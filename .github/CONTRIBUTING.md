@@ -58,6 +58,7 @@ pnpm test
 See `docs/REPOSITORY_STRUCTURE.md` for the canonical layout.
 
 High-level responsibilities:
+
 - `src/` Pulsar core (small, stable, hot paths)
 - `extensions/` first-party extensions using the public extension API
 - `modules/` example apps or built-in modules (HMVC boundaries)
@@ -107,6 +108,7 @@ declare(strict_types=1);
 ## Static analysis & formatting (mandatory)
 
 Before opening a PR, the full gate must pass:
+
 - PHP static analysis:
   - PHPStan
   - Psalm
@@ -126,6 +128,7 @@ If a tool requires baseline files (e.g., Qodana), keep baselines small and docum
 ## Performance & regression prevention
 
 If your change affects:
+
 - kernel boot
 - routing dispatch
 - container resolution
@@ -133,6 +136,7 @@ If your change affects:
 - serialization/validation
 
 …include:
+
 - a brief performance note in the PR
 - benchmark results (before/after) if available
 - justification for any regression (must be accepted explicitly)
@@ -142,6 +146,7 @@ Pulsar aims for measurable performance leadership; performance is a product feat
 ## Documentation requirements
 
 Any feature change requires:
+
 - updating relevant docs under `docs/`
 - adding usage notes if it impacts API or behavior
 - documenting security implications (even if “none”)
@@ -151,6 +156,7 @@ Docs must stay aligned with real behavior.
 ## Branching and commits
 
 ### Branch naming
+
 - `feat/<topic>`
 - `fix/<topic>`
 - `docs/<topic>`
@@ -161,6 +167,7 @@ Docs must stay aligned with real behavior.
 ### Commit messages (Conventional Commits)
 
 Format:
+
 ```
 <type>(<scope>): <imperative summary>
 ```
@@ -170,6 +177,7 @@ Types: `feat`, `fix`, `docs`, `perf`, `refactor`, `test`, `ci`, `build`, `chore`
 Scopes examples: `core`, `http`, `router`, `container`, `console`, `dx`, `ext`, `security`, `obs`, `docs`, `tooling`, `ci`
 
 Examples:
+
 - `feat(ext): add extension manifest validator`
 - `perf(router): reduce regex allocations in matcher`
 - `security(session): rotate session id on privilege change`
@@ -178,6 +186,7 @@ Examples:
 ## Pull requests
 
 A PR must include:
+
 - problem statement (what and why)
 - what changed (key points)
 - security impact (explicitly “none” if applicable)

@@ -1,14 +1,14 @@
 {
-    "name": "pulsar/example",
-    "version": "0.2.0",
-    "description": "Example first-party extension demonstrating the extension system",
-    "extension_class": "Pulsar\\Extension\\Example\\ExampleExtension",
-    "pulsar": {
-        "min_version": "0.2.0"
-    },
-    "provides": {
-        "services": ["ExampleService"],
-        "routes": true,
-        "commands": []
-    }
+  "name": "pulsar/example",
+  "version": "0.2.0",
+  "description": "Example first-party extension demonstrating the extension system",
+  "extension_class": "Pulsar\\Extension\\Example\\ExampleExtension",
+  "pulsar": {
+    "min_version": "0.2.0"
+  },
+  "provides": {
+    "services": ["ExampleService"],
+    "routes": true,
+    "commands": []
+  }
 }
