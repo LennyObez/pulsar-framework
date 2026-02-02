@@ -10,17 +10,21 @@ use function is_string;
 
 use Psr\Log\LoggerInterface;
 use Pulsar\Config\AppConfig;
+use Pulsar\Config\AuditConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
+use Pulsar\Config\CsrfConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Config\SecurityConfig;
+use Pulsar\Config\SecurityHeadersConfig;
+use Pulsar\Config\SessionConfig;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
 use Pulsar\Extensibility\ExtensionBootstrap;
-use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
@@ -38,6 +42,18 @@ use Pulsar\Observability\Metrics\PrometheusExporter;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Router;
+use Pulsar\Security\Audit\AuditFileSink;
+use Pulsar\Security\Audit\AuditLogger;
+use Pulsar\Security\Audit\AuditSinkInterface;
+use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Csrf\CsrfMiddleware;
+use Pulsar\Security\Csrf\CsrfTokenManager;
+use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
+use Pulsar\Security\Exception\SecurityException;
+use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
+use Pulsar\Security\Session\Session;
+use Pulsar\Security\Session\SessionInterface;
 use RuntimeException;
 
 use function sprintf;
@@ -51,7 +67,7 @@ use Throwable;
  * managing the lifecycle, and orchestrating the request/response cycle.
  *
  * Boot pipeline order:
- * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> DiagnosticsRoute -> Extensions
+ * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> SecurityServices -> DiagnosticsRoute -> Extensions
  */
 final class Kernel
 {
@@ -100,9 +116,10 @@ final class Kernel
      * 4. Metrics creation (MetricsMiddleware as inner global middleware)
      * 5. Error tracker creation
      * 6. Exception handler creation
-     * 7. Diagnostics route registration (debug mode only)
-     * 8. Extension register phase
-     * 9. Extension boot phase
+     * 7. Security services creation
+     * 8. Diagnostics route registration (debug mode only)
+     * 9. Extension register phase
+     * 10. Extension boot phase
      */
     public function boot(): void
     {
@@ -119,6 +136,7 @@ final class Kernel
             $this->createMetrics();
             $this->createErrorTracker();
             $this->createExceptionHandler();
+            $this->createSecurityServices();
             $this->registerDiagnosticsRoute();
         }
 
@@ -349,6 +367,14 @@ final class Kernel
         /** @var ObservabilityConfig $observabilityConfig */
         $observabilityConfig = $repository->get(ObservabilityConfig::class);
         $this->container->instance(ObservabilityConfig::class, $observabilityConfig);
+        $this->container->instance(AuditConfig::class, $observabilityConfig->audit);
+
+        /** @var SecurityConfig $securityConfig */
+        $securityConfig = $repository->get(SecurityConfig::class);
+        $this->container->instance(SecurityConfig::class, $securityConfig);
+        $this->container->instance(SessionConfig::class, $securityConfig->session);
+        $this->container->instance(CsrfConfig::class, $securityConfig->csrf);
+        $this->container->instance(SecurityHeadersConfig::class, $securityConfig->headers);
     }
 
     /**
@@ -488,6 +514,70 @@ final class Kernel
         /** @var SensitiveDataScrubber|null $scrubber */
         $this->exceptionHandler = new ExceptionHandler($renderer, $logger, $aggregator, $scrubber);
         $this->container->instance(ExceptionHandler::class, $this->exceptionHandler);
+    }
+
+    /**
+     * Create security services and register in the container.
+     *
+     * Registers: Session, CsrfTokenManager, CsrfMiddleware,
+     * SecurityHeadersMiddleware. If PULSAR_MASTER_KEY is set,
+     * also registers MasterKey, Encryptor, and AuditLogger.
+     */
+    private function createSecurityServices(): void
+    {
+        /** @var ConfigManager $configManager */
+        $configManager = $this->configManager;
+        $environment = $configManager->environment();
+
+        /** @var SecurityConfig $securityConfig */
+        $securityConfig = $configManager->repository()->get(SecurityConfig::class);
+
+        // Session
+        $session = new Session($securityConfig->session);
+        $this->container->instance(Session::class, $session);
+        $this->container->instance(SessionInterface::class, $session);
+
+        // CSRF
+        $csrfTokenManager = new CsrfTokenManager($session, $securityConfig->csrf);
+        $this->container->instance(CsrfTokenManager::class, $csrfTokenManager);
+        $this->container->instance(CsrfTokenManagerInterface::class, $csrfTokenManager);
+
+        $csrfMiddleware = new CsrfMiddleware($csrfTokenManager, $securityConfig->csrf);
+        $this->container->instance(CsrfMiddleware::class, $csrfMiddleware);
+
+        // Security Headers
+        $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers);
+        $this->container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
+
+        // Crypto + Audit (only if master key is available)
+        $masterKeyHex = $environment->get('PULSAR_MASTER_KEY');
+
+        if ($masterKeyHex !== null && $masterKeyHex !== '') {
+            try {
+                $masterKey = MasterKey::fromHex($masterKeyHex);
+                $this->container->instance(MasterKey::class, $masterKey);
+
+                $encryptor = new Encryptor($masterKey);
+                $this->container->instance(Encryptor::class, $encryptor);
+
+                // Audit logger with HMAC chain
+                /** @var ObservabilityConfig $obsConfig */
+                $obsConfig = $configManager->repository()->get(ObservabilityConfig::class);
+
+                if ($obsConfig->audit->enabled) {
+                    $auditKey = $masterKey->deriveSubKey(2, 'audit___');
+                    $auditSink = new AuditFileSink($obsConfig->audit->logPath);
+                    $this->container->instance(AuditSinkInterface::class, $auditSink);
+                    $this->container->instance(AuditFileSink::class, $auditSink);
+
+                    $auditLogger = new AuditLogger($auditSink, $auditKey);
+                    $this->container->instance(AuditLogger::class, $auditLogger);
+                }
+            } catch (SecurityException) {
+                // Master key is invalid — skip crypto/audit registration.
+                // Session, CSRF, and headers still work without it.
+            }
+        }
     }
 
     /**

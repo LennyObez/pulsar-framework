@@ -57,7 +57,7 @@ Deliverables:
   Exit criteria:
 - No “magic” config; everything type-safe and discoverable
 
-### 0.4.0 — HTTP & Routing Advanced (CURRENT)
+### 0.4.0 — HTTP & Routing Advanced
 
 Deliverables:
 
@@ -83,13 +83,16 @@ Deliverables:
   Exit criteria:
 - Example app produces logs/metrics/traces and viewable report
 
-### 0.6.0 — Security Baseline v1
+### 0.6.0 — Security Baseline v1 (CURRENT)
 
 Deliverables:
 
-- Session hardening + CSRF + secure headers defaults
-- Crypto/key management primitives
-- Audit logging subsystem (domain events + immutable logs)
+- Session hardening + CSRF + secure headers defaults ✓
+- Crypto/key management primitives (libsodium: HMAC, KDF, secretbox) ✓
+- Audit logging subsystem (HMAC-chained tamper-evident entries) ✓
+- SecurityConfig DTO + SessionConfig + CsrfConfig + SecurityHeadersConfig ✓
+- SecurityException with factory methods for all security errors ✓
+- Kernel integration: createSecurityServices() in boot pipeline ✓
   Exit criteria:
 - Security checklist documented + tested
 
