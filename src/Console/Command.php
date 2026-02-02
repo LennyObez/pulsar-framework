@@ -1,0 +1,137 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Console;
+
+use function sprintf;
+
+/**
+ * Abstract base class for console commands.
+ *
+ * Provides common functionality and a structured approach to command implementation.
+ */
+abstract class Command implements CommandInterface
+{
+    protected string $name = '';
+    protected string $description = '';
+
+    /** @var list<array{name: string, description: string, required: bool}> */
+    protected array $arguments = [];
+
+    /** @var array<string, array{description: string, shortcut: string|null, default: mixed}> */
+    protected array $options = [];
+
+    public function __construct()
+    {
+        $this->configure();
+    }
+
+    /**
+     * Configure the command (name, description, arguments, options).
+     */
+    protected function configure(): void
+    {
+        // Override in subclasses
+    }
+
+    /**
+     * Set the command name.
+     */
+    protected function setName(string $name): self
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * Set the command description.
+     */
+    protected function setDescription(string $description): self
+    {
+        $this->description = $description;
+        return $this;
+    }
+
+    /**
+     * Add an argument definition.
+     */
+    protected function addArgument(string $name, string $description = '', bool $required = false): self
+    {
+        $this->arguments[] = [
+            'name' => $name,
+            'description' => $description,
+            'required' => $required,
+        ];
+        return $this;
+    }
+
+    /**
+     * Add an option definition.
+     */
+    protected function addOption(
+        string $name,
+        string $description = '',
+        ?string $shortcut = null,
+        mixed $default = null,
+    ): self {
+        $this->options[$name] = [
+            'description' => $description,
+            'shortcut' => $shortcut,
+            'default' => $default,
+        ];
+        return $this;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getDescription(): string
+    {
+        return $this->description;
+    }
+
+    /**
+     * Get argument definitions.
+     *
+     * @return list<array{name: string, description: string, required: bool}>
+     */
+    public function getArguments(): array
+    {
+        return $this->arguments;
+    }
+
+    /**
+     * Get option definitions.
+     *
+     * @return array<string, array{description: string, shortcut: string|null, default: mixed}>
+     */
+    public function getOptions(): array
+    {
+        return $this->options;
+    }
+
+    /**
+     * Get the usage string for this command.
+     */
+    public function getUsage(): string
+    {
+        $usage = $this->name;
+
+        foreach ($this->options as $name => $config) {
+            $usage .= sprintf(' [--%s]', $name);
+        }
+
+        foreach ($this->arguments as $arg) {
+            if ($arg['required']) {
+                $usage .= sprintf(' <%s>', $arg['name']);
+            } else {
+                $usage .= sprintf(' [%s]', $arg['name']);
+            }
+        }
+
+        return $usage;
+    }
+}

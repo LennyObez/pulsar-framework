@@ -4,8 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Container;
 
+use function in_array;
+use function is_callable;
+use function is_object;
+
+use Override;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use ReflectionClass;
+use ReflectionNamedType;
+
+use function sprintf;
 
 /**
  * Array-based dependency injection container.
@@ -35,7 +44,7 @@ final class Container implements ContainerInterface
      */
     private array $resolving = [];
 
-    #[\Override]
+    #[Override]
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {
         $this->bindings[$id] = [
@@ -47,19 +56,19 @@ final class Container implements ContainerInterface
         unset($this->instances[$id]);
     }
 
-    #[\Override]
+    #[Override]
     public function instance(string $id, object $instance): void
     {
         $this->instances[$id] = $instance;
     }
 
-    #[\Override]
+    #[Override]
     public function has(string $id): bool
     {
         return isset($this->bindings[$id]) || isset($this->instances[$id]);
     }
 
-    #[\Override]
+    #[Override]
     public function get(string $id): mixed
     {
         // Return cached instance if available
@@ -128,7 +137,7 @@ final class Container implements ContainerInterface
             );
         }
 
-        $reflector = new \ReflectionClass($className);
+        $reflector = new ReflectionClass($className);
 
         if (!$reflector->isInstantiable()) {
             throw ContainerException::unresolvable(
@@ -164,7 +173,7 @@ final class Container implements ContainerInterface
                 );
             }
 
-            if (!$type instanceof \ReflectionNamedType || $type->isBuiltin()) {
+            if (!$type instanceof ReflectionNamedType || $type->isBuiltin()) {
                 if ($parameter->isDefaultValueAvailable()) {
                     $dependencies[] = $parameter->getDefaultValue();
                     continue;
@@ -175,7 +184,7 @@ final class Container implements ContainerInterface
                     sprintf(
                         'Parameter "%s" requires a non-class type "%s"',
                         $parameter->getName(),
-                        $type instanceof \ReflectionNamedType ? $type->getName() : 'unknown',
+                        $type instanceof ReflectionNamedType ? $type->getName() : 'unknown',
                     ),
                 );
             }

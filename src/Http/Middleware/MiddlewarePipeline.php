@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
+use function assert;
+use function count;
+
+use InvalidArgumentException;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
+
+use function sprintf;
 
 /**
  * Executes a stack of middleware around a core handler.
@@ -100,7 +106,7 @@ final class MiddlewarePipeline
             return new $middleware();
         }
 
-        throw new \InvalidArgumentException(sprintf(
+        throw new InvalidArgumentException(sprintf(
             'Middleware "%s" could not be resolved. Ensure it is a valid class or registered in the container.',
             $middleware,
         ));
