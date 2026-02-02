@@ -1,0 +1,41 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# PHP / Composer
+/vendor/
+.phpunit.result.cache
+.phpunit.cache/
+.phpstan.cache/
+.psalm/
+.psalm-cache/
+*.log
+
+# Runtime / app temp
+/bootstrap/cache/
+/storage/
+/var/
+tmp/
+.cache/
+
+# Node / tooling
+node_modules/
+dist/
+build/
+coverage/
+.eslintcache
+.prettier-cache
+.qodana/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Internal / local-only agent instructions (keep out of GitHub)
+CLAUDE.md
+docs/internal/
