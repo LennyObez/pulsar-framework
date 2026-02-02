@@ -21,6 +21,7 @@ final class VersionTest extends TestCase
         self::assertStringContainsString((string) Version::MINOR, $version);
         self::assertStringContainsString((string) Version::PATCH, $version);
 
+        // @phpstan-ignore notIdentical.alwaysFalse (condition is valid when PRERELEASE is set in future versions)
         if (Version::PRERELEASE !== '') {
             self::assertStringContainsString(Version::PRERELEASE, $version);
         }
@@ -38,10 +39,28 @@ final class VersionTest extends TestCase
     }
 
     #[Test]
-    public function versionConstantsAreIntegers(): void
+    public function versionConstantsAreCorrectTypes(): void
     {
-        self::assertIsInt(Version::MAJOR);
-        self::assertIsInt(Version::MINOR);
-        self::assertIsInt(Version::PATCH);
+        // Verify major is an integer >= 0
+        self::assertGreaterThanOrEqual(0, Version::MAJOR);
+
+        // Verify minor is an integer >= 0
+        self::assertGreaterThanOrEqual(0, Version::MINOR);
+
+        // Verify patch is an integer >= 0
+        self::assertGreaterThanOrEqual(0, Version::PATCH);
+
+        // Verify prerelease is a string (even if empty)
+        // @phpstan-ignore staticMethod.alreadyNarrowedType
+        self::assertIsString(Version::PRERELEASE);
+    }
+
+    #[Test]
+    public function currentVersionIs010(): void
+    {
+        self::assertSame(0, Version::MAJOR);
+        self::assertSame(1, Version::MINOR);
+        self::assertSame(0, Version::PATCH);
+        self::assertSame('0.1.0', Version::short());
     }
 }

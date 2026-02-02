@@ -1,0 +1,346 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Tests\Unit\Http;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Method;
+use Pulsar\Http\Request;
+
+#[CoversClass(Request::class)]
+#[CoversClass(Method::class)]
+final class RequestTest extends TestCase
+{
+    #[Test]
+    public function constructorSetsProperties(): void
+    {
+        $headers = new HeaderBag(['Content-Type' => 'application/json']);
+
+        $request = new Request(
+            method: Method::POST,
+            uri: '/api/users?sort=name',
+            path: '/api/users',
+            queryString: 'sort=name',
+            headers: $headers,
+            body: '{"name":"test"}',
+            query: ['sort' => 'name'],
+            post: ['name' => 'test'],
+            protocolVersion: '1.1',
+        );
+
+        self::assertSame(Method::POST, $request->method);
+        self::assertSame('/api/users?sort=name', $request->uri);
+        self::assertSame('/api/users', $request->path);
+        self::assertSame('sort=name', $request->queryString);
+        self::assertSame($headers, $request->headers);
+        self::assertSame('{"name":"test"}', $request->body);
+        self::assertSame(['sort' => 'name'], $request->query);
+        self::assertSame(['name' => 'test'], $request->post);
+        self::assertSame('1.1', $request->protocolVersion);
+    }
+
+    #[Test]
+    public function queryMethodReturnsParameter(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            query: ['page' => '1', 'limit' => '10'],
+        );
+
+        self::assertSame('1', $request->query('page'));
+        self::assertSame('10', $request->query('limit'));
+        self::assertNull($request->query('missing'));
+        self::assertSame('default', $request->query('missing', 'default'));
+    }
+
+    #[Test]
+    public function postMethodReturnsParameter(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            post: ['username' => 'john'],
+        );
+
+        self::assertSame('john', $request->post('username'));
+        self::assertNull($request->post('missing'));
+    }
+
+    #[Test]
+    public function cookieMethodReturnsValue(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            cookies: ['session' => 'abc123'],
+        );
+
+        self::assertSame('abc123', $request->cookie('session'));
+        self::assertNull($request->cookie('missing'));
+    }
+
+    #[Test]
+    public function serverMethodReturnsValue(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            server: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
+
+        self::assertSame('127.0.0.1', $request->server('REMOTE_ADDR'));
+        self::assertNull($request->server('MISSING'));
+    }
+
+    #[Test]
+    public function attributeMethodReturnsValue(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            attributes: ['user_id' => 42],
+        );
+
+        self::assertSame(42, $request->attribute('user_id'));
+        self::assertNull($request->attribute('missing'));
+    }
+
+    #[Test]
+    public function headerMethodReturnsFirstValue(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '',
+        );
+
+        self::assertSame('application/json', $request->header('Content-Type'));
+        self::assertNull($request->header('Missing'));
+        self::assertSame('default', $request->header('Missing', 'default'));
+    }
+
+    #[Test]
+    public function withAttributeReturnsNewRequestWithAttribute(): void
+    {
+        $original = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+        );
+
+        $new = $original->withAttribute('key', 'value');
+
+        self::assertNotSame($original, $new);
+        self::assertNull($original->attribute('key'));
+        self::assertSame('value', $new->attribute('key'));
+    }
+
+    #[Test]
+    public function withoutAttributeReturnsNewRequestWithoutAttribute(): void
+    {
+        $original = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            attributes: ['key' => 'value'],
+        );
+
+        $new = $original->withoutAttribute('key');
+
+        self::assertNotSame($original, $new);
+        self::assertSame('value', $original->attribute('key'));
+        self::assertNull($new->attribute('key'));
+    }
+
+    #[Test]
+    public function isAjaxReturnsTrueForXhrRequest(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['X-Requested-With' => 'XMLHttpRequest']),
+            body: '',
+        );
+
+        self::assertTrue($request->isAjax());
+    }
+
+    #[Test]
+    public function isAjaxReturnsFalseForNormalRequest(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+        );
+
+        self::assertFalse($request->isAjax());
+    }
+
+    #[Test]
+    public function isSecureReturnsTrueForHttps(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            server: ['HTTPS' => 'on'],
+        );
+
+        self::assertTrue($request->isSecure());
+    }
+
+    #[Test]
+    public function isSecureReturnsFalseForHttp(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            server: ['HTTPS' => 'off'],
+        );
+
+        self::assertFalse($request->isSecure());
+    }
+
+    #[Test]
+    public function preferredContentTypeReturnsFirstAcceptType(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Accept' => 'application/json, text/html;q=0.9']),
+            body: '',
+        );
+
+        self::assertSame('application/json', $request->preferredContentType());
+    }
+
+    #[Test]
+    public function preferredContentTypeStripsQualityValue(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Accept' => 'text/html;q=0.9']),
+            body: '',
+        );
+
+        self::assertSame('text/html', $request->preferredContentType());
+    }
+
+    #[Test]
+    public function preferredContentTypeReturnsNullIfNoAcceptHeader(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+        );
+
+        self::assertNull($request->preferredContentType());
+    }
+}
+
+#[CoversClass(Method::class)]
+final class MethodEnumTest extends TestCase
+{
+    #[Test]
+    public function isSafeReturnsCorrectValues(): void
+    {
+        self::assertTrue(Method::GET->isSafe());
+        self::assertTrue(Method::HEAD->isSafe());
+        self::assertTrue(Method::OPTIONS->isSafe());
+        self::assertTrue(Method::TRACE->isSafe());
+
+        self::assertFalse(Method::POST->isSafe());
+        self::assertFalse(Method::PUT->isSafe());
+        self::assertFalse(Method::DELETE->isSafe());
+        self::assertFalse(Method::PATCH->isSafe());
+    }
+
+    #[Test]
+    public function isIdempotentReturnsCorrectValues(): void
+    {
+        self::assertTrue(Method::GET->isIdempotent());
+        self::assertTrue(Method::HEAD->isIdempotent());
+        self::assertTrue(Method::PUT->isIdempotent());
+        self::assertTrue(Method::DELETE->isIdempotent());
+        self::assertTrue(Method::OPTIONS->isIdempotent());
+
+        self::assertFalse(Method::POST->isIdempotent());
+        self::assertFalse(Method::PATCH->isIdempotent());
+    }
+
+    #[Test]
+    public function mayHaveBodyReturnsCorrectValues(): void
+    {
+        self::assertTrue(Method::POST->mayHaveBody());
+        self::assertTrue(Method::PUT->mayHaveBody());
+        self::assertTrue(Method::PATCH->mayHaveBody());
+
+        self::assertFalse(Method::GET->mayHaveBody());
+        self::assertFalse(Method::HEAD->mayHaveBody());
+        self::assertFalse(Method::DELETE->mayHaveBody());
+    }
+
+    #[Test]
+    public function fromStringIsCaseInsensitive(): void
+    {
+        self::assertSame(Method::GET, Method::fromString('get'));
+        self::assertSame(Method::POST, Method::fromString('Post'));
+        self::assertSame(Method::DELETE, Method::fromString('DELETE'));
+    }
+}
