@@ -1,0 +1,32 @@
+name: Qodana
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  qodana-php:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Qodana (PHP)
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/data/project" \
+            -e QODANA_TOKEN="${QODANA_TOKEN}" \
+            jetbrains/qodana-php:2025.3
+
+  qodana-js:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Qodana (JS/TS)
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}:/data/project" \
+            -e QODANA_TOKEN="${QODANA_TOKEN}" \
+            jetbrains/qodana-js:2025.3
