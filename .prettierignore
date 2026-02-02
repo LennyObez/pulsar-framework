@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+coverage/
+bootstrap/cache/
+
+# Generated files
+*.lock
+pnpm-lock.yaml
+composer.lock
+
+# IDE and editor
+.idea/
+.vscode/
+
+# Caches
+.phpunit.cache/
+.phpstan.cache/
+.psalm-cache/
+.eslintcache
+.prettier-cache

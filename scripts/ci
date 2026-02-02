@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# Pulsar CI Entrypoint
+#
+# This script is the main entrypoint for CI environments.
+# It delegates to the quality gate and performs any CI-specific setup.
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+cd "$PROJECT_ROOT"
+
+echo "=== Pulsar CI ==="
+echo "PHP Version: $(php -v | head -n 1)"
+echo "Composer Version: $(composer --version)"
+echo ""
+
+# Run quality gate
+exec "$SCRIPT_DIR/qa"
