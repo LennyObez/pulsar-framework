@@ -7,6 +7,8 @@ namespace Pulsar\Routing;
 use Exception;
 use Pulsar\Http\Method;
 
+use function sprintf;
+
 /**
  * Exception thrown when routing fails.
  */

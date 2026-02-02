@@ -18,7 +18,8 @@
   },
   "autoload": {
     "psr-4": {
-      "Pulsar\\": "src/"
+      "Pulsar\\": "src/",
+      "Pulsar\\Extension\\Example\\": "extensions/example/src/"
     }
   },
   "autoload-dev": {
@@ -26,6 +27,9 @@
       "Pulsar\\Tests\\": "tests/"
     }
   },
+  "bin": [
+    "bin/pulsar"
+  ],
   "scripts": {
     "test": "phpunit -c tools/php/phpunit.xml",
     "phpstan": "phpstan analyse -c tools/php/phpstan.neon",

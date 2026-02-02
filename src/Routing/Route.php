@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Routing;
 
+use function in_array;
+use function is_string;
+
 use Pulsar\Http\Method;
 
 /**

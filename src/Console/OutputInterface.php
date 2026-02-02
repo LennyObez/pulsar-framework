@@ -1,0 +1,76 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Console;
+
+/**
+ * Contract for console output.
+ */
+interface OutputInterface
+{
+    /**
+     * Write a message to the output.
+     */
+    public function write(string $message): void;
+
+    /**
+     * Write a message followed by a newline.
+     */
+    public function writeln(string $message = ''): void;
+
+    /**
+     * Write an error message.
+     */
+    public function error(string $message): void;
+
+    /**
+     * Write an error message followed by a newline.
+     */
+    public function errorln(string $message = ''): void;
+
+    /**
+     * Write a success message.
+     */
+    public function success(string $message): void;
+
+    /**
+     * Write an info message.
+     */
+    public function info(string $message): void;
+
+    /**
+     * Write a warning message.
+     */
+    public function warning(string $message): void;
+
+    /**
+     * Get the current verbosity level.
+     */
+    public function getVerbosity(): Verbosity;
+
+    /**
+     * Set the verbosity level.
+     */
+    public function setVerbosity(Verbosity $verbosity): void;
+
+    /**
+     * Check if output is quiet.
+     */
+    public function isQuiet(): bool;
+
+    /**
+     * Check if output is verbose.
+     */
+    public function isVerbose(): bool;
+
+    /**
+     * Check if output is in debug mode.
+     */
+    public function isDebug(): bool;
+
+    /**
+     * Write a newline.
+     */
+    public function newLine(int $count = 1): void;
+}

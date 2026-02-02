@@ -7,6 +7,8 @@ namespace Pulsar\Container\Exception;
 use Exception;
 use Psr\Container\NotFoundExceptionInterface;
 
+use function sprintf;
+
 /**
  * Exception thrown when a requested binding is not found in the container.
  */
