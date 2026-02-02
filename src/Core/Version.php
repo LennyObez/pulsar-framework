@@ -10,9 +10,9 @@ namespace Pulsar\Core;
 final class Version
 {
     public const MAJOR = 0;
-    public const MINOR = 0;
-    public const PATCH = 1;
-    public const PRERELEASE = 'alpha';
+    public const MINOR = 1;
+    public const PATCH = 0;
+    public const PRERELEASE = '';
 
     /**
      * Get the full version string.
@@ -21,6 +21,7 @@ final class Version
     {
         $version = self::MAJOR . '.' . self::MINOR . '.' . self::PATCH;
 
+        // @phpstan-ignore notIdentical.alwaysFalse (condition is valid when PRERELEASE is set in future versions)
         if (self::PRERELEASE !== '') {
             $version .= '-' . self::PRERELEASE;
         }

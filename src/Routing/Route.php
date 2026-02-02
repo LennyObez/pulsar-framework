@@ -1,0 +1,168 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Routing;
+
+use Pulsar\Http\Method;
+
+/**
+ * Represents a single route definition.
+ */
+readonly class Route
+{
+    /**
+     * @param list<Method> $methods Allowed HTTP methods
+     * @param string $path The route path pattern
+     * @param callable|class-string|array{0: class-string, 1: string} $handler The route handler
+     * @param string|null $name Optional route name
+     * @param array<string, mixed> $attributes Additional route attributes
+     * @param list<string> $middleware Middleware to apply
+     */
+    public function __construct(
+        public array $methods,
+        public string $path,
+        public mixed $handler,
+        public ?string $name = null,
+        public array $attributes = [],
+        public array $middleware = [],
+    ) {}
+
+    /**
+     * Check if this route matches the given method.
+     */
+    public function matchesMethod(Method $method): bool
+    {
+        return in_array($method, $this->methods, true);
+    }
+
+    /**
+     * Check if this route matches the given path.
+     *
+     * Returns extracted parameters on match, null on no match.
+     *
+     * @return array<string, string>|null
+     */
+    public function matchesPath(string $path): ?array
+    {
+        // Normalize paths
+        $routePath = '/' . trim($this->path, '/');
+        $requestPath = '/' . trim($path, '/');
+
+        // Exact match (no parameters)
+        if (!str_contains($routePath, '{')) {
+            return $routePath === $requestPath ? [] : null;
+        }
+
+        // Build regex pattern from route path
+        $pattern = $this->pathToPattern($routePath);
+
+        if (preg_match($pattern, $requestPath, $matches)) {
+            // Extract named parameters
+            $params = [];
+            foreach ($matches as $key => $value) {
+                if (is_string($key)) {
+                    $params[$key] = $value;
+                }
+            }
+            return $params;
+        }
+
+        return null;
+    }
+
+    /**
+     * Convert route path to regex pattern.
+     */
+    private function pathToPattern(string $path): string
+    {
+        // Escape regex special characters except { and }
+        $pattern = preg_quote($path, '#');
+
+        // Restore { and } and convert to named capture groups
+        $pattern = str_replace(['\{', '\}'], ['{', '}'], $pattern);
+
+        // Convert {param} to (?P<param>[^/]+)
+        $replaced = preg_replace(
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\}#',
+            '(?P<$1>[^/]+)',
+            $pattern,
+        );
+        $pattern = $replaced ?? $pattern;
+
+        // Convert {param?} to (?:(?P<param>[^/]+))?
+        $replaced = preg_replace(
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\?\}#',
+            '(?:(?P<$1>[^/]+))?',
+            $pattern,
+        );
+        $pattern = $replaced ?? $pattern;
+
+        return '#^' . $pattern . '$#';
+    }
+
+    /**
+     * Create a GET route.
+     *
+     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     */
+    public static function get(string $path, mixed $handler, ?string $name = null): self
+    {
+        return new self([Method::GET, Method::HEAD], $path, $handler, $name);
+    }
+
+    /**
+     * Create a POST route.
+     *
+     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     */
+    public static function post(string $path, mixed $handler, ?string $name = null): self
+    {
+        return new self([Method::POST], $path, $handler, $name);
+    }
+
+    /**
+     * Create a PUT route.
+     *
+     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     */
+    public static function put(string $path, mixed $handler, ?string $name = null): self
+    {
+        return new self([Method::PUT], $path, $handler, $name);
+    }
+
+    /**
+     * Create a PATCH route.
+     *
+     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     */
+    public static function patch(string $path, mixed $handler, ?string $name = null): self
+    {
+        return new self([Method::PATCH], $path, $handler, $name);
+    }
+
+    /**
+     * Create a DELETE route.
+     *
+     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     */
+    public static function delete(string $path, mixed $handler, ?string $name = null): self
+    {
+        return new self([Method::DELETE], $path, $handler, $name);
+    }
+
+    /**
+     * Create a route matching any method.
+     *
+     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     */
+    public static function any(string $path, mixed $handler, ?string $name = null): self
+    {
+        return new self(
+            [Method::GET, Method::HEAD, Method::POST, Method::PUT, Method::PATCH, Method::DELETE, Method::OPTIONS],
+            $path,
+            $handler,
+            $name,
+        );
+    }
+}
