@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+#
+# Pulsar Quality Gate Script
+#
+# Runs all quality checks in sequence:
+# - PHP: CS-Fixer, PHPStan, Psalm, PHPUnit
+# - JS/TS: ESLint, Prettier, Vitest
+#
+# Exit codes:
+#   0 - All checks passed
+#   1 - One or more checks failed
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+cd "$PROJECT_ROOT"
+
+echo "=== Pulsar Quality Gate ==="
+echo ""
+
+FAILED=0
+
+# PHP Quality Checks
+echo "--- PHP: Code Style (php-cs-fixer) ---"
+if composer cs:check; then
+    echo "[PASS] PHP code style"
+else
+    echo "[FAIL] PHP code style"
+    FAILED=1
+fi
+echo ""
+
+echo "--- PHP: Static Analysis (PHPStan) ---"
+if composer phpstan; then
+    echo "[PASS] PHPStan"
+else
+    echo "[FAIL] PHPStan"
+    FAILED=1
+fi
+echo ""
+
+echo "--- PHP: Static Analysis (Psalm) ---"
+if composer psalm; then
+    echo "[PASS] Psalm"
+else
+    echo "[FAIL] Psalm"
+    FAILED=1
+fi
+echo ""
+
+echo "--- PHP: Tests (PHPUnit) ---"
+if composer test; then
+    echo "[PASS] PHPUnit"
+else
+    echo "[FAIL] PHPUnit"
+    FAILED=1
+fi
+echo ""
+
+# JS/TS Quality Checks (only if node_modules exists)
+if [ -d "node_modules" ]; then
+    echo "--- JS/TS: Lint (ESLint) ---"
+    if pnpm lint; then
+        echo "[PASS] ESLint"
+    else
+        echo "[FAIL] ESLint"
+        FAILED=1
+    fi
+    echo ""
+
+    echo "--- JS/TS: Format Check (Prettier) ---"
+    if pnpm format:check; then
+        echo "[PASS] Prettier"
+    else
+        echo "[FAIL] Prettier"
+        FAILED=1
+    fi
+    echo ""
+
+    echo "--- JS/TS: Tests (Vitest) ---"
+    if pnpm test; then
+        echo "[PASS] Vitest"
+    else
+        echo "[FAIL] Vitest"
+        FAILED=1
+    fi
+    echo ""
+else
+    echo "--- JS/TS: Skipped (node_modules not found, run 'pnpm install') ---"
+    echo ""
+fi
+
+# Summary
+echo "=== Quality Gate Summary ==="
+if [ $FAILED -eq 0 ]; then
+    echo "All checks passed."
+    exit 0
+else
+    echo "One or more checks failed."
+    exit 1
+fi
