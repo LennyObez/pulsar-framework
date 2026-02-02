@@ -17,6 +17,9 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\Validation\ValidationException;
+use Pulsar\Http\Validation\ValidationResult;
+use Pulsar\Http\Validation\Violation;
 use RuntimeException;
 
 #[CoversClass(Kernel::class)]
@@ -96,13 +99,14 @@ final class KernelErrorHandlingTest extends TestCase
     private function createRequest(
         Method $method = Method::GET,
         string $path = '/',
+        ?HeaderBag $headers = null,
     ): Request {
         return new Request(
             method: $method,
             uri: $path,
             path: $path,
             queryString: '',
-            headers: new HeaderBag(),
+            headers: $headers ?? new HeaderBag(),
             body: '',
         );
     }
@@ -213,6 +217,64 @@ final class KernelErrorHandlingTest extends TestCase
         $kernel = $this->createKernel();
 
         self::assertNotNull($kernel->configManager());
+    }
+
+    #[Test]
+    public function validationExceptionReturnsJson422(): void
+    {
+        $kernel = $this->createKernel();
+        $kernel->router()->get('/validate', function () {
+            $result = new ValidationResult([
+                new Violation('email', 'The email field is required.', 'required'),
+            ]);
+            throw new ValidationException($result);
+        });
+
+        $response = $kernel->handle($this->createRequest(path: '/validate'));
+
+        self::assertSame(ResponseStatus::UnprocessableEntity, $response->status);
+        self::assertStringContainsString('application/json', $response->headers->first('Content-Type') ?? '');
+
+        /** @var array{error: string, status: int, violations: list<mixed>} $data */
+        $data = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('Validation Failed', $data['error']);
+        self::assertSame(422, $data['status']);
+        self::assertCount(1, $data['violations']);
+    }
+
+    #[Test]
+    public function acceptJsonHeaderReturnsJsonError(): void
+    {
+        $kernel = $this->createKernel();
+        $kernel->router()->get('/error', fn() => throw new RuntimeException('Server error'));
+
+        $headers = new HeaderBag(['Accept' => 'application/json']);
+        $response = $kernel->handle($this->createRequest(path: '/error', headers: $headers));
+
+        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        self::assertStringContainsString('application/json', $response->headers->first('Content-Type') ?? '');
+
+        /** @var array{error: string, status: int} $data */
+        $data = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('Internal Server Error', $data['error']);
+        self::assertSame(500, $data['status']);
+    }
+
+    #[Test]
+    public function acceptJsonWith404ReturnsJsonError(): void
+    {
+        $kernel = $this->createKernel();
+        $kernel->router()->get('/', fn() => Response::text('home'));
+
+        $headers = new HeaderBag(['Accept' => 'application/json']);
+        $response = $kernel->handle($this->createRequest(path: '/nonexistent', headers: $headers));
+
+        self::assertSame(ResponseStatus::NotFound, $response->status);
+
+        /** @var array{error: string, status: int} $data */
+        $data = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('Not Found', $data['error']);
+        self::assertSame(404, $data['status']);
     }
 }
 

@@ -57,14 +57,18 @@ Deliverables:
   Exit criteria:
 - No “magic” config; everything type-safe and discoverable
 
-### 0.4.0 — HTTP & Routing Advanced
+### 0.4.0 — HTTP & Routing Advanced (CURRENT)
 
 Deliverables:
 
-- Middlewares finalized
-- Route naming, constraints, host-based routing
-- Request validation system (typed)
-- Rate-limit MVP (foundation)
+- Middleware finalized: named groups, aliases, MiddlewareRegistry ✓
+- Request convenience methods: `all()`, `input()`, `json()`, `wantsJson()` ✓
+- Request validation system (typed): Validator, 11 built-in rules, ValidationMiddleware ✓
+- JSON content-negotiation in ExceptionHandler ✓
+- Response::validationError() factory (422 JSON) ✓
+- Route constraints: per-parameter regex patterns enforced during matching ✓
+- Host-based routing: exact or parameterized host matching on routes and groups ✓
+- Rate-limit MVP: fixed-window in-memory RateLimiter + RateLimitMiddleware (429 + Retry-After) ✓
   Exit criteria:
 - Routing and validation benchmarks with stored baselines
 

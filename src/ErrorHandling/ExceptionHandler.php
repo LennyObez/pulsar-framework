@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\Validation\ValidationException;
 use Pulsar\Routing\RoutingException;
 
 use function sprintf;
@@ -20,11 +21,11 @@ use Throwable;
  * Resolves HTTP status from exception type, logs every exception
  * with structured context, and renders an error response.
  */
-final class ExceptionHandler
+final readonly class ExceptionHandler
 {
     public function __construct(
-        private readonly ExceptionRendererInterface $renderer,
-        private readonly ?LoggerInterface $logger = null,
+        private ExceptionRendererInterface $renderer,
+        private ?LoggerInterface $logger = null,
     ) {}
 
     /**
@@ -36,6 +37,20 @@ final class ExceptionHandler
         $headers = $this->resolveHeaders($exception);
 
         $this->logException($exception, $request, $status);
+
+        // ValidationException always renders as JSON
+        if ($exception instanceof ValidationException) {
+            return $this->renderValidationJson($exception);
+        }
+
+        // Content-negotiation: JSON error for clients that want JSON
+        if ($request->wantsJson()) {
+            $response = $this->renderJson($exception, $status);
+            foreach ($headers as $name => $value) {
+                $response = $response->withHeader($name, $value);
+            }
+            return $response;
+        }
 
         try {
             $body = $this->renderer->render($exception, $request, $status);
@@ -114,6 +129,28 @@ final class ExceptionHandler
         } else {
             $this->logger->warning($exception->getMessage(), $context);
         }
+    }
+
+    /**
+     * Render a ValidationException as a 422 JSON response.
+     */
+    private function renderValidationJson(ValidationException $exception): Response
+    {
+        return Response::validationError($exception->violations());
+    }
+
+    /**
+     * Render a generic JSON error response for clients that prefer JSON.
+     */
+    private function renderJson(Throwable $exception, ResponseStatus $status): Response
+    {
+        return Response::json(
+            data: [
+                'error' => $status->reasonPhrase(),
+                'status' => $status->value,
+            ],
+            status: $status,
+        );
     }
 
     /**
