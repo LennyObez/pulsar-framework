@@ -12,6 +12,7 @@ use function array_sum;
 use function array_values;
 use function ceil;
 use function count;
+use function date;
 use function in_array;
 use function intdiv;
 use function max;
@@ -36,7 +37,7 @@ use function usort;
  * types that have recorded events.
  */
 #[Internal]
-final readonly class DashboardAggregator
+final readonly class DashboardAggregator implements DashboardAggregatorInterface
 {
     private const int TOP_EXCEPTIONS_LIMIT = 10;
 
@@ -441,6 +442,55 @@ final readonly class DashboardAggregator
         $index = max(0, min($count - 1, $index));
 
         return round($sorted[$index], 2);
+    }
+
+    /**
+     * Aggregate all dashboard metrics into a single array.
+     *
+     * Uses a 5-minute default window for all sub-queries.
+     *
+     * @return array<string, mixed>
+     */
+    public function aggregate(): array
+    {
+        $windowUs = 5 * 60 * 1_000_000;
+
+        $throughput = $this->throughput($windowUs);
+        $latency = $this->latencyPercentiles($windowUs);
+        $errors = $this->errorRate($windowUs);
+        $counts = $this->eventCountsByType($windowUs);
+        $slowRoutes = $this->slowRoutes($windowUs);
+        $slowQueries = $this->slowQueries($windowUs);
+
+        $routes = [];
+        foreach ($slowRoutes as $route) {
+            $routes[] = [
+                'path' => $route['route'],
+                'hits' => $route['count'],
+                'avg_ms' => $route['avg_ms'],
+                'errors' => 0,
+            ];
+        }
+
+        $exceptions = [];
+        foreach ($errors['top_exceptions'] as $exc) {
+            $exceptions[] = [
+                'class' => $exc['class'],
+                'count' => $exc['count'],
+                'last_seen' => date('Y-m-d H:i:s', intdiv($exc['last_seen_us'], 1_000_000)),
+            ];
+        }
+
+        return [
+            'total_events' => array_sum(array_values($counts)),
+            'total_requests' => $throughput['total'],
+            'avg_response_ms' => $latency['p50'],
+            'total_exceptions' => $errors['total'],
+            'total_queries' => $counts['db.query'] ?? 0,
+            'routes' => $routes,
+            'exceptions' => $exceptions,
+            'slow_queries' => $slowQueries,
+        ];
     }
 
     private function nowUs(): int

@@ -19,11 +19,24 @@ use function usort;
  * correlation and orders them by timestamp for timeline display.
  */
 #[Internal]
-final readonly class TimelineBuilder
+final readonly class TimelineBuilder implements TimelineBuilderInterface
 {
     public function __construct(
         private EventStoreInterface $store,
     ) {}
+
+    /**
+     * Build a timeline from a list of raw events.
+     *
+     * Sorts the events by timestamp and returns them as timeline entries.
+     *
+     * @param list<array<string, mixed>> $events
+     * @return list<array<string, mixed>>
+     */
+    public function build(array $events): array
+    {
+        return $this->sortByTimestamp($events);
+    }
 
     /**
      * Build a timeline for a specific request.

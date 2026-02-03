@@ -9,6 +9,7 @@ use function hash;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Studio\Console\Event\EventEnvelope;
+use SodiumException;
 
 /**
  * SHA-256 evidence hash chain with optional BLAKE2b per-link MAC.
@@ -36,6 +37,8 @@ final class HashChain
 
     /**
      * Compute the next chain link for an event.
+     *
+     * @throws SodiumException
      */
     public function computeLink(EventEnvelope $envelope, string $previousHash): ChainLink
     {
@@ -66,6 +69,8 @@ final class HashChain
 
     /**
      * Verify a link's MAC (requires chain MAC key).
+     *
+     * @throws SodiumException
      */
     public static function verifyLinkMac(string $currentHash, string $expectedMac, string $chainMacKey): bool
     {

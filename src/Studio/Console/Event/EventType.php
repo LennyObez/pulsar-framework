@@ -27,4 +27,7 @@ enum EventType: string
     case LogEntry = 'log.entry';
     case FeatureFlagEval = 'feature_flag.eval';
     case Heartbeat = 'heartbeat';
+    case SupervisorRecycle = 'supervisor.recycle';
+    case SupervisorHealing = 'supervisor.healing';
+    case IntegrityCheck = 'integrity.check';
 }

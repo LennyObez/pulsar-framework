@@ -49,6 +49,7 @@ return [
         'exception' => true,
         'scheduler' => true,
         'feature_flag' => true,
+        'queue' => true,
     ],
 ];
 ```
@@ -176,16 +177,25 @@ After retention pruning removes old events, verification operates in "window" mo
 
 ## Collectors
 
-| Collector                | Events Captured               | Hook Point                         |
-| ------------------------ | ----------------------------- | ---------------------------------- |
-| `HttpCollector`          | `HttpRequest`, `HttpResponse` | Middleware (wraps pipeline)        |
-| `InstrumentedConnection` | `DatabaseQuery`               | Decorator on `ConnectionInterface` |
-| `LogCollector`           | `LogEntry`                    | `LogSinkInterface` implementation  |
-| `ExceptionCollector`     | `Exception`                   | Observer on `ErrorAggregator`      |
-| `InstrumentedScheduler`  | `SchedulerRun`                | Decorator on `Scheduler`           |
-| `FeatureFlagCollector`   | `FeatureFlagEval`             | Observer on `FlagEvaluationLog`    |
+| Collector                  | Events Captured               | Hook Point                         |
+| -------------------------- | ----------------------------- | ---------------------------------- |
+| `HttpCollector`            | `HttpRequest`, `HttpResponse` | Middleware (wraps pipeline)        |
+| `InstrumentedConnection`   | `DatabaseQuery`               | Decorator on `ConnectionInterface` |
+| `LogCollector`             | `LogEntry`                    | `LogSinkInterface` implementation  |
+| `ExceptionCollector`       | `Exception`                   | Observer on `ErrorAggregator`      |
+| `InstrumentedScheduler`    | `SchedulerRun`                | Decorator on `Scheduler`           |
+| `FeatureFlagCollector`     | `FeatureFlagEval`             | Observer on `FlagEvaluationLog`    |
+| `InstrumentedQueueManager` | `JobQueued`                   | Decorator on `QueueManager`        |
+| `InstrumentedWorker`       | `JobCompleted`, `JobFailed`   | Decorator on `Worker`              |
 
 All collectors receive a `CorrelationContextProviderInterface` to read the current context. Enable or disable individual collectors via `config/studio.php`.
+
+### Queue Collector
+
+The queue collector instruments both job dispatch and job execution:
+
+- `InstrumentedQueueManager` wraps `QueueManager::dispatch()` and emits a `JobPayload` with status `queued` for each dispatched job, capturing the job class and target queue.
+- `InstrumentedWorker` wraps `Worker::processNextJob()` and emits `JobPayload` events with status `completed` or `failed`. Each job gets a fiber-scoped correlation context with a unique `jobId`, and duration is measured via `hrtime()`.
 
 ## Security
 
@@ -216,13 +226,41 @@ In production mode, `ProductionSafetyMode` restricts access to sensitive endpoin
 
 ### Console Commands
 
-| Command                 | Description                           |
-| ----------------------- | ------------------------------------- |
-| `studio:console:status` | Show event counts and retention stats |
-| `studio:console:tail`   | Stream events in real-time            |
-| `studio:console:query`  | Query events with filters             |
-| `studio:console:export` | Export evidence archive               |
-| `studio:console:verify` | Verify evidence chain integrity       |
+| Command                     | Description                           |
+| --------------------------- | ------------------------------------- |
+| `studio:console:status`     | Show event counts and retention stats |
+| `studio:console:tail`       | Stream events in real-time            |
+| `studio:console:query`      | Query events with filters             |
+| `studio:console:export`     | Export evidence archive               |
+| `studio:console:verify`     | Verify evidence chain integrity       |
+| `studio:console:timeline`   | Display correlated event timeline     |
+| `studio:console:metrics`    | Display collected metrics summary     |
+| `studio:console:routes`     | Display route performance statistics  |
+| `studio:console:exceptions` | Display exception groups and counts   |
+| `studio:console:jobs`       | Display queue job statistics          |
+
+### Evidence Commands
+
+| Command                                   | Description                                 |
+| ----------------------------------------- | ------------------------------------------- |
+| `studio:console:evidence:export`          | Export Studio events as evidence archive    |
+| `studio:console:evidence:verify`          | Verify a Studio evidence archive            |
+| `studio:console:evidence:status`          | Display evidence store status               |
+| `studio:console:evidence:retention:apply` | Apply retention policy to evidence store    |
+| `studio:console:evidence:purge`           | Purge all events from evidence store        |
+| `studio:console:evidence:redaction:test`  | Test redaction policies against sample data |
+
+### Guardian Commands
+
+| Command                                       | Description                                     |
+| --------------------------------------------- | ----------------------------------------------- |
+| `studio:console:guardian:status`              | Display combined guardian status overview       |
+| `studio:console:guardian:check`               | Run all guardian checks (preflight + invariant) |
+| `studio:console:guardian:deploy:check`        | Run deploy readiness checks                     |
+| `studio:console:guardian:supervisor:status`   | Display supervisor configuration status         |
+| `studio:console:guardian:supervisor:run-once` | Run a single supervisor evaluation cycle        |
+| `studio:console:guardian:integrity:build`     | Build an integrity manifest                     |
+| `studio:console:guardian:integrity:verify`    | Verify integrity manifest against filesystem    |
 
 All commands support `--json` for machine-readable output.
 
@@ -238,9 +276,21 @@ php bin/pulsar studio:console:tail --type=http.request
 # Query events by correlation ID
 php bin/pulsar studio:console:query --request-id=abc123 --json
 
+# View correlated event timeline for a request
+php bin/pulsar studio:console:timeline --request-id=abc123
+
+# View queue job statistics
+php bin/pulsar studio:console:jobs --json
+
 # Export and verify evidence chain
-php bin/pulsar studio:console:export --output=evidence.studio
-php bin/pulsar studio:console:verify evidence.studio --mode=tamper-evident --json
+php bin/pulsar studio:console:evidence:export --output=evidence.studio
+php bin/pulsar studio:console:evidence:verify evidence.studio --mode=tamper-evident --json
+
+# Run guardian checks
+php bin/pulsar studio:console:guardian:check --json
+
+# Verify file integrity via guardian
+php bin/pulsar studio:console:guardian:integrity:verify --strict --json
 ```
 
 ## Web Interface

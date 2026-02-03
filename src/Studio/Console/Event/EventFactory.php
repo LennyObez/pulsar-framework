@@ -13,8 +13,10 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Studio\CorrelationContext;
+use Random\RandomException;
 
 use function random_bytes;
 
@@ -42,6 +44,9 @@ final readonly class EventFactory
 
     /**
      * Wrap a ConsoleEvent into an EventEnvelope with metadata.
+     *
+     * @throws JsonException
+     * @throws RandomException
      */
     public function envelope(ConsoleEvent $event, ?CorrelationContext $context = null): EventEnvelope
     {

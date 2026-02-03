@@ -9,10 +9,15 @@ use function hash;
 use function is_string;
 
 use JsonException;
+use PDOException;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Studio\Console\Event\EventEnvelope;
+use Pulsar\Studio\Exception\StudioException;
+use Random\RandomException;
 use RuntimeException;
+use SodiumException;
 
 /**
  * Decorator that encrypts event payloads before storage.
@@ -29,6 +34,11 @@ final readonly class EncryptedEventStore implements EventStoreInterface
         private Encryptor $encryptor,
     ) {}
 
+    /**
+     * @throws SecurityException If encryption fails
+     * @throws RandomException
+     * @throws SodiumException
+     */
     public function store(EventEnvelope $envelope, string $payloadJson, ?string $tenantHash = null): void
     {
         $encrypted = $this->encryptor->encrypt($payloadJson);
@@ -47,6 +57,13 @@ final readonly class EncryptedEventStore implements EventStoreInterface
 
     /**
      * Store with chain link, encrypting the payload.
+     *
+     * @throws JsonException If JSON encoding fails
+     * @throws PDOException If a non-retryable database error occurs
+     * @throws SecurityException If encryption fails
+     * @throws StudioException If maximum retry attempts exceeded due to database busy
+     * @throws RandomException
+     * @throws SodiumException
      */
     public function storeWithChain(
         EventEnvelope $envelope,
@@ -69,6 +86,9 @@ final readonly class EncryptedEventStore implements EventStoreInterface
 
     /**
      * @throws RuntimeException If decryption fails
+     * @throws SecurityException If decryption fails
+     * @throws JsonException If JSON encoding fails
+     * @throws SodiumException
      */
     public function query(array $filters = [], int $limit = 50, int $offset = 0): array
     {
@@ -84,6 +104,9 @@ final readonly class EncryptedEventStore implements EventStoreInterface
 
     /**
      * @throws RuntimeException If decryption fails
+     * @throws SecurityException If decryption fails
+     * @throws JsonException If JSON encoding fails
+     * @throws SodiumException
      */
     public function find(string $eventId): ?array
     {
@@ -135,6 +158,8 @@ final readonly class EncryptedEventStore implements EventStoreInterface
      * @return array<string, mixed>
      * @throws RuntimeException If decryption fails
      * @throws JsonException If JSON encoding fails
+     * @throws SecurityException If decryption fails
+     * @throws SodiumException
      */
     private function decryptRow(array $row): array
     {

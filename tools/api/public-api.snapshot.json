@@ -150,6 +150,16 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Config\\DeployConfig": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\DiskConfig": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\Environment": {
       "since": "",
       "methods": [],
@@ -180,6 +190,16 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Config\\IntegrityConfig": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\IntegrityPolicyMode": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\LoggingChannelConfig": {
       "since": "",
       "methods": [],
@@ -191,6 +211,16 @@
       "constants": []
     },
     "Pulsar\\Config\\ObservabilityConfig": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\QueueConfig": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\QueueDriverType": {
       "since": "",
       "methods": [],
       "constants": []
@@ -230,6 +260,21 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Config\\StorageConfig": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\StorageDriver": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\SupervisorConfig": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\TenancyConfig": {
       "since": "",
       "methods": [],
@@ -251,6 +296,16 @@
       "constants": []
     },
     "Pulsar\\Console\\CommandInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Command\\NewProject\\EnvironmentPreset": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Command\\NewProject\\ProjectPreset": {
       "since": "",
       "methods": [],
       "constants": []
@@ -356,6 +411,31 @@
       "constants": []
     },
     "Pulsar\\Database\\Row": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\CheckResult": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\CheckSeverity": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\DeployCheckInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\DeployReport": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\Exception\\DeployException": {
       "since": "",
       "methods": [],
       "constants": []
@@ -595,6 +675,41 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Integrity\\Exception\\IntegrityException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\FileVerificationResult": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\FileVerificationStatus": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\IntegrityManifest": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\IntegrityPolicy": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\ManifestEntry": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\VerificationResult": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\ErrorTracking\\ErrorFingerprint": {
       "since": "",
       "methods": [],
@@ -656,6 +771,76 @@
       "constants": []
     },
     "Pulsar\\Observability\\Tracing\\TraceContext": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\DeadLetterQueue": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Exception\\QueueException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\FailedJob": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\JobContext": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\JobRecord": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\JobRecordStatus": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\QueueDriverInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\QueueManager": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\QueueableInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Retry\\QueueRetryPolicy": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Retry\\RetryDecision": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Worker": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\WorkerOptions": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\WorkerStatus": {
       "since": "",
       "methods": [],
       "constants": []
@@ -825,6 +1010,101 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Storage\\StorageAdapterInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Storage\\StorageException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Storage\\StorageManager": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Storage\\StorageMetadata": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Storage\\StorageObject": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\CachePurgeHookInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\ConnectionResetHookInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\Exception\\SupervisorException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\HealingAction": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\HealingActionType": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\InvariantCheck\\InvariantCheckInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\InvariantCheck\\InvariantCheckResult": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\PreflightCheck\\PreflightCheckInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\PreflightCheck\\PreflightCheckResult": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\RecycleAction": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\RecycleReason": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\RecycleRecord": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\StuckJobPolicy": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\WorkerRecyclePolicy": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Tenancy\\Exception\\TenancyException": {
       "since": "",
       "methods": [],
@@ -852,6 +1132,18 @@
     }
   },
   "internal_classes": [
+    "Pulsar\\Cache\\CacheAllowedClasses",
+    "Pulsar\\Cache\\CacheException",
+    "Pulsar\\Cache\\CacheIntegrity",
+    "Pulsar\\Cache\\CacheLock",
+    "Pulsar\\Cache\\CacheManifest",
+    "Pulsar\\Cache\\CachedRoute",
+    "Pulsar\\Cache\\ConfigCache",
+    "Pulsar\\Cache\\ContainerCache",
+    "Pulsar\\Cache\\FrameworkCache",
+    "Pulsar\\Cache\\RouteCache",
+    "Pulsar\\Cache\\RouteHandler",
+    "Pulsar\\Cache\\RouteHandlerType",
     "Pulsar\\Config\\ConfigManager",
     "Pulsar\\Config\\ConfigOverrides",
     "Pulsar\\Config\\StudioCollectorConfig",
@@ -860,20 +1152,68 @@
     "Pulsar\\Config\\StudioSecurityConfig",
     "Pulsar\\Config\\StudioServerConfig",
     "Pulsar\\Console\\Application",
+    "Pulsar\\Console\\Command\\DeployCheckCommand",
+    "Pulsar\\Console\\Command\\NewProject\\ComposerJsonGenerator",
+    "Pulsar\\Console\\Command\\NewProject\\DirectoryLayout",
+    "Pulsar\\Console\\Command\\NewProject\\ProjectGenerator",
+    "Pulsar\\Console\\Command\\NewProject\\SecureEnvGenerator",
+    "Pulsar\\Console\\Command\\NewProject\\TemplateRegistry",
+    "Pulsar\\Console\\Command\\OptimizeClearCommand",
+    "Pulsar\\Console\\Command\\OptimizeCommand",
     "Pulsar\\Core\\Kernel",
     "Pulsar\\Core\\Version",
+    "Pulsar\\Deploy\\Check\\CacheSettingsCheck",
+    "Pulsar\\Deploy\\Check\\DebugModeCheck",
+    "Pulsar\\Deploy\\Check\\HealthEndpointCheck",
+    "Pulsar\\Deploy\\Check\\Http3ReadinessCheck",
+    "Pulsar\\Deploy\\Check\\HttpsReadinessCheck",
+    "Pulsar\\Deploy\\Check\\IntegrityCheck",
+    "Pulsar\\Deploy\\Check\\OpcacheCheck",
+    "Pulsar\\Deploy\\Check\\RateLimitCheck",
+    "Pulsar\\Deploy\\Check\\RequestSizeCheck",
+    "Pulsar\\Deploy\\Check\\SecurityHeadersReadinessCheck",
+    "Pulsar\\Deploy\\Check\\TrustedProxyCheck",
+    "Pulsar\\Deploy\\DeployCheck",
+    "Pulsar\\Deploy\\Snippet\\ProxySnippetGenerator",
+    "Pulsar\\Deploy\\Snippet\\TlsSnippetGenerator",
     "Pulsar\\Extensibility\\ExtensionBootstrap",
     "Pulsar\\Extensibility\\ExtensionLoader",
     "Pulsar\\Extensibility\\ExtensionRegistry",
     "Pulsar\\Http\\Middleware\\MiddlewarePipeline",
     "Pulsar\\Http\\Middleware\\MiddlewareRegistry",
+    "Pulsar\\Integrity\\ManifestBuilder",
+    "Pulsar\\Integrity\\ManifestFormat",
+    "Pulsar\\Integrity\\ManifestSigner",
+    "Pulsar\\Integrity\\ManifestVerifier",
     "Pulsar\\Observability\\Log\\Sink\\DeferredSink",
+    "Pulsar\\Queue\\Driver\\DatabaseDriver",
+    "Pulsar\\Queue\\Driver\\InMemoryDriver",
+    "Pulsar\\Queue\\Driver\\SyncDriver",
+    "Pulsar\\Studio\\Command\\Console\\ConsoleExceptionsCommand",
     "Pulsar\\Studio\\Command\\Console\\ConsoleExportCommand",
+    "Pulsar\\Studio\\Command\\Console\\ConsoleJobsCommand",
+    "Pulsar\\Studio\\Command\\Console\\ConsoleMetricsCommand",
     "Pulsar\\Studio\\Command\\Console\\ConsoleQueryCommand",
+    "Pulsar\\Studio\\Command\\Console\\ConsoleRoutesCommand",
     "Pulsar\\Studio\\Command\\Console\\ConsoleStatusCommand",
     "Pulsar\\Studio\\Command\\Console\\ConsoleTailCommand",
+    "Pulsar\\Studio\\Command\\Console\\ConsoleTimelineCommand",
     "Pulsar\\Studio\\Command\\Console\\ConsoleVerifyCommand",
     "Pulsar\\Studio\\Command\\Console\\EventDataExtractor",
+    "Pulsar\\Studio\\Command\\Console\\Evidence\\EvidenceExportCommand",
+    "Pulsar\\Studio\\Command\\Console\\Evidence\\EvidencePurgeCommand",
+    "Pulsar\\Studio\\Command\\Console\\Evidence\\EvidenceStatusCommand",
+    "Pulsar\\Studio\\Command\\Console\\Evidence\\EvidenceVerifyCommand",
+    "Pulsar\\Studio\\Command\\Console\\Evidence\\RedactionTestCommand",
+    "Pulsar\\Studio\\Command\\Console\\Evidence\\RetentionApplyCommand",
+    "Pulsar\\Studio\\Command\\Console\\Guardian\\GuardianCheckCommand",
+    "Pulsar\\Studio\\Command\\Console\\Guardian\\GuardianDeployCheckCommand",
+    "Pulsar\\Studio\\Command\\Console\\Guardian\\GuardianIntegrityBuildCommand",
+    "Pulsar\\Studio\\Command\\Console\\Guardian\\GuardianIntegrityVerifyCommand",
+    "Pulsar\\Studio\\Command\\Console\\Guardian\\GuardianStatusCommand",
+    "Pulsar\\Studio\\Command\\Console\\Guardian\\GuardianSupervisorRunOnceCommand",
+    "Pulsar\\Studio\\Command\\Console\\Guardian\\GuardianSupervisorStatusCommand",
+    "Pulsar\\Studio\\Command\\Console\\JsonOutputHelper",
     "Pulsar\\Studio\\Command\\StudioDisableCommand",
     "Pulsar\\Studio\\Command\\StudioDoctorCommand",
     "Pulsar\\Studio\\Command\\StudioEnableCommand",
@@ -881,7 +1221,9 @@
     "Pulsar\\Studio\\Command\\StudioStartCommand",
     "Pulsar\\Studio\\Command\\StudioStatusCommand",
     "Pulsar\\Studio\\Console\\Aggregation\\DashboardAggregator",
+    "Pulsar\\Studio\\Console\\Aggregation\\DashboardAggregatorInterface",
     "Pulsar\\Studio\\Console\\Aggregation\\TimelineBuilder",
+    "Pulsar\\Studio\\Console\\Aggregation\\TimelineBuilderInterface",
     "Pulsar\\Studio\\Console\\Collector\\CollectorInterface",
     "Pulsar\\Studio\\Console\\Collector\\ExceptionCollector",
     "Pulsar\\Studio\\Console\\Collector\\FeatureFlagCollector",
@@ -891,7 +1233,9 @@
     "Pulsar\\Studio\\Console\\Collector\\Hook\\NotificationInstrumentationInterface",
     "Pulsar\\Studio\\Console\\Collector\\HttpCollector",
     "Pulsar\\Studio\\Console\\Collector\\InstrumentedConnection",
+    "Pulsar\\Studio\\Console\\Collector\\InstrumentedQueueManager",
     "Pulsar\\Studio\\Console\\Collector\\InstrumentedScheduler",
+    "Pulsar\\Studio\\Console\\Collector\\InstrumentedWorker",
     "Pulsar\\Studio\\Console\\Collector\\LogCollector",
     "Pulsar\\Studio\\Console\\Collector\\SqlNormalizer",
     "Pulsar\\Studio\\Console\\Event\\ConsoleEvent",
@@ -905,11 +1249,13 @@
     "Pulsar\\Studio\\Console\\Event\\Payload\\FeatureFlagPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\HttpRequestPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\HttpResponsePayload",
+    "Pulsar\\Studio\\Console\\Event\\Payload\\IntegrityCheckPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\JobPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\LogEntryPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\NotificationPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\OutgoingHttpPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\SchedulerRunPayload",
+    "Pulsar\\Studio\\Console\\Event\\Payload\\SupervisorPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\TenancyPayload",
     "Pulsar\\Studio\\Console\\Evidence\\ChainLink",
     "Pulsar\\Studio\\Console\\Evidence\\EvidenceArchive",
@@ -921,8 +1267,10 @@
     "Pulsar\\Studio\\Console\\Query\\EventQueryResult",
     "Pulsar\\Studio\\Console\\Redaction\\DefaultRedactionPolicy",
     "Pulsar\\Studio\\Console\\Redaction\\RedactionPipeline",
+    "Pulsar\\Studio\\Console\\Redaction\\RedactionPipelineInterface",
     "Pulsar\\Studio\\Console\\Redaction\\RedactionPolicyInterface",
     "Pulsar\\Studio\\Console\\Retention\\RetentionEnforcer",
+    "Pulsar\\Studio\\Console\\Retention\\RetentionEnforcerInterface",
     "Pulsar\\Studio\\Console\\Retention\\RetentionPolicy",
     "Pulsar\\Studio\\Console\\Storage\\EncryptedEventStore",
     "Pulsar\\Studio\\Console\\Storage\\EventStoreInterface",
@@ -948,6 +1296,13 @@
     "Pulsar\\Studio\\Server\\StudioRouter",
     "Pulsar\\Studio\\Server\\StudioServer",
     "Pulsar\\Studio\\Server\\View\\ViewRenderer",
-    "Pulsar\\Studio\\StudioManager"
+    "Pulsar\\Studio\\StudioManager",
+    "Pulsar\\Supervisor\\InvariantCheck\\InvariantRunner",
+    "Pulsar\\Supervisor\\PreflightCheck\\DiskSpacePreflightCheck",
+    "Pulsar\\Supervisor\\PreflightCheck\\MemoryPreflightCheck",
+    "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunner",
+    "Pulsar\\Supervisor\\StuckJobDetector",
+    "Pulsar\\Supervisor\\StuckJobRecovery",
+    "Pulsar\\Supervisor\\Supervisor"
   ]
 }

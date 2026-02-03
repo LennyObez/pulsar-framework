@@ -22,6 +22,7 @@ use Pulsar\Studio\Console\Event\Payload\HttpRequestPayload;
 use Pulsar\Studio\Console\Event\Payload\HttpResponsePayload;
 use Pulsar\Studio\CorrelationContext;
 use Pulsar\Studio\FiberScopedContextProvider;
+use Random\RandomException;
 
 use function random_bytes;
 use function strlen;
@@ -48,6 +49,10 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         private readonly Closure $emit,
     ) {}
 
+    /**
+     * @throws RandomException
+     * @throws Throwable
+     */
     public function process(Request $request, callable $next): Response
     {
         if (!$this->enabled) {

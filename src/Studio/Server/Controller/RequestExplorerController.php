@@ -12,6 +12,7 @@ use function json_encode;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
@@ -27,6 +28,9 @@ final readonly class RequestExplorerController
         private EventStoreInterface $store,
     ) {}
 
+    /**
+     * @throws JsonException
+     */
     public function handle(Request $_request): Response
     {
         $events = $this->store->query(

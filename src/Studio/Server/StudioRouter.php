@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Server;
 
+use JsonException;
+
 use function preg_match;
 
 use Pulsar\Api\Internal;
@@ -45,6 +47,8 @@ final readonly class StudioRouter
 
     /**
      * Route a request to the appropriate controller.
+     *
+     * @throws JsonException
      */
     public function dispatch(Request $request): Response
     {
