@@ -18,22 +18,22 @@ This matrix maps features to their actual usage in the codebase, ensuring covera
 
 | Feature | Used | Location(s) | Rationale |
 |---------|------|-------------|-----------|
-| Named arguments | Yes | `src/Http/Request.php`, `src/Http/Response.php` | Improved readability for constructor calls with many parameters |
+| Named arguments | Yes | `src/Http/Request.php`, `src/Http/Response.php`, `src/Config/AppConfig.php`, `src/Observability/Log/LogEntry.php`, `src/ErrorHandling/HttpException.php` | Improved readability for constructor calls with many parameters |
 | Attributes | Yes | `tests/Unit/**/*Test.php` | PHPUnit test configuration (#[Test], #[CoversClass]) |
-| Constructor property promotion | Yes | `src/Http/Request.php`, `src/Http/Response.php`, `src/Http/HeaderBag.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php`, `src/Http/Middleware/MiddlewarePipeline.php` | Reduced boilerplate for value objects |
+| Constructor property promotion | Yes | `src/Http/Request.php`, `src/Http/Response.php`, `src/Http/HeaderBag.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php`, `src/Http/Middleware/MiddlewarePipeline.php`, `src/Config/AppConfig.php`, `src/Config/LoggingChannelConfig.php`, `src/Observability/Log/LogEntry.php`, `src/ErrorHandling/HttpException.php`, `src/ErrorHandling/ExceptionHandler.php` | Reduced boilerplate for value objects and service classes |
 | Union types | Yes | `src/Container/ContainerInterface.php`, `src/Container/Container.php`, `src/Http/Middleware/MiddlewarePipeline.php` | Precise type declarations for flexible APIs |
-| Match expression | Yes | `src/Http/Method.php`, `src/Http/ResponseStatus.php` | Cleaner exhaustive enum matching |
+| Match expression | Yes | `src/Http/Method.php`, `src/Http/ResponseStatus.php`, `src/Config/EnvironmentMode.php`, `src/Config/AppConfig.php`, `src/Observability/Log/LogLevel.php` | Cleaner exhaustive enum matching |
 | Nullsafe operator (`?->`) | Planned | - | Null handling |
-| `str_contains`, `str_starts_with`, `str_ends_with` | Yes | `src/Http/HeaderBag.php`, `src/Routing/Route.php` | Native string operations |
+| `str_contains`, `str_starts_with`, `str_ends_with` | Yes | `src/Http/HeaderBag.php`, `src/Routing/Route.php`, `src/Config/Environment.php` | Native string operations |
 | `throw` as expression | Planned | - | Inline error handling |
 
 ### PHP 8.1 Features
 
 | Feature | Used | Location(s) | Rationale |
 |---------|------|-------------|-----------|
-| Enums | Yes | `src/Container/BindingType.php`, `src/Http/Method.php`, `src/Http/ResponseStatus.php` | Type-safe constants with methods |
+| Enums | Yes | `src/Container/BindingType.php`, `src/Http/Method.php`, `src/Http/ResponseStatus.php`, `src/Config/EnvironmentMode.php`, `src/Observability/Log/LogLevel.php` | Type-safe constants with methods |
 | Fibers | Planned | - | Async operations (scheduler, jobs) |
-| Readonly properties | Yes | `src/Http/HeaderBag.php`, `src/Http/Request.php`, `src/Http/Response.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php` | Immutability for value objects |
+| Readonly properties | Yes | `src/Http/HeaderBag.php`, `src/Http/Request.php`, `src/Http/Response.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php`, `src/ErrorHandling/HttpException.php`, `src/ErrorHandling/ExceptionHandler.php` | Immutability for value objects and service fields |
 | First-class callables | Yes | `src/Core/Kernel.php`, `src/Http/Middleware/MiddlewarePipeline.php` | Clean callback passing with `fn()` syntax |
 | Intersection types | Planned | - | Precise typing |
 | `never` return type | Planned | - | Exit/throw functions |
@@ -44,7 +44,7 @@ This matrix maps features to their actual usage in the codebase, ensuring covera
 
 | Feature | Used | Location(s) | Rationale |
 |---------|------|-------------|-----------|
-| Readonly classes | Yes | `src/Http/HeaderBag.php`, `src/Http/Request.php`, `src/Http/Response.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php` | Fully immutable value objects |
+| Readonly classes | Yes | `src/Http/HeaderBag.php`, `src/Http/Request.php`, `src/Http/Response.php`, `src/Routing/Route.php`, `src/Routing/MatchedRoute.php`, `src/Config/AppConfig.php`, `src/Config/ObservabilityConfig.php`, `src/Config/LoggingChannelConfig.php`, `src/Observability/Log/LogEntry.php` | Fully immutable value objects and config DTOs |
 | `true`, `false`, `null` as standalone types | Planned | - | Precise return types |
 | Disjunctive Normal Form (DNF) types | Planned | - | Complex type constraints |
 | Traits with constants | Planned | - | Shared constants |

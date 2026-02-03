@@ -133,6 +133,6 @@ final class DiagnosticsCommand extends Command
             $unit++;
         }
 
-        return sprintf('%.2f %s', $size, $units[$unit] ?? 'B');
+        return sprintf('%.2f %s', $size, $units[$unit]);
     }
 }
