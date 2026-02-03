@@ -86,16 +86,20 @@ if ($needsPreload) {
 
 // Header
 printf(
-    "%-25s | %9s | %8s | %8s | %7s | %8s\n",
+    "%-25s | %9s | %9s | %8s | %8s | %7s | %10s | %8s | %8s\n",
     'Profile',
     'Boot (us)',
+    'Warm (us)',
     'p50 (us)',
     'p95 (us)',
     'RPS',
+    'Alloc (KB)',
     'RSS (KB)',
+    'OPC (KB)',
 );
-echo str_repeat('-', 25) . '-|' . str_repeat('-', 11) . '|' . str_repeat('-', 10)
-    . '|' . str_repeat('-', 10) . '|' . str_repeat('-', 9) . '|' . str_repeat('-', 10) . "\n";
+echo str_repeat('-', 25) . '-|' . str_repeat('-', 11) . '|' . str_repeat('-', 11)
+    . '|' . str_repeat('-', 10) . '|' . str_repeat('-', 10) . '|' . str_repeat('-', 9)
+    . '|' . str_repeat('-', 12) . '|' . str_repeat('-', 10) . '|' . str_repeat('-', 10) . "\n";
 
 // Run profiles in sorted order for deterministic output
 ksort($profiles);
@@ -103,7 +107,7 @@ ksort($profiles);
 foreach ($profiles as $name => $profile) {
     // Skip preload profiles if preload generation failed
     if ($profile['preload'] && $tempPreloadFile === null) {
-        printf("%-25s | %9s | %8s | %8s | %7s | %8s\n", $name, 'skipped', '-', '-', '-', '-');
+        printf("%-25s | %9s | %9s | %8s | %8s | %7s | %10s | %8s | %8s\n", $name, 'skipped', '-', '-', '-', '-', '-', '-', '-');
         continue;
     }
 
@@ -132,7 +136,7 @@ foreach ($profiles as $name => $profile) {
     exec($cmd, $output, $exitCode);
 
     if ($exitCode !== 0 || $output === []) {
-        printf("%-25s | %9s | %8s | %8s | %7s | %8s\n", $name, 'error', '-', '-', '-', '-');
+        printf("%-25s | %9s | %9s | %8s | %8s | %7s | %10s | %8s | %8s\n", $name, 'error', '-', '-', '-', '-', '-', '-', '-');
         $results[$name] = ['error' => implode("\n", $output)];
         continue;
     }
@@ -141,22 +145,29 @@ foreach ($profiles as $name => $profile) {
     $jsonLine = end($output);
 
     try {
-        /** @var array{boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int} $metrics */
+        /** @var array{boot_us: int, warm_boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int, memory_usage_kb: int, opcache_memory_kb: ?int} $metrics */
         $metrics = json_decode($jsonLine, true, 512, JSON_THROW_ON_ERROR);
     } catch (JsonException) {
-        printf("%-25s | %9s | %8s | %8s | %7s | %8s\n", $name, 'parse-err', '-', '-', '-', '-');
+        printf("%-25s | %9s | %9s | %8s | %8s | %7s | %10s | %8s | %8s\n", $name, 'parse-err', '-', '-', '-', '-', '-', '-', '-');
         $results[$name] = ['error' => 'JSON parse failed: ' . $jsonLine];
         continue;
     }
 
+    $opcacheDisplay = $metrics['opcache_memory_kb'] !== null
+        ? number_format($metrics['opcache_memory_kb'])
+        : '-';
+
     printf(
-        "%-25s | %9s | %8s | %8s | %7s | %8s\n",
+        "%-25s | %9s | %9s | %8s | %8s | %7s | %10s | %8s | %8s\n",
         $name,
         number_format($metrics['boot_us']),
+        number_format($metrics['warm_boot_us']),
         number_format($metrics['p50_us']),
         number_format($metrics['p95_us']),
         number_format($metrics['rps']),
+        number_format($metrics['memory_usage_kb']),
         number_format($metrics['peak_rss_kb']),
+        $opcacheDisplay,
     );
 
     $results[$name] = $metrics;

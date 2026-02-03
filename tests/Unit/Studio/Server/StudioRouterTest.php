@@ -21,6 +21,8 @@ use Pulsar\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Studio\Security\ProductionSafetyMode;
 use Pulsar\Studio\Server\Controller\ApiController;
+use Pulsar\Studio\Server\Controller\BenchmarkApiController;
+use Pulsar\Studio\Server\Controller\BenchmarkController;
 use Pulsar\Studio\Server\Controller\ConsoleOverviewController;
 use Pulsar\Studio\Server\Controller\DatabaseExplorerController;
 use Pulsar\Studio\Server\Controller\ExceptionExplorerController;
@@ -404,6 +406,79 @@ final class StudioRouterTest extends TestCase
         self::assertSame('SSE live stream is disabled in production mode', $data['error']);
     }
 
+    #[Test]
+    public function dispatchRoutesToBenchmarkDashboard(): void
+    {
+        $router = $this->createRouter($this->localSafetyMode);
+        $request = $this->createRequest('/studio/console/benchmarks');
+
+        $response = $router->dispatch($request);
+
+        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertStringContainsString('benchmark-dashboard', $response->body);
+    }
+
+    #[Test]
+    public function dispatchBlocksBenchmarkDashboardInProductionMode(): void
+    {
+        $router = $this->createRouter($this->productionSafetyMode);
+        $request = $this->createRequest('/studio/console/benchmarks');
+
+        $response = $router->dispatch($request);
+
+        self::assertSame(ResponseStatus::Forbidden, $response->status);
+    }
+
+    #[Test]
+    public function dispatchPostBenchmarkClearInLocalMode(): void
+    {
+        $router = $this->createRouter($this->localSafetyMode);
+        $request = $this->createPostJsonRequest('/studio/api/benchmark/clear', '{}');
+
+        $response = $router->dispatch($request);
+
+        self::assertSame(ResponseStatus::OK, $response->status);
+        $data = json_decode($response->body, true);
+        self::assertIsArray($data);
+        self::assertArrayHasKey('deleted', $data);
+    }
+
+    #[Test]
+    public function dispatchPostBlockedInProductionMode(): void
+    {
+        $router = $this->createRouter($this->productionSafetyMode);
+        $request = $this->createPostJsonRequest('/studio/api/benchmark/clear', '{}');
+
+        $response = $router->dispatch($request);
+
+        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        $data = json_decode($response->body, true);
+        self::assertIsArray($data);
+        self::assertSame('Mutable API actions are restricted to local development mode', $data['error']);
+    }
+
+    #[Test]
+    public function dispatchPostBlockedInStagingMode(): void
+    {
+        $router = $this->createRouter($this->stagingSafetyMode);
+        $request = $this->createPostJsonRequest('/studio/api/benchmark/run', '{}');
+
+        $response = $router->dispatch($request);
+
+        self::assertSame(ResponseStatus::Forbidden, $response->status);
+    }
+
+    #[Test]
+    public function dispatchPostToUnknownPathReturns405(): void
+    {
+        $router = $this->createRouter($this->localSafetyMode);
+        $request = $this->createPostJsonRequest('/studio/console', '{}');
+
+        $response = $router->dispatch($request);
+
+        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
+    }
+
     private function createRouter(ProductionSafetyMode $safetyMode): StudioRouter
     {
         $studioConfig = new StudioConfig(
@@ -414,15 +489,19 @@ final class StudioRouterTest extends TestCase
             samplingRate: 1.0,
         );
 
+        $aggregator = new DashboardAggregator($this->store);
+
         return new StudioRouter(
             landing: new LandingController($studioConfig, $this->store),
-            consoleOverview: new ConsoleOverviewController(new DashboardAggregator($this->store)),
+            consoleOverview: new ConsoleOverviewController($aggregator),
             requestExplorer: new RequestExplorerController($this->store),
             databaseExplorer: new DatabaseExplorerController($this->store),
             logExplorer: new LogExplorerController($this->store),
             exceptionExplorer: new ExceptionExplorerController($this->store, $safetyMode),
             timeline: new TimelineController(new TimelineBuilder($this->store)),
             api: new ApiController($this->store),
+            benchmark: new BenchmarkController($aggregator),
+            benchmarkApi: new BenchmarkApiController($this->store, __DIR__),
             safetyMode: $safetyMode,
         );
     }
@@ -436,6 +515,18 @@ final class StudioRouterTest extends TestCase
             queryString: '',
             headers: new HeaderBag([]),
             body: '',
+        );
+    }
+
+    private function createPostJsonRequest(string $path, string $body): Request
+    {
+        return new Request(
+            method: Method::POST,
+            uri: $path,
+            path: $path,
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: $body,
         );
     }
 }

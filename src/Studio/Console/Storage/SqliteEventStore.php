@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Console\Storage;
 
+use function array_fill;
+
 use Closure;
 
+use function count;
 use function dirname;
 use function hash;
 use function implode;
@@ -341,6 +344,33 @@ final class SqliteEventStore implements EventStoreInterface
     {
         $stmt = $this->pdo->prepare('DELETE FROM studio_events WHERE timestamp_us < :timestamp_us');
         $stmt->execute(['timestamp_us' => $timestampUs]);
+
+        return $stmt->rowCount();
+    }
+
+    #[Override]
+    public function deleteByEventTypes(array $eventTypes): int
+    {
+        if ($eventTypes === []) {
+            return 0;
+        }
+
+        $placeholders = implode(', ', array_fill(0, count($eventTypes), '?'));
+        $stmt = $this->pdo->prepare(
+            sprintf('DELETE FROM studio_events WHERE event_type IN (%s)', $placeholders),
+        );
+        $stmt->execute($eventTypes);
+
+        return $stmt->rowCount();
+    }
+
+    #[Override]
+    public function deleteByPayloadKey(string $eventType, string $jsonPath, string $value): int
+    {
+        $stmt = $this->pdo->prepare(
+            'DELETE FROM studio_events WHERE event_type = :type AND json_extract(payload_json, :path) = :value',
+        );
+        $stmt->execute(['type' => $eventType, 'path' => $jsonPath, 'value' => $value]);
 
         return $stmt->rowCount();
     }

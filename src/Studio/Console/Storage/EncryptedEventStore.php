@@ -133,6 +133,18 @@ final readonly class EncryptedEventStore implements EventStoreInterface
     }
 
     #[Override]
+    public function deleteByEventTypes(array $eventTypes): int
+    {
+        return $this->inner->deleteByEventTypes($eventTypes);
+    }
+
+    #[Override]
+    public function deleteByPayloadKey(string $eventType, string $jsonPath, string $value): int
+    {
+        return $this->inner->deleteByPayloadKey($eventType, $jsonPath, $value);
+    }
+
+    #[Override]
     public function clear(): void
     {
         $this->inner->clear();
@@ -172,7 +184,9 @@ final readonly class EncryptedEventStore implements EventStoreInterface
      */
     private function decryptRow(array $row): array
     {
-        if (isset($row['payload_json']) && is_string($row['payload_json'])) {
+        // Skip decryption for plaintext rows (stored before encryption was enabled).
+        // Encrypted rows always have a ciphertext_hash; plaintext rows have NULL.
+        if (isset($row['payload_json']) && is_string($row['payload_json']) && isset($row['ciphertext_hash'])) {
             $row['payload_json'] = $this->encryptor->decrypt($row['payload_json']);
         }
 

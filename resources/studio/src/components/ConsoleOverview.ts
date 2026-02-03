@@ -31,6 +31,7 @@ export function renderConsoleOverview(container: HTMLElement, payload: unknown):
         ${data.sections.includes('slow_queries') ? '<a href="/studio/console/database">Database</a>' : ''}
         ${data.sections.includes('logs') ? '<a href="/studio/console/logs">Logs</a>' : ''}
         ${data.sections.includes('error_rate') ? '<a href="/studio/console/exceptions">Exceptions</a>' : ''}
+        ${data.sections.includes('benchmark') ? '<a href="/studio/console/benchmarks">Benchmarks</a>' : ''}
       </div>
     </nav>
     <div class="dashboard">

@@ -367,6 +367,11 @@ a:hover {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Sticky thead breaks inside cards with display:block — use static instead */
+.card .data-table thead {
+  position: static;
+}
+
 /* ---------------------------------------------------------------------------
  * 8. Status Grid (.status-grid)
  * ------------------------------------------------------------------------ */
@@ -1282,5 +1287,111 @@ code.sql {
 
   .config-table td:first-child {
     width: auto;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 32. Benchmark Comparison Charts (.chart-*)
+ * ------------------------------------------------------------------------ */
+
+.chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--studio-space-sm) var(--studio-space-md);
+  margin-bottom: var(--studio-space-lg);
+}
+
+.chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--studio-text-muted);
+}
+
+.chart-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  gap: var(--studio-space-lg);
+}
+
+.chart-metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--studio-space-xs);
+}
+
+.chart-metric-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--studio-text-muted);
+  margin-bottom: var(--studio-space-xs);
+}
+
+.chart-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-sm);
+  height: 24px;
+}
+
+.chart-bar-row.chart-bar-best .chart-bar-label {
+  color: var(--studio-green);
+  font-weight: 600;
+}
+
+.chart-bar-label {
+  flex-shrink: 0;
+  width: 120px;
+  font-family: var(--studio-font-mono);
+  font-size: 0.6875rem;
+  color: var(--studio-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-bar-track {
+  flex: 1;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.chart-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  opacity: 0.75;
+  transition: width var(--studio-transition-normal);
+}
+
+.chart-bar-value {
+  flex-shrink: 0;
+  min-width: 60px;
+  text-align: right;
+  font-family: var(--studio-font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--studio-text-muted);
+}
+
+@media (max-width: 768px) {
+  .chart-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-bar-label {
+    width: 80px;
   }
 }

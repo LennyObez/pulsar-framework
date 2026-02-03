@@ -61,14 +61,43 @@ $totalUs = array_sum($timings);
 $rps = $totalUs > 0 ? (int) ($measuredIterations / ($totalUs / 1_000_000)) : 0;
 
 $peakRssKb = (int) (memory_get_peak_usage(true) / 1024);
+$memoryUsageKb = (int) (memory_get_usage(true) / 1024);
+
+// OPcache shared memory usage (null if unavailable)
+$opcacheMemoryKb = null;
+
+if (function_exists('opcache_get_status')) {
+    $opcacheStatus = opcache_get_status(false);
+    if (is_array($opcacheStatus) && isset($opcacheStatus['memory_usage']['used_memory'])) {
+        $opcacheMemoryKb = (int) ($opcacheStatus['memory_usage']['used_memory'] / 1024);
+    }
+}
+
+// Warm boot measurement (5 cycles with warm OPcache/JIT)
+unset($kernel);
+$warmBootTimings = [];
+
+for ($w = 0; $w < 5; $w++) {
+    $wStart = hrtime(true);
+    $wKernel = new Kernel();
+    $wKernel->router()->get('/bench', fn () => Response::text('ok'));
+    $wKernel->boot();
+    $warmBootTimings[] = (int) ((hrtime(true) - $wStart) / 1_000);
+    unset($wKernel);
+}
+
+$warmBootUs = (int) (array_sum($warmBootTimings) / count($warmBootTimings));
 
 $result = [
     'boot_us' => $bootUs,
     'iterations' => $measuredIterations,
+    'memory_usage_kb' => $memoryUsageKb,
+    'opcache_memory_kb' => $opcacheMemoryKb,
     'p50_us' => $p50,
     'p95_us' => $p95,
     'peak_rss_kb' => $peakRssKb,
     'rps' => $rps,
+    'warm_boot_us' => $warmBootUs,
 ];
 
 ksort($result);

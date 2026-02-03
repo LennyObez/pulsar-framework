@@ -78,10 +78,40 @@ export interface TimelineData {
   events: StudioEvent[];
 }
 
+export interface BenchmarkRun {
+  run_id: string;
+  profile_count: number;
+  success_count: number;
+  failure_count: number;
+  skipped_count: number;
+  total_duration_ms: number;
+  php_version: string;
+  timestamp_us: number;
+}
+
+export interface BenchmarkProfile {
+  profile_name: string;
+  boot_us: number;
+  warm_boot_us: number;
+  p50_us: number;
+  p95_us: number;
+  rps: number;
+  peak_rss_kb: number;
+  memory_usage_kb: number;
+  opcache_memory_kb: number | null;
+  optimize_enabled: boolean;
+}
+
+export interface BenchmarkDashboardData {
+  runs: BenchmarkRun[];
+  latest_profiles: BenchmarkProfile[];
+}
+
 export type PageType =
   | 'console-overview'
   | 'request-explorer'
   | 'database-explorer'
   | 'log-explorer'
   | 'exception-explorer'
-  | 'timeline';
+  | 'timeline'
+  | 'benchmark-dashboard';

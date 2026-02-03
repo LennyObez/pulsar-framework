@@ -46,6 +46,11 @@ final readonly class ProductionSafetyMode
         return $this->mode !== EnvironmentMode::Production;
     }
 
+    public function allowMutableApi(): bool
+    {
+        return $this->mode === EnvironmentMode::Local;
+    }
+
     public function mode(): EnvironmentMode
     {
         return $this->mode;

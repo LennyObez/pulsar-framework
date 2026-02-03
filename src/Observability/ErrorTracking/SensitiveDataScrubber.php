@@ -8,6 +8,7 @@ use function array_any;
 use function array_merge;
 use function in_array;
 use function is_array;
+use function is_string;
 use function str_contains;
 use function strtolower;
 
@@ -66,7 +67,7 @@ final readonly class SensitiveDataScrubber
         $result = [];
 
         foreach ($data as $key => $value) {
-            if ($this->isSensitiveKey($key)) {
+            if (is_string($key) && $this->isSensitiveKey($key)) {
                 $result[$key] = self::REDACTED;
             } elseif (is_array($value)) {
                 /** @var array<string, mixed> $value */

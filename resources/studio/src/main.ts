@@ -1,4 +1,5 @@
 import type { PageType } from './types.js';
+import { renderBenchmarkDashboard } from './components/BenchmarkDashboard.js';
 import { renderConsoleOverview } from './components/ConsoleOverview.js';
 import { renderEventTable } from './components/EventTable.js';
 import { renderTimeline } from './components/Timeline.js';
@@ -34,6 +35,9 @@ function init(): void {
       break;
     case 'timeline':
       renderTimeline(app, payload);
+      break;
+    case 'benchmark-dashboard':
+      renderBenchmarkDashboard(app, payload);
       break;
     default:
       app.innerHTML = '<p class="error">Unknown page type.</p>';

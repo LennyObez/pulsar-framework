@@ -51,6 +51,23 @@ interface EventStoreInterface
     public function deleteOlderThan(int $timestampUs): int;
 
     /**
+     * Delete events matching any of the given event types.
+     *
+     * @param list<string> $eventTypes
+     * @return int Number of deleted rows
+     */
+    public function deleteByEventTypes(array $eventTypes): int;
+
+    /**
+     * Delete events matching an event type whose payload JSON field equals a value.
+     *
+     * Uses json_extract(payload_json, $jsonPath) = $value.
+     *
+     * @return int Number of deleted rows
+     */
+    public function deleteByPayloadKey(string $eventType, string $jsonPath, string $value): int;
+
+    /**
      * Delete all events.
      */
     public function clear(): void;

@@ -58,6 +58,7 @@ final readonly class LandingController
                         <a href="/studio/console/database">Database</a>
                         <a href="/studio/console/logs">Logs</a>
                         <a href="/studio/console/exceptions">Exceptions</a>
+                        <a href="/studio/console/benchmarks">Benchmarks</a>
                     </div>
                 </nav>
                 <div class="dashboard">
@@ -105,6 +106,10 @@ final readonly class LandingController
                             <a href="/studio/console/exceptions" class="landing-nav-card">
                                 <span class="card-title">Exceptions</span>
                                 <span class="card-desc">Track exceptions with stack traces, grouping, and occurrence counts.</span>
+                            </a>
+                            <a href="/studio/console/benchmarks" class="landing-nav-card">
+                                <span class="card-title">Benchmarks</span>
+                                <span class="card-desc">Run performance benchmarks and compare profiles across configurations.</span>
                             </a>
                         </div>
                     </div>

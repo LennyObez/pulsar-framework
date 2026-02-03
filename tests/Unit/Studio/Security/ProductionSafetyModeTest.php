@@ -134,6 +134,30 @@ final class ProductionSafetyModeTest extends TestCase
     }
 
     #[Test]
+    public function localModeAllowsMutableApi(): void
+    {
+        $safety = new ProductionSafetyMode(EnvironmentMode::Local);
+
+        self::assertTrue($safety->allowMutableApi());
+    }
+
+    #[Test]
+    public function stagingModeDeniesMutableApi(): void
+    {
+        $safety = new ProductionSafetyMode(EnvironmentMode::Staging);
+
+        self::assertFalse($safety->allowMutableApi());
+    }
+
+    #[Test]
+    public function productionModeDeniesMutableApi(): void
+    {
+        $safety = new ProductionSafetyMode(EnvironmentMode::Production);
+
+        self::assertFalse($safety->allowMutableApi());
+    }
+
+    #[Test]
     public function modeReturnsConfiguredEnvironmentMode(): void
     {
         $localSafety = new ProductionSafetyMode(EnvironmentMode::Local);
@@ -155,6 +179,7 @@ final class ProductionSafetyModeTest extends TestCase
         self::assertTrue($safety->allowSse());
         self::assertTrue($safety->allowRawPayload());
         self::assertTrue($safety->allowApi());
+        self::assertTrue($safety->allowMutableApi());
     }
 
     #[Test]
@@ -167,6 +192,7 @@ final class ProductionSafetyModeTest extends TestCase
         self::assertTrue($safety->allowSse());
         self::assertFalse($safety->allowRawPayload());
         self::assertTrue($safety->allowApi());
+        self::assertFalse($safety->allowMutableApi());
     }
 
     #[Test]
@@ -179,5 +205,6 @@ final class ProductionSafetyModeTest extends TestCase
         self::assertFalse($safety->allowSse());
         self::assertFalse($safety->allowRawPayload());
         self::assertFalse($safety->allowApi());
+        self::assertFalse($safety->allowMutableApi());
     }
 }
