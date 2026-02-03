@@ -33,6 +33,7 @@ Follow the reporting process described in `SECURITY.md`.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported at:
+
 - pulsar+conduct@lennyobez.com
 
 Project maintainers may remove, edit, or reject comments, commits, code, issues, and other contributions that are not
