@@ -18,6 +18,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'session' => [
+        'cookie_name' => 'PULSAR_SESSION',
+        'lifetime' => 7200,
         'cookie_httponly' => true,
         'cookie_secure' => true,
         'cookie_samesite' => 'Strict',
@@ -33,6 +35,7 @@ return [
         'enabled' => true,
         'token_length' => 32,
         'header_name' => 'X-CSRF-Token',
+        'form_field_name' => '_csrf_token',
     ],
 
     /*
