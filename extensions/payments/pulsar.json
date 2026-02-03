@@ -1,0 +1,21 @@
+{
+  "name": "pulsar/payments",
+  "version": "1.0.0-rc.7",
+  "description": "Vendor-agnostic payment processing extension with idempotency enforcement and webhook verification",
+  "extension_class": "Pulsar\\Extension\\Payments\\PaymentsExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.6"
+  },
+  "provides": {
+    "services": [
+      "PaymentGateway",
+      "WebhookProcessor",
+      "PaymentProviderInterface",
+      "IdempotencyStoreInterface",
+      "WebhookEventLogInterface",
+      "WebhookVerifierInterface"
+    ],
+    "routes": true,
+    "commands": []
+  }
+}

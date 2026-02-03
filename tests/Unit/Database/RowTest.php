@@ -294,4 +294,72 @@ final class RowTest extends TestCase
 
         self::assertSame(0, $row->getInt('count'));
     }
+
+    #[Test]
+    public function getNullableIntCastsStringToInt(): void
+    {
+        $row = new Row(['count' => '42']);
+
+        self::assertSame(42, $row->getNullableInt('count'));
+    }
+
+    #[Test]
+    public function getNullableIntThrowsOnInvalidValue(): void
+    {
+        $row = new Row(['count' => 'abc']);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "count" to int');
+
+        $row->getNullableInt('count');
+    }
+
+    #[Test]
+    public function getNullableStringCastsIntToString(): void
+    {
+        $row = new Row(['id' => 42]);
+
+        self::assertSame('42', $row->getNullableString('id'));
+    }
+
+    #[Test]
+    public function getNullableStringCastsFloatToString(): void
+    {
+        $row = new Row(['price' => 9.99]);
+
+        self::assertSame('9.99', $row->getNullableString('price'));
+    }
+
+    #[Test]
+    public function getNullableStringThrowsOnInvalidValue(): void
+    {
+        $row = new Row(['data' => []]);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "data" to string');
+
+        $row->getNullableString('data');
+    }
+
+    #[Test]
+    public function getFloatThrowsOnNull(): void
+    {
+        $row = new Row(['value' => null]);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "value" to float');
+
+        $row->getFloat('value');
+    }
+
+    #[Test]
+    public function getIntThrowsOnEmptyString(): void
+    {
+        $row = new Row(['value' => '']);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "value" to int');
+
+        $row->getInt('value');
+    }
 }
