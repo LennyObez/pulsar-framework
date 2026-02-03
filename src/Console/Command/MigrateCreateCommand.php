@@ -33,9 +33,9 @@ final class MigrateCreateCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('migrate:create')
-            ->setDescription('Create a new migration file')
-            ->addArgument('name', 'Migration name (e.g., create_users_table)', true);
+        $this->name = 'migrate:create';
+        $this->description = 'Create a new migration file';
+        $this->addArgument('name', 'Migration name (e.g., create_users_table)', true);
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
@@ -78,9 +78,8 @@ final class MigrateCreateCommand extends Command
         // Replace spaces, hyphens, and camelCase with underscores
         $snake = (string) preg_replace('/[^a-z0-9]+/i', '_', $name);
         $snake = (string) preg_replace('/([a-z])([A-Z])/', '$1_$2', $snake);
-        $snake = strtolower(trim($snake, '_'));
 
-        return $snake;
+        return strtolower(trim($snake, '_'));
     }
 
     private function generateContent(): string

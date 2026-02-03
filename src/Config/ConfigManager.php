@@ -62,6 +62,34 @@ final class ConfigManager
             $databaseConfig = DatabaseConfig::fromArray($databaseData, $this->environment);
             $this->repository->set($databaseConfig);
         }
+
+        // Load tenancy config (optional — only if config/tenancy.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'tenancy.php')) {
+            $tenancyData = $this->loadConfigFile('tenancy');
+            $tenancyConfig = TenancyConfig::fromArray($tenancyData, $this->environment);
+            $this->repository->set($tenancyConfig);
+        }
+
+        // Load feature flags config (optional — only if config/features.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'features.php')) {
+            $featuresData = $this->loadConfigFile('features');
+            $featureFlagConfig = FeatureFlagConfig::fromArray($featuresData, $this->environment);
+            $this->repository->set($featureFlagConfig);
+        }
+
+        // Load scheduler config (optional — only if config/scheduler.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'scheduler.php')) {
+            $schedulerData = $this->loadConfigFile('scheduler');
+            $schedulerConfig = SchedulerConfig::fromArray($schedulerData, $this->environment);
+            $this->repository->set($schedulerConfig);
+        }
+
+        // Load resilience config (optional — only if config/resilience.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'resilience.php')) {
+            $resilienceData = $this->loadConfigFile('resilience');
+            $resilienceConfig = ResilienceConfig::fromArray($resilienceData, $this->environment);
+            $this->repository->set($resilienceConfig);
+        }
     }
 
     /**

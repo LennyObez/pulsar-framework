@@ -26,11 +26,7 @@ readonly class SecurityHeadersConfig
     public static function fromArray(array $data): self
     {
         /** @var array<string, string> $headers */
-        $headers = [];
-
-        foreach ($data as $name => $value) {
-            $headers[$name] = (string) $value; // @phpstan-ignore cast.string
-        }
+        $headers = array_map(static fn(mixed $value): string => (string) $value, $data); // @phpstan-ignore cast.string
 
         return new self(headers: $headers);
     }

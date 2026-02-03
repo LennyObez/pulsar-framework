@@ -6,7 +6,7 @@ namespace Pulsar\Tests\Unit\Auth\Guard;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Guard\SessionGuard;
 use Pulsar\Auth\Identity\Identity;
@@ -19,13 +19,13 @@ use Pulsar\Security\Session\SessionInterface;
 #[CoversClass(SessionGuard::class)]
 final class SessionGuardTest extends TestCase
 {
-    /** @var SessionInterface&MockObject */
+    /** @var SessionInterface&Stub */
     private SessionInterface $session;
     private SessionGuard $guard;
 
     protected function setUp(): void
     {
-        $this->session = $this->createMock(SessionInterface::class);
+        $this->session = $this->createStub(SessionInterface::class);
         $this->guard = new SessionGuard($this->session);
     }
 
@@ -115,22 +115,26 @@ final class SessionGuardTest extends TestCase
             attributes: [],
         );
 
-        $this->session->expects(self::once())->method('regenerate');
-        $this->session->expects(self::once())->method('set')->with(
+        $session = $this->createMock(SessionInterface::class);
+        $session->expects(self::once())->method('regenerate');
+        $session->expects(self::once())->method('set')->with(
             '_pulsar_identity',
             $identity->toArray(),
         );
 
-        $this->guard->login($identity);
+        $guard = new SessionGuard($session);
+        $guard->login($identity);
     }
 
     #[Test]
     public function logoutRemovesIdentityAndRegenerates(): void
     {
-        $this->session->expects(self::once())->method('remove')->with('_pulsar_identity');
-        $this->session->expects(self::once())->method('regenerate');
+        $session = $this->createMock(SessionInterface::class);
+        $session->expects(self::once())->method('remove')->with('_pulsar_identity');
+        $session->expects(self::once())->method('regenerate');
 
-        $this->guard->logout();
+        $guard = new SessionGuard($session);
+        $guard->logout();
     }
 
     #[Test]
@@ -144,12 +148,14 @@ final class SessionGuardTest extends TestCase
             attributes: [],
         );
 
-        $this->session->expects(self::never())->method('regenerate');
-        $this->session->expects(self::once())->method('set')->with(
+        $session = $this->createMock(SessionInterface::class);
+        $session->expects(self::never())->method('regenerate');
+        $session->expects(self::once())->method('set')->with(
             '_pulsar_identity',
             $identity->toArray(),
         );
 
-        $this->guard->updateIdentity($identity);
+        $guard = new SessionGuard($session);
+        $guard->updateIdentity($identity);
     }
 }

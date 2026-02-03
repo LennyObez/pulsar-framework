@@ -11,6 +11,7 @@ use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanStatus;
 use Pulsar\Observability\Tracing\TraceContext;
 use Pulsar\Observability\Tracing\W3CTraceContextParser;
+use Random\RandomException;
 
 use function sprintf;
 
@@ -28,6 +29,9 @@ final readonly class TracingMiddleware implements MiddlewareInterface
         private float $samplingRate = 1.0,
     ) {}
 
+    /**
+     * @throws RandomException
+     */
     public function process(Request $request, callable $next): Response
     {
         // Parse incoming traceparent or create new context
@@ -70,21 +74,22 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             $response = $next($request);
 
             $span->setAttribute('http.status_code', $response->status->value);
-            $span->setStatus($this->resolveSpanStatus($response->status->value));
+            $span->status = $this->resolveSpanStatus($response->status->value);
 
             // Add traceparent to response
-            $response = $response->withHeader(
+            return $response->withHeader(
                 'traceparent',
                 W3CTraceContextParser::serialize($context),
             );
-
-            return $response;
         } finally {
             $span->end();
             $this->collector->onEnd($span);
         }
     }
 
+    /**
+     * @throws RandomException
+     */
     private function shouldSample(?TraceContext $parentContext): bool
     {
         // If parent is sampled, always sample
@@ -101,7 +106,6 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             return false;
         }
 
-        /** @var int $random */
         $random = random_int(0, 999);
 
         $threshold = (int) ($this->samplingRate * 1000.0);

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\ErrorTracking;
 
+use function array_any;
 use function array_merge;
+use function in_array;
 use function is_array;
 use function str_contains;
 use function strtolower;
@@ -103,23 +105,18 @@ final readonly class SensitiveDataScrubber
     {
         $lower = strtolower($key);
 
-        foreach ($this->fields as $field) {
-            if (str_contains($lower, $field)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $this->fields,
+            static fn(string $field): bool => str_contains($lower, $field),
+        );
     }
 
     private function isSensitiveHeader(string $name): bool
     {
         $lower = strtolower($name);
 
-        foreach (self::SENSITIVE_HEADERS as $header) {
-            if ($lower === $header) {
-                return true;
-            }
+        if (in_array($lower, self::SENSITIVE_HEADERS, true)) {
+            return true;
         }
 
         // Also check general sensitive fields

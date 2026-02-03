@@ -39,7 +39,7 @@ final class TwoFactorMiddlewareTest extends TestCase
         IdentityInterface $identity,
         Request $request,
     ): SecurityContext {
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($identity);
 
         return new SecurityContext($authManager, $request);

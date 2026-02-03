@@ -16,15 +16,15 @@ use function strlen;
 final class ArgvInput implements InputInterface
 {
     /** @var list<string> */
-    private array $tokens;
+    public private(set) array $tokens;
 
-    private ?string $commandName = null;
+    public private(set) ?string $commandName = null;
 
     /** @var list<string> */
-    private array $arguments = [];
+    public private(set) array $arguments = [];
 
     /** @var array<string, string|bool> */
-    private array $options = [];
+    public private(set) array $options = [];
 
     /**
      * @param list<string>|null $argv Command line arguments (null to use $_SERVER['argv'])
@@ -102,11 +102,6 @@ final class ArgvInput implements InputInterface
         }
     }
 
-    public function getCommandName(): ?string
-    {
-        return $this->commandName;
-    }
-
     public function getArgument(int|string $key, mixed $default = null): mixed
     {
         if (is_int($key)) {
@@ -117,11 +112,6 @@ final class ArgvInput implements InputInterface
         return $default;
     }
 
-    public function getArguments(): array
-    {
-        return $this->arguments;
-    }
-
     public function hasOption(string $name): bool
     {
         return isset($this->options[$name]);
@@ -130,15 +120,5 @@ final class ArgvInput implements InputInterface
     public function getOption(string $name, mixed $default = null): mixed
     {
         return $this->options[$name] ?? $default;
-    }
-
-    public function getOptions(): array
-    {
-        return $this->options;
-    }
-
-    public function getTokens(): array
-    {
-        return $this->tokens;
     }
 }

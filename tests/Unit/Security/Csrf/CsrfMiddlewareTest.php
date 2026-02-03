@@ -6,7 +6,7 @@ namespace Pulsar\Tests\Unit\Security\Csrf;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Http\HeaderBag;
@@ -23,7 +23,7 @@ final class CsrfMiddlewareTest extends TestCase
     private string $validToken;
     private CsrfConfig $config;
 
-    /** @var CsrfTokenManagerInterface&MockObject */
+    /** @var CsrfTokenManagerInterface&Stub */
     private CsrfTokenManagerInterface $tokenManager;
 
     protected function setUp(): void
@@ -37,7 +37,7 @@ final class CsrfMiddlewareTest extends TestCase
             formFieldName: '_csrf_token',
         );
 
-        $this->tokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $this->tokenManager = $this->createStub(CsrfTokenManagerInterface::class);
     }
 
     /**

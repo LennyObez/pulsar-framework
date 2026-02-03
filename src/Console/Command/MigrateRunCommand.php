@@ -29,8 +29,8 @@ final class MigrateRunCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('migrate:run')
-            ->setDescription('Run all pending database migrations');
+        $this->name = 'migrate:run';
+        $this->description = 'Run all pending database migrations';
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
