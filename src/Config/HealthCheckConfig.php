@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -20,6 +21,7 @@ readonly class HealthCheckConfig
     /**
      * @param array<string, mixed> $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
         /** @var int $intervalSeconds */

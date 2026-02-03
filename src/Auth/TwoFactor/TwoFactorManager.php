@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use Override;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Random\RandomException;
 
@@ -24,6 +25,7 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
     /**
      * @throws RandomException
      */
+    #[Override]
     public function beginSetup(IdentityInterface $identity): array
     {
         $secret = $this->generator->generateSecret();
@@ -39,16 +41,19 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
         ];
     }
 
+    #[Override]
     public function confirmSetup(string $secret, string $code): bool
     {
         return $this->verifier->verify($secret, $code);
     }
 
+    #[Override]
     public function verifyCode(string $secret, string $code): bool
     {
         return $this->verifier->verify($secret, $code);
     }
 
+    #[Override]
     public function verifyRecoveryCode(string $code, array $validCodes): int
     {
         return $this->recoveryCodeVerifier->verify($code, $validCodes);

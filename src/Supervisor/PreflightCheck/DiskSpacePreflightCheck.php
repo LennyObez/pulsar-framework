@@ -6,6 +6,7 @@ namespace Pulsar\Supervisor\PreflightCheck;
 
 use function disk_free_space;
 
+use Override;
 use Pulsar\Api\Internal;
 
 use function sprintf;
@@ -24,11 +25,13 @@ final class DiskSpacePreflightCheck implements PreflightCheckInterface
         private readonly int $minimumFreeMb = 100,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return 'disk_space';
     }
 
+    #[Override]
     public function check(): PreflightCheckResult
     {
         $freeBytes = @disk_free_space($this->path);

@@ -37,7 +37,7 @@ final class MasterKeyTest extends TestCase
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('expected');
 
-        MasterKey::fromHex(sodium_bin2hex(random_bytes(16))); // 16 bytes, need 32
+        $_ = MasterKey::fromHex(sodium_bin2hex(random_bytes(16))); // 16 bytes, need 32
     }
 
     #[Test]
@@ -123,7 +123,7 @@ final class MasterKeyTest extends TestCase
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('PULSAR_MASTER_KEY');
 
-        MasterKey::fromEnvironment('');
+        $_ = MasterKey::fromEnvironment('');
     }
 
     #[Test]

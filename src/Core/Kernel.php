@@ -75,6 +75,8 @@ use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Deploy\DeployCheck;
+use Pulsar\Deploy\Runtime\PhpRuntime;
+use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
@@ -171,6 +173,9 @@ use Pulsar\Tenancy\TenantAwareConnectionManager;
 use Pulsar\Tenancy\TenantContext;
 use Pulsar\Tenancy\TenantResolverInterface;
 use Pulsar\Tenancy\TenantResolverStrategy;
+use Random\Engine\Secure;
+use Random\Randomizer;
+use ReflectionException;
 use RuntimeException;
 use SodiumException;
 
@@ -253,6 +258,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs during bootstrap
      * @throws NotFoundException If a required binding is not found during bootstrap
+     * @throws ReflectionException If class reflection fails during autowiring
      * @throws FeatureFlagException If flag storage fails during boot
      * @throws JsonException If flag serialization fails during boot
      * @throws SodiumException If a sodium cryptographic operation fails during boot
@@ -279,8 +285,16 @@ final class Kernel
                 if ($cached !== null && $cached['config'] !== null) {
                     $cacheLoaded = $this->configManager->loadFromCache($cached['config']);
                 }
+
+                if ($cached !== null && $cached['containerHints'] !== null) {
+                    $this->container->setResolutionHints($cached['containerHints']);
+                }
             }
         }
+
+        // Register shared Randomizer (CSPRNG) singleton
+        $randomizer = new Randomizer(new Secure());
+        $this->container->instance(Randomizer::class, $randomizer);
 
         // Config phase: load config, create services
         if ($this->configManager !== null) {
@@ -513,6 +527,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs during resolution
      * @throws NotFoundException If the resolved binding is not found
+     * @throws ReflectionException If class reflection fails during autowiring
      * @throws Error If the class cannot be instantiated
      */
     private function resolveController(string $class): object
@@ -593,6 +608,9 @@ final class Kernel
 
     /**
      * Create the tracing subsystem and register TracingMiddleware as outermost global middleware.
+     *
+     * @throws NotFoundException|ContainerException
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createTracer(): void
     {
@@ -609,9 +627,13 @@ final class Kernel
         $collector = new InMemorySpanCollector();
         $this->container->instance(InMemorySpanCollector::class, $collector);
 
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+
         $tracingMiddleware = new TracingMiddleware(
             $collector,
             $observabilityConfig->tracing->samplingRate,
+            $randomizer,
         );
 
         // Tracing is outermost: registered first
@@ -687,6 +709,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createExceptionHandler(): void
     {
@@ -725,6 +748,9 @@ final class Kernel
      * Registers: Session, CsrfTokenManager, CsrfMiddleware,
      * SecurityHeadersMiddleware. If PULSAR_MASTER_KEY is set,
      * also registers MasterKey, Encryptor, and AuditLogger.
+     *
+     * @throws NotFoundException|ContainerException
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createSecurityServices(): void
     {
@@ -741,7 +767,9 @@ final class Kernel
         $this->container->instance(SessionInterface::class, $session);
 
         // CSRF
-        $csrfTokenManager = new CsrfTokenManager($session, $securityConfig->csrf);
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+        $csrfTokenManager = new CsrfTokenManager($session, $securityConfig->csrf, $randomizer);
         $this->container->instance(CsrfTokenManager::class, $csrfTokenManager);
         $this->container->instance(CsrfTokenManagerInterface::class, $csrfTokenManager);
 
@@ -773,7 +801,7 @@ final class Kernel
                     $this->container->instance(AuditSinkInterface::class, $auditSink);
                     $this->container->instance(AuditFileSink::class, $auditSink);
 
-                    $auditLogger = new AuditLogger($auditSink, $auditKey);
+                    $auditLogger = new AuditLogger($auditSink, $auditKey, $randomizer);
                     $this->container->instance(AuditLogger::class, $auditLogger);
                 }
             } catch (SecurityException | SodiumException) {
@@ -792,6 +820,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createAuthServices(): void
     {
@@ -854,12 +883,16 @@ final class Kernel
 
         // 2FA services
         if ($authConfig->twoFactor->enabled) {
+            /** @var Randomizer $randomizer */
+            $randomizer = $this->container->get(Randomizer::class);
+
             $totpGenerator = new TotpGenerator(
                 codeDigits: $authConfig->twoFactor->codeDigits,
                 period: $authConfig->twoFactor->codePeriod,
+                randomizer: $randomizer,
             );
             $totpVerifier = new TotpVerifier($totpGenerator, $authConfig->twoFactor->verificationWindow);
-            $recoveryCodeGenerator = new RecoveryCodeGenerator();
+            $recoveryCodeGenerator = new RecoveryCodeGenerator($randomizer);
             $recoveryCodeVerifier = new RecoveryCodeVerifier();
 
             $twoFactorManager = new TwoFactorManager(
@@ -936,6 +969,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createTenancyServices(): void
     {
@@ -1049,6 +1083,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createSchedulerServices(): void
     {
@@ -1138,6 +1173,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createQueueServices(): void
     {
@@ -1158,9 +1194,12 @@ final class Kernel
         }
 
         // Queue driver
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+
         $driver = match ($queueConfig->driver) {
-            QueueDriverType::Sync => new SyncDriver(),
-            QueueDriverType::Memory => new InMemoryDriver(),
+            QueueDriverType::Sync => new SyncDriver($randomizer),
+            QueueDriverType::Memory => new InMemoryDriver($randomizer),
             QueueDriverType::Database => $this->container->has(QueueDriverInterface::class)
                 ? $this->container->get(QueueDriverInterface::class)
                 : new InMemoryDriver(),
@@ -1204,6 +1243,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createSupervisorServices(): void
     {
@@ -1250,6 +1290,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createIntegrityServices(): void
     {
@@ -1318,6 +1359,9 @@ final class Kernel
         $deployConfig = $repository->get(DeployConfig::class);
         $this->container->instance(DeployConfig::class, $deployConfig);
 
+        $phpRuntime = new PhpRuntime();
+        $this->container->instance(PhpRuntimeInterface::class, $phpRuntime);
+
         $deployCheck = new DeployCheck();
         $this->container->instance(DeployCheck::class, $deployCheck);
     }
@@ -1371,6 +1415,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      * @throws SodiumException If a sodium cryptographic operation fails
      */
     private function studioPreboot(): void
@@ -1480,7 +1525,9 @@ final class Kernel
         $this->container->instance(CorrelationContextProviderInterface::class, $contextProvider);
 
         // Event factory
-        $eventFactory = EventFactory::create($appConfig->mode->value);
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+        $eventFactory = EventFactory::create($appConfig->mode->value, $randomizer);
         $this->container->instance(EventFactory::class, $eventFactory);
 
         // Tenant context (if available)
@@ -1498,6 +1545,7 @@ final class Kernel
             tenantContext: $tenantContext,
             chainMacKey: $chainMacKey,
             samplingRate: $studioConfig->samplingRate,
+            randomizer: $randomizer,
         );
         $this->container->instance(StudioManager::class, $studioManager);
 
@@ -1533,6 +1581,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function attachStudioCollectors(): void
     {
@@ -1550,9 +1599,12 @@ final class Kernel
         /** @var AppConfig $appConfig */
         $appConfig = $this->container->get(AppConfig::class);
 
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+
         // 1. HTTP collector (global middleware, after MetricsMiddleware)
         if ($collectorConfig->http) {
-            $httpCollector = new HttpCollector($contextProvider, $emit);
+            $httpCollector = new HttpCollector($contextProvider, $emit, $randomizer);
             $this->container->instance(HttpCollector::class, $httpCollector);
             $this->middleware->pipe($httpCollector);
         }
@@ -1598,7 +1650,7 @@ final class Kernel
             /** @var Scheduler $scheduler */
             $scheduler = $this->container->get(Scheduler::class);
 
-            $instrumentedScheduler = new InstrumentedScheduler($scheduler, $contextProvider, $emit);
+            $instrumentedScheduler = new InstrumentedScheduler($scheduler, $contextProvider, $emit, $randomizer);
             $this->container->instance(InstrumentedScheduler::class, $instrumentedScheduler);
         }
 
@@ -1625,7 +1677,7 @@ final class Kernel
                 /** @var Worker $worker */
                 $worker = $this->container->get(Worker::class);
 
-                $instrumentedWorker = new InstrumentedWorker($worker, $contextProvider, $emit);
+                $instrumentedWorker = new InstrumentedWorker($worker, $contextProvider, $emit, $randomizer);
                 $this->container->instance(InstrumentedWorker::class, $instrumentedWorker);
             }
         }

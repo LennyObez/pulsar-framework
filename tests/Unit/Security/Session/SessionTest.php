@@ -50,7 +50,7 @@ final class SessionTest extends TestCase
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('not been started');
 
-        $session->get('key');
+        $_ = $session->get('key');
     }
 
     #[Test]

@@ -10,6 +10,7 @@ use function hash_equals;
 use function json_encode;
 
 use JsonException;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Hmac;
 use SodiumException;
@@ -48,6 +49,7 @@ readonly class AuditEntry
      * @throws JsonException
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function create(
         string $id,
         AuditEvent $event,

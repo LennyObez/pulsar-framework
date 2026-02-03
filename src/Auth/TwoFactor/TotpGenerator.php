@@ -9,9 +9,10 @@ use function intdiv;
 use function ord;
 use function pack;
 
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
-use function random_bytes;
 use function rawurlencode;
 use function sprintf;
 use function str_pad;
@@ -24,11 +25,16 @@ use function unpack;
  */
 final readonly class TotpGenerator
 {
+    private Randomizer $randomizer;
+
     public function __construct(
         private int $codeDigits = 6,
         private int $period = 30,
         private string $algorithm = 'sha1',
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * Generate a cryptographically random secret.
@@ -39,7 +45,7 @@ final readonly class TotpGenerator
      */
     public function generateSecret(int $length = 20): string
     {
-        return random_bytes($length);
+        return $this->randomizer->getBytes($length);
     }
 
     /**

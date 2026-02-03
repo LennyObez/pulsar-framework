@@ -6,15 +6,17 @@ namespace Pulsar\Queue\Driver;
 
 use function bin2hex;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Database\Row;
 use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueDriverInterface;
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
-use function random_bytes;
 use function time;
 
 /**
@@ -39,14 +41,20 @@ use function time;
 #[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
 final readonly class DatabaseDriver implements QueueDriverInterface
 {
+    private Randomizer $randomizer;
+
     public function __construct(
         private ConnectionManagerInterface $connections,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /** @throws RandomException If random byte generation fails */
+    #[Override]
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string
     {
-        $id = bin2hex(random_bytes(16));
+        $id = bin2hex($this->randomizer->getBytes(16));
         $now = time();
 
         $this->connections->connection()->execute(
@@ -67,6 +75,7 @@ final readonly class DatabaseDriver implements QueueDriverInterface
         return $id;
     }
 
+    #[Override]
     public function pop(string $queue): ?JobRecord
     {
         $now = time();
@@ -124,6 +133,7 @@ final readonly class DatabaseDriver implements QueueDriverInterface
         });
     }
 
+    #[Override]
     public function acknowledge(string $jobId): void
     {
         $this->connections->connection()->execute(
@@ -132,6 +142,7 @@ final readonly class DatabaseDriver implements QueueDriverInterface
         );
     }
 
+    #[Override]
     public function reject(string $jobId, string $reason): void
     {
         $this->connections->connection()->execute(
@@ -143,6 +154,7 @@ final readonly class DatabaseDriver implements QueueDriverInterface
         );
     }
 
+    #[Override]
     public function size(string $queue): int
     {
         $result = $this->connections->connection()->query(
@@ -158,6 +170,7 @@ final readonly class DatabaseDriver implements QueueDriverInterface
         return $row !== null ? $row->getInt('cnt') : 0;
     }
 
+    #[Override]
     public function purge(string $queue): int
     {
         return $this->connections->connection()->execute(
@@ -169,6 +182,7 @@ final readonly class DatabaseDriver implements QueueDriverInterface
     /**
      * @return list<JobRecord>
      */
+    #[Override]
     public function findByStatus(JobRecordStatus $status): array
     {
         $result = $this->connections->connection()->query(

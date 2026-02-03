@@ -124,7 +124,7 @@ final class LocalStorageAdapterTest extends TestCase
         $this->expectException(StorageException::class);
         $this->expectExceptionMessage('Storage object not found: "missing.txt"');
 
-        $this->adapter->get('missing.txt');
+        $_ = $this->adapter->get('missing.txt');
     }
 
     #[Test]
@@ -142,7 +142,7 @@ final class LocalStorageAdapterTest extends TestCase
         $this->expectException(StorageException::class);
         $this->expectExceptionMessage('path traversal not allowed');
 
-        $this->adapter->get('subdir/../../etc/passwd');
+        $_ = $this->adapter->get('subdir/../../etc/passwd');
     }
 
     #[Test]

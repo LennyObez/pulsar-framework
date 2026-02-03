@@ -472,7 +472,7 @@ final class EventQueryTest extends TestCase
             ->willReturn(0);
 
         $query = new EventQuery($store);
-        $query->requestId('req-123')->get();
+        $_ = $query->requestId('req-123')->get();
     }
 
     #[Test]
@@ -489,7 +489,7 @@ final class EventQueryTest extends TestCase
             ->willReturn(0);
 
         $query = new EventQuery($store);
-        $query->limit(25)->offset(100)->get();
+        $_ = $query->limit(25)->offset(100)->get();
     }
 
     #[Test]

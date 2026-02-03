@@ -57,7 +57,7 @@ final class ExtensionRegistryTest extends TestCase
         $this->expectException(ExtensionException::class);
         $this->expectExceptionMessage('not found');
 
-        $this->registry->get('nonexistent');
+        $_ = $this->registry->get('nonexistent');
     }
 
     #[Test]

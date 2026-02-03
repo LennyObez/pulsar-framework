@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -25,6 +26,7 @@ readonly class StorageConfig
     /**
      * @param array<string, mixed> $data Raw array from config/storage.php
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         $default = $environment->get('STORAGE_DISK') ?? ($data['default'] ?? 'local');

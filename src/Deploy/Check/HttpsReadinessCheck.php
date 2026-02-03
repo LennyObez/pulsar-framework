@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Deploy\CheckResult;
@@ -26,16 +27,19 @@ final readonly class HttpsReadinessCheck implements DeployCheckInterface
         private SecurityConfig $securityConfig,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return self::CHECK_NAME;
     }
 
+    #[Override]
     public function getDescription(): string
     {
         return 'Validates HSTS (Strict-Transport-Security) header is configured';
     }
 
+    #[Override]
     public function check(string $environment): CheckResult
     {
         $headers = $this->securityConfig->headers->headers;

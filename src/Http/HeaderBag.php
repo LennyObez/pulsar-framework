@@ -12,6 +12,8 @@ use function is_array;
 use function is_string;
 
 use IteratorAggregate;
+use NoDiscard;
+use Override;
 use Pulsar\Api\Api;
 
 use function sprintf;
@@ -65,6 +67,7 @@ readonly class HeaderBag implements IteratorAggregate
      *
      * @return list<string>
      */
+    #[NoDiscard]
     public function get(string $name): array
     {
         return $this->headers[strtolower($name)] ?? [];
@@ -92,6 +95,7 @@ readonly class HeaderBag implements IteratorAggregate
      *
      * @param string|list<string> $value
      */
+    #[NoDiscard]
     public function with(string $name, string|array $value): self
     {
         $headers = $this->toArray();
@@ -102,6 +106,7 @@ readonly class HeaderBag implements IteratorAggregate
     /**
      * Return a new HeaderBag with an additional header value.
      */
+    #[NoDiscard]
     public function withAdded(string $name, string $value): self
     {
         $headers = $this->toArray();
@@ -120,6 +125,7 @@ readonly class HeaderBag implements IteratorAggregate
     /**
      * Return a new HeaderBag without the specified header.
      */
+    #[NoDiscard]
     public function without(string $name): self
     {
         $lowered = strtolower($name);
@@ -189,6 +195,7 @@ readonly class HeaderBag implements IteratorAggregate
     /**
      * @return Traversable<string, list<string>>
      */
+    #[Override]
     public function getIterator(): Traversable
     {
         return new ArrayIterator($this->toArray());
@@ -199,6 +206,7 @@ readonly class HeaderBag implements IteratorAggregate
      *
      * @param array<string, mixed> $server
      */
+    #[NoDiscard]
     public static function fromServer(array $server): self
     {
         $headers = [];

@@ -8,6 +8,7 @@ use function count;
 use function extension_loaded;
 use function ini_get;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -28,12 +29,14 @@ final class DiagnosticsCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'diagnostics';
         $this->description = 'Display system diagnostics and health checks';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Pulsar Framework Diagnostics');

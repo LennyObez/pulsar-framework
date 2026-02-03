@@ -7,6 +7,7 @@ namespace Pulsar\Observability\Log;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -33,6 +34,7 @@ readonly class LogEntry
      *
      * @throws DateMalformedStringException
      */
+    #[NoDiscard]
     public static function create(
         LogLevel $level,
         string $message,

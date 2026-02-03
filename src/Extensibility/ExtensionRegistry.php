@@ -6,6 +6,7 @@ namespace Pulsar\Extensibility;
 
 use function count;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Extensibility\Exception\ExtensionException;
 
@@ -64,6 +65,7 @@ final class ExtensionRegistry
      *
      * @throws ExtensionException If not found
      */
+    #[NoDiscard]
     public function get(string $name): ExtensionInterface
     {
         if (!$this->has($name)) {

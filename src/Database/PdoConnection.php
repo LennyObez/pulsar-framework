@@ -7,6 +7,8 @@ namespace Pulsar\Database;
 use function is_bool;
 use function is_int;
 
+use NoDiscard;
+use Override;
 use PDO;
 use PDOException;
 use PDOStatement;
@@ -40,6 +42,7 @@ final class PdoConnection implements ConnectionInterface
     /**
      * Create a PdoConnection from a ConnectionConfig DTO.
      */
+    #[NoDiscard]
     public static function fromConfig(ConnectionConfig $config): self
     {
         $dsn = $config->driver->buildDsn($config->host, $config->port, $config->database);
@@ -57,6 +60,7 @@ final class PdoConnection implements ConnectionInterface
         );
     }
 
+    #[Override]
     public function query(string $sql, array $bindings = []): Result
     {
         $pdo = $this->pdo();
@@ -75,6 +79,7 @@ final class PdoConnection implements ConnectionInterface
         }
     }
 
+    #[Override]
     public function execute(string $sql, array $bindings = []): int
     {
         $pdo = $this->pdo();
@@ -90,6 +95,7 @@ final class PdoConnection implements ConnectionInterface
         }
     }
 
+    #[Override]
     public function prepare(string $sql): Statement
     {
         $pdo = $this->pdo();
@@ -103,6 +109,7 @@ final class PdoConnection implements ConnectionInterface
         }
     }
 
+    #[Override]
     public function beginTransaction(): Transaction
     {
         $pdo = $this->pdo();
@@ -127,6 +134,7 @@ final class PdoConnection implements ConnectionInterface
      * @throws DatabaseException
      * @throws Throwable
      */
+    #[Override]
     public function transaction(callable $callback): mixed
     {
         $transaction = $this->beginTransaction();
@@ -147,26 +155,31 @@ final class PdoConnection implements ConnectionInterface
         }
     }
 
+    #[Override]
     public function lastInsertId(): string
     {
         return $this->pdo()->lastInsertId() ?: '0';
     }
 
+    #[Override]
     public function driver(): Driver
     {
         return $this->driver;
     }
 
+    #[Override]
     public function name(): string
     {
         return $this->connectionName;
     }
 
+    #[Override]
     public function inTransaction(): bool
     {
         return $this->transactionDepth > 0;
     }
 
+    #[Override]
     public function disconnect(): void
     {
         $this->connection = null;

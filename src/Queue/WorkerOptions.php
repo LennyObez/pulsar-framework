@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Queue;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\QueueConfig;
 
@@ -23,6 +24,7 @@ readonly class WorkerOptions
     /**
      * Build worker options from queue configuration.
      */
+    #[NoDiscard]
     public static function fromConfig(QueueConfig $config): self
     {
         return new self(

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Auth\Middleware;
 
 use JsonException;
+use Override;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\PolicyContext;
 use Pulsar\Auth\SecurityContext;
@@ -32,6 +33,7 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
         private ?AuditLogger $auditLogger = null,
     ) {}
 
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         /** @var SecurityContext|null $securityContext */

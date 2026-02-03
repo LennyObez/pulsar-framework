@@ -402,3 +402,23 @@ The extension system uses specific exception types:
 - `ExtensionException` -- General extension loading and lifecycle errors.
 
 All exceptions use static factory methods for clear, contextual error messages.
+
+## Concurrency Constraints
+
+Extensions must respect Pulsar's synchronous execution model. The framework provides no event loop, Fiber scheduler, or implicit parallelism.
+
+### Rules
+
+- **MUST NOT** create Fibers that escape their scope. A Fiber created by an extension must complete within the same request or command lifecycle that created it. Escaped Fibers break deterministic execution guarantees and can corrupt shared state.
+- **MUST NOT** start background threads or use `parallel\Runtime`. Pulsar assumes single-threaded execution within each worker process.
+- **MAY** use scoped Fibers for context isolation (the same pattern Studio uses internally), provided the Fiber is created, used, and completed within a well-defined scope with proper RAII cleanup.
+
+### RAII Cleanup
+
+If an extension uses `ContextScope` or similar RAII guards within Fibers, it must ensure:
+
+1. Every `enter()` call has a matching `close()` call.
+2. The `close()` call happens from the same Fiber that called `enter()`.
+3. Guards are closed before the Fiber completes, even in error paths.
+
+For full details on Pulsar's concurrency model, Fiber usage, and guarantees, see [`docs/ASYNC_MODEL.md`](ASYNC_MODEL.md).

@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -27,6 +28,7 @@ readonly class MetricsConfig
      *
      * @param array<string, mixed> $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
         /** @var array<string, mixed> $exporters */

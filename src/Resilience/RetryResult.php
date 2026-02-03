@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Resilience;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Throwable;
 
@@ -30,6 +31,7 @@ readonly class RetryResult
      *
      * @param list<int> $attemptDelays
      */
+    #[NoDiscard]
     public static function success(mixed $result, int $attempts, array $attemptDelays): self
     {
         return new self(
@@ -46,6 +48,7 @@ readonly class RetryResult
      *
      * @param list<int> $attemptDelays
      */
+    #[NoDiscard]
     public static function exhausted(int $attempts, Throwable $lastException, array $attemptDelays): self
     {
         return new self(
