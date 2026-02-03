@@ -20,7 +20,7 @@ use Pulsar\Extensibility\Exception\ManifestException;
  */
 final class ExtensionLoader
 {
-    private const MANIFEST_FILENAME = 'pulsar.json';
+    private const string MANIFEST_FILENAME = 'pulsar.json';
 
     /**
      * Discover extension manifests in the given paths.

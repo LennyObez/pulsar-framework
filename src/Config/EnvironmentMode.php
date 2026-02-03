@@ -20,8 +20,7 @@ enum EnvironmentMode: string
     {
         return match ($this) {
             self::Local => true,
-            self::Staging => false,
-            self::Production => false,
+            self::Staging, self::Production => false,
         };
     }
 }

@@ -23,7 +23,7 @@ final class InitCommand extends Command
     {
         $this->setName('init')
             ->setDescription('Initialize a new Pulsar project')
-            ->addArgument('directory', 'Target directory (default: current directory)', false)
+            ->addArgument('directory', 'Target directory (default: current directory)')
             ->addOption('force', 'Overwrite existing files', 'f');
     }
 

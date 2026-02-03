@@ -29,8 +29,8 @@ final class ConsoleOutput implements OutputInterface
      * @param resource|null $stderr
      */
     public function __construct(
-        $stdout = null,
-        $stderr = null,
+        mixed $stdout = null,
+        mixed $stderr = null,
         Verbosity $verbosity = Verbosity::Normal,
         ?bool $decorated = null,
     ) {

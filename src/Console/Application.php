@@ -19,7 +19,7 @@ use Throwable;
  */
 final class Application
 {
-    private const NAME = 'Pulsar Framework';
+    private const string NAME = 'Pulsar Framework';
 
     /** @var array<string, CommandInterface> */
     private array $commands = [];

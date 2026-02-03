@@ -124,8 +124,11 @@ readonly class Response
     /**
      * Create a JSON response.
      *
-     * @param mixed $data
+     * @param mixed $data Data to encode as JSON
+     * @param ResponseStatus $status HTTP response status
      * @param int $options JSON encoding options
+     *
+     * @return self
      */
     public static function json(
         mixed $data,
@@ -201,6 +204,23 @@ readonly class Response
         return new self(
             body: '',
             status: ResponseStatus::NoContent,
+        );
+    }
+
+    /**
+     * Create a 422 JSON response for validation errors.
+     *
+     * @param list<array{field: string, message: string, rule: string}> $violations
+     */
+    public static function validationError(array $violations): self
+    {
+        return self::json(
+            data: [
+                'error' => 'Validation Failed',
+                'status' => 422,
+                'violations' => $violations,
+            ],
+            status: ResponseStatus::UnprocessableEntity,
         );
     }
 }

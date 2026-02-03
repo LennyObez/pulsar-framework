@@ -19,15 +19,15 @@ use Throwable;
  * via the configured threshold. Sink failures are silently swallowed —
  * logging must never crash a request.
  */
-final class Logger implements LoggerInterface
+final readonly class Logger implements LoggerInterface
 {
     /**
      * @param list<LogSinkInterface> $sinks
      */
     public function __construct(
-        private readonly array $sinks,
-        private readonly LogLevel $threshold,
-        private readonly string $channel = 'app',
+        private array $sinks,
+        private LogLevel $threshold,
+        private string $channel = 'app',
     ) {}
 
     /**

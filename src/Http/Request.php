@@ -4,7 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use function array_diff_key;
+use function array_flip;
+use function array_intersect_key;
+use function array_key_exists;
+use function is_array;
 use function is_string;
+use function json_decode;
+
+use const JSON_THROW_ON_ERROR;
+
+use JsonException;
+
+use function str_contains;
 
 /**
  * Immutable HTTP request value object.
@@ -124,6 +136,104 @@ readonly class Request
             attributes: $attributes,
             protocolVersion: $this->protocolVersion,
         );
+    }
+
+    /**
+     * Decode the request body as JSON when Content-Type contains application/json.
+     *
+     * Returns an empty array on invalid JSON, empty body, or wrong content type.
+     *
+     * @return array<string, mixed>
+     */
+    public function json(): array
+    {
+        $contentType = $this->header('Content-Type');
+        if ($contentType === null || !str_contains($contentType, 'application/json')) {
+            return [];
+        }
+
+        if ($this->body === '') {
+            return [];
+        }
+
+        try {
+            $decoded = json_decode($this->body, true, 512, JSON_THROW_ON_ERROR);
+
+            /** @var array<string, mixed> */
+            return is_array($decoded) ? $decoded : [];
+        } catch (JsonException) {
+            return [];
+        }
+    }
+
+    /**
+     * Merge all input sources: query + post + json (json > post > query precedence).
+     *
+     * @return array<string, mixed>
+     */
+    public function all(): array
+    {
+        return [...$this->query, ...$this->post, ...$this->json()];
+    }
+
+    /**
+     * Get a value from the merged input (json > post > query).
+     */
+    public function input(string $key, mixed $default = null): mixed
+    {
+        return $this->all()[$key] ?? $default;
+    }
+
+    /**
+     * Check that all given keys exist in the merged input.
+     */
+    public function has(string ...$keys): bool
+    {
+        $all = $this->all();
+
+        return array_all($keys, static fn(string $key): bool => array_key_exists($key, $all));
+    }
+
+    /**
+     * Check that all given keys exist and are not empty string or null.
+     */
+    public function filled(string ...$keys): bool
+    {
+        $all = $this->all();
+
+        return array_all(
+            $keys,
+            static fn(string $key): bool => array_key_exists($key, $all) && $all[$key] !== '' && $all[$key] !== null,
+        );
+    }
+
+    /**
+     * Return a subset of the merged input for the given keys.
+     *
+     * @return array<string, mixed>
+     */
+    public function only(string ...$keys): array
+    {
+        return array_intersect_key($this->all(), array_flip($keys));
+    }
+
+    /**
+     * Return the merged input minus the given keys.
+     *
+     * @return array<string, mixed>
+     */
+    public function except(string ...$keys): array
+    {
+        return array_diff_key($this->all(), array_flip($keys));
+    }
+
+    /**
+     * Check if the client prefers a JSON response (Accept header contains application/json).
+     */
+    public function wantsJson(): bool
+    {
+        $accept = $this->header('Accept');
+        return $accept !== null && str_contains($accept, 'application/json');
     }
 
     /**
