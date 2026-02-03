@@ -55,6 +55,13 @@ final class ConfigManager
         $securityData = $this->loadConfigFile('security');
         $securityConfig = SecurityConfig::fromArray($securityData, $this->environment);
         $this->repository->set($securityConfig);
+
+        // Load database config (optional — only if config/database.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'database.php')) {
+            $databaseData = $this->loadConfigFile('database');
+            $databaseConfig = DatabaseConfig::fromArray($databaseData, $this->environment);
+            $this->repository->set($databaseConfig);
+        }
     }
 
     /**
