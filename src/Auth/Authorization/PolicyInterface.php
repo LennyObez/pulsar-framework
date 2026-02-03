@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Authorization;
 
+use Pulsar\Api\Api;
 use Pulsar\Auth\Identity\IdentityInterface;
 
 /**
@@ -12,6 +13,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * A policy can explicitly allow, explicitly deny, or abstain (return null).
  * Explicit deny always takes precedence over allow.
  */
+#[Api]
 interface PolicyInterface
 {
     /**

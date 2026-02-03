@@ -7,9 +7,12 @@ namespace Pulsar\Config;
 use function is_int;
 use function is_numeric;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for the error tracking section of observability config.
  */
+#[Api]
 readonly class ErrorTrackingConfig
 {
     /**

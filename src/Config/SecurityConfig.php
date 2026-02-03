@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Top-level typed configuration DTO for `config/security.php`.
  *
  * Composes sub-config DTOs for session, CSRF, security headers, and rate limiting.
  */
+#[Api]
 readonly class SecurityConfig
 {
     public function __construct(

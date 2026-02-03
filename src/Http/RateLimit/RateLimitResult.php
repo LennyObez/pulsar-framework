@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\RateLimit;
 
+use Pulsar\Api\Api;
+
 /**
  * Result of a rate limit check.
  */
+#[Api]
 readonly class RateLimitResult
 {
     public function __construct(

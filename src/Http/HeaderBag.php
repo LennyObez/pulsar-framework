@@ -12,6 +12,7 @@ use function is_array;
 use function is_string;
 
 use IteratorAggregate;
+use Pulsar\Api\Api;
 
 use function sprintf;
 
@@ -24,6 +25,7 @@ use Traversable;
  *
  * @implements IteratorAggregate<string, list<string>>
  */
+#[Api]
 readonly class HeaderBag implements IteratorAggregate
 {
     /**

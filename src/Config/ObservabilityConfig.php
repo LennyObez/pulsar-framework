@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for `config/observability.php`.
  *
  * Environment variables `LOG_LEVEL` and `LOG_CHANNEL` override file values.
  */
+#[Api]
 readonly class ObservabilityConfig
 {
     /**

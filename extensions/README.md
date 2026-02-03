@@ -70,6 +70,10 @@ First-party extensions maintained by the Pulsar team will be added here as the f
 - Common functionality
 - Demonstration of best practices
 
+## Complete Documentation
+
+For the full extension development guide -- including advanced manifest options, capability declarations, lifecycle hooks, testing strategies, and publishing -- see [`docs/EXTENSIONS.md`](../docs/EXTENSIONS.md).
+
 ## Guidelines
 
 - Extensions must be self-contained

@@ -6,12 +6,15 @@ namespace Pulsar\Observability\Tracing;
 
 use function hrtime;
 
+use Pulsar\Api\Api;
+
 /**
  * Mutable lifecycle object representing a unit of work in a trace.
  *
  * Spans track name, start/end times (via hrtime), attributes, and status.
  * Calling {@see end()} is idempotent.
  */
+#[Api]
 final class Span
 {
     private int $startTime;

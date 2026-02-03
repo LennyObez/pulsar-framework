@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -11,6 +12,7 @@ use function sprintf;
 /**
  * Emits an HTTP response to the client.
  */
+#[Api]
 final class ResponseEmitter
 {
     /**

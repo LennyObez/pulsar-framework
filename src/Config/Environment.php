@@ -8,6 +8,7 @@ use function array_key_exists;
 use function is_file;
 use function is_readable;
 
+use Pulsar\Api\Api;
 use Pulsar\Config\Exception\ConfigException;
 
 /**
@@ -17,6 +18,7 @@ use Pulsar\Config\Exception\ConfigException;
  * The `.env` parser supports `KEY=VALUE` lines, `#` comments, and blank lines.
  * No interpolation is performed.
  */
+#[Api]
 final class Environment
 {
     /**

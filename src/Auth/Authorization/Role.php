@@ -7,9 +7,12 @@ namespace Pulsar\Auth\Authorization;
 use function array_any;
 use function array_map;
 
+use Pulsar\Api\Api;
+
 /**
  * Immutable value object representing a role with its associated permissions.
  */
+#[Api]
 readonly class Role
 {
     /**

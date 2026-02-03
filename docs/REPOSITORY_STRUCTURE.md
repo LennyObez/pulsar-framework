@@ -36,6 +36,9 @@
 │ ├─ bench.sh
 │ └─ release.sh
 ├─ src/
+│ ├─ Api/
+│ │ ├─ Api.php
+│ │ └─ Internal.php
 │ ├─ Core/
 │ ├─ Http/
 │ ├─ Routing/
@@ -47,13 +50,16 @@
 ├─ tests/
 │ ├─ Unit/
 │ ├─ Integration/
-│ └─ E2E/
+│ ├─ E2E/
+│ └─ Benchmark/
 ├─ tools/
 │ ├─ qodana.yaml
 │ └─ php/
 │ ├─ phpstan.neon
 │ ├─ psalm.xml
-│ └─ phpunit.xml
+│ ├─ phpunit.xml
+│ ├─ phpbench.json
+│ └─ performance-budgets.json
 ├─ .editorconfig
 ├─ .gitignore
 ├─ composer.json

@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
+use Pulsar\Api\Api;
+
 /**
  * Database connection interface.
  *
  * Provides a thin abstraction over PDO for executing queries,
  * preparing statements, and managing transactions.
  */
+#[Api]
 interface ConnectionInterface
 {
     /**

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
+use Pulsar\Api\Api;
+
 /**
  * Immutable feature flag definition.
  */
+#[Api]
 readonly class FlagDefinition
 {
     /**

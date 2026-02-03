@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Scheduler\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -11,6 +12,7 @@ use function sprintf;
 /**
  * Exception for scheduler errors.
  */
+#[Api]
 final class SchedulerException extends RuntimeException
 {
     /**

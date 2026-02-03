@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for a single authentication guard.
  */
+#[Api]
 readonly class AuthGuardConfig
 {
     public function __construct(

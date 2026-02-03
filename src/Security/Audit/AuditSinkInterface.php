@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Audit;
 
+use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
 
 /**
@@ -12,6 +13,7 @@ use Pulsar\Security\Exception\SecurityException;
  * Implementations must guarantee that entries are durably written
  * before returning from write().
  */
+#[Api]
 interface AuditSinkInterface
 {
     /**

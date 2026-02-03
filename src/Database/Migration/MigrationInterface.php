@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Migration;
 
+use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
 
 /**
@@ -18,6 +19,7 @@ use Pulsar\Database\ConnectionInterface;
  * };
  * ```
  */
+#[Api]
 interface MigrationInterface
 {
     /**

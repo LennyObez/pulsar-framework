@@ -6,12 +6,14 @@ namespace Pulsar\Container\Exception;
 
 use Exception;
 use Psr\Container\ContainerExceptionInterface;
+use Pulsar\Api\Api;
 
 use function sprintf;
 
 /**
  * Exception thrown when the container encounters an error.
  */
+#[Api]
 final class ContainerException extends Exception implements ContainerExceptionInterface
 {
     /**

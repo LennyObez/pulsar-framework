@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -13,6 +14,7 @@ use function sprintf;
  *
  * Provides static factory methods for specific security error scenarios.
  */
+#[Api]
 final class SecurityException extends RuntimeException
 {
     /**
