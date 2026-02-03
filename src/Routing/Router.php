@@ -116,20 +116,38 @@ final class Router
     /**
      * Match a request path and method to a route.
      *
+     * @param Method $method The HTTP method
+     * @param string $path The request path
+     * @param string|null $host The request Host header (for host-based routing)
      * @throws RoutingException When no route matches or method is not allowed
      */
-    public function match(Method $method, string $path): MatchedRoute
+    public function match(Method $method, string $path, ?string $host = null): MatchedRoute
     {
         $pathMatches = [];
 
         foreach ($this->routes as $route) {
+            // Check host constraint first
+            if ($host !== null) {
+                $hostParams = $route->matchesHost($host);
+                if ($hostParams === null) {
+                    continue;
+                }
+            } else {
+                $hostParams = [];
+                // Skip routes that require a specific host when no host is provided
+                if ($route->host !== null) {
+                    continue;
+                }
+            }
+
             $params = $route->matchesPath($path);
 
             if ($params !== null) {
-                $pathMatches[] = ['route' => $route, 'params' => $params];
+                $mergedParams = [...$hostParams, ...$params];
+                $pathMatches[] = ['route' => $route, 'params' => $mergedParams];
 
                 if ($route->matchesMethod($method)) {
-                    return new MatchedRoute($route, $params);
+                    return new MatchedRoute($route, $mergedParams);
                 }
             }
         }
@@ -181,7 +199,7 @@ final class Router
         }
 
         // Remove unfilled optional parameters
-        $replaced = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\?\}#', '', $path);
+        $replaced = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\?}#', '', $path);
         $path = $replaced ?? $path;
 
         // Clean up double slashes

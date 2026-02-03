@@ -112,11 +112,11 @@ final class ScaffoldModuleCommand extends Command
 
             declare(strict_types=1);
 
-            namespace {$namespace};
+            namespace $namespace;
 
             use Pulsar\Container\ContainerInterface;
             use Pulsar\Extensibility\ServiceProviderInterface;
-            use {$namespace}\\Services\\{$name}Service;
+            use $namespace\\Services\\{$name}Service;
 
             final class ModuleServiceProvider implements ServiceProviderInterface
             {
@@ -143,11 +143,11 @@ final class ScaffoldModuleCommand extends Command
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Controllers;
+            namespace $namespace\\Controllers;
 
             use Pulsar\\Http\\Request;
             use Pulsar\\Http\\Response;
-            use {$namespace}\\Services\\{$name}Service;
+            use $namespace\\Services\\{$name}Service;
 
             final class {$name}Controller
             {
@@ -158,8 +158,8 @@ final class ScaffoldModuleCommand extends Command
                 public function index(Request \$request): Response
                 {
                     return Response::json([
-                        'module' => '{$name}',
-                        'message' => 'Hello from {$name} module!',
+                        'module' => '$name',
+                        'message' => 'Hello from $name module!',
                     ]);
                 }
 
@@ -168,7 +168,7 @@ final class ScaffoldModuleCommand extends Command
                     \$id = \$params['id'] ?? null;
 
                     return Response::json([
-                        'module' => '{$name}',
+                        'module' => '$name',
                         'id' => \$id,
                     ]);
                 }
@@ -183,7 +183,7 @@ final class ScaffoldModuleCommand extends Command
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Services;
+            namespace $namespace\\Services;
 
             final class {$name}Service
             {
@@ -201,11 +201,11 @@ final class ScaffoldModuleCommand extends Command
             declare(strict_types=1);
 
             use Pulsar\\Routing\\Router;
-            use {$namespace}\\Controllers\\{$name}Controller;
+            use $namespace\\Controllers\\{$name}Controller;
 
             return function (Router \$router): void {
-                \$router->get('/{$lcName}', [{$name}Controller::class, 'index'], '{$lcName}.index');
-                \$router->get('/{$lcName}/{id}', [{$name}Controller::class, 'show'], '{$lcName}.show');
+                \$router->get('/$lcName', [{$name}Controller::class, 'index'], '$lcName.index');
+                \$router->get('/$lcName/{id}', [{$name}Controller::class, 'show'], '$lcName.show');
             };
             PHP;
     }

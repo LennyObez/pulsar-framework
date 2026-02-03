@@ -11,10 +11,10 @@ use Pulsar\Http\Response;
 /**
  * Example controller demonstrating route handling with DI.
  */
-final class ExampleController
+final readonly class ExampleController
 {
     public function __construct(
-        private readonly ExampleService $exampleService,
+        private ExampleService $exampleService,
     ) {}
 
     /**

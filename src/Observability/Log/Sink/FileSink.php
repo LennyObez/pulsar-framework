@@ -16,12 +16,12 @@ use Pulsar\Observability\Log\LogSinkInterface;
  *
  * Creates the directory if missing. Uses LOCK_EX for concurrent safety.
  */
-final class FileSink implements LogSinkInterface
+final readonly class FileSink implements LogSinkInterface
 {
-    private readonly LogFormatter $formatter;
+    private LogFormatter $formatter;
 
     public function __construct(
-        private readonly string $path,
+        private string $path,
         ?LogFormatter $formatter = null,
     ) {
         $this->formatter = $formatter ?? new LogFormatter();

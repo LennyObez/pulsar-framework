@@ -61,11 +61,11 @@ final class ShowRoutesCommand extends Command
             $methods = implode('|', array_map(fn($m) => $m->value, $route->methods));
 
             // Apply filters
-            if ($methodFilter !== null && is_string($methodFilter) && !str_contains(strtoupper($methods), strtoupper($methodFilter))) {
+            if (is_string($methodFilter) && !str_contains(strtoupper($methods), strtoupper($methodFilter))) {
                 continue;
             }
 
-            if ($pathFilter !== null && is_string($pathFilter) && !str_contains($route->path, $pathFilter)) {
+            if (is_string($pathFilter) && !str_contains($route->path, $pathFilter)) {
                 continue;
             }
 
@@ -116,7 +116,7 @@ final class ShowRoutesCommand extends Command
     }
 
     /**
-     * @param array<mixed> $middleware
+     * @param list<string> $middleware
      */
     private function formatMiddleware(array $middleware): string
     {
@@ -124,13 +124,9 @@ final class ShowRoutesCommand extends Command
             return '-';
         }
 
-        $names = array_map(function ($m) {
-            if (is_string($m)) {
-                // Get short class name
-                $parts = explode('\\', $m);
-                return end($parts);
-            }
-            return 'Closure';
+        $names = array_map(static function (string $m): string {
+            $parts = explode('\\', $m);
+            return end($parts);
         }, $middleware);
 
         return implode(', ', $names);

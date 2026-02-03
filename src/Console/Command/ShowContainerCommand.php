@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use function assert;
 use function count;
 use function in_array;
 use function is_string;
@@ -43,12 +44,7 @@ final class ShowContainerCommand extends Command
 
         $container = $this->kernel->container();
 
-        // Check if container supports introspection
-        if (!$container instanceof Container) {
-            $output->warning('Container introspection not available.');
-            $output->writeln('The container must be an instance of Pulsar\\Container\\Container.');
-            return ExitCode::Success->value;
-        }
+        assert($container instanceof Container, 'Container introspection requires Pulsar\\Container\\Container.');
 
         $bindings = $container->getBindings();
         $instances = $container->getInstances();
