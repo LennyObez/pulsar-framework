@@ -22,6 +22,7 @@ use Pulsar\ErrorHandling\ProductionRenderer;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
+use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseEmitter;
@@ -46,6 +47,7 @@ final class Kernel
     private ContainerInterface $container;
     private Router $router;
     private MiddlewarePipeline $middleware;
+    private MiddlewareRegistry $middlewareRegistry;
     private ?ExtensionBootstrap $extensionBootstrap;
     private ?ConfigManager $configManager;
     private ?ExceptionHandler $exceptionHandler = null;
@@ -59,12 +61,14 @@ final class Kernel
         $this->container = $container ?? new Container();
         $this->router = $router ?? new Router();
         $this->middleware = new MiddlewarePipeline($this->container);
+        $this->middlewareRegistry = new MiddlewareRegistry();
         $this->extensionBootstrap = $extensionBootstrap;
         $this->configManager = $configManager;
 
         // Register core services in container
         $this->container->instance(ContainerInterface::class, $this->container);
         $this->container->instance(Router::class, $this->router);
+        $this->container->instance(MiddlewareRegistry::class, $this->middlewareRegistry);
         $this->container->instance(self::class, $this);
 
         // Register extension bootstrap if provided
@@ -146,6 +150,14 @@ final class Kernel
     }
 
     /**
+     * Get the middleware registry.
+     */
+    public function middlewareRegistry(): MiddlewareRegistry
+    {
+        return $this->middlewareRegistry;
+    }
+
+    /**
      * Add global middleware.
      *
      * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
@@ -191,17 +203,25 @@ final class Kernel
      */
     private function dispatchRoute(Request $request): Response
     {
-        $matched = $this->router->match($request->method, $request->path);
+        $host = $request->header('Host');
+        $matched = $this->router->match($request->method, $request->path, $host);
 
         // Add route parameters to request attributes
         $request = $this->addRouteAttributesToRequest($request, $matched);
 
-        // Apply route-specific middleware
+        // Apply route-specific middleware, resolving names through the registry
         if ($matched->getMiddleware() !== []) {
             $pipeline = new MiddlewarePipeline($this->container);
             foreach ($matched->getMiddleware() as $middleware) {
-                /** @var MiddlewareInterface|class-string<MiddlewareInterface> $middleware */
-                $pipeline->pipe($middleware);
+                if (is_string($middleware)) {
+                    $resolved = $this->middlewareRegistry->resolve($middleware);
+                    foreach ($resolved as $m) {
+                        $pipeline->pipe($m);
+                    }
+                } else {
+                    /** @var MiddlewareInterface $middleware */
+                    $pipeline->pipe($middleware);
+                }
             }
             return $pipeline->handle($request, fn(Request $req) => $this->invokeHandler($req, $matched));
         }

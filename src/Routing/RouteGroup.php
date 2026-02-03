@@ -18,11 +18,13 @@ final class RouteGroup
      * @param string $prefix URL prefix for all routes in this group
      * @param list<string> $middleware Middleware to apply to all routes
      * @param array<string, mixed> $attributes Additional attributes for all routes
+     * @param string|null $host Host pattern applied to all routes in this group
      */
     public function __construct(
         private readonly string $prefix = '',
         private readonly array $middleware = [],
         private readonly array $attributes = [],
+        private readonly ?string $host = null,
     ) {}
 
     /**
@@ -113,6 +115,8 @@ final class RouteGroup
                     name: $item->name,
                     attributes: [...$combinedAttributes, ...$item->attributes],
                     middleware: [...$combinedMiddleware, ...$item->middleware],
+                    constraints: $item->constraints,
+                    host: $item->host ?? $this->host,
                 );
             }
         }

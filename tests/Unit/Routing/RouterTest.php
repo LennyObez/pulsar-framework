@@ -277,6 +277,146 @@ final class RouterTest extends TestCase
 
         self::assertNull($router->getByName('unknown'));
     }
+
+    // --- Route Constraints in Router ---
+
+    #[Test]
+    public function matchRespectsConstraints(): void
+    {
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/users/{id}',
+            handler: fn() => 'constrained',
+            constraints: ['id' => '\d+'],
+        ));
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/users/{slug}',
+            handler: fn() => 'fallback',
+        ));
+
+        // Numeric id matches the constrained route
+        $matched = $router->match(Method::GET, '/users/123');
+        self::assertSame('123', $matched->parameter('id'));
+
+        // Non-numeric falls through to the fallback route
+        $matched = $router->match(Method::GET, '/users/john');
+        self::assertSame('john', $matched->parameter('slug'));
+    }
+
+    // --- Host-Based Routing in Router ---
+
+    #[Test]
+    public function matchWithHostSelectsCorrectRoute(): void
+    {
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => 'api',
+            host: 'api.example.com',
+        ));
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => 'web',
+        ));
+
+        // With matching host, picks the host-constrained route
+        $matched = $router->match(Method::GET, '/', 'api.example.com');
+        /** @var callable(): string $apiHandler */
+        $apiHandler = $matched->getHandler();
+        self::assertSame('api', $apiHandler());
+
+        // With a different host, picks the fallback (no host constraint)
+        $matched = $router->match(Method::GET, '/', 'www.example.com');
+        /** @var callable(): string $webHandler */
+        $webHandler = $matched->getHandler();
+        self::assertSame('web', $webHandler());
+    }
+
+    #[Test]
+    public function matchWithHostExtractsHostParameters(): void
+    {
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/dashboard',
+            handler: fn() => null,
+            host: '{tenant}.app.com',
+        ));
+
+        $matched = $router->match(Method::GET, '/dashboard', 'acme.app.com');
+
+        self::assertSame('acme', $matched->parameter('tenant'));
+    }
+
+    #[Test]
+    public function matchWithoutHostSkipsHostConstrainedRoutes(): void
+    {
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => 'host-only',
+            host: 'api.example.com',
+        ));
+
+        $this->expectException(RoutingException::class);
+        $this->expectExceptionCode(404);
+
+        // No host provided, and the only route requires a host
+        $router->match(Method::GET, '/');
+    }
+
+    #[Test]
+    public function groupPropagatesHostToRoutes(): void
+    {
+        $router = new Router();
+        $group = new RouteGroup('/api', host: 'api.example.com');
+        $group->add(Route::get('/users', fn() => null));
+
+        $router->addGroup($group);
+
+        $routes = $router->getRoutes();
+        self::assertSame('api.example.com', $routes[0]->host);
+    }
+
+    #[Test]
+    public function routeHostOverridesGroupHost(): void
+    {
+        $router = new Router();
+        $group = new RouteGroup('/api', host: 'api.example.com');
+        $group->add(new Route(
+            methods: [Method::GET],
+            path: '/special',
+            handler: fn() => null,
+            host: 'special.example.com',
+        ));
+
+        $router->addGroup($group);
+
+        $routes = $router->getRoutes();
+        self::assertSame('special.example.com', $routes[0]->host);
+    }
+
+    #[Test]
+    public function matchWithHostReturns404WhenNoHostMatches(): void
+    {
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => null,
+            host: 'api.example.com',
+        ));
+
+        $this->expectException(RoutingException::class);
+        $this->expectExceptionCode(404);
+
+        $router->match(Method::GET, '/', 'other.example.com');
+    }
 }
 
 #[CoversClass(MatchedRoute::class)]

@@ -10,7 +10,7 @@ namespace Pulsar\Core;
 final class Version
 {
     public const MAJOR = 0;
-    public const MINOR = 3;
+    public const MINOR = 4;
     public const PATCH = 0;
     public const PRERELEASE = '';
 

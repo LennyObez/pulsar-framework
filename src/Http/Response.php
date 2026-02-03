@@ -203,4 +203,21 @@ readonly class Response
             status: ResponseStatus::NoContent,
         );
     }
+
+    /**
+     * Create a 422 JSON response for validation errors.
+     *
+     * @param list<array{field: string, message: string, rule: string}> $violations
+     */
+    public static function validationError(array $violations): self
+    {
+        return self::json(
+            data: [
+                'error' => 'Validation Failed',
+                'status' => 422,
+                'violations' => $violations,
+            ],
+            status: ResponseStatus::UnprocessableEntity,
+        );
+    }
 }

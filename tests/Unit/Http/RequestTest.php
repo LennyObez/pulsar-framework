@@ -292,6 +292,242 @@ final class RequestTest extends TestCase
 
         self::assertNull($request->preferredContentType());
     }
+
+    #[Test]
+    public function jsonDecodesBodyWhenContentTypeIsJson(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '{"name":"John","age":30}',
+        );
+
+        self::assertSame(['name' => 'John', 'age' => 30], $request->json());
+    }
+
+    #[Test]
+    public function jsonReturnsEmptyArrayForNonJsonContentType(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'text/html']),
+            body: '{"name":"John"}',
+        );
+
+        self::assertSame([], $request->json());
+    }
+
+    #[Test]
+    public function jsonReturnsEmptyArrayForInvalidJson(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '{invalid json}',
+        );
+
+        self::assertSame([], $request->json());
+    }
+
+    #[Test]
+    public function jsonReturnsEmptyArrayForEmptyBody(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '',
+        );
+
+        self::assertSame([], $request->json());
+    }
+
+    #[Test]
+    public function allMergesQueryPostAndJson(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/?page=1',
+            path: '/',
+            queryString: 'page=1',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '{"name":"John"}',
+            query: ['page' => '1'],
+            post: ['token' => 'abc'],
+        );
+
+        $all = $request->all();
+        self::assertSame('1', $all['page']);
+        self::assertSame('abc', $all['token']);
+        self::assertSame('John', $all['name']);
+    }
+
+    #[Test]
+    public function allJsonOverridesPostOverridesQuery(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '{"key":"from_json"}',
+            query: ['key' => 'from_query'],
+            post: ['key' => 'from_post'],
+        );
+
+        self::assertSame('from_json', $request->all()['key']);
+    }
+
+    #[Test]
+    public function inputReturnsValueFromMergedData(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            query: ['name' => 'John'],
+        );
+
+        self::assertSame('John', $request->input('name'));
+        self::assertNull($request->input('missing'));
+        self::assertSame('default', $request->input('missing', 'default'));
+    }
+
+    #[Test]
+    public function hasReturnsTrueWhenAllKeysExist(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            query: ['name' => 'John', 'email' => 'john@test.com'],
+        );
+
+        self::assertTrue($request->has('name'));
+        self::assertTrue($request->has('name', 'email'));
+        self::assertFalse($request->has('name', 'missing'));
+    }
+
+    #[Test]
+    public function filledReturnsTrueWhenAllKeysExistAndNotEmpty(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            query: ['name' => 'John', 'empty' => '', 'present' => 'yes'],
+        );
+
+        self::assertTrue($request->filled('name'));
+        self::assertFalse($request->filled('empty'));
+        self::assertFalse($request->filled('missing'));
+        self::assertTrue($request->filled('name', 'present'));
+        self::assertFalse($request->filled('name', 'empty'));
+    }
+
+    #[Test]
+    public function onlyReturnsSubset(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            query: ['name' => 'John', 'email' => 'john@test.com', 'extra' => 'data'],
+        );
+
+        self::assertSame(
+            ['name' => 'John', 'email' => 'john@test.com'],
+            $request->only('name', 'email'),
+        );
+    }
+
+    #[Test]
+    public function exceptExcludesKeys(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            query: ['name' => 'John', 'email' => 'john@test.com', 'extra' => 'data'],
+        );
+
+        self::assertSame(
+            ['name' => 'John', 'email' => 'john@test.com'],
+            $request->except('extra'),
+        );
+    }
+
+    #[Test]
+    public function wantsJsonReturnsTrueWhenAcceptContainsJson(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Accept' => 'application/json']),
+            body: '',
+        );
+
+        self::assertTrue($request->wantsJson());
+    }
+
+    #[Test]
+    public function wantsJsonReturnsFalseWhenAcceptDoesNotContainJson(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Accept' => 'text/html']),
+            body: '',
+        );
+
+        self::assertFalse($request->wantsJson());
+    }
+
+    #[Test]
+    public function wantsJsonReturnsFalseWhenNoAcceptHeader(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+        );
+
+        self::assertFalse($request->wantsJson());
+    }
 }
 
 #[CoversClass(Method::class)]

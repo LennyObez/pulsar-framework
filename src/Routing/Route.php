@@ -21,6 +21,8 @@ readonly class Route
      * @param string|null $name Optional route name
      * @param array<string, mixed> $attributes Additional route attributes
      * @param list<string> $middleware Middleware to apply
+     * @param array<string, string> $constraints Regex constraints per parameter (e.g. ['id' => '\d+'])
+     * @param string|null $host Host pattern for host-based routing (e.g. 'api.example.com' or '{subdomain}.example.com')
      */
     public function __construct(
         public array $methods,
@@ -29,6 +31,8 @@ readonly class Route
         public ?string $name = null,
         public array $attributes = [],
         public array $middleware = [],
+        public array $constraints = [],
+        public ?string $host = null,
     ) {}
 
     /**
@@ -75,7 +79,7 @@ readonly class Route
     }
 
     /**
-     * Convert route path to regex pattern.
+     * Convert route path to regex pattern, applying per-parameter constraints.
      */
     private function pathToPattern(string $path): string
     {
@@ -85,23 +89,76 @@ readonly class Route
         // Restore { and } and convert to named capture groups
         $pattern = str_replace(['\{', '\}'], ['{', '}'], $pattern);
 
-        // Convert {param} to (?P<param>[^/]+)
-        $replaced = preg_replace(
+        $constraints = $this->constraints;
+
+        // Convert {param} to (?P<param>CONSTRAINT) using constraints or default [^/]+
+        $replaced = preg_replace_callback(
             '#\{([a-zA-Z_][a-zA-Z0-9_]*)\}#',
-            '(?P<$1>[^/]+)',
+            static function (array $matches) use ($constraints): string {
+                $name = $matches[1];
+                $regex = $constraints[$name] ?? '[^/]+';
+                return '(?P<' . $name . '>' . $regex . ')';
+            },
             $pattern,
         );
         $pattern = $replaced ?? $pattern;
 
-        // Convert {param?} to (?:(?P<param>[^/]+))?
-        $replaced = preg_replace(
+        // Convert {param?} to (?:(?P<param>CONSTRAINT))? using constraints or default [^/]+
+        $replaced = preg_replace_callback(
             '#\{([a-zA-Z_][a-zA-Z0-9_]*)\?\}#',
-            '(?:(?P<$1>[^/]+))?',
+            static function (array $matches) use ($constraints): string {
+                $name = $matches[1];
+                $regex = $constraints[$name] ?? '[^/]+';
+                return '(?:(?P<' . $name . '>' . $regex . '))?';
+            },
             $pattern,
         );
         $pattern = $replaced ?? $pattern;
 
         return '#^' . $pattern . '$#';
+    }
+
+    /**
+     * Check if this route matches the given host.
+     *
+     * Returns extracted host parameters on match, null on no match.
+     * Routes without a host pattern match any host (returns empty array).
+     *
+     * @return array<string, string>|null
+     */
+    public function matchesHost(string $host): ?array
+    {
+        if ($this->host === null) {
+            return [];
+        }
+
+        // Exact match (no parameters)
+        if (!str_contains($this->host, '{')) {
+            return strtolower($this->host) === strtolower($host) ? [] : null;
+        }
+
+        // Build regex from host pattern
+        $pattern = preg_quote($this->host, '#');
+        $pattern = str_replace(['\{', '\}'], ['{', '}'], $pattern);
+
+        $replaced = preg_replace(
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\}#',
+            '(?P<$1>[^.]+)',
+            $pattern,
+        );
+        $pattern = '#^' . ($replaced ?? $pattern) . '$#i';
+
+        if (preg_match($pattern, $host, $matches)) {
+            $params = [];
+            foreach ($matches as $key => $value) {
+                if (is_string($key)) {
+                    $params[$key] = $value;
+                }
+            }
+            return $params;
+        }
+
+        return null;
     }
 
     /**

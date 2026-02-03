@@ -145,4 +145,142 @@ final class RouteTest extends TestCase
         self::assertContains(Method::DELETE, $route->methods);
         self::assertContains(Method::OPTIONS, $route->methods);
     }
+
+    // --- Route Constraints ---
+
+    #[Test]
+    public function constraintEnforcesDigitsOnly(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/users/{id}',
+            handler: fn() => null,
+            constraints: ['id' => '\d+'],
+        );
+
+        self::assertSame(['id' => '123'], $route->matchesPath('/users/123'));
+        self::assertNull($route->matchesPath('/users/abc'));
+        self::assertNull($route->matchesPath('/users/12a'));
+    }
+
+    #[Test]
+    public function constraintEnforcesAlphaSlug(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/posts/{slug}',
+            handler: fn() => null,
+            constraints: ['slug' => '[a-z0-9\-]+'],
+        );
+
+        self::assertSame(['slug' => 'hello-world'], $route->matchesPath('/posts/hello-world'));
+        self::assertNull($route->matchesPath('/posts/Hello_World'));
+    }
+
+    #[Test]
+    public function multipleConstraintsOnDifferentParameters(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/users/{id}/posts/{slug}',
+            handler: fn() => null,
+            constraints: ['id' => '\d+', 'slug' => '[a-z\-]+'],
+        );
+
+        self::assertSame(
+            ['id' => '42', 'slug' => 'my-post'],
+            $route->matchesPath('/users/42/posts/my-post'),
+        );
+        self::assertNull($route->matchesPath('/users/abc/posts/my-post'));
+        self::assertNull($route->matchesPath('/users/42/posts/MY_POST'));
+    }
+
+    #[Test]
+    public function unconstrainedParameterStillMatchesAnything(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/users/{id}/posts/{slug}',
+            handler: fn() => null,
+            constraints: ['id' => '\d+'],
+        );
+
+        // id is constrained but slug is not
+        self::assertSame(
+            ['id' => '42', 'slug' => 'Anything_123'],
+            $route->matchesPath('/users/42/posts/Anything_123'),
+        );
+    }
+
+    // --- Host-Based Routing ---
+
+    #[Test]
+    public function matchesHostExactMatch(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => null,
+            host: 'api.example.com',
+        );
+
+        self::assertSame([], $route->matchesHost('api.example.com'));
+        self::assertSame([], $route->matchesHost('API.EXAMPLE.COM'));
+        self::assertNull($route->matchesHost('www.example.com'));
+    }
+
+    #[Test]
+    public function matchesHostWithParameter(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => null,
+            host: '{subdomain}.example.com',
+        );
+
+        $params = $route->matchesHost('api.example.com');
+
+        self::assertSame(['subdomain' => 'api'], $params);
+    }
+
+    #[Test]
+    public function matchesHostReturnsNullForNonMatch(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => null,
+            host: '{subdomain}.example.com',
+        );
+
+        self::assertNull($route->matchesHost('api.other.com'));
+    }
+
+    #[Test]
+    public function matchesHostWithNoHostPatternMatchesAny(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/',
+            handler: fn() => null,
+        );
+
+        self::assertSame([], $route->matchesHost('anything.example.com'));
+    }
+
+    #[Test]
+    public function constructorSetsConstraintsAndHost(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/users/{id}',
+            handler: fn() => null,
+            constraints: ['id' => '\d+'],
+            host: 'api.example.com',
+        );
+
+        self::assertSame(['id' => '\d+'], $route->constraints);
+        self::assertSame('api.example.com', $route->host);
+    }
 }
