@@ -30,16 +30,25 @@ if ($autoloader === null) {
 
 require $autoloader;
 
+use Pulsar\Config\ConfigManager;
+use Pulsar\Config\DatabaseConfig;
 use Pulsar\Console\Application;
 use Pulsar\Console\Command\DiagnosticsCommand;
 use Pulsar\Console\Command\InitCommand;
 use Pulsar\Console\Command\ListCommand;
+use Pulsar\Console\Command\MigrateCreateCommand;
+use Pulsar\Console\Command\MigrateRollbackCommand;
+use Pulsar\Console\Command\MigrateRunCommand;
+use Pulsar\Console\Command\MigrateStatusCommand;
 use Pulsar\Console\Command\ScaffoldExtensionCommand;
 use Pulsar\Console\Command\ScaffoldModuleCommand;
 use Pulsar\Console\Command\ShowContainerCommand;
 use Pulsar\Console\Command\ShowRoutesCommand;
 use Pulsar\Console\CommandInterface;
 use Pulsar\Core\Kernel;
+use Pulsar\Database\ConnectionManager;
+use Pulsar\Database\Migration\MigrationRepository;
+use Pulsar\Database\Migration\MigrationRunner;
 use Pulsar\Extensibility\ExtensionBootstrap;
 
 // Create kernel with optional extension support
@@ -64,7 +73,23 @@ foreach ($extensionPaths as $path) {
     }
 }
 
-$kernel = new Kernel(extensionBootstrap: $extensionBootstrap);
+// Resolve config directory
+$configPath = getcwd() . '/config';
+if (!is_dir($configPath)) {
+    $configPath = __DIR__ . '/../config';
+}
+
+$configManager = null;
+if (is_dir($configPath)) {
+    $configManager = new ConfigManager(configPath: $configPath);
+}
+
+$kernel = new Kernel(
+    extensionBootstrap: $extensionBootstrap,
+    configManager: $configManager,
+);
+$kernel->boot();
+
 $application = new Application($kernel);
 
 // Register built-in commands
@@ -77,6 +102,29 @@ $application->addCommands([
     new ScaffoldModuleCommand(),
     new ScaffoldExtensionCommand(),
 ]);
+
+// Register migration commands (only if database is configured)
+if ($kernel->container()->has(ConnectionManager::class)) {
+    /** @var DatabaseConfig $dbConfig */
+    $dbConfig = $kernel->container()->get(DatabaseConfig::class);
+
+    /** @var ConnectionManager $connectionManager */
+    $connectionManager = $kernel->container()->get(ConnectionManager::class);
+
+    $migrationRepo = new MigrationRepository($dbConfig->migrationsPath);
+    $migrationRunner = new MigrationRunner(
+        $connectionManager->connection(),
+        $migrationRepo,
+        $dbConfig->migrationsTable,
+    );
+
+    $application->addCommands([
+        new MigrateRunCommand($migrationRunner),
+        new MigrateRollbackCommand($migrationRunner),
+        new MigrateStatusCommand($migrationRunner, $migrationRepo),
+        new MigrateCreateCommand($dbConfig->migrationsPath),
+    ]);
+}
 
 // Register extension commands
 if ($extensionBootstrap !== null) {
