@@ -35,22 +35,22 @@ return [
 
 Environment variables override file values for the active connection:
 
-| Variable | Overrides |
-|---|---|
-| `DB_CONNECTION` | `default` |
-| `DB_HOST` | `host` |
-| `DB_PORT` | `port` |
-| `DB_DATABASE` | `database` |
-| `DB_USERNAME` | `username` |
-| `DB_PASSWORD` | `password` |
+| Variable        | Overrides  |
+| --------------- | ---------- |
+| `DB_CONNECTION` | `default`  |
+| `DB_HOST`       | `host`     |
+| `DB_PORT`       | `port`     |
+| `DB_DATABASE`   | `database` |
+| `DB_USERNAME`   | `username` |
+| `DB_PASSWORD`   | `password` |
 
 ## Supported Drivers
 
-| Driver | Enum Value | Default Port |
-|---|---|---|
-| MySQL | `mysql` | 3306 |
-| PostgreSQL | `pgsql` | 5432 |
-| SQLite | `sqlite` | — |
+| Driver     | Enum Value | Default Port |
+| ---------- | ---------- | ------------ |
+| MySQL      | `mysql`    | 3306         |
+| PostgreSQL | `pgsql`    | 5432         |
+| SQLite     | `sqlite`   | —            |
 
 ## Basic Usage
 
@@ -110,16 +110,16 @@ foreach ($entries as $entry) {
 
 `Row` provides type-safe accessors that cast database values:
 
-| Method | Returns | Throws on |
-|---|---|---|
-| `getInt(column)` | `int` | Non-integer value |
-| `getString(column)` | `string` | `null` or non-scalar |
-| `getBool(column)` | `bool` | Non-boolean value |
-| `getFloat(column)` | `float` | Non-numeric value |
-| `getNullableInt(column)` | `?int` | Non-integer non-null |
-| `getNullableString(column)` | `?string` | Non-scalar non-null |
-| `get(column)` | `mixed` | Missing column |
-| `getOrDefault(column, default)` | `mixed` | Never |
+| Method                          | Returns   | Throws on            |
+| ------------------------------- | --------- | -------------------- |
+| `getInt(column)`                | `int`     | Non-integer value    |
+| `getString(column)`             | `string`  | `null` or non-scalar |
+| `getBool(column)`               | `bool`    | Non-boolean value    |
+| `getFloat(column)`              | `float`   | Non-numeric value    |
+| `getNullableInt(column)`        | `?int`    | Non-integer non-null |
+| `getNullableString(column)`     | `?string` | Non-scalar non-null  |
+| `get(column)`                   | `mixed`   | Missing column       |
+| `getOrDefault(column, default)` | `mixed`   | Never                |
 
 Additional methods: `has(column)`, `columns()`, `toArray()`.
 

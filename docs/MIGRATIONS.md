@@ -72,11 +72,11 @@ Each `migrate:run` call assigns a batch number. All migrations applied in one ru
 
 Example:
 
-| Version | Name | Batch |
-|---|---|---|
-| 20260101120000 | create_users | 1 |
-| 20260102120000 | create_posts | 1 |
-| 20260201120000 | add_user_avatar | 2 |
+| Version        | Name            | Batch |
+| -------------- | --------------- | ----- |
+| 20260101120000 | create_users    | 1     |
+| 20260102120000 | create_posts    | 1     |
+| 20260201120000 | add_user_avatar | 2     |
 
 Running `migrate:rollback` rolls back only `20260201120000` (batch 2).
 

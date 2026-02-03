@@ -15,6 +15,31 @@ use Pulsar\Database\Exception\DatabaseException;
 #[CoversClass(DatabaseConfig::class)]
 final class DatabaseConfigTest extends TestCase
 {
+    /** @var array<string, string|false> */
+    private array $savedEnvVars = [];
+
+    private const array DB_ENV_KEYS = ['DB_CONNECTION', 'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD'];
+
+    protected function setUp(): void
+    {
+        foreach (self::DB_ENV_KEYS as $key) {
+            $this->savedEnvVars[$key] = getenv($key);
+            putenv($key);
+        }
+    }
+
+    protected function tearDown(): void
+    {
+        foreach (self::DB_ENV_KEYS as $key) {
+            $saved = $this->savedEnvVars[$key];
+            if ($saved === false) {
+                putenv($key);
+            } else {
+                putenv("{$key}={$saved}");
+            }
+        }
+    }
+
     #[Test]
     public function fromArrayCreatesConfigWithDefaults(): void
     {
