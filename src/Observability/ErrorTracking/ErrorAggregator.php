@@ -6,6 +6,10 @@ namespace Pulsar\Observability\ErrorTracking;
 
 use function array_values;
 use function count;
+
+use Pulsar\Api\Internal;
+use Throwable;
+
 use function usort;
 
 /**
@@ -18,6 +22,9 @@ final class ErrorAggregator
 {
     /** @var array<string, ErrorGroup> fingerprint => group */
     private array $groups = [];
+
+    /** @var list<callable(ErrorEvent): void> */
+    private array $observers = [];
 
     public function __construct(
         private readonly int $maxGroups = 500,
@@ -41,6 +48,24 @@ final class ErrorAggregator
         }
 
         $this->groups[$key]->record($event);
+
+        foreach ($this->observers as $observer) {
+            try {
+                $observer($event);
+            } catch (Throwable) {
+            }
+        }
+    }
+
+    /**
+     * Register an observer to be notified on every captured error event.
+     *
+     * @param callable(ErrorEvent): void $observer
+     */
+    #[Internal]
+    public function addObserver(callable $observer): void
+    {
+        $this->observers[] = $observer;
     }
 
     /**

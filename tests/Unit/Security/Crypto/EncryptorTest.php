@@ -25,7 +25,7 @@ final class EncryptorTest extends TestCase
     {
         $hex = sodium_bin2hex(random_bytes(32));
         $masterKey = MasterKey::fromHex($hex);
-        $this->encryptor = new Encryptor($masterKey);
+        $this->encryptor = Encryptor::fromMasterKey($masterKey);
     }
 
     #[Test]
@@ -91,7 +91,7 @@ final class EncryptorTest extends TestCase
 
         $otherHex = sodium_bin2hex(random_bytes(32));
         $otherKey = MasterKey::fromHex($otherHex);
-        $otherEncryptor = new Encryptor($otherKey);
+        $otherEncryptor = Encryptor::fromMasterKey($otherKey);
 
         $this->expectException(SecurityException::class);
 

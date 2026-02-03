@@ -207,8 +207,9 @@ final class ContainerTest extends TestCase
     public function nonExistentClassThrowsException(): void
     {
         $container = new Container();
-        // @phpstan-ignore argument.type
-        $container->bind('service', 'NonExistentClass');
+        /** @var class-string $nonExistent */
+        $nonExistent = trim('NonExistentClass');
+        $container->bind('service', $nonExistent);
 
         $this->expectException(ContainerException::class);
         $this->expectExceptionMessage('does not exist');

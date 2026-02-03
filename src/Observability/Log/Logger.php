@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use function is_string;
+
 use Psr\Log\LoggerInterface;
 use Pulsar\Config\LoggingChannelConfig;
 use Pulsar\Config\ObservabilityConfig;
@@ -35,6 +37,16 @@ final readonly class Logger implements LoggerInterface
      */
     public static function fromConfig(ObservabilityConfig $config): self
     {
+        return self::fromConfigWithExtraSinks($config, []);
+    }
+
+    /**
+     * Build a Logger from ObservabilityConfig with additional sinks appended.
+     *
+     * @param list<LogSinkInterface> $extraSinks
+     */
+    public static function fromConfigWithExtraSinks(ObservabilityConfig $config, array $extraSinks): self
+    {
         $threshold = LogLevel::fromPsrLevel($config->loggingLevel);
         $sinks = [];
 
@@ -44,6 +56,10 @@ final readonly class Logger implements LoggerInterface
             if ($sink !== null) {
                 $sinks[] = $sink;
             }
+        }
+
+        foreach ($extraSinks as $sink) {
+            $sinks[] = $sink;
         }
 
         return new self(
@@ -95,7 +111,8 @@ final readonly class Logger implements LoggerInterface
 
     public function log(mixed $level, string|Stringable $message, array $context = []): void
     {
-        $logLevel = LogLevel::fromPsrLevel($level);
+        $levelParam = $level instanceof LogLevel ? $level : (is_string($level) ? $level : 'debug');
+        $logLevel = LogLevel::fromPsrLevel($levelParam);
 
         if (!$logLevel->meetsThreshold($this->threshold)) {
             return;

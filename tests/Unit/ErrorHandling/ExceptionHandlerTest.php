@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\ErrorHandling;
 
+use function is_scalar;
+use function is_string;
+
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -202,7 +205,7 @@ final class TestLogger implements LoggerInterface
     {
         /** @var array<string, mixed> $context */
         $this->logs[] = [
-            'level' => (string) $level, // @phpstan-ignore cast.string
+            'level' => is_string($level) ? $level : (is_scalar($level) ? (string) $level : 'unknown'),
             'message' => (string) $message,
             'context' => $context,
         ];

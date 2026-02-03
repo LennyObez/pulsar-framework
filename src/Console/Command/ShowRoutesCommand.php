@@ -104,7 +104,10 @@ final class ShowRoutesCommand extends Command
         return ExitCode::Success->value;
     }
 
-    private function formatHandler(mixed $handler): string
+    /**
+     * @param array<int, mixed>|string|callable $handler
+     */
+    private function formatHandler(array|string|callable $handler): string
     {
         if (is_string($handler)) {
             return $handler;
