@@ -38,22 +38,22 @@ vendor/bin/phpbench run benchmarks --iterations=10 --revs=1000 --report=default
 
 ## Current Benchmarks
 
-| Benchmark | Description | Status |
-|-----------|-------------|--------|
+| Benchmark      | Description                         | Status      |
+| -------------- | ----------------------------------- | ----------- |
 | ContainerBench | DI container resolution performance | Placeholder |
-| RouterBench | Route matching performance | Placeholder |
+| RouterBench    | Route matching performance          | Placeholder |
 
 ## Performance Targets
 
 These are aspirational targets for core operations:
 
-| Operation | Target | Notes |
-|-----------|--------|-------|
-| Container::get (cached) | < 100ns | Singleton lookup |
-| Container::get (factory) | < 1μs | With autowiring |
-| Router::match (10 routes) | < 5μs | Static routes |
-| Router::match (100 routes) | < 50μs | With parameters |
-| Middleware pipeline (5 deep) | < 10μs | Empty middleware |
+| Operation                    | Target  | Notes            |
+| ---------------------------- | ------- | ---------------- |
+| Container::get (cached)      | < 100ns | Singleton lookup |
+| Container::get (factory)     | < 1μs   | With autowiring  |
+| Router::match (10 routes)    | < 5μs   | Static routes    |
+| Router::match (100 routes)   | < 50μs  | With parameters  |
+| Middleware pipeline (5 deep) | < 10μs  | Empty middleware |
 
 ## Adding New Benchmarks
 
