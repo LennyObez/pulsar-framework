@@ -56,11 +56,11 @@ final class VersionTest extends TestCase
     }
 
     #[Test]
-    public function currentVersionIs040(): void
+    public function currentVersionIs060(): void
     {
         self::assertSame(0, Version::MAJOR);
-        self::assertSame(4, Version::MINOR);
+        self::assertSame(6, Version::MINOR);
         self::assertSame(0, Version::PATCH);
-        self::assertSame('0.4.0', Version::short());
+        self::assertSame('0.6.0', Version::short());
     }
 }

@@ -96,6 +96,18 @@ final class ValidationMiddlewareTest extends TestCase
                     "stderr" => ["driver" => "stream", "stream" => "php://stderr"],
                 ],
             ],
+            "audit" => [
+                "enabled" => false,
+                "log_path" => "var/logs/audit.jsonl",
+                "events" => [],
+            ],
+        ];');
+
+        file_put_contents($this->tempDir . '/security.php', '<?php return [
+            "session" => [],
+            "csrf" => ["enabled" => false],
+            "headers" => [],
+            "rate_limiting" => ["enabled" => false],
         ];');
     }
 

@@ -76,6 +76,7 @@ return [
     */
     'audit' => [
         'enabled' => true,
+        'log_path' => 'var/logs/audit.jsonl',
         'events' => [
             'authentication',
             'authorization',
