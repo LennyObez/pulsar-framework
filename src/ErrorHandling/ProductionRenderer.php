@@ -33,7 +33,7 @@ final class ProductionRenderer implements ExceptionRendererInterface
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>{$title}</title>
+                <title>$title</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body { font-family: system-ui, -apple-system, sans-serif; background: #f8f9fa; color: #333; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
@@ -44,8 +44,8 @@ final class ProductionRenderer implements ExceptionRendererInterface
             </head>
             <body>
                 <div class="error">
-                    <h1>{$statusCode}</h1>
-                    <p>{$message}</p>
+                    <h1>$statusCode</h1>
+                    <p>$message</p>
                 </div>
             </body>
             </html>

@@ -6,6 +6,7 @@ namespace Pulsar\Console\Command;
 
 use Pulsar\Console\Application;
 use Pulsar\Console\Command;
+use Pulsar\Console\CommandInterface;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
@@ -94,8 +95,8 @@ final class ListCommand extends Command
     }
 
     /**
-     * @param array<string, \Pulsar\Console\CommandInterface> $commands
-     * @return array<string, list<\Pulsar\Console\CommandInterface>>
+     * @param array<string, CommandInterface> $commands
+     * @return array<string, list<CommandInterface>>
      */
     private function groupCommands(array $commands): array
     {

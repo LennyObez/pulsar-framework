@@ -102,9 +102,7 @@ final class RouteGroup
             } else {
                 // Create new route with applied prefix and middleware
                 $routePath = rtrim($fullPrefix, '/') . '/' . ltrim($item->path, '/');
-                if ($routePath === '/') {
-                    $routePath = '/';
-                } else {
+                if ($routePath !== '/') {
                     $routePath = '/' . trim($routePath, '/');
                 }
 

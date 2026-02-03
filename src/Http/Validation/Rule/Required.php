@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Rule;
 
-use function is_array;
-use function is_string;
-
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
@@ -24,8 +21,8 @@ readonly class Required implements RuleInterface
     public function validate(string $field, mixed $value, array $data): ?Violation
     {
         $missing = $value === null
-            || (is_string($value) && $value === '')
-            || (is_array($value) && $value === []);
+            || $value === ''
+            || $value === [];
 
         if ($missing) {
             return new Violation(

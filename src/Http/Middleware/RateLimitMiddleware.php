@@ -18,10 +18,10 @@ use Pulsar\Http\ResponseStatus;
  * Returns 429 Too Many Requests with standard rate-limit headers
  * when the limit is exceeded.
  */
-final class RateLimitMiddleware implements MiddlewareInterface
+final readonly class RateLimitMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly RateLimiter $limiter,
+        private RateLimiter $limiter,
     ) {}
 
     public function process(Request $request, callable $next): Response

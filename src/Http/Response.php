@@ -124,8 +124,11 @@ readonly class Response
     /**
      * Create a JSON response.
      *
-     * @param mixed $data
+     * @param mixed $data Data to encode as JSON
+     * @param ResponseStatus $status HTTP response status
      * @param int $options JSON encoding options
+     *
+     * @return self
      */
     public static function json(
         mixed $data,

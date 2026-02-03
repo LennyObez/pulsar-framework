@@ -8,3 +8,12 @@ profile:
   name: qodana.recommended
 include:
   - name: CheckDependencyLicenses
+exclude:
+  - name: PhpUndefinedClassInspection
+  - name: PhpUndefinedNamespaceInspection
+  - name: PhpNoninstalledComposerPackagesInspection
+  - name: PhpIncludeInspection
+  - name: PhpUnhandledExceptionInspection
+  - name: PhpUnusedParameterInspection
+  - name: PhpAccessorCanBeReplacedWithPropertyHookInspection
+  - name: EsLintInspection

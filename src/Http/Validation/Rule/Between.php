@@ -34,8 +34,8 @@ readonly class Between implements RuleInterface
                 message: $this->message !== '' ? $this->message : sprintf(
                     'The %s field must be between %s and %s.',
                     $field,
-                    (string) $this->min,
-                    (string) $this->max,
+                    $this->min,
+                    $this->max,
                 ),
                 rule: $this->name(),
             );
@@ -49,8 +49,8 @@ readonly class Between implements RuleInterface
                 message: $this->message !== '' ? $this->message : sprintf(
                     'The %s field must be between %s and %s.',
                     $field,
-                    (string) $this->min,
-                    (string) $this->max,
+                    $this->min,
+                    $this->max,
                 ),
                 rule: $this->name(),
             );

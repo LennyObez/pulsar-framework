@@ -99,7 +99,6 @@ final class ConfigManager
             throw ConfigException::fileNotFound($path);
         }
 
-        /** @var mixed $data */
         $data = require $path;
 
         if (!is_array($data)) {

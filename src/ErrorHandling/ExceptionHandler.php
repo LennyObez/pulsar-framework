@@ -21,11 +21,11 @@ use Throwable;
  * Resolves HTTP status from exception type, logs every exception
  * with structured context, and renders an error response.
  */
-final class ExceptionHandler
+final readonly class ExceptionHandler
 {
     public function __construct(
-        private readonly ExceptionRendererInterface $renderer,
-        private readonly ?LoggerInterface $logger = null,
+        private ExceptionRendererInterface $renderer,
+        private ?LoggerInterface $logger = null,
     ) {}
 
     /**

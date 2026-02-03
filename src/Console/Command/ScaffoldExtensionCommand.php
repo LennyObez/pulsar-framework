@@ -135,7 +135,7 @@ final class ScaffoldExtensionCommand extends Command
             ],
         ];
 
-        return (string) json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+        return json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
     }
 
     private function getComposerContent(string $fullName, string $namespace): string
@@ -154,7 +154,7 @@ final class ScaffoldExtensionCommand extends Command
             ],
         ];
 
-        return (string) json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+        return json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
     }
 
     private function getExtensionContent(string $namespace, string $className): string
@@ -164,19 +164,19 @@ final class ScaffoldExtensionCommand extends Command
 
             declare(strict_types=1);
 
-            namespace {$namespace};
+            namespace $namespace;
 
             use Pulsar\\Container\\ContainerInterface;
             use Pulsar\\Extensibility\\ExtensionInterface;
             use Pulsar\\Extensibility\\ServiceProviderInterface;
             use Pulsar\\Routing\\Router;
-            use {$namespace}\\Controller\\{$className}Controller;
+            use $namespace\\Controller\\{$className}Controller;
 
             final class {$className}Extension implements ExtensionInterface
             {
                 public function name(): string
                 {
-                    return '{$namespace}';
+                    return '$namespace';
                 }
 
                 public function register(ContainerInterface \$container): void
@@ -210,7 +210,7 @@ final class ScaffoldExtensionCommand extends Command
 
             declare(strict_types=1);
 
-            namespace {$namespace};
+            namespace $namespace;
 
             use Pulsar\\Container\\ContainerInterface;
             use Pulsar\\Extensibility\\ServiceProviderInterface;
@@ -239,13 +239,13 @@ final class ScaffoldExtensionCommand extends Command
 
             declare(strict_types=1);
 
-            namespace {$namespace};
+            namespace $namespace;
 
             final class {$className}Service
             {
                 public function getMessage(): string
                 {
-                    return 'Hello from {$className}!';
+                    return 'Hello from $className!';
                 }
             }
             PHP;
@@ -259,11 +259,11 @@ final class ScaffoldExtensionCommand extends Command
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Controller;
+            namespace $namespace\\Controller;
 
             use Pulsar\\Http\\Request;
             use Pulsar\\Http\\Response;
-            use {$namespace}\\{$className}Service;
+            use $namespace\\{$className}Service;
 
             final class {$className}Controller
             {

@@ -6,6 +6,7 @@ namespace Pulsar\Benchmarks;
 
 use Pulsar\Container\BindingType;
 use Pulsar\Container\Container;
+use stdClass;
 
 /**
  * Benchmarks for the dependency injection container.
@@ -23,11 +24,11 @@ final class ContainerBench
         $this->container = new Container();
 
         // Register various bindings for benchmarking
-        $this->container->instance('instance', new \stdClass());
+        $this->container->instance('instance', new stdClass());
 
-        $this->container->bind('singleton', fn() => new \stdClass(), BindingType::Singleton);
+        $this->container->bind('singleton', fn() => new stdClass());
 
-        $this->container->bind('factory', fn() => new \stdClass(), BindingType::Factory);
+        $this->container->bind('factory', fn() => new stdClass(), BindingType::Factory);
 
         // Pre-resolve singleton to cache it
         $this->container->get('singleton');
@@ -99,7 +100,7 @@ final class ContainerBench
      */
     public function benchBindRegistration(): void
     {
-        $this->container->bind('new-binding', fn() => new \stdClass());
+        $this->container->bind('new-binding', fn() => new stdClass());
     }
 
     public function setUpFresh(): void

@@ -7,11 +7,13 @@ namespace Pulsar\Http\Validation\Rule;
 use function array_map;
 use function implode;
 use function in_array;
+use function is_scalar;
 
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
 use function sprintf;
+use function strval;
 
 /**
  * Value must be one of an allowed set (loose comparison for HTTP string inputs).
@@ -33,9 +35,12 @@ readonly class In implements RuleInterface
             return null;
         }
 
-        // Loose comparison: HTTP inputs are typically strings
-        if (in_array($value, $this->allowed, false)) {
-            return null;
+        // Loose comparison: cast allowed values to string for HTTP input matching
+        if (is_scalar($value)) {
+            $stringAllowed = array_map(strval(...), $this->allowed);
+            if (in_array(strval($value), $stringAllowed, true)) {
+                return null;
+            }
         }
 
         return new Violation(

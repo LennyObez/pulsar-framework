@@ -43,7 +43,7 @@ final class DevelopmentRenderer implements ExceptionRendererInterface
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>{$title}</title>
+                <title>$title</title>
                 <style>
                     * { margin: 0; padding: 0; box-sizing: border-box; }
                     body { font-family: system-ui, -apple-system, sans-serif; background: #1a1a2e; color: #e0e0e0; padding: 2rem; }
@@ -67,40 +67,40 @@ final class DevelopmentRenderer implements ExceptionRendererInterface
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>{$exceptionClass}</h1>
-                        <div class="status">{$title}</div>
+                        <h1>$exceptionClass</h1>
+                        <div class="status">$title</div>
                     </div>
 
                     <div class="section">
                         <h2>Exception</h2>
-                        <p>{$exceptionMessage}</p>
-                        <p class="meta" style="margin-top: 0.5rem;">{$file}:{$line}</p>
+                        <p>$exceptionMessage</p>
+                        <p class="meta" style="margin-top: 0.5rem;">$file:$line</p>
                     </div>
 
                     <div class="section">
                         <h2>Stack Trace</h2>
-                        <pre>{$trace}</pre>
+                        <pre>$trace</pre>
                     </div>
 
                     <div class="section">
                         <h2>Request</h2>
                         <table>
-                            <tr><td class="label">Method</td><td>{$requestMethod}</td></tr>
-                            <tr><td class="label">URI</td><td>{$requestUri}</td></tr>
+                            <tr><td class="label">Method</td><td>$requestMethod</td></tr>
+                            <tr><td class="label">URI</td><td>$requestUri</td></tr>
                         </table>
                     </div>
 
                     <div class="section">
                         <h2>Headers</h2>
-                        <table>{$headersHtml}</table>
+                        <table>$headersHtml</table>
                     </div>
 
                     <div class="section">
                         <h2>Query Parameters</h2>
-                        <table>{$queryHtml}</table>
+                        <table>$queryHtml</table>
                     </div>
 
-                    {$previousHtml}
+                    $previousHtml
                 </div>
             </body>
             </html>
@@ -114,7 +114,7 @@ final class DevelopmentRenderer implements ExceptionRendererInterface
         foreach ($request->headers->toArray() as $name => $values) {
             $escapedName = $this->escape($name);
             $escapedValue = $this->escape(implode(', ', $values));
-            $html .= "<tr><td>{$escapedName}</td><td>{$escapedValue}</td></tr>";
+            $html .= "<tr><td>$escapedName</td><td>$escapedValue</td></tr>";
         }
 
         return $html !== '' ? $html : '<tr><td colspan="2">None</td></tr>';
@@ -134,7 +134,7 @@ final class DevelopmentRenderer implements ExceptionRendererInterface
         foreach ($data as $key => $value) {
             $escapedKey = $this->escape($key);
             $escapedValue = $this->escape((string) $value); // @phpstan-ignore cast.string
-            $html .= "<tr><td>{$escapedKey}</td><td>{$escapedValue}</td></tr>";
+            $html .= "<tr><td>$escapedKey</td><td>$escapedValue</td></tr>";
         }
 
         return $html;
@@ -160,10 +160,10 @@ final class DevelopmentRenderer implements ExceptionRendererInterface
 
             $html .= <<<BLOCK
                 <div class="previous">
-                    <h3>{$class}</h3>
-                    <p>{$message}</p>
-                    <p class="meta">{$file}:{$line}</p>
-                    <pre style="margin-top: 0.5rem;">{$trace}</pre>
+                    <h3>$class</h3>
+                    <p>$message</p>
+                    <p class="meta">$file:$line</p>
+                    <pre style="margin-top: 0.5rem;">$trace</pre>
                 </div>
                 BLOCK;
 

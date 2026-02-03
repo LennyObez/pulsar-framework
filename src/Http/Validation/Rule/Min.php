@@ -30,7 +30,7 @@ readonly class Min implements RuleInterface
         if (!is_numeric($value)) {
             return new Violation(
                 field: $field,
-                message: $this->message !== '' ? $this->message : sprintf('The %s field must be at least %s.', $field, (string) $this->min),
+                message: $this->message !== '' ? $this->message : sprintf('The %s field must be at least %s.', $field, $this->min),
                 rule: $this->name(),
             );
         }
@@ -38,7 +38,7 @@ readonly class Min implements RuleInterface
         if ((float) $value < $this->min) {
             return new Violation(
                 field: $field,
-                message: $this->message !== '' ? $this->message : sprintf('The %s field must be at least %s.', $field, (string) $this->min),
+                message: $this->message !== '' ? $this->message : sprintf('The %s field must be at least %s.', $field, $this->min),
                 rule: $this->name(),
             );
         }

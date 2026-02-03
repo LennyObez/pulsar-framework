@@ -30,7 +30,7 @@ readonly class Max implements RuleInterface
         if (!is_numeric($value)) {
             return new Violation(
                 field: $field,
-                message: $this->message !== '' ? $this->message : sprintf('The %s field must be at most %s.', $field, (string) $this->max),
+                message: $this->message !== '' ? $this->message : sprintf('The %s field must be at most %s.', $field, $this->max),
                 rule: $this->name(),
             );
         }
@@ -38,7 +38,7 @@ readonly class Max implements RuleInterface
         if ((float) $value > $this->max) {
             return new Violation(
                 field: $field,
-                message: $this->message !== '' ? $this->message : sprintf('The %s field must be at most %s.', $field, (string) $this->max),
+                message: $this->message !== '' ? $this->message : sprintf('The %s field must be at most %s.', $field, $this->max),
                 rule: $this->name(),
             );
         }

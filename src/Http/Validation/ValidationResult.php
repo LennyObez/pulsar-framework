@@ -58,13 +58,11 @@ readonly class ValidationResult
      */
     public function firstForField(string $field): ?Violation
     {
-        foreach ($this->violations as $violation) {
-            if ($violation->field === $field) {
-                return $violation;
-            }
-        }
-
-        return null;
+        /** @var Violation|null */
+        return array_find(
+            $this->violations,
+            static fn(Violation $v): bool => $v->field === $field,
+        );
     }
 
     /**

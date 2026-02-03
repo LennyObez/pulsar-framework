@@ -27,7 +27,7 @@ final class ArrayInput implements InputInterface
      * @param array<string, mixed> $options Options (--name=value pairs)
      */
     public function __construct(
-        private ?string $commandName = null,
+        private readonly ?string $commandName = null,
         array $arguments = [],
         array $options = [],
     ) {

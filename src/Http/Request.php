@@ -157,7 +157,6 @@ readonly class Request
         }
 
         try {
-            /** @var mixed $decoded */
             $decoded = json_decode($this->body, true, 512, JSON_THROW_ON_ERROR);
 
             /** @var array<string, mixed> */
@@ -191,13 +190,8 @@ readonly class Request
     public function has(string ...$keys): bool
     {
         $all = $this->all();
-        foreach ($keys as $key) {
-            if (!array_key_exists($key, $all)) {
-                return false;
-            }
-        }
 
-        return true;
+        return array_all($keys, static fn(string $key): bool => array_key_exists($key, $all));
     }
 
     /**
@@ -206,13 +200,11 @@ readonly class Request
     public function filled(string ...$keys): bool
     {
         $all = $this->all();
-        foreach ($keys as $key) {
-            if (!array_key_exists($key, $all) || $all[$key] === '' || $all[$key] === null) {
-                return false;
-            }
-        }
 
-        return true;
+        return array_all(
+            $keys,
+            static fn(string $key): bool => array_key_exists($key, $all) && $all[$key] !== '' && $all[$key] !== null,
+        );
     }
 
     /**

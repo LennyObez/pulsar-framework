@@ -246,11 +246,12 @@ final class Kernel
 
     /**
      * Invoke the route handler.
+     *
+     * @throws RuntimeException
      */
     private function invokeHandler(Request $request, MatchedRoute $matched): Response
     {
         $handler = $matched->getHandler();
-        $response = null;
 
         if (is_callable($handler)) {
             $response = $handler($request, $matched->parameters);
@@ -291,6 +292,9 @@ final class Kernel
      * Resolve a controller instance from the container or instantiate directly.
      *
      * @param class-string $class
+     *
+     * @throws \Psr\Container\NotFoundExceptionInterface
+     * @throws \Psr\Container\ContainerExceptionInterface
      */
     private function resolveController(string $class): object
     {

@@ -65,11 +65,11 @@ readonly class Route
         $pattern = $this->pathToPattern($routePath);
 
         if (preg_match($pattern, $requestPath, $matches)) {
-            // Extract named parameters
+            // Extract named parameters (filter out numeric keys from preg_match)
             $params = [];
-            foreach ($matches as $key => $value) {
+            foreach ($matches as $key => $val) {
                 if (is_string($key)) {
-                    $params[$key] = $value;
+                    $params[$key] = $val;
                 }
             }
             return $params;
@@ -93,7 +93,7 @@ readonly class Route
 
         // Convert {param} to (?P<param>CONSTRAINT) using constraints or default [^/]+
         $replaced = preg_replace_callback(
-            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\}#',
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)}#',
             static function (array $matches) use ($constraints): string {
                 $name = $matches[1];
                 $regex = $constraints[$name] ?? '[^/]+';
@@ -105,7 +105,7 @@ readonly class Route
 
         // Convert {param?} to (?:(?P<param>CONSTRAINT))? using constraints or default [^/]+
         $replaced = preg_replace_callback(
-            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\?\}#',
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\?}#',
             static function (array $matches) use ($constraints): string {
                 $name = $matches[1];
                 $regex = $constraints[$name] ?? '[^/]+';
@@ -142,7 +142,7 @@ readonly class Route
         $pattern = str_replace(['\{', '\}'], ['{', '}'], $pattern);
 
         $replaced = preg_replace(
-            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\}#',
+            '#\{([a-zA-Z_][a-zA-Z0-9_]*)}#',
             '(?P<$1>[^.]+)',
             $pattern,
         );
@@ -150,9 +150,9 @@ readonly class Route
 
         if (preg_match($pattern, $host, $matches)) {
             $params = [];
-            foreach ($matches as $key => $value) {
+            foreach ($matches as $key => $val) {
                 if (is_string($key)) {
-                    $params[$key] = $value;
+                    $params[$key] = $val;
                 }
             }
             return $params;

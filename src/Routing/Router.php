@@ -199,7 +199,7 @@ final class Router
         }
 
         // Remove unfilled optional parameters
-        $replaced = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\?\}#', '', $path);
+        $replaced = preg_replace('#\{[a-zA-Z_][a-zA-Z0-9_]*\?}#', '', $path);
         $path = $replaced ?? $path;
 
         // Clean up double slashes
