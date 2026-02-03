@@ -50,6 +50,11 @@ final class ConfigManager
         $observabilityData = $this->loadConfigFile('observability');
         $observabilityConfig = ObservabilityConfig::fromArray($observabilityData, $this->environment);
         $this->repository->set($observabilityConfig);
+
+        // Load security config
+        $securityData = $this->loadConfigFile('security');
+        $securityConfig = SecurityConfig::fromArray($securityData, $this->environment);
+        $this->repository->set($securityConfig);
     }
 
     /**
