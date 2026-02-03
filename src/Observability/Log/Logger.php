@@ -1,0 +1,133 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Observability\Log;
+
+use Psr\Log\LoggerInterface;
+use Pulsar\Config\LoggingChannelConfig;
+use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Observability\Log\Sink\FileSink;
+use Pulsar\Observability\Log\Sink\StreamSink;
+use Stringable;
+use Throwable;
+
+/**
+ * PSR-3 compliant logger.
+ *
+ * Dispatches log entries to one or more sinks. Level filtering is applied
+ * via the configured threshold. Sink failures are silently swallowed —
+ * logging must never crash a request.
+ */
+final class Logger implements LoggerInterface
+{
+    /**
+     * @param list<LogSinkInterface> $sinks
+     */
+    public function __construct(
+        private readonly array $sinks,
+        private readonly LogLevel $threshold,
+        private readonly string $channel = 'app',
+    ) {}
+
+    /**
+     * Build a Logger from ObservabilityConfig.
+     */
+    public static function fromConfig(ObservabilityConfig $config): self
+    {
+        $threshold = LogLevel::fromPsrLevel($config->loggingLevel);
+        $sinks = [];
+
+        foreach ($config->loggingChannels as $channelConfig) {
+            $sink = self::createSink($channelConfig);
+
+            if ($sink !== null) {
+                $sinks[] = $sink;
+            }
+        }
+
+        return new self(
+            sinks: $sinks,
+            threshold: $threshold,
+            channel: $config->defaultLoggingChannel,
+        );
+    }
+
+    public function emergency(string|Stringable $message, array $context = []): void
+    {
+        $this->log(LogLevel::Emergency, $message, $context);
+    }
+
+    public function alert(string|Stringable $message, array $context = []): void
+    {
+        $this->log(LogLevel::Alert, $message, $context);
+    }
+
+    public function critical(string|Stringable $message, array $context = []): void
+    {
+        $this->log(LogLevel::Critical, $message, $context);
+    }
+
+    public function error(string|Stringable $message, array $context = []): void
+    {
+        $this->log(LogLevel::Error, $message, $context);
+    }
+
+    public function warning(string|Stringable $message, array $context = []): void
+    {
+        $this->log(LogLevel::Warning, $message, $context);
+    }
+
+    public function notice(string|Stringable $message, array $context = []): void
+    {
+        $this->log(LogLevel::Notice, $message, $context);
+    }
+
+    public function info(string|Stringable $message, array $context = []): void
+    {
+        $this->log(LogLevel::Info, $message, $context);
+    }
+
+    public function debug(string|Stringable $message, array $context = []): void
+    {
+        $this->log(LogLevel::Debug, $message, $context);
+    }
+
+    public function log(mixed $level, string|Stringable $message, array $context = []): void
+    {
+        $logLevel = LogLevel::fromPsrLevel($level);
+
+        if (!$logLevel->meetsThreshold($this->threshold)) {
+            return;
+        }
+
+        /** @var array<string, mixed> $context */
+        $entry = LogEntry::create(
+            level: $logLevel,
+            message: (string) $message,
+            context: $context,
+            channel: $this->channel,
+        );
+
+        foreach ($this->sinks as $sink) {
+            try {
+                $sink->write($entry);
+            } catch (Throwable) {
+                // Sink failures are silently swallowed — logging never crashes a request
+            }
+        }
+    }
+
+    private static function createSink(LoggingChannelConfig $config): ?LogSinkInterface
+    {
+        try {
+            return match ($config->driver) {
+                'file' => new FileSink($config->path ?? 'var/logs/pulsar.log'),
+                'stream' => new StreamSink($config->stream ?? 'php://stderr'),
+                default => null,
+            };
+        } catch (Throwable) {
+            return null;
+        }
+    }
+}
