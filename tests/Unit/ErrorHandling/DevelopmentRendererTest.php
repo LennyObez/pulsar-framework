@@ -1,0 +1,138 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Tests\Unit\ErrorHandling;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Pulsar\ErrorHandling\DevelopmentRenderer;
+use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Method;
+use Pulsar\Http\Request;
+use Pulsar\Http\ResponseStatus;
+use RuntimeException;
+
+#[CoversClass(DevelopmentRenderer::class)]
+final class DevelopmentRendererTest extends TestCase
+{
+    private function createRequest(string $path = '/'): Request
+    {
+        return new Request(
+            method: Method::GET,
+            uri: $path,
+            path: $path,
+            queryString: 'foo=bar',
+            headers: new HeaderBag(['X-Test' => 'value']),
+            body: '',
+            query: ['foo' => 'bar'],
+        );
+    }
+
+    #[Test]
+    public function outputContainsExceptionMessage(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('Something went wrong');
+
+        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
+
+        self::assertStringContainsString('Something went wrong', $html);
+    }
+
+    #[Test]
+    public function outputContainsExceptionClass(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('test');
+
+        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
+
+        self::assertStringContainsString('RuntimeException', $html);
+    }
+
+    #[Test]
+    public function outputContainsStackTrace(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('test');
+
+        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
+
+        // Stack trace should contain this test file
+        self::assertStringContainsString('DevelopmentRendererTest', $html);
+    }
+
+    #[Test]
+    public function outputContainsRequestDetails(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('test');
+
+        $html = $renderer->render($exception, $this->createRequest('/api/test'), ResponseStatus::InternalServerError);
+
+        self::assertStringContainsString('GET', $html);
+        self::assertStringContainsString('/api/test', $html);
+    }
+
+    #[Test]
+    public function outputContainsRequestHeaders(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('test');
+
+        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
+
+        self::assertStringContainsString('X-Test', $html);
+    }
+
+    #[Test]
+    public function outputContainsQueryParameters(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('test');
+
+        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
+
+        self::assertStringContainsString('foo', $html);
+        self::assertStringContainsString('bar', $html);
+    }
+
+    #[Test]
+    public function htmlEscapesValues(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('Error with <script>alert("xss")</script>');
+
+        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
+
+        self::assertStringNotContainsString('<script>', $html);
+        self::assertStringContainsString('&lt;script&gt;', $html);
+    }
+
+    #[Test]
+    public function showsPreviousException(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $previous = new RuntimeException('Root cause');
+        $exception = new RuntimeException('Wrapper', 0, $previous);
+
+        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::InternalServerError);
+
+        self::assertStringContainsString('Root cause', $html);
+        self::assertStringContainsString('Previous Exceptions', $html);
+    }
+
+    #[Test]
+    public function showsStatusCode(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('not found');
+
+        $html = $renderer->render($exception, $this->createRequest(), ResponseStatus::NotFound);
+
+        self::assertStringContainsString('404', $html);
+        self::assertStringContainsString('Not Found', $html);
+    }
+}
