@@ -20,13 +20,22 @@ use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
 use Pulsar\Extensibility\ExtensionBootstrap;
+use Pulsar\Http\Method;
+use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Http\Middleware\TracingMiddleware;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseEmitter;
+use Pulsar\Observability\Diagnostics\DiagnosticsRenderer;
+use Pulsar\Observability\ErrorTracking\ErrorAggregator;
+use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Observability\Log\Logger;
+use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Observability\Metrics\PrometheusExporter;
+use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Router;
 use RuntimeException;
@@ -40,6 +49,9 @@ use Throwable;
  *
  * The kernel is responsible for bootstrapping the application,
  * managing the lifecycle, and orchestrating the request/response cycle.
+ *
+ * Boot pipeline order:
+ * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> DiagnosticsRoute -> Extensions
  */
 final class Kernel
 {
@@ -83,8 +95,14 @@ final class Kernel
      * This method initializes all core services and prepares
      * the application for handling requests. Boot pipeline:
      * 1. Config loading (if ConfigManager provided)
-     * 2. Extension register phase
-     * 3. Extension boot phase
+     * 2. Logger creation
+     * 3. Tracer creation (TracingMiddleware as outermost global middleware)
+     * 4. Metrics creation (MetricsMiddleware as inner global middleware)
+     * 5. Error tracker creation
+     * 6. Exception handler creation
+     * 7. Diagnostics route registration (debug mode only)
+     * 8. Extension register phase
+     * 9. Extension boot phase
      */
     public function boot(): void
     {
@@ -92,12 +110,16 @@ final class Kernel
             return;
         }
 
-        // Config phase: load config, create logger, create exception handler
+        // Config phase: load config, create services
         if ($this->configManager !== null) {
             $this->configManager->load();
             $this->registerConfigServices();
             $this->createLogger();
+            $this->createTracer();
+            $this->createMetrics();
+            $this->createErrorTracker();
             $this->createExceptionHandler();
+            $this->registerDiagnosticsRoute();
         }
 
         // Extension register phase (all extensions)
@@ -346,6 +368,95 @@ final class Kernel
     }
 
     /**
+     * Create the tracing subsystem and register TracingMiddleware as outermost global middleware.
+     */
+    private function createTracer(): void
+    {
+        /** @var ConfigManager $configManager */
+        $configManager = $this->configManager;
+
+        /** @var ObservabilityConfig $observabilityConfig */
+        $observabilityConfig = $configManager->repository()->get(ObservabilityConfig::class);
+
+        if (!$observabilityConfig->tracing->enabled) {
+            return;
+        }
+
+        $collector = new InMemorySpanCollector();
+        $this->container->instance(InMemorySpanCollector::class, $collector);
+
+        $tracingMiddleware = new TracingMiddleware(
+            $collector,
+            $observabilityConfig->tracing->samplingRate,
+        );
+
+        // Tracing is outermost: registered first
+        $this->middleware->pipe($tracingMiddleware);
+    }
+
+    /**
+     * Create the metrics subsystem and register MetricsMiddleware as inner global middleware.
+     */
+    private function createMetrics(): void
+    {
+        /** @var ConfigManager $configManager */
+        $configManager = $this->configManager;
+
+        /** @var ObservabilityConfig $observabilityConfig */
+        $observabilityConfig = $configManager->repository()->get(ObservabilityConfig::class);
+
+        if (!$observabilityConfig->metrics->enabled) {
+            return;
+        }
+
+        $registry = new MetricRegistry();
+        $this->container->instance(MetricRegistry::class, $registry);
+
+        $metricsMiddleware = new MetricsMiddleware($registry);
+
+        // Metrics is inner: registered after tracing
+        $this->middleware->pipe($metricsMiddleware);
+
+        // Register Prometheus endpoint if enabled
+        if ($observabilityConfig->metrics->prometheusEnabled) {
+            $endpoint = $observabilityConfig->metrics->prometheusEndpoint;
+            $this->router->get($endpoint, static function () use ($registry): Response {
+                $exporter = new PrometheusExporter($registry);
+
+                return new Response(
+                    body: $exporter->export(),
+                    headers: new \Pulsar\Http\HeaderBag(['content-type' => ['text/plain; version=0.0.4; charset=utf-8']]),
+                );
+            });
+        }
+    }
+
+    /**
+     * Create the error tracking subsystem.
+     */
+    private function createErrorTracker(): void
+    {
+        /** @var ConfigManager $configManager */
+        $configManager = $this->configManager;
+
+        /** @var ObservabilityConfig $observabilityConfig */
+        $observabilityConfig = $configManager->repository()->get(ObservabilityConfig::class);
+
+        if (!$observabilityConfig->errorTracking->enabled) {
+            return;
+        }
+
+        $scrubber = new SensitiveDataScrubber($observabilityConfig->errorTracking->sensitiveFields);
+        $aggregator = new ErrorAggregator(
+            maxGroups: $observabilityConfig->errorTracking->maxGroups,
+            maxRecentEventsPerGroup: $observabilityConfig->errorTracking->maxRecentEventsPerGroup,
+        );
+
+        $this->container->instance(SensitiveDataScrubber::class, $scrubber);
+        $this->container->instance(ErrorAggregator::class, $aggregator);
+    }
+
+    /**
      * Create the exception handler from config and register in the container.
      */
     private function createExceptionHandler(): void
@@ -364,9 +475,60 @@ final class Kernel
             ? $this->container->get(LoggerInterface::class)
             : null;
 
+        $aggregator = $this->container->has(ErrorAggregator::class)
+            ? $this->container->get(ErrorAggregator::class)
+            : null;
+
+        $scrubber = $this->container->has(SensitiveDataScrubber::class)
+            ? $this->container->get(SensitiveDataScrubber::class)
+            : null;
+
         /** @var LoggerInterface|null $logger */
-        $this->exceptionHandler = new ExceptionHandler($renderer, $logger);
+        /** @var ErrorAggregator|null $aggregator */
+        /** @var SensitiveDataScrubber|null $scrubber */
+        $this->exceptionHandler = new ExceptionHandler($renderer, $logger, $aggregator, $scrubber);
         $this->container->instance(ExceptionHandler::class, $this->exceptionHandler);
+    }
+
+    /**
+     * Register the diagnostics route (debug mode only).
+     */
+    private function registerDiagnosticsRoute(): void
+    {
+        /** @var ConfigManager $configManager */
+        $configManager = $this->configManager;
+
+        /** @var AppConfig $appConfig */
+        $appConfig = $configManager->repository()->get(AppConfig::class);
+
+        if (!$appConfig->debug) {
+            return;
+        }
+
+        if (!$this->container->has(MetricRegistry::class)) {
+            return;
+        }
+
+        $container = $this->container;
+
+        $this->router->get('/_pulsar/diagnostics', static function () use ($container): Response {
+            /** @var MetricRegistry $registry */
+            $registry = $container->get(MetricRegistry::class);
+
+            $collector = $container->has(InMemorySpanCollector::class)
+                ? $container->get(InMemorySpanCollector::class)
+                : null;
+
+            $aggregator = $container->has(ErrorAggregator::class)
+                ? $container->get(ErrorAggregator::class)
+                : null;
+
+            /** @var InMemorySpanCollector|null $collector */
+            /** @var ErrorAggregator|null $aggregator */
+            $renderer = new DiagnosticsRenderer($registry, $collector, $aggregator);
+
+            return Response::html($renderer->render());
+        });
     }
 
     /**

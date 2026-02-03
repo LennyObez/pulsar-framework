@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Config;
 
 /**
- * Typed configuration DTO for the logging section of `config/observability.php`.
+ * Typed configuration DTO for `config/observability.php`.
  *
  * Environment variables `LOG_LEVEL` and `LOG_CHANNEL` override file values.
  */
@@ -18,6 +18,9 @@ readonly class ObservabilityConfig
         public string $defaultLoggingChannel,
         public string $loggingLevel,
         public array $loggingChannels,
+        public MetricsConfig $metrics = new MetricsConfig(),
+        public TracingConfig $tracing = new TracingConfig(),
+        public ErrorTrackingConfig $errorTracking = new ErrorTrackingConfig(),
     ) {}
 
     /**
@@ -51,10 +54,28 @@ readonly class ObservabilityConfig
             );
         }
 
+        // Metrics config
+        /** @var array<string, mixed> $metricsData */
+        $metricsData = $data['metrics'] ?? [];
+        $metricsConfig = MetricsConfig::fromArray($metricsData);
+
+        // Tracing config
+        /** @var array<string, mixed> $tracingData */
+        $tracingData = $data['tracing'] ?? [];
+        $tracingConfig = TracingConfig::fromArray($tracingData);
+
+        // Error tracking config
+        /** @var array<string, mixed> $errorTrackingData */
+        $errorTrackingData = $data['error_tracking'] ?? [];
+        $errorTrackingConfig = ErrorTrackingConfig::fromArray($errorTrackingData);
+
         return new self(
             defaultLoggingChannel: $defaultChannel,
             loggingLevel: $level,
             loggingChannels: $channelConfigs,
+            metrics: $metricsConfig,
+            tracing: $tracingConfig,
+            errorTracking: $errorTrackingConfig,
         );
     }
 }
