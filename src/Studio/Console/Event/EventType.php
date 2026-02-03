@@ -30,4 +30,6 @@ enum EventType: string
     case SupervisorRecycle = 'supervisor.recycle';
     case SupervisorHealing = 'supervisor.healing';
     case IntegrityCheck = 'integrity.check';
+    case BenchmarkProfile = 'benchmark.profile';
+    case BenchmarkRun = 'benchmark.run';
 }

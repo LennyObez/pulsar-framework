@@ -29,11 +29,16 @@ use Pulsar\Config\StudioConfig;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
+use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Studio\Console\Aggregation\TimelineBuilder;
+use Pulsar\Studio\Console\Storage\EncryptedEventStore;
 use Pulsar\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Studio\Security\ProductionSafetyMode;
 use Pulsar\Studio\Server\Controller\ApiController;
+use Pulsar\Studio\Server\Controller\BenchmarkApiController;
+use Pulsar\Studio\Server\Controller\BenchmarkController;
 use Pulsar\Studio\Server\Controller\ConsoleOverviewController;
 use Pulsar\Studio\Server\Controller\DatabaseExplorerController;
 use Pulsar\Studio\Server\Controller\ExceptionExplorerController;
@@ -120,7 +125,20 @@ if (!is_dir($storageDir)) {
     mkdir($storageDir, 0o755, true);
 }
 
-$store = new SqliteEventStore($storagePath);
+$sqliteStore = new SqliteEventStore($storagePath);
+
+// Wrap with encryption if PULSAR_MASTER_KEY is set (must match Kernel's sub-key derivation)
+$store = $sqliteStore;
+$masterKeyHex = $environment->get('PULSAR_MASTER_KEY') ?? '';
+if ($masterKeyHex !== '') {
+    try {
+        $masterKey = MasterKey::fromHex($masterKeyHex);
+        $studioEncryptor = Encryptor::fromDerivedKey($masterKey, 3, 'studio_enc__');
+        $store = new EncryptedEventStore($sqliteStore, $studioEncryptor);
+    } catch (Throwable) {
+        // Invalid key or sodium failure — use plain store
+    }
+}
 
 // Create dependencies
 $aggregator = new DashboardAggregator($store);
@@ -138,6 +156,8 @@ $logExplorer = new LogExplorerController($store);
 $exceptionExplorer = new ExceptionExplorerController($store, $safetyMode);
 $timeline = new TimelineController($timelineBuilder);
 $api = new ApiController($store);
+$benchmarkController = new BenchmarkController($aggregator);
+$benchmarkApi = new BenchmarkApiController($store, $dir);
 
 // Create router and dispatch
 $router = new StudioRouter(
@@ -149,6 +169,8 @@ $router = new StudioRouter(
     exceptionExplorer: $exceptionExplorer,
     timeline: $timeline,
     api: $api,
+    benchmark: $benchmarkController,
+    benchmarkApi: $benchmarkApi,
     safetyMode: $safetyMode,
 );
 
