@@ -9,7 +9,7 @@ $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__ . '/config')
     ->exclude('cache');
 
-return (new PhpCsFixer\Config())
+return (new PhpCsFixer\Config)
     ->setRiskyAllowed(true)
     ->setRules([
         '@PER-CS2.0' => true,

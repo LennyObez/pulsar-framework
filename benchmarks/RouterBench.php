@@ -35,7 +35,7 @@ final class RouterBench
         // Router with parameterized routes
         $this->routerWithParams = new Router();
         for ($i = 0; $i < 50; $i++) {
-            $this->routerWithParams->get("/users/{id}/posts/{postId}/comments/{commentId}/path{$i}", fn() => null);
+            $this->routerWithParams->get("/users/{id}/posts/{postId}/comments/{commentId}/path$i", fn() => null);
         }
     }
 
@@ -44,7 +44,7 @@ final class RouterBench
         $router = new Router();
 
         for ($i = 0; $i < $count; $i++) {
-            $router->get("/route{$i}", fn() => null);
+            $router->get("/route$i", fn() => null);
         }
 
         return $router;
@@ -141,7 +141,7 @@ final class RouterBench
     {
         $this->routerSmall = new Router();
         for ($i = 0; $i < 10; $i++) {
-            $this->routerSmall->get("/route{$i}/{id}", fn() => null, "route.{$i}");
+            $this->routerSmall->get("/route$i/{id}", fn() => null, "route.$i");
         }
     }
 }

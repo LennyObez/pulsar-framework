@@ -223,6 +223,105 @@ final class MiddlewarePipelineTest extends TestCase
 
         self::assertFalse($pipeline->isEmpty());
     }
+
+    #[Test]
+    public function fifoGuaranteeWithThreeMiddleware(): void
+    {
+        /** @var list<string> $order */
+        $order = [];
+        $pipeline = new MiddlewarePipeline();
+
+        for ($i = 1; $i <= 3; $i++) {
+            $n = $i;
+            $middleware = new class ($order, $n) implements MiddlewareInterface {
+                /**
+                 * @param list<string> $order
+                 * @phpstan-ignore property.onlyWritten
+                 */
+                public function __construct(private array &$order, private readonly int $n) {}
+
+                public function process(Request $request, callable $next): Response
+                {
+                    $this->order[] = "before{$this->n}";
+                    $response = $next($request);
+                    $this->order[] = "after{$this->n}";
+                    return $response;
+                }
+            };
+            $pipeline->pipe($middleware);
+        }
+
+        $pipeline->handle($this->createRequest(), function () use (&$order) {
+            $order[] = 'handler';
+            return Response::text('ok');
+        });
+
+        self::assertSame(
+            ['before1', 'before2', 'before3', 'handler', 'after3', 'after2', 'after1'],
+            $order,
+        );
+    }
+
+    #[Test]
+    public function shortCircuitCascadePreventsDownstreamMiddleware(): void
+    {
+        /** @var list<string> $order */
+        $order = [];
+        $pipeline = new MiddlewarePipeline();
+
+        // First middleware passes through
+        $pipeline->pipe(new class ($order) implements MiddlewareInterface {
+            /**
+             * @param list<string> $order
+             * @phpstan-ignore property.onlyWritten
+             */
+            public function __construct(private array &$order) {}
+
+            public function process(Request $request, callable $next): Response
+            {
+                $this->order[] = 'first';
+                return $next($request);
+            }
+        });
+
+        // Second middleware short-circuits
+        $pipeline->pipe(new class ($order) implements MiddlewareInterface {
+            /**
+             * @param list<string> $order
+             * @phpstan-ignore property.onlyWritten
+             */
+            public function __construct(private array &$order) {}
+
+            public function process(Request $request, callable $next): Response
+            {
+                $this->order[] = 'blocker';
+                return Response::text('blocked');
+            }
+        });
+
+        // Third middleware should never execute
+        $pipeline->pipe(new class ($order) implements MiddlewareInterface {
+            /**
+             * @param list<string> $order
+             * @phpstan-ignore property.onlyWritten
+             */
+            public function __construct(private array &$order) {}
+
+            public function process(Request $request, callable $next): Response
+            {
+                $this->order[] = 'third';
+                return $next($request);
+            }
+        });
+
+        $response = $pipeline->handle($this->createRequest(), function () use (&$order) {
+            $order[] = 'handler';
+            return Response::text('ok');
+        });
+
+        self::assertSame(['first', 'blocker'], $order);
+        self::assertSame('blocked', $response->body);
+    }
 }
 
 class AddHeaderMiddleware implements MiddlewareInterface

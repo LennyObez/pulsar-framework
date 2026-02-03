@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Output;
 
-use function count;
-
 use Pulsar\Console\OutputInterface;
 
 /**
@@ -62,7 +60,6 @@ final class TableFormatter
         }
 
         $widths = $this->calculateColumnWidths();
-        $totalWidth = array_sum($widths) + (count($widths) * 3) + 1;
 
         // Top border
         $output->writeln($this->renderBorder($widths, '┌', '┬', '┐'));
@@ -89,12 +86,8 @@ final class TableFormatter
      */
     private function calculateColumnWidths(): array
     {
-        $widths = [];
-
         // Account for headers
-        foreach ($this->headers as $i => $header) {
-            $widths[$i] = mb_strlen($header);
-        }
+        $widths = array_map(mb_strlen(...), $this->headers);
 
         // Account for data rows
         foreach ($this->rows as $row) {

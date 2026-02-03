@@ -140,15 +140,11 @@ final class ExtensionRegistry
      */
     public function inState(ExtensionLifecycle $state): array
     {
-        $result = [];
-
-        foreach ($this->extensions as $name => $extension) {
-            if ($this->states[$name] === $state) {
-                $result[$name] = $extension;
-            }
-        }
-
-        return $result;
+        return array_filter(
+            $this->extensions,
+            fn(string $name): bool => $this->states[$name] === $state,
+            ARRAY_FILTER_USE_KEY,
+        );
     }
 
     /**
@@ -174,13 +170,8 @@ final class ExtensionRegistry
      */
     public function allBooted(): bool
     {
-        foreach ($this->states as $state) {
-            if ($state !== ExtensionLifecycle::Booted) {
-                return false;
-            }
-        }
-
-        return $this->count() > 0;
+        return $this->count() > 0
+            && !array_any($this->states, static fn(ExtensionLifecycle $state): bool => $state !== ExtensionLifecycle::Booted);
     }
 
     /**

@@ -38,6 +38,7 @@ use Pulsar\Console\Command\ScaffoldExtensionCommand;
 use Pulsar\Console\Command\ScaffoldModuleCommand;
 use Pulsar\Console\Command\ShowContainerCommand;
 use Pulsar\Console\Command\ShowRoutesCommand;
+use Pulsar\Console\CommandInterface;
 use Pulsar\Core\Kernel;
 use Pulsar\Extensibility\ExtensionBootstrap;
 
@@ -86,11 +87,11 @@ if ($extensionBootstrap !== null) {
                     ? $kernel->container()->get($commandClass)
                     : new $commandClass();
 
-                if ($command instanceof \Pulsar\Console\CommandInterface) {
+                if ($command instanceof CommandInterface) {
                     $application->add($command);
                 }
             } catch (Throwable $e) {
-                fwrite(STDERR, "Warning: Failed to register command {$commandClass}: {$e->getMessage()}\n");
+                fwrite(STDERR, "Warning: Failed to register command $commandClass: {$e->getMessage()}\n");
             }
         }
     }

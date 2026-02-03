@@ -86,6 +86,8 @@ final class Container implements ContainerInterface
 
     /**
      * Resolve a binding to its concrete implementation.
+     *
+     * @throws ContainerException
      */
     private function resolve(string $id): object
     {
@@ -127,6 +129,8 @@ final class Container implements ContainerInterface
      * Build a class instance using autowiring.
      *
      * @param class-string $className
+     *
+     * @throws ContainerException
      */
     private function build(string $className): object
     {

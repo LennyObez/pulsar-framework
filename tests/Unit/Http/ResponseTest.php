@@ -202,6 +202,26 @@ final class ResponseTest extends TestCase
         self::assertSame('', $response->body);
         self::assertSame(ResponseStatus::NoContent, $response->status);
     }
+
+    #[Test]
+    public function validationErrorCreates422JsonResponse(): void
+    {
+        $violations = [
+            ['field' => 'email', 'message' => 'Required.', 'rule' => 'required'],
+        ];
+
+        $response = Response::validationError($violations);
+
+        self::assertSame(ResponseStatus::UnprocessableEntity, $response->status);
+        self::assertSame('application/json; charset=utf-8', $response->headers->first('Content-Type'));
+
+        /** @var array{error: string, status: int, violations: list<array{field: string, message: string, rule: string}>} $data */
+        $data = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('Validation Failed', $data['error']);
+        self::assertSame(422, $data['status']);
+        self::assertCount(1, $data['violations']);
+        self::assertSame('email', $data['violations'][0]['field']);
+    }
 }
 
 #[CoversClass(ResponseStatus::class)]

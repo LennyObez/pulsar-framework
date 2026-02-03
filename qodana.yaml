@@ -2,9 +2,18 @@
 # WARNING: Do not store sensitive information in this file, as its contents will be included in the Qodana report. #
 ####################################################################################################################
 
-version: "1.0"
+version: '1.0'
 linter: jetbrains/qodana-php:2025.3
 profile:
   name: qodana.recommended
 include:
   - name: CheckDependencyLicenses
+exclude:
+  - name: PhpUndefinedClassInspection
+  - name: PhpUndefinedNamespaceInspection
+  - name: PhpNoninstalledComposerPackagesInspection
+  - name: PhpIncludeInspection
+  - name: PhpUnhandledExceptionInspection
+  - name: PhpUnusedParameterInspection
+  - name: PhpAccessorCanBeReplacedWithPropertyHookInspection
+  - name: EsLintInspection

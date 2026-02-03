@@ -8,7 +8,12 @@
     "eslint": "^9.0.0",
     "prettier": "^3.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^2.0.0"
+    "vitest": "^4.0.18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   },
   "scripts": {
     "lint": "eslint . --ignore-pattern '*.config.*' --no-error-on-unmatched-pattern",
