@@ -1,0 +1,223 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extensibility;
+
+use function count;
+
+use DirectoryIterator;
+
+use function in_array;
+
+use Pulsar\Core\Version;
+use Pulsar\Extensibility\Exception\DependencyException;
+use Pulsar\Extensibility\Exception\ExtensionException;
+use Pulsar\Extensibility\Exception\ManifestException;
+
+/**
+ * Discovers and validates extension manifests.
+ */
+final class ExtensionLoader
+{
+    private const MANIFEST_FILENAME = 'pulsar.json';
+
+    /**
+     * Discover extension manifests in the given paths.
+     *
+     * @param list<string> $paths Directories to scan for extensions
+     * @return list<ExtensionManifest>
+     * @throws ManifestException If a manifest is invalid
+     */
+    public function discover(array $paths): array
+    {
+        $manifests = [];
+
+        foreach ($paths as $path) {
+            if (!is_dir($path)) {
+                continue;
+            }
+
+            $manifests = [...$manifests, ...$this->scanDirectory($path)];
+        }
+
+        return $manifests;
+    }
+
+    /**
+     * Scan a directory for extension manifests.
+     *
+     * @return list<ExtensionManifest>
+     */
+    private function scanDirectory(string $directory): array
+    {
+        $manifests = [];
+        $iterator = new DirectoryIterator($directory);
+
+        foreach ($iterator as $item) {
+            if ($item->isDot() || !$item->isDir()) {
+                continue;
+            }
+
+            $manifestPath = $item->getPathname() . DIRECTORY_SEPARATOR . self::MANIFEST_FILENAME;
+
+            if (file_exists($manifestPath)) {
+                $manifests[] = ExtensionManifest::fromFile($manifestPath);
+            }
+        }
+
+        return $manifests;
+    }
+
+    /**
+     * Validate that a manifest is compatible with the current framework version.
+     *
+     * @throws ManifestException If incompatible
+     */
+    public function validateCompatibility(ExtensionManifest $manifest): void
+    {
+        if (!$manifest->pulsar->isSatisfiedByCurrent()) {
+            throw ManifestException::incompatibleFrameworkVersion(
+                $manifest->name,
+                $manifest->pulsar->minVersion,
+                $manifest->pulsar->maxVersion,
+                Version::short(),
+            );
+        }
+    }
+
+    /**
+     * Validate that the extension class exists and implements ExtensionInterface.
+     *
+     * @throws ExtensionException If the class is invalid
+     */
+    public function validateExtensionClass(ExtensionManifest $manifest): void
+    {
+        $class = $manifest->extensionClass;
+
+        if (!class_exists($class)) {
+            throw ManifestException::extensionClassNotFound($class, $manifest->path);
+        }
+
+        if (!is_subclass_of($class, ExtensionInterface::class)) {
+            throw ExtensionException::invalidExtensionClass($class);
+        }
+    }
+
+    /**
+     * Resolve the load order for extensions based on dependencies.
+     *
+     * Returns manifests sorted in dependency order (dependencies first).
+     *
+     * @param list<ExtensionManifest> $manifests
+     * @return list<ExtensionManifest>
+     * @throws DependencyException If dependencies cannot be resolved
+     */
+    public function resolveDependencies(array $manifests): array
+    {
+        // Build lookup map
+        $byName = [];
+        foreach ($manifests as $manifest) {
+            $byName[$manifest->name] = $manifest;
+        }
+
+        // Validate all dependencies exist
+        foreach ($manifests as $manifest) {
+            foreach ($manifest->getDependencies() as $dependency) {
+                if (!isset($byName[$dependency])) {
+                    throw DependencyException::missingDependency($manifest->name, $dependency);
+                }
+            }
+        }
+
+        // Topological sort using Kahn's algorithm
+        return $this->topologicalSort($manifests, $byName);
+    }
+
+    /**
+     * Perform topological sort on manifests.
+     *
+     * @param list<ExtensionManifest> $manifests
+     * @param array<string, ExtensionManifest> $byName
+     * @return list<ExtensionManifest>
+     * @throws DependencyException If circular dependency detected
+     */
+    private function topologicalSort(array $manifests, array $byName): array
+    {
+        // Calculate in-degrees (number of dependencies)
+        $inDegree = [];
+        $dependents = []; // Map of extension -> extensions that depend on it
+
+        foreach ($manifests as $manifest) {
+            $name = $manifest->name;
+            $inDegree[$name] ??= 0;
+            $dependents[$name] ??= [];
+
+            foreach ($manifest->getDependencies() as $dependency) {
+                $inDegree[$name]++;
+                $dependents[$dependency][] = $name;
+            }
+        }
+
+        // Start with extensions that have no dependencies
+        $queue = [];
+        foreach ($manifests as $manifest) {
+            if ($inDegree[$manifest->name] === 0) {
+                $queue[] = $manifest->name;
+            }
+        }
+
+        $sorted = [];
+        $visited = 0;
+
+        while ($queue !== []) {
+            $current = array_shift($queue);
+            $sorted[] = $byName[$current];
+            $visited++;
+
+            foreach ($dependents[$current] as $dependent) {
+                $inDegree[$dependent]--;
+                if ($inDegree[$dependent] === 0) {
+                    $queue[] = $dependent;
+                }
+            }
+        }
+
+        // If we didn't visit all nodes, there's a cycle
+        if ($visited !== count($manifests)) {
+            // Find the cycle for error reporting
+            $remaining = array_values(array_filter(
+                array_keys($inDegree),
+                fn(string $name) => !in_array($byName[$name], $sorted, true),
+            ));
+            throw DependencyException::circularDependency($remaining);
+        }
+
+        return $sorted;
+    }
+
+    /**
+     * Load and instantiate an extension from its manifest.
+     *
+     * @throws ExtensionException If instantiation fails
+     */
+    public function instantiate(ExtensionManifest $manifest): ExtensionInterface
+    {
+        $class = $manifest->extensionClass;
+
+        if (!class_exists($class)) {
+            throw ExtensionException::registrationFailed(
+                $manifest->name,
+                'Extension class does not exist: ' . $class,
+            );
+        }
+
+        $instance = new $class();
+
+        if (!$instance instanceof ExtensionInterface) {
+            throw ExtensionException::invalidExtensionClass($class);
+        }
+
+        return $instance;
+    }
+}

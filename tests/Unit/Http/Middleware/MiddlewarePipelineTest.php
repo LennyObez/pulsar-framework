@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http\Middleware;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -191,7 +192,7 @@ final class MiddlewarePipelineTest extends TestCase
         // @phpstan-ignore argument.type
         $pipeline->pipe('NonExistentMiddleware');
 
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('could not be resolved');
 
         $pipeline->handle($this->createRequest(), fn() => Response::text('ok'));

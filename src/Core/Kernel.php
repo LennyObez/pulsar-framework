@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Core;
 
+use function is_array;
+use function is_callable;
+use function is_string;
+
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Request;
@@ -15,6 +20,9 @@ use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RoutingException;
+use RuntimeException;
+
+use function sprintf;
 
 /**
  * Pulsar Kernel
@@ -28,26 +36,36 @@ final class Kernel
     private ContainerInterface $container;
     private Router $router;
     private MiddlewarePipeline $middleware;
+    private ?ExtensionBootstrap $extensionBootstrap;
 
     public function __construct(
         ?ContainerInterface $container = null,
         ?Router $router = null,
+        ?ExtensionBootstrap $extensionBootstrap = null,
     ) {
         $this->container = $container ?? new Container();
         $this->router = $router ?? new Router();
         $this->middleware = new MiddlewarePipeline($this->container);
+        $this->extensionBootstrap = $extensionBootstrap;
 
         // Register core services in container
         $this->container->instance(ContainerInterface::class, $this->container);
         $this->container->instance(Router::class, $this->router);
         $this->container->instance(self::class, $this);
+
+        // Register extension bootstrap if provided
+        if ($this->extensionBootstrap !== null) {
+            $this->container->instance(ExtensionBootstrap::class, $this->extensionBootstrap);
+        }
     }
 
     /**
      * Boot the kernel.
      *
      * This method initializes all core services and prepares
-     * the application for handling requests.
+     * the application for handling requests. Extension lifecycle:
+     * 1. Register phase: All extensions register services
+     * 2. Boot phase: All extensions boot (routes, etc.)
      */
     public function boot(): void
     {
@@ -55,7 +73,21 @@ final class Kernel
             return;
         }
 
+        // Extension register phase (all extensions)
+        $this->extensionBootstrap?->register($this->container);
+
+        // Extension boot phase (all extensions)
+        $this->extensionBootstrap?->boot($this->container, $this->router);
+
         $this->booted = true;
+    }
+
+    /**
+     * Get the extension bootstrap instance.
+     */
+    public function extensionBootstrap(): ?ExtensionBootstrap
+    {
+        return $this->extensionBootstrap;
     }
 
     /**
@@ -176,13 +208,13 @@ final class Kernel
             if (method_exists($controller, '__invoke')) {
                 $response = $controller($request, $matched->parameters);
             } else {
-                throw new \RuntimeException(sprintf(
+                throw new RuntimeException(sprintf(
                     'Controller "%s" must be callable or specify a method',
                     $handler,
                 ));
             }
         } else {
-            throw new \RuntimeException('Invalid route handler');
+            throw new RuntimeException('Invalid route handler');
         }
 
         // Convert string responses to Response objects
@@ -191,7 +223,7 @@ final class Kernel
         }
 
         if (!$response instanceof Response) {
-            throw new \RuntimeException(sprintf(
+            throw new RuntimeException(sprintf(
                 'Handler must return a Response or string, got %s',
                 get_debug_type($response),
             ));

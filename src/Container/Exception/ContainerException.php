@@ -7,6 +7,8 @@ namespace Pulsar\Container\Exception;
 use Exception;
 use Psr\Container\ContainerExceptionInterface;
 
+use function sprintf;
+
 /**
  * Exception thrown when the container encounters an error.
  */

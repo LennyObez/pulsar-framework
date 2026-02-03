@@ -1,0 +1,100 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Pulsar Framework CLI
+ *
+ * This is the entry point for the Pulsar command-line interface.
+ */
+
+// Find autoloader (supports both development and installed scenarios)
+$autoloadPaths = [
+    __DIR__ . '/../vendor/autoload.php',     // Development (in framework repo)
+    __DIR__ . '/../../../autoload.php',       // Installed as dependency
+];
+
+$autoloader = null;
+foreach ($autoloadPaths as $path) {
+    if (file_exists($path)) {
+        $autoloader = $path;
+        break;
+    }
+}
+
+if ($autoloader === null) {
+    fwrite(STDERR, "Error: Could not find autoloader. Run 'composer install' first.\n");
+    exit(1);
+}
+
+require $autoloader;
+
+use Pulsar\Console\Application;
+use Pulsar\Console\Command\DiagnosticsCommand;
+use Pulsar\Console\Command\InitCommand;
+use Pulsar\Console\Command\ListCommand;
+use Pulsar\Console\Command\ScaffoldExtensionCommand;
+use Pulsar\Console\Command\ScaffoldModuleCommand;
+use Pulsar\Console\Command\ShowContainerCommand;
+use Pulsar\Console\Command\ShowRoutesCommand;
+use Pulsar\Core\Kernel;
+use Pulsar\Extensibility\ExtensionBootstrap;
+
+// Create kernel with optional extension support
+$extensionBootstrap = null;
+
+// Check for extensions directory
+$extensionPaths = [
+    getcwd() . '/extensions',
+    __DIR__ . '/../extensions',
+];
+
+foreach ($extensionPaths as $path) {
+    if (is_dir($path)) {
+        $extensionBootstrap = ExtensionBootstrap::create();
+        try {
+            $extensionBootstrap->loadFromPaths([$path]);
+        } catch (Throwable $e) {
+            // Extension loading errors are non-fatal for CLI
+            fwrite(STDERR, "Warning: Failed to load extensions: {$e->getMessage()}\n");
+        }
+        break;
+    }
+}
+
+$kernel = new Kernel(extensionBootstrap: $extensionBootstrap);
+$application = new Application($kernel);
+
+// Register built-in commands
+$application->addCommands([
+    new ListCommand($application),
+    new ShowRoutesCommand($kernel),
+    new ShowContainerCommand($kernel),
+    new DiagnosticsCommand($kernel),
+    new InitCommand(),
+    new ScaffoldModuleCommand(),
+    new ScaffoldExtensionCommand(),
+]);
+
+// Register extension commands
+if ($extensionBootstrap !== null) {
+    foreach ($extensionBootstrap->getCommands() as $commandClass) {
+        if (class_exists($commandClass)) {
+            try {
+                $command = $kernel->container()->has($commandClass)
+                    ? $kernel->container()->get($commandClass)
+                    : new $commandClass();
+
+                if ($command instanceof \Pulsar\Console\CommandInterface) {
+                    $application->add($command);
+                }
+            } catch (Throwable $e) {
+                fwrite(STDERR, "Warning: Failed to register command {$commandClass}: {$e->getMessage()}\n");
+            }
+        }
+    }
+}
+
+// Run the application
+exit($application->run($argv));

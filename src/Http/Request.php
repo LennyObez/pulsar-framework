@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use function is_string;
+
 /**
  * Immutable HTTP request value object.
  */

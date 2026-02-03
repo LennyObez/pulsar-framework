@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use RuntimeException;
+
+use function sprintf;
+
 /**
  * Emits an HTTP response to the client.
  */
@@ -70,12 +74,12 @@ final class ResponseEmitter
     /**
      * Assert that headers have not already been sent.
      *
-     * @throws \RuntimeException If headers were already sent
+     * @throws RuntimeException If headers were already sent
      */
     private function assertHeadersNotSent(): void
     {
         if (headers_sent($file, $line)) {
-            throw new \RuntimeException(sprintf(
+            throw new RuntimeException(sprintf(
                 'Headers already sent in %s on line %d. Cannot emit response.',
                 $file,
                 $line,

@@ -14,14 +14,14 @@ declare(strict_types=1);
 // Ensure we're running PHP 8.5+
 if (\PHP_VERSION_ID < 80500) {
     throw new \RuntimeException(
-        \sprintf('Pulsar requires PHP 8.5 or higher. Current version: %s', \PHP_VERSION),
+        sprintf('Pulsar requires PHP 8.5 or higher. Current version: %s', \PHP_VERSION),
     );
 }
 
 // Load Composer autoloader
-$autoloadPath = \dirname(__DIR__) . '/vendor/autoload.php';
+$autoloadPath = dirname(__DIR__) . '/vendor/autoload.php';
 
-if (!\file_exists($autoloadPath)) {
+if (!file_exists($autoloadPath)) {
     throw new \RuntimeException(
         'Composer autoload not found. Run "composer install" first.',
     );
