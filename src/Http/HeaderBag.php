@@ -5,7 +5,16 @@ declare(strict_types=1);
 namespace Pulsar\Http;
 
 use ArrayIterator;
+
+use function count;
+use function in_array;
+use function is_array;
+use function is_string;
+
 use IteratorAggregate;
+
+use function sprintf;
+
 use Traversable;
 
 /**

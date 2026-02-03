@@ -12,6 +12,7 @@ use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use stdClass;
 
 #[CoversClass(Container::class)]
 #[CoversClass(BindingType::class)]
@@ -40,7 +41,7 @@ final class ContainerTest extends TestCase
     public function hasReturnsTrueForBoundId(): void
     {
         $container = new Container();
-        $container->bind('service', fn() => new \stdClass());
+        $container->bind('service', fn() => new stdClass());
 
         self::assertTrue($container->has('service'));
     }
@@ -49,7 +50,7 @@ final class ContainerTest extends TestCase
     public function hasReturnsTrueForInstance(): void
     {
         $container = new Container();
-        $container->instance('service', new \stdClass());
+        $container->instance('service', new stdClass());
 
         self::assertTrue($container->has('service'));
     }
@@ -69,7 +70,7 @@ final class ContainerTest extends TestCase
     public function getReturnsInstanceForBoundId(): void
     {
         $container = new Container();
-        $container->instance('service', $instance = new \stdClass());
+        $container->instance('service', $instance = new stdClass());
 
         self::assertSame($instance, $container->get('service'));
     }
@@ -82,7 +83,7 @@ final class ContainerTest extends TestCase
 
         $container->bind('service', function () use (&$callCount) {
             $callCount++;
-            return new \stdClass();
+            return new stdClass();
         }, BindingType::Singleton);
 
         $first = $container->get('service');
@@ -100,7 +101,7 @@ final class ContainerTest extends TestCase
 
         $container->bind('service', function () use (&$callCount) {
             $callCount++;
-            return new \stdClass();
+            return new stdClass();
         }, BindingType::Factory);
 
         $first = $container->get('service');
@@ -118,7 +119,7 @@ final class ContainerTest extends TestCase
 
         $container->bind('service', function (ContainerInterface $c) use (&$receivedContainer) {
             $receivedContainer = $c;
-            return new \stdClass();
+            return new stdClass();
         });
 
         $container->get('service');
@@ -131,10 +132,10 @@ final class ContainerTest extends TestCase
     {
         $container = new Container();
 
-        $container->bind('service', fn() => new \stdClass());
+        $container->bind('service', fn() => new stdClass());
         $first = $container->get('service');
 
-        $container->bind('service', fn() => new \stdClass());
+        $container->bind('service', fn() => new stdClass());
         $second = $container->get('service');
 
         self::assertNotSame($first, $second);
@@ -144,11 +145,11 @@ final class ContainerTest extends TestCase
     public function autowireBuildsClassWithoutConstructor(): void
     {
         $container = new Container();
-        $container->bind(\stdClass::class, \stdClass::class);
+        $container->bind(stdClass::class, stdClass::class);
 
-        $instance = $container->get(\stdClass::class);
+        $instance = $container->get(stdClass::class);
 
-        self::assertInstanceOf(\stdClass::class, $instance);
+        self::assertInstanceOf(stdClass::class, $instance);
     }
 
     #[Test]
@@ -231,8 +232,8 @@ final class ContainerTest extends TestCase
     public function getBindingsReturnsAllBindingIds(): void
     {
         $container = new Container();
-        $container->bind('a', fn() => new \stdClass());
-        $container->bind('b', fn() => new \stdClass());
+        $container->bind('a', fn() => new stdClass());
+        $container->bind('b', fn() => new stdClass());
 
         $bindings = $container->getBindings();
 
@@ -244,8 +245,8 @@ final class ContainerTest extends TestCase
     public function getInstancesReturnsCachedInstanceIds(): void
     {
         $container = new Container();
-        $container->instance('a', new \stdClass());
-        $container->bind('b', fn() => new \stdClass());
+        $container->instance('a', new stdClass());
+        $container->bind('b', fn() => new stdClass());
         $container->get('b');
 
         $instances = $container->getInstances();
@@ -256,9 +257,7 @@ final class ContainerTest extends TestCase
 }
 
 // Test stubs
-class DependencyStub
-{
-}
+class DependencyStub {}
 
 class ServiceStub
 {

@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Routing;
 
+use function count;
+use function in_array;
+
+use InvalidArgumentException;
 use Pulsar\Http\Method;
+
+use function sprintf;
 
 /**
  * HTTP router for route registration and matching.
@@ -157,14 +163,14 @@ final class Router
      * Generate a URL for a named route.
      *
      * @param array<string, string> $parameters
-     * @throws \InvalidArgumentException If route not found
+     * @throws InvalidArgumentException If route not found
      */
     public function url(string $name, array $parameters = []): string
     {
         $route = $this->getByName($name);
 
         if ($route === null) {
-            throw new \InvalidArgumentException(sprintf('Route "%s" not found', $name));
+            throw new InvalidArgumentException(sprintf('Route "%s" not found', $name));
         }
 
         $path = $route->path;
