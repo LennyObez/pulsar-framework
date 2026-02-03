@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
 
@@ -34,6 +35,7 @@ readonly class ConnectionConfig
      *
      * @param array<string, mixed> $data Raw connection config array
      */
+    #[NoDiscard]
     public static function fromArray(string $name, array $data, Environment $environment): self
     {
         $rawDriver = $data['driver'] ?? 'mysql';

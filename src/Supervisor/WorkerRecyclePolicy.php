@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Supervisor;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\SupervisorConfig;
 
@@ -26,6 +27,7 @@ final readonly class WorkerRecyclePolicy
     /**
      * Build a recycle policy from supervisor configuration.
      */
+    #[NoDiscard]
     public static function fromConfig(SupervisorConfig $config): self
     {
         return new self(

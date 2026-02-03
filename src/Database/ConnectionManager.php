@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
+use NoDiscard;
+use Override;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Database\Exception\DatabaseException;
 
@@ -22,11 +24,13 @@ final class ConnectionManager implements ConnectionManagerInterface
     /**
      * Create a ConnectionManager from a DatabaseConfig DTO.
      */
+    #[NoDiscard]
     public static function fromConfig(DatabaseConfig $config): self
     {
         return new self($config);
     }
 
+    #[Override]
     public function connection(?string $name = null): ConnectionInterface
     {
         $name ??= $this->config->defaultConnection;
@@ -46,11 +50,13 @@ final class ConnectionManager implements ConnectionManagerInterface
         return $connection;
     }
 
+    #[Override]
     public function getDefaultConnectionName(): string
     {
         return $this->config->defaultConnection;
     }
 
+    #[Override]
     public function disconnect(?string $name = null): void
     {
         if ($name !== null) {

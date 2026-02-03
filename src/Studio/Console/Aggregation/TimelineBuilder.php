@@ -7,6 +7,7 @@ namespace Pulsar\Studio\Console\Aggregation;
 use function is_int;
 use function is_string;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Studio\Console\Storage\EventStoreInterface;
 
@@ -33,6 +34,7 @@ final readonly class TimelineBuilder implements TimelineBuilderInterface
      * @param list<array<string, mixed>> $events
      * @return list<array<string, mixed>>
      */
+    #[Override]
     public function build(array $events): array
     {
         return $this->sortByTimestamp($events);

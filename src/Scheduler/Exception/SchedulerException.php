@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Scheduler\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -18,6 +19,7 @@ final class SchedulerException extends RuntimeException
     /**
      * Requested job was not found in the registry.
      */
+    #[NoDiscard]
     public static function jobNotFound(string $name): self
     {
         return new self(sprintf('Scheduled job not found: "%s"', $name));
@@ -26,6 +28,7 @@ final class SchedulerException extends RuntimeException
     /**
      * Job execution exceeded the maximum allowed time.
      */
+    #[NoDiscard]
     public static function executionTimeout(string $name, int $timeoutSeconds): self
     {
         return new self(sprintf(
@@ -38,6 +41,7 @@ final class SchedulerException extends RuntimeException
     /**
      * Cron expression could not be parsed.
      */
+    #[NoDiscard]
     public static function invalidCronExpression(string $expression, string $reason): self
     {
         return new self(sprintf(
@@ -50,6 +54,7 @@ final class SchedulerException extends RuntimeException
     /**
      * A job with the same name is already registered.
      */
+    #[NoDiscard]
     public static function duplicateJob(string $name): self
     {
         return new self(sprintf('A job named "%s" is already registered', $name));

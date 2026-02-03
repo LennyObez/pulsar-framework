@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -18,6 +19,7 @@ final class LogException extends RuntimeException
     /**
      * A sink failed to write a log entry.
      */
+    #[NoDiscard]
     public static function sinkWriteFailed(string $sink, string $reason): self
     {
         return new self(sprintf('Log sink "%s" write failed: %s', $sink, $reason));
@@ -26,6 +28,7 @@ final class LogException extends RuntimeException
     /**
      * An invalid log driver was specified.
      */
+    #[NoDiscard]
     public static function invalidDriver(string $driver): self
     {
         return new self(sprintf('Invalid log driver: "%s"', $driver));

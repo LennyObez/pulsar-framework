@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Tenancy\TenantDatabaseStrategy;
 
@@ -21,6 +22,7 @@ readonly class TenantDatabaseConfig
     /**
      * @param array<string, mixed> $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
         /** @var string $strategyValue */

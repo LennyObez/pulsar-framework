@@ -1,0 +1,56 @@
+{
+  "baseline": {
+    "description": "OPcache enabled, JIT off, no preload",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "off",
+      "opcache.jit_buffer_size": "0"
+    },
+    "preload": false
+  },
+  "jit-function": {
+    "description": "OPcache + JIT function mode",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "function",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": false
+  },
+  "jit-tracing": {
+    "description": "OPcache + JIT tracing mode",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "tracing",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": false
+  },
+  "preload-jit-function": {
+    "description": "OPcache + preload + JIT function mode",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "function",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": true
+  },
+  "preload-jit-tracing": {
+    "description": "OPcache + preload + JIT tracing mode",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "tracing",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": true
+  },
+  "preload-only": {
+    "description": "OPcache + preload, JIT off",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "off",
+      "opcache.jit_buffer_size": "0"
+    },
+    "preload": true
+  }
+}

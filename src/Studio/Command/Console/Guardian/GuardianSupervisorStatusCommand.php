@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Studio\Command\Console\Guardian;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\Command;
@@ -27,6 +28,7 @@ final class GuardianSupervisorStatusCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:guardian:supervisor:status';
@@ -37,6 +39,7 @@ final class GuardianSupervisorStatusCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

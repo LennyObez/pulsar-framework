@@ -7,6 +7,7 @@ namespace Pulsar\Config;
 use function is_int;
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -31,6 +32,7 @@ readonly class SessionConfig
      *
      * @param array<string, mixed> $data Raw `session` sub-array from config/security.php
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         $rawCookieName = $data['cookie_name'] ?? 'PULSAR_SESSION';

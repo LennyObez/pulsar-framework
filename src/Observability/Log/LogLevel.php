@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -54,6 +55,7 @@ enum LogLevel: string
     /**
      * Create a LogLevel from a PSR-3 level string or value.
      */
+    #[NoDiscard]
     public static function fromPsrLevel(self|string $level): self
     {
         if ($level instanceof self) {

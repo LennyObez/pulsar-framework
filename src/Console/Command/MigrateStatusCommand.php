@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -28,12 +29,14 @@ final class MigrateStatusCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'migrate:status';
         $this->description = 'Show the status of each migration';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         try {

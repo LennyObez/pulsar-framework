@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Session;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -28,6 +29,7 @@ interface SessionInterface
     /**
      * Get a value from the session.
      */
+    #[NoDiscard]
     public function get(string $key, mixed $default = null): mixed;
 
     /**

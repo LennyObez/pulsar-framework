@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Password;
 
+use Override;
+
 use const PASSWORD_ARGON2ID;
 
 use function password_hash;
@@ -22,16 +24,19 @@ final readonly class PasswordHasher implements PasswordHasherInterface
         private array $options = [],
     ) {}
 
+    #[Override]
     public function hash(string $password): string
     {
         return password_hash($password, PASSWORD_ARGON2ID, $this->options);
     }
 
+    #[Override]
     public function verify(string $password, string $hash): bool
     {
         return password_verify($password, $hash);
     }
 
+    #[Override]
     public function needsRehash(string $hash): bool
     {
         return password_needs_rehash($hash, PASSWORD_ARGON2ID, $this->options);

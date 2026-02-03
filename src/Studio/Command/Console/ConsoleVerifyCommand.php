@@ -12,6 +12,7 @@ use InvalidArgumentException;
 use function is_string;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -38,6 +39,7 @@ final class ConsoleVerifyCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:verify';
@@ -51,6 +53,7 @@ final class ConsoleVerifyCommand extends Command
      * @throws JsonException
      * @throws SodiumException If MAC verification fails
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $rawFilePath = $input->getArgument(0);

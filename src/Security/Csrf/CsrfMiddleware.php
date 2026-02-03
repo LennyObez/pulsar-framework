@@ -6,6 +6,7 @@ namespace Pulsar\Security\Csrf;
 
 use function is_string;
 
+use Override;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
@@ -31,6 +32,7 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
         private CsrfConfig $config,
     ) {}
 
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         if (!$this->config->enabled) {

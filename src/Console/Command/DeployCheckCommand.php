@@ -12,6 +12,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -39,6 +40,7 @@ final class DeployCheckCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'deploy:check';
@@ -52,6 +54,7 @@ final class DeployCheckCommand extends Command
      * @throws DeployException
      * @throws JsonException If JSON encoding fails in JSON output mode
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $environment = $input->getOption('env', 'production');

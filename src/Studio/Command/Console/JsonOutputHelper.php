@@ -11,6 +11,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Console\OutputInterface;
 
@@ -34,6 +35,7 @@ final class JsonOutputHelper
      *
      * @throws JsonException
      */
+    #[NoDiscard]
     public static function encode(string $command, bool $success, array $data): string
     {
         $envelope = [
@@ -52,6 +54,7 @@ final class JsonOutputHelper
      *
      * @throws JsonException
      */
+    #[NoDiscard]
     public static function formatJson(array $data): string
     {
         return json_encode($data, self::JSON_FLAGS);

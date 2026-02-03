@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\NewProject;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -22,6 +23,7 @@ enum EnvironmentPreset: string
     /**
      * Resolve an environment preset from user input, defaulting to Local.
      */
+    #[NoDiscard]
     public static function fromInput(?string $value): self
     {
         if ($value === null || $value === '') {

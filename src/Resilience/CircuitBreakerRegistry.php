@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Resilience;
 
+use NoDiscard;
 use Pulsar\Config\CircuitBreakerConfig;
 
 /**
@@ -24,6 +25,7 @@ final class CircuitBreakerRegistry
     /**
      * Get or create a circuit breaker by name.
      */
+    #[NoDiscard]
     public function get(string $name): CircuitBreaker
     {
         if (!isset($this->breakers[$name])) {

@@ -37,6 +37,9 @@ final readonly class ViewRenderer
      *
      * @param string $template Template name (e.g., 'console/overview')
      * @param array<string, mixed> $data Variables to extract into template scope
+     *
+     * @throws RuntimeException If template not found
+     * @throws Throwable If template execution fails
      */
     public function render(string $template, array $data = []): string
     {
@@ -46,18 +49,7 @@ final readonly class ViewRenderer
             throw new RuntimeException(sprintf('Template not found: %s', $path));
         }
 
-        extract($data, EXTR_SKIP);
-
-        ob_start();
-
-        try {
-            include $path;
-        } catch (Throwable $e) {
-            ob_end_clean();
-            throw $e;
-        }
-
-        return (string) ob_get_clean();
+        return self::renderIsolated($path, $data);
     }
 
     /**
@@ -77,5 +69,30 @@ final readonly class ViewRenderer
             'title' => $title,
             'content' => $content,
         ]);
+    }
+
+    /**
+     * Render in an isolated scope so extract() does not pollute the caller.
+     *
+     * Uses a static method to avoid per-call closure allocation.
+     * Double-underscore suffix avoids collision with template variables.
+     *
+     * @param array<string, mixed> $_data_
+     */
+    private static function renderIsolated(string $_path_, array $_data_): string
+    {
+        extract($_data_, EXTR_SKIP);
+
+        ob_start();
+
+        try {
+            /** @psalm-suppress UnresolvableInclude */
+            include $_path_;
+        } catch (Throwable $e) {
+            ob_end_clean();
+            throw $e;
+        }
+
+        return (string) ob_get_clean();
     }
 }

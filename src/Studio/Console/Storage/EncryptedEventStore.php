@@ -9,6 +9,7 @@ use function hash;
 use function is_string;
 
 use JsonException;
+use Override;
 use PDOException;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Encryptor;
@@ -39,6 +40,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
      * @throws RandomException
      * @throws SodiumException
      */
+    #[Override]
     public function store(EventEnvelope $envelope, string $payloadJson, ?string $tenantHash = null): void
     {
         $encrypted = $this->encryptor->encrypt($payloadJson);
@@ -90,6 +92,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
      * @throws JsonException If JSON encoding fails
      * @throws SodiumException
      */
+    #[Override]
     public function query(array $filters = [], int $limit = 50, int $offset = 0): array
     {
         $rows = $this->inner->query($filters, $limit, $offset);
@@ -97,6 +100,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
         return array_map(fn(array $row): array => $this->decryptRow($row), $rows);
     }
 
+    #[Override]
     public function count(array $filters = []): int
     {
         return $this->inner->count($filters);
@@ -108,6 +112,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
      * @throws JsonException If JSON encoding fails
      * @throws SodiumException
      */
+    #[Override]
     public function find(string $eventId): ?array
     {
         $row = $this->inner->find($eventId);
@@ -115,21 +120,25 @@ final readonly class EncryptedEventStore implements EventStoreInterface
         return $row !== null ? $this->decryptRow($row) : null;
     }
 
+    #[Override]
     public function sizeInBytes(): int
     {
         return $this->inner->sizeInBytes();
     }
 
+    #[Override]
     public function deleteOlderThan(int $timestampUs): int
     {
         return $this->inner->deleteOlderThan($timestampUs);
     }
 
+    #[Override]
     public function clear(): void
     {
         $this->inner->clear();
     }
 
+    #[Override]
     public function vacuum(): void
     {
         $this->inner->vacuum();

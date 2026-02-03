@@ -9,6 +9,8 @@ use function array_slice;
 use function array_values;
 use function count;
 
+use Override;
+
 /**
  * In-memory span collector with ring-buffer eviction.
  *
@@ -24,6 +26,7 @@ final class InMemorySpanCollector implements SpanProcessorInterface
         private readonly int $maxSpans = 1000,
     ) {}
 
+    #[Override]
     public function onEnd(Span $span): void
     {
         $this->spans[] = $span;

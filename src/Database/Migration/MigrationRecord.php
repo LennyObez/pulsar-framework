@@ -9,6 +9,7 @@ use DateTimeImmutable;
 
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -31,6 +32,7 @@ readonly class MigrationRecord
      *
      * @throws DateMalformedStringException
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
         $appliedAt = $data['applied_at'] ?? 'now';

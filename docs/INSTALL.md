@@ -14,7 +14,7 @@ Pulsar Framework 1.0.0-rc.1 -- Installation and setup for PHP 8.5 HMVC applicati
 | ext-sodium   | (bundled)       | Cryptographic operations             |
 | ext-json     | (bundled)       | JSON encoding/decoding               |
 | ext-pcre     | (bundled)       | Regular expression support           |
-| ext-opcache  | (recommended)   | Bytecode caching for production      |
+| ext-opcache  | (recommended)   | Required for JIT and preloading      |
 | ext-apcu     | (optional)      | In-memory caching for config/routing |
 | ext-redis    | (optional)      | Redis-backed sessions and caching    |
 
@@ -186,6 +186,17 @@ WORKDIR /app
 COPY . .
 
 RUN composer install --no-dev --optimize-autoloader
+
+# Generate preload script (immutable build artifact)
+RUN php bin/pulsar preload:dump --output=preload.generated.php --no-meta
+
+# OPcache + JIT + preload configuration
+RUN echo "opcache.enable=1\n\
+opcache.jit=tracing\n\
+opcache.jit_buffer_size=128M\n\
+opcache.validate_timestamps=0\n\
+opcache.preload=/app/preload.generated.php\n\
+opcache.preload_user=www-data" > /usr/local/etc/php/conf.d/opcache.ini
 
 EXPOSE 9000
 CMD ["php-fpm"]

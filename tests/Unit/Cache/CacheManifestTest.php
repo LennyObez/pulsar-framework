@@ -81,7 +81,7 @@ final class CacheManifestTest extends TestCase
     #[Test]
     public function loadReturnsNullForTamperedManifest(): void
     {
-        CacheManifest::write(
+        $_ = CacheManifest::write(
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
             schemaVersion: 1,
@@ -110,7 +110,7 @@ final class CacheManifestTest extends TestCase
     #[Test]
     public function loadReturnsNullForWrongHmacKey(): void
     {
-        CacheManifest::write(
+        $_ = CacheManifest::write(
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
             schemaVersion: 1,
@@ -204,7 +204,7 @@ final class CacheManifestTest extends TestCase
     #[Test]
     public function manifestHmacUsesConstantTimeComparison(): void
     {
-        CacheManifest::write(
+        $_ = CacheManifest::write(
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
             schemaVersion: 1,

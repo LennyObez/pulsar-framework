@@ -8,9 +8,10 @@ use function base64_encode;
 use function bin2hex;
 
 use Pulsar\Api\Internal;
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
-use function random_bytes;
 use function sprintf;
 
 /**
@@ -20,8 +21,15 @@ use function sprintf;
  * values derived from `random_bytes()`. Keys are never printed to stdout.
  */
 #[Internal]
-final class SecureEnvGenerator
+final readonly class SecureEnvGenerator
 {
+    private Randomizer $randomizer;
+
+    public function __construct(?Randomizer $randomizer = null)
+    {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
+
     /**
      * Generate `.env` file content.
      *
@@ -34,8 +42,8 @@ final class SecureEnvGenerator
             ? 'http://localhost:8000'
             : 'https://example.com';
 
-        $appKey = 'base64:' . base64_encode(random_bytes(32));
-        $masterKey = bin2hex(random_bytes(32));
+        $appKey = 'base64:' . base64_encode($this->randomizer->getBytes(32));
+        $masterKey = bin2hex($this->randomizer->getBytes(32));
 
         return sprintf(
             <<<'ENV'

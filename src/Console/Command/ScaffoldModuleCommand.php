@@ -6,6 +6,7 @@ namespace Pulsar\Console\Command;
 
 use function is_string;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -19,6 +20,7 @@ use function sprintf;
 final class ScaffoldModuleCommand extends Command
 {
     use ScaffoldTrait;
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'scaffold:module';
@@ -27,6 +29,7 @@ final class ScaffoldModuleCommand extends Command
         $this->addOption('path', 'Base path for modules', 'p', 'app/Modules');
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);

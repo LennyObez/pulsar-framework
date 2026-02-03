@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\DeployConfig;
 use Pulsar\Deploy\CheckResult;
@@ -32,16 +33,19 @@ final readonly class RequestSizeCheck implements DeployCheckInterface
         private DeployConfig $deployConfig,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return self::CHECK_NAME;
     }
 
+    #[Override]
     public function getDescription(): string
     {
         return 'Validates POST body and upload size limits are reasonable';
     }
 
+    #[Override]
     public function check(string $environment): CheckResult
     {
         $postSize = $this->deployConfig->maxPostSizeMb;

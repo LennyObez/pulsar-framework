@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use function is_int;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 
 /**
@@ -23,6 +24,7 @@ readonly class StudioRetentionConfig
     /**
      * @param array<string, mixed> $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         $retentionEnv = $environment->get('STUDIO_RETENTION_DAYS');

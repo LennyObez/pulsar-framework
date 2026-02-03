@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 use function sprintf;
@@ -19,6 +20,7 @@ final class CommandNotFoundException extends ConsoleException
      *
      * @param list<string> $alternatives Similar command names
      */
+    #[NoDiscard]
     public static function forCommand(string $name, array $alternatives = []): self
     {
         $message = sprintf('Command "%s" not found.', $name);
@@ -35,6 +37,7 @@ final class CommandNotFoundException extends ConsoleException
      *
      * @param list<string> $matches Matching command names
      */
+    #[NoDiscard]
     public static function ambiguous(string $name, array $matches): self
     {
         return new self(sprintf(

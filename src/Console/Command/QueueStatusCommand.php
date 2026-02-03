@@ -11,6 +11,7 @@ use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 
 use JsonException;
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -32,6 +33,7 @@ final class QueueStatusCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'queue:status';
@@ -43,6 +45,7 @@ final class QueueStatusCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $pendingCount = $this->manager->size();

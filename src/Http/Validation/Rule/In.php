@@ -9,6 +9,7 @@ use function implode;
 use function in_array;
 use function is_scalar;
 
+use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
@@ -31,6 +32,7 @@ readonly class In implements RuleInterface
         private string $message = '',
     ) {}
 
+    #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation
     {
         if ($value === null) {
@@ -56,6 +58,7 @@ readonly class In implements RuleInterface
         );
     }
 
+    #[Override]
     public function name(): string
     {
         return 'in';

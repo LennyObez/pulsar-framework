@@ -10,6 +10,7 @@ use function in_array;
 use function is_string;
 
 use JsonException;
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -38,6 +39,7 @@ final class ShowContainerCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'show:container';
@@ -54,6 +56,7 @@ final class ShowContainerCommand extends Command
      * @throws RoutingException If the router is locked in strict cache mode
      * @throws SodiumException If a sodium cryptographic operation fails during boot
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->kernel->boot();

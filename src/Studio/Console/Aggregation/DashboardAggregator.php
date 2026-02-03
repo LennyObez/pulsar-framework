@@ -19,6 +19,7 @@ use function max;
 use function microtime;
 use function min;
 
+use Override;
 use PDO;
 use Pulsar\Api\Internal;
 use Pulsar\Studio\Console\Storage\EncryptedEventStore;
@@ -451,6 +452,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
      *
      * @return array<string, mixed>
      */
+    #[Override]
     public function aggregate(): array
     {
         $windowUs = 5 * 60 * 1_000_000;

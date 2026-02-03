@@ -7,10 +7,12 @@ namespace Pulsar\Observability\Tracing;
 use function bin2hex;
 use function ctype_xdigit;
 
+use NoDiscard;
 use Pulsar\Observability\Tracing\Exception\TracingException;
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
-use function random_bytes;
 use function strlen;
 use function strtolower;
 
@@ -37,9 +39,12 @@ final readonly class TraceId
      *
      * @throws RandomException
      */
-    public static function generate(): self
+    #[NoDiscard]
+    public static function generate(?Randomizer $randomizer = null): self
     {
-        return new self(bin2hex(random_bytes(16)));
+        $randomizer ??= new Randomizer(new Secure());
+
+        return new self(bin2hex($randomizer->getBytes(16)));
     }
 
     public function toString(): string

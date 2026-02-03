@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use function is_int;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -28,6 +29,7 @@ readonly class DeployConfig
     /**
      * @param array<string, mixed> $data Raw array from config/deploy.php
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         /** @var list<string> $trustedProxies */

@@ -7,6 +7,7 @@ namespace Pulsar\Auth\Authorization;
 use function array_any;
 use function array_map;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -39,6 +40,7 @@ readonly class Role
      *
      * @param array<string, mixed> $data Expected keys: 'permissions' => list<string>
      */
+    #[NoDiscard]
     public static function fromArray(string $name, array $data): self
     {
         /** @var list<string> $permissionNames */

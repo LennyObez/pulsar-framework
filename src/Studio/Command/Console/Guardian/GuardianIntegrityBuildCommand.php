@@ -15,6 +15,7 @@ use const LOCK_EX;
 
 use function mkdir;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Console\Command;
@@ -44,6 +45,7 @@ final class GuardianIntegrityBuildCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:guardian:integrity:build';
@@ -58,6 +60,7 @@ final class GuardianIntegrityBuildCommand extends Command
      * @throws IntegrityException If the manifest build process fails
      * @throws SodiumException If manifest signing fails
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

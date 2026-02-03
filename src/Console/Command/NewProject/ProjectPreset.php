@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\NewProject;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -27,6 +28,7 @@ enum ProjectPreset: string
     /**
      * Resolve a preset from user input, defaulting to Web.
      */
+    #[NoDiscard]
     public static function fromInput(?string $value): self
     {
         if ($value === null || $value === '') {

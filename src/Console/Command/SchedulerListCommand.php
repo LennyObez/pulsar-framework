@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -23,12 +24,14 @@ final class SchedulerListCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'scheduler:list';
         $this->description = 'List all registered scheduled jobs';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $jobs = $this->registry->all();

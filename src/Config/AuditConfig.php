@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -32,6 +33,7 @@ readonly class AuditConfig
      *
      * @param array<string, mixed> $data Raw `audit` sub-array from config/observability.php
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         $enabled = (bool) ($data['enabled'] ?? true);

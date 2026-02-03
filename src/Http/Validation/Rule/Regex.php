@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Http\Validation\Rule;
 
 use function is_string;
+
+use Override;
+
 use function preg_match;
 
 use Pulsar\Api\Api;
@@ -24,6 +27,7 @@ readonly class Regex implements RuleInterface
         private string $message = '',
     ) {}
 
+    #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation
     {
         if ($value === null) {
@@ -41,6 +45,7 @@ readonly class Regex implements RuleInterface
         );
     }
 
+    #[Override]
     public function name(): string
     {
         return 'regex';

@@ -191,7 +191,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('corrupted');
 
-        ManifestFormat::fromJson('{not valid json');
+        $_ = ManifestFormat::fromJson('{not valid json');
     }
 
     #[Test]
@@ -200,7 +200,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('expected JSON object at root');
 
-        ManifestFormat::fromJson('"just a string"');
+        $_ = ManifestFormat::fromJson('"just a string"');
     }
 
     #[Test]
@@ -209,7 +209,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('missing or invalid "version" field');
 
-        ManifestFormat::fromJson('{"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
+        $_ = ManifestFormat::fromJson('{"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
     }
 
     #[Test]
@@ -218,7 +218,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('missing or invalid "version" field');
 
-        ManifestFormat::fromJson('{"version":"not_int","algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
+        $_ = ManifestFormat::fromJson('{"version":"not_int","algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
     }
 
     #[Test]
@@ -227,7 +227,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('missing or invalid "algorithm" field');
 
-        ManifestFormat::fromJson('{"version":1,"generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
+        $_ = ManifestFormat::fromJson('{"version":1,"generated_at":0,"framework_version":"x","entry_count":0,"entries":[]}');
     }
 
     #[Test]
@@ -236,7 +236,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('missing or invalid "generated_at" field');
 
-        ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","framework_version":"x","entry_count":0,"entries":[]}');
+        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","framework_version":"x","entry_count":0,"entries":[]}');
     }
 
     #[Test]
@@ -245,7 +245,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('missing or invalid "framework_version" field');
 
-        ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"entry_count":0,"entries":[]}');
+        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"entry_count":0,"entries":[]}');
     }
 
     #[Test]
@@ -254,7 +254,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('missing or invalid "entry_count" field');
 
-        ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entries":[]}');
+        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entries":[]}');
     }
 
     #[Test]
@@ -263,7 +263,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('missing or invalid "entries" field');
 
-        ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0}');
+        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":0}');
     }
 
     #[Test]
@@ -272,7 +272,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('entry at index 0 is not an object');
 
-        ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":["bad"]}');
+        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":["bad"]}');
     }
 
     #[Test]
@@ -281,7 +281,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('entry at index 0 has missing or invalid "path"');
 
-        ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":[{"hash":"abc","size":10}]}');
+        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":[{"hash":"abc","size":10}]}');
     }
 
     #[Test]
@@ -290,7 +290,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('entry at index 0 has missing or invalid "hash"');
 
-        ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":[{"path":"a.php","size":10}]}');
+        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":[{"path":"a.php","size":10}]}');
     }
 
     #[Test]
@@ -299,7 +299,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectException(IntegrityException::class);
         $this->expectExceptionMessage('entry at index 0 has missing or invalid "size"');
 
-        ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":[{"path":"a.php","hash":"abc"}]}');
+        $_ = ManifestFormat::fromJson('{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":1,"entries":[{"path":"a.php","hash":"abc"}]}');
     }
 
     #[Test]
@@ -309,7 +309,7 @@ final class ManifestFormatTest extends TestCase
         $this->expectExceptionMessage('entry at index 1 has missing or invalid "hash"');
 
         $json = '{"version":1,"algorithm":"sha256","generated_at":0,"framework_version":"x","entry_count":2,"entries":[{"path":"a.php","hash":"abc","size":10},{"path":"b.php","size":20}]}';
-        ManifestFormat::fromJson($json);
+        $_ = ManifestFormat::fromJson($json);
     }
 
     #[Test]

@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Manifest;
 
+use function array_is_list;
+
+use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Extensibility\Exception\ManifestException;
 
 /**
  * Configuration for what an extension provides.
@@ -30,13 +34,30 @@ readonly class ProvidesConfig
      *
      * @param array{services?: list<string>, commands?: list<string>, routes?: bool, middleware?: list<string>} $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $services = $data['services'] ?? [];
+        $commands = $data['commands'] ?? [];
+        $middleware = $data['middleware'] ?? [];
+
+        if ($services !== [] && !array_is_list($services)) {
+            throw ManifestException::invalidFieldType('provides.services', 'list', 'associative array', '');
+        }
+
+        if ($commands !== [] && !array_is_list($commands)) {
+            throw ManifestException::invalidFieldType('provides.commands', 'list', 'associative array', '');
+        }
+
+        if ($middleware !== [] && !array_is_list($middleware)) {
+            throw ManifestException::invalidFieldType('provides.middleware', 'list', 'associative array', '');
+        }
+
         return new self(
-            services: $data['services'] ?? [],
-            commands: $data['commands'] ?? [],
+            services: $services,
+            commands: $commands,
             routes: $data['routes'] ?? false,
-            middleware: $data['middleware'] ?? [],
+            middleware: $middleware,
         );
     }
 

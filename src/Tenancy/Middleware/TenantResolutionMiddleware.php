@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy\Middleware;
 
+use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Http\Middleware\MiddlewareInterface;
@@ -25,6 +26,7 @@ readonly class TenantResolutionMiddleware implements MiddlewareInterface
         private ?LoggerInterface $logger = null,
     ) {}
 
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         $tenant = $this->resolver->resolve($request);

@@ -6,6 +6,7 @@ namespace Pulsar\Auth;
 
 use function array_key_exists;
 
+use Override;
 use Pulsar\Auth\Exception\AuthenticationException;
 use Pulsar\Auth\Guard\GuardInterface;
 use Pulsar\Auth\Identity\AnonymousIdentity;
@@ -39,6 +40,7 @@ final class AuthManager implements AuthManagerInterface
         $this->priority[] = $guard->name();
     }
 
+    #[Override]
     public function authenticate(Request $request): IdentityInterface
     {
         foreach ($this->priority as $name) {
@@ -52,6 +54,7 @@ final class AuthManager implements AuthManagerInterface
         return new AnonymousIdentity();
     }
 
+    #[Override]
     public function guard(string $name): GuardInterface
     {
         if (!array_key_exists($name, $this->guards)) {
@@ -61,6 +64,7 @@ final class AuthManager implements AuthManagerInterface
         return $this->guards[$name];
     }
 
+    #[Override]
     public function defaultGuard(): string
     {
         return $this->defaultGuardName;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Studio;
 
 use Fiber;
+use Override;
 use Pulsar\Api\Internal;
 use SplStack;
 use stdClass;
@@ -53,6 +54,7 @@ final class FiberScopedContextProvider implements CorrelationContextProviderInte
      * Returns the innermost active context for the current Fiber (or root),
      * or null if no scope is active.
      */
+    #[Override]
     public function current(): ?CorrelationContext
     {
         $key = $this->currentKey();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
+use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
@@ -11,7 +12,9 @@ use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanStatus;
 use Pulsar\Observability\Tracing\TraceContext;
 use Pulsar\Observability\Tracing\W3CTraceContextParser;
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
 use function sprintf;
 
@@ -24,14 +27,20 @@ use function sprintf;
  */
 final readonly class TracingMiddleware implements MiddlewareInterface
 {
+    private Randomizer $randomizer;
+
     public function __construct(
         private InMemorySpanCollector $collector,
         private float $samplingRate = 1.0,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * @throws RandomException
      */
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         // Parse incoming traceparent or create new context
@@ -106,7 +115,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             return false;
         }
 
-        $random = random_int(0, 999);
+        $random = $this->randomizer->getInt(0, 999);
 
         $threshold = (int) ($this->samplingRate * 1000.0);
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
@@ -31,6 +32,7 @@ final class ExtensionBootstrap
     /**
      * Create a bootstrap instance with default loader.
      */
+    #[NoDiscard]
     public static function create(): self
     {
         return new self(new ExtensionRegistry(), new ExtensionLoader());

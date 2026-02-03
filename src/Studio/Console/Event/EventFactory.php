@@ -14,11 +14,12 @@ use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
 use JsonException;
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Studio\CorrelationContext;
+use Random\Engine\Secure;
 use Random\RandomException;
-
-use function random_bytes;
+use Random\Randomizer;
 
 /**
  * Factory for creating EventEnvelopes from ConsoleEvents.
@@ -26,19 +27,26 @@ use function random_bytes;
 #[Internal]
 final readonly class EventFactory
 {
+    private Randomizer $randomizer;
+
     public function __construct(
         private string $appEnv,
         private string $hostname,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * Create a factory with auto-detected hostname.
      */
-    public static function create(string $appEnv): self
+    #[NoDiscard]
+    public static function create(string $appEnv, ?Randomizer $randomizer = null): self
     {
         return new self(
             appEnv: $appEnv,
             hostname: gethostname() ?: 'unknown',
+            randomizer: $randomizer,
         );
     }
 
@@ -56,7 +64,7 @@ final readonly class EventFactory
         $payloadHash = hash('sha256', $payloadJson);
 
         return new EventEnvelope(
-            eventId: bin2hex(random_bytes(16)),
+            eventId: bin2hex($this->randomizer->getBytes(16)),
             eventType: $event->eventType(),
             schemaVersion: $event->schemaVersion(),
             timestampUs: (int) (microtime(true) * 1_000_000.0),

@@ -9,6 +9,7 @@ use function is_dir;
 use function is_int;
 use function is_string;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\StudioConfig;
 use Pulsar\Console\Command;
@@ -31,6 +32,7 @@ final class StudioStartCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:start';
@@ -39,6 +41,7 @@ final class StudioStartCommand extends Command
         $this->addOption('port', 'Port to listen on', 'p');
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->config->enabled) {

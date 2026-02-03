@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Container\Exception;
 
 use Exception;
+use NoDiscard;
 use Psr\Container\ContainerExceptionInterface;
 use Pulsar\Api\Api;
 
@@ -19,6 +20,7 @@ final class ContainerException extends Exception implements ContainerExceptionIn
     /**
      * Create an exception for when a binding cannot be resolved.
      */
+    #[NoDiscard]
     public static function unresolvable(string $id, string $reason = ''): self
     {
         $message = sprintf('Unable to resolve binding "%s"', $id);
@@ -35,6 +37,7 @@ final class ContainerException extends Exception implements ContainerExceptionIn
      *
      * @param list<string> $chain
      */
+    #[NoDiscard]
     public static function circularDependency(string $id, array $chain): self
     {
         return new self(sprintf(

@@ -239,7 +239,7 @@ final class EvidenceArchiveTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid JSON');
 
-        EvidenceArchive::fromJson('not valid json');
+        $_ = EvidenceArchive::fromJson('not valid json');
     }
 
     #[Test]

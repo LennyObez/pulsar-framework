@@ -6,6 +6,7 @@ namespace Pulsar\Cache;
 
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigRepository;
+use Random\RandomException;
 use SodiumException;
 
 /**
@@ -25,6 +26,7 @@ final class ConfigCache
      *
      * @throws CacheException
      * @throws SodiumException
+     * @throws RandomException If nonce generation fails during encryption
      */
     public function write(string $cachePath, ConfigRepository $repository, bool $encrypt): void
     {

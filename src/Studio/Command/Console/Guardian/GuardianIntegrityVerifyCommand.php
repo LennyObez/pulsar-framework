@@ -8,6 +8,7 @@ use function file_exists;
 use function file_get_contents;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\IntegrityPolicyMode;
@@ -39,6 +40,7 @@ final class GuardianIntegrityVerifyCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:guardian:integrity:verify';
@@ -52,6 +54,7 @@ final class GuardianIntegrityVerifyCommand extends Command
      * @throws IntegrityException If the manifest is malformed or missing required fields
      * @throws SodiumException If signature verification fails
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

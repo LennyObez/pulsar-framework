@@ -119,20 +119,20 @@ final class ValidationBench
     #[Assert('mode(variant.time.avg) < 50 microseconds')]
     public function benchSimpleValidation(): void
     {
-        $this->validator->validate($this->simpleData, $this->simpleRules);
+        $result = $this->validator->validate($this->simpleData, $this->simpleRules);
     }
 
     #[Subject]
     #[Assert('mode(variant.time.avg) < 200 microseconds')]
     public function benchComplexValidation(): void
     {
-        $this->validator->validate($this->complexData, $this->complexRules);
+        $result = $this->validator->validate($this->complexData, $this->complexRules);
     }
 
     #[Subject]
     #[Assert('mode(variant.time.avg) < 100 microseconds')]
     public function benchValidationWithViolations(): void
     {
-        $this->validator->validate($this->failingData, $this->failingRules);
+        $result = $this->validator->validate($this->failingData, $this->failingRules);
     }
 }

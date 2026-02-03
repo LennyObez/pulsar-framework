@@ -8,6 +8,7 @@ use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -29,12 +30,14 @@ final class StudioDisableCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:disable';
         $this->description = 'Disable Studio in configuration';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $configPath = $this->basePath . '/config/studio.php';

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Metrics;
 
+use NoDiscard;
+
 /**
  * Readonly value object capturing point-in-time metric state.
  */
@@ -24,6 +26,7 @@ final readonly class MetricSnapshot
     /**
      * Create a snapshot from a counter.
      */
+    #[NoDiscard]
     public static function fromCounter(Counter $counter): self
     {
         return new self(
@@ -37,6 +40,7 @@ final readonly class MetricSnapshot
     /**
      * Create a snapshot from a gauge.
      */
+    #[NoDiscard]
     public static function fromGauge(Gauge $gauge): self
     {
         return new self(
@@ -50,6 +54,7 @@ final readonly class MetricSnapshot
     /**
      * Create a snapshot from a histogram.
      */
+    #[NoDiscard]
     public static function fromHistogram(Histogram $histogram): self
     {
         $series = [];

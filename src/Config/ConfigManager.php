@@ -168,11 +168,7 @@ final class ConfigManager
      */
     public function environment(): Environment
     {
-        if ($this->environment === null) {
-            throw ConfigException::missingRequired('environment', 'ConfigManager (call load() first)');
-        }
-
-        return $this->environment;
+        return $this->environment ?? throw ConfigException::missingRequired('environment', 'ConfigManager (call load() first)');
     }
 
     /**
@@ -182,11 +178,7 @@ final class ConfigManager
      */
     public function repository(): ConfigRepository
     {
-        if ($this->repository === null) {
-            throw ConfigException::missingRequired('repository', 'ConfigManager (call load() first)');
-        }
-
-        return $this->repository;
+        return $this->repository ?? throw ConfigException::missingRequired('repository', 'ConfigManager (call load() first)');
     }
 
     /**

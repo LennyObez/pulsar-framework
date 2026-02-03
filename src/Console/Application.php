@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Exception\CommandNotFoundException;
 use Pulsar\Console\Input\ArgvInput;
@@ -65,6 +66,7 @@ final class Application
      *
      * @throws CommandNotFoundException If command not found
      */
+    #[NoDiscard]
     public function get(string $name): CommandInterface
     {
         if (!$this->has($name)) {

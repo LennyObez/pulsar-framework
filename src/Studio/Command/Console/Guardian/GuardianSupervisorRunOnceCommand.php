@@ -8,6 +8,7 @@ use JsonException;
 
 use function memory_get_usage;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -37,6 +38,7 @@ final class GuardianSupervisorRunOnceCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:guardian:supervisor:run-once';
@@ -48,6 +50,7 @@ final class GuardianSupervisorRunOnceCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

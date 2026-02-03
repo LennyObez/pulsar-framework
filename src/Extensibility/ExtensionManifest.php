@@ -7,8 +7,10 @@ namespace Pulsar\Extensibility;
 use function count;
 use function dirname;
 use function is_string;
+use function json_validate;
 
 use JsonException;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extensibility\Exception\ManifestException;
 use Pulsar\Extensibility\Manifest\ProvidesConfig;
@@ -37,15 +39,18 @@ readonly class ExtensionManifest
      *
      * @throws ManifestException If the file cannot be read or parsed
      */
+    #[NoDiscard]
     public static function fromFile(string $path): self
     {
         if (!file_exists($path)) {
             throw ManifestException::fileNotFound($path);
         }
 
-        $content = file_get_contents($path);
-        if ($content === false) {
-            throw ManifestException::fileNotFound($path);
+        $content = file_get_contents($path)
+            ?: throw ManifestException::fileNotFound($path);
+
+        if (!json_validate($content)) {
+            throw ManifestException::invalidJson($path, 'Invalid JSON');
         }
 
         try {
@@ -64,6 +69,7 @@ readonly class ExtensionManifest
      * @param array<string, mixed> $data
      * @throws ManifestException If required fields are missing or invalid
      */
+    #[NoDiscard]
     public static function fromArray(array $data, string $basePath = ''): self
     {
         // Validate required fields

@@ -308,6 +308,12 @@ Retention enforcement (`RetentionEnforcer`) deletes old events and their chain l
 - `links_pruned` counter in `studio_meta` tracks how many links were removed
 - Verification reports include mode (`full` / `window`), anchor type, and pruned count
 
+### Concurrency Model
+
+Pulsar is synchronous by design. The framework processes one request at a time per worker, with no event loop, hidden scheduler, or implicit parallelism. Fibers are used in exactly one place -- Studio's `FiberScopedContextProvider` -- for correlation context isolation across Fiber boundaries via a `WeakMap` keyed by Fiber identity. When no Fiber is active, all context operations fall back to a root key with zero overhead.
+
+For full details on Fiber usage, extension constraints, and framework guarantees, see [`docs/ASYNC_MODEL.md`](ASYNC_MODEL.md).
+
 ## Operational Layer
 
 The operational layer provides production-grade subsystems for job processing, process supervision, file integrity verification, and deploy readiness checks. These subsystems are wired into the Kernel boot pipeline and integrate with Studio for observability.

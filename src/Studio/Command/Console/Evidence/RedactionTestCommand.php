@@ -11,6 +11,7 @@ use function json_decode;
 use const JSON_THROW_ON_ERROR;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -34,6 +35,7 @@ final class RedactionTestCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:evidence:redaction:test';
@@ -46,6 +48,7 @@ final class RedactionTestCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

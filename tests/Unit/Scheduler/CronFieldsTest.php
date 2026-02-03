@@ -44,7 +44,7 @@ final class CronFieldsTest extends TestCase
         $this->expectException(SchedulerException::class);
         $this->expectExceptionMessage('expected 5 fields, got 3');
 
-        CronFields::parse('* * *');
+        $_ = CronFields::parse('* * *');
     }
 
     #[Test]
@@ -53,7 +53,7 @@ final class CronFieldsTest extends TestCase
         $this->expectException(SchedulerException::class);
         $this->expectExceptionMessage('expected 5 fields, got 6');
 
-        CronFields::parse('* * * * * *');
+        $_ = CronFields::parse('* * * * * *');
     }
 
     #[Test]

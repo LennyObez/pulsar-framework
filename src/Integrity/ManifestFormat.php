@@ -16,6 +16,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Integrity\Exception\IntegrityException;
 
@@ -35,6 +36,7 @@ final class ManifestFormat
      *
      * @throws JsonException
      */
+    #[NoDiscard]
     public static function toJson(IntegrityManifest $manifest, ?string $signature = null): string
     {
         $entries = array_map(
@@ -69,6 +71,7 @@ final class ManifestFormat
      *
      * @throws IntegrityException If the JSON is malformed or missing required fields
      */
+    #[NoDiscard]
     public static function fromJson(string $json): IntegrityManifest
     {
         try {

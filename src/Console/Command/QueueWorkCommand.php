@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -27,6 +28,7 @@ final class QueueWorkCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'queue:work';
@@ -39,6 +41,7 @@ final class QueueWorkCommand extends Command
         $this->addOption('sleep', 'Sleep time in milliseconds when queue is empty', null, '1000');
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         /** @var string $queue */

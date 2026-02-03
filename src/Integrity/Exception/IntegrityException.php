@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Integrity\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -20,6 +21,7 @@ final class IntegrityException extends RuntimeException
     /**
      * Manifest file was not found at the expected path.
      */
+    #[NoDiscard]
     public static function manifestNotFound(string $path): self
     {
         return new self(sprintf('Integrity manifest not found at "%s"', $path));
@@ -28,6 +30,7 @@ final class IntegrityException extends RuntimeException
     /**
      * Manifest file exists but is corrupted or unparseable.
      */
+    #[NoDiscard]
     public static function manifestCorrupted(string $path, string $reason): self
     {
         return new self(sprintf('Integrity manifest at "%s" is corrupted: %s', $path, $reason));
@@ -36,6 +39,7 @@ final class IntegrityException extends RuntimeException
     /**
      * HMAC signature verification failed for the manifest.
      */
+    #[NoDiscard]
     public static function signatureInvalid(): self
     {
         return new self('Integrity manifest signature is invalid — the manifest may have been tampered with');
@@ -44,6 +48,7 @@ final class IntegrityException extends RuntimeException
     /**
      * Filesystem verification detected modifications or missing files.
      */
+    #[NoDiscard]
     public static function verificationFailed(int $modified, int $missing): self
     {
         return new self(sprintf(
@@ -56,6 +61,7 @@ final class IntegrityException extends RuntimeException
     /**
      * Manifest build process failed.
      */
+    #[NoDiscard]
     public static function buildFailed(string $reason): self
     {
         return new self(sprintf('Failed to build integrity manifest: %s', $reason));

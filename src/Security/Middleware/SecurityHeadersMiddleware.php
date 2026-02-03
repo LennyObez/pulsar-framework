@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Middleware;
 
+use Override;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
@@ -21,6 +22,7 @@ final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
         private SecurityHeadersConfig $config,
     ) {}
 
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         /** @var Response $response */

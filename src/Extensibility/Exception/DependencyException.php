@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 use function sprintf;
@@ -17,6 +18,7 @@ final class DependencyException extends ExtensionException
     /**
      * Create exception for missing dependency.
      */
+    #[NoDiscard]
     public static function missingDependency(string $extension, string $dependency): self
     {
         return new self(sprintf(
@@ -29,6 +31,7 @@ final class DependencyException extends ExtensionException
     /**
      * Create exception for dependency version mismatch.
      */
+    #[NoDiscard]
     public static function versionMismatch(
         string $extension,
         string $dependency,
@@ -49,6 +52,7 @@ final class DependencyException extends ExtensionException
      *
      * @param list<string> $chain
      */
+    #[NoDiscard]
     public static function circularDependency(array $chain): self
     {
         return new self(sprintf(
@@ -60,6 +64,7 @@ final class DependencyException extends ExtensionException
     /**
      * Create exception for unresolvable dependency graph.
      */
+    #[NoDiscard]
     public static function unresolvable(string $reason): self
     {
         return new self(sprintf('Unable to resolve extension dependencies: %s', $reason));

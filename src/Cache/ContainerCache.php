@@ -7,6 +7,7 @@ namespace Pulsar\Cache;
 use function is_array;
 
 use Pulsar\Api\Internal;
+use Random\RandomException;
 use SodiumException;
 
 /**
@@ -37,6 +38,7 @@ final class ContainerCache
      *
      * @throws CacheException
      * @throws SodiumException
+     * @throws RandomException If nonce generation fails during encryption
      */
     public function write(string $cachePath, array $hints, bool $encrypt): void
     {

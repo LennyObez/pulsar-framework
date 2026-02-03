@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Metrics\Exception;
 
+use NoDiscard;
 use RuntimeException;
 
 use function sprintf;
@@ -13,6 +14,7 @@ use function sprintf;
  */
 final class MetricsException extends RuntimeException
 {
+    #[NoDiscard]
     public static function negativeIncrement(float $value): self
     {
         return new self(sprintf(
@@ -21,6 +23,7 @@ final class MetricsException extends RuntimeException
         ));
     }
 
+    #[NoDiscard]
     public static function typeMismatch(string $name, string $expected, string $actual): self
     {
         return new self(sprintf(

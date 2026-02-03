@@ -10,6 +10,7 @@ use function count;
 
 use DateInvalidTimeZoneException;
 use DateTimeImmutable;
+use NoDiscard;
 use Pulsar\Scheduler\Exception\SchedulerException;
 
 /**
@@ -39,6 +40,7 @@ final class JobRegistry
      *
      * @throws SchedulerException If the job is not found.
      */
+    #[NoDiscard]
     public function get(string $name): JobInterface
     {
         if (!isset($this->jobs[$name])) {

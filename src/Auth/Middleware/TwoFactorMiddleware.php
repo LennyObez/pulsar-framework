@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Middleware;
 
+use Override;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Auth\SecurityContext;
 use Pulsar\Http\Middleware\MiddlewareInterface;
@@ -19,6 +20,7 @@ use Pulsar\Http\ResponseStatus;
  */
 final readonly class TwoFactorMiddleware implements MiddlewareInterface
 {
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         /** @var SecurityContext|null $securityContext */

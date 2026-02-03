@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy\Resolver;
 
+use Override;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Http\Request;
 use Pulsar\Tenancy\Tenant;
@@ -25,6 +26,7 @@ readonly class SubdomainTenantResolver implements TenantResolverInterface
         private TenancyConfig $config,
     ) {}
 
+    #[Override]
     public function resolve(Request $request): ?Tenant
     {
         $host = $request->header('Host');

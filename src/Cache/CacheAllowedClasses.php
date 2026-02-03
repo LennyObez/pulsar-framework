@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache;
 
+use function array_is_list;
 use function class_exists;
 
 use const DIRECTORY_SEPARATOR;
@@ -27,6 +28,7 @@ use JsonException;
 
 use const LOCK_EX;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -77,6 +79,7 @@ final class CacheAllowedClasses
      *
      * @throws ReflectionException
      */
+    #[NoDiscard]
     public static function scan(string $vendorPath, string $srcPath): array
     {
         $candidates = self::discoverCandidates($vendorPath, $srcPath);
@@ -98,6 +101,7 @@ final class CacheAllowedClasses
      *
      * @return list<class-string>|null Null if not found or invalid.
      */
+    #[NoDiscard]
     public static function load(string $cachePath): ?array
     {
         $path = $cachePath . DIRECTORY_SEPARATOR . self::FILENAME;
@@ -105,6 +109,10 @@ final class CacheAllowedClasses
         $decoded = self::readJsonFile($path, 16);
 
         if ($decoded === null) {
+            return null;
+        }
+
+        if (!array_is_list($decoded)) {
             return null;
         }
 

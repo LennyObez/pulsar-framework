@@ -72,7 +72,7 @@ final class ValidatorTest extends TestCase
     {
         $this->expectException(ValidationException::class);
 
-        $this->validator->validateOrFail(
+        $_ = $this->validator->validateOrFail(
             ['name' => ''],
             ['name' => [new Required()]],
         );

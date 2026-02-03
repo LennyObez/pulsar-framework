@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -27,6 +28,7 @@ readonly class SecurityConfig
      *
      * @param array<string, mixed> $data Raw array from config/security.php
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         /** @var array<string, mixed> $sessionData */

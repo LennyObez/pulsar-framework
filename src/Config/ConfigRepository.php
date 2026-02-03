@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\Exception\ConfigException;
 
@@ -39,6 +40,7 @@ final class ConfigRepository
      *
      * @throws ConfigException If the config class has not been registered.
      */
+    #[NoDiscard]
     public function get(string $class): object
     {
         if (!isset($this->configs[$class])) {

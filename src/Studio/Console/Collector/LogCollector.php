@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Studio\Console\Collector;
 
 use Closure;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogSinkInterface;
@@ -33,6 +34,7 @@ final class LogCollector implements LogSinkInterface, CollectorInterface
         private readonly Closure $emit,
     ) {}
 
+    #[Override]
     public function write(LogEntry $entry): void
     {
         if (!$this->enabled) {

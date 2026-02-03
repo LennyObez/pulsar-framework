@@ -1,0 +1,31 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 2
+			path: ../../tests/Integration/Auth/TwoFactorFlowTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertFalse\(\) with false will always evaluate to false\.$#'
+			identifier: staticMethod.impossibleType
+			count: 1
+			path: ../../tests/Unit/Auth/AuthManagerTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertFalse\(\) with false will always evaluate to false\.$#'
+			identifier: staticMethod.impossibleType
+			count: 5
+			path: ../../tests/Unit/Auth/Identity/AnonymousIdentityTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertSame\(\) with true and true will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: ../../tests/Unit/Auth/Identity/IdentityTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 1
+			path: ../../tests/Unit/Auth/Identity/IdentityTest.php

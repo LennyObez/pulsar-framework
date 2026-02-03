@@ -8,11 +8,12 @@ use function bin2hex;
 use function hash_equals;
 use function is_string;
 
+use Override;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Security\Session\SessionInterface;
+use Random\Engine\Secure;
 use Random\RandomException;
-
-use function random_bytes;
+use Random\Randomizer;
 
 /**
  * CSRF token manager using the synchronizer token pattern.
@@ -28,10 +29,15 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      */
     private const string SESSION_KEY = '_csrf_token';
 
+    private readonly Randomizer $randomizer;
+
     public function __construct(
         private readonly SessionInterface $session,
         private readonly CsrfConfig $config,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * Generate a new CSRF token and store it in the session.
@@ -40,9 +46,10 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      *
      * @throws RandomException
      */
+    #[Override]
     public function generate(): string
     {
-        $token = bin2hex(random_bytes(max(1, $this->config->tokenLength)));
+        $token = bin2hex($this->randomizer->getBytes(max(1, $this->config->tokenLength)));
         $this->session->set(self::SESSION_KEY, $token);
 
         return $token;
@@ -53,6 +60,7 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      *
      * @throws RandomException
      */
+    #[Override]
     public function getToken(): string
     {
         $token = $this->session->get(self::SESSION_KEY);
@@ -69,6 +77,7 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      *
      * Uses constant-time comparison to prevent timing attacks.
      */
+    #[Override]
     public function validate(string $submittedToken): bool
     {
         $storedToken = $this->session->get(self::SESSION_KEY);
@@ -87,6 +96,7 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      *
      * @throws RandomException
      */
+    #[Override]
     public function rotate(): string
     {
         return $this->generate();

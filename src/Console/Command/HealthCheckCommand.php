@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -24,12 +25,14 @@ final class HealthCheckCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'health:check';
         $this->description = 'Run all registered health checks';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $report = $this->runner->runAll();

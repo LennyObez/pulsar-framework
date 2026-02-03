@@ -13,11 +13,12 @@ use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
 use JsonException;
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Studio\CorrelationContext;
+use Random\Engine\Secure;
 use Random\RandomException;
-
-use function random_bytes;
+use Random\Randomizer;
 
 /**
  * Wraps a ConsoleEvent with common metadata and computed fields.
@@ -49,18 +50,21 @@ final readonly class EventEnvelope
      * @throws JsonException
      * @throws RandomException
      */
+    #[NoDiscard]
     public static function wrap(
         ConsoleEvent $event,
         CorrelationContext $context,
         string $appEnv,
         string $hostname,
+        ?Randomizer $randomizer = null,
     ): self {
+        $randomizer ??= new Randomizer(new Secure());
         $payload = $event->toArray();
         $payloadJson = json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $payloadHash = hash('sha256', $payloadJson);
 
         return new self(
-            eventId: bin2hex(random_bytes(16)),
+            eventId: bin2hex($randomizer->getBytes(16)),
             eventType: $event->eventType(),
             schemaVersion: $event->schemaVersion(),
             timestampUs: (int) (microtime(true) * 1_000_000.0),

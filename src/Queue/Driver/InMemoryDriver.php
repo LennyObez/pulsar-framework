@@ -9,13 +9,15 @@ use function array_values;
 use function bin2hex;
 use function count;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueDriverInterface;
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
-use function random_bytes;
 use function time;
 
 /**
@@ -30,10 +32,18 @@ final class InMemoryDriver implements QueueDriverInterface
     /** @var array<string, JobRecord> */
     private array $records = [];
 
+    private readonly Randomizer $randomizer;
+
+    public function __construct(?Randomizer $randomizer = null)
+    {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
+
     /** @throws RandomException If random byte generation fails */
+    #[Override]
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string
     {
-        $id = bin2hex(random_bytes(16));
+        $id = bin2hex($this->randomizer->getBytes(16));
         $now = time();
 
         $this->records[$id] = new JobRecord(
@@ -50,6 +60,7 @@ final class InMemoryDriver implements QueueDriverInterface
         return $id;
     }
 
+    #[Override]
     public function pop(string $queue): ?JobRecord
     {
         $now = time();
@@ -80,6 +91,7 @@ final class InMemoryDriver implements QueueDriverInterface
         return null;
     }
 
+    #[Override]
     public function acknowledge(string $jobId): void
     {
         if (!isset($this->records[$jobId])) {
@@ -89,6 +101,7 @@ final class InMemoryDriver implements QueueDriverInterface
         unset($this->records[$jobId]);
     }
 
+    #[Override]
     public function reject(string $jobId, string $reason): void
     {
         if (!isset($this->records[$jobId])) {
@@ -109,6 +122,7 @@ final class InMemoryDriver implements QueueDriverInterface
         );
     }
 
+    #[Override]
     public function size(string $queue): int
     {
         return count(array_filter(
@@ -118,6 +132,7 @@ final class InMemoryDriver implements QueueDriverInterface
         ));
     }
 
+    #[Override]
     public function purge(string $queue): int
     {
         $before = count($this->records);
@@ -133,6 +148,7 @@ final class InMemoryDriver implements QueueDriverInterface
     /**
      * @return list<JobRecord>
      */
+    #[Override]
     public function findByStatus(JobRecordStatus $status): array
     {
         return array_values(array_filter(

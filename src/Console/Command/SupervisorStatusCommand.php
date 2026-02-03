@@ -11,6 +11,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
+use Override;
 use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -32,6 +33,7 @@ final class SupervisorStatusCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'supervisor:status';
@@ -42,6 +44,7 @@ final class SupervisorStatusCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $recyclePolicy = $this->config->enabled

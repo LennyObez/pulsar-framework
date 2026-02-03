@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -29,12 +30,14 @@ final class SupervisorCheckCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'supervisor:check';
         $this->description = 'Run supervisor preflight checks';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $output->writeln('Supervisor Preflight Checks');

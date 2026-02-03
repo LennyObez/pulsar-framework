@@ -50,6 +50,8 @@
     "api:snapshot": "php tools/api/generate-snapshot.php",
     "bench": "phpbench run --config=tools/php/phpbench.json --report=default",
     "bench:ci": "phpbench run --config=tools/php/phpbench.json --report=default --progress=none",
+    "bench:profiles": "php tools/bench/run.php",
+    "bench:profiles:ci": "php tools/bench/run.php --output=var/bench/results.json",
     "qa": [
       "@cs:check",
       "@phpstan",

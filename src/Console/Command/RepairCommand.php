@@ -6,6 +6,7 @@ namespace Pulsar\Console\Command;
 
 use function count;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -25,12 +26,14 @@ final class RepairCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'health:repair';
         $this->description = 'Run self-healing repair jobs';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $diagnoses = $this->runner->diagnoseAll();

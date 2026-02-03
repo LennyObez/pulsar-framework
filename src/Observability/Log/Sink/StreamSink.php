@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log\Sink;
 
+use Override;
 use Pulsar\Observability\Log\Exception\LogException;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogFormatter;
@@ -39,6 +40,7 @@ final class StreamSink implements LogSinkInterface
         $this->stream = $stream;
     }
 
+    #[Override]
     public function write(LogEntry $entry): void
     {
         $line = $this->formatter->format($entry);

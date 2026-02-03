@@ -12,6 +12,7 @@ use function is_string;
 
 use Pulsar\Api\Internal;
 use Pulsar\Routing\Route;
+use Random\RandomException;
 use SodiumException;
 
 /**
@@ -34,6 +35,7 @@ final class RouteCache
      *
      * @throws CacheException
      * @throws SodiumException
+     * @throws RandomException If nonce generation fails during encryption
      */
     public function write(string $cachePath, array $routes, bool $encrypt): array
     {

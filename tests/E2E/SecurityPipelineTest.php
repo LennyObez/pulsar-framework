@@ -6,6 +6,8 @@ namespace Pulsar\Tests\E2E;
 
 use function array_key_exists;
 
+use NoDiscard;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -337,6 +339,8 @@ class InMemoryTestSession implements SessionInterface
         return $this->started;
     }
 
+    #[NoDiscard]
+    #[Override]
     public function get(string $key, mixed $default = null): mixed
     {
         return $this->data[$key] ?? $default;

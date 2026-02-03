@@ -11,6 +11,7 @@ use function is_float;
 use function is_int;
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
@@ -32,6 +33,7 @@ readonly class Row
      *
      * @throws DatabaseException If the column does not exist.
      */
+    #[NoDiscard]
     public function get(string $column): mixed
     {
         if (!array_key_exists($column, $this->data)) {

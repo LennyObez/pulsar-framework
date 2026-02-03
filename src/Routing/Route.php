@@ -10,6 +10,7 @@ use const ARRAY_FILTER_USE_KEY;
 
 use function in_array;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
@@ -165,6 +166,7 @@ readonly class Route
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
+    #[NoDiscard]
     public static function get(string $path, mixed $handler, ?string $name = null): self
     {
         return new self([Method::GET, Method::HEAD], $path, $handler, $name);
@@ -175,6 +177,7 @@ readonly class Route
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
+    #[NoDiscard]
     public static function post(string $path, mixed $handler, ?string $name = null): self
     {
         return new self([Method::POST], $path, $handler, $name);
@@ -185,6 +188,7 @@ readonly class Route
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
+    #[NoDiscard]
     public static function put(string $path, mixed $handler, ?string $name = null): self
     {
         return new self([Method::PUT], $path, $handler, $name);
@@ -195,6 +199,7 @@ readonly class Route
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
+    #[NoDiscard]
     public static function patch(string $path, mixed $handler, ?string $name = null): self
     {
         return new self([Method::PATCH], $path, $handler, $name);
@@ -205,6 +210,7 @@ readonly class Route
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
+    #[NoDiscard]
     public static function delete(string $path, mixed $handler, ?string $name = null): self
     {
         return new self([Method::DELETE], $path, $handler, $name);
@@ -215,6 +221,7 @@ readonly class Route
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
      */
+    #[NoDiscard]
     public static function any(string $path, mixed $handler, ?string $name = null): self
     {
         return new self(

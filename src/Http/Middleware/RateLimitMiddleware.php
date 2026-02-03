@@ -6,6 +6,7 @@ namespace Pulsar\Http\Middleware;
 
 use function is_string;
 
+use Override;
 use Pulsar\Http\RateLimit\RateLimiter;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
@@ -24,6 +25,7 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
         private RateLimiter $limiter,
     ) {}
 
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         $key = $this->resolveKey($request);

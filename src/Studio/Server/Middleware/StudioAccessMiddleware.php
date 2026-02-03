@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Server\Middleware;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Middleware\MiddlewareInterface;
@@ -25,6 +26,7 @@ final readonly class StudioAccessMiddleware implements MiddlewareInterface
         private StudioAccessGate $gate,
     ) {}
 
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         $result = $this->gate->check($request);

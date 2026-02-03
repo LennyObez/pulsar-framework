@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -15,6 +16,7 @@ interface FlagStorageInterface
     /**
      * Get a flag definition by name.
      */
+    #[NoDiscard]
     public function get(string $name): ?FlagDefinition;
 
     /**

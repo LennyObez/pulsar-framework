@@ -440,6 +440,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Deploy\\Runtime\\PhpRuntimeInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\ErrorHandling\\ExceptionRendererInterface": {
       "since": "",
       "methods": [],
@@ -1160,6 +1165,7 @@
     "Pulsar\\Console\\Command\\NewProject\\TemplateRegistry",
     "Pulsar\\Console\\Command\\OptimizeClearCommand",
     "Pulsar\\Console\\Command\\OptimizeCommand",
+    "Pulsar\\Console\\Command\\PreloadDumpCommand",
     "Pulsar\\Core\\Kernel",
     "Pulsar\\Core\\Version",
     "Pulsar\\Deploy\\Check\\CacheSettingsCheck",
@@ -1168,12 +1174,16 @@
     "Pulsar\\Deploy\\Check\\Http3ReadinessCheck",
     "Pulsar\\Deploy\\Check\\HttpsReadinessCheck",
     "Pulsar\\Deploy\\Check\\IntegrityCheck",
+    "Pulsar\\Deploy\\Check\\JitCheck",
     "Pulsar\\Deploy\\Check\\OpcacheCheck",
     "Pulsar\\Deploy\\Check\\RateLimitCheck",
     "Pulsar\\Deploy\\Check\\RequestSizeCheck",
     "Pulsar\\Deploy\\Check\\SecurityHeadersReadinessCheck",
     "Pulsar\\Deploy\\Check\\TrustedProxyCheck",
     "Pulsar\\Deploy\\DeployCheck",
+    "Pulsar\\Deploy\\Runtime\\FilesystemReader",
+    "Pulsar\\Deploy\\Runtime\\FilesystemReaderInterface",
+    "Pulsar\\Deploy\\Runtime\\PhpRuntime",
     "Pulsar\\Deploy\\Snippet\\ProxySnippetGenerator",
     "Pulsar\\Deploy\\Snippet\\TlsSnippetGenerator",
     "Pulsar\\Extensibility\\ExtensionBootstrap",
@@ -1303,6 +1313,7 @@
     "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunner",
     "Pulsar\\Supervisor\\StuckJobDetector",
     "Pulsar\\Supervisor\\StuckJobRecovery",
-    "Pulsar\\Supervisor\\Supervisor"
+    "Pulsar\\Supervisor\\Supervisor",
+    "Pulsar\\Support\\AtomicFileWriter"
   ]
 }

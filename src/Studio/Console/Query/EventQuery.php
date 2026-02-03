@@ -7,6 +7,7 @@ namespace Pulsar\Studio\Console\Query;
 use function array_values;
 use function max;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Studio\Console\Event\EventType;
 use Pulsar\Studio\Console\Storage\EventStoreInterface;
@@ -123,6 +124,7 @@ final class EventQuery
         );
     }
 
+    #[NoDiscard]
     public function get(): EventQueryResult
     {
         $filter = $this->filter();

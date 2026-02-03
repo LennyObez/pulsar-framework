@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Tracing\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -15,6 +16,7 @@ use function sprintf;
 #[Api]
 final class TracingException extends RuntimeException
 {
+    #[NoDiscard]
     public static function invalidTraceId(string $value): self
     {
         return new self(sprintf(
@@ -23,6 +25,7 @@ final class TracingException extends RuntimeException
         ));
     }
 
+    #[NoDiscard]
     public static function invalidSpanId(string $value): self
     {
         return new self(sprintf(

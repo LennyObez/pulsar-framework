@@ -7,6 +7,7 @@ namespace Pulsar\Config;
 use function is_float;
 use function is_int;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 
 /**
@@ -28,6 +29,7 @@ readonly class StudioConfig
     /**
      * @param array<string, mixed> $data Raw array from config/studio.php
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         $enabled = $environment->get('STUDIO_ENABLED') !== null

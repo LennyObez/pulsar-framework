@@ -8,6 +8,7 @@ use function array_key_exists;
 use function is_int;
 use function is_scalar;
 
+use Override;
 use Pulsar\Console\InputInterface;
 
 /**
@@ -58,6 +59,7 @@ final class ArrayInput implements InputInterface
         $this->options = $options;
     }
 
+    #[Override]
     public function getArgument(int|string $key, mixed $default = null): mixed
     {
         if (is_int($key)) {
@@ -67,11 +69,13 @@ final class ArrayInput implements InputInterface
         return $default;
     }
 
+    #[Override]
     public function hasOption(string $name): bool
     {
         return array_key_exists($name, $this->options);
     }
 
+    #[Override]
     public function getOption(string $name, mixed $default = null): mixed
     {
         return $this->options[$name] ?? $default;

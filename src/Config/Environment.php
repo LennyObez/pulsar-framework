@@ -8,6 +8,7 @@ use function array_key_exists;
 use function is_file;
 use function is_readable;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\Exception\ConfigException;
 
@@ -42,6 +43,7 @@ final class Environment
      * OS vars are read first. If an `.env` file path is provided and exists,
      * its values are loaded but never override existing OS vars.
      */
+    #[NoDiscard]
     public static function load(?string $envFilePath = null): self
     {
         $osVars = self::readOsVars();
@@ -63,6 +65,7 @@ final class Environment
     /**
      * Get an environment variable value.
      */
+    #[NoDiscard]
     public function get(string $key, ?string $default = null): ?string
     {
         return $this->variables[$key] ?? $default;

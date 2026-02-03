@@ -16,6 +16,7 @@ use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
 use JsonException;
+use NoDiscard;
 use Pulsar\Api\Internal;
 
 /**
@@ -58,6 +59,7 @@ final readonly class EvidenceArchive
      *
      * @throws InvalidArgumentException If JSON is invalid or required keys are missing
      */
+    #[NoDiscard]
     public static function fromJson(string $json): self
     {
         try {

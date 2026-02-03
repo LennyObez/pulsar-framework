@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Routing;
 
 use Exception;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
@@ -22,6 +23,7 @@ final class RoutingException extends Exception
     /**
      * Create a "not found" exception.
      */
+    #[NoDiscard]
     public static function notFound(string $path): self
     {
         return new self(
@@ -35,6 +37,7 @@ final class RoutingException extends Exception
      *
      * @param list<Method> $allowedMethods
      */
+    #[NoDiscard]
     public static function methodNotAllowed(
         string $path,
         Method $method,
@@ -82,6 +85,7 @@ final class RoutingException extends Exception
     /**
      * Create a "router locked" exception for strict cache mode.
      */
+    #[NoDiscard]
     public static function routerLocked(): self
     {
         return new self(

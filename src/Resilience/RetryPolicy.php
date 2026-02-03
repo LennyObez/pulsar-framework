@@ -8,10 +8,13 @@ use Closure;
 
 use function min;
 
+use NoDiscard;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Config\RetryConfig;
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
 use function sprintf;
 
@@ -25,17 +28,23 @@ use function usleep;
 #[Api]
 readonly class RetryPolicy
 {
+    private Randomizer $randomizer;
+
     public function __construct(
         private int $maxAttempts,
         private int $baseDelayMs,
         private int $maxDelayMs,
         private float $multiplier,
         private bool $jitter,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * Create a RetryPolicy from a RetryConfig DTO.
      */
+    #[NoDiscard]
     public static function fromConfig(RetryConfig $config): self
     {
         return new self(
@@ -124,7 +133,7 @@ readonly class RetryPolicy
             $randomRange = (int) ((float) $delay * 0.5);
 
             if ($randomRange > 0) {
-                $jitterAmount = random_int(0, $randomRange * 2) - $randomRange;
+                $jitterAmount = $this->randomizer->getInt(0, $randomRange * 2) - $randomRange;
                 $delay = max(1, $delay + $jitterAmount);
             }
         }

@@ -6,6 +6,7 @@ namespace Pulsar\Console\Input;
 
 use function is_int;
 
+use Override;
 use Pulsar\Console\InputInterface;
 
 use function strlen;
@@ -102,6 +103,7 @@ final class ArgvInput implements InputInterface
         }
     }
 
+    #[Override]
     public function getArgument(int|string $key, mixed $default = null): mixed
     {
         if (is_int($key)) {
@@ -112,11 +114,13 @@ final class ArgvInput implements InputInterface
         return $default;
     }
 
+    #[Override]
     public function hasOption(string $name): bool
     {
         return isset($this->options[$name]);
     }
 
+    #[Override]
     public function getOption(string $name, mixed $default = null): mixed
     {
         return $this->options[$name] ?? $default;

@@ -30,7 +30,7 @@ final class RowTest extends TestCase
         $this->expectException(DatabaseException::class);
         $this->expectExceptionMessage('Column "missing" not found in row');
 
-        $row->get('missing');
+        $_ = $row->get('missing');
     }
 
     #[Test]

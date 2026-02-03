@@ -140,15 +140,15 @@ final class ViewRendererTest extends TestCase
     }
 
     #[Test]
-    public function renderDoesNotOverwriteExistingVariablesWithExtrSkip(): void
+    public function renderIsolatesScope(): void
     {
-        $this->createTemplate('existing', '<?php echo $this->templateDir; ?>');
+        // $this should not be available in the template's static scope
+        $this->createTemplate('isolated', '<?php echo isset($this) ? "leaked" : "isolated"; ?>');
         $renderer = new ViewRenderer($this->templateDir);
 
-        // This should NOT overwrite $this->templateDir due to EXTR_SKIP
-        $result = $renderer->render('existing', ['templateDir' => '/overwritten']);
+        $result = $renderer->render('isolated');
 
-        self::assertSame($this->templateDir, $result);
+        self::assertSame('isolated', $result);
     }
 
     #[Test]

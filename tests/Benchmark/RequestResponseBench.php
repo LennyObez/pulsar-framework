@@ -66,7 +66,7 @@ final class RequestResponseBench
     #[Assert('mode(variant.time.avg) < 5 microseconds')]
     public function benchResponseText(): void
     {
-        Response::text('Hello, World!');
+        $result = Response::text('Hello, World!');
     }
 
     /**
@@ -76,7 +76,7 @@ final class RequestResponseBench
     #[Assert('mode(variant.time.avg) < 5 microseconds')]
     public function benchResponseHtml(): void
     {
-        Response::html('<h1>Hello</h1>');
+        $result = Response::html('<h1>Hello</h1>');
     }
 
     /**
@@ -86,7 +86,7 @@ final class RequestResponseBench
     #[Assert('mode(variant.time.avg) < 5 microseconds')]
     public function benchResponseJson(): void
     {
-        Response::json(['status' => 'ok', 'data' => ['id' => 1, 'name' => 'Test']]);
+        $result = Response::json(['status' => 'ok', 'data' => ['id' => 1, 'name' => 'Test']]);
     }
 
     /**
@@ -122,7 +122,7 @@ final class RequestResponseBench
     #[Assert('mode(variant.time.avg) < 5 microseconds')]
     public function benchResponseWithHeaderChain(): void
     {
-        new Response(body: 'OK')
+        $result = new Response(body: 'OK')
             ->withHeader('Content-Type', 'text/plain')
             ->withHeader('X-Request-Id', 'bench-123');
     }

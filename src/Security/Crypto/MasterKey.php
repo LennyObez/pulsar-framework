@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Crypto;
 
+use NoDiscard;
 use Pulsar\Security\Exception\SecurityException;
 
 use function sodium_bin2hex;
@@ -51,6 +52,7 @@ final class MasterKey
      * @throws SecurityException If the key is invalid
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function fromHex(string $hex): self
     {
         $raw = sodium_hex2bin($hex);
@@ -70,6 +72,7 @@ final class MasterKey
      * @throws SecurityException If the variable is missing or invalid
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function fromEnvironment(?string $envValue = null): self
     {
         $hex = $envValue ?? getenv('PULSAR_MASTER_KEY');

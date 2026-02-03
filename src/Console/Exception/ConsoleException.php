@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -18,6 +19,7 @@ class ConsoleException extends RuntimeException
     /**
      * Create exception for invalid input.
      */
+    #[NoDiscard]
     public static function invalidInput(string $message): self
     {
         return new self($message);
@@ -26,6 +28,7 @@ class ConsoleException extends RuntimeException
     /**
      * Create exception for invalid option.
      */
+    #[NoDiscard]
     public static function invalidOption(string $name): self
     {
         return new self(sprintf('Invalid option: --%s', $name));
@@ -34,6 +37,7 @@ class ConsoleException extends RuntimeException
     /**
      * Create exception for missing argument.
      */
+    #[NoDiscard]
     public static function missingArgument(string $name): self
     {
         return new self(sprintf('Missing required argument: %s', $name));

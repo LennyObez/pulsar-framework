@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Resilience\HealthCheck;
 
+use Override;
 use Pulsar\Database\ConnectionManagerInterface;
 
 use function sprintf;
@@ -22,11 +23,13 @@ readonly class DatabaseHealthCheck implements HealthCheckInterface
         private ?string $connectionName = null,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return 'database';
     }
 
+    #[Override]
     public function check(): HealthCheckResult
     {
         $start = microtime(true);

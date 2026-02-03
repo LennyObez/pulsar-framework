@@ -7,6 +7,7 @@ namespace Pulsar\Security\Crypto;
 use function hash_equals;
 
 use InvalidArgumentException;
+use NoDiscard;
 
 use function sodium_bin2hex;
 use function sodium_crypto_generichash;
@@ -40,6 +41,7 @@ final class Hmac
      *
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function computeHex(string $message, string $key): string
     {
         self::validateKey($key);
@@ -54,6 +56,7 @@ final class Hmac
      *
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function compute(string $message, string $key): string
     {
         self::validateKey($key);
@@ -68,6 +71,7 @@ final class Hmac
      *
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function verifyHex(string $message, string $expectedHex, string $key): bool
     {
         $computedHex = self::computeHex($message, $key);
@@ -82,6 +86,7 @@ final class Hmac
      *
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function verify(string $message, string $expected, string $key): bool
     {
         $computed = self::compute($message, $key);

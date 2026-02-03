@@ -16,6 +16,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\StudioConfig;
 use Pulsar\Console\Command;
@@ -38,6 +39,7 @@ final class StudioDoctorCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:doctor';
@@ -48,6 +50,7 @@ final class StudioDoctorCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

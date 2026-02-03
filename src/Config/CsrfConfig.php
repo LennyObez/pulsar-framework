@@ -7,6 +7,7 @@ namespace Pulsar\Config;
 use function is_int;
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -29,6 +30,7 @@ readonly class CsrfConfig
      *
      * @param array<string, mixed> $data Raw `csrf` sub-array from config/security.php
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
         $enabled = (bool) ($data['enabled'] ?? true);

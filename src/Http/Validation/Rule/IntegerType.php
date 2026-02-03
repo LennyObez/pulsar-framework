@@ -10,6 +10,7 @@ use function filter_var;
 use function is_bool;
 use function is_int;
 
+use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
@@ -27,6 +28,7 @@ readonly class IntegerType implements RuleInterface
         private string $message = '',
     ) {}
 
+    #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation
     {
         if ($value === null) {
@@ -57,6 +59,7 @@ readonly class IntegerType implements RuleInterface
         );
     }
 
+    #[Override]
     public function name(): string
     {
         return 'integer';

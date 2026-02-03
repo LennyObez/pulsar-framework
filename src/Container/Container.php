@@ -8,6 +8,7 @@ use function in_array;
 use function is_callable;
 use function is_object;
 
+use NoDiscard;
 use Override;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
@@ -56,6 +57,21 @@ final class Container implements ContainerInterface
         set(array $value) => $value;
     }
 
+    /**
+     * Load optimization hints from cache.
+     *
+     * Hints are fallible — if a hint fails at resolution time,
+     * the container silently falls back to reflection. Passing null
+     * clears all hints.
+     *
+     * @param array<class-string, list<array{name: string, type: class-string}>>|null $hints
+     */
+    #[Override]
+    public function setResolutionHints(?array $hints): void
+    {
+        $this->resolutionHints = $hints ?? [];
+    }
+
     #[Override]
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {
@@ -83,7 +99,9 @@ final class Container implements ContainerInterface
     /**
      * @throws NotFoundException
      * @throws ContainerException
+     * @throws ReflectionException If class reflection fails during autowiring
      */
+    #[NoDiscard]
     #[Override]
     public function get(string $id): mixed
     {
@@ -182,6 +200,7 @@ final class Container implements ContainerInterface
      *
      * @throws NotFoundException If a dependency cannot be found in the container
      * @throws ContainerException If a container error occurs during resolution
+     * @throws ReflectionException If class reflection fails during dependency autowiring
      */
     private function buildFromHints(string $className, array $hints): object
     {

@@ -6,6 +6,7 @@ namespace Pulsar\ErrorHandling;
 
 use function htmlspecialchars;
 
+use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
 
@@ -21,6 +22,7 @@ use Throwable;
  */
 final class ProductionRenderer implements ExceptionRendererInterface
 {
+    #[Override]
     public function render(Throwable $exception, Request $request, ResponseStatus $status): string
     {
         $statusCode = $status->value;

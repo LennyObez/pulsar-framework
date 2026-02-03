@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Console\Retention;
 
+use Override;
 use PDO;
 use Pulsar\Api\Internal;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -36,6 +37,7 @@ final readonly class RetentionEnforcer implements RetentionEnforcerInterface
      *
      * @return array{events_deleted: int, vacuum_run: bool}
      */
+    #[Override]
     public function enforce(): array
     {
         $eventsDeleted = 0;

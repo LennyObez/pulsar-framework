@@ -144,7 +144,7 @@ final class InMemoryStorageAdapterTest extends TestCase
         $this->expectException(StorageException::class);
         $this->expectExceptionMessage('Storage object not found: "missing.txt"');
 
-        $this->adapter->get('missing.txt');
+        $_ = $this->adapter->get('missing.txt');
     }
 
     #[Test]

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Studio\Command\Console;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -26,6 +27,7 @@ final class ConsoleMetricsCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:metrics';
@@ -36,6 +38,7 @@ final class ConsoleMetricsCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

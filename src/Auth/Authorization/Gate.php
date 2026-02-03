@@ -7,6 +7,7 @@ namespace Pulsar\Auth\Authorization;
 use function array_any;
 use function in_array;
 
+use Override;
 use Pulsar\Auth\Identity\IdentityInterface;
 
 /**
@@ -40,6 +41,7 @@ final class Gate implements GateInterface
         $this->policies[] = $policy;
     }
 
+    #[Override]
     public function allows(IdentityInterface $identity, string $permission, ?PolicyContext $context = null): bool
     {
         // 1. Super-role bypass
@@ -83,6 +85,7 @@ final class Gate implements GateInterface
         return false;
     }
 
+    #[Override]
     public function denies(IdentityInterface $identity, string $permission, ?PolicyContext $context = null): bool
     {
         return !$this->allows($identity, $permission, $context);

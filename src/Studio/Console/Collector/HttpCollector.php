@@ -12,6 +12,7 @@ use function is_int;
 use function is_string;
 use function microtime;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
@@ -22,9 +23,10 @@ use Pulsar\Studio\Console\Event\Payload\HttpRequestPayload;
 use Pulsar\Studio\Console\Event\Payload\HttpResponsePayload;
 use Pulsar\Studio\CorrelationContext;
 use Pulsar\Studio\FiberScopedContextProvider;
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
-use function random_bytes;
 use function strlen;
 
 use Throwable;
@@ -41,18 +43,24 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
 {
     public bool $enabled = true;
 
+    private readonly Randomizer $randomizer;
+
     /**
      * @param Closure(ConsoleEvent, ?CorrelationContext): void $emit
      */
     public function __construct(
         private readonly FiberScopedContextProvider $contextProvider,
         private readonly Closure $emit,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * @throws RandomException
      * @throws Throwable
      */
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         if (!$this->enabled) {
@@ -60,7 +68,7 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         }
 
         $context = new CorrelationContext(
-            requestId: bin2hex(random_bytes(16)),
+            requestId: bin2hex($this->randomizer->getBytes(16)),
             traceId: $this->extractTraceId($request),
             spanId: $this->extractSpanId($request),
         );
