@@ -98,5 +98,71 @@
     },
     "preload": true,
     "optimize": false
+  },
+  "runtime-baseline": {
+    "description": "Persistent runtime, OPcache, JIT off",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "off",
+      "opcache.jit_buffer_size": "0"
+    },
+    "preload": false,
+    "optimize": false,
+    "worker": "runtime"
+  },
+  "runtime-baseline-optimized": {
+    "description": "Persistent runtime, OPcache + framework cache",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "off",
+      "opcache.jit_buffer_size": "0"
+    },
+    "preload": false,
+    "optimize": true,
+    "worker": "runtime"
+  },
+  "runtime-jit-function": {
+    "description": "Persistent runtime, OPcache + JIT function",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "function",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": false,
+    "optimize": false,
+    "worker": "runtime"
+  },
+  "runtime-jit-function-optimized": {
+    "description": "Persistent runtime, OPcache + JIT function + framework cache",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "function",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": false,
+    "optimize": true,
+    "worker": "runtime"
+  },
+  "runtime-jit-tracing": {
+    "description": "Persistent runtime, OPcache + JIT tracing",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "tracing",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": false,
+    "optimize": false,
+    "worker": "runtime"
+  },
+  "runtime-jit-tracing-optimized": {
+    "description": "Persistent runtime, OPcache + JIT tracing + framework cache",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "tracing",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": false,
+    "optimize": true,
+    "worker": "runtime"
   }
 }

@@ -120,7 +120,7 @@ final class EventTypeTest extends TestCase
     public function totalCaseCount(): void
     {
         // If this fails, a new case was added - update the test accordingly
-        self::assertCount(20, EventType::cases());
+        self::assertCount(25, EventType::cases());
     }
 
     #[Test]
@@ -152,6 +152,11 @@ final class EventTypeTest extends TestCase
         yield 'log.entry' => ['log.entry', EventType::LogEntry];
         yield 'feature_flag.eval' => ['feature_flag.eval', EventType::FeatureFlagEval];
         yield 'heartbeat' => ['heartbeat', EventType::Heartbeat];
+        yield 'runtime.worker_start' => ['runtime.worker_start', EventType::RuntimeWorkerStart];
+        yield 'runtime.worker_recycle' => ['runtime.worker_recycle', EventType::RuntimeWorkerRecycle];
+        yield 'runtime.request_complete' => ['runtime.request_complete', EventType::RuntimeRequestComplete];
+        yield 'runtime.leak_warning' => ['runtime.leak_warning', EventType::RuntimeLeakWarning];
+        yield 'runtime.scheduler_metric' => ['runtime.scheduler_metric', EventType::RuntimeSchedulerMetric];
     }
 
     #[Test]

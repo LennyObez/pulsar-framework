@@ -22,9 +22,16 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Support\AtomicFileWriter;
+use Random\RandomException;
 
 use function random_bytes;
+
+use RuntimeException;
+
 use function sodium_bin2hex;
+
+use SodiumException;
+
 use function sprintf;
 
 use const STDERR;
@@ -75,6 +82,11 @@ final class KeyGenerateCommand extends Command
         $this->addOption('force', 'Overwrite an existing PULSAR_MASTER_KEY without confirmation', 'f');
     }
 
+    /**
+     * @throws RandomException If random_bytes() fails
+     * @throws RuntimeException If AtomicFileWriter::write() fails
+     * @throws SodiumException If sodium_bin2hex() fails
+     */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -91,6 +103,10 @@ final class KeyGenerateCommand extends Command
         return $this->writeToEnv($envFile, $hex, $input->hasOption('force'), $output);
     }
 
+    /**
+     * @throws RandomException If random byte generation fails during atomic write
+     * @throws RuntimeException If the file write or rename fails
+     */
     private function writeToEnv(string $envFile, string $hex, bool $force, OutputInterface $output): int
     {
         $line = sprintf('PULSAR_MASTER_KEY=%s', $hex);

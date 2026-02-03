@@ -47,6 +47,7 @@ use Pulsar\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Studio\Console\Event\Payload\BenchmarkProfilePayload;
 use Pulsar\Studio\Console\Event\Payload\BenchmarkRunPayload;
 use Pulsar\Support\AtomicFileWriter;
+use Random\RandomException;
 
 use function random_bytes;
 use function sprintf;
@@ -84,7 +85,8 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @throws JsonException
+     * @throws JsonException If profile JSON cannot be decoded or results cannot be encoded
+     * @throws RandomException If random_bytes() fails for run ID generation
      */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
@@ -113,7 +115,7 @@ final class ConsoleBenchmarkCommand extends Command
             return ExitCode::Error->value;
         }
 
-        /** @var array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool}> $profiles */
+        /** @var array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string}> $profiles */
         $profiles = json_decode($profilesContent, true, 512, JSON_THROW_ON_ERROR);
 
         if ($singleProfile !== null) {
@@ -161,7 +163,7 @@ final class ConsoleBenchmarkCommand extends Command
             $output->writeln('Pulsar Performance Profile Matrix');
             $output->writeln(sprintf('PHP %s (%s) | %s %s', PHP_VERSION, PHP_SAPI, PHP_OS_FAMILY, php_uname('m')));
             $output->writeln(str_repeat('=', 70));
-            $output->writeln('');
+            $output->writeln();
         }
 
         // Phase 1: Non-optimized profiles
@@ -188,7 +190,7 @@ final class ConsoleBenchmarkCommand extends Command
             }
 
             if (!$isJson) {
-                $output->writeln('');
+                $output->writeln();
             }
         }
 
@@ -203,7 +205,7 @@ final class ConsoleBenchmarkCommand extends Command
             if ($this->runOptimize($phpBinary)) {
                 if (!$isJson) {
                     $output->writeln('  [ok]   Framework cache warmed');
-                    $output->writeln('');
+                    $output->writeln();
                     $output->writeln('--- Optimized profiles ---');
                 }
             } else {
@@ -211,7 +213,7 @@ final class ConsoleBenchmarkCommand extends Command
 
                 if (!$isJson) {
                     $output->writeln('  [fail] Framework cache could not be warmed');
-                    $output->writeln('');
+                    $output->writeln();
                     $output->writeln('--- Optimized profiles ---');
                 }
             }
@@ -245,7 +247,7 @@ final class ConsoleBenchmarkCommand extends Command
             }
 
             if (!$isJson) {
-                $output->writeln('');
+                $output->writeln();
                 $output->writeln('--- Clearing framework cache ---');
             }
 
@@ -298,7 +300,7 @@ final class ConsoleBenchmarkCommand extends Command
             AtomicFileWriter::write($outputPath, $resultsJson . "\n");
 
             if (!$isJson) {
-                $output->writeln('');
+                $output->writeln();
                 $output->writeln(sprintf('Results saved to %s', $outputPath));
             }
         }
@@ -320,7 +322,7 @@ final class ConsoleBenchmarkCommand extends Command
             return ExitCode::Success->value;
         }
 
-        $output->writeln('');
+        $output->writeln();
         $completedSuffix = $skipCount > 0
             ? sprintf(' (%d skipped)', $skipCount)
             : '';
@@ -337,7 +339,7 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool} $profile
+     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string} $profile
      * @param array<string, mixed> $results
      */
     private function executeProfile(
@@ -430,7 +432,9 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @param array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool}> $profiles
+     * @param array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string}> $profiles
+     *
+     * @throws RandomException If random_bytes() fails for temp file naming
      */
     private function generatePreloadIfNeeded(array $profiles, string $phpBinary, OutputInterface $output): ?string
     {
@@ -473,7 +477,7 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool} $profile
+     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string} $profile
      *
      * @return array{boot_us: int, warm_boot_us: int, iterations: int, memory_usage_kb: int, opcache_memory_kb: ?int, p50_us: int, p95_us: int, peak_rss_kb: int, rps: int}|null
      */
@@ -484,6 +488,13 @@ final class ConsoleBenchmarkCommand extends Command
         string $workerScript,
         ?string $tempPreloadFile,
     ): ?array {
+        // Select worker script based on profile type
+        $worker = $profile['worker'] ?? 'default';
+
+        if ($worker === 'runtime') {
+            $workerScript = $this->basePath . '/tools/bench/runtime-worker.php';
+        }
+
         $iniFlags = [];
 
         foreach ($profile['ini'] as $key => $value) {

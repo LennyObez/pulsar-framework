@@ -300,6 +300,12 @@ final class Container implements ContainerInterface
         return new $className(...$dependencies);
     }
 
+    #[Override]
+    public function forgetInstance(string $id): void
+    {
+        unset($this->instances[$id]);
+    }
+
     /**
      * Get all registered binding IDs.
      *

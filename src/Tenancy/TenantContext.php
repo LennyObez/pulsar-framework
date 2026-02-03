@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Tenancy;
 
 use NoDiscard;
+use Override;
+use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Tenancy\Exception\TenancyException;
 
 /**
  * Holds the current tenant for the active request.
  */
-final class TenantContext
+final class TenantContext implements ResettableInterface
 {
     private ?Tenant $tenant = null;
 
@@ -55,5 +57,11 @@ final class TenantContext
     public function clear(): void
     {
         $this->tenant = null;
+    }
+
+    #[Override]
+    public function resetRequestState(): void
+    {
+        $this->clear();
     }
 }

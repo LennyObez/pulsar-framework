@@ -8,13 +8,15 @@ use function array_filter;
 use function array_values;
 use function count;
 
+use Override;
 use Pulsar\Api\Internal;
+use Pulsar\Runtime\ResettableInterface;
 use Throwable;
 
 /**
  * In-memory log of feature flag evaluations.
  */
-final class FlagEvaluationLog
+final class FlagEvaluationLog implements ResettableInterface
 {
     /** @var list<FlagEvaluation> */
     private array $evaluations = [];
@@ -85,5 +87,11 @@ final class FlagEvaluationLog
     public function count(): int
     {
         return count($this->evaluations);
+    }
+
+    #[Override]
+    public function resetRequestState(): void
+    {
+        $this->clear();
     }
 }

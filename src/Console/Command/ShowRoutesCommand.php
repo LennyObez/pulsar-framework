@@ -24,6 +24,7 @@ use Pulsar\Core\Kernel;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 use Pulsar\Routing\RoutingException;
+use ReflectionException;
 use SodiumException;
 
 use function sprintf;
@@ -54,6 +55,7 @@ final class ShowRoutesCommand extends Command
      * @throws NotFoundException
      * @throws FeatureFlagException
      * @throws JsonException
+     * @throws ReflectionException If class reflection fails during autowiring
      * @throws RoutingException If the router is locked in strict cache mode
      * @throws SodiumException If a sodium cryptographic operation fails during boot
      */

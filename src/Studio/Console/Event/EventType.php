@@ -32,4 +32,9 @@ enum EventType: string
     case IntegrityCheck = 'integrity.check';
     case BenchmarkProfile = 'benchmark.profile';
     case BenchmarkRun = 'benchmark.run';
+    case RuntimeWorkerStart = 'runtime.worker_start';
+    case RuntimeWorkerRecycle = 'runtime.worker_recycle';
+    case RuntimeRequestComplete = 'runtime.request_complete';
+    case RuntimeLeakWarning = 'runtime.leak_warning';
+    case RuntimeSchedulerMetric = 'runtime.scheduler_metric';
 }

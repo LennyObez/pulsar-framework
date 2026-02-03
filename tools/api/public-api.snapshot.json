@@ -240,6 +240,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Config\\RuntimeConfig": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\SchedulerConfig": {
       "since": "",
       "methods": [],
@@ -930,6 +935,46 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Runtime\\Exception\\RuntimeException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\FpmRuntime": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\ResettableInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\RuntimeInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\RuntimeStatus": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Upgrade\\UpgradeContext": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Upgrade\\UpgradeHandlerInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Upgrade\\UpgradeResponse": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Scheduler\\CronFields": {
       "since": "",
       "methods": [],
@@ -1200,6 +1245,15 @@
     "Pulsar\\Queue\\Driver\\DatabaseDriver",
     "Pulsar\\Queue\\Driver\\InMemoryDriver",
     "Pulsar\\Queue\\Driver\\SyncDriver",
+    "Pulsar\\Runtime\\Fiber\\FiberScheduler",
+    "Pulsar\\Runtime\\Http\\ConnectionContext",
+    "Pulsar\\Runtime\\Http\\HttpRequestParser",
+    "Pulsar\\Runtime\\Http\\HttpResponseSerializer",
+    "Pulsar\\Runtime\\LeakDetector",
+    "Pulsar\\Runtime\\PersistentRuntime",
+    "Pulsar\\Runtime\\RequestResetRegistry",
+    "Pulsar\\Runtime\\RequestSandbox",
+    "Pulsar\\Runtime\\ResourceEntry",
     "Pulsar\\Studio\\Command\\Console\\ConsoleBenchmarkCommand",
     "Pulsar\\Studio\\Command\\Console\\ConsoleExceptionsCommand",
     "Pulsar\\Studio\\Command\\Console\\ConsoleExportCommand",
@@ -1246,6 +1300,7 @@
     "Pulsar\\Studio\\Console\\Collector\\HttpCollector",
     "Pulsar\\Studio\\Console\\Collector\\InstrumentedConnection",
     "Pulsar\\Studio\\Console\\Collector\\InstrumentedQueueManager",
+    "Pulsar\\Studio\\Console\\Collector\\InstrumentedRuntime",
     "Pulsar\\Studio\\Console\\Collector\\InstrumentedScheduler",
     "Pulsar\\Studio\\Console\\Collector\\InstrumentedWorker",
     "Pulsar\\Studio\\Console\\Collector\\LogCollector",
@@ -1268,6 +1323,11 @@
     "Pulsar\\Studio\\Console\\Event\\Payload\\LogEntryPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\NotificationPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\OutgoingHttpPayload",
+    "Pulsar\\Studio\\Console\\Event\\Payload\\RuntimeLeakWarningPayload",
+    "Pulsar\\Studio\\Console\\Event\\Payload\\RuntimeRequestCompletePayload",
+    "Pulsar\\Studio\\Console\\Event\\Payload\\RuntimeSchedulerMetricPayload",
+    "Pulsar\\Studio\\Console\\Event\\Payload\\RuntimeWorkerRecyclePayload",
+    "Pulsar\\Studio\\Console\\Event\\Payload\\RuntimeWorkerStartPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\SchedulerRunPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\SupervisorPayload",
     "Pulsar\\Studio\\Console\\Event\\Payload\\TenancyPayload",

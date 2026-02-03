@@ -27,9 +27,15 @@ exclude:
   # Unused parameters with underscore prefix are intentionally unused (PHP naming convention)
   - name: PhpUnusedParameterInspection
   # ext-pcntl is intentionally in `suggest` (Unix-only, guarded by function_exists())
+  # ext-sockets is intentionally in `suggest` (guarded by extension_loaded() at PersistentRuntime:88)
   - name: PhpComposerExtensionStubsInspection
     paths:
       - src/Queue/Worker.php
+      - src/Runtime/PersistentRuntime.php
+      - src/Runtime/Fiber/FiberScheduler.php
+      - src/Runtime/Http/ConnectionContext.php
+      - src/Runtime/Upgrade/UpgradeHandlerInterface.php
+      - src/Console/Command/RuntimeServeCommand.php
   # Duplicated code - Studio CLI commands share structural patterns (extract values,
   # format output) but operate on different data; further extraction is over-engineering.
   - name: DuplicatedCode
@@ -40,11 +46,6 @@ exclude:
   - name: PhpIncludeInspection
     paths:
       - resources/studio/router.php
-  # Loop → array_find() — Psalm 6.x lacks return-type inference for array_find(),
-  # so using it introduces a MixedReturnStatement error. Keep foreach until Psalm supports it.
-  - name: PhpLoopCanBeConvertedToArrayFindInspection
-    paths:
-      - src/Deploy/Check/OpcacheCheck.php
   - name: All
     paths:
       - composer.json
