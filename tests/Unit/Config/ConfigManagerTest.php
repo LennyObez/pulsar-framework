@@ -83,6 +83,37 @@ final class ConfigManagerTest extends TestCase
                     "stderr" => ["driver" => "stream", "stream" => "php://stderr"],
                 ],
             ],
+            "audit" => [
+                "enabled" => true,
+                "log_path" => "var/logs/audit.jsonl",
+                "events" => ["authentication"],
+            ],
+        ];');
+
+        file_put_contents($this->tempDir . '/security.php', '<?php return [
+            "session" => [
+                "cookie_name" => "TEST_SESSION",
+                "lifetime" => 3600,
+                "cookie_httponly" => true,
+                "cookie_secure" => true,
+                "cookie_samesite" => "Strict",
+                "regenerate_on_privilege_change" => true,
+            ],
+            "csrf" => [
+                "enabled" => true,
+                "token_length" => 32,
+                "header_name" => "X-CSRF-Token",
+                "form_field_name" => "_csrf_token",
+            ],
+            "headers" => [
+                "X-Content-Type-Options" => "nosniff",
+                "X-Frame-Options" => "DENY",
+            ],
+            "rate_limiting" => [
+                "enabled" => true,
+                "default_limit" => 60,
+                "default_window" => 60,
+            ],
         ];');
     }
 
@@ -153,6 +184,7 @@ final class ConfigManagerTest extends TestCase
     {
         file_put_contents($this->tempDir . '/app.php', '<?php return "not an array";');
         file_put_contents($this->tempDir . '/observability.php', '<?php return [];');
+        file_put_contents($this->tempDir . '/security.php', '<?php return [];');
 
         $manager = new ConfigManager(configPath: $this->tempDir);
 

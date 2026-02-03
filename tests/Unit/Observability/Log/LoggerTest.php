@@ -137,6 +137,11 @@ final class LoggerTest extends TestCase
                     stream: 'php://stderr',
                 ),
             ],
+            audit: new \Pulsar\Config\AuditConfig(
+                enabled: false,
+                logPath: 'var/logs/audit.jsonl',
+                events: [],
+            ),
         );
 
         $logger = Logger::fromConfig($config);

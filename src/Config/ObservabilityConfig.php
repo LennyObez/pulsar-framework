@@ -21,6 +21,7 @@ readonly class ObservabilityConfig
         public MetricsConfig $metrics = new MetricsConfig(),
         public TracingConfig $tracing = new TracingConfig(),
         public ErrorTrackingConfig $errorTracking = new ErrorTrackingConfig(),
+        public AuditConfig $audit = new AuditConfig(),
     ) {}
 
     /**
@@ -69,6 +70,11 @@ readonly class ObservabilityConfig
         $errorTrackingData = $data['error_tracking'] ?? [];
         $errorTrackingConfig = ErrorTrackingConfig::fromArray($errorTrackingData);
 
+        // Build audit config
+        /** @var array<string, mixed> $auditData */
+        $auditData = $data['audit'] ?? [];
+        $auditConfig = AuditConfig::fromArray($auditData, $environment);
+
         return new self(
             defaultLoggingChannel: $defaultChannel,
             loggingLevel: $level,
@@ -76,6 +82,7 @@ readonly class ObservabilityConfig
             metrics: $metricsConfig,
             tracing: $tracingConfig,
             errorTracking: $errorTrackingConfig,
+            audit: $auditConfig,
         );
     }
 }
