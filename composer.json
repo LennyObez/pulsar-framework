@@ -5,6 +5,7 @@
   "license": "Apache-2.0",
   "require": {
     "ext-mbstring": "*",
+    "ext-pdo": "*",
     "php": "^8.5",
     "psr/container": "^2.0",
     "psr/log": "^3.0"

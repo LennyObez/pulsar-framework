@@ -14,6 +14,7 @@ use Pulsar\Config\AuditConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\CsrfConfig;
+use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Config\SecurityConfig;
@@ -21,6 +22,8 @@ use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionManager;
+use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
@@ -67,7 +70,7 @@ use Throwable;
  * managing the lifecycle, and orchestrating the request/response cycle.
  *
  * Boot pipeline order:
- * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> SecurityServices -> DiagnosticsRoute -> Extensions
+ * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> SecurityServices -> DatabaseServices -> DiagnosticsRoute -> Extensions
  */
 final class Kernel
 {
@@ -117,9 +120,10 @@ final class Kernel
      * 5. Error tracker creation
      * 6. Exception handler creation
      * 7. Security services creation
-     * 8. Diagnostics route registration (debug mode only)
-     * 9. Extension register phase
-     * 10. Extension boot phase
+     * 8. Database services creation (if config/database.php exists)
+     * 9. Diagnostics route registration (debug mode only)
+     * 10. Extension register phase
+     * 11. Extension boot phase
      */
     public function boot(): void
     {
@@ -137,6 +141,7 @@ final class Kernel
             $this->createErrorTracker();
             $this->createExceptionHandler();
             $this->createSecurityServices();
+            $this->createDatabaseServices();
             $this->registerDiagnosticsRoute();
         }
 
@@ -578,6 +583,31 @@ final class Kernel
                 // Session, CSRF, and headers still work without it.
             }
         }
+    }
+
+    /**
+     * Create database services and register in the container.
+     *
+     * Only activates when config/database.php was loaded (optional).
+     * Registers DatabaseConfig, ConnectionManager, and ConnectionManagerInterface.
+     */
+    private function createDatabaseServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(DatabaseConfig::class)) {
+            return;
+        }
+
+        /** @var DatabaseConfig $dbConfig */
+        $dbConfig = $repository->get(DatabaseConfig::class);
+        $this->container->instance(DatabaseConfig::class, $dbConfig);
+
+        $connectionManager = ConnectionManager::fromConfig($dbConfig);
+        $this->container->instance(ConnectionManager::class, $connectionManager);
+        $this->container->instance(ConnectionManagerInterface::class, $connectionManager);
     }
 
     /**
