@@ -96,13 +96,23 @@ Deliverables:
   Exit criteria:
 - Security checklist documented + tested
 
-### 0.7.0 — Data Layer v1
+### 0.7.0 — Data Layer v1 (CURRENT)
 
 Deliverables:
 
-- Migrations + rollback
-- Transaction API
-- DB access strategy that remains explicit/testable
+- PDO-based ConnectionInterface with lazy initialization + typed bindings ✓
+- ConnectionManager for multi-connection management ✓
+- Driver enum (MySQL, PostgreSQL, SQLite) with DSN builder ✓
+- Typed Row/Result value objects with getInt(), getString(), getBool(), etc. ✓
+- Transaction API with savepoint-based nesting ✓
+- Statement wrapper for reusable prepared statements ✓
+- DatabaseException with static factory methods ✓
+- DatabaseConfig + ConnectionConfig DTOs with env overrides ✓
+- MigrationRunner with batch-based tracking, runPending, rollback, reset ✓
+- MigrationRepository for file discovery (timestamp-versioned anonymous classes) ✓
+- Console commands: migrate:run, migrate:rollback, migrate:status, migrate:create ✓
+- Kernel integration: optional database services in boot pipeline ✓
+- CI: MySQL 8.0 + PostgreSQL 16 services for integration tests ✓
   Exit criteria:
 - Integration tests with real DB in CI
 
