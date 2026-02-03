@@ -8,11 +8,11 @@ Pulsar 0.5.0 introduces a built-in observability suite: metrics collection, dist
 
 Three metric types are available via `MetricType` enum:
 
-| Type | Class | Description |
-|------|-------|-------------|
-| Counter | `Pulsar\Observability\Metrics\Counter` | Monotonic incrementing value |
-| Gauge | `Pulsar\Observability\Metrics\Gauge` | Bidirectional value (set, increment, decrement) |
-| Histogram | `Pulsar\Observability\Metrics\Histogram` | Bucket-based distribution tracking |
+| Type      | Class                                    | Description                                     |
+| --------- | ---------------------------------------- | ----------------------------------------------- |
+| Counter   | `Pulsar\Observability\Metrics\Counter`   | Monotonic incrementing value                    |
+| Gauge     | `Pulsar\Observability\Metrics\Gauge`     | Bidirectional value (set, increment, decrement) |
+| Histogram | `Pulsar\Observability\Metrics\Histogram` | Bucket-based distribution tracking              |
 
 ### MetricRegistry
 
