@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Extensibility\Manifest;
 
 use function array_is_list;
+use function is_array;
+use function is_bool;
 
 use NoDiscard;
 use Pulsar\Api\Api;
@@ -32,7 +34,7 @@ readonly class ProvidesConfig
     /**
      * Create from manifest array data.
      *
-     * @param array{services?: list<string>, commands?: list<string>, routes?: bool, middleware?: list<string>} $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -40,23 +42,39 @@ readonly class ProvidesConfig
         $services = $data['services'] ?? [];
         $commands = $data['commands'] ?? [];
         $middleware = $data['middleware'] ?? [];
+        $routes = $data['routes'] ?? false;
+
+        if (!is_array($services)) {
+            throw ManifestException::invalidFieldType('provides.services', 'list', 'non-array', '');
+        }
+
+        if (!is_array($commands)) {
+            throw ManifestException::invalidFieldType('provides.commands', 'list', 'non-array', '');
+        }
+
+        if (!is_array($middleware)) {
+            throw ManifestException::invalidFieldType('provides.middleware', 'list', 'non-array', '');
+        }
 
         if ($services !== [] && !array_is_list($services)) {
             throw ManifestException::invalidFieldType('provides.services', 'list', 'associative array', '');
         }
+        /** @var list<string> $services */
 
         if ($commands !== [] && !array_is_list($commands)) {
             throw ManifestException::invalidFieldType('provides.commands', 'list', 'associative array', '');
         }
+        /** @var list<string> $commands */
 
         if ($middleware !== [] && !array_is_list($middleware)) {
             throw ManifestException::invalidFieldType('provides.middleware', 'list', 'associative array', '');
         }
+        /** @var list<string> $middleware */
 
         return new self(
             services: $services,
             commands: $commands,
-            routes: $data['routes'] ?? false,
+            routes: is_bool($routes) ? $routes : false,
             middleware: $middleware,
         );
     }

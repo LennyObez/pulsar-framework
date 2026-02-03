@@ -12,6 +12,7 @@ use Pulsar\FeatureFlag\FlagContext;
 use Pulsar\FeatureFlag\FlagEvaluation;
 use Pulsar\FeatureFlag\FlagEvaluationLog;
 use Pulsar\FeatureFlag\FlagEvaluationReason;
+use RuntimeException;
 
 #[CoversClass(FlagEvaluationLog::class)]
 final class FlagEvaluationLogTest extends TestCase
@@ -127,5 +128,68 @@ final class FlagEvaluationLogTest extends TestCase
         ));
 
         self::assertSame(2, $log->count());
+    }
+
+    #[Test]
+    public function addObserverCallsObserverOnRecord(): void
+    {
+        $log = new FlagEvaluationLog();
+        $observed = null;
+
+        $log->addObserver(static function (FlagEvaluation $eval) use (&$observed): void {
+            $observed = $eval;
+        });
+
+        $evaluation = new FlagEvaluation(
+            flagName: 'test-flag',
+            result: true,
+            reason: FlagEvaluationReason::FlagEnabled,
+            context: new FlagContext(),
+            evaluatedAt: new DateTimeImmutable(),
+        );
+
+        $log->record($evaluation);
+
+        self::assertSame($evaluation, $observed);
+    }
+
+    #[Test]
+    public function observerExceptionDoesNotPreventRecording(): void
+    {
+        $log = new FlagEvaluationLog();
+
+        $log->addObserver(static function (): void {
+            throw new RuntimeException('observer failure');
+        });
+
+        $log->record(new FlagEvaluation(
+            flagName: 'flag',
+            result: true,
+            reason: FlagEvaluationReason::FlagEnabled,
+            context: new FlagContext(),
+            evaluatedAt: new DateTimeImmutable(),
+        ));
+
+        self::assertSame(1, $log->count());
+    }
+
+    #[Test]
+    public function resetRequestStateClearsLog(): void
+    {
+        $log = new FlagEvaluationLog();
+
+        $log->record(new FlagEvaluation(
+            flagName: 'flag',
+            result: true,
+            reason: FlagEvaluationReason::FlagEnabled,
+            context: new FlagContext(),
+            evaluatedAt: new DateTimeImmutable(),
+        ));
+
+        self::assertSame(1, $log->count());
+
+        $log->resetRequestState();
+
+        self::assertSame(0, $log->count());
     }
 }

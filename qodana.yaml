@@ -50,3 +50,4 @@ exclude:
     paths:
       - composer.json
       - extensions/example/composer.json
+      - extensions/payments/composer.json

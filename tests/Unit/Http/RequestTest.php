@@ -528,6 +528,102 @@ final class RequestTest extends TestCase
 
         self::assertFalse($request->wantsJson());
     }
+
+    #[Test]
+    public function isSecureReturnsFalseWhenNoHttpsKey(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            server: [],
+        );
+
+        self::assertFalse($request->isSecure());
+    }
+
+    #[Test]
+    public function jsonReturnsEmptyArrayForNonArrayDecoded(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '"just a string"',
+        );
+
+        self::assertSame([], $request->json());
+    }
+
+    #[Test]
+    public function filledReturnsFalseForNullValue(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            query: ['name' => null],
+        );
+
+        self::assertFalse($request->filled('name'));
+    }
+
+    #[Test]
+    public function fromGlobalsCreatesRequestFromServerData(): void
+    {
+        $server = [
+            'REQUEST_METHOD' => 'POST',
+            'REQUEST_URI' => '/api/users?page=1',
+            'QUERY_STRING' => 'page=1',
+            'SERVER_PROTOCOL' => 'HTTP/2.0',
+            'HTTP_HOST' => 'example.com',
+            'HTTP_CONTENT_TYPE' => 'application/json',
+        ];
+        $get = ['page' => '1'];
+        $post = ['name' => 'Alice'];
+        $cookies = ['session' => 'xyz'];
+
+        $request = Request::fromGlobals(
+            get: $get,
+            post: $post,
+            cookies: $cookies,
+            server: $server,
+        );
+
+        self::assertSame(Method::POST, $request->method);
+        self::assertSame('/api/users?page=1', $request->uri);
+        self::assertSame('/api/users', $request->path);
+        self::assertSame('page=1', $request->queryString);
+        self::assertSame('2.0', $request->protocolVersion);
+        self::assertSame('1', $request->query('page'));
+        self::assertSame('Alice', $request->post('name'));
+        self::assertSame('xyz', $request->cookie('session'));
+    }
+
+    #[Test]
+    public function fromGlobalsDefaultsForMissingServerKeys(): void
+    {
+        $request = Request::fromGlobals(
+            get: [],
+            post: [],
+            cookies: [],
+            server: [],
+        );
+
+        self::assertSame(Method::GET, $request->method);
+        self::assertSame('/', $request->uri);
+        self::assertSame('/', $request->path);
+        self::assertSame('', $request->queryString);
+        self::assertSame('1.1', $request->protocolVersion);
+    }
 }
 
 #[CoversClass(Method::class)]

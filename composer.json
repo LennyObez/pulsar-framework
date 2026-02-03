@@ -30,7 +30,8 @@
   "autoload": {
     "psr-4": {
       "Pulsar\\": "src/",
-      "Pulsar\\Extension\\Example\\": "extensions/example/src/"
+      "Pulsar\\Extension\\Example\\": "extensions/example/src/",
+      "Pulsar\\Extension\\Payments\\": "extensions/payments/src/"
     }
   },
   "autoload-dev": {

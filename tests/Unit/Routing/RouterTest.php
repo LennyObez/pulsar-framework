@@ -460,4 +460,50 @@ final class MatchedRouteTest extends TestCase
 
         self::assertSame(['auth', 'log'], $matched->getMiddleware());
     }
+
+    #[Test]
+    public function hasParameterReturnsTrueWhenPresent(): void
+    {
+        $route = Route::get('/test/{slug}', fn() => null, 'test');
+        $matched = new MatchedRoute($route, ['slug' => 'hello']);
+
+        self::assertTrue($matched->hasParameter('slug'));
+    }
+
+    #[Test]
+    public function hasParameterReturnsFalseWhenMissing(): void
+    {
+        $route = Route::get('/test', fn() => null, 'test');
+        $matched = new MatchedRoute($route);
+
+        self::assertFalse($matched->hasParameter('slug'));
+    }
+
+    #[Test]
+    public function getHandlerDelegatesToRoute(): void
+    {
+        $handler = static fn() => 'ok';
+        $route = new Route([Method::GET], '/test', $handler);
+        $matched = new MatchedRoute($route);
+
+        self::assertSame($handler, $matched->getHandler());
+    }
+
+    #[Test]
+    public function getNameDelegatesToRoute(): void
+    {
+        $route = Route::get('/test', fn() => null, 'test.route');
+        $matched = new MatchedRoute($route);
+
+        self::assertSame('test.route', $matched->getName());
+    }
+
+    #[Test]
+    public function getNameReturnsNullWhenUnset(): void
+    {
+        $route = new Route([Method::GET], '/test', fn() => null);
+        $matched = new MatchedRoute($route);
+
+        self::assertNull($matched->getName());
+    }
 }

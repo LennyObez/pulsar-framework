@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Observability\ErrorTracking;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -63,5 +64,29 @@ final class ErrorGroupTest extends TestCase
 
         self::assertSame(RuntimeException::class, $group->exceptionClass());
         self::assertSame('latest', $group->message());
+    }
+
+    #[Test]
+    public function exceptionClassReturnsNullWhenEmpty(): void
+    {
+        $group = new ErrorGroup(new ErrorFingerprint('abc'));
+
+        self::assertNull($group->exceptionClass());
+    }
+
+    #[Test]
+    public function messageReturnsNullWhenEmpty(): void
+    {
+        $group = new ErrorGroup(new ErrorFingerprint('abc'));
+
+        self::assertNull($group->message());
+    }
+
+    #[Test]
+    public function firstSeenIsSetOnConstruction(): void
+    {
+        $group = new ErrorGroup(new ErrorFingerprint('abc'));
+
+        self::assertInstanceOf(DateTimeImmutable::class, $group->firstSeen());
     }
 }
