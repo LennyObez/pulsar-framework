@@ -9,6 +9,10 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\Validation\ValidationException;
+use Pulsar\Observability\ErrorTracking\ErrorAggregator;
+use Pulsar\Observability\ErrorTracking\ErrorEvent;
+use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
+use Pulsar\Observability\Tracing\TraceContext;
 use Pulsar\Routing\RoutingException;
 
 use function sprintf;
@@ -20,12 +24,15 @@ use Throwable;
  *
  * Resolves HTTP status from exception type, logs every exception
  * with structured context, and renders an error response.
+ * Optionally captures errors into the ErrorAggregator for grouping.
  */
 final readonly class ExceptionHandler
 {
     public function __construct(
         private ExceptionRendererInterface $renderer,
         private ?LoggerInterface $logger = null,
+        private ?ErrorAggregator $errorAggregator = null,
+        private ?SensitiveDataScrubber $scrubber = null,
     ) {}
 
     /**
@@ -37,6 +44,7 @@ final readonly class ExceptionHandler
         $headers = $this->resolveHeaders($exception);
 
         $this->logException($exception, $request, $status);
+        $this->captureError($exception, $request);
 
         // ValidationException always renders as JSON
         if ($exception instanceof ValidationException) {
@@ -129,6 +137,38 @@ final readonly class ExceptionHandler
         } else {
             $this->logger->warning($exception->getMessage(), $context);
         }
+    }
+
+    /**
+     * Capture the error into the aggregator for grouping/tracking.
+     */
+    private function captureError(Throwable $exception, Request $request): void
+    {
+        if ($this->errorAggregator === null) {
+            return;
+        }
+
+        // Build scrubbed context from request
+        $context = [
+            'method' => $request->method->value,
+            'uri' => $request->uri,
+            'query' => $request->query,
+        ];
+
+        if ($this->scrubber !== null) {
+            $context = $this->scrubber->scrub($context);
+        }
+
+        // Extract trace ID from request attributes if available
+        $traceId = null;
+        $traceContext = $request->attribute('_trace_context');
+
+        if ($traceContext instanceof TraceContext) {
+            $traceId = $traceContext->traceId;
+        }
+
+        $event = ErrorEvent::fromThrowable($exception, $context, $traceId);
+        $this->errorAggregator->capture($event);
     }
 
     /**
