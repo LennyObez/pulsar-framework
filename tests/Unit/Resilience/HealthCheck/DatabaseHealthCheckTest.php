@@ -20,10 +20,10 @@ final class DatabaseHealthCheckTest extends TestCase
     #[Test]
     public function healthyWhenDatabaseResponds(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('query')->willReturn(Result::fromArrays([]));
 
-        $manager = $this->createMock(ConnectionManagerInterface::class);
+        $manager = $this->createStub(ConnectionManagerInterface::class);
         $manager->method('connection')->willReturn($connection);
 
         $check = new DatabaseHealthCheck($manager);
@@ -37,7 +37,7 @@ final class DatabaseHealthCheckTest extends TestCase
     #[Test]
     public function unhealthyWhenDatabaseFails(): void
     {
-        $manager = $this->createMock(ConnectionManagerInterface::class);
+        $manager = $this->createStub(ConnectionManagerInterface::class);
         $manager->method('connection')->willThrowException(new RuntimeException('Connection refused'));
 
         $check = new DatabaseHealthCheck($manager);
@@ -50,7 +50,7 @@ final class DatabaseHealthCheckTest extends TestCase
     #[Test]
     public function usesSpecificConnectionName(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('query')->willReturn(Result::fromArrays([]));
 
         $manager = $this->createMock(ConnectionManagerInterface::class);
@@ -68,7 +68,7 @@ final class DatabaseHealthCheckTest extends TestCase
     #[Test]
     public function nameReturnsDatabase(): void
     {
-        $manager = $this->createMock(ConnectionManagerInterface::class);
+        $manager = $this->createStub(ConnectionManagerInterface::class);
         $check = new DatabaseHealthCheck($manager);
 
         self::assertSame('database', $check->getName());

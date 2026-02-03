@@ -42,6 +42,7 @@
     "psalm": "psalm -c tools/php/psalm.xml",
     "cs:check": "php-cs-fixer fix --dry-run --diff",
     "cs:fix": "php-cs-fixer fix",
+    "api:snapshot": "php tools/api/generate-snapshot.php",
     "bench": "phpbench run --config=tools/php/phpbench.json --report=default",
     "bench:ci": "phpbench run --config=tools/php/phpbench.json --report=default --progress=none",
     "qa": [

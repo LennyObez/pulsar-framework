@@ -21,7 +21,7 @@ final class SchedulerListCommandTest extends TestCase
     #[Test]
     public function listsJobs(): void
     {
-        $job = $this->createMock(JobInterface::class);
+        $job = $this->createStub(JobInterface::class);
         $job->method('getName')->willReturn('cleanup');
         $job->method('getSchedule')->willReturn(new Schedule('*/5 * * * *'));
         $job->method('getDescription')->willReturn('Clean up old records');
