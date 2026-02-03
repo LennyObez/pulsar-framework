@@ -16,6 +16,7 @@ readonly class SecurityConfig
         public CsrfConfig $csrf,
         public SecurityHeadersConfig $headers,
         public RateLimitConfig $rateLimit,
+        public ?AuthConfig $auth = null,
     ) {}
 
     /**
@@ -37,11 +38,15 @@ readonly class SecurityConfig
         /** @var array<string, mixed> $rateLimitData */
         $rateLimitData = $data['rate_limiting'] ?? [];
 
+        /** @var array<string, mixed>|null $authData */
+        $authData = $data['auth'] ?? null;
+
         return new self(
             session: SessionConfig::fromArray($sessionData, $environment),
             csrf: CsrfConfig::fromArray($csrfData),
             headers: SecurityHeadersConfig::fromArray($headersData),
             rateLimit: RateLimitConfig::fromArray($rateLimitData),
+            auth: $authData !== null ? AuthConfig::fromArray($authData) : null,
         );
     }
 }
