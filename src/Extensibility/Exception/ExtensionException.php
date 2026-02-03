@@ -1,0 +1,71 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extensibility\Exception;
+
+use RuntimeException;
+
+use function sprintf;
+
+/**
+ * Base exception for extension-related errors.
+ */
+class ExtensionException extends RuntimeException
+{
+    /**
+     * Create exception for extension not found.
+     */
+    public static function notFound(string $name): self
+    {
+        return new self(sprintf('Extension "%s" not found', $name));
+    }
+
+    /**
+     * Create exception for extension already registered.
+     */
+    public static function alreadyRegistered(string $name): self
+    {
+        return new self(sprintf('Extension "%s" is already registered', $name));
+    }
+
+    /**
+     * Create exception for invalid extension class.
+     */
+    public static function invalidExtensionClass(string $class): self
+    {
+        return new self(sprintf(
+            'Extension class "%s" must implement ExtensionInterface',
+            $class,
+        ));
+    }
+
+    /**
+     * Create exception for extension in invalid state.
+     */
+    public static function invalidState(string $name, string $currentState, string $expectedState): self
+    {
+        return new self(sprintf(
+            'Extension "%s" is in state "%s" but expected "%s"',
+            $name,
+            $currentState,
+            $expectedState,
+        ));
+    }
+
+    /**
+     * Create exception for boot failure.
+     */
+    public static function bootFailed(string $name, string $reason): self
+    {
+        return new self(sprintf('Failed to boot extension "%s": %s', $name, $reason));
+    }
+
+    /**
+     * Create exception for registration failure.
+     */
+    public static function registrationFailed(string $name, string $reason): self
+    {
+        return new self(sprintf('Failed to register extension "%s": %s', $name, $reason));
+    }
+}
