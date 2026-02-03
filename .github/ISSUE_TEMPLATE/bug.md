@@ -1,7 +1,7 @@
 ---
 name: Bug Report
 about: Report a bug in Pulsar Framework
-title: "[Bug] "
+title: '[Bug] '
 labels: bug
 assignees: ''
 ---

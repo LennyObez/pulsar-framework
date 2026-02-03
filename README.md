@@ -48,24 +48,29 @@ Pulsar is designed for regulated domains such as:
 ## Features (roadmap-driven)
 
 ### 1) Deterministic HMVC Modules
+
 - Canonical module layout and discovery
 - Explicit module boundaries and contracts
 - Versioned module lifecycle
 
 ### 2) Extension System
+
 - `pulsar.json` manifest
 - Discover → validate → register → boot
 - Stable hooks: DI bindings, routes, console commands, migrations, assets
 - Compatibility validation and deprecation strategy
 
 ### 3) In-house Observability Suite
+
 No dependency on Prometheus/Grafana/Sentry.
+
 - Structured logs + audit logging subsystem
 - Metrics collector + exporters (Prometheus exposition format allowed as output)
 - Tracing: spans, context propagation, sampling rules
 - Error reporting: grouping, fingerprints, local viewer UI
 
 ### 4) Security Baseline (default-on)
+
 - Session hardening, CSRF protection, security headers, rate limiting
 - Secrets strategy and key rotation foundations
 - Auditable security-relevant events
@@ -84,12 +89,15 @@ However, v1.0 explicitly aims to make building an admin/CMS **straightforward vi
 Exact toolchain is pinned in-repo to avoid “foundation rewrites”.
 
 ## Contributing
+
 See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
 ## Code of Conduct
+
 See [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md).
 
 ## Security
+
 See [SECURITY.md](.github/SECURITY.md).
 
 ## License
