@@ -39,19 +39,19 @@ return [
 
 Environment variable overrides:
 
-| Variable              | Overrides                   |
-| --------------------- | --------------------------- |
-| `SESSION_COOKIE_NAME` | `session.cookie_name`       |
+| Variable              | Overrides             |
+| --------------------- | --------------------- |
+| `SESSION_COOKIE_NAME` | `session.cookie_name` |
 
 ### Config DTOs
 
-| Class                    | Responsibility                       |
-| ------------------------ | ------------------------------------ |
-| `SecurityConfig`         | Top-level; composes sub-configs      |
-| `SessionConfig`          | Session cookie and lifetime settings |
-| `CsrfConfig`             | CSRF toggle, token length, names     |
-| `SecurityHeadersConfig`  | Header key-value pairs               |
-| `RateLimitConfig`        | Rate limit window and max attempts   |
+| Class                   | Responsibility                       |
+| ----------------------- | ------------------------------------ |
+| `SecurityConfig`        | Top-level; composes sub-configs      |
+| `SessionConfig`         | Session cookie and lifetime settings |
+| `CsrfConfig`            | CSRF toggle, token length, names     |
+| `SecurityHeadersConfig` | Header key-value pairs               |
+| `RateLimitConfig`       | Rate limit window and max attempts   |
 
 All DTOs are `readonly` classes with `fromArray()` factory methods, following the same pattern as `AppConfig` and `ObservabilityConfig`.
 
@@ -131,12 +131,15 @@ $manager->rotate();                   // Invalidate old, generate new
 Automatically validates CSRF tokens on state-changing HTTP methods.
 
 **Safe methods** (pass through without validation):
+
 - `GET`, `HEAD`, `OPTIONS`
 
 **Validated methods** (require a valid CSRF token):
+
 - `POST`, `PUT`, `PATCH`, `DELETE`
 
 **Token extraction** (checked in order, first match wins):
+
 1. Request header (`X-CSRF-Token` by default)
 2. POST form field (`_csrf_token` by default)
 
@@ -164,8 +167,8 @@ Include the token as a hidden field:
 
 ```html
 <form method="POST" action="/submit">
-    <input type="hidden" name="_csrf_token" value="{{ csrfToken }}">
-    <!-- form fields -->
+  <input type="hidden" name="_csrf_token" value="{{ csrfToken }}" />
+  <!-- form fields -->
 </form>
 ```
 
@@ -175,12 +178,12 @@ Include the token in a request header:
 
 ```js
 fetch('/api/data', {
-    method: 'POST',
-    headers: {
-        'X-CSRF-Token': token,
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
+  method: 'POST',
+  headers: {
+    'X-CSRF-Token': token,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(data),
 });
 ```
 
@@ -196,11 +199,11 @@ $middleware = new SecurityHeadersMiddleware($headersConfig);
 
 Default headers from `config/security.php`:
 
-| Header                     | Value                                |
-| -------------------------- | ------------------------------------ |
-| `X-Content-Type-Options`   | `nosniff`                            |
-| `X-Frame-Options`          | `DENY`                               |
-| `Referrer-Policy`          | `strict-origin-when-cross-origin`    |
+| Header                   | Value                             |
+| ------------------------ | --------------------------------- |
+| `X-Content-Type-Options` | `nosniff`                         |
+| `X-Frame-Options`        | `DENY`                            |
+| `Referrer-Policy`        | `strict-origin-when-cross-origin` |
 
 Additional recommended headers can be added via configuration:
 
@@ -301,29 +304,29 @@ boot() →
 
 `createSecurityServices()` registers:
 
-| Service                       | Container ID                          |
-| ----------------------------- | ------------------------------------- |
-| `Session`                     | `SessionInterface`                    |
-| `CsrfTokenManager`           | `CsrfTokenManagerInterface`           |
-| `CsrfMiddleware`             | `CsrfMiddleware::class`              |
-| `SecurityHeadersMiddleware`   | `SecurityHeadersMiddleware::class`    |
-| `MasterKey`                   | `MasterKey::class` (if key present)   |
-| `Encryptor`                   | `Encryptor::class` (if key present)   |
-| `AuditLogger`                 | `AuditLogger::class` (if key present) |
+| Service                     | Container ID                          |
+| --------------------------- | ------------------------------------- |
+| `Session`                   | `SessionInterface`                    |
+| `CsrfTokenManager`          | `CsrfTokenManagerInterface`           |
+| `CsrfMiddleware`            | `CsrfMiddleware::class`               |
+| `SecurityHeadersMiddleware` | `SecurityHeadersMiddleware::class`    |
+| `MasterKey`                 | `MasterKey::class` (if key present)   |
+| `Encryptor`                 | `Encryptor::class` (if key present)   |
+| `AuditLogger`               | `AuditLogger::class` (if key present) |
 
 ## SecurityException
 
 All security errors throw `Pulsar\Security\Exception\SecurityException` with descriptive factory methods:
 
-| Factory Method              | When                                       |
-| --------------------------- | ------------------------------------------ |
-| `csrfTokenMissing()`        | State-changing request without CSRF token   |
-| `csrfTokenInvalid()`        | CSRF token fails validation                 |
-| `sessionNotStarted()`       | Session operation before `start()`          |
-| `sessionStartFailed()`      | PHP `session_start()` returns false         |
-| `masterKeyMissing()`        | `PULSAR_MASTER_KEY` env var not set         |
-| `masterKeyInvalid()`        | Master key not exactly 32 bytes             |
-| `encryptionFailed()`        | `sodium_crypto_secretbox` fails             |
-| `decryptionFailed()`        | Ciphertext tampered or wrong key            |
-| `auditIntegrityViolation()` | Audit entry HMAC verification fails         |
-| `auditWriteFailed()`        | Audit file sink cannot write                |
+| Factory Method              | When                                      |
+| --------------------------- | ----------------------------------------- |
+| `csrfTokenMissing()`        | State-changing request without CSRF token |
+| `csrfTokenInvalid()`        | CSRF token fails validation               |
+| `sessionNotStarted()`       | Session operation before `start()`        |
+| `sessionStartFailed()`      | PHP `session_start()` returns false       |
+| `masterKeyMissing()`        | `PULSAR_MASTER_KEY` env var not set       |
+| `masterKeyInvalid()`        | Master key not exactly 32 bytes           |
+| `encryptionFailed()`        | `sodium_crypto_secretbox` fails           |
+| `decryptionFailed()`        | Ciphertext tampered or wrong key          |
+| `auditIntegrityViolation()` | Audit entry HMAC verification fails       |
+| `auditWriteFailed()`        | Audit file sink cannot write              |

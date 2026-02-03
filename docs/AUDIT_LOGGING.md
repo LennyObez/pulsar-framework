@@ -203,18 +203,18 @@ Immutable value object representing a single audit log entry.
 
 ### Fields
 
-| Field          | Type           | Description                              |
-| -------------- | -------------- | ---------------------------------------- |
-| `id`           | `string`       | UUIDv4 identifier                        |
-| `event`        | `AuditEvent`   | Category of the event                    |
-| `outcome`      | `AuditOutcome` | Result of the action                     |
+| Field          | Type           | Description                                |
+| -------------- | -------------- | ------------------------------------------ |
+| `id`           | `string`       | UUIDv4 identifier                          |
+| `event`        | `AuditEvent`   | Category of the event                      |
+| `outcome`      | `AuditOutcome` | Result of the action                       |
 | `actor`        | `string`       | Who performed the action (e.g., `user:42`) |
-| `action`       | `string`       | What was done (e.g., `login`, `export`)  |
-| `resource`     | `string`       | What was acted upon (e.g., `session`)    |
-| `timestamp`    | `string`       | ISO 8601 with microseconds              |
-| `metadata`     | `array`        | Additional context (key-value pairs)     |
-| `hmac`         | `string`       | HMAC-BLAKE2b hex covering all fields     |
-| `previousHmac` | `string`       | Previous entry's HMAC (chain link)       |
+| `action`       | `string`       | What was done (e.g., `login`, `export`)    |
+| `resource`     | `string`       | What was acted upon (e.g., `session`)      |
+| `timestamp`    | `string`       | ISO 8601 with microseconds                 |
+| `metadata`     | `array`        | Additional context (key-value pairs)       |
+| `hmac`         | `string`       | HMAC-BLAKE2b hex covering all fields       |
+| `previousHmac` | `string`       | Previous entry's HMAC (chain link)         |
 
 ### Serialization
 
