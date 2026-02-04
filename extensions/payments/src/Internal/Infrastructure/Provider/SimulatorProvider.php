@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Provider;
+namespace Pulsar\Extension\Payments\Internal\Infrastructure\Provider;
 
 use Override;
-use Pulsar\Extension\Payments\Contract\ClockInterface;
-use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Payments\Contracts\ClockInterface;
+use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
 use Pulsar\Extension\Payments\Domain\Charge;
 use Pulsar\Extension\Payments\Domain\ChargeStatus;
 use Pulsar\Extension\Payments\Domain\Money;
@@ -35,6 +36,7 @@ use function substr;
  * - 3030: Success, but refund fails
  * - All others: Success
  */
+#[Internal]
 final class SimulatorProvider implements PaymentProviderInterface
 {
     /** @var array<string, PaymentIntent> */

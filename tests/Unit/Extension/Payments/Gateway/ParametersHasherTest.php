@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\Payments\Gateway;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Payments\Gateway\ParametersHasher;
+use Pulsar\Extension\Payments\Internal\Support\ParametersHasher;
 
 use function strlen;
 
