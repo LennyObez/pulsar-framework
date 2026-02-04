@@ -38,6 +38,7 @@ use Pulsar\Config\AuthorizationConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\CsrfConfig;
+use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Config\SecurityConfig;
@@ -46,6 +47,8 @@ use Pulsar\Config\SessionConfig;
 use Pulsar\Config\TwoFactorConfig;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionManager;
+use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
@@ -92,7 +95,7 @@ use Throwable;
  * managing the lifecycle, and orchestrating the request/response cycle.
  *
  * Boot pipeline order:
- * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> SecurityServices -> AuthServices -> DiagnosticsRoute -> Extensions
+ * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> SecurityServices -> AuthServices -> DatabaseServices -> DiagnosticsRoute -> Extensions
  */
 final class Kernel
 {
@@ -143,9 +146,10 @@ final class Kernel
      * 6. Exception handler creation
      * 7. Security services creation
      * 8. Auth services creation
-     * 9. Diagnostics route registration (debug mode only)
-     * 10. Extension register phase
-     * 11. Extension boot phase
+     * 9. Database services creation (if config/database.php exists)
+     * 10. Diagnostics route registration (debug mode only)
+     * 11. Extension register phase
+     * 12. Extension boot phase
      */
     public function boot(): void
     {
@@ -164,6 +168,7 @@ final class Kernel
             $this->createExceptionHandler();
             $this->createSecurityServices();
             $this->createAuthServices();
+            $this->createDatabaseServices();
             $this->registerDiagnosticsRoute();
         }
 
@@ -727,6 +732,31 @@ final class Kernel
 
         // Add AuthenticationMiddleware as global middleware (lightweight — only attaches SecurityContext)
         $this->middleware->pipe($authenticationMiddleware);
+    }
+
+    /**
+     * Create database services and register in the container.
+     *
+     * Only activates when config/database.php was loaded (optional).
+     * Registers DatabaseConfig, ConnectionManager, and ConnectionManagerInterface.
+     */
+    private function createDatabaseServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(DatabaseConfig::class)) {
+            return;
+        }
+
+        /** @var DatabaseConfig $dbConfig */
+        $dbConfig = $repository->get(DatabaseConfig::class);
+        $this->container->instance(DatabaseConfig::class, $dbConfig);
+
+        $connectionManager = ConnectionManager::fromConfig($dbConfig);
+        $this->container->instance(ConnectionManager::class, $connectionManager);
+        $this->container->instance(ConnectionManagerInterface::class, $connectionManager);
     }
 
     /**
