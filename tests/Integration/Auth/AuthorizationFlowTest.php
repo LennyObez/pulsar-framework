@@ -114,7 +114,7 @@ final class AuthorizationFlowTest extends TestCase
         $identity = new Identity(id: 'editor-1', displayName: 'Editor', roles: ['editor']);
 
         // Policy denies content.edit for this specific context
-        $policy = $this->createMock(PolicyInterface::class);
+        $policy = $this->createStub(PolicyInterface::class);
         $policy->method('evaluate')
             ->willReturnCallback(static function ($identity, PolicyContext $context): ?bool {
                 if ($context->permission === 'content.edit' && $context->resource === '/locked-article') {
@@ -145,7 +145,7 @@ final class AuthorizationFlowTest extends TestCase
     {
         $middleware = new AuthorizationMiddleware($this->gate);
 
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn(new AnonymousIdentity());
 
         $request = $this->createRequestWithRoute(
@@ -167,7 +167,7 @@ final class AuthorizationFlowTest extends TestCase
         $middleware = new AuthorizationMiddleware($this->gate);
 
         $identity = new Identity(id: 'editor-1', displayName: 'Editor', roles: ['editor']);
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($identity);
 
         $request = $this->createRequestWithRoute(
@@ -189,7 +189,7 @@ final class AuthorizationFlowTest extends TestCase
         $middleware = new AuthorizationMiddleware($this->gate);
 
         $identity = new Identity(id: 'viewer-1', displayName: 'Viewer', roles: ['viewer']);
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($identity);
 
         $request = $this->createRequestWithRoute(

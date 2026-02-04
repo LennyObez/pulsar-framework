@@ -83,7 +83,7 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
     #[Test]
     public function csrfMiddlewareAllowsGetThroughThenBlocksPost(): void
     {
-        $tokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $tokenManager = $this->createStub(CsrfTokenManagerInterface::class);
         $tokenManager->method('validate')->willReturn(false);
 
         $middleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
@@ -109,7 +109,7 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
     {
         $token = bin2hex(random_bytes(32));
 
-        $tokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $tokenManager = $this->createStub(CsrfTokenManagerInterface::class);
         $tokenManager->method('validate')
             ->with($token)
             ->willReturn(true);
@@ -135,7 +135,7 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
     {
         $token = bin2hex(random_bytes(32));
 
-        $tokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $tokenManager = $this->createStub(CsrfTokenManagerInterface::class);
         $tokenManager->method('validate')
             ->with($token)
             ->willReturn(true);
@@ -160,7 +160,7 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
     {
         $token = bin2hex(random_bytes(32));
 
-        $tokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $tokenManager = $this->createStub(CsrfTokenManagerInterface::class);
         $tokenManager->method('validate')->with($token)->willReturn(true);
 
         $csrfMiddleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
@@ -190,7 +190,7 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
     #[Test]
     public function forbiddenResponseFromCsrfStillGetsSecurityHeaders(): void
     {
-        $tokenManager = $this->createMock(CsrfTokenManagerInterface::class);
+        $tokenManager = $this->createStub(CsrfTokenManagerInterface::class);
         $tokenManager->method('validate')->willReturn(false);
 
         $csrfMiddleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);

@@ -8,6 +8,9 @@ use function hash_hmac;
 use function intdiv;
 use function ord;
 use function pack;
+
+use Random\RandomException;
+
 use function random_bytes;
 use function rawurlencode;
 use function sprintf;
@@ -31,6 +34,8 @@ final readonly class TotpGenerator
      * Generate a cryptographically random secret.
      *
      * @param positive-int $length Length in bytes (default 20 for SHA-1 compatibility)
+     *
+     * @throws RandomException
      */
     public function generateSecret(int $length = 20): string
     {

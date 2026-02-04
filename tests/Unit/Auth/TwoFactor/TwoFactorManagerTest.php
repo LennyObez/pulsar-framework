@@ -47,7 +47,7 @@ final class TwoFactorManagerTest extends TestCase
     #[Test]
     public function beginSetupReturnsArrayWithRequiredKeys(): void
     {
-        $identity = $this->createMock(IdentityInterface::class);
+        $identity = $this->createStub(IdentityInterface::class);
         $identity->method('displayName')->willReturn('test@example.com');
 
         $result = $this->manager->beginSetup($identity);

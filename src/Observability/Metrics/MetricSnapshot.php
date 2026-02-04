@@ -55,16 +55,12 @@ final readonly class MetricSnapshot
         $series = [];
 
         foreach ($histogram->seriesKeys() as $key) {
-            $labels = new LabelSet(); // default for key parsing
-            if ($key !== '') {
-                // Reconstruct LabelSet is not needed; we store raw series data
-                $labels = new LabelSet(); // placeholder
-            }
+            $labelSet = new LabelSet();
 
             $series[$key] = [
-                'buckets' => $histogram->buckets(new LabelSet()),
-                'sum' => $histogram->sum(new LabelSet()),
-                'count' => $histogram->count(new LabelSet()),
+                'buckets' => $histogram->buckets($labelSet),
+                'sum' => $histogram->sum($labelSet),
+                'count' => $histogram->count($labelSet),
             ];
         }
 

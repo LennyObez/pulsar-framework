@@ -2,16 +2,6 @@
 
 declare(strict_types=1);
 
-use function dirname;
-use function file_exists;
-
-use const PHP_VERSION;
-use const PHP_VERSION_ID;
-
-use RuntimeException;
-
-use function sprintf;
-
 /**
  * Pulsar Framework Bootstrap
  *

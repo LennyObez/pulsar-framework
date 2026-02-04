@@ -15,10 +15,9 @@ final class HomeController
 {
     /**
      * Display the welcome page.
-     *
-     * @param array<string, string> $params
      */
-    public function index(Request $request, array $params): Response
+    /** @noinspection PhpUnusedParameterInspection — route handler contract */
+    public function index(Request $_request, array $_params): Response
     {
         $html = <<<HTML
         <!DOCTYPE html>
@@ -109,7 +108,8 @@ final class HomeController
      *
      * @param array<string, string> $params
      */
-    public function greet(Request $request, array $params): Response
+    /** @noinspection PhpUnusedParameterInspection — route handler contract */
+    public function greet(Request $_request, array $params): Response
     {
         $name = $params['name'] ?? 'Guest';
         $name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
@@ -126,10 +126,9 @@ final class HomeController
 
     /**
      * Return API status as JSON.
-     *
-     * @param array<string, string> $params
      */
-    public function status(Request $request, array $params): Response
+    /** @noinspection PhpUnusedParameterInspection — route handler contract */
+    public function status(Request $_request, array $_params): Response
     {
         return Response::json([
             'status' => 'ok',

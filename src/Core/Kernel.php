@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Core;
 
+use Error;
+
 use function is_array;
 use function is_callable;
 use function is_string;
 
+use JsonException;
 use Psr\Log\LoggerInterface;
 use Pulsar\Auth\AuthManager;
 use Pulsar\Auth\AuthManagerInterface;
@@ -24,7 +27,6 @@ use Pulsar\Auth\Middleware\AuthorizationMiddleware;
 use Pulsar\Auth\Middleware\TwoFactorMiddleware;
 use Pulsar\Auth\Password\PasswordHasher;
 use Pulsar\Auth\Password\PasswordHasherInterface;
-use Pulsar\Auth\SecurityContext;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\RecoveryCodeVerifier;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
@@ -35,24 +37,44 @@ use Pulsar\Config\AppConfig;
 use Pulsar\Config\AuditConfig;
 use Pulsar\Config\AuthConfig;
 use Pulsar\Config\AuthorizationConfig;
+use Pulsar\Config\CircuitBreakerConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\Environment;
+use Pulsar\Config\FeatureFlagConfig;
+use Pulsar\Config\HealthCheckConfig;
 use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Config\ResilienceConfig;
+use Pulsar\Config\RetryConfig;
+use Pulsar\Config\SchedulerConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
+use Pulsar\Config\TenancyConfig;
+use Pulsar\Config\TenantDatabaseConfig;
 use Pulsar\Config\TwoFactorConfig;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Container\Exception\ContainerException;
+use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
 use Pulsar\Extensibility\ExtensionBootstrap;
+use Pulsar\FeatureFlag\Exception\FeatureFlagException;
+use Pulsar\FeatureFlag\FeatureFlagManager;
+use Pulsar\FeatureFlag\FeatureFlagManagerInterface;
+use Pulsar\FeatureFlag\FlagDefinition;
+use Pulsar\FeatureFlag\FlagEvaluationLog;
+use Pulsar\FeatureFlag\FlagStorageDriver;
+use Pulsar\FeatureFlag\FlagStorageInterface;
+use Pulsar\FeatureFlag\Storage\FileFlagStorage;
+use Pulsar\FeatureFlag\Storage\InMemoryFlagStorage;
+use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
@@ -68,8 +90,15 @@ use Pulsar\Observability\Log\Logger;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Metrics\PrometheusExporter;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
+use Pulsar\Resilience\CircuitBreakerRegistry;
+use Pulsar\Resilience\HealthCheck\HealthCheckRunner;
+use Pulsar\Resilience\Repair\RepairRunner;
+use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\RoutingException;
+use Pulsar\Scheduler\JobRegistry;
+use Pulsar\Scheduler\Scheduler;
 use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditSinkInterface;
@@ -82,7 +111,16 @@ use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
+use Pulsar\Tenancy\Middleware\TenantResolutionMiddleware;
+use Pulsar\Tenancy\Resolver\HeaderTenantResolver;
+use Pulsar\Tenancy\Resolver\PathPrefixTenantResolver;
+use Pulsar\Tenancy\Resolver\SubdomainTenantResolver;
+use Pulsar\Tenancy\TenantAwareConnectionManager;
+use Pulsar\Tenancy\TenantContext;
+use Pulsar\Tenancy\TenantResolverInterface;
+use Pulsar\Tenancy\TenantResolverStrategy;
 use RuntimeException;
+use SodiumException;
 
 use function sprintf;
 
@@ -95,11 +133,13 @@ use Throwable;
  * managing the lifecycle, and orchestrating the request/response cycle.
  *
  * Boot pipeline order:
- * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> SecurityServices -> AuthServices -> DatabaseServices -> DiagnosticsRoute -> Extensions
+ * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler
+ * -> Security -> Auth -> Database -> Tenancy -> FeatureFlags -> Scheduler -> Resilience
+ * -> DiagnosticsRoute -> Extensions
  */
 final class Kernel
 {
-    private bool $booted = false;
+    public private(set) bool $booted = false;
     private ContainerInterface $container;
     private Router $router;
     private MiddlewarePipeline $middleware;
@@ -147,9 +187,18 @@ final class Kernel
      * 7. Security services creation
      * 8. Auth services creation
      * 9. Database services creation (if config/database.php exists)
-     * 10. Diagnostics route registration (debug mode only)
-     * 11. Extension register phase
-     * 12. Extension boot phase
+     * 10. Tenancy services creation (if config/tenancy.php exists)
+     * 11. Feature flag services creation (if config/features.php exists)
+     * 12. Scheduler services creation (if config/scheduler.php exists)
+     * 13. Resilience services creation (if config/resilience.php exists)
+     * 14. Diagnostics route registration (debug mode only)
+     * 15. Extension register phase
+     * 16. Extension boot phase
+     *
+     * @throws ContainerException If a container error occurs during bootstrap
+     * @throws NotFoundException If a required binding is not found during bootstrap
+     * @throws FeatureFlagException If flag storage fails during boot
+     * @throws JsonException If flag serialization fails during boot
      */
     public function boot(): void
     {
@@ -169,6 +218,10 @@ final class Kernel
             $this->createSecurityServices();
             $this->createAuthServices();
             $this->createDatabaseServices();
+            $this->createTenancyServices();
+            $this->createFeatureFlagServices();
+            $this->createSchedulerServices();
+            $this->createResilienceServices();
             $this->registerDiagnosticsRoute();
         }
 
@@ -195,14 +248,6 @@ final class Kernel
     public function configManager(): ?ConfigManager
     {
         return $this->configManager;
-    }
-
-    /**
-     * Check if the kernel has been booted.
-     */
-    public function isBooted(): bool
-    {
-        return $this->booted;
     }
 
     /**
@@ -242,6 +287,8 @@ final class Kernel
 
     /**
      * Handle an HTTP request and return a response.
+     *
+     * @throws Throwable If no exception handler is registered or re-thrown after handling fails
      */
     public function handle(Request $request): Response
     {
@@ -260,6 +307,8 @@ final class Kernel
 
     /**
      * Handle a request from PHP superglobals and emit the response.
+     *
+     * @throws Throwable If no exception handler is registered or re-thrown after handling fails
      */
     public function run(): void
     {
@@ -272,6 +321,12 @@ final class Kernel
 
     /**
      * Dispatch the request to the matched route handler.
+     *
+     * @throws RoutingException When no route matches or method is not allowed
+     * @throws RuntimeException If the handler is invalid or returns an unexpected type
+     * @throws ContainerException If a container error occurs resolving a controller
+     * @throws NotFoundException If a controller binding is not found in the container
+     * @throws Error If a controller class cannot be instantiated
      */
     private function dispatchRoute(Request $request): Response
     {
@@ -319,7 +374,10 @@ final class Kernel
     /**
      * Invoke the route handler.
      *
-     * @throws RuntimeException
+     * @throws RuntimeException If the handler is invalid or returns an unexpected type
+     * @throws ContainerException If a container error occurs resolving a controller
+     * @throws NotFoundException If a controller binding is not found in the container
+     * @throws Error If a controller class cannot be instantiated
      */
     private function invokeHandler(Request $request, MatchedRoute $matched): Response
     {
@@ -365,8 +423,9 @@ final class Kernel
      *
      * @param class-string $class
      *
-     * @throws \Psr\Container\NotFoundExceptionInterface
-     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws NotFoundException
+     * @throws ContainerException
+     * @throws Error If the class cannot be instantiated
      */
     private function resolveController(string $class): object
     {
@@ -489,7 +548,7 @@ final class Kernel
 
                 return new Response(
                     body: $exporter->export(),
-                    headers: new \Pulsar\Http\HeaderBag(['content-type' => ['text/plain; version=0.0.4; charset=utf-8']]),
+                    headers: new HeaderBag(['content-type' => ['text/plain; version=0.0.4; charset=utf-8']]),
                 );
             });
         }
@@ -522,6 +581,9 @@ final class Kernel
 
     /**
      * Create the exception handler from config and register in the container.
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createExceptionHandler(): void
     {
@@ -611,8 +673,8 @@ final class Kernel
                     $auditLogger = new AuditLogger($auditSink, $auditKey);
                     $this->container->instance(AuditLogger::class, $auditLogger);
                 }
-            } catch (SecurityException) {
-                // Master key is invalid — skip crypto/audit registration.
+            } catch (SecurityException | SodiumException) {
+                // Master key is invalid or sodium operation failed — skip crypto/audit registration.
                 // Session, CSRF, and headers still work without it.
             }
         }
@@ -624,6 +686,9 @@ final class Kernel
      * Registers: PasswordHasher, SessionGuard, TokenGuard (if resolver bound),
      * AuthManager, RoleRegistry, Gate, SecurityContext, and auth middleware.
      * If 2FA is enabled, also registers TOTP and recovery code services.
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createAuthServices(): void
     {
@@ -757,6 +822,208 @@ final class Kernel
         $connectionManager = ConnectionManager::fromConfig($dbConfig);
         $this->container->instance(ConnectionManager::class, $connectionManager);
         $this->container->instance(ConnectionManagerInterface::class, $connectionManager);
+    }
+
+    /**
+     * Create multi-tenancy services and register in the container.
+     *
+     * Only activates when config/tenancy.php was loaded and tenancy is enabled.
+     * Registers TenancyConfig, TenantContext, TenantResolver, and TenantResolutionMiddleware.
+     * If database services are available, decorates ConnectionManager with tenant awareness.
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
+     */
+    private function createTenancyServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(TenancyConfig::class)) {
+            return;
+        }
+
+        /** @var TenancyConfig $tenancyConfig */
+        $tenancyConfig = $repository->get(TenancyConfig::class);
+        $this->container->instance(TenancyConfig::class, $tenancyConfig);
+        $this->container->instance(TenantDatabaseConfig::class, $tenancyConfig->database);
+
+        if (!$tenancyConfig->enabled) {
+            return;
+        }
+
+        // Tenant context
+        $tenantContext = new TenantContext();
+        $this->container->instance(TenantContext::class, $tenantContext);
+
+        // Resolver
+        $resolver = match ($tenancyConfig->resolver) {
+            TenantResolverStrategy::Header => new HeaderTenantResolver($tenancyConfig),
+            TenantResolverStrategy::Subdomain => new SubdomainTenantResolver($tenancyConfig),
+            TenantResolverStrategy::Path => new PathPrefixTenantResolver($tenancyConfig),
+        };
+
+        $this->container->instance(TenantResolverInterface::class, $resolver);
+        $this->container->instance($resolver::class, $resolver);
+
+        // Middleware
+        $logger = $this->container->has(LoggerInterface::class)
+            ? $this->container->get(LoggerInterface::class)
+            : null;
+
+        /** @var LoggerInterface|null $logger */
+        $tenantMiddleware = new TenantResolutionMiddleware($resolver, $tenantContext, $tenancyConfig, $logger);
+        $this->container->instance(TenantResolutionMiddleware::class, $tenantMiddleware);
+
+        // Tenant-aware connection manager (decorate existing if available)
+        if ($this->container->has(ConnectionManagerInterface::class)) {
+            /** @var ConnectionManagerInterface $innerManager */
+            $innerManager = $this->container->get(ConnectionManagerInterface::class);
+
+            $tenantAwareManager = new TenantAwareConnectionManager($innerManager, $tenantContext, $tenancyConfig);
+            $this->container->instance(TenantAwareConnectionManager::class, $tenantAwareManager);
+        }
+    }
+
+    /**
+     * Create feature flag services and register in the container.
+     *
+     * Only activates when config/features.php was loaded and feature flags are enabled.
+     * Registers FlagStorage, FlagEvaluationLog, and FeatureFlagManager.
+     *
+     * @throws FeatureFlagException If flag storage fails during initial flag loading
+     * @throws JsonException If flag serialization fails during initial flag loading
+     */
+    private function createFeatureFlagServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(FeatureFlagConfig::class)) {
+            return;
+        }
+
+        /** @var FeatureFlagConfig $flagConfig */
+        $flagConfig = $repository->get(FeatureFlagConfig::class);
+        $this->container->instance(FeatureFlagConfig::class, $flagConfig);
+
+        if (!$flagConfig->enabled) {
+            return;
+        }
+
+        // Storage
+        $storage = match ($flagConfig->storage) {
+            FlagStorageDriver::Memory => new InMemoryFlagStorage(),
+            FlagStorageDriver::File => new FileFlagStorage($flagConfig->filePath),
+        };
+
+        // Load pre-configured flags
+        foreach ($flagConfig->flags as $name => $data) {
+            /** @var array<string, mixed> $data */
+            $storage->set(FlagDefinition::fromArray($name, $data));
+        }
+
+        $this->container->instance(FlagStorageInterface::class, $storage);
+        $this->container->instance($storage::class, $storage);
+
+        // Evaluation log
+        $evaluationLog = new FlagEvaluationLog();
+        $this->container->instance(FlagEvaluationLog::class, $evaluationLog);
+
+        // Manager
+        $manager = new FeatureFlagManager($storage, $evaluationLog, $flagConfig->defaultState);
+        $this->container->instance(FeatureFlagManager::class, $manager);
+        $this->container->instance(FeatureFlagManagerInterface::class, $manager);
+    }
+
+    /**
+     * Create scheduler services and register in the container.
+     *
+     * Only activates when config/scheduler.php was loaded and scheduler is enabled.
+     * Registers JobRegistry and Scheduler.
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
+     */
+    private function createSchedulerServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(SchedulerConfig::class)) {
+            return;
+        }
+
+        /** @var SchedulerConfig $schedulerConfig */
+        $schedulerConfig = $repository->get(SchedulerConfig::class);
+        $this->container->instance(SchedulerConfig::class, $schedulerConfig);
+
+        if (!$schedulerConfig->enabled) {
+            return;
+        }
+
+        $logger = $this->container->has(LoggerInterface::class)
+            ? $this->container->get(LoggerInterface::class)
+            : null;
+
+        $metrics = $this->container->has(MetricRegistry::class)
+            ? $this->container->get(MetricRegistry::class)
+            : null;
+
+        $registry = new JobRegistry();
+        $this->container->instance(JobRegistry::class, $registry);
+
+        /** @var LoggerInterface|null $logger */
+        /** @var MetricRegistry|null $metrics */
+        $scheduler = new Scheduler($registry, $logger, $metrics);
+        $this->container->instance(Scheduler::class, $scheduler);
+    }
+
+    /**
+     * Create resilience services and register in the container.
+     *
+     * Only activates when config/resilience.php was loaded and resilience is enabled.
+     * Registers RetryPolicy, CircuitBreakerRegistry, HealthCheckRunner, and RepairRunner.
+     */
+    private function createResilienceServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(ResilienceConfig::class)) {
+            return;
+        }
+
+        /** @var ResilienceConfig $resilienceConfig */
+        $resilienceConfig = $repository->get(ResilienceConfig::class);
+        $this->container->instance(ResilienceConfig::class, $resilienceConfig);
+        $this->container->instance(RetryConfig::class, $resilienceConfig->retry);
+        $this->container->instance(CircuitBreakerConfig::class, $resilienceConfig->circuitBreaker);
+        $this->container->instance(HealthCheckConfig::class, $resilienceConfig->healthCheck);
+
+        if (!$resilienceConfig->enabled) {
+            return;
+        }
+
+        // Retry policy (default)
+        $retryPolicy = RetryPolicy::fromConfig($resilienceConfig->retry);
+        $this->container->instance(RetryPolicy::class, $retryPolicy);
+
+        // Circuit breaker registry
+        $cbRegistry = new CircuitBreakerRegistry($resilienceConfig->circuitBreaker);
+        $this->container->instance(CircuitBreakerRegistry::class, $cbRegistry);
+
+        // Health check runner
+        $healthCheckRunner = new HealthCheckRunner();
+        $this->container->instance(HealthCheckRunner::class, $healthCheckRunner);
+
+        // Repair runner
+        $repairRunner = new RepairRunner();
+        $this->container->instance(RepairRunner::class, $repairRunner);
     }
 
     /**

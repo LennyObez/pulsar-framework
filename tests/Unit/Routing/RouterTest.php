@@ -29,7 +29,7 @@ final class RouterTest extends TestCase
 
         $router->add($route);
 
-        self::assertCount(1, $router->getRoutes());
+        self::assertCount(1, $router->routes);
     }
 
     #[Test]
@@ -51,7 +51,7 @@ final class RouterTest extends TestCase
 
         $router->get('/test', $handler, 'test');
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertCount(1, $routes);
         self::assertSame('/test', $routes[0]->path);
     }
@@ -62,7 +62,7 @@ final class RouterTest extends TestCase
         $router = new Router();
         $router->post('/test', fn() => null);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertSame([Method::POST], $routes[0]->methods);
     }
 
@@ -72,7 +72,7 @@ final class RouterTest extends TestCase
         $router = new Router();
         $router->put('/test', fn() => null);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertSame([Method::PUT], $routes[0]->methods);
     }
 
@@ -82,7 +82,7 @@ final class RouterTest extends TestCase
         $router = new Router();
         $router->patch('/test', fn() => null);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertSame([Method::PATCH], $routes[0]->methods);
     }
 
@@ -92,7 +92,7 @@ final class RouterTest extends TestCase
         $router = new Router();
         $router->delete('/test', fn() => null);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertSame([Method::DELETE], $routes[0]->methods);
     }
 
@@ -102,7 +102,7 @@ final class RouterTest extends TestCase
         $router = new Router();
         $router->any('/test', fn() => null);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertContains(Method::GET, $routes[0]->methods);
         self::assertContains(Method::POST, $routes[0]->methods);
     }
@@ -159,8 +159,8 @@ final class RouterTest extends TestCase
         } catch (RoutingException $e) {
             self::assertSame(405, $e->getCode());
             self::assertTrue($e->isMethodNotAllowed());
-            self::assertContains(Method::GET, $e->getAllowedMethods());
-            self::assertContains(Method::POST, $e->getAllowedMethods());
+            self::assertContains(Method::GET, $e->allowedMethods);
+            self::assertContains(Method::POST, $e->allowedMethods);
             self::assertStringContainsString('GET', $e->getAllowHeader());
         }
     }
@@ -175,7 +175,7 @@ final class RouterTest extends TestCase
 
         $router->addGroup($group);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertCount(2, $routes);
         self::assertSame('/api/users', $routes[0]->path);
         self::assertSame('/api/posts', $routes[1]->path);
@@ -192,7 +192,7 @@ final class RouterTest extends TestCase
 
         $router->addGroup($api);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertSame('/api/v1/users', $routes[0]->path);
     }
 
@@ -205,7 +205,7 @@ final class RouterTest extends TestCase
 
         $router->addGroup($group);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertSame(['auth', 'throttle', 'log'], $routes[0]->middleware);
     }
 
@@ -263,7 +263,7 @@ final class RouterTest extends TestCase
         $router->get('/b', fn() => null);
         $router->get('/c', fn() => null, 'route.c');
 
-        $named = $router->getNamedRoutes();
+        $named = $router->namedRoutes;
 
         self::assertArrayHasKey('route.a', $named);
         self::assertArrayHasKey('route.c', $named);
@@ -379,7 +379,7 @@ final class RouterTest extends TestCase
 
         $router->addGroup($group);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertSame('api.example.com', $routes[0]->host);
     }
 
@@ -397,7 +397,7 @@ final class RouterTest extends TestCase
 
         $router->addGroup($group);
 
-        $routes = $router->getRoutes();
+        $routes = $router->routes;
         self::assertSame('special.example.com', $routes[0]->host);
     }
 

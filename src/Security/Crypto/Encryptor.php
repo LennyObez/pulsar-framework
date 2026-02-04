@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Security\Crypto;
 
 use Pulsar\Security\Exception\SecurityException;
+use Random\RandomException;
 
 use function sodium_crypto_secretbox;
 use function sodium_crypto_secretbox_open;
+
+use SodiumException;
+
 use function strlen;
 
 /**
@@ -35,6 +39,9 @@ final class Encryptor
 
     private readonly string $key;
 
+    /**
+     * @throws SodiumException
+     */
     public function __construct(MasterKey $masterKey)
     {
         $this->key = $masterKey->deriveSubKey(self::SUB_KEY_ID, self::KDF_CONTEXT);
@@ -46,6 +53,8 @@ final class Encryptor
      * Output format: base64(nonce || ciphertext_with_mac)
      *
      * @throws SecurityException If encryption fails
+     * @throws RandomException
+     * @throws SodiumException
      */
     public function encrypt(string $plaintext): string
     {
@@ -59,6 +68,7 @@ final class Encryptor
      * Decrypt a base64-encoded ciphertext produced by encrypt().
      *
      * @throws SecurityException If decryption fails (wrong key, tampered data, etc.)
+     * @throws SodiumException
      */
     public function decrypt(string $encoded): string
     {

@@ -5,6 +5,5 @@ parameters:
         - ../../tests
     excludePaths:
         - ../../vendor
-        - ../../bootstrap/cache (?)
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true

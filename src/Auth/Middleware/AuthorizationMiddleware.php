@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Middleware;
 
+use JsonException;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\PolicyContext;
 use Pulsar\Auth\SecurityContext;
@@ -15,6 +16,8 @@ use Pulsar\Routing\MatchedRoute;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
+use Random\RandomException;
+use SodiumException;
 
 /**
  * Route-level middleware that triggers lazy identity resolution and checks authorization.
@@ -45,7 +48,11 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
         $request = $request->withAttribute('_identity', $identity);
 
         if (!$identity->isAuthenticated()) {
-            $this->auditAuthFailure($request, 'unauthenticated');
+            try {
+                $this->auditAuthFailure($request);
+            } catch (RandomException | JsonException | SodiumException) {
+                // Audit logging failure must not disrupt authorization flow
+            }
             return $this->unauthorizedResponse($request);
         }
 
@@ -65,7 +72,11 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
                 );
 
                 if ($this->gate->denies($identity, $permission, $context)) {
-                    $this->auditAuthzDenied($request, $identity->id(), $permission);
+                    try {
+                        $this->auditAuthzDenied($request, $identity->id(), $permission);
+                    } catch (RandomException | JsonException | SodiumException) {
+                        // Audit logging failure must not disrupt authorization flow
+                    }
                     return $this->forbiddenResponse($request);
                 }
             }
@@ -104,7 +115,12 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
         );
     }
 
-    private function auditAuthFailure(Request $request, string $reason): void
+    /**
+     * @throws RandomException
+     * @throws JsonException
+     * @throws SodiumException
+     */
+    private function auditAuthFailure(Request $request): void
     {
         $this->auditLogger?->log(
             event: AuditEvent::Authentication,
@@ -112,10 +128,15 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
             actor: 'anonymous',
             action: 'authenticate',
             resource: $request->path,
-            metadata: ['reason' => $reason],
+            metadata: ['reason' => 'unauthenticated'],
         );
     }
 
+    /**
+     * @throws RandomException
+     * @throws JsonException
+     * @throws SodiumException
+     */
     private function auditAuthzDenied(Request $request, string $actor, string $permission): void
     {
         $this->auditLogger?->log(

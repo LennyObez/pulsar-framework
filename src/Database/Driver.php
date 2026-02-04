@@ -45,8 +45,7 @@ enum Driver: string
     public function supportsSavepoints(): bool
     {
         return match ($this) {
-            self::MySQL, self::PostgreSQL => true,
-            self::SQLite => true,
+            self::MySQL, self::PostgreSQL, self::SQLite => true,
         };
     }
 }

@@ -12,6 +12,8 @@ use function file_put_contents;
 use function is_dir;
 use function json_encode;
 
+use JsonException;
+
 use const LOCK_EX;
 
 use function mkdir;
@@ -38,6 +40,9 @@ final class AuditFileSink implements AuditSinkInterface
         private readonly string $logPath,
     ) {}
 
+    /**
+     * @throws JsonException
+     */
     public function write(AuditEntry $entry): void
     {
         $this->ensureDirectory();

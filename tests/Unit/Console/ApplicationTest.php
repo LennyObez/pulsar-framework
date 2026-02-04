@@ -91,17 +91,10 @@ final class ApplicationTest extends TestCase
     {
         $executed = false;
         $command = new class ($executed) implements CommandInterface {
+            public string $name = 'test';
+            public string $description = 'Test';
+
             public function __construct(private bool &$executed) {} // @phpstan-ignore property.onlyWritten
-
-            public function getName(): string
-            {
-                return 'test';
-            }
-
-            public function getDescription(): string
-            {
-                return 'Test';
-            }
 
             public function execute(InputInterface $input, OutputInterface $output): int
             {
@@ -129,7 +122,7 @@ final class ApplicationTest extends TestCase
 
         $exitCode = $this->application->doRun($input, $output);
 
-        $content = $output->getBuffer();
+        $content = $output->buffer;
         self::assertStringContainsString('Pulsar Framework', $content);
         self::assertStringContainsString('Usage:', $content);
         self::assertSame(ExitCode::Success->value, $exitCode);
@@ -143,7 +136,7 @@ final class ApplicationTest extends TestCase
 
         $exitCode = $this->application->doRun($input, $output);
 
-        $content = $output->getBuffer();
+        $content = $output->buffer;
         self::assertStringContainsString('Pulsar Framework', $content);
         self::assertSame(ExitCode::Success->value, $exitCode);
     }
@@ -163,15 +156,8 @@ final class ApplicationTest extends TestCase
     public function doRunHandlesCommandException(): void
     {
         $command = new class implements CommandInterface {
-            public function getName(): string
-            {
-                return 'test';
-            }
-
-            public function getDescription(): string
-            {
-                return 'Test';
-            }
+            public string $name = 'test';
+            public string $description = 'Test';
 
             public function execute(InputInterface $input, OutputInterface $output): int
             {
@@ -187,7 +173,7 @@ final class ApplicationTest extends TestCase
         $exitCode = $this->application->doRun($input, $output);
 
         self::assertSame(ExitCode::Error->value, $exitCode);
-        self::assertStringContainsString('Test error', $output->getErrorBuffer());
+        self::assertStringContainsString('Test error', $output->errorBuffer);
     }
 
     #[Test]
@@ -208,8 +194,8 @@ final class ApplicationTest extends TestCase
 
             protected function configure(): void
             {
-                $this->setName($this->commandName)
-                    ->setDescription($this->commandDescription);
+                $this->name = $this->commandName;
+                $this->description = $this->commandDescription;
             }
 
             public function execute(InputInterface $input, OutputInterface $output): int

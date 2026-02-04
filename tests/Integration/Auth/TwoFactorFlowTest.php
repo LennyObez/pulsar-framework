@@ -103,7 +103,7 @@ final class TwoFactorFlowTest extends TestCase
             twoFactorStatus: TwoFactorStatus::Pending,
         );
 
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($pendingIdentity);
 
         $request = new Request(
@@ -136,7 +136,7 @@ final class TwoFactorFlowTest extends TestCase
             twoFactorStatus: TwoFactorStatus::Verified,
         );
 
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($verifiedIdentity);
 
         $request = new Request(
