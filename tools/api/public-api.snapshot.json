@@ -10,6 +10,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Audit\\AuditLoggerInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Auth\\AuthManagerInterface": {
       "since": "",
       "methods": [],
@@ -365,6 +370,41 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Context\\CausationId": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\ContextPropagator": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\CorrelationId": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\Exception\\ContextException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\Middleware\\RequestContextMiddleware": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\RequestContext": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\RequestContextHolder": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Core\\Version": {
       "since": "1.0.0-rc.1",
       "methods": [],
@@ -471,6 +511,16 @@
       "constants": []
     },
     "Pulsar\\ErrorHandling\\HttpExceptionInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\EventEnvelope": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\EventMetadata": {
       "since": "",
       "methods": [],
       "constants": []
@@ -701,6 +751,41 @@
       "constants": []
     },
     "Pulsar\\Http\\Validation\\Violation": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\Exception\\IdempotencyException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyClaim": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyClaimStatus": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyKey": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyRecord": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyStoreInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\InMemoryIdempotencyStore": {
       "since": "",
       "methods": [],
       "constants": []
@@ -1221,6 +1306,56 @@
       "constants": []
     },
     "Pulsar\\Tenancy\\TenantResolverStrategy": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\Exception\\WebhookException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\InMemoryWebhookEventLog": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookClaim": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookClaimStatus": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookEventLogInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookHandlerInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookProcessingResult": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookProcessingStatus": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookProcessor": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookVerifierInterface": {
       "since": "",
       "methods": [],
       "constants": []

@@ -8,9 +8,9 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Payments\Exception\WebhookException;
-use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\InMemoryWebhookEventLog;
-use Pulsar\Extension\Payments\Webhook\WebhookClaimStatus;
+use Pulsar\Webhook\Exception\WebhookException;
+use Pulsar\Webhook\InMemoryWebhookEventLog;
+use Pulsar\Webhook\WebhookClaimStatus;
 
 #[CoversClass(InMemoryWebhookEventLog::class)]
 final class InMemoryWebhookEventLogTest extends TestCase

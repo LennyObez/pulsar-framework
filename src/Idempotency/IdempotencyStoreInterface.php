@@ -2,17 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Contracts;
+namespace Pulsar\Idempotency;
 
 use DateTimeImmutable;
 use Pulsar\Api\Api;
-use Pulsar\Extension\Payments\Exception\IdempotencyException;
-use Pulsar\Extension\Payments\Idempotency\IdempotencyClaim;
+use Pulsar\Idempotency\Exception\IdempotencyException;
 
 /**
  * Atomic claim-based idempotency store contract.
- *
- * @see \Pulsar\Contracts\IdempotencyStoreInterface Planned core-level contract (Plan 3).
  */
 #[Api]
 interface IdempotencyStoreInterface

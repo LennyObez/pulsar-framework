@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Exception;
+namespace Pulsar\Idempotency\Exception;
 
 use NoDiscard;
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -12,6 +13,7 @@ use function sprintf;
 /**
  * Idempotency violation exceptions.
  */
+#[Api]
 final class IdempotencyException extends RuntimeException
 {
     #[NoDiscard]

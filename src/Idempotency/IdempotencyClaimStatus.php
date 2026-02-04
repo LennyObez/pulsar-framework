@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Idempotency;
+namespace Pulsar\Idempotency;
 
 use Pulsar\Api\Api;
 

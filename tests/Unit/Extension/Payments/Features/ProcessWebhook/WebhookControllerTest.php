@@ -19,12 +19,12 @@ use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\WebhookController;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
-use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Webhook\InMemoryWebhookEventLog;
 
 #[CoversClass(WebhookController::class)]
 final class WebhookControllerTest extends TestCase

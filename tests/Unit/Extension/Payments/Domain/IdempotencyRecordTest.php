@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Payments\Domain\IdempotencyRecord;
+use Pulsar\Idempotency\IdempotencyRecord;
 
 #[CoversClass(IdempotencyRecord::class)]
 final class IdempotencyRecordTest extends TestCase

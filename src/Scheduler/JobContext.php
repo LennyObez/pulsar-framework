@@ -7,6 +7,7 @@ namespace Pulsar\Scheduler;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
+use Pulsar\Context\RequestContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
 
 /**
@@ -20,5 +21,6 @@ readonly class JobContext
         public DateTimeImmutable $startedAt,
         public ?LoggerInterface $logger = null,
         public ?MetricRegistry $metrics = null,
+        public ?RequestContext $requestContext = null,
     ) {}
 }

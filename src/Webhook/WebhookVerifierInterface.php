@@ -2,15 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Contracts;
+namespace Pulsar\Webhook;
 
 use Pulsar\Api\Api;
-use Pulsar\Extension\Payments\Exception\WebhookException;
+use Pulsar\Webhook\Exception\WebhookException;
 
 /**
  * Webhook signature verification contract.
- *
- * @see \Pulsar\Contracts\WebhookVerifierInterface Planned core-level contract (Plan 3).
  */
 #[Api]
 interface WebhookVerifierInterface

@@ -2,15 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Internal\Infrastructure\Idempotency;
+namespace Pulsar\Idempotency;
 
 use DateTimeImmutable;
 use Override;
-use Pulsar\Api\Internal;
-use Pulsar\Extension\Payments\Contracts\IdempotencyStoreInterface;
-use Pulsar\Extension\Payments\Domain\IdempotencyRecord;
-use Pulsar\Extension\Payments\Exception\IdempotencyException;
-use Pulsar\Extension\Payments\Idempotency\IdempotencyClaim;
+use Pulsar\Api\Api;
+use Pulsar\Idempotency\Exception\IdempotencyException;
 
 /**
  * In-memory idempotency store with Fiber-safe mutex.
@@ -18,7 +15,7 @@ use Pulsar\Extension\Payments\Idempotency\IdempotencyClaim;
  * Uses an internal in-flight map to prevent interleaved Fiber execution
  * from double-processing the same key.
  */
-#[Internal]
+#[Api]
 final class InMemoryIdempotencyStore implements IdempotencyStoreInterface
 {
     /** @var array<string, IdempotencyRecord> */

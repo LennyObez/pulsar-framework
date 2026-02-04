@@ -2,19 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Internal\Infrastructure\Webhook;
+namespace Pulsar\Webhook;
 
 use DateTimeImmutable;
 use Override;
-use Pulsar\Api\Internal;
-use Pulsar\Extension\Payments\Contracts\WebhookEventLogInterface;
-use Pulsar\Extension\Payments\Exception\WebhookException;
-use Pulsar\Extension\Payments\Webhook\WebhookClaim;
+use Pulsar\Api\Api;
+use Pulsar\Webhook\Exception\WebhookException;
 
 /**
  * In-memory webhook replay prevention store with Fiber-safe mutex.
  */
-#[Internal]
+#[Api]
 final class InMemoryWebhookEventLog implements WebhookEventLogInterface
 {
     /** @var array<string, DateTimeImmutable> eventId => processedAt */
@@ -56,11 +54,8 @@ final class InMemoryWebhookEventLog implements WebhookEventLogInterface
         $now = new DateTimeImmutable();
         $this->processed[$eventId] = $now;
 
-        // Use the current time + a long TTL for expiry tracking
-        // The actual TTL was specified in claim(), but we need to store it somehow
-        // For simplicity, commit records the current time and the prune handles cleanup
         if (!isset($this->expiry[$eventId])) {
-            // Default 72h expiry if not set during claim
+            // Default 72h expiry
             $this->expiry[$eventId] = $now->modify('+259200 seconds');
         }
 

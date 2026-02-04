@@ -2,17 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Contracts;
+namespace Pulsar\Webhook;
 
 use DateTimeImmutable;
 use Pulsar\Api\Api;
-use Pulsar\Extension\Payments\Exception\WebhookException;
-use Pulsar\Extension\Payments\Webhook\WebhookClaim;
+use Pulsar\Webhook\Exception\WebhookException;
 
 /**
  * Claim-based webhook replay prevention contract.
- *
- * @see \Pulsar\Contracts\WebhookEventLogInterface Planned core-level contract (Plan 3).
  */
 #[Api]
 interface WebhookEventLogInterface

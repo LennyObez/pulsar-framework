@@ -15,6 +15,7 @@ use function is_string;
 use JsonException;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Auth\AuthManager;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Authorization\Gate;
@@ -70,6 +71,8 @@ use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use Pulsar\Context\Middleware\RequestContextMiddleware;
+use Pulsar\Context\RequestContextHolder;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Deploy\DeployCheck;
@@ -171,10 +174,10 @@ use Throwable;
  * managing the lifecycle, and orchestrating the request/response cycle.
  *
  * Boot pipeline order:
- * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler
- * -> Security -> Auth -> Database -> Tenancy -> FeatureFlags -> Scheduler -> Resilience
- * -> Queue -> Supervisor -> Integrity -> Deploy -> DiagnosticsRoute
- * -> Extensions (register -> preBoot -> boot -> postBoot)
+ * Config -> Logger -> Tracer -> Metrics -> RequestContext -> ErrorTracker
+ * -> ExceptionHandler -> Security -> Auth -> Database -> Tenancy -> FeatureFlags
+ * -> Scheduler -> Resilience -> Queue -> Supervisor -> Integrity -> Deploy
+ * -> DiagnosticsRoute -> Extensions (register -> preBoot -> boot -> postBoot)
  */
 #[Internal]
 final class Kernel
@@ -225,6 +228,7 @@ final class Kernel
      * 2. Logger creation
      * 3. Tracer creation (TracingMiddleware as outermost global middleware)
      * 4. Metrics creation (MetricsMiddleware as inner global middleware)
+     * 4b. RequestContext creation (RequestContextMiddleware after metrics)
      * 5. Error tracker creation
      * 6. Exception handler creation
      * 7. Security services creation
@@ -289,6 +293,7 @@ final class Kernel
             $this->createLogger();
             $this->createTracer();
             $this->createMetrics();
+            $this->createRequestContext();
             $this->createErrorTracker();
             $this->createExceptionHandler();
             $this->createSecurityServices();
@@ -676,6 +681,29 @@ final class Kernel
     }
 
     /**
+     * Create the request context subsystem and register RequestContextMiddleware.
+     *
+     * Provides correlation/causation ID propagation and request metadata
+     * across HTTP, queue, and scheduler boundaries.
+     *
+     * @throws NotFoundException|ContainerException
+     * @throws ReflectionException If class reflection fails during autowiring
+     */
+    private function createRequestContext(): void
+    {
+        $holder = new RequestContextHolder();
+        $this->container->instance(RequestContextHolder::class, $holder);
+
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+
+        $middleware = new RequestContextMiddleware($holder, $randomizer);
+
+        // RequestContext comes after metrics, before error tracker
+        $this->middleware->pipe($middleware);
+    }
+
+    /**
      * Create the error tracking subsystem.
      */
     private function createErrorTracker(): void
@@ -809,8 +837,14 @@ final class Kernel
                     $this->container->instance(AuditSinkInterface::class, $auditSink);
                     $this->container->instance(AuditFileSink::class, $auditSink);
 
-                    $auditLogger = new AuditLogger($auditSink, $auditKey, $randomizer);
+                    $contextHolder = $this->container->has(RequestContextHolder::class)
+                        ? $this->container->get(RequestContextHolder::class)
+                        : null;
+
+                    /** @var RequestContextHolder|null $contextHolder */
+                    $auditLogger = new AuditLogger($auditSink, $auditKey, $randomizer, $contextHolder);
                     $this->container->instance(AuditLogger::class, $auditLogger);
+                    $this->container->instance(AuditLoggerInterface::class, $auditLogger);
                 }
             } catch (SecurityException | SodiumException) {
                 // Master key is invalid or sodium operation failed — skip crypto/audit registration.
@@ -928,8 +962,13 @@ final class Kernel
             ? $this->container->get(AuditLogger::class)
             : null;
 
+        $authContextHolder = $this->container->has(RequestContextHolder::class)
+            ? $this->container->get(RequestContextHolder::class)
+            : null;
+
         /** @var AuditLogger|null $auditLogger */
-        $authorizationMiddleware = new AuthorizationMiddleware($gate, $auditLogger);
+        /** @var RequestContextHolder|null $authContextHolder */
+        $authorizationMiddleware = new AuthorizationMiddleware($gate, $auditLogger, $authContextHolder);
         $this->container->instance(AuthorizationMiddleware::class, $authorizationMiddleware);
 
         $twoFactorMiddleware = new TwoFactorMiddleware();
@@ -1122,9 +1161,19 @@ final class Kernel
         $registry = new JobRegistry();
         $this->container->instance(JobRegistry::class, $registry);
 
+        $contextHolder = $this->container->has(RequestContextHolder::class)
+            ? $this->container->get(RequestContextHolder::class)
+            : null;
+
+        /** @var Randomizer|null $schedulerRandomizer */
+        $schedulerRandomizer = $this->container->has(Randomizer::class)
+            ? $this->container->get(Randomizer::class)
+            : null;
+
         /** @var LoggerInterface|null $logger */
         /** @var MetricRegistry|null $metrics */
-        $scheduler = new Scheduler($registry, $logger, $metrics);
+        /** @var RequestContextHolder|null $contextHolder */
+        $scheduler = new Scheduler($registry, $logger, $metrics, $contextHolder, $schedulerRandomizer);
         $this->container->instance(Scheduler::class, $scheduler);
     }
 
@@ -1217,8 +1266,13 @@ final class Kernel
             $this->container->instance(QueueDriverInterface::class, $driver);
         }
 
-        // Queue manager
-        $queueManager = new QueueManager($queueConfig, $driver);
+        // Queue manager (with context propagation)
+        $contextHolder = $this->container->has(RequestContextHolder::class)
+            ? $this->container->get(RequestContextHolder::class)
+            : null;
+
+        /** @var RequestContextHolder|null $contextHolder */
+        $queueManager = new QueueManager($queueConfig, $driver, $contextHolder);
         $this->container->instance(QueueManager::class, $queueManager);
 
         // Worker options
@@ -1231,7 +1285,7 @@ final class Kernel
             : null;
 
         /** @var LoggerInterface|null $logger */
-        $worker = new Worker($driver, $workerOptions, $logger);
+        $worker = new Worker($driver, $workerOptions, $logger, $contextHolder);
         $this->container->instance(Worker::class, $worker);
 
         // Retry policy
@@ -1406,6 +1460,10 @@ final class Kernel
         $registry->registerEvictable(SecurityContext::class);
 
         // Register resettable services (state reset between requests)
+        if ($this->container->has(RequestContextHolder::class)) {
+            $registry->registerResettable(RequestContextHolder::class);
+        }
+
         if ($this->container->has(TenantContext::class)) {
             $registry->registerResettable(TenantContext::class);
         }

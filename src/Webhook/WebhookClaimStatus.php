@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Webhook;
+namespace Pulsar\Webhook;
 
 use Pulsar\Api\Api;
 

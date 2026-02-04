@@ -9,6 +9,7 @@ use Override;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\PolicyContext;
 use Pulsar\Auth\SecurityContext;
+use Pulsar\Context\RequestContextHolder;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
@@ -31,6 +32,7 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
     public function __construct(
         private GateInterface $gate,
         private ?AuditLogger $auditLogger = null,
+        private ?RequestContextHolder $contextHolder = null,
     ) {}
 
     #[Override]
@@ -48,6 +50,13 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
 
         // Update request with resolved identity
         $request = $request->withAttribute('_identity', $identity);
+
+        // Enrich RequestContext with actor identity when authenticated
+        if ($identity->isAuthenticated() && $this->contextHolder?->isAvailable() === true) {
+            $this->contextHolder->set(
+                $this->contextHolder->get()->withActor($identity->id()),
+            );
+        }
 
         if (!$identity->isAuthenticated()) {
             try {
