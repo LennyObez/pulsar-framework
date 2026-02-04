@@ -59,4 +59,42 @@ return [
         'default_limit' => 60,
         'default_window' => 60,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication & Authorization
+    |--------------------------------------------------------------------------
+    */
+    'auth' => [
+        'default_guard' => 'session',
+
+        'guards' => [
+            ['name' => 'session', 'driver' => 'session', 'enabled' => true],
+            ['name' => 'token', 'driver' => 'token', 'enabled' => true],
+        ],
+
+        'two_factor' => [
+            'enabled' => false,
+            'issuer' => 'Pulsar',
+            'code_digits' => 6,
+            'code_period' => 30,
+            'verification_window' => 1,
+            'recovery_code_count' => 8,
+        ],
+
+        'authorization' => [
+            'roles' => [
+                'admin' => [
+                    'permissions' => ['*'],
+                ],
+                'editor' => [
+                    'permissions' => ['content.view', 'content.create', 'content.edit'],
+                ],
+                'viewer' => [
+                    'permissions' => ['content.view'],
+                ],
+            ],
+            'super_roles' => ['admin'],
+        ],
+    ],
 ];

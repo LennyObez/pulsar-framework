@@ -9,8 +9,32 @@ use function is_callable;
 use function is_string;
 
 use Psr\Log\LoggerInterface;
+use Pulsar\Auth\AuthManager;
+use Pulsar\Auth\AuthManagerInterface;
+use Pulsar\Auth\Authorization\Gate;
+use Pulsar\Auth\Authorization\GateInterface;
+use Pulsar\Auth\Authorization\InMemoryRoleRegistry;
+use Pulsar\Auth\Authorization\Role;
+use Pulsar\Auth\Authorization\RoleRegistryInterface;
+use Pulsar\Auth\Guard\SessionGuard;
+use Pulsar\Auth\Guard\TokenGuard;
+use Pulsar\Auth\Guard\TokenResolverInterface;
+use Pulsar\Auth\Middleware\AuthenticationMiddleware;
+use Pulsar\Auth\Middleware\AuthorizationMiddleware;
+use Pulsar\Auth\Middleware\TwoFactorMiddleware;
+use Pulsar\Auth\Password\PasswordHasher;
+use Pulsar\Auth\Password\PasswordHasherInterface;
+use Pulsar\Auth\SecurityContext;
+use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
+use Pulsar\Auth\TwoFactor\RecoveryCodeVerifier;
+use Pulsar\Auth\TwoFactor\TotpGenerator;
+use Pulsar\Auth\TwoFactor\TotpVerifier;
+use Pulsar\Auth\TwoFactor\TwoFactorManager;
+use Pulsar\Auth\TwoFactor\TwoFactorManagerInterface;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\AuditConfig;
+use Pulsar\Config\AuthConfig;
+use Pulsar\Config\AuthorizationConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\CsrfConfig;
@@ -20,6 +44,7 @@ use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
+use Pulsar\Config\TwoFactorConfig;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionManager;
@@ -70,7 +95,7 @@ use Throwable;
  * managing the lifecycle, and orchestrating the request/response cycle.
  *
  * Boot pipeline order:
- * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> SecurityServices -> DatabaseServices -> DiagnosticsRoute -> Extensions
+ * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler -> SecurityServices -> AuthServices -> DatabaseServices -> DiagnosticsRoute -> Extensions
  */
 final class Kernel
 {
@@ -120,10 +145,11 @@ final class Kernel
      * 5. Error tracker creation
      * 6. Exception handler creation
      * 7. Security services creation
-     * 8. Database services creation (if config/database.php exists)
-     * 9. Diagnostics route registration (debug mode only)
-     * 10. Extension register phase
-     * 11. Extension boot phase
+     * 8. Auth services creation
+     * 9. Database services creation (if config/database.php exists)
+     * 10. Diagnostics route registration (debug mode only)
+     * 11. Extension register phase
+     * 12. Extension boot phase
      */
     public function boot(): void
     {
@@ -141,6 +167,7 @@ final class Kernel
             $this->createErrorTracker();
             $this->createExceptionHandler();
             $this->createSecurityServices();
+            $this->createAuthServices();
             $this->createDatabaseServices();
             $this->registerDiagnosticsRoute();
         }
@@ -380,6 +407,12 @@ final class Kernel
         $this->container->instance(SessionConfig::class, $securityConfig->session);
         $this->container->instance(CsrfConfig::class, $securityConfig->csrf);
         $this->container->instance(SecurityHeadersConfig::class, $securityConfig->headers);
+
+        if ($securityConfig->auth !== null) {
+            $this->container->instance(AuthConfig::class, $securityConfig->auth);
+            $this->container->instance(TwoFactorConfig::class, $securityConfig->auth->twoFactor);
+            $this->container->instance(AuthorizationConfig::class, $securityConfig->auth->authorization);
+        }
     }
 
     /**
@@ -583,6 +616,122 @@ final class Kernel
                 // Session, CSRF, and headers still work without it.
             }
         }
+    }
+
+    /**
+     * Create authentication and authorization services.
+     *
+     * Registers: PasswordHasher, SessionGuard, TokenGuard (if resolver bound),
+     * AuthManager, RoleRegistry, Gate, SecurityContext, and auth middleware.
+     * If 2FA is enabled, also registers TOTP and recovery code services.
+     */
+    private function createAuthServices(): void
+    {
+        /** @var ConfigManager $configManager */
+        $configManager = $this->configManager;
+
+        /** @var SecurityConfig $securityConfig */
+        $securityConfig = $configManager->repository()->get(SecurityConfig::class);
+
+        if ($securityConfig->auth === null) {
+            return;
+        }
+
+        $authConfig = $securityConfig->auth;
+
+        // Password hasher
+        $passwordHasher = new PasswordHasher();
+        $this->container->instance(PasswordHasher::class, $passwordHasher);
+        $this->container->instance(PasswordHasherInterface::class, $passwordHasher);
+
+        // Auth manager
+        $authManager = new AuthManager($authConfig->defaultGuard);
+
+        // Session guard
+        if ($this->container->has(SessionInterface::class)) {
+            /** @var SessionInterface $session */
+            $session = $this->container->get(SessionInterface::class);
+            $sessionGuard = new SessionGuard($session);
+            $this->container->instance(SessionGuard::class, $sessionGuard);
+            $authManager->addGuard($sessionGuard);
+        }
+
+        // Token guard (only if a TokenResolverInterface is bound)
+        if ($this->container->has(TokenResolverInterface::class)) {
+            /** @var TokenResolverInterface $tokenResolver */
+            $tokenResolver = $this->container->get(TokenResolverInterface::class);
+            $tokenGuard = new TokenGuard($tokenResolver);
+            $this->container->instance(TokenGuard::class, $tokenGuard);
+            $authManager->addGuard($tokenGuard);
+        }
+
+        $this->container->instance(AuthManager::class, $authManager);
+        $this->container->instance(AuthManagerInterface::class, $authManager);
+
+        // Role registry
+        $roleRegistry = new InMemoryRoleRegistry();
+
+        foreach ($authConfig->authorization->roles as $roleName => $roleData) {
+            /** @var array<string, mixed> $roleData */
+            $roleRegistry->register(Role::fromArray($roleName, $roleData));
+        }
+
+        $this->container->instance(InMemoryRoleRegistry::class, $roleRegistry);
+        $this->container->instance(RoleRegistryInterface::class, $roleRegistry);
+
+        // Gate
+        $gate = new Gate($roleRegistry, $authConfig->authorization->superRoles);
+        $this->container->instance(Gate::class, $gate);
+        $this->container->instance(GateInterface::class, $gate);
+
+        // 2FA services
+        if ($authConfig->twoFactor->enabled) {
+            $totpGenerator = new TotpGenerator(
+                codeDigits: $authConfig->twoFactor->codeDigits,
+                period: $authConfig->twoFactor->codePeriod,
+            );
+            $totpVerifier = new TotpVerifier($totpGenerator, $authConfig->twoFactor->verificationWindow);
+            $recoveryCodeGenerator = new RecoveryCodeGenerator();
+            $recoveryCodeVerifier = new RecoveryCodeVerifier();
+
+            $twoFactorManager = new TwoFactorManager(
+                generator: $totpGenerator,
+                verifier: $totpVerifier,
+                recoveryCodeGenerator: $recoveryCodeGenerator,
+                recoveryCodeVerifier: $recoveryCodeVerifier,
+                issuer: $authConfig->twoFactor->issuer,
+                recoveryCodeCount: $authConfig->twoFactor->recoveryCodeCount,
+            );
+
+            $this->container->instance(TotpGenerator::class, $totpGenerator);
+            $this->container->instance(TotpVerifier::class, $totpVerifier);
+            $this->container->instance(RecoveryCodeGenerator::class, $recoveryCodeGenerator);
+            $this->container->instance(RecoveryCodeVerifier::class, $recoveryCodeVerifier);
+            $this->container->instance(TwoFactorManager::class, $twoFactorManager);
+            $this->container->instance(TwoFactorManagerInterface::class, $twoFactorManager);
+        }
+
+        // Middleware
+        $authenticationMiddleware = new AuthenticationMiddleware($authManager);
+        $this->container->instance(AuthenticationMiddleware::class, $authenticationMiddleware);
+
+        $auditLogger = $this->container->has(AuditLogger::class)
+            ? $this->container->get(AuditLogger::class)
+            : null;
+
+        /** @var AuditLogger|null $auditLogger */
+        $authorizationMiddleware = new AuthorizationMiddleware($gate, $auditLogger);
+        $this->container->instance(AuthorizationMiddleware::class, $authorizationMiddleware);
+
+        $twoFactorMiddleware = new TwoFactorMiddleware();
+        $this->container->instance(TwoFactorMiddleware::class, $twoFactorMiddleware);
+
+        // Register middleware aliases
+        $this->middlewareRegistry->alias('auth', $authorizationMiddleware);
+        $this->middlewareRegistry->alias('2fa', $twoFactorMiddleware);
+
+        // Add AuthenticationMiddleware as global middleware (lightweight — only attaches SecurityContext)
+        $this->middleware->pipe($authenticationMiddleware);
     }
 
     /**
