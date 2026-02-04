@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use DateInvalidTimeZoneException;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Scheduler\Exception\SchedulerException;
 use Pulsar\Scheduler\Scheduler;
 
 use function sprintf;
@@ -29,6 +31,10 @@ final class SchedulerTickCommand extends Command
         $this->description = 'Run all due scheduled jobs';
     }
 
+    /**
+     * @throws DateInvalidTimeZoneException If a job's schedule has an invalid timezone.
+     * @throws SchedulerException If a job's cron expression is invalid.
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $result = $this->scheduler->tick();
