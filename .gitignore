@@ -39,6 +39,9 @@ coverage/
 # PHP-CS-Fixer cache
 .php-cs-fixer.cache
 
+# Deptrac cache
+.deptrac.cache
+
 # Internal / local-only agent instructions (keep out of GitHub)
 CLAUDE.md
 .claude/

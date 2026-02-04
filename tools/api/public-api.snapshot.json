@@ -365,6 +365,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Core\\Version": {
+      "since": "1.0.0-rc.1",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\ConnectionInterface": {
       "since": "",
       "methods": [],
@@ -1213,7 +1218,6 @@
     "Pulsar\\Console\\Command\\OptimizeCommand",
     "Pulsar\\Console\\Command\\PreloadDumpCommand",
     "Pulsar\\Core\\Kernel",
-    "Pulsar\\Core\\Version",
     "Pulsar\\Deploy\\Check\\CacheSettingsCheck",
     "Pulsar\\Deploy\\Check\\DebugModeCheck",
     "Pulsar\\Deploy\\Check\\HealthEndpointCheck",

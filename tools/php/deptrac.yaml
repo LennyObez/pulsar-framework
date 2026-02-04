@@ -1,0 +1,127 @@
+deptrac:
+  paths:
+    - ../../src/
+    - ../../extensions/
+
+  exclude_files:
+    - '#.*Test\.php$#'
+    - '#.*Fixture.*\.php$#'
+
+  layers:
+    # -----------------------------------------------------------------
+    # Composition Roots — may freely cross core module boundaries.
+    # These are the only classes allowed to wire together internal
+    # implementations from many core modules.
+    # -----------------------------------------------------------------
+    - name: CompositionRoot
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Core\\Kernel$
+        - type: classLike
+          value: ^Pulsar\\Console\\Application$
+
+    # -----------------------------------------------------------------
+    # Core — everything under Pulsar\ except Extension\ and the
+    # composition roots above.  Treated as a single layer for Plan 2;
+    # Plan 7 will split this into per-module layers.
+    # -----------------------------------------------------------------
+    - name: Core
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\
+            - type: layer
+              value: CompositionRoot
+
+    # -----------------------------------------------------------------
+    # Payments Extension — public contracts surface
+    # Matches both Contracts\ (canonical) and Contract\ (transition)
+    # -----------------------------------------------------------------
+    - name: PaymentsContracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Payments\\Contracts\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Payments\\Contract\\
+
+    # -----------------------------------------------------------------
+    # Payments Extension — domain types exposed in contract signatures
+    # (Domain value objects, enums, exceptions)
+    # -----------------------------------------------------------------
+    - name: PaymentsDomain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Payments\\Domain\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Payments\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Payments\\Idempotency\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Payments\\Webhook\\WebhookClaim
+
+    # -----------------------------------------------------------------
+    # Payments Extension — internal implementation
+    # Everything in Payments that is NOT Contracts or Domain/Exception:
+    # Internal\, Features\, Gateway\, Webhook\, Config\, Idempotency\,
+    # Clock\, Adapter\, Provider\, and root-level classes.
+    # -----------------------------------------------------------------
+    - name: PaymentsInternal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Payments\\
+          must_not:
+            - type: layer
+              value: PaymentsContracts
+            - type: layer
+              value: PaymentsDomain
+
+    # -----------------------------------------------------------------
+    # Example Extension — no contracts/internal split
+    # -----------------------------------------------------------------
+    - name: ExampleExtension
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Example\\
+
+  ruleset:
+    # Composition roots may depend on all core code freely
+    CompositionRoot:
+      - Core
+
+    # Core may reference composition roots but NOT any extension layer
+    Core:
+      - CompositionRoot
+
+    # Payments contracts may reference core types and own domain types
+    PaymentsContracts:
+      - Core
+      - PaymentsDomain
+
+    # Payments domain/exception types may reference core (e.g. Api attr)
+    PaymentsDomain:
+      - Core
+
+    # Payments internals may use core, own contracts, and own domain
+    PaymentsInternal:
+      - Core
+      - PaymentsContracts
+      - PaymentsDomain
+
+    # Example extension may depend on core only
+    ExampleExtension:
+      - Core
+
+  analyser:
+    types:
+      - use
+      - file
+      - class_superglobal
+      - function_superglobal
+
+  ignore_uncovered_internal_classes: true

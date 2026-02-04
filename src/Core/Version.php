@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Core;
 
 use NoDiscard;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 
 /**
  * Framework version information.
  */
-#[Internal]
+#[Api(since: '1.0.0-rc.1')]
 final class Version
 {
     public const int MAJOR = 1;
