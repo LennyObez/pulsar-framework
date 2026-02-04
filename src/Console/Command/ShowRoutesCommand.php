@@ -11,12 +11,16 @@ use function is_callable;
 use function is_object;
 use function is_string;
 
+use JsonException;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Container\Exception\ContainerException;
+use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Core\Kernel;
+use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 
 use function sprintf;
 
@@ -39,6 +43,12 @@ final class ShowRoutesCommand extends Command
         $this->addOption('path', 'Filter by path pattern', 'p');
     }
 
+    /**
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws FeatureFlagException
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->kernel->boot();

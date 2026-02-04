@@ -74,7 +74,7 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
                 if ($this->gate->denies($identity, $permission, $context)) {
                     try {
                         $this->auditAuthzDenied($request, $identity->id(), $permission);
-                    } catch (RandomException | JsonException) {
+                    } catch (RandomException | JsonException | SodiumException) {
                         // Audit logging failure must not disrupt authorization flow
                     }
                     return $this->forbiddenResponse($request);

@@ -6,9 +6,11 @@ namespace Pulsar\Scheduler;
 
 use function count;
 
+use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Scheduler\Exception\SchedulerException;
 
 use function sprintf;
 
@@ -25,6 +27,9 @@ final readonly class Scheduler
 
     /**
      * Execute a single tick: find and run all due jobs.
+     *
+     * @throws DateInvalidTimeZoneException If a job's schedule has an invalid timezone
+     * @throws SchedulerException If a job's cron expression is invalid
      */
     public function tick(?DateTimeImmutable $now = null): SchedulerTickResult
     {
