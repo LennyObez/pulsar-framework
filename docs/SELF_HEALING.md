@@ -13,30 +13,30 @@ These patterns are essential in regulated domains (banking, healthcare, legal) w
 
 ### Key Components
 
-| Class | Namespace | Purpose |
-|---|---|---|
-| `RetryPolicy` | `Pulsar\Resilience` | Retry with exponential backoff and jitter |
-| `RetryResult` | `Pulsar\Resilience` | Result of a retry execution |
-| `CircuitBreaker` | `Pulsar\Resilience` | Circuit breaker state machine |
-| `CircuitBreakerState` | `Pulsar\Resilience` | Enum: `Closed`, `Open`, `HalfOpen` |
-| `CircuitBreakerRegistry` | `Pulsar\Resilience` | Named circuit breaker registry |
-| `HealthCheckInterface` | `Pulsar\Resilience\HealthCheck` | Contract for health checks |
-| `HealthCheckResult` | `Pulsar\Resilience\HealthCheck` | Single health check result |
-| `HealthStatus` | `Pulsar\Resilience\HealthCheck` | Enum: `Healthy`, `Degraded`, `Unhealthy` |
-| `HealthReport` | `Pulsar\Resilience\HealthCheck` | Aggregate report from all checks |
-| `HealthCheckRunner` | `Pulsar\Resilience\HealthCheck` | Orchestrates health check execution |
-| `DatabaseHealthCheck` | `Pulsar\Resilience\HealthCheck` | Built-in database connectivity check |
-| `RepairJobInterface` | `Pulsar\Resilience\Repair` | Contract for self-healing repair jobs |
-| `RepairDiagnosis` | `Pulsar\Resilience\Repair` | Diagnosis result from a repair job |
-| `RepairResult` | `Pulsar\Resilience\Repair` | Result of a repair action |
-| `RepairRunner` | `Pulsar\Resilience\Repair` | Orchestrates repair diagnosis and execution |
-| `ResilienceConfig` | `Pulsar\Config` | Top-level resilience configuration DTO |
-| `RetryConfig` | `Pulsar\Config` | Retry policy configuration DTO |
-| `CircuitBreakerConfig` | `Pulsar\Config` | Circuit breaker configuration DTO |
-| `HealthCheckConfig` | `Pulsar\Config` | Health check configuration DTO |
-| `ResilienceException` | `Pulsar\Resilience\Exception` | Exception type for resilience errors |
-| `HealthCheckCommand` | `Pulsar\Console\Command` | CLI command: `health:check` |
-| `RepairCommand` | `Pulsar\Console\Command` | CLI command: `health:repair` |
+| Class                    | Namespace                       | Purpose                                     |
+| ------------------------ | ------------------------------- | ------------------------------------------- |
+| `RetryPolicy`            | `Pulsar\Resilience`             | Retry with exponential backoff and jitter   |
+| `RetryResult`            | `Pulsar\Resilience`             | Result of a retry execution                 |
+| `CircuitBreaker`         | `Pulsar\Resilience`             | Circuit breaker state machine               |
+| `CircuitBreakerState`    | `Pulsar\Resilience`             | Enum: `Closed`, `Open`, `HalfOpen`          |
+| `CircuitBreakerRegistry` | `Pulsar\Resilience`             | Named circuit breaker registry              |
+| `HealthCheckInterface`   | `Pulsar\Resilience\HealthCheck` | Contract for health checks                  |
+| `HealthCheckResult`      | `Pulsar\Resilience\HealthCheck` | Single health check result                  |
+| `HealthStatus`           | `Pulsar\Resilience\HealthCheck` | Enum: `Healthy`, `Degraded`, `Unhealthy`    |
+| `HealthReport`           | `Pulsar\Resilience\HealthCheck` | Aggregate report from all checks            |
+| `HealthCheckRunner`      | `Pulsar\Resilience\HealthCheck` | Orchestrates health check execution         |
+| `DatabaseHealthCheck`    | `Pulsar\Resilience\HealthCheck` | Built-in database connectivity check        |
+| `RepairJobInterface`     | `Pulsar\Resilience\Repair`      | Contract for self-healing repair jobs       |
+| `RepairDiagnosis`        | `Pulsar\Resilience\Repair`      | Diagnosis result from a repair job          |
+| `RepairResult`           | `Pulsar\Resilience\Repair`      | Result of a repair action                   |
+| `RepairRunner`           | `Pulsar\Resilience\Repair`      | Orchestrates repair diagnosis and execution |
+| `ResilienceConfig`       | `Pulsar\Config`                 | Top-level resilience configuration DTO      |
+| `RetryConfig`            | `Pulsar\Config`                 | Retry policy configuration DTO              |
+| `CircuitBreakerConfig`   | `Pulsar\Config`                 | Circuit breaker configuration DTO           |
+| `HealthCheckConfig`      | `Pulsar\Config`                 | Health check configuration DTO              |
+| `ResilienceException`    | `Pulsar\Resilience\Exception`   | Exception type for resilience errors        |
+| `HealthCheckCommand`     | `Pulsar\Console\Command`        | CLI command: `health:check`                 |
+| `RepairCommand`          | `Pulsar\Console\Command`        | CLI command: `health:repair`                |
 
 ---
 
@@ -146,12 +146,12 @@ When jitter is enabled, a random offset in the range `[-delay*0.5, +delay*0.5]` 
 
 **Example with defaults** (`baseDelayMs=100`, `multiplier=2.0`, `maxDelayMs=5000`, `jitter=true`):
 
-| Attempt | Base Delay | With Jitter (approx.) |
-|---|---|---|
-| 1 | First try -- no delay | -- |
-| 2 | 100ms | 50-150ms |
-| 3 | 200ms | 100-300ms |
-| 4 (if max_attempts=4) | 400ms | 200-600ms |
+| Attempt               | Base Delay            | With Jitter (approx.) |
+| --------------------- | --------------------- | --------------------- |
+| 1                     | First try -- no delay | --                    |
+| 2                     | 100ms                 | 50-150ms              |
+| 3                     | 200ms                 | 100-300ms             |
+| 4 (if max_attempts=4) | 400ms                 | 200-600ms             |
 
 ### Creating a RetryPolicy
 
@@ -260,10 +260,10 @@ The circuit breaker has three states:
          failure in half-open ──────────────────┘
 ```
 
-| State | Behavior |
-|---|---|
-| **Closed** | Normal operation. Failures are counted. When `failureCount >= failureThreshold`, transitions to Open. |
-| **Open** | All calls are rejected immediately with `ResilienceException::circuitOpen()`. After `openTimeoutSeconds` elapse, transitions to HalfOpen. |
+| State        | Behavior                                                                                                                                                                            |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Closed**   | Normal operation. Failures are counted. When `failureCount >= failureThreshold`, transitions to Open.                                                                               |
+| **Open**     | All calls are rejected immediately with `ResilienceException::circuitOpen()`. After `openTimeoutSeconds` elapse, transitions to HalfOpen.                                           |
 | **HalfOpen** | A limited number of probe requests are allowed through. If `successThreshold` consecutive successes occur, transitions to Closed. Any failure immediately transitions back to Open. |
 
 ### CircuitBreakerState Enum
@@ -479,6 +479,7 @@ $result = $check->check();
 ```
 
 **Thresholds:**
+
 - Response time <= 1000ms: `Healthy`
 - Response time > 1000ms: `Degraded` (database is slow)
 - Exception thrown: `Unhealthy`
@@ -579,6 +580,7 @@ readonly class HealthReport
 ```
 
 The `overallStatus` is determined by the worst individual result:
+
 - If any check is `Unhealthy`, overall is `Unhealthy`.
 - If any check is `Degraded` (and none is `Unhealthy`), overall is `Degraded`.
 - If all checks are `Healthy`, overall is `Healthy`.
@@ -746,11 +748,13 @@ Overall status: unhealthy
 ```
 
 **Status indicators:**
+
 - `[OK]` -- Healthy
 - `[WARN]` -- Degraded
 - `[FAIL]` -- Unhealthy
 
 **Exit codes:**
+
 - `0` -- All checks passed (overall status is Healthy).
 - `1` -- At least one check is Degraded or Unhealthy.
 
@@ -779,6 +783,7 @@ All 1 repair(s) completed successfully.
 ```
 
 **Exit codes:**
+
 - `0` -- No repairs needed, or all repairs succeeded.
 - `1` -- One or more repairs failed.
 
@@ -790,13 +795,13 @@ The resilience system integrates with Pulsar's observability layer to emit struc
 
 ### Metrics Emitted
 
-| Metric | Type | Labels | Description |
-|---|---|---|---|
-| Retry attempt count | Counter | operation | Number of retry attempts per operation |
-| Circuit breaker state changes | Counter | breaker_name, from_state, to_state | State transition events |
-| Health check results | Gauge | check_name, status | Latest status per check |
-| Health check response time | Histogram | check_name | Response time distribution |
-| Repair job executions | Counter | job_name, success | Repair execution outcomes |
+| Metric                        | Type      | Labels                             | Description                            |
+| ----------------------------- | --------- | ---------------------------------- | -------------------------------------- |
+| Retry attempt count           | Counter   | operation                          | Number of retry attempts per operation |
+| Circuit breaker state changes | Counter   | breaker_name, from_state, to_state | State transition events                |
+| Health check results          | Gauge     | check_name, status                 | Latest status per check                |
+| Health check response time    | Histogram | check_name                         | Response time distribution             |
+| Repair job executions         | Counter   | job_name, success                  | Repair execution outcomes              |
 
 ### Audit Events
 
@@ -813,18 +818,18 @@ These events can be fed into Pulsar's structured logging and audit logging syste
 
 **RetryPolicy logging (when logger is provided to `execute()`):**
 
-| Level | Event |
-|---|---|
+| Level   | Event                               |
+| ------- | ----------------------------------- |
 | WARNING | Failed attempt with retry scheduled |
-| INFO | Successful retry on attempt > 1 |
-| ERROR | All retry attempts exhausted |
+| INFO    | Successful retry on attempt > 1     |
+| ERROR   | All retry attempts exhausted        |
 
 **Scheduler logging (from `Scheduler` class):**
 
-| Level | Event |
-|---|---|
-| INFO | Tick start, job completion with duration |
-| ERROR | Job failure with exception message |
+| Level | Event                                    |
+| ----- | ---------------------------------------- |
+| INFO  | Tick start, job completion with duration |
+| ERROR | Job failure with exception message       |
 
 ---
 
@@ -917,17 +922,17 @@ foreach ($repairResults as $result) {
 
 All resilience-specific errors throw `Pulsar\Resilience\Exception\ResilienceException`:
 
-| Factory Method | When Thrown |
-|---|---|
-| `circuitOpen(string $name)` | `CircuitBreaker::execute()` when circuit is in Open state |
-| `retryExhausted(string $operation, int $attempts, ?Throwable $last)` | All retry attempts have been exhausted |
-| `healthCheckFailed(string $checkName, string $reason)` | `HealthCheckRunner::run()` with unknown check name |
-| `repairFailed(string $repairName, string $reason)` | `RepairRunner::repair()` with unknown repair job name |
+| Factory Method                                                       | When Thrown                                               |
+| -------------------------------------------------------------------- | --------------------------------------------------------- |
+| `circuitOpen(string $name)`                                          | `CircuitBreaker::execute()` when circuit is in Open state |
+| `retryExhausted(string $operation, int $attempts, ?Throwable $last)` | All retry attempts have been exhausted                    |
+| `healthCheckFailed(string $checkName, string $reason)`               | `HealthCheckRunner::run()` with unknown check name        |
+| `repairFailed(string $repairName, string $reason)`                   | `RepairRunner::repair()` with unknown repair job name     |
 
 ---
 
 ## Environment Variable Overrides
 
-| Variable | Overrides | Values |
-|---|---|---|
+| Variable             | Overrides                   | Values                |
+| -------------------- | --------------------------- | --------------------- |
 | `RESILIENCE_ENABLED` | `config.resilience.enabled` | `'true'` or `'false'` |

@@ -8,22 +8,22 @@ The system supports three flag types (boolean, percentage, contextual), two stor
 
 ### Key Components
 
-| Class | Namespace | Purpose |
-|---|---|---|
-| `FeatureFlagManager` | `Pulsar\FeatureFlag` | Core evaluation engine |
-| `FeatureFlagManagerInterface` | `Pulsar\FeatureFlag` | Contract for flag evaluation |
-| `FlagDefinition` | `Pulsar\FeatureFlag` | Immutable flag definition value object |
-| `FlagType` | `Pulsar\FeatureFlag` | Enum: `Boolean`, `Percentage`, `Contextual` |
-| `FlagContext` | `Pulsar\FeatureFlag` | Evaluation context (tenant, user, environment) |
-| `FlagEvaluation` | `Pulsar\FeatureFlag` | Immutable evaluation result record |
-| `FlagEvaluationReason` | `Pulsar\FeatureFlag` | Enum describing why a flag evaluated to its result |
-| `FlagEvaluationLog` | `Pulsar\FeatureFlag` | In-memory audit log of all evaluations |
-| `FlagStorageInterface` | `Pulsar\FeatureFlag` | Contract for flag definition storage |
-| `FlagStorageDriver` | `Pulsar\FeatureFlag` | Enum: `Memory`, `File` |
-| `InMemoryFlagStorage` | `Pulsar\FeatureFlag\Storage` | In-memory storage backend |
-| `FileFlagStorage` | `Pulsar\FeatureFlag\Storage` | JSON file storage backend |
-| `FeatureFlagConfig` | `Pulsar\Config` | Typed configuration DTO |
-| `FeatureFlagException` | `Pulsar\FeatureFlag\Exception` | Exception type for flag errors |
+| Class                         | Namespace                      | Purpose                                            |
+| ----------------------------- | ------------------------------ | -------------------------------------------------- |
+| `FeatureFlagManager`          | `Pulsar\FeatureFlag`           | Core evaluation engine                             |
+| `FeatureFlagManagerInterface` | `Pulsar\FeatureFlag`           | Contract for flag evaluation                       |
+| `FlagDefinition`              | `Pulsar\FeatureFlag`           | Immutable flag definition value object             |
+| `FlagType`                    | `Pulsar\FeatureFlag`           | Enum: `Boolean`, `Percentage`, `Contextual`        |
+| `FlagContext`                 | `Pulsar\FeatureFlag`           | Evaluation context (tenant, user, environment)     |
+| `FlagEvaluation`              | `Pulsar\FeatureFlag`           | Immutable evaluation result record                 |
+| `FlagEvaluationReason`        | `Pulsar\FeatureFlag`           | Enum describing why a flag evaluated to its result |
+| `FlagEvaluationLog`           | `Pulsar\FeatureFlag`           | In-memory audit log of all evaluations             |
+| `FlagStorageInterface`        | `Pulsar\FeatureFlag`           | Contract for flag definition storage               |
+| `FlagStorageDriver`           | `Pulsar\FeatureFlag`           | Enum: `Memory`, `File`                             |
+| `InMemoryFlagStorage`         | `Pulsar\FeatureFlag\Storage`   | In-memory storage backend                          |
+| `FileFlagStorage`             | `Pulsar\FeatureFlag\Storage`   | JSON file storage backend                          |
+| `FeatureFlagConfig`           | `Pulsar\Config`                | Typed configuration DTO                            |
+| `FeatureFlagException`        | `Pulsar\FeatureFlag\Exception` | Exception type for flag errors                     |
 
 ---
 
@@ -109,6 +109,7 @@ The simplest flag type. When the flag exists and is enabled, it evaluates to `tr
 ```
 
 **Evaluation logic:**
+
 - If the flag is not found: returns `defaultState` with reason `FlagNotFound`.
 - If the flag is disabled (`enabled: false`): returns `false` with reason `FlagDisabled`.
 - If the flag is enabled: returns `true` with reason `FlagEnabled`.
@@ -138,6 +139,7 @@ result     = bucket < percentage
 The double-modulo operation `((hash % 100) + 100) % 100` ensures a non-negative bucket value regardless of `crc32` sign. This produces a stable, uniformly distributed assignment that does not change between evaluations for the same identifier.
 
 **Evaluation reasons:**
+
 - `PercentageRollout` -- the identifier fell within the rollout percentage.
 - `PercentageExcluded` -- the identifier fell outside the rollout percentage.
 
@@ -199,16 +201,16 @@ $data = $flag->toArray();
 
 ### Properties
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `name` | `string` | -- | Unique flag identifier |
-| `enabled` | `bool` | -- | Master on/off switch |
-| `type` | `FlagType` | `Boolean` | Evaluation strategy |
-| `percentage` | `int` | `100` | Rollout percentage (percentage type only) |
-| `allowedTenants` | `list<string>` | `[]` | Tenant IDs for contextual matching |
-| `allowedUsers` | `list<string>` | `[]` | User IDs for contextual matching |
-| `allowedEnvironments` | `list<string>` | `[]` | Environment names for contextual matching |
-| `description` | `string` | `''` | Human-readable description |
+| Property              | Type           | Default   | Description                               |
+| --------------------- | -------------- | --------- | ----------------------------------------- |
+| `name`                | `string`       | --        | Unique flag identifier                    |
+| `enabled`             | `bool`         | --        | Master on/off switch                      |
+| `type`                | `FlagType`     | `Boolean` | Evaluation strategy                       |
+| `percentage`          | `int`          | `100`     | Rollout percentage (percentage type only) |
+| `allowedTenants`      | `list<string>` | `[]`      | Tenant IDs for contextual matching        |
+| `allowedUsers`        | `list<string>` | `[]`      | User IDs for contextual matching          |
+| `allowedEnvironments` | `list<string>` | `[]`      | Environment names for contextual matching |
+| `description`         | `string`       | `''`      | Human-readable description                |
 
 ---
 
@@ -249,24 +251,24 @@ $flag = $storage->get('dark-mode');
 
 ```json
 {
-    "dark-mode": {
-        "enabled": true,
-        "type": "boolean",
-        "percentage": 100,
-        "allowed_tenants": [],
-        "allowed_users": [],
-        "allowed_environments": [],
-        "description": "Enable dark mode UI"
-    },
-    "new-checkout": {
-        "enabled": true,
-        "type": "percentage",
-        "percentage": 25,
-        "allowed_tenants": [],
-        "allowed_users": [],
-        "allowed_environments": [],
-        "description": "Gradual rollout of new checkout flow"
-    }
+  "dark-mode": {
+    "enabled": true,
+    "type": "boolean",
+    "percentage": 100,
+    "allowed_tenants": [],
+    "allowed_users": [],
+    "allowed_environments": [],
+    "description": "Enable dark mode UI"
+  },
+  "new-checkout": {
+    "enabled": true,
+    "type": "percentage",
+    "percentage": 25,
+    "allowed_tenants": [],
+    "allowed_users": [],
+    "allowed_environments": [],
+    "description": "Gradual rollout of new checkout flow"
+  }
 }
 ```
 
@@ -309,12 +311,12 @@ $context = FlagContext::fromRequest($request);
 
 ### Properties
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `tenantId` | `?string` | `null` | Current tenant identifier |
-| `userId` | `?string` | `null` | Current user identifier |
-| `environment` | `?string` | `null` | Current environment name |
-| `attributes` | `array<string, mixed>` | `[]` | Arbitrary extra attributes |
+| Property      | Type                   | Default | Description                |
+| ------------- | ---------------------- | ------- | -------------------------- |
+| `tenantId`    | `?string`              | `null`  | Current tenant identifier  |
+| `userId`      | `?string`              | `null`  | Current user identifier    |
+| `environment` | `?string`              | `null`  | Current environment name   |
+| `attributes`  | `array<string, mixed>` | `[]`    | Arbitrary extra attributes |
 
 ---
 
@@ -357,16 +359,16 @@ $evaluation->evaluatedAt; // DateTimeImmutable -- when the evaluation occurred
 
 ### FlagEvaluationReason
 
-| Reason | Description |
-|---|---|
-| `FlagDisabled` | Flag exists but is disabled |
-| `FlagEnabled` | Boolean flag is enabled |
-| `FlagNotFound` | Flag does not exist in storage |
-| `DefaultState` | No matching rule; returned the default state |
-| `TenantMatch` | Contextual flag matched the tenant ID |
-| `UserMatch` | Contextual flag matched the user ID |
-| `EnvironmentMatch` | Contextual flag matched the environment |
-| `PercentageRollout` | Percentage flag: identifier is within rollout |
+| Reason               | Description                                    |
+| -------------------- | ---------------------------------------------- |
+| `FlagDisabled`       | Flag exists but is disabled                    |
+| `FlagEnabled`        | Boolean flag is enabled                        |
+| `FlagNotFound`       | Flag does not exist in storage                 |
+| `DefaultState`       | No matching rule; returned the default state   |
+| `TenantMatch`        | Contextual flag matched the tenant ID          |
+| `UserMatch`          | Contextual flag matched the user ID            |
+| `EnvironmentMatch`   | Contextual flag matched the environment        |
+| `PercentageRollout`  | Percentage flag: identifier is within rollout  |
 | `PercentageExcluded` | Percentage flag: identifier is outside rollout |
 
 ---
@@ -497,15 +499,15 @@ $totalEvals = $log->count();
 
 ## Error Handling
 
-| Exception | Factory Method | When Thrown |
-|---|---|---|
-| `FeatureFlagException` | `storageError(string $reason)` | File read/write failure, invalid JSON |
-| `FeatureFlagException` | `invalidDefinition(string $flagName, string $reason)` | Malformed flag definition |
+| Exception              | Factory Method                                        | When Thrown                           |
+| ---------------------- | ----------------------------------------------------- | ------------------------------------- |
+| `FeatureFlagException` | `storageError(string $reason)`                        | File read/write failure, invalid JSON |
+| `FeatureFlagException` | `invalidDefinition(string $flagName, string $reason)` | Malformed flag definition             |
 
 ---
 
 ## Environment Variable Overrides
 
-| Variable | Overrides | Values |
-|---|---|---|
+| Variable                | Overrides                 | Values                |
+| ----------------------- | ------------------------- | --------------------- |
 | `FEATURE_FLAGS_ENABLED` | `config.features.enabled` | `'true'` or `'false'` |

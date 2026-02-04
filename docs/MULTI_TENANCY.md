@@ -8,18 +8,18 @@ Multi-tenancy in Pulsar is explicit: tenants must be pre-configured, resolution 
 
 ### Key components
 
-| Class | Namespace | Purpose |
-|---|---|---|
-| `Tenant` | `Pulsar\Tenancy` | Immutable value object representing a tenant |
-| `TenantContext` | `Pulsar\Tenancy` | Request-scoped container for the current tenant |
-| `TenantResolverInterface` | `Pulsar\Tenancy` | Contract for tenant resolution from requests |
-| `TenantResolverStrategy` | `Pulsar\Tenancy` | Enum: `Header`, `Subdomain`, `Path` |
-| `TenantDatabaseStrategy` | `Pulsar\Tenancy` | Enum: `Prefix`, `SeparateConnection`, `Shared` |
-| `TenantResolutionMiddleware` | `Pulsar\Tenancy\Middleware` | HTTP middleware that resolves and sets tenant |
-| `TenantAwareConnectionManager` | `Pulsar\Tenancy` | Database connection decorator for tenant isolation |
-| `TenancyConfig` | `Pulsar\Config` | Typed configuration DTO |
-| `TenantDatabaseConfig` | `Pulsar\Config` | Database isolation sub-configuration DTO |
-| `TenancyException` | `Pulsar\Tenancy\Exception` | Exception type for tenancy errors |
+| Class                          | Namespace                   | Purpose                                            |
+| ------------------------------ | --------------------------- | -------------------------------------------------- |
+| `Tenant`                       | `Pulsar\Tenancy`            | Immutable value object representing a tenant       |
+| `TenantContext`                | `Pulsar\Tenancy`            | Request-scoped container for the current tenant    |
+| `TenantResolverInterface`      | `Pulsar\Tenancy`            | Contract for tenant resolution from requests       |
+| `TenantResolverStrategy`       | `Pulsar\Tenancy`            | Enum: `Header`, `Subdomain`, `Path`                |
+| `TenantDatabaseStrategy`       | `Pulsar\Tenancy`            | Enum: `Prefix`, `SeparateConnection`, `Shared`     |
+| `TenantResolutionMiddleware`   | `Pulsar\Tenancy\Middleware` | HTTP middleware that resolves and sets tenant      |
+| `TenantAwareConnectionManager` | `Pulsar\Tenancy`            | Database connection decorator for tenant isolation |
+| `TenancyConfig`                | `Pulsar\Config`             | Typed configuration DTO                            |
+| `TenantDatabaseConfig`         | `Pulsar\Config`             | Database isolation sub-configuration DTO           |
+| `TenancyException`             | `Pulsar\Tenancy\Exception`  | Exception type for tenancy errors                  |
 
 ---
 
@@ -295,11 +295,11 @@ $tenant = $resolver->resolve($request);
 
 The `TenantDatabaseStrategy` enum defines three approaches to database isolation:
 
-| Strategy | Enum Value | Description |
-|---|---|---|
-| `Prefix` | `'prefix'` | All tenants share a database; tables are prefixed with a tenant-specific string |
-| `SeparateConnection` | `'separate_connection'` | Each tenant gets a dedicated database connection (e.g., separate databases) |
-| `Shared` | `'shared'` | All tenants share the same database and tables (application-level filtering) |
+| Strategy             | Enum Value              | Description                                                                     |
+| -------------------- | ----------------------- | ------------------------------------------------------------------------------- |
+| `Prefix`             | `'prefix'`              | All tenants share a database; tables are prefixed with a tenant-specific string |
+| `SeparateConnection` | `'separate_connection'` | Each tenant gets a dedicated database connection (e.g., separate databases)     |
+| `Shared`             | `'shared'`              | All tenants share the same database and tables (application-level filtering)    |
 
 ### Prefix Strategy
 
@@ -368,13 +368,13 @@ $context->clear();
 
 ### Method Reference
 
-| Method | Return Type | Throws | Description |
-|---|---|---|---|
-| `set(Tenant $tenant)` | `void` | -- | Set the current tenant |
-| `get()` | `Tenant` | `TenancyException` | Get current tenant or throw |
-| `tryGet()` | `?Tenant` | -- | Get current tenant or null |
-| `isResolved()` | `bool` | -- | Check if a tenant is set |
-| `clear()` | `void` | -- | Remove the current tenant |
+| Method                | Return Type | Throws             | Description                 |
+| --------------------- | ----------- | ------------------ | --------------------------- |
+| `set(Tenant $tenant)` | `void`      | --                 | Set the current tenant      |
+| `get()`               | `Tenant`    | `TenancyException` | Get current tenant or throw |
+| `tryGet()`            | `?Tenant`   | --                 | Get current tenant or null  |
+| `isResolved()`        | `bool`      | --                 | Check if a tenant is set    |
+| `clear()`             | `void`      | --                 | Remove the current tenant   |
 
 ---
 
@@ -476,12 +476,12 @@ $connection = $manager->connection();
 
 ### Method Reference
 
-| Method | Return Type | Description |
-|---|---|---|
-| `connection(?string $name = null)` | `ConnectionInterface` | Get a connection (tenant-aware routing for SeparateConnection strategy) |
-| `getDefaultConnectionName()` | `string` | Delegates to the inner connection manager |
-| `disconnect(?string $name = null)` | `void` | Delegates to the inner connection manager |
-| `getTablePrefix()` | `string` | Get the tenant table prefix (Prefix strategy only; throws if no tenant resolved) |
+| Method                             | Return Type           | Description                                                                      |
+| ---------------------------------- | --------------------- | -------------------------------------------------------------------------------- |
+| `connection(?string $name = null)` | `ConnectionInterface` | Get a connection (tenant-aware routing for SeparateConnection strategy)          |
+| `getDefaultConnectionName()`       | `string`              | Delegates to the inner connection manager                                        |
+| `disconnect(?string $name = null)` | `void`                | Delegates to the inner connection manager                                        |
+| `getTablePrefix()`                 | `string`              | Get the tenant table prefix (Prefix strategy only; throws if no tenant resolved) |
 
 ---
 
@@ -586,16 +586,16 @@ class AccountController
 
 All tenancy-specific errors throw `Pulsar\Tenancy\Exception\TenancyException`:
 
-| Factory Method | When Thrown |
-|---|---|
-| `TenancyException::tenantNotResolved()` | `TenantContext::get()` called before a tenant is set |
-| `TenancyException::tenantNotFound(string $identifier)` | A tenant ID was extracted but does not match any configured tenant |
-| `TenancyException::invalidConfiguration(string $reason)` | Tenancy configuration is malformed |
+| Factory Method                                           | When Thrown                                                        |
+| -------------------------------------------------------- | ------------------------------------------------------------------ |
+| `TenancyException::tenantNotResolved()`                  | `TenantContext::get()` called before a tenant is set               |
+| `TenancyException::tenantNotFound(string $identifier)`   | A tenant ID was extracted but does not match any configured tenant |
+| `TenancyException::invalidConfiguration(string $reason)` | Tenancy configuration is malformed                                 |
 
 ---
 
 ## Environment Variable Overrides
 
-| Variable | Overrides | Values |
-|---|---|---|
+| Variable          | Overrides                | Values                |
+| ----------------- | ------------------------ | --------------------- |
 | `TENANCY_ENABLED` | `config.tenancy.enabled` | `'true'` or `'false'` |

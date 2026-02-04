@@ -8,23 +8,23 @@ The scheduler operates via a "tick" model -- a single `scheduler:tick` console c
 
 ### Key Components
 
-| Class | Namespace | Purpose |
-|---|---|---|
-| `Scheduler` | `Pulsar\Scheduler` | Tick engine: finds due jobs and executes them |
-| `JobInterface` | `Pulsar\Scheduler` | Contract for scheduled jobs |
-| `CallbackJob` | `Pulsar\Scheduler` | Closure-based job implementation |
-| `Schedule` | `Pulsar\Scheduler` | Cron-backed schedule definition with static factories |
-| `CronFields` | `Pulsar\Scheduler` | Parsed cron expression with matching logic |
-| `JobRegistry` | `Pulsar\Scheduler` | Registry of all scheduled jobs |
-| `JobContext` | `Pulsar\Scheduler` | Context passed to jobs at execution time |
-| `JobResult` | `Pulsar\Scheduler` | Immutable result of a single job execution |
-| `JobStatus` | `Pulsar\Scheduler` | Enum: `Success`, `Failure`, `Skipped`, `Running` |
-| `JobEvent` | `Pulsar\Scheduler` | Enum: `BeforeExecute`, `AfterExecute`, `Failed`, `Skipped` |
-| `SchedulerTickResult` | `Pulsar\Scheduler` | Aggregate result of a scheduler tick |
-| `SchedulerConfig` | `Pulsar\Config` | Typed configuration DTO |
-| `SchedulerException` | `Pulsar\Scheduler\Exception` | Exception type for scheduler errors |
-| `SchedulerTickCommand` | `Pulsar\Console\Command` | CLI command: `scheduler:tick` |
-| `SchedulerListCommand` | `Pulsar\Console\Command` | CLI command: `scheduler:list` |
+| Class                  | Namespace                    | Purpose                                                    |
+| ---------------------- | ---------------------------- | ---------------------------------------------------------- |
+| `Scheduler`            | `Pulsar\Scheduler`           | Tick engine: finds due jobs and executes them              |
+| `JobInterface`         | `Pulsar\Scheduler`           | Contract for scheduled jobs                                |
+| `CallbackJob`          | `Pulsar\Scheduler`           | Closure-based job implementation                           |
+| `Schedule`             | `Pulsar\Scheduler`           | Cron-backed schedule definition with static factories      |
+| `CronFields`           | `Pulsar\Scheduler`           | Parsed cron expression with matching logic                 |
+| `JobRegistry`          | `Pulsar\Scheduler`           | Registry of all scheduled jobs                             |
+| `JobContext`           | `Pulsar\Scheduler`           | Context passed to jobs at execution time                   |
+| `JobResult`            | `Pulsar\Scheduler`           | Immutable result of a single job execution                 |
+| `JobStatus`            | `Pulsar\Scheduler`           | Enum: `Success`, `Failure`, `Skipped`, `Running`           |
+| `JobEvent`             | `Pulsar\Scheduler`           | Enum: `BeforeExecute`, `AfterExecute`, `Failed`, `Skipped` |
+| `SchedulerTickResult`  | `Pulsar\Scheduler`           | Aggregate result of a scheduler tick                       |
+| `SchedulerConfig`      | `Pulsar\Config`              | Typed configuration DTO                                    |
+| `SchedulerException`   | `Pulsar\Scheduler\Exception` | Exception type for scheduler errors                        |
+| `SchedulerTickCommand` | `Pulsar\Console\Command`     | CLI command: `scheduler:tick`                              |
+| `SchedulerListCommand` | `Pulsar\Console\Command`     | CLI command: `scheduler:list`                              |
 
 ---
 
@@ -216,16 +216,16 @@ enum JobStatus: string
 
 The `Schedule` readonly class provides convenient static factories for common intervals. Each factory accepts an optional timezone string (defaults to `'UTC'`).
 
-| Factory | Cron Expression | Description |
-|---|---|---|
-| `Schedule::everyMinute()` | `* * * * *` | Every minute |
-| `Schedule::everyFiveMinutes()` | `*/5 * * * *` | Every five minutes |
-| `Schedule::hourly()` | `0 * * * *` | Every hour at minute 0 |
-| `Schedule::daily()` | `0 0 * * *` | Daily at midnight |
-| `Schedule::dailyAt('14:30')` | `30 14 * * *` | Daily at 2:30 PM |
-| `Schedule::weekly()` | `0 0 * * 0` | Weekly on Sunday at midnight |
-| `Schedule::monthly()` | `0 0 1 * *` | Monthly on the 1st at midnight |
-| `Schedule::cron('15 3 * * 1-5')` | `15 3 * * 1-5` | Custom cron expression |
+| Factory                          | Cron Expression | Description                    |
+| -------------------------------- | --------------- | ------------------------------ |
+| `Schedule::everyMinute()`        | `* * * * *`     | Every minute                   |
+| `Schedule::everyFiveMinutes()`   | `*/5 * * * *`   | Every five minutes             |
+| `Schedule::hourly()`             | `0 * * * *`     | Every hour at minute 0         |
+| `Schedule::daily()`              | `0 0 * * *`     | Daily at midnight              |
+| `Schedule::dailyAt('14:30')`     | `30 14 * * *`   | Daily at 2:30 PM               |
+| `Schedule::weekly()`             | `0 0 * * 0`     | Weekly on Sunday at midnight   |
+| `Schedule::monthly()`            | `0 0 1 * *`     | Monthly on the 1st at midnight |
+| `Schedule::cron('15 3 * * 1-5')` | `15 3 * * 1-5`  | Custom cron expression         |
 
 **Examples:**
 
@@ -261,14 +261,14 @@ Pulsar uses standard 5-field cron expressions:
 
 **Supported field syntax:**
 
-| Syntax | Meaning | Example |
-|---|---|---|
-| `*` | Any value | `* * * * *` = every minute |
-| `5` | Exact value | `5 * * * *` = at minute 5 of every hour |
-| `1,15,30` | List of values | `0 1,13 * * *` = at 1:00 AM and 1:00 PM |
-| `1-5` | Range | `0 0 * * 1-5` = midnight on weekdays |
-| `*/5` | Step from 0 | `*/5 * * * *` = every 5 minutes |
-| `1-30/5` | Step within range | `1-30/5 * * * *` = at 1, 6, 11, 16, 21, 26 |
+| Syntax    | Meaning           | Example                                    |
+| --------- | ----------------- | ------------------------------------------ |
+| `*`       | Any value         | `* * * * *` = every minute                 |
+| `5`       | Exact value       | `5 * * * *` = at minute 5 of every hour    |
+| `1,15,30` | List of values    | `0 1,13 * * *` = at 1:00 AM and 1:00 PM    |
+| `1-5`     | Range             | `0 0 * * 1-5` = midnight on weekdays       |
+| `*/5`     | Step from 0       | `*/5 * * * *` = every 5 minutes            |
+| `1-30/5`  | Step within range | `1-30/5 * * * *` = at 1, 6, 11, 16, 21, 26 |
 
 ### Schedule Methods
 
@@ -394,6 +394,7 @@ php bin/pulsar scheduler:tick
 ```
 
 **Exit codes:**
+
 - `0` -- All jobs succeeded (or no jobs were due).
 - `1` -- One or more jobs failed.
 
@@ -511,17 +512,17 @@ if ($result->hasFailures()) {
 
 ## Error Handling
 
-| Exception | Factory Method | When Thrown |
-|---|---|---|
-| `SchedulerException` | `jobNotFound(string $name)` | `JobRegistry::get()` with unknown name |
-| `SchedulerException` | `duplicateJob(string $name)` | `JobRegistry::register()` with duplicate name |
-| `SchedulerException` | `executionTimeout(string $name, int $timeout)` | Job exceeds max execution time |
+| Exception            | Factory Method                                        | When Thrown                                     |
+| -------------------- | ----------------------------------------------------- | ----------------------------------------------- |
+| `SchedulerException` | `jobNotFound(string $name)`                           | `JobRegistry::get()` with unknown name          |
+| `SchedulerException` | `duplicateJob(string $name)`                          | `JobRegistry::register()` with duplicate name   |
+| `SchedulerException` | `executionTimeout(string $name, int $timeout)`        | Job exceeds max execution time                  |
 | `SchedulerException` | `invalidCronExpression(string $expr, string $reason)` | `CronFields::parse()` with malformed expression |
 
 ---
 
 ## Environment Variable Overrides
 
-| Variable | Overrides | Values |
-|---|---|---|
+| Variable            | Overrides                  | Values                |
+| ------------------- | -------------------------- | --------------------- |
 | `SCHEDULER_ENABLED` | `config.scheduler.enabled` | `'true'` or `'false'` |
