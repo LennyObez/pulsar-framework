@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use JsonException;
 use Pulsar\Console\Application;
 use Pulsar\Console\Command;
 use Pulsar\Console\CommandInterface;
@@ -31,6 +32,9 @@ final class ListCommand extends Command
         $this->addOption('format', 'Output format (text, json)', 'f', 'text');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $format = $input->getOption('format', 'text');
@@ -75,6 +79,9 @@ final class ListCommand extends Command
         return ExitCode::Success->value;
     }
 
+    /**
+     * @throws JsonException
+     */
     private function renderJson(OutputInterface $output): int
     {
         $commands = [];

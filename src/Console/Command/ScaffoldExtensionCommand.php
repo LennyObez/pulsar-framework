@@ -6,6 +6,7 @@ namespace Pulsar\Console\Command;
 
 use function is_string;
 
+use JsonException;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -29,6 +30,9 @@ final class ScaffoldExtensionCommand extends Command
         $this->addOption('path', 'Base path for extensions', 'p', 'extensions');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);
@@ -107,6 +111,9 @@ final class ScaffoldExtensionCommand extends Command
         return str_replace([' ', '-'], '', ucwords(str_replace(['_', '-'], ' ', $name)));
     }
 
+    /**
+     * @throws JsonException
+     */
     private function getManifestContent(string $fullName, string $namespace, string $className): string
     {
         $manifest = [
@@ -126,6 +133,9 @@ final class ScaffoldExtensionCommand extends Command
         return json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n";
     }
 
+    /**
+     * @throws JsonException
+     */
     private function getComposerContent(string $fullName, string $namespace): string
     {
         $composer = [

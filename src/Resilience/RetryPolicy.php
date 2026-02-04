@@ -52,6 +52,8 @@ readonly class RetryPolicy
      * @param Closure(): T $operation
      * @param LoggerInterface|null $logger Optional logger for retry diagnostics
      * @return RetryResult
+     *
+     * @throws RandomException
      */
     public function execute(Closure $operation, ?LoggerInterface $logger = null): RetryResult
     {

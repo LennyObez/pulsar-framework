@@ -222,7 +222,7 @@ final class Application
         $output->newLine();
 
         if ($command instanceof Command) {
-            $arguments = $command->getArguments();
+            $arguments = $command->arguments;
             if ($arguments !== []) {
                 $output->writeln('Arguments:');
                 foreach ($arguments as $arg) {
@@ -232,7 +232,7 @@ final class Application
                 $output->newLine();
             }
 
-            $options = $command->getOptions();
+            $options = $command->options;
             if ($options !== []) {
                 $output->writeln('Options:');
                 foreach ($options as $name => $config) {

@@ -17,10 +17,10 @@ abstract class Command implements CommandInterface
     public protected(set) string $description = '';
 
     /** @var list<array{name: string, description: string, required: bool}> */
-    protected array $arguments = [];
+    public protected(set) array $arguments = [];
 
     /** @var array<string, array{description: string, shortcut: string|null, default: mixed}> */
-    protected array $options = [];
+    public protected(set) array $options = [];
 
     public function __construct()
     {
@@ -63,26 +63,6 @@ abstract class Command implements CommandInterface
             'default' => $default,
         ];
         return $this;
-    }
-
-    /**
-     * Get argument definitions.
-     *
-     * @return list<array{name: string, description: string, required: bool}>
-     */
-    public function getArguments(): array
-    {
-        return $this->arguments;
-    }
-
-    /**
-     * Get option definitions.
-     *
-     * @return array<string, array{description: string, shortcut: string|null, default: mixed}>
-     */
-    public function getOptions(): array
-    {
-        return $this->options;
     }
 
     /**

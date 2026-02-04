@@ -56,6 +56,10 @@ final class FileFlagStorage implements FlagStorageInterface
         return isset($flags[$name]);
     }
 
+    /**
+     * @throws FeatureFlagException
+     * @throws JsonException
+     */
     public function set(FlagDefinition $flag): void
     {
         $flags = $this->loadFlags();
@@ -63,6 +67,10 @@ final class FileFlagStorage implements FlagStorageInterface
         $this->saveFlags($flags);
     }
 
+    /**
+     * @throws FeatureFlagException
+     * @throws JsonException
+     */
     public function remove(string $name): void
     {
         $flags = $this->loadFlags();

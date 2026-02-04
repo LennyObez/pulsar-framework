@@ -25,10 +25,10 @@ final class CommandTest extends TestCase
     }
 
     #[Test]
-    public function getArgumentsReturnsDefinedArguments(): void
+    public function argumentsPropertyReturnsDefinedArguments(): void
     {
         $command = new TestCommand();
-        $arguments = $command->getArguments();
+        $arguments = $command->arguments;
 
         self::assertCount(2, $arguments);
         self::assertSame('name', $arguments[0]['name']);
@@ -38,10 +38,10 @@ final class CommandTest extends TestCase
     }
 
     #[Test]
-    public function getOptionsReturnsDefinedOptions(): void
+    public function optionsPropertyReturnsDefinedOptions(): void
     {
         $command = new TestCommand();
-        $options = $command->getOptions();
+        $options = $command->options;
 
         self::assertArrayHasKey('verbose', $options);
         self::assertSame('v', $options['verbose']['shortcut']);

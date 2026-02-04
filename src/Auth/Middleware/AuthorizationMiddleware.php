@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Middleware;
 
+use JsonException;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\PolicyContext;
 use Pulsar\Auth\SecurityContext;
@@ -15,6 +16,7 @@ use Pulsar\Routing\MatchedRoute;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
+use Random\RandomException;
 
 /**
  * Route-level middleware that triggers lazy identity resolution and checks authorization.
@@ -104,6 +106,10 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
         );
     }
 
+    /**
+     * @throws RandomException
+     * @throws JsonException
+     */
     private function auditAuthFailure(Request $request): void
     {
         $this->auditLogger?->log(
@@ -116,6 +122,10 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
         );
     }
 
+    /**
+     * @throws RandomException
+     * @throws JsonException
+     */
     private function auditAuthzDenied(Request $request, string $actor, string $permission): void
     {
         $this->auditLogger?->log(

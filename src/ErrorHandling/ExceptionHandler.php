@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\ErrorHandling;
 
+use DateMalformedStringException;
 use Psr\Log\LoggerInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
@@ -167,7 +168,13 @@ final readonly class ExceptionHandler
             $traceId = $traceContext->traceId;
         }
 
-        $event = ErrorEvent::fromThrowable($exception, $context, $traceId);
+        try {
+            $event = ErrorEvent::fromThrowable($exception, $context, $traceId);
+        } catch (DateMalformedStringException) {
+            // Error event creation failure must not disrupt error handling
+            return;
+        }
+
         $this->errorAggregator->capture($event);
     }
 
@@ -182,7 +189,7 @@ final readonly class ExceptionHandler
     /**
      * Render a generic JSON error response for clients that prefer JSON.
      */
-    private function renderJson(Throwable $exception, ResponseStatus $status): Response
+    private function renderJson(Throwable $_exception, ResponseStatus $status): Response
     {
         return Response::json(
             data: [

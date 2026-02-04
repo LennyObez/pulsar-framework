@@ -39,6 +39,9 @@ final class Encryptor
 
     private readonly string $key;
 
+    /**
+     * @throws SodiumException
+     */
     public function __construct(MasterKey $masterKey)
     {
         $this->key = $masterKey->deriveSubKey(self::SUB_KEY_ID, self::KDF_CONTEXT);

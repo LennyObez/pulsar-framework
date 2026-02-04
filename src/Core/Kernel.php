@@ -94,6 +94,7 @@ use Pulsar\Resilience\Repair\RepairRunner;
 use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\RoutingException;
 use Pulsar\Scheduler\JobRegistry;
 use Pulsar\Scheduler\Scheduler;
 use Pulsar\Security\Audit\AuditFileSink;
@@ -117,6 +118,7 @@ use Pulsar\Tenancy\TenantContext;
 use Pulsar\Tenancy\TenantResolverInterface;
 use Pulsar\Tenancy\TenantResolverStrategy;
 use RuntimeException;
+use SodiumException;
 
 use function sprintf;
 
@@ -190,6 +192,9 @@ final class Kernel
      * 14. Diagnostics route registration (debug mode only)
      * 15. Extension register phase
      * 16. Extension boot phase
+     *
+     * @throws ContainerExceptionInterface If a container error occurs during bootstrap
+     * @throws NotFoundExceptionInterface If a required binding is not found during bootstrap
      */
     public function boot(): void
     {
@@ -278,6 +283,8 @@ final class Kernel
 
     /**
      * Handle an HTTP request and return a response.
+     *
+     * @throws Throwable If no exception handler is registered or re-thrown after handling fails
      */
     public function handle(Request $request): Response
     {
@@ -296,6 +303,8 @@ final class Kernel
 
     /**
      * Handle a request from PHP superglobals and emit the response.
+     *
+     * @throws Throwable If no exception handler is registered or re-thrown after handling fails
      */
     public function run(): void
     {
@@ -308,6 +317,12 @@ final class Kernel
 
     /**
      * Dispatch the request to the matched route handler.
+     *
+     * @throws RoutingException When no route matches or method is not allowed
+     * @throws RuntimeException If the handler is invalid or returns an unexpected type
+     * @throws ContainerExceptionInterface If a container error occurs resolving a controller
+     * @throws NotFoundExceptionInterface If a controller binding is not found in the container
+     * @throws Error If a controller class cannot be instantiated
      */
     private function dispatchRoute(Request $request): Response
     {
@@ -355,7 +370,10 @@ final class Kernel
     /**
      * Invoke the route handler.
      *
-     * @throws RuntimeException
+     * @throws RuntimeException If the handler is invalid or returns an unexpected type
+     * @throws ContainerExceptionInterface If a container error occurs resolving a controller
+     * @throws NotFoundExceptionInterface If a controller binding is not found in the container
+     * @throws Error If a controller class cannot be instantiated
      */
     private function invokeHandler(Request $request, MatchedRoute $matched): Response
     {
@@ -559,6 +577,9 @@ final class Kernel
 
     /**
      * Create the exception handler from config and register in the container.
+     *
+     * @throws ContainerExceptionInterface If a container error occurs while resolving dependencies
+     * @throws NotFoundExceptionInterface If a required binding is not found in the container
      */
     private function createExceptionHandler(): void
     {
@@ -648,8 +669,8 @@ final class Kernel
                     $auditLogger = new AuditLogger($auditSink, $auditKey);
                     $this->container->instance(AuditLogger::class, $auditLogger);
                 }
-            } catch (SecurityException) {
-                // Master key is invalid — skip crypto/audit registration.
+            } catch (SecurityException | SodiumException) {
+                // Master key is invalid or sodium operation failed — skip crypto/audit registration.
                 // Session, CSRF, and headers still work without it.
             }
         }
@@ -661,6 +682,9 @@ final class Kernel
      * Registers: PasswordHasher, SessionGuard, TokenGuard (if resolver bound),
      * AuthManager, RoleRegistry, Gate, SecurityContext, and auth middleware.
      * If 2FA is enabled, also registers TOTP and recovery code services.
+     *
+     * @throws ContainerExceptionInterface If a container error occurs while resolving dependencies
+     * @throws NotFoundExceptionInterface If a required binding is not found in the container
      */
     private function createAuthServices(): void
     {
@@ -802,6 +826,9 @@ final class Kernel
      * Only activates when config/tenancy.php was loaded and tenancy is enabled.
      * Registers TenancyConfig, TenantContext, TenantResolver, and TenantResolutionMiddleware.
      * If database services are available, decorates ConnectionManager with tenant awareness.
+     *
+     * @throws ContainerExceptionInterface If a container error occurs while resolving dependencies
+     * @throws NotFoundExceptionInterface If a required binding is not found in the container
      */
     private function createTenancyServices(): void
     {
@@ -909,6 +936,9 @@ final class Kernel
      *
      * Only activates when config/scheduler.php was loaded and scheduler is enabled.
      * Registers JobRegistry and Scheduler.
+     *
+     * @throws ContainerExceptionInterface If a container error occurs while resolving dependencies
+     * @throws NotFoundExceptionInterface If a required binding is not found in the container
      */
     private function createSchedulerServices(): void
     {

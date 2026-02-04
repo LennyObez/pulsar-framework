@@ -8,7 +8,11 @@ use function hash_equals;
 
 use InvalidArgumentException;
 
+use function sodium_bin2hex;
 use function sodium_crypto_generichash;
+
+use SodiumException;
+
 use function sprintf;
 use function strlen;
 
@@ -33,6 +37,8 @@ final class Hmac
 
     /**
      * Compute a keyed BLAKE2b hash and return as hex string.
+     *
+     * @throws SodiumException
      */
     public static function computeHex(string $message, string $key): string
     {
@@ -45,6 +51,8 @@ final class Hmac
 
     /**
      * Compute a keyed BLAKE2b hash and return raw bytes.
+     *
+     * @throws SodiumException
      */
     public static function compute(string $message, string $key): string
     {
@@ -57,6 +65,8 @@ final class Hmac
      * Verify a hex-encoded HMAC against a message and key.
      *
      * Uses constant-time comparison to prevent timing attacks.
+     *
+     * @throws SodiumException
      */
     public static function verifyHex(string $message, string $expectedHex, string $key): bool
     {
@@ -69,6 +79,8 @@ final class Hmac
      * Verify raw HMAC bytes against a message and key.
      *
      * Uses constant-time comparison to prevent timing attacks.
+     *
+     * @throws SodiumException
      */
     public static function verify(string $message, string $expected, string $key): bool
     {
