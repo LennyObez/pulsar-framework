@@ -126,16 +126,18 @@ Deliverables:
   Exit criteria:
 - Threat model docs for auth + tests
 
-### 0.9.0 — Enterprise Features v1
+### 0.9.0 — Enterprise Features v1 (CURRENT)
 
 Deliverables:
 
-- Multi-tenancy
-- Feature flags
-- Job scheduler + queue baseline
-- Extension compatibility validation + deprecation policy tooling
+- Multi-tenancy with pluggable resolvers (header, subdomain, path) and DB isolation ✓
+- Feature flags with boolean, percentage, and contextual evaluation ✓
+- Job scheduler with cron parsing and tick-based execution ✓
+- Self-healing: retry policies, circuit breakers, health checks, repair system ✓
+- Console commands: scheduler:tick, scheduler:list, health:check, health:repair ✓
+- Kernel integration for all four enterprise services ✓
   Exit criteria:
-- Upgrade guide templates + compatibility checks
+- All enterprise primitives tested and documented
 
 ### 1.0.0-rc.1 — Stabilization
 

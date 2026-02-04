@@ -102,12 +102,17 @@ final readonly class Logger implements LoggerInterface
         }
 
         /** @var array<string, mixed> $context */
-        $entry = LogEntry::create(
-            level: $logLevel,
-            message: (string) $message,
-            context: $context,
-            channel: $this->channel,
-        );
+        try {
+            $entry = LogEntry::create(
+                level: $logLevel,
+                message: (string) $message,
+                context: $context,
+                channel: $this->channel,
+            );
+        } catch (Throwable) {
+            // Entry creation failure is silently swallowed — logging never crashes a request
+            return;
+        }
 
         foreach ($this->sinks as $sink) {
             try {

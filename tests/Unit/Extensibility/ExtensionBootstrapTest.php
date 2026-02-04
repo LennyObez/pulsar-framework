@@ -38,8 +38,8 @@ final class ExtensionBootstrapTest extends TestCase
     {
         $bootstrap = ExtensionBootstrap::create();
 
-        self::assertInstanceOf(ExtensionRegistry::class, $bootstrap->registry());
-        self::assertInstanceOf(ExtensionLoader::class, $bootstrap->loader());
+        self::assertInstanceOf(ExtensionRegistry::class, $bootstrap->registry);
+        self::assertInstanceOf(ExtensionLoader::class, $bootstrap->loader);
     }
 
     #[Test]
@@ -50,7 +50,7 @@ final class ExtensionBootstrapTest extends TestCase
 
         $this->bootstrap->addExtension($extension, $manifest);
 
-        self::assertTrue($this->bootstrap->registry()->has('test/ext'));
+        self::assertTrue($this->bootstrap->registry->has('test/ext'));
     }
 
     #[Test]
@@ -228,19 +228,19 @@ final class ExtensionBootstrapTest extends TestCase
 
         self::assertSame(
             ExtensionLifecycle::Validated,
-            $this->bootstrap->registry()->getState('test/ext'),
+            $this->bootstrap->registry->getState('test/ext'),
         );
 
         $this->bootstrap->register($this->container);
         self::assertSame(
             ExtensionLifecycle::Registered,
-            $this->bootstrap->registry()->getState('test/ext'),
+            $this->bootstrap->registry->getState('test/ext'),
         );
 
         $this->bootstrap->boot($this->container, $this->router);
         self::assertSame(
             ExtensionLifecycle::Booted,
-            $this->bootstrap->registry()->getState('test/ext'),
+            $this->bootstrap->registry->getState('test/ext'),
         );
     }
 
@@ -250,10 +250,10 @@ final class ExtensionBootstrapTest extends TestCase
         $extension = $this->createTestExtension('test/ext');
         $this->bootstrap->addExtension($extension, $this->createManifest('test/ext'));
 
-        self::assertFalse($this->bootstrap->isRegistered());
+        self::assertFalse($this->bootstrap->registered);
 
         $this->bootstrap->register($this->container);
-        self::assertTrue($this->bootstrap->isRegistered());
+        self::assertTrue($this->bootstrap->registered);
     }
 
     #[Test]
@@ -263,10 +263,10 @@ final class ExtensionBootstrapTest extends TestCase
         $this->bootstrap->addExtension($extension, $this->createManifest('test/ext'));
         $this->bootstrap->register($this->container);
 
-        self::assertFalse($this->bootstrap->isBooted());
+        self::assertFalse($this->bootstrap->booted);
 
         $this->bootstrap->boot($this->container, $this->router);
-        self::assertTrue($this->bootstrap->isBooted());
+        self::assertTrue($this->bootstrap->booted);
     }
 
     #[Test]

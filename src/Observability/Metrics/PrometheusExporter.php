@@ -114,7 +114,7 @@ final readonly class PrometheusExporter
         // Emit empty histogram if no series
         if ($histogram->seriesKeys() === []) {
             foreach ($histogram->boundaries() as $bound) {
-                $lines[] = sprintf('%s_bucket{le="%s"} 0', $name, (string) $bound);
+                $lines[] = sprintf('%s_bucket{le="%s"} 0', $name, $bound);
             }
 
             $lines[] = sprintf('%s_bucket{le="+Inf"} 0', $name);

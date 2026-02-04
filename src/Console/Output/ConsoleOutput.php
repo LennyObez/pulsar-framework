@@ -20,9 +20,9 @@ final class ConsoleOutput implements OutputInterface
     /** @var resource */
     private $stderr;
 
-    private Verbosity $verbosity;
+    public Verbosity $verbosity;
 
-    private bool $decorated;
+    public bool $decorated;
 
     /**
      * @param resource|null $stdout
@@ -116,16 +116,6 @@ final class ConsoleOutput implements OutputInterface
         $this->writeln($formatted);
     }
 
-    public function getVerbosity(): Verbosity
-    {
-        return $this->verbosity;
-    }
-
-    public function setVerbosity(Verbosity $verbosity): void
-    {
-        $this->verbosity = $verbosity;
-    }
-
     public function isQuiet(): bool
     {
         return $this->verbosity === Verbosity::Quiet;
@@ -146,19 +136,4 @@ final class ConsoleOutput implements OutputInterface
         $this->write(str_repeat(PHP_EOL, $count));
     }
 
-    /**
-     * Check if output is decorated (colored).
-     */
-    public function isDecorated(): bool
-    {
-        return $this->decorated;
-    }
-
-    /**
-     * Set whether output should be decorated.
-     */
-    public function setDecorated(bool $decorated): void
-    {
-        $this->decorated = $decorated;
-    }
 }

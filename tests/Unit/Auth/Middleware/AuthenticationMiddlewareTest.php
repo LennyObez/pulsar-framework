@@ -23,7 +23,7 @@ final class AuthenticationMiddlewareTest extends TestCase
     #[Test]
     public function attachesSecurityContextAttributeToRequest(): void
     {
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $middleware = new AuthenticationMiddleware($authManager);
 
         $request = new Request(
@@ -51,7 +51,7 @@ final class AuthenticationMiddlewareTest extends TestCase
     #[Test]
     public function attachesAnonymousIdentityAttributeToRequest(): void
     {
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $middleware = new AuthenticationMiddleware($authManager);
 
         $request = new Request(
@@ -79,7 +79,7 @@ final class AuthenticationMiddlewareTest extends TestCase
     #[Test]
     public function callsNextHandler(): void
     {
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $middleware = new AuthenticationMiddleware($authManager);
 
         $request = new Request(

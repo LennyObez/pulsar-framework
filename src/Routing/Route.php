@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Routing;
 
+use function array_filter;
+
+use const ARRAY_FILTER_USE_KEY;
+
 use function in_array;
-use function is_string;
 
 use Pulsar\Http\Method;
 
@@ -48,6 +51,8 @@ readonly class Route
      *
      * Returns extracted parameters on match, null on no match.
      *
+     * @psalm-suppress MixedReturnTypeCoercion array_filter with is_string key filter guarantees string keys
+     *
      * @return array<string, string>|null
      */
     public function matchesPath(string $path): ?array
@@ -66,13 +71,8 @@ readonly class Route
 
         if (preg_match($pattern, $requestPath, $matches)) {
             // Extract named parameters (filter out numeric keys from preg_match)
-            $params = [];
-            foreach ($matches as $key => $val) {
-                if (is_string($key)) {
-                    $params[$key] = $val;
-                }
-            }
-            return $params;
+            /** @psalm-suppress MixedReturnTypeCoercion array_filter with is_string key filter guarantees string keys */
+            return array_filter($matches, is_string(...), ARRAY_FILTER_USE_KEY);
         }
 
         return null;
@@ -124,6 +124,8 @@ readonly class Route
      * Returns extracted host parameters on match, null on no match.
      * Routes without a host pattern match any host (returns empty array).
      *
+     * @psalm-suppress MixedReturnTypeCoercion array_filter with is_string key filter guarantees string keys
+     *
      * @return array<string, string>|null
      */
     public function matchesHost(string $host): ?array
@@ -149,13 +151,8 @@ readonly class Route
         $pattern = '#^' . ($replaced ?? $pattern) . '$#i';
 
         if (preg_match($pattern, $host, $matches)) {
-            $params = [];
-            foreach ($matches as $key => $val) {
-                if (is_string($key)) {
-                    $params[$key] = $val;
-                }
-            }
-            return $params;
+            /** @psalm-suppress MixedReturnTypeCoercion array_filter with is_string key filter guarantees string keys */
+            return array_filter($matches, is_string(...), ARRAY_FILTER_USE_KEY);
         }
 
         return null;

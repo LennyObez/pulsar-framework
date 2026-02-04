@@ -88,7 +88,12 @@ $kernel = new Kernel(
     extensionBootstrap: $extensionBootstrap,
     configManager: $configManager,
 );
-$kernel->boot();
+try {
+    $kernel->boot();
+} catch (Throwable $e) {
+    fwrite(STDERR, "Error: Kernel boot failed: {$e->getMessage()}\n");
+    exit(1);
+}
 
 $application = new Application($kernel);
 

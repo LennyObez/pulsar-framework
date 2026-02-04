@@ -13,14 +13,14 @@ use function sprintf;
  */
 abstract class Command implements CommandInterface
 {
-    protected string $name = '';
-    protected string $description = '';
+    public protected(set) string $name = '';
+    public protected(set) string $description = '';
 
     /** @var list<array{name: string, description: string, required: bool}> */
-    protected array $arguments = [];
+    public protected(set) array $arguments = [];
 
     /** @var array<string, array{description: string, shortcut: string|null, default: mixed}> */
-    protected array $options = [];
+    public protected(set) array $options = [];
 
     public function __construct()
     {
@@ -33,24 +33,6 @@ abstract class Command implements CommandInterface
     protected function configure(): void
     {
         // Override in subclasses
-    }
-
-    /**
-     * Set the command name.
-     */
-    protected function setName(string $name): self
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-    /**
-     * Set the command description.
-     */
-    protected function setDescription(string $description): self
-    {
-        $this->description = $description;
-        return $this;
     }
 
     /**
@@ -81,36 +63,6 @@ abstract class Command implements CommandInterface
             'default' => $default,
         ];
         return $this;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function getDescription(): string
-    {
-        return $this->description;
-    }
-
-    /**
-     * Get argument definitions.
-     *
-     * @return list<array{name: string, description: string, required: bool}>
-     */
-    public function getArguments(): array
-    {
-        return $this->arguments;
-    }
-
-    /**
-     * Get option definitions.
-     *
-     * @return array<string, array{description: string, shortcut: string|null, default: mixed}>
-     */
-    public function getOptions(): array
-    {
-        return $this->options;
     }
 
     /**

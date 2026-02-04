@@ -21,10 +21,10 @@ final class InitCommand extends Command
 {
     protected function configure(): void
     {
-        $this->setName('init')
-            ->setDescription('Initialize a new Pulsar project')
-            ->addArgument('directory', 'Target directory (default: current directory)')
-            ->addOption('force', 'Overwrite existing files', 'f');
+        $this->name = 'init';
+        $this->description = 'Initialize a new Pulsar project';
+        $this->addArgument('directory', 'Target directory (default: current directory)');
+        $this->addOption('force', 'Overwrite existing files', 'f');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

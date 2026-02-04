@@ -8,6 +8,7 @@ use function bin2hex;
 use function ctype_xdigit;
 
 use Pulsar\Observability\Tracing\Exception\TracingException;
+use Random\RandomException;
 
 use function random_bytes;
 use function strlen;
@@ -33,6 +34,8 @@ final readonly class SpanId
 
     /**
      * Generate a new random span ID.
+     *
+     * @throws RandomException
      */
     public static function generate(): self
     {

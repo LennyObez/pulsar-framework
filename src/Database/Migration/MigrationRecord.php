@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Migration;
 
+use DateMalformedStringException;
 use DateTimeImmutable;
 
 use function is_string;
@@ -24,6 +25,8 @@ readonly class MigrationRecord
      * Build from a raw database row array.
      *
      * @param array<string, mixed> $data
+     *
+     * @throws DateMalformedStringException
      */
     public static function fromArray(array $data): self
     {

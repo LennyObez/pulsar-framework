@@ -9,6 +9,9 @@ use Pulsar\Security\Exception\SecurityException;
 use function sodium_bin2hex;
 use function sodium_crypto_kdf_derive_from_key;
 use function sodium_hex2bin;
+
+use SodiumException;
+
 use function sprintf;
 use function strlen;
 
@@ -46,6 +49,7 @@ final class MasterKey
      * Load master key from a hex-encoded string.
      *
      * @throws SecurityException If the key is invalid
+     * @throws SodiumException
      */
     public static function fromHex(string $hex): self
     {
@@ -64,6 +68,7 @@ final class MasterKey
      * Load master key from the PULSAR_MASTER_KEY environment variable.
      *
      * @throws SecurityException If the variable is missing or invalid
+     * @throws SodiumException
      */
     public static function fromEnvironment(?string $envValue = null): self
     {
@@ -84,6 +89,8 @@ final class MasterKey
      * @param int    $length   Desired subkey length in bytes (16–64)
      *
      * @return string Raw subkey bytes
+     *
+     * @throws SodiumException
      */
     public function deriveSubKey(int $subKeyId, string $context, int $length = SODIUM_CRYPTO_SECRETBOX_KEYBYTES): string
     {
@@ -94,6 +101,8 @@ final class MasterKey
 
     /**
      * Derive a subkey and return it as hex.
+     *
+     * @throws SodiumException
      */
     public function deriveSubKeyHex(int $subKeyId, string $context, int $length = SODIUM_CRYPTO_SECRETBOX_KEYBYTES): string
     {

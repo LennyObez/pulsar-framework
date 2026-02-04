@@ -9,13 +9,17 @@ use function count;
 use function in_array;
 use function is_string;
 
+use JsonException;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Container\Container;
+use Pulsar\Container\Exception\ContainerException;
+use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Core\Kernel;
+use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 
 use function sprintf;
 use function strlen;
@@ -33,11 +37,17 @@ final class ShowContainerCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('show:container')
-            ->setDescription('Display container bindings')
-            ->addOption('filter', 'Filter by binding ID', 'f');
+        $this->name = 'show:container';
+        $this->description = 'Display container bindings';
+        $this->addOption('filter', 'Filter by binding ID', 'f');
     }
 
+    /**
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws FeatureFlagException
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->kernel->boot();
@@ -51,7 +61,7 @@ final class ShowContainerCommand extends Command
         $filter = $input->getOption('filter');
 
         // Apply filter
-        if ($filter !== null && is_string($filter)) {
+        if (is_string($filter)) {
             $filterString = $filter;
             $bindings = array_filter($bindings, fn(string $id) => str_contains($id, $filterString));
             $instances = array_filter($instances, fn(string $id) => str_contains($id, $filterString));

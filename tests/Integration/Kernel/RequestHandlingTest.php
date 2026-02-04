@@ -178,11 +178,11 @@ final class RequestHandlingTest extends TestCase
         $kernel = new Kernel();
         $kernel->router()->get('/', fn() => Response::text('ok'));
 
-        self::assertFalse($kernel->isBooted());
+        self::assertFalse($kernel->booted);
 
         $kernel->handle($this->createRequest());
 
-        self::assertTrue($kernel->isBooted());
+        self::assertTrue($kernel->booted);
     }
 
     #[Test]
@@ -214,11 +214,11 @@ final class RequestHandlingTest extends TestCase
         $kernel->router()->get('/', fn() => Response::text('ok'));
         $kernel->handle($this->createRequest());
 
-        self::assertTrue($kernel->isBooted());
+        self::assertTrue($kernel->booted);
 
         $kernel->shutdown();
 
-        self::assertFalse($kernel->isBooted());
+        self::assertFalse($kernel->booted);
     }
 }
 

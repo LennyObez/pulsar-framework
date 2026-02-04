@@ -17,7 +17,7 @@ final class MetricsException extends RuntimeException
     {
         return new self(sprintf(
             'Counter increment must be non-negative, got %s',
-            (string) $value,
+            $value,
         ));
     }
 

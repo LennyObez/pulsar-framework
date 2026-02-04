@@ -80,6 +80,15 @@ if [ -d "node_modules" ]; then
     fi
     echo ""
 
+    echo "--- JS/TS: Type Check (TypeScript) ---"
+    if pnpm typecheck; then
+        echo "[PASS] TypeScript"
+    else
+        echo "[FAIL] TypeScript"
+        FAILED=1
+    fi
+    echo ""
+
     echo "--- JS/TS: Tests (Vitest) ---"
     if pnpm test; then
         echo "[PASS] Vitest"

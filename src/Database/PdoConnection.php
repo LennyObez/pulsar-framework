@@ -123,6 +123,10 @@ final class PdoConnection implements ConnectionInterface
         return new Transaction($pdo, $depth);
     }
 
+    /**
+     * @throws DatabaseException
+     * @throws Throwable
+     */
     public function transaction(callable $callback): mixed
     {
         $transaction = $this->beginTransaction();
@@ -134,7 +138,7 @@ final class PdoConnection implements ConnectionInterface
 
             return $result;
         } catch (Throwable $e) {
-            if ($transaction->isActive()) {
+            if ($transaction->active) {
                 $transaction->rollback();
             }
             $this->transactionDepth--;

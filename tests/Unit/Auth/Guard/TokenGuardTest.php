@@ -6,7 +6,6 @@ namespace Pulsar\Tests\Unit\Auth\Guard;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Guard\TokenGuard;
 use Pulsar\Auth\Guard\TokenResolverInterface;
@@ -19,13 +18,12 @@ use Pulsar\Http\Request;
 #[CoversClass(TokenGuard::class)]
 final class TokenGuardTest extends TestCase
 {
-    /** @var TokenResolverInterface&MockObject */
     private TokenResolverInterface $resolver;
     private TokenGuard $guard;
 
     protected function setUp(): void
     {
-        $this->resolver = $this->createMock(TokenResolverInterface::class);
+        $this->resolver = $this->createStub(TokenResolverInterface::class);
         $this->guard = new TokenGuard($this->resolver);
     }
 
@@ -91,10 +89,13 @@ final class TokenGuardTest extends TestCase
             attributes: [],
         );
 
-        $this->resolver->expects(self::once())
+        $resolver = $this->createMock(TokenResolverInterface::class);
+        $resolver->expects(self::once())
             ->method('resolve')
             ->with('test-token')
             ->willReturn($identity);
+
+        $guard = new TokenGuard($resolver);
 
         $request = new Request(
             method: Method::GET,
@@ -105,7 +106,7 @@ final class TokenGuardTest extends TestCase
             body: '',
         );
 
-        $result = $this->guard->authenticate($request);
+        $result = $guard->authenticate($request);
 
         self::assertSame($identity, $result);
     }
@@ -113,10 +114,13 @@ final class TokenGuardTest extends TestCase
     #[Test]
     public function authenticateReturnsNullWhenResolverReturnsNull(): void
     {
-        $this->resolver->expects(self::once())
+        $resolver = $this->createMock(TokenResolverInterface::class);
+        $resolver->expects(self::once())
             ->method('resolve')
             ->with('invalid-token')
             ->willReturn(null);
+
+        $guard = new TokenGuard($resolver);
 
         $request = new Request(
             method: Method::GET,
@@ -127,6 +131,6 @@ final class TokenGuardTest extends TestCase
             body: '',
         );
 
-        self::assertNull($this->guard->authenticate($request));
+        self::assertNull($guard->authenticate($request));
     }
 }

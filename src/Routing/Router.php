@@ -20,12 +20,12 @@ final class Router
     /**
      * @var list<Route>
      */
-    private array $routes = [];
+    public private(set) array $routes = [];
 
     /**
      * @var array<string, Route>
      */
-    private array $namedRoutes = [];
+    public private(set) array $namedRoutes = [];
 
     /**
      * Add a route to the router.
@@ -207,26 +207,6 @@ final class Router
         $path = $replaced ?? $path;
 
         return '/' . trim($path, '/');
-    }
-
-    /**
-     * Get all registered routes.
-     *
-     * @return list<Route>
-     */
-    public function getRoutes(): array
-    {
-        return $this->routes;
-    }
-
-    /**
-     * Get all named routes.
-     *
-     * @return array<string, Route>
-     */
-    public function getNamedRoutes(): array
-    {
-        return $this->namedRoutes;
     }
 
     /**

@@ -30,8 +30,8 @@ final class DiagnosticsCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('diagnostics')
-            ->setDescription('Display system diagnostics and health checks');
+        $this->name = 'diagnostics';
+        $this->description = 'Display system diagnostics and health checks';
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
@@ -53,9 +53,9 @@ final class DiagnosticsCommand extends Command
     {
         $output->info('Framework');
         $output->writeln(sprintf('  Version:      %s', Version::full()));
-        $output->writeln(sprintf('  Kernel:       %s', $this->kernel->isBooted() ? 'Booted' : 'Not booted'));
+        $output->writeln(sprintf('  Kernel:       %s', $this->kernel->booted ? 'Booted' : 'Not booted'));
 
-        $extensions = $this->kernel->extensionBootstrap()?->registry();
+        $extensions = $this->kernel->extensionBootstrap()?->registry;
         if ($extensions !== null) {
             $output->writeln(sprintf('  Extensions:   %d loaded', $extensions->count()));
         } else {

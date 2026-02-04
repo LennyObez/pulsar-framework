@@ -12,9 +12,9 @@ use Pulsar\Console\Verbosity;
  */
 final class BufferedOutput implements OutputInterface
 {
-    private string $buffer = '';
-    private string $errorBuffer = '';
-    private Verbosity $verbosity;
+    public private(set) string $buffer = '';
+    public private(set) string $errorBuffer = '';
+    public Verbosity $verbosity;
 
     public function __construct(Verbosity $verbosity = Verbosity::Normal)
     {
@@ -64,16 +64,6 @@ final class BufferedOutput implements OutputInterface
         $this->writeln('[WARNING] ' . $message);
     }
 
-    public function getVerbosity(): Verbosity
-    {
-        return $this->verbosity;
-    }
-
-    public function setVerbosity(Verbosity $verbosity): void
-    {
-        $this->verbosity = $verbosity;
-    }
-
     public function isQuiet(): bool
     {
         return $this->verbosity === Verbosity::Quiet;
@@ -112,22 +102,6 @@ final class BufferedOutput implements OutputInterface
         $content = $this->errorBuffer;
         $this->errorBuffer = '';
         return $content;
-    }
-
-    /**
-     * Get the current buffer content without clearing.
-     */
-    public function getBuffer(): string
-    {
-        return $this->buffer;
-    }
-
-    /**
-     * Get the current error buffer content without clearing.
-     */
-    public function getErrorBuffer(): string
-    {
-        return $this->errorBuffer;
     }
 
     /**
