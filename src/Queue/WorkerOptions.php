@@ -16,7 +16,7 @@ readonly class WorkerOptions
 {
     public function __construct(
         public int $maxJobs = 1000,
-        public int $maxMemoryMb = 128,
+        public int $maxMemoryMb = 256,
         public int $timeLimitSeconds = 3600,
         public int $sleepMs = 1000,
     ) {}
