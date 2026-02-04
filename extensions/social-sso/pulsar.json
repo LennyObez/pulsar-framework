@@ -1,0 +1,22 @@
+{
+  "name": "pulsar/social-sso",
+  "version": "1.0.0-rc.8",
+  "description": "OAuth2/OIDC social single sign-on extension with PKCE, ID token verification, and identity linking",
+  "extension_class": "Pulsar\\Extension\\SocialSso\\SocialSsoExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.7"
+  },
+  "provides": {
+    "services": [
+      "SsoGateway",
+      "OAuthProviderInterface",
+      "OAuthProviderRegistryInterface",
+      "OAuthStateManagerInterface",
+      "NonceVerifierInterface",
+      "IdTokenVerifierInterface",
+      "SocialIdentityLinkerInterface"
+    ],
+    "routes": true,
+    "commands": []
+  }
+}

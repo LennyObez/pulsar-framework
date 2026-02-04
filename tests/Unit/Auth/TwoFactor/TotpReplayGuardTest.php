@@ -17,6 +17,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
 use Pulsar\Auth\TwoFactor\SqliteTotpReplayGuard;
+use Pulsar\Auth\TwoFactor\TwoFactorPurpose;
 
 use function random_bytes;
 use function rmdir;
@@ -53,7 +54,7 @@ final class TotpReplayGuardTest extends TestCase
     {
         $guard = new InMemoryTotpReplayGuard();
 
-        self::assertTrue($guard->markUsed('user-1', '123456', 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
     }
 
     #[Test]
@@ -61,17 +62,17 @@ final class TotpReplayGuardTest extends TestCase
     {
         $guard = new InMemoryTotpReplayGuard();
 
-        self::assertTrue($guard->markUsed('user-1', '123456', 1000));
-        self::assertFalse($guard->markUsed('user-1', '123456', 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
+        self::assertFalse($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
     }
 
     #[Test]
-    public function inMemoryAllowsDifferentCodes(): void
+    public function inMemoryAllowsDifferentTimeSteps(): void
     {
         $guard = new InMemoryTotpReplayGuard();
 
-        self::assertTrue($guard->markUsed('user-1', '123456', 1000));
-        self::assertTrue($guard->markUsed('user-1', '654321', 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33334, 1000));
     }
 
     #[Test]
@@ -79,8 +80,17 @@ final class TotpReplayGuardTest extends TestCase
     {
         $guard = new InMemoryTotpReplayGuard();
 
-        self::assertTrue($guard->markUsed('user-1', '123456', 1000));
-        self::assertTrue($guard->markUsed('user-2', '123456', 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
+        self::assertTrue($guard->markUsed('user-2', TwoFactorPurpose::Login, 33333, 1000));
+    }
+
+    #[Test]
+    public function inMemoryAllowsDifferentPurposes(): void
+    {
+        $guard = new InMemoryTotpReplayGuard();
+
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::StepUp, 33333, 1000));
     }
 
     #[Test]
@@ -88,9 +98,9 @@ final class TotpReplayGuardTest extends TestCase
     {
         $guard = new InMemoryTotpReplayGuard();
 
-        self::assertTrue($guard->markUsed('user-1', '123456', 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
         // 91 seconds later — expired
-        self::assertTrue($guard->markUsed('user-1', '123456', 1091));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1091));
     }
 
     #[Test]
@@ -98,7 +108,7 @@ final class TotpReplayGuardTest extends TestCase
     {
         $guard = $this->createSqliteGuard();
 
-        self::assertTrue($guard->markUsed('user-1', '123456', 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
     }
 
     #[Test]
@@ -106,17 +116,17 @@ final class TotpReplayGuardTest extends TestCase
     {
         $guard = $this->createSqliteGuard();
 
-        self::assertTrue($guard->markUsed('user-1', '123456', 1000));
-        self::assertFalse($guard->markUsed('user-1', '123456', 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
+        self::assertFalse($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
     }
 
     #[Test]
-    public function sqliteAllowsDifferentCodes(): void
+    public function sqliteAllowsDifferentTimeSteps(): void
     {
         $guard = $this->createSqliteGuard();
 
-        self::assertTrue($guard->markUsed('user-1', '123456', 1000));
-        self::assertTrue($guard->markUsed('user-1', '654321', 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33334, 1000));
     }
 
     #[Test]
@@ -124,8 +134,17 @@ final class TotpReplayGuardTest extends TestCase
     {
         $guard = $this->createSqliteGuard();
 
-        self::assertTrue($guard->markUsed('user-1', '123456', 1000));
-        self::assertTrue($guard->markUsed('user-2', '123456', 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
+        self::assertTrue($guard->markUsed('user-2', TwoFactorPurpose::Login, 33333, 1000));
+    }
+
+    #[Test]
+    public function sqliteAllowsDifferentPurposes(): void
+    {
+        $guard = $this->createSqliteGuard();
+
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
+        self::assertTrue($guard->markUsed('user-1', TwoFactorPurpose::StepUp, 33333, 1000));
     }
 
     #[Test]
@@ -135,8 +154,8 @@ final class TotpReplayGuardTest extends TestCase
         $guard1 = $this->createSqliteGuard($path);
         $guard2 = $this->createSqliteGuard($path);
 
-        self::assertTrue($guard1->markUsed('user-1', '123456', 1000));
-        self::assertFalse($guard2->markUsed('user-1', '123456', 1000));
+        self::assertTrue($guard1->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
+        self::assertFalse($guard2->markUsed('user-1', TwoFactorPurpose::Login, 33333, 1000));
     }
 
     private function createSqliteGuard(?string $path = null): SqliteTotpReplayGuard
