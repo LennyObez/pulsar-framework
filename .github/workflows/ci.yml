@@ -181,6 +181,58 @@ jobs:
           cat benchmark-profiles.txt >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
+  cache-warmup:
+    name: Cache Warmup Smoke Test
+    runs-on: ubuntu-latest
+    needs: php-quality
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: pdo_sqlite
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      - name: Verify cache warmup pipeline
+        env:
+          PULSAR_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+        run: |
+          if php bin/pulsar list 2>/dev/null | grep -q 'optimize:validate'; then
+            php bin/pulsar optimize:validate --strict
+          else
+            php bin/pulsar optimize
+            php bin/pulsar optimize:clear
+          fi
+
+  adr-check:
+    name: ADR Governance Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch base ref (fork-safe)
+        run: git fetch origin ${{ github.event.pull_request.base.sha }} --depth=1
+
+      - name: Check ADR governance
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: bash scripts/check-adr.sh
+
   js:
     name: JS/TS (Lint, Format, Typecheck, Test)
     runs-on: ubuntu-latest
