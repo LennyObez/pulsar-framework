@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Reason a worker recycle was triggered.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum RecycleReason: string
 {
     case MaxRequests = 'max_requests';

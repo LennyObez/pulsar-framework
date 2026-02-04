@@ -14,7 +14,7 @@ use function sprintf;
 /**
  * Exception thrown when a requested binding is not found in the container.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class NotFoundException extends Exception implements NotFoundExceptionInterface
 {
     /**

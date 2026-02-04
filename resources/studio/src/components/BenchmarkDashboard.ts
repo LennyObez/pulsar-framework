@@ -1,5 +1,5 @@
 import type { BenchmarkDashboardData, BenchmarkProfile, BenchmarkRun } from '../types.js';
-import { postAction } from '../api.js';
+import { fetchJson, postAction } from '../api.js';
 import { escapeHtml } from '../utils/escapeHtml.js';
 
 export function renderBenchmarkDashboard(container: HTMLElement, payload: unknown): void {
@@ -360,11 +360,11 @@ function wireEvents(container: HTMLElement): void {
 
   runBtn?.addEventListener('click', async () => {
     runBtn.disabled = true;
-    setStatus(statusEl, 'Running benchmarks\u2026');
+    setStatus(statusEl, 'Starting benchmarks\u2026');
 
     try {
-      await postAction<{ success: boolean }>('/benchmark/run');
-      window.location.reload();
+      await postAction<{ started: boolean }>('/benchmark/run');
+      pollBenchmarkStatus(runBtn, statusEl);
     } catch (e) {
       setStatus(statusEl, `Error: ${e instanceof Error ? e.message : 'Unknown error'}`);
       runBtn.disabled = false;
@@ -444,6 +444,52 @@ function formatRunSubtitle(run: BenchmarkRun): string {
   if (run.skipped_count > 0) parts.push(`${String(run.skipped_count)} skipped`);
   if (run.failure_count > 0) parts.push(`${String(run.failure_count)} failed`);
   return parts.length > 0 ? parts.join(', ') : 'All passed';
+}
+
+interface BenchmarkStatus {
+  running: boolean;
+  completed: boolean;
+  success?: boolean;
+  exit_code?: number;
+  output?: string;
+}
+
+function pollBenchmarkStatus(
+  runBtn: HTMLButtonElement,
+  statusEl: HTMLSpanElement | null | undefined,
+): void {
+  let elapsed = 0;
+  const interval = 2000; // poll every 2 seconds
+
+  const timer = setInterval(async () => {
+    elapsed += interval;
+    const seconds = Math.floor(elapsed / 1000);
+    setStatus(statusEl, `Running benchmarks\u2026 (${String(seconds)}s)`);
+
+    try {
+      const status = await fetchJson<BenchmarkStatus>('/benchmark/status');
+
+      if (status.completed) {
+        clearInterval(timer);
+        if (status.success) {
+          setStatus(statusEl, 'Benchmarks complete. Reloading\u2026');
+          window.location.reload();
+        } else {
+          setStatus(statusEl, `Benchmark failed (exit code ${String(status.exit_code ?? '?')})`);
+          runBtn.disabled = false;
+        }
+      }
+
+      // If not running and not completed, something went wrong
+      if (!status.running && !status.completed) {
+        clearInterval(timer);
+        setStatus(statusEl, 'Benchmark process ended unexpectedly.');
+        runBtn.disabled = false;
+      }
+    } catch {
+      // Network error during poll — keep trying
+    }
+  }, interval);
 }
 
 function formatUs(us: number): string {

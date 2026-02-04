@@ -19,7 +19,7 @@ use Throwable;
  * Produces a sha256 hash of `{class}|{message}|{file}|{line}` to group
  * identical errors regardless of when they occur.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class ErrorFingerprint
 {
     public function __construct(

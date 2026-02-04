@@ -11,7 +11,7 @@ use Throwable;
 /**
  * Result of a retry policy execution.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class RetryResult
 {
     /**

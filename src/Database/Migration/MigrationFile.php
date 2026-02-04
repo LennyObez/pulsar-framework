@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Readonly value object for a discovered migration file on disk.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class MigrationFile
 {
     public function __construct(

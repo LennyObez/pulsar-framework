@@ -15,7 +15,7 @@ use Pulsar\Api\Api;
 /**
  * Typed configuration DTO for `config/deploy.php`.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class DeployConfig
 {
     /** Default check configuration used when no explicit config is provided. */

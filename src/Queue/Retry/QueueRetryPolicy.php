@@ -20,7 +20,7 @@ use Throwable;
  * Calculates increasing delays between retry attempts using the formula:
  *   delay = min(baseDelayMs * multiplier^(attempt - 1), maxDelayMs)
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class QueueRetryPolicy
 {
     public function __construct(

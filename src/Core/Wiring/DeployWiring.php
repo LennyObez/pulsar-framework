@@ -1,0 +1,160 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Core\Wiring;
+
+use Closure;
+use Pulsar\Api\Internal;
+use Pulsar\Cache\FrameworkCache;
+use Pulsar\Config\AppConfig;
+use Pulsar\Config\ConfigManager;
+use Pulsar\Config\DeployConfig;
+use Pulsar\Config\IntegrityConfig;
+use Pulsar\Config\SecurityConfig;
+use Pulsar\Container\ContainerInterface;
+use Pulsar\Deploy\Check\CacheSettingsCheck;
+use Pulsar\Deploy\Check\DebugModeCheck;
+use Pulsar\Deploy\Check\FilesystemScanCheck;
+use Pulsar\Deploy\Check\HealthEndpointCheck;
+use Pulsar\Deploy\Check\Http3ReadinessCheck;
+use Pulsar\Deploy\Check\HttpsReadinessCheck;
+use Pulsar\Deploy\Check\IntegrityCheck;
+use Pulsar\Deploy\Check\JitCheck;
+use Pulsar\Deploy\Check\OpcacheCheck;
+use Pulsar\Deploy\Check\RateLimitCheck;
+use Pulsar\Deploy\Check\RequestSizeCheck;
+use Pulsar\Deploy\Check\SecurityHeadersReadinessCheck;
+use Pulsar\Deploy\Check\SeverityOverrideCheck;
+use Pulsar\Deploy\Check\SkippedCheck;
+use Pulsar\Deploy\Check\TrustedProxyCheck;
+use Pulsar\Deploy\CheckSeverity;
+use Pulsar\Deploy\DeployCheck;
+use Pulsar\Deploy\DeployCheckInterface;
+use Pulsar\Deploy\DeployCheckRunnerInterface;
+use Pulsar\Deploy\DeploySeverity;
+use Pulsar\Deploy\Runtime\PhpRuntime;
+use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
+use Pulsar\Http\Middleware\MiddlewarePipeline;
+use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Routing\Router;
+
+#[Internal]
+final readonly class DeployWiring implements ServiceWiringInterface
+{
+    public function wire(
+        ContainerInterface $container,
+        ConfigManager $configManager,
+        MiddlewarePipeline $middleware,
+        MiddlewareRegistry $middlewareRegistry,
+        Router $router,
+    ): void {
+        $repository = $configManager->repository();
+
+        if (!$repository->has(DeployConfig::class)) {
+            return;
+        }
+
+        /** @var DeployConfig $deployConfig */
+        $deployConfig = $repository->get(DeployConfig::class);
+        $container->instance(DeployConfig::class, $deployConfig);
+
+        $phpRuntime = new PhpRuntime();
+        $container->instance(PhpRuntimeInterface::class, $phpRuntime);
+
+        /** @var AppConfig $appConfig */
+        $appConfig = $repository->get(AppConfig::class);
+
+        /** @var SecurityConfig $securityConfig */
+        $securityConfig = $repository->get(SecurityConfig::class);
+
+        $deployCheck = new DeployCheck();
+
+        $this->registerCheckOrSkip($deployCheck, 'debug-mode', $deployConfig, static fn(): DeployCheckInterface => new DebugModeCheck($appConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'opcache', $deployConfig, static fn(): DeployCheckInterface => new OpcacheCheck($phpRuntime));
+
+        $this->registerCheckOrSkip($deployCheck, 'jit', $deployConfig, static fn(): DeployCheckInterface => new JitCheck($phpRuntime));
+
+        $this->registerCheckOrSkip($deployCheck, 'cache-settings', $deployConfig, static function () use ($container): ?DeployCheckInterface {
+            if (!$container->has(FrameworkCache::class)) {
+                return null;
+            }
+            /** @var FrameworkCache $cache */
+            $cache = $container->get(FrameworkCache::class);
+
+            return new CacheSettingsCheck($cache);
+        });
+
+        $this->registerCheckOrSkip($deployCheck, 'filesystem-scan', $deployConfig, static function () use ($container): ?DeployCheckInterface {
+            if (!$container->has(FrameworkCache::class)) {
+                return null;
+            }
+            /** @var FrameworkCache $cache */
+            $cache = $container->get(FrameworkCache::class);
+
+            return new FilesystemScanCheck($cache);
+        });
+
+        $this->registerCheckOrSkip($deployCheck, 'security-headers', $deployConfig, static fn(): DeployCheckInterface => new SecurityHeadersReadinessCheck($securityConfig->headers));
+
+        $this->registerCheckOrSkip($deployCheck, 'https-readiness', $deployConfig, static fn(): DeployCheckInterface => new HttpsReadinessCheck($securityConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'http3-readiness', $deployConfig, static fn(): DeployCheckInterface => new Http3ReadinessCheck($deployConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'health-endpoint', $deployConfig, static fn() => new HealthEndpointCheck($router));
+
+        $this->registerCheckOrSkip($deployCheck, 'rate-limiting', $deployConfig, static fn(): DeployCheckInterface => new RateLimitCheck($securityConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'request-size-limits', $deployConfig, static fn(): DeployCheckInterface => new RequestSizeCheck($deployConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'trusted-proxies', $deployConfig, static fn(): DeployCheckInterface => new TrustedProxyCheck($deployConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'integrity', $deployConfig, static function () use ($container): ?DeployCheckInterface {
+            if (!$container->has(IntegrityConfig::class)) {
+                return null;
+            }
+            /** @var IntegrityConfig $integrityConfig */
+            $integrityConfig = $container->get(IntegrityConfig::class);
+
+            return new IntegrityCheck($integrityConfig);
+        });
+
+        $container->instance(DeployCheck::class, $deployCheck);
+        $container->instance(DeployCheckRunnerInterface::class, $deployCheck);
+    }
+
+    /**
+     * Register a deploy check or a skipped stub based on config and dependency availability.
+     *
+     * @param Closure(): ?DeployCheckInterface $factory
+     */
+    private function registerCheckOrSkip(
+        DeployCheck $deployCheck,
+        string $name,
+        DeployConfig $deployConfig,
+        Closure $factory,
+    ): void {
+        $config = $deployConfig->checkConfig($name);
+
+        if (!$config['enabled']) {
+            return;
+        }
+
+        $check = $factory();
+
+        if ($check === null) {
+            $deployCheck->register(new SkippedCheck(
+                $name,
+                'Required dependency not configured',
+                $config['severity'] === 'fail' ? CheckSeverity::Error : CheckSeverity::Warning,
+            ));
+            return;
+        }
+
+        $severity = DeploySeverity::from($config['severity']);
+
+        // Wrap with severity override if configured
+        $deployCheck->register(new SeverityOverrideCheck($check, $severity));
+    }
+}

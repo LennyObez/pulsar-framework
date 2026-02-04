@@ -123,7 +123,7 @@ Components:
 - `AppConfig` / `ObservabilityConfig` — readonly DTOs with `fromArray()` factories
 - `ConfigRepository` — typed store keyed by class name
 - `ConfigManager` — orchestrator that runs the full pipeline
-- `ConfigLoaderInterface` — extension point for custom config DTOs (not consumed by core in 0.3.0)
+- `ConfigLoaderInterface` — extension point for custom config DTOs
 
 ### Error Handling (`src/ErrorHandling/`)
 

@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Exception thrown for configuration errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ConfigException extends RuntimeException
 {
     /**

@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
 /**
  * Per-disk storage configuration.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class DiskConfig
 {
     public function __construct(

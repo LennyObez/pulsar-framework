@@ -14,7 +14,7 @@ use function sprintf;
 /**
  * Exception thrown when the container encounters an error.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ContainerException extends Exception implements ContainerExceptionInterface
 {
     /**

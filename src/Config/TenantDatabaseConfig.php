@@ -11,7 +11,7 @@ use Pulsar\Tenancy\TenantDatabaseStrategy;
 /**
  * Tenant database isolation configuration sub-DTO.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class TenantDatabaseConfig
 {
     public function __construct(

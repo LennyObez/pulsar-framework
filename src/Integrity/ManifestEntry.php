@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * A single file entry within an integrity manifest.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class ManifestEntry
 {
     public function __construct(

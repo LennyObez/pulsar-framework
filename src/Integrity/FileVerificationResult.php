@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Result of verifying a single file against its manifest entry.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class FileVerificationResult
 {
     public function __construct(

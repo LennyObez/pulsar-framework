@@ -12,7 +12,7 @@ use Pulsar\Extension\Payments\Domain\WebhookEvent;
  *
  * Implementations process webhook events dispatched by the WebhookProcessor.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface WebhookHandlerInterface
 {
     /**

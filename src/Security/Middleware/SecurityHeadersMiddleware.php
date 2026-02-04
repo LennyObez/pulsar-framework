@@ -28,7 +28,7 @@ final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
         /** @var Response $response */
         $response = $next($request);
 
-        foreach ($this->config->headers as $name => $value) {
+        foreach ($this->config->effectiveHeaders() as $name => $value) {
             $response = $response->withHeader($name, $value);
         }
 

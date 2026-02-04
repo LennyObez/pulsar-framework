@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Represents a successfully matched route.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class MatchedRoute
 {
     /**

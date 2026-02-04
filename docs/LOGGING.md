@@ -1,6 +1,6 @@
 # Logging
 
-Pulsar 0.3.0 introduces a PSR-3 compliant structured logging system. Log output is JSON lines format, suitable for log aggregation systems.
+Pulsar provides a PSR-3 compliant structured logging system. Log output is JSON lines format, suitable for log aggregation systems.
 
 ## PSR-3 Compliance
 

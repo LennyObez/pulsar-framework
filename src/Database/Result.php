@@ -16,7 +16,7 @@ use Pulsar\Database\Exception\DatabaseException;
  *
  * Eagerly loads all rows from the statement at construction time.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Result
 {
     /** @var list<Row> */

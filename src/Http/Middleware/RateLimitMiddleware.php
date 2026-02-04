@@ -7,22 +7,27 @@ namespace Pulsar\Http\Middleware;
 use function is_string;
 
 use Override;
-use Pulsar\Http\RateLimit\RateLimiter;
+use Pulsar\Http\RateLimit\RateLimiterInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\TrustedProxy;
 
 /**
  * Middleware that enforces rate limiting on incoming requests.
  *
- * Uses a fixed-window rate limiter keyed by client IP address.
+ * Uses a configurable rate limiter keyed by client IP address.
+ * When a TrustedProxy is provided, resolves the real client IP from
+ * X-Forwarded-For behind reverse proxies.
+ *
  * Returns 429 Too Many Requests with standard rate-limit headers
  * when the limit is exceeded.
  */
 final readonly class RateLimitMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private RateLimiter $limiter,
+        private RateLimiterInterface $limiter,
+        private ?TrustedProxy $trustedProxy = null,
     ) {}
 
     #[Override]
@@ -52,10 +57,15 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
     /**
      * Resolve the rate-limit key from the request.
      *
-     * Default: client IP address from REMOTE_ADDR server variable.
+     * Uses TrustedProxy for IP resolution when available, otherwise
+     * falls back to REMOTE_ADDR.
      */
     private function resolveKey(Request $request): string
     {
+        if ($this->trustedProxy !== null) {
+            return 'rate_limit:' . $this->trustedProxy->resolveClientIp($request);
+        }
+
         $ip = $request->server('REMOTE_ADDR');
 
         return 'rate_limit:' . (is_string($ip) ? $ip : 'unknown');

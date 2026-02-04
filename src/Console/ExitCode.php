@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Standard exit codes for CLI commands.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum ExitCode: int
 {
     case Success = 0;
