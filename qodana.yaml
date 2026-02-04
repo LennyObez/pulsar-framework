@@ -13,7 +13,6 @@ exclude:
   - name: PhpUndefinedClassInspection
   - name: PhpUndefinedNamespaceInspection
   - name: PhpIncludeInspection
-  - name: PhpUnhandledExceptionInspection
   - name: PhpUnusedParameterInspection
   # ESLint - not relevant, project uses its own ESLint setup via pnpm
   - name: Eslint
@@ -22,5 +21,3 @@ exclude:
   - name: PhpNoninstalledComposerPackagesInspection
   # Unnecessary stop statements - intentional explicit returns/breaks for clarity
   - name: PhpUnnecessaryStopStatementInspection
-  # Duplicated code - acceptable during early development, will be refactored later
-  - name: DuplicatedCode
