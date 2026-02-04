@@ -17,7 +17,7 @@ exclude:
   - name: EsLintInspection
   # Redundant visibility modifier - CS Fixer (PER-CS2.0) enforces explicit `public` on
   # `private(set)` properties; Qodana flags it as redundant. CS Fixer is authoritative.
-  - name: PhpRedundantVisibilityModifierInspection
+  - name: PhpPublicPropertyModifierCanBeOmittedInspection
   # Composer packages - dependencies managed externally, not always installed in CI scan
   - name: PhpNoninstalledComposerPackagesInspection
   - name: All
