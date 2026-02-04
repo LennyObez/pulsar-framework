@@ -15,6 +15,8 @@ use Pulsar\Extension\Studio\Console\Event\EventVersion;
 use Pulsar\Extension\Studio\Console\Evidence\ChainLink;
 use Pulsar\Extension\Studio\Console\Evidence\HashChain;
 use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\HmacService;
 
 use function random_bytes;
 use function strlen;
@@ -22,10 +24,12 @@ use function strlen;
 #[CoversClass(HashChain::class)]
 final class HashChainTest extends TestCase
 {
+    private HmacInterface $hmac;
     private string $macKey;
 
     protected function setUp(): void
     {
+        $this->hmac = new HmacService();
         // 32-byte key meets BLAKE2b minimum requirement
         $this->macKey = random_bytes(32);
     }
@@ -68,7 +72,7 @@ final class HashChainTest extends TestCase
     #[Test]
     public function computeLinkWithMacKey(): void
     {
-        $chain = new HashChain($this->macKey);
+        $chain = new HashChain($this->hmac, $this->macKey);
         $envelope = $this->createTestEnvelope('event-002');
         $previousHash = HashChain::seedHash();
 
@@ -98,7 +102,7 @@ final class HashChainTest extends TestCase
     #[Test]
     public function computeLinkProducesCorrectMac(): void
     {
-        $chain = new HashChain($this->macKey);
+        $chain = new HashChain($this->hmac, $this->macKey);
         $envelope = $this->createTestEnvelope('mac-test-event');
         $previousHash = HashChain::seedHash();
 
@@ -188,7 +192,7 @@ final class HashChainTest extends TestCase
         $currentHash = 'some-current-hash-value';
         $expectedMac = Hmac::computeHex($currentHash, $this->macKey);
 
-        $result = HashChain::verifyLinkMac($currentHash, $expectedMac, $this->macKey);
+        $result = HashChain::verifyLinkMac($currentHash, $expectedMac, $this->macKey, $this->hmac);
 
         self::assertTrue($result);
     }
@@ -198,7 +202,7 @@ final class HashChainTest extends TestCase
     {
         $currentHash = 'some-current-hash-value';
 
-        $result = HashChain::verifyLinkMac($currentHash, str_repeat('f', 64), $this->macKey);
+        $result = HashChain::verifyLinkMac($currentHash, str_repeat('f', 64), $this->macKey, $this->hmac);
 
         self::assertFalse($result);
     }
@@ -210,7 +214,7 @@ final class HashChainTest extends TestCase
         $expectedMac = Hmac::computeHex($currentHash, $this->macKey);
         $differentKey = random_bytes(32);
 
-        $result = HashChain::verifyLinkMac($currentHash, $expectedMac, $differentKey);
+        $result = HashChain::verifyLinkMac($currentHash, $expectedMac, $differentKey, $this->hmac);
 
         self::assertFalse($result);
     }
@@ -221,7 +225,7 @@ final class HashChainTest extends TestCase
         $currentHash = 'original-hash';
         $expectedMac = Hmac::computeHex($currentHash, $this->macKey);
 
-        $result = HashChain::verifyLinkMac('tampered-hash', $expectedMac, $this->macKey);
+        $result = HashChain::verifyLinkMac('tampered-hash', $expectedMac, $this->macKey, $this->hmac);
 
         self::assertFalse($result);
     }
@@ -229,7 +233,7 @@ final class HashChainTest extends TestCase
     #[Test]
     public function hasMacKeyReturnsTrueWhenKeyProvided(): void
     {
-        $chain = new HashChain($this->macKey);
+        $chain = new HashChain($this->hmac, $this->macKey);
 
         self::assertTrue($chain->hasMacKey());
     }
@@ -245,7 +249,7 @@ final class HashChainTest extends TestCase
     #[Test]
     public function hasMacKeyReturnsFalseWithNullKey(): void
     {
-        $chain = new HashChain(null);
+        $chain = new HashChain(null, null);
 
         self::assertFalse($chain->hasMacKey());
     }

@@ -8,12 +8,12 @@ use function count;
 
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Cache\FrameworkCache;
+use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 
 use function sprintf;
 
@@ -35,8 +35,8 @@ use Throwable;
 final class OptimizeValidateCommand extends Command
 {
     public function __construct(
-        private readonly Kernel $kernel,
-        private readonly ?FrameworkCache $frameworkCache = null,
+        private readonly KernelInterface $kernel,
+        private readonly ?FrameworkCacheInterface $frameworkCache = null,
     ) {
         parent::__construct();
     }

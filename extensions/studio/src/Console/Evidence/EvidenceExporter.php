@@ -14,7 +14,7 @@ use const JSON_UNESCAPED_UNICODE;
 
 use JsonException;
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
@@ -35,6 +35,7 @@ final readonly class EvidenceExporter
 {
     public function __construct(
         private EventStoreInterface $store,
+        private ?HmacInterface $hmac = null,
         private ?string $archiveMacKey = null,
         private bool $isEncrypted = false,
         private bool $hasDecryptionKey = true,
@@ -70,7 +71,7 @@ final readonly class EvidenceExporter
         if ($this->archiveMacKey !== null) {
             $manifestJson = json_encode($manifest, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             $archiveDigest = hash('sha256', $manifestJson);
-            $mac = Hmac::computeHex($archiveDigest, $this->archiveMacKey);
+            $mac = $this->hmac?->computeHex($archiveDigest, $this->archiveMacKey);
         }
 
         return new EvidenceArchive(

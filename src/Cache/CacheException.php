@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Cache;
 
 use NoDiscard;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Exception thrown for framework cache operations.
  */
-#[Internal]
+#[Api]
 final class CacheException extends RuntimeException
 {
     #[NoDiscard]

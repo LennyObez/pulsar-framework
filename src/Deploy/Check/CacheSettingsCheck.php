@@ -7,7 +7,7 @@ namespace Pulsar\Deploy\Check;
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Cache\FrameworkCache;
+use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Deploy\CheckResult;
 use Pulsar\Deploy\DeployCheckInterface;
 use SodiumException;
@@ -24,7 +24,7 @@ final readonly class CacheSettingsCheck implements DeployCheckInterface
     private const string CHECK_NAME = 'cache-settings';
 
     public function __construct(
-        private FrameworkCache $frameworkCache,
+        private FrameworkCacheInterface $frameworkCache,
     ) {}
 
     #[Override]

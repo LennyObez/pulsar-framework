@@ -18,6 +18,7 @@ use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Event\EventVersion;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Security\Crypto\HmacService;
 
 use function usleep;
 
@@ -92,13 +93,14 @@ final class SqliteEventStoreTest extends TestCase
     #[Test]
     public function storeWithChainCreatesChainLinkWithMac(): void
     {
+        $store = new SqliteEventStore(':memory:', null, new HmacService());
         $envelope = $this->createEnvelope('event-1');
         $payloadJson = json_encode($envelope->payload, JSON_THROW_ON_ERROR);
         $macKey = 'test-mac-key-32-bytes-length-ok!';
 
-        $this->store->storeWithChain($envelope, $payloadJson, null, $macKey);
+        $store->storeWithChain($envelope, $payloadJson, null, $macKey);
 
-        $links = $this->store->chainLinks();
+        $links = $store->chainLinks();
         self::assertCount(1, $links);
         self::assertNotNull($links[0]['link_mac']);
     }

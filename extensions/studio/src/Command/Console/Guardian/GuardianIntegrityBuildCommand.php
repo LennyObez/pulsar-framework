@@ -23,9 +23,9 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Integrity\Exception\IntegrityException;
-use Pulsar\Integrity\ManifestBuilder;
+use Pulsar\Integrity\ManifestBuilderInterface;
 use Pulsar\Integrity\ManifestFormat;
-use Pulsar\Integrity\ManifestSigner;
+use Pulsar\Integrity\ManifestSignerInterface;
 use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 use SodiumException;
 
@@ -38,9 +38,9 @@ use function sprintf;
 final class GuardianIntegrityBuildCommand extends Command
 {
     public function __construct(
-        private readonly ManifestBuilder $builder,
+        private readonly ManifestBuilderInterface $builder,
         private readonly IntegrityConfig $config,
-        private readonly ?ManifestSigner $signer = null,
+        private readonly ?ManifestSignerInterface $signer = null,
     ) {
         parent::__construct();
     }

@@ -19,8 +19,9 @@ use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Core\Version;
 use Pulsar\Routing\Route;
-use Pulsar\Security\Crypto\Encryptor;
-use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\EncryptorInterface;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use Random\RandomException;
 use ReflectionException;
 use SodiumException;
@@ -34,19 +35,13 @@ use function sort;
  * manifests and deterministic invalidation.
  */
 #[Internal]
-final class FrameworkCache
+final class FrameworkCache implements FrameworkCacheInterface
 {
     /** MasterKey sub-key ID for cache HMAC. */
     private const int HMAC_SUB_KEY_ID = 7;
 
     /** MasterKey KDF context for cache HMAC. */
     private const string HMAC_CONTEXT = 'fw_cache';
-
-    /** MasterKey sub-key ID for cache encryption. */
-    private const int ENCRYPT_SUB_KEY_ID = 8;
-
-    /** MasterKey KDF context for cache encryption. */
-    private const string ENCRYPT_CONTEXT = 'fw_c_enc';
 
     /** Manifest schema version. */
     private const int SCHEMA_VERSION = 1;
@@ -68,6 +63,7 @@ final class FrameworkCache
     ];
 
     private readonly string $cachePath;
+    private readonly HmacInterface $hmac;
     private readonly CacheIntegrity $integrity;
     private readonly ConfigCache $configCache;
     private readonly RouteCache $routeCache;
@@ -76,19 +72,17 @@ final class FrameworkCache
     /** @throws SodiumException */
     public function __construct(
         private readonly string $basePath,
-        private readonly MasterKey $masterKey,
+        private readonly KeyProviderInterface $masterKey,
+        HmacInterface $hmac,
         private readonly bool $encrypt = false,
+        ?EncryptorInterface $encryptor = null,
     ) {
+        $this->hmac = $hmac;
         $this->cachePath = $basePath . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'framework';
 
         $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
 
-        $encryptor = null;
-        if ($this->encrypt) {
-            $encryptor = Encryptor::fromDerivedKey($this->masterKey, self::ENCRYPT_SUB_KEY_ID, self::ENCRYPT_CONTEXT);
-        }
-
-        $this->integrity = new CacheIntegrity($hmacKey, $encryptor);
+        $this->integrity = new CacheIntegrity($this->hmac, $hmacKey, $this->encrypt ? $encryptor : null);
         $this->configCache = new ConfigCache($this->integrity);
         $this->routeCache = new RouteCache($this->integrity);
         $this->containerCache = new ContainerCache($this->integrity);
@@ -163,7 +157,7 @@ final class FrameworkCache
     {
         $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
 
-        return CacheManifest::load($this->cachePath, $hmacKey) !== null;
+        return CacheManifest::load($this->hmac, $this->cachePath, $hmacKey) !== null;
     }
 
     /**
@@ -188,7 +182,7 @@ final class FrameworkCache
         }
 
         $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
-        $manifest = CacheManifest::load($this->cachePath, $hmacKey);
+        $manifest = CacheManifest::load($this->hmac, $this->cachePath, $hmacKey);
 
         if ($manifest === null) {
             return null;
@@ -343,6 +337,7 @@ final class FrameworkCache
         // Write manifest
         $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
         CacheManifest::write(
+            hmac: $this->hmac,
             cachePath: $this->cachePath,
             hmacKey: $hmacKey,
             schemaVersion: self::SCHEMA_VERSION,

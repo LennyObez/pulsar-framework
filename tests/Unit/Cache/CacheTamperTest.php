@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheIntegrity;
+use Pulsar\Security\Crypto\HmacService;
 
 use function strlen;
 
@@ -21,7 +22,7 @@ final class CacheTamperTest extends TestCase
     protected function setUp(): void
     {
         $this->hmacKey = random_bytes(32);
-        $this->integrity = new CacheIntegrity($this->hmacKey);
+        $this->integrity = new CacheIntegrity(new HmacService(), $this->hmacKey);
         $this->tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_cache_tamper_test_' . bin2hex(random_bytes(8));
         mkdir($this->tempDir, 0o750, true);
     }

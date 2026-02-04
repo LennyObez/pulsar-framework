@@ -14,6 +14,7 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
+use Pulsar\Observability\Tracing\W3CTraceContextParser;
 
 #[CoversClass(TracingMiddleware::class)]
 final class TracingMiddlewareTest extends TestCase
@@ -38,6 +39,7 @@ final class TracingMiddlewareTest extends TestCase
 
         $middleware = new TracingMiddleware(
             collector: $collector,
+            traceContextParser: new W3CTraceContextParser(),
             routeContext: $routeContext,
         );
 
@@ -65,6 +67,7 @@ final class TracingMiddlewareTest extends TestCase
 
         $middleware = new TracingMiddleware(
             collector: $collector,
+            traceContextParser: new W3CTraceContextParser(),
             routeContext: null,
         );
 
@@ -87,6 +90,7 @@ final class TracingMiddlewareTest extends TestCase
 
         $middleware = new TracingMiddleware(
             collector: $collector,
+            traceContextParser: new W3CTraceContextParser(),
             routeContext: $routeContext,
         );
 

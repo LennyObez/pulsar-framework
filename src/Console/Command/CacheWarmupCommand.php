@@ -6,11 +6,11 @@ namespace Pulsar\Console\Command;
 
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Cache\FrameworkCache;
+use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Console\Command;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 
 /**
  * Alias for `optimize` — discoverable as `cache:warmup`.
@@ -21,8 +21,8 @@ use Pulsar\Core\Kernel;
 final class CacheWarmupCommand extends Command
 {
     public function __construct(
-        private readonly Kernel $kernel,
-        private readonly ?FrameworkCache $frameworkCache = null,
+        private readonly KernelInterface $kernel,
+        private readonly ?FrameworkCacheInterface $frameworkCache = null,
     ) {
         parent::__construct();
     }

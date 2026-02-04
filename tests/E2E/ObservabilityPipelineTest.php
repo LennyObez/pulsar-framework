@@ -27,6 +27,7 @@ use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanStatus;
 use Pulsar\Observability\Tracing\TraceContext;
+use Pulsar\Observability\Tracing\W3CTraceContextParser;
 
 /**
  * End-to-end tests for the observability pipeline.
@@ -157,7 +158,7 @@ final class ObservabilityPipelineTest extends TestCase
     public function tracingMiddlewareCreatesRootSpanForRequest(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, 1.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
 
         $request = $this->createRequest(Method::GET, '/api/items');
 
@@ -189,7 +190,7 @@ final class ObservabilityPipelineTest extends TestCase
     public function tracingMiddlewarePropagatesToResponseHeader(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, 1.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
 
         $response = $middleware->process(
             $this->createRequest(),
@@ -208,7 +209,7 @@ final class ObservabilityPipelineTest extends TestCase
     public function tracingMiddlewarePropagatesIncomingTraceContext(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, 1.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
 
         $incomingTraceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
         $request = $this->createRequest(
@@ -237,7 +238,7 @@ final class ObservabilityPipelineTest extends TestCase
     public function tracingMiddlewareAttachesContextToRequestAttributes(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, 1.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
 
         $capturedContext = null;
         $capturedSpan = null;
@@ -259,7 +260,7 @@ final class ObservabilityPipelineTest extends TestCase
     public function tracingMiddlewareSetsErrorStatusOnServerError(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, 1.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
 
         $middleware->process(
             $this->createRequest(),
@@ -373,7 +374,7 @@ final class ObservabilityPipelineTest extends TestCase
         $collector = new InMemorySpanCollector();
 
         $metricsMiddleware = new MetricsMiddleware($registry);
-        $tracingMiddleware = new TracingMiddleware($collector, 1.0);
+        $tracingMiddleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
 
         $request = $this->createRequest(Method::POST, '/api/orders');
 

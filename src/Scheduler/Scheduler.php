@@ -9,6 +9,7 @@ use function count;
 use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
+use Pulsar\Api\Api;
 use Pulsar\Context\CausationId;
 use Pulsar\Context\CorrelationId;
 use Pulsar\Context\RequestContext;
@@ -22,6 +23,7 @@ use function sprintf;
 /**
  * Job scheduler that evaluates due jobs and executes them.
  */
+#[Api]
 final readonly class Scheduler
 {
     public function __construct(

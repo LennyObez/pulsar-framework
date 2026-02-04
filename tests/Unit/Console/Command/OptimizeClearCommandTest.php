@@ -15,6 +15,7 @@ use Pulsar\Console\Command\OptimizeClearCommand;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function random_bytes;
@@ -82,7 +83,7 @@ final class OptimizeClearCommandTest extends TestCase
 
         // Create the cache directory with a dummy file
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
-        $cache = new FrameworkCache($this->tempDir, $masterKey);
+        $cache = new FrameworkCache($this->tempDir, $masterKey, new HmacService());
         $cachePath = $cache->cachePath();
         mkdir($cachePath, 0o750, true);
         file_put_contents($cachePath . DIRECTORY_SEPARATOR . 'manifest.json', '{}');
@@ -98,7 +99,7 @@ final class OptimizeClearCommandTest extends TestCase
     private function createCommand(): OptimizeClearCommand
     {
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
-        $frameworkCache = new FrameworkCache($this->tempDir, $masterKey);
+        $frameworkCache = new FrameworkCache($this->tempDir, $masterKey, new HmacService());
 
         return new OptimizeClearCommand($frameworkCache);
     }

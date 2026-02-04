@@ -19,8 +19,8 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\FileVerificationStatus;
 use Pulsar\Integrity\ManifestFormat;
-use Pulsar\Integrity\ManifestSigner;
-use Pulsar\Integrity\ManifestVerifier;
+use Pulsar\Integrity\ManifestSignerInterface;
+use Pulsar\Integrity\ManifestVerifierInterface;
 use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 use SodiumException;
 
@@ -33,9 +33,9 @@ use function sprintf;
 final class GuardianIntegrityVerifyCommand extends Command
 {
     public function __construct(
-        private readonly ManifestVerifier $verifier,
+        private readonly ManifestVerifierInterface $verifier,
         private readonly IntegrityConfig $config,
-        private readonly ?ManifestSigner $signer = null,
+        private readonly ?ManifestSignerInterface $signer = null,
     ) {
         parent::__construct();
     }

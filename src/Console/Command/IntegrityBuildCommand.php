@@ -24,11 +24,9 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Integrity\Exception\IntegrityException;
-use Pulsar\Integrity\ManifestBuilder;
+use Pulsar\Integrity\ManifestBuilderInterface;
 use Pulsar\Integrity\ManifestFormat;
-use Pulsar\Integrity\ManifestSigner;
-use Pulsar\Security\Crypto\MasterKey;
-use Pulsar\Security\Exception\SecurityException;
+use Pulsar\Integrity\ManifestSignerInterface;
 use SodiumException;
 
 use function sprintf;
@@ -42,7 +40,9 @@ final class IntegrityBuildCommand extends Command
 {
     public function __construct(
         private readonly IntegrityConfig $config,
+        private readonly ManifestBuilderInterface $builder,
         private readonly string $basePath,
+        private readonly ?ManifestSignerInterface $signer = null,
     ) {
         parent::__construct();
     }
@@ -58,7 +58,6 @@ final class IntegrityBuildCommand extends Command
 
     /**
      * @throws JsonException If manifest canonicalization fails during signing
-     * @throws SecurityException If the master key is missing or invalid when --sign is used
      */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
@@ -77,8 +76,7 @@ final class IntegrityBuildCommand extends Command
         $output->newLine();
 
         try {
-            $builder = new ManifestBuilder($this->basePath);
-            $manifest = $builder->build($this->config->include, $this->config->exclude);
+            $manifest = $this->builder->build($this->config->include, $this->config->exclude);
         } catch (IntegrityException $e) {
             $output->error(sprintf('Build failed: %s', $e->getMessage()));
 
@@ -90,10 +88,14 @@ final class IntegrityBuildCommand extends Command
         $signature = null;
 
         if ($sign) {
+            if ($this->signer === null) {
+                $output->error('Signing requested but no ManifestSignerInterface was provided (is PULSAR_MASTER_KEY set?)');
+
+                return ExitCode::Error->value;
+            }
+
             try {
-                $masterKey = MasterKey::fromEnvironment();
-                $signer = new ManifestSigner($masterKey);
-                $signature = $signer->sign($manifest);
+                $signature = $this->signer->sign($manifest);
                 $output->writeln('  Manifest signed with HMAC (BLAKE2b)');
             } catch (SodiumException $e) {
                 $output->error(sprintf('Signing failed: %s', $e->getMessage()));

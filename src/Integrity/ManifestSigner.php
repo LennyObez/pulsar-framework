@@ -11,8 +11,8 @@ use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\Hmac;
-use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use SodiumException;
 
 /**
@@ -22,7 +22,7 @@ use SodiumException;
  * subKeyId=6 and context='integ_sg' for domain separation.
  */
 #[Internal]
-final class ManifestSigner
+final class ManifestSigner implements ManifestSignerInterface
 {
     private const int SUB_KEY_ID = 6;
     private const string CONTEXT = 'integ_sg';
@@ -32,8 +32,10 @@ final class ManifestSigner
     /**
      * @throws SodiumException
      */
-    public function __construct(MasterKey $masterKey)
-    {
+    public function __construct(
+        private readonly HmacInterface $hmac,
+        KeyProviderInterface $masterKey,
+    ) {
         $this->signingKey = $masterKey->deriveSubKey(self::SUB_KEY_ID, self::CONTEXT);
     }
 
@@ -50,7 +52,7 @@ final class ManifestSigner
     {
         $canonical = $this->canonicalize($manifest);
 
-        return Hmac::computeHex($canonical, $this->signingKey);
+        return $this->hmac->computeHex($canonical, $this->signingKey);
     }
 
     /**
@@ -70,7 +72,7 @@ final class ManifestSigner
 
         $canonical = $this->canonicalize($manifest);
 
-        return Hmac::verifyHex($canonical, $manifest->signature, $this->signingKey);
+        return $this->hmac->verifyHex($canonical, $manifest->signature, $this->signingKey);
     }
 
     /**

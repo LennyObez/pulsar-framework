@@ -12,7 +12,7 @@ use JsonException;
 use Override;
 use PDOException;
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use Pulsar\Extension\Studio\Exception\StudioException;
@@ -32,7 +32,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
 {
     public function __construct(
         private SqliteEventStore $inner,
-        private Encryptor $encryptor,
+        private EncryptorInterface $encryptor,
     ) {}
 
     /**

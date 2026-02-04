@@ -17,6 +17,7 @@ use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function random_bytes;
@@ -36,7 +37,7 @@ final class ConfigCacheTest extends TestCase
         mkdir($this->tempDir, 0o750, true);
 
         $hmacKey = random_bytes(32);
-        $this->integrity = new CacheIntegrity($hmacKey);
+        $this->integrity = new CacheIntegrity(new HmacService(), $hmacKey);
         $this->configCache = new ConfigCache($this->integrity);
     }
 
@@ -83,7 +84,7 @@ final class ConfigCacheTest extends TestCase
     {
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $encryptor = Encryptor::fromDerivedKey($masterKey, 8, 'fw_c_enc');
-        $integrity = new CacheIntegrity(random_bytes(32), $encryptor);
+        $integrity = new CacheIntegrity(new HmacService(), random_bytes(32), $encryptor);
         $cache = new ConfigCache($integrity);
 
         $repository = new ConfigRepository();

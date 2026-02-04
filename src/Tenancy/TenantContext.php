@@ -6,12 +6,14 @@ namespace Pulsar\Tenancy;
 
 use NoDiscard;
 use Override;
+use Pulsar\Api\Api;
 use Pulsar\Runtime\ResettableInterface;
 use Pulsar\Tenancy\Exception\TenancyException;
 
 /**
  * Holds the current tenant for the active request.
  */
+#[Api]
 final class TenantContext implements ResettableInterface
 {
     private ?Tenant $tenant = null;

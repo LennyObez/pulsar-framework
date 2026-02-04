@@ -18,7 +18,7 @@ use Throwable;
  * When Studio is disabled, this remains a no-op with an empty sinks array.
  */
 #[Internal]
-final class DeferredSink implements LogSinkInterface
+final class DeferredSink implements DeferredSinkInterface
 {
     /** @var list<LogSinkInterface> */
     private array $sinks = [];

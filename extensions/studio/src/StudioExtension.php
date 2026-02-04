@@ -8,10 +8,10 @@ use function is_array;
 use function is_file;
 
 use Pulsar\Config\AppConfig;
-use Pulsar\Config\ConfigManager;
+use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
@@ -38,11 +38,11 @@ use Pulsar\Extension\Studio\Security\StudioAccessGate;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\PostBootExtensionInterface;
 use Pulsar\Extensibility\PreBootExtensionInterface;
-use Pulsar\FeatureFlag\FlagEvaluationLog;
+use Pulsar\FeatureFlag\FlagEvaluationLogInterface;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Observability\Context\CorrelationContextProviderInterface;
-use Pulsar\Observability\ErrorTracking\ErrorAggregator;
-use Pulsar\Observability\Log\Sink\DeferredSink;
+use Pulsar\Observability\ErrorTracking\ErrorAggregatorInterface;
+use Pulsar\Observability\Log\Sink\DeferredSinkInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Queue\Worker;
@@ -50,8 +50,9 @@ use Pulsar\Routing\RouterInterface;
 use Pulsar\Runtime\FpmRuntime;
 use Pulsar\Runtime\RuntimeCollectorInterface;
 use Pulsar\Scheduler\Scheduler;
-use Pulsar\Security\Crypto\Encryptor;
-use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\EncryptorInterface;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Tenancy\TenantContext;
 use Random\Randomizer;
 
@@ -87,8 +88,8 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
      */
     public function preBoot(ContainerInterface $container): void
     {
-        /** @var ConfigManager $configManager */
-        $configManager = $container->get(ConfigManager::class);
+        /** @var ConfigManagerInterface $configManager */
+        $configManager = $container->get(ConfigManagerInterface::class);
         $repository = $configManager->repository();
         $environment = $configManager->environment();
 
@@ -127,29 +128,35 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         }
 
         // Create SQLite event store
+        /** @var HmacInterface $hmacForStore */
+        $hmacForStore = $container->get(HmacInterface::class);
+
         $sqliteStore = new SqliteEventStore(
             $studioConfig->storagePath,
             $container->has(MetricRegistry::class)
                 ? $container->get(MetricRegistry::class)
                 : null,
+            $hmacForStore,
         );
         /** @var MetricRegistry|null $_ Psalm hint */
         $container->instance(SqliteEventStore::class, $sqliteStore);
 
-        // Optionally wrap with encryption (requires MasterKey for key derivation)
+        // Optionally wrap with encryption (requires KeyProvider for key derivation)
         $store = $sqliteStore;
         $isEncrypted = false;
         $hasDecryptionKey = false;
         $chainMacKey = null;
         $archiveMacKey = null;
 
-        if ($container->has(MasterKey::class)) {
-            /** @var MasterKey $masterKey */
-            $masterKey = $container->get(MasterKey::class);
+        if ($container->has(KeyProviderInterface::class) && $container->has(EncryptorInterface::class)) {
+            /** @var KeyProviderInterface $masterKey */
+            $masterKey = $container->get(KeyProviderInterface::class);
             $hasDecryptionKey = true;
 
             // Encryption at rest — dedicated subkey 3 (separate from main Encryptor's subkey 1)
-            $studioEncryptor = Encryptor::fromDerivedKey($masterKey, 3, 'studio_enc__');
+            /** @var EncryptorInterface $baseEncryptor */
+            $baseEncryptor = $container->get(EncryptorInterface::class);
+            $studioEncryptor = $baseEncryptor->withDerivedKey($masterKey, 3, 'studio_enc__');
             $encryptedStore = new EncryptedEventStore($sqliteStore, $studioEncryptor);
             $store = $encryptedStore;
             $isEncrypted = true;
@@ -228,11 +235,15 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         $container->instance(StudioAccessGate::class, $accessGate);
 
         // Evidence services
-        $evidenceVerifier = new EvidenceVerifier();
+        /** @var HmacInterface $hmacForEvidence */
+        $hmacForEvidence = $container->get(HmacInterface::class);
+
+        $evidenceVerifier = new EvidenceVerifier($hmacForEvidence);
         $container->instance(EvidenceVerifier::class, $evidenceVerifier);
 
         $evidenceExporter = new EvidenceExporter(
             store: $store,
+            hmac: $hmacForEvidence,
             archiveMacKey: $archiveMacKey,
             isEncrypted: $isEncrypted,
             hasDecryptionKey: $hasDecryptionKey,
@@ -245,7 +256,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             $metricRegistry = $container->get(MetricRegistry::class);
 
             $collector = new InstrumentedRuntime(
-                inner: new FpmRuntime($container->get(Kernel::class)),
+                inner: new FpmRuntime($container->get(KernelInterface::class)),
                 contextProvider: $contextProvider,
                 metricRegistry: $metricRegistry,
                 emit: $studioManager->emitCallback(),
@@ -317,22 +328,22 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         }
 
         // 3. Log collector (via DeferredSink)
-        if ($collectorConfig->logs && $container->has(DeferredSink::class)) {
+        if ($collectorConfig->logs && $container->has(DeferredSinkInterface::class)) {
             $logCollector = new LogCollector($contextProvider, $emit);
             $container->instance(LogCollector::class, $logCollector);
 
-            /** @var DeferredSink $deferredSink */
-            $deferredSink = $container->get(DeferredSink::class);
+            /** @var DeferredSinkInterface $deferredSink */
+            $deferredSink = $container->get(DeferredSinkInterface::class);
             $deferredSink->addSink($logCollector);
         }
 
         // 4. Exception collector (observer on ErrorAggregator)
-        if ($collectorConfig->exceptions && $container->has(ErrorAggregator::class)) {
+        if ($collectorConfig->exceptions && $container->has(ErrorAggregatorInterface::class)) {
             $exceptionCollector = new ExceptionCollector($contextProvider, $emit);
             $container->instance(ExceptionCollector::class, $exceptionCollector);
 
-            /** @var ErrorAggregator $aggregator */
-            $aggregator = $container->get(ErrorAggregator::class);
+            /** @var ErrorAggregatorInterface $aggregator */
+            $aggregator = $container->get(ErrorAggregatorInterface::class);
             $aggregator->addObserver($exceptionCollector->handleError(...));
         }
 
@@ -346,12 +357,12 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         }
 
         // 6. Feature flag collector (observer on FlagEvaluationLog)
-        if ($collectorConfig->featureFlags && $container->has(FlagEvaluationLog::class)) {
+        if ($collectorConfig->featureFlags && $container->has(FlagEvaluationLogInterface::class)) {
             $featureFlagCollector = new FeatureFlagCollector($contextProvider, $emit);
             $container->instance(FeatureFlagCollector::class, $featureFlagCollector);
 
-            /** @var FlagEvaluationLog $evaluationLog */
-            $evaluationLog = $container->get(FlagEvaluationLog::class);
+            /** @var FlagEvaluationLogInterface $evaluationLog */
+            $evaluationLog = $container->get(FlagEvaluationLogInterface::class);
             $evaluationLog->addObserver($featureFlagCollector->handleEvaluation(...));
         }
 

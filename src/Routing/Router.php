@@ -9,8 +9,6 @@ use function in_array;
 
 use InvalidArgumentException;
 use Pulsar\Api\Api;
-use Pulsar\Cache\CachedRoute;
-use Pulsar\Cache\RouteHandlerType;
 use Pulsar\Http\Method;
 
 use function sprintf;
@@ -237,6 +235,16 @@ final class Router implements RouterInterface
     }
 
     /**
+     * Get all registered routes.
+     *
+     * @return list<Route>
+     */
+    public function routes(): array
+    {
+        return $this->routes;
+    }
+
+    /**
      * Get the number of registered routes.
      */
     public function count(): int
@@ -255,33 +263,13 @@ final class Router implements RouterInterface
     }
 
     /**
-     * Load cached routes from the cache subsystem.
+     * Load pre-built routes (e.g. reconstructed from cache by the composition root).
      *
-     * Converts CachedRoute DTOs back to Route objects with handler arrays/strings.
-     *
-     * @param list<CachedRoute> $cachedRoutes
+     * @param list<Route> $routes
      */
-    public function loadCachedRoutes(array $cachedRoutes): void
+    public function loadRoutes(array $routes): void
     {
-        foreach ($cachedRoutes as $cached) {
-            /** @var class-string $resolvable */
-            $resolvable = $cached->handler->resolvable;
-            $handler = match ($cached->handler->type) {
-                RouteHandlerType::Invokable => $resolvable,
-                RouteHandlerType::Method => [$resolvable, $cached->handler->method ?? '__invoke'],
-            };
-
-            $route = new Route(
-                methods: $cached->methods,
-                path: $cached->path,
-                handler: $handler,
-                name: $cached->name,
-                attributes: $cached->attributes,
-                middleware: $cached->middleware,
-                constraints: $cached->constraints,
-                host: $cached->host,
-            );
-
+        foreach ($routes as $route) {
             $this->routes[] = $route;
 
             if ($route->name !== null) {

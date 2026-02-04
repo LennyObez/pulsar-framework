@@ -7,12 +7,15 @@ namespace Pulsar\Observability\Metrics;
 use function implode;
 use function ksort;
 
+use Pulsar\Api\Api;
+
 /**
  * Immutable label key-value set for metric dimensions.
  *
  * Labels are sorted deterministically by key to produce a stable
  * map lookup key via {@see key()}.
  */
+#[Api]
 final readonly class LabelSet
 {
     /** @var array<string, string> */

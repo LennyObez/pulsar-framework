@@ -21,6 +21,7 @@ use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Container\Container;
 use Pulsar\Core\Kernel;
 use Pulsar\Routing\Router;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function random_bytes;
@@ -95,7 +96,7 @@ final class OptimizeValidateCommandTest extends TestCase
 
         $kernel = new Kernel($container, $router, null, $configManager);
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
-        $cache = new FrameworkCache($this->tempDir, $masterKey);
+        $cache = new FrameworkCache($this->tempDir, $masterKey, new HmacService());
 
         $command = new OptimizeValidateCommand($kernel, $cache);
         $output = new BufferedOutput();

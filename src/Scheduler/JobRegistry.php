@@ -11,11 +11,13 @@ use function count;
 use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use NoDiscard;
+use Pulsar\Api\Api;
 use Pulsar\Scheduler\Exception\SchedulerException;
 
 /**
  * Registry of scheduled jobs.
  */
+#[Api]
 final class JobRegistry
 {
     /** @var array<string, JobInterface> */

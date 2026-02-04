@@ -9,8 +9,7 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Supervisor\PreflightCheck\PreflightCheckInterface;
-use Pulsar\Supervisor\PreflightCheck\PreflightRunner;
+use Pulsar\Supervisor\PreflightCheck\PreflightRunnerInterface;
 
 use function sprintf;
 
@@ -19,14 +18,9 @@ use function sprintf;
  */
 final class SupervisorCheckCommand extends Command
 {
-    private readonly PreflightRunner $runner;
-
-    /**
-     * @param list<PreflightCheckInterface> $checks
-     */
-    public function __construct(array $checks)
-    {
-        $this->runner = new PreflightRunner($checks);
+    public function __construct(
+        private readonly PreflightRunnerInterface $runner,
+    ) {
         parent::__construct();
     }
 

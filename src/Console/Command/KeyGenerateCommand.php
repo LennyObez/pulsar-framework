@@ -9,7 +9,6 @@ use const DIRECTORY_SEPARATOR;
 use function fgets;
 use function file_exists;
 use function file_get_contents;
-use function fwrite;
 
 use Override;
 
@@ -34,7 +33,6 @@ use SodiumException;
 
 use function sprintf;
 
-use const STDERR;
 use const STDIN;
 
 use function str_contains;
@@ -193,8 +191,7 @@ final class KeyGenerateCommand extends Command
      */
     private function confirm(OutputInterface $output): bool
     {
-        // Write prompt to stderr so it doesn't pollute stdout
-        fwrite(STDERR, 'PULSAR_MASTER_KEY is already set. Replace it? [y/N] ');
+        $output->write('PULSAR_MASTER_KEY is already set. Replace it? [y/N] ');
 
         $answer = fgets($this->stdin);
 

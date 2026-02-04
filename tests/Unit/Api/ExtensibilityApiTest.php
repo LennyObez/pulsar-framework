@@ -84,9 +84,9 @@ final class ExtensibilityApiTest extends TestCase
     }
 
     #[Test]
-    public function extensionBootstrapIsInternal(): void
+    public function extensionBootstrapIsPublicApi(): void
     {
-        self::assertHasInternalAttribute(ExtensionBootstrap::class);
+        self::assertHasApiAttribute(ExtensionBootstrap::class);
     }
 
     #[Test]

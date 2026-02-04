@@ -9,6 +9,7 @@ use function array_map;
 use function array_values;
 use function explode;
 use function is_dir;
+use function is_int;
 use function is_string;
 
 use Pulsar\Console\ExitCode;
@@ -129,10 +130,9 @@ trait ScaffoldTrait
         $name = $this->toPascalCase($name);
         $module = $this->toPascalCase($module);
 
-        $resolved = $this->resolveBasePath($basePath, 'app/Modules');
-        if ($resolved === false) {
-            $output->errorln('Failed to get current working directory.');
-            return ExitCode::Error->value;
+        $resolved = $this->resolveBasePathOrFail($basePath, 'app/Modules', $output);
+        if (is_int($resolved)) {
+            return $resolved;
         }
 
         $modulePath = $resolved . DIRECTORY_SEPARATOR . $module;
@@ -207,6 +207,25 @@ trait ScaffoldTrait
         }
 
         return $cwd . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+    }
+
+    /**
+     * Resolve a base path or write an error and return an exit code.
+     *
+     * @return string|int The resolved absolute path, or ExitCode::Error value on failure
+     */
+    private function resolveBasePathOrFail(
+        string $optionValue,
+        string $default,
+        OutputInterface $output,
+    ): string|int {
+        $resolved = $this->resolveBasePath($optionValue, $default);
+        if ($resolved === false) {
+            $output->errorln('Failed to get current working directory.');
+            return ExitCode::Error->value;
+        }
+
+        return $resolved;
     }
 
     /**

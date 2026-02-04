@@ -10,7 +10,7 @@ use Pulsar\Api\Internal;
  * Executes all registered preflight checks and aggregates the results.
  */
 #[Internal]
-final readonly class PreflightRunner
+final readonly class PreflightRunner implements PreflightRunnerInterface
 {
     /** @var list<PreflightCheckInterface> */
     private array $checks;

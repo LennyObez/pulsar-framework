@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Console;
 
+use Pulsar\Api\Api;
+
 use function sprintf;
 
 /**
@@ -11,6 +13,7 @@ use function sprintf;
  *
  * Provides common functionality and a structured approach to command implementation.
  */
+#[Api]
 abstract class Command implements CommandInterface
 {
     public protected(set) string $name = '';

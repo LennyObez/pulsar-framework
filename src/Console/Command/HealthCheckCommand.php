@@ -9,7 +9,7 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Resilience\HealthCheck\HealthCheckRunner;
+use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
 use Pulsar\Resilience\HealthCheck\HealthStatus;
 
 use function sprintf;
@@ -20,7 +20,7 @@ use function sprintf;
 final class HealthCheckCommand extends Command
 {
     public function __construct(
-        private readonly HealthCheckRunner $runner,
+        private readonly HealthCheckRunnerInterface $runner,
     ) {
         parent::__construct();
     }

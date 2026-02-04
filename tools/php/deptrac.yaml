@@ -7,11 +7,27 @@ deptrac:
     - '#.*Test\.php$#'
     - '#.*Fixture.*\.php$#'
 
+  # =================================================================
+  # Layer definitions — Plan 7: per-module public + internal layers
+  #
+  # Tiers (dependency direction: down only):
+  #   Foundation:     Api, Support
+  #   CoreTier:       Container, Config, Core, ErrorHandling
+  #   Infrastructure: Http, Routing, Console, Extensibility
+  #   Features:       everything else (20 modules)
+  #
+  # Each module has two layers:
+  #   {Module}          — public surface (excludes \Internal\ namespace)
+  #   {Module}_Internal  — internal implementation (\Internal\ only)
+  #
+  # Internal layers may only depend on their own public layer plus
+  # Foundation and CoreTier. Cross-module Internal\ access is blocked.
+  # =================================================================
+
   layers:
     # -----------------------------------------------------------------
-    # Composition Roots — may freely cross core module boundaries.
-    # These are the only classes allowed to wire together internal
-    # implementations from many core modules.
+    # Composition Root — Kernel and Application wire the system.
+    # Unrestricted access to all layers (public + internal).
     # -----------------------------------------------------------------
     - name: CompositionRoot
       collectors:
@@ -20,27 +36,511 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Console\\Application$
 
-    # -----------------------------------------------------------------
-    # Core — everything under Pulsar\ except Extension\ and the
-    # composition roots above.  Treated as a single layer for Plan 2;
-    # Plan 7 will split this into per-module layers.
-    # -----------------------------------------------------------------
+    # =================================================================
+    # Foundation Tier
+    # =================================================================
+
+    # --- Api ---
+    - name: Api
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Api\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Api\\Internal\\
+
+    - name: Api_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Api\\Internal\\
+
+    # --- Support ---
+    - name: Support
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Support\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Support\\Internal\\
+
+    - name: Support_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Support\\Internal\\
+
+    # =================================================================
+    # CoreTier
+    # =================================================================
+
+    # --- Container ---
+    - name: Container
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Container\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Container\\Internal\\
+
+    - name: Container_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Container\\Internal\\
+
+    # --- Config ---
+    - name: Config
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Config\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Config\\Internal\\
+
+    - name: Config_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Config\\Internal\\
+
+    # --- Core (excludes Kernel → CompositionRoot) ---
     - name: Core
       collectors:
         - type: bool
           must:
             - type: classLike
-              value: ^Pulsar\\
+              value: ^Pulsar\\Core\\
           must_not:
             - type: classLike
-              value: ^Pulsar\\Extension\\
+              value: ^Pulsar\\Core\\Internal\\
             - type: layer
               value: CompositionRoot
 
-    # -----------------------------------------------------------------
-    # Payments Extension — public contracts surface
-    # Matches both Contracts\ (canonical) and Contract\ (transition)
-    # -----------------------------------------------------------------
+    - name: Core_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Core\\Internal\\
+
+    # --- ErrorHandling ---
+    - name: ErrorHandling
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\ErrorHandling\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\ErrorHandling\\Internal\\
+
+    - name: ErrorHandling_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\ErrorHandling\\Internal\\
+
+    # =================================================================
+    # Infrastructure Tier
+    # =================================================================
+
+    # --- Http ---
+    - name: Http
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Http\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Http\\Internal\\
+
+    - name: Http_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Http\\Internal\\
+
+    # --- Routing ---
+    - name: Routing
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Routing\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Routing\\Internal\\
+
+    - name: Routing_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Routing\\Internal\\
+
+    # --- Console (excludes Application → CompositionRoot) ---
+    - name: Console
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Console\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Console\\Internal\\
+            - type: layer
+              value: CompositionRoot
+
+    - name: Console_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Console\\Internal\\
+
+    # --- Extensibility ---
+    - name: Extensibility
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extensibility\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extensibility\\Internal\\
+
+    - name: Extensibility_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extensibility\\Internal\\
+
+    # =================================================================
+    # Feature Tier (20 modules)
+    # =================================================================
+
+    # --- Audit ---
+    - name: Audit
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Audit\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Audit\\Internal\\
+
+    - name: Audit_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Audit\\Internal\\
+
+    # --- Auth ---
+    - name: Auth
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Auth\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Auth\\Internal\\
+
+    - name: Auth_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Auth\\Internal\\
+
+    # --- Cache ---
+    - name: Cache
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Cache\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Cache\\Internal\\
+
+    - name: Cache_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Cache\\Internal\\
+
+    # --- Context ---
+    - name: Context
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Context\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Context\\Internal\\
+
+    - name: Context_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Context\\Internal\\
+
+    # --- Database ---
+    - name: Database
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Database\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Database\\Internal\\
+
+    - name: Database_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Database\\Internal\\
+
+    # --- Deploy ---
+    - name: Deploy
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Deploy\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Deploy\\Internal\\
+
+    - name: Deploy_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Deploy\\Internal\\
+
+    # --- Event ---
+    - name: Event
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Event\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Event\\Internal\\
+
+    - name: Event_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Event\\Internal\\
+
+    # --- FeatureFlag ---
+    - name: FeatureFlag
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\FeatureFlag\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\FeatureFlag\\Internal\\
+
+    - name: FeatureFlag_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\FeatureFlag\\Internal\\
+
+    # --- Idempotency ---
+    - name: Idempotency
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Idempotency\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Idempotency\\Internal\\
+
+    - name: Idempotency_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Idempotency\\Internal\\
+
+    # --- Integrity ---
+    - name: Integrity
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Integrity\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Integrity\\Internal\\
+
+    - name: Integrity_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Integrity\\Internal\\
+
+    # --- Observability ---
+    - name: Observability
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Observability\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Observability\\Internal\\
+
+    - name: Observability_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Observability\\Internal\\
+
+    # --- Queue ---
+    - name: Queue
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Queue\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Queue\\Internal\\
+
+    - name: Queue_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Queue\\Internal\\
+
+    # --- Resilience ---
+    - name: Resilience
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Resilience\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Resilience\\Internal\\
+
+    - name: Resilience_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Resilience\\Internal\\
+
+    # --- Runtime ---
+    - name: Runtime
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Runtime\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Runtime\\Internal\\
+
+    - name: Runtime_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Runtime\\Internal\\
+
+    # --- Scheduler ---
+    - name: Scheduler
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Scheduler\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Scheduler\\Internal\\
+
+    - name: Scheduler_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Scheduler\\Internal\\
+
+    # --- Security ---
+    - name: Security
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Security\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Security\\Internal\\
+
+    - name: Security_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Security\\Internal\\
+
+    # --- Storage ---
+    - name: Storage
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Storage\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Storage\\Internal\\
+
+    - name: Storage_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Storage\\Internal\\
+
+    # --- Supervisor ---
+    - name: Supervisor
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Supervisor\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Supervisor\\Internal\\
+
+    - name: Supervisor_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Supervisor\\Internal\\
+
+    # --- Tenancy ---
+    - name: Tenancy
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Tenancy\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Tenancy\\Internal\\
+
+    - name: Tenancy_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Tenancy\\Internal\\
+
+    # --- Webhook ---
+    - name: Webhook
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Webhook\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Webhook\\Internal\\
+
+    - name: Webhook_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Webhook\\Internal\\
+
+    # =================================================================
+    # Extension Layers
+    # =================================================================
+
+    # --- Payments: public contracts ---
     - name: PaymentsContracts
       collectors:
         - type: classLike
@@ -48,10 +548,7 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Payments\\Contract\\
 
-    # -----------------------------------------------------------------
-    # Payments Extension — domain types exposed in contract signatures
-    # (Domain value objects, enums, exceptions)
-    # -----------------------------------------------------------------
+    # --- Payments: domain types (value objects, enums, exceptions) ---
     - name: PaymentsDomain
       collectors:
         - type: classLike
@@ -63,12 +560,7 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Payments\\Webhook\\WebhookClaim
 
-    # -----------------------------------------------------------------
-    # Payments Extension — internal implementation
-    # Everything in Payments that is NOT Contracts or Domain/Exception:
-    # Internal\, Features\, Gateway\, Webhook\, Config\, Idempotency\,
-    # Clock\, Adapter\, Provider\, and root-level classes.
-    # -----------------------------------------------------------------
+    # --- Payments: internal implementation ---
     - name: PaymentsInternal
       collectors:
         - type: bool
@@ -81,53 +573,284 @@ deptrac:
             - type: layer
               value: PaymentsDomain
 
-    # -----------------------------------------------------------------
-    # Studio Extension — development console
-    # -----------------------------------------------------------------
+    # --- Studio Extension ---
     - name: StudioExtension
       collectors:
         - type: classLike
           value: ^Pulsar\\Extension\\Studio\\
 
-    # -----------------------------------------------------------------
-    # Example Extension — no contracts/internal split
-    # -----------------------------------------------------------------
+    # --- Example Extension ---
     - name: ExampleExtension
       collectors:
         - type: classLike
           value: ^Pulsar\\Extension\\Example\\
 
+  # =================================================================
+  # Rulesets — defines allowed outgoing dependencies per layer
+  #
+  # Key structural rules enforced by Deptrac:
+  # 1. Internal\ layers may only depend on own public + Foundation + CoreTier
+  #    (cross-module Internal\ access is BLOCKED)
+  # 2. Extensions depend on core public + CompositionRoot only (no Internal\)
+  # 3. CompositionRoot has unrestricted access
+  #
+  # Tier direction (Foundation → CoreTier → Infrastructure → Features) is
+  # NOT enforced here — the custom boundary script handles this via #[Api]
+  # targeting. All public layers may depend on all other public layers at
+  # the Deptrac level. This keeps Deptrac focused on the structural
+  # Internal\ fence while avoiding false positives from legitimate
+  # cross-tier dependencies (Console commands → Features, Config DTOs →
+  # domain types, etc.).
+  # =================================================================
+
   ruleset:
-    # Composition roots may depend on all core code freely
+    # -----------------------------------------------------------------
+    # Composition Root — unrestricted (wires everything together)
+    # -----------------------------------------------------------------
     CompositionRoot:
+      - Api
+      - Api_Internal
+      - Support
+      - Support_Internal
+      - Container
+      - Container_Internal
+      - Config
+      - Config_Internal
       - Core
+      - Core_Internal
+      - ErrorHandling
+      - ErrorHandling_Internal
+      - Http
+      - Http_Internal
+      - Routing
+      - Routing_Internal
+      - Console
+      - Console_Internal
+      - Extensibility
+      - Extensibility_Internal
+      - Audit
+      - Audit_Internal
+      - Auth
+      - Auth_Internal
+      - Cache
+      - Cache_Internal
+      - Context
+      - Context_Internal
+      - Database
+      - Database_Internal
+      - Deploy
+      - Deploy_Internal
+      - Event
+      - Event_Internal
+      - FeatureFlag
+      - FeatureFlag_Internal
+      - Idempotency
+      - Idempotency_Internal
+      - Integrity
+      - Integrity_Internal
+      - Observability
+      - Observability_Internal
+      - Queue
+      - Queue_Internal
+      - Resilience
+      - Resilience_Internal
+      - Runtime
+      - Runtime_Internal
+      - Scheduler
+      - Scheduler_Internal
+      - Security
+      - Security_Internal
+      - Storage
+      - Storage_Internal
+      - Supervisor
+      - Supervisor_Internal
+      - Tenancy
+      - Tenancy_Internal
+      - Webhook
+      - Webhook_Internal
 
-    # Core may reference composition roots but NOT any extension layer
-    Core:
+    # -----------------------------------------------------------------
+    # Public Layers — all public layers may depend on all other public
+    # layers + CompositionRoot. The custom boundary script enforces
+    # #[Api] targeting for cross-module imports.
+    # -----------------------------------------------------------------
+    Api: &public_deps
       - CompositionRoot
-
-    # Payments contracts may reference core types and own domain types
-    PaymentsContracts:
+      - Api
+      - Support
+      - Container
+      - Config
       - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+    Support: *public_deps
+    Container: *public_deps
+    Config: *public_deps
+    Core: *public_deps
+    ErrorHandling: *public_deps
+    Http: *public_deps
+    Routing: *public_deps
+    Console: *public_deps
+    Extensibility: *public_deps
+    Audit: *public_deps
+    Auth: *public_deps
+    Cache: *public_deps
+    Context: *public_deps
+    Database: *public_deps
+    Deploy: *public_deps
+    Event: *public_deps
+    FeatureFlag: *public_deps
+    Idempotency: *public_deps
+    Integrity: *public_deps
+    Observability: *public_deps
+    Queue: *public_deps
+    Resilience: *public_deps
+    Runtime: *public_deps
+    Scheduler: *public_deps
+    Security: *public_deps
+    Storage: *public_deps
+    Supervisor: *public_deps
+    Tenancy: *public_deps
+    Webhook: *public_deps
+
+    # -----------------------------------------------------------------
+    # Internal Layers — own public + Foundation + CoreTier only
+    #
+    # This is the key Internal\ fence: no internal layer may depend on
+    # another module's internal layer, and internal code cannot reach
+    # Infrastructure or Feature peers directly.
+    # -----------------------------------------------------------------
+    Api_Internal: [Api]
+    Support_Internal: [Support, Api]
+    Container_Internal: [Container, Api, Support, Config, Core, ErrorHandling]
+    Config_Internal: [Config, Api, Support, Container, Core, ErrorHandling]
+    Core_Internal: [Core, Api, Support, Container, Config, ErrorHandling]
+    ErrorHandling_Internal: [ErrorHandling, Api, Support, Container, Config, Core]
+    Http_Internal: [Http, Api, Support, Container, Config, Core, ErrorHandling]
+    Routing_Internal: [Routing, Api, Support, Container, Config, Core, ErrorHandling]
+    Console_Internal: [Console, Api, Support, Container, Config, Core, ErrorHandling]
+    Extensibility_Internal: [Extensibility, Api, Support, Container, Config, Core, ErrorHandling]
+    Audit_Internal: [Audit, Api, Support, Container, Config, Core, ErrorHandling]
+    Auth_Internal: [Auth, Api, Support, Container, Config, Core, ErrorHandling]
+    Cache_Internal: [Cache, Api, Support, Container, Config, Core, ErrorHandling]
+    Context_Internal: [Context, Api, Support, Container, Config, Core, ErrorHandling]
+    Database_Internal: [Database, Api, Support, Container, Config, Core, ErrorHandling]
+    Deploy_Internal: [Deploy, Api, Support, Container, Config, Core, ErrorHandling]
+    Event_Internal: [Event, Api, Support, Container, Config, Core, ErrorHandling]
+    FeatureFlag_Internal: [FeatureFlag, Api, Support, Container, Config, Core, ErrorHandling]
+    Idempotency_Internal: [Idempotency, Api, Support, Container, Config, Core, ErrorHandling]
+    Integrity_Internal: [Integrity, Api, Support, Container, Config, Core, ErrorHandling]
+    Observability_Internal: [Observability, Api, Support, Container, Config, Core, ErrorHandling]
+    Queue_Internal: [Queue, Api, Support, Container, Config, Core, ErrorHandling]
+    Resilience_Internal: [Resilience, Api, Support, Container, Config, Core, ErrorHandling]
+    Runtime_Internal: [Runtime, Api, Support, Container, Config, Core, ErrorHandling]
+    Scheduler_Internal: [Scheduler, Api, Support, Container, Config, Core, ErrorHandling]
+    Security_Internal: [Security, Api, Support, Container, Config, Core, ErrorHandling]
+    Storage_Internal: [Storage, Api, Support, Container, Config, Core, ErrorHandling]
+    Supervisor_Internal: [Supervisor, Api, Support, Container, Config, Core, ErrorHandling]
+    Tenancy_Internal: [Tenancy, Api, Support, Container, Config, Core, ErrorHandling]
+    Webhook_Internal: [Webhook, Api, Support, Container, Config, Core, ErrorHandling]
+
+    # -----------------------------------------------------------------
+    # Extension Layers — depend on all core public + CompositionRoot +
+    # own sublayers. Extensions cannot access any Internal\ layer.
+    # -----------------------------------------------------------------
+    PaymentsContracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
       - PaymentsDomain
 
-    # Payments domain/exception types may reference core (e.g. Api attr)
-    PaymentsDomain:
-      - Core
+    PaymentsDomain: *public_deps
 
-    # Payments internals may use core, own contracts, and own domain
     PaymentsInternal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
       - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
       - PaymentsContracts
       - PaymentsDomain
 
-    # Studio extension may depend on core only
-    StudioExtension:
-      - Core
-
-    # Example extension may depend on core only
-    ExampleExtension:
-      - Core
+    StudioExtension: *public_deps
+    ExampleExtension: *public_deps
 
   analyser:
     types:

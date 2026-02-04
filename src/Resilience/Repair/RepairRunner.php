@@ -13,7 +13,7 @@ use Throwable;
 /**
  * Orchestrates repair job diagnosis and execution.
  */
-final class RepairRunner
+final class RepairRunner implements RepairRunnerInterface
 {
     /** @var array<string, RepairJobInterface> */
     private array $jobs = [];

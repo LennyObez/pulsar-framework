@@ -47,7 +47,7 @@ use function usort;
  * exclude patterns, and computes SHA-256 hashes for each tracked file.
  */
 #[Internal]
-final class ManifestBuilder
+final class ManifestBuilder implements ManifestBuilderInterface
 {
     private const string ALGORITHM = 'sha256';
     private const int MANIFEST_VERSION = 1;

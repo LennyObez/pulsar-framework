@@ -23,7 +23,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Integrity\Exception\IntegrityException;
-use Pulsar\Integrity\ManifestBuilder;
+use Pulsar\Integrity\ManifestBuilderInterface;
 use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
@@ -45,6 +45,7 @@ final class IntegrityRepairCommand extends Command
 {
     public function __construct(
         private readonly IntegrityConfig $config,
+        private readonly ManifestBuilderInterface $builder,
         private readonly AuditLogger $auditLogger,
         private readonly string $basePath,
     ) {
@@ -81,8 +82,7 @@ final class IntegrityRepairCommand extends Command
         $output->newLine();
 
         try {
-            $builder = new ManifestBuilder($this->basePath);
-            $manifest = $builder->build($this->config->include, $this->config->exclude);
+            $manifest = $this->builder->build($this->config->include, $this->config->exclude);
         } catch (IntegrityException $e) {
             $this->auditLogger->log(
                 event: AuditEvent::SystemEvent,

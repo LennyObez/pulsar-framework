@@ -12,7 +12,7 @@ use function dirname;
 use function file_exists;
 use function file_put_contents;
 
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Random\RandomException;
 
 use function random_bytes;
@@ -30,7 +30,7 @@ use function unlink;
  * On Windows, rename() fails if the target exists, so we unlink first.
  * A small race window exists on Windows — acceptable for build artifacts.
  */
-#[Internal]
+#[Api]
 final class AtomicFileWriter
 {
     /**

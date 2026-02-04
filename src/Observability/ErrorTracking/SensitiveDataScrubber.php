@@ -9,6 +9,9 @@ use function array_merge;
 use function in_array;
 use function is_array;
 use function is_string;
+
+use Pulsar\Api\Api;
+
 use function str_contains;
 use function strtolower;
 
@@ -18,6 +21,7 @@ use function strtolower;
  * Uses case-insensitive substring matching against a configurable list
  * of sensitive field names.
  */
+#[Api]
 final readonly class SensitiveDataScrubber
 {
     private const string REDACTED = '[REDACTED]';

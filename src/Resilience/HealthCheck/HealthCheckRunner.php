@@ -10,7 +10,7 @@ use Pulsar\Resilience\Exception\ResilienceException;
 /**
  * Orchestrates health check execution.
  */
-final class HealthCheckRunner
+final class HealthCheckRunner implements HealthCheckRunnerInterface
 {
     /** @var array<string, HealthCheckInterface> */
     private array $checks = [];

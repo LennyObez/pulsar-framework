@@ -14,7 +14,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Deploy\CheckSeverity;
-use Pulsar\Deploy\DeployCheck;
+use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 
 use function sprintf;
@@ -26,7 +26,7 @@ use function sprintf;
 final class GuardianDeployCheckCommand extends Command
 {
     public function __construct(
-        private readonly DeployCheck $deployCheck,
+        private readonly DeployCheckRunnerInterface $deployCheck,
     ) {
         parent::__construct();
     }

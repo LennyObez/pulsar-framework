@@ -18,6 +18,7 @@ use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\RouteCache;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Routing\Route;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function random_bytes;
@@ -52,7 +53,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_reports_not_warm_when_no_cache_exists(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
 
         self::assertFalse($cache->isWarm());
     }
@@ -60,7 +61,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_returns_correct_cache_path(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
 
         $expected = $this->basePath . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR . 'framework';
         self::assertSame($expected, $cache->cachePath());
@@ -69,7 +70,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_computes_deterministic_invalidation_key(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
 
         $key1 = $cache->computeInvalidationKey($configPath);
@@ -82,7 +83,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_produces_different_invalidation_key_when_config_changes(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
 
         $key1 = $cache->computeInvalidationKey($configPath);
@@ -101,7 +102,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_clears_cache_files(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $cachePath = $cache->cachePath();
         mkdir($cachePath, 0o750, true);
 
@@ -124,7 +125,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_returns_null_when_loading_from_nonexistent_cache_directory(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
 
         $result = $cache->load($configPath);
@@ -135,7 +136,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_warms_and_becomes_warm(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
         $configManager->load();
         $repository = $configManager->repository();
@@ -155,7 +156,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_warms_with_container_hints(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
         $configManager->load();
         $repository = $configManager->repository();
@@ -173,7 +174,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_clears_after_warming(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
         $configManager->load();
         $repository = $configManager->repository();
@@ -188,7 +189,7 @@ final class FrameworkCacheTest extends TestCase
     #[Test]
     public function it_includes_composer_lock_in_invalidation_key(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
 
         $key1 = $cache->computeInvalidationKey($configPath);

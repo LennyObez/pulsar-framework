@@ -16,6 +16,7 @@ use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Deploy\Check\FilesystemScanCheck;
 use Pulsar\Deploy\CheckSeverity;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function random_bytes;
@@ -46,7 +47,7 @@ final class FilesystemScanCheckTest extends TestCase
     #[Test]
     public function passesInLocalEnvironment(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $check = new FilesystemScanCheck($cache);
 
         $result = $check->check('local');
@@ -57,7 +58,7 @@ final class FilesystemScanCheckTest extends TestCase
     #[Test]
     public function passesWhenCacheIsWarm(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
         $configManager->load();
         $cache->warm($configManager->repository(), [], [], 'production', false);
@@ -72,7 +73,7 @@ final class FilesystemScanCheckTest extends TestCase
     #[Test]
     public function errorWhenColdInProduction(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $check = new FilesystemScanCheck($cache);
 
         $result = $check->check('production');
@@ -84,7 +85,7 @@ final class FilesystemScanCheckTest extends TestCase
     #[Test]
     public function warningWhenColdInStaging(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $check = new FilesystemScanCheck($cache);
 
         $result = $check->check('staging');
@@ -95,7 +96,7 @@ final class FilesystemScanCheckTest extends TestCase
     #[Test]
     public function nameAndDescription(): void
     {
-        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
         $check = new FilesystemScanCheck($cache);
 
         self::assertSame('filesystem-scan', $check->getName());

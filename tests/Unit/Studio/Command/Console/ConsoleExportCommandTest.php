@@ -17,6 +17,7 @@ use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Extension\Studio\Command\Console\ConsoleExportCommand;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Security\Crypto\HmacService;
 
 use function sys_get_temp_dir;
 use function unlink;
@@ -41,8 +42,7 @@ final class ConsoleExportCommandTest extends TestCase
         if ($throwException) {
             // Create exporter with encryption enabled but no key
             return new EvidenceExporter(
-                $this->store,
-                null,
+                store: $this->store,
                 isEncrypted: true,
                 hasDecryptionKey: false,
             );
@@ -202,7 +202,7 @@ final class ConsoleExportCommandTest extends TestCase
         $this->store->method('query')->willReturn([['event_id' => 'evt-1']]);
 
         // With archiveMacKey, MAC will be included (key must be at least 16 bytes)
-        $exporter = new EvidenceExporter($this->store, 'test-mac-key-that-is-long-enough');
+        $exporter = new EvidenceExporter($this->store, new HmacService(), 'test-mac-key-that-is-long-enough');
         $command = new ConsoleExportCommand($exporter);
 
         $outputPath = $this->tempDir . '/test-with-mac.json';

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Console\Command\Remove;
 
 use function is_dir;
+use function is_int;
 use function is_string;
 
 use Override;
@@ -65,13 +66,12 @@ final class RemoveExtensionCommand extends Command
 
         $dirName = $this->toKebabCase($name);
 
-        $cwd = getcwd();
-        if ($cwd === false) {
-            $output->errorln('Failed to get current working directory.');
-            return ExitCode::Error->value;
+        $resolved = $this->resolveBasePathOrFail($basePath, 'extensions', $output);
+        if (is_int($resolved)) {
+            return $resolved;
         }
 
-        $extensionPath = $cwd . DIRECTORY_SEPARATOR . $basePath . DIRECTORY_SEPARATOR . $dirName;
+        $extensionPath = $resolved . DIRECTORY_SEPARATOR . $dirName;
 
         if (!is_dir($extensionPath)) {
             $output->errorln(sprintf('Extension "%s" does not exist at %s', $dirName, $extensionPath));

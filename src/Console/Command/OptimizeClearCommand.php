@@ -6,7 +6,7 @@ namespace Pulsar\Console\Command;
 
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Cache\FrameworkCache;
+use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -21,7 +21,7 @@ use Pulsar\Console\OutputInterface;
 final class OptimizeClearCommand extends Command
 {
     public function __construct(
-        private readonly ?FrameworkCache $frameworkCache = null,
+        private readonly ?FrameworkCacheInterface $frameworkCache = null,
     ) {
         parent::__construct();
     }

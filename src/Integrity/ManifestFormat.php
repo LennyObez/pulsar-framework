@@ -17,13 +17,13 @@ use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
 use NoDiscard;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Pulsar\Integrity\Exception\IntegrityException;
 
 /**
  * Serializes and deserializes integrity manifests to/from JSON.
  */
-#[Internal]
+#[Api]
 final class ManifestFormat
 {
     private function __construct() {}

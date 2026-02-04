@@ -15,6 +15,7 @@ use Pulsar\Cache\RouteHandler;
 use Pulsar\Cache\RouteHandlerType;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Route;
+use Pulsar\Security\Crypto\HmacService;
 
 #[CoversClass(RouteCache::class)]
 #[CoversClass(RouteHandler::class)]
@@ -29,7 +30,7 @@ final class RouteCacheTest extends TestCase
     protected function setUp(): void
     {
         $this->hmacKey = random_bytes(32);
-        $this->integrity = new CacheIntegrity($this->hmacKey);
+        $this->integrity = new CacheIntegrity(new HmacService(), $this->hmacKey);
         $this->routeCache = new RouteCache($this->integrity);
         $this->tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_route_cache_test_' . bin2hex(random_bytes(8));
         mkdir($this->tempDir, 0o750, true);

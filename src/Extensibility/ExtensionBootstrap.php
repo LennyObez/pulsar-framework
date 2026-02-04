@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extensibility;
 
 use NoDiscard;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Routing\RouterInterface;
@@ -21,7 +21,7 @@ use Throwable;
  * 3. Boot phase: All extensions boot (in dependency order)
  * 4. PostBoot phase: Extensions implementing PostBootExtensionInterface
  */
-#[Internal]
+#[Api]
 final class ExtensionBootstrap
 {
     public private(set) bool $registered = false;

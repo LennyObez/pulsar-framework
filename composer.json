@@ -58,11 +58,17 @@
     "bench:profiles": "php tools/bench/run.php",
     "bench:profiles:ci": "php tools/bench/run.php --output=var/bench/results.json",
     "deptrac": "deptrac analyse --config-file=tools/php/deptrac.yaml",
+    "boundary:deptrac": "@deptrac",
+    "boundary:custom": "php scripts/boundary_check.php",
+    "boundary:check": [
+      "@boundary:deptrac",
+      "@boundary:custom"
+    ],
     "qa": [
       "@cs:check",
       "@phpstan",
       "@psalm",
-      "@deptrac",
+      "@boundary:check",
       "@test"
     ]
   },

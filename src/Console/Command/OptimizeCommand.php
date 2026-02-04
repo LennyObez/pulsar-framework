@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function assert;
-
 use Closure;
 
 use function count;
@@ -14,14 +12,13 @@ use JsonException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\CacheException;
-use Pulsar\Cache\FrameworkCache;
+use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Container\Container;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 use Pulsar\Routing\Router;
 use Random\RandomException;
 use ReflectionClass;
@@ -42,8 +39,8 @@ use Throwable;
 final class OptimizeCommand extends Command
 {
     public function __construct(
-        private readonly Kernel $kernel,
-        private readonly ?FrameworkCache $frameworkCache = null,
+        private readonly KernelInterface $kernel,
+        private readonly ?FrameworkCacheInterface $frameworkCache = null,
     ) {
         parent::__construct();
     }
@@ -172,7 +169,6 @@ final class OptimizeCommand extends Command
     private function buildContainerHints(): array
     {
         $container = $this->kernel->container();
-        assert($container instanceof Container);
 
         $hints = [];
 

@@ -83,6 +83,7 @@ use Pulsar\Console\Command\ShowRoutesCommand;
 use Pulsar\Console\Command\SupervisorCheckCommand;
 use Pulsar\Console\Command\SupervisorStatusCommand;
 use Pulsar\Console\CommandInterface;
+use Pulsar\Supervisor\PreflightCheck\PreflightRunnerInterface;
 use Pulsar\Core\Kernel;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\Migration\MigrationRepository;
@@ -90,12 +91,17 @@ use Pulsar\Database\Migration\MigrationRunner;
 use Pulsar\Deploy\DeployCheck;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\Integrity\ManifestBuilder;
+use Pulsar\Integrity\ManifestBuilderInterface;
 use Pulsar\Integrity\ManifestSigner;
+use Pulsar\Integrity\ManifestSignerInterface;
 use Pulsar\Integrity\ManifestVerifier;
+use Pulsar\Integrity\ManifestVerifierInterface;
 use Pulsar\Queue\DeadLetterQueue;
 use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Security\Audit\AuditLogger;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Extension\Studio\Command\Console\ConsoleBenchmarkCommand;
 use Pulsar\Extension\Studio\Command\Console\ConsoleExceptionsCommand;
@@ -185,7 +191,7 @@ if ($masterKeyHex !== false && $masterKeyHex !== '' && $configManager !== null) 
     try {
         $earlyMasterKey = MasterKey::fromHex($masterKeyHex);
         $encrypt = getenv('CACHE_ENCRYPT') === 'true' || getenv('CACHE_ENCRYPT') === '1';
-        $earlyCache = new FrameworkCache($basePath, $earlyMasterKey, $encrypt);
+        $earlyCache = new FrameworkCache($basePath, $earlyMasterKey, new HmacService(), $encrypt);
         $kernel->container()->instance(FrameworkCache::class, $earlyCache);
     } catch (Throwable) {
         // Invalid key or sodium failure — skip pre-boot cache
@@ -268,23 +274,38 @@ if ($kernel->container()->has(SupervisorConfig::class)) {
     /** @var SupervisorConfig $supervisorConfig */
     $supervisorConfig = $kernel->container()->get(SupervisorConfig::class);
     $application->add(new SupervisorStatusCommand($supervisorConfig));
-    $application->add(new SupervisorCheckCommand([]));
+    if ($kernel->container()->has(PreflightRunnerInterface::class)) {
+        /** @var PreflightRunnerInterface $preflightRunner */
+        $preflightRunner = $kernel->container()->get(PreflightRunnerInterface::class);
+        $application->add(new SupervisorCheckCommand($preflightRunner));
+    }
 }
 
-// Register integrity commands (only if integrity is configured)
-if ($kernel->container()->has(IntegrityConfig::class)) {
+// Register integrity commands (only if integrity is configured and enabled)
+if ($kernel->container()->has(ManifestBuilderInterface::class)) {
     /** @var IntegrityConfig $integrityConfig */
     $integrityConfig = $kernel->container()->get(IntegrityConfig::class);
 
+    /** @var ManifestBuilderInterface $manifestBuilder */
+    $manifestBuilder = $kernel->container()->get(ManifestBuilderInterface::class);
+
+    /** @var ManifestVerifierInterface $manifestVerifier */
+    $manifestVerifier = $kernel->container()->get(ManifestVerifierInterface::class);
+
+    /** @var ManifestSignerInterface|null $manifestSigner */
+    $manifestSigner = $kernel->container()->has(ManifestSignerInterface::class)
+        ? $kernel->container()->get(ManifestSignerInterface::class)
+        : null;
+
     $application->addCommands([
-        new IntegrityBuildCommand($integrityConfig, $basePath),
-        new IntegrityVerifyCommand($integrityConfig, $basePath),
+        new IntegrityBuildCommand($integrityConfig, $manifestBuilder, $basePath, $manifestSigner),
+        new IntegrityVerifyCommand($integrityConfig, $manifestVerifier, $basePath),
     ]);
 
     if ($kernel->container()->has(AuditLogger::class)) {
         /** @var AuditLogger $auditLogger */
         $auditLogger = $kernel->container()->get(AuditLogger::class);
-        $application->add(new IntegrityRepairCommand($integrityConfig, $auditLogger, $basePath));
+        $application->add(new IntegrityRepairCommand($integrityConfig, $manifestBuilder, $auditLogger, $basePath));
     }
 }
 
@@ -424,7 +445,12 @@ if ($kernel->container()->has(StudioConfig::class)) {
 
             try {
                 $manifestSigner = $kernel->container()->has(MasterKey::class)
-                    ? new ManifestSigner($kernel->container()->get(MasterKey::class))
+                    ? new ManifestSigner(
+                        $kernel->container()->has(HmacInterface::class)
+                            ? $kernel->container()->get(HmacInterface::class)
+                            : new HmacService(),
+                        $kernel->container()->get(MasterKey::class),
+                    )
                     : null;
             } catch (Throwable $e) {
                 fwrite(STDERR, "Warning: Failed to initialize manifest signer: {$e->getMessage()}\n");

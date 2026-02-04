@@ -13,6 +13,7 @@ use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Extension\Studio\Command\Console\Evidence\EvidenceExportCommand;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Security\Crypto\HmacService;
 
 #[CoversClass(EvidenceExportCommand::class)]
 final class EvidenceExportCommandTest extends TestCase
@@ -152,7 +153,7 @@ final class EvidenceExportCommandTest extends TestCase
         $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
 
-        $exporter = new EvidenceExporter($store, archiveMacKey: 'test-mac-key-16b!');
+        $exporter = new EvidenceExporter($store, hmac: new HmacService(), archiveMacKey: 'test-mac-key-16b!');
 
         $tempDir = sys_get_temp_dir();
         $outputPath = $tempDir . DIRECTORY_SEPARATOR . 'test-mac-' . bin2hex(random_bytes(4)) . '.json';

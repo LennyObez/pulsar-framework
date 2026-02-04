@@ -24,7 +24,7 @@ final class TracingMiddlewareTest extends TestCase
     public function createsRootSpanForRequest(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, samplingRate: 1.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 1.0);
 
         $request = $this->createRequest('GET', '/test');
         $response = $middleware->process($request, static fn() => Response::html('ok'));
@@ -41,7 +41,7 @@ final class TracingMiddlewareTest extends TestCase
     public function propagatesTraceparentHeader(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, samplingRate: 1.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 1.0);
 
         $request = $this->createRequest('GET', '/test');
         $response = $middleware->process($request, static fn() => Response::html('ok'));
@@ -49,7 +49,7 @@ final class TracingMiddlewareTest extends TestCase
         $traceparent = $response->headers->first('traceparent');
         self::assertNotNull($traceparent);
 
-        $parsed = W3CTraceContextParser::parse($traceparent);
+        $parsed = new W3CTraceContextParser()->parse($traceparent);
         self::assertNotNull($parsed);
         self::assertTrue($parsed->isSampled());
     }
@@ -58,7 +58,7 @@ final class TracingMiddlewareTest extends TestCase
     public function parsesIncomingTraceparent(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, samplingRate: 1.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 1.0);
 
         $incomingTraceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
         $request = $this->createRequest('GET', '/test', ['traceparent' => [$incomingTraceparent]]);
@@ -76,7 +76,7 @@ final class TracingMiddlewareTest extends TestCase
     public function setsErrorStatusOn5xx(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, samplingRate: 1.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 1.0);
 
         $request = $this->createRequest('POST', '/fail');
         $response = $middleware->process(
@@ -93,7 +93,7 @@ final class TracingMiddlewareTest extends TestCase
     public function respectsSamplingRate(): void
     {
         $collector = new InMemorySpanCollector();
-        $middleware = new TracingMiddleware($collector, samplingRate: 0.0);
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 0.0);
 
         $request = $this->createRequest('GET', '/test');
         $response = $middleware->process($request, static fn() => Response::html('ok'));

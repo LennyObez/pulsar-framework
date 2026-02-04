@@ -22,7 +22,7 @@ use function strlen;
  *
  * Ciphertext format: nonce (24 bytes) || ciphertext+mac.
  */
-final class Encryptor
+final class Encryptor implements EncryptorInterface
 {
     /**
      * Sub-key ID for the default encryption context.
@@ -60,7 +60,7 @@ final class Encryptor
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromMasterKey(MasterKey $masterKey): self
+    public static function fromMasterKey(KeyProviderInterface $masterKey): self
     {
         return new self($masterKey->deriveSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT));
     }
@@ -74,7 +74,7 @@ final class Encryptor
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self
+    public static function fromDerivedKey(KeyProviderInterface $masterKey, int $subKeyId, string $context): self
     {
         return new self($masterKey->deriveSubKey($subKeyId, $context));
     }
@@ -124,6 +124,20 @@ final class Encryptor
         }
 
         return $plaintext;
+    }
+
+    /**
+     * Create an encryptor using a specific subkey derivation.
+     *
+     * Instance-based alternative to the static fromDerivedKey() factory,
+     * allowing creation through the EncryptorInterface contract.
+     *
+     * @throws SodiumException
+     */
+    #[NoDiscard]
+    public function withDerivedKey(KeyProviderInterface $masterKey, int $subKeyId, string $context): self
+    {
+        return self::fromDerivedKey($masterKey, $subKeyId, $context);
     }
 
     /**

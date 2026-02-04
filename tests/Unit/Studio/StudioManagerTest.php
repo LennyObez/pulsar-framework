@@ -21,6 +21,7 @@ use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Extension\Studio\StudioManager;
 use Pulsar\Observability\Context\CorrelationContext;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Tenancy\Tenant;
 use Pulsar\Tenancy\TenantContext;
 use RuntimeException;
@@ -287,8 +288,10 @@ final class StudioManagerTest extends TestCase
     #[Test]
     public function ingestCreatesChainLinkWithMac(): void
     {
+        $store = SqliteEventStore::inMemory(hmac: new HmacService());
+
         $manager = new StudioManager(
-            store: $this->store,
+            store: $store,
             eventFactory: $this->eventFactory,
             redactionPipeline: $this->redactionPipeline,
             chainMacKey: 'test-mac-key-32-bytes-length-ok!',
@@ -296,7 +299,7 @@ final class StudioManagerTest extends TestCase
 
         $manager->ingest($this->createMockEvent());
 
-        $links = $this->store->chainLinks();
+        $links = $store->chainLinks();
         self::assertCount(1, $links);
         self::assertNotNull($links[0]['link_mac']);
     }
