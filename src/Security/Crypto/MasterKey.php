@@ -27,7 +27,7 @@ use function strlen;
  * - 1 = encryption (used by Encryptor)
  * - 2 = audit HMAC chain
  */
-final class MasterKey
+final class MasterKey implements KeyProviderInterface
 {
     /**
      * Expected key length in bytes.

@@ -66,4 +66,24 @@ interface ContainerInterface extends PsrContainerInterface
      * @param array<class-string, list<array{name: string, type: class-string}>>|null $hints
      */
     public function setResolutionHints(?array $hints): void;
+
+    /**
+     * Get all registered binding IDs.
+     *
+     * Used by framework tooling (optimize, diagnostics) for container introspection.
+     *
+     * @return list<string>
+     */
+    #[NoDiscard]
+    public function getBindings(): array;
+
+    /**
+     * Get all cached instance IDs.
+     *
+     * Used by framework tooling (diagnostics) for container introspection.
+     *
+     * @return list<string>
+     */
+    #[NoDiscard]
+    public function getInstances(): array;
 }

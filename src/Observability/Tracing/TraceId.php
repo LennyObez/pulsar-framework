@@ -8,6 +8,7 @@ use function bin2hex;
 use function ctype_xdigit;
 
 use NoDiscard;
+use Pulsar\Api\Api;
 use Pulsar\Observability\Tracing\Exception\TracingException;
 use Random\Engine\Secure;
 use Random\RandomException;
@@ -19,6 +20,7 @@ use function strtolower;
 /**
  * 128-bit trace identifier represented as 32 lowercase hex characters.
  */
+#[Api]
 final readonly class TraceId
 {
     public string $value;

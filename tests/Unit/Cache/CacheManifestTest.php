@@ -8,15 +8,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheManifest;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\HmacService;
 
 #[CoversClass(CacheManifest::class)]
 final class CacheManifestTest extends TestCase
 {
+    private HmacInterface $hmac;
     private string $hmacKey;
     private string $tempDir;
 
     protected function setUp(): void
     {
+        $this->hmac = new HmacService();
         $this->hmacKey = random_bytes(32);
         $this->tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_cache_manifest_test_' . bin2hex(random_bytes(8));
         mkdir($this->tempDir, 0o750, true);
@@ -36,6 +40,7 @@ final class CacheManifestTest extends TestCase
         ];
 
         $manifest = CacheManifest::write(
+            hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
             schemaVersion: 1,
@@ -54,7 +59,7 @@ final class CacheManifestTest extends TestCase
         self::assertTrue($manifest->strict);
         self::assertFalse($manifest->encrypted);
 
-        $loaded = CacheManifest::load($this->tempDir, $this->hmacKey);
+        $loaded = CacheManifest::load($this->hmac, $this->tempDir, $this->hmacKey);
 
         self::assertNotNull($loaded);
         self::assertSame(1, $loaded->schemaVersion);
@@ -73,7 +78,7 @@ final class CacheManifestTest extends TestCase
         $nonExistentDir = $this->tempDir . DIRECTORY_SEPARATOR . 'nonexistent';
         mkdir($nonExistentDir, 0o750, true);
 
-        $result = CacheManifest::load($nonExistentDir, $this->hmacKey);
+        $result = CacheManifest::load($this->hmac, $nonExistentDir, $this->hmacKey);
 
         self::assertNull($result);
     }
@@ -82,6 +87,7 @@ final class CacheManifestTest extends TestCase
     public function loadReturnsNullForTamperedManifest(): void
     {
         $_ = CacheManifest::write(
+            hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
             schemaVersion: 1,
@@ -102,7 +108,7 @@ final class CacheManifestTest extends TestCase
         $tampered = str_replace('production', 'tampered!', $content);
         file_put_contents($manifestPath, $tampered);
 
-        $result = CacheManifest::load($this->tempDir, $this->hmacKey);
+        $result = CacheManifest::load($this->hmac, $this->tempDir, $this->hmacKey);
 
         self::assertNull($result);
     }
@@ -111,6 +117,7 @@ final class CacheManifestTest extends TestCase
     public function loadReturnsNullForWrongHmacKey(): void
     {
         $_ = CacheManifest::write(
+            hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
             schemaVersion: 1,
@@ -124,7 +131,7 @@ final class CacheManifestTest extends TestCase
         );
 
         $wrongKey = random_bytes(32);
-        $result = CacheManifest::load($this->tempDir, $wrongKey);
+        $result = CacheManifest::load($this->hmac, $this->tempDir, $wrongKey);
 
         self::assertNull($result);
     }
@@ -205,6 +212,7 @@ final class CacheManifestTest extends TestCase
     public function manifestHmacUsesConstantTimeComparison(): void
     {
         $_ = CacheManifest::write(
+            hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
             schemaVersion: 1,
@@ -232,7 +240,7 @@ final class CacheManifestTest extends TestCase
         $data['manifest_hmac'] = substr($originalHmac, 0, -1) . ($originalHmac[-1] === 'a' ? 'b' : 'a');
         file_put_contents($manifestPath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
 
-        $result = CacheManifest::load($this->tempDir, $this->hmacKey);
+        $result = CacheManifest::load($this->hmac, $this->tempDir, $this->hmacKey);
 
         self::assertNull($result);
     }
@@ -245,6 +253,7 @@ final class CacheManifestTest extends TestCase
         ];
 
         $manifest = CacheManifest::write(
+            hmac: $this->hmac,
             cachePath: $this->tempDir,
             hmacKey: $this->hmacKey,
             schemaVersion: 1,
@@ -280,7 +289,7 @@ final class CacheManifestTest extends TestCase
         $manifestPath = $this->tempDir . DIRECTORY_SEPARATOR . 'manifest.json';
         file_put_contents($manifestPath, 'not valid json {{{');
 
-        $result = CacheManifest::load($this->tempDir, $this->hmacKey);
+        $result = CacheManifest::load($this->hmac, $this->tempDir, $this->hmacKey);
 
         self::assertNull($result);
     }
@@ -303,7 +312,7 @@ final class CacheManifestTest extends TestCase
         ];
         file_put_contents($manifestPath, json_encode($data, JSON_PRETTY_PRINT));
 
-        $result = CacheManifest::load($this->tempDir, $this->hmacKey);
+        $result = CacheManifest::load($this->hmac, $this->tempDir, $this->hmacKey);
 
         self::assertNull($result);
     }

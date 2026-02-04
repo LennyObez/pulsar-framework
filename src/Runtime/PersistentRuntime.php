@@ -16,7 +16,7 @@ use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\RuntimeConfig;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
@@ -77,7 +77,7 @@ final class PersistentRuntime implements RuntimeInterface
     private ?FiberScheduler $scheduler = null;
 
     public function __construct(
-        private readonly Kernel $kernel,
+        private readonly KernelInterface $kernel,
         private readonly RequestSandbox $sandbox,
         private readonly RuntimeConfig $config,
         private readonly ?LoggerInterface $logger = null,

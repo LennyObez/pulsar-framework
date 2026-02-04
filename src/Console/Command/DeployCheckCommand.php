@@ -20,7 +20,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Deploy\CheckSeverity;
-use Pulsar\Deploy\DeployCheck;
+use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Deploy\DeployReport;
 use Pulsar\Deploy\Exception\DeployException;
 
@@ -35,7 +35,7 @@ use function sprintf;
 final class DeployCheckCommand extends Command
 {
     public function __construct(
-        private readonly DeployCheck $deployCheck,
+        private readonly DeployCheckRunnerInterface $deployCheck,
     ) {
         parent::__construct();
     }
