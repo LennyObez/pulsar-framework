@@ -45,7 +45,7 @@ Pass 4 (PostBoot):  foreach extensions → if PostBootExtensionInterface → cal
 Create a directory under `extensions/` (or use the scaffold command):
 
 ```bash
-php bin/pulsar scaffold:extension my-feature --vendor=acme
+php bin/pulsar make:extension my-feature --vendor=acme
 ```
 
 This generates:
@@ -340,7 +340,7 @@ This walkthrough builds a "Notifications" extension from scratch.
 ### 1. Scaffold the Extension
 
 ```bash
-php bin/pulsar scaffold:extension notifications --vendor=myapp
+php bin/pulsar make:extension notifications --vendor=myapp
 ```
 
 ### 2. Edit the Manifest

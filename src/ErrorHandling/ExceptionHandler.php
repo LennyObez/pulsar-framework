@@ -6,6 +6,8 @@ namespace Pulsar\ErrorHandling;
 
 use DateMalformedStringException;
 use Psr\Log\LoggerInterface;
+use Pulsar\Context\RequestContext;
+use Pulsar\Context\RequestContextHolder;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
@@ -34,6 +36,7 @@ final readonly class ExceptionHandler
         private ?LoggerInterface $logger = null,
         private ?ErrorAggregator $errorAggregator = null,
         private ?SensitiveDataScrubber $scrubber = null,
+        private ?RequestContextHolder $requestContextHolder = null,
     ) {}
 
     /**
@@ -54,7 +57,7 @@ final readonly class ExceptionHandler
 
         // Content-negotiation: JSON error for clients that want JSON
         if ($request->wantsJson()) {
-            $response = $this->renderJson($exception, $status);
+            $response = $this->renderJson($exception, $status, $request);
             foreach ($headers as $name => $value) {
                 $response = $response->withHeader($name, $value);
             }
@@ -133,6 +136,11 @@ final readonly class ExceptionHandler
             'uri' => $request->uri,
         ];
 
+        $requestContext = $this->resolveRequestContext($request);
+        if ($requestContext !== null) {
+            $context['correlation_id'] = $requestContext->correlationId->value;
+        }
+
         if ($status->isServerError()) {
             $this->logger->error($exception->getMessage(), $context);
         } else {
@@ -155,6 +163,11 @@ final readonly class ExceptionHandler
             'uri' => $request->uri,
             'query' => $request->query,
         ];
+
+        $requestContext = $this->resolveRequestContext($request);
+        if ($requestContext !== null) {
+            $context['correlation_id'] = $requestContext->correlationId->value;
+        }
 
         if ($this->scrubber !== null) {
             $context = $this->scrubber->scrub($context);
@@ -189,16 +202,39 @@ final readonly class ExceptionHandler
     /**
      * Render a generic JSON error response for clients that prefer JSON.
      */
-    /** @noinspection PhpUnusedParameterInspection — signature consistency with other renderers */
-    private function renderJson(Throwable $_exception, ResponseStatus $status): Response
+    private function renderJson(Throwable $_exception, ResponseStatus $status, Request $request): Response
     {
+        $data = [
+            'error' => $status->reasonPhrase(),
+            'status' => $status->value,
+        ];
+
+        $requestContext = $this->resolveRequestContext($request);
+        if ($requestContext !== null) {
+            $data['correlation_id'] = $requestContext->correlationId->value;
+        }
+
         return Response::json(
-            data: [
-                'error' => $status->reasonPhrase(),
-                'status' => $status->value,
-            ],
+            data: $data,
             status: $status,
         );
+    }
+
+    /**
+     * Resolve the current RequestContext from holder or request attribute.
+     */
+    private function resolveRequestContext(Request $request): ?RequestContext
+    {
+        if ($this->requestContextHolder !== null) {
+            $context = $this->requestContextHolder->tryGet();
+            if ($context !== null) {
+                return $context;
+            }
+        }
+
+        $attribute = $request->attribute('_request_context');
+
+        return $attribute instanceof RequestContext ? $attribute : null;
     }
 
     /**
