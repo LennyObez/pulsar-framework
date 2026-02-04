@@ -17,7 +17,7 @@ use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
-use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 
 #[CoversClass(Kernel::class)]
 #[CoversClass(ExtensionBootstrap::class)]
@@ -160,7 +160,7 @@ final class ExtensionLifecycleTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void
+            public function boot(ContainerInterface $container, RouterInterface $router): void
             {
                 $this->order->append('a');
             }
@@ -182,7 +182,7 @@ final class ExtensionLifecycleTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void
+            public function boot(ContainerInterface $container, RouterInterface $router): void
             {
                 $this->order->append('b');
             }
@@ -233,7 +233,7 @@ class TestableExtension implements ExtensionInterface
         $container->bind(TestableService::class, TestableService::class);
     }
 
-    public function boot(ContainerInterface $container, Router $router): void
+    public function boot(ContainerInterface $container, RouterInterface $router): void
     {
         $router->get('/test', function (Request $request): Response {
             return Response::json(['message' => 'Hello from extension!']);
@@ -269,7 +269,7 @@ class ExtensionWithProvider implements ExtensionInterface
 
     public function register(ContainerInterface $container): void {}
 
-    public function boot(ContainerInterface $container, Router $router): void {}
+    public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
     public function providers(): array
     {

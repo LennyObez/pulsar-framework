@@ -9,8 +9,8 @@ use PDOException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Storage\SchemaManager;
-use Pulsar\Studio\Exception\StudioException;
+use Pulsar\Extension\Studio\Console\Storage\SchemaManager;
+use Pulsar\Extension\Studio\Exception\StudioException;
 
 #[CoversClass(SchemaManager::class)]
 final class SchemaManagerTest extends TestCase

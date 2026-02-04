@@ -16,8 +16,11 @@ use Pulsar\Extensibility\ExtensionLifecycle;
 use Pulsar\Extensibility\ExtensionLoader;
 use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\ExtensionRegistry;
+use Pulsar\Extensibility\PostBootExtensionInterface;
+use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 
 #[CoversClass(ExtensionBootstrap::class)]
 final class ExtensionBootstrapTest extends TestCase
@@ -69,7 +72,7 @@ final class ExtensionBootstrapTest extends TestCase
                 $this->registered = true;
             }
 
-            public function boot(ContainerInterface $container, Router $router): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
             public function providers(): array
             {
@@ -100,7 +103,7 @@ final class ExtensionBootstrapTest extends TestCase
                 $this->callCount++;
             }
 
-            public function boot(ContainerInterface $container, Router $router): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
             public function providers(): array
             {
@@ -128,7 +131,7 @@ final class ExtensionBootstrapTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void
+            public function boot(ContainerInterface $container, RouterInterface $router): void
             {
                 $this->booted = true;
             }
@@ -169,7 +172,7 @@ final class ExtensionBootstrapTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void
+            public function boot(ContainerInterface $container, RouterInterface $router): void
             {
                 $this->callCount++;
             }
@@ -204,7 +207,7 @@ final class ExtensionBootstrapTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
             public function providers(): array
             {
@@ -286,6 +289,172 @@ final class ExtensionBootstrapTest extends TestCase
         self::assertSame(['TestCommand', 'OtherCommand'], $commands);
     }
 
+    #[Test]
+    public function bootPassesRouterInterfaceToExtension(): void
+    {
+        $extension = new class implements ExtensionInterface {
+            public bool $booted = false;
+
+            public function name(): string
+            {
+                return 'test/router-interface';
+            }
+
+            public function register(ContainerInterface $container): void {}
+
+            public function boot(ContainerInterface $container, RouterInterface $router): void
+            {
+                $this->booted = true;
+                $router->get('/interface-test', fn() => 'ok', 'interface.test');
+            }
+
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $this->bootstrap->addExtension($extension, $this->createManifest('test/router-interface'));
+        $this->bootstrap->register($this->container);
+        $this->bootstrap->boot($this->container, $this->router);
+
+        self::assertTrue($extension->booted);
+        self::assertSame(1, $this->router->count());
+        self::assertSame('/interface-test', $this->router->routes[0]->path);
+    }
+
+    #[Test]
+    public function preBootCalledBeforeBoot(): void
+    {
+        $order = [];
+
+        $extension = new class ($order) implements ExtensionInterface, PreBootExtensionInterface {
+            /** @param list<string> $order */
+            public function __construct(private array &$order) {} // @phpstan-ignore property.onlyWritten
+
+            public function name(): string
+            {
+                return 'test/preboot';
+            }
+
+            public function register(ContainerInterface $container): void {}
+
+            public function preBoot(ContainerInterface $container): void
+            {
+                $this->order[] = 'preBoot';
+            }
+
+            public function boot(ContainerInterface $container, RouterInterface $router): void
+            {
+                $this->order[] = 'boot';
+            }
+
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $this->bootstrap->addExtension($extension, $this->createManifest('test/preboot'));
+        $this->bootstrap->register($this->container);
+        $this->bootstrap->boot($this->container, $this->router);
+
+        self::assertSame(['preBoot', 'boot'], $order);
+    }
+
+    #[Test]
+    public function postBootCalledAfterAllBoots(): void
+    {
+        $order = [];
+
+        $extensionA = new class ($order) implements ExtensionInterface, PostBootExtensionInterface {
+            /** @param list<string> $order */
+            public function __construct(private array &$order) {} // @phpstan-ignore property.onlyWritten
+
+            public function name(): string
+            {
+                return 'test/a';
+            }
+
+            public function register(ContainerInterface $container): void {}
+
+            public function boot(ContainerInterface $container, RouterInterface $router): void
+            {
+                $this->order[] = 'boot:a';
+            }
+
+            public function postBoot(ContainerInterface $container): void
+            {
+                $this->order[] = 'postBoot:a';
+            }
+
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $extensionB = new class ($order) implements ExtensionInterface {
+            /** @param list<string> $order */
+            public function __construct(private array &$order) {} // @phpstan-ignore property.onlyWritten
+
+            public function name(): string
+            {
+                return 'test/b';
+            }
+
+            public function register(ContainerInterface $container): void {}
+
+            public function boot(ContainerInterface $container, RouterInterface $router): void
+            {
+                $this->order[] = 'boot:b';
+            }
+
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $this->bootstrap->addExtension($extensionA, $this->createManifest('test/a'));
+        $this->bootstrap->addExtension($extensionB, $this->createManifest('test/b'));
+        $this->bootstrap->register($this->container);
+        $this->bootstrap->boot($this->container, $this->router);
+
+        self::assertSame(['boot:a', 'boot:b', 'postBoot:a'], $order);
+    }
+
+    #[Test]
+    public function preBootAndPostBootAreOptional(): void
+    {
+        $extension = new class implements ExtensionInterface {
+            public bool $booted = false;
+
+            public function name(): string
+            {
+                return 'test/plain';
+            }
+
+            public function register(ContainerInterface $container): void {}
+
+            public function boot(ContainerInterface $container, RouterInterface $router): void
+            {
+                $this->booted = true;
+            }
+
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $this->bootstrap->addExtension($extension, $this->createManifest('test/plain'));
+        $this->bootstrap->register($this->container);
+        $this->bootstrap->boot($this->container, $this->router);
+
+        self::assertTrue($extension->booted);
+    }
+
     private function createTestExtension(string $name): ExtensionInterface
     {
         return new class ($name) implements ExtensionInterface {
@@ -298,7 +467,7 @@ final class ExtensionBootstrapTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
             public function providers(): array
             {

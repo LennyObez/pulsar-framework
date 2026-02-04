@@ -11,7 +11,7 @@ use function json_decode;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Evidence\EvidenceArchive;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
 use ReflectionClass;
 
 use function time;

@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\Evidence\RetentionApplyCommand;
-use Pulsar\Studio\Console\Retention\RetentionEnforcerInterface;
+use Pulsar\Extension\Studio\Command\Console\Evidence\RetentionApplyCommand;
+use Pulsar\Extension\Studio\Console\Retention\RetentionEnforcerInterface;
 
 #[CoversClass(RetentionApplyCommand::class)]
 final class RetentionApplyCommandTest extends TestCase

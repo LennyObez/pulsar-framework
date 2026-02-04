@@ -9,7 +9,7 @@ use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\WebhookController;
-use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 
 /**
  * Vendor-agnostic payments extension.
@@ -29,7 +29,7 @@ final class PaymentsExtension implements ExtensionInterface
         // Service provider handles all bindings
     }
 
-    public function boot(ContainerInterface $container, Router $router): void
+    public function boot(ContainerInterface $container, RouterInterface $router): void
     {
         /** @var PaymentsConfig $config */
         $config = $container->get(PaymentsConfig::class);

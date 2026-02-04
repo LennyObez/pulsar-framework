@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\Environment;
-use Pulsar\Config\StudioSecurityConfig;
+use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
 
 #[CoversClass(StudioSecurityConfig::class)]
 final class StudioSecurityConfigTest extends TestCase

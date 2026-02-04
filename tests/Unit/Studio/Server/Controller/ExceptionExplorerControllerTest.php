@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\EnvironmentMode;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Security\ProductionSafetyMode;
+use Pulsar\Extension\Studio\Server\Controller\ExceptionExplorerController;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Studio\Security\ProductionSafetyMode;
-use Pulsar\Studio\Server\Controller\ExceptionExplorerController;
 
 #[CoversClass(ExceptionExplorerController::class)]
 final class ExceptionExplorerControllerTest extends TestCase

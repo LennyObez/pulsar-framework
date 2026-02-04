@@ -170,7 +170,7 @@ final class ScaffoldExtensionCommand extends Command
             use Pulsar\\Container\\ContainerInterface;
             use Pulsar\\Extensibility\\ExtensionInterface;
             use Pulsar\\Extensibility\\ServiceProviderInterface;
-            use Pulsar\\Routing\\Router;
+            use Pulsar\\Routing\\RouterInterface;
             use $namespace\\Controller\\{$className}Controller;
 
             final class {$className}Extension implements ExtensionInterface
@@ -185,7 +185,7 @@ final class ScaffoldExtensionCommand extends Command
                     // Register any additional services here
                 }
 
-                public function boot(ContainerInterface \$container, Router \$router): void
+                public function boot(ContainerInterface \$container, RouterInterface \$router): void
                 {
                     // Register routes
                     \$router->get('/{$this->toKebabCase($className)}', [{$className}Controller::class, 'index'], '{$this->toKebabCase($className)}.index');

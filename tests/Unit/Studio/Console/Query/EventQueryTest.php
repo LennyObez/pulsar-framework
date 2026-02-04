@@ -7,11 +7,11 @@ namespace Pulsar\Tests\Unit\Studio\Console\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Query\EventFilter;
-use Pulsar\Studio\Console\Query\EventQuery;
-use Pulsar\Studio\Console\Query\EventQueryResult;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Query\EventFilter;
+use Pulsar\Extension\Studio\Console\Query\EventQuery;
+use Pulsar\Extension\Studio\Console\Query\EventQueryResult;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 #[CoversClass(EventQuery::class)]
 #[CoversClass(EventFilter::class)]
