@@ -2,15 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Clock;
+namespace Pulsar\Extension\Payments\Internal\Infrastructure\Clock;
 
 use DateTimeImmutable;
 use Override;
-use Pulsar\Extension\Payments\Contract\ClockInterface;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Payments\Contracts\ClockInterface;
 
 /**
  * Test clock with injectable, deterministic time.
  */
+#[Internal]
 final class FixedClock implements ClockInterface
 {
     public function __construct(

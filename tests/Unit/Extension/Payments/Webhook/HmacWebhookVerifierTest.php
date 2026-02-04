@@ -8,9 +8,9 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Payments\Clock\FixedClock;
 use Pulsar\Extension\Payments\Exception\WebhookException;
-use Pulsar\Extension\Payments\Webhook\HmacWebhookVerifier;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
 
 use function sprintf;
 

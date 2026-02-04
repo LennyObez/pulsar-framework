@@ -8,24 +8,28 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\Container;
-use Pulsar\Extension\Payments\Clock\SystemClock;
 use Pulsar\Extension\Payments\Config\IdempotencyConfig;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
-use Pulsar\Extension\Payments\Contract\ClockInterface;
-use Pulsar\Extension\Payments\Contract\IdempotencyStoreInterface;
-use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
-use Pulsar\Extension\Payments\Contract\WebhookEventLogInterface;
-use Pulsar\Extension\Payments\Contract\WebhookVerifierInterface;
-use Pulsar\Extension\Payments\Controller\WebhookController;
+use Pulsar\Extension\Payments\Contracts\ClockInterface;
+use Pulsar\Extension\Payments\Contracts\IdempotencyStoreInterface;
+use Pulsar\Extension\Payments\Contracts\PaymentGatewayInterface;
+use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
+use Pulsar\Extension\Payments\Contracts\WebhookEventLogInterface;
+use Pulsar\Extension\Payments\Contracts\WebhookProcessorInterface;
+use Pulsar\Extension\Payments\Contracts\WebhookVerifierInterface;
+use Pulsar\Extension\Payments\Features\CreatePaymentIntent\CreatePaymentIntentHandler;
+use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
+use Pulsar\Extension\Payments\Features\ProcessWebhook\WebhookController;
 use Pulsar\Extension\Payments\Gateway\PaymentGateway;
-use Pulsar\Extension\Payments\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\SystemClock;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\NullProvider;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\SimulatorProvider;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Extension\Payments\PaymentsServiceProvider;
-use Pulsar\Extension\Payments\Provider\NullProvider;
-use Pulsar\Extension\Payments\Provider\SimulatorProvider;
-use Pulsar\Extension\Payments\Webhook\HmacWebhookVerifier;
-use Pulsar\Extension\Payments\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
 
 #[CoversClass(PaymentsServiceProvider::class)]
@@ -44,8 +48,12 @@ final class PaymentsServiceProviderTest extends TestCase
         self::assertContains(IdempotencyStoreInterface::class, $provides);
         self::assertContains(WebhookEventLogInterface::class, $provides);
         self::assertContains(WebhookVerifierInterface::class, $provides);
+        self::assertContains(CreatePaymentIntentHandler::class, $provides);
+        self::assertContains(ProcessWebhookHandler::class, $provides);
         self::assertContains(PaymentGateway::class, $provides);
+        self::assertContains(PaymentGatewayInterface::class, $provides);
         self::assertContains(WebhookProcessor::class, $provides);
+        self::assertContains(WebhookProcessorInterface::class, $provides);
         self::assertContains(WebhookController::class, $provides);
     }
 

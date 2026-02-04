@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Payments\Exception\WebhookException;
-use Pulsar\Extension\Payments\Webhook\InMemoryWebhookEventLog;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Extension\Payments\Webhook\WebhookClaimStatus;
 
 #[CoversClass(InMemoryWebhookEventLog::class)]

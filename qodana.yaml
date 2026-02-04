@@ -15,6 +15,13 @@ exclude:
   # ESLint - not relevant, project uses its own ESLint setup via pnpm
   - name: Eslint
   - name: EsLintInspection
+  # PHP 8.5 false positives — jetbrains/qodana-php:2025.3 does not fully support PHP 8.5.
+  # These inspections misfire on constructor-promoted properties, named arguments, and
+  # property access expressions. PHPStan max + Psalm level 1 are authoritative.
+  # Remove these exclusions when upgrading to a Qodana version with PHP 8.5 support.
+  - name: PhpUndefinedVariableInspection
+  - name: PhpUndefinedConstantInspection
+  - name: PhpExpressionResultUnusedInspection
   # Redundant visibility modifier - CS Fixer (PER-CS2.0) enforces explicit `public` on
   # `private(set)` properties; Qodana flags it as redundant. CS Fixer is authoritative.
   - name: PhpPublicPropertyModifierCanBeOmittedInspection
@@ -38,10 +45,14 @@ exclude:
       - src/Console/Command/RuntimeServeCommand.php
   # Duplicated code - Studio CLI commands share structural patterns (extract values,
   # format output) but operate on different data; further extraction is over-engineering.
+  # Payments gateway/handler share validation and serialization because the handler was
+  # extracted from the gateway; remaining methods will migrate in future slices.
   - name: DuplicatedCode
     paths:
       - src/Studio/Command/Console/ConsoleExportCommand.php
       - src/Studio/Command/Console/ConsoleVerifyCommand.php
+      - extensions/payments/src/Gateway/PaymentGateway.php
+      - extensions/payments/src/Features/CreatePaymentIntent/CreatePaymentIntentHandler.php
   # Development-only router file references non-existent autoload
   - name: PhpIncludeInspection
     paths:
