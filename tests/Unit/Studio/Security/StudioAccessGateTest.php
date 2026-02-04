@@ -10,12 +10,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\EnvironmentMode;
-use Pulsar\Config\StudioSecurityConfig;
+use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
+use Pulsar\Extension\Studio\Security\AllowlistChecker;
+use Pulsar\Extension\Studio\Security\StudioAccessGate;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
-use Pulsar\Studio\Security\AllowlistChecker;
-use Pulsar\Studio\Security\StudioAccessGate;
 
 #[CoversClass(StudioAccessGate::class)]
 #[CoversClass(AllowlistChecker::class)]

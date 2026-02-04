@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Studio\Console\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Query\EventQueryResult;
+use Pulsar\Extension\Studio\Console\Query\EventQueryResult;
 
 #[CoversClass(EventQueryResult::class)]
 final class EventQueryResultTest extends TestCase

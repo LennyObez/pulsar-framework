@@ -17,11 +17,11 @@ use const JSON_UNESCAPED_UNICODE;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
-use Pulsar\Studio\Console\Event\EventEnvelope;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Event\EventVersion;
-use Pulsar\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
+use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Event\EventVersion;
+use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 
 use function random_bytes;
 use function usleep;

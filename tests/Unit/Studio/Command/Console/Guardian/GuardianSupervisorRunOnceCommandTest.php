@@ -11,7 +11,7 @@ use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\Guardian\GuardianSupervisorRunOnceCommand;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianSupervisorRunOnceCommand;
 use Pulsar\Supervisor\PreflightCheck\PreflightCheckInterface;
 use Pulsar\Supervisor\PreflightCheck\PreflightCheckResult;
 use Pulsar\Supervisor\Supervisor;

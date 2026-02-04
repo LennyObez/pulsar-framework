@@ -8,10 +8,8 @@ use function dirname;
 
 use Error;
 
-use function getenv;
 use function is_array;
 use function is_callable;
-use function is_file;
 use function is_string;
 
 use JsonException;
@@ -51,7 +49,6 @@ use Pulsar\Config\CsrfConfig;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\DeployConfig;
 use Pulsar\Config\Environment;
-use Pulsar\Config\EnvironmentMode;
 use Pulsar\Config\FeatureFlagConfig;
 use Pulsar\Config\HealthCheckConfig;
 use Pulsar\Config\IntegrityConfig;
@@ -65,7 +62,6 @@ use Pulsar\Config\SchedulerConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
-use Pulsar\Config\StudioConfig;
 use Pulsar\Config\SupervisorConfig;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Config\TenantDatabaseConfig;
@@ -97,11 +93,13 @@ use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
+use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\Middleware\TracingMiddleware;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseEmitter;
+use Pulsar\Http\RouteContext;
 use Pulsar\Integrity\IntegrityPolicy;
 use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestSigner;
@@ -128,6 +126,7 @@ use Pulsar\Resilience\Repair\RepairRunner;
 use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
 use Pulsar\Runtime\LeakDetector;
 use Pulsar\Runtime\RequestResetRegistry;
@@ -146,29 +145,6 @@ use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
-use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
-use Pulsar\Studio\Console\Aggregation\TimelineBuilder;
-use Pulsar\Studio\Console\Collector\ExceptionCollector;
-use Pulsar\Studio\Console\Collector\FeatureFlagCollector;
-use Pulsar\Studio\Console\Collector\HttpCollector;
-use Pulsar\Studio\Console\Collector\InstrumentedConnection;
-use Pulsar\Studio\Console\Collector\InstrumentedQueueManager;
-use Pulsar\Studio\Console\Collector\InstrumentedScheduler;
-use Pulsar\Studio\Console\Collector\InstrumentedWorker;
-use Pulsar\Studio\Console\Collector\LogCollector;
-use Pulsar\Studio\Console\Event\EventFactory;
-use Pulsar\Studio\Console\Evidence\EvidenceExporter;
-use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
-use Pulsar\Studio\Console\Redaction\RedactionPipeline;
-use Pulsar\Studio\Console\Retention\RetentionEnforcer;
-use Pulsar\Studio\Console\Retention\RetentionPolicy;
-use Pulsar\Studio\Console\Storage\EncryptedEventStore;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Studio\Console\Storage\SqliteEventStore;
-use Pulsar\Studio\CorrelationContextProviderInterface;
-use Pulsar\Studio\FiberScopedContextProvider;
-use Pulsar\Studio\Security\StudioAccessGate;
-use Pulsar\Studio\StudioManager;
 use Pulsar\Supervisor\Supervisor;
 use Pulsar\Tenancy\Middleware\TenantResolutionMiddleware;
 use Pulsar\Tenancy\Resolver\HeaderTenantResolver;
@@ -197,8 +173,8 @@ use Throwable;
  * Boot pipeline order:
  * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler
  * -> Security -> Auth -> Database -> Tenancy -> FeatureFlags -> Scheduler -> Resilience
- * -> Queue -> Supervisor -> Integrity -> Deploy
- * -> DiagnosticsRoute -> Studio preboot -> Extensions -> Studio attach
+ * -> Queue -> Supervisor -> Integrity -> Deploy -> DiagnosticsRoute
+ * -> Extensions (register -> preBoot -> boot -> postBoot)
  */
 #[Internal]
 final class Kernel
@@ -211,6 +187,7 @@ final class Kernel
     private ?ExtensionBootstrap $extensionBootstrap;
     private ?ConfigManager $configManager;
     private ?ExceptionHandler $exceptionHandler = null;
+    private ?RouteContext $routeContext = null;
 
     public function __construct(
         ?ContainerInterface $container = null,
@@ -228,6 +205,8 @@ final class Kernel
         // Register core services in container
         $this->container->instance(ContainerInterface::class, $this->container);
         $this->container->instance(Router::class, $this->router);
+        $this->container->instance(RouterInterface::class, $this->router);
+        $this->container->instance(MiddlewarePipelineInterface::class, $this->middleware);
         $this->container->instance(MiddlewareRegistry::class, $this->middlewareRegistry);
         $this->container->instance(self::class, $this);
 
@@ -256,10 +235,10 @@ final class Kernel
      * 12. Scheduler services creation (if config/scheduler.php exists)
      * 13. Resilience services creation (if config/resilience.php exists)
      * 14. Diagnostics route registration (debug mode only)
-     * 15. Studio preboot (config + storage + redaction + chain)
-     * 16. Extension register phase
+     * 15. Extension register phase
+     * 16. Extension preBoot phase (PreBootExtensionInterface)
      * 17. Extension boot phase
-     * 18. Studio attach (wire collectors into final bindings)
+     * 18. Extension postBoot phase (PostBootExtensionInterface)
      *
      * @throws ContainerException If a container error occurs during bootstrap
      * @throws NotFoundException If a required binding is not found during bootstrap
@@ -325,19 +304,13 @@ final class Kernel
             $this->createDeployServices();
             $this->createRuntimeServices();
             $this->registerDiagnosticsRoute();
-            $this->studioPreboot();
         }
 
         // Extension register phase (all extensions)
         $this->extensionBootstrap?->register($this->container);
 
-        // Extension boot phase (all extensions)
+        // Extension boot phase (all extensions — includes preBoot, boot, postBoot)
         $this->extensionBootstrap?->boot($this->container, $this->router);
-
-        // Studio attach: wire collectors into final service bindings
-        if ($this->container->has(StudioManager::class)) {
-            $this->attachStudioCollectors();
-        }
 
         $this->booted = true;
     }
@@ -402,6 +375,9 @@ final class Kernel
     {
         $this->boot();
 
+        // Reset route context for this request (worker reuse safety)
+        $this->routeContext?->reset();
+
         try {
             return $this->middleware->handle($request, fn(Request $req) => $this->dispatchRoute($req));
         } catch (Throwable $e) {
@@ -440,6 +416,12 @@ final class Kernel
     {
         $host = $request->header('Host');
         $matched = $this->router->match($request->method, $request->path, $host);
+
+        // Populate RouteContext for observability middleware (metrics/tracing)
+        if ($this->routeContext !== null) {
+            $this->routeContext->pattern = $matched->route->path;
+            $this->routeContext->name = $matched->getName();
+        }
 
         // Add route parameters to request attributes
         $request = $this->addRouteAttributesToRequest($request, $matched);
@@ -586,10 +568,10 @@ final class Kernel
     /**
      * Create the logger from config and register in the container.
      *
-     * When Studio is potentially enabled (lightweight check via env vars +
-     * config file existence), injects a DeferredSink into the Logger's sink
-     * list. Studio's LogCollector is added to it later during attach().
-     * If Studio is ultimately disabled, the DeferredSink remains a no-op.
+     * DeferredSink is always-present as a generic extension point.
+     * It's a pass-through (no buffer) — zero overhead when no sinks attached.
+     * Extensions (e.g., Studio) call $deferredSink->addSink() to wire in
+     * late-bound log collection during their postBoot phase.
      */
     private function createLogger(): void
     {
@@ -599,14 +581,9 @@ final class Kernel
         /** @var ObservabilityConfig $observabilityConfig */
         $observabilityConfig = $configManager->repository()->get(ObservabilityConfig::class);
 
-        // Inject DeferredSink when Studio may be enabled
-        if ($this->isStudioEnabled()) {
-            $deferredSink = new DeferredSink();
-            $this->container->instance(DeferredSink::class, $deferredSink);
-            $logger = Logger::fromConfigWithExtraSinks($observabilityConfig, [$deferredSink]);
-        } else {
-            $logger = Logger::fromConfig($observabilityConfig);
-        }
+        $deferredSink = new DeferredSink();
+        $this->container->instance(DeferredSink::class, $deferredSink);
+        $logger = Logger::fromConfigWithExtraSinks($observabilityConfig, [$deferredSink]);
 
         $this->container->instance(LoggerInterface::class, $logger);
         $this->container->instance(Logger::class, $logger);
@@ -636,10 +613,17 @@ final class Kernel
         /** @var Randomizer $randomizer */
         $randomizer = $this->container->get(Randomizer::class);
 
+        // Create shared RouteContext (populated after route matching)
+        if ($this->routeContext === null) {
+            $this->routeContext = new RouteContext();
+            $this->container->instance(RouteContext::class, $this->routeContext);
+        }
+
         $tracingMiddleware = new TracingMiddleware(
             $collector,
             $observabilityConfig->tracing->samplingRate,
             $randomizer,
+            $this->routeContext,
         );
 
         // Tracing is outermost: registered first
@@ -666,7 +650,13 @@ final class Kernel
         $registry = new MetricRegistry();
         $this->container->instance(MetricRegistry::class, $registry);
 
-        $metricsMiddleware = new MetricsMiddleware($registry);
+        // Create shared RouteContext if not already created by tracing
+        if ($this->routeContext === null) {
+            $this->routeContext = new RouteContext();
+            $this->container->instance(RouteContext::class, $this->routeContext);
+        }
+
+        $metricsMiddleware = new MetricsMiddleware($registry, $this->routeContext);
 
         // Metrics is inner: registered after tracing
         $this->middleware->pipe($metricsMiddleware);
@@ -725,8 +715,13 @@ final class Kernel
         /** @var AppConfig $appConfig */
         $appConfig = $configManager->repository()->get(AppConfig::class);
 
+        $scrubber = $this->container->has(SensitiveDataScrubber::class)
+            ? $this->container->get(SensitiveDataScrubber::class)
+            : null;
+
+        /** @var SensitiveDataScrubber|null $scrubber */
         $renderer = $appConfig->debug
-            ? new DevelopmentRenderer()
+            ? new DevelopmentRenderer($scrubber ?? new SensitiveDataScrubber())
             : new ProductionRenderer();
 
         $logger = $this->container->has(LoggerInterface::class)
@@ -735,10 +730,6 @@ final class Kernel
 
         $aggregator = $this->container->has(ErrorAggregator::class)
             ? $this->container->get(ErrorAggregator::class)
-            : null;
-
-        $scrubber = $this->container->has(SensitiveDataScrubber::class)
-            ? $this->container->get(SensitiveDataScrubber::class)
             : null;
 
         /** @var LoggerInterface|null $logger */
@@ -1441,323 +1432,6 @@ final class Kernel
         // Create request sandbox
         $sandbox = new RequestSandbox($this->container, $registry, $leakDetector);
         $this->container->instance(RequestSandbox::class, $sandbox);
-    }
-
-    /**
-     * Lightweight Studio-enabled check for the early boot phase.
-     *
-     * Runs BEFORE full StudioConfig hydration. Uses only env vars and
-     * config file existence to decide whether to create the DeferredSink.
-     */
-    private function isStudioEnabled(): bool
-    {
-        // Explicit disable always wins
-        if (getenv('STUDIO_DISABLED') === 'true') {
-            return false;
-        }
-
-        // Config file must exist
-        /** @var ConfigManager $configManager */
-        $configManager = $this->configManager;
-        $configPath = $configManager->configPath();
-
-        if ($configPath === null || !is_file($configPath . DIRECTORY_SEPARATOR . 'studio.php')) {
-            return false;
-        }
-
-        /** @var AppConfig $appConfig */
-        $appConfig = $configManager->repository()->get(AppConfig::class);
-
-        // In production, require explicit env vars
-        if ($appConfig->mode === EnvironmentMode::Production) {
-            return getenv('STUDIO_ENABLED') === 'true'
-                && getenv('STUDIO_PRODUCTION_CONFIRM') === 'true';
-        }
-
-        // In staging, require explicit env var
-        if ($appConfig->mode === EnvironmentMode::Staging) {
-            return getenv('STUDIO_ENABLED') === 'true';
-        }
-
-        // In local/dev, enabled by default when config file exists
-        return true;
-    }
-
-    /**
-     * Studio preboot — Phase 1: config, storage, redaction, evidence chain.
-     *
-     * Called after all core services are created, before Extensions.
-     * Creates StudioManager and supporting services. If disabled via
-     * config, returns early (DeferredSink stays a no-op).
-     *
-     * @throws ContainerException If a container error occurs while resolving dependencies
-     * @throws NotFoundException If a required binding is not found in the container
-     * @throws ReflectionException If class reflection fails during autowiring
-     * @throws SodiumException If a sodium cryptographic operation fails
-     */
-    private function studioPreboot(): void
-    {
-        /** @var ConfigManager $configManager */
-        $configManager = $this->configManager;
-        $repository = $configManager->repository();
-        $environment = $configManager->environment();
-
-        $configPath = $configManager->configPath();
-
-        if ($configPath === null || !is_file($configPath . DIRECTORY_SEPARATOR . 'studio.php')) {
-            return;
-        }
-
-        // Load Studio config
-        /** @psalm-suppress UnresolvableInclude Studio config path is validated by is_file() above */
-        $studioData = require $configPath . DIRECTORY_SEPARATOR . 'studio.php';
-
-        if (!is_array($studioData)) {
-            return;
-        }
-
-        /** @var array<string, mixed> $studioData */
-        $studioConfig = StudioConfig::fromArray($studioData, $environment);
-        $this->container->instance(StudioConfig::class, $studioConfig);
-
-        if (!$studioConfig->enabled) {
-            return;
-        }
-
-        /** @var AppConfig $appConfig */
-        $appConfig = $repository->get(AppConfig::class);
-
-        // Production double-check
-        if ($appConfig->mode === EnvironmentMode::Production) {
-            $prodConfirm = $environment->get('STUDIO_PRODUCTION_CONFIRM');
-
-            if ($prodConfirm !== 'true') {
-                return;
-            }
-        }
-
-        // Create SQLite event store
-        $sqliteStore = new SqliteEventStore(
-            $studioConfig->storagePath,
-            $this->container->has(MetricRegistry::class)
-                ? $this->container->get(MetricRegistry::class)
-                : null,
-        );
-        /** @var MetricRegistry|null $_ Psalm hint */
-        $this->container->instance(SqliteEventStore::class, $sqliteStore);
-
-        // Optionally wrap with encryption (requires MasterKey for key derivation)
-        $store = $sqliteStore;
-        $isEncrypted = false;
-        $hasDecryptionKey = false;
-        $chainMacKey = null;
-        $archiveMacKey = null;
-
-        if ($this->container->has(MasterKey::class)) {
-            /** @var MasterKey $masterKey */
-            $masterKey = $this->container->get(MasterKey::class);
-            $hasDecryptionKey = true;
-
-            // Encryption at rest — dedicated subkey 3 (separate from main Encryptor's subkey 1)
-            $studioEncryptor = Encryptor::fromDerivedKey($masterKey, 3, 'studio_enc__');
-            $encryptedStore = new EncryptedEventStore($sqliteStore, $studioEncryptor);
-            $store = $encryptedStore;
-            $isEncrypted = true;
-            $this->container->instance(EncryptedEventStore::class, $encryptedStore);
-
-            // Archive MAC key — subkey 4
-            $archiveMacKey = $masterKey->deriveSubKey(4, 'studio_mac__');
-
-            // Chain MAC key — subkey 5
-            $chainMacKey = $masterKey->deriveSubKey(5, 'studio_chain_mac__');
-        }
-
-        $this->container->instance(EventStoreInterface::class, $store);
-
-        // Redaction pipeline
-        $redactionPipeline = RedactionPipeline::withDefaults();
-        $this->container->instance(RedactionPipeline::class, $redactionPipeline);
-
-        // Retention
-        $retentionPolicy = new RetentionPolicy(
-            maxAgeDays: $studioConfig->retention->maxAgeDays,
-            maxSizeMb: $studioConfig->retention->maxSizeMb,
-            vacuumIntervalHours: $studioConfig->retention->vacuumIntervalHours,
-        );
-        $this->container->instance(RetentionPolicy::class, $retentionPolicy);
-
-        $retentionEnforcer = new RetentionEnforcer(
-            $sqliteStore,
-            $retentionPolicy,
-            $this->container->has(MetricRegistry::class)
-                ? $this->container->get(MetricRegistry::class)
-                : null,
-        );
-        /** @var MetricRegistry|null $_ */
-        $this->container->instance(RetentionEnforcer::class, $retentionEnforcer);
-
-        // Context provider (fiber-safe)
-        $contextProvider = new FiberScopedContextProvider();
-        $this->container->instance(FiberScopedContextProvider::class, $contextProvider);
-        $this->container->instance(CorrelationContextProviderInterface::class, $contextProvider);
-
-        // Event factory
-        /** @var Randomizer $randomizer */
-        $randomizer = $this->container->get(Randomizer::class);
-        $eventFactory = EventFactory::create($appConfig->mode->value, $randomizer);
-        $this->container->instance(EventFactory::class, $eventFactory);
-
-        // Tenant context (if available)
-        $tenantContext = $this->container->has(TenantContext::class)
-            ? $this->container->get(TenantContext::class)
-            : null;
-
-        /** @var TenantContext|null $tenantContext */
-
-        // Studio manager
-        $studioManager = new StudioManager(
-            store: $store,
-            eventFactory: $eventFactory,
-            redactionPipeline: $redactionPipeline,
-            tenantContext: $tenantContext,
-            chainMacKey: $chainMacKey,
-            samplingRate: $studioConfig->samplingRate,
-            randomizer: $randomizer,
-        );
-        $this->container->instance(StudioManager::class, $studioManager);
-
-        // Aggregation services
-        $dashboardAggregator = new DashboardAggregator($store);
-        $this->container->instance(DashboardAggregator::class, $dashboardAggregator);
-
-        $timelineBuilder = new TimelineBuilder($store);
-        $this->container->instance(TimelineBuilder::class, $timelineBuilder);
-
-        // Security gate
-        $accessGate = new StudioAccessGate($studioConfig->security, $appConfig->mode);
-        $this->container->instance(StudioAccessGate::class, $accessGate);
-
-        // Evidence services
-        $evidenceVerifier = new EvidenceVerifier();
-        $this->container->instance(EvidenceVerifier::class, $evidenceVerifier);
-
-        $evidenceExporter = new EvidenceExporter(
-            store: $store,
-            archiveMacKey: $archiveMacKey,
-            isEncrypted: $isEncrypted,
-            hasDecryptionKey: $hasDecryptionKey,
-        );
-        $this->container->instance(EvidenceExporter::class, $evidenceExporter);
-    }
-
-    /**
-     * Studio attach — Phase 2: wire collectors into final service bindings.
-     *
-     * Called AFTER Extensions boot. Decorates the final service instances
-     * (including any modifications made by extensions during their boot phase).
-     *
-     * @throws ContainerException If a container error occurs while resolving dependencies
-     * @throws NotFoundException If a required binding is not found in the container
-     * @throws ReflectionException If class reflection fails during autowiring
-     */
-    private function attachStudioCollectors(): void
-    {
-        /** @var StudioManager $studioManager */
-        $studioManager = $this->container->get(StudioManager::class);
-        $emit = $studioManager->emitCallback();
-
-        /** @var StudioConfig $studioConfig */
-        $studioConfig = $this->container->get(StudioConfig::class);
-        $collectorConfig = $studioConfig->collectors;
-
-        /** @var FiberScopedContextProvider $contextProvider */
-        $contextProvider = $this->container->get(FiberScopedContextProvider::class);
-
-        /** @var AppConfig $appConfig */
-        $appConfig = $this->container->get(AppConfig::class);
-
-        /** @var Randomizer $randomizer */
-        $randomizer = $this->container->get(Randomizer::class);
-
-        // 1. HTTP collector (global middleware, after MetricsMiddleware)
-        if ($collectorConfig->http) {
-            $httpCollector = new HttpCollector($contextProvider, $emit, $randomizer);
-            $this->container->instance(HttpCollector::class, $httpCollector);
-            $this->middleware->pipe($httpCollector);
-        }
-
-        // 2. Database collector (decorator)
-        if ($collectorConfig->database && $this->container->has(ConnectionManagerInterface::class)) {
-            /** @var ConnectionManagerInterface $connectionManager */
-            $connectionManager = $this->container->get(ConnectionManagerInterface::class);
-            $connection = $connectionManager->connection();
-
-            $instrumentedConnection = new InstrumentedConnection(
-                inner: $connection,
-                contextProvider: $contextProvider,
-                emit: $emit,
-                storeRawSql: $collectorConfig->storeRawSql,
-                environmentMode: $appConfig->mode,
-            );
-            $this->container->instance(InstrumentedConnection::class, $instrumentedConnection);
-        }
-
-        // 3. Log collector (via DeferredSink)
-        if ($collectorConfig->logs && $this->container->has(DeferredSink::class)) {
-            $logCollector = new LogCollector($contextProvider, $emit);
-            $this->container->instance(LogCollector::class, $logCollector);
-
-            /** @var DeferredSink $deferredSink */
-            $deferredSink = $this->container->get(DeferredSink::class);
-            $deferredSink->addSink($logCollector);
-        }
-
-        // 4. Exception collector (observer on ErrorAggregator)
-        if ($collectorConfig->exceptions && $this->container->has(ErrorAggregator::class)) {
-            $exceptionCollector = new ExceptionCollector($contextProvider, $emit);
-            $this->container->instance(ExceptionCollector::class, $exceptionCollector);
-
-            /** @var ErrorAggregator $aggregator */
-            $aggregator = $this->container->get(ErrorAggregator::class);
-            $aggregator->addObserver($exceptionCollector->handleError(...));
-        }
-
-        // 5. Scheduler collector (decorator)
-        if ($collectorConfig->scheduler && $this->container->has(Scheduler::class)) {
-            /** @var Scheduler $scheduler */
-            $scheduler = $this->container->get(Scheduler::class);
-
-            $instrumentedScheduler = new InstrumentedScheduler($scheduler, $contextProvider, $emit, $randomizer);
-            $this->container->instance(InstrumentedScheduler::class, $instrumentedScheduler);
-        }
-
-        // 6. Feature flag collector (observer on FlagEvaluationLog)
-        if ($collectorConfig->featureFlags && $this->container->has(FlagEvaluationLog::class)) {
-            $featureFlagCollector = new FeatureFlagCollector($contextProvider, $emit);
-            $this->container->instance(FeatureFlagCollector::class, $featureFlagCollector);
-
-            /** @var FlagEvaluationLog $evaluationLog */
-            $evaluationLog = $this->container->get(FlagEvaluationLog::class);
-            $evaluationLog->addObserver($featureFlagCollector->handleEvaluation(...));
-        }
-
-        // 7. Queue collector (decorator on QueueManager)
-        if ($collectorConfig->queue && $this->container->has(QueueManager::class)) {
-            /** @var QueueManager $queueManager */
-            $queueManager = $this->container->get(QueueManager::class);
-
-            $instrumentedQueueManager = new InstrumentedQueueManager($queueManager, $contextProvider, $emit);
-            $this->container->instance(InstrumentedQueueManager::class, $instrumentedQueueManager);
-
-            // Worker decorator (if worker is registered)
-            if ($this->container->has(Worker::class)) {
-                /** @var Worker $worker */
-                $worker = $this->container->get(Worker::class);
-
-                $instrumentedWorker = new InstrumentedWorker($worker, $contextProvider, $emit, $randomizer);
-                $this->container->instance(InstrumentedWorker::class, $instrumentedWorker);
-            }
-        }
     }
 
     /**

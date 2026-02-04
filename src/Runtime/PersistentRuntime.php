@@ -27,7 +27,6 @@ use Pulsar\Runtime\Http\HttpRequestParser;
 use Pulsar\Runtime\Http\HttpResponseSerializer;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
 use Pulsar\Runtime\Upgrade\UpgradeResponse;
-use Pulsar\Studio\Console\Collector\InstrumentedRuntime;
 
 use function register_shutdown_function;
 
@@ -82,7 +81,7 @@ final class PersistentRuntime implements RuntimeInterface
         private readonly RequestSandbox $sandbox,
         private readonly RuntimeConfig $config,
         private readonly ?LoggerInterface $logger = null,
-        private readonly ?InstrumentedRuntime $collector = null,
+        private readonly ?RuntimeCollectorInterface $collector = null,
         private readonly ?UpgradeContext $upgradeContext = null,
     ) {
         if (!extension_loaded('sockets')) {

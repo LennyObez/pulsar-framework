@@ -8,7 +8,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Example\Controller\ExampleController;
-use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
 
 /**
@@ -35,7 +35,7 @@ final class ExampleExtension implements ExtensionInterface
     /**
      * @throws RoutingException If the router is locked in strict cache mode
      */
-    public function boot(ContainerInterface $container, Router $router): void
+    public function boot(ContainerInterface $container, RouterInterface $router): void
     {
         // Register extension routes
         $router->get('/example', [ExampleController::class, 'index'], 'example.index');

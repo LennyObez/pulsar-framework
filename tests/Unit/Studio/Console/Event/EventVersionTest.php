@@ -9,7 +9,7 @@ use function count;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Event\EventVersion;
+use Pulsar\Extension\Studio\Console\Event\EventVersion;
 use ValueError;
 
 #[CoversClass(EventVersion::class)]

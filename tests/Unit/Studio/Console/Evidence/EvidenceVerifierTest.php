@@ -15,10 +15,10 @@ use const JSON_UNESCAPED_UNICODE;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
+use Pulsar\Extension\Studio\Console\Evidence\HashChain;
 use Pulsar\Security\Crypto\Hmac;
-use Pulsar\Studio\Console\Evidence\EvidenceArchive;
-use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
-use Pulsar\Studio\Console\Evidence\HashChain;
 
 use function random_bytes;
 

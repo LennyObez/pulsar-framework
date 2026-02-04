@@ -9,13 +9,13 @@ use DateTimeZone;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Collector\ExceptionCollector;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\Payload\ExceptionPayload;
+use Pulsar\Observability\Context\CorrelationContext;
+use Pulsar\Observability\Context\CorrelationContextProviderInterface;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;
 use Pulsar\Observability\ErrorTracking\ErrorFingerprint;
-use Pulsar\Studio\Console\Collector\ExceptionCollector;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Studio\Console\Event\Payload\ExceptionPayload;
-use Pulsar\Studio\CorrelationContext;
-use Pulsar\Studio\CorrelationContextProviderInterface;
 use RuntimeException;
 
 #[CoversClass(ExceptionCollector::class)]

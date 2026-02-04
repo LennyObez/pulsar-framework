@@ -7,8 +7,8 @@ namespace Pulsar\Tests\Unit\Studio\Server;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Config\StudioServerConfig;
-use Pulsar\Studio\Server\StudioServer;
+use Pulsar\Extension\Studio\Config\StudioServerConfig;
+use Pulsar\Extension\Studio\Server\StudioServer;
 
 #[CoversClass(StudioServer::class)]
 final class StudioServerTest extends TestCase

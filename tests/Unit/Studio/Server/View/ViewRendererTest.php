@@ -12,7 +12,7 @@ use function mkdir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Server\View\ViewRenderer;
+use Pulsar\Extension\Studio\Server\View\ViewRenderer;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use RuntimeException;

@@ -8,14 +8,14 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Collector\FeatureFlagCollector;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\Payload\FeatureFlagPayload;
+use Pulsar\Extension\Studio\FiberScopedContextProvider;
 use Pulsar\FeatureFlag\FlagContext;
 use Pulsar\FeatureFlag\FlagEvaluation;
 use Pulsar\FeatureFlag\FlagEvaluationReason;
-use Pulsar\Studio\Console\Collector\FeatureFlagCollector;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Studio\Console\Event\Payload\FeatureFlagPayload;
-use Pulsar\Studio\CorrelationContext;
-use Pulsar\Studio\FiberScopedContextProvider;
+use Pulsar\Observability\Context\CorrelationContext;
 use RuntimeException;
 
 #[CoversClass(FeatureFlagCollector::class)]

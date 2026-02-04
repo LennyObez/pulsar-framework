@@ -8,11 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\Environment;
-use Pulsar\Config\StudioCollectorConfig;
-use Pulsar\Config\StudioConfig;
-use Pulsar\Config\StudioRetentionConfig;
-use Pulsar\Config\StudioSecurityConfig;
-use Pulsar\Config\StudioServerConfig;
+use Pulsar\Extension\Studio\Config\StudioCollectorConfig;
+use Pulsar\Extension\Studio\Config\StudioConfig;
+use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
+use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
+use Pulsar\Extension\Studio\Config\StudioServerConfig;
 
 #[CoversClass(StudioConfig::class)]
 final class StudioConfigTest extends TestCase

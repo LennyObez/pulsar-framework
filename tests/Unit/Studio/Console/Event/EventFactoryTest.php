@@ -7,12 +7,12 @@ namespace Pulsar\Tests\Unit\Studio\Console\Event;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Studio\Console\Event\EventEnvelope;
-use Pulsar\Studio\Console\Event\EventFactory;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Event\EventVersion;
-use Pulsar\Studio\CorrelationContext;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
+use Pulsar\Extension\Studio\Console\Event\EventFactory;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Event\EventVersion;
+use Pulsar\Observability\Context\CorrelationContext;
 
 use function strlen;
 

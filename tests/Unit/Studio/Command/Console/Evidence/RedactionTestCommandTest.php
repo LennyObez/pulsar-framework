@@ -10,10 +10,10 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\Evidence\RedactionTestCommand;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Redaction\RedactionPipeline;
-use Pulsar\Studio\Console\Redaction\RedactionPipelineInterface;
+use Pulsar\Extension\Studio\Command\Console\Evidence\RedactionTestCommand;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Redaction\RedactionPipeline;
+use Pulsar\Extension\Studio\Console\Redaction\RedactionPipelineInterface;
 
 #[CoversClass(RedactionTestCommand::class)]
 final class RedactionTestCommandTest extends TestCase

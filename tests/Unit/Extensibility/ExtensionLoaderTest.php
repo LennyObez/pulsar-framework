@@ -13,7 +13,7 @@ use Pulsar\Extensibility\Exception\DependencyException;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ExtensionLoader;
 use Pulsar\Extensibility\ExtensionManifest;
-use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
@@ -206,7 +206,7 @@ class StubExtension implements ExtensionInterface
 
     public function register(ContainerInterface $container): void {}
 
-    public function boot(ContainerInterface $container, Router $router): void {}
+    public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
     public function providers(): array
     {

@@ -10,14 +10,14 @@ use function microtime;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Event\EventEnvelope;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Event\EventVersion;
-use Pulsar\Studio\Console\Evidence\EvidenceArchive;
-use Pulsar\Studio\Console\Evidence\EvidenceExporter;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Studio\Console\Storage\SqliteEventStore;
-use Pulsar\Studio\Exception\StudioException;
+use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Event\EventVersion;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Extension\Studio\Exception\StudioException;
 
 use function strlen;
 

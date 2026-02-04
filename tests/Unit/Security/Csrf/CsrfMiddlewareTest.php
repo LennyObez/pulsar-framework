@@ -120,11 +120,15 @@ final class CsrfMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function postWithoutTokenReturns403(): void
+    public function postWithoutTokenReturns403Json(): void
     {
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
-        $request = $this->createRequest(Method::POST, '/submit');
+        $request = $this->createRequest(
+            Method::POST,
+            '/submit',
+            headers: ['Accept' => 'application/json'],
+        );
         $response = $middleware->process($request, $this->successHandler());
 
         self::assertSame(ResponseStatus::Forbidden, $response->status);
@@ -136,7 +140,7 @@ final class CsrfMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function postWithInvalidTokenReturns403(): void
+    public function postWithInvalidTokenReturns403Json(): void
     {
         $this->tokenManager->method('validate')
             ->willReturn(false);
@@ -146,7 +150,7 @@ final class CsrfMiddlewareTest extends TestCase
         $request = $this->createRequest(
             Method::POST,
             '/submit',
-            headers: ['X-CSRF-Token' => 'wrong_token'],
+            headers: ['X-CSRF-Token' => 'wrong_token', 'Accept' => 'application/json'],
         );
 
         $response = $middleware->process($request, $this->successHandler());
@@ -191,6 +195,43 @@ final class CsrfMiddlewareTest extends TestCase
         $response = $middleware->process($request, $this->successHandler());
 
         self::assertSame(ResponseStatus::OK, $response->status);
+    }
+
+    #[Test]
+    public function postWithoutTokenReturnsHtmlForBrowserRequest(): void
+    {
+        $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
+
+        $request = $this->createRequest(
+            Method::POST,
+            '/submit',
+            headers: ['Accept' => 'text/html'],
+        );
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertStringContainsString('text/html', $response->headers->first('Content-Type') ?? '');
+        self::assertStringContainsString('403 Forbidden', $response->body);
+        self::assertStringContainsString('CSRF token is missing', $response->body);
+    }
+
+    #[Test]
+    public function xhrRequestWithoutTokenReturnsJson(): void
+    {
+        $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
+
+        $request = $this->createRequest(
+            Method::POST,
+            '/submit',
+            headers: ['X-Requested-With' => 'XMLHttpRequest'],
+        );
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::Forbidden, $response->status);
+
+        /** @var array{error: string, message: string} $body */
+        $body = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        self::assertSame('Forbidden', $body['error']);
     }
 
     #[Test]

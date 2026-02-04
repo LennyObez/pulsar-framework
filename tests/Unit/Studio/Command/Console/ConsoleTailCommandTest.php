@@ -9,8 +9,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\ConsoleTailCommand;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Command\Console\ConsoleTailCommand;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use ReflectionMethod;
 
 #[CoversClass(ConsoleTailCommand::class)]

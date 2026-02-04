@@ -25,7 +25,7 @@ final class Span
     public SpanStatus $status = SpanStatus::Unset;
 
     public function __construct(
-        public readonly string $name,
+        public string $name,
         public readonly TraceContext $context,
         public readonly ?SpanId $parentSpanId = null,
     ) {

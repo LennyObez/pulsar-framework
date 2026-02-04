@@ -11,8 +11,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\Evidence\EvidenceStatusCommand;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Command\Console\Evidence\EvidenceStatusCommand;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 #[CoversClass(EvidenceStatusCommand::class)]
 final class EvidenceStatusCommandTest extends TestCase

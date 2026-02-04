@@ -14,7 +14,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\StudioEnableCommand;
+use Pulsar\Extension\Studio\Command\StudioEnableCommand;
 
 use function sys_get_temp_dir;
 use function uniqid;

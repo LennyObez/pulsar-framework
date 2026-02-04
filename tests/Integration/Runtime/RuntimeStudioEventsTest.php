@@ -8,23 +8,23 @@ use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Collector\InstrumentedRuntime;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeLeakWarningPayload;
+use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeRequestCompletePayload;
+use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeSchedulerMetricPayload;
+use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerRecyclePayload;
+use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerStartPayload;
+use Pulsar\Extension\Studio\FiberScopedContextProvider;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Runtime\FpmRuntime;
-use Pulsar\Studio\Console\Collector\InstrumentedRuntime;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Event\Payload\RuntimeLeakWarningPayload;
-use Pulsar\Studio\Console\Event\Payload\RuntimeRequestCompletePayload;
-use Pulsar\Studio\Console\Event\Payload\RuntimeSchedulerMetricPayload;
-use Pulsar\Studio\Console\Event\Payload\RuntimeWorkerRecyclePayload;
-use Pulsar\Studio\Console\Event\Payload\RuntimeWorkerStartPayload;
-use Pulsar\Studio\CorrelationContext;
-use Pulsar\Studio\FiberScopedContextProvider;
 
 #[CoversClass(InstrumentedRuntime::class)]
 final class RuntimeStudioEventsTest extends TestCase

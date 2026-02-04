@@ -6,7 +6,7 @@ namespace Pulsar\Extensibility;
 
 use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 
 /**
  * Contract for Pulsar extensions.
@@ -42,7 +42,7 @@ interface ExtensionInterface
      * Use this to register routes, configure services, and perform
      * any initialization that depends on other services being available.
      */
-    public function boot(ContainerInterface $container, Router $router): void;
+    public function boot(ContainerInterface $container, RouterInterface $router): void;
 
     /**
      * Get the service providers for this extension.

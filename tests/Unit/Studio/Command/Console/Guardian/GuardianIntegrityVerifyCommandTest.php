@@ -12,11 +12,11 @@ use Pulsar\Config\IntegrityPolicyMode;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianIntegrityVerifyCommand;
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Integrity\ManifestVerifier;
-use Pulsar\Studio\Command\Console\Guardian\GuardianIntegrityVerifyCommand;
 
 #[CoversClass(GuardianIntegrityVerifyCommand::class)]
 final class GuardianIntegrityVerifyCommandTest extends TestCase

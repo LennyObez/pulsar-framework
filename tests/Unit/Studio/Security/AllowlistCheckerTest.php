@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Studio\Security;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Security\AllowlistChecker;
+use Pulsar\Extension\Studio\Security\AllowlistChecker;
 
 #[CoversClass(AllowlistChecker::class)]
 final class AllowlistCheckerTest extends TestCase

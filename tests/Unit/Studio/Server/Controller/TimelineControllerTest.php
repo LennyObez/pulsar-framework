@@ -7,13 +7,13 @@ namespace Pulsar\Tests\Unit\Studio\Server\Controller;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Server\Controller\TimelineController;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
-use Pulsar\Studio\Console\Aggregation\TimelineBuilder;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Studio\Server\Controller\TimelineController;
 
 #[CoversClass(TimelineController::class)]
 final class TimelineControllerTest extends TestCase

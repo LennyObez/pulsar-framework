@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Studio\Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Exception\StudioException;
+use Pulsar\Extension\Studio\Exception\StudioException;
 use RuntimeException;
 
 #[CoversClass(StudioException::class)]

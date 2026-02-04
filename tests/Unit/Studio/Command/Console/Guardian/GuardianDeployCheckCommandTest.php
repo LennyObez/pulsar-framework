@@ -13,7 +13,7 @@ use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Deploy\CheckResult;
 use Pulsar\Deploy\DeployCheck;
 use Pulsar\Deploy\DeployCheckInterface;
-use Pulsar\Studio\Command\Console\Guardian\GuardianDeployCheckCommand;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianDeployCheckCommand;
 
 #[CoversClass(GuardianDeployCheckCommand::class)]
 final class GuardianDeployCheckCommandTest extends TestCase

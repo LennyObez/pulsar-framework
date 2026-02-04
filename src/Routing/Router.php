@@ -19,7 +19,7 @@ use function sprintf;
  * HTTP router for route registration and matching.
  */
 #[Api]
-final class Router
+final class Router implements RouterInterface
 {
     /**
      * @var list<Route>

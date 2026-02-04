@@ -19,7 +19,7 @@ use function sprintf;
  * Executes a stack of middleware around a core handler.
  */
 #[Internal]
-final class MiddlewarePipeline
+final class MiddlewarePipeline implements MiddlewarePipelineInterface
 {
     /**
      * @var list<MiddlewareInterface|class-string<MiddlewareInterface>>

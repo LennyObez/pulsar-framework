@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\Guardian\GuardianStatusCommand;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianStatusCommand;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 #[CoversClass(GuardianStatusCommand::class)]
 final class GuardianStatusCommandTest extends TestCase

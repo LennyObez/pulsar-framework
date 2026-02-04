@@ -21,10 +21,11 @@ enum Driver: string
     /**
      * Build a PDO DSN string for the given connection parameters.
      */
-    public function buildDsn(string $host, int $port, string $database): string
+    public function buildDsn(string $host, int $port, string $database, ?string $charset = null): string
     {
         return match ($this) {
-            self::MySQL => sprintf('mysql:host=%s;port=%d;dbname=%s', $host, $port, $database),
+            self::MySQL => sprintf('mysql:host=%s;port=%d;dbname=%s', $host, $port, $database)
+                . ($charset !== null ? sprintf(';charset=%s', $charset) : ''),
             self::PostgreSQL => sprintf('pgsql:host=%s;port=%d;dbname=%s', $host, $port, $database),
             self::SQLite => sprintf('sqlite:%s', $database),
         };

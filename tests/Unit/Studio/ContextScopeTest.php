@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Studio;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\ContextScope;
+use Pulsar\Extension\Studio\ContextScope;
 use RuntimeException;
 
 #[CoversClass(ContextScope::class)]

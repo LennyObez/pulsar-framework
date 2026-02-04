@@ -13,7 +13,7 @@ use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ExtensionLifecycle;
 use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\ExtensionRegistry;
-use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 
 #[CoversClass(ExtensionRegistry::class)]
 final class ExtensionRegistryTest extends TestCase
@@ -196,7 +196,7 @@ final class ExtensionRegistryTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
             public function providers(): array
             {

@@ -7,9 +7,9 @@ namespace Pulsar\Tests\Unit\Studio\Console\Event\Payload;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Event\EventVersion;
-use Pulsar\Studio\Console\Event\Payload\RuntimeWorkerStartPayload;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Event\EventVersion;
+use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerStartPayload;
 
 #[CoversClass(RuntimeWorkerStartPayload::class)]
 final class RuntimeWorkerStartPayloadTest extends TestCase

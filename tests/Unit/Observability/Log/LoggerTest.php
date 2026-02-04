@@ -231,6 +231,57 @@ final class LoggerTest extends TestCase
         self::assertCount(1, $sink->entries);
         self::assertSame(LogLevel::Debug, $sink->entries[0]->level);
     }
+
+    #[Test]
+    public function sinkFailureWritesToStderrInDebugMode(): void
+    {
+        $stderr = fopen('php://temp', 'r+b');
+        self::assertIsResource($stderr);
+
+        $failingSink = new FailingSink();
+        $collectingSink = new CollectingSink();
+        $logger = new Logger(
+            sinks: [$failingSink, $collectingSink],
+            threshold: LogLevel::Debug,
+            debug: true,
+            stderr: $stderr,
+        );
+
+        $logger->error('test');
+
+        rewind($stderr);
+        $output = stream_get_contents($stderr);
+        fclose($stderr);
+
+        self::assertIsString($output);
+        self::assertStringContainsString('[Pulsar Logger] Sink failure: Sink failure', $output);
+
+        // Second sink still received the entry
+        self::assertCount(1, $collectingSink->entries);
+    }
+
+    #[Test]
+    public function sinkFailureDoesNotWriteToStderrWhenNotDebug(): void
+    {
+        $stderr = fopen('php://temp', 'r+b');
+        self::assertIsResource($stderr);
+
+        $failingSink = new FailingSink();
+        $logger = new Logger(
+            sinks: [$failingSink],
+            threshold: LogLevel::Debug,
+            debug: false,
+            stderr: $stderr,
+        );
+
+        $logger->error('test');
+
+        rewind($stderr);
+        $output = stream_get_contents($stderr);
+        fclose($stderr);
+
+        self::assertSame('', $output);
+    }
 }
 
 /**

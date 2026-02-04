@@ -11,16 +11,16 @@ use const JSON_THROW_ON_ERROR;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Config\StudioCollectorConfig;
-use Pulsar\Config\StudioConfig;
-use Pulsar\Config\StudioRetentionConfig;
-use Pulsar\Config\StudioSecurityConfig;
-use Pulsar\Config\StudioServerConfig;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\StudioStatusCommand;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Command\StudioStatusCommand;
+use Pulsar\Extension\Studio\Config\StudioCollectorConfig;
+use Pulsar\Extension\Studio\Config\StudioConfig;
+use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
+use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
+use Pulsar\Extension\Studio\Config\StudioServerConfig;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 #[CoversClass(StudioStatusCommand::class)]
 final class StudioStatusCommandTest extends TestCase

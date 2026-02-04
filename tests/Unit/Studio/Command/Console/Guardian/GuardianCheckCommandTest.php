@@ -11,7 +11,7 @@ use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\Guardian\GuardianCheckCommand;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianCheckCommand;
 use Pulsar\Supervisor\InvariantCheck\InvariantCheckInterface;
 use Pulsar\Supervisor\InvariantCheck\InvariantCheckResult;
 use Pulsar\Supervisor\PreflightCheck\PreflightCheckInterface;

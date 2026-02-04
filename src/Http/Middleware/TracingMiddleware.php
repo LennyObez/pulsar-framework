@@ -7,6 +7,7 @@ namespace Pulsar\Http\Middleware;
 use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
+use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanStatus;
@@ -33,6 +34,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
         private InMemorySpanCollector $collector,
         private float $samplingRate = 1.0,
         ?Randomizer $randomizer = null,
+        private ?RouteContext $routeContext = null,
     ) {
         $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
@@ -91,6 +93,14 @@ final readonly class TracingMiddleware implements MiddlewareInterface
                 W3CTraceContextParser::serialize($context),
             );
         } finally {
+            // Update span name with resolved route for bounded cardinality
+            $routeLabel = $this->routeContext?->label();
+
+            if ($routeLabel !== null && $routeLabel !== 'unmatched') {
+                $span->name = sprintf('HTTP %s %s', $request->method->value, $routeLabel);
+                $span->setAttribute('http.route', $routeLabel);
+            }
+
             $span->end();
             $this->collector->onEnd($span);
         }

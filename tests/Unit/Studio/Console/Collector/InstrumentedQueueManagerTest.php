@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\QueueConfig;
+use Pulsar\Extension\Studio\Console\Collector\InstrumentedQueueManager;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\Payload\JobPayload;
+use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
-use Pulsar\Studio\Console\Collector\InstrumentedQueueManager;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Studio\Console\Event\Payload\JobPayload;
-use Pulsar\Studio\CorrelationContext;
-use Pulsar\Studio\FiberScopedContextProvider;
 use RuntimeException;
 
 #[CoversClass(InstrumentedQueueManager::class)]

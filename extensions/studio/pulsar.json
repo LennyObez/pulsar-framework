@@ -1,0 +1,14 @@
+{
+  "name": "pulsar/studio",
+  "version": "1.0.0-rc.1",
+  "description": "Development console with event collection, evidence chain, and diagnostics UI",
+  "extension_class": "Pulsar\\Extension\\Studio\\StudioExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.1"
+  },
+  "provides": {
+    "services": ["StudioManager", "EventStoreInterface", "DashboardAggregator"],
+    "routes": true,
+    "commands": []
+  }
+}

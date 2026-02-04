@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Integrity\Fixture;
 
 // Cross-module controller reference — architecture violation.
-use Pulsar\Studio\Server\Controller\ApiController;
+use Pulsar\Extension\Studio\Server\Controller\ApiController;
 
 /**
  * Test fixture: references a controller from a different module.

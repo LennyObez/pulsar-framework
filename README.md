@@ -13,8 +13,23 @@
 
 </div>
 
-> **Status:** Release Candidate (1.0.0-rc.2). The `#[Api]`-marked surface is SemVer-stable; non-`#[Api]` internals may change until 1.0.0.
+> **Status:** Release Candidate (1.0.0-rc.7). The `#[Api]`-marked surface is SemVer-stable; non-`#[Api]` internals may change until 1.0.0.
 > Track milestones in [`ROADMAP.md`](ROADMAP.md) and requirements in [`PRD.md`](PRD.md).
+
+## Who this is for
+
+Pulsar is built for teams that need:
+
+- Audit trails, tamper-evident logging, and compliance-mappable controls out of the box
+- Deterministic boot pipelines and explicit module boundaries (no auto-wiring surprises)
+- A framework that ships its own observability stack (no vendor lock-in)
+- PHP 8.5+ with strict typing, static analysis at max level, and performance budgets in CI
+
+## Who this is _not_ for
+
+- Teams looking for a batteries-included CMS or admin panel (Pulsar is a framework, not a product)
+- Projects that need broad community plugin ecosystems today (RC phase, ecosystem is small)
+- Rapid prototyping where convention-over-configuration is preferred (Pulsar is explicit by design)
 
 ## Why Pulsar
 
@@ -94,6 +109,45 @@ No dependency on external monitoring vendors.
 ## Non-goals for v1.0
 
 Core v1.0 does not ship a full CMS/admin product; optional first-party extensions may provide an admin shell/UI scaffolding.
+
+## Quick start (dev)
+
+```bash
+git clone https://github.com/LennyObez/pulsar-framework.git
+cd pulsar-framework
+composer install
+pnpm install
+```
+
+Run the test suite:
+
+```bash
+composer test          # PHPUnit (all suites)
+composer phpstan       # Static analysis (level max)
+composer psalm         # Static analysis (level 1)
+pnpm test             # JS/TS tests (Vitest)
+```
+
+Run the full quality gate:
+
+```bash
+composer qa            # cs:fix + phpstan + psalm + test
+```
+
+See the [Installation Guide](docs/INSTALL.md) for environment details and the [CLI Reference](docs/CLI_REFERENCE.md) for available commands.
+
+## Stability and compatibility
+
+Pulsar uses `#[Api]` and `#[Internal]` attributes to mark its public surface:
+
+| Surface                                                 | Stability    | Policy                                                      |
+| ------------------------------------------------------- | ------------ | ----------------------------------------------------------- |
+| `#[Api]` classes, interfaces, methods                   | **Stable**   | SemVer-protected. No breaking changes without a major bump. |
+| `#[Internal]` or unmarked symbols                       | **Unstable** | May change between RC releases without notice.              |
+| Extension lifecycle (register, preBoot, boot, postBoot) | **Stable**   | Phase ordering and contracts are finalized.                 |
+| Config file format (`config/*.php`)                     | **Stable**   | Existing keys are preserved; new keys may be added.         |
+
+During the RC phase, breaking changes to `#[Api]` symbols require explicit changelog entries and migration notes. After 1.0.0, they require a major version bump.
 
 ## Requirements
 

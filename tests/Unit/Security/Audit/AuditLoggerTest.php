@@ -12,6 +12,7 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Audit\AuditSinkInterface;
+use Pulsar\Security\Audit\ChainableAuditSinkInterface;
 use Pulsar\Security\Crypto\Hmac;
 
 #[CoversClass(AuditLogger::class)]
@@ -127,6 +128,40 @@ final class AuditLoggerTest extends TestCase
         self::assertSame('update_config', $entry->action);
         self::assertSame('security.csrf.enabled', $entry->resource);
         self::assertSame(['old' => 'true', 'new' => 'false'], $entry->metadata);
+    }
+
+    #[Test]
+    public function seedsFromChainableSinkLastHmac(): void
+    {
+        $resumedHmac = 'abc123resumed';
+        $sink = $this->createStub(ChainableAuditSinkInterface::class);
+        $sink->method('lastHmac')->willReturn($resumedHmac);
+
+        $logger = new AuditLogger($sink, $this->auditKey);
+
+        self::assertSame($resumedHmac, $logger->previousHmac());
+    }
+
+    #[Test]
+    public function fallsBackToSeedWhenChainableSinkReturnsNull(): void
+    {
+        $sink = $this->createStub(ChainableAuditSinkInterface::class);
+        $sink->method('lastHmac')->willReturn(null);
+
+        $logger = new AuditLogger($sink, $this->auditKey);
+
+        $expected = Hmac::computeHex('PULSAR_AUDIT_SEED', $this->auditKey);
+        self::assertSame($expected, $logger->previousHmac());
+    }
+
+    #[Test]
+    public function fallsBackToSeedWhenSinkIsNotChainable(): void
+    {
+        $sink = $this->createStub(AuditSinkInterface::class);
+        $logger = new AuditLogger($sink, $this->auditKey);
+
+        $expected = Hmac::computeHex('PULSAR_AUDIT_SEED', $this->auditKey);
+        self::assertSame($expected, $logger->previousHmac());
     }
 
     #[Test]

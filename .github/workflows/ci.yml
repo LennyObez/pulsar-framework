@@ -89,7 +89,7 @@ jobs:
       - run: composer install --no-interaction --no-progress
 
       - name: Run all tests with coverage
-        run: vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml
+        run: php -d pcov.directory=. vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml
 
       - name: Enforce coverage threshold
         run: |

@@ -12,15 +12,15 @@ use const JSON_THROW_ON_ERROR;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Event\EventVersion;
+use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Extension\Studio\Server\Controller\BenchmarkApiController;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
-use Pulsar\Studio\Console\Event\EventEnvelope;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Event\EventVersion;
-use Pulsar\Studio\Console\Storage\SqliteEventStore;
-use Pulsar\Studio\Server\Controller\BenchmarkApiController;
 
 #[CoversClass(BenchmarkApiController::class)]
 final class BenchmarkApiControllerTest extends TestCase

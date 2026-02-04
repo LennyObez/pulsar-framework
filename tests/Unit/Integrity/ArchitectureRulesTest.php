@@ -395,13 +395,13 @@ final class ArchitectureRulesTest extends TestCase
             . DIRECTORY_SEPARATOR . 'FakeControllerCrossRef.php';
         $refs = ImportAnalyzer::extractReferences($fixturePath);
 
-        self::assertContains('Pulsar\Studio\Server\Controller\ApiController', $refs);
-        self::assertTrue(ModuleMap::isController('Pulsar\Studio\Server\Controller\ApiController'));
+        self::assertContains('Pulsar\Extension\Studio\Server\Controller\ApiController', $refs);
+        self::assertTrue(ModuleMap::isController('Pulsar\Extension\Studio\Server\Controller\ApiController'));
 
         // Fixture is in Tests module, ApiController is in Studio — different modules
         self::assertFalse(ModuleMap::sameModule(
             'Pulsar\Tests\Unit\Integrity\Fixture\FakeControllerCrossRef',
-            'Pulsar\Studio\Server\Controller\ApiController',
+            'Pulsar\Extension\Studio\Server\Controller\ApiController',
         ));
     }
 
@@ -431,8 +431,8 @@ final class ArchitectureRulesTest extends TestCase
             . DIRECTORY_SEPARATOR . 'FakeViewCrossRef.php';
         $refs = ImportAnalyzer::extractReferences($fixturePath);
 
-        self::assertContains('Pulsar\Studio\Server\View\ViewRenderer', $refs);
-        self::assertTrue(ModuleMap::isView('Pulsar\Studio\Server\View\ViewRenderer'));
+        self::assertContains('Pulsar\Extension\Studio\Server\View\ViewRenderer', $refs);
+        self::assertTrue(ModuleMap::isView('Pulsar\Extension\Studio\Server\View\ViewRenderer'));
     }
 
     #[Test]

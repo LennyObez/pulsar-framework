@@ -10,9 +10,9 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\ConsoleTimelineCommand;
-use Pulsar\Studio\Console\Aggregation\TimelineBuilderInterface;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Command\Console\ConsoleTimelineCommand;
+use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilderInterface;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 #[CoversClass(ConsoleTimelineCommand::class)]
 final class ConsoleTimelineCommandTest extends TestCase

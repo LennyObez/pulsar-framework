@@ -77,4 +77,36 @@ final class DriverTest extends TestCase
         self::assertSame(Driver::PostgreSQL, Driver::from('pgsql'));
         self::assertSame(Driver::SQLite, Driver::from('sqlite'));
     }
+
+    #[Test]
+    public function mysqlBuildsDsnWithCharset(): void
+    {
+        $dsn = Driver::MySQL->buildDsn('localhost', 3306, 'testdb', 'utf8mb4');
+
+        self::assertSame('mysql:host=localhost;port=3306;dbname=testdb;charset=utf8mb4', $dsn);
+    }
+
+    #[Test]
+    public function mysqlBuildsDsnWithoutCharsetWhenNull(): void
+    {
+        $dsn = Driver::MySQL->buildDsn('localhost', 3306, 'testdb', null);
+
+        self::assertSame('mysql:host=localhost;port=3306;dbname=testdb', $dsn);
+    }
+
+    #[Test]
+    public function postgresqlIgnoresCharsetParameter(): void
+    {
+        $dsn = Driver::PostgreSQL->buildDsn('localhost', 5432, 'testdb', 'utf8');
+
+        self::assertSame('pgsql:host=localhost;port=5432;dbname=testdb', $dsn);
+    }
+
+    #[Test]
+    public function sqliteIgnoresCharsetParameter(): void
+    {
+        $dsn = Driver::SQLite->buildDsn('', 0, '/tmp/test.sqlite', 'utf8');
+
+        self::assertSame('sqlite:/tmp/test.sqlite', $dsn);
+    }
 }

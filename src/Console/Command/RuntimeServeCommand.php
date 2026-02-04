@@ -20,14 +20,12 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Core\Kernel;
 use Pulsar\Observability\Metrics\MetricRegistry;
-use Pulsar\Runtime\FpmRuntime;
 use Pulsar\Runtime\LeakDetector;
 use Pulsar\Runtime\PersistentRuntime;
 use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
+use Pulsar\Runtime\RuntimeCollectorInterface;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
-use Pulsar\Studio\Console\Collector\InstrumentedRuntime;
-use Pulsar\Studio\FiberScopedContextProvider;
 
 use function sprintf;
 
@@ -42,7 +40,7 @@ final class RuntimeServeCommand extends Command
         private readonly ?LoggerInterface $logger = null,
         private readonly ?MetricRegistry $metricRegistry = null,
         private readonly ?RequestResetRegistry $resetRegistry = null,
-        private readonly ?FiberScopedContextProvider $contextProvider = null,
+        private readonly ?RuntimeCollectorInterface $collector = null,
     ) {
         parent::__construct();
     }
@@ -108,17 +106,6 @@ final class RuntimeServeCommand extends Command
             $leakDetector,
         );
 
-        $collector = null;
-
-        if ($this->metricRegistry !== null && $this->contextProvider !== null) {
-            $collector = new InstrumentedRuntime(
-                inner: new FpmRuntime($this->kernel),
-                contextProvider: $this->contextProvider,
-                metricRegistry: $this->metricRegistry,
-                emit: static function (): void {},
-            );
-        }
-
         $upgradeContext = new UpgradeContext(
             logger: $this->logger,
             metrics: $this->metricRegistry,
@@ -130,7 +117,7 @@ final class RuntimeServeCommand extends Command
             sandbox: $sandbox,
             config: $config,
             logger: $this->logger,
-            collector: $collector,
+            collector: $this->collector,
             upgradeContext: $upgradeContext,
         );
 

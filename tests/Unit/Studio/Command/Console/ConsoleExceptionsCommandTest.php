@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\ConsoleExceptionsCommand;
-use Pulsar\Studio\Console\Aggregation\DashboardAggregatorInterface;
+use Pulsar\Extension\Studio\Command\Console\ConsoleExceptionsCommand;
+use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregatorInterface;
 
 #[CoversClass(ConsoleExceptionsCommand::class)]
 final class ConsoleExceptionsCommandTest extends TestCase

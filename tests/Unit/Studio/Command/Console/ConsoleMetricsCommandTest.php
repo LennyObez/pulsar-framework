@@ -10,8 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\ConsoleMetricsCommand;
-use Pulsar\Studio\Console\Aggregation\DashboardAggregatorInterface;
+use Pulsar\Extension\Studio\Command\Console\ConsoleMetricsCommand;
+use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregatorInterface;
 
 #[CoversClass(ConsoleMetricsCommand::class)]
 final class ConsoleMetricsCommandTest extends TestCase

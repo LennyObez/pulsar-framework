@@ -11,8 +11,8 @@ use Pulsar\Config\IntegrityConfig;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
+use Pulsar\Extension\Studio\Command\Console\Guardian\GuardianIntegrityBuildCommand;
 use Pulsar\Integrity\ManifestBuilder;
-use Pulsar\Studio\Command\Console\Guardian\GuardianIntegrityBuildCommand;
 
 #[CoversClass(GuardianIntegrityBuildCommand::class)]
 final class GuardianIntegrityBuildCommandTest extends TestCase
