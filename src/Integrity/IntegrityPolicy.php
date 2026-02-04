@@ -12,7 +12,7 @@ use Pulsar\Config\IntegrityPolicyMode;
 /**
  * Resolved integrity policy derived from configuration.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class IntegrityPolicy
 {
     public function __construct(

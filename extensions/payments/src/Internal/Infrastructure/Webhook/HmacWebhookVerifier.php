@@ -80,7 +80,7 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 
             if (str_starts_with($part, 't=')) {
                 $value = substr($part, 2);
-                if (!ctype_digit($value) || $value === '') {
+                if ($value === '' || !ctype_digit($value)) {
                     throw WebhookException::malformedHeader('invalid timestamp');
                 }
                 $timestamp = (int) $value;

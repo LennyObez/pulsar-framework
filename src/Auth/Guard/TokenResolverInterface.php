@@ -13,7 +13,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * Applications or extensions implement this interface and register it
  * in the container to enable token-based authentication.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface TokenResolverInterface
 {
     /**

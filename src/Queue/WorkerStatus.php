@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Represents the current operational state of a queue worker.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum WorkerStatus: string
 {
     case Running = 'running';

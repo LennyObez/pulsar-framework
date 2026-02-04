@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Exception thrown for error tracking system errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ErrorTrackingException extends RuntimeException
 {
     #[NoDiscard]

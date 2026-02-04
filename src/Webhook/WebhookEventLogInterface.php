@@ -11,7 +11,7 @@ use Pulsar\Webhook\Exception\WebhookException;
 /**
  * Claim-based webhook replay prevention contract.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface WebhookEventLogInterface
 {
     /**

@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Configuration for health checks.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class HealthCheckConfig
 {
     public function __construct(

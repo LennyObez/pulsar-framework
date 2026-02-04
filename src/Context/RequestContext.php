@@ -17,7 +17,7 @@ use Pulsar\Api\Api;
  * Propagated across HTTP, queue, scheduler, and CLI boundaries via ContextPropagator.
  * Clone-with mutators use PHP 8.5 clone() syntax.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class RequestContext
 {
     public DateTimeImmutable $timestamp;

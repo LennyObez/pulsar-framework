@@ -28,7 +28,7 @@ use SodiumException;
  * When a RequestContextHolder is available, auto-enriches entries with
  * correlation/causation IDs and auto-fills actor from context.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class AuditLogger implements AuditLoggerInterface
 {
     /**

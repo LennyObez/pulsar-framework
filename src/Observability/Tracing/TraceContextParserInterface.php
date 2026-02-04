@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Contract for parsing and serializing trace context propagation headers.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface TraceContextParserInterface
 {
     /**

@@ -16,7 +16,7 @@ use Pulsar\Runtime\ResettableInterface;
  * Follows the same pattern as TenantContext: set/get/tryGet/clear with
  * ResettableInterface for per-request cleanup in the persistent runtime.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class RequestContextHolder implements ResettableInterface
 {
     private ?RequestContext $context = null;

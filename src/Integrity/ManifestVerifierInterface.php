@@ -6,7 +6,7 @@ namespace Pulsar\Integrity;
 
 use Pulsar\Api\Api;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface ManifestVerifierInterface
 {
     public function verify(IntegrityManifest $manifest): VerificationResult;

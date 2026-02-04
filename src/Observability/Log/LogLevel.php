@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  *
  * Lower severity value = more severe (0 = emergency, 7 = debug).
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum LogLevel: string
 {
     case Emergency = 'emergency';

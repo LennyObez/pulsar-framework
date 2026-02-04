@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Output verbosity levels.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum Verbosity: int
 {
     case Quiet = 0;

@@ -23,7 +23,7 @@ use function sprintf;
 /**
  * Job scheduler that evaluates due jobs and executes them.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class Scheduler
 {
     public function __construct(

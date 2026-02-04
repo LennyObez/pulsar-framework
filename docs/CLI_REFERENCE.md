@@ -541,6 +541,289 @@ Evaluates all registered jobs and executes those that are due. Each job result s
 * * * * * cd /path/to/project && php bin/pulsar scheduler:tick >> /dev/null 2>&1
 ```
 
+### Runtime
+
+#### `runtime:serve`
+
+Start the persistent HTTP runtime server.
+
+```bash
+php bin/pulsar runtime:serve
+php bin/pulsar runtime:serve --port 3000 --concurrency 64
+php bin/pulsar runtime:serve --host 0.0.0.0 --port 8080 --public
+```
+
+| Option           | Short | Default     | Description                                |
+| ---------------- | ----- | ----------- | ------------------------------------------ |
+| `--host`         | --    | `127.0.0.1` | Address to bind                            |
+| `--port`         | --    | `8080`      | Port to listen on                          |
+| `--max-requests` | --    | `10000`     | Maximum requests before worker recycles    |
+| `--memory`       | --    | `256`       | Memory threshold in MB before recycle      |
+| `--timeout`      | --    | `7200`      | Time limit in seconds before recycle       |
+| `--concurrency`  | --    | `0`         | Fiber concurrency slots (0 = synchronous)  |
+| `--public`       | --    | --          | Required to bind to non-loopback addresses |
+
+Requires `ext-sockets`. See [`docs/RUNTIME.md`](RUNTIME.md) for full details on configuration, safety rules, and deployment.
+
+### Security Keys
+
+#### `key:generate`
+
+Generate a cryptographically secure `PULSAR_MASTER_KEY`.
+
+```bash
+php bin/pulsar key:generate
+php bin/pulsar key:generate --write
+php bin/pulsar key:generate --write --force
+```
+
+| Option    | Short | Description                                                      |
+| --------- | ----- | ---------------------------------------------------------------- |
+| `--write` | `-w`  | Write the key to `.env` (creates from `.env.example` if missing) |
+| `--force` | `-f`  | Overwrite an existing key without confirmation                   |
+
+Without `--write`, prints the key to stdout. With `--write`, creates or updates the `.env` file.
+
+#### `key:rotate`
+
+Rotate the application master key.
+
+```bash
+php bin/pulsar key:rotate
+php bin/pulsar key:rotate --write
+php bin/pulsar key:rotate --write --clear-cache
+```
+
+| Option          | Short | Description                                |
+| --------------- | ----- | ------------------------------------------ |
+| `--write`       | `-w`  | Write the rotated keys to `.env`           |
+| `--clear-cache` | `-c`  | Remind to clear cached data after rotation |
+
+Generates a new master key and moves the current key to `PULSAR_MASTER_KEY_PREVIOUS` for a rotation window. Without `--write`, prints manual rotation instructions.
+
+### Preloading
+
+#### `preload:dump`
+
+Generate a deterministic OPcache preload script.
+
+```bash
+php bin/pulsar preload:dump --output=preload.generated.php
+php bin/pulsar preload:dump --output=preload.generated.php --strict
+php bin/pulsar preload:dump --output=preload.generated.php --no-meta
+```
+
+| Option      | Short | Default                 | Description                                   |
+| ----------- | ----- | ----------------------- | --------------------------------------------- |
+| `--output`  | `-o`  | `preload.generated.php` | Output file path                              |
+| `--strict`  | `-s`  | (default)               | Fail if any classmap entry cannot be resolved |
+| `--lenient` | `-l`  | --                      | Skip invalid entries with warnings            |
+| `--no-meta` | --    | --                      | Suppress `.meta.json` sidecar generation      |
+
+The generated file is an immutable build artifact for use in `php.ini` with `opcache.preload`.
+
+### DX Scaffolding
+
+These commands generate boundary-compliant code structures with `Contracts/Internal` separation, config DTOs, observability wiring, and test stubs. Each `make:*` command has a corresponding `remove:*` command.
+
+#### `make:module`
+
+Generate a new module with Contracts/Internal separation.
+
+```bash
+php bin/pulsar make:module <name> [--path=app/Modules] [--with-config] [--with-tests]
+```
+
+| Argument | Required | Description |
+| -------- | -------- | ----------- |
+| `name`   | Yes      | Module name |
+
+| Option          | Short | Default       | Description                   |
+| --------------- | ----- | ------------- | ----------------------------- |
+| `--path`        | `-p`  | `app/Modules` | Base path for module creation |
+| `--with-config` | --    | --            | Generate a config DTO         |
+| `--with-tests`  | --    | --            | Generate test stubs           |
+
+#### `make:feature`
+
+Generate a vertical feature slice within a module.
+
+```bash
+php bin/pulsar make:feature <name> --module=<module> [--path=app/Modules] [--method=POST]
+```
+
+| Argument | Required | Description  |
+| -------- | -------- | ------------ |
+| `name`   | Yes      | Feature name |
+
+| Option     | Short | Default       | Description               |
+| ---------- | ----- | ------------- | ------------------------- |
+| `--module` | --    | (required)    | Target module             |
+| `--path`   | `-p`  | `app/Modules` | Base path                 |
+| `--method` | --    | `POST`        | HTTP method for the route |
+
+#### `make:port`
+
+Generate a port interface in a module's Contracts directory.
+
+```bash
+php bin/pulsar make:port <name> --module=<module> [--path=app/Modules] [--methods=process,refund]
+```
+
+#### `make:adapter`
+
+Generate an adapter implementing a port interface.
+
+```bash
+php bin/pulsar make:adapter <name> --port=<port> --module=<module> [--path=app/Modules]
+```
+
+#### `make:webhook-handler`
+
+Generate a webhook handler with verification, deduplication, and HTTP controller.
+
+```bash
+php bin/pulsar make:webhook-handler <name> --module=<module> [--path=app/Modules]
+```
+
+#### `make:payment-flow`
+
+Generate a complete payment flow with idempotency, audit logging, and metrics.
+
+```bash
+php bin/pulsar make:payment-flow <name> --module=<module> [--path=app/Modules]
+```
+
+#### `make:event-ingestion`
+
+Generate an event ingestion pipeline with webhook verification and deduplication.
+
+```bash
+php bin/pulsar make:event-ingestion <name> --module=<module> [--path=app/Modules] [--events=push,pull_request]
+```
+
+#### `remove:module`
+
+Remove a scaffolded module and its associated test directory.
+
+```bash
+php bin/pulsar remove:module <name> [--path=app/Modules] [--force] [--dry-run]
+```
+
+#### `remove:feature`
+
+Remove a scaffolded feature slice from a module.
+
+```bash
+php bin/pulsar remove:feature <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+#### `remove:port`
+
+Remove a scaffolded port interface from a module.
+
+```bash
+php bin/pulsar remove:port <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+#### `remove:adapter`
+
+Remove a scaffolded adapter and its test file.
+
+```bash
+php bin/pulsar remove:adapter <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+#### `remove:webhook-handler`
+
+Remove a scaffolded webhook handler and all its associated files.
+
+```bash
+php bin/pulsar remove:webhook-handler <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+#### `remove:payment-flow`
+
+Remove a scaffolded payment flow and all its associated files.
+
+```bash
+php bin/pulsar remove:payment-flow <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+#### `remove:event-ingestion`
+
+Remove a scaffolded event ingestion pipeline and all its associated files.
+
+```bash
+php bin/pulsar remove:event-ingestion <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+#### `remove:extension`
+
+Remove a scaffolded extension directory.
+
+```bash
+php bin/pulsar remove:extension <name> [--path=extensions] [--force] [--dry-run]
+```
+
+All `remove:*` commands support `--force` (skip confirmation) and `--dry-run` (list files without deleting).
+
+### Studio Commands
+
+Studio provides observability and debugging commands. See [`docs/STUDIO.md`](STUDIO.md) for full details.
+
+#### Umbrella Commands
+
+| Command          | Description                           |
+| ---------------- | ------------------------------------- |
+| `studio:status`  | Show Studio status and storage stats  |
+| `studio:start`   | Start the Studio web server           |
+| `studio:open`    | Open Studio in the default browser    |
+| `studio:doctor`  | Run diagnostics (storage, port, keys) |
+| `studio:enable`  | Enable Studio                         |
+| `studio:disable` | Disable Studio                        |
+
+#### Console Commands
+
+| Command                     | Description                           |
+| --------------------------- | ------------------------------------- |
+| `studio:console:status`     | Show event counts and retention stats |
+| `studio:console:tail`       | Stream events in real-time            |
+| `studio:console:query`      | Query events with filters             |
+| `studio:console:export`     | Export evidence archive               |
+| `studio:console:verify`     | Verify evidence chain integrity       |
+| `studio:console:timeline`   | Display correlated event timeline     |
+| `studio:console:metrics`    | Display collected metrics summary     |
+| `studio:console:routes`     | Display route performance statistics  |
+| `studio:console:exceptions` | Display exception groups and counts   |
+| `studio:console:jobs`       | Display queue job statistics          |
+| `studio:console:bench`      | Run benchmarks and display results    |
+
+#### Evidence Commands
+
+| Command                                   | Description                                 |
+| ----------------------------------------- | ------------------------------------------- |
+| `studio:console:evidence:export`          | Export Studio events as evidence archive    |
+| `studio:console:evidence:verify`          | Verify a Studio evidence archive            |
+| `studio:console:evidence:status`          | Display evidence store status               |
+| `studio:console:evidence:retention:apply` | Apply retention policy to evidence store    |
+| `studio:console:evidence:purge`           | Purge all events from evidence store        |
+| `studio:console:evidence:redaction:test`  | Test redaction policies against sample data |
+
+#### Guardian Commands
+
+| Command                                       | Description                                     |
+| --------------------------------------------- | ----------------------------------------------- |
+| `studio:console:guardian:status`              | Display combined guardian status overview       |
+| `studio:console:guardian:check`               | Run all guardian checks (preflight + invariant) |
+| `studio:console:guardian:deploy:check`        | Run deploy readiness checks                     |
+| `studio:console:guardian:supervisor:status`   | Display supervisor configuration status         |
+| `studio:console:guardian:supervisor:run-once` | Run a single supervisor evaluation cycle        |
+| `studio:console:guardian:integrity:build`     | Build an integrity manifest                     |
+| `studio:console:guardian:integrity:verify`    | Verify integrity manifest against filesystem    |
+
+All Studio, Evidence, and Guardian commands support `--json` for machine-readable output.
+
 ## Exit Codes
 
 All commands use the `ExitCode` enum:

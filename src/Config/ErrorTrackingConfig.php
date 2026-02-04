@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
 /**
  * Typed configuration DTO for the error tracking section of observability config.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class ErrorTrackingConfig
 {
     /**

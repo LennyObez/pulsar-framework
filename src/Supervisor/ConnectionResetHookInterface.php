@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * message broker links, or other persistent connections that may have
  * become stale or leaked.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ConnectionResetHookInterface
 {
     /**

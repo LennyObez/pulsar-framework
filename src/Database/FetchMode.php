@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Fetch mode for query results.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum FetchMode: int
 {
     case Associative = PDO::FETCH_ASSOC;

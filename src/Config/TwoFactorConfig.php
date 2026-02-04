@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
 /**
  * Typed configuration DTO for two-factor authentication settings.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class TwoFactorConfig
 {
     public function __construct(

@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Contract for log output destinations.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface LogSinkInterface
 {
     /**

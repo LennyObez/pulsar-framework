@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Diagnosis result from a repair job.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class RepairDiagnosis
 {
     /**

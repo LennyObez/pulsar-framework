@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  *
  * Maps from the `audit` key of `config/observability.php`.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class AuditConfig
 {
     /**

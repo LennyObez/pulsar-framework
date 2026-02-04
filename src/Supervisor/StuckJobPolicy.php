@@ -15,7 +15,7 @@ use Pulsar\Config\SupervisorConfig;
  * the interval between detection sweeps, and whether stuck jobs should
  * be moved to the dead-letter queue automatically.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class StuckJobPolicy
 {
     public function __construct(

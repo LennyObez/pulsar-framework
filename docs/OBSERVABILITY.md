@@ -1,6 +1,6 @@
 # Observability
 
-Pulsar 0.5.0 introduces a built-in observability suite: metrics collection, distributed tracing, and error tracking. All components are homegrown with no external service dependencies.
+Pulsar provides a built-in observability suite: metrics collection, distributed tracing, and error tracking. All components are homegrown with no external service dependencies.
 
 ## Metrics
 

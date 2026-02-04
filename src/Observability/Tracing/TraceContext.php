@@ -14,7 +14,7 @@ use Random\RandomException;
  * Holds trace ID, span ID, and trace flags. Creates child contexts
  * that preserve the trace ID with a new span ID.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class TraceContext
 {
     public function __construct(

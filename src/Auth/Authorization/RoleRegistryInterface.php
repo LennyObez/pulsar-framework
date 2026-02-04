@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Contract for role storage and lookup.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface RoleRegistryInterface
 {
     /**

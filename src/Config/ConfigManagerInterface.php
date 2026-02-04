@@ -14,7 +14,7 @@ use Pulsar\Config\Exception\ConfigException;
  * and the config directory path for extensions that need to
  * discover additional config files.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ConfigManagerInterface
 {
     /**

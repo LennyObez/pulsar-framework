@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * State of a circuit breaker.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum CircuitBreakerState: string
 {
     case Closed = 'closed';

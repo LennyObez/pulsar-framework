@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  *   Open --> UnderReview --> Won | Lost
  *   Open --> Accepted
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum DisputeStatus: string
 {
     case Open = 'open';

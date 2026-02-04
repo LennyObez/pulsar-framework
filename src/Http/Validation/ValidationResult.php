@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
 /**
  * Immutable collection of validation violations.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class ValidationResult
 {
     /** @var list<Violation> */

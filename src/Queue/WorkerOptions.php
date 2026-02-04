@@ -11,7 +11,7 @@ use Pulsar\Config\QueueConfig;
 /**
  * Immutable options governing worker lifecycle and resource limits.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class WorkerOptions
 {
     public function __construct(

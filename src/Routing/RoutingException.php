@@ -14,7 +14,7 @@ use function sprintf;
 /**
  * Exception thrown when routing fails.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class RoutingException extends Exception
 {
     /** @var list<Method> */
@@ -92,5 +92,23 @@ final class RoutingException extends Exception
             'Router is locked in strict cached mode. Register all routes before `pulsar optimize --strict`, or use non-strict mode.',
             423,
         );
+    }
+
+    #[NoDiscard]
+    public static function invalidHandler(string $class): self
+    {
+        return new self(sprintf('Controller "%s" must be callable or specify a method', $class));
+    }
+
+    #[NoDiscard]
+    public static function nonCallableHandler(): self
+    {
+        return new self('Invalid route handler');
+    }
+
+    #[NoDiscard]
+    public static function unexpectedReturnType(string $type): self
+    {
+        return new self(sprintf('Handler must return a Response or string, got %s', $type));
     }
 }

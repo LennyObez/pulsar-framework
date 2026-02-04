@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
+use function array_reverse;
 use function assert;
 use function count;
 
@@ -26,6 +27,18 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface
      */
     private array $middleware = [];
 
+    /**
+     * Cached resolved+reversed middleware list.
+     *
+     * Populated on first `handle()` call. Subsequent calls reuse this list,
+     * skipping both container resolution and array_reverse().
+     *
+     * Invalidated when new middleware is piped via `pipe()`.
+     *
+     * @var list<MiddlewareInterface>|null
+     */
+    private ?array $resolvedMiddleware = null;
+
     public function __construct(
         private readonly ?ContainerInterface $container = null,
     ) {}
@@ -37,9 +50,11 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface
      *
      * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
      */
-    public function pipe(MiddlewareInterface|string $middleware): static
+    public function pipe(MiddlewareInterface|string $middleware): self
     {
         $this->middleware[] = $middleware;
+        $this->resolvedMiddleware = null; // Invalidate cache
+
         return $this;
     }
 
@@ -67,13 +82,31 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface
         // Start with the core handler
         $next = $handler;
 
-        // Wrap in middleware from inside out (reverse order)
-        foreach (array_reverse($this->middleware) as $middleware) {
-            $middlewareInstance = $this->resolveMiddleware($middleware);
+        // Resolve and cache the reversed middleware list on first call
+        $resolved = $this->resolvedMiddleware ??= $this->resolveAllMiddleware();
+
+        // Wrap in middleware from inside out (already reversed)
+        foreach ($resolved as $middlewareInstance) {
             $next = $this->createLayer($middlewareInstance, $next);
         }
 
         return $next;
+    }
+
+    /**
+     * Resolve all middleware instances and return them in reversed order.
+     *
+     * @return list<MiddlewareInterface>
+     */
+    private function resolveAllMiddleware(): array
+    {
+        $resolved = [];
+
+        foreach (array_reverse($this->middleware) as $middleware) {
+            $resolved[] = $this->resolveMiddleware($middleware);
+        }
+
+        return $resolved;
     }
 
     /**

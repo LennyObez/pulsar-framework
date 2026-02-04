@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Represents an object in storage.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class StorageObject
 {
     public function __construct(

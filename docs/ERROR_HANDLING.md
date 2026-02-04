@@ -1,6 +1,6 @@
 # Error Handling
 
-Pulsar 0.3.0 introduces centralized exception handling with separate development and production renderers. All exceptions flow through a single `ExceptionHandler` that resolves HTTP status codes, logs context, and renders appropriate responses.
+Pulsar provides centralized exception handling with separate development and production renderers. All exceptions flow through a single `ExceptionHandler` that resolves HTTP status codes, logs context, and renders appropriate responses.
 
 ## ExceptionHandler Flow
 

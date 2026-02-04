@@ -17,7 +17,7 @@ use Throwable;
  *
  * Provides static factory methods for specific database error scenarios.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class DatabaseException extends RuntimeException
 {
     /**

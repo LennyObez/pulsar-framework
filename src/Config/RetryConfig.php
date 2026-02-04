@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Configuration for retry policies.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class RetryConfig
 {
     public function __construct(

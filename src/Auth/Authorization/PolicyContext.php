@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Context object passed to ABAC policies during evaluation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class PolicyContext
 {
     /**

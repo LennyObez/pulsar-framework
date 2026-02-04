@@ -14,7 +14,7 @@ use Pulsar\Http\ResponseStatus;
  * Carries the full ValidationResult so handlers can inspect individual
  * field violations. Always maps to HTTP 422 Unprocessable Entity.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 class ValidationException extends HttpException
 {
     public function __construct(

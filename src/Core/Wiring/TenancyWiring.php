@@ -1,0 +1,83 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Core\Wiring;
+
+use Psr\Log\LoggerInterface;
+use Pulsar\Api\Internal;
+use Pulsar\Config\ConfigManager;
+use Pulsar\Config\TenancyConfig;
+use Pulsar\Config\TenantDatabaseConfig;
+use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Http\Middleware\MiddlewarePipeline;
+use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Routing\Router;
+use Pulsar\Tenancy\Middleware\TenantResolutionMiddleware;
+use Pulsar\Tenancy\Resolver\HeaderTenantResolver;
+use Pulsar\Tenancy\Resolver\PathPrefixTenantResolver;
+use Pulsar\Tenancy\Resolver\SubdomainTenantResolver;
+use Pulsar\Tenancy\TenantAwareConnectionManager;
+use Pulsar\Tenancy\TenantContext;
+use Pulsar\Tenancy\TenantResolverInterface;
+use Pulsar\Tenancy\TenantResolverStrategy;
+
+#[Internal]
+final readonly class TenancyWiring implements ServiceWiringInterface
+{
+    public function wire(
+        ContainerInterface $container,
+        ConfigManager $configManager,
+        MiddlewarePipeline $middleware,
+        MiddlewareRegistry $middlewareRegistry,
+        Router $router,
+    ): void {
+        $repository = $configManager->repository();
+
+        if (!$repository->has(TenancyConfig::class)) {
+            return;
+        }
+
+        /** @var TenancyConfig $tenancyConfig */
+        $tenancyConfig = $repository->get(TenancyConfig::class);
+        $container->instance(TenancyConfig::class, $tenancyConfig);
+        $container->instance(TenantDatabaseConfig::class, $tenancyConfig->database);
+
+        if (!$tenancyConfig->enabled) {
+            return;
+        }
+
+        // Tenant context
+        $tenantContext = new TenantContext();
+        $container->instance(TenantContext::class, $tenantContext);
+
+        // Resolver
+        $resolver = match ($tenancyConfig->resolver) {
+            TenantResolverStrategy::Header => new HeaderTenantResolver($tenancyConfig),
+            TenantResolverStrategy::Subdomain => new SubdomainTenantResolver($tenancyConfig),
+            TenantResolverStrategy::Path => new PathPrefixTenantResolver($tenancyConfig),
+        };
+
+        $container->instance(TenantResolverInterface::class, $resolver);
+        $container->instance($resolver::class, $resolver);
+
+        // Middleware
+        $logger = $container->has(LoggerInterface::class)
+            ? $container->get(LoggerInterface::class)
+            : null;
+
+        /** @var LoggerInterface|null $logger */
+        $tenantMiddleware = new TenantResolutionMiddleware($resolver, $tenantContext, $tenancyConfig, $logger);
+        $container->instance(TenantResolutionMiddleware::class, $tenantMiddleware);
+
+        // Tenant-aware connection manager (decorate existing if available)
+        if ($container->has(ConnectionManagerInterface::class)) {
+            /** @var ConnectionManagerInterface $innerManager */
+            $innerManager = $container->get(ConnectionManagerInterface::class);
+
+            $tenantAwareManager = new TenantAwareConnectionManager($innerManager, $tenantContext, $tenancyConfig);
+            $container->instance(TenantAwareConnectionManager::class, $tenantAwareManager);
+        }
+    }
+}

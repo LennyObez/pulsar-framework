@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Abstracts token operations for testability while allowing
  * the concrete implementation to remain final.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface CsrfTokenManagerInterface
 {
     /**

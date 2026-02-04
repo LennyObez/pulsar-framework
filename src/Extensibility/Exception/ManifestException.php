@@ -12,7 +12,7 @@ use function sprintf;
 /**
  * Exception for manifest parsing and validation errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ManifestException extends ExtensionException
 {
     /**

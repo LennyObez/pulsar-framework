@@ -11,7 +11,7 @@ use Pulsar\Http\Request;
 /**
  * Context for evaluating a feature flag.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class FlagContext
 {
     /**

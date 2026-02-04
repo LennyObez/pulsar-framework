@@ -14,7 +14,7 @@ use Attribute;
  * (e.g., types exposed via public readonly properties that are implementation details).
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::TARGET_CLASS_CONSTANT)]
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class Internal
 {
     public function __construct(

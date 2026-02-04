@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Available queue driver types.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum QueueDriverType: string
 {
     case Sync = 'sync';

@@ -7,7 +7,7 @@ namespace Pulsar\Observability\ErrorTracking;
 use function array_values;
 use function count;
 
-use Pulsar\Api\Internal;
+use Override;
 use Throwable;
 
 use function usort;
@@ -62,7 +62,7 @@ final class ErrorAggregator implements ErrorAggregatorInterface
      *
      * @param callable(ErrorEvent): void $observer
      */
-    #[Internal]
+    #[Override]
     public function addObserver(callable $observer): void
     {
         $this->observers[] = $observer;

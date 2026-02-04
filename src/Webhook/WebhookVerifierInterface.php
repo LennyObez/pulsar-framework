@@ -10,7 +10,7 @@ use Pulsar\Webhook\Exception\WebhookException;
 /**
  * Webhook signature verification contract.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface WebhookVerifierInterface
 {
     /**

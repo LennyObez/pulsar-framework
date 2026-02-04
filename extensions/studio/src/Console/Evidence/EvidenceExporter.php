@@ -67,10 +67,17 @@ final readonly class EvidenceExporter
             'filters' => $filters,
         ];
 
+        // Serialize full archive content to bytes for MAC computation
+        $archiveContent = json_encode([
+            'manifest' => $manifest,
+            'events' => $events,
+            'chain_links' => $chainLinks,
+        ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        // MAC over the exact bytes: HMAC-BLAKE2b(SHA-256-hex(bytes), key)
         $mac = null;
         if ($this->archiveMacKey !== null) {
-            $manifestJson = json_encode($manifest, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-            $archiveDigest = hash('sha256', $manifestJson);
+            $archiveDigest = hash('sha256', $archiveContent);
             $mac = $this->hmac?->computeHex($archiveDigest, $this->archiveMacKey);
         }
 

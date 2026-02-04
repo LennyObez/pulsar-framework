@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Each check validates a specific aspect of the deployment configuration
  * and returns a result with a severity and actionable recommendations.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface DeployCheckInterface
 {
     /**

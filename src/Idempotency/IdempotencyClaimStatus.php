@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Status of an idempotency claim.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum IdempotencyClaimStatus
 {
     case Replay;

@@ -20,7 +20,7 @@ use Pulsar\Context\RequestContext;
  * Carries correlation, causation, actor, tenant, and occurrence timestamp.
  * Created from RequestContext for automatic propagation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class EventMetadata
 {
     public DateTimeImmutable $occurredAt;

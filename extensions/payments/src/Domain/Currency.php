@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * ISO 4217 currency codes with minor-unit digit counts.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum Currency: string
 {
     case USD = 'USD';

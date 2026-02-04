@@ -14,7 +14,7 @@ use Pulsar\Http\Response;
  * Middleware can inspect/modify requests before they reach handlers,
  * and inspect/modify responses after handlers complete.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface MiddlewareInterface
 {
     /**

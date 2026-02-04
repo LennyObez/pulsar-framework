@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Base exception for extension-related errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 class ExtensionException extends RuntimeException
 {
     /**
@@ -76,5 +76,11 @@ class ExtensionException extends RuntimeException
     public static function registrationFailed(string $name, string $reason): self
     {
         return new self(sprintf('Failed to register extension "%s": %s', $name, $reason));
+    }
+
+    #[NoDiscard]
+    public static function bootBeforeRegister(): self
+    {
+        return new self('Extensions must be registered before booting');
     }
 }

@@ -14,7 +14,7 @@ deptrac:
   #   Foundation:     Api, Support
   #   CoreTier:       Container, Config, Core, ErrorHandling
   #   Infrastructure: Http, Routing, Console, Extensibility
-  #   Features:       everything else (20 modules)
+  #   Features:       everything else (21 modules)
   #
   # Each module has two layers:
   #   {Module}          — public surface (excludes \Internal\ namespace)
@@ -213,7 +213,7 @@ deptrac:
           value: ^Pulsar\\Extensibility\\Internal\\
 
     # =================================================================
-    # Feature Tier (20 modules)
+    # Feature Tier (21 modules)
     # =================================================================
 
     # --- Audit ---
@@ -295,6 +295,22 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\Database\\Internal\\
+
+    # --- DataProtection ---
+    - name: DataProtection
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\DataProtection\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\DataProtection\\Internal\\
+
+    - name: DataProtection_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\DataProtection\\Internal\\
 
     # --- Deploy ---
     - name: Deploy
@@ -579,6 +595,18 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Studio\\
 
+    # --- PSR-7 Bridge Extension (Pulsar\\Extension\\Psr7-bridge → Psr7Bridge) ---
+    - name: Psr7BridgeExtension
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Psr7Bridge\\
+
+    # --- Observability Export Extension (Pulsar\\Extension\\Observability-export → ObservabilityExport) ---
+    - name: ObservabilityExportExtension
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\ObservabilityExport\\
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -638,6 +666,8 @@ deptrac:
       - Context_Internal
       - Database
       - Database_Internal
+      - DataProtection
+      - DataProtection_Internal
       - Deploy
       - Deploy_Internal
       - Event
@@ -691,6 +721,7 @@ deptrac:
       - Cache
       - Context
       - Database
+      - DataProtection
       - Deploy
       - Event
       - FeatureFlag
@@ -720,6 +751,7 @@ deptrac:
     Cache: *public_deps
     Context: *public_deps
     Database: *public_deps
+    DataProtection: *public_deps
     Deploy: *public_deps
     Event: *public_deps
     FeatureFlag: *public_deps
@@ -758,6 +790,7 @@ deptrac:
     Cache_Internal: [Cache, Api, Support, Container, Config, Core, ErrorHandling]
     Context_Internal: [Context, Api, Support, Container, Config, Core, ErrorHandling]
     Database_Internal: [Database, Api, Support, Container, Config, Core, ErrorHandling]
+    DataProtection_Internal: [DataProtection, Api, Support, Container, Config, Core, ErrorHandling]
     Deploy_Internal: [Deploy, Api, Support, Container, Config, Core, ErrorHandling]
     Event_Internal: [Event, Api, Support, Container, Config, Core, ErrorHandling]
     FeatureFlag_Internal: [FeatureFlag, Api, Support, Container, Config, Core, ErrorHandling]
@@ -795,6 +828,7 @@ deptrac:
       - Cache
       - Context
       - Database
+      - DataProtection
       - Deploy
       - Event
       - FeatureFlag
@@ -831,6 +865,7 @@ deptrac:
       - Cache
       - Context
       - Database
+      - DataProtection
       - Deploy
       - Event
       - FeatureFlag
@@ -849,6 +884,8 @@ deptrac:
       - PaymentsContracts
       - PaymentsDomain
 
+    ObservabilityExportExtension: *public_deps
+    Psr7BridgeExtension: *public_deps
     StudioExtension: *public_deps
     ExampleExtension: *public_deps
 

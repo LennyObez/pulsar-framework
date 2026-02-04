@@ -13,7 +13,7 @@ use Pulsar\Database\Exception\DatabaseException;
  *
  * Composes per-connection DTOs and migration settings.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class DatabaseConfig
 {
     /**

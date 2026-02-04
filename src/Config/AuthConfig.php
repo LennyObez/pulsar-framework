@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  *
  * Maps from the `auth` key of `config/security.php`.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class AuthConfig
 {
     /**

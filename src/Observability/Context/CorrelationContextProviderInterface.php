@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Implementations track fiber-scoped or request-scoped correlation IDs
  * for distributed tracing and event correlation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface CorrelationContextProviderInterface
 {
     /**

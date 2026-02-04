@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * Note: tenantHash is deliberately excluded — tenant identity is resolved
  * exclusively by StudioManager::ingest() via TenantContext::tryGet().
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class CorrelationContext
 {
     public function __construct(

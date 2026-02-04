@@ -624,6 +624,113 @@ final class RequestTest extends TestCase
         self::assertSame('', $request->queryString);
         self::assertSame('1.1', $request->protocolVersion);
     }
+
+    // --- withAttributes() batch method ---
+
+    #[Test]
+    public function withAttributesMergesMultipleAttributes(): void
+    {
+        $original = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            attributes: ['existing' => 'value'],
+        );
+
+        $new = $original->withAttributes(['a' => 1, 'b' => 2]);
+
+        self::assertNotSame($original, $new);
+        self::assertSame('value', $new->attribute('existing'));
+        self::assertSame(1, $new->attribute('a'));
+        self::assertSame(2, $new->attribute('b'));
+    }
+
+    #[Test]
+    public function withAttributesOverwritesExistingKeys(): void
+    {
+        $original = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            attributes: ['key' => 'old'],
+        );
+
+        $new = $original->withAttributes(['key' => 'new']);
+
+        self::assertSame('old', $original->attribute('key'));
+        self::assertSame('new', $new->attribute('key'));
+    }
+
+    #[Test]
+    public function withAttributesEmptyArrayReturnsClone(): void
+    {
+        $original = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(),
+            body: '',
+            attributes: ['key' => 'value'],
+        );
+
+        $new = $original->withAttributes([]);
+
+        self::assertNotSame($original, $new);
+        self::assertSame('value', $new->attribute('key'));
+    }
+
+    // --- json() memoization ---
+
+    #[Test]
+    public function jsonReturnsSameResultOnRepeatedCalls(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '{"name":"Alice","age":25}',
+        );
+
+        $first = $request->json();
+        $second = $request->json();
+
+        self::assertSame($first, $second);
+        self::assertSame(['name' => 'Alice', 'age' => 25], $first);
+    }
+
+    #[Test]
+    public function jsonMemoizationDoesNotLeakBetweenInstances(): void
+    {
+        $request1 = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '{"key":"one"}',
+        );
+
+        $request2 = new Request(
+            method: Method::POST,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            body: '{"key":"two"}',
+        );
+
+        self::assertSame(['key' => 'one'], $request1->json());
+        self::assertSame(['key' => 'two'], $request2->json());
+    }
 }
 
 #[CoversClass(Method::class)]

@@ -320,11 +320,11 @@ The console overview supports real-time streaming via Server-Sent Events. Toggle
 
 Studio uses three distinct derived subkeys from `PULSAR_MASTER_KEY`:
 
-| Purpose        | Subkey ID | Context String       |
-| -------------- | --------- | -------------------- |
-| Encryption     | 3         | `studio_enc__`       |
-| Archive MAC    | 4         | `studio_mac__`       |
-| Chain link MAC | 5         | `studio_chain_mac__` |
+| Purpose        | Subkey ID | Context String |
+| -------------- | --------- | -------------- |
+| Encryption     | 3         | `stud_enc`     |
+| Archive MAC    | 4         | `stud_mac`     |
+| Chain link MAC | 5         | `stud_chn`     |
 
 When `PULSAR_MASTER_KEY` is not set, encryption and MAC features degrade gracefully. The SHA-256 chain remains fully functional and publicly verifiable.
 

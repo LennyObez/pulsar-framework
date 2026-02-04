@@ -12,7 +12,7 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Routing\RouterInterface;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface KernelInterface
 {
     public function boot(): void;

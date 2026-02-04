@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Types of auditable security events.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum AuditEvent: string
 {
     case Authentication = 'authentication';

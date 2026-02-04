@@ -13,7 +13,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * The gate combines RBAC (roles/permissions) with ABAC (policies)
  * to make authorization decisions.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface GateInterface
 {
     /**

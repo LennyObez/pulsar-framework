@@ -25,7 +25,7 @@ final readonly class FeatureTemplates
             /**
              * Handler contract for the $feature feature.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             interface {$feature}HandlerInterface
             {
                 public function handle(Request \$request): Response;

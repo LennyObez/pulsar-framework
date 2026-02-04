@@ -12,7 +12,7 @@ use Throwable;
 /**
  * Contract for rendering exceptions as response bodies.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ExceptionRendererInterface
 {
     /**

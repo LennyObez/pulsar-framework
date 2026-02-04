@@ -90,6 +90,7 @@ final readonly class StudioRouter
             $path === '/studio/console/exceptions' => $this->exceptionExplorer->handle($request),
             $path === '/studio/console/benchmarks' => $this->guardDrillDown($request, fn() => $this->benchmark->handle($request)),
             $this->matchesTimeline($path) => $this->guardDrillDown($request, fn() => $this->timeline->handle($request, $this->extractTimelineId($path))),
+            $path === '/studio/api/benchmark/status' => $this->guardApi($request, fn() => $this->benchmarkApi->status($request)),
             $path === '/studio/api/events' => $this->guardApi($request, fn() => $this->api->events($request)),
             $path === '/studio/api/live' => $this->guardSse($request, fn() => $this->api->live($request)),
             default => new Response(body: 'Not Found', status: ResponseStatus::NotFound),

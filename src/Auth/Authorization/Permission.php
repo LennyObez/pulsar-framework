@@ -15,7 +15,7 @@ use function substr;
  *
  * Supports wildcard matching: "users.*" matches "users.create", "users.delete", etc.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Permission
 {
     public function __construct(

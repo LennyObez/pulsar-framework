@@ -30,7 +30,7 @@ use function sprintf;
  * The payload hash is computed from canonical serialization: event type, schema version,
  * and recursively key-sorted JSON payload — protecting the semantic meaning of the event.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class EventEnvelope
 {
     /**

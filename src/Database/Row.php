@@ -18,7 +18,7 @@ use Pulsar\Database\Exception\DatabaseException;
 /**
  * Readonly single-row value object with typed accessors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Row
 {
     /**

@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Exception for authorization failures.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class AuthorizationException extends RuntimeException
 {
     #[NoDiscard]

@@ -156,17 +156,17 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             // Encryption at rest — dedicated subkey 3 (separate from main Encryptor's subkey 1)
             /** @var EncryptorInterface $baseEncryptor */
             $baseEncryptor = $container->get(EncryptorInterface::class);
-            $studioEncryptor = $baseEncryptor->withDerivedKey($masterKey, 3, 'studio_enc__');
+            $studioEncryptor = $baseEncryptor->withDerivedKey($masterKey, 3, 'stud_enc');
             $encryptedStore = new EncryptedEventStore($sqliteStore, $studioEncryptor);
             $store = $encryptedStore;
             $isEncrypted = true;
             $container->instance(EncryptedEventStore::class, $encryptedStore);
 
             // Archive MAC key — subkey 4
-            $archiveMacKey = $masterKey->deriveSubKey(4, 'studio_mac__');
+            $archiveMacKey = $masterKey->deriveSubKey(4, 'stud_mac');
 
             // Chain MAC key — subkey 5
-            $chainMacKey = $masterKey->deriveSubKey(5, 'studio_chain_mac__');
+            $chainMacKey = $masterKey->deriveSubKey(5, 'stud_chn');
         }
 
         $container->instance(EventStoreInterface::class, $store);

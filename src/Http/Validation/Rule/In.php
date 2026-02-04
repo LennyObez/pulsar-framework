@@ -21,7 +21,7 @@ use function strval;
  * Value must be one of an allowed set (loose comparison for HTTP string inputs).
  * Skips null values.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class In implements RuleInterface
 {
     /**

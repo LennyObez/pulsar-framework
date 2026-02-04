@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
 /**
  * Immutable value object representing a role with its associated permissions.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Role
 {
     /**

@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Application environment mode.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum EnvironmentMode: string
 {
     case Local = 'local';

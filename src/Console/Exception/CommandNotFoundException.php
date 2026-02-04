@@ -12,7 +12,7 @@ use function sprintf;
 /**
  * Exception for when a command is not found.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class CommandNotFoundException extends ConsoleException
 {
     /**

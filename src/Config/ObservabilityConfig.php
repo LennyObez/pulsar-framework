@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  *
  * Environment variables `LOG_LEVEL` and `LOG_CHANNEL` override file values.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class ObservabilityConfig
 {
     /**

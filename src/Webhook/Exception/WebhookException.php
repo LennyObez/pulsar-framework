@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Webhook processing exceptions.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class WebhookException extends RuntimeException
 {
     #[NoDiscard]

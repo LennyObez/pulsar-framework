@@ -15,7 +15,7 @@ use Pulsar\Config\Exception\ConfigException;
  * with full type information.
  *
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ConfigRepository
 {
     /**

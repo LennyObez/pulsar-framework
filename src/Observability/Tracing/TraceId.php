@@ -20,7 +20,7 @@ use function strtolower;
 /**
  * 128-bit trace identifier represented as 32 lowercase hex characters.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class TraceId
 {
     public string $value;

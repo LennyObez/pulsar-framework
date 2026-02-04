@@ -14,7 +14,7 @@ use Pulsar\Container\ContainerInterface;
  * shared across multiple extensions. They allow for organized, modular
  * service configuration.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ServiceProviderInterface
 {
     /**

@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Integrity verification policy modes.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum IntegrityPolicyMode: string
 {
     case Warn = 'warn';

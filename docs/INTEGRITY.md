@@ -135,14 +135,15 @@ Signature verification uses constant-time comparison to prevent timing attacks.
 
 The integrity signing key (subKeyId=6) is distinct from all other derived keys:
 
-| SubKey ID | Purpose            | Context String       |
-| --------- | ------------------ | -------------------- |
-| 1         | Session encryption | `session__`          |
-| 2         | CSRF tokens        | `csrf_tok_`          |
-| 3         | Studio encryption  | `studio_enc__`       |
-| 4         | Studio archive MAC | `studio_mac__`       |
-| 5         | Studio chain MAC   | `studio_chain_mac__` |
-| 6         | Integrity signing  | `integ_sg`           |
+| SubKey ID | Purpose            | Context String |
+| --------- | ------------------ | -------------- |
+| 1         | Encryption         | `encrypt_`     |
+| 2         | Audit HMAC         | `audit___`     |
+| 3         | Studio encryption  | `stud_enc`     |
+| 4         | Studio archive MAC | `stud_mac`     |
+| 5         | Studio chain MAC   | `stud_chn`     |
+| 6         | Integrity signing  | `integ_sg`     |
+| 7         | Cache HMAC         | `fw_cache`     |
 
 ## Workflow
 

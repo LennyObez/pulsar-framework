@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Immutable result of a single invariant check.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class InvariantCheckResult
 {
     /**

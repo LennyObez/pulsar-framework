@@ -15,7 +15,7 @@ use Pulsar\Extensibility\Exception\ManifestException;
 /**
  * Configuration for what an extension provides.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class ProvidesConfig
 {
     /**

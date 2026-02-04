@@ -16,7 +16,7 @@ use function sprintf;
 /**
  * Numeric value must be >= the given minimum. Skips null values.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Min implements RuleInterface
 {
     public function __construct(

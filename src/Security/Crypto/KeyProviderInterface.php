@@ -7,7 +7,7 @@ namespace Pulsar\Security\Crypto;
 use Pulsar\Api\Api;
 use SodiumException;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface KeyProviderInterface
 {
     /**

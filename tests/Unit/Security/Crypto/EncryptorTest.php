@@ -124,5 +124,86 @@ final class EncryptorTest extends TestCase
         $debug = $this->encryptor->__debugInfo();
 
         self::assertSame('[REDACTED]', $debug['key']);
+        self::assertSame('[NONE]', $debug['previousKey']);
+    }
+
+    #[Test]
+    public function decryptFallsBackToPreviousKey(): void
+    {
+        // Encrypt with old key
+        $oldHex = sodium_bin2hex(random_bytes(32));
+        $oldMaster = MasterKey::fromHex($oldHex);
+        $oldEncryptor = Encryptor::fromMasterKey($oldMaster);
+
+        $ciphertext = $oldEncryptor->encrypt('secret data');
+
+        // Create rotated encryptor with new key + old as previous
+        $newHex = sodium_bin2hex(random_bytes(32));
+        $rotatedMaster = MasterKey::fromHex($newHex, $oldHex);
+        $rotatedEncryptor = Encryptor::fromMasterKey($rotatedMaster);
+
+        // Should decrypt using fallback to previous key
+        $decrypted = $rotatedEncryptor->decrypt($ciphertext);
+        self::assertSame('secret data', $decrypted);
+    }
+
+    #[Test]
+    public function encryptUsesCurrentKeyNotPrevious(): void
+    {
+        $oldHex = sodium_bin2hex(random_bytes(32));
+        $newHex = sodium_bin2hex(random_bytes(32));
+        $rotatedMaster = MasterKey::fromHex($newHex, $oldHex);
+        $rotatedEncryptor = Encryptor::fromMasterKey($rotatedMaster);
+
+        $ciphertext = $rotatedEncryptor->encrypt('new data');
+
+        // New key-only encryptor should decrypt (proves encrypt uses current key)
+        $newOnlyMaster = MasterKey::fromHex($newHex);
+        $newOnlyEncryptor = Encryptor::fromMasterKey($newOnlyMaster);
+        self::assertSame('new data', $newOnlyEncryptor->decrypt($ciphertext));
+    }
+
+    #[Test]
+    public function bothKeysMissingThrowsDecryptionFailed(): void
+    {
+        $key1Hex = sodium_bin2hex(random_bytes(32));
+        $key2Hex = sodium_bin2hex(random_bytes(32));
+        $key3Hex = sodium_bin2hex(random_bytes(32));
+
+        $master1 = MasterKey::fromHex($key1Hex);
+        $encryptor1 = Encryptor::fromMasterKey($master1);
+        $ciphertext = $encryptor1->encrypt('data');
+
+        // Encryptor with completely different keys (current + previous)
+        $master23 = MasterKey::fromHex($key2Hex, $key3Hex);
+        $encryptor23 = Encryptor::fromMasterKey($master23);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('tampered');
+
+        $encryptor23->decrypt($ciphertext);
+    }
+
+    #[Test]
+    public function serializationThrows(): void
+    {
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('Serialization');
+
+        serialize($this->encryptor);
+    }
+
+    #[Test]
+    public function debugInfoRedactsPreviousKeyWhenPresent(): void
+    {
+        $hex1 = sodium_bin2hex(random_bytes(32));
+        $hex2 = sodium_bin2hex(random_bytes(32));
+        $master = MasterKey::fromHex($hex1, $hex2);
+        $encryptor = Encryptor::fromMasterKey($master);
+
+        $debug = $encryptor->__debugInfo();
+
+        self::assertSame('[REDACTED]', $debug['key']);
+        self::assertSame('[REDACTED]', $debug['previousKey']);
     }
 }

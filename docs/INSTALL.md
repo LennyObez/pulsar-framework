@@ -1,6 +1,6 @@
 # Installation Guide
 
-Pulsar Framework 1.0.0-rc.1 -- Installation and setup for PHP 8.5 HMVC applications targeting regulated, mission-critical domains.
+Pulsar Framework 1.0.0-rc.8 -- Installation and setup for PHP 8.5 HMVC applications targeting regulated, mission-critical domains.
 
 ## System Requirements
 
@@ -131,7 +131,7 @@ Pulsar Framework Diagnostics
 ========================================
 
 [INFO] Framework
-  Version:      1.0.0-rc.1
+  Version:      1.0.0-rc.8
   Kernel:       Booted
   Extensions:   0 loaded
   Routes:       1 registered
@@ -153,15 +153,64 @@ Pulsar Framework Diagnostics
     [ ] redis           Not loaded
 ```
 
+## Security Setup
+
+Generate a master key for cache integrity, encryption, and audit chain signing:
+
+```bash
+php bin/pulsar key:generate --write
+```
+
+This creates or updates the `.env` file with a cryptographically secure `PULSAR_MASTER_KEY`. If `.env` does not exist, the command copies `.env.example` as a template (if available). The master key enables:
+
+- HMAC-signed framework caches
+- Authenticated encryption (XSalsa20-Poly1305)
+- Audit log chain integrity (BLAKE2b)
+- Studio evidence chain MAC verification
+
+If `PULSAR_MASTER_KEY` is not set, crypto-dependent services are not registered. Session management, CSRF protection, and security headers still function without a master key.
+
+For key rotation procedures, see [Key Rotation](KEY_ROTATION.md).
+
 ## Running the Development Server
 
-Start the built-in PHP development server:
+Start the Pulsar persistent runtime server:
+
+```bash
+php bin/pulsar runtime:serve
+```
+
+This starts a persistent worker on `127.0.0.1:8080` that boots the kernel once and handles many requests without per-request bootstrap overhead. Visit `http://localhost:8080` in your browser.
+
+Custom port and concurrency:
+
+```bash
+php bin/pulsar runtime:serve --port 3000 --concurrency 64
+```
+
+Alternatively, use the built-in PHP development server:
 
 ```bash
 php -S localhost:8000 -t public
 ```
 
-Then visit `http://localhost:8000` in your browser.
+See [Runtime](RUNTIME.md) for full persistent runtime documentation including configuration, safety rules, and production deployment.
+
+## Platform Notes
+
+### Windows
+
+Pulsar runs on Windows with PHP 8.5+. Some notes:
+
+- Use `php bin/pulsar` from PowerShell or CMD. All CLI commands work cross-platform.
+- Copy config stubs with `xcopy` instead of `cp`: `xcopy vendor\pulsar\framework\config config\ /E /I`
+- The `runtime:serve` command uses `socket_select()` which behaves differently on Windows. Test on your target deployment platform.
+- For `key:generate --write`, the `.env` file uses LF line endings regardless of platform.
+- Scheduler cron entries (`scheduler:tick`) can be configured via Windows Task Scheduler instead of crontab.
+
+### Linux / macOS
+
+No special considerations. All commands work as documented.
 
 ## Docker Quick-Start
 

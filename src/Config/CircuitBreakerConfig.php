@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Configuration for circuit breakers.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class CircuitBreakerConfig
 {
     public function __construct(

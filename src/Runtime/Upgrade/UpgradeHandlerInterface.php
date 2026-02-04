@@ -14,7 +14,7 @@ use Socket;
  * and becomes owned by the handler. The handler receives an UpgradeContext
  * (no container reference) exposing only safe persistent services.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface UpgradeHandlerInterface
 {
     /**

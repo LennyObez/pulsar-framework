@@ -22,7 +22,7 @@ use function substr;
  * Migration filenames must follow the convention:
  * {YYYYMMDDHHMMSS}_description_snake_case.php
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class MigrationRepository
 {
     public function __construct(

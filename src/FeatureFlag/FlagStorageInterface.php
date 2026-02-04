@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Interface for feature flag storage backends.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface FlagStorageInterface
 {
     /**

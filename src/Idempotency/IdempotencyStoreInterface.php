@@ -11,7 +11,7 @@ use Pulsar\Idempotency\Exception\IdempotencyException;
 /**
  * Atomic claim-based idempotency store contract.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface IdempotencyStoreInterface
 {
     /**

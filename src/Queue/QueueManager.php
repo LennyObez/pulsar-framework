@@ -24,7 +24,7 @@ use Pulsar\Queue\Exception\QueueException;
  * driver is injected via the constructor. When a RequestContextHolder
  * is available, automatically propagates context into job payloads.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class QueueManager
 {
     private ?QueueDriverInterface $resolvedDriver;

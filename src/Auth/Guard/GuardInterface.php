@@ -13,7 +13,7 @@ use Pulsar\Http\Request;
  *
  * A guard extracts credentials from a request and resolves them to an identity.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface GuardInterface
 {
     /**

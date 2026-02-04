@@ -9,7 +9,7 @@ use Pulsar\Security\Exception\SecurityException;
 use Random\RandomException;
 use SodiumException;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface EncryptorInterface
 {
     /**
@@ -29,7 +29,7 @@ interface EncryptorInterface
      * Create an encryptor using a specific subkey derivation.
      *
      * Enables domain separation for subsystems that need their own
-     * encryption keys (e.g., Studio uses subKeyId=3, context='studio_enc__').
+     * encryption keys (e.g., Studio uses subKeyId=3, context='stud_enc').
      *
      * @throws SodiumException
      */

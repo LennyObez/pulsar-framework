@@ -283,4 +283,47 @@ final class RouteTest extends TestCase
         self::assertSame(['id' => '\d+'], $route->constraints);
         self::assertSame('api.example.com', $route->host);
     }
+
+    // --- compiledPattern pre-compilation ---
+
+    #[Test]
+    public function compiledPatternIsNullForStaticRoute(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/users',
+            handler: fn() => null,
+        );
+
+        self::assertNull($route->compiledPattern);
+    }
+
+    #[Test]
+    public function compiledPatternIsSetForParameterizedRoute(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/users/{id}',
+            handler: fn() => null,
+        );
+
+        self::assertNotNull($route->compiledPattern);
+        self::assertSame(1, preg_match($route->compiledPattern, '/users/123'));
+        self::assertSame(0, preg_match($route->compiledPattern, '/posts/123'));
+    }
+
+    #[Test]
+    public function compiledPatternRespectsConstraints(): void
+    {
+        $route = new Route(
+            methods: [Method::GET],
+            path: '/users/{id}',
+            handler: fn() => null,
+            constraints: ['id' => '\d+'],
+        );
+
+        self::assertNotNull($route->compiledPattern);
+        self::assertSame(1, preg_match($route->compiledPattern, '/users/123'));
+        self::assertSame(0, preg_match($route->compiledPattern, '/users/abc'));
+    }
 }

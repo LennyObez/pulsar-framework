@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Typed DTO for a single logging channel configuration.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class LoggingChannelConfig
 {
     public function __construct(

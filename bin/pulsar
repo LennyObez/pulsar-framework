@@ -42,6 +42,7 @@ use Pulsar\Console\Command\DeployCheckCommand;
 use Pulsar\Console\Command\DiagnosticsCommand;
 use Pulsar\Console\Command\InitCommand;
 use Pulsar\Console\Command\KeyGenerateCommand;
+use Pulsar\Console\Command\KeyRotateCommand;
 use Pulsar\Console\Command\IntegrityBuildCommand;
 use Pulsar\Console\Command\IntegrityRepairCommand;
 use Pulsar\Console\Command\IntegrityVerifyCommand;
@@ -247,6 +248,7 @@ $application->addCommands([
     new OptimizeValidateCommand($kernel, $frameworkCache),
     new CacheWarmupCommand($kernel, $frameworkCache),
     new KeyGenerateCommand($basePath),
+    new KeyRotateCommand($basePath),
 ]);
 
 // Register queue commands (only if queue is configured)

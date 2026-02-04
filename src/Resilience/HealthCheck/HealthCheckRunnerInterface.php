@@ -6,7 +6,7 @@ namespace Pulsar\Resilience\HealthCheck;
 
 use Pulsar\Api\Api;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface HealthCheckRunnerInterface
 {
     public function register(HealthCheckInterface $check): void;

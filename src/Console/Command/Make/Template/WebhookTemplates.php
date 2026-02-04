@@ -24,7 +24,7 @@ final readonly class WebhookTemplates
             /**
              * Webhook handler contract for $name events.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             interface {$name}WebhookHandlerInterface extends WebhookHandlerInterface
             {
             }
@@ -234,7 +234,7 @@ final readonly class WebhookTemplates
             /**
              * Configuration DTO for $name webhook processing.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             final readonly class {$name}WebhookConfig
             {
                 public function __construct(

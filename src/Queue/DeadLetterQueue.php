@@ -18,7 +18,7 @@ use function time;
  * Failed jobs are stored separately from the main queue for later
  * inspection, manual retry, or bulk purging.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class DeadLetterQueue
 {
     /** @var array<string, FailedJob> */

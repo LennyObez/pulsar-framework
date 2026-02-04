@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Action the supervisor takes when a worker recycle is triggered.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum RecycleAction: string
 {
     case GracefulRestart = 'graceful_restart';

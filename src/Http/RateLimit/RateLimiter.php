@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\RateLimit;
 
+use Pulsar\Api\Internal;
+
 use function time;
 
 /**
  * Fixed-window in-memory rate limiter.
  *
  * Tracks request counts per key within fixed time windows.
- * Suitable for single-process deployments; for distributed deployments,
- * replace with a cache/store-backed implementation.
+ * Suitable for single-process deployments and testing; for multi-process
+ * deployments, use SqliteRateLimiter or a store-backed implementation.
  */
-final class RateLimiter
+#[Internal]
+final class RateLimiter implements RateLimiterInterface
 {
     /**
      * @var array<string, array{count: int, window_start: int}>
@@ -25,12 +28,6 @@ final class RateLimiter
         private readonly int $windowSeconds,
     ) {}
 
-    /**
-     * Attempt a hit for the given key.
-     *
-     * Returns a result indicating whether the request is allowed and how many
-     * attempts remain in the current window.
-     */
     public function hit(string $key): RateLimitResult
     {
         $now = time();
@@ -62,9 +59,6 @@ final class RateLimiter
         );
     }
 
-    /**
-     * Get the current hit count for a key without incrementing.
-     */
     public function attempts(string $key): int
     {
         $this->pruneExpired($key, time());
@@ -72,17 +66,11 @@ final class RateLimiter
         return $this->hits[$key]['count'] ?? 0;
     }
 
-    /**
-     * Reset the counter for a key.
-     */
     public function reset(string $key): void
     {
         unset($this->hits[$key]);
     }
 
-    /**
-     * Remove expired window entries for a key.
-     */
     private function pruneExpired(string $key, int $now): void
     {
         if (!isset($this->hits[$key])) {

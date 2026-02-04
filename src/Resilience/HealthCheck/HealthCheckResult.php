@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
 /**
  * Result of a single health check.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class HealthCheckResult
 {
     public function __construct(

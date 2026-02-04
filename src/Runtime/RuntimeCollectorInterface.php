@@ -15,7 +15,7 @@ use Pulsar\Http\Response;
  * request metrics without depending on a concrete collector implementation.
  * Extensions (e.g., Studio) provide the concrete implementation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface RuntimeCollectorInterface
 {
     public function emitWorkerStart(

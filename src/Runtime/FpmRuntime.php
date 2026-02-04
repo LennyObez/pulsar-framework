@@ -18,7 +18,7 @@ use Throwable;
  * beforeRequest/afterRequest are no-ops since FPM isolates requests
  * at the process level.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class FpmRuntime implements RuntimeInterface
 {
     private RuntimeStatus $status = RuntimeStatus::Stopped;

@@ -1,0 +1,12 @@
+{
+  "name": "pulsar/psr7-bridge",
+  "version": "1.0.0-rc.8",
+  "description": "Bidirectional PSR-7/PSR-15 adapters for Pulsar HTTP abstractions",
+  "extension_class": "Pulsar\\Extension\\Psr7Bridge\\Psr7BridgeExtension",
+  "pulsar": { "min_version": "1.0.0-rc.8" },
+  "provides": {
+    "services": ["Psr15MiddlewareAdapter"],
+    "routes": false,
+    "commands": []
+  }
+}

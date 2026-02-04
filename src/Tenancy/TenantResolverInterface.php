@@ -10,7 +10,7 @@ use Pulsar\Http\Request;
 /**
  * Interface for resolving the current tenant from an HTTP request.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface TenantResolverInterface
 {
     /**

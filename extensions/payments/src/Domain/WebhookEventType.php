@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Webhook event types.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum WebhookEventType: string
 {
     case PaymentIntentCreated = 'payment_intent.created';

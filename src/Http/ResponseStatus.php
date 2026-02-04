@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum ResponseStatus: int
 {
     // 1xx Informational

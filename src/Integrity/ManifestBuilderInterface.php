@@ -7,7 +7,7 @@ namespace Pulsar\Integrity;
 use Pulsar\Api\Api;
 use Pulsar\Integrity\Exception\IntegrityException;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface ManifestBuilderInterface
 {
     /**

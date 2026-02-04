@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * verify that system invariants hold (e.g., database connectivity,
  * expected filesystem state, configuration consistency).
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface InvariantCheckInterface
 {
     /**

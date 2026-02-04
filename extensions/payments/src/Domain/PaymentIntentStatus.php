@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  *   Created --capture--> Captured --dispute--> Disputed --resolve--> Resolved
  *   Created --cancel---> Cancelled
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum PaymentIntentStatus: string
 {
     case Created = 'created';

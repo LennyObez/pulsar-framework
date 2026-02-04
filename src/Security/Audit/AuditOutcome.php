@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Outcome of an auditable event.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum AuditOutcome: string
 {
     case Success = 'success';

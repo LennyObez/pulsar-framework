@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Stored idempotency record.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class IdempotencyRecord
 {
     public function __construct(

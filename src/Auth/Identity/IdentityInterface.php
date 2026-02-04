@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Represents an authenticated (or anonymous) identity in the system.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface IdentityInterface
 {
     /**

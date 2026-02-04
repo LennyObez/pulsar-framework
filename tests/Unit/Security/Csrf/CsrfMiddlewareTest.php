@@ -254,4 +254,164 @@ final class CsrfMiddlewareTest extends TestCase
 
         self::assertSame(ResponseStatus::OK, $response->status);
     }
+
+    #[Test]
+    public function crossOriginRequestRejected(): void
+    {
+        $config = new CsrfConfig(
+            enabled: true,
+            tokenLength: 32,
+            headerName: 'X-CSRF-Token',
+            formFieldName: '_csrf_token',
+            trustedOrigins: ['https://example.com'],
+            originValidation: 'optional',
+        );
+
+        $middleware = new CsrfMiddleware($this->tokenManager, $config);
+
+        $request = $this->createRequest(
+            Method::POST,
+            '/submit',
+            headers: ['Origin' => 'https://evil.com', 'X-CSRF-Token' => $this->validToken],
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::Forbidden, $response->status);
+    }
+
+    #[Test]
+    public function sameOriginRequestPasses(): void
+    {
+        $this->tokenManager->method('validate')->willReturn(true);
+
+        $config = new CsrfConfig(
+            enabled: true,
+            tokenLength: 32,
+            headerName: 'X-CSRF-Token',
+            formFieldName: '_csrf_token',
+            trustedOrigins: ['https://example.com'],
+            originValidation: 'optional',
+        );
+
+        $middleware = new CsrfMiddleware($this->tokenManager, $config);
+
+        $request = $this->createRequest(
+            Method::POST,
+            '/submit',
+            headers: ['Origin' => 'https://example.com', 'X-CSRF-Token' => $this->validToken],
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::OK, $response->status);
+    }
+
+    #[Test]
+    public function portNormalizationMatchesDefaultPorts(): void
+    {
+        $this->tokenManager->method('validate')->willReturn(true);
+
+        $config = new CsrfConfig(
+            enabled: true,
+            tokenLength: 32,
+            headerName: 'X-CSRF-Token',
+            formFieldName: '_csrf_token',
+            trustedOrigins: ['https://example.com'],
+            originValidation: 'optional',
+        );
+
+        $middleware = new CsrfMiddleware($this->tokenManager, $config);
+
+        $request = $this->createRequest(
+            Method::POST,
+            '/submit',
+            headers: ['Origin' => 'https://example.com:443', 'X-CSRF-Token' => $this->validToken],
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::OK, $response->status);
+    }
+
+    #[Test]
+    public function requiredModeRejectsMissingOriginHeader(): void
+    {
+        $config = new CsrfConfig(
+            enabled: true,
+            tokenLength: 32,
+            headerName: 'X-CSRF-Token',
+            formFieldName: '_csrf_token',
+            trustedOrigins: ['https://example.com'],
+            originValidation: 'required',
+        );
+
+        $middleware = new CsrfMiddleware($this->tokenManager, $config);
+
+        $request = $this->createRequest(
+            Method::POST,
+            '/submit',
+            headers: ['X-CSRF-Token' => $this->validToken],
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::Forbidden, $response->status);
+    }
+
+    #[Test]
+    public function refererFallbackWhenOriginAbsent(): void
+    {
+        $this->tokenManager->method('validate')->willReturn(true);
+
+        $config = new CsrfConfig(
+            enabled: true,
+            tokenLength: 32,
+            headerName: 'X-CSRF-Token',
+            formFieldName: '_csrf_token',
+            trustedOrigins: ['https://example.com'],
+            originValidation: 'optional',
+        );
+
+        $middleware = new CsrfMiddleware($this->tokenManager, $config);
+
+        $request = $this->createRequest(
+            Method::POST,
+            '/submit',
+            headers: ['Referer' => 'https://example.com/page?q=1', 'X-CSRF-Token' => $this->validToken],
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        self::assertSame(ResponseStatus::OK, $response->status);
+    }
+
+    #[Test]
+    public function originNullStringTreatedAsAbsent(): void
+    {
+        $this->tokenManager->method('validate')->willReturn(true);
+
+        $config = new CsrfConfig(
+            enabled: true,
+            tokenLength: 32,
+            headerName: 'X-CSRF-Token',
+            formFieldName: '_csrf_token',
+            trustedOrigins: ['https://example.com'],
+            originValidation: 'optional',
+        );
+
+        $middleware = new CsrfMiddleware($this->tokenManager, $config);
+
+        // "null" string Origin (privacy redirect) should be treated as absent
+        $request = $this->createRequest(
+            Method::POST,
+            '/submit',
+            headers: ['Origin' => 'null', 'X-CSRF-Token' => $this->validToken],
+        );
+
+        $response = $middleware->process($request, $this->successHandler());
+
+        // In optional mode, absent origin falls through to token validation
+        self::assertSame(ResponseStatus::OK, $response->status);
+    }
 }

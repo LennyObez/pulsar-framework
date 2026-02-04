@@ -93,6 +93,92 @@ final class AuditEntryTest extends TestCase
     }
 
     #[Test]
+    public function createComputesKidFromAuditKey(): void
+    {
+        $entry = AuditEntry::create(
+            id: 'kid-test',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: 'user',
+            action: 'login',
+            resource: '',
+            timestamp: new DateTimeImmutable(),
+            metadata: [],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        // kid should be 16 hex chars
+        self::assertMatchesRegularExpression('/^[0-9a-f]{16}$/', $entry->kid);
+    }
+
+    #[Test]
+    public function kidIsDeterministicForSameKey(): void
+    {
+        $entry1 = AuditEntry::create(
+            id: 'e1',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: 'user',
+            action: 'login',
+            resource: '',
+            timestamp: new DateTimeImmutable(),
+            metadata: [],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        $entry2 = AuditEntry::create(
+            id: 'e2',
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: 'user',
+            action: 'read',
+            resource: '',
+            timestamp: new DateTimeImmutable(),
+            metadata: [],
+            previousHmac: $entry1->hmac,
+            auditKey: $this->auditKey,
+        );
+
+        self::assertSame($entry1->kid, $entry2->kid);
+    }
+
+    #[Test]
+    public function differentKeysProduceDifferentKids(): void
+    {
+        $otherKey = random_bytes(32);
+
+        $entry1 = AuditEntry::create(
+            id: 'e1',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: 'user',
+            action: 'login',
+            resource: '',
+            timestamp: new DateTimeImmutable(),
+            metadata: [],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        $entry2 = AuditEntry::create(
+            id: 'e1',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: 'user',
+            action: 'login',
+            resource: '',
+            timestamp: new DateTimeImmutable(),
+            metadata: [],
+            previousHmac: 'seed',
+            auditKey: $otherKey,
+        );
+
+        self::assertNotSame($entry1->kid, $entry2->kid);
+    }
+
+    #[Test]
     public function toArrayContainsAllFields(): void
     {
         $timestamp = new DateTimeImmutable('2025-06-01T12:00:00.000000+00:00');
@@ -122,6 +208,7 @@ final class AuditEntryTest extends TestCase
         self::assertSame(['old' => 'false', 'new' => 'true'], $array['metadata']);
         self::assertSame('chain_previous', $array['previous_hmac']);
         self::assertNotEmpty($array['hmac']);
+        self::assertNotEmpty($array['kid']);
     }
 
     #[Test]
@@ -180,5 +267,77 @@ final class AuditEntryTest extends TestCase
         $entry2 = AuditEntry::create(...[...$base, 'metadata' => ['key' => 'value2']]);
 
         self::assertNotSame($entry1->hmac, $entry2->hmac);
+    }
+
+    #[Test]
+    public function fieldsContainingDelimitersProduceDistinctHmacs(): void
+    {
+        $ts = new DateTimeImmutable('2025-01-01T00:00:00.000000+00:00');
+
+        // Actor "admin\nlogin" vs actor "admin" + action "login" should never collide
+        $entry1 = AuditEntry::create(
+            id: 'e1',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: "admin\nlogin",
+            action: 'x',
+            resource: '',
+            timestamp: $ts,
+            metadata: [],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        $entry2 = AuditEntry::create(
+            id: 'e1',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: 'admin',
+            action: "login\nx",
+            resource: '',
+            timestamp: $ts,
+            metadata: [],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        self::assertNotSame($entry1->hmac, $entry2->hmac);
+    }
+
+    #[Test]
+    public function multiBytUtf8MetadataProducesCorrectHmac(): void
+    {
+        $ts = new DateTimeImmutable('2025-01-01T00:00:00.000000+00:00');
+
+        $entry = AuditEntry::create(
+            id: 'utf8-test',
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: 'operador',
+            action: 'transferência',
+            resource: '/pagamento',
+            timestamp: $ts,
+            metadata: ['descrição' => 'Ação: €100'],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        self::assertTrue($entry->verify($this->auditKey));
+
+        // Different UTF-8 content must produce different HMAC
+        $entry2 = AuditEntry::create(
+            id: 'utf8-test',
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: 'operador',
+            action: 'transferência',
+            resource: '/pagamento',
+            timestamp: $ts,
+            metadata: ['descrição' => 'Ação: £100'],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        self::assertNotSame($entry->hmac, $entry2->hmac);
     }
 }

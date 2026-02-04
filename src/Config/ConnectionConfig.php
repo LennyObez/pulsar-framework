@@ -13,7 +13,7 @@ use Pulsar\Database\Driver;
 /**
  * Typed configuration DTO for a single database connection.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class ConnectionConfig
 {
     public function __construct(

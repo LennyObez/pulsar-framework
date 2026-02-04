@@ -15,7 +15,7 @@ use Pulsar\Http\ResponseStatus;
  * When the runtime detects an UpgradeResponse, it sends the 101 handshake
  * and transfers socket ownership to the UpgradeHandlerInterface.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class UpgradeResponse extends Response
 {
     public function __construct(

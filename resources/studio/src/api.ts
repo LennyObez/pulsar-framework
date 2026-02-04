@@ -32,6 +32,16 @@ export async function postAction<T>(path: string, body: Record<string, unknown> 
   return (await response.json()) as T;
 }
 
+export async function fetchJson<T>(path: string): Promise<T> {
+  const response = await fetch(new URL(`${BASE_URL}${path}`, window.location.origin).toString());
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status} ${response.statusText}`);
+  }
+
+  return (await response.json()) as T;
+}
+
 export function createEventSource(types?: string[], lastEventId?: string): EventSource {
   const url = new URL(`${BASE_URL}/live`, window.location.origin);
 

@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Storage adapter contract for object/file storage operations.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface StorageAdapterInterface
 {
     /**
