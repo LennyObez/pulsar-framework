@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Core;
 
+use Closure;
+
 use function dirname;
 
 use Error;
@@ -75,7 +77,25 @@ use Pulsar\Context\Middleware\RequestContextMiddleware;
 use Pulsar\Context\RequestContextHolder;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Deploy\Check\CacheSettingsCheck;
+use Pulsar\Deploy\Check\DebugModeCheck;
+use Pulsar\Deploy\Check\FilesystemScanCheck;
+use Pulsar\Deploy\Check\HealthEndpointCheck;
+use Pulsar\Deploy\Check\Http3ReadinessCheck;
+use Pulsar\Deploy\Check\HttpsReadinessCheck;
+use Pulsar\Deploy\Check\IntegrityCheck;
+use Pulsar\Deploy\Check\JitCheck;
+use Pulsar\Deploy\Check\OpcacheCheck;
+use Pulsar\Deploy\Check\RateLimitCheck;
+use Pulsar\Deploy\Check\RequestSizeCheck;
+use Pulsar\Deploy\Check\SecurityHeadersReadinessCheck;
+use Pulsar\Deploy\Check\SeverityOverrideCheck;
+use Pulsar\Deploy\Check\SkippedCheck;
+use Pulsar\Deploy\Check\TrustedProxyCheck;
+use Pulsar\Deploy\CheckSeverity;
 use Pulsar\Deploy\DeployCheck;
+use Pulsar\Deploy\DeployCheckInterface;
+use Pulsar\Deploy\DeploySeverity;
 use Pulsar\Deploy\Runtime\PhpRuntime;
 use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
@@ -191,6 +211,8 @@ final class Kernel
     private ?ConfigManager $configManager;
     private ?ExceptionHandler $exceptionHandler = null;
     private ?RouteContext $routeContext = null;
+    private ?BootProfile $bootProfile = null;
+    private ?MetricRegistry $metricsRegistry = null;
 
     public function __construct(
         ?ContainerInterface $container = null,
@@ -259,8 +281,13 @@ final class Kernel
             return;
         }
 
+        $bootStart = hrtime(true);
+
         // Cache-aware boot: attempt to load config from FrameworkCache
         $cacheLoaded = false;
+        $routesCached = false;
+
+        $cacheStart = hrtime(true);
 
         if ($this->configManager !== null && $this->container->has(FrameworkCache::class)) {
             /** @var FrameworkCache $frameworkCache */
@@ -277,14 +304,28 @@ final class Kernel
                 if ($cached !== null && $cached['containerHints'] !== null) {
                     $this->container->setResolutionHints($cached['containerHints']);
                 }
+
+                // Apply cached routes to the router
+                if ($cached !== null && $cached['routes'] !== null && $cached['routes'] !== []) {
+                    $this->router->loadCachedRoutes($cached['routes']);
+                    $routesCached = true;
+
+                    if ($cached['manifest']->strict) {
+                        $this->router->lock();
+                    }
+                }
             }
         }
+
+        $cacheLoadUs = (int) ((hrtime(true) - $cacheStart) / 1000);
 
         // Register shared Randomizer (CSPRNG) singleton
         $randomizer = new Randomizer(new Secure());
         $this->container->instance(Randomizer::class, $randomizer);
 
         // Config phase: load config, create services
+        $configStart = hrtime(true);
+
         if ($this->configManager !== null) {
             if (!$cacheLoaded) {
                 $this->configManager->load();
@@ -311,13 +352,52 @@ final class Kernel
             $this->registerDiagnosticsRoute();
         }
 
+        $configUs = (int) ((hrtime(true) - $configStart) / 1000);
+
         // Extension register phase (all extensions)
+        $extRegisterStart = hrtime(true);
         $this->extensionBootstrap?->register($this->container);
+        $extensionRegisterUs = (int) ((hrtime(true) - $extRegisterStart) / 1000);
 
         // Extension boot phase (all extensions — includes preBoot, boot, postBoot)
+        $extBootStart = hrtime(true);
         $this->extensionBootstrap?->boot($this->container, $this->router);
+        $extensionBootUs = (int) ((hrtime(true) - $extBootStart) / 1000);
 
         $this->booted = true;
+
+        // Cache MetricRegistry reference for hot-path dispatch timing
+        if ($this->container->has(MetricRegistry::class)) {
+            /** @var MetricRegistry $registry */
+            $registry = $this->container->get(MetricRegistry::class);
+            $this->metricsRegistry = $registry;
+        }
+
+        $totalUs = (int) ((hrtime(true) - $bootStart) / 1000);
+
+        $this->bootProfile = new BootProfile(
+            totalUs: $totalUs,
+            cacheLoadUs: $cacheLoadUs,
+            configUs: $configUs,
+            extensionRegisterUs: $extensionRegisterUs,
+            extensionBootUs: $extensionBootUs,
+            cacheHit: $cacheLoaded,
+            routesCached: $routesCached,
+        );
+
+        // Emit boot duration metric if MetricRegistry is available
+        $this->metricsRegistry?->gauge(
+            'pulsar_boot_duration_us',
+            'Total kernel boot duration in microseconds',
+        )->set((float) $totalUs);
+    }
+
+    /**
+     * Get the boot profile (available after boot completes).
+     */
+    public function bootProfile(): ?BootProfile
+    {
+        return $this->bootProfile;
     }
 
     /**
@@ -420,7 +500,20 @@ final class Kernel
     private function dispatchRoute(Request $request): Response
     {
         $host = $request->header('Host');
-        $matched = $this->router->match($request->method, $request->path, $host);
+
+        if ($this->metricsRegistry !== null) {
+            $matchStart = hrtime(true);
+            $matched = $this->router->match($request->method, $request->path, $host);
+            $matchUs = (int) ((hrtime(true) - $matchStart) / 1000);
+
+            $this->metricsRegistry->histogram(
+                'pulsar_route_match_us',
+                'Route matching duration in microseconds',
+                [10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0],
+            )->observe((float) $matchUs);
+        } else {
+            $matched = $this->router->match($request->method, $request->path, $host);
+        }
 
         // Populate RouteContext for observability middleware (metrics/tracing)
         if ($this->routeContext !== null) {
@@ -1405,7 +1498,7 @@ final class Kernel
      * Create deploy check services and register in the container.
      *
      * Only activates when config/deploy.php was loaded.
-     * Registers DeployConfig and DeployCheck.
+     * Registers DeployConfig, PhpRuntime, and DeployCheck with all checks wired.
      */
     private function createDeployServices(): void
     {
@@ -1424,8 +1517,99 @@ final class Kernel
         $phpRuntime = new PhpRuntime();
         $this->container->instance(PhpRuntimeInterface::class, $phpRuntime);
 
+        /** @var AppConfig $appConfig */
+        $appConfig = $repository->get(AppConfig::class);
+
+        /** @var SecurityConfig $securityConfig */
+        $securityConfig = $repository->get(SecurityConfig::class);
+
         $deployCheck = new DeployCheck();
+
+        $this->registerCheckOrSkip($deployCheck, 'debug-mode', $deployConfig, static fn(): DeployCheckInterface => new DebugModeCheck($appConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'opcache', $deployConfig, static fn(): DeployCheckInterface => new OpcacheCheck($phpRuntime));
+
+        $this->registerCheckOrSkip($deployCheck, 'jit', $deployConfig, static fn(): DeployCheckInterface => new JitCheck($phpRuntime));
+
+        $this->registerCheckOrSkip($deployCheck, 'cache-settings', $deployConfig, function (): ?DeployCheckInterface {
+            if (!$this->container->has(FrameworkCache::class)) {
+                return null;
+            }
+            /** @var FrameworkCache $cache */
+            $cache = $this->container->get(FrameworkCache::class);
+
+            return new CacheSettingsCheck($cache);
+        });
+
+        $this->registerCheckOrSkip($deployCheck, 'filesystem-scan', $deployConfig, function (): ?DeployCheckInterface {
+            if (!$this->container->has(FrameworkCache::class)) {
+                return null;
+            }
+            /** @var FrameworkCache $cache */
+            $cache = $this->container->get(FrameworkCache::class);
+
+            return new FilesystemScanCheck($cache);
+        });
+
+        $this->registerCheckOrSkip($deployCheck, 'security-headers', $deployConfig, static fn(): DeployCheckInterface => new SecurityHeadersReadinessCheck($securityConfig->headers));
+
+        $this->registerCheckOrSkip($deployCheck, 'https-readiness', $deployConfig, static fn(): DeployCheckInterface => new HttpsReadinessCheck($securityConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'http3-readiness', $deployConfig, static fn(): DeployCheckInterface => new Http3ReadinessCheck($deployConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'health-endpoint', $deployConfig, fn(): DeployCheckInterface => new HealthEndpointCheck($this->router));
+
+        $this->registerCheckOrSkip($deployCheck, 'rate-limiting', $deployConfig, static fn(): DeployCheckInterface => new RateLimitCheck($securityConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'request-size-limits', $deployConfig, static fn(): DeployCheckInterface => new RequestSizeCheck($deployConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'trusted-proxies', $deployConfig, static fn(): DeployCheckInterface => new TrustedProxyCheck($deployConfig));
+
+        $this->registerCheckOrSkip($deployCheck, 'integrity', $deployConfig, function (): ?DeployCheckInterface {
+            if (!$this->container->has(IntegrityConfig::class)) {
+                return null;
+            }
+            /** @var IntegrityConfig $integrityConfig */
+            $integrityConfig = $this->container->get(IntegrityConfig::class);
+
+            return new IntegrityCheck($integrityConfig);
+        });
+
         $this->container->instance(DeployCheck::class, $deployCheck);
+    }
+
+    /**
+     * Register a deploy check or a skipped stub based on config and dependency availability.
+     *
+     * @param Closure(): ?DeployCheckInterface $factory
+     */
+    private function registerCheckOrSkip(
+        DeployCheck $deployCheck,
+        string $name,
+        DeployConfig $deployConfig,
+        Closure $factory,
+    ): void {
+        $config = $deployConfig->checkConfig($name);
+
+        if (!$config['enabled']) {
+            return;
+        }
+
+        $check = $factory();
+
+        if ($check === null) {
+            $deployCheck->register(new SkippedCheck(
+                $name,
+                'Required dependency not configured',
+                $config['severity'] === 'fail' ? CheckSeverity::Error : CheckSeverity::Warning,
+            ));
+            return;
+        }
+
+        $severity = DeploySeverity::from($config['severity']);
+
+        // Wrap with severity override if configured
+        $deployCheck->register(new SeverityOverrideCheck($check, $severity));
     }
 
     /**
