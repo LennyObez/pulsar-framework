@@ -9,8 +9,6 @@ use function is_callable;
 use function is_object;
 
 use Override;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
 use ReflectionClass;
@@ -71,8 +69,8 @@ final class Container implements ContainerInterface
     }
 
     /**
-     * @throws NotFoundExceptionInterface
-     * @throws ContainerExceptionInterface
+     * @throws NotFoundException
+     * @throws ContainerException
      */
     #[Override]
     public function get(string $id): mixed

@@ -8,6 +8,7 @@ use function array_filter;
 use function array_values;
 use function count;
 
+use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use Pulsar\Scheduler\Exception\SchedulerException;
 
@@ -69,6 +70,9 @@ final class JobRegistry
      * Get all jobs that are due at the given time.
      *
      * @return list<JobInterface>
+     *
+     * @throws DateInvalidTimeZoneException If a job's schedule has an invalid timezone
+     * @throws SchedulerException If a job's cron expression is invalid
      */
     public function dueJobs(DateTimeImmutable $now): array
     {

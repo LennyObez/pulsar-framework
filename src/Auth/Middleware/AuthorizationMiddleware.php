@@ -17,6 +17,7 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
 use Random\RandomException;
+use SodiumException;
 
 /**
  * Route-level middleware that triggers lazy identity resolution and checks authorization.
@@ -49,7 +50,7 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
         if (!$identity->isAuthenticated()) {
             try {
                 $this->auditAuthFailure($request);
-            } catch (RandomException | JsonException) {
+            } catch (RandomException | JsonException | SodiumException) {
                 // Audit logging failure must not disrupt authorization flow
             }
             return $this->unauthorizedResponse($request);
@@ -117,6 +118,7 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
     /**
      * @throws RandomException
      * @throws JsonException
+     * @throws SodiumException
      */
     private function auditAuthFailure(Request $request): void
     {
@@ -133,6 +135,7 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
     /**
      * @throws RandomException
      * @throws JsonException
+     * @throws SodiumException
      */
     private function auditAuthzDenied(Request $request, string $actor, string $permission): void
     {

@@ -11,8 +11,6 @@ use function is_callable;
 use function is_string;
 
 use JsonException;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Auth\AuthManager;
 use Pulsar\Auth\AuthManagerInterface;
@@ -59,6 +57,8 @@ use Pulsar\Config\TenantDatabaseConfig;
 use Pulsar\Config\TwoFactorConfig;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Container\Exception\ContainerException;
+use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
@@ -195,8 +195,10 @@ final class Kernel
      * 15. Extension register phase
      * 16. Extension boot phase
      *
-     * @throws ContainerExceptionInterface If a container error occurs during bootstrap
-     * @throws NotFoundExceptionInterface If a required binding is not found during bootstrap
+     * @throws ContainerException If a container error occurs during bootstrap
+     * @throws NotFoundException If a required binding is not found during bootstrap
+     * @throws FeatureFlagException If flag storage fails during boot
+     * @throws JsonException If flag serialization fails during boot
      */
     public function boot(): void
     {
@@ -322,8 +324,8 @@ final class Kernel
      *
      * @throws RoutingException When no route matches or method is not allowed
      * @throws RuntimeException If the handler is invalid or returns an unexpected type
-     * @throws ContainerExceptionInterface If a container error occurs resolving a controller
-     * @throws NotFoundExceptionInterface If a controller binding is not found in the container
+     * @throws ContainerException If a container error occurs resolving a controller
+     * @throws NotFoundException If a controller binding is not found in the container
      * @throws Error If a controller class cannot be instantiated
      */
     private function dispatchRoute(Request $request): Response
@@ -373,8 +375,8 @@ final class Kernel
      * Invoke the route handler.
      *
      * @throws RuntimeException If the handler is invalid or returns an unexpected type
-     * @throws ContainerExceptionInterface If a container error occurs resolving a controller
-     * @throws NotFoundExceptionInterface If a controller binding is not found in the container
+     * @throws ContainerException If a container error occurs resolving a controller
+     * @throws NotFoundException If a controller binding is not found in the container
      * @throws Error If a controller class cannot be instantiated
      */
     private function invokeHandler(Request $request, MatchedRoute $matched): Response
@@ -421,8 +423,8 @@ final class Kernel
      *
      * @param class-string $class
      *
-     * @throws NotFoundExceptionInterface
-     * @throws ContainerExceptionInterface
+     * @throws NotFoundException
+     * @throws ContainerException
      * @throws Error If the class cannot be instantiated
      */
     private function resolveController(string $class): object
@@ -580,8 +582,8 @@ final class Kernel
     /**
      * Create the exception handler from config and register in the container.
      *
-     * @throws ContainerExceptionInterface If a container error occurs while resolving dependencies
-     * @throws NotFoundExceptionInterface If a required binding is not found in the container
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createExceptionHandler(): void
     {
@@ -685,8 +687,8 @@ final class Kernel
      * AuthManager, RoleRegistry, Gate, SecurityContext, and auth middleware.
      * If 2FA is enabled, also registers TOTP and recovery code services.
      *
-     * @throws ContainerExceptionInterface If a container error occurs while resolving dependencies
-     * @throws NotFoundExceptionInterface If a required binding is not found in the container
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createAuthServices(): void
     {
@@ -829,8 +831,8 @@ final class Kernel
      * Registers TenancyConfig, TenantContext, TenantResolver, and TenantResolutionMiddleware.
      * If database services are available, decorates ConnectionManager with tenant awareness.
      *
-     * @throws ContainerExceptionInterface If a container error occurs while resolving dependencies
-     * @throws NotFoundExceptionInterface If a required binding is not found in the container
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createTenancyServices(): void
     {
@@ -942,8 +944,8 @@ final class Kernel
      * Only activates when config/scheduler.php was loaded and scheduler is enabled.
      * Registers JobRegistry and Scheduler.
      *
-     * @throws ContainerExceptionInterface If a container error occurs while resolving dependencies
-     * @throws NotFoundExceptionInterface If a required binding is not found in the container
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createSchedulerServices(): void
     {
