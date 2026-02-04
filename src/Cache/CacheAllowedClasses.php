@@ -15,6 +15,7 @@ use function file_put_contents;
 
 use FilesystemIterator;
 
+use function in_array;
 use function is_array;
 use function is_file;
 use function json_decode;
@@ -30,6 +31,7 @@ use const LOCK_EX;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Config\ConfigRepository;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -62,6 +64,17 @@ final class CacheAllowedClasses
         'Pulsar\\Http\\',
     ];
 
+    /**
+     * Classes that are always allowed for cache deserialization regardless
+     * of the readonly check. These are primary serialization targets that
+     * cannot be readonly (e.g. mutable collections populated during boot).
+     *
+     * @var list<class-string>
+     */
+    private const array ALWAYS_ALLOWED = [
+        ConfigRepository::class,
+    ];
+
     /** Magic methods that make a class unsafe for deserialization. */
     private const array DANGEROUS_METHODS = [
         '__wakeup',
@@ -83,10 +96,10 @@ final class CacheAllowedClasses
     public static function scan(string $vendorPath, string $srcPath): array
     {
         $candidates = self::discoverCandidates($vendorPath, $srcPath);
-        $allowed = [];
+        $allowed = self::ALWAYS_ALLOWED;
 
         foreach ($candidates as $className) {
-            if (self::isEligible($className)) {
+            if (!in_array($className, $allowed, true) && self::isEligible($className)) {
                 $allowed[] = $className;
             }
         }

@@ -51,8 +51,10 @@ use Pulsar\Console\Command\MigrateRollbackCommand;
 use Pulsar\Console\Command\MigrateRunCommand;
 use Pulsar\Console\Command\MigrateStatusCommand;
 use Pulsar\Console\Command\NewCommand;
+use Pulsar\Console\Command\CacheWarmupCommand;
 use Pulsar\Console\Command\OptimizeCommand;
 use Pulsar\Console\Command\OptimizeClearCommand;
+use Pulsar\Console\Command\OptimizeValidateCommand;
 use Pulsar\Console\Command\PreloadDumpCommand;
 use Pulsar\Console\Command\QueueFailedCommand;
 use Pulsar\Console\Command\QueueFlushCommand;
@@ -206,6 +208,8 @@ $frameworkCache = $kernel->container()->has(FrameworkCache::class)
 $application->addCommands([
     new OptimizeCommand($kernel, $frameworkCache),
     new OptimizeClearCommand($frameworkCache),
+    new OptimizeValidateCommand($kernel, $frameworkCache),
+    new CacheWarmupCommand($kernel, $frameworkCache),
     new KeyGenerateCommand($basePath),
 ]);
 
