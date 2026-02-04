@@ -13,6 +13,8 @@ use Random\RandomException;
 
 use function random_bytes;
 
+use SodiumException;
+
 /**
  * Orchestrates tamper-evident audit logging with HMAC chain.
  *
@@ -29,6 +31,9 @@ final class AuditLogger
 
     private string $previousHmac;
 
+    /**
+     * @throws SodiumException
+     */
     public function __construct(
         private readonly AuditSinkInterface $sink,
         private readonly string $auditKey,
@@ -46,6 +51,7 @@ final class AuditLogger
      *
      * @throws RandomException
      * @throws JsonException
+     * @throws SodiumException
      */
     public function log(
         AuditEvent $event,

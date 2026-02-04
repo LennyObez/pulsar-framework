@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Scheduler;
 
+use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use DateTimeZone;
+use Pulsar\Scheduler\Exception\SchedulerException;
 
 use function sprintf;
 
@@ -21,6 +23,9 @@ readonly class Schedule
 
     /**
      * Check if this schedule is due at the given time.
+     *
+     * @throws DateInvalidTimeZoneException If the timezone is invalid
+     * @throws SchedulerException If the cron expression is invalid
      */
     public function isDue(DateTimeImmutable $now): bool
     {

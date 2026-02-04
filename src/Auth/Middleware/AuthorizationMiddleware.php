@@ -47,7 +47,11 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
         $request = $request->withAttribute('_identity', $identity);
 
         if (!$identity->isAuthenticated()) {
-            $this->auditAuthFailure($request);
+            try {
+                $this->auditAuthFailure($request);
+            } catch (RandomException | JsonException) {
+                // Audit logging failure must not disrupt authorization flow
+            }
             return $this->unauthorizedResponse($request);
         }
 
@@ -67,7 +71,11 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
                 );
 
                 if ($this->gate->denies($identity, $permission, $context)) {
-                    $this->auditAuthzDenied($request, $identity->id(), $permission);
+                    try {
+                        $this->auditAuthzDenied($request, $identity->id(), $permission);
+                    } catch (RandomException | JsonException) {
+                        // Audit logging failure must not disrupt authorization flow
+                    }
                     return $this->forbiddenResponse($request);
                 }
             }

@@ -50,4 +50,10 @@ $registerRoutes = require __DIR__ . '/../routes.php';
 $registerRoutes($kernel->router());
 
 // Handle request
-$kernel->run();
+try {
+    $kernel->run();
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo 'Internal Server Error';
+    error_log((string) $e);
+}

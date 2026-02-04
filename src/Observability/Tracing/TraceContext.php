@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Tracing;
 
+use Random\RandomException;
+
 /**
  * Readonly value object representing distributed trace context.
  *
@@ -20,6 +22,8 @@ final readonly class TraceContext
 
     /**
      * Create a child context with a new span ID, preserving the trace ID.
+     *
+     * @throws RandomException
      */
     public function createChild(): self
     {
@@ -40,6 +44,8 @@ final readonly class TraceContext
 
     /**
      * Create a new root trace context.
+     *
+     * @throws RandomException
      */
     public static function create(): self
     {

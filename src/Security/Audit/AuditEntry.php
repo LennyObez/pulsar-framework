@@ -11,6 +11,7 @@ use function json_encode;
 
 use JsonException;
 use Pulsar\Security\Crypto\Hmac;
+use SodiumException;
 
 /**
  * Immutable audit log entry with HMAC chain for tamper evidence.
@@ -43,6 +44,7 @@ readonly class AuditEntry
      * @param array<string, mixed> $metadata
      *
      * @throws JsonException
+     * @throws SodiumException
      */
     public static function create(
         string $id,
@@ -90,6 +92,7 @@ readonly class AuditEntry
      * Verify this entry's HMAC is valid for the given audit key.
      *
      * @throws JsonException
+     * @throws SodiumException
      */
     public function verify(string $auditKey): bool
     {

@@ -25,6 +25,7 @@ final class ErrorGroup
     /** @var list<ErrorEvent> */
     private array $recentEvents = [];
 
+    /** @noinspection PhpUnhandledExceptionInspection — hardcoded 'now' and 'UTC' never throw */
     public function __construct(
         public readonly ErrorFingerprint $fingerprint,
         private readonly int $maxRecentEvents = 5,

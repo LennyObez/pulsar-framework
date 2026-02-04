@@ -189,6 +189,7 @@ final readonly class ExceptionHandler
     /**
      * Render a generic JSON error response for clients that prefer JSON.
      */
+    /** @noinspection PhpUnusedParameterInspection — signature consistency with other renderers */
     private function renderJson(Throwable $_exception, ResponseStatus $status): Response
     {
         return Response::json(

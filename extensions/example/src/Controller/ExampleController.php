@@ -20,6 +20,7 @@ final readonly class ExampleController
     /**
      * Index action - returns a simple greeting.
      */
+    /** @noinspection PhpUnusedParameterInspection — route handler contract */
     public function index(Request $_request): Response
     {
         return Response::json([
@@ -31,6 +32,7 @@ final readonly class ExampleController
     /**
      * Info action - returns extension information.
      */
+    /** @noinspection PhpUnusedParameterInspection — route handler contract */
     public function info(Request $_request): Response
     {
         return Response::json($this->exampleService->getInfo());
@@ -41,6 +43,7 @@ final readonly class ExampleController
      *
      * @param array<string, string> $params Route parameters
      */
+    /** @noinspection PhpUnusedParameterInspection — route handler contract */
     public function greet(Request $_request, array $params): Response
     {
         $name = $params['name'] ?? 'Guest';

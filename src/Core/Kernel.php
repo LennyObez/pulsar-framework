@@ -10,6 +10,7 @@ use function is_array;
 use function is_callable;
 use function is_string;
 
+use JsonException;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
@@ -64,6 +65,7 @@ use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
 use Pulsar\Extensibility\ExtensionBootstrap;
+use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 use Pulsar\FeatureFlag\FeatureFlagManager;
 use Pulsar\FeatureFlag\FeatureFlagManagerInterface;
 use Pulsar\FeatureFlag\FlagDefinition;
@@ -887,6 +889,9 @@ final class Kernel
      *
      * Only activates when config/features.php was loaded and feature flags are enabled.
      * Registers FlagStorage, FlagEvaluationLog, and FeatureFlagManager.
+     *
+     * @throws FeatureFlagException If flag storage fails during initial flag loading
+     * @throws JsonException If flag serialization fails during initial flag loading
      */
     private function createFeatureFlagServices(): void
     {
