@@ -31,6 +31,7 @@ final class ModuleMap
         'Pulsar\Core\Wiring\ExceptionHandlerWiring',
         'Pulsar\Core\Wiring\FeatureFlagWiring',
         'Pulsar\Core\Wiring\IntegrityWiring',
+        'Pulsar\Core\Wiring\IntrospectionWiring',
         'Pulsar\Core\Wiring\LoggingWiring',
         'Pulsar\Core\Wiring\MetricsWiring',
         'Pulsar\Core\Wiring\QueueWiring',

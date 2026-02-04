@@ -64,11 +64,11 @@ final class MemoryPreflightCheckTest extends TestCase
     }
 
     #[Test]
-    public function it_uses_default_threshold_of_128_mb(): void
+    public function it_uses_default_threshold_of_256_mb(): void
     {
         $check = new MemoryPreflightCheck();
 
-        // Default threshold is 128 MB; a typical test process uses less
+        // Default threshold is 256 MB; a typical test process (even with coverage) uses less
         $result = $check->check();
 
         self::assertTrue($result->passed);

@@ -202,10 +202,9 @@ final class Encryptor implements EncryptorInterface
     {
         $key = $masterKey->deriveSubKey($subKeyId, $context);
 
-        $previousKey = null;
-        if ($masterKey instanceof MasterKey && $masterKey->hasPreviousKey()) {
-            $previousKey = $masterKey->derivePreviousSubKey($subKeyId, $context);
-        }
+        $previousKey = ($masterKey instanceof MasterKey && $masterKey->hasPreviousKey())
+            ? $masterKey->derivePreviousSubKey($subKeyId, $context)
+            : null;
 
         return new self($key, $previousKey);
     }

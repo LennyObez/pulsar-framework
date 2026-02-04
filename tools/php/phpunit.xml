@@ -27,6 +27,7 @@
             <directory>../../extensions/studio/src</directory>
             <directory>../../extensions/observability-export/src</directory>
             <directory>../../extensions/social-sso/src</directory>
+            <directory>../../extensions/mcp-server/src</directory>
         </include>
     </source>
 </phpunit>

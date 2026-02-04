@@ -53,7 +53,7 @@ return [
     */
     'worker' => [
         'max_jobs' => 1000,
-        'max_memory_mb' => 128,
+        'max_memory_mb' => 256,
         'time_limit_seconds' => 3600,
         'sleep_ms' => 1000,
     ],

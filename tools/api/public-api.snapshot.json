@@ -1000,6 +1000,86 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Introspection\\Data\\ApiSnapshotData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ArchitectureMapData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\CommandEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\CommandReferenceData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ConfigPropertySchema": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ConfigSchemaData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ConfigSchemaEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ContributedMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ExtensionEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\RouteEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\RouteMapData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\IntrospectionConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\MetadataContributorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\ProjectMetadataBuilder": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\ProjectMetadataService": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\ProjectMetadataSnapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\Context\\CorrelationContext": {
       "since": "1.0.0",
       "methods": [],
@@ -1715,6 +1795,7 @@
     "Pulsar\\Core\\Wiring\\ExceptionHandlerWiring",
     "Pulsar\\Core\\Wiring\\FeatureFlagWiring",
     "Pulsar\\Core\\Wiring\\IntegrityWiring",
+    "Pulsar\\Core\\Wiring\\IntrospectionWiring",
     "Pulsar\\Core\\Wiring\\LoggingWiring",
     "Pulsar\\Core\\Wiring\\MetricsWiring",
     "Pulsar\\Core\\Wiring\\QueueWiring",
@@ -1760,6 +1841,9 @@
     "Pulsar\\Integrity\\ManifestBuilder",
     "Pulsar\\Integrity\\ManifestSigner",
     "Pulsar\\Integrity\\ManifestVerifier",
+    "Pulsar\\Introspection\\Internal\\ConfigSchemaReflector",
+    "Pulsar\\Introspection\\Internal\\CoreRuntimeProbe",
+    "Pulsar\\Introspection\\Internal\\SnapshotFileReader",
     "Pulsar\\Observability\\Log\\Sink\\DeferredSink",
     "Pulsar\\Queue\\Driver\\DatabaseDriver",
     "Pulsar\\Queue\\Driver\\InMemoryDriver",

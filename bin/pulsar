@@ -40,6 +40,7 @@ use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\Application;
 use Pulsar\Console\Command\DeployCheckCommand;
 use Pulsar\Console\Command\DiagnosticsCommand;
+use Pulsar\Console\Command\MetadataExportCommand;
 use Pulsar\Console\Command\InitCommand;
 use Pulsar\Console\Command\KeyGenerateCommand;
 use Pulsar\Console\Command\KeyRotateCommand;
@@ -100,6 +101,8 @@ use Pulsar\Integrity\ManifestVerifierInterface;
 use Pulsar\Queue\DeadLetterQueue;
 use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
+use Pulsar\Introspection\ProjectMetadataService;
+use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\HmacService;
@@ -250,6 +253,17 @@ $application->addCommands([
     new KeyGenerateCommand($basePath),
     new KeyRotateCommand($basePath),
 ]);
+
+// Register metadata export command (if introspection is enabled)
+if ($kernel->container()->has(ProjectMetadataService::class)) {
+    /** @var ProjectMetadataService $metadataService */
+    $metadataService = $kernel->container()->get(ProjectMetadataService::class);
+    $scrubber = $kernel->container()->has(SensitiveDataScrubber::class)
+        ? $kernel->container()->get(SensitiveDataScrubber::class)
+        : new SensitiveDataScrubber();
+    /** @var SensitiveDataScrubber $scrubber */
+    $application->add(new MetadataExportCommand($metadataService, $scrubber));
+}
 
 // Register queue commands (only if queue is configured)
 if ($kernel->container()->has(QueueConfig::class)) {

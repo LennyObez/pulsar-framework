@@ -56,9 +56,9 @@ final readonly class Psr15MiddlewareAdapter implements PulsarMiddlewareInterface
              * @param callable(Request): Response $next
              */
             public function __construct(
-                private readonly mixed $next,
-                private readonly Psr7ToPulsarRequest $toPulsarRequest,
-                private readonly PulsarToPsr7Response $toPsr7Response,
+                private mixed $next,
+                private Psr7ToPulsarRequest $toPulsarRequest,
+                private PulsarToPsr7Response $toPsr7Response,
             ) {}
 
             public function handle(ServerRequestInterface $request): ResponseInterface

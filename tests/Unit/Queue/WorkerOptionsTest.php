@@ -20,7 +20,7 @@ final class WorkerOptionsTest extends TestCase
         $options = new WorkerOptions();
 
         self::assertSame(1000, $options->maxJobs);
-        self::assertSame(128, $options->maxMemoryMb);
+        self::assertSame(256, $options->maxMemoryMb);
         self::assertSame(3600, $options->timeLimitSeconds);
         self::assertSame(1000, $options->sleepMs);
     }
@@ -68,7 +68,7 @@ final class WorkerOptionsTest extends TestCase
         $options = WorkerOptions::fromConfig($config);
 
         self::assertSame(1000, $options->maxJobs);
-        self::assertSame(128, $options->maxMemoryMb);
+        self::assertSame(256, $options->maxMemoryMb);
         self::assertSame(3600, $options->timeLimitSeconds);
         self::assertSame(1000, $options->sleepMs);
     }
