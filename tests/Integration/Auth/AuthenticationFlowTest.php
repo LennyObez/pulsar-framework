@@ -34,7 +34,7 @@ final class AuthenticationFlowTest extends TestCase
     public function sessionLoginAndAuthenticateRoundtrip(): void
     {
         $sessionData = [];
-        $session = $this->createMock(SessionInterface::class);
+        $session = $this->createStub(SessionInterface::class);
         $session->method('isStarted')->willReturn(true);
         $session->method('regenerate');
         $session->method('set')->willReturnCallback(
@@ -96,7 +96,7 @@ final class AuthenticationFlowTest extends TestCase
             roles: ['api'],
         );
 
-        $resolver = $this->createMock(TokenResolverInterface::class);
+        $resolver = $this->createStub(TokenResolverInterface::class);
         $resolver->method('resolve')
             ->with('valid-api-token')
             ->willReturn($expectedIdentity);
@@ -128,7 +128,7 @@ final class AuthenticationFlowTest extends TestCase
             roles: ['user'],
         );
 
-        $session = $this->createMock(SessionInterface::class);
+        $session = $this->createStub(SessionInterface::class);
         $session->method('isStarted')->willReturn(true);
         $session->method('has')->willReturn(true);
         $session->method('get')->willReturn($expectedIdentity->toArray());
@@ -182,14 +182,14 @@ final class AuthenticationFlowTest extends TestCase
         );
 
         // Session guard returns null (no session data)
-        $session = $this->createMock(SessionInterface::class);
+        $session = $this->createStub(SessionInterface::class);
         $session->method('isStarted')->willReturn(true);
         $session->method('has')->willReturn(false);
 
         $sessionGuard = new SessionGuard($session);
 
         // Token guard resolves the token
-        $resolver = $this->createMock(TokenResolverInterface::class);
+        $resolver = $this->createStub(TokenResolverInterface::class);
         $resolver->method('resolve')
             ->with('my-token')
             ->willReturn($tokenIdentity);
@@ -218,7 +218,7 @@ final class AuthenticationFlowTest extends TestCase
     public function logoutClearsSessionIdentity(): void
     {
         $sessionData = [];
-        $session = $this->createMock(SessionInterface::class);
+        $session = $this->createStub(SessionInterface::class);
         $session->method('isStarted')->willReturn(true);
         $session->method('regenerate');
         $session->method('set')->willReturnCallback(

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Auth\TwoFactor;
 
 use Pulsar\Auth\Identity\IdentityInterface;
+use Random\RandomException;
 
 /**
  * Orchestrates TOTP and recovery code operations for two-factor authentication.
@@ -20,6 +21,9 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
         private int $recoveryCodeCount = 8,
     ) {}
 
+    /**
+     * @throws RandomException
+     */
     public function beginSetup(IdentityInterface $identity): array
     {
         $secret = $this->generator->generateSecret();

@@ -45,14 +45,9 @@ interface OutputInterface
     public function warning(string $message): void;
 
     /**
-     * Get the current verbosity level.
+     * The current verbosity level.
      */
-    public function getVerbosity(): Verbosity;
-
-    /**
-     * Set the verbosity level.
-     */
-    public function setVerbosity(Verbosity $verbosity): void;
+    public Verbosity $verbosity { get; set; }
 
     /**
      * Check if output is quiet.

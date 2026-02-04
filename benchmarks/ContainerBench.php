@@ -6,6 +6,8 @@ namespace Pulsar\Benchmarks;
 
 use Pulsar\Container\BindingType;
 use Pulsar\Container\Container;
+use Pulsar\Container\Exception\ContainerException;
+use Pulsar\Container\Exception\NotFoundException;
 use stdClass;
 
 /**
@@ -19,6 +21,10 @@ final class ContainerBench
 {
     private Container $container;
 
+    /**
+     * @throws ContainerException
+     * @throws NotFoundException
+     */
     public function setUp(): void
     {
         $this->container = new Container();
@@ -40,6 +46,9 @@ final class ContainerBench
      * This is the fastest path - direct array lookup.
      *
      * @Subject
+     *
+     * @throws ContainerException
+     * @throws NotFoundException
      */
     public function benchInstanceResolution(): void
     {
@@ -52,6 +61,9 @@ final class ContainerBench
      * After first resolution, singletons are cached.
      *
      * @Subject
+     *
+     * @throws ContainerException
+     * @throws NotFoundException
      */
     public function benchSingletonCachedResolution(): void
     {
@@ -64,6 +76,9 @@ final class ContainerBench
      * Factory bindings create new instances each time.
      *
      * @Subject
+     *
+     * @throws ContainerException
+     * @throws NotFoundException
      */
     public function benchFactoryResolution(): void
     {

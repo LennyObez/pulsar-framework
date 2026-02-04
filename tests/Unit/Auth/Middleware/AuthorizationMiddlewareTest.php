@@ -43,7 +43,7 @@ final class AuthorizationMiddlewareTest extends TestCase
         IdentityInterface $identity,
         Request $request,
     ): SecurityContext {
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($identity);
 
         return new SecurityContext($authManager, $request);
@@ -52,7 +52,7 @@ final class AuthorizationMiddlewareTest extends TestCase
     #[Test]
     public function returns401WhenNoSecurityContextOnRequest(): void
     {
-        $gate = $this->createMock(GateInterface::class);
+        $gate = $this->createStub(GateInterface::class);
         $middleware = new AuthorizationMiddleware($gate);
 
         $request = $this->createRequest();
@@ -66,7 +66,7 @@ final class AuthorizationMiddlewareTest extends TestCase
     #[Test]
     public function returns401WhenIdentityIsNotAuthenticated(): void
     {
-        $gate = $this->createMock(GateInterface::class);
+        $gate = $this->createStub(GateInterface::class);
         $middleware = new AuthorizationMiddleware($gate);
 
         $request = $this->createRequest();
@@ -93,7 +93,7 @@ final class AuthorizationMiddlewareTest extends TestCase
             twoFactorStatus: TwoFactorStatus::Disabled,
         );
 
-        $gate = $this->createMock(GateInterface::class);
+        $gate = $this->createStub(GateInterface::class);
         $gate->method('denies')->willReturn(false);
 
         $middleware = new AuthorizationMiddleware($gate);
@@ -128,7 +128,7 @@ final class AuthorizationMiddlewareTest extends TestCase
             twoFactorStatus: TwoFactorStatus::Disabled,
         );
 
-        $gate = $this->createMock(GateInterface::class);
+        $gate = $this->createStub(GateInterface::class);
         $gate->method('denies')->willReturn(true);
 
         $middleware = new AuthorizationMiddleware($gate);

@@ -20,7 +20,8 @@ final readonly class ExampleController
     /**
      * Index action - returns a simple greeting.
      */
-    public function index(Request $request): Response
+    /** @noinspection PhpUnusedParameterInspection — route handler contract */
+    public function index(Request $_request): Response
     {
         return Response::json([
             'message' => $this->exampleService->getGreeting(),
@@ -31,7 +32,8 @@ final readonly class ExampleController
     /**
      * Info action - returns extension information.
      */
-    public function info(Request $request): Response
+    /** @noinspection PhpUnusedParameterInspection — route handler contract */
+    public function info(Request $_request): Response
     {
         return Response::json($this->exampleService->getInfo());
     }
@@ -41,7 +43,8 @@ final readonly class ExampleController
      *
      * @param array<string, string> $params Route parameters
      */
-    public function greet(Request $request, array $params): Response
+    /** @noinspection PhpUnusedParameterInspection — route handler contract */
+    public function greet(Request $_request, array $params): Response
     {
         $name = $params['name'] ?? 'Guest';
 

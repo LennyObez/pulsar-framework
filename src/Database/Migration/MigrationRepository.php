@@ -21,10 +21,10 @@ use function substr;
  * Migration filenames must follow the convention:
  * {YYYYMMDDHHMMSS}_description_snake_case.php
  */
-final class MigrationRepository
+final readonly class MigrationRepository
 {
     public function __construct(
-        private readonly string $migrationsPath,
+        private string $migrationsPath,
     ) {}
 
     /**
@@ -84,7 +84,6 @@ final class MigrationRepository
     {
         /**
          * @psalm-suppress UnresolvableInclude Migration file paths are validated at runtime via discover()
-         * @var mixed $migration
          */
         $migration = require $filePath;
 

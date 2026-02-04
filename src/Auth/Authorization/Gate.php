@@ -90,12 +90,9 @@ final class Gate implements GateInterface
 
     private function hasSuperRole(IdentityInterface $identity): bool
     {
-        foreach ($identity->roles() as $role) {
-            if (in_array($role, $this->superRoles, true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $identity->roles(),
+            fn(string $role): bool => in_array($role, $this->superRoles, true),
+        );
     }
 }

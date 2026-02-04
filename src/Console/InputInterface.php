@@ -10,21 +10,35 @@ namespace Pulsar\Console;
 interface InputInterface
 {
     /**
-     * Get the command name from input.
+     * The command name from input.
      */
-    public function getCommandName(): ?string;
+    public ?string $commandName { get; }
+
+    /**
+     * All positional arguments.
+     *
+     * @var array<string|int, mixed>
+     */
+    public array $arguments { get; }
+
+    /**
+     * All options.
+     *
+     * @var array<string, mixed>
+     */
+    public array $options { get; }
+
+    /**
+     * The raw input tokens.
+     *
+     * @var list<string>
+     */
+    public array $tokens { get; }
 
     /**
      * Get a positional argument by index or name.
      */
     public function getArgument(int|string $key, mixed $default = null): mixed;
-
-    /**
-     * Get all arguments.
-     *
-     * @return array<string|int, mixed>
-     */
-    public function getArguments(): array;
 
     /**
      * Check if an option is present.
@@ -35,18 +49,4 @@ interface InputInterface
      * Get an option value.
      */
     public function getOption(string $name, mixed $default = null): mixed;
-
-    /**
-     * Get all options.
-     *
-     * @return array<string, mixed>
-     */
-    public function getOptions(): array;
-
-    /**
-     * Get the raw input tokens.
-     *
-     * @return list<string>
-     */
-    public function getTokens(): array;
 }

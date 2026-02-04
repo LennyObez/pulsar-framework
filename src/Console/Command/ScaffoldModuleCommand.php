@@ -18,12 +18,13 @@ use function sprintf;
  */
 final class ScaffoldModuleCommand extends Command
 {
+    use ScaffoldTrait;
     protected function configure(): void
     {
-        $this->setName('scaffold:module')
-            ->setDescription('Generate a new module structure')
-            ->addArgument('name', 'Module name (e.g., User, Blog, Admin)', true)
-            ->addOption('path', 'Base path for modules', 'p', 'app/Modules');
+        $this->name = 'scaffold:module';
+        $this->description = 'Generate a new module structure';
+        $this->addArgument('name', 'Module name (e.g., User, Blog, Admin)', true);
+        $this->addOption('path', 'Base path for modules', 'p', 'app/Modules');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
@@ -69,30 +70,19 @@ final class ScaffoldModuleCommand extends Command
             'Views',
         ];
 
-        foreach ($directories as $dir) {
-            $path = $modulePath . ($dir !== '' ? DIRECTORY_SEPARATOR . $dir : '');
-            if (!mkdir($path, 0o755, true)) {
-                $output->errorln('Failed to create directory: ' . $path);
-                return ExitCode::Error->value;
-            }
-            $output->writeln(sprintf('  Created %s/', $dir !== '' ? $dir : $name));
+        if (!$this->createDirectories($modulePath, $name, $directories, $output)) {
+            return ExitCode::Error->value;
         }
 
         // Create files
         $namespace = 'App\\Modules\\' . $name;
 
-        $files = [
+        $this->writeFiles($modulePath, [
             'ModuleServiceProvider.php' => $this->getServiceProviderContent($name, $namespace),
             'Controllers/' . $name . 'Controller.php' => $this->getControllerContent($name, $namespace),
             'Services/' . $name . 'Service.php' => $this->getServiceContent($name, $namespace),
             'routes.php' => $this->getRoutesContent($name, $namespace),
-        ];
-
-        foreach ($files as $file => $content) {
-            $filePath = $modulePath . DIRECTORY_SEPARATOR . $file;
-            file_put_contents($filePath, $content);
-            $output->writeln(sprintf('  Created %s', $file));
-        }
+        ], $output);
 
         $output->newLine();
         $output->success(sprintf('Module "%s" scaffolded successfully!', $name));

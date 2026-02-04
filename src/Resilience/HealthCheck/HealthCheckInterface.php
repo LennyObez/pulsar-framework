@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Resilience\HealthCheck;
+
+/**
+ * Interface for system health checks.
+ */
+interface HealthCheckInterface
+{
+    /**
+     * Get the health check name.
+     */
+    public function getName(): string;
+
+    /**
+     * Run the health check and return the result.
+     */
+    public function check(): HealthCheckResult;
+}

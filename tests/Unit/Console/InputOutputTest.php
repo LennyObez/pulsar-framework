@@ -22,7 +22,7 @@ final class InputOutputTest extends TestCase
     {
         $input = new ArgvInput(['pulsar', 'test']);
 
-        self::assertSame('test', $input->getCommandName());
+        self::assertSame('test', $input->commandName);
     }
 
     #[Test]
@@ -66,7 +66,7 @@ final class InputOutputTest extends TestCase
     {
         $input = new ArgvInput(['pulsar', 'test', '--opt', 'arg']);
 
-        self::assertSame(['test', '--opt', 'arg'], $input->getTokens());
+        self::assertSame(['test', '--opt', 'arg'], $input->tokens);
     }
 
     #[Test]
@@ -74,7 +74,7 @@ final class InputOutputTest extends TestCase
     {
         $input = new ArrayInput('test');
 
-        self::assertSame('test', $input->getCommandName());
+        self::assertSame('test', $input->commandName);
     }
 
     #[Test]
@@ -84,7 +84,7 @@ final class InputOutputTest extends TestCase
 
         self::assertSame('arg1', $input->getArgument(0));
         self::assertSame('arg2', $input->getArgument(1));
-        self::assertSame(['arg1', 'arg2'], $input->getArguments());
+        self::assertSame(['arg1', 'arg2'], $input->arguments);
     }
 
     #[Test]
@@ -102,7 +102,7 @@ final class InputOutputTest extends TestCase
     {
         $input = new ArrayInput('test', ['arg1'], ['verbose' => true, 'name' => 'value']);
 
-        $tokens = $input->getTokens();
+        $tokens = $input->tokens;
 
         self::assertContains('test', $tokens);
         self::assertContains('arg1', $tokens);
@@ -118,7 +118,7 @@ final class InputOutputTest extends TestCase
         $output->write('Hello');
         $output->write(' World');
 
-        self::assertSame('Hello World', $output->getBuffer());
+        self::assertSame('Hello World', $output->buffer);
     }
 
     #[Test]
@@ -129,7 +129,7 @@ final class InputOutputTest extends TestCase
         $output->writeln('Line 1');
         $output->writeln('Line 2');
 
-        self::assertSame('Line 1' . PHP_EOL . 'Line 2' . PHP_EOL, $output->getBuffer());
+        self::assertSame('Line 1' . PHP_EOL . 'Line 2' . PHP_EOL, $output->buffer);
     }
 
     #[Test]
@@ -139,8 +139,8 @@ final class InputOutputTest extends TestCase
 
         $output->error('Error message');
 
-        self::assertSame('Error message', $output->getErrorBuffer());
-        self::assertSame('', $output->getBuffer());
+        self::assertSame('Error message', $output->errorBuffer);
+        self::assertSame('', $output->buffer);
     }
 
     #[Test]
@@ -152,7 +152,7 @@ final class InputOutputTest extends TestCase
         $fetched = $output->fetch();
 
         self::assertSame('Content', $fetched);
-        self::assertSame('', $output->getBuffer());
+        self::assertSame('', $output->buffer);
     }
 
     #[Test]
@@ -164,8 +164,8 @@ final class InputOutputTest extends TestCase
         $output->error('Error');
         $output->clear();
 
-        self::assertSame('', $output->getBuffer());
-        self::assertSame('', $output->getErrorBuffer());
+        self::assertSame('', $output->buffer);
+        self::assertSame('', $output->errorBuffer);
     }
 
     #[Test]
@@ -175,7 +175,7 @@ final class InputOutputTest extends TestCase
 
         $output->write('Content');
 
-        self::assertSame('', $output->getBuffer());
+        self::assertSame('', $output->buffer);
     }
 
     #[Test]
@@ -185,7 +185,7 @@ final class InputOutputTest extends TestCase
 
         $output->newLine(3);
 
-        self::assertSame(PHP_EOL . PHP_EOL . PHP_EOL, $output->getBuffer());
+        self::assertSame(PHP_EOL . PHP_EOL . PHP_EOL, $output->buffer);
     }
 
     #[Test]
@@ -211,10 +211,10 @@ final class InputOutputTest extends TestCase
     {
         $output = new BufferedOutput(Verbosity::Normal);
 
-        self::assertSame(Verbosity::Normal, $output->getVerbosity());
+        self::assertSame(Verbosity::Normal, $output->verbosity);
 
-        $output->setVerbosity(Verbosity::Debug);
-        self::assertSame(Verbosity::Debug, $output->getVerbosity());
+        $output->verbosity = Verbosity::Debug;
+        self::assertSame(Verbosity::Debug, $output->verbosity);
     }
 
     #[Test]
@@ -226,7 +226,7 @@ final class InputOutputTest extends TestCase
         $output->info('Info message');
         $output->warning('Warning message');
 
-        $buffer = $output->getBuffer();
+        $buffer = $output->buffer;
 
         self::assertStringContainsString('Success message', $buffer);
         self::assertStringContainsString('Info message', $buffer);

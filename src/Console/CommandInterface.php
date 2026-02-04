@@ -10,14 +10,14 @@ namespace Pulsar\Console;
 interface CommandInterface
 {
     /**
-     * Get the command name.
+     * The command name.
      */
-    public function getName(): string;
+    public string $name { get; }
 
     /**
-     * Get the command description.
+     * The command description.
      */
-    public function getDescription(): string;
+    public string $description { get; }
 
     /**
      * Execute the command.

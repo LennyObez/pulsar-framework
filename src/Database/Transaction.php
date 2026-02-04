@@ -18,9 +18,9 @@ use function sprintf;
  */
 final class Transaction
 {
-    private bool $active = true;
-    private bool $committed = false;
-    private bool $rolledBack = false;
+    public private(set) bool $active = true;
+    public private(set) bool $committed = false;
+    public private(set) bool $rolledBack = false;
 
     public function __construct(
         private readonly PDO $pdo,
@@ -71,30 +71,6 @@ final class Transaction
 
         $this->active = false;
         $this->rolledBack = true;
-    }
-
-    /**
-     * Whether the transaction is still active (not yet committed or rolled back).
-     */
-    public function isActive(): bool
-    {
-        return $this->active;
-    }
-
-    /**
-     * Whether the transaction was committed.
-     */
-    public function isCommitted(): bool
-    {
-        return $this->committed;
-    }
-
-    /**
-     * Whether the transaction was rolled back.
-     */
-    public function isRolledBack(): bool
-    {
-        return $this->rolledBack;
     }
 
     /**
