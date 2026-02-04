@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Console\Command;
+namespace Pulsar\Console\Command\Make;
 
 use function is_string;
 
 use JsonException;
 use Override;
 use Pulsar\Console\Command;
+use Pulsar\Console\Command\ScaffoldTrait;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
@@ -19,13 +20,14 @@ use function sprintf;
 /**
  * Scaffold a new extension structure.
  */
-final class ScaffoldExtensionCommand extends Command
+final class MakeExtensionCommand extends Command
 {
     use ScaffoldTrait;
+
     #[Override]
     protected function configure(): void
     {
-        $this->name = 'scaffold:extension';
+        $this->name = 'make:extension';
         $this->description = 'Generate a new extension structure';
         $this->addArgument('name', 'Extension name (e.g., my-extension)', true);
         $this->addOption('vendor', 'Vendor name', null, 'acme');
@@ -100,18 +102,6 @@ final class ScaffoldExtensionCommand extends Command
         $output->writeln('  2. Run composer dump-autoload');
 
         return ExitCode::Success->value;
-    }
-
-    private function toKebabCase(string $name): string
-    {
-        $name = preg_replace('/[A-Z]/', '-$0', $name) ?? $name;
-        $name = strtolower(trim($name, '-'));
-        return str_replace(['_', ' '], '-', $name);
-    }
-
-    private function toPascalCase(string $name): string
-    {
-        return str_replace([' ', '-'], '', ucwords(str_replace(['_', '-'], ' ', $name)));
     }
 
     /**
@@ -254,7 +244,9 @@ final class ScaffoldExtensionCommand extends Command
 
     private function getControllerContent(string $namespace, string $className): string
     {
-        $lcName = lcfirst($className);
+        $serviceName = $this->toCamelCase($className) . 'Service';
+        $messageCall = '$this->' . $serviceName . '->getMessage()';
+
         return <<<PHP
             <?php
 
@@ -269,13 +261,13 @@ final class ScaffoldExtensionCommand extends Command
             final class {$className}Controller
             {
                 public function __construct(
-                    private readonly {$className}Service \${$lcName}Service,
+                    private readonly {$className}Service \$$serviceName,
                 ) {}
 
                 public function index(Request \$request): Response
                 {
                     return Response::json([
-                        'message' => \$this->{$lcName}Service->getMessage(),
+                        'message' => $messageCall,
                     ]);
                 }
             }
