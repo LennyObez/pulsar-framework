@@ -148,7 +148,7 @@ final class CsrfTokenManagerTest extends TestCase
      */
     private function createSessionMock(?string $storedToken = 'default'): SessionInterface
     {
-        $session = $this->createMock(SessionInterface::class);
+        $session = $this->createStub(SessionInterface::class);
         $session->method('isStarted')->willReturn(true);
 
         if ($storedToken === null) {

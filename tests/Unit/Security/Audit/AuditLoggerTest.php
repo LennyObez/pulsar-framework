@@ -27,7 +27,7 @@ final class AuditLoggerTest extends TestCase
     #[Test]
     public function initialPreviousHmacIsSeedHmac(): void
     {
-        $sink = $this->createMock(AuditSinkInterface::class);
+        $sink = $this->createStub(AuditSinkInterface::class);
         $logger = new AuditLogger($sink, $this->auditKey);
 
         $expected = Hmac::computeHex('PULSAR_AUDIT_SEED', $this->auditKey);
@@ -58,7 +58,7 @@ final class AuditLoggerTest extends TestCase
     #[Test]
     public function logAdvancesChainState(): void
     {
-        $sink = $this->createMock(AuditSinkInterface::class);
+        $sink = $this->createStub(AuditSinkInterface::class);
         $logger = new AuditLogger($sink, $this->auditKey);
 
         $seedHmac = $logger->previousHmac();
@@ -90,7 +90,7 @@ final class AuditLoggerTest extends TestCase
     #[Test]
     public function loggedEntriesVerifyCorrectly(): void
     {
-        $sink = $this->createMock(AuditSinkInterface::class);
+        $sink = $this->createStub(AuditSinkInterface::class);
         $logger = new AuditLogger($sink, $this->auditKey);
 
         $entry = $logger->log(
@@ -108,7 +108,7 @@ final class AuditLoggerTest extends TestCase
     #[Test]
     public function logPopulatesAllFields(): void
     {
-        $sink = $this->createMock(AuditSinkInterface::class);
+        $sink = $this->createStub(AuditSinkInterface::class);
         $logger = new AuditLogger($sink, $this->auditKey);
 
         $entry = $logger->log(
@@ -133,7 +133,7 @@ final class AuditLoggerTest extends TestCase
     public function multipleEntriesFormValidChain(): void
     {
         $entries = [];
-        $sink = $this->createMock(AuditSinkInterface::class);
+        $sink = $this->createStub(AuditSinkInterface::class);
         $logger = new AuditLogger($sink, $this->auditKey);
 
         $seedHmac = $logger->previousHmac();
