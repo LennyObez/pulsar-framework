@@ -72,14 +72,17 @@ final class TwoFactorFlowTest extends TestCase
         // Step 2: Confirm setup with a valid TOTP code
         $timestamp = time();
         $code = $this->generator->computeCode($setup['secret'], $timestamp);
-        self::assertTrue($this->manager->confirmSetup($setup['secret'], $code));
+        $confirmResult = $this->manager->confirmSetup('user-1', $setup['secret'], $code);
+        self::assertTrue($confirmResult->confirmed);
 
-        // Step 3: Verify code during login
+        // Step 3: Verify code during login (using deprecated verifyCodeWithSecret)
         $loginCode = $this->generator->computeCode($setup['secret'], $timestamp);
-        self::assertTrue($this->manager->verifyCode($setup['secret'], $loginCode));
+        $verifyResult = $this->manager->verifyCodeWithSecret('user-1', $setup['secret'], $loginCode);
+        self::assertTrue($verifyResult->verified);
 
         // Step 4: Use recovery code as fallback
         $recoveryIndex = $this->manager->verifyRecoveryCode(
+            'user-1',
             $setup['recovery_codes'][0],
             $setup['recovery_codes'],
         );
@@ -87,6 +90,7 @@ final class TwoFactorFlowTest extends TestCase
 
         // Wrong recovery code fails
         $failedIndex = $this->manager->verifyRecoveryCode(
+            'user-1',
             'ZZZZ-ZZZZ',
             $setup['recovery_codes'],
         );

@@ -26,6 +26,7 @@
             <directory>../../extensions/psr7-bridge/src</directory>
             <directory>../../extensions/studio/src</directory>
             <directory>../../extensions/observability-export/src</directory>
+            <directory>../../extensions/social-sso/src</directory>
         </include>
     </source>
 </phpunit>

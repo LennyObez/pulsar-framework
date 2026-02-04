@@ -8,6 +8,7 @@ use function hash_equals;
 
 use InvalidArgumentException;
 use NoDiscard;
+use Pulsar\Api\Api;
 
 use function sodium_bin2hex;
 use function sodium_crypto_generichash;
@@ -22,6 +23,7 @@ use function strlen;
  *
  * Provides keyed hashing for integrity verification and tamper detection.
  */
+#[Api(since: '1.0.0')]
 final class Hmac
 {
     /**

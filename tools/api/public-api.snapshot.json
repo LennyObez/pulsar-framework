@@ -95,12 +95,72 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Auth\\TwoFactor\\AuthEventCollectorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\Confirm2faSetupResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\ConsumeReason": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\ConsumeResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\RecoveryCodeRotationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\RecoveryCodeSet": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\RecoveryCodeStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Auth\\TwoFactor\\TotpReplayGuardInterface": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Auth\\TwoFactor\\TotpSecretStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Auth\\TwoFactor\\TwoFactorManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\TwoFactorPurpose": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\TwoFactorRateLimiterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\Verify2faResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\VerifyReason": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -1365,6 +1425,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Security\\Crypto\\Hmac": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Security\\Crypto\\HmacInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -1607,7 +1672,10 @@
     }
   },
   "internal_classes": [
+    "Pulsar\\Auth\\TwoFactor\\InMemoryRecoveryCodeStore",
     "Pulsar\\Auth\\TwoFactor\\InMemoryTotpReplayGuard",
+    "Pulsar\\Auth\\TwoFactor\\InMemoryTotpSecretStore",
+    "Pulsar\\Auth\\TwoFactor\\RecoveryCodeHasher",
     "Pulsar\\Auth\\TwoFactor\\SqliteTotpReplayGuard",
     "Pulsar\\Cache\\CacheAllowedClasses",
     "Pulsar\\Cache\\CacheIntegrity",

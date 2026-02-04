@@ -43,6 +43,7 @@
       "Pulsar\\Extension\\Payments\\": "extensions/payments/src/",
       "Pulsar\\Extension\\Psr7Bridge\\": "extensions/psr7-bridge/src/",
       "Pulsar\\Extension\\ObservabilityExport\\": "extensions/observability-export/src/",
+      "Pulsar\\Extension\\SocialSso\\": "extensions/social-sso/src/",
       "Pulsar\\Extension\\Studio\\": "extensions/studio/src/"
     }
   },
