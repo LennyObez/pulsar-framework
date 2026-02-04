@@ -20,6 +20,8 @@ final readonly class RecoveryCodeGenerator
      *
      * @param int $count Number of codes to generate
      * @return list<string> Recovery codes in XXXX-XXXX format
+     *
+     * @throws \Random\RandomException
      */
     public function generate(int $count = 8): array
     {

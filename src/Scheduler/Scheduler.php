@@ -15,12 +15,12 @@ use function sprintf;
 /**
  * Job scheduler that evaluates due jobs and executes them.
  */
-final class Scheduler
+final readonly class Scheduler
 {
     public function __construct(
-        private readonly JobRegistry $registry,
-        private readonly ?LoggerInterface $logger = null,
-        private readonly ?MetricRegistry $metrics = null,
+        private JobRegistry $registry,
+        private ?LoggerInterface $logger = null,
+        private ?MetricRegistry $metrics = null,
     ) {}
 
     /**

@@ -49,6 +49,7 @@ readonly class RetryPolicy
      *
      * @template T
      * @param Closure(): T $operation
+     * @param LoggerInterface|null $logger Optional logger for retry diagnostics
      * @return RetryResult
      */
     public function execute(Closure $operation, ?LoggerInterface $logger = null): RetryResult
@@ -103,6 +104,8 @@ readonly class RetryPolicy
      *
      * Uses exponential backoff: baseDelay * multiplier^(attempt-1), capped at maxDelay.
      * When jitter is enabled, a random factor between 0.5 and 1.5 is applied.
+     *
+     * @param int $attempt The current attempt number (1-based)
      */
     public function calculateDelay(int $attempt): int
     {

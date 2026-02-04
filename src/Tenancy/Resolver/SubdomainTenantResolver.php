@@ -48,8 +48,7 @@ readonly class SubdomainTenantResolver implements TenantResolverInterface
 
         $tenantId = substr($host, 0, strlen($host) - strlen($suffix));
 
-        /** @psalm-suppress DocblockTypeContradiction */
-        if ($tenantId === '' || $tenantId === false) { // @phpstan-ignore identical.alwaysFalse
+        if ($tenantId === '') {
             return null;
         }
 

@@ -31,7 +31,7 @@ final class MigrateRollbackCommand extends Command
     {
         $this->setName('migrate:rollback')
             ->setDescription('Rollback the last batch of migrations')
-            ->addOption('all', 'Rollback all migrations (reset)', null);
+            ->addOption('all', 'Rollback all migrations (reset)');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

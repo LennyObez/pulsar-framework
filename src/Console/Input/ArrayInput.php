@@ -83,6 +83,7 @@ final class ArrayInput implements InputInterface
             if ($value === true) {
                 $tokens[] = '--' . $name;
             } elseif (is_scalar($value)) {
+                /** @var int|float|string|false $value */
                 $tokens[] = '--' . $name . '=' . (string) $value;
             }
         }

@@ -31,6 +31,8 @@ final readonly class TotpGenerator
      * Generate a cryptographically random secret.
      *
      * @param positive-int $length Length in bytes (default 20 for SHA-1 compatibility)
+     *
+     * @throws \Random\RandomException
      */
     public function generateSecret(int $length = 20): string
     {

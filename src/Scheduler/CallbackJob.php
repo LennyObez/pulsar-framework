@@ -11,16 +11,16 @@ use Throwable;
 /**
  * Closure-based scheduled job.
  */
-final class CallbackJob implements JobInterface
+final readonly class CallbackJob implements JobInterface
 {
     /**
      * @param Closure(JobContext): ?string $callback
      */
     public function __construct(
-        private readonly string $name,
-        private readonly Schedule $schedule,
-        private readonly Closure $callback,
-        private readonly string $description = '',
+        private string $name,
+        private Schedule $schedule,
+        private Closure $callback,
+        private string $description = '',
     ) {}
 
     public function getName(): string

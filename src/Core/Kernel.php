@@ -8,6 +8,8 @@ use function is_array;
 use function is_callable;
 use function is_string;
 
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Auth\AuthManager;
 use Pulsar\Auth\AuthManagerInterface;
@@ -24,7 +26,6 @@ use Pulsar\Auth\Middleware\AuthorizationMiddleware;
 use Pulsar\Auth\Middleware\TwoFactorMiddleware;
 use Pulsar\Auth\Password\PasswordHasher;
 use Pulsar\Auth\Password\PasswordHasherInterface;
-use Pulsar\Auth\SecurityContext;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\RecoveryCodeVerifier;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
@@ -69,6 +70,7 @@ use Pulsar\FeatureFlag\FlagStorageDriver;
 use Pulsar\FeatureFlag\FlagStorageInterface;
 use Pulsar\FeatureFlag\Storage\FileFlagStorage;
 use Pulsar\FeatureFlag\Storage\InMemoryFlagStorage;
+use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
@@ -405,8 +407,8 @@ final class Kernel
      *
      * @param class-string $class
      *
-     * @throws \Psr\Container\NotFoundExceptionInterface
-     * @throws \Psr\Container\ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     * @throws ContainerExceptionInterface
      */
     private function resolveController(string $class): object
     {
@@ -529,7 +531,7 @@ final class Kernel
 
                 return new Response(
                     body: $exporter->export(),
-                    headers: new \Pulsar\Http\HeaderBag(['content-type' => ['text/plain; version=0.0.4; charset=utf-8']]),
+                    headers: new HeaderBag(['content-type' => ['text/plain; version=0.0.4; charset=utf-8']]),
                 );
             });
         }

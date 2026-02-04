@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag\Storage;
 
+use function array_map;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
@@ -71,6 +72,8 @@ final class FileFlagStorage implements FlagStorageInterface
 
     /**
      * @return array<string, FlagDefinition>
+     *
+     * @throws FeatureFlagException
      */
     private function loadFlags(): array
     {
@@ -115,14 +118,13 @@ final class FileFlagStorage implements FlagStorageInterface
 
     /**
      * @param array<string, FlagDefinition> $flags
+     *
+     * @throws FeatureFlagException
+     * @throws JsonException
      */
     private function saveFlags(array $flags): void
     {
-        $data = [];
-
-        foreach ($flags as $name => $flag) {
-            $data[$name] = $flag->toArray();
-        }
+        $data = array_map(static fn(FlagDefinition $flag): array => $flag->toArray(), $flags);
 
         $json = json_encode($data, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
         $result = file_put_contents($this->filePath, $json, LOCK_EX);

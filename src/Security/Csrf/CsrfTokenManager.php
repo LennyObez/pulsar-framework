@@ -36,6 +36,8 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      * Generate a new CSRF token and store it in the session.
      *
      * @return string The generated token (hex-encoded)
+     *
+     * @throws \Random\RandomException
      */
     public function generate(): string
     {
@@ -47,12 +49,14 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
 
     /**
      * Get the current CSRF token, generating one if none exists.
+     *
+     * @throws \Random\RandomException
      */
     public function getToken(): string
     {
         $token = $this->session->get(self::SESSION_KEY);
 
-        if ($token === null || !is_string($token)) {
+        if (!is_string($token)) {
             return $this->generate();
         }
 
@@ -68,7 +72,7 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
     {
         $storedToken = $this->session->get(self::SESSION_KEY);
 
-        if ($storedToken === null || !is_string($storedToken)) {
+        if (!is_string($storedToken)) {
             return false;
         }
 
@@ -79,6 +83,8 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      * Rotate the CSRF token (generate a new one, invalidating the old).
      *
      * Call after successful form submission to prevent replay.
+     *
+     * @throws \Random\RandomException
      */
     public function rotate(): string
     {

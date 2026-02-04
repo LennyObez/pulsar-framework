@@ -15,6 +15,7 @@ use Pulsar\Observability\Metrics\Histogram;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\Span;
+use Pulsar\Observability\Tracing\SpanStatus;
 
 use function sprintf;
 
@@ -189,8 +190,8 @@ final readonly class DiagnosticsRenderer
         $durationStr = $duration !== null ? sprintf('%.4fs', $duration) : 'running';
 
         $statusBadge = match ($span->status()) {
-            \Pulsar\Observability\Tracing\SpanStatus::Ok => '<span class="badge badge-ok">ok</span>',
-            \Pulsar\Observability\Tracing\SpanStatus::Error => '<span class="badge badge-error">error</span>',
+            SpanStatus::Ok => '<span class="badge badge-ok">ok</span>',
+            SpanStatus::Error => '<span class="badge badge-error">error</span>',
             default => '<span class="badge">unset</span>',
         };
 
@@ -218,7 +219,7 @@ final readonly class DiagnosticsRenderer
             if ($key === '') {
                 $parts[] = (string) $value;
             } else {
-                $parts[] = sprintf('{%s} %s', $key, (string) $value);
+                $parts[] = sprintf('{%s} %s', $key, $value);
             }
         }
 

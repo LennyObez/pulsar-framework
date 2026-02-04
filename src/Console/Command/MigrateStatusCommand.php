@@ -14,8 +14,6 @@ use Pulsar\Database\Migration\MigrationRunner;
 use function sprintf;
 use function str_pad;
 
-use const STR_PAD_RIGHT;
-
 use Throwable;
 
 /**
@@ -61,10 +59,10 @@ final class MigrateStatusCommand extends Command
         // Header
         $output->writeln(sprintf(
             '  %s  %s  %s  %s  %s',
-            str_pad('Version', 16, ' ', STR_PAD_RIGHT),
-            str_pad('Name', 40, ' ', STR_PAD_RIGHT),
-            str_pad('Status', 10, ' ', STR_PAD_RIGHT),
-            str_pad('Batch', 7, ' ', STR_PAD_RIGHT),
+            str_pad('Version', 16),
+            str_pad('Name', 40),
+            str_pad('Status', 10),
+            str_pad('Batch', 7),
             'Applied At',
         ));
 
@@ -84,10 +82,10 @@ final class MigrateStatusCommand extends Command
 
             $output->writeln(sprintf(
                 '  %s  %s  %s  %s  %s',
-                str_pad($version, 16, ' ', STR_PAD_RIGHT),
-                str_pad($file->name, 40, ' ', STR_PAD_RIGHT),
-                str_pad($status, 10, ' ', STR_PAD_RIGHT),
-                str_pad($batch, 7, ' ', STR_PAD_RIGHT),
+                str_pad($version, 16),
+                str_pad($file->name, 40),
+                str_pad($status, 10),
+                str_pad($batch, 7),
                 $appliedAt,
             ));
         }

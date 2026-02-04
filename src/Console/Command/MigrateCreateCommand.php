@@ -78,9 +78,8 @@ final class MigrateCreateCommand extends Command
         // Replace spaces, hyphens, and camelCase with underscores
         $snake = (string) preg_replace('/[^a-z0-9]+/i', '_', $name);
         $snake = (string) preg_replace('/([a-z])([A-Z])/', '$1_$2', $snake);
-        $snake = strtolower(trim($snake, '_'));
 
-        return $snake;
+        return strtolower(trim($snake, '_'));
     }
 
     private function generateContent(): string

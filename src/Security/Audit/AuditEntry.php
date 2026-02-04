@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use function hash_equals;
 use function json_encode;
 
+use JsonException;
 use Pulsar\Security\Crypto\Hmac;
 
 /**
@@ -40,6 +41,8 @@ readonly class AuditEntry
      * Create a new audit entry and compute its HMAC.
      *
      * @param array<string, mixed> $metadata
+     *
+     * @throws JsonException
      */
     public static function create(
         string $id,
@@ -85,6 +88,8 @@ readonly class AuditEntry
 
     /**
      * Verify this entry's HMAC is valid for the given audit key.
+     *
+     * @throws JsonException
      */
     public function verify(string $auditKey): bool
     {

@@ -45,13 +45,13 @@ final class RepairCommand extends Command
             }
         }
 
+        $output->newLine();
+
         if ($needsRepair === 0) {
-            $output->newLine();
             $output->success('No repairs needed.');
             return ExitCode::Success->value;
         }
 
-        $output->newLine();
         $output->writeln(sprintf('Running %d repair(s)...', $needsRepair));
         $output->newLine();
 

@@ -4,8 +4,10 @@
   "type": "library",
   "license": "Apache-2.0",
   "require": {
+    "ext-ctype": "*",
     "ext-mbstring": "*",
     "ext-pdo": "*",
+    "ext-sodium": "*",
     "php": "^8.5",
     "psr/container": "^2.0",
     "psr/log": "^3.0"

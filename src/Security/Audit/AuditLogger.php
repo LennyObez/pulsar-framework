@@ -7,6 +7,7 @@ namespace Pulsar\Security\Audit;
 use function bin2hex;
 
 use DateTimeImmutable;
+use JsonException;
 use Pulsar\Security\Crypto\Hmac;
 
 use function random_bytes;
@@ -41,6 +42,9 @@ final class AuditLogger
      * and advances the chain state.
      *
      * @param array<string, mixed> $metadata
+     *
+     * @throws \Random\RandomException
+     * @throws JsonException
      */
     public function log(
         AuditEvent $event,

@@ -8,6 +8,9 @@ use Pulsar\Security\Exception\SecurityException;
 
 use function sodium_crypto_secretbox;
 use function sodium_crypto_secretbox_open;
+
+use SodiumException;
+
 use function strlen;
 
 /**
@@ -46,6 +49,8 @@ final class Encryptor
      * Output format: base64(nonce || ciphertext_with_mac)
      *
      * @throws SecurityException If encryption fails
+     * @throws \Random\RandomException
+     * @throws SodiumException
      */
     public function encrypt(string $plaintext): string
     {
@@ -59,6 +64,7 @@ final class Encryptor
      * Decrypt a base64-encoded ciphertext produced by encrypt().
      *
      * @throws SecurityException If decryption fails (wrong key, tampered data, etc.)
+     * @throws SodiumException
      */
     public function decrypt(string $encoded): string
     {

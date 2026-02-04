@@ -19,6 +19,7 @@ use function sprintf;
  */
 final class ScaffoldExtensionCommand extends Command
 {
+    use ScaffoldTrait;
     protected function configure(): void
     {
         $this->setName('scaffold:extension')
@@ -70,32 +71,19 @@ final class ScaffoldExtensionCommand extends Command
         $output->newLine();
 
         // Create directory structure
-        $directories = ['', 'src', 'src/Controller'];
-
-        foreach ($directories as $dir) {
-            $path = $extensionPath . ($dir !== '' ? DIRECTORY_SEPARATOR . $dir : '');
-            if (!mkdir($path, 0o755, true)) {
-                $output->errorln('Failed to create directory: ' . $path);
-                return ExitCode::Error->value;
-            }
-            $output->writeln(sprintf('  Created %s/', $dir !== '' ? $dir : $dirName));
+        if (!$this->createDirectories($extensionPath, $dirName, ['', 'src', 'src/Controller'], $output)) {
+            return ExitCode::Error->value;
         }
 
         // Create files
-        $files = [
+        $this->writeFiles($extensionPath, [
             'pulsar.json' => $this->getManifestContent($fullName, $namespace, $className),
             'composer.json' => $this->getComposerContent($fullName, $namespace),
             'src/' . $className . 'Extension.php' => $this->getExtensionContent($namespace, $className),
             'src/' . $className . 'ServiceProvider.php' => $this->getServiceProviderContent($namespace, $className),
             'src/' . $className . 'Service.php' => $this->getServiceContent($namespace, $className),
             'src/Controller/' . $className . 'Controller.php' => $this->getControllerContent($namespace, $className),
-        ];
-
-        foreach ($files as $file => $content) {
-            $filePath = $extensionPath . DIRECTORY_SEPARATOR . $file;
-            file_put_contents($filePath, $content);
-            $output->writeln(sprintf('  Created %s', $file));
-        }
+        ], $output);
 
         $output->newLine();
         $output->success(sprintf('Extension "%s" scaffolded successfully!', $fullName));

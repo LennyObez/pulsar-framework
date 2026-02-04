@@ -51,7 +51,7 @@ final class ShowContainerCommand extends Command
         $filter = $input->getOption('filter');
 
         // Apply filter
-        if ($filter !== null && is_string($filter)) {
+        if (is_string($filter)) {
             $filterString = $filter;
             $bindings = array_filter($bindings, fn(string $id) => str_contains($id, $filterString));
             $instances = array_filter($instances, fn(string $id) => str_contains($id, $filterString));

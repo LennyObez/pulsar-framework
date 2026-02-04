@@ -45,7 +45,7 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
         $request = $request->withAttribute('_identity', $identity);
 
         if (!$identity->isAuthenticated()) {
-            $this->auditAuthFailure($request, 'unauthenticated');
+            $this->auditAuthFailure($request);
             return $this->unauthorizedResponse($request);
         }
 
@@ -104,7 +104,7 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
         );
     }
 
-    private function auditAuthFailure(Request $request, string $reason): void
+    private function auditAuthFailure(Request $request): void
     {
         $this->auditLogger?->log(
             event: AuditEvent::Authentication,
@@ -112,7 +112,7 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
             actor: 'anonymous',
             action: 'authenticate',
             resource: $request->path,
-            metadata: ['reason' => $reason],
+            metadata: ['reason' => 'unauthenticated'],
         );
     }
 

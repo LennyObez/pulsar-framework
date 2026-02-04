@@ -36,8 +36,7 @@ readonly class PathPrefixTenantResolver implements TenantResolverInterface
 
         $remainder = substr($path, strlen($this->config->pathPrefix));
 
-        /** @psalm-suppress DocblockTypeContradiction */
-        if ($remainder === '' || $remainder === false) { // @phpstan-ignore identical.alwaysFalse
+        if ($remainder === '') {
             return null;
         }
 

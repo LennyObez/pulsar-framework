@@ -51,6 +51,7 @@ final class CircuitBreaker
      * @return T
      *
      * @throws ResilienceException If the circuit is open.
+     * @throws Throwable If the operation throws.
      */
     public function execute(Closure $operation): mixed
     {

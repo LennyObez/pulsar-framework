@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Audit;
 
+use Pulsar\Security\Exception\SecurityException;
+
 /**
  * Contract for audit log persistence backends.
  *
@@ -15,7 +17,7 @@ interface AuditSinkInterface
     /**
      * Write an audit entry to the backing store.
      *
-     * @throws \Pulsar\Security\Exception\SecurityException If the write fails
+     * @throws SecurityException If the write fails
      */
     public function write(AuditEntry $entry): void;
 }

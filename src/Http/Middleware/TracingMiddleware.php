@@ -73,12 +73,10 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             $span->setStatus($this->resolveSpanStatus($response->status->value));
 
             // Add traceparent to response
-            $response = $response->withHeader(
+            return $response->withHeader(
                 'traceparent',
                 W3CTraceContextParser::serialize($context),
             );
-
-            return $response;
         } finally {
             $span->end();
             $this->collector->onEnd($span);
@@ -101,7 +99,6 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             return false;
         }
 
-        /** @var int $random */
         $random = random_int(0, 999);
 
         $threshold = (int) ($this->samplingRate * 1000.0);

@@ -16,12 +16,12 @@ use function in_array;
  * Supports boolean, percentage (deterministic hash-based), and contextual flags.
  * Records evaluations to the evaluation log for audit purposes.
  */
-final class FeatureFlagManager implements FeatureFlagManagerInterface
+final readonly class FeatureFlagManager implements FeatureFlagManagerInterface
 {
     public function __construct(
-        private readonly FlagStorageInterface $storage,
-        private readonly FlagEvaluationLog $log,
-        private readonly bool $defaultState = false,
+        private FlagStorageInterface $storage,
+        private FlagEvaluationLog $log,
+        private bool $defaultState = false,
     ) {}
 
     public function isEnabled(string $flagName, ?FlagContext $context = null): bool

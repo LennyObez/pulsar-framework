@@ -16,12 +16,12 @@ use function str_replace;
  *
  * Supports prefix-based table naming and separate connection switching.
  */
-final class TenantAwareConnectionManager implements ConnectionManagerInterface
+final readonly class TenantAwareConnectionManager implements ConnectionManagerInterface
 {
     public function __construct(
-        private readonly ConnectionManagerInterface $inner,
-        private readonly TenantContext $context,
-        private readonly TenancyConfig $config,
+        private ConnectionManagerInterface $inner,
+        private TenantContext $context,
+        private TenancyConfig $config,
     ) {}
 
     public function connection(?string $name = null): ConnectionInterface
