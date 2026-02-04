@@ -68,6 +68,10 @@ final class Container implements ContainerInterface
         return isset($this->bindings[$id]) || isset($this->instances[$id]);
     }
 
+    /**
+     * @throws NotFoundException
+     * @throws ContainerException
+     */
     #[Override]
     public function get(string $id): mixed
     {

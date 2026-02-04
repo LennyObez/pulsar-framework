@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
-use DateInvalidTimeZoneException;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -30,7 +29,6 @@ readonly class LogEntry
      *
      * @param array<string, mixed> $context
      *
-     * @throws DateInvalidTimeZoneException
      * @throws DateMalformedStringException
      */
     public static function create(

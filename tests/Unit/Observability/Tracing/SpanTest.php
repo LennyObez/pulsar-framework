@@ -29,7 +29,7 @@ final class SpanTest extends TestCase
     {
         $span = new Span('test', TraceContext::create());
 
-        self::assertSame(SpanStatus::Unset, $span->status());
+        self::assertSame(SpanStatus::Unset, $span->status);
         self::assertFalse($span->hasEnded());
         self::assertNull($span->endTime());
         self::assertNull($span->duration());
@@ -64,13 +64,13 @@ final class SpanTest extends TestCase
     public function setStatusChangesStatus(): void
     {
         $span = new Span('test', TraceContext::create());
-        $span->setStatus(SpanStatus::Ok);
+        $span->status = SpanStatus::Ok;
 
-        self::assertSame(SpanStatus::Ok, $span->status());
+        self::assertSame(SpanStatus::Ok, $span->status);
 
-        $span->setStatus(SpanStatus::Error);
+        $span->status = SpanStatus::Error;
 
-        self::assertSame(SpanStatus::Error, $span->status());
+        self::assertSame(SpanStatus::Error, $span->status);
     }
 
     #[Test]

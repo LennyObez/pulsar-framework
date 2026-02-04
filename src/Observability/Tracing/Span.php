@@ -19,7 +19,7 @@ final class Span
 
     /** @var array<string, scalar> */
     private array $attributes = [];
-    private SpanStatus $status = SpanStatus::Unset;
+    public SpanStatus $status = SpanStatus::Unset;
 
     public function __construct(
         public readonly string $name,
@@ -40,27 +40,11 @@ final class Span
     }
 
     /**
-     * Set the span status.
-     */
-    public function setStatus(SpanStatus $status): void
-    {
-        $this->status = $status;
-    }
-
-    /**
      * Set a span attribute.
      */
     public function setAttribute(string $key, string|int|float|bool $value): void
     {
         $this->attributes[$key] = $value;
-    }
-
-    /**
-     * Get the span status.
-     */
-    public function status(): SpanStatus
-    {
-        return $this->status;
     }
 
     /**

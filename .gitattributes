@@ -1,0 +1,18 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Ensure shell scripts use LF (required for bash/sh)
+*.sh text eol=lf
+scripts/* text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pdf binary

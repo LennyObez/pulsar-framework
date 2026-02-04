@@ -1,0 +1,63 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Resilience\HealthCheck;
+
+use DateTimeImmutable;
+
+/**
+ * Result of a single health check.
+ */
+readonly class HealthCheckResult
+{
+    public function __construct(
+        public string $name,
+        public HealthStatus $status,
+        public string $message,
+        public float $responseTimeMs,
+        public DateTimeImmutable $checkedAt,
+    ) {}
+
+    /**
+     * Create a healthy result.
+     */
+    public static function healthy(string $name, string $message = 'OK', float $responseTimeMs = 0.0): self
+    {
+        return new self(
+            name: $name,
+            status: HealthStatus::Healthy,
+            message: $message,
+            responseTimeMs: $responseTimeMs,
+            checkedAt: new DateTimeImmutable(),
+        );
+    }
+
+    /**
+     * Create a degraded result.
+     */
+    public static function degraded(string $name, string $message, float $responseTimeMs = 0.0): self
+    {
+        return new self(
+            name: $name,
+            status: HealthStatus::Degraded,
+            message: $message,
+            responseTimeMs: $responseTimeMs,
+            checkedAt: new DateTimeImmutable(),
+        );
+    }
+
+    /**
+     * Create an unhealthy result.
+     */
+    public static function unhealthy(string $name, string $message, float $responseTimeMs = 0.0): self
+    {
+        return new self(
+            name: $name,
+            status: HealthStatus::Unhealthy,
+            message: $message,
+            responseTimeMs: $responseTimeMs,
+            checkedAt: new DateTimeImmutable(),
+        );
+    }
+}

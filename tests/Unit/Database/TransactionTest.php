@@ -27,9 +27,9 @@ final class TransactionTest extends TestCase
     {
         $transaction = new Transaction($this->pdo, 0);
 
-        self::assertTrue($transaction->isActive());
-        self::assertFalse($transaction->isCommitted());
-        self::assertFalse($transaction->isRolledBack());
+        self::assertTrue($transaction->active);
+        self::assertFalse($transaction->committed);
+        self::assertFalse($transaction->rolledBack);
     }
 
     #[Test]
@@ -40,9 +40,9 @@ final class TransactionTest extends TestCase
 
         $transaction->commit();
 
-        self::assertFalse($transaction->isActive());
-        self::assertTrue($transaction->isCommitted());
-        self::assertFalse($transaction->isRolledBack());
+        self::assertFalse($transaction->active);
+        self::assertTrue($transaction->committed);
+        self::assertFalse($transaction->rolledBack);
     }
 
     #[Test]
@@ -53,9 +53,9 @@ final class TransactionTest extends TestCase
 
         $transaction->rollback();
 
-        self::assertFalse($transaction->isActive());
-        self::assertFalse($transaction->isCommitted());
-        self::assertTrue($transaction->isRolledBack());
+        self::assertFalse($transaction->active);
+        self::assertFalse($transaction->committed);
+        self::assertTrue($transaction->rolledBack);
     }
 
     #[Test]
@@ -133,7 +133,7 @@ final class TransactionTest extends TestCase
         // Commit (release savepoint) should not throw
         $transaction->commit();
 
-        self::assertTrue($transaction->isCommitted());
+        self::assertTrue($transaction->committed);
 
         // Clean up
         $this->pdo->rollBack();
@@ -152,7 +152,7 @@ final class TransactionTest extends TestCase
         // Rollback (rollback to savepoint) should not throw
         $transaction->rollback();
 
-        self::assertTrue($transaction->isRolledBack());
+        self::assertTrue($transaction->rolledBack);
 
         // Clean up
         $this->pdo->rollBack();

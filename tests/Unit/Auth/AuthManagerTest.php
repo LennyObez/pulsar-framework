@@ -56,7 +56,7 @@ final class AuthManagerTest extends TestCase
             attributes: [],
         );
 
-        $guard = $this->createMock(GuardInterface::class);
+        $guard = $this->createStub(GuardInterface::class);
         $guard->method('name')->willReturn('session');
         $guard->method('authenticate')->willReturn($expectedIdentity);
 
@@ -79,11 +79,11 @@ final class AuthManagerTest extends TestCase
             attributes: [],
         );
 
-        $firstGuard = $this->createMock(GuardInterface::class);
+        $firstGuard = $this->createStub(GuardInterface::class);
         $firstGuard->method('name')->willReturn('session');
         $firstGuard->method('authenticate')->willReturn(null);
 
-        $secondGuard = $this->createMock(GuardInterface::class);
+        $secondGuard = $this->createStub(GuardInterface::class);
         $secondGuard->method('name')->willReturn('token');
         $secondGuard->method('authenticate')->willReturn($expectedIdentity);
 
@@ -99,7 +99,7 @@ final class AuthManagerTest extends TestCase
     #[Test]
     public function guardReturnsRegisteredGuardByName(): void
     {
-        $guard = $this->createMock(GuardInterface::class);
+        $guard = $this->createStub(GuardInterface::class);
         $guard->method('name')->willReturn('session');
 
         $manager = new AuthManager();

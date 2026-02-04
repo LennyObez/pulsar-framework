@@ -7,9 +7,13 @@ namespace Pulsar\Security\Audit;
 use function bin2hex;
 
 use DateTimeImmutable;
+use JsonException;
 use Pulsar\Security\Crypto\Hmac;
+use Random\RandomException;
 
 use function random_bytes;
+
+use SodiumException;
 
 /**
  * Orchestrates tamper-evident audit logging with HMAC chain.
@@ -27,6 +31,9 @@ final class AuditLogger
 
     private string $previousHmac;
 
+    /**
+     * @throws SodiumException
+     */
     public function __construct(
         private readonly AuditSinkInterface $sink,
         private readonly string $auditKey,
@@ -41,6 +48,10 @@ final class AuditLogger
      * and advances the chain state.
      *
      * @param array<string, mixed> $metadata
+     *
+     * @throws RandomException
+     * @throws JsonException
+     * @throws SodiumException
      */
     public function log(
         AuditEvent $event,

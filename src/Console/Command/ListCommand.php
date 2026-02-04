@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use JsonException;
 use Pulsar\Console\Application;
 use Pulsar\Console\Command;
 use Pulsar\Console\CommandInterface;
@@ -26,11 +27,14 @@ final class ListCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('list')
-            ->setDescription('List all available commands')
-            ->addOption('format', 'Output format (text, json)', 'f', 'text');
+        $this->name = 'list';
+        $this->description = 'List all available commands';
+        $this->addOption('format', 'Output format (text, json)', 'f', 'text');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $format = $input->getOption('format', 'text');
@@ -65,8 +69,8 @@ final class ListCommand extends Command
             foreach ($namespaceCommands as $command) {
                 $output->writeln(sprintf(
                     '  %-24s %s',
-                    $command->getName(),
-                    $command->getDescription(),
+                    $command->name,
+                    $command->description,
                 ));
             }
             $output->newLine();
@@ -75,18 +79,21 @@ final class ListCommand extends Command
         return ExitCode::Success->value;
     }
 
+    /**
+     * @throws JsonException
+     */
     private function renderJson(OutputInterface $output): int
     {
         $commands = [];
 
         foreach ($this->application->all() as $command) {
-            $name = $command->getName();
+            $name = $command->name;
             $namespace = str_contains($name, ':') ? explode(':', $name)[0] : '';
 
             $commands[] = [
                 'name' => $name,
                 'namespace' => $namespace,
-                'description' => $command->getDescription(),
+                'description' => $command->description,
             ];
         }
 
@@ -103,7 +110,7 @@ final class ListCommand extends Command
         $grouped = ['' => []];
 
         foreach ($commands as $command) {
-            $name = $command->getName();
+            $name = $command->name;
             $namespace = str_contains($name, ':') ? explode(':', $name)[0] : '';
 
             $grouped[$namespace] ??= [];
@@ -112,7 +119,7 @@ final class ListCommand extends Command
 
         // Sort commands within each namespace
         foreach ($grouped as &$cmds) {
-            usort($cmds, fn($a, $b) => strcmp($a->getName(), $b->getName()));
+            usort($cmds, fn(CommandInterface $a, CommandInterface $b) => strcmp($a->name, $b->name));
         }
 
         return $grouped;

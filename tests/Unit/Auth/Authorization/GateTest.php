@@ -97,7 +97,7 @@ final class GateTest extends TestCase
         );
         $this->registry->register($role);
 
-        $denyPolicy = $this->createMock(PolicyInterface::class);
+        $denyPolicy = $this->createStub(PolicyInterface::class);
         $denyPolicy->method('evaluate')
             ->willReturn(false);
 
@@ -114,7 +114,7 @@ final class GateTest extends TestCase
     public function abacPolicyExplicitAllowCanGrantWithoutRbac(): void
     {
         // No roles registered, so RBAC has no permissions
-        $allowPolicy = $this->createMock(PolicyInterface::class);
+        $allowPolicy = $this->createStub(PolicyInterface::class);
         $allowPolicy->method('evaluate')
             ->willReturn(true);
 
@@ -136,7 +136,7 @@ final class GateTest extends TestCase
         );
         $this->registry->register($role);
 
-        $abstainPolicy = $this->createMock(PolicyInterface::class);
+        $abstainPolicy = $this->createStub(PolicyInterface::class);
         $abstainPolicy->method('evaluate')
             ->willReturn(null);
 

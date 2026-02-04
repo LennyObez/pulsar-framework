@@ -50,14 +50,14 @@ final class ExtensionLifecycleTest extends TestCase
         self::assertInstanceOf(TestableService::class, $service);
 
         // Assert: Route is registered
-        $routes = $kernel->router()->getRoutes();
+        $routes = $kernel->router()->routes;
         self::assertNotEmpty($routes);
         self::assertSame('/test', $routes[0]->path);
 
         // Assert: Extension is in booted state
         self::assertSame(
             ExtensionLifecycle::Booted,
-            $bootstrap->registry()->getState('test/extension'),
+            $bootstrap->registry->getState('test/extension'),
         );
     }
 
@@ -135,7 +135,7 @@ final class ExtensionLifecycleTest extends TestCase
         $kernel = new Kernel();
         $kernel->boot();
 
-        self::assertTrue($kernel->isBooted());
+        self::assertTrue($kernel->booted);
         self::assertNull($kernel->extensionBootstrap());
     }
 

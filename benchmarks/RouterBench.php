@@ -6,6 +6,7 @@ namespace Pulsar\Benchmarks;
 
 use Pulsar\Http\Method;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\RoutingException;
 
 /**
  * Benchmarks for the HTTP router.
@@ -56,6 +57,8 @@ final class RouterBench
      * Best case - route found immediately.
      *
      * @Subject
+     *
+     * @throws RoutingException
      */
     public function benchSmallRouterFirstRoute(): void
     {
@@ -68,6 +71,8 @@ final class RouterBench
      * Worst case for small router.
      *
      * @Subject
+     *
+     * @throws RoutingException
      */
     public function benchSmallRouterLastRoute(): void
     {
@@ -80,6 +85,8 @@ final class RouterBench
      * Average case for medium router.
      *
      * @Subject
+     *
+     * @throws RoutingException
      */
     public function benchMediumRouterMiddleRoute(): void
     {
@@ -92,6 +99,8 @@ final class RouterBench
      * Worst case for large router.
      *
      * @Subject
+     *
+     * @throws RoutingException
      */
     public function benchLargeRouterLastRoute(): void
     {
@@ -104,6 +113,8 @@ final class RouterBench
      * Tests regex-based parameter extraction.
      *
      * @Subject
+     *
+     * @throws RoutingException
      */
     public function benchParameterizedRouteMatch(): void
     {

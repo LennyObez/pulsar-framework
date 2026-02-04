@@ -18,12 +18,12 @@ use Throwable;
  */
 final class ExtensionBootstrap
 {
-    private bool $registered = false;
-    private bool $booted = false;
+    public private(set) bool $registered = false;
+    public private(set) bool $booted = false;
 
     public function __construct(
-        private readonly ExtensionRegistry $registry,
-        private readonly ExtensionLoader $loader,
+        public readonly ExtensionRegistry $registry,
+        public readonly ExtensionLoader $loader,
     ) {}
 
     /**
@@ -32,22 +32,6 @@ final class ExtensionBootstrap
     public static function create(): self
     {
         return new self(new ExtensionRegistry(), new ExtensionLoader());
-    }
-
-    /**
-     * Get the extension registry.
-     */
-    public function registry(): ExtensionRegistry
-    {
-        return $this->registry;
-    }
-
-    /**
-     * Get the extension loader.
-     */
-    public function loader(): ExtensionLoader
-    {
-        return $this->loader;
     }
 
     /**
@@ -154,22 +138,6 @@ final class ExtensionBootstrap
         }
 
         $this->booted = true;
-    }
-
-    /**
-     * Check if extensions have been registered.
-     */
-    public function isRegistered(): bool
-    {
-        return $this->registered;
-    }
-
-    /**
-     * Check if extensions have been booted.
-     */
-    public function isBooted(): bool
-    {
-        return $this->booted;
     }
 
     /**

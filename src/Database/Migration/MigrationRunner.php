@@ -11,6 +11,7 @@ use function array_values;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Exception\DatabaseException;
+use Pulsar\Database\Row;
 
 use function sprintf;
 
@@ -25,12 +26,12 @@ use function usort;
  * assigns one batch number; `rollbackLastBatch()` rolls back all
  * migrations in the highest batch in reverse version order.
  */
-final class MigrationRunner
+final readonly class MigrationRunner
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly MigrationRepository $repository,
-        private readonly string $tableName,
+        private ConnectionInterface $connection,
+        private MigrationRepository $repository,
+        private string $tableName,
     ) {}
 
     /**
@@ -125,30 +126,7 @@ final class MigrationRunner
         // Sort in reverse version order
         usort($toRollback, static fn(MigrationRecord $a, MigrationRecord $b): int => $b->version <=> $a->version);
 
-        $rolledBack = [];
-        $allFiles = $this->repository->discover();
-
-        foreach ($toRollback as $record) {
-            if (!isset($allFiles[$record->version])) {
-                throw DatabaseException::migrationNotFound($record->version);
-            }
-
-            $file = $allFiles[$record->version];
-            $migration = $this->repository->load($file->path);
-
-            try {
-                $this->connection->transaction(function (ConnectionInterface $conn) use ($migration): void {
-                    $migration->down($conn);
-                });
-            } catch (Throwable $e) {
-                throw DatabaseException::migrationFailed($record->version, 'down', $e);
-            }
-
-            $this->removeMigrationRecord($record->version);
-            $rolledBack[] = $record->version;
-        }
-
-        return $rolledBack;
+        return $this->rollbackRecords($toRollback);
     }
 
     /**
@@ -170,30 +148,7 @@ final class MigrationRunner
         $sorted = $applied;
         usort($sorted, static fn(MigrationRecord $a, MigrationRecord $b): int => $b->version <=> $a->version);
 
-        $rolledBack = [];
-        $allFiles = $this->repository->discover();
-
-        foreach ($sorted as $record) {
-            if (!isset($allFiles[$record->version])) {
-                throw DatabaseException::migrationNotFound($record->version);
-            }
-
-            $file = $allFiles[$record->version];
-            $migration = $this->repository->load($file->path);
-
-            try {
-                $this->connection->transaction(function (ConnectionInterface $conn) use ($migration): void {
-                    $migration->down($conn);
-                });
-            } catch (Throwable $e) {
-                throw DatabaseException::migrationFailed($record->version, 'down', $e);
-            }
-
-            $this->removeMigrationRecord($record->version);
-            $rolledBack[] = $record->version;
-        }
-
-        return $rolledBack;
+        return $this->rollbackRecords($sorted);
     }
 
     /**
@@ -207,7 +162,7 @@ final class MigrationRunner
             sprintf('SELECT * FROM %s ORDER BY version ASC', $this->tableName),
         );
 
-        return $result->map(static fn(\Pulsar\Database\Row $row): MigrationRecord => MigrationRecord::fromArray($row->toArray()));
+        return $result->map(static fn(Row $row): MigrationRecord => MigrationRecord::fromArray($row->toArray()));
     }
 
     /**
@@ -269,10 +224,22 @@ final class MigrationRunner
         $batchRecords = array_values($batchRecords);
         usort($batchRecords, static fn(MigrationRecord $a, MigrationRecord $b): int => $b->version <=> $a->version);
 
+        return $this->rollbackRecords($batchRecords);
+    }
+
+    /**
+     * Execute rollback for the given migration records.
+     *
+     * @param list<MigrationRecord> $records Records to roll back (must be pre-sorted)
+     * @return list<string> List of rolled-back version strings
+     * @throws DatabaseException
+     */
+    private function rollbackRecords(array $records): array
+    {
         $rolledBack = [];
         $allFiles = $this->repository->discover();
 
-        foreach ($batchRecords as $record) {
+        foreach ($records as $record) {
             if (!isset($allFiles[$record->version])) {
                 throw DatabaseException::migrationNotFound($record->version);
             }

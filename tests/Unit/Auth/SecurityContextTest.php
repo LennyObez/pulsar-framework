@@ -98,7 +98,7 @@ final class SecurityContextTest extends TestCase
             attributes: [],
         );
 
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($identity);
 
         $context = new SecurityContext($authManager, $this->request);
@@ -109,7 +109,7 @@ final class SecurityContextTest extends TestCase
     #[Test]
     public function isAuthenticatedReturnsFalseForAnonymousIdentity(): void
     {
-        $authManager = $this->createMock(AuthManagerInterface::class);
+        $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn(new AnonymousIdentity());
 
         $context = new SecurityContext($authManager, $this->request);

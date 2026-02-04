@@ -11,8 +11,16 @@ declare(strict_types=1);
  *   php -S localhost:8080 -t examples/hello-world/public
  */
 
-// Autoload
-require __DIR__ . '/../../../vendor/autoload.php';
+// Autoload from project root (three levels up from public/)
+$projectRoot = dirname(__DIR__, 3);
+$autoloadPath = $projectRoot . '/vendor/autoload.php';
+
+if (!file_exists($autoloadPath)) {
+    fwrite(STDERR, "Composer autoloader not found. Run 'composer install' from the project root.\n");
+    exit(1);
+}
+
+require $autoloadPath;
 
 // Also autoload the example app's classes
 spl_autoload_register(static function (string $class): void {
@@ -42,4 +50,10 @@ $registerRoutes = require __DIR__ . '/../routes.php';
 $registerRoutes($kernel->router());
 
 // Handle request
-$kernel->run();
+try {
+    $kernel->run();
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo 'Internal Server Error';
+    error_log((string) $e);
+}

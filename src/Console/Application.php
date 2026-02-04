@@ -33,7 +33,7 @@ final class Application
      */
     public function add(CommandInterface $command): self
     {
-        $this->commands[$command->getName()] = $command;
+        $this->commands[$command->name] = $command;
         return $this;
     }
 
@@ -110,7 +110,7 @@ final class Application
             return ExitCode::Success->value;
         }
 
-        $commandName = $input->getCommandName();
+        $commandName = $input->commandName;
 
         // Handle --help or no command
         if ($commandName === null || $input->hasOption('help') || $input->hasOption('h')) {
@@ -145,13 +145,13 @@ final class Application
     private function configureVerbosity(InputInterface $input, OutputInterface $output): void
     {
         if ($input->hasOption('quiet') || $input->hasOption('q')) {
-            $output->setVerbosity(Verbosity::Quiet);
+            $output->verbosity = Verbosity::Quiet;
         } elseif ($input->hasOption('vvv')) {
-            $output->setVerbosity(Verbosity::Debug);
+            $output->verbosity = Verbosity::Debug;
         } elseif ($input->hasOption('vv')) {
-            $output->setVerbosity(Verbosity::Verbose);
+            $output->verbosity = Verbosity::Verbose;
         } elseif ($input->hasOption('v') || $input->hasOption('verbose')) {
-            $output->setVerbosity(Verbosity::Verbose);
+            $output->verbosity = Verbosity::Verbose;
         }
     }
 
@@ -196,8 +196,8 @@ final class Application
                 foreach ($commands as $command) {
                     $output->writeln(sprintf(
                         '  %-20s %s',
-                        $command->getName(),
-                        $command->getDescription(),
+                        $command->name,
+                        $command->description,
                     ));
                 }
             }
@@ -210,19 +210,19 @@ final class Application
     private function renderCommandHelp(CommandInterface $command, OutputInterface $output): void
     {
         $output->writeln('Description:');
-        $output->writeln('  ' . $command->getDescription());
+        $output->writeln('  ' . $command->description);
         $output->newLine();
 
         $output->writeln('Usage:');
         if ($command instanceof Command) {
             $output->writeln('  ' . $command->getUsage());
         } else {
-            $output->writeln('  ' . $command->getName());
+            $output->writeln('  ' . $command->name);
         }
         $output->newLine();
 
         if ($command instanceof Command) {
-            $arguments = $command->getArguments();
+            $arguments = $command->arguments;
             if ($arguments !== []) {
                 $output->writeln('Arguments:');
                 foreach ($arguments as $arg) {
@@ -232,7 +232,7 @@ final class Application
                 $output->newLine();
             }
 
-            $options = $command->getOptions();
+            $options = $command->options;
             if ($options !== []) {
                 $output->writeln('Options:');
                 foreach ($options as $name => $config) {
@@ -254,7 +254,7 @@ final class Application
         $grouped = ['' => []];
 
         foreach ($this->commands as $command) {
-            $name = $command->getName();
+            $name = $command->name;
             $namespace = str_contains($name, ':') ? explode(':', $name)[0] : '';
 
             $grouped[$namespace] ??= [];
@@ -263,7 +263,7 @@ final class Application
 
         // Sort commands within each namespace
         foreach ($grouped as &$commands) {
-            usort($commands, fn($a, $b) => strcmp($a->getName(), $b->getName()));
+            usort($commands, fn(CommandInterface $a, CommandInterface $b) => strcmp($a->name, $b->name));
         }
 
         return $grouped;
