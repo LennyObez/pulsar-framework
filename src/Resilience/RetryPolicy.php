@@ -10,6 +10,7 @@ use function min;
 
 use Psr\Log\LoggerInterface;
 use Pulsar\Config\RetryConfig;
+use Random\RandomException;
 
 use function sprintf;
 
@@ -106,6 +107,8 @@ readonly class RetryPolicy
      * When jitter is enabled, a random factor between 0.5 and 1.5 is applied.
      *
      * @param int $attempt The current attempt number (1-based)
+     *
+     * @throws RandomException
      */
     public function calculateDelay(int $attempt): int
     {

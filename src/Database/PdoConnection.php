@@ -134,7 +134,7 @@ final class PdoConnection implements ConnectionInterface
 
             return $result;
         } catch (Throwable $e) {
-            if ($transaction->isActive()) {
+            if ($transaction->active) {
                 $transaction->rollback();
             }
             $this->transactionDepth--;

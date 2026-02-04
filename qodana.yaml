@@ -18,8 +18,6 @@ exclude:
   # ESLint - not relevant, project uses its own ESLint setup via pnpm
   - name: Eslint
   - name: EsLintInspection
-  # Property hooks - intentional design; classic accessors used for PHP 8.0-8.4 compatibility
-  - name: PhpAccessorCanBeReplacedWithPropertyHookInspection
   # Composer packages - dependencies managed externally, not always installed in CI scan
   - name: PhpNoninstalledComposerPackagesInspection
   # Unnecessary stop statements - intentional explicit returns/breaks for clarity

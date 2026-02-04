@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Core;
 
+use Error;
+
 use function is_array;
 use function is_callable;
 use function is_string;
@@ -133,7 +135,7 @@ use Throwable;
  */
 final class Kernel
 {
-    private bool $booted = false;
+    public private(set) bool $booted = false;
     private ContainerInterface $container;
     private Router $router;
     private MiddlewarePipeline $middleware;
@@ -237,14 +239,6 @@ final class Kernel
     public function configManager(): ?ConfigManager
     {
         return $this->configManager;
-    }
-
-    /**
-     * Check if the kernel has been booted.
-     */
-    public function isBooted(): bool
-    {
-        return $this->booted;
     }
 
     /**
@@ -409,6 +403,7 @@ final class Kernel
      *
      * @throws NotFoundExceptionInterface
      * @throws ContainerExceptionInterface
+     * @throws Error If the class cannot be instantiated
      */
     private function resolveController(string $class): object
     {

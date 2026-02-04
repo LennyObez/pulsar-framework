@@ -27,8 +27,8 @@ final class RepairCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('health:repair')
-            ->setDescription('Run self-healing repair jobs');
+        $this->name = 'health:repair';
+        $this->description = 'Run self-healing repair jobs';
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

@@ -33,7 +33,7 @@ final class TracingMiddlewareTest extends TestCase
 
         $span = $collector->spans()[0];
         self::assertSame('HTTP GET /test', $span->name);
-        self::assertSame(SpanStatus::Ok, $span->status());
+        self::assertSame(SpanStatus::Ok, $span->status);
         self::assertTrue($span->hasEnded());
     }
 
@@ -85,7 +85,7 @@ final class TracingMiddlewareTest extends TestCase
         );
 
         $span = $collector->spans()[0];
-        self::assertSame(SpanStatus::Error, $span->status());
+        self::assertSame(SpanStatus::Error, $span->status);
         self::assertSame(500, $span->attributes()['http.status_code']);
     }
 

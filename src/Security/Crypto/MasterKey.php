@@ -68,6 +68,7 @@ final class MasterKey
      * Load master key from the PULSAR_MASTER_KEY environment variable.
      *
      * @throws SecurityException If the variable is missing or invalid
+     * @throws SodiumException
      */
     public static function fromEnvironment(?string $envValue = null): self
     {

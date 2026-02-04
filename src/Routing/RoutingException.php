@@ -14,10 +14,8 @@ use function sprintf;
  */
 final class RoutingException extends Exception
 {
-    /**
-     * @var list<Method>
-     */
-    private array $allowedMethods = [];
+    /** @var list<Method> */
+    public private(set) array $allowedMethods = [];
 
     /**
      * Create a "not found" exception.
@@ -53,16 +51,6 @@ final class RoutingException extends Exception
         $exception->allowedMethods = $allowedMethods;
 
         return $exception;
-    }
-
-    /**
-     * Get allowed methods (for 405 responses).
-     *
-     * @return list<Method>
-     */
-    public function getAllowedMethods(): array
-    {
-        return $this->allowedMethods;
     }
 
     /**

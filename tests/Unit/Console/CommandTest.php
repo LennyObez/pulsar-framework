@@ -20,8 +20,8 @@ final class CommandTest extends TestCase
     {
         $command = new TestCommand();
 
-        self::assertSame('test:command', $command->getName());
-        self::assertSame('A test command', $command->getDescription());
+        self::assertSame('test:command', $command->name);
+        self::assertSame('A test command', $command->description);
     }
 
     #[Test]
@@ -67,12 +67,12 @@ class TestCommand extends Command
 {
     protected function configure(): void
     {
-        $this->setName('test:command')
-            ->setDescription('A test command')
-            ->addArgument('name', 'The name argument', true)
-            ->addArgument('option', 'An optional argument', false)
-            ->addOption('verbose', 'Verbose output', 'v')
-            ->addOption('format', 'Output format', 'f', 'text');
+        $this->name = 'test:command';
+        $this->description = 'A test command';
+        $this->addArgument('name', 'The name argument', true);
+        $this->addArgument('option', 'An optional argument', false);
+        $this->addOption('verbose', 'Verbose output', 'v');
+        $this->addOption('format', 'Output format', 'f', 'text');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

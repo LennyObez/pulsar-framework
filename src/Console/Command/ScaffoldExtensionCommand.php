@@ -22,11 +22,11 @@ final class ScaffoldExtensionCommand extends Command
     use ScaffoldTrait;
     protected function configure(): void
     {
-        $this->setName('scaffold:extension')
-            ->setDescription('Generate a new extension structure')
-            ->addArgument('name', 'Extension name (e.g., my-extension)', true)
-            ->addOption('vendor', 'Vendor name', null, 'acme')
-            ->addOption('path', 'Base path for extensions', 'p', 'extensions');
+        $this->name = 'scaffold:extension';
+        $this->description = 'Generate a new extension structure';
+        $this->addArgument('name', 'Extension name (e.g., my-extension)', true);
+        $this->addOption('vendor', 'Vendor name', null, 'acme');
+        $this->addOption('path', 'Base path for extensions', 'p', 'extensions');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

@@ -13,8 +13,8 @@ use function sprintf;
  */
 abstract class Command implements CommandInterface
 {
-    protected string $name = '';
-    protected string $description = '';
+    public protected(set) string $name = '';
+    public protected(set) string $description = '';
 
     /** @var list<array{name: string, description: string, required: bool}> */
     protected array $arguments = [];
@@ -33,24 +33,6 @@ abstract class Command implements CommandInterface
     protected function configure(): void
     {
         // Override in subclasses
-    }
-
-    /**
-     * Set the command name.
-     */
-    protected function setName(string $name): self
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-    /**
-     * Set the command description.
-     */
-    protected function setDescription(string $description): self
-    {
-        $this->description = $description;
-        return $this;
     }
 
     /**
@@ -81,16 +63,6 @@ abstract class Command implements CommandInterface
             'default' => $default,
         ];
         return $this;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function getDescription(): string
-    {
-        return $this->description;
     }
 
     /**

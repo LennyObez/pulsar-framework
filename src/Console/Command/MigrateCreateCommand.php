@@ -33,9 +33,9 @@ final class MigrateCreateCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('migrate:create')
-            ->setDescription('Create a new migration file')
-            ->addArgument('name', 'Migration name (e.g., create_users_table)', true);
+        $this->name = 'migrate:create';
+        $this->description = 'Create a new migration file';
+        $this->addArgument('name', 'Migration name (e.g., create_users_table)', true);
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

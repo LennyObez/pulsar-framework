@@ -40,5 +40,13 @@
 
         <!-- File operations can return false -->
         <RiskyTruthyFalsyComparison errorLevel="suppress"/>
+
+        <!-- Psalm 6.15 does not yet recognize PHP 8.4 virtual property hooks
+             (get-only computed properties with no backing store) -->
+        <PropertyNotSetInConstructor>
+            <errorLevel type="suppress">
+                <file name="../../src/Console/Input/ArrayInput.php"/>
+            </errorLevel>
+        </PropertyNotSetInConstructor>
     </issueHandlers>
 </psalm>

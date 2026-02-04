@@ -9,7 +9,6 @@ use function array_filter;
 use const ARRAY_FILTER_USE_KEY;
 
 use function in_array;
-use function is_string;
 
 use Pulsar\Http\Method;
 

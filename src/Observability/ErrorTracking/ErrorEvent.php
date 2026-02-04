@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\ErrorTracking;
 
-use DateInvalidTimeZoneException;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
@@ -37,7 +36,6 @@ final readonly class ErrorEvent
      *
      * @param array<string, mixed> $context
      *
-     * @throws DateInvalidTimeZoneException
      * @throws DateMalformedStringException
      */
     public static function fromThrowable(

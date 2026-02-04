@@ -189,7 +189,7 @@ final readonly class DiagnosticsRenderer
         $duration = $span->durationSeconds();
         $durationStr = $duration !== null ? sprintf('%.4fs', $duration) : 'running';
 
-        $statusBadge = match ($span->status()) {
+        $statusBadge = match ($span->status) {
             SpanStatus::Ok => '<span class="badge badge-ok">ok</span>',
             SpanStatus::Error => '<span class="badge badge-error">error</span>',
             default => '<span class="badge">unset</span>',

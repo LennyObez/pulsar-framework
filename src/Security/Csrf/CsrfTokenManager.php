@@ -10,6 +10,7 @@ use function is_string;
 
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Security\Session\SessionInterface;
+use Random\RandomException;
 
 use function random_bytes;
 
@@ -37,7 +38,7 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      *
      * @return string The generated token (hex-encoded)
      *
-     * @throws \Random\RandomException
+     * @throws RandomException
      */
     public function generate(): string
     {
@@ -50,7 +51,7 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
     /**
      * Get the current CSRF token, generating one if none exists.
      *
-     * @throws \Random\RandomException
+     * @throws RandomException
      */
     public function getToken(): string
     {
@@ -84,7 +85,7 @@ final class CsrfTokenManager implements CsrfTokenManagerInterface
      *
      * Call after successful form submission to prevent replay.
      *
-     * @throws \Random\RandomException
+     * @throws RandomException
      */
     public function rotate(): string
     {

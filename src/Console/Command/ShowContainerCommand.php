@@ -33,9 +33,9 @@ final class ShowContainerCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('show:container')
-            ->setDescription('Display container bindings')
-            ->addOption('filter', 'Filter by binding ID', 'f');
+        $this->name = 'show:container';
+        $this->description = 'Display container bindings';
+        $this->addOption('filter', 'Filter by binding ID', 'f');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

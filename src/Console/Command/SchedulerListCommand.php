@@ -25,8 +25,8 @@ final class SchedulerListCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('scheduler:list')
-            ->setDescription('List all registered scheduled jobs');
+        $this->name = 'scheduler:list';
+        $this->description = 'List all registered scheduled jobs';
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

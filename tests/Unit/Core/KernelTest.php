@@ -19,7 +19,7 @@ final class KernelTest extends TestCase
     {
         $kernel = new Kernel();
 
-        self::assertFalse($kernel->isBooted());
+        self::assertFalse($kernel->booted);
     }
 
     #[Test]
@@ -28,7 +28,7 @@ final class KernelTest extends TestCase
         $kernel = new Kernel();
         $kernel->boot();
 
-        self::assertTrue($kernel->isBooted());
+        self::assertTrue($kernel->booted);
     }
 
     #[Test]
@@ -38,7 +38,7 @@ final class KernelTest extends TestCase
         $kernel->boot();
         $kernel->boot();
 
-        self::assertTrue($kernel->isBooted());
+        self::assertTrue($kernel->booted);
     }
 
     #[Test]
@@ -48,7 +48,7 @@ final class KernelTest extends TestCase
         $kernel->boot();
         $kernel->shutdown();
 
-        self::assertFalse($kernel->isBooted());
+        self::assertFalse($kernel->booted);
     }
 
     #[Test]

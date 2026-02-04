@@ -9,6 +9,7 @@ use function bin2hex;
 use DateTimeImmutable;
 use JsonException;
 use Pulsar\Security\Crypto\Hmac;
+use Random\RandomException;
 
 use function random_bytes;
 
@@ -43,7 +44,7 @@ final class AuditLogger
      *
      * @param array<string, mixed> $metadata
      *
-     * @throws \Random\RandomException
+     * @throws RandomException
      * @throws JsonException
      */
     public function log(

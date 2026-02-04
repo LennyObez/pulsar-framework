@@ -21,10 +21,10 @@ final class ScaffoldModuleCommand extends Command
     use ScaffoldTrait;
     protected function configure(): void
     {
-        $this->setName('scaffold:module')
-            ->setDescription('Generate a new module structure')
-            ->addArgument('name', 'Module name (e.g., User, Blog, Admin)', true)
-            ->addOption('path', 'Base path for modules', 'p', 'app/Modules');
+        $this->name = 'scaffold:module';
+        $this->description = 'Generate a new module structure';
+        $this->addArgument('name', 'Module name (e.g., User, Blog, Admin)', true);
+        $this->addOption('path', 'Base path for modules', 'p', 'app/Modules');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

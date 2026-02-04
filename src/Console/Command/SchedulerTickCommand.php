@@ -25,8 +25,8 @@ final class SchedulerTickCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('scheduler:tick')
-            ->setDescription('Run all due scheduled jobs');
+        $this->name = 'scheduler:tick';
+        $this->description = 'Run all due scheduled jobs';
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

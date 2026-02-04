@@ -26,8 +26,8 @@ final class HealthCheckCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('health:check')
-            ->setDescription('Run all registered health checks');
+        $this->name = 'health:check';
+        $this->description = 'Run all registered health checks';
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

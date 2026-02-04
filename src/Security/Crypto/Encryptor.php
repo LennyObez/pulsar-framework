@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Security\Crypto;
 
 use Pulsar\Security\Exception\SecurityException;
+use Random\RandomException;
 
 use function sodium_crypto_secretbox;
 use function sodium_crypto_secretbox_open;
@@ -49,7 +50,7 @@ final class Encryptor
      * Output format: base64(nonce || ciphertext_with_mac)
      *
      * @throws SecurityException If encryption fails
-     * @throws \Random\RandomException
+     * @throws RandomException
      * @throws SodiumException
      */
     public function encrypt(string $plaintext): string

@@ -33,17 +33,17 @@ final class ShowRoutesCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('show:routes')
-            ->setDescription('Display all registered routes')
-            ->addOption('method', 'Filter by HTTP method', 'm')
-            ->addOption('path', 'Filter by path pattern', 'p');
+        $this->name = 'show:routes';
+        $this->description = 'Display all registered routes';
+        $this->addOption('method', 'Filter by HTTP method', 'm');
+        $this->addOption('path', 'Filter by path pattern', 'p');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->kernel->boot();
 
-        $routes = $this->kernel->router()->getRoutes();
+        $routes = $this->kernel->router()->routes;
 
         if ($routes === []) {
             $output->writeln('No routes registered.');

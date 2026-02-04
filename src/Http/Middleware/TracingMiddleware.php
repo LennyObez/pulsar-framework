@@ -70,7 +70,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             $response = $next($request);
 
             $span->setAttribute('http.status_code', $response->status->value);
-            $span->setStatus($this->resolveSpanStatus($response->status->value));
+            $span->status = $this->resolveSpanStatus($response->status->value);
 
             // Add traceparent to response
             return $response->withHeader(

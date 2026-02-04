@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Auth\TwoFactor;
 
 use function bin2hex;
+
+use Random\RandomException;
+
 use function random_bytes;
 use function sprintf;
 use function strtoupper;
@@ -21,7 +24,7 @@ final readonly class RecoveryCodeGenerator
      * @param int $count Number of codes to generate
      * @return list<string> Recovery codes in XXXX-XXXX format
      *
-     * @throws \Random\RandomException
+     * @throws RandomException
      */
     public function generate(int $count = 8): array
     {

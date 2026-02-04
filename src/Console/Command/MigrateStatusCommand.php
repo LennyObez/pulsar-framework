@@ -30,8 +30,8 @@ final class MigrateStatusCommand extends Command
 
     protected function configure(): void
     {
-        $this->setName('migrate:status')
-            ->setDescription('Show the status of each migration');
+        $this->name = 'migrate:status';
+        $this->description = 'Show the status of each migration';
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
