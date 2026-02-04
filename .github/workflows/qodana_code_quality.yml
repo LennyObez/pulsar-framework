@@ -4,6 +4,10 @@ on:
   pull_request:
   push:
 
+concurrency:
+  group: qodana-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   qodana:
     runs-on: ubuntu-latest
