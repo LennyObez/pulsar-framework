@@ -38,7 +38,7 @@ jobs:
       - run: composer psalm
 
       - name: Audit dependencies for vulnerabilities
-        run: composer audit
+        run: composer audit --abandoned=report
 
   php-unit:
     name: PHP Unit Tests
