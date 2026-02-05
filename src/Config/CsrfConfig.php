@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_int;
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -29,9 +32,12 @@ readonly class CsrfConfig
     public static function fromArray(array $data): self
     {
         $enabled = (bool) ($data['enabled'] ?? true);
-        $tokenLength = (int) ($data['token_length'] ?? 32); // @phpstan-ignore cast.int
-        $headerName = (string) ($data['header_name'] ?? 'X-CSRF-Token'); // @phpstan-ignore cast.string
-        $formFieldName = (string) ($data['form_field_name'] ?? '_csrf_token'); // @phpstan-ignore cast.string
+        $rawTokenLength = $data['token_length'] ?? 32;
+        $tokenLength = is_int($rawTokenLength) ? $rawTokenLength : (int) (is_numeric($rawTokenLength) ? $rawTokenLength : 32);
+        $rawHeaderName = $data['header_name'] ?? 'X-CSRF-Token';
+        $headerName = is_string($rawHeaderName) ? $rawHeaderName : 'X-CSRF-Token';
+        $rawFormFieldName = $data['form_field_name'] ?? '_csrf_token';
+        $formFieldName = is_string($rawFormFieldName) ? $rawFormFieldName : '_csrf_token';
 
         return new self(
             enabled: $enabled,

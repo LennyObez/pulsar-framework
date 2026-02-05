@@ -55,7 +55,7 @@ abstract class Command implements CommandInterface
         string $name,
         string $description = '',
         ?string $shortcut = null,
-        mixed $default = null,
+        ?string $default = null,
     ): self {
         $this->options[$name] = [
             'description' => $description,

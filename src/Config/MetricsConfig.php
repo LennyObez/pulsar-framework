@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -35,7 +37,7 @@ readonly class MetricsConfig
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
             exporterEnabled: (bool) ($exporter['enabled'] ?? false),
-            exporterEndpoint: (string) ($exporter['endpoint'] ?? '/metrics'), // @phpstan-ignore cast.string
+            exporterEndpoint: is_string($exporter['endpoint'] ?? null) ? $exporter['endpoint'] : '/metrics',
         );
     }
 }

@@ -54,14 +54,12 @@ enum LogLevel: string
     /**
      * Create a LogLevel from a PSR-3 level string or value.
      */
-    public static function fromPsrLevel(mixed $level): self
+    public static function fromPsrLevel(self|string $level): self
     {
         if ($level instanceof self) {
             return $level;
         }
 
-        $levelString = (string) $level; // @phpstan-ignore cast.string
-
-        return self::tryFrom($levelString) ?? self::Debug;
+        return self::tryFrom($level) ?? self::Debug;
     }
 }
