@@ -29,8 +29,6 @@ use Pulsar\Config\StudioConfig;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Http\ResponseStatus;
 use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Studio\Console\Aggregation\TimelineBuilder;
 use Pulsar\Studio\Console\Storage\SqliteEventStore;

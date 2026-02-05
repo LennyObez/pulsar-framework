@@ -113,8 +113,6 @@ final class InstrumentedScheduler implements CollectorInterface
             $this->emitJobEvent($result, $jobContext);
 
             return $result;
-        } catch (Throwable $e) {
-            throw $e;
         } finally {
             $scope->close();
         }

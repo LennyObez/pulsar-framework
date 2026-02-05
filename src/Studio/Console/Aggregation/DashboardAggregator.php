@@ -36,7 +36,7 @@ use function usort;
  * types that have recorded events.
  */
 #[Internal]
-final class DashboardAggregator
+final readonly class DashboardAggregator
 {
     private readonly PDO $pdo;
 

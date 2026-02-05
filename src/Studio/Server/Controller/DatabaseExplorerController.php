@@ -21,13 +21,13 @@ use Pulsar\Studio\Console\Storage\EventStoreInterface;
  * Handles GET /studio/console/database — database query explorer.
  */
 #[Internal]
-final class DatabaseExplorerController
+final readonly class DatabaseExplorerController
 {
     public function __construct(
         private readonly EventStoreInterface $store,
     ) {}
 
-    public function handle(Request $request): Response
+    public function handle(Request $_request): Response
     {
         $events = $this->store->query(
             ['event_type' => ['db.query']],
@@ -53,7 +53,7 @@ final class DatabaseExplorerController
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
-                <div id="app" data-page="database-explorer" data-payload="{$safePayload}"></div>
+                <div id="app" data-page="database-explorer" data-payload="$safePayload"></div>
                 <script type="module" src="/studio/assets/main.js"></script>
             </body>
             </html>

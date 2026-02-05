@@ -29,7 +29,7 @@ use function usleep;
  * JSON API and SSE live endpoint for Studio.
  */
 #[Internal]
-final class ApiController
+final readonly class ApiController
 {
     public function __construct(
         private readonly EventStoreInterface $store,
@@ -62,10 +62,8 @@ final class ApiController
             $filters['since_id'] = (int) $sinceId;
         }
 
-        /** @var mixed $limitAttr */
         $limitAttr = $request->attribute('_query_limit');
         $limit = (is_int($limitAttr) || is_string($limitAttr)) ? (int) $limitAttr : 50;
-        /** @var mixed $offsetAttr */
         $offsetAttr = $request->attribute('_query_offset');
         $offset = (is_int($offsetAttr) || is_string($offsetAttr)) ? (int) $offsetAttr : 0;
 

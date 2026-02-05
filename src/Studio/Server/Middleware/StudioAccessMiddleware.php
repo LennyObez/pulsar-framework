@@ -19,7 +19,7 @@ use Pulsar\Studio\Security\StudioAccessGate;
  * 403 for authorization failures.
  */
 #[Internal]
-final class StudioAccessMiddleware implements MiddlewareInterface
+final readonly class StudioAccessMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly StudioAccessGate $gate,

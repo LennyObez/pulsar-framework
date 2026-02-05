@@ -16,7 +16,7 @@ use function sprintf;
  * the Studio UI and API endpoints.
  */
 #[Internal]
-final class StudioServer
+final readonly class StudioServer
 {
     public function __construct(
         private readonly StudioServerConfig $config,

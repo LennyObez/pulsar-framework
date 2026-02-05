@@ -46,13 +46,11 @@ final class StudioStartCommand extends Command
             return ExitCode::Error->value;
         }
 
-        /** @var mixed $hostOption */
         $hostOption = $input->getOption('host');
         $host = $input->hasOption('host') && is_string($hostOption)
             ? $hostOption
             : $this->config->server->host;
 
-        /** @var mixed $portOption */
         $portOption = $input->getOption('port');
         $port = $input->hasOption('port') && (is_int($portOption) || is_string($portOption))
             ? (int) $portOption

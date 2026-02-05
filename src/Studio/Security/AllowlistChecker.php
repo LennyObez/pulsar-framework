@@ -17,7 +17,7 @@ use function unpack;
  * Checks IP addresses against CIDR allowlists.
  */
 #[Internal]
-final class AllowlistChecker
+final readonly class AllowlistChecker
 {
     /** @var list<string> */
     private readonly array $cidrs;
@@ -39,13 +39,7 @@ final class AllowlistChecker
             return true;
         }
 
-        foreach ($this->cidrs as $cidr) {
-            if ($this->matchesCidr($ip, $cidr)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->cidrs, fn(string $cidr): bool => $this->matchesCidr($ip, $cidr));
     }
 
     private function matchesCidr(string $ip, string $cidr): bool

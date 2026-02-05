@@ -26,7 +26,7 @@ use function substr;
  * Production: requires STUDIO_ENABLED + STUDIO_PRODUCTION_CONFIRM + auth + CIDR allowlist.
  */
 #[Internal]
-final class StudioAccessGate
+final readonly class StudioAccessGate
 {
     private readonly AllowlistChecker $allowlistChecker;
 

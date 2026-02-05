@@ -19,7 +19,7 @@ use function usort;
  * correlation and orders them by timestamp for timeline display.
  */
 #[Internal]
-final class TimelineBuilder
+final readonly class TimelineBuilder
 {
     public function __construct(
         private readonly EventStoreInterface $store,

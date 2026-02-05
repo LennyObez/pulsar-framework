@@ -18,7 +18,7 @@ use function time;
  * window verification reporting.
  */
 #[Internal]
-final class RetentionEnforcer
+final readonly class RetentionEnforcer
 {
     public function __construct(
         private readonly SqliteEventStore $store,

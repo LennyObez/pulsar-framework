@@ -26,7 +26,7 @@ use Throwable;
  * Templates are plain PHP files that output HTML.
  */
 #[Internal]
-final class ViewRenderer
+final readonly class ViewRenderer
 {
     public function __construct(
         private readonly string $templateDir,

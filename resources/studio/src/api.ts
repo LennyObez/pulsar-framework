@@ -14,7 +14,7 @@ export async function fetchEvents(params: Record<string, string> = {}): Promise<
     throw new Error(`API error: ${response.status} ${response.statusText}`);
   }
 
-  return response.json() as Promise<EventsResponse>;
+  return (await response.json()) as EventsResponse;
 }
 
 export function createEventSource(types?: string[], lastEventId?: string): EventSource {

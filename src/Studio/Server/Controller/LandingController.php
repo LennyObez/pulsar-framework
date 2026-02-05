@@ -21,14 +21,14 @@ use function sprintf;
  * Handles GET /studio — the Studio landing page.
  */
 #[Internal]
-final class LandingController
+final readonly class LandingController
 {
     public function __construct(
         private readonly StudioConfig $config,
         private readonly ?EventStoreInterface $store = null,
     ) {}
 
-    public function handle(Request $request): Response
+    public function handle(Request $_request): Response
     {
         $eventCount = $this->store?->count() ?? 0;
         $sizeBytes = $this->store?->sizeInBytes() ?? 0;
@@ -64,17 +64,17 @@ final class LandingController
                     <div class="metrics-row">
                         <div class="metric-card">
                             <div class="metric-label">Events Recorded</div>
-                            <div class="metric-value">{$formattedCount}</div>
+                            <div class="metric-value">$formattedCount</div>
                             <div class="metric-subtitle">Total events in store</div>
                         </div>
                         <div class="metric-card">
                             <div class="metric-label">Storage Used</div>
-                            <div class="metric-value">{$formattedSize}</div>
-                            <div class="metric-subtitle">Limit: {$maxSizeMb} MB</div>
+                            <div class="metric-value">$formattedSize</div>
+                            <div class="metric-subtitle">Limit: $maxSizeMb MB</div>
                         </div>
                         <div class="metric-card">
                             <div class="metric-label">Sampling Rate</div>
-                            <div class="metric-value">{$samplingPct}</div>
+                            <div class="metric-value">$samplingPct</div>
                             <div class="metric-subtitle">Events captured</div>
                         </div>
                         <div class="metric-card">
@@ -113,19 +113,19 @@ final class LandingController
                         <table class="config-table">
                             <tr>
                                 <td>Storage</td>
-                                <td><code>{$storagePath}</code></td>
+                                <td><code>$storagePath</code></td>
                             </tr>
                             <tr>
                                 <td>Sampling</td>
-                                <td>{$samplingPct} of events</td>
+                                <td>$samplingPct of events</td>
                             </tr>
                             <tr>
                                 <td>Retention</td>
-                                <td>{$retentionDays} days / {$maxSizeMb} MB max</td>
+                                <td>$retentionDays days / $maxSizeMb MB max</td>
                             </tr>
                             <tr>
                                 <td>Collectors</td>
-                                <td><div class="collector-badges">{$collectors}</div></td>
+                                <td><div class="collector-badges">$collectors</div></td>
                             </tr>
                         </table>
                     </div>

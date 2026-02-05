@@ -29,7 +29,7 @@ use function time;
  * decrypted plaintext for external auditor verification.
  */
 #[Internal]
-final class EvidenceExporter
+final readonly class EvidenceExporter
 {
     public function __construct(
         private readonly EventStoreInterface $store,

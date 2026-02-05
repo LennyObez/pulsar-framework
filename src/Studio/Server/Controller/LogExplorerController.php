@@ -21,13 +21,13 @@ use Pulsar\Studio\Console\Storage\EventStoreInterface;
  * Handles GET /studio/console/logs — log entry explorer.
  */
 #[Internal]
-final class LogExplorerController
+final readonly class LogExplorerController
 {
     public function __construct(
         private readonly EventStoreInterface $store,
     ) {}
 
-    public function handle(Request $request): Response
+    public function handle(Request $_request): Response
     {
         $events = $this->store->query(
             ['event_type' => ['log.entry']],
@@ -47,7 +47,7 @@ final class LogExplorerController
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
-                <div id="app" data-page="log-explorer" data-payload="{$safePayload}"></div>
+                <div id="app" data-page="log-explorer" data-payload="$safePayload"></div>
                 <script type="module" src="/studio/assets/main.js"></script>
             </body>
             </html>

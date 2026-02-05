@@ -22,14 +22,14 @@ use Pulsar\Studio\Security\ProductionSafetyMode;
  * Handles GET /studio/console/exceptions — exception explorer.
  */
 #[Internal]
-final class ExceptionExplorerController
+final readonly class ExceptionExplorerController
 {
     public function __construct(
         private readonly EventStoreInterface $store,
         private readonly ProductionSafetyMode $safetyMode,
     ) {}
 
-    public function handle(Request $request): Response
+    public function handle(Request $_request): Response
     {
         $events = $this->store->query(
             ['event_type' => ['exception']],
@@ -53,7 +53,7 @@ final class ExceptionExplorerController
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
-                <div id="app" data-page="exception-explorer" data-payload="{$safePayload}"></div>
+                <div id="app" data-page="exception-explorer" data-payload="$safePayload"></div>
                 <script type="module" src="/studio/assets/main.js"></script>
             </body>
             </html>

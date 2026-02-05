@@ -21,13 +21,13 @@ use Pulsar\Studio\Console\Storage\EventStoreInterface;
  * Handles GET /studio/console/requests — HTTP request explorer.
  */
 #[Internal]
-final class RequestExplorerController
+final readonly class RequestExplorerController
 {
     public function __construct(
         private readonly EventStoreInterface $store,
     ) {}
 
-    public function handle(Request $request): Response
+    public function handle(Request $_request): Response
     {
         $events = $this->store->query(
             ['event_type' => ['http.request', 'http.response']],
@@ -47,7 +47,7 @@ final class RequestExplorerController
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
-                <div id="app" data-page="request-explorer" data-payload="{$safePayload}"></div>
+                <div id="app" data-page="request-explorer" data-payload="$safePayload"></div>
                 <script type="module" src="/studio/assets/main.js"></script>
             </body>
             </html>

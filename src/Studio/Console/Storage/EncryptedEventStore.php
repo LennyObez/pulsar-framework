@@ -20,7 +20,7 @@ use Pulsar\Studio\Console\Event\EventEnvelope;
  * Stores an additional ciphertext_hash for DB-level tamper detection.
  */
 #[Internal]
-final class EncryptedEventStore implements EventStoreInterface
+final readonly class EncryptedEventStore implements EventStoreInterface
 {
     public function __construct(
         private readonly SqliteEventStore $inner,

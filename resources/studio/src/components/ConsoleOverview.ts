@@ -22,7 +22,7 @@ export function renderConsoleOverview(container: HTMLElement, payload: unknown):
     return;
   }
 
-  const html = `
+  container.innerHTML = `
     <nav class="studio-nav">
       <a href="/studio" class="nav-brand">Pulsar Studio</a>
       <div class="nav-links">
@@ -52,8 +52,6 @@ export function renderConsoleOverview(container: HTMLElement, payload: unknown):
       ${renderTopExceptions(data.error_rate?.top_exceptions)}
     </div>
   `;
-
-  container.innerHTML = html;
 }
 
 function renderMetricCard(

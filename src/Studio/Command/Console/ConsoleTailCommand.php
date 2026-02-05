@@ -91,9 +91,9 @@ final class ConsoleTailCommand extends Command
             foreach ($events as $event) {
                 $this->outputEvent($event, $isJson, $output);
                 $rawEventId = $event['id'] ?? 0;
-                $eventId = is_int($rawEventId) ? $rawEventId : (int) (is_numeric($rawEventId) ? $rawEventId : 0);
-                if ($eventId > $lastId) {
-                    $lastId = $eventId;
+                $_eventId = is_int($rawEventId) ? $rawEventId : (int) (is_numeric($rawEventId) ? $rawEventId : 0);
+                if ($_eventId > $lastId) {
+                    $lastId = $_eventId;
                 }
             }
 

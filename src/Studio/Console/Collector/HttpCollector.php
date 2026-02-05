@@ -96,14 +96,9 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
 
     private function emitRequest(Request $request, CorrelationContext $context): void
     {
-        $headers = [];
-        foreach ($request->headers->toArray() as $name => $values) {
-            $headers[$name] = $values[0] ?? '';
-        }
+        $headers = array_map(static fn(array $values): string => $values[0] ?? '', $request->headers->toArray());
 
-        /** @var mixed $remoteAddr */
         $remoteAddr = $request->server('REMOTE_ADDR');
-        /** @var mixed $routeName */
         $routeName = $request->attribute('_route_name');
 
         $event = new HttpRequestPayload(
@@ -137,7 +132,6 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
 
         $body = $response !== null ? $response->body : '';
 
-        /** @var mixed $responseRouteName */
         $responseRouteName = $request->attribute('_route_name');
 
         $event = new HttpResponsePayload(
@@ -157,7 +151,6 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
 
     private function extractTraceId(Request $request): ?string
     {
-        /** @var mixed $traceContext */
         $traceContext = $request->attribute('_trace_context');
 
         if ($traceContext instanceof TraceId) {
@@ -169,7 +162,6 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
 
     private function extractSpanId(Request $request): ?string
     {
-        /** @var mixed $spanId */
         $spanId = $request->attribute('_span_id');
 
         if (is_string($spanId)) {

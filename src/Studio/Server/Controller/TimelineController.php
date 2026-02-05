@@ -22,13 +22,13 @@ use Pulsar\Studio\Console\Aggregation\TimelineBuilder;
  * Handles GET /studio/console/timeline/{id} — request/job timeline view.
  */
 #[Internal]
-final class TimelineController
+final readonly class TimelineController
 {
     public function __construct(
         private readonly TimelineBuilder $timelineBuilder,
     ) {}
 
-    public function handle(Request $request, string $correlationId): Response
+    public function handle(Request $_request, string $correlationId): Response
     {
         $events = $this->timelineBuilder->forCorrelation(
             requestId: $correlationId,
@@ -59,7 +59,7 @@ final class TimelineController
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
-                <div id="app" data-page="timeline" data-payload="{$safePayload}"></div>
+                <div id="app" data-page="timeline" data-payload="$safePayload"></div>
                 <script type="module" src="/studio/assets/main.js"></script>
             </body>
             </html>

@@ -22,8 +22,6 @@ use Pulsar\Studio\Server\Controller\LogExplorerController;
 use Pulsar\Studio\Server\Controller\RequestExplorerController;
 use Pulsar\Studio\Server\Controller\TimelineController;
 
-use function str_starts_with;
-
 /**
  * Standalone router for the Studio server.
  *
@@ -31,7 +29,7 @@ use function str_starts_with;
  * Used by the `studio:start` command's built-in server.
  */
 #[Internal]
-final class StudioRouter
+final readonly class StudioRouter
 {
     public function __construct(
         private readonly LandingController $landing,
@@ -71,7 +69,6 @@ final class StudioRouter
             $this->matchesTimeline($path) => $this->guardDrillDown($request, fn() => $this->timeline->handle($request, $this->extractTimelineId($path))),
             $path === '/studio/api/events' => $this->guardApi($request, fn() => $this->api->events($request)),
             $path === '/studio/api/live' => $this->guardSse($request, fn() => $this->api->live($request)),
-            str_starts_with($path, '/studio/') => new Response(body: 'Not Found', status: ResponseStatus::NotFound),
             default => new Response(body: 'Not Found', status: ResponseStatus::NotFound),
         };
     }
@@ -91,7 +88,7 @@ final class StudioRouter
     /**
      * @param callable(): Response $handler
      */
-    private function guardDrillDown(Request $request, callable $handler): Response
+    private function guardDrillDown(Request $_request, callable $handler): Response
     {
         if (!$this->safetyMode->allowDrillDown()) {
             return Response::json(
@@ -106,7 +103,7 @@ final class StudioRouter
     /**
      * @param callable(): Response $handler
      */
-    private function guardApi(Request $request, callable $handler): Response
+    private function guardApi(Request $_request, callable $handler): Response
     {
         if (!$this->safetyMode->allowApi()) {
             return Response::json(
@@ -121,7 +118,7 @@ final class StudioRouter
     /**
      * @param callable(): Response $handler
      */
-    private function guardSse(Request $request, callable $handler): Response
+    private function guardSse(Request $_request, callable $handler): Response
     {
         if (!$this->safetyMode->allowSse()) {
             return Response::json(

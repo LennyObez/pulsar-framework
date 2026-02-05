@@ -13,10 +13,7 @@ export interface EmptyStateOptions {
 function isSafeUrl(url: string): boolean {
   // Only allow relative URLs starting with /
   // or absolute HTTP(S) URLs
-  if (url.startsWith('/')) return true;
-  if (url.startsWith('https://')) return true;
-  if (url.startsWith('http://')) return true;
-  return false;
+  return url.startsWith('/') || url.startsWith('https://') || url.startsWith('http://');
 }
 
 export function renderEmptyState(options: EmptyStateOptions): string {

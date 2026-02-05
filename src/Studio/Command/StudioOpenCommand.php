@@ -45,6 +45,7 @@ final class StudioOpenCommand extends Command
             default => sprintf('xdg-open %s', escapeshellarg($url)),
         };
 
+        $exitCode = 0;
         exec($command, result_code: $exitCode);
 
         if ($exitCode !== 0) {

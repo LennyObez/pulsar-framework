@@ -20,7 +20,7 @@ if ($count > 1):
     foreach ($values as $i => $v) {
         $x = (float) $i / (float) ($count - 1) * (float) $w;
         $y = (float) $h - ($v - $min) / $range * (float) ($h - 2) - 1.0;
-        $points[] = (string) round($x, 1) . ',' . (string) round($y, 1);
+        $points[] = number_format($x, 1, '.', '') . ',' . number_format($y, 1, '.', '');
     }
     ?>
         <polyline fill="none" stroke="#38bdf8" stroke-width="1.5" points="<?= implode(' ', $points) ?>" />

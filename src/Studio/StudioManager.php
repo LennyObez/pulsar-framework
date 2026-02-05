@@ -34,7 +34,7 @@ use Throwable;
  * Applies sampling rate to control event volume.
  */
 #[Internal]
-final class StudioManager
+final readonly class StudioManager
 {
     public function __construct(
         private readonly EventStoreInterface $store,

@@ -21,7 +21,7 @@ use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
  * Handles GET /studio/console — the Console overview dashboard.
  */
 #[Internal]
-final class ConsoleOverviewController
+final readonly class ConsoleOverviewController
 {
     public function __construct(
         private readonly DashboardAggregator $aggregator,
@@ -63,7 +63,7 @@ final class ConsoleOverviewController
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
-                <div id="app" data-page="console-overview" data-payload="{$safePayload}"></div>
+                <div id="app" data-page="console-overview" data-payload="$safePayload"></div>
                 <script type="module" src="/studio/assets/main.js"></script>
             </body>
             </html>
@@ -78,7 +78,6 @@ final class ConsoleOverviewController
 
         return match ($window) {
             '5m' => 5 * 60 * 1_000_000,
-            '1h' => 60 * 60 * 1_000_000,
             '24h' => 24 * 60 * 60 * 1_000_000,
             default => 60 * 60 * 1_000_000,
         };
