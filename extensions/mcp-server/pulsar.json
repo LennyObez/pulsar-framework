@@ -2,6 +2,7 @@
   "name": "pulsar/mcp-server",
   "version": "1.0.0-rc.9",
   "description": "MCP server for AI-assisted development tooling",
+  "trust_tier": "core",
   "extension_class": "Pulsar\\Extension\\McpServer\\McpServerExtension",
   "pulsar": {
     "min_version": "1.0.0-rc.9"
