@@ -6,10 +6,17 @@ describe('fetchEvents', () => {
 
   beforeEach(() => {
     vi.stubGlobal('fetch', mockFetch);
+    vi.stubGlobal('window', {
+      location: {
+        origin: 'http://localhost:8080',
+      },
+    });
   });
 
   afterEach(() => {
+    mockFetch.mockClear();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('should fetch events from the API', async () => {
