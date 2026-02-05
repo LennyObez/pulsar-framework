@@ -177,10 +177,21 @@ final class SqliteEventStore implements EventStoreInterface
         $bindings = [];
 
         if (isset($filters['event_type'])) {
-            $where[] = 'event_type = :event_type';
-            /** @var string $eventTypeFilter */
             $eventTypeFilter = $filters['event_type'];
-            $bindings['event_type'] = $eventTypeFilter;
+            if (is_array($eventTypeFilter)) {
+                $placeholders = [];
+                /** @var list<string> $eventTypeFilter */
+                foreach ($eventTypeFilter as $i => $type) {
+                    $key = 'event_type_' . $i;
+                    $placeholders[] = ':' . $key;
+                    $bindings[$key] = $type;
+                }
+                $where[] = 'event_type IN (' . implode(', ', $placeholders) . ')';
+            } else {
+                /** @var string $eventTypeFilter */
+                $where[] = 'event_type = :event_type';
+                $bindings['event_type'] = $eventTypeFilter;
+            }
         }
 
         if (isset($filters['request_id'])) {
@@ -258,10 +269,21 @@ final class SqliteEventStore implements EventStoreInterface
         $bindings = [];
 
         if (isset($filters['event_type'])) {
-            $where[] = 'event_type = :event_type';
-            /** @var string $eventTypeFilter */
             $eventTypeFilter = $filters['event_type'];
-            $bindings['event_type'] = $eventTypeFilter;
+            if (is_array($eventTypeFilter)) {
+                $placeholders = [];
+                /** @var list<string> $eventTypeFilter */
+                foreach ($eventTypeFilter as $i => $type) {
+                    $key = 'event_type_' . $i;
+                    $placeholders[] = ':' . $key;
+                    $bindings[$key] = $type;
+                }
+                $where[] = 'event_type IN (' . implode(', ', $placeholders) . ')';
+            } else {
+                /** @var string $eventTypeFilter */
+                $where[] = 'event_type = :event_type';
+                $bindings['event_type'] = $eventTypeFilter;
+            }
         }
 
         if (isset($filters['since_us'])) {

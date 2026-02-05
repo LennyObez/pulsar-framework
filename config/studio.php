@@ -93,7 +93,7 @@ return [
     'server' => [
         'host' => '127.0.0.1',
         'port' => 8585,
-        'document_root' => 'public',
+        'document_root' => 'resources/studio/public',
     ],
 
     /*
