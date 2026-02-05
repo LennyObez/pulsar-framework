@@ -8,6 +8,9 @@ use function array_filter;
 use function array_values;
 use function count;
 
+use Pulsar\Api\Internal;
+use Throwable;
+
 /**
  * In-memory log of feature flag evaluations.
  */
@@ -16,12 +19,33 @@ final class FlagEvaluationLog
     /** @var list<FlagEvaluation> */
     private array $evaluations = [];
 
+    /** @var list<callable(FlagEvaluation): void> */
+    private array $observers = [];
+
     /**
      * Record a flag evaluation.
      */
     public function record(FlagEvaluation $evaluation): void
     {
         $this->evaluations[] = $evaluation;
+
+        foreach ($this->observers as $observer) {
+            try {
+                $observer($evaluation);
+            } catch (Throwable) {
+            }
+        }
+    }
+
+    /**
+     * Register an observer to be notified on every flag evaluation.
+     *
+     * @param callable(FlagEvaluation): void $observer
+     */
+    #[Internal]
+    public function addObserver(callable $observer): void
+    {
+        $this->observers[] = $observer;
     }
 
     /**

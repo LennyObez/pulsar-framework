@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_int;
+
 use Pulsar\Api\Api;
 
 /**
@@ -28,8 +30,10 @@ readonly class RateLimitConfig
     public static function fromArray(array $data): self
     {
         $enabled = (bool) ($data['enabled'] ?? true);
-        $defaultLimit = (int) ($data['default_limit'] ?? 60); // @phpstan-ignore cast.int
-        $defaultWindow = (int) ($data['default_window'] ?? 60); // @phpstan-ignore cast.int
+        $rawDefaultLimit = $data['default_limit'] ?? 60;
+        $defaultLimit = is_int($rawDefaultLimit) ? $rawDefaultLimit : (int) (is_numeric($rawDefaultLimit) ? $rawDefaultLimit : 60);
+        $rawDefaultWindow = $data['default_window'] ?? 60;
+        $defaultWindow = is_int($rawDefaultWindow) ? $rawDefaultWindow : (int) (is_numeric($rawDefaultWindow) ? $rawDefaultWindow : 60);
 
         return new self(
             enabled: $enabled,

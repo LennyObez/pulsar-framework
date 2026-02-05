@@ -89,12 +89,10 @@ final class ApplicationTest extends TestCase
     #[Test]
     public function doRunExecutesCommand(): void
     {
-        $executed = false;
-        $command = new class ($executed) implements CommandInterface {
+        $command = new class implements CommandInterface {
             public string $name = 'test';
             public string $description = 'Test';
-
-            public function __construct(private bool &$executed) {} // @phpstan-ignore property.onlyWritten
+            public bool $executed = false;
 
             public function execute(InputInterface $input, OutputInterface $output): int
             {
@@ -110,7 +108,7 @@ final class ApplicationTest extends TestCase
 
         $exitCode = $this->application->doRun($input, $output);
 
-        self::assertTrue($executed);
+        self::assertTrue($command->executed);
         self::assertSame(ExitCode::Success->value, $exitCode);
     }
 

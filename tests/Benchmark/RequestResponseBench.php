@@ -26,8 +26,7 @@ final class RequestResponseBench
     #[Assert('mode(variant.time.avg) < 5 microseconds')]
     public function benchRequestCreation(): void
     {
-        /** @phpstan-ignore new.resultUnused */
-        new Request(
+        $_ = new Request(
             method: Method::GET,
             uri: '/users/123',
             path: '/users/123',
@@ -44,8 +43,7 @@ final class RequestResponseBench
     #[Assert('mode(variant.time.avg) < 5 microseconds')]
     public function benchRequestCreationWithData(): void
     {
-        /** @phpstan-ignore new.resultUnused */
-        new Request(
+        $_ = new Request(
             method: Method::POST,
             uri: '/api/users?page=1',
             path: '/api/users',
@@ -98,8 +96,7 @@ final class RequestResponseBench
     #[Assert('mode(variant.time.avg) < 5 microseconds')]
     public function benchResponseDirectConstruction(): void
     {
-        /** @phpstan-ignore new.resultUnused */
-        new Response(body: 'OK');
+        $_ = new Response(body: 'OK');
     }
 
     /**

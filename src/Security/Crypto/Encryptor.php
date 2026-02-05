@@ -17,34 +17,57 @@ use function strlen;
 /**
  * Authenticated encryption using libsodium's secretbox (XSalsa20-Poly1305).
  *
- * Uses a derived subkey from MasterKey (subKeyId=1, context='encrypt_').
  * Ciphertext format: nonce (24 bytes) || ciphertext+mac.
  */
 final class Encryptor
 {
     /**
-     * Sub-key ID for encryption.
+     * Sub-key ID for the default encryption context.
      */
-    private const int SUB_KEY_ID = 1;
+    private const int DEFAULT_SUB_KEY_ID = 1;
 
     /**
-     * KDF context for encryption key derivation.
+     * KDF context for the default encryption key derivation.
      */
-    private const string KDF_CONTEXT = 'encrypt_';
+    private const string DEFAULT_KDF_CONTEXT = 'encrypt_';
 
     /**
      * Nonce length in bytes.
      */
     private const int NONCE_LENGTH = SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
 
-    private readonly string $key;
+    /**
+     * Create an Encryptor with a raw key directly.
+     *
+     * @param string $key Raw 32-byte secretbox key
+     */
+    private function __construct(
+        private readonly string $key,
+    ) {}
 
     /**
+     * Create an Encryptor using the default subkey derivation (subKeyId=1, context='encrypt_').
+     *
+     * This is the standard construction path for general-purpose encryption.
+     *
      * @throws SodiumException
      */
-    public function __construct(MasterKey $masterKey)
+    public static function fromMasterKey(MasterKey $masterKey): self
     {
-        $this->key = $masterKey->deriveSubKey(self::SUB_KEY_ID, self::KDF_CONTEXT);
+        return new self($masterKey->deriveSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT));
+    }
+
+    /**
+     * Create an Encryptor using a specific subkey derivation.
+     *
+     * Enables domain separation for subsystems that need their own
+     * encryption keys (e.g., Studio uses subKeyId=3, context='studio_enc__').
+     *
+     * @throws SodiumException
+     */
+    public static function fromDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self
+    {
+        return new self($masterKey->deriveSubKey($subKeyId, $context));
     }
 
     /**
