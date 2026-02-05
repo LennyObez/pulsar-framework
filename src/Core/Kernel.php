@@ -425,8 +425,6 @@ final class Kernel
      *
      * @param class-string $class
      *
-     * @throws NotFoundException
-     * @throws ContainerException
      * @throws Error If the class cannot be instantiated
      */
     private function resolveController(string $class): object
@@ -583,9 +581,6 @@ final class Kernel
 
     /**
      * Create the exception handler from config and register in the container.
-     *
-     * @throws ContainerException If a container error occurs while resolving dependencies
-     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createExceptionHandler(): void
     {
@@ -688,9 +683,6 @@ final class Kernel
      * Registers: PasswordHasher, SessionGuard, TokenGuard (if resolver bound),
      * AuthManager, RoleRegistry, Gate, SecurityContext, and auth middleware.
      * If 2FA is enabled, also registers TOTP and recovery code services.
-     *
-     * @throws ContainerException If a container error occurs while resolving dependencies
-     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createAuthServices(): void
     {
@@ -832,9 +824,6 @@ final class Kernel
      * Only activates when config/tenancy.php was loaded and tenancy is enabled.
      * Registers TenancyConfig, TenantContext, TenantResolver, and TenantResolutionMiddleware.
      * If database services are available, decorates ConnectionManager with tenant awareness.
-     *
-     * @throws ContainerException If a container error occurs while resolving dependencies
-     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createTenancyServices(): void
     {
@@ -945,9 +934,6 @@ final class Kernel
      *
      * Only activates when config/scheduler.php was loaded and scheduler is enabled.
      * Registers JobRegistry and Scheduler.
-     *
-     * @throws ContainerException If a container error occurs while resolving dependencies
-     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createSchedulerServices(): void
     {
