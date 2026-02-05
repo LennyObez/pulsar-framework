@@ -6,12 +6,14 @@ namespace Pulsar\Container\Exception;
 
 use Exception;
 use Psr\Container\NotFoundExceptionInterface;
+use Pulsar\Api\Api;
 
 use function sprintf;
 
 /**
  * Exception thrown when a requested binding is not found in the container.
  */
+#[Api]
 final class NotFoundException extends Exception implements NotFoundExceptionInterface
 {
     /**

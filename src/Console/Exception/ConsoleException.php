@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -11,6 +12,7 @@ use function sprintf;
 /**
  * Base exception for console-related errors.
  */
+#[Api]
 class ConsoleException extends RuntimeException
 {
     /**

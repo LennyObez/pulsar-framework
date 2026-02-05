@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for security headers.
  *
  * Maps from the `headers` key of `config/security.php`.
  */
+#[Api]
 readonly class SecurityHeadersConfig
 {
     /**

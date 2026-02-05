@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Resilience\Repair;
 
+use Pulsar\Api\Api;
 use Throwable;
 
 /**
  * Result of a repair action.
  */
+#[Api]
 readonly class RepairResult
 {
     /**

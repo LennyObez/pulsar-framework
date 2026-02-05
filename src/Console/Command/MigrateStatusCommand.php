@@ -68,7 +68,9 @@ final class MigrateStatusCommand extends Command
 
         $output->writeln(sprintf('  %s', str_repeat('-', 100)));
 
-        foreach ($allFiles as $version => $file) {
+        foreach ($allFiles as $file) {
+            $version = $file->version;
+
             if (isset($appliedByVersion[$version])) {
                 $record = $appliedByVersion[$version];
                 $status = 'Applied';

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Scheduler;
 
 use DateTimeImmutable;
+use Pulsar\Api\Api;
 use Throwable;
 
 /**
  * Result of a scheduled job execution.
  */
+#[Api]
 readonly class JobResult
 {
     public function __construct(

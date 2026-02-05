@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed DTO for a single logging channel configuration.
  */
+#[Api]
 readonly class LoggingChannelConfig
 {
     public function __construct(

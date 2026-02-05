@@ -6,6 +6,7 @@ namespace Pulsar\Http\Validation\Rule;
 
 use function is_string;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
@@ -14,6 +15,7 @@ use function sprintf;
 /**
  * Value must be a string. Skips null values.
  */
+#[Api]
 readonly class StringType implements RuleInterface
 {
     public function __construct(

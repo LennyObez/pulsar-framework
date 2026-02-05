@@ -2,19 +2,21 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Benchmarks;
+namespace Pulsar\Tests\Benchmark;
 
+use PhpBench\Attributes\Assert;
+use PhpBench\Attributes\BeforeMethods;
+use PhpBench\Attributes\Iterations;
+use PhpBench\Attributes\Revs;
+use PhpBench\Attributes\Subject;
+use PhpBench\Attributes\Warmup;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Router;
-use Pulsar\Routing\RoutingException;
 
-/**
- * Benchmarks for the HTTP router.
- *
- * @BeforeMethods("setUp")
- * @Revs(1000)
- * @Iterations(5)
- */
+#[BeforeMethods('setUp')]
+#[Revs(1000)]
+#[Iterations(5)]
+#[Warmup(1)]
 final class RouterBench
 {
     private Router $routerSmall;
@@ -24,16 +26,10 @@ final class RouterBench
 
     public function setUp(): void
     {
-        // Small router: 10 routes
         $this->routerSmall = $this->createRouter(10);
-
-        // Medium router: 50 routes
         $this->routerMedium = $this->createRouter(50);
-
-        // Large router: 200 routes
         $this->routerLarge = $this->createRouter(200);
 
-        // Router with parameterized routes
         $this->routerWithParams = new Router();
         for ($i = 0; $i < 50; $i++) {
             $this->routerWithParams->get("/users/{id}/posts/{postId}/comments/{commentId}/path$i", fn() => null);
@@ -52,81 +48,61 @@ final class RouterBench
     }
 
     /**
-     * Benchmark: Match first route in small router.
-     *
-     * Best case - route found immediately.
-     *
-     * @Subject
-     *
-     * @throws RoutingException
+     * Best case: route found immediately in a small router.
      */
+    #[Subject]
+    #[Assert('mode(variant.time.avg) < 5 microseconds')]
     public function benchSmallRouterFirstRoute(): void
     {
         $this->routerSmall->match(Method::GET, '/route0');
     }
 
     /**
-     * Benchmark: Match last route in small router.
-     *
      * Worst case for small router.
-     *
-     * @Subject
-     *
-     * @throws RoutingException
      */
+    #[Subject]
+    #[Assert('mode(variant.time.avg) < 5 microseconds')]
     public function benchSmallRouterLastRoute(): void
     {
         $this->routerSmall->match(Method::GET, '/route9');
     }
 
     /**
-     * Benchmark: Match middle route in medium router.
-     *
      * Average case for medium router.
-     *
-     * @Subject
-     *
-     * @throws RoutingException
      */
+    #[Subject]
+    #[Assert('mode(variant.time.avg) < 50 microseconds')]
     public function benchMediumRouterMiddleRoute(): void
     {
         $this->routerMedium->match(Method::GET, '/route25');
     }
 
     /**
-     * Benchmark: Match last route in large router.
-     *
      * Worst case for large router.
-     *
-     * @Subject
-     *
-     * @throws RoutingException
      */
+    #[Subject]
+    #[Assert('mode(variant.time.avg) < 100 microseconds')]
     public function benchLargeRouterLastRoute(): void
     {
         $this->routerLarge->match(Method::GET, '/route199');
     }
 
     /**
-     * Benchmark: Match route with parameters.
-     *
-     * Tests regex-based parameter extraction.
-     *
-     * @Subject
-     *
-     * @throws RoutingException
+     * Regex-based parameter extraction with multiple segments.
      */
+    #[Subject]
+    #[Assert('mode(variant.time.avg) < 200 microseconds')]
     public function benchParameterizedRouteMatch(): void
     {
         $this->routerWithParams->match(Method::GET, '/users/123/posts/456/comments/789/path25');
     }
 
     /**
-     * Benchmark: Route registration.
-     *
-     * @Subject
-     * @BeforeMethods("setUpFresh")
+     * Route registration throughput.
      */
+    #[Subject]
+    #[BeforeMethods('setUpFresh')]
+    #[Assert('mode(variant.time.avg) < 1 millisecond')]
     public function benchRouteRegistration(): void
     {
         $this->routerSmall->get('/new-route', fn() => null);
@@ -138,11 +114,11 @@ final class RouterBench
     }
 
     /**
-     * Benchmark: URL generation for named route.
-     *
-     * @Subject
-     * @BeforeMethods("setUpNamedRoutes")
+     * URL generation for named route with parameters.
      */
+    #[Subject]
+    #[BeforeMethods('setUpNamedRoutes')]
+    #[Assert('mode(variant.time.avg) < 50 microseconds')]
     public function benchUrlGeneration(): void
     {
         $this->routerSmall->url('route.5', ['id' => '123']);

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use Pulsar\Api\Api;
+
 /**
  * Immutable HTTP response value object.
  */
+#[Api]
 readonly class Response
 {
     public function __construct(

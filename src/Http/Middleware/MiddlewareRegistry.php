@@ -6,12 +6,15 @@ namespace Pulsar\Http\Middleware;
 
 use function array_key_exists;
 
+use Pulsar\Api\Internal;
+
 /**
  * Registry for named middleware groups and aliases.
  *
  * Groups map a single name to an ordered list of middleware.
  * Aliases map a short name to a single middleware class-string or instance.
  */
+#[Internal]
 final class MiddlewareRegistry
 {
     /** @var array<string, list<MiddlewareInterface|class-string<MiddlewareInterface>>> */

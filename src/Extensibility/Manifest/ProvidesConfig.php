@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Manifest;
 
+use Pulsar\Api\Api;
+
 /**
  * Configuration for what an extension provides.
  */
+#[Api]
 readonly class ProvidesConfig
 {
     /**

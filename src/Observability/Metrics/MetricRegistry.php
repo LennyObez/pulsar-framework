@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Metrics;
 
+use Pulsar\Api\Api;
 use Pulsar\Observability\Metrics\Exception\MetricsException;
 
 /**
@@ -12,6 +13,7 @@ use Pulsar\Observability\Metrics\Exception\MetricsException;
  * Create-or-return semantics: calling counter/gauge/histogram with the same
  * name returns the existing instrument. Throws on type mismatch.
  */
+#[Api]
 final class MetricRegistry
 {
     /** @var array<string, Counter|Gauge|Histogram> */

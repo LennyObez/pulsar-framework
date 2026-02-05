@@ -10,6 +10,7 @@ use function hash_equals;
 use function json_encode;
 
 use JsonException;
+use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Hmac;
 use SodiumException;
 
@@ -20,6 +21,7 @@ use SodiumException;
  * creating a chain where modifying or deleting any entry invalidates all
  * subsequent HMACs.
  */
+#[Api]
 readonly class AuditEntry
 {
     /**

@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Csrf;
 
+use Pulsar\Api\Api;
+
 /**
  * Contract for CSRF token management.
  *
  * Abstracts token operations for testability while allowing
  * the concrete implementation to remain final.
  */
+#[Api]
 interface CsrfTokenManagerInterface
 {
     /**

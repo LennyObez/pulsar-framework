@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use Pulsar\Api\Api;
 use Pulsar\Auth\Identity\IdentityInterface;
 
 /**
  * Contract for two-factor authentication management.
  */
+#[Api]
 interface TwoFactorManagerInterface
 {
     /**

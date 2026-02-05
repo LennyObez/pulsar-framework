@@ -7,6 +7,7 @@ namespace Pulsar\Http\Validation\Rule;
 use function is_string;
 use function mb_strlen;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
@@ -15,6 +16,7 @@ use function sprintf;
 /**
  * String length must be >= the given minimum. Skips null values.
  */
+#[Api]
 readonly class MinLength implements RuleInterface
 {
     public function __construct(

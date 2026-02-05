@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\ErrorHandling\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -11,6 +12,7 @@ use function sprintf;
 /**
  * Exception thrown for error handling subsystem failures.
  */
+#[Api]
 final class ErrorHandlingException extends RuntimeException
 {
     /**

@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation;
 
+use Pulsar\Api\Api;
+
 /**
  * Contract for a single validation rule.
  *
  * Rules inspect a field value and return a Violation on failure,
  * or null when the value passes validation.
  */
+#[Api]
 interface RuleInterface
 {
     /**

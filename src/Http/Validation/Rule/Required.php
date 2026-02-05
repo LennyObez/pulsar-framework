@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Rule;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
@@ -12,6 +13,7 @@ use function sprintf;
 /**
  * Fails on null, empty string, or empty array.
  */
+#[Api]
 readonly class Required implements RuleInterface
 {
     public function __construct(

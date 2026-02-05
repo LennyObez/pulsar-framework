@@ -227,6 +227,36 @@ modules/<module-name>/
 
 See `docs/REPOSITORY_STRUCTURE.md` for the complete directory structure.
 
+## API Stability
+
+Pulsar uses a PHP attribute-based system to explicitly mark API surface boundaries.
+
+### Stability Attributes
+
+- `#[Api]` (`src/Api/Api.php`) -- marks a class, method, or interface as part of the **public API**. These symbols are covered by semantic versioning guarantees: breaking changes require a major version bump.
+- `#[Internal]` (`src/Api/Internal.php`) -- marks a symbol as **framework-internal**. Internal symbols may change or be removed in any release without notice. Extension authors and application code must not depend on internal symbols.
+
+### Semver Guarantees
+
+Only symbols annotated with `#[Api]` are covered by semver. Specifically:
+
+- **Patch releases** (1.0.x) -- bug fixes only, no API changes.
+- **Minor releases** (1.x.0) -- new `#[Api]` symbols may be added; existing ones are never removed or changed incompatibly.
+- **Major releases** (x.0.0) -- `#[Api]` symbols may be removed or changed.
+
+Symbols without either attribute are treated as internal by default.
+
+For the complete public API reference, see [`docs/PUBLIC_API.md`](PUBLIC_API.md).
+
+## Performance Budgets
+
+Pulsar includes a PHPBench-based benchmark suite (`tests/Benchmark/`) with CI-enforced performance budgets.
+
+- **Benchmark suite**: PHPBench benchmarks cover critical hot paths (bootstrap, routing, container resolution, middleware pipeline, response emission).
+- **Budget definitions**: Budgets are declared in `tools/php/performance-budgets.json` and enforced during CI runs.
+- **PHPBench configuration**: See `tools/php/phpbench.json` for runner configuration.
+- **CI enforcement**: Performance regressions that exceed the defined budgets will fail the CI pipeline, preventing accidental degradation of framework performance.
+
 ## Extension Points
 
 Extensions can hook into:

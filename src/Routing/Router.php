@@ -8,6 +8,7 @@ use function count;
 use function in_array;
 
 use InvalidArgumentException;
+use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
 use function sprintf;
@@ -15,6 +16,7 @@ use function sprintf;
 /**
  * HTTP router for route registration and matching.
  */
+#[Api]
 final class Router
 {
     /**

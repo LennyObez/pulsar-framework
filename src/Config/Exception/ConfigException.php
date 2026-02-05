@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -11,6 +12,7 @@ use function sprintf;
 /**
  * Exception thrown for configuration errors.
  */
+#[Api]
 final class ConfigException extends RuntimeException
 {
     /**
