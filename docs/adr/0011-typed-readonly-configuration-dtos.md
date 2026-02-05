@@ -61,3 +61,9 @@ The key invariant: env vars are the canonical source of truth for any setting th
 ### Neutral
 
 - **Config stubs in `config/`.** The framework ships stub config files that return default arrays. Applications override only the values they need. The stubs serve as living documentation.
+
+## Field Report
+
+_Optional. Document operational experience that validates or challenges this decision. Add entries as they accumulate._
+
+- **rc.4 – rc.10** | Feature flag implementation: The readonly DTO approach confirmed its strength for static configuration — type safety and IDE support have eliminated an entire class of config-related bugs. However, dynamic configuration needs (feature flag toggling via admin panel, A/B test cohort assignment) cannot be served by readonly DTOs. This led to the creation of a separate `FeatureFlagConfig` system with mutable runtime state, backed by a persistent store. The boundary between static config (readonly DTOs) and dynamic config (feature flags) is now explicit and well-understood. Readonly DTOs remain the correct choice for settings that are fixed at boot time.
