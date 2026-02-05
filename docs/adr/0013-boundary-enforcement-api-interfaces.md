@@ -102,6 +102,12 @@ Rejected. Would require mass-renaming and lose the granularity of attribute-leve
 - **API snapshot grows.** The public API snapshot includes the new interfaces. This is intentional — they are the stable contracts.
 - **Existing extension code.** Extensions already importing concrete classes will need to update imports. This is a one-time migration during the RC phase.
 
+## Field Report
+
+_Optional. Document operational experience that validates or challenges this decision. Add entries as they accumulate._
+
+- **rc.6 – rc.10** | PR #29, boundary enforcement rollout: Initial scan identified 123 violations across 41 classes. The three-strategy remediation — 16 new interfaces, 11 dependency direction fixes, 15 type promotions — achieved zero violations within a single release cycle. Post-enforcement, two subsequent refactors (cache subsystem and observability pipeline) confirmed the value: internal class constructors were restructured without breaking any cross-module consumer. CI boundary checks caught three accidental concrete imports during code review, preventing regressions before merge. Measurable improvement in refactoring safety and developer confidence when modifying internal implementations.
+
 ## Security Impact
 
 None. The change is purely structural (import paths and DI wiring). No changes to authentication, authorization, encryption, or data handling. Crypto contracts (`EncryptorInterface`, `HmacInterface`, `KeyProviderInterface`) expose the same operations as the concrete classes — no new attack surface.

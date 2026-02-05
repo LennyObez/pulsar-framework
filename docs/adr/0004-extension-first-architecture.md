@@ -45,3 +45,9 @@ Key design choices:
 ### Neutral
 
 - **Scaffold command available.** `php bin/pulsar make:extension` generates the boilerplate directory structure and manifest, reducing the ceremony cost.
+
+## Field Report
+
+_Optional. Document operational experience that validates or challenges this decision. Add entries as they accumulate._
+
+- **rc.1 – rc.10** | Internal development: Manifest overhead proved manageable in practice. The `php bin/pulsar make:extension` scaffold command generates the full `pulsar.json` and directory structure in seconds, reducing ceremony to a one-time cost per extension. Deterministic boot ordering has been the highest-value payoff — dependency issues surface immediately at validation time rather than manifesting as subtle runtime bugs. During the rc cycle, topological sort caught three circular dependency attempts before any code executed, saving significant debugging time.
