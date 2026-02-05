@@ -7,9 +7,12 @@ namespace Pulsar\Auth\Identity;
 use function array_key_exists;
 use function in_array;
 
+use Pulsar\Api\Api;
+
 /**
  * Immutable value object representing an authenticated identity.
  */
+#[Api]
 readonly class Identity implements IdentityInterface
 {
     /**

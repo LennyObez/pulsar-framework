@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
 use Pulsar\Tenancy\TenantDatabaseStrategy;
 
 /**
  * Tenant database isolation configuration sub-DTO.
  */
+#[Api]
 readonly class TenantDatabaseConfig
 {
     public function __construct(

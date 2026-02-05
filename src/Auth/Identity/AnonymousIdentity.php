@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Identity;
 
+use Pulsar\Api\Api;
+
 /**
  * Null object for unauthenticated requests.
  *
  * Always returns false for isAuthenticated() and empty values for all fields.
  */
+#[Api]
 readonly class AnonymousIdentity implements IdentityInterface
 {
     public function id(): string

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Validation\Rule\Required;
 
 /**
@@ -15,6 +16,7 @@ use Pulsar\Http\Validation\Rule\Required;
  * When a Required rule fails for a field, remaining rules for that field
  * are skipped (short-circuit).
  */
+#[Api]
 final class Validator
 {
     /**

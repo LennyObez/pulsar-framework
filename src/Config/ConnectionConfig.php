@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
 
 /**
  * Typed configuration DTO for a single database connection.
  */
+#[Api]
 readonly class ConnectionConfig
 {
     public function __construct(

@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Resilience;
 
+use Pulsar\Api\Api;
 use Throwable;
 
 /**
  * Result of a retry policy execution.
  */
+#[Api]
 readonly class RetryResult
 {
     /**

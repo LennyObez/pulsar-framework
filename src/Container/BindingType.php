@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Container;
 
+use Pulsar\Api\Api;
+
 /**
  * Defines how a container binding should be resolved.
  */
+#[Api]
 enum BindingType: string
 {
     /**

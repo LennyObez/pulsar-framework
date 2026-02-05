@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility;
 
+use Pulsar\Api\Api;
+
 /**
  * Extension lifecycle states.
  *
@@ -12,6 +14,7 @@ namespace Pulsar\Extensibility;
  *
  * Failed can occur from any state if an error occurs.
  */
+#[Api]
 enum ExtensionLifecycle: string
 {
     case Discovered = 'discovered';

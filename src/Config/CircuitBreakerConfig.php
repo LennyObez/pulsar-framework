@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Configuration for circuit breakers.
  */
+#[Api]
 readonly class CircuitBreakerConfig
 {
     public function __construct(

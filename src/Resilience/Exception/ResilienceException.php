@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Resilience\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -13,6 +14,7 @@ use Throwable;
 /**
  * Exception for resilience/self-healing errors.
  */
+#[Api]
 final class ResilienceException extends RuntimeException
 {
     /**

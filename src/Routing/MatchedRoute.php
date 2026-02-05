@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Routing;
 
+use Pulsar\Api\Api;
+
 /**
  * Represents a successfully matched route.
  */
+#[Api]
 readonly class MatchedRoute
 {
     /**

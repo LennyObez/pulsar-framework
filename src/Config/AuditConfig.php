@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for audit logging settings.
  *
  * Maps from the `audit` key of `config/observability.php`.
  */
+#[Api]
 readonly class AuditConfig
 {
     /**

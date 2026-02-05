@@ -9,6 +9,7 @@ use function dirname;
 use function is_string;
 
 use JsonException;
+use Pulsar\Api\Api;
 use Pulsar\Extensibility\Exception\ManifestException;
 use Pulsar\Extensibility\Manifest\ProvidesConfig;
 use Pulsar\Extensibility\Manifest\PulsarVersionConfig;
@@ -17,6 +18,7 @@ use Pulsar\Extensibility\Manifest\RequiresConfig;
 /**
  * Readonly DTO representing an extension's pulsar.json manifest.
  */
+#[Api]
 readonly class ExtensionManifest
 {
     public function __construct(

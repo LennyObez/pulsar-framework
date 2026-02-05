@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
+use Pulsar\Api\Api;
+
 /**
  * Interface for managing multiple database connections.
  */
+#[Api]
 interface ConnectionManagerInterface
 {
     /**

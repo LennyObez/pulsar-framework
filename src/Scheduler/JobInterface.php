@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Scheduler;
 
+use Pulsar\Api\Api;
+
 /**
  * Interface for scheduled jobs.
  */
+#[Api]
 interface JobInterface
 {
     /**

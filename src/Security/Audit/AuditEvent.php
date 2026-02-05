@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Audit;
 
+use Pulsar\Api\Api;
+
 /**
  * Types of auditable security events.
  */
+#[Api]
 enum AuditEvent: string
 {
     case Authentication = 'authentication';

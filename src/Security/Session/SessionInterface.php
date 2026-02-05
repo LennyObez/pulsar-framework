@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Session;
 
+use Pulsar\Api\Api;
+
 /**
  * Contract for session management.
  *
  * Abstracts session operations for testability while allowing
  * the concrete implementation to remain final.
  */
+#[Api]
 interface SessionInterface
 {
     /**

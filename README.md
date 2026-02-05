@@ -13,7 +13,7 @@
 
 </div>
 
-> **Status:** pre-alpha (0.x). APIs and architecture may change rapidly until 1.0.  
+> **Status:** Release Candidate (1.0.0-rc.1). The public API is stable and covered by semver guarantees.
 > Track milestones in [`ROADMAP.md`](ROADMAP.md) and requirements in [`PRD.md`](PRD.md).
 
 ## Why Pulsar
@@ -74,6 +74,22 @@ No dependency on Prometheus/Grafana/Sentry.
 - Session hardening, CSRF protection, security headers, rate limiting
 - Secrets strategy and key rotation foundations
 - Auditable security-relevant events
+
+### 5) Performance Budget Enforcement
+
+- PHPBench benchmark suite covering critical hot paths (bootstrap, routing, container, middleware)
+- Performance budgets defined in `tools/php/performance-budgets.json`
+- CI-enforced regression detection -- pull requests that exceed budgets will fail the pipeline
+
+## Documentation
+
+- [Installation Guide](docs/INSTALL.md)
+- [Architecture Overview](docs/ARCHITECTURE.md)
+- [Public API Reference](docs/PUBLIC_API.md)
+- [Extension Development Guide](docs/EXTENSIONS.md)
+- [CLI Reference](docs/CLI_REFERENCE.md)
+- [Repository Structure](docs/REPOSITORY_STRUCTURE.md)
+- [PHP Feature Matrix](docs/PHP_FEATURE_MATRIX.md)
 
 ## Non-goals for v1.0
 

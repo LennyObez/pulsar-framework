@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Authorization;
 
+use Pulsar\Api\Api;
+
 /**
  * Contract for role storage and lookup.
  */
+#[Api]
 interface RoleRegistryInterface
 {
     /**

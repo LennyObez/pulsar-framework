@@ -5,6 +5,31 @@ All notable changes to Pulsar Framework are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-rc.1] — 2026-02-04
+
+### Added
+
+- `#[Api]` and `#[Internal]` attributes for public API boundary enforcement.
+- 16 API compatibility test suites (170+ annotated public types, 142 tests, 551 assertions).
+- API attribute discovery meta-test ensuring no unexpected classes have `#[Api]`.
+- PHPBench performance benchmark suite (7 benchmark files, 35 subjects) with budget assertions.
+- Performance budgets CI job (`php-benchmark`) enforcing regression detection.
+- `composer bench` and `composer bench:ci` scripts for running benchmarks.
+- 4 E2E test files: FullRequestLifecycle, BootPipeline, SecurityPipeline, ObservabilityPipeline.
+- 6 new documentation files: INSTALL.md, EXTENSIONS.md, CLI_REFERENCE.md, UPGRADE.md, PUBLIC_API.md, PERFORMANCE_BUDGETS.md.
+
+### Changed
+
+- Version bumped from 0.9.0 to 1.0.0-rc.1.
+- Coverage threshold raised from 55% to 70%.
+- Benchmarks migrated from `benchmarks/` to `tests/Benchmark/` with PHP 8 attributes.
+- Updated ARCHITECTURE.md, REPOSITORY_STRUCTURE.md, PHP_FEATURE_MATRIX.md, README.md.
+
+### Internal
+
+- 161 source files annotated with `#[Api]` or `#[Internal]` attributes.
+- 10 classes marked as `#[Internal]`: Kernel, Version, ConfigManager, ConfigOverrides, Application, ExtensionRegistry, ExtensionBootstrap, ExtensionLoader, MiddlewarePipeline, MiddlewareRegistry.
+
 ## [0.9.0] — 2026-02-04
 
 ### Added

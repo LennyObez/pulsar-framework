@@ -9,9 +9,12 @@ use DateTimeImmutable;
 
 use function is_string;
 
+use Pulsar\Api\Api;
+
 /**
  * Readonly value object for an applied migration row.
  */
+#[Api]
 readonly class MigrationRecord
 {
     public function __construct(

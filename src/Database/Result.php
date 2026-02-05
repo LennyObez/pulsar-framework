@@ -7,6 +7,7 @@ namespace Pulsar\Database;
 use function array_map;
 use function count;
 
+use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
 /**
@@ -14,6 +15,7 @@ use Pulsar\Database\Exception\DatabaseException;
  *
  * Eagerly loads all rows from the statement at construction time.
  */
+#[Api]
 readonly class Result
 {
     /** @var list<Row> */

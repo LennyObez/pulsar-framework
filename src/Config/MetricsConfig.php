@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for the metrics section of observability config.
  */
+#[Api]
 readonly class MetricsConfig
 {
     public function __construct(

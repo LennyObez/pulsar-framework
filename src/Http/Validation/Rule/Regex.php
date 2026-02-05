@@ -7,6 +7,7 @@ namespace Pulsar\Http\Validation\Rule;
 use function is_string;
 use function preg_match;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
@@ -15,6 +16,7 @@ use function sprintf;
 /**
  * Value must match the given regular expression. Skips null values.
  */
+#[Api]
 readonly class Regex implements RuleInterface
 {
     public function __construct(

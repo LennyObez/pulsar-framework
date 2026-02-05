@@ -83,7 +83,7 @@ Deliverables:
   Exit criteria:
 - Example app produces logs/metrics/traces and viewable report
 
-### 0.6.0 — Security Baseline v1 (CURRENT)
+### 0.6.0 — Security Baseline v1 ✅
 
 Deliverables:
 
@@ -96,7 +96,7 @@ Deliverables:
   Exit criteria:
 - Security checklist documented + tested
 
-### 0.7.0 — Data Layer v1 (CURRENT)
+### 0.7.0 — Data Layer v1 ✅
 
 Deliverables:
 
@@ -126,7 +126,7 @@ Deliverables:
   Exit criteria:
 - Threat model docs for auth + tests
 
-### 0.9.0 — Enterprise Features v1 (CURRENT)
+### 0.9.0 — Enterprise Features v1 ✅
 
 Deliverables:
 
@@ -139,14 +139,20 @@ Deliverables:
   Exit criteria:
 - All enterprise primitives tested and documented
 
-### 1.0.0-rc.1 — Stabilization
+### 1.0.0-rc.1 — Stabilization ✅
 
 Deliverables:
 
-- API freeze for public extension API
-- Performance budgets enforced
-- Documentation complete
-- Migration guides where applicable
+- `#[Api]` and `#[Internal]` attributes for public API boundary enforcement ✓
+- 16 API compatibility test suites (170+ annotated public types, 142 tests, 551 assertions) ✓
+- PHPBench performance benchmark suite (7 benchmark files, 35 subjects) with budget assertions ✓
+- Performance budgets CI job (`php-benchmark`) enforcing regression detection ✓
+- 4 E2E test files (FullRequestLifecycle, BootPipeline, SecurityPipeline, ObservabilityPipeline) ✓
+- 6 documentation files: INSTALL.md, EXTENSIONS.md, CLI_REFERENCE.md, UPGRADE.md, PUBLIC_API.md, PERFORMANCE_BUDGETS.md ✓
+- Coverage threshold raised from 55% to 70% ✓
+- 161 source files annotated with API boundary attributes ✓
+  Exit criteria:
+- Public API frozen, performance budgets enforced, documentation complete
 
 ### 1.0.0 — First Stable Release
 

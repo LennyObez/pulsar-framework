@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
+use Pulsar\Api\Api;
+
 /**
  * Reason for a feature flag evaluation result.
  */
+#[Api]
 enum FlagEvaluationReason: string
 {
     case FlagDisabled = 'flag_disabled';

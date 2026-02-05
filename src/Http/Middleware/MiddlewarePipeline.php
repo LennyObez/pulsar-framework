@@ -8,6 +8,7 @@ use function assert;
 use function count;
 
 use InvalidArgumentException;
+use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
@@ -17,6 +18,7 @@ use function sprintf;
 /**
  * Executes a stack of middleware around a core handler.
  */
+#[Internal]
 final class MiddlewarePipeline
 {
     /**

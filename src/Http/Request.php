@@ -15,12 +15,14 @@ use function json_decode;
 use const JSON_THROW_ON_ERROR;
 
 use JsonException;
+use Pulsar\Api\Api;
 
 use function str_contains;
 
 /**
  * Immutable HTTP request value object.
  */
+#[Api]
 readonly class Request
 {
     /**

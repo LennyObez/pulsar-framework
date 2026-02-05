@@ -7,10 +7,12 @@ namespace Pulsar\Observability\Log;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
+use Pulsar\Api\Api;
 
 /**
  * Immutable log entry value object.
  */
+#[Api]
 readonly class LogEntry
 {
     /**

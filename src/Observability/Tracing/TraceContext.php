@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Tracing;
 
+use Pulsar\Api\Api;
 use Random\RandomException;
 
 /**
@@ -12,6 +13,7 @@ use Random\RandomException;
  * Holds trace ID, span ID, and trace flags. Creates child contexts
  * that preserve the trace ID with a new span ID.
  */
+#[Api]
 final readonly class TraceContext
 {
     public function __construct(

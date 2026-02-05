@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for rate limiting settings.
  *
  * Maps from the `rate_limiting` key of `config/security.php`.
  */
+#[Api]
 readonly class RateLimitConfig
 {
     public function __construct(

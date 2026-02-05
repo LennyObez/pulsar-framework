@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Resilience\HealthCheck;
 
 use DateTimeImmutable;
+use Pulsar\Api\Api;
 
 /**
  * Aggregated report from running all health checks.
  */
+#[Api]
 readonly class HealthReport
 {
     /**
