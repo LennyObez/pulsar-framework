@@ -873,7 +873,7 @@ final class SqliteEventStoreTest extends TestCase
             eventId: $eventId,
             eventType: $eventType,
             schemaVersion: EventVersion::V1,
-            timestampUs: $timestampUs ?? (int) ((float) microtime(true) * 1_000_000.0),
+            timestampUs: $timestampUs ?? (int) (microtime(true) * 1_000_000.0),
             requestId: $requestId,
             traceId: $traceId,
             spanId: 'span-123',

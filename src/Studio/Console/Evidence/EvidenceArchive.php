@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Console\Evidence;
 
+use InvalidArgumentException;
+
+use function is_string;
 use function json_decode;
 use function json_encode;
 
@@ -12,6 +15,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
+use JsonException;
 use Pulsar\Api\Internal;
 
 /**
@@ -49,17 +53,36 @@ final readonly class EvidenceArchive
 
     /**
      * Deserialize an archive from a JSON string.
+     *
+     * @throws InvalidArgumentException If JSON is invalid or required keys are missing
      */
     public static function fromJson(string $json): self
     {
-        /** @var array{events: list<array<string, mixed>>, chain: list<array<string, mixed>>, manifest: array<string, mixed>, mac: ?string} $data */
-        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        try {
+            /** @var array<string, mixed> $data */
+            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            throw new InvalidArgumentException('Invalid JSON: ' . $e->getMessage(), 0, $e);
+        }
+
+        if (!isset($data['events'], $data['chain'], $data['manifest'])) {
+            throw new InvalidArgumentException('Archive missing required keys: events, chain, manifest');
+        }
+
+        /** @var list<array<string, mixed>> $events */
+        $events = $data['events'];
+
+        /** @var list<array<string, mixed>> $chain */
+        $chain = $data['chain'];
+
+        /** @var array<string, mixed> $manifest */
+        $manifest = $data['manifest'];
 
         return new self(
-            events: $data['events'],
-            chainLinks: $data['chain'],
-            manifest: $data['manifest'],
-            mac: $data['mac'] ?? null,
+            events: $events,
+            chainLinks: $chain,
+            manifest: $manifest,
+            mac: isset($data['mac']) && is_string($data['mac']) ? $data['mac'] : null,
         );
     }
 }

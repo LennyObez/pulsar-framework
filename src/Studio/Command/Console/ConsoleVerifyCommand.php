@@ -6,6 +6,9 @@ namespace Pulsar\Studio\Command\Console;
 
 use function file_exists;
 use function file_get_contents;
+
+use InvalidArgumentException;
+
 use function is_string;
 use function json_encode;
 
@@ -20,7 +23,6 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Studio\Console\Evidence\EvidenceArchive;
 use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
-use Pulsar\Studio\Exception\StudioException;
 
 use function sprintf;
 
@@ -72,7 +74,7 @@ final class ConsoleVerifyCommand extends Command
 
         try {
             $archive = EvidenceArchive::fromJson($contents);
-        } catch (StudioException $e) {
+        } catch (InvalidArgumentException $e) {
             if ($isJson) {
                 $output->writeln(json_encode(['error' => 'invalid_archive', 'message' => $e->getMessage()], JSON_THROW_ON_ERROR));
             } else {
