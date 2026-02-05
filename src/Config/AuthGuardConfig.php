@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -25,8 +27,10 @@ readonly class AuthGuardConfig
      */
     public static function fromArray(array $data): self
     {
-        $name = (string) ($data['name'] ?? ''); // @phpstan-ignore cast.string
-        $driver = (string) ($data['driver'] ?? 'session'); // @phpstan-ignore cast.string
+        $rawName = $data['name'] ?? '';
+        $name = is_string($rawName) ? $rawName : '';
+        $rawDriver = $data['driver'] ?? 'session';
+        $driver = is_string($rawDriver) ? $rawDriver : 'session';
         $enabled = (bool) ($data['enabled'] ?? true);
 
         return new self(

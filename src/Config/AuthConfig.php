@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -31,7 +33,8 @@ readonly class AuthConfig
      */
     public static function fromArray(array $data): self
     {
-        $defaultGuard = (string) ($data['default_guard'] ?? 'session'); // @phpstan-ignore cast.string
+        $rawDefaultGuard = $data['default_guard'] ?? 'session';
+        $defaultGuard = is_string($rawDefaultGuard) ? $rawDefaultGuard : 'session';
 
         /** @var list<array<string, mixed>> $guardsData */
         $guardsData = $data['guards'] ?? [];

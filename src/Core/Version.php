@@ -17,7 +17,7 @@ final class Version
     public const int PATCH = 0;
 
     /** Pre-release suffix including the leading hyphen, or '' for stable releases. */
-    public const string PRERELEASE_SUFFIX = '-rc.2';
+    public const string PRERELEASE_SUFFIX = '-rc.3';
 
     /**
      * Get the full version string (e.g. "1.0.0-rc.1" or "1.0.0").

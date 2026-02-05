@@ -14,7 +14,8 @@ use Throwable;
 readonly class RetryResult
 {
     /**
-     * @param list<int> $attemptDelays Delay in milliseconds before each attempt
+     * @param mixed      $result        The return value (null on failure)
+     * @param list<int>  $attemptDelays Delay in milliseconds before each attempt
      */
     public function __construct(
         public bool $succeeded,

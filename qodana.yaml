@@ -24,6 +24,12 @@ exclude:
   - name: PhpDocRedundantThrowsInspection
   # Composer packages - dependencies managed externally, not always installed in CI scan
   - name: PhpNoninstalledComposerPackagesInspection
+  # Unused parameters with underscore prefix are intentionally unused (PHP naming convention)
+  - name: PhpUnusedParameterInspection
+  # Development-only router file references non-existent autoload
+  - name: PhpIncludeInspection
+    paths:
+      - resources/studio/router.php
   - name: All
     paths:
       - composer.json

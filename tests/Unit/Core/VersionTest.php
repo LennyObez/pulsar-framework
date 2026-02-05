@@ -15,7 +15,7 @@ final class VersionTest extends TestCase
     #[Test]
     public function fullVersionIncludesPrerelease(): void
     {
-        self::assertSame('1.0.0-rc.2', Version::full());
+        self::assertSame('1.0.0-rc.3', Version::full());
     }
 
     #[Test]
@@ -43,8 +43,8 @@ final class VersionTest extends TestCase
         self::assertSame(1, Version::MAJOR);
         self::assertSame(0, Version::MINOR);
         self::assertSame(0, Version::PATCH);
-        self::assertSame('-rc.2', Version::PRERELEASE_SUFFIX);
+        self::assertSame('-rc.3', Version::PRERELEASE_SUFFIX);
         self::assertSame('1.0.0', Version::short());
-        self::assertSame('1.0.0-rc.2', Version::full());
+        self::assertSame('1.0.0-rc.3', Version::full());
     }
 }

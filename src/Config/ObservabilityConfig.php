@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -38,11 +40,13 @@ readonly class ObservabilityConfig
         $logging = $data['logging'] ?? [];
 
         // Env overrides for channel and level
+        $rawDefaultChannel = $logging['default_channel'] ?? 'file';
         $defaultChannel = $environment->get('LOG_CHANNEL')
-            ?? (string) ($logging['default_channel'] ?? 'file'); // @phpstan-ignore cast.string
+            ?? (is_string($rawDefaultChannel) ? $rawDefaultChannel : 'file');
 
+        $rawLevel = $logging['level'] ?? 'info';
         $level = $environment->get('LOG_LEVEL')
-            ?? (string) ($logging['level'] ?? 'info'); // @phpstan-ignore cast.string
+            ?? (is_string($rawLevel) ? $rawLevel : 'info');
 
         // Build channel DTOs
         /** @var array<string, array<string, mixed>> $channels */
@@ -50,11 +54,14 @@ readonly class ObservabilityConfig
         $channelConfigs = [];
 
         foreach ($channels as $name => $channelData) {
+            $rawDriver = $channelData['driver'] ?? 'file';
+            $rawPath = $channelData['path'] ?? null;
+            $rawStream = $channelData['stream'] ?? null;
             $channelConfigs[] = new LoggingChannelConfig(
                 name: $name,
-                driver: (string) ($channelData['driver'] ?? 'file'), // @phpstan-ignore cast.string
-                path: isset($channelData['path']) ? (string) $channelData['path'] : null, // @phpstan-ignore cast.string
-                stream: isset($channelData['stream']) ? (string) $channelData['stream'] : null, // @phpstan-ignore cast.string
+                driver: is_string($rawDriver) ? $rawDriver : 'file',
+                path: is_string($rawPath) ? $rawPath : null,
+                stream: is_string($rawStream) ? $rawStream : null,
             );
         }
 

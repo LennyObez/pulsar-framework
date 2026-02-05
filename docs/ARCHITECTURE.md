@@ -257,6 +257,57 @@ Pulsar includes a PHPBench-based benchmark suite (`tests/Benchmark/`) with CI-en
 - **PHPBench configuration**: See `tools/php/phpbench.json` for runner configuration.
 - **CI enforcement**: Performance regressions that exceed the defined budgets will fail the CI pipeline, preventing accidental degradation of framework performance.
 
+### Studio (`src/Studio/`)
+
+Built-in observability and debugging subsystem. See [`docs/STUDIO.md`](STUDIO.md) for full documentation.
+
+Architecture:
+
+- **Two-phase Kernel boot**: `preboot()` (config + store + event factory) then `attach()` (decorate final service bindings after extensions boot)
+- **Collector pattern**: Middleware, decorators, sinks, and observers capture events without modifying core component interfaces
+- **Event pipeline**: Collect → Redact → Serialize → Hash → Encrypt (optional) → Store + Chain
+- **Evidence chain**: SHA-256 hash chain with optional BLAKE2b per-link MAC for tamper detection
+
+Components:
+
+- `StudioManager` — central orchestrator for event ingestion with sampling
+- `FiberScopedContextProvider` — fiber-safe correlation context via `WeakMap` per Fiber
+- `SqliteEventStore` — SQLite storage with WAL mode and write contention retry
+- `HashChain` / `EvidenceVerifier` — cryptographic integrity verification
+- `StudioServer` / `StudioRouter` — PHP built-in server with SSE support
+- `StudioAccessGate` — environment-aware access control (local/staging/production)
+
+#### Concurrency Model
+
+`FiberScopedContextProvider` uses a `WeakMap<object, SplStack<CorrelationContext>>` keyed by Fiber identity. Each Fiber gets its own independent scope stack:
+
+- Main thread uses a stable `stdClass` root key
+- Each Fiber uses `Fiber::getCurrent()` as its key
+- When a Fiber is garbage-collected, its `WeakMap` entry is automatically reclaimed
+- `ContextScope` is an RAII guard that must be closed from the same Fiber that called `enter()`
+
+This design ensures sequential runtime behavior (all scopes on the root key) while being safe under Fiber concurrency without code changes.
+
+#### SQLite Write Contention
+
+Studio uses SQLite in WAL mode with `BEGIN IMMEDIATE` transactions for chain linearization:
+
+- `busy_timeout = 5000` PRAGMA provides reader/writer coordination at the SQLite level
+- Application-level retry on `SQLITE_BUSY` / `SQLITE_LOCKED`: 5 attempts with exponential backoff (base 5ms, 3x multiplier, ±50% jitter)
+- Each retry re-runs the entire transaction closure (fresh `BEGIN IMMEDIATE` + fresh chain tip read)
+- `studio.store.busy` metric counter tracks contention events
+
+This guarantees a linear evidence chain even under concurrent multi-process writes (PHP-FPM workers, RoadRunner workers).
+
+#### Evidence Chain After Retention
+
+Retention enforcement (`RetentionEnforcer`) deletes old events and their chain links. After pruning, `EvidenceVerifier` operates in "window" mode:
+
+- The earliest remaining link's `previous_hash` becomes the trust boundary (not verified)
+- All remaining links are verified from that anchor to the latest link
+- `links_pruned` counter in `studio_meta` tracks how many links were removed
+- Verification reports include mode (`full` / `window`), anchor type, and pruned count
+
 ## Extension Points
 
 Extensions can hook into:

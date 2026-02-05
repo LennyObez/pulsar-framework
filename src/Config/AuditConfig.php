@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -34,8 +36,9 @@ readonly class AuditConfig
     {
         $enabled = (bool) ($data['enabled'] ?? true);
 
+        $rawLogPath = $data['log_path'] ?? 'var/logs/audit.jsonl';
         $logPath = $environment->get('AUDIT_LOG_PATH')
-            ?? (string) ($data['log_path'] ?? 'var/logs/audit.jsonl'); // @phpstan-ignore cast.string
+            ?? (is_string($rawLogPath) ? $rawLogPath : 'var/logs/audit.jsonl');
 
         /** @var list<string> $events */
         $events = $data['events'] ?? [];

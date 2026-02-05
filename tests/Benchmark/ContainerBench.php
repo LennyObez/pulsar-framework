@@ -56,16 +56,14 @@ final class ContainerBench
     #[Assert('mode(variant.time.avg) < 100 microseconds')]
     public function benchHasExisting(): void
     {
-        /** @phpstan-ignore method.resultUnused */
-        $this->container->has('instance');
+        $_ = $this->container->has('instance');
     }
 
     #[Subject]
     #[Assert('mode(variant.time.avg) < 100 microseconds')]
     public function benchHasNonExisting(): void
     {
-        /** @phpstan-ignore method.resultUnused */
-        $this->container->has('non-existing');
+        $_ = $this->container->has('non-existing');
     }
 
     #[Subject]
