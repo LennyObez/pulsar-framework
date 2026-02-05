@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
-use function is_int;
-use function is_numeric;
-
 use NoDiscard;
 use Pulsar\Api\Api;
+
+use function is_int;
+use function is_numeric;
 
 /**
  * Typed configuration DTO for the error tracking section of observability config.

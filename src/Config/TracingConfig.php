@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
+use Pulsar\Api\Api;
+
 use function is_float;
 use function is_int;
 use function is_numeric;
-
-use NoDiscard;
-use Pulsar\Api\Api;
 
 /**
  * Typed configuration DTO for the tracing section of observability config.

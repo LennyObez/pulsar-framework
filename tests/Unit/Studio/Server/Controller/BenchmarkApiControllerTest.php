@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Server\Controller;
 
-use function hash;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,6 +16,11 @@ use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
+
+use function hash;
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(BenchmarkApiController::class)]
 final class BenchmarkApiControllerTest extends TestCase

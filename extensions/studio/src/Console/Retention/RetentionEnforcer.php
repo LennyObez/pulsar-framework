@@ -7,8 +7,8 @@ namespace Pulsar\Extension\Studio\Console\Retention;
 use Override;
 use PDO;
 use Pulsar\Api\Internal;
-use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Observability\Metrics\MetricRegistry;
 
 use function time;
 

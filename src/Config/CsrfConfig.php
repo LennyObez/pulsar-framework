@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
+use Pulsar\Api\Api;
+
 use function array_filter;
 use function array_values;
 use function in_array;
@@ -11,9 +14,6 @@ use function is_array;
 use function is_int;
 use function is_numeric;
 use function is_string;
-
-use NoDiscard;
-use Pulsar\Api\Api;
 
 /**
  * Typed configuration DTO for CSRF protection settings.

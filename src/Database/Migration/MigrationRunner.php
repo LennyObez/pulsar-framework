@@ -4,20 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Migration;
 
-use function array_diff_key;
-use function array_filter;
-use function array_values;
-
 use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Database\Row;
-
-use function sprintf;
-
 use Throwable;
 
+use function array_diff_key;
+use function array_filter;
+use function array_values;
+use function sprintf;
 use function usort;
 
 /**

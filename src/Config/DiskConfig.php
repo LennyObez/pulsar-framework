@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
-use function is_string;
-
 use NoDiscard;
 use Pulsar\Api\Api;
+
+use function is_string;
 
 /**
  * Per-disk storage configuration.

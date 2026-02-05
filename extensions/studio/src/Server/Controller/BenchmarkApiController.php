@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Server\Controller;
 
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
+use Pulsar\Http\ResponseStatus;
+
 use function array_filter;
 use function array_sum;
 use function array_values;
@@ -26,12 +32,6 @@ use function var_export;
 
 use const PHP_BINARY;
 use const PHP_OS_FAMILY;
-
-use Pulsar\Api\Internal;
-use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Http\ResponseStatus;
 
 /**
  * Handles benchmark dashboard API actions.

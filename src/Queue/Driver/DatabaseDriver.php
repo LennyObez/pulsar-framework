@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Queue\Driver;
 
-use function bin2hex;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionManagerInterface;
@@ -17,6 +15,7 @@ use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
+use function bin2hex;
 use function time;
 
 /**

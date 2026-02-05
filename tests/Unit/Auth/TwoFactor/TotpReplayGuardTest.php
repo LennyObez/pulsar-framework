@@ -4,14 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Auth\TwoFactor;
 
-use function bin2hex;
-
-use const DIRECTORY_SEPARATOR;
-
-use function gc_collect_cycles;
-use function is_dir;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,10 +11,16 @@ use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
 use Pulsar\Auth\TwoFactor\SqliteTotpReplayGuard;
 use Pulsar\Auth\TwoFactor\TwoFactorPurpose;
 
+use function bin2hex;
+use function gc_collect_cycles;
+use function is_dir;
+use function mkdir;
 use function random_bytes;
 use function rmdir;
 use function scandir;
 use function unlink;
+
+use const DIRECTORY_SEPARATOR;
 
 #[CoversClass(InMemoryTotpReplayGuard::class)]
 #[CoversClass(SqliteTotpReplayGuard::class)]

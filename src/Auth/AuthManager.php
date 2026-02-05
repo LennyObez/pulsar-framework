@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth;
 
-use function array_key_exists;
-
 use Override;
 use Pulsar\Auth\Exception\AuthenticationException;
 use Pulsar\Auth\Guard\GuardInterface;
@@ -13,6 +11,8 @@ use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Http\Request;
 use Pulsar\Runtime\ResettableInterface;
+
+use function array_key_exists;
 
 /**
  * Manages authentication guards and resolves identities from requests.

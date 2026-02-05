@@ -10,6 +10,7 @@ use function array_key_exists;
 use function base64_decode;
 use function chr;
 use function openssl_pkey_get_public;
+use function ord;
 use function pack;
 use function str_replace;
 use function strlen;
@@ -98,7 +99,7 @@ final readonly class JwkKey
         $der = self::asn1Sequence($algorithmIdentifier . $pubKeyBitString);
         $pem = "-----BEGIN PUBLIC KEY-----\n"
             . chunk_split(base64_encode($der), 64)
-            . "-----END PUBLIC KEY-----";
+            . '-----END PUBLIC KEY-----';
 
         // Validate the generated PEM
         $key = openssl_pkey_get_public($pem);
@@ -151,7 +152,7 @@ final readonly class JwkKey
 
         $pem = "-----BEGIN PUBLIC KEY-----\n"
             . chunk_split(base64_encode($der), 64)
-            . "-----END PUBLIC KEY-----";
+            . '-----END PUBLIC KEY-----';
 
         $key = openssl_pkey_get_public($pem);
 

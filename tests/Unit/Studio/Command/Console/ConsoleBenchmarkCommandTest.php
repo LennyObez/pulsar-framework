@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Studio\Command\Console;
 
 use Closure;
-
-use function dirname;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +13,8 @@ use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Extension\Studio\Command\Console\ConsoleBenchmarkCommand;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+
+use function dirname;
 
 #[CoversClass(ConsoleBenchmarkCommand::class)]
 final class ConsoleBenchmarkCommandTest extends TestCase

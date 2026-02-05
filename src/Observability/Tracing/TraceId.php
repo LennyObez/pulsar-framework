@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Tracing;
 
-use function bin2hex;
-use function ctype_xdigit;
-
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Observability\Tracing\Exception\TracingException;
@@ -14,6 +11,8 @@ use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
+use function bin2hex;
+use function ctype_xdigit;
 use function strlen;
 use function strtolower;
 

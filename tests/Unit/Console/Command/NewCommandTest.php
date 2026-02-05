@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Console\Command;
 
-use function dirname;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -13,6 +11,8 @@ use Pulsar\Console\Command\NewCommand;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+
+use function dirname;
 
 #[CoversClass(NewCommand::class)]
 final class NewCommandTest extends TestCase

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Psr7Bridge\Middleware;
 
-use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as Psr15MiddlewareInterface;

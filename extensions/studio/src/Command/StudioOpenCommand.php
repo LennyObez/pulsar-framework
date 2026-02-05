@@ -5,17 +5,16 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Command;
 
 use Override;
-
-use const PHP_OS_FAMILY;
-
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Extension\Studio\Config\StudioConfig;
 
 use function sprintf;
+
+use const PHP_OS_FAMILY;
 
 /**
  * Opens the Studio dashboard in the default browser.

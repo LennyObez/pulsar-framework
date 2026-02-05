@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime\Http;
 
+use Pulsar\Api\Internal;
+use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Method;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
+use Pulsar\Http\ResponseStatus;
+use ValueError;
+
 use function array_filter;
-
-use const ARRAY_FILTER_USE_KEY;
-
 use function array_key_exists;
 use function count;
 use function explode;
@@ -15,14 +20,6 @@ use function intval;
 use function is_string;
 use function ltrim;
 use function parse_str;
-
-use Pulsar\Api\Internal;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Http\ResponseStatus;
-
 use function rawurldecode;
 use function strlen;
 use function strpos;
@@ -30,7 +27,7 @@ use function strtolower;
 use function substr;
 use function trim;
 
-use ValueError;
+use const ARRAY_FILTER_USE_KEY;
 
 /**
  * Incremental HTTP/1.1 request parser operating on a ConnectionContext buffer.

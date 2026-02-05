@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\ObservabilityExport\Metrics;
 
-use function count;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\ObservabilityExport\Internal\JsonLinesFileWriter;
 use Pulsar\Extension\ObservabilityExport\Schema\MetricSchema;
 use Pulsar\Observability\Metrics\MetricSnapshot;
+
+use function count;
 
 use const PHP_EOL;
 

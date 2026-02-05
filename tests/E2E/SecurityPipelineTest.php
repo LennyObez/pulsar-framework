@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\E2E;
 
-use function array_key_exists;
-
 use NoDiscard;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -22,6 +20,8 @@ use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 use Pulsar\Security\Session\SessionInterface;
+
+use function array_key_exists;
 
 /**
  * End-to-end tests for the security pipeline.

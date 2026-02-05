@@ -17,7 +17,8 @@ final readonly class ProviderConfig
         public string $name,
         public string $type,
         public string $clientId,
-        #[SensitiveParameter] public string $clientSecret,
+        #[SensitiveParameter]
+        public string $clientSecret,
         public string $authorizationUrl,
         public string $tokenUrl,
         public ?string $jwksUri,

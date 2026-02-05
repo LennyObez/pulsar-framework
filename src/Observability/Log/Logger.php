@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
-use function fwrite;
-use function is_string;
-
 use NoDiscard;
 use Psr\Log\LoggerInterface;
 use Pulsar\Config\LoggingChannelConfig;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Observability\Log\Sink\FileSink;
 use Pulsar\Observability\Log\Sink\StreamSink;
-
-use function sprintf;
-
 use Stringable;
 use Throwable;
+
+use function fwrite;
+use function is_string;
+use function sprintf;
 
 /**
  * PSR-3 compliant logger.

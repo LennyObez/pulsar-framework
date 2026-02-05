@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function date;
-use function file_put_contents;
-use function is_dir;
-use function is_string;
-use function mkdir;
-
 use Override;
-
-use function preg_replace;
-
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
+use function date;
+use function file_put_contents;
+use function is_dir;
+use function is_string;
+use function mkdir;
+use function preg_replace;
 use function sprintf;
 use function strtolower;
 use function trim;

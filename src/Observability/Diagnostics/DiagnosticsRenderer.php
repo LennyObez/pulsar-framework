@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Diagnostics;
 
-use function array_slice;
-use function htmlspecialchars;
-
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\ErrorTracking\ErrorGroup;
 use Pulsar\Observability\Metrics\Counter;
@@ -17,6 +14,8 @@ use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanStatus;
 
+use function array_slice;
+use function htmlspecialchars;
 use function sprintf;
 
 /**

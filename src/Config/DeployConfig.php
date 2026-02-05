@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
+use Pulsar\Api\Api;
+
 use function in_array;
 use function is_array;
 use function is_int;
 use function is_string;
-
-use NoDiscard;
-use Pulsar\Api\Api;
 
 /**
  * Typed configuration DTO for `config/deploy.php`.

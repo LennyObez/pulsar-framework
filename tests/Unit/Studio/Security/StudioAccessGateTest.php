@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Security;
 
-use function base64_encode;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +14,8 @@ use Pulsar\Extension\Studio\Security\StudioAccessGate;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
+
+use function base64_encode;
 
 #[CoversClass(StudioAccessGate::class)]
 #[CoversClass(AllowlistChecker::class)]

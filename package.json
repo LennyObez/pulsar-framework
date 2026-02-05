@@ -23,6 +23,8 @@
     "format:fix": "prettier --write .",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
-    "build:studio": "tsc -p resources/studio/tsconfig.json"
+    "build:studio": "tsc -p extensions/studio/frontend/tsconfig.json",
+    "build:admin": "tsc -p extensions/admin/frontend/tsconfig.json",
+    "build": "pnpm build:studio && pnpm build:admin"
   }
 }

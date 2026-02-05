@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\ErrorTracking;
 
+use Pulsar\Api\Api;
+
 use function array_any;
 use function array_merge;
 use function in_array;
 use function is_array;
 use function is_string;
-
-use Pulsar\Api\Api;
-
 use function str_contains;
 use function strtolower;
 

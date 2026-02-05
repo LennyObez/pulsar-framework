@@ -6,11 +6,11 @@ namespace Pulsar\Extension\Studio\Console\Collector;
 
 use Closure;
 use Pulsar\Api\Internal;
-use Pulsar\Observability\ErrorTracking\ErrorEvent;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\ExceptionPayload;
 use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Context\CorrelationContextProviderInterface;
+use Pulsar\Observability\ErrorTracking\ErrorEvent;
 use Throwable;
 
 /**

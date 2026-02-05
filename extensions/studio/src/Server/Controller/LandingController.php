@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Server\Controller;
 
-use const ENT_QUOTES;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Config\StudioConfig;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
 
 use function htmlspecialchars;
 use function implode;
-
-use Pulsar\Api\Internal;
-use Pulsar\Extension\Studio\Config\StudioConfig;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-
 use function sprintf;
+
+use const ENT_QUOTES;
 
 /**
  * Handles GET /studio — the Studio landing page.

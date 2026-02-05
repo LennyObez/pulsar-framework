@@ -4,15 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Console\Command;
 
-use function bin2hex;
-
-use const DIRECTORY_SEPARATOR;
-
-use function file_get_contents;
-use function file_put_contents;
-use function is_dir;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,11 +12,18 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
 
+use function bin2hex;
+use function file_get_contents;
+use function file_put_contents;
+use function is_dir;
+use function mkdir;
 use function random_bytes;
 use function rmdir;
 use function scandir;
 use function sodium_bin2hex;
 use function unlink;
+
+use const DIRECTORY_SEPARATOR;
 
 #[CoversClass(KeyRotateCommand::class)]
 final class KeyRotateCommandTest extends TestCase
