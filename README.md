@@ -13,7 +13,7 @@
 
 </div>
 
-> **Status:** Release Candidate (1.0.0-rc.1). The public API is stable and covered by semver guarantees.
+> **Status:** Release Candidate (1.0.0-rc.2). The `#[Api]`-marked surface is SemVer-stable; non-`#[Api]` internals may change until 1.0.0.
 > Track milestones in [`ROADMAP.md`](ROADMAP.md) and requirements in [`PRD.md`](PRD.md).
 
 ## Why Pulsar
@@ -22,7 +22,7 @@ Pulsar targets teams building **mission-critical applications** where you need:
 
 - **Deterministic architecture** (explicit boundaries, predictable boot pipeline)
 - **Extension-first design** (stable hooks, compatibility checks, versioned lifecycle)
-- **Measurable performance** (bench harness + budgets enforced in CI)
+- **Measurable performance** (bench harness + budgets compared against stored baselines in CI; blocks merges when signal is stable, otherwise advisory with artifacts)
 - **Security by default** (secure sessions, CSRF, headers, encryption, auditability)
 - **Regulated-domain readiness** (documentation mapping features to compliance controls)
 
@@ -34,12 +34,12 @@ Pulsar is designed for regulated domains such as:
 - Legal & e-signature workflows (GDPR, eIDAS)
 - Medical & healthcare ecosystems (MDR, HL7/FHIR, ISO 13485)
 
-> Important: Pulsar does **not** claim certification by itself.  
+> Important: Pulsar does **not** claim certification by itself.
 > It provides secure defaults, auditability, and documentation that maps framework capabilities to compliance controls. Final compliance always depends on how each product is implemented and operated.
 
 ## Core principles
 
-- **Small, fast core**: keep the hot path tight (bootstrap → route → handler → response)
+- **Lean hot path**: fast core with minimal overhead on the request path (bootstrap → route → handler → response)
 - **No hidden magic**: explicit configuration, explicit dependencies, type-safe APIs
 - **Compile-ready DI**: reduce runtime reflection overhead where possible
 - **HMVC done strictly**: modules are first-class boundaries with clear contracts
@@ -60,12 +60,12 @@ Pulsar is designed for regulated domains such as:
 - Stable hooks: DI bindings, routes, console commands, migrations, assets
 - Compatibility validation and deprecation strategy
 
-### 3) In-house Observability Suite
+### 3) Pulsar Studio — Studio Console
 
-No dependency on Prometheus/Grafana/Sentry.
+No dependency on external monitoring vendors.
 
 - Structured logs + audit logging subsystem
-- Metrics collector + exporters (Prometheus exposition format allowed as output)
+- Metrics collector + exporters (OpenMetrics text exposition format)
 - Tracing: spans, context propagation, sampling rules
 - Error reporting: grouping, fingerprints, local viewer UI
 
@@ -79,7 +79,7 @@ No dependency on Prometheus/Grafana/Sentry.
 
 - PHPBench benchmark suite covering critical hot paths (bootstrap, routing, container, middleware)
 - Performance budgets defined in `tools/php/performance-budgets.json`
-- CI-enforced regression detection -- pull requests that exceed budgets will fail the pipeline
+- Benchmarks compared against a stored baseline with relative regression thresholds; CI blocks merges when signal is stable, otherwise advisory with artifacts and PR summary
 
 ## Documentation
 
@@ -93,8 +93,7 @@ No dependency on Prometheus/Grafana/Sentry.
 
 ## Non-goals for v1.0
 
-Pulsar v1.0 will **not** ship as a complete product CMS/admin panel/UI framework.  
-However, v1.0 explicitly aims to make building an admin/CMS **straightforward via first-party extensions** (admin shell, UI foundation, and scaffolding).
+Core v1.0 does not ship a full CMS/admin product; optional first-party extensions may provide an admin shell/UI scaffolding.
 
 ## Requirements
 
@@ -102,7 +101,7 @@ However, v1.0 explicitly aims to make building an admin/CMS **straightforward vi
 - Composer 2.7+
 - Node.js (for optional docs/UI tooling) + pnpm
 
-Exact toolchain is pinned in-repo to avoid “foundation rewrites”.
+Exact toolchain is pinned in-repo to avoid "foundation rewrites".
 
 ## Contributing
 

@@ -8,19 +8,19 @@ use function implode;
 use function sprintf;
 
 /**
- * Renders a MetricRegistry as Prometheus text exposition format 0.0.4.
+ * Renders a MetricRegistry as OpenMetrics text exposition format 0.0.4.
  *
  * Output includes # HELP, # TYPE lines, and sample lines with labels.
  * Histograms render _bucket, _sum, and _count series.
  */
-final readonly class PrometheusExporter
+final readonly class OpenMetricsExporter
 {
     public function __construct(
         private MetricRegistry $registry,
     ) {}
 
     /**
-     * Render all metrics as Prometheus exposition text.
+     * Render all metrics as OpenMetrics exposition text.
      */
     public function export(): string
     {

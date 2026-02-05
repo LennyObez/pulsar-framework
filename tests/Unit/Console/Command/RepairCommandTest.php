@@ -41,7 +41,7 @@ final class RepairCommandTest extends TestCase
     #[Test]
     public function repairsSucceed(): void
     {
-        $job = $this->createMock(RepairJobInterface::class);
+        $job = $this->createStub(RepairJobInterface::class);
         $job->method('getName')->willReturn('cache-repair');
         $job->method('getDescription')->willReturn('Cache repair');
         $job->method('diagnose')->willReturn(
@@ -69,7 +69,7 @@ final class RepairCommandTest extends TestCase
     #[Test]
     public function repairsFail(): void
     {
-        $job = $this->createMock(RepairJobInterface::class);
+        $job = $this->createStub(RepairJobInterface::class);
         $job->method('getName')->willReturn('db-repair');
         $job->method('getDescription')->willReturn('DB repair');
         $job->method('diagnose')->willReturn(
@@ -122,7 +122,7 @@ final class RepairCommandTest extends TestCase
 
     private function makeRepairJob(string $name, bool $needsRepair, string $description): RepairJobInterface
     {
-        $job = $this->createMock(RepairJobInterface::class);
+        $job = $this->createStub(RepairJobInterface::class);
         $job->method('getName')->willReturn($name);
         $job->method('getDescription')->willReturn($description);
         $job->method('diagnose')->willReturn(

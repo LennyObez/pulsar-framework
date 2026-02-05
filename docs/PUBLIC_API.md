@@ -346,9 +346,35 @@ These classes are explicitly marked `#[Internal]` and are not covered by semver 
 | `Pulsar\Http\Middleware\MiddlewarePipeline` | Middleware execution implementation             |
 | `Pulsar\Http\Middleware\MiddlewareRegistry` | Middleware storage implementation               |
 
+## Snapshot Workflow
+
+The public API surface is tracked by a committed JSON snapshot at `tools/api/public-api.snapshot.json`. A PHPUnit test (`PublicApiSnapshotTest`) regenerates the snapshot in-memory and compares it against the committed file — any drift fails the test suite.
+
+### Adding new public API
+
+1. Add the `#[Api]` attribute to the new class, method, or constant.
+2. Regenerate the snapshot:
+   ```bash
+   composer api:snapshot
+   ```
+3. Review the diff in the snapshot file to confirm only the expected additions appear.
+4. Commit the updated snapshot alongside the source changes.
+
+### Regenerating after changes
+
+Any time you add, remove, or rename an `#[Api]` or `#[Internal]` annotated type, regenerate:
+
+```bash
+composer api:snapshot
+```
+
+### CI enforcement
+
+The snapshot test runs as part of `composer test`. If the snapshot is stale, the test fails with instructions to regenerate. This ensures every PR that touches the public API surface includes an updated snapshot for review.
+
 ## Statistics
 
-- **Total public API types**: ~160 (interfaces, classes, enums, DTOs, exceptions)
+- **Total public API types**: 170 (interfaces, classes, enums, DTOs, exceptions)
 - **Total internal types**: 10 (explicitly marked)
 - **Subsystems**: 16
 - **Convention**: Everything without `#[Api]` is internal by default

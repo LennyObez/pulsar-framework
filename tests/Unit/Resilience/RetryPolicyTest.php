@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Resilience;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\RetryConfig;
 use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Resilience\RetryResult;
 use RuntimeException;
@@ -112,6 +113,66 @@ final class RetryPolicyTest extends TestCase
 
         // attempt 5: 10 * 2^4 = 160, capped at 50
         self::assertSame(50, $policy->calculateDelay(5));
+    }
+
+    #[Test]
+    public function fromConfigCreatesMatchingPolicy(): void
+    {
+        $config = new RetryConfig(
+            maxAttempts: 5,
+            baseDelayMs: 50,
+            maxDelayMs: 2000,
+            multiplier: 3.0,
+            jitter: false,
+        );
+
+        $policy = RetryPolicy::fromConfig($config);
+
+        // Verify the delay matches expected exponential backoff
+        self::assertSame(50, $policy->calculateDelay(1));     // 50 * 3^0
+        self::assertSame(150, $policy->calculateDelay(2));    // 50 * 3^1
+        self::assertSame(450, $policy->calculateDelay(3));    // 50 * 3^2
+        self::assertSame(1350, $policy->calculateDelay(4));   // 50 * 3^3
+        self::assertSame(2000, $policy->calculateDelay(5));   // 50 * 3^4 = 4050, capped at 2000
+    }
+
+    #[Test]
+    public function calculateDelayWithJitterAndSmallBaseDelay(): void
+    {
+        $policy = new RetryPolicy(
+            maxAttempts: 3,
+            baseDelayMs: 1,
+            maxDelayMs: 1000,
+            multiplier: 2.0,
+            jitter: true,
+        );
+
+        // With baseDelay=1ms, jitter range is 0 (randomRange = floor(0.5) = 0)
+        // so delay should always be 1
+        for ($i = 0; $i < 10; $i++) {
+            $delay = $policy->calculateDelay(1);
+            self::assertGreaterThanOrEqual(1, $delay);
+        }
+    }
+
+    #[Test]
+    public function singleAttemptPolicyNeverRetries(): void
+    {
+        $policy = new RetryPolicy(
+            maxAttempts: 1,
+            baseDelayMs: 100,
+            maxDelayMs: 1000,
+            multiplier: 2.0,
+            jitter: false,
+        );
+
+        $result = $policy->execute(function (): never {
+            throw new RuntimeException('immediate failure');
+        });
+
+        self::assertFalse($result->succeeded);
+        self::assertSame(1, $result->attempts);
+        self::assertSame([], $result->attemptDelays);
     }
 
     #[Test]
