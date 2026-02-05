@@ -8,9 +8,12 @@ use function array_filter;
 use function array_map;
 use function array_values;
 
+use Pulsar\Api\Api;
+
 /**
  * Immutable collection of validation violations.
  */
+#[Api]
 readonly class ValidationResult
 {
     /** @var list<Violation> */

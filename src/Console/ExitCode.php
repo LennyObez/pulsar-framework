@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Console;
 
+use Pulsar\Api\Api;
+
 /**
  * Standard exit codes for CLI commands.
  */
+#[Api]
 enum ExitCode: int
 {
     case Success = 0;

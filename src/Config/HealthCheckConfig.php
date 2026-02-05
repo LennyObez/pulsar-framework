@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Configuration for health checks.
  */
+#[Api]
 readonly class HealthCheckConfig
 {
     public function __construct(

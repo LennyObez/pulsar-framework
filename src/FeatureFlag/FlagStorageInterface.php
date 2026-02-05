@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
+use Pulsar\Api\Api;
+
 /**
  * Interface for feature flag storage backends.
  */
+#[Api]
 interface FlagStorageInterface
 {
     /**

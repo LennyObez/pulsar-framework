@@ -11,11 +11,13 @@ use function is_float;
 use function is_int;
 use function is_string;
 
+use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
 /**
  * Readonly single-row value object with typed accessors.
  */
+#[Api]
 readonly class Row
 {
     /**

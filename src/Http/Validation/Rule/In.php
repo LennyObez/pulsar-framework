@@ -9,6 +9,7 @@ use function implode;
 use function in_array;
 use function is_scalar;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
@@ -19,6 +20,7 @@ use function strval;
  * Value must be one of an allowed set (loose comparison for HTTP string inputs).
  * Skips null values.
  */
+#[Api]
 readonly class In implements RuleInterface
 {
     /**

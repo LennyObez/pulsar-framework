@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\FeatureFlag;
 
 use DateTimeImmutable;
+use Pulsar\Api\Api;
 
 /**
  * Record of a feature flag evaluation.
  */
+#[Api]
 readonly class FlagEvaluation
 {
     public function __construct(

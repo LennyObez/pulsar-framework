@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Container;
 
 use Psr\Container\ContainerInterface as PsrContainerInterface;
+use Pulsar\Api\Api;
 
 /**
  * Pulsar container interface extending PSR-11 with binding capabilities.
  */
+#[Api]
 interface ContainerInterface extends PsrContainerInterface
 {
     /**

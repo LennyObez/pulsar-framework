@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -15,6 +16,7 @@ use Throwable;
  *
  * Provides static factory methods for specific database error scenarios.
  */
+#[Api]
 final class DatabaseException extends RuntimeException
 {
     /**

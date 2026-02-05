@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Console;
 
+use Pulsar\Api\Api;
+
 /**
  * Contract for console output.
  */
+#[Api]
 interface OutputInterface
 {
     /**

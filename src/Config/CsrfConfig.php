@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for CSRF protection settings.
  *
  * Maps from the `csrf` key of `config/security.php`.
  */
+#[Api]
 readonly class CsrfConfig
 {
     public function __construct(

@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
+use Pulsar\Api\Api;
+
 /**
  * Types of feature flag evaluation.
  */
+#[Api]
 enum FlagType: string
 {
     case Boolean = 'boolean';

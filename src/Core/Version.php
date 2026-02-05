@@ -4,29 +4,27 @@ declare(strict_types=1);
 
 namespace Pulsar\Core;
 
+use Pulsar\Api\Internal;
+
 /**
  * Framework version information.
  */
+#[Internal]
 final class Version
 {
-    public const int MAJOR = 0;
-    public const int MINOR = 9;
+    public const int MAJOR = 1;
+    public const int MINOR = 0;
     public const int PATCH = 0;
-    public const string PRERELEASE = '';
+
+    /** Pre-release suffix including the leading hyphen, or '' for stable releases. */
+    public const string PRERELEASE_SUFFIX = '-rc.1';
 
     /**
-     * Get the full version string.
+     * Get the full version string (e.g. "1.0.0-rc.1" or "1.0.0").
      */
     public static function full(): string
     {
-        $version = self::MAJOR . '.' . self::MINOR . '.' . self::PATCH;
-
-        // @phpstan-ignore notIdentical.alwaysFalse (condition is valid when PRERELEASE is set in future versions)
-        if (self::PRERELEASE !== '') {
-            $version .= '-' . self::PRERELEASE;
-        }
-
-        return $version;
+        return self::short() . self::PRERELEASE_SUFFIX;
     }
 
     /**

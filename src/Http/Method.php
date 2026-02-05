@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use Pulsar\Api\Api;
+
 /**
  * HTTP request methods.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
  */
+#[Api]
 enum Method: string
 {
     case GET = 'GET';

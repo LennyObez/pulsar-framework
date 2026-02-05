@@ -8,6 +8,7 @@ use function bin2hex;
 
 use DateTimeImmutable;
 use JsonException;
+use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Hmac;
 use Random\RandomException;
 
@@ -22,6 +23,7 @@ use SodiumException;
  * The seed HMAC is computed from a well-known string and the audit key,
  * so verification tools can reconstruct the chain from the beginning.
  */
+#[Api]
 final class AuditLogger
 {
     /**

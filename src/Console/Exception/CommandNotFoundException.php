@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Exception;
 
+use Pulsar\Api\Api;
+
 use function sprintf;
 
 /**
  * Exception for when a command is not found.
  */
+#[Api]
 final class CommandNotFoundException extends ConsoleException
 {
     /**

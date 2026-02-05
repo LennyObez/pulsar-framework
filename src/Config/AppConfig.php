@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for `config/app.php`.
  *
  * Environment variables `APP_NAME`, `APP_ENV`, `APP_DEBUG` override file values.
  */
+#[Api]
 readonly class AppConfig
 {
     public function __construct(

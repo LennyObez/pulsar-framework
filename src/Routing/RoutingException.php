@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Routing;
 
 use Exception;
+use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
 use function sprintf;
@@ -12,6 +13,7 @@ use function sprintf;
 /**
  * Exception thrown when routing fails.
  */
+#[Api]
 final class RoutingException extends Exception
 {
     /** @var list<Method> */

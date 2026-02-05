@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
 use Pulsar\Config\Exception\ConfigException;
 
 /**
@@ -13,6 +14,7 @@ use Pulsar\Config\Exception\ConfigException;
  * with full type information.
  *
  */
+#[Api]
 final class ConfigRepository
 {
     /**

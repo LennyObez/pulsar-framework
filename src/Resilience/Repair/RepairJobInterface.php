@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Resilience\Repair;
 
+use Pulsar\Api\Api;
+
 /**
  * Interface for self-healing repair jobs.
  */
+#[Api]
 interface RepairJobInterface
 {
     /**

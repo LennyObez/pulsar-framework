@@ -10,6 +10,7 @@ use function filter_var;
 use function is_bool;
 use function is_int;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
@@ -19,6 +20,7 @@ use function sprintf;
  * Value must be an integer or a numeric string that passes FILTER_VALIDATE_INT.
  * Skips null values.
  */
+#[Api]
 readonly class IntegerType implements RuleInterface
 {
     public function __construct(

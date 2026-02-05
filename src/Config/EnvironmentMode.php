@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Application environment mode.
  */
+#[Api]
 enum EnvironmentMode: string
 {
     case Local = 'local';

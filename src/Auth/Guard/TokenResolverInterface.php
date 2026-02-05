@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Guard;
 
+use Pulsar\Api\Api;
 use Pulsar\Auth\Identity\IdentityInterface;
 
 /**
@@ -12,6 +13,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * Applications or extensions implement this interface and register it
  * in the container to enable token-based authentication.
  */
+#[Api]
 interface TokenResolverInterface
 {
     /**

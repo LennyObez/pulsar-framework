@@ -13,6 +13,7 @@ use function explode;
 use function in_array;
 use function preg_match;
 
+use Pulsar\Api\Api;
 use Pulsar\Scheduler\Exception\SchedulerException;
 
 use function sprintf;
@@ -23,6 +24,7 @@ use function str_contains;
  *
  * Standard five-field cron: minute hour dayOfMonth month dayOfWeek
  */
+#[Api]
 readonly class CronFields
 {
     public function __construct(

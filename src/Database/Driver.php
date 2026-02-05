@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
+use Pulsar\Api\Api;
+
 use function sprintf;
 
 /**
  * Supported database drivers.
  */
+#[Api]
 enum Driver: string
 {
     case MySQL = 'mysql';

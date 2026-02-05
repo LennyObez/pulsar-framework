@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 
@@ -13,6 +14,7 @@ use Pulsar\Http\Response;
  * Middleware can inspect/modify requests before they reach handlers,
  * and inspect/modify responses after handlers complete.
  */
+#[Api]
 interface MiddlewareInterface
 {
     /**

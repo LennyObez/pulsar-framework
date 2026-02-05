@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility;
 
+use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Routing\Router;
 
@@ -16,6 +17,7 @@ use Pulsar\Routing\Router;
  * - Register routes in the router
  * - Provide service providers for deferred loading
  */
+#[Api]
 interface ExtensionInterface
 {
     /**
