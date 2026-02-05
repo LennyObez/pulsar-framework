@@ -31,7 +31,7 @@ Pulsar aims to deliver a lean hot path with minimal overhead on the request path
   - routing dispatch time
   - container resolution time
   - memory footprint under typical loads
-- Prevent regressions via CI (baseline + thresholds).
+- Benchmarks are measured in CI and compared against a stored baseline using relative regression thresholds. The benchmark job is non-flaky by design (warmup iterations, multiple runs, median-based comparison). CI blocks merges only when the benchmark signal is stable and a regression exceeds the threshold; otherwise the job is advisory and always publishes artifacts and a PR summary.
 
 ### 3.2 DX (Developer Experience)
 
@@ -107,6 +107,8 @@ Pulsar aims to deliver a lean hot path with minimal overhead on the request path
 
 No dependency on external monitoring vendors. Studio Console is the first-party observability, debugging, and operational intelligence product under the Pulsar Studio umbrella.
 
+Studio Console is enabled by default in local/development environments. In staging and production, it is disabled by default and requires explicit opt-in with authentication or allowlisting before activation.
+
 Deliver:
 
 - **Structured logging** (JSON) + audit logging subsystem.
@@ -153,6 +155,7 @@ The v1.0 data layer is split into two tiers:
 - Entity mapping, hydration, and persistence through explicit method calls.
 - Query building with visible, inspectable SQL output.
 - Full ORM feature set (relations, eager/lazy loading, identity map) is a post-v1.0 concern; v1.0 delivers the foundational layer and public API surface.
+- Only the explicitly `#[Api]`-marked surface of the ORM foundation is SemVer-stable; internal implementation details may change without notice.
 
 Policy/metadata readiness (entity annotations, field-level access rules, audit-aware fields) is a prerequisite for Studio Admin CRUD scaffolding and is designed into the ORM foundation from the start.
 
@@ -199,7 +202,8 @@ Policy/metadata readiness (entity annotations, field-level access rules, audit-a
 - Docs:
   - architecture + extension lifecycle + security model
 - Benchmarks:
-  - baseline stored, regressions tracked via CI (advisory, not merge-blocking).
+  - measured against a stored baseline with relative regression thresholds
+  - CI blocks merges only when the benchmark signal is stable; otherwise advisory with artifacts and PR summary always published
 
 ## 8. Release & Compatibility
 
@@ -213,6 +217,6 @@ Policy/metadata readiness (entity annotations, field-level access rules, audit-a
 - Modules + extensions can register routes, DI bindings, and commands.
 - Studio Console produces metrics, logs, traces, and a viewable report with correlation-based timelines.
 - Security baseline enabled by default.
-- CI enforces quality gates and performance budgets (advisory for benchmarks).
+- CI enforces quality gates; benchmarks block merges when signal is stable, otherwise advisory with artifacts.
 - `deploy:check` validates environment readiness.
 - `integrity:verify` detects file-level tampering against a hash manifest.
