@@ -1,0 +1,41 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Studio\Console\Query;
+
+use function ceil;
+
+use Pulsar\Api\Internal;
+
+/**
+ * Readonly DTO representing a paginated query result.
+ */
+#[Internal]
+final readonly class EventQueryResult
+{
+    /**
+     * @param list<array<string, mixed>> $items
+     */
+    public function __construct(
+        public array $items,
+        public int $total,
+        public int $limit,
+        public int $offset,
+    ) {}
+
+    public function hasMore(): bool
+    {
+        return ($this->offset + $this->limit) < $this->total;
+    }
+
+    public function page(): int
+    {
+        return $this->limit > 0 ? intdiv($this->offset, $this->limit) + 1 : 1;
+    }
+
+    public function totalPages(): int
+    {
+        return $this->limit > 0 ? (int) ceil((float) $this->total / (float) $this->limit) : 1;
+    }
+}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Integration\Extensibility;
 
+use ArrayObject;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -142,14 +143,15 @@ final class ExtensionLifecycleTest extends TestCase
     #[Test]
     public function multipleExtensionsBootInDependencyOrder(): void
     {
-        $bootOrder = [];
+        /** @var ArrayObject<int, string> $bootOrder */
+        $bootOrder = new ArrayObject();
 
         $bootstrap = ExtensionBootstrap::create();
 
         // Extension B depends on A
         $extA = new class ($bootOrder) implements ExtensionInterface {
-            /** @param list<string> $order */
-            public function __construct(private array &$order) {} // @phpstan-ignore property.onlyWritten
+            /** @param ArrayObject<int, string> $order */
+            public function __construct(private readonly ArrayObject $order) {}
 
             public function name(): string
             {
@@ -160,7 +162,7 @@ final class ExtensionLifecycleTest extends TestCase
 
             public function boot(ContainerInterface $container, Router $router): void
             {
-                $this->order[] = 'a';
+                $this->order->append('a');
             }
 
             public function providers(): array
@@ -170,8 +172,8 @@ final class ExtensionLifecycleTest extends TestCase
         };
 
         $extB = new class ($bootOrder) implements ExtensionInterface {
-            /** @param list<string> $order */
-            public function __construct(private array &$order) {} // @phpstan-ignore property.onlyWritten
+            /** @param ArrayObject<int, string> $order */
+            public function __construct(private readonly ArrayObject $order) {}
 
             public function name(): string
             {
@@ -182,7 +184,7 @@ final class ExtensionLifecycleTest extends TestCase
 
             public function boot(ContainerInterface $container, Router $router): void
             {
-                $this->order[] = 'b';
+                $this->order->append('b');
             }
 
             public function providers(): array
@@ -212,7 +214,7 @@ final class ExtensionLifecycleTest extends TestCase
         $kernel->boot();
 
         // Both should boot in order (A before B due to dependency)
-        self::assertSame(['a', 'b'], $bootOrder);
+        self::assertSame(['a', 'b'], $bootOrder->getArrayCopy());
     }
 }
 

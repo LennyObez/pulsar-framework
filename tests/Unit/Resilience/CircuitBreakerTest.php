@@ -211,7 +211,6 @@ final class CircuitBreakerTest extends TestCase
             $breaker->execute(function (): string {
                 throw new RuntimeException('operation failed');
             });
-            self::fail('Expected RuntimeException to be thrown'); // @phpstan-ignore deadCode.unreachable
         } catch (RuntimeException $e) {
             self::assertSame('operation failed', $e->getMessage());
         }

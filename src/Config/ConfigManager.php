@@ -92,6 +92,17 @@ final class ConfigManager
             $resilienceConfig = ResilienceConfig::fromArray($resilienceData, $this->environment);
             $this->repository->set($resilienceConfig);
         }
+
+        // Studio config is NOT loaded here — it is loaded directly by Kernel::studioPreboot()
+        // to avoid introducing a StudioConfig dependency in ConfigManager.
+    }
+
+    /**
+     * Get the config directory path.
+     */
+    public function configPath(): ?string
+    {
+        return $this->configPath;
     }
 
     /**

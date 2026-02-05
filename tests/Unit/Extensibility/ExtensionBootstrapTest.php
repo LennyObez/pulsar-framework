@@ -56,9 +56,8 @@ final class ExtensionBootstrapTest extends TestCase
     #[Test]
     public function registerCallsExtensionRegister(): void
     {
-        $registered = false;
-        $extension = new class ($registered) implements ExtensionInterface {
-            public function __construct(private bool &$registered) {} // @phpstan-ignore property.onlyWritten
+        $extension = new class implements ExtensionInterface {
+            public bool $registered = false;
 
             public function name(): string
             {
@@ -81,7 +80,7 @@ final class ExtensionBootstrapTest extends TestCase
         $this->bootstrap->addExtension($extension, $this->createManifest('test/ext'));
         $this->bootstrap->register($this->container);
 
-        self::assertTrue($registered);
+        self::assertTrue($extension->registered);
     }
 
     #[Test]
@@ -119,9 +118,8 @@ final class ExtensionBootstrapTest extends TestCase
     #[Test]
     public function bootCallsExtensionBoot(): void
     {
-        $booted = false;
-        $extension = new class ($booted) implements ExtensionInterface {
-            public function __construct(private bool &$booted) {} // @phpstan-ignore property.onlyWritten
+        $extension = new class implements ExtensionInterface {
+            public bool $booted = false;
 
             public function name(): string
             {
@@ -145,7 +143,7 @@ final class ExtensionBootstrapTest extends TestCase
         $this->bootstrap->register($this->container);
         $this->bootstrap->boot($this->container, $this->router);
 
-        self::assertTrue($booted);
+        self::assertTrue($extension->booted);
     }
 
     #[Test]

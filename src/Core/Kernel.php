@@ -6,8 +6,10 @@ namespace Pulsar\Core;
 
 use Error;
 
+use function getenv;
 use function is_array;
 use function is_callable;
+use function is_file;
 use function is_string;
 
 use JsonException;
@@ -44,6 +46,7 @@ use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Config\Environment;
+use Pulsar\Config\EnvironmentMode;
 use Pulsar\Config\FeatureFlagConfig;
 use Pulsar\Config\HealthCheckConfig;
 use Pulsar\Config\ObservabilityConfig;
@@ -53,6 +56,7 @@ use Pulsar\Config\SchedulerConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
+use Pulsar\Config\StudioConfig;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Config\TenantDatabaseConfig;
 use Pulsar\Config\TwoFactorConfig;
@@ -88,6 +92,7 @@ use Pulsar\Observability\Diagnostics\DiagnosticsRenderer;
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Observability\Log\Logger;
+use Pulsar\Observability\Log\Sink\DeferredSink;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Metrics\OpenMetricsExporter;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
@@ -112,6 +117,27 @@ use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
+use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
+use Pulsar\Studio\Console\Aggregation\TimelineBuilder;
+use Pulsar\Studio\Console\Collector\ExceptionCollector;
+use Pulsar\Studio\Console\Collector\FeatureFlagCollector;
+use Pulsar\Studio\Console\Collector\HttpCollector;
+use Pulsar\Studio\Console\Collector\InstrumentedConnection;
+use Pulsar\Studio\Console\Collector\InstrumentedScheduler;
+use Pulsar\Studio\Console\Collector\LogCollector;
+use Pulsar\Studio\Console\Event\EventFactory;
+use Pulsar\Studio\Console\Evidence\EvidenceExporter;
+use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
+use Pulsar\Studio\Console\Redaction\RedactionPipeline;
+use Pulsar\Studio\Console\Retention\RetentionEnforcer;
+use Pulsar\Studio\Console\Retention\RetentionPolicy;
+use Pulsar\Studio\Console\Storage\EncryptedEventStore;
+use Pulsar\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Studio\CorrelationContextProviderInterface;
+use Pulsar\Studio\FiberScopedContextProvider;
+use Pulsar\Studio\Security\StudioAccessGate;
+use Pulsar\Studio\StudioManager;
 use Pulsar\Tenancy\Middleware\TenantResolutionMiddleware;
 use Pulsar\Tenancy\Resolver\HeaderTenantResolver;
 use Pulsar\Tenancy\Resolver\PathPrefixTenantResolver;
@@ -136,7 +162,7 @@ use Throwable;
  * Boot pipeline order:
  * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler
  * -> Security -> Auth -> Database -> Tenancy -> FeatureFlags -> Scheduler -> Resilience
- * -> DiagnosticsRoute -> Extensions
+ * -> DiagnosticsRoute -> Studio preboot -> Extensions -> Studio attach
  */
 #[Internal]
 final class Kernel
@@ -194,8 +220,10 @@ final class Kernel
      * 12. Scheduler services creation (if config/scheduler.php exists)
      * 13. Resilience services creation (if config/resilience.php exists)
      * 14. Diagnostics route registration (debug mode only)
-     * 15. Extension register phase
-     * 16. Extension boot phase
+     * 15. Studio preboot (config + storage + redaction + chain)
+     * 16. Extension register phase
+     * 17. Extension boot phase
+     * 18. Studio attach (wire collectors into final bindings)
      *
      * @throws ContainerException If a container error occurs during bootstrap
      * @throws NotFoundException If a required binding is not found during bootstrap
@@ -225,6 +253,7 @@ final class Kernel
             $this->createSchedulerServices();
             $this->createResilienceServices();
             $this->registerDiagnosticsRoute();
+            $this->studioPreboot();
         }
 
         // Extension register phase (all extensions)
@@ -232,6 +261,11 @@ final class Kernel
 
         // Extension boot phase (all extensions)
         $this->extensionBootstrap?->boot($this->container, $this->router);
+
+        // Studio attach: wire collectors into final service bindings
+        if ($this->container->has(StudioManager::class)) {
+            $this->attachStudioCollectors();
+        }
 
         $this->booted = true;
     }
@@ -478,6 +512,11 @@ final class Kernel
 
     /**
      * Create the logger from config and register in the container.
+     *
+     * When Studio is potentially enabled (lightweight check via env vars +
+     * config file existence), injects a DeferredSink into the Logger's sink
+     * list. Studio's LogCollector is added to it later during attach().
+     * If Studio is ultimately disabled, the DeferredSink remains a no-op.
      */
     private function createLogger(): void
     {
@@ -486,7 +525,15 @@ final class Kernel
 
         /** @var ObservabilityConfig $observabilityConfig */
         $observabilityConfig = $configManager->repository()->get(ObservabilityConfig::class);
-        $logger = Logger::fromConfig($observabilityConfig);
+
+        // Inject DeferredSink when Studio may be enabled
+        if ($this->isStudioEnabled()) {
+            $deferredSink = new DeferredSink();
+            $this->container->instance(DeferredSink::class, $deferredSink);
+            $logger = Logger::fromConfigWithExtraSinks($observabilityConfig, [$deferredSink]);
+        } else {
+            $logger = Logger::fromConfig($observabilityConfig);
+        }
 
         $this->container->instance(LoggerInterface::class, $logger);
         $this->container->instance(Logger::class, $logger);
@@ -659,7 +706,7 @@ final class Kernel
                 $masterKey = MasterKey::fromHex($masterKeyHex);
                 $this->container->instance(MasterKey::class, $masterKey);
 
-                $encryptor = new Encryptor($masterKey);
+                $encryptor = Encryptor::fromMasterKey($masterKey);
                 $this->container->instance(Encryptor::class, $encryptor);
 
                 // Audit logger with HMAC chain
@@ -1026,6 +1073,290 @@ final class Kernel
         // Repair runner
         $repairRunner = new RepairRunner();
         $this->container->instance(RepairRunner::class, $repairRunner);
+    }
+
+    /**
+     * Lightweight Studio-enabled check for the early boot phase.
+     *
+     * Runs BEFORE full StudioConfig hydration. Uses only env vars and
+     * config file existence to decide whether to create the DeferredSink.
+     */
+    private function isStudioEnabled(): bool
+    {
+        // Explicit disable always wins
+        if (getenv('STUDIO_DISABLED') === 'true') {
+            return false;
+        }
+
+        // Config file must exist
+        /** @var ConfigManager $configManager */
+        $configManager = $this->configManager;
+        $configPath = $configManager->configPath();
+
+        if ($configPath === null || !is_file($configPath . DIRECTORY_SEPARATOR . 'studio.php')) {
+            return false;
+        }
+
+        /** @var AppConfig $appConfig */
+        $appConfig = $configManager->repository()->get(AppConfig::class);
+
+        // In production, require explicit env vars
+        if ($appConfig->mode === EnvironmentMode::Production) {
+            return getenv('STUDIO_ENABLED') === 'true'
+                && getenv('STUDIO_PRODUCTION_CONFIRM') === 'true';
+        }
+
+        // In staging, require explicit env var
+        if ($appConfig->mode === EnvironmentMode::Staging) {
+            return getenv('STUDIO_ENABLED') === 'true';
+        }
+
+        // In local/dev, enabled by default when config file exists
+        return true;
+    }
+
+    /**
+     * Studio preboot — Phase 1: config, storage, redaction, evidence chain.
+     *
+     * Called after all core services are created, before Extensions.
+     * Creates StudioManager and supporting services. If disabled via
+     * config, returns early (DeferredSink stays a no-op).
+     */
+    private function studioPreboot(): void
+    {
+        /** @var ConfigManager $configManager */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+        $environment = $configManager->environment();
+
+        $configPath = $configManager->configPath();
+
+        if ($configPath === null || !is_file($configPath . DIRECTORY_SEPARATOR . 'studio.php')) {
+            return;
+        }
+
+        // Load Studio config
+        /** @psalm-suppress UnresolvableInclude Studio config path is validated by is_file() above */
+        $studioData = require $configPath . DIRECTORY_SEPARATOR . 'studio.php';
+
+        if (!is_array($studioData)) {
+            return;
+        }
+
+        /** @var array<string, mixed> $studioData */
+        $studioConfig = StudioConfig::fromArray($studioData, $environment);
+        $this->container->instance(StudioConfig::class, $studioConfig);
+
+        if (!$studioConfig->enabled) {
+            return;
+        }
+
+        /** @var AppConfig $appConfig */
+        $appConfig = $repository->get(AppConfig::class);
+
+        // Production double-check
+        if ($appConfig->mode === EnvironmentMode::Production) {
+            $prodConfirm = $environment->get('STUDIO_PRODUCTION_CONFIRM');
+
+            if ($prodConfirm !== 'true') {
+                return;
+            }
+        }
+
+        // Create SQLite event store
+        $sqliteStore = new SqliteEventStore(
+            $studioConfig->storagePath,
+            $this->container->has(MetricRegistry::class)
+                ? $this->container->get(MetricRegistry::class)
+                : null,
+        );
+        /** @var MetricRegistry|null $_ Psalm hint */
+        $this->container->instance(SqliteEventStore::class, $sqliteStore);
+
+        // Optionally wrap with encryption (requires MasterKey for key derivation)
+        $store = $sqliteStore;
+        $isEncrypted = false;
+        $hasDecryptionKey = false;
+        $chainMacKey = null;
+        $archiveMacKey = null;
+
+        if ($this->container->has(MasterKey::class)) {
+            /** @var MasterKey $masterKey */
+            $masterKey = $this->container->get(MasterKey::class);
+            $hasDecryptionKey = true;
+
+            // Encryption at rest — dedicated subkey 3 (separate from main Encryptor's subkey 1)
+            $studioEncryptor = Encryptor::fromDerivedKey($masterKey, 3, 'studio_enc__');
+            $encryptedStore = new EncryptedEventStore($sqliteStore, $studioEncryptor);
+            $store = $encryptedStore;
+            $isEncrypted = true;
+            $this->container->instance(EncryptedEventStore::class, $encryptedStore);
+
+            // Archive MAC key — subkey 4
+            $archiveMacKey = $masterKey->deriveSubKey(4, 'studio_mac__');
+
+            // Chain MAC key — subkey 5
+            $chainMacKey = $masterKey->deriveSubKey(5, 'studio_chain_mac__');
+        }
+
+        $this->container->instance(EventStoreInterface::class, $store);
+
+        // Redaction pipeline
+        $redactionPipeline = RedactionPipeline::withDefaults();
+        $this->container->instance(RedactionPipeline::class, $redactionPipeline);
+
+        // Retention
+        $retentionPolicy = new RetentionPolicy(
+            maxAgeDays: $studioConfig->retention->maxAgeDays,
+            maxSizeMb: $studioConfig->retention->maxSizeMb,
+            vacuumIntervalHours: $studioConfig->retention->vacuumIntervalHours,
+        );
+        $this->container->instance(RetentionPolicy::class, $retentionPolicy);
+
+        $retentionEnforcer = new RetentionEnforcer(
+            $sqliteStore,
+            $retentionPolicy,
+            $this->container->has(MetricRegistry::class)
+                ? $this->container->get(MetricRegistry::class)
+                : null,
+        );
+        /** @var MetricRegistry|null $_ */
+        $this->container->instance(RetentionEnforcer::class, $retentionEnforcer);
+
+        // Context provider (fiber-safe)
+        $contextProvider = new FiberScopedContextProvider();
+        $this->container->instance(FiberScopedContextProvider::class, $contextProvider);
+        $this->container->instance(CorrelationContextProviderInterface::class, $contextProvider);
+
+        // Event factory
+        $eventFactory = EventFactory::create($appConfig->mode->value);
+        $this->container->instance(EventFactory::class, $eventFactory);
+
+        // Tenant context (if available)
+        $tenantContext = $this->container->has(TenantContext::class)
+            ? $this->container->get(TenantContext::class)
+            : null;
+
+        /** @var TenantContext|null $tenantContext */
+
+        // Studio manager
+        $studioManager = new StudioManager(
+            store: $store,
+            eventFactory: $eventFactory,
+            redactionPipeline: $redactionPipeline,
+            tenantContext: $tenantContext,
+            chainMacKey: $chainMacKey,
+            samplingRate: $studioConfig->samplingRate,
+        );
+        $this->container->instance(StudioManager::class, $studioManager);
+
+        // Aggregation services
+        $dashboardAggregator = new DashboardAggregator($store);
+        $this->container->instance(DashboardAggregator::class, $dashboardAggregator);
+
+        $timelineBuilder = new TimelineBuilder($store);
+        $this->container->instance(TimelineBuilder::class, $timelineBuilder);
+
+        // Security gate
+        $accessGate = new StudioAccessGate($studioConfig->security, $appConfig->mode);
+        $this->container->instance(StudioAccessGate::class, $accessGate);
+
+        // Evidence services
+        $evidenceVerifier = new EvidenceVerifier();
+        $this->container->instance(EvidenceVerifier::class, $evidenceVerifier);
+
+        $evidenceExporter = new EvidenceExporter(
+            store: $store,
+            archiveMacKey: $archiveMacKey,
+            isEncrypted: $isEncrypted,
+            hasDecryptionKey: $hasDecryptionKey,
+        );
+        $this->container->instance(EvidenceExporter::class, $evidenceExporter);
+    }
+
+    /**
+     * Studio attach — Phase 2: wire collectors into final service bindings.
+     *
+     * Called AFTER Extensions boot. Decorates the final service instances
+     * (including any modifications made by extensions during their boot phase).
+     */
+    private function attachStudioCollectors(): void
+    {
+        /** @var StudioManager $studioManager */
+        $studioManager = $this->container->get(StudioManager::class);
+        $emit = $studioManager->emitCallback();
+
+        /** @var StudioConfig $studioConfig */
+        $studioConfig = $this->container->get(StudioConfig::class);
+        $collectorConfig = $studioConfig->collectors;
+
+        /** @var FiberScopedContextProvider $contextProvider */
+        $contextProvider = $this->container->get(FiberScopedContextProvider::class);
+
+        /** @var AppConfig $appConfig */
+        $appConfig = $this->container->get(AppConfig::class);
+
+        // 1. HTTP collector (global middleware, after MetricsMiddleware)
+        if ($collectorConfig->http) {
+            $httpCollector = new HttpCollector($contextProvider, $emit);
+            $this->container->instance(HttpCollector::class, $httpCollector);
+            $this->middleware->pipe($httpCollector);
+        }
+
+        // 2. Database collector (decorator)
+        if ($collectorConfig->database && $this->container->has(ConnectionManagerInterface::class)) {
+            /** @var ConnectionManagerInterface $connectionManager */
+            $connectionManager = $this->container->get(ConnectionManagerInterface::class);
+            $connection = $connectionManager->connection();
+
+            $instrumentedConnection = new InstrumentedConnection(
+                inner: $connection,
+                contextProvider: $contextProvider,
+                emit: $emit,
+                storeRawSql: $collectorConfig->storeRawSql,
+                environmentMode: $appConfig->mode,
+            );
+            $this->container->instance(InstrumentedConnection::class, $instrumentedConnection);
+        }
+
+        // 3. Log collector (via DeferredSink)
+        if ($collectorConfig->logs && $this->container->has(DeferredSink::class)) {
+            $logCollector = new LogCollector($contextProvider, $emit);
+            $this->container->instance(LogCollector::class, $logCollector);
+
+            /** @var DeferredSink $deferredSink */
+            $deferredSink = $this->container->get(DeferredSink::class);
+            $deferredSink->addSink($logCollector);
+        }
+
+        // 4. Exception collector (observer on ErrorAggregator)
+        if ($collectorConfig->exceptions && $this->container->has(ErrorAggregator::class)) {
+            $exceptionCollector = new ExceptionCollector($contextProvider, $emit);
+            $this->container->instance(ExceptionCollector::class, $exceptionCollector);
+
+            /** @var ErrorAggregator $aggregator */
+            $aggregator = $this->container->get(ErrorAggregator::class);
+            $aggregator->addObserver($exceptionCollector->handleError(...));
+        }
+
+        // 5. Scheduler collector (decorator)
+        if ($collectorConfig->scheduler && $this->container->has(Scheduler::class)) {
+            /** @var Scheduler $scheduler */
+            $scheduler = $this->container->get(Scheduler::class);
+
+            $instrumentedScheduler = new InstrumentedScheduler($scheduler, $contextProvider, $emit);
+            $this->container->instance(InstrumentedScheduler::class, $instrumentedScheduler);
+        }
+
+        // 6. Feature flag collector (observer on FlagEvaluationLog)
+        if ($collectorConfig->featureFlags && $this->container->has(FlagEvaluationLog::class)) {
+            $featureFlagCollector = new FeatureFlagCollector($contextProvider, $emit);
+            $this->container->instance(FeatureFlagCollector::class, $featureFlagCollector);
+
+            /** @var FlagEvaluationLog $evaluationLog */
+            $evaluationLog = $this->container->get(FlagEvaluationLog::class);
+            $evaluationLog->addObserver($featureFlagCollector->handleEvaluation(...));
+        }
     }
 
     /**
