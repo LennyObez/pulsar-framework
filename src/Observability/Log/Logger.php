@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use function is_string;
+
 use Psr\Log\LoggerInterface;
 use Pulsar\Config\LoggingChannelConfig;
 use Pulsar\Config\ObservabilityConfig;
@@ -109,7 +111,8 @@ final readonly class Logger implements LoggerInterface
 
     public function log(mixed $level, string|Stringable $message, array $context = []): void
     {
-        $logLevel = LogLevel::fromPsrLevel($level);
+        $levelParam = $level instanceof LogLevel ? $level : (is_string($level) ? $level : 'debug');
+        $logLevel = LogLevel::fromPsrLevel($levelParam);
 
         if (!$logLevel->meetsThreshold($this->threshold)) {
             return;

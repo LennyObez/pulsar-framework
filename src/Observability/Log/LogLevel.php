@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
-use function is_scalar;
-use function is_string;
-
 use Pulsar\Api\Api;
 
 /**
@@ -57,14 +54,12 @@ enum LogLevel: string
     /**
      * Create a LogLevel from a PSR-3 level string or value.
      */
-    public static function fromPsrLevel(mixed $level): self
+    public static function fromPsrLevel(self|string $level): self
     {
         if ($level instanceof self) {
             return $level;
         }
 
-        $levelString = is_string($level) ? $level : (is_scalar($level) ? (string) $level : 'debug');
-
-        return self::tryFrom($levelString) ?? self::Debug;
+        return self::tryFrom($level) ?? self::Debug;
     }
 }
