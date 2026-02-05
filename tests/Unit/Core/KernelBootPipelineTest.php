@@ -7,17 +7,17 @@ namespace Pulsar\Tests\Unit\Core;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Core\Kernel;
-use Pulsar\Http\Method;
 use Pulsar\ErrorHandling\ExceptionHandler;
+use Pulsar\Http\Method;
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Observability\Log\Logger;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Security\Session\Session;
-use Psr\Log\LoggerInterface;
 
 #[CoversClass(Kernel::class)]
 final class KernelBootPipelineTest extends TestCase
@@ -27,7 +27,7 @@ final class KernelBootPipelineTest extends TestCase
     protected function setUp(): void
     {
         $this->tempDir = sys_get_temp_dir() . '/pulsar_kernel_test_' . uniqid();
-        mkdir($this->tempDir, 0777, true);
+        mkdir($this->tempDir, 0o777, true);
 
         // Write minimal app config (always required)
         file_put_contents($this->tempDir . '/app.php', "<?php\nreturn ['debug' => false];");
@@ -162,26 +162,26 @@ final class KernelBootPipelineTest extends TestCase
         $errorTrackingEnabledStr = $errorTrackingEnabled ? 'true' : 'false';
 
         $content = <<<PHP
-<?php
-return [
-    'metrics' => [
-        'enabled' => {$metricsEnabledStr},
-        'exporters' => [
-            'openmetrics' => [
-                'enabled' => {$exporterEnabledStr},
-                'endpoint' => '{$exporterEndpoint}',
-            ],
-        ],
-    ],
-    'tracing' => [
-        'enabled' => {$tracingEnabledStr},
-        'sampling_rate' => 1.0,
-    ],
-    'error_tracking' => [
-        'enabled' => {$errorTrackingEnabledStr},
-    ],
-];
-PHP;
+            <?php
+            return [
+                'metrics' => [
+                    'enabled' => {$metricsEnabledStr},
+                    'exporters' => [
+                        'openmetrics' => [
+                            'enabled' => {$exporterEnabledStr},
+                            'endpoint' => '{$exporterEndpoint}',
+                        ],
+                    ],
+                ],
+                'tracing' => [
+                    'enabled' => {$tracingEnabledStr},
+                    'sampling_rate' => 1.0,
+                ],
+                'error_tracking' => [
+                    'enabled' => {$errorTrackingEnabledStr},
+                ],
+            ];
+            PHP;
 
         file_put_contents($this->tempDir . '/observability.php', $content);
     }

@@ -108,7 +108,7 @@ final class OpenMetricsExporterTest extends TestCase
     public function escapesSpecialCharactersInHelpText(): void
     {
         $registry = new MetricRegistry();
-        $registry->counter("test_counter", "Help with \\backslash and \nnewline");
+        $registry->counter('test_counter', "Help with \\backslash and \nnewline");
 
         $exporter = new OpenMetricsExporter($registry);
         $output = $exporter->export();

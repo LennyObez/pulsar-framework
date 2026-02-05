@@ -11,11 +11,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\Api;
 use Pulsar\Api\Internal;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use ReflectionClass;
 use ReflectionClassConstant;
 use ReflectionMethod;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use SplFileInfo;
 
 /**
@@ -39,7 +39,7 @@ final class PublicApiSnapshotTest extends TestCase
             $committed,
             $current,
             "Public API snapshot is stale. Regenerate with: composer api:snapshot\n"
-            . "Then review the diff and commit the updated snapshot.",
+            . 'Then review the diff and commit the updated snapshot.',
         );
     }
 
