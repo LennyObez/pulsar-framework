@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
 use Pulsar\Tenancy\TenantResolverStrategy;
 
 /**
  * Typed configuration DTO for `config/tenancy.php`.
  */
+#[Api]
 readonly class TenancyConfig
 {
     /**

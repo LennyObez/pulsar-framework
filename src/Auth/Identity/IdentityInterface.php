@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Identity;
 
+use Pulsar\Api\Api;
+
 /**
  * Represents an authenticated (or anonymous) identity in the system.
  */
+#[Api]
 interface IdentityInterface
 {
     /**

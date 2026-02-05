@@ -9,6 +9,7 @@ use Closure;
 use function min;
 
 use Psr\Log\LoggerInterface;
+use Pulsar\Api\Api;
 use Pulsar\Config\RetryConfig;
 use Random\RandomException;
 
@@ -21,6 +22,7 @@ use function usleep;
 /**
  * Retry policy with exponential backoff and optional jitter.
  */
+#[Api]
 readonly class RetryPolicy
 {
     public function __construct(

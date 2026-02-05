@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Internal;
+
 /**
  * Runtime configuration override bag.
  *
  * Allows overriding raw config arrays before typed DTO construction.
  * Overrides are applied via `array_replace_recursive` per domain.
  */
+#[Internal]
 final class ConfigOverrides
 {
     /**

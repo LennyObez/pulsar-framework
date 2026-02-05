@@ -6,6 +6,7 @@ namespace Pulsar\Http\Validation\Rule;
 
 use function is_numeric;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
@@ -14,6 +15,7 @@ use function sprintf;
 /**
  * Numeric value must be >= the given minimum. Skips null values.
  */
+#[Api]
 readonly class Min implements RuleInterface
 {
     public function __construct(

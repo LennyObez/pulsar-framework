@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for `config/resilience.php`.
  *
  * Composes retry, circuit breaker, and health check sub-configs.
  */
+#[Api]
 readonly class ResilienceConfig
 {
     public function __construct(

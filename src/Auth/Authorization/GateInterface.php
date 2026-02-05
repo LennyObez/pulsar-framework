@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Authorization;
 
+use Pulsar\Api\Api;
 use Pulsar\Auth\Identity\IdentityInterface;
 
 /**
@@ -12,6 +13,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * The gate combines RBAC (roles/permissions) with ABAC (policies)
  * to make authorization decisions.
  */
+#[Api]
 interface GateInterface
 {
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Manifest;
 
+use Pulsar\Api\Api;
 use Pulsar\Core\Version;
 
 use function sprintf;
@@ -11,6 +12,7 @@ use function sprintf;
 /**
  * Version constraint configuration for Pulsar framework compatibility.
  */
+#[Api]
 readonly class PulsarVersionConfig
 {
     public function __construct(

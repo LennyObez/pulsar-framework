@@ -7,6 +7,7 @@ namespace Pulsar\Scheduler;
 use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use DateTimeZone;
+use Pulsar\Api\Api;
 use Pulsar\Scheduler\Exception\SchedulerException;
 
 use function sprintf;
@@ -14,6 +15,7 @@ use function sprintf;
 /**
  * Schedule definition for a job, backed by a cron expression.
  */
+#[Api]
 readonly class Schedule
 {
     public function __construct(

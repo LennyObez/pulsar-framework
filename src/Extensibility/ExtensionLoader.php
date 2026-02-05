@@ -10,6 +10,7 @@ use DirectoryIterator;
 
 use function in_array;
 
+use Pulsar\Api\Internal;
 use Pulsar\Core\Version;
 use Pulsar\Extensibility\Exception\DependencyException;
 use Pulsar\Extensibility\Exception\ExtensionException;
@@ -18,6 +19,7 @@ use Pulsar\Extensibility\Exception\ManifestException;
 /**
  * Discovers and validates extension manifests.
  */
+#[Internal]
 final class ExtensionLoader
 {
     private const string MANIFEST_FILENAME = 'pulsar.json';

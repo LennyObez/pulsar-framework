@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy;
 
+use Pulsar\Api\Api;
+
 /**
  * Immutable tenant value object.
  */
+#[Api]
 readonly class Tenant
 {
     /**

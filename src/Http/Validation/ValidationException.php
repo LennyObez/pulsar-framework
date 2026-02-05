@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation;
 
+use Pulsar\Api\Api;
 use Pulsar\ErrorHandling\HttpException;
 use Pulsar\Http\ResponseStatus;
 
@@ -13,6 +14,7 @@ use Pulsar\Http\ResponseStatus;
  * Carries the full ValidationResult so handlers can inspect individual
  * field violations. Always maps to HTTP 422 Unprocessable Entity.
  */
+#[Api]
 class ValidationException extends HttpException
 {
     public function __construct(

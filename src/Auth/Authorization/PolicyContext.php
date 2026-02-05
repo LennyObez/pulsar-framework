@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Authorization;
 
+use Pulsar\Api\Api;
+
 /**
  * Context object passed to ABAC policies during evaluation.
  */
+#[Api]
 readonly class PolicyContext
 {
     /**

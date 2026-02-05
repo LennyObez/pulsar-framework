@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use Pulsar\Api\Api;
+
 /**
  * HTTP response status codes with reason phrases.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
  */
+#[Api]
 enum ResponseStatus: int
 {
     // 1xx Informational

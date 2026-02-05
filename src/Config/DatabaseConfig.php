@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
 /**
@@ -11,6 +12,7 @@ use Pulsar\Database\Exception\DatabaseException;
  *
  * Composes per-connection DTOs and migration settings.
  */
+#[Api]
 readonly class DatabaseConfig
 {
     /**

@@ -6,11 +6,13 @@ namespace Pulsar\Extensibility;
 
 use function count;
 
+use Pulsar\Api\Internal;
 use Pulsar\Extensibility\Exception\ExtensionException;
 
 /**
  * Registry for managing loaded extensions and their lifecycle states.
  */
+#[Internal]
 final class ExtensionRegistry
 {
     /**

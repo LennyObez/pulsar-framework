@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility;
 
+use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
 
 /**
@@ -13,6 +14,7 @@ use Pulsar\Container\ContainerInterface;
  * shared across multiple extensions. They allow for organized, modular
  * service configuration.
  */
+#[Api]
 interface ServiceProviderInterface
 {
     /**

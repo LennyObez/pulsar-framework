@@ -10,11 +10,13 @@ use const ARRAY_FILTER_USE_KEY;
 
 use function in_array;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
 /**
  * Represents a single route definition.
  */
+#[Api]
 readonly class Route
 {
     /**

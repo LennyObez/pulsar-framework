@@ -7,6 +7,7 @@ namespace Pulsar\Config;
 use function is_array;
 use function is_file;
 
+use Pulsar\Api\Internal;
 use Pulsar\Config\Exception\ConfigException;
 
 /**
@@ -19,6 +20,7 @@ use Pulsar\Config\Exception\ConfigException;
  * 4. Runtime overrides (applied via array_replace_recursive)
  * 5. Typed DTO construction (env vars override array values inside factories)
  */
+#[Internal]
 final class ConfigManager
 {
     private ?Environment $environment = null;

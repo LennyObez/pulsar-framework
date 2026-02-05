@@ -1,0 +1,53 @@
+{
+  "description": "Performance budgets for Pulsar Framework CI enforcement",
+  "budgets": {
+    "container.instance_resolution": {
+      "max_avg": "100 microseconds",
+      "description": "Container::get for pre-registered instances (direct lookup)"
+    },
+    "container.singleton_cached": {
+      "max_avg": "100 microseconds",
+      "description": "Container::get for cached singletons"
+    },
+    "container.factory_resolution": {
+      "max_avg": "1 millisecond",
+      "description": "Container::get for factory bindings (new instance each time)"
+    },
+    "router.static_10": {
+      "max_avg": "5 microseconds",
+      "description": "Router::match against 10 static routes"
+    },
+    "router.static_200": {
+      "max_avg": "100 microseconds",
+      "description": "Router::match against 200 static routes (worst case)"
+    },
+    "router.parameterized": {
+      "max_avg": "200 microseconds",
+      "description": "Router::match with parameter extraction"
+    },
+    "middleware.pipeline_5": {
+      "max_avg": "10 microseconds",
+      "description": "Middleware pipeline with 5 pass-through layers"
+    },
+    "request.creation": {
+      "max_avg": "5 microseconds",
+      "description": "Request object construction"
+    },
+    "response.creation": {
+      "max_avg": "5 microseconds",
+      "description": "Response object construction via static factory"
+    },
+    "validation.simple": {
+      "max_avg": "50 microseconds",
+      "description": "Validation of 5 fields with simple rules"
+    },
+    "kernel.dispatch": {
+      "max_avg": "500 microseconds",
+      "description": "Full kernel request dispatch cycle"
+    },
+    "authorization.gate_check": {
+      "max_avg": "50 microseconds",
+      "description": "Authorization gate check with policies"
+    }
+  }
+}

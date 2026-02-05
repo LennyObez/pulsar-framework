@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Request;
 
 /**
  * Interface for resolving the current tenant from an HTTP request.
  */
+#[Api]
 interface TenantResolverInterface
 {
     /**

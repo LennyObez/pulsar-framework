@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Routing;
 
+use Pulsar\Api\Api;
+
 /**
  * Groups related routes with a common prefix and attributes.
  */
+#[Api]
 final class RouteGroup
 {
     /**

@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use Pulsar\Api\Api;
+
 /**
  * Log severity levels mapping PSR-3 levels.
  *
  * Lower severity value = more severe (0 = emergency, 7 = debug).
  */
+#[Api]
 enum LogLevel: string
 {
     case Emergency = 'emergency';

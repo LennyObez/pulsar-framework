@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Database;
 
 use PDO;
+use Pulsar\Api\Api;
 
 /**
  * Fetch mode for query results.
  */
+#[Api]
 enum FetchMode: int
 {
     case Associative = PDO::FETCH_ASSOC;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\ErrorHandling;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\ResponseStatus;
 use RuntimeException;
 use Throwable;
@@ -11,6 +12,7 @@ use Throwable;
 /**
  * General HTTP exception with status code and optional headers.
  */
+#[Api]
 class HttpException extends RuntimeException implements HttpExceptionInterface
 {
     /**

@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Exception;
 
+use Pulsar\Api\Api;
+
 use function sprintf;
 
 /**
  * Exception for manifest parsing and validation errors.
  */
+#[Api]
 final class ManifestException extends ExtensionException
 {
     /**

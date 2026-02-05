@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\ErrorHandling;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
 use Throwable;
@@ -11,6 +12,7 @@ use Throwable;
 /**
  * Contract for rendering exceptions as response bodies.
  */
+#[Api]
 interface ExceptionRendererInterface
 {
     /**
