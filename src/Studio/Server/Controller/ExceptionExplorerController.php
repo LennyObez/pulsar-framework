@@ -25,8 +25,8 @@ use Pulsar\Studio\Security\ProductionSafetyMode;
 final readonly class ExceptionExplorerController
 {
     public function __construct(
-        private readonly EventStoreInterface $store,
-        private readonly ProductionSafetyMode $safetyMode,
+        private EventStoreInterface $store,
+        private ProductionSafetyMode $safetyMode,
     ) {}
 
     public function handle(Request $_request): Response

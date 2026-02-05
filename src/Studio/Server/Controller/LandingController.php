@@ -24,8 +24,8 @@ use function sprintf;
 final readonly class LandingController
 {
     public function __construct(
-        private readonly StudioConfig $config,
-        private readonly ?EventStoreInterface $store = null,
+        private StudioConfig $config,
+        private ?EventStoreInterface $store = null,
     ) {}
 
     public function handle(Request $_request): Response

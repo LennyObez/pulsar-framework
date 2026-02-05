@@ -28,11 +28,11 @@ use function substr;
 #[Internal]
 final readonly class StudioAccessGate
 {
-    private readonly AllowlistChecker $allowlistChecker;
+    private AllowlistChecker $allowlistChecker;
 
     public function __construct(
-        private readonly StudioSecurityConfig $config,
-        private readonly EnvironmentMode $mode,
+        private StudioSecurityConfig $config,
+        private EnvironmentMode $mode,
     ) {
         $this->allowlistChecker = new AllowlistChecker($config->allowedCidrs);
     }

@@ -22,7 +22,7 @@ use Pulsar\Studio\Security\StudioAccessGate;
 final readonly class StudioAccessMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly StudioAccessGate $gate,
+        private StudioAccessGate $gate,
     ) {}
 
     public function process(Request $request, callable $next): Response

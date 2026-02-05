@@ -32,15 +32,15 @@ use Pulsar\Studio\Server\Controller\TimelineController;
 final readonly class StudioRouter
 {
     public function __construct(
-        private readonly LandingController $landing,
-        private readonly ConsoleOverviewController $consoleOverview,
-        private readonly RequestExplorerController $requestExplorer,
-        private readonly DatabaseExplorerController $databaseExplorer,
-        private readonly LogExplorerController $logExplorer,
-        private readonly ExceptionExplorerController $exceptionExplorer,
-        private readonly TimelineController $timeline,
-        private readonly ApiController $api,
-        private readonly ProductionSafetyMode $safetyMode,
+        private LandingController $landing,
+        private ConsoleOverviewController $consoleOverview,
+        private RequestExplorerController $requestExplorer,
+        private DatabaseExplorerController $databaseExplorer,
+        private LogExplorerController $logExplorer,
+        private ExceptionExplorerController $exceptionExplorer,
+        private TimelineController $timeline,
+        private ApiController $api,
+        private ProductionSafetyMode $safetyMode,
     ) {}
 
     /**

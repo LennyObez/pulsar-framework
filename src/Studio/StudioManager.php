@@ -37,12 +37,12 @@ use Throwable;
 final readonly class StudioManager
 {
     public function __construct(
-        private readonly EventStoreInterface $store,
-        private readonly EventFactory $eventFactory,
-        private readonly RedactionPipeline $redactionPipeline,
-        private readonly ?TenantContext $tenantContext = null,
-        private readonly ?string $chainMacKey = null,
-        private readonly float $samplingRate = 1.0,
+        private EventStoreInterface $store,
+        private EventFactory $eventFactory,
+        private RedactionPipeline $redactionPipeline,
+        private ?TenantContext $tenantContext = null,
+        private ?string $chainMacKey = null,
+        private float $samplingRate = 1.0,
     ) {}
 
     /**

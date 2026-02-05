@@ -8,6 +8,7 @@ use function array_map;
 use function hash;
 use function is_string;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Studio\Console\Event\EventEnvelope;
@@ -24,8 +25,8 @@ use RuntimeException;
 final readonly class EncryptedEventStore implements EventStoreInterface
 {
     public function __construct(
-        private readonly SqliteEventStore $inner,
-        private readonly Encryptor $encryptor,
+        private SqliteEventStore $inner,
+        private Encryptor $encryptor,
     ) {}
 
     public function store(EventEnvelope $envelope, string $payloadJson, ?string $tenantHash = null): void
@@ -133,6 +134,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
      * @param array<string, mixed> $row
      * @return array<string, mixed>
      * @throws RuntimeException If decryption fails
+     * @throws JsonException If JSON encoding fails
      */
     private function decryptRow(array $row): array
     {

@@ -20,7 +20,7 @@ use function unpack;
 final readonly class AllowlistChecker
 {
     /** @var list<string> */
-    private readonly array $cidrs;
+    private array $cidrs;
 
     /**
      * @param list<string> $cidrs CIDR ranges (e.g., '127.0.0.1/8', '::1/128')

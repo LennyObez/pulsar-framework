@@ -22,7 +22,7 @@ use function usort;
 final readonly class TimelineBuilder
 {
     public function __construct(
-        private readonly EventStoreInterface $store,
+        private EventStoreInterface $store,
     ) {}
 
     /**

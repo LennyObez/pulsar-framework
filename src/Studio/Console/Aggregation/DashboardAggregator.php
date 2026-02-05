@@ -40,7 +40,7 @@ final readonly class DashboardAggregator
 {
     private const int TOP_EXCEPTIONS_LIMIT = 10;
 
-    private readonly PDO $pdo;
+    private PDO $pdo;
 
     public function __construct(
         EventStoreInterface $store,

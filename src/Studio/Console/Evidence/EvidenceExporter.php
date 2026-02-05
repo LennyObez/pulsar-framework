@@ -33,10 +33,10 @@ use function time;
 final readonly class EvidenceExporter
 {
     public function __construct(
-        private readonly EventStoreInterface $store,
-        private readonly ?string $archiveMacKey = null,
-        private readonly bool $isEncrypted = false,
-        private readonly bool $hasDecryptionKey = true,
+        private EventStoreInterface $store,
+        private ?string $archiveMacKey = null,
+        private bool $isEncrypted = false,
+        private bool $hasDecryptionKey = true,
     ) {}
 
     /**

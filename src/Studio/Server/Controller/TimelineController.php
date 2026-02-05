@@ -25,7 +25,7 @@ use Pulsar\Studio\Console\Aggregation\TimelineBuilder;
 final readonly class TimelineController
 {
     public function __construct(
-        private readonly TimelineBuilder $timelineBuilder,
+        private TimelineBuilder $timelineBuilder,
     ) {}
 
     public function handle(Request $_request, string $correlationId): Response

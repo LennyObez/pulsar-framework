@@ -29,7 +29,7 @@ use Throwable;
 final readonly class ViewRenderer
 {
     public function __construct(
-        private readonly string $templateDir,
+        private string $templateDir,
     ) {}
 
     /**

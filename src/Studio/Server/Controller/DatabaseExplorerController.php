@@ -24,7 +24,7 @@ use Pulsar\Studio\Console\Storage\EventStoreInterface;
 final readonly class DatabaseExplorerController
 {
     public function __construct(
-        private readonly EventStoreInterface $store,
+        private EventStoreInterface $store,
     ) {}
 
     public function handle(Request $_request): Response

@@ -19,9 +19,9 @@ use function sprintf;
 final readonly class StudioServer
 {
     public function __construct(
-        private readonly StudioServerConfig $config,
-        private readonly string $documentRoot,
-        private readonly ?string $routerScript = null,
+        private StudioServerConfig $config,
+        private string $documentRoot,
+        private ?string $routerScript = null,
     ) {}
 
     /**

@@ -32,7 +32,7 @@ use function usleep;
 final readonly class ApiController
 {
     public function __construct(
-        private readonly EventStoreInterface $store,
+        private EventStoreInterface $store,
     ) {}
 
     /**

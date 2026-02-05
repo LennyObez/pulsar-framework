@@ -23,9 +23,9 @@ final readonly class RetentionEnforcer
     private const int SIZE_DELETION_BATCH_SIZE = 100;
 
     public function __construct(
-        private readonly SqliteEventStore $store,
-        private readonly RetentionPolicy $policy,
-        private readonly ?MetricRegistry $metricRegistry = null,
+        private SqliteEventStore $store,
+        private RetentionPolicy $policy,
+        private ?MetricRegistry $metricRegistry = null,
     ) {}
 
     /**

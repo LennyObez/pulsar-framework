@@ -13,6 +13,9 @@ use function is_array;
 use function is_dir;
 use function is_int;
 use function is_string;
+
+use JsonException;
+
 use function mb_strtolower;
 use function mkdir;
 
@@ -412,6 +415,7 @@ final class SqliteEventStore implements EventStoreInterface
      * @param Closure(): void $transaction
      * @throws StudioException If maximum retry attempts exceeded due to database busy
      * @throws PDOException If a non-retryable database error occurs
+     * @throws JsonException If JSON encoding fails
      */
     private function ingestWithRetry(Closure $transaction): void
     {

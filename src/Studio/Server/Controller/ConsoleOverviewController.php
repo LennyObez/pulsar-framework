@@ -24,7 +24,7 @@ use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
 final readonly class ConsoleOverviewController
 {
     public function __construct(
-        private readonly DashboardAggregator $aggregator,
+        private DashboardAggregator $aggregator,
     ) {}
 
     public function handle(Request $request): Response
