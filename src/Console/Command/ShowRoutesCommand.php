@@ -18,6 +18,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Container\Exception\ContainerException;
+use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Core\Kernel;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 
@@ -44,6 +45,7 @@ final class ShowRoutesCommand extends Command
 
     /**
      * @throws ContainerException
+     * @throws NotFoundException
      * @throws FeatureFlagException
      * @throws JsonException
      */
