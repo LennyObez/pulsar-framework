@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
-use function array_find;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Deploy\CheckResult;
@@ -13,6 +11,7 @@ use Pulsar\Deploy\DeployCheckInterface;
 use Pulsar\Deploy\Runtime\FilesystemReaderInterface;
 use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
 
+use function array_find;
 use function sprintf;
 use function str_contains;
 use function str_starts_with;

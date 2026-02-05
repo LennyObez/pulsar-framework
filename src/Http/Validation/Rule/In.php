@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Rule;
 
-use function array_map;
-use function implode;
-use function in_array;
-use function is_scalar;
-
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
+use function array_map;
+use function implode;
+use function in_array;
+use function is_scalar;
 use function sprintf;
 use function strval;
 

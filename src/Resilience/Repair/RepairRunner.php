@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Resilience\Repair;
 
 use Pulsar\Resilience\Exception\ResilienceException;
+use Throwable;
 
 use function sprintf;
-
-use Throwable;
 
 /**
  * Orchestrates repair job diagnosis and execution.

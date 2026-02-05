@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
-use function is_array;
-use function is_file;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Exception\ConfigException;
+
+use function is_array;
+use function is_file;
 
 /**
  * Configuration orchestrator.

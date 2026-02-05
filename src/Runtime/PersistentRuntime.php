@@ -4,14 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime;
 
-use const AF_INET;
-
-use function extension_loaded;
-use function function_exists;
-use function in_array;
-use function memory_get_usage;
-use function microtime;
-
 use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
@@ -27,15 +19,15 @@ use Pulsar\Runtime\Http\HttpRequestParser;
 use Pulsar\Runtime\Http\HttpResponseSerializer;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
 use Pulsar\Runtime\Upgrade\UpgradeResponse;
-
-use function register_shutdown_function;
-
-use const SO_RCVTIMEO;
-use const SO_REUSEADDR;
-use const SOCK_STREAM;
-
 use Socket;
+use Throwable;
 
+use function extension_loaded;
+use function function_exists;
+use function in_array;
+use function memory_get_usage;
+use function microtime;
+use function register_shutdown_function;
 use function socket_accept;
 use function socket_bind;
 use function socket_close;
@@ -47,16 +39,16 @@ use function socket_select;
 use function socket_set_option;
 use function socket_strerror;
 use function socket_write;
-
-use const SOL_SOCKET;
-use const SOL_TCP;
-
 use function sprintf;
 use function strlen;
-
-use Throwable;
-
 use function time;
+
+use const AF_INET;
+use const SO_RCVTIMEO;
+use const SO_REUSEADDR;
+use const SOCK_STREAM;
+use const SOL_SOCKET;
+use const SOL_TCP;
 
 /**
  * Long-running HTTP/1.1 server using ext-sockets.

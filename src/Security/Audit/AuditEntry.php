@@ -5,20 +5,16 @@ declare(strict_types=1);
 namespace Pulsar\Security\Audit;
 
 use DateTimeImmutable;
-
-use function hash_equals;
-use function json_encode;
-
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Hmac;
-
-use function sodium_bin2hex;
-use function sodium_crypto_generichash;
-
 use SodiumException;
 
+use function hash_equals;
+use function json_encode;
+use function sodium_bin2hex;
+use function sodium_crypto_generichash;
 use function strlen;
 use function substr;
 

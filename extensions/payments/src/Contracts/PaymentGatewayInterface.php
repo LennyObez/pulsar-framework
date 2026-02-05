@@ -10,8 +10,8 @@ use Pulsar\Extension\Payments\Domain\Charge;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\PaymentIntent;
 use Pulsar\Extension\Payments\Domain\Refund;
-use Pulsar\Idempotency\Exception\IdempotencyException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
+use Pulsar\Idempotency\Exception\IdempotencyException;
 
 /**
  * Payment gateway port — orchestrates provider calls with cross-cutting concerns.

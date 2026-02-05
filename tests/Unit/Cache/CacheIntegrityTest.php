@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Cache;
 
-use function hash;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RequiresOperatingSystemFamily;
 use PHPUnit\Framework\Attributes\Test;
@@ -16,6 +14,7 @@ use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function hash;
 use function strlen;
 
 #[CoversClass(CacheIntegrity::class)]

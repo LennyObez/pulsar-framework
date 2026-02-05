@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Container;
 
-use function in_array;
-use function is_callable;
-use function is_object;
-
 use NoDiscard;
 use Override;
 use Pulsar\Container\Exception\ContainerException;
@@ -15,10 +11,12 @@ use Pulsar\Container\Exception\NotFoundException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
-
-use function sprintf;
-
 use Throwable;
+
+use function in_array;
+use function is_callable;
+use function is_object;
+use function sprintf;
 
 /**
  * Array-based dependency injection container.

@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function count;
-use function date;
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-
 use JsonException;
 use Override;
 use Pulsar\Console\Command;
@@ -20,10 +13,16 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Queue\DeadLetterQueue;
 use Pulsar\Queue\FailedJob;
 
+use function count;
+use function date;
+use function json_encode;
 use function sprintf;
 use function str_pad;
 use function strlen;
 use function substr;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
 
 /**
  * List all failed jobs in the dead-letter queue.

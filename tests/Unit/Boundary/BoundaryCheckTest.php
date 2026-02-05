@@ -5,15 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Boundary;
 
 use BoundaryAnalyzer;
-
-use function dirname;
-use function file_put_contents;
-
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function dirname;
+use function file_put_contents;
 use function sprintf;
 use function sys_get_temp_dir;
 use function unlink;

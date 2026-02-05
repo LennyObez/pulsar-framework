@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\Session;
 
-use function array_key_exists;
-
 use NoDiscard;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -13,6 +11,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
+
+use function array_key_exists;
 
 /**
  * Unit tests for session happy-path operations.
@@ -232,11 +232,13 @@ class SessionOperationsInMemorySession implements SessionInterface
     private bool $started = true;
     private int $idCounter = 1;
 
+    #[Override]
     public function start(): void
     {
         $this->started = true;
     }
 
+    #[Override]
     public function isStarted(): bool
     {
         return $this->started;
@@ -249,31 +251,37 @@ class SessionOperationsInMemorySession implements SessionInterface
         return array_key_exists($key, $this->data) ? $this->data[$key] : $default;
     }
 
+    #[Override]
     public function set(string $key, mixed $value): void
     {
         $this->data[$key] = $value;
     }
 
+    #[Override]
     public function has(string $key): bool
     {
         return array_key_exists($key, $this->data);
     }
 
+    #[Override]
     public function remove(string $key): void
     {
         unset($this->data[$key]);
     }
 
+    #[Override]
     public function id(): string
     {
         return 'test-session-' . $this->idCounter;
     }
 
+    #[Override]
     public function regenerate(bool $deleteOldSession = true): void
     {
         $this->idCounter++;
     }
 
+    #[Override]
     public function destroy(): void
     {
         $this->data = [];
@@ -283,6 +291,7 @@ class SessionOperationsInMemorySession implements SessionInterface
     /**
      * @return array<string, mixed>
      */
+    #[Override]
     public function all(): array
     {
         return $this->data;

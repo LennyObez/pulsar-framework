@@ -5,11 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Webhook;
 
 use DateTimeImmutable;
-
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +15,10 @@ use Pulsar\Webhook\WebhookProcessingStatus;
 use Pulsar\Webhook\WebhookProcessor;
 use RuntimeException;
 
+use function json_encode;
 use function sprintf;
+
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(WebhookProcessor::class)]
 final class WebhookProcessorTest extends TestCase

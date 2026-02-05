@@ -250,6 +250,6 @@ Pulsar is designed for regulated, mission-critical domains. This document maps P
 
 1. **Framework vs. application responsibility**: Pulsar provides the interfaces, secure defaults, and enforcement mechanisms. Application developers are responsible for implementing domain-specific policies (e.g., defining which data categories apply, wiring consent flows into their UI, configuring retention periods for their jurisdiction).
 
-2. **Regulatory currency**: This matrix reflects requirements as of Pulsar 1.0.0-rc.7. Regulatory frameworks evolve; consult current regulation texts and qualified legal counsel for compliance certification.
+2. **Regulatory currency**: This matrix reflects requirements as of Pulsar 1.0.0-rc.10. Regulatory frameworks evolve; consult current regulation texts and qualified legal counsel for compliance certification.
 
 3. **Certification scope**: Framework-level controls alone do not constitute compliance. A complete compliance posture requires infrastructure controls, organizational policies, personnel training, and regular audits beyond what any framework can provide.

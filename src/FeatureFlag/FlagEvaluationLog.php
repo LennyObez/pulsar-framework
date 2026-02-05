@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
-use function array_filter;
-use function array_values;
-use function count;
-
 use Override;
 use Pulsar\Runtime\ResettableInterface;
 use Throwable;
+
+use function array_filter;
+use function array_values;
+use function count;
 
 /**
  * In-memory log of feature flag evaluations.

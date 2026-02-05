@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime;
 
-use function in_array;
-
 use Pulsar\Api\Internal;
+
+use function in_array;
 
 /**
  * Deterministic registry of services that require per-request reset or eviction.

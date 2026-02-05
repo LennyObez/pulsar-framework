@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\Make;
 
-use function is_dir;
-use function is_file;
-use function is_int;
-use function is_string;
-
 use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\Command\Make\Template\FeatureTemplates;
@@ -17,6 +12,10 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
+use function is_dir;
+use function is_file;
+use function is_int;
+use function is_string;
 use function sprintf;
 
 /**

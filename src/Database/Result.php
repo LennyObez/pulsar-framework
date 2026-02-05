@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
-use function array_map;
-use function count;
-
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
+
+use function array_map;
+use function count;
 
 /**
  * Readonly query result value object.

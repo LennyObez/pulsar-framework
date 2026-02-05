@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Output;
 
-use function function_exists;
-
 use Override;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Console\Verbosity;
+
+use function function_exists;
 
 /**
  * Output to the console (STDOUT/STDERR).

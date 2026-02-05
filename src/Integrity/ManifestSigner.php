@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Integrity;
 
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use SodiumException;
+
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Signs and verifies integrity manifests using HMAC (BLAKE2b).

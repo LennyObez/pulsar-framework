@@ -24,12 +24,12 @@ final class Version
     public const int PATCH = 0;
 
     /** Pre-release suffix including the leading hyphen, or '' for stable releases. */
-    public const string PRERELEASE_SUFFIX = '-rc.7';
+    public const string PRERELEASE_SUFFIX = '-rc.10';
 
     private const string PACKAGE_NAME = 'pulsar/framework';
 
     /**
-     * Get the full version string (e.g. "1.0.0-rc.7" or "1.0.0").
+     * Get the full version string (e.g. "1.0.0-rc.10" or "1.0.0").
      */
     #[NoDiscard]
     public static function full(): string

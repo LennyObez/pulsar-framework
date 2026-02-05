@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Payments\Internal\Support;
 
-use NoDiscard;
 use JsonException;
+use NoDiscard;
 use Pulsar\Api\Internal;
 
 use function is_array;

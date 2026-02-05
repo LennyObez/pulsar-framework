@@ -4,17 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console\Guardian;
 
-use function dirname;
-use function file_put_contents;
-use function is_dir;
-use function is_string;
-
 use JsonException;
-
-use const LOCK_EX;
-
-use function mkdir;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\IntegrityConfig;
@@ -22,14 +12,21 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\ManifestBuilderInterface;
 use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Integrity\ManifestSignerInterface;
-use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 use SodiumException;
 
+use function dirname;
+use function file_put_contents;
+use function is_dir;
+use function is_string;
+use function mkdir;
 use function sprintf;
+
+use const LOCK_EX;
 
 /**
  * Builds an integrity manifest from the current filesystem state.

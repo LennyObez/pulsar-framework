@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Snippet;
 
-use function implode;
-
 use Pulsar\Api\Internal;
+
+use function implode;
 
 /**
  * Generates a vendor-neutral TLS configuration snippet.

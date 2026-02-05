@@ -6,14 +6,14 @@ namespace Pulsar\Extension\ObservabilityExport;
 
 use Override;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Extensibility\ExtensionInterface;
+use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\ObservabilityExport\Error\ErrorExporterInterface;
 use Pulsar\Extension\ObservabilityExport\Error\JsonLinesErrorExporter;
 use Pulsar\Extension\ObservabilityExport\Metrics\JsonLinesMetricsExporter;
 use Pulsar\Extension\ObservabilityExport\Metrics\MetricsExporterInterface;
 use Pulsar\Extension\ObservabilityExport\Span\JsonLinesSpanExporter;
 use Pulsar\Extension\ObservabilityExport\Span\SpanExporterInterface;
-use Pulsar\Extensibility\ExtensionInterface;
-use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Routing\RouterInterface;
 
 /**

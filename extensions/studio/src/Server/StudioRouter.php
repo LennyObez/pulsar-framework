@@ -5,15 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server;
 
 use JsonException;
-
-use function preg_match;
-
 use Pulsar\Api\Internal;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Http\ResponseStatus;
 use Pulsar\Extension\Studio\Security\ProductionSafetyMode;
 use Pulsar\Extension\Studio\Server\Controller\ApiController;
 use Pulsar\Extension\Studio\Server\Controller\BenchmarkApiController;
@@ -25,6 +17,13 @@ use Pulsar\Extension\Studio\Server\Controller\LandingController;
 use Pulsar\Extension\Studio\Server\Controller\LogExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\RequestExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\TimelineController;
+use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Method;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
+use Pulsar\Http\ResponseStatus;
+
+use function preg_match;
 
 /**
  * Standalone router for the Studio server.

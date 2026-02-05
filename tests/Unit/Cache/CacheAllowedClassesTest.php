@@ -4,21 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Cache;
 
-use function dirname;
-use function file_put_contents;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheAllowedClasses;
 
+use function dirname;
+use function file_put_contents;
+use function json_encode;
+use function mkdir;
 use function sys_get_temp_dir;
 use function unlink;
+
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(CacheAllowedClasses::class)]
 final class CacheAllowedClassesTest extends TestCase

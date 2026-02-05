@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\ObservabilityExport;
 
-use function file_get_contents;
-use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-use const PHP_EOL;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,9 +12,14 @@ use Pulsar\Extension\ObservabilityExport\Schema\MetricSchema;
 use Pulsar\Observability\Metrics\MetricSnapshot;
 use Pulsar\Observability\Metrics\MetricType;
 
+use function file_get_contents;
+use function json_decode;
 use function sys_get_temp_dir;
 use function tempnam;
 use function unlink;
+
+use const JSON_THROW_ON_ERROR;
+use const PHP_EOL;
 
 #[CoversClass(JsonLinesMetricsExporter::class)]
 #[CoversClass(MetricSchema::class)]

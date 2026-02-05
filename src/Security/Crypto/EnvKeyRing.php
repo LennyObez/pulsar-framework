@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Crypto;
 
-use function in_array;
-
 use Pulsar\Api\Internal;
 use SodiumException;
+
+use function in_array;
 
 /**
  * Key ring backed by environment-derived keys (current + optional previous).

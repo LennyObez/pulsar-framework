@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Tracing;
 
+use NoDiscard;
+use Override;
+
 use function count;
 use function ctype_xdigit;
 use function explode;
 use function hexdec;
-
-use NoDiscard;
-use Override;
-
 use function sprintf;
 use function strlen;
 use function strtolower;

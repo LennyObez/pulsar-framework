@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Introspection;
 
-use function array_map;
-
 use Pulsar\Api\Api;
 use Pulsar\Introspection\Data\ApiSnapshotData;
 use Pulsar\Introspection\Data\ArchitectureMapData;
@@ -13,6 +11,8 @@ use Pulsar\Introspection\Data\CommandReferenceData;
 use Pulsar\Introspection\Data\ConfigSchemaData;
 use Pulsar\Introspection\Data\ContributedMetadata;
 use Pulsar\Introspection\Data\RouteMapData;
+
+use function array_map;
 
 /**
  * Immutable aggregate of all introspection data for the current application.

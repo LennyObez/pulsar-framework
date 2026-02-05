@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function count;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\FrameworkCacheInterface;
@@ -14,10 +12,10 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Core\KernelInterface;
-
-use function sprintf;
-
 use Throwable;
+
+use function count;
+use function sprintf;
 
 /**
  * Validates that `optimize` produced a loadable cache.

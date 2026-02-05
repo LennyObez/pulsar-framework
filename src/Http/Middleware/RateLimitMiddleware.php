@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
-use function is_string;
-
 use Override;
 use Pulsar\Http\RateLimit\RateLimiterInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\TrustedProxy;
+
+use function is_string;
 
 /**
  * Middleware that enforces rate limiting on incoming requests.

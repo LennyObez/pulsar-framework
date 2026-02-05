@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
+use Pulsar\Api\Api;
+
 use function is_bool;
 use function is_int;
 use function is_string;
-
-use NoDiscard;
-use Pulsar\Api\Api;
 
 /**
  * Configuration for the persistent HTTP runtime.

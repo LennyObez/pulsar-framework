@@ -4,14 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Deploy\Check;
 
-use function bin2hex;
-
-use const DIRECTORY_SEPARATOR;
-
-use function is_dir;
-use function is_file;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -22,10 +14,16 @@ use Pulsar\Deploy\CheckSeverity;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function bin2hex;
+use function is_dir;
+use function is_file;
+use function mkdir;
 use function random_bytes;
 use function rmdir;
 use function sodium_bin2hex;
 use function unlink;
+
+use const DIRECTORY_SEPARATOR;
 
 #[CoversClass(CacheSettingsCheck::class)]
 final class CacheSettingsCheckTest extends TestCase

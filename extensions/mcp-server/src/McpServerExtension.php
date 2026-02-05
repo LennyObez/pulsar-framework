@@ -4,16 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\McpServer;
 
-use function is_array;
-use function is_file;
-
-use function dirname;
-use function getcwd;
-
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Extensibility\ExtensionInterface;
+use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Extension\McpServer\Config\McpConfig;
 use Pulsar\Extension\McpServer\Contracts\McpAccessGateInterface;
 use Pulsar\Extension\McpServer\Contracts\McpRedactionPipelineInterface;
@@ -35,12 +31,15 @@ use Pulsar\Extension\McpServer\Internal\Tools\ReadRoutesTool;
 use Pulsar\Extension\McpServer\Internal\Tools\RunAnalysisTool;
 use Pulsar\Extension\McpServer\Internal\Tools\RunFormatterTool;
 use Pulsar\Extension\McpServer\Internal\Tools\RunTestsTool;
-use Pulsar\Extensibility\ExtensionInterface;
-use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Http\RateLimit\RateLimiterInterface;
 use Pulsar\Introspection\ProjectMetadataService;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Routing\RouterInterface;
+
+use function dirname;
+use function getcwd;
+use function is_array;
+use function is_file;
 
 use const DIRECTORY_SEPARATOR;
 

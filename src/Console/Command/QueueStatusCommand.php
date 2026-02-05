@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function count;
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-
 use JsonException;
 use Override;
 use Pulsar\Console\Command;
@@ -19,7 +13,12 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Queue\DeadLetterQueue;
 use Pulsar\Queue\QueueManager;
 
+use function count;
+use function json_encode;
 use function sprintf;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Display the current status of the queue system.

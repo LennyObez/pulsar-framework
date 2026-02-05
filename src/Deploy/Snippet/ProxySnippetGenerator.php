@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Snippet;
 
-use function implode;
-
 use Pulsar\Api\Internal;
 use Pulsar\Config\DeployConfig;
 
+use function implode;
 use function sprintf;
 
 /**

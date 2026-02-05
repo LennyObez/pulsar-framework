@@ -4,20 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Csrf;
 
-use function htmlspecialchars;
-use function is_string;
-
 use Override;
-
-use function parse_url;
-use function preg_replace;
-
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
+use function htmlspecialchars;
+use function is_string;
+use function parse_url;
+use function preg_replace;
 use function rtrim;
 use function sprintf;
 use function strtolower;

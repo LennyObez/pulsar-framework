@@ -4,14 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function in_array;
-use function is_string;
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -19,6 +11,14 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Introspection\ProjectMetadataService;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
+
+use function in_array;
+use function is_string;
+use function json_encode;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Exports project metadata as JSON to stdout.

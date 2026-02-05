@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache;
 
-use const DIRECTORY_SEPARATOR;
+use Pulsar\Api\Internal;
 
 use function dirname;
 use function fclose;
 use function flock;
 use function fopen;
 use function is_dir;
-
-use const LOCK_EX;
-use const LOCK_UN;
-
 use function mkdir;
 
-use Pulsar\Api\Internal;
+use const DIRECTORY_SEPARATOR;
+use const LOCK_EX;
+use const LOCK_UN;
 
 /**
  * flock()-based write lock for concurrent optimize safety.

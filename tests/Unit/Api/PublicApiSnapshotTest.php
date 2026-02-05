@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Api;
 
-use function dirname;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,6 +15,8 @@ use ReflectionClass;
 use ReflectionClassConstant;
 use ReflectionMethod;
 use SplFileInfo;
+
+use function dirname;
 
 /**
  * Verifies the committed API snapshot matches the current codebase.

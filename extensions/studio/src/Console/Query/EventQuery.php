@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Query;
 
-use function array_values;
-use function max;
-
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+
+use function array_values;
+use function max;
 
 /**
  * Fluent builder for querying Studio events.

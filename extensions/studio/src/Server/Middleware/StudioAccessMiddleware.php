@@ -6,12 +6,12 @@ namespace Pulsar\Extension\Studio\Server\Middleware;
 
 use Override;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Security\StudioAccessGate;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
-use Pulsar\Extension\Studio\Security\StudioAccessGate;
 
 /**
  * Middleware that applies Studio access control per-request.

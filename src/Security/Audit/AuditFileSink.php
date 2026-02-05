@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Audit;
 
+use JsonException;
+use Override;
+use Pulsar\Security\Exception\SecurityException;
+use Throwable;
+
 use function dirname;
 use function fclose;
-
-use const FILE_APPEND;
-
 use function file_put_contents;
 use function fopen;
 use function fread;
@@ -20,25 +22,15 @@ use function is_file;
 use function is_string;
 use function json_decode;
 use function json_encode;
-
-use JsonException;
-
-use const LOCK_EX;
-
 use function mkdir;
-
-use Override;
-use Pulsar\Security\Exception\SecurityException;
-
-use const SEEK_END;
-
 use function sprintf;
 use function strrpos;
 use function substr;
-
-use Throwable;
-
 use function trim;
+
+use const FILE_APPEND;
+use const LOCK_EX;
+use const SEEK_END;
 
 /**
  * Append-only JSON Lines audit log file sink.

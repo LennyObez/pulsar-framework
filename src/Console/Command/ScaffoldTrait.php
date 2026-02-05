@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use Pulsar\Console\ExitCode;
+use Pulsar\Console\InputInterface;
+use Pulsar\Console\OutputInterface;
+
 use function array_filter;
 use function array_map;
 use function array_values;
@@ -11,11 +15,6 @@ use function explode;
 use function is_dir;
 use function is_int;
 use function is_string;
-
-use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
-use Pulsar\Console\OutputInterface;
-
 use function sprintf;
 use function trim;
 

@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Csrf;
 
-use function bin2hex;
-use function hash_equals;
-use function is_string;
-
 use Override;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Security\Session\SessionInterface;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+
+use function bin2hex;
+use function hash_equals;
+use function is_string;
 
 /**
  * CSRF token manager using the synchronizer token pattern.

@@ -4,28 +4,25 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Server\Controller;
 
+use JsonException;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
+use Pulsar\Http\ResponseStatus;
+
 use function explode;
 use function flush;
 use function is_int;
 use function is_string;
 use function json_encode;
+use function ob_end_flush;
+use function sprintf;
+use function usleep;
 
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
-
-use JsonException;
-
-use function ob_end_flush;
-
-use Pulsar\Api\Internal;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Http\ResponseStatus;
-use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-
-use function sprintf;
-use function usleep;
 
 /**
  * JSON API and SSE live endpoint for Studio.

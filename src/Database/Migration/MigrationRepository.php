@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Migration;
 
+use Pulsar\Api\Api;
+use Pulsar\Database\Exception\DatabaseException;
+
 use function array_keys;
 use function is_dir;
 use function ksort;
 use function preg_match;
-
-use Pulsar\Api\Api;
-use Pulsar\Database\Exception\DatabaseException;
-
 use function scandir;
 use function str_ends_with;
 use function substr;

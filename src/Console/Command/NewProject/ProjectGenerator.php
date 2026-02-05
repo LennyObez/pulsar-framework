@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\NewProject;
 
-use function is_dir;
-
 use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command\ScaffoldTrait;
@@ -13,6 +11,7 @@ use Pulsar\Console\OutputInterface;
 use Random\RandomException;
 use RuntimeException;
 
+use function is_dir;
 use function sprintf;
 
 /**

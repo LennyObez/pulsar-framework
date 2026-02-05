@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
-use function hash_equals;
-
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Hmac;
 use SensitiveParameter;
 use SodiumException;
 
+use function hash_equals;
 use function str_replace;
 use function strtoupper;
 

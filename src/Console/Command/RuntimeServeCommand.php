@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function extension_loaded;
-
-use const FILTER_VALIDATE_IP;
-
-use function filter_var;
-use function in_array;
-
 use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Config\RuntimeConfig;
@@ -24,7 +17,12 @@ use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
 use Pulsar\Runtime\RuntimeCollectorInterface;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
 
+use function extension_loaded;
+use function filter_var;
+use function in_array;
 use function sprintf;
+
+use const FILTER_VALIDATE_IP;
 
 /**
  * Start the persistent HTTP runtime server.

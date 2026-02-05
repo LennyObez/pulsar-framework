@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\NewProject;
 
+use JsonException;
+use Pulsar\Api\Internal;
+
 use function json_encode;
+use function preg_replace;
+use function strtolower;
 
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
-
-use JsonException;
-
-use function preg_replace;
-
-use Pulsar\Api\Internal;
-
-use function strtolower;
 
 /**
  * Generates a `composer.json` file tailored to the chosen project preset.

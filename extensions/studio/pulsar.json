@@ -10,5 +10,14 @@
     "services": ["StudioManager", "EventStoreInterface", "DashboardAggregator"],
     "routes": true,
     "commands": []
+  },
+  "frontend": {
+    "bundles": [
+      {
+        "id": "studio",
+        "root": "frontend",
+        "entries": ["src/main.ts"]
+      }
+    ]
   }
 }

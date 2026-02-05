@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Server\View;
 
-use const EXTR_SKIP;
+use Pulsar\Api\Internal;
+use RuntimeException;
+use Throwable;
 
 use function extract;
 use function file_exists;
 use function ob_end_clean;
 use function ob_get_clean;
 use function ob_start;
-
-use Pulsar\Api\Internal;
-use RuntimeException;
-
 use function sprintf;
 
-use Throwable;
+use const EXTR_SKIP;
 
 /**
  * Simple PHP template renderer for Studio views.

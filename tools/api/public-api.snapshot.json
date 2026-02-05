@@ -15,6 +15,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Audit\\MutationContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Auth\\AuthManagerInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -545,6 +550,21 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Database\\Introspection\\ColumnInfo": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Introspection\\DatabaseIntrospector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Introspection\\TableInfo": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\Migration\\MigrationDirection": {
       "since": "1.0.0",
       "methods": [],
@@ -575,12 +595,82 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Database\\Param": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\Result": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
     },
     "Pulsar\\Database\\Row": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\DdlCompiler": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaCapabilities": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaColumn": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaColumnType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaDefaultExpression": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaForeignKey": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaIdentifier": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaIndex": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaReferentialAction": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaSqlCanonicalizer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\TableDefinition": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -1521,6 +1611,11 @@
       "constants": []
     },
     "Pulsar\\Security\\Crypto\\KeyRingInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\MasterKey": {
       "since": "1.0.0",
       "methods": [],
       "constants": []

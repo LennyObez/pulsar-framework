@@ -4,17 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console\Evidence;
 
-use function dirname;
-use function file_put_contents;
-use function is_dir;
-use function is_int;
-use function is_string;
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -26,9 +15,19 @@ use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Extension\Studio\Exception\StudioException;
 use SodiumException;
 
+use function dirname;
+use function file_put_contents;
+use function is_dir;
+use function is_int;
+use function is_string;
+use function json_encode;
 use function sprintf;
 use function strlen;
 use function time;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Exports Studio events as a verifiable evidence archive.

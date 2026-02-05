@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Server\Controller;
 
-use const ENT_QUOTES;
+use JsonException;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
 
 use function htmlspecialchars;
 use function json_encode;
 
+use const ENT_QUOTES;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
-
-use JsonException;
-use Pulsar\Api\Internal;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 
 /**
  * Handles GET /studio/console/benchmarks — the benchmark dashboard page.

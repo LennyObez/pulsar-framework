@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache;
 
-use const DIRECTORY_SEPARATOR;
+use Pulsar\Api\Internal;
+use Pulsar\Security\Crypto\EncryptorInterface;
+use Pulsar\Security\Crypto\HmacInterface;
+use Random\RandomException;
+use SodiumException;
+use Throwable;
 
 use function dirname;
 use function file_get_contents;
@@ -19,24 +24,13 @@ use function is_dir;
 use function is_file;
 use function is_link;
 use function is_string;
-
-use const LOCK_EX;
-
 use function mkdir;
-
-use const PHP_OS_FAMILY;
-
-use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\EncryptorInterface;
-use Pulsar\Security\Crypto\HmacInterface;
-use Random\RandomException;
-
 use function rename;
-
-use SodiumException;
-use Throwable;
-
 use function unlink;
+
+use const DIRECTORY_SEPARATOR;
+use const LOCK_EX;
+use const PHP_OS_FAMILY;
 
 /**
  * Cache integrity: HMAC signing, verification, and filesystem hardening.

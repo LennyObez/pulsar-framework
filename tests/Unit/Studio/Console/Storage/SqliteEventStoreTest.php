@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Console\Storage;
 
-use function hash;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -20,7 +15,11 @@ use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Crypto\HmacService;
 
+use function hash;
+use function json_encode;
 use function usleep;
+
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(SqliteEventStore::class)]
 final class SqliteEventStoreTest extends TestCase

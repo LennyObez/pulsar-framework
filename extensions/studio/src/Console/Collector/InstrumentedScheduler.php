@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Collector;
 
-use function bin2hex;
-
 use Closure;
-
-use function count;
-
 use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use Exception;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\Payload\SchedulerRunPayload;
+use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Scheduler\Exception\SchedulerException;
 use Pulsar\Scheduler\JobInterface;
 use Pulsar\Scheduler\JobRegistry;
@@ -21,13 +20,12 @@ use Pulsar\Scheduler\JobResult;
 use Pulsar\Scheduler\JobStatus;
 use Pulsar\Scheduler\Scheduler;
 use Pulsar\Scheduler\SchedulerTickResult;
-use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Extension\Studio\Console\Event\Payload\SchedulerRunPayload;
-use Pulsar\Observability\Context\CorrelationContext;
-use Pulsar\Extension\Studio\FiberScopedContextProvider;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use Throwable;
+
+use function bin2hex;
+use function count;
 
 /**
  * Scheduler decorator that instruments job execution for Studio.

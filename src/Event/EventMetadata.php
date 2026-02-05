@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Event;
 
 use DateTimeImmutable;
-
-use function is_string;
-
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Context\CausationId;
 use Pulsar\Context\CorrelationId;
 use Pulsar\Context\RequestContext;
+
+use function is_string;
 
 /**
  * Metadata for domain/integration events.

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility;
 
-use function count;
-
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Extensibility\Exception\ExtensionException;
+
+use function count;
 
 /**
  * Registry for managing loaded extensions and their lifecycle states.

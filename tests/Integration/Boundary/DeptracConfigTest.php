@@ -4,26 +4,22 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Integration\Boundary;
 
-use function array_slice;
-
-use const DIRECTORY_SEPARATOR;
-
-use function dirname;
-use function file_get_contents;
-use function glob;
-
-use const GLOB_ONLYDIR;
-
-use function implode;
-
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
+use function array_slice;
+use function dirname;
+use function file_get_contents;
+use function glob;
+use function implode;
 use function preg_match;
 use function sprintf;
 use function str_contains;
 use function ucfirst;
+
+use const DIRECTORY_SEPARATOR;
+use const GLOB_ONLYDIR;
 
 #[CoversNothing]
 final class DeptracConfigTest extends TestCase

@@ -13,7 +13,7 @@
 
 </div>
 
-> **Status:** Release Candidate (1.0.0-rc.7). The `#[Api]`-marked surface is SemVer-stable; non-`#[Api]` internals may change until 1.0.0.
+> **Status:** Release Candidate (1.0.0-rc.10). The `#[Api]`-marked surface is SemVer-stable; non-`#[Api]` internals may change until 1.0.0.
 > Track milestones in [`ROADMAP.md`](ROADMAP.md) and requirements in [`PRD.md`](PRD.md).
 
 ## Who this is for

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function count;
-
 use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -13,6 +11,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Resilience\Repair\RepairRunnerInterface;
 
+use function count;
 use function sprintf;
 
 /**

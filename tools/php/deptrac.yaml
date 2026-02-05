@@ -687,6 +687,70 @@ deptrac:
             - type: layer
               value: McpServerDomain
 
+    # --- ORM Extension (Pulsar\\Extension\\Orm) ---
+
+    # --- ORM: public contracts ---
+    - name: OrmContracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Orm\\Contracts\\
+
+    # --- ORM: domain types (value objects, enums, exceptions, config, attributes) ---
+    - name: OrmDomain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Orm\\Domain\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Orm\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Orm\\Config\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Orm\\Attribute\\
+
+    # --- ORM: internal implementation ---
+    - name: OrmInternal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Orm\\
+          must_not:
+            - type: layer
+              value: OrmContracts
+            - type: layer
+              value: OrmDomain
+
+    # --- Admin Extension (Pulsar\\Extension\\Admin) ---
+
+    # --- Admin: public contracts ---
+    - name: AdminContracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Admin\\Contracts\\
+
+    # --- Admin: domain types (value objects, enums, exceptions, config) ---
+    - name: AdminDomain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Admin\\Domain\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Admin\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Admin\\Config\\
+
+    # --- Admin: internal implementation ---
+    - name: AdminInternal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Admin\\
+          must_not:
+            - type: layer
+              value: AdminContracts
+            - type: layer
+              value: AdminDomain
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -780,6 +844,13 @@ deptrac:
       - Webhook_Internal
       - Introspection
       - Introspection_Internal
+      # Extension layers (CompositionRoot wires these too)
+      - OrmContracts
+      - OrmDomain
+      - OrmInternal
+      - AdminContracts
+      - AdminDomain
+      - AdminInternal
 
     # -----------------------------------------------------------------
     # Public Layers — all public layers may depend on all other public
@@ -1167,6 +1238,158 @@ deptrac:
       - Webhook
       - McpServerContracts
       - McpServerDomain
+
+    OrmContracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - OrmDomain
+
+    OrmDomain: *public_deps
+
+    OrmInternal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - OrmContracts
+      - OrmDomain
+
+    AdminContracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - AdminDomain
+      - StudioExtension
+      - OrmContracts
+      - OrmDomain
+
+    AdminDomain: *public_deps
+
+    AdminInternal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - AdminContracts
+      - AdminDomain
+      - StudioExtension
+      - OrmContracts
+      - OrmDomain
 
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps

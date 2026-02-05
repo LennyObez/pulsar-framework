@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console;
 
-use function count;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -16,6 +14,7 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilderInterface;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
+use function count;
 use function sprintf;
 
 /**

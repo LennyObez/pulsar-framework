@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function count;
-use function gettype;
-use function is_array;
-use function is_callable;
-use function is_object;
-use function is_string;
-
 use JsonException;
 use Override;
 use Pulsar\Console\Command;
@@ -27,6 +20,12 @@ use Pulsar\Routing\RoutingException;
 use ReflectionException;
 use SodiumException;
 
+use function count;
+use function gettype;
+use function is_array;
+use function is_callable;
+use function is_object;
+use function is_string;
 use function sprintf;
 
 /**

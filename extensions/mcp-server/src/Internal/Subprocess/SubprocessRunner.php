@@ -13,6 +13,7 @@ use function fclose;
 use function fread;
 use function getenv;
 use function hrtime;
+use function is_resource;
 use function max;
 use function proc_close;
 use function proc_get_status;
@@ -55,13 +56,14 @@ final class SubprocessRunner
      */
     public function run(array $command, array $env = []): ToolResult
     {
+        $this->cancelled = false;
+
         $descriptors = [
             0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
             2 => ['pipe', 'w'],
         ];
 
-        /** @var array<string, string> $osEnv */
         $osEnv = getenv();
         $mergedEnv = array_merge($osEnv, ['CI' => '1'], $env);
 
@@ -70,8 +72,6 @@ final class SubprocessRunner
         if (!is_resource($process)) {
             return ToolResult::error('Failed to start subprocess');
         }
-
-        $this->cancelled = false;
 
         fclose($pipes[0]);
 
@@ -88,7 +88,7 @@ final class SubprocessRunner
             $status = proc_get_status($process);
             $nowNs = hrtime(true);
 
-            if ($this->cancelled) {
+            if ($this->isCancelled()) {
                 proc_terminate($process);
 
                 break;
@@ -165,6 +165,14 @@ final class SubprocessRunner
             isError: $exitCode !== 0,
             meta: [],
         );
+    }
+
+    /**
+     * Check if cancellation has been requested (by another Fiber).
+     */
+    private function isCancelled(): bool
+    {
+        return $this->cancelled;
     }
 
     /**

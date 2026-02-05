@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
-use function array_key_exists;
-use function is_string;
-
 use Pulsar\Api\Internal;
 use RuntimeException;
 
+use function array_key_exists;
+use function is_string;
 use function sprintf;
 
 /**

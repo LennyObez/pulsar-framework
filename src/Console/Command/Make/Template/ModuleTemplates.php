@@ -68,7 +68,7 @@ final readonly class ModuleTemplates
             final class {$name}Controller
             {
                 public function __construct(
-                    private readonly {$name}ServiceInterface \${$lcName}Service,
+                    private {$name}ServiceInterface \${$lcName}Service,
                 ) {}
 
                 public function index(Request \$request): Response

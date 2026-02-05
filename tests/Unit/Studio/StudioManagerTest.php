@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Studio;
 
 use Closure;
-
-use function hash;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,6 +22,8 @@ use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Tenancy\Tenant;
 use Pulsar\Tenancy\TenantContext;
 use RuntimeException;
+
+use function hash;
 
 #[CoversClass(StudioManager::class)]
 final class StudioManagerTest extends TestCase

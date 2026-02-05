@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Storage;
 
-use const DIRECTORY_SEPARATOR;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -15,6 +13,8 @@ use Pulsar\Storage\StorageException;
 use function strlen;
 use function sys_get_temp_dir;
 use function uniqid;
+
+use const DIRECTORY_SEPARATOR;
 
 #[CoversClass(LocalStorageAdapter::class)]
 final class LocalStorageAdapterTest extends TestCase

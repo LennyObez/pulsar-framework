@@ -7,12 +7,12 @@ namespace Pulsar\Extension\Studio\Console\Collector;
 use Closure;
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Observability\Log\LogEntry;
-use Pulsar\Observability\Log\LogSinkInterface;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\LogEntryPayload;
 use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Context\CorrelationContextProviderInterface;
+use Pulsar\Observability\Log\LogEntry;
+use Pulsar\Observability\Log\LogSinkInterface;
 use Throwable;
 
 /**

@@ -25,6 +25,7 @@ final readonly class HttpResponsePayload implements ConsoleEvent
         public ?int $contentLength,
         public ?string $contentType,
         public ?string $routeName,
+        public ?string $bodyPreview = null,
     ) {}
 
     public function eventType(): EventType
@@ -46,6 +47,7 @@ final readonly class HttpResponsePayload implements ConsoleEvent
             'content_length' => $this->contentLength,
             'content_type' => $this->contentType,
             'route_name' => $this->routeName,
+            'body_preview' => $this->bodyPreview,
         ];
     }
 }

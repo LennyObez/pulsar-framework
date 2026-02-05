@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Context;
 
 use DateTimeImmutable;
-
-use function is_string;
-
 use NoDiscard;
 use Pulsar\Api\Api;
+
+use function is_string;
 
 /**
  * Immutable request context carrying correlation, causation, and request metadata.

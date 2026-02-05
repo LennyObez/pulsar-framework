@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Integrity;
 
+use JsonException;
+use NoDiscard;
+use Pulsar\Api\Api;
+use Pulsar\Integrity\Exception\IntegrityException;
+
 use function array_map;
 use function is_array;
 use function is_int;
@@ -14,11 +19,6 @@ use function json_encode;
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
-
-use JsonException;
-use NoDiscard;
-use Pulsar\Api\Api;
-use Pulsar\Integrity\Exception\IntegrityException;
 
 /**
  * Serializes and deserializes integrity manifests to/from JSON.

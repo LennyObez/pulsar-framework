@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Console\Retention;
 
-use function bin2hex;
-use function hash;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +14,12 @@ use Pulsar\Extension\Studio\Console\Retention\RetentionEnforcer;
 use Pulsar\Extension\Studio\Console\Retention\RetentionPolicy;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 
+use function bin2hex;
+use function hash;
+use function json_encode;
 use function random_bytes;
+
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(RetentionEnforcer::class)]
 final class RetentionEnforcerTest extends TestCase

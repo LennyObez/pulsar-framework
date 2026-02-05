@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Console\Storage;
 
-use function hash;
-use function json_decode;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -22,10 +16,15 @@ use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function hash;
+use function json_decode;
+use function json_encode;
 use function random_bytes;
 use function sodium_bin2hex;
 use function strlen;
 use function usleep;
+
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(EncryptedEventStore::class)]
 final class EncryptedEventStoreTest extends TestCase

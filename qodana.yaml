@@ -63,6 +63,18 @@ exclude:
       - src/Context/RequestContext.php
       # MCP read tools share pagination logic intentionally — each tool filters differently
       - extensions/mcp-server/src/Internal/Tools/ReadCommandsTool.php
+      # Admin dev router shares bootstrap pattern with studio dev router
+      - extensions/admin/dev/router.php
+      # MariaDB dialect shares most SQL generation with MySQL dialect by design
+      - extensions/orm/src/Internal/Compiler/MariaDbDialect.php
+      # Relation and batch loaders share query construction for HasMany/BelongsTo patterns
+      - extensions/orm/src/Features/Relation/RelationLoader.php
+      # Entity dehydrator mirrors hydrator structure by design
+      - extensions/orm/src/Features/Hydration/EntityDehydrator.php
+      # FormField and SavedViews share DOM manipulation patterns in admin frontend
+      - extensions/admin/frontend/src/components/FormField.ts
+      # DbSavedViewStore shares SQL CRUD pattern with DbActionHistoryStore
+      - extensions/admin/src/Internal/Storage/DbSavedViewStore.php
   # Same parameter value — auditPayment() is designed for reuse across payment
   # operations; currently only cancel_intent calls it, but capture/refund will follow.
   - name: PhpSameParameterValueInspection
@@ -71,8 +83,17 @@ exclude:
   # Development-only router file and CI scripts reference vendor autoload unavailable during scan
   - name: PhpIncludeInspection
     paths:
-      - resources/studio/router.php
+      - extensions/studio/dev/router.php
+      - extensions/admin/dev/router.php
       - scripts/boundary_check.php
+  # PHPDoc signature inspections — template files use extracted variables without type hints;
+  # they are not standalone classes and PHPDoc signatures are not meaningful in this context.
+  - name: PhpDocSignatureInspection
+    paths:
+      - extensions/admin/src/Server/View/templates/
+  - name: PhpDocSignatureIsNotCompleteInspection
+    paths:
+      - extensions/admin/src/Server/View/templates/
   - name: All
     paths:
       - composer.json

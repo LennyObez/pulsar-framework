@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Console\Command;
 
 use Closure;
-
-use function count;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -25,10 +22,10 @@ use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
 use SodiumException;
-
-use function sprintf;
-
 use Throwable;
+
+use function count;
+use function sprintf;
 
 /**
  * Writes all framework caches + manifest.

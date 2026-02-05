@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Storage;
 
-use const DIRECTORY_SEPARATOR;
+use NoDiscard;
+use Override;
 
 use function dirname;
 use function file_exists;
@@ -14,19 +15,15 @@ use function filemtime;
 use function filesize;
 use function is_dir;
 use function is_file;
-
-use const LOCK_EX;
-
 use function mkdir;
-
-use NoDiscard;
-use Override;
-
 use function str_contains;
 use function str_starts_with;
 use function strlen;
 use function substr;
 use function unlink;
+
+use const DIRECTORY_SEPARATOR;
+use const LOCK_EX;
 
 /**
  * Local filesystem storage adapter.

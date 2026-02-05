@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Command;
 
-use function file_get_contents;
-use function file_put_contents;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +12,9 @@ use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Extension\Studio\Command\StudioEnableCommand;
 
+use function file_get_contents;
+use function file_put_contents;
+use function mkdir;
 use function sys_get_temp_dir;
 use function uniqid;
 

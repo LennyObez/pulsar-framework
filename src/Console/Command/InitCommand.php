@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function dirname;
-use function is_string;
-
 use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
+use function dirname;
+use function is_string;
 use function sprintf;
 
 /**

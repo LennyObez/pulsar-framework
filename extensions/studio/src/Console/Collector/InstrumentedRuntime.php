@@ -5,24 +5,23 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Console\Collector;
 
 use Closure;
-
-use function memory_get_usage;
-
 use Pulsar\Api\Internal;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Observability\Metrics\MetricRegistry;
-use Pulsar\Runtime\RuntimeCollectorInterface;
-use Pulsar\Runtime\RuntimeInterface;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeLeakWarningPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeRequestCompletePayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeSchedulerMetricPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerRecyclePayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerStartPayload;
-use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
+use Pulsar\Observability\Context\CorrelationContext;
+use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Runtime\RuntimeCollectorInterface;
+use Pulsar\Runtime\RuntimeInterface;
 use Throwable;
+
+use function memory_get_usage;
 
 /**
  * Decorator that instruments the persistent runtime for Studio.

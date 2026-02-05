@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Support;
 
+use PDO;
+use Pulsar\Api\Api;
+
 use function dirname;
 use function is_dir;
 use function mkdir;
-
-use PDO;
-use Pulsar\Api\Api;
 
 /**
  * Factory for creating SQLite PDO connections with WAL journaling.

@@ -28,6 +28,8 @@ final readonly class HttpRequestPayload implements ConsoleEvent
         public ?string $contentType,
         public ?int $contentLength,
         public ?string $routeName,
+        public ?string $queryString = null,
+        public ?string $bodyPreview = null,
     ) {}
 
     public function eventType(): EventType
@@ -52,6 +54,8 @@ final readonly class HttpRequestPayload implements ConsoleEvent
             'content_type' => $this->contentType,
             'content_length' => $this->contentLength,
             'route_name' => $this->routeName,
+            'query_string' => $this->queryString,
+            'body_preview' => $this->bodyPreview,
         ];
     }
 }

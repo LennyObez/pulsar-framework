@@ -4,17 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility;
 
-use function count;
-
 use DirectoryIterator;
-
-use function in_array;
-
 use Pulsar\Api\Internal;
 use Pulsar\Core\Version;
 use Pulsar\Extensibility\Exception\DependencyException;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\Exception\ManifestException;
+
+use function count;
+use function in_array;
 
 /**
  * Discovers and validates extension manifests.

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
-use function is_int;
-use function is_string;
-
 use NoDiscard;
 use Pulsar\Api\Api;
+
+use function is_int;
+use function is_string;
 
 /**
  * Typed configuration DTO for session settings.

@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Queue\Driver;
 
-use function array_filter;
-use function array_values;
-use function bin2hex;
-use function count;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Queue\JobRecord;
@@ -18,6 +13,10 @@ use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
+use function array_filter;
+use function array_values;
+use function bin2hex;
+use function count;
 use function time;
 
 /**

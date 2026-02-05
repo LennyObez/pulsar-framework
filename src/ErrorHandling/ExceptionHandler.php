@@ -17,10 +17,9 @@ use Pulsar\Observability\ErrorTracking\ErrorEvent;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Observability\Tracing\TraceContext;
 use Pulsar\Routing\RoutingException;
+use Throwable;
 
 use function sprintf;
-
-use Throwable;
 
 /**
  * Central exception handler.

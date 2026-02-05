@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Integrity;
 
-use function class_exists;
-use function count;
-use function dirname;
-
 use NoDiscard;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
@@ -19,6 +15,9 @@ use ReflectionMethod;
 use ReflectionNamedType;
 use SplFileInfo;
 
+use function class_exists;
+use function count;
+use function dirname;
 use function sprintf;
 use function str_replace;
 use function str_starts_with;

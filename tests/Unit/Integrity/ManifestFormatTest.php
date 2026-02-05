@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Integrity;
 
-use function json_decode;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -13,6 +11,8 @@ use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestEntry;
 use Pulsar\Integrity\ManifestFormat;
+
+use function json_decode;
 
 #[CoversClass(ManifestFormat::class)]
 final class ManifestFormatTest extends TestCase

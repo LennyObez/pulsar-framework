@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime\Http;
 
-use function gmdate;
-
 use Pulsar\Api\Internal;
 use Pulsar\Http\Method;
 use Pulsar\Http\Response;
 
+use function gmdate;
 use function sprintf;
 use function strlen;
 

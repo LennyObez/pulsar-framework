@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use Random\Engine\Secure;
+use Random\RandomException;
+use Random\Randomizer;
+
 use function assert;
 use function hash_hmac;
 use function intdiv;
 use function ord;
 use function pack;
-
-use Random\Engine\Secure;
-use Random\RandomException;
-use Random\Randomizer;
-
 use function rawurlencode;
 use function sprintf;
 use function str_pad;

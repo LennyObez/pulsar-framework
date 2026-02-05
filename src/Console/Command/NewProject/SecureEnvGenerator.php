@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\NewProject;
 
-use function base64_encode;
-use function bin2hex;
-
 use Pulsar\Api\Internal;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
+use function base64_encode;
+use function bin2hex;
 use function sprintf;
 
 /**

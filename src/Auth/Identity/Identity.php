@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Identity;
 
+use NoDiscard;
+use Override;
+use Pulsar\Api\Api;
+use Pulsar\Auth\Exception\AuthenticationException;
+
 use function array_all;
 use function array_key_exists;
 use function in_array;
 use function is_array;
 use function is_string;
-
-use NoDiscard;
-use Override;
-use Pulsar\Api\Api;
-use Pulsar\Auth\Exception\AuthenticationException;
 
 /**
  * Immutable value object representing an authenticated identity.

@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Supervisor\PreflightCheck;
 
-use function memory_get_usage;
-
 use Override;
 use Pulsar\Api\Internal;
 
+use function memory_get_usage;
 use function round;
 use function sprintf;
 

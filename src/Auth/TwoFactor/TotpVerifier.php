@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use SensitiveParameter;
+
 use function hash_equals;
 use function intdiv;
-
-use SensitiveParameter;
 
 /**
  * Verifies TOTP codes with a configurable time window to account for clock drift.

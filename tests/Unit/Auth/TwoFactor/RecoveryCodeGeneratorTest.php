@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Auth\TwoFactor;
 
-use function count;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
+
+use function count;
 
 #[CoversClass(RecoveryCodeGenerator::class)]
 final class RecoveryCodeGeneratorTest extends TestCase

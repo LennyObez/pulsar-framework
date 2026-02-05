@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
-use function array_search;
-
 use Pulsar\Api\Internal;
+
+use function array_search;
 
 /**
  * In-memory recovery code store for testing and development.

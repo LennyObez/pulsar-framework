@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Server\Controller;
 
-use const ENT_QUOTES;
+use JsonException;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
 
 use function htmlspecialchars;
 use function json_encode;
 
+use const ENT_QUOTES;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
-
-use JsonException;
-use Pulsar\Api\Internal;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 
 /**
  * Handles GET /studio/console — the Console overview dashboard.
@@ -82,8 +81,8 @@ final readonly class ConsoleOverviewController
 
         return match ($window) {
             '5m' => 5 * 60 * 1_000_000,
-            '24h' => 24 * 60 * 60 * 1_000_000,
-            default => 60 * 60 * 1_000_000,
+            '1h' => 60 * 60 * 1_000_000,
+            default => 24 * 60 * 60 * 1_000_000,
         };
     }
 }

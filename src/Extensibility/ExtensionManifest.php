@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility;
 
-use function count;
-use function dirname;
-use function is_string;
-use function json_validate;
-
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
@@ -16,6 +11,11 @@ use Pulsar\Extensibility\Exception\ManifestException;
 use Pulsar\Extensibility\Manifest\ProvidesConfig;
 use Pulsar\Extensibility\Manifest\PulsarVersionConfig;
 use Pulsar\Extensibility\Manifest\RequiresConfig;
+
+use function count;
+use function dirname;
+use function is_string;
+use function json_validate;
 
 /**
  * Readonly DTO representing an extension's pulsar.json manifest.

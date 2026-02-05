@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Authorization;
 
-use function array_any;
-use function in_array;
-
 use Override;
 use Pulsar\Auth\Identity\IdentityInterface;
+
+use function array_any;
+use function in_array;
 
 /**
  * Authorization gate combining RBAC and ABAC strategies.

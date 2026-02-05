@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Observability\Metrics;
 
-use function array_key_exists;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Observability\Metrics\Histogram;
 use Pulsar\Observability\Metrics\LabelSet;
+
+use function array_key_exists;
 
 #[CoversClass(Histogram::class)]
 final class HistogramTest extends TestCase

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Introspection;
 
+use Closure;
+use Pulsar\Api\Api;
+use Pulsar\Introspection\Data\ContributedMetadata;
+use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
+
 use function array_keys;
 use function array_map;
 use function array_slice;
-
-use Closure;
-
 use function count;
 use function is_array;
 use function is_bool;
@@ -19,19 +21,13 @@ use function is_object;
 use function is_resource;
 use function is_string;
 use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 use function mb_strlen;
 use function preg_replace;
-
-use Pulsar\Api\Api;
-use Pulsar\Introspection\Data\ContributedMetadata;
-use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
-
 use function sprintf;
 use function strtolower;
 use function trim;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Mutable builder scoped to a single metadata contributor.

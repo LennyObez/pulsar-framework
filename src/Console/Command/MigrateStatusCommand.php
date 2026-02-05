@@ -11,11 +11,10 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Database\Migration\MigrationRepository;
 use Pulsar\Database\Migration\MigrationRunner;
+use Throwable;
 
 use function sprintf;
 use function str_pad;
-
-use Throwable;
 
 /**
  * Display the status of all migrations.

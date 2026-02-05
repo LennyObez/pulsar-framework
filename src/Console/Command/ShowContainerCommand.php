@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function count;
-use function in_array;
-use function is_string;
-
 use JsonException;
 use Override;
 use Pulsar\Console\Command;
@@ -24,6 +20,9 @@ use Pulsar\Routing\RoutingException;
 use ReflectionException;
 use SodiumException;
 
+use function count;
+use function in_array;
+use function is_string;
 use function sprintf;
 use function strlen;
 

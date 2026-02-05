@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function count;
-use function extension_loaded;
-use function ini_get;
-
 use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -16,6 +12,9 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Core\KernelInterface;
 use Pulsar\Core\Version;
 
+use function count;
+use function extension_loaded;
+use function ini_get;
 use function sprintf;
 
 /**

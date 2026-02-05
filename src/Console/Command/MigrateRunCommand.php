@@ -4,18 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function count;
-
 use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Database\Migration\MigrationRunner;
-
-use function sprintf;
-
 use Throwable;
+
+use function count;
+use function sprintf;
 
 /**
  * Run all pending database migrations.

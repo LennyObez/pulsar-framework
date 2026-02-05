@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Query;
 
-use function array_map;
-
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Event\EventType;
+
+use function array_map;
 
 /**
  * Readonly DTO representing all filter criteria for event queries.

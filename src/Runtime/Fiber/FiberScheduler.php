@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Runtime\Fiber;
 
 use Closure;
-
-use function count;
-
 use Fiber;
 use Pulsar\Api\Internal;
 use Socket;
 use Throwable;
+
+use function count;
 
 /**
  * Cooperative event loop using socket_select and Fibers.

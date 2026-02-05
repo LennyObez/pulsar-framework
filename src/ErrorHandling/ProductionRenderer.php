@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\ErrorHandling;
 
-use function htmlspecialchars;
-
 use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
-
-use function sprintf;
-
 use Throwable;
+
+use function htmlspecialchars;
+use function sprintf;
 
 /**
  * Safe production error renderer.

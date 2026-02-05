@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\ErrorTracking;
 
-use function array_values;
-use function count;
-
 use Override;
 use Throwable;
 
+use function array_values;
+use function count;
 use function usort;
 
 /**

@@ -42,14 +42,14 @@ final readonly class AdapterTemplates
                         #[Override]
                         public function $method->name($paramList)$returnType
                         {
-                            throw new \LogicException('Not implemented.');
+                            throw new LogicException('Not implemented.');
                         }
                     STUB;
             }
             $methodBodies = "\n" . implode("\n\n", $stubs) . "\n";
         }
 
-        $useOverride = $methods !== [] ? "\nuse Override;" : '';
+        $useOverride = $methods !== [] ? "\nuse LogicException;\nuse Override;" : '';
         $classBody = '{' . $methodBodies . '}';
 
         return <<<PHP

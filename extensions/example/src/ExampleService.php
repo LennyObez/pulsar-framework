@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Example;
 
 use Pulsar\Core\Version;
 
+use function sprintf;
+
 /**
  * Example service demonstrating DI integration.
  */

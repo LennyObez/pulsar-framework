@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Rule;
 
-use const FILTER_VALIDATE_EMAIL;
-
-use function filter_var;
-
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
+use function filter_var;
 use function sprintf;
+
+use const FILTER_VALIDATE_EMAIL;
 
 /**
  * Value must be a valid email address via FILTER_VALIDATE_EMAIL. Skips null values.

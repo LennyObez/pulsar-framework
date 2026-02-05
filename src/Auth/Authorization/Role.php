@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Authorization;
 
-use function array_any;
-use function array_map;
-
 use NoDiscard;
 use Pulsar\Api\Api;
+
+use function array_any;
+use function array_map;
 
 /**
  * Immutable value object representing a role with its associated permissions.

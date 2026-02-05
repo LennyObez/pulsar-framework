@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation;
 
+use Pulsar\Api\Api;
+
 use function array_filter;
 use function array_map;
 use function array_values;
-
-use Pulsar\Api\Api;
 
 /**
  * Immutable collection of validation violations.

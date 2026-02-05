@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Introspection\Internal;
 
+use JsonException;
+use Pulsar\Api\Internal;
+use Pulsar\Introspection\Data\ApiSnapshotData;
+
 use function file_get_contents;
 use function is_array;
 use function is_file;
 use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
 use function json_validate;
 
-use JsonException;
-use Pulsar\Api\Internal;
-use Pulsar\Introspection\Data\ApiSnapshotData;
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Reads the public API snapshot from tools/api/public-api.snapshot.json.

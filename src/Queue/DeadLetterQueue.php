@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Queue;
 
-use function array_values;
-use function count;
-
 use Pulsar\Api\Api;
 use Pulsar\Queue\Exception\QueueException;
 
+use function array_values;
+use function count;
 use function time;
 
 /**

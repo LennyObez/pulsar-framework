@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
-use function array_key_exists;
-use function is_file;
-use function is_readable;
-
 use NoDiscard;
-
-use function preg_replace;
-
 use Pulsar\Api\Api;
 use Pulsar\Config\Exception\ConfigException;
 
+use function array_key_exists;
+use function is_file;
+use function is_readable;
+use function preg_replace;
 use function rtrim;
 
 /**

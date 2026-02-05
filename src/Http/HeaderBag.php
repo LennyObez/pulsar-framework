@@ -5,20 +5,17 @@ declare(strict_types=1);
 namespace Pulsar\Http;
 
 use ArrayIterator;
+use IteratorAggregate;
+use NoDiscard;
+use Override;
+use Pulsar\Api\Api;
+use Traversable;
 
 use function count;
 use function in_array;
 use function is_array;
 use function is_string;
-
-use IteratorAggregate;
-use NoDiscard;
-use Override;
-use Pulsar\Api\Api;
-
 use function sprintf;
-
-use Traversable;
 
 /**
  * Immutable HTTP headers collection.

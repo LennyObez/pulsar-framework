@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Integration\Cache;
 
-use function bin2hex;
-use function is_dir;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +15,9 @@ use Pulsar\Config\EnvironmentMode;
 use Pulsar\Container\Container;
 use Pulsar\Core\Kernel;
 
+use function bin2hex;
+use function is_dir;
+use function mkdir;
 use function random_bytes;
 use function scandir;
 

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Evidence;
 
-use function hash;
-
 use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
+use Pulsar\Security\Crypto\HmacInterface;
 use SodiumException;
+
+use function hash;
 
 /**
  * SHA-256 evidence hash chain with optional BLAKE2b per-link MAC.

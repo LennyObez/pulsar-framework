@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache;
 
-use function is_array;
-
 use Pulsar\Api\Internal;
 use Random\RandomException;
 use SodiumException;
+
+use function is_array;
 
 /**
  * Optimization-hint cache for constructor parameter type maps.

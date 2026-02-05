@@ -4,18 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console\Evidence;
 
-use function file_exists;
-use function file_get_contents;
-
 use InvalidArgumentException;
-
-use function is_string;
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -27,8 +16,16 @@ use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
 use SodiumException;
 
+use function file_exists;
+use function file_get_contents;
+use function is_string;
+use function json_encode;
 use function sprintf;
 use function str_repeat;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Verifies the integrity of a Studio evidence archive.

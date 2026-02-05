@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\ErrorTracking;
 
-use function hash;
-
 use NoDiscard;
 use Pulsar\Api\Api;
-
-use function sprintf;
-
 use Throwable;
+
+use function hash;
+use function sprintf;
 
 /**
  * Deterministic fingerprint for error grouping.

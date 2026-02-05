@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
-use function is_bool;
-use function is_int;
-
 use PDO;
 use PDOException;
 use PDOStatement;
 use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
+
+use function is_bool;
+use function is_int;
 
 /**
  * Prepared statement wrapper.

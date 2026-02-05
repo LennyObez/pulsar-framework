@@ -4,6 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache;
 
+use JsonException;
+use NoDiscard;
+use Pulsar\Api\Internal;
+use Pulsar\Security\Crypto\HmacInterface;
+use SodiumException;
+use Throwable;
+
 use function file_get_contents;
 use function file_put_contents;
 use function hash_equals;
@@ -13,23 +20,13 @@ use function is_int;
 use function is_string;
 use function json_decode;
 use function json_encode;
+use function ksort;
 
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
-
-use JsonException;
-
-use function ksort;
-
 use const LOCK_EX;
-
-use NoDiscard;
-use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\HmacInterface;
-use SodiumException;
-use Throwable;
 
 /**
  * HMAC-signed cache manifest.

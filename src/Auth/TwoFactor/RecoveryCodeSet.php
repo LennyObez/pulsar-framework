@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
-use function count;
-use function in_array;
-
 use NoDiscard;
 use Pulsar\Api\Api;
+
+use function count;
+use function in_array;
 
 /**
  * Immutable value object representing a set of hashed recovery codes.

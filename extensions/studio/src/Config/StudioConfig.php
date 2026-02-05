@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Config;
 
-use function is_float;
-use function is_int;
-
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
+
+use function is_float;
+use function is_int;
 
 /**
  * Typed configuration DTO for config/studio.php.

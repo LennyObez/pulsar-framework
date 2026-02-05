@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\ErrorTracking;
 
-use function array_slice;
-use function count;
-
 use DateTimeImmutable;
 use DateTimeZone;
+
+use function array_slice;
+use function count;
 
 /**
  * Aggregate of errors sharing the same fingerprint.

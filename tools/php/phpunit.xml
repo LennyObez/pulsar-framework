@@ -28,6 +28,8 @@
             <directory>../../extensions/observability-export/src</directory>
             <directory>../../extensions/social-sso/src</directory>
             <directory>../../extensions/mcp-server/src</directory>
+            <directory>../../extensions/orm/src</directory>
+            <directory>../../extensions/admin/src</directory>
         </include>
     </source>
 </phpunit>

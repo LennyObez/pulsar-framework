@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
-use function crc32;
-
 use DateTimeImmutable;
-
-use function in_array;
-
 use Override;
+
+use function crc32;
+use function in_array;
 
 /**
  * Feature flag evaluation engine.

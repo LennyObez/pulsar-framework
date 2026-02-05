@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime;
 
-use function array_values;
-use function memory_get_usage;
-
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 
+use function array_values;
+use function memory_get_usage;
 use function sprintf;
 
 /**

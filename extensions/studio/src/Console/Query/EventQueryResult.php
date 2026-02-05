@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Query;
 
-use function ceil;
-
 use Pulsar\Api\Internal;
+
+use function ceil;
 
 /**
  * Readonly DTO representing a paginated query result.

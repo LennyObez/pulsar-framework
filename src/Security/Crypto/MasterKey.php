@@ -6,16 +6,15 @@ namespace Pulsar\Security\Crypto;
 
 use InvalidArgumentException;
 use NoDiscard;
+use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
+use SodiumException;
 
 use function sodium_bin2hex;
 use function sodium_crypto_generichash;
 use function sodium_crypto_kdf_derive_from_key;
 use function sodium_hex2bin;
 use function sodium_memzero;
-
-use SodiumException;
-
 use function sprintf;
 use function strlen;
 use function substr;
@@ -34,6 +33,7 @@ use function substr;
  * - 1 = encryption (used by Encryptor)
  * - 2 = audit HMAC chain
  */
+#[Api(since: '1.0.0')]
 final class MasterKey implements KeyProviderInterface
 {
     /**

@@ -6,11 +6,10 @@ namespace Pulsar\Database\Migration;
 
 use DateMalformedStringException;
 use DateTimeImmutable;
-
-use function is_string;
-
 use NoDiscard;
 use Pulsar\Api\Api;
+
+use function is_string;
 
 /**
  * Readonly value object for an applied migration row.

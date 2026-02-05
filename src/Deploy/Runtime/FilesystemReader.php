@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Runtime;
 
-use function is_readable;
-
 use Override;
 use Pulsar\Api\Internal;
+
+use function is_readable;
 
 /**
  * Default implementation delegating to real filesystem functions.

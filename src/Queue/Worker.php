@@ -4,36 +4,29 @@ declare(strict_types=1);
 
 namespace Pulsar\Queue;
 
-use function array_key_exists;
-use function class_exists;
-use function function_exists;
-use function is_array;
-use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
 use JsonException;
-
-use function memory_get_usage;
-
-use const PHP_OS_FAMILY;
-
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Context\ContextPropagator;
 use Pulsar\Context\RequestContext;
 use Pulsar\Context\RequestContextHolder;
 use Pulsar\Queue\Exception\QueueException;
-
-use const SIGINT;
-use const SIGTERM;
-
-use function sprintf;
-
 use Throwable;
 
+use function array_key_exists;
+use function class_exists;
+use function function_exists;
+use function is_array;
+use function json_decode;
+use function memory_get_usage;
+use function sprintf;
 use function time;
 use function usleep;
+
+use const JSON_THROW_ON_ERROR;
+use const PHP_OS_FAMILY;
+use const SIGINT;
+use const SIGTERM;
 
 /**
  * Long-running worker that polls a queue and processes jobs.

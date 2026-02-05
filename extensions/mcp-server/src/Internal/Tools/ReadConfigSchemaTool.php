@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\McpServer\Internal\Tools;
 
-use function is_string;
-use function json_encode;
-
 use Pulsar\Api\Internal;
 use Pulsar\Extension\McpServer\Contracts\McpToolInterface;
 use Pulsar\Extension\McpServer\Domain\ToolCategory;
 use Pulsar\Extension\McpServer\Domain\ToolResult;
 use Pulsar\Introspection\ProjectMetadataService;
+
+use function is_string;
+use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 

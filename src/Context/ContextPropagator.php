@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Context;
 
-use function array_key_exists;
-
 use DateTimeImmutable;
-
-use function is_string;
-
 use NoDiscard;
 use Pulsar\Api\Api;
 use Throwable;
+
+use function array_key_exists;
+use function is_string;
 
 /**
  * Serializes/deserializes RequestContext into carrier arrays for cross-boundary propagation.

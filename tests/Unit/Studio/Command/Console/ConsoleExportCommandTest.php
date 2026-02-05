@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Command\Console;
 
-use function file_get_contents;
-use function is_file;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -19,6 +16,8 @@ use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Security\Crypto\HmacService;
 
+use function file_get_contents;
+use function is_file;
 use function sys_get_temp_dir;
 use function unlink;
 

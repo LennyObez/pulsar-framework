@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command;
 
-use function file_exists;
-use function file_get_contents;
-use function file_put_contents;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
@@ -15,6 +11,9 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
+use function file_exists;
+use function file_get_contents;
+use function file_put_contents;
 use function sprintf;
 use function str_replace;
 

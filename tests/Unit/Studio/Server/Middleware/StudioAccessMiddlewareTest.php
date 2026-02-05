@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Server\Middleware;
 
-use function base64_encode;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +16,8 @@ use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+
+use function base64_encode;
 
 #[CoversClass(StudioAccessMiddleware::class)]
 final class StudioAccessMiddlewareTest extends TestCase

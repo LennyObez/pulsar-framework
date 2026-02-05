@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\McpServer\Internal\Tools;
 
-use function is_string;
-
 use Pulsar\Api\Internal;
 use Pulsar\Extension\McpServer\Contracts\McpAccessGateInterface;
 use Pulsar\Extension\McpServer\Contracts\McpToolInterface;
@@ -13,6 +11,8 @@ use Pulsar\Extension\McpServer\Domain\ToolCategory;
 use Pulsar\Extension\McpServer\Domain\ToolResult;
 use Pulsar\Extension\McpServer\Internal\Security\ParamValidator;
 use Pulsar\Extension\McpServer\Internal\Subprocess\SubprocessRunner;
+
+use function is_string;
 
 #[Internal]
 final readonly class RunTestsTool implements McpToolInterface

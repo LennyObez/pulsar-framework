@@ -4,16 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache;
 
-use const DIRECTORY_SEPARATOR;
-
-use function file_get_contents;
-use function glob;
-use function hash;
-use function hash_equals;
-use function implode;
-use function is_dir;
-use function is_file;
-
 use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigRepository;
@@ -26,7 +16,16 @@ use Random\RandomException;
 use ReflectionException;
 use SodiumException;
 
+use function file_get_contents;
+use function glob;
+use function hash;
+use function hash_equals;
+use function implode;
+use function is_dir;
+use function is_file;
 use function sort;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Framework cache orchestrator.

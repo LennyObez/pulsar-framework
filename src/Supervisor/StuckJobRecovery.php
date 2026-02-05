@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Supervisor;
 
-use function bin2hex;
-
 use JsonException;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
@@ -19,6 +17,7 @@ use Random\RandomException;
 use Random\Randomizer;
 use SodiumException;
 
+use function bin2hex;
 use function sprintf;
 use function time;
 
