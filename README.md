@@ -13,7 +13,7 @@
 
 </div>
 
-> **Status:** Release Candidate (1.0.0-rc.1). The public API is stable and covered by semver guarantees.
+> **Status:** Release Candidate (1.0.0-rc.2). The public API is stable and covered by semver guarantees.
 > Track milestones in [`ROADMAP.md`](ROADMAP.md) and requirements in [`PRD.md`](PRD.md).
 
 ## Why Pulsar
