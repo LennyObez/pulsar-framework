@@ -21,7 +21,7 @@ exclude:
   # Redundant @throws - contradicts PhpUnhandledExceptionInspection and PhpDocMissingThrowsInspection
   # when interface contracts declare @throws but concrete analysis sees no throw path (e.g.,
   # has()-guarded get() calls). PHPStan max + Psalm level 1 are authoritative for throw analysis.
-  - name: PhpDocSignatureInspection
+  - name: PhpDocRedundantThrowsInspection
   # Composer packages - dependencies managed externally, not always installed in CI scan
   - name: PhpNoninstalledComposerPackagesInspection
   - name: All
