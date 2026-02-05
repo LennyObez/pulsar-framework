@@ -11,6 +11,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Container\AdvancedContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Core\KernelInterface;
@@ -77,12 +78,37 @@ final class ShowContainerCommand extends Command
         $output->newLine();
 
         if ($bindings !== []) {
-            $table = new TableFormatter();
-            $table->setHeaders(['ID', 'Type']);
+            $definitions = $container instanceof AdvancedContainerInterface
+                ? $container->getDefinitions()
+                : [];
 
-            foreach ($bindings as $id) {
-                $type = in_array($id, $instances, true) ? 'Instance' : 'Binding';
-                $table->addRow([$this->shortenId($id), $type]);
+            $table = new TableFormatter();
+
+            if ($definitions !== []) {
+                $table->setHeaders(['ID', 'Lifetime', 'Lazy', 'Tags', 'Decorators']);
+
+                foreach ($bindings as $id) {
+                    if (isset($definitions[$id])) {
+                        $def = $definitions[$id];
+                        $table->addRow([
+                            $this->shortenId($id),
+                            $def->lifetime->value,
+                            $def->lazy ? 'Yes' : 'No',
+                            (string) count($def->tags),
+                            (string) count($def->decorators),
+                        ]);
+                    } else {
+                        $type = in_array($id, $instances, true) ? 'Instance' : 'Binding';
+                        $table->addRow([$this->shortenId($id), $type, '-', '0', '0']);
+                    }
+                }
+            } else {
+                $table->setHeaders(['ID', 'Type']);
+
+                foreach ($bindings as $id) {
+                    $type = in_array($id, $instances, true) ? 'Instance' : 'Binding';
+                    $table->addRow([$this->shortenId($id), $type]);
+                }
             }
 
             $table->render($output);

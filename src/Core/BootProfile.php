@@ -21,6 +21,7 @@ final readonly class BootProfile
      * @param int $configUs Config + service registration phase duration in microseconds
      * @param int $extensionRegisterUs Extension register phase duration in microseconds
      * @param int $extensionBootUs Extension boot phase duration in microseconds
+     * @param int $compilerPassPhaseUs Compiler pass phase duration in microseconds
      * @param bool $cacheHit Whether config was loaded from cache
      * @param bool $routesCached Whether routes were loaded from cache
      */
@@ -30,12 +31,13 @@ final readonly class BootProfile
         public int $configUs,
         public int $extensionRegisterUs,
         public int $extensionBootUs,
-        public bool $cacheHit,
-        public bool $routesCached,
+        public int $compilerPassPhaseUs = 0,
+        public bool $cacheHit = false,
+        public bool $routesCached = false,
     ) {}
 
     /**
-     * @return array{total_us: int, cache_load_us: int, config_us: int, extension_register_us: int, extension_boot_us: int, cache_hit: bool, routes_cached: bool}
+     * @return array{total_us: int, cache_load_us: int, config_us: int, extension_register_us: int, extension_boot_us: int, compiler_pass_us: int, cache_hit: bool, routes_cached: bool}
      */
     public function toArray(): array
     {
@@ -45,6 +47,7 @@ final readonly class BootProfile
             'config_us' => $this->configUs,
             'extension_register_us' => $this->extensionRegisterUs,
             'extension_boot_us' => $this->extensionBootUs,
+            'compiler_pass_us' => $this->compilerPassPhaseUs,
             'cache_hit' => $this->cacheHit,
             'routes_cached' => $this->routesCached,
         ];
