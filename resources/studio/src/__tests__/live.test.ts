@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { LiveManager } from '../live.js';
 import type { StudioEvent } from '../types.js';
 
-function createMockEvent(id: number): StudioEvent {
+function _createMockEvent(id: number): StudioEvent {
   return {
     id,
     event_id: `evt-${String(id)}`,
