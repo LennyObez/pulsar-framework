@@ -1,0 +1,66 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Tests\Unit\Extension\OpenTelemetry\Bridge;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\OpenTelemetry\Bridge\CompositeSpanProcessor;
+use Pulsar\Observability\Tracing\Span;
+use Pulsar\Observability\Tracing\SpanId;
+use Pulsar\Observability\Tracing\SpanProcessorInterface;
+use Pulsar\Observability\Tracing\TraceContext;
+use Pulsar\Observability\Tracing\TraceId;
+
+#[CoversClass(CompositeSpanProcessor::class)]
+final class CompositeSpanProcessorTest extends TestCase
+{
+    #[Test]
+    public function dispatchesToAllProcessors(): void
+    {
+        $span = $this->createSpan();
+
+        $processor1 = $this->createMock(SpanProcessorInterface::class);
+        $processor1->expects(self::once())->method('onEnd')->with($span);
+
+        $processor2 = $this->createMock(SpanProcessorInterface::class);
+        $processor2->expects(self::once())->method('onEnd')->with($span);
+
+        $composite = new CompositeSpanProcessor([$processor1, $processor2]);
+        $composite->onEnd($span);
+    }
+
+    #[Test]
+    public function emptyProcessorListDoesNothing(): void
+    {
+        $composite = new CompositeSpanProcessor([]);
+        $composite->onEnd($this->createSpan());
+
+        // No exception means pass
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function singleProcessorDispatches(): void
+    {
+        $span = $this->createSpan();
+
+        $processor = $this->createMock(SpanProcessorInterface::class);
+        $processor->expects(self::once())->method('onEnd')->with($span);
+
+        $composite = new CompositeSpanProcessor([$processor]);
+        $composite->onEnd($span);
+    }
+
+    private function createSpan(): Span
+    {
+        $context = new TraceContext(
+            new TraceId('0af7651916cd43dd8448eb211c80319c'),
+            new SpanId('b7ad6b7169203331'),
+        );
+
+        return new Span('test-span', $context);
+    }
+}
