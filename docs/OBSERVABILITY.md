@@ -80,16 +80,16 @@ $histogram->sum(); // sum of observed values
 $histogram->buckets(); // boundary => cumulative count
 ```
 
-### Prometheus Exporter
+### OpenMetrics Exporter
 
-`PrometheusExporter` renders the entire registry as Prometheus text exposition format 0.0.4:
+`OpenMetricsExporter` renders the entire registry as OpenMetrics text exposition format 0.0.4:
 
 ```php
-$exporter = new PrometheusExporter($registry);
+$exporter = new OpenMetricsExporter($registry);
 $text = $exporter->export();
 ```
 
-Output includes `# HELP`, `# TYPE`, sample lines with labels, and histogram `_bucket`/`_sum`/`_count` series. The exporter is registered as a route at the configured endpoint (default `/metrics`) when Prometheus export is enabled.
+Output includes `# HELP`, `# TYPE`, sample lines with labels, and histogram `_bucket`/`_sum`/`_count` series. The exporter is registered as a route at the configured endpoint (default `/metrics`) when the metrics exporter is enabled.
 
 ## Tracing
 
@@ -249,7 +249,7 @@ return [
     'metrics' => [
         'enabled' => true,
         'exporters' => [
-            'prometheus' => [
+            'openmetrics' => [
                 'enabled' => false,
                 'endpoint' => '/metrics',
             ],
@@ -272,7 +272,7 @@ return [
 
 Each section maps to a typed readonly DTO:
 
-- `MetricsConfig` — `enabled`, `prometheusEnabled`, `prometheusEndpoint`
+- `MetricsConfig` — `enabled`, `exporterEnabled`, `exporterEndpoint`
 - `TracingConfig` — `enabled`, `samplingRate`
 - `ErrorTrackingConfig` — `enabled`, `maxGroups`, `maxRecentEventsPerGroup`, `sensitiveFields`
 

@@ -49,8 +49,8 @@ final class ObservabilityConfigTest extends TestCase
         self::assertSame('info', $config->loggingLevel);
         self::assertSame([], $config->loggingChannels);
         self::assertTrue($config->metrics->enabled);
-        self::assertFalse($config->metrics->prometheusEnabled);
-        self::assertSame('/metrics', $config->metrics->prometheusEndpoint);
+        self::assertFalse($config->metrics->exporterEnabled);
+        self::assertSame('/metrics', $config->metrics->exporterEndpoint);
         self::assertFalse($config->tracing->enabled);
         self::assertSame(0.1, $config->tracing->samplingRate);
         self::assertTrue($config->errorTracking->enabled);
@@ -77,7 +77,7 @@ final class ObservabilityConfigTest extends TestCase
             'metrics' => [
                 'enabled' => true,
                 'exporters' => [
-                    'prometheus' => ['enabled' => true, 'endpoint' => '/prom'],
+                    'openmetrics' => ['enabled' => true, 'endpoint' => '/prom'],
                 ],
             ],
             'tracing' => [
@@ -115,8 +115,8 @@ final class ObservabilityConfigTest extends TestCase
         self::assertSame('php://stderr', $stderrChannel->stream);
 
         self::assertTrue($config->metrics->enabled);
-        self::assertTrue($config->metrics->prometheusEnabled);
-        self::assertSame('/prom', $config->metrics->prometheusEndpoint);
+        self::assertTrue($config->metrics->exporterEnabled);
+        self::assertSame('/prom', $config->metrics->exporterEndpoint);
 
         self::assertTrue($config->tracing->enabled);
         self::assertSame(0.5, $config->tracing->samplingRate);
@@ -165,13 +165,26 @@ final class ObservabilityConfigTest extends TestCase
         $config = MetricsConfig::fromArray([
             'enabled' => false,
             'exporters' => [
-                'prometheus' => ['enabled' => true, 'endpoint' => '/custom'],
+                'openmetrics' => ['enabled' => true, 'endpoint' => '/custom'],
             ],
         ]);
 
         self::assertFalse($config->enabled);
-        self::assertTrue($config->prometheusEnabled);
-        self::assertSame('/custom', $config->prometheusEndpoint);
+        self::assertTrue($config->exporterEnabled);
+        self::assertSame('/custom', $config->exporterEndpoint);
+    }
+
+    #[Test]
+    public function metricsFromArrayAcceptsLegacyPrometheusKey(): void
+    {
+        $config = MetricsConfig::fromArray([
+            'exporters' => [
+                'prometheus' => ['enabled' => true, 'endpoint' => '/legacy'],
+            ],
+        ]);
+
+        self::assertTrue($config->exporterEnabled);
+        self::assertSame('/legacy', $config->exporterEndpoint);
     }
 
     #[Test]

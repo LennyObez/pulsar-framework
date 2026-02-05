@@ -173,6 +173,131 @@ final class FeatureFlagManagerTest extends TestCase
     }
 
     #[Test]
+    public function percentageFlagFallsBackToTenantIdWhenUserIdIsNull(): void
+    {
+        $this->storage->set(new FlagDefinition(
+            name: 'tenant-rollout',
+            enabled: true,
+            type: FlagType::Percentage,
+            percentage: 50,
+        ));
+
+        $context = new FlagContext(tenantId: 'acme-corp');
+
+        // Should be deterministic using tenantId as identifier
+        $firstResult = $this->manager->isEnabled('tenant-rollout', $context);
+        $secondResult = $this->manager->isEnabled('tenant-rollout', $context);
+
+        self::assertSame($firstResult, $secondResult);
+
+        // Verify it matches the hash calculation using tenantId
+        $hash = crc32('tenant-rollout' . 'acme-corp');
+        $bucket = (($hash % 100) + 100) % 100;
+        $expectedResult = $bucket < 50;
+
+        self::assertSame($expectedResult, $firstResult);
+    }
+
+    #[Test]
+    public function percentageFlagPrefersUserIdOverTenantId(): void
+    {
+        $this->storage->set(new FlagDefinition(
+            name: 'user-pref-rollout',
+            enabled: true,
+            type: FlagType::Percentage,
+            percentage: 50,
+        ));
+
+        $context = new FlagContext(userId: 'user-1', tenantId: 'acme');
+
+        $result = $this->manager->isEnabled('user-pref-rollout', $context);
+
+        // Verify it uses userId, not tenantId
+        $hash = crc32('user-pref-rollout' . 'user-1');
+        $bucket = (($hash % 100) + 100) % 100;
+        $expectedResult = $bucket < 50;
+
+        self::assertSame($expectedResult, $result);
+    }
+
+    #[Test]
+    public function percentageFlagUsesEmptyStringWhenNoIdentifier(): void
+    {
+        $this->storage->set(new FlagDefinition(
+            name: 'anon-rollout',
+            enabled: true,
+            type: FlagType::Percentage,
+            percentage: 50,
+        ));
+
+        $context = new FlagContext();
+
+        $result = $this->manager->isEnabled('anon-rollout', $context);
+
+        $hash = crc32('anon-rollout' . '');
+        $bucket = (($hash % 100) + 100) % 100;
+        $expectedResult = $bucket < 50;
+
+        self::assertSame($expectedResult, $result);
+    }
+
+    #[Test]
+    public function contextualFlagPrioritizesTenantOverUserMatch(): void
+    {
+        $this->storage->set(new FlagDefinition(
+            name: 'priority-feature',
+            enabled: true,
+            type: FlagType::Contextual,
+            allowedTenants: ['acme'],
+            allowedUsers: ['user-1'],
+            allowedEnvironments: ['production'],
+        ));
+
+        // Context has all three matching — tenant match should take precedence
+        $context = new FlagContext(
+            tenantId: 'acme',
+            userId: 'user-1',
+            environment: 'production',
+        );
+
+        $evaluation = $this->manager->evaluate('priority-feature', $context);
+        self::assertTrue($evaluation->result);
+        self::assertSame(FlagEvaluationReason::TenantMatch, $evaluation->reason);
+    }
+
+    #[Test]
+    public function contextualFlagFallsToUserWhenTenantDoesNotMatch(): void
+    {
+        $this->storage->set(new FlagDefinition(
+            name: 'user-fallback',
+            enabled: true,
+            type: FlagType::Contextual,
+            allowedTenants: ['globex'],
+            allowedUsers: ['user-1'],
+        ));
+
+        $context = new FlagContext(
+            tenantId: 'acme',
+            userId: 'user-1',
+        );
+
+        $evaluation = $this->manager->evaluate('user-fallback', $context);
+        self::assertTrue($evaluation->result);
+        self::assertSame(FlagEvaluationReason::UserMatch, $evaluation->reason);
+    }
+
+    #[Test]
+    public function allFlagsReturnsFlagsFromStorage(): void
+    {
+        $this->storage->set(new FlagDefinition(name: 'flag-a', enabled: true, type: FlagType::Boolean));
+        $this->storage->set(new FlagDefinition(name: 'flag-b', enabled: false, type: FlagType::Boolean));
+
+        $all = $this->manager->allFlags();
+
+        self::assertCount(2, $all);
+    }
+
+    #[Test]
     public function evaluationsAreRecordedInLog(): void
     {
         $this->storage->set(new FlagDefinition(

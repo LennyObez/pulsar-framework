@@ -40,7 +40,7 @@ return [
     'metrics' => [
         'enabled' => true,
         'exporters' => [
-            'prometheus' => [
+            'openmetrics' => [
                 'enabled' => false,
                 'endpoint' => '/metrics',
             ],

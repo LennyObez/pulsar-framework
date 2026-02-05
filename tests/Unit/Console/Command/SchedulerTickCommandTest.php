@@ -83,7 +83,7 @@ final class SchedulerTickCommandTest extends TestCase
 
     private function makeJob(string $name, Schedule $schedule, JobResult $result): JobInterface
     {
-        $job = $this->createMock(JobInterface::class);
+        $job = $this->createStub(JobInterface::class);
         $job->method('getName')->willReturn($name);
         $job->method('getSchedule')->willReturn($schedule);
         $job->method('getDescription')->willReturn($name);
