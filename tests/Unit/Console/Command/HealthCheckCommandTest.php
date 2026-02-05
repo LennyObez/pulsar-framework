@@ -83,7 +83,7 @@ final class HealthCheckCommandTest extends TestCase
 
     private function makeCheck(string $name, HealthCheckResult $result): HealthCheckInterface
     {
-        $check = $this->createMock(HealthCheckInterface::class);
+        $check = $this->createStub(HealthCheckInterface::class);
         $check->method('getName')->willReturn($name);
         $check->method('check')->willReturn($result);
 

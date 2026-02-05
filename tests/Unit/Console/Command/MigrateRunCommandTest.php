@@ -45,7 +45,7 @@ final class MigrateRunCommandTest extends TestCase
         $this->writeMigrationFile('20240101000000', 'create_users');
         $this->writeMigrationFile('20240102000000', 'create_posts');
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('driver')->willReturn(Driver::SQLite);
         $connection->method('execute')->willReturn(0);
         $connection->method('query')->willReturnCallback(
@@ -73,7 +73,7 @@ final class MigrateRunCommandTest extends TestCase
     #[Test]
     public function nothingToMigrate(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('driver')->willReturn(Driver::SQLite);
         $connection->method('execute')->willReturn(0);
         $connection->method('query')->willReturn(Result::fromArrays([]));
@@ -92,7 +92,7 @@ final class MigrateRunCommandTest extends TestCase
     #[Test]
     public function exceptionReturnsError(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('driver')->willThrowException(new RuntimeException('DB error'));
 
         $repository = new MigrationRepository($this->tmpDir);
@@ -109,7 +109,7 @@ final class MigrateRunCommandTest extends TestCase
     #[Test]
     public function configuredCorrectly(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $repository = new MigrationRepository($this->tmpDir);
         $runner = new MigrationRunner($connection, $repository, 'migrations');
         $command = new MigrateRunCommand($runner);

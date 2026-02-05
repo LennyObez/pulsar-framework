@@ -42,7 +42,7 @@ final class MigrateRollbackCommandTest extends TestCase
     #[Test]
     public function nothingToRollback(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('driver')->willReturn(Driver::SQLite);
         $connection->method('execute')->willReturn(0);
         $connection->method('query')->willReturn(Result::fromArrays([]));
@@ -64,7 +64,7 @@ final class MigrateRollbackCommandTest extends TestCase
         $this->writeMigrationFile('20240101000000', 'create_users');
 
         $queryCount = 0;
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('driver')->willReturn(Driver::SQLite);
         $connection->method('execute')->willReturn(0);
         $connection->method('query')->willReturnCallback(
@@ -97,7 +97,7 @@ final class MigrateRollbackCommandTest extends TestCase
     #[Test]
     public function exceptionReturnsError(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('driver')->willThrowException(new RuntimeException('DB fail'));
 
         $repository = new MigrationRepository($this->tmpDir);
@@ -114,7 +114,7 @@ final class MigrateRollbackCommandTest extends TestCase
     #[Test]
     public function configuredCorrectly(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $repository = new MigrationRepository($this->tmpDir);
         $runner = new MigrationRunner($connection, $repository, 'migrations');
         $command = new MigrateRollbackCommand($runner);

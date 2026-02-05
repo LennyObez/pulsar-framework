@@ -86,7 +86,7 @@ If the assertion fails, PHPBench exits with a non-zero code, and the CI job fail
 
 ### CI Integration
 
-The benchmark suite runs as part of the CI pipeline via:
+The benchmark suite runs as an **advisory** CI job — it does not block merges. Results appear in the PR job summary and are uploaded as a build artifact (14-day retention) for human review. If a budget assertion fails, the job reports the failure but the overall CI pipeline continues.
 
 ```bash
 composer bench

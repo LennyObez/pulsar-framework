@@ -14,12 +14,14 @@ readonly class MetricsConfig
 {
     public function __construct(
         public bool $enabled = true,
-        public bool $prometheusEnabled = false,
-        public string $prometheusEndpoint = '/metrics',
+        public bool $exporterEnabled = false,
+        public string $exporterEndpoint = '/metrics',
     ) {}
 
     /**
      * Build from the raw metrics config array.
+     *
+     * Accepts both 'openmetrics' and legacy 'prometheus' exporter keys.
      *
      * @param array<string, mixed> $data
      */
@@ -27,13 +29,13 @@ readonly class MetricsConfig
     {
         /** @var array<string, mixed> $exporters */
         $exporters = $data['exporters'] ?? [];
-        /** @var array<string, mixed> $prometheus */
-        $prometheus = $exporters['prometheus'] ?? [];
+        /** @var array<string, mixed> $exporter */
+        $exporter = $exporters['openmetrics'] ?? $exporters['prometheus'] ?? [];
 
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            prometheusEnabled: (bool) ($prometheus['enabled'] ?? false),
-            prometheusEndpoint: (string) ($prometheus['endpoint'] ?? '/metrics'), // @phpstan-ignore cast.string
+            exporterEnabled: (bool) ($exporter['enabled'] ?? false),
+            exporterEndpoint: (string) ($exporter['endpoint'] ?? '/metrics'), // @phpstan-ignore cast.string
         );
     }
 }

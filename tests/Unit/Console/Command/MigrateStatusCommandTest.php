@@ -45,7 +45,7 @@ final class MigrateStatusCommandTest extends TestCase
         file_put_contents($this->tmpDir . DIRECTORY_SEPARATOR . '20240101000000_create_users.php', '<?php');
         file_put_contents($this->tmpDir . DIRECTORY_SEPARATOR . '20240102000000_create_posts.php', '<?php');
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('driver')->willReturn(Driver::SQLite);
         $connection->method('execute')->willReturn(0);
         $connection->method('query')->willReturn(Result::fromArrays([
@@ -69,7 +69,7 @@ final class MigrateStatusCommandTest extends TestCase
     #[Test]
     public function noMigrationFiles(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('driver')->willReturn(Driver::SQLite);
         $connection->method('execute')->willReturn(0);
         $connection->method('query')->willReturn(Result::fromArrays([]));
@@ -88,7 +88,7 @@ final class MigrateStatusCommandTest extends TestCase
     #[Test]
     public function exceptionReturnsError(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('driver')->willThrowException(new RuntimeException('No DB'));
 
         $repository = new MigrationRepository($this->tmpDir);
@@ -105,7 +105,7 @@ final class MigrateStatusCommandTest extends TestCase
     #[Test]
     public function configuredCorrectly(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $repository = new MigrationRepository($this->tmpDir);
         $runner = new MigrationRunner($connection, $repository, 'migrations');
         $command = new MigrateStatusCommand($runner, $repository);
