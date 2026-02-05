@@ -11,6 +11,9 @@ use Pulsar\Support\AtomicFileWriter;
 use RuntimeException;
 
 use function file_get_contents;
+use function filesize;
+use function hash;
+use function hash_file;
 use function is_dir;
 use function mkdir;
 use function rmdir;
@@ -114,10 +117,17 @@ final class AtomicFileWriterTest extends TestCase
     public function it_handles_large_content(): void
     {
         $path = $this->tempDir . DIRECTORY_SEPARATOR . 'large.txt';
-        $content = str_repeat('x', 1024 * 1024); // 1 MB
+        $size = 1024 * 1024; // 1 MB
+        $content = str_repeat('x', $size);
 
         AtomicFileWriter::write($path, $content);
 
-        self::assertSame($content, file_get_contents($path));
+        // Compare via hash to avoid holding two 1 MB copies in memory
+        // (the full suite accumulates ~120 MB before reaching this test).
+        $expectedHash = hash('sha256', $content);
+        unset($content);
+
+        self::assertSame($size, filesize($path));
+        self::assertSame($expectedHash, hash_file('sha256', $path));
     }
 }
