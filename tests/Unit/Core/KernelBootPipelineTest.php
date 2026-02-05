@@ -17,6 +17,7 @@ use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Observability\Log\Logger;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
+use Pulsar\Routing\MatchedRoute;
 use Pulsar\Security\Session\Session;
 
 #[CoversClass(Kernel::class)]
@@ -76,8 +77,10 @@ final class KernelBootPipelineTest extends TestCase
         $this->writeObservabilityConfig(metricsEnabled: true, exporterEnabled: true, exporterEndpoint: '/test-metrics');
         $kernel = $this->bootKernel();
 
+        // Router::match() throws RoutingException if no route matches,
+        // so reaching this assertion means the endpoint was registered.
         $matched = $kernel->router()->match(Method::GET, '/test-metrics');
-        self::assertNotNull($matched);
+        self::assertInstanceOf(MatchedRoute::class, $matched);
     }
 
     #[Test]

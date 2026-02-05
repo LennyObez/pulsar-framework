@@ -128,18 +128,18 @@ final class TenantAwareConnectionManagerTest extends TestCase
     #[Test]
     public function connectionUsesTenantPrefixedNameForSeparateConnectionStrategy(): void
     {
-        $requestedName = null;
         $mockConnection = $this->createStub(ConnectionInterface::class);
 
-        $inner = new class ($mockConnection, $requestedName) implements ConnectionManagerInterface {
+        $inner = new class ($mockConnection) implements ConnectionManagerInterface {
+            public ?string $lastRequestedName = null;
+
             public function __construct(
                 private readonly ConnectionInterface $conn,
-                private ?string &$requestedName,
             ) {}
 
             public function connection(?string $name = null): ConnectionInterface
             {
-                $this->requestedName = $name;
+                $this->lastRequestedName = $name;
 
                 return $this->conn;
             }
@@ -167,24 +167,24 @@ final class TenantAwareConnectionManagerTest extends TestCase
         $connection = $manager->connection();
 
         self::assertSame($mockConnection, $connection);
-        self::assertSame('tenant_acme', $requestedName);
+        self::assertSame('tenant_acme', $inner->lastRequestedName);
     }
 
     #[Test]
     public function connectionFallsBackToInnerWhenSeparateConnectionButNoTenantResolved(): void
     {
-        $requestedName = null;
         $mockConnection = $this->createStub(ConnectionInterface::class);
 
-        $inner = new class ($mockConnection, $requestedName) implements ConnectionManagerInterface {
+        $inner = new class ($mockConnection) implements ConnectionManagerInterface {
+            public ?string $lastRequestedName = null;
+
             public function __construct(
                 private readonly ConnectionInterface $conn,
-                private ?string &$requestedName,
             ) {}
 
             public function connection(?string $name = null): ConnectionInterface
             {
-                $this->requestedName = $name;
+                $this->lastRequestedName = $name;
 
                 return $this->conn;
             }
@@ -211,7 +211,7 @@ final class TenantAwareConnectionManagerTest extends TestCase
         $manager = new TenantAwareConnectionManager($inner, $context, $config);
         $manager->connection('myconn');
 
-        self::assertSame('myconn', $requestedName);
+        self::assertSame('myconn', $inner->lastRequestedName);
     }
 
     #[Test]
@@ -279,10 +279,8 @@ final class TenantAwareConnectionManagerTest extends TestCase
     #[Test]
     public function disconnectDelegatesToInner(): void
     {
-        $disconnectedName = null;
-
-        $inner = new class ($disconnectedName) implements ConnectionManagerInterface {
-            public function __construct(private ?string &$disconnectedName) {}
+        $inner = new class implements ConnectionManagerInterface {
+            public ?string $disconnectedName = null;
 
             public function connection(?string $name = null): ConnectionInterface
             {
@@ -309,7 +307,7 @@ final class TenantAwareConnectionManagerTest extends TestCase
         $manager = new TenantAwareConnectionManager($inner, $context, $config);
         $manager->disconnect('myconn');
 
-        self::assertSame('myconn', $disconnectedName);
+        self::assertSame('myconn', $inner->disconnectedName);
     }
 
     #[Test]
