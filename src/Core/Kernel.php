@@ -197,8 +197,6 @@ final class Kernel
      * 15. Extension register phase
      * 16. Extension boot phase
      *
-     * @throws ContainerException If a container error occurs during bootstrap
-     * @throws NotFoundException If a required binding is not found during bootstrap
      * @throws FeatureFlagException If flag storage fails during boot
      * @throws JsonException If flag serialization fails during boot
      */
