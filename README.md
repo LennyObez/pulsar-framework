@@ -62,10 +62,10 @@ Pulsar is designed for regulated domains such as:
 
 ### 3) In-house Observability Suite
 
-No dependency on Prometheus/Grafana/Sentry.
+No dependency on external monitoring vendors.
 
 - Structured logs + audit logging subsystem
-- Metrics collector + exporters (Prometheus exposition format allowed as output)
+- Metrics collector + exporters (OpenMetrics text exposition format)
 - Tracing: spans, context propagation, sampling rules
 - Error reporting: grouping, fingerprints, local viewer UI
 

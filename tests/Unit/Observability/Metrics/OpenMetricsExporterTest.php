@@ -9,10 +9,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
-use Pulsar\Observability\Metrics\PrometheusExporter;
+use Pulsar\Observability\Metrics\OpenMetricsExporter;
 
-#[CoversClass(PrometheusExporter::class)]
-final class PrometheusExporterTest extends TestCase
+#[CoversClass(OpenMetricsExporter::class)]
+final class OpenMetricsExporterTest extends TestCase
 {
     #[Test]
     public function exportsCounterWithHelpAndType(): void
@@ -21,7 +21,7 @@ final class PrometheusExporterTest extends TestCase
         $counter = $registry->counter('http_requests_total', 'Total HTTP requests');
         $counter->increment();
 
-        $exporter = new PrometheusExporter($registry);
+        $exporter = new OpenMetricsExporter($registry);
         $output = $exporter->export();
 
         self::assertStringContainsString('# HELP http_requests_total Total HTTP requests', $output);
@@ -36,7 +36,7 @@ final class PrometheusExporterTest extends TestCase
         $counter = $registry->counter('requests');
         $counter->increment(new LabelSet(['method' => 'GET', 'status' => '200']));
 
-        $exporter = new PrometheusExporter($registry);
+        $exporter = new OpenMetricsExporter($registry);
         $output = $exporter->export();
 
         self::assertStringContainsString('method="GET"', $output);
@@ -50,7 +50,7 @@ final class PrometheusExporterTest extends TestCase
         $gauge = $registry->gauge('temperature', 'Current temperature');
         $gauge->set(36.6);
 
-        $exporter = new PrometheusExporter($registry);
+        $exporter = new OpenMetricsExporter($registry);
         $output = $exporter->export();
 
         self::assertStringContainsString('# TYPE temperature gauge', $output);
@@ -64,7 +64,7 @@ final class PrometheusExporterTest extends TestCase
         $histogram = $registry->histogram('duration', 'Request duration', [0.1, 0.5, 1.0]);
         $histogram->observe(0.3);
 
-        $exporter = new PrometheusExporter($registry);
+        $exporter = new OpenMetricsExporter($registry);
         $output = $exporter->export();
 
         self::assertStringContainsString('# TYPE duration histogram', $output);
@@ -80,7 +80,7 @@ final class PrometheusExporterTest extends TestCase
     public function exportsEmptyRegistry(): void
     {
         $registry = new MetricRegistry();
-        $exporter = new PrometheusExporter($registry);
+        $exporter = new OpenMetricsExporter($registry);
 
         self::assertSame("\n", $exporter->export());
     }

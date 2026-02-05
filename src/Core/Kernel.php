@@ -89,7 +89,7 @@ use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Observability\Log\Logger;
 use Pulsar\Observability\Metrics\MetricRegistry;
-use Pulsar\Observability\Metrics\PrometheusExporter;
+use Pulsar\Observability\Metrics\OpenMetricsExporter;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Resilience\CircuitBreakerRegistry;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunner;
@@ -542,11 +542,11 @@ final class Kernel
         // Metrics is inner: registered after tracing
         $this->middleware->pipe($metricsMiddleware);
 
-        // Register Prometheus endpoint if enabled
+        // Register OpenMetrics endpoint if enabled
         if ($observabilityConfig->metrics->prometheusEnabled) {
             $endpoint = $observabilityConfig->metrics->prometheusEndpoint;
             $this->router->get($endpoint, static function () use ($registry): Response {
-                $exporter = new PrometheusExporter($registry);
+                $exporter = new OpenMetricsExporter($registry);
 
                 return new Response(
                     body: $exporter->export(),
