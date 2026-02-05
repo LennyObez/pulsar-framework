@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http\Middleware;
 
+use ArrayObject;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -45,50 +46,44 @@ final class MiddlewarePipelineTest extends TestCase
     #[Test]
     public function middlewareIsExecutedInOrder(): void
     {
-        /** @var list<string> $order */
-        $order = [];
+        /** @var ArrayObject<int, string> $order */
+        $order = new ArrayObject();
         $pipeline = new MiddlewarePipeline();
 
         $middleware1 = new class ($order) implements MiddlewareInterface {
-            /**
-             * @param list<string> $order
-             * @phpstan-ignore property.onlyWritten
-             */
-            public function __construct(private array &$order) {}
+            /** @param ArrayObject<int, string> $order */
+            public function __construct(private readonly ArrayObject $order) {}
 
             public function process(Request $request, callable $next): Response
             {
-                $this->order[] = 'before1';
+                $this->order->append('before1');
                 $response = $next($request);
-                $this->order[] = 'after1';
+                $this->order->append('after1');
                 return $response;
             }
         };
 
         $middleware2 = new class ($order) implements MiddlewareInterface {
-            /**
-             * @param list<string> $order
-             * @phpstan-ignore property.onlyWritten
-             */
-            public function __construct(private array &$order) {}
+            /** @param ArrayObject<int, string> $order */
+            public function __construct(private readonly ArrayObject $order) {}
 
             public function process(Request $request, callable $next): Response
             {
-                $this->order[] = 'before2';
+                $this->order->append('before2');
                 $response = $next($request);
-                $this->order[] = 'after2';
+                $this->order->append('after2');
                 return $response;
             }
         };
 
         $pipeline->pipe($middleware1)->pipe($middleware2);
 
-        $pipeline->handle($this->createRequest(), function () use (&$order) {
-            $order[] = 'handler';
+        $pipeline->handle($this->createRequest(), function () use ($order) {
+            $order->append('handler');
             return Response::text('ok');
         });
 
-        self::assertSame(['before1', 'before2', 'handler', 'after2', 'after1'], $order);
+        self::assertSame(['before1', 'before2', 'handler', 'after2', 'after1'], $order->getArrayCopy());
     }
 
     #[Test]
@@ -189,8 +184,9 @@ final class MiddlewarePipelineTest extends TestCase
     public function invalidMiddlewareThrowsException(): void
     {
         $pipeline = new MiddlewarePipeline();
-        // @phpstan-ignore argument.type
-        $pipeline->pipe('NonExistentMiddleware');
+        /** @var class-string<MiddlewareInterface> $nonExistent */
+        $nonExistent = trim('NonExistentMiddleware');
+        $pipeline->pipe($nonExistent);
 
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('could not be resolved');
@@ -227,99 +223,87 @@ final class MiddlewarePipelineTest extends TestCase
     #[Test]
     public function fifoGuaranteeWithThreeMiddleware(): void
     {
-        /** @var list<string> $order */
-        $order = [];
+        /** @var ArrayObject<int, string> $order */
+        $order = new ArrayObject();
         $pipeline = new MiddlewarePipeline();
 
         for ($i = 1; $i <= 3; $i++) {
             $n = $i;
             $middleware = new class ($order, $n) implements MiddlewareInterface {
-                /**
-                 * @param list<string> $order
-                 * @phpstan-ignore property.onlyWritten
-                 */
-                public function __construct(private array &$order, private readonly int $n) {}
+                /** @param ArrayObject<int, string> $order */
+                public function __construct(private readonly ArrayObject $order, private readonly int $n) {}
 
                 public function process(Request $request, callable $next): Response
                 {
-                    $this->order[] = "before{$this->n}";
+                    $this->order->append("before{$this->n}");
                     $response = $next($request);
-                    $this->order[] = "after{$this->n}";
+                    $this->order->append("after{$this->n}");
                     return $response;
                 }
             };
             $pipeline->pipe($middleware);
         }
 
-        $pipeline->handle($this->createRequest(), function () use (&$order) {
-            $order[] = 'handler';
+        $pipeline->handle($this->createRequest(), function () use ($order) {
+            $order->append('handler');
             return Response::text('ok');
         });
 
         self::assertSame(
             ['before1', 'before2', 'before3', 'handler', 'after3', 'after2', 'after1'],
-            $order,
+            $order->getArrayCopy(),
         );
     }
 
     #[Test]
     public function shortCircuitCascadePreventsDownstreamMiddleware(): void
     {
-        /** @var list<string> $order */
-        $order = [];
+        /** @var ArrayObject<int, string> $order */
+        $order = new ArrayObject();
         $pipeline = new MiddlewarePipeline();
 
         // First middleware passes through
         $pipeline->pipe(new class ($order) implements MiddlewareInterface {
-            /**
-             * @param list<string> $order
-             * @phpstan-ignore property.onlyWritten
-             */
-            public function __construct(private array &$order) {}
+            /** @param ArrayObject<int, string> $order */
+            public function __construct(private readonly ArrayObject $order) {}
 
             public function process(Request $request, callable $next): Response
             {
-                $this->order[] = 'first';
+                $this->order->append('first');
                 return $next($request);
             }
         });
 
         // Second middleware short-circuits
         $pipeline->pipe(new class ($order) implements MiddlewareInterface {
-            /**
-             * @param list<string> $order
-             * @phpstan-ignore property.onlyWritten
-             */
-            public function __construct(private array &$order) {}
+            /** @param ArrayObject<int, string> $order */
+            public function __construct(private readonly ArrayObject $order) {}
 
             public function process(Request $request, callable $next): Response
             {
-                $this->order[] = 'blocker';
+                $this->order->append('blocker');
                 return Response::text('blocked');
             }
         });
 
         // Third middleware should never execute
         $pipeline->pipe(new class ($order) implements MiddlewareInterface {
-            /**
-             * @param list<string> $order
-             * @phpstan-ignore property.onlyWritten
-             */
-            public function __construct(private array &$order) {}
+            /** @param ArrayObject<int, string> $order */
+            public function __construct(private readonly ArrayObject $order) {}
 
             public function process(Request $request, callable $next): Response
             {
-                $this->order[] = 'third';
+                $this->order->append('third');
                 return $next($request);
             }
         });
 
-        $response = $pipeline->handle($this->createRequest(), function () use (&$order) {
-            $order[] = 'handler';
+        $response = $pipeline->handle($this->createRequest(), function () use ($order) {
+            $order->append('handler');
             return Response::text('ok');
         });
 
-        self::assertSame(['first', 'blocker'], $order);
+        self::assertSame(['first', 'blocker'], $order->getArrayCopy());
         self::assertSame('blocked', $response->body);
     }
 }

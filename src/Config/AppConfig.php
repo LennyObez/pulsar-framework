@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -31,11 +33,13 @@ readonly class AppConfig
     {
         // Resolve mode: env var overrides file value
         $envValue = $environment->get('APP_ENV');
-        $modeString = $envValue ?? (string) ($data['env'] ?? 'local'); // @phpstan-ignore cast.string
+        $rawEnv = $data['env'] ?? 'local';
+        $modeString = $envValue ?? (is_string($rawEnv) ? $rawEnv : 'local');
         $mode = EnvironmentMode::tryFrom($modeString) ?? EnvironmentMode::Local;
 
         // Resolve name: env var overrides file value
-        $name = $environment->get('APP_NAME') ?? (string) ($data['name'] ?? 'Pulsar'); // @phpstan-ignore cast.string
+        $rawName = $data['name'] ?? 'Pulsar';
+        $name = $environment->get('APP_NAME') ?? (is_string($rawName) ? $rawName : 'Pulsar');
 
         // Resolve debug: env var overrides file value, which overrides mode default
         $debugEnv = $environment->get('APP_DEBUG');
@@ -48,8 +52,10 @@ readonly class AppConfig
             $debug = $mode->isDebugByDefault();
         }
 
-        $timezone = (string) ($data['timezone'] ?? 'UTC'); // @phpstan-ignore cast.string
-        $locale = (string) ($data['locale'] ?? 'en'); // @phpstan-ignore cast.string
+        $rawTimezone = $data['timezone'] ?? 'UTC';
+        $timezone = is_string($rawTimezone) ? $rawTimezone : 'UTC';
+        $rawLocale = $data['locale'] ?? 'en';
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
 
         return new self(
             name: $name,

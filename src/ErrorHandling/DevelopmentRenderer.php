@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\ErrorHandling;
 
 use function htmlspecialchars;
+use function is_scalar;
+use function is_string;
 
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
@@ -133,7 +135,7 @@ final class DevelopmentRenderer implements ExceptionRendererInterface
 
         foreach ($data as $key => $value) {
             $escapedKey = $this->escape($key);
-            $escapedValue = $this->escape((string) $value); // @phpstan-ignore cast.string
+            $escapedValue = $this->escape(is_string($value) ? $value : (is_scalar($value) ? (string) $value : ''));
             $html .= "<tr><td>$escapedKey</td><td>$escapedValue</td></tr>";
         }
 

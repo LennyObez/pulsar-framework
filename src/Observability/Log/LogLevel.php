@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use function is_scalar;
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -60,7 +63,7 @@ enum LogLevel: string
             return $level;
         }
 
-        $levelString = (string) $level; // @phpstan-ignore cast.string
+        $levelString = is_string($level) ? $level : (is_scalar($level) ? (string) $level : 'debug');
 
         return self::tryFrom($levelString) ?? self::Debug;
     }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_int;
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -29,11 +32,16 @@ readonly class TwoFactorConfig
     public static function fromArray(array $data): self
     {
         $enabled = (bool) ($data['enabled'] ?? false);
-        $issuer = (string) ($data['issuer'] ?? 'Pulsar'); // @phpstan-ignore cast.string
-        $codeDigits = (int) ($data['code_digits'] ?? 6); // @phpstan-ignore cast.int
-        $codePeriod = (int) ($data['code_period'] ?? 30); // @phpstan-ignore cast.int
-        $verificationWindow = (int) ($data['verification_window'] ?? 1); // @phpstan-ignore cast.int
-        $recoveryCodeCount = (int) ($data['recovery_code_count'] ?? 8); // @phpstan-ignore cast.int
+        $rawIssuer = $data['issuer'] ?? 'Pulsar';
+        $issuer = is_string($rawIssuer) ? $rawIssuer : 'Pulsar';
+        $rawCodeDigits = $data['code_digits'] ?? 6;
+        $codeDigits = is_int($rawCodeDigits) ? $rawCodeDigits : (int) (is_numeric($rawCodeDigits) ? $rawCodeDigits : 6);
+        $rawCodePeriod = $data['code_period'] ?? 30;
+        $codePeriod = is_int($rawCodePeriod) ? $rawCodePeriod : (int) (is_numeric($rawCodePeriod) ? $rawCodePeriod : 30);
+        $rawVerificationWindow = $data['verification_window'] ?? 1;
+        $verificationWindow = is_int($rawVerificationWindow) ? $rawVerificationWindow : (int) (is_numeric($rawVerificationWindow) ? $rawVerificationWindow : 1);
+        $rawRecoveryCodeCount = $data['recovery_code_count'] ?? 8;
+        $recoveryCodeCount = is_int($rawRecoveryCodeCount) ? $rawRecoveryCodeCount : (int) (is_numeric($rawRecoveryCodeCount) ? $rawRecoveryCodeCount : 8);
 
         return new self(
             enabled: $enabled,

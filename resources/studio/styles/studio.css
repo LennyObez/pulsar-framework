@@ -1,0 +1,960 @@
+/* ============================================================================
+ * Pulsar Studio — Dark-themed observability dashboard
+ * ============================================================================
+ * Color system uses CSS custom properties for maintainability.
+ * All components are mobile-friendly with responsive breakpoints.
+ * ========================================================================= */
+
+/* ---------------------------------------------------------------------------
+ * 1. Custom Properties
+ * ------------------------------------------------------------------------ */
+
+:root {
+  /* Surface colors */
+  --studio-bg: #0f172a;
+  --studio-surface: #1e293b;
+  --studio-surface-raised: #273548;
+  --studio-border: #334155;
+
+  /* Text colors */
+  --studio-text: #e2e8f0;
+  --studio-text-muted: #94a3b8;
+  --studio-text-dim: #64748b;
+
+  /* Accent colors */
+  --studio-accent: #38bdf8;
+  --studio-blue: #3b82f6;
+  --studio-green: #22c55e;
+  --studio-yellow: #eab308;
+  --studio-orange: #f97316;
+  --studio-red: #ef4444;
+  --studio-purple: #a855f7;
+  --studio-cyan: #06b6d4;
+  --studio-pink: #ec4899;
+
+  /* Status colors (HTTP) */
+  --studio-status-2xx: #22c55e;
+  --studio-status-3xx: #38bdf8;
+  --studio-status-4xx: #eab308;
+  --studio-status-5xx: #ef4444;
+
+  /* Timeline type colors */
+  --studio-type-http: #3b82f6;
+  --studio-type-db: #a855f7;
+  --studio-type-error: #ef4444;
+  --studio-type-log: #22c55e;
+  --studio-type-scheduler: #f97316;
+  --studio-type-flag: #06b6d4;
+  --studio-type-default: #94a3b8;
+
+  /* Typography */
+  --studio-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --studio-font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+
+  /* Spacing scale */
+  --studio-space-xs: 0.25rem;
+  --studio-space-sm: 0.5rem;
+  --studio-space-md: 1rem;
+  --studio-space-lg: 1.5rem;
+  --studio-space-xl: 2rem;
+  --studio-space-2xl: 3rem;
+
+  /* Radii */
+  --studio-radius-sm: 4px;
+  --studio-radius-md: 8px;
+  --studio-radius-lg: 12px;
+
+  /* Shadows */
+  --studio-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --studio-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --studio-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
+
+  /* Transitions */
+  --studio-transition-fast: 150ms ease;
+  --studio-transition-normal: 250ms ease;
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. Reset & Base
+ * ------------------------------------------------------------------------ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--studio-font-sans);
+  background: var(--studio-bg);
+  color: var(--studio-text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--studio-accent);
+  text-decoration: none;
+  transition: color var(--studio-transition-fast);
+}
+
+a:hover {
+  color: var(--studio-blue);
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. Navigation (.studio-nav)
+ * ------------------------------------------------------------------------ */
+
+.studio-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--studio-space-sm) var(--studio-space-xl);
+  background: var(--studio-surface);
+  border-bottom: 1px solid var(--studio-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  min-height: 56px;
+}
+
+.nav-brand {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--studio-text);
+  letter-spacing: -0.01em;
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-sm);
+}
+
+.nav-brand:hover {
+  color: var(--studio-accent);
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-xs);
+  list-style: none;
+  flex-wrap: wrap;
+}
+
+.nav-links a {
+  display: inline-block;
+  padding: var(--studio-space-xs) var(--studio-space-md);
+  color: var(--studio-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--studio-radius-sm);
+  transition:
+    color var(--studio-transition-fast),
+    background-color var(--studio-transition-fast);
+}
+
+.nav-links a:hover {
+  color: var(--studio-text);
+  background: var(--studio-surface-raised);
+  text-decoration: none;
+}
+
+.nav-links a.active {
+  color: var(--studio-accent);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+@media (max-width: 768px) {
+  .studio-nav {
+    flex-direction: column;
+    gap: var(--studio-space-sm);
+    padding: var(--studio-space-sm) var(--studio-space-md);
+  }
+
+  .nav-links {
+    justify-content: center;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. Dashboard Layout (.dashboard)
+ * ------------------------------------------------------------------------ */
+
+.dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--studio-space-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--studio-space-xl);
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: var(--studio-space-md);
+    gap: var(--studio-space-lg);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. Metric Cards (.metrics-row, .metric-card)
+ * ------------------------------------------------------------------------ */
+
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--studio-space-md);
+}
+
+.metric-card {
+  background: var(--studio-surface);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-md);
+  padding: var(--studio-space-lg);
+  transition:
+    border-color var(--studio-transition-fast),
+    box-shadow var(--studio-transition-fast);
+}
+
+.metric-card:hover {
+  border-color: var(--studio-accent);
+  box-shadow: var(--studio-shadow-md);
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--studio-text-muted);
+  margin-bottom: var(--studio-space-xs);
+}
+
+.metric-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--studio-text);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-subtitle {
+  font-size: 0.8125rem;
+  color: var(--studio-text-dim);
+  margin-top: var(--studio-space-xs);
+}
+
+@media (max-width: 480px) {
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 6. Generic Card (.card)
+ * ------------------------------------------------------------------------ */
+
+.card {
+  background: var(--studio-surface);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-md);
+  padding: var(--studio-space-lg);
+  transition: box-shadow var(--studio-transition-fast);
+}
+
+.card:hover {
+  box-shadow: var(--studio-shadow-sm);
+}
+
+.card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--studio-text);
+  margin-bottom: var(--studio-space-md);
+  padding-bottom: var(--studio-space-sm);
+  border-bottom: 1px solid var(--studio-border);
+}
+
+/* ---------------------------------------------------------------------------
+ * 7. Data Table (.data-table)
+ * ------------------------------------------------------------------------ */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table thead {
+  position: sticky;
+  top: 56px;
+  z-index: 10;
+}
+
+.data-table th {
+  background: var(--studio-surface-raised);
+  color: var(--studio-text-muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: var(--studio-space-sm) var(--studio-space-md);
+  text-align: left;
+  border-bottom: 1px solid var(--studio-border);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: var(--studio-space-sm) var(--studio-space-md);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+  color: var(--studio-text);
+  vertical-align: middle;
+}
+
+.data-table tbody tr {
+  transition: background-color var(--studio-transition-fast);
+}
+
+.data-table tbody tr:hover {
+  background: rgba(56, 189, 248, 0.04);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Overflow wrapper for responsive tables */
+.card .data-table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ---------------------------------------------------------------------------
+ * 8. Status Grid (.status-grid)
+ * ------------------------------------------------------------------------ */
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: var(--studio-space-sm);
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--studio-space-sm) var(--studio-space-md);
+  border-radius: var(--studio-radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--studio-border);
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--studio-transition-fast);
+}
+
+.status-2xx {
+  border-color: var(--studio-status-2xx);
+  color: var(--studio-status-2xx);
+}
+
+.status-3xx {
+  border-color: var(--studio-status-3xx);
+  color: var(--studio-status-3xx);
+}
+
+.status-4xx {
+  border-color: var(--studio-status-4xx);
+  color: var(--studio-status-4xx);
+}
+
+.status-5xx {
+  border-color: var(--studio-status-5xx);
+  color: var(--studio-status-5xx);
+}
+
+/* ---------------------------------------------------------------------------
+ * 9. Explorer (.explorer)
+ * ------------------------------------------------------------------------ */
+
+.explorer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--studio-space-md);
+}
+
+.explorer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--studio-space-md);
+}
+
+.explorer-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--studio-text);
+}
+
+/* ---------------------------------------------------------------------------
+ * 10. Live Controls (.live-controls)
+ * ------------------------------------------------------------------------ */
+
+.live-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-sm);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--studio-space-xs);
+  padding: var(--studio-space-xs) var(--studio-space-md);
+  font-family: var(--studio-font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--studio-text-muted);
+  background: var(--studio-surface);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--studio-transition-fast),
+    background-color var(--studio-transition-fast),
+    border-color var(--studio-transition-fast);
+}
+
+.btn:hover {
+  color: var(--studio-text);
+  background: var(--studio-surface-raised);
+  border-color: var(--studio-text-dim);
+}
+
+.btn-active {
+  color: var(--studio-accent);
+  background: rgba(56, 189, 248, 0.1);
+  border-color: var(--studio-accent);
+}
+
+.btn-active:hover {
+  color: var(--studio-accent);
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--studio-accent);
+}
+
+/* ---------------------------------------------------------------------------
+ * 11. Live Indicator (.live-indicator)
+ * ------------------------------------------------------------------------ */
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--studio-space-xs);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--studio-text-muted);
+}
+
+.live-indicator.live-active {
+  color: var(--studio-green);
+}
+
+.live-indicator.live-paused {
+  color: var(--studio-yellow);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--studio-text-dim);
+  flex-shrink: 0;
+}
+
+.live-active .live-dot {
+  background: var(--studio-green);
+  animation: live-pulse 2s ease-in-out infinite;
+}
+
+.live-paused .live-dot {
+  background: var(--studio-yellow);
+  animation: none;
+}
+
+@keyframes live-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    opacity: 0.6;
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 12. Badge (.badge, .event-type-badge)
+ * ------------------------------------------------------------------------ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--studio-bg);
+  background: var(--studio-accent);
+  border-radius: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.event-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: var(--studio-radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--studio-text-muted);
+}
+
+.event-type-badge[data-type='http.request'],
+.event-type-badge[data-type='http.response'] {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--studio-type-http);
+}
+
+.event-type-badge[data-type='db.query'] {
+  background: rgba(168, 85, 247, 0.15);
+  color: var(--studio-type-db);
+}
+
+.event-type-badge[data-type='exception'] {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--studio-type-error);
+}
+
+.event-type-badge[data-type='log.entry'] {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--studio-type-log);
+}
+
+.event-type-badge[data-type='scheduler.run'] {
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--studio-type-scheduler);
+}
+
+.event-type-badge[data-type='feature.flag'] {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--studio-type-flag);
+}
+
+/* ---------------------------------------------------------------------------
+ * 13. Correlation Link (.correlation-link)
+ * ------------------------------------------------------------------------ */
+
+.correlation-link {
+  font-family: var(--studio-font-mono);
+  font-size: 0.75rem;
+  color: var(--studio-accent);
+  cursor: pointer;
+  padding: 1px 4px;
+  border-radius: var(--studio-radius-sm);
+  transition:
+    background-color var(--studio-transition-fast),
+    color var(--studio-transition-fast);
+}
+
+.correlation-link:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--studio-blue);
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * 14. Table Cell Variants (.time-cell, .details-cell)
+ * ------------------------------------------------------------------------ */
+
+.time-cell {
+  font-family: var(--studio-font-mono);
+  font-size: 0.75rem;
+  color: var(--studio-text-dim);
+  white-space: nowrap;
+}
+
+.details-cell {
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--studio-text-muted);
+  font-size: 0.8125rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * 15. Timeline View (.timeline-view)
+ * ------------------------------------------------------------------------ */
+
+.timeline-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--studio-space-lg);
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--studio-space-md);
+}
+
+.timeline-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--studio-text);
+}
+
+.timeline-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-md);
+  font-size: 0.8125rem;
+  color: var(--studio-text-muted);
+}
+
+/* ---------------------------------------------------------------------------
+ * 16. Timeline (.timeline, .timeline-entry)
+ * ------------------------------------------------------------------------ */
+
+.timeline {
+  position: relative;
+  padding-left: var(--studio-space-2xl);
+}
+
+/* Vertical line */
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--studio-border);
+}
+
+.timeline-entry {
+  position: relative;
+  padding-bottom: var(--studio-space-lg);
+  /* Support --position custom property for programmatic offset */
+  margin-top: var(--position, 0);
+}
+
+.timeline-entry:last-child {
+  padding-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * 17. Timeline Marker (.timeline-marker)
+ * ------------------------------------------------------------------------ */
+
+.timeline-marker {
+  position: absolute;
+  left: calc(-1 * var(--studio-space-2xl) + 4px);
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--studio-bg);
+  background: var(--studio-type-default);
+  z-index: 1;
+}
+
+.timeline-marker.type-http {
+  background: var(--studio-type-http);
+}
+
+.timeline-marker.type-db {
+  background: var(--studio-type-db);
+}
+
+.timeline-marker.type-error {
+  background: var(--studio-type-error);
+}
+
+.timeline-marker.type-log {
+  background: var(--studio-type-log);
+}
+
+.timeline-marker.type-scheduler {
+  background: var(--studio-type-scheduler);
+}
+
+.timeline-marker.type-flag {
+  background: var(--studio-type-flag);
+}
+
+.timeline-marker.type-default {
+  background: var(--studio-type-default);
+}
+
+/* ---------------------------------------------------------------------------
+ * 18. Timeline Content (.timeline-content, etc.)
+ * ------------------------------------------------------------------------ */
+
+.timeline-content {
+  background: var(--studio-surface);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-md);
+  padding: var(--studio-space-md);
+  transition:
+    border-color var(--studio-transition-fast),
+    box-shadow var(--studio-transition-fast);
+}
+
+.timeline-content:hover {
+  border-color: var(--studio-text-dim);
+  box-shadow: var(--studio-shadow-sm);
+}
+
+.timeline-time {
+  font-family: var(--studio-font-mono);
+  font-size: 0.6875rem;
+  color: var(--studio-text-dim);
+}
+
+.timeline-type {
+  display: inline-block;
+  padding: 1px 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-radius: var(--studio-radius-sm);
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--studio-text-muted);
+}
+
+.timeline-index {
+  font-family: var(--studio-font-mono);
+  font-size: 0.6875rem;
+  color: var(--studio-text-dim);
+}
+
+.timeline-details {
+  margin-top: var(--studio-space-sm);
+  font-size: 0.8125rem;
+  color: var(--studio-text-muted);
+  line-height: 1.5;
+}
+
+.timeline-details code {
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .timeline {
+    padding-left: var(--studio-space-xl);
+  }
+
+  .timeline-marker {
+    left: calc(-1 * var(--studio-space-xl) + 2px);
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 19. Empty State (.empty-state)
+ * ------------------------------------------------------------------------ */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--studio-space-2xl) var(--studio-space-xl);
+  min-height: 300px;
+}
+
+.empty-state h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--studio-text-muted);
+  margin-bottom: var(--studio-space-sm);
+}
+
+.empty-state p {
+  font-size: 0.875rem;
+  color: var(--studio-text-dim);
+  max-width: 480px;
+  margin-bottom: var(--studio-space-md);
+}
+
+.empty-state a,
+.empty-state .btn {
+  margin-top: var(--studio-space-sm);
+}
+
+/* ---------------------------------------------------------------------------
+ * 20. Pagination (.pagination)
+ * ------------------------------------------------------------------------ */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--studio-space-xs);
+  padding: var(--studio-space-md) 0;
+}
+
+.page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 var(--studio-space-sm);
+  font-family: var(--studio-font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--studio-text-muted);
+  background: var(--studio-surface);
+  border: 1px solid var(--studio-border);
+  border-radius: var(--studio-radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--studio-transition-fast),
+    background-color var(--studio-transition-fast),
+    border-color var(--studio-transition-fast);
+}
+
+.page-link:hover {
+  color: var(--studio-text);
+  background: var(--studio-surface-raised);
+  border-color: var(--studio-text-dim);
+  text-decoration: none;
+}
+
+.page-link.active,
+.page-link[aria-current='page'] {
+  color: var(--studio-accent);
+  background: rgba(56, 189, 248, 0.1);
+  border-color: var(--studio-accent);
+}
+
+.page-link:disabled,
+.page-link[disabled] {
+  color: var(--studio-text-dim);
+  background: var(--studio-surface);
+  border-color: var(--studio-border);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.page-info {
+  font-size: 0.8125rem;
+  color: var(--studio-text-dim);
+  padding: 0 var(--studio-space-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+ * 21. Error Message (.error)
+ * ------------------------------------------------------------------------ */
+
+.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--studio-radius-md);
+  padding: var(--studio-space-md) var(--studio-space-lg);
+  color: var(--studio-red);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.error a {
+  color: var(--studio-red);
+  text-decoration: underline;
+}
+
+.error a:hover {
+  color: var(--studio-text);
+}
+
+/* ---------------------------------------------------------------------------
+ * 22. Inline Code (code, code.sql)
+ * ------------------------------------------------------------------------ */
+
+code {
+  font-family: var(--studio-font-mono);
+  font-size: 0.8125em;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--studio-radius-sm);
+  color: var(--studio-accent);
+  word-break: break-word;
+}
+
+code.sql {
+  color: var(--studio-purple);
+  background: rgba(168, 85, 247, 0.1);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+/* ---------------------------------------------------------------------------
+ * 23. Scrollbar (Webkit)
+ * ------------------------------------------------------------------------ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--studio-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--studio-text-dim);
+}
+
+/* ---------------------------------------------------------------------------
+ * 24. Utility: Selection
+ * ------------------------------------------------------------------------ */
+
+::selection {
+  background: rgba(56, 189, 248, 0.3);
+  color: var(--studio-text);
+}

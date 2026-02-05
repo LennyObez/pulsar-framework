@@ -20,6 +20,7 @@
     "format:check": "prettier --check .",
     "format:fix": "prettier --write .",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:studio": "tsc -p resources/studio/tsconfig.json"
   }
 }

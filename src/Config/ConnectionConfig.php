@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_string;
+
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
 
@@ -34,7 +36,8 @@ readonly class ConnectionConfig
      */
     public static function fromArray(string $name, array $data, Environment $environment): self
     {
-        $driverString = (string) ($data['driver'] ?? 'mysql'); // @phpstan-ignore cast.string
+        $rawDriver = $data['driver'] ?? 'mysql';
+        $driverString = is_string($rawDriver) ? $rawDriver : 'mysql';
         $driver = Driver::from($driverString);
 
         /** @var string $hostDefault */

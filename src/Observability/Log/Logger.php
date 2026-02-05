@@ -35,6 +35,16 @@ final readonly class Logger implements LoggerInterface
      */
     public static function fromConfig(ObservabilityConfig $config): self
     {
+        return self::fromConfigWithExtraSinks($config, []);
+    }
+
+    /**
+     * Build a Logger from ObservabilityConfig with additional sinks appended.
+     *
+     * @param list<LogSinkInterface> $extraSinks
+     */
+    public static function fromConfigWithExtraSinks(ObservabilityConfig $config, array $extraSinks): self
+    {
         $threshold = LogLevel::fromPsrLevel($config->loggingLevel);
         $sinks = [];
 
@@ -44,6 +54,10 @@ final readonly class Logger implements LoggerInterface
             if ($sink !== null) {
                 $sinks[] = $sink;
             }
+        }
+
+        foreach ($extraSinks as $sink) {
+            $sinks[] = $sink;
         }
 
         return new self(

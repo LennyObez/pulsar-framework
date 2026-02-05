@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use function is_int;
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -30,15 +33,18 @@ readonly class SessionConfig
      */
     public static function fromArray(array $data, Environment $environment): self
     {
+        $rawCookieName = $data['cookie_name'] ?? 'PULSAR_SESSION';
         $cookieName = $environment->get('SESSION_COOKIE_NAME')
-            ?? (string) ($data['cookie_name'] ?? 'PULSAR_SESSION'); // @phpstan-ignore cast.string
+            ?? (is_string($rawCookieName) ? $rawCookieName : 'PULSAR_SESSION');
 
-        $lifetime = (int) ($data['lifetime'] ?? 7200); // @phpstan-ignore cast.int
+        $rawLifetime = $data['lifetime'] ?? 7200;
+        $lifetime = is_int($rawLifetime) ? $rawLifetime : (int) (is_numeric($rawLifetime) ? $rawLifetime : 7200);
 
         $cookieHttpOnly = (bool) ($data['cookie_httponly'] ?? true);
         $cookieSecure = (bool) ($data['cookie_secure'] ?? true);
 
-        $cookieSameSite = (string) ($data['cookie_samesite'] ?? 'Strict'); // @phpstan-ignore cast.string
+        $rawCookieSameSite = $data['cookie_samesite'] ?? 'Strict';
+        $cookieSameSite = is_string($rawCookieSameSite) ? $rawCookieSameSite : 'Strict';
 
         $regenerateOnPrivilegeChange = (bool) ($data['regenerate_on_privilege_change'] ?? true);
 
