@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Scheduler;
 
 use DateTimeImmutable;
+use Pulsar\Api\Api;
 
 /**
  * Result of a single scheduler tick.
  */
+#[Api]
 readonly class SchedulerTickResult
 {
     /**

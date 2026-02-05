@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -11,6 +12,7 @@ use function sprintf;
 /**
  * Exception for authorization failures.
  */
+#[Api]
 final class AuthorizationException extends RuntimeException
 {
     public static function permissionDenied(string $permission): self

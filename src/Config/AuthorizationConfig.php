@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for authorization settings.
  */
+#[Api]
 readonly class AuthorizationConfig
 {
     /**

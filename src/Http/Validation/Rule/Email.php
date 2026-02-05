@@ -8,6 +8,7 @@ use const FILTER_VALIDATE_EMAIL;
 
 use function filter_var;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
@@ -16,6 +17,7 @@ use function sprintf;
 /**
  * Value must be a valid email address via FILTER_VALIDATE_EMAIL. Skips null values.
  */
+#[Api]
 readonly class Email implements RuleInterface
 {
     public function __construct(

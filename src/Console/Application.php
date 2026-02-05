@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console;
 
+use Pulsar\Api\Internal;
 use Pulsar\Console\Exception\CommandNotFoundException;
 use Pulsar\Console\Input\ArgvInput;
 use Pulsar\Console\Output\ConsoleOutput;
@@ -17,6 +18,7 @@ use Throwable;
 /**
  * Console application orchestrator.
  */
+#[Internal]
 final class Application
 {
     private const string NAME = 'Pulsar Framework';

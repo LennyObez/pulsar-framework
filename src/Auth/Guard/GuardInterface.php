@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Guard;
 
+use Pulsar\Api\Api;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Http\Request;
 
@@ -12,6 +13,7 @@ use Pulsar\Http\Request;
  *
  * A guard extracts credentials from a request and resolves them to an identity.
  */
+#[Api]
 interface GuardInterface
 {
     /**

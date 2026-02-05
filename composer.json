@@ -14,6 +14,7 @@
   },
   "require-dev": {
     "friendsofphp/php-cs-fixer": "^3.0",
+    "phpbench/phpbench": "^1.3",
     "phpstan/phpstan": "^2.0",
     "phpunit/phpunit": "^12.0",
     "rector/rector": "^2.0",
@@ -41,6 +42,8 @@
     "psalm": "psalm -c tools/php/psalm.xml",
     "cs:check": "php-cs-fixer fix --dry-run --diff",
     "cs:fix": "php-cs-fixer fix",
+    "bench": "phpbench run --config=tools/php/phpbench.json --report=default",
+    "bench:ci": "phpbench run --config=tools/php/phpbench.json --report=default --progress=none",
     "qa": [
       "@cs:check",
       "@phpstan",

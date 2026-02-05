@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Exception;
 
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
@@ -11,6 +12,7 @@ use function sprintf;
 /**
  * Base exception for extension-related errors.
  */
+#[Api]
 class ExtensionException extends RuntimeException
 {
     /**

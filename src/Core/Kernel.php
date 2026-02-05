@@ -12,6 +12,7 @@ use function is_string;
 
 use JsonException;
 use Psr\Log\LoggerInterface;
+use Pulsar\Api\Internal;
 use Pulsar\Auth\AuthManager;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Authorization\Gate;
@@ -137,6 +138,7 @@ use Throwable;
  * -> Security -> Auth -> Database -> Tenancy -> FeatureFlags -> Scheduler -> Resilience
  * -> DiagnosticsRoute -> Extensions
  */
+#[Internal]
 final class Kernel
 {
     public private(set) bool $booted = false;

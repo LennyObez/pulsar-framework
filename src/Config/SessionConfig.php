@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for session settings.
  *
  * Maps from the `session` key of `config/security.php`.
  */
+#[Api]
 readonly class SessionConfig
 {
     public function __construct(

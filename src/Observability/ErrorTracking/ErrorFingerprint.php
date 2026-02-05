@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Observability\ErrorTracking;
 
 use function hash;
+
+use Pulsar\Api\Api;
+
 use function sprintf;
 
 use Throwable;
@@ -15,6 +18,7 @@ use Throwable;
  * Produces a sha256 hash of `{class}|{message}|{file}|{line}` to group
  * identical errors regardless of when they occur.
  */
+#[Api]
 final readonly class ErrorFingerprint
 {
     public function __construct(

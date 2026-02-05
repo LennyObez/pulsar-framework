@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use Pulsar\Api\Api;
+
 /**
  * Contract for log output destinations.
  */
+#[Api]
 interface LogSinkInterface
 {
     /**

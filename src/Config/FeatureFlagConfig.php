@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
 use Pulsar\FeatureFlag\FlagStorageDriver;
 
 /**
  * Typed configuration DTO for `config/features.php`.
  */
+#[Api]
 readonly class FeatureFlagConfig
 {
     /**

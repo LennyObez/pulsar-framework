@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Console;
 
+use Pulsar\Api\Api;
+
 /**
  * Output verbosity levels.
  */
+#[Api]
 enum Verbosity: int
 {
     case Quiet = 0;

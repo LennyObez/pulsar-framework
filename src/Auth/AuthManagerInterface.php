@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth;
 
+use Pulsar\Api\Api;
 use Pulsar\Auth\Guard\GuardInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Http\Request;
@@ -13,6 +14,7 @@ use Pulsar\Http\Request;
  *
  * Orchestrates multiple guards to resolve an identity from a request.
  */
+#[Api]
 interface AuthManagerInterface
 {
     /**

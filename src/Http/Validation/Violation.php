@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation;
 
+use Pulsar\Api\Api;
+
 /**
  * A single validation violation.
  */
+#[Api]
 readonly class Violation
 {
     public function __construct(

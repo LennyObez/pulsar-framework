@@ -1,0 +1,18 @@
+{
+  "$schema": "https://raw.githubusercontent.com/phpbench/phpbench/main/phpbench.schema.json",
+  "runner.bootstrap": "../../vendor/autoload.php",
+  "runner.path": "../../tests/Benchmark",
+  "runner.file_pattern": "*Bench.php",
+  "runner.iterations": [5],
+  "runner.revs": [1000],
+  "runner.warmup": [1],
+  "runner.retry_threshold": 5,
+  "runner.time_unit": "microseconds",
+  "runner.assert": "mode(variant.time.avg) < 10 milliseconds",
+  "report.generators": {
+    "pulsar": {
+      "generator": "expression",
+      "cols": ["benchmark_name", "subject_name", "set", "revs", "its", "mem_peak", "mode", "rstdev"]
+    }
+  }
+}

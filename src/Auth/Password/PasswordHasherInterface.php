@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Password;
 
+use Pulsar\Api\Api;
+
 /**
  * Contract for password hashing operations.
  */
+#[Api]
 interface PasswordHasherInterface
 {
     /**

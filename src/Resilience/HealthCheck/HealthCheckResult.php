@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Resilience\HealthCheck;
 
 use DateTimeImmutable;
+use Pulsar\Api\Api;
 
 /**
  * Result of a single health check.
  */
+#[Api]
 readonly class HealthCheckResult
 {
     public function __construct(

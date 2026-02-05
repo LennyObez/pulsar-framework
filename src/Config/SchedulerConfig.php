@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Typed configuration DTO for `config/scheduler.php`.
  */
+#[Api]
 readonly class SchedulerConfig
 {
     public function __construct(

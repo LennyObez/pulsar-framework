@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Resilience\HealthCheck;
 
+use Pulsar\Api\Api;
+
 /**
  * Interface for system health checks.
  */
+#[Api]
 interface HealthCheckInterface
 {
     /**

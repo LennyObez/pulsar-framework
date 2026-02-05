@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Configuration for retry policies.
  */
+#[Api]
 readonly class RetryConfig
 {
     public function __construct(

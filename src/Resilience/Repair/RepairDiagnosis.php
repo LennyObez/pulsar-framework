@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Resilience\Repair;
 
+use Pulsar\Api\Api;
+
 /**
  * Diagnosis result from a repair job.
  */
+#[Api]
 readonly class RepairDiagnosis
 {
     /**

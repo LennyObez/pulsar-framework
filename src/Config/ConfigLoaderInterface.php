@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use Pulsar\Api\Api;
+
 /**
  * Extension point for custom configuration loading.
  *
  * Not consumed by core in 0.3.0. Establishes the pattern for extensions
  * that provide their own typed config DTOs.
  */
+#[Api]
 interface ConfigLoaderInterface
 {
     /**

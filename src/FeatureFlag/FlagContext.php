@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
+use Pulsar\Api\Api;
 use Pulsar\Http\Request;
 
 /**
  * Context for evaluating a feature flag.
  */
+#[Api]
 readonly class FlagContext
 {
     /**
