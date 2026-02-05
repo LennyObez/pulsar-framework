@@ -47,21 +47,38 @@ use Pulsar\Studio\Server\StudioRouter;
 $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
 $path = parse_url($requestUri, PHP_URL_PATH) ?: '/';
 
-// Serve static assets from known locations
-$assetMap = [
-    '/studio/assets/studio.css' => $dir . '/resources/studio/styles/studio.css',
-    '/studio/assets/main.js' => $dir . '/resources/studio/dist/main.js',
-];
+// Serve static assets under /studio/assets/
+$assetPrefix = '/studio/assets/';
+if (str_starts_with($path, $assetPrefix)) {
+    $assetPath = substr($path, strlen($assetPrefix));
 
-if (isset($assetMap[$path]) && file_exists($assetMap[$path])) {
-    $ext = pathinfo($assetMap[$path], PATHINFO_EXTENSION);
+    // CSS: resources/studio/styles/
+    // JS:  resources/studio/dist/
+    $candidates = [
+        $dir . '/resources/studio/styles/' . $assetPath,
+        $dir . '/resources/studio/dist/' . $assetPath,
+    ];
+
     $mimeTypes = [
         'css' => 'text/css; charset=UTF-8',
         'js' => 'application/javascript; charset=UTF-8',
+        'map' => 'application/json; charset=UTF-8',
     ];
 
-    header('Content-Type: ' . ($mimeTypes[$ext] ?? 'application/octet-stream'));
-    readfile($assetMap[$path]);
+    foreach ($candidates as $filePath) {
+        $realPath = realpath($filePath);
+        if ($realPath !== false && is_file($realPath)) {
+            $ext = pathinfo($realPath, PATHINFO_EXTENSION);
+            header('Content-Type: ' . ($mimeTypes[$ext] ?? 'application/octet-stream'));
+            header('Cache-Control: no-cache');
+            readfile($realPath);
+
+            return;
+        }
+    }
+
+    http_response_code(404);
+    echo 'Asset not found';
 
     return;
 }

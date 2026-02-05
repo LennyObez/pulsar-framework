@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Server\Controller;
 
+use const ENT_QUOTES;
+
+use function htmlspecialchars;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
@@ -44,6 +47,8 @@ final class TimelineController
             'events' => $events,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
+        $safePayload = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+
         $html = <<<HTML
             <!DOCTYPE html>
             <html lang="en">
@@ -54,7 +59,7 @@ final class TimelineController
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
-                <div id="app" data-page="timeline" data-payload='{$data}'></div>
+                <div id="app" data-page="timeline" data-payload="{$safePayload}"></div>
                 <script type="module" src="/studio/assets/main.js"></script>
             </body>
             </html>

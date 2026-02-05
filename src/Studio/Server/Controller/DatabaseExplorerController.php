@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Server\Controller;
 
+use const ENT_QUOTES;
+
+use function htmlspecialchars;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
@@ -38,6 +41,7 @@ final class DatabaseExplorerController
         }
 
         $data = json_encode(['events' => $events], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        $safePayload = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
 
         $html = <<<HTML
             <!DOCTYPE html>
@@ -49,7 +53,7 @@ final class DatabaseExplorerController
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
-                <div id="app" data-page="database-explorer" data-payload='{$data}'></div>
+                <div id="app" data-page="database-explorer" data-payload="{$safePayload}"></div>
                 <script type="module" src="/studio/assets/main.js"></script>
             </body>
             </html>
@@ -67,19 +71,25 @@ final class DatabaseExplorerController
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <title>Database Queries - Pulsar Studio</title>
-                <style>
-                    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 2rem; background: #0f172a; color: #e2e8f0; }
-                    .empty { max-width: 600px; margin: 4rem auto; text-align: center; }
-                    .empty h2 { color: #94a3b8; }
-                    .empty p { color: #64748b; }
-                    a { color: #38bdf8; }
-                </style>
+                <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
-                <div class="empty">
-                    <h2>No Database Query Events</h2>
-                    <p>No database query events have been recorded yet. Database instrumentation is active when the InstrumentedConnection decorator wraps your database connection.</p>
-                    <p><a href="/studio/console">Back to Console Overview</a></p>
+                <nav class="studio-nav">
+                    <a href="/studio" class="nav-brand">Pulsar Studio</a>
+                    <div class="nav-links">
+                        <a href="/studio/console">Console</a>
+                        <a href="/studio/console/requests">Requests</a>
+                        <a href="/studio/console/database" class="active">Database</a>
+                        <a href="/studio/console/logs">Logs</a>
+                        <a href="/studio/console/exceptions">Exceptions</a>
+                    </div>
+                </nav>
+                <div class="dashboard">
+                    <div class="empty-state">
+                        <h2>No Database Query Events</h2>
+                        <p>No database query events have been recorded yet. Database instrumentation is active when the InstrumentedConnection decorator wraps your database connection.</p>
+                        <a href="/studio/console" class="btn">Back to Console Overview</a>
+                    </div>
                 </div>
             </body>
             </html>
