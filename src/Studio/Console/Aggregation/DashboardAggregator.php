@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Console\Aggregation;
 
+use function array_fill;
 use function array_filter;
 use function array_map;
 use function array_slice;
@@ -12,6 +13,7 @@ use function array_values;
 use function ceil;
 use function count;
 use function in_array;
+use function intdiv;
 use function max;
 use function microtime;
 use function min;
@@ -85,7 +87,7 @@ final class DashboardAggregator
     /**
      * Get throughput metrics (requests per minute) for a time window.
      *
-     * @return array{current_rpm: float, total: int}
+     * @return array{per_minute: float, total: int, by_status: array<string, int>}
      */
     public function throughput(int $windowUs): array
     {
@@ -103,8 +105,9 @@ final class DashboardAggregator
         $rpm = $windowMinutes > 0 ? (float) $total / $windowMinutes : 0.0;
 
         return [
-            'current_rpm' => round($rpm, 2),
+            'per_minute' => round($rpm, 2),
             'total' => $total,
+            'by_status' => $this->statusBreakdown($windowUs),
         ];
     }
 
@@ -148,7 +151,7 @@ final class DashboardAggregator
     /**
      * Get error rate for a time window.
      *
-     * @return array{errors_per_minute: float, total_errors: int}
+     * @return array{per_minute: float, total: int, top_exceptions: list<array{class: string, count: int, last_seen_us: int}>}
      */
     public function errorRate(int $windowUs): array
     {
@@ -166,15 +169,16 @@ final class DashboardAggregator
         $epm = $windowMinutes > 0 ? (float) $totalErrors / $windowMinutes : 0.0;
 
         return [
-            'errors_per_minute' => round($epm, 2),
-            'total_errors' => $totalErrors,
+            'per_minute' => round($epm, 2),
+            'total' => $totalErrors,
+            'top_exceptions' => $this->topExceptions($windowUs),
         ];
     }
 
     /**
      * Get slow routes by P95 latency.
      *
-     * @return list<array{route_name: string, p95_ms: float, count: int, avg_ms: float}>
+     * @return list<array{route: string, p95_ms: float, count: int, avg_ms: float}>
      */
     public function slowRoutes(int $windowUs, int $limit = 10): array
     {
@@ -198,10 +202,10 @@ final class DashboardAggregator
         }
 
         $result = [];
-        foreach ($grouped as $route => $durations) {
+        foreach ($grouped as $routeName => $durations) {
             sort($durations);
             $result[] = [
-                'route_name' => $route,
+                'route' => $routeName,
                 'p95_ms' => $this->percentile($durations, 95),
                 'count' => count($durations),
                 'avg_ms' => round(array_sum($durations) / (float) count($durations), 2),
@@ -283,6 +287,164 @@ final class DashboardAggregator
         }
 
         return $counts;
+    }
+
+    /**
+     * Get throughput time-series for sparkline visualization.
+     *
+     * Divides the window into buckets and returns counts per bucket.
+     *
+     * @return list<int>
+     */
+    public function throughputTimeSeries(int $windowUs, int $buckets = 12): array
+    {
+        $since = $this->nowUs() - $windowUs;
+        $bucketSize = intdiv($windowUs, $buckets);
+
+        if ($bucketSize <= 0) {
+            return array_fill(0, $buckets, 0);
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT (timestamp_us - :since) / :bucket_size AS bucket, COUNT(*) AS cnt
+             FROM studio_events
+             WHERE event_type = :type AND timestamp_us > :since2
+             GROUP BY bucket
+             ORDER BY bucket',
+        );
+        $stmt->execute([
+            'since' => $since,
+            'bucket_size' => $bucketSize,
+            'type' => 'http.response',
+            'since2' => $since,
+        ]);
+        /** @var list<array{bucket: int, cnt: int}> $rows */
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Initialize all buckets to zero
+        $series = array_fill(0, $buckets, 0);
+
+        foreach ($rows as $row) {
+            $idx = $row['bucket'];
+            if ($idx >= 0 && $idx < $buckets) {
+                $series[$idx] = $row['cnt'];
+            }
+        }
+
+        /** @var list<int> */
+        return array_values($series);
+    }
+
+    /**
+     * Get error time-series for sparkline visualization.
+     *
+     * @return list<int>
+     */
+    public function errorTimeSeries(int $windowUs, int $buckets = 12): array
+    {
+        $since = $this->nowUs() - $windowUs;
+        $bucketSize = intdiv($windowUs, $buckets);
+
+        if ($bucketSize <= 0) {
+            return array_fill(0, $buckets, 0);
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT (timestamp_us - :since) / :bucket_size AS bucket, COUNT(*) AS cnt
+             FROM studio_events
+             WHERE event_type = :type AND timestamp_us > :since2
+             GROUP BY bucket
+             ORDER BY bucket',
+        );
+        $stmt->execute([
+            'since' => $since,
+            'bucket_size' => $bucketSize,
+            'type' => 'exception',
+            'since2' => $since,
+        ]);
+        /** @var list<array{bucket: int, cnt: int}> $rows */
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $series = array_fill(0, $buckets, 0);
+
+        foreach ($rows as $row) {
+            $idx = $row['bucket'];
+            if ($idx >= 0 && $idx < $buckets) {
+                $series[$idx] = $row['cnt'];
+            }
+        }
+
+        /** @var list<int> */
+        return array_values($series);
+    }
+
+    /**
+     * Get status code breakdown grouped by class (2xx, 3xx, etc.).
+     *
+     * @return array<string, int>
+     */
+    private function statusBreakdown(int $windowUs): array
+    {
+        $since = $this->nowUs() - $windowUs;
+
+        $stmt = $this->pdo->prepare(
+            "SELECT json_extract(payload_json, '$.status_code') AS status_code, COUNT(*) AS cnt
+             FROM studio_events
+             WHERE event_type = :type AND timestamp_us > :since
+             GROUP BY status_code",
+        );
+        $stmt->execute(['type' => 'http.response', 'since' => $since]);
+        /** @var list<array{status_code: string|null, cnt: int}> $rows */
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        /** @var array<string, int> $byClass */
+        $byClass = [];
+
+        foreach ($rows as $row) {
+            $code = (int) ($row['status_code'] ?? 0);
+            if ($code <= 0) {
+                continue;
+            }
+            $class = intdiv($code, 100) . 'xx';
+            $byClass[$class] = ($byClass[$class] ?? 0) + $row['cnt'];
+        }
+
+        return $byClass;
+    }
+
+    /**
+     * Get top exceptions grouped by class.
+     *
+     * @return list<array{class: string, count: int, last_seen_us: int}>
+     */
+    private function topExceptions(int $windowUs, int $limit = 10): array
+    {
+        $since = $this->nowUs() - $windowUs;
+
+        $stmt = $this->pdo->prepare(
+            "SELECT json_extract(payload_json, '$.exception_class') AS exception_class,
+                    COUNT(*) AS cnt,
+                    MAX(timestamp_us) AS last_seen_us
+             FROM studio_events
+             WHERE event_type = :type AND timestamp_us > :since
+             GROUP BY exception_class
+             ORDER BY cnt DESC
+             LIMIT :limit",
+        );
+        $stmt->execute(['type' => 'exception', 'since' => $since, 'limit' => $limit]);
+        /** @var list<array{exception_class: string|null, cnt: int, last_seen_us: int}> $rows */
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[] = [
+                'class' => $row['exception_class'] ?? 'Unknown',
+                'count' => $row['cnt'],
+                'last_seen_us' => $row['last_seen_us'],
+            ];
+        }
+
+        return $result;
     }
 
     /**

@@ -1,3 +1,5 @@
+import { escapeHtml } from '../utils/escapeHtml.js';
+
 export interface PaginationOptions {
   total: number;
   limit: number;
@@ -6,17 +8,21 @@ export interface PaginationOptions {
 }
 
 export function renderPagination(options: PaginationOptions): string {
+  // Guard against division by zero
+  if (options.limit <= 0) return '';
+
   const totalPages = Math.ceil(options.total / options.limit);
   const currentPage = Math.floor(options.offset / options.limit) + 1;
 
   if (totalPages <= 1) return '';
 
   const pages: string[] = [];
+  const safeBaseUrl = escapeHtml(options.baseUrl);
 
   if (currentPage > 1) {
     const prevOffset = (currentPage - 2) * options.limit;
     pages.push(
-      `<a href="${options.baseUrl}?offset=${String(prevOffset)}&limit=${String(options.limit)}" class="page-link">&laquo; Prev</a>`,
+      `<a href="${safeBaseUrl}?offset=${String(prevOffset)}&limit=${String(options.limit)}" class="page-link">&laquo; Prev</a>`,
     );
   }
 
@@ -25,7 +31,7 @@ export function renderPagination(options: PaginationOptions): string {
   if (currentPage < totalPages) {
     const nextOffset = currentPage * options.limit;
     pages.push(
-      `<a href="${options.baseUrl}?offset=${String(nextOffset)}&limit=${String(options.limit)}" class="page-link">Next &raquo;</a>`,
+      `<a href="${safeBaseUrl}?offset=${String(nextOffset)}&limit=${String(options.limit)}" class="page-link">Next &raquo;</a>`,
     );
   }
 

@@ -34,4 +34,64 @@ describe('renderEmptyState', () => {
 
     expect(html).toContain('Go Back');
   });
+
+  it('should escape XSS in title and message', () => {
+    const html = renderEmptyState({
+      title: '<script>alert("xss")</script>',
+      message: '<img src=x onerror=alert(1)>',
+    });
+
+    expect(html).not.toContain('<script>');
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;script&gt;');
+    expect(html).toContain('&lt;img');
+  });
+
+  it('should reject javascript: URLs', () => {
+    const html = renderEmptyState({
+      title: 'Test',
+      message: 'Test message',
+      backUrl: 'javascript:alert(1)',
+      backLabel: 'Click me',
+    });
+
+    // Should not render the link at all
+    expect(html).not.toContain('href=');
+    expect(html).not.toContain('javascript:');
+  });
+
+  it('should reject data: URLs', () => {
+    const html = renderEmptyState({
+      title: 'Test',
+      message: 'Test message',
+      backUrl: 'data:text/html,<script>alert(1)</script>',
+      backLabel: 'Click me',
+    });
+
+    // Should not render the link at all
+    expect(html).not.toContain('href=');
+    expect(html).not.toContain('data:');
+  });
+
+  it('should allow relative URLs starting with /', () => {
+    const html = renderEmptyState({
+      title: 'Test',
+      message: 'Test message',
+      backUrl: '/studio/console',
+      backLabel: 'Go to Console',
+    });
+
+    expect(html).toContain('href="/studio/console"');
+  });
+
+  it('should allow https URLs', () => {
+    const html = renderEmptyState({
+      title: 'Test',
+      message: 'Test message',
+      backUrl: 'https://example.com/path',
+      backLabel: 'External Link',
+    });
+
+    expect(html).toContain('href="https://example.com/path"');
+  });
 });

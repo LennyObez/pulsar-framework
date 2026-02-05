@@ -1,4 +1,5 @@
 import type { TimelineData, StudioEvent } from '../types.js';
+import { escapeHtml } from '../utils/escapeHtml.js';
 
 export function renderTimeline(container: HTMLElement, payload: unknown): void {
   const data = payload as TimelineData | null;
@@ -14,11 +15,15 @@ export function renderTimeline(container: HTMLElement, payload: unknown): void {
       <div class="empty-state">
         <h2>No Timeline Data</h2>
         <p>No events found for this correlation ID.</p>
-        <a href="/studio/console">Back to Console</a>
+        <a href="/studio/console" class="btn">Back to Console</a>
       </div>
     `;
     return;
   }
+
+  const correlationDisplay = data.correlation_id
+    ? escapeHtml(data.correlation_id.substring(0, 16)) + '...'
+    : 'Unknown';
 
   const firstTs = data.events[0]?.timestamp_us ?? 0;
   const lastTs = data.events[data.events.length - 1]?.timestamp_us ?? firstTs;
@@ -33,7 +38,7 @@ export function renderTimeline(container: HTMLElement, payload: unknown): void {
     </nav>
     <div class="timeline-view">
       <div class="timeline-header">
-        <h2>Timeline: ${data.correlation_id.substring(0, 16)}...</h2>
+        <h2>Timeline: ${correlationDisplay}</h2>
         <span class="timeline-meta">${String(data.events.length)} events, ${formatDuration(totalDuration)}</span>
       </div>
       <div class="timeline">
@@ -61,9 +66,9 @@ function renderTimelineEntry(
     <div class="timeline-entry" style="--position: ${String(position)}%">
       <div class="timeline-marker ${getTypeClass(event.event_type)}"></div>
       <div class="timeline-content">
-        <div class="timeline-time">${time} (+${formatDuration(offset)})</div>
+        <div class="timeline-time">${escapeHtml(time)} (+${formatDuration(offset)})</div>
         <div class="timeline-type">
-          <span class="event-type-badge">${event.event_type}</span>
+          <span class="event-type-badge">${escapeHtml(event.event_type)}</span>
           <span class="timeline-index">#${String(index + 1)}</span>
         </div>
         <div class="timeline-details">${details}</div>
@@ -78,24 +83,24 @@ function extractTimelineDetails(event: StudioEvent): string {
 
     switch (event.event_type) {
       case 'http.request':
-        return `${String(payload['method'] ?? '')} ${String(payload['path'] ?? '')}`;
+        return `${escapeHtml(String(payload['method'] ?? ''))} ${escapeHtml(String(payload['path'] ?? ''))}`;
       case 'http.response':
-        return `Status ${String(payload['status_code'] ?? '')} in ${String(payload['duration_ms'] ?? '?')}ms`;
+        return `Status ${escapeHtml(String(payload['status_code'] ?? ''))} in ${escapeHtml(String(payload['duration_ms'] ?? '?'))}ms`;
       case 'db.query':
-        return `<code>${truncate(String(payload['sql'] ?? ''), 120)}</code> in ${String(payload['duration_ms'] ?? '?')}ms`;
+        return `<code>${escapeHtml(truncate(String(payload['sql'] ?? ''), 120))}</code> in ${escapeHtml(String(payload['duration_ms'] ?? '?'))}ms`;
       case 'log.entry':
-        return `[${String(payload['level'] ?? '')}] ${truncate(String(payload['message'] ?? ''), 120)}`;
+        return `[${escapeHtml(String(payload['level'] ?? ''))}] ${escapeHtml(truncate(String(payload['message'] ?? ''), 120))}`;
       case 'exception':
-        return `${String(payload['class'] ?? '')}: ${truncate(String(payload['message'] ?? ''), 120)}`;
+        return `${escapeHtml(String(payload['exception_class'] ?? ''))}: ${escapeHtml(truncate(String(payload['message'] ?? ''), 120))}`;
       case 'scheduler.run':
-        return `Job: ${String(payload['job_name'] ?? '')} — ${String(payload['outcome'] ?? '')}`;
+        return `Job: ${escapeHtml(String(payload['job_name'] ?? ''))} — ${escapeHtml(String(payload['status'] ?? ''))}`;
       case 'feature_flag.eval':
-        return `Flag: ${String(payload['flag_name'] ?? '')} = ${String(payload['value'] ?? '')}`;
+        return `Flag: ${escapeHtml(String(payload['flag_name'] ?? ''))} = ${escapeHtml(String(payload['result'] ?? ''))}`;
       default:
-        return event.event_type;
+        return escapeHtml(event.event_type);
     }
   } catch {
-    return event.event_type;
+    return escapeHtml(event.event_type);
   }
 }
 
@@ -110,7 +115,7 @@ function getTypeClass(eventType: string): string {
 }
 
 function formatDuration(us: number): string {
-  if (us < 1000) return `${String(us)}μs`;
+  if (us < 1000) return `${String(us)}us`;
   if (us < 1_000_000) return `${(us / 1000).toFixed(1)}ms`;
   return `${(us / 1_000_000).toFixed(2)}s`;
 }

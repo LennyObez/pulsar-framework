@@ -1,5 +1,6 @@
 import type { PageType, StudioEvent } from '../types.js';
 import { LiveManager } from '../live.js';
+import { escapeHtml } from '../utils/escapeHtml.js';
 
 interface ExplorerPayload {
   events: StudioEvent[];
@@ -19,11 +20,19 @@ const PAGE_TYPES: Record<string, string[]> = {
   'exception-explorer': ['exception'],
 };
 
+const PAGE_EMPTY_MESSAGES: Record<string, string> = {
+  'request-explorer': 'No HTTP requests recorded yet. Start your application to see traffic.',
+  'database-explorer': 'No database queries recorded yet. Run some queries to see activity.',
+  'log-explorer': 'No log entries recorded yet. Your application logs will appear here.',
+  'exception-explorer': 'No exceptions recorded yet. Any errors will be captured here.',
+};
+
 export function renderEventTable(container: HTMLElement, page: PageType, payload: unknown): void {
   const data = payload as ExplorerPayload | null;
   const events = data?.events ?? [];
   const title = PAGE_TITLES[page] ?? 'Events';
   const eventTypes = PAGE_TYPES[page] ?? [];
+  const emptyMessage = PAGE_EMPTY_MESSAGES[page] ?? 'No events recorded yet.';
 
   const liveEvents: StudioEvent[] = [...events];
   let live: LiveManager | null = null;
@@ -43,26 +52,36 @@ export function renderEventTable(container: HTMLElement, page: PageType, payload
       </nav>
       <div class="explorer">
         <div class="explorer-header">
-          <h2>${title}</h2>
+          <h2>${escapeHtml(title)}</h2>
           <div class="live-controls">
             <button id="live-toggle" class="btn ${isLive ? 'btn-active' : ''}">${isLive ? 'Pause' : 'Live'}</button>
             ${live && live.isPaused() ? `<span class="badge">${String(live.bufferedCount())} buffered</span>` : ''}
           </div>
         </div>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>Type</th>
-              <th>Request ID</th>
-              <th>Details</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${liveEvents.map((e) => renderEventRow(e)).join('')}
-          </tbody>
-        </table>
-        ${liveEvents.length === 0 ? '<p class="empty-state">No events recorded yet.</p>' : ''}
+        ${
+          liveEvents.length > 0
+            ? `
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Type</th>
+                <th>Request ID</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${liveEvents.map((e) => renderEventRow(e)).join('')}
+            </tbody>
+          </table>
+        `
+            : `
+          <div class="empty-state">
+            <h2>No Events Yet</h2>
+            <p>${escapeHtml(emptyMessage)}</p>
+          </div>
+        `
+        }
       </div>
     `;
 
@@ -108,10 +127,10 @@ function renderEventRow(event: StudioEvent): string {
 
   return `
     <tr>
-      <td class="time-cell">${time}</td>
-      <td><span class="event-type-badge">${event.event_type}</span></td>
+      <td class="time-cell">${escapeHtml(time)}</td>
+      <td><span class="event-type-badge">${escapeHtml(event.event_type)}</span></td>
       <td>
-        ${event.request_id ? `<a href="/studio/console/timeline/${event.request_id}" class="correlation-link">${requestId}</a>` : '-'}
+        ${event.request_id ? `<a href="/studio/console/timeline/${escapeHtml(event.request_id)}" class="correlation-link">${escapeHtml(requestId)}</a>` : '-'}
       </td>
       <td class="details-cell">${details}</td>
     </tr>
@@ -124,20 +143,20 @@ function extractDetails(event: StudioEvent): string {
 
     switch (event.event_type) {
       case 'http.request':
-        return `${String(payload['method'] ?? '')} ${String(payload['path'] ?? '')}`;
+        return `${escapeHtml(String(payload['method'] ?? ''))} ${escapeHtml(String(payload['path'] ?? ''))}`;
       case 'http.response':
-        return `${String(payload['status_code'] ?? '')} (${String(payload['duration_ms'] ?? '?')}ms)`;
+        return `${escapeHtml(String(payload['status_code'] ?? ''))} (${escapeHtml(String(payload['duration_ms'] ?? '?'))}ms)`;
       case 'db.query':
-        return `<code>${truncate(String(payload['sql'] ?? ''), 80)}</code> (${String(payload['duration_ms'] ?? '?')}ms)`;
+        return `<code>${escapeHtml(truncate(String(payload['sql'] ?? ''), 80))}</code> (${escapeHtml(String(payload['duration_ms'] ?? '?'))}ms)`;
       case 'log.entry':
-        return `[${String(payload['level'] ?? '')}] ${truncate(String(payload['message'] ?? ''), 100)}`;
+        return `[${escapeHtml(String(payload['level'] ?? ''))}] ${escapeHtml(truncate(String(payload['message'] ?? ''), 100))}`;
       case 'exception':
-        return `${String(payload['class'] ?? '')} — ${truncate(String(payload['message'] ?? ''), 80)}`;
+        return `${escapeHtml(String(payload['exception_class'] ?? ''))} — ${escapeHtml(truncate(String(payload['message'] ?? ''), 80))}`;
       default:
-        return event.event_type;
+        return escapeHtml(event.event_type);
     }
   } catch {
-    return event.event_type;
+    return escapeHtml(event.event_type);
   }
 }
 

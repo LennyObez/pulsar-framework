@@ -12,8 +12,9 @@ export class LiveManager {
   private eventSource: EventSource | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private paused = false;
+  private polling = false;
   private buffer: StudioEvent[] = [];
-  private lastEventId = '0';
+  private lastEventId = 0;
   private readonly options: Required<LiveManagerOptions>;
   private useSse = true;
 
@@ -70,13 +71,18 @@ export class LiveManager {
   private startSse(): void {
     this.eventSource = createEventSource(
       this.options.types.length > 0 ? this.options.types : undefined,
-      this.lastEventId !== '0' ? this.lastEventId : undefined,
+      this.lastEventId !== 0 ? String(this.lastEventId) : undefined,
     );
 
     this.eventSource.onmessage = (event: MessageEvent<string>) => {
       try {
         const data = JSON.parse(event.data) as StudioEvent;
-        this.lastEventId = event.lastEventId || this.lastEventId;
+        if (event.lastEventId) {
+          const parsed = Number(event.lastEventId);
+          if (!Number.isNaN(parsed)) {
+            this.lastEventId = parsed;
+          }
+        }
         this.handleEvent(data);
       } catch {
         // Ignore malformed events
@@ -93,6 +99,10 @@ export class LiveManager {
 
   private startPolling(): void {
     const poll = async (): Promise<void> => {
+      // Guard against overlapping polls
+      if (this.polling) return;
+      this.polling = true;
+
       try {
         const params: Record<string, string> = {};
 
@@ -100,14 +110,14 @@ export class LiveManager {
           params['types'] = this.options.types.join(',');
         }
 
-        if (this.lastEventId !== '0') {
-          params['since_id'] = this.lastEventId;
+        if (this.lastEventId !== 0) {
+          params['since_id'] = String(this.lastEventId);
         }
 
         const response = await fetchEvents(params);
 
         for (const event of response.events) {
-          const eventId = String(event.id);
+          const eventId = event.id;
           if (eventId > this.lastEventId) {
             this.lastEventId = eventId;
           }
@@ -115,6 +125,8 @@ export class LiveManager {
         }
       } catch (error) {
         this.options.onError(error instanceof Error ? error : new Error(String(error)));
+      } finally {
+        this.polling = false;
       }
     };
 

@@ -58,11 +58,13 @@
   --studio-space-lg: 1.5rem;
   --studio-space-xl: 2rem;
   --studio-space-2xl: 3rem;
+  --studio-space-3xl: 4rem;
 
   /* Radii */
   --studio-radius-sm: 4px;
   --studio-radius-md: 8px;
   --studio-radius-lg: 12px;
+  --studio-radius-xl: 16px;
 
   /* Shadows */
   --studio-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -219,8 +221,8 @@ a:hover {
 .metric-card {
   background: var(--studio-surface);
   border: 1px solid var(--studio-border);
-  border-radius: var(--studio-radius-md);
-  padding: var(--studio-space-lg);
+  border-radius: var(--studio-radius-lg);
+  padding: var(--studio-space-xl) var(--studio-space-lg);
   transition:
     border-color var(--studio-transition-fast),
     box-shadow var(--studio-transition-fast);
@@ -248,6 +250,24 @@ a:hover {
   font-variant-numeric: tabular-nums;
 }
 
+.metric-unit {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--studio-text-muted);
+  margin-left: 0.125rem;
+}
+
+.metric-sparkline {
+  margin: var(--studio-space-sm) 0;
+  height: 40px;
+  overflow: hidden;
+}
+
+.metric-sparkline svg {
+  width: 100%;
+  height: 100%;
+}
+
 .metric-subtitle {
   font-size: 0.8125rem;
   color: var(--studio-text-dim);
@@ -271,13 +291,16 @@ a:hover {
 .card {
   background: var(--studio-surface);
   border: 1px solid var(--studio-border);
-  border-radius: var(--studio-radius-md);
+  border-radius: var(--studio-radius-lg);
   padding: var(--studio-space-lg);
-  transition: box-shadow var(--studio-transition-fast);
+  transition:
+    box-shadow var(--studio-transition-fast),
+    border-color var(--studio-transition-fast);
 }
 
 .card:hover {
-  box-shadow: var(--studio-shadow-sm);
+  box-shadow: var(--studio-shadow-md);
+  border-color: rgba(56, 189, 248, 0.2);
 }
 
 .card h3 {
@@ -960,7 +983,203 @@ code.sql {
 }
 
 /* ---------------------------------------------------------------------------
- * 25. Landing Page (.landing-nav-grid, .landing-nav-card, .config-table)
+ * 25. Dashboard Header (.dashboard-header)
+ * ------------------------------------------------------------------------ */
+
+.dashboard-header {
+  margin-bottom: var(--studio-space-md);
+}
+
+.dashboard-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--studio-text);
+  line-height: 1.2;
+}
+
+.dashboard-header p {
+  color: var(--studio-text-muted);
+  font-size: 0.9375rem;
+  margin-top: 0.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * 26. Status Bar (.status-bar-container, .status-bar-row)
+ * ------------------------------------------------------------------------ */
+
+.status-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--studio-space-sm);
+}
+
+.status-bar-row {
+  display: flex;
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  gap: 2px;
+}
+
+.status-bar-segment {
+  min-width: 4px;
+  border-radius: 2px;
+}
+
+.status-bar-segment.status-2xx {
+  background: var(--studio-status-2xx);
+}
+
+.status-bar-segment.status-3xx {
+  background: var(--studio-status-3xx);
+}
+
+.status-bar-segment.status-4xx {
+  background: var(--studio-status-4xx);
+}
+
+.status-bar-segment.status-5xx {
+  background: var(--studio-status-5xx);
+}
+
+.status-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--studio-space-md);
+  margin-top: var(--studio-space-sm);
+}
+
+.status-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--studio-text-muted);
+}
+
+.status-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-legend-dot.status-2xx {
+  background: var(--studio-status-2xx);
+}
+
+.status-legend-dot.status-3xx {
+  background: var(--studio-status-3xx);
+}
+
+.status-legend-dot.status-4xx {
+  background: var(--studio-status-4xx);
+}
+
+.status-legend-dot.status-5xx {
+  background: var(--studio-status-5xx);
+}
+
+/* ---------------------------------------------------------------------------
+ * 27. Inline Bar (.bar-cell, .inline-bar)
+ * ------------------------------------------------------------------------ */
+
+.bar-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-sm);
+}
+
+.inline-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--studio-accent);
+  opacity: 0.6;
+  min-width: 4px;
+  max-width: 120px;
+  transition: width var(--studio-transition-normal);
+}
+
+/* ---------------------------------------------------------------------------
+ * 28. Event Bar Chart (.event-bar-chart)
+ * ------------------------------------------------------------------------ */
+
+.event-bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--studio-space-sm);
+}
+
+.event-bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-sm);
+}
+
+.event-bar {
+  flex: 1;
+  height: 20px;
+  border-radius: var(--studio-radius-sm);
+  background: var(--studio-accent);
+  opacity: 0.3;
+  transition: width var(--studio-transition-normal);
+}
+
+.event-bar-value {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--studio-text-muted);
+  min-width: 3rem;
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------------------
+ * 29. Event Counts (.event-counts, .event-count-item)
+ * ------------------------------------------------------------------------ */
+
+.event-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--studio-space-sm);
+}
+
+.event-count-item {
+  display: flex;
+  align-items: center;
+  gap: var(--studio-space-sm);
+  padding: var(--studio-space-xs) var(--studio-space-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: var(--studio-radius-sm);
+  border: 1px solid var(--studio-border);
+}
+
+.event-count {
+  font-size: 1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--studio-text);
+}
+
+/* ---------------------------------------------------------------------------
+ * 30. Status Code (.status-code, .status-count)
+ * ------------------------------------------------------------------------ */
+
+.status-code {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-count {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+ * 31. Landing Page (.landing-nav-grid, .landing-nav-card, .config-table)
  * ------------------------------------------------------------------------ */
 
 .landing-nav-grid {

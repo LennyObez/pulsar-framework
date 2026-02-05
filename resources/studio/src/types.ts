@@ -30,6 +30,8 @@ export interface DashboardData {
   slow_routes: SlowRouteEntry[];
   slow_queries: SlowQueryEntry[];
   event_counts: Record<string, number>;
+  throughput_series: number[];
+  error_series: number[];
 }
 
 export interface ThroughputData {

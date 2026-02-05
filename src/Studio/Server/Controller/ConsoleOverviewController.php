@@ -47,6 +47,8 @@ final class ConsoleOverviewController
             'slow_routes' => $slowRoutes,
             'slow_queries' => $slowQueries,
             'event_counts' => $eventCounts,
+            'throughput_series' => $this->aggregator->throughputTimeSeries($windowUs),
+            'error_series' => $this->aggregator->errorTimeSeries($windowUs),
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
         $safePayload = htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
