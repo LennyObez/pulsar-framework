@@ -543,8 +543,8 @@ final class Kernel
         $this->middleware->pipe($metricsMiddleware);
 
         // Register OpenMetrics endpoint if enabled
-        if ($observabilityConfig->metrics->prometheusEnabled) {
-            $endpoint = $observabilityConfig->metrics->prometheusEndpoint;
+        if ($observabilityConfig->metrics->exporterEnabled) {
+            $endpoint = $observabilityConfig->metrics->exporterEndpoint;
             $this->router->get($endpoint, static function () use ($registry): Response {
                 $exporter = new OpenMetricsExporter($registry);
 
