@@ -110,7 +110,7 @@ final class StudioStatusCommandTest extends TestCase
     public function displaysStorageStatsWhenStoreProvided(): void
     {
         $config = $this->createConfig();
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('count')->willReturn(150);
         $store->method('sizeInBytes')->willReturn(524288);
 
@@ -165,7 +165,7 @@ final class StudioStatusCommandTest extends TestCase
     public function jsonOutputIncludesStorageStats(): void
     {
         $config = $this->createConfig();
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('count')->willReturn(42);
         $store->method('sizeInBytes')->willReturn(1024);
 

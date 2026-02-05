@@ -6,7 +6,7 @@ namespace Pulsar\Tests\Unit\Studio\Command\Console;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Studio\Command\Console\ConsoleTailCommand;
@@ -16,13 +16,13 @@ use ReflectionMethod;
 #[CoversClass(ConsoleTailCommand::class)]
 final class ConsoleTailCommandTest extends TestCase
 {
-    /** @var EventStoreInterface&MockObject */
+    /** @var EventStoreInterface&Stub */
     private EventStoreInterface $store;
     private BufferedOutput $output;
 
     protected function setUp(): void
     {
-        $this->store = $this->createMock(EventStoreInterface::class);
+        $this->store = $this->createStub(EventStoreInterface::class);
         $this->output = new BufferedOutput();
     }
 

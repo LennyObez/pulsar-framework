@@ -6,7 +6,6 @@ namespace Pulsar\Tests\Unit\Studio\Command\Console;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
@@ -17,20 +16,18 @@ use Pulsar\Studio\Console\Storage\EventStoreInterface;
 #[CoversClass(ConsoleQueryCommand::class)]
 final class ConsoleQueryCommandTest extends TestCase
 {
-    /** @var EventStoreInterface&MockObject */
-    private EventStoreInterface $store;
     private BufferedOutput $output;
 
     protected function setUp(): void
     {
-        $this->store = $this->createMock(EventStoreInterface::class);
         $this->output = new BufferedOutput();
     }
 
     #[Test]
     public function configuredCorrectly(): void
     {
-        $command = new ConsoleQueryCommand($this->store);
+        $store = $this->createStub(EventStoreInterface::class);
+        $command = new ConsoleQueryCommand($store);
 
         self::assertSame('studio:console:query', $command->name);
         self::assertSame('Query Studio events', $command->description);
@@ -54,10 +51,11 @@ final class ConsoleQueryCommandTest extends TestCase
             ],
         ];
 
-        $this->store->method('query')->willReturn($events);
-        $this->store->method('count')->willReturn(1);
+        $store = $this->createStub(EventStoreInterface::class);
+        $store->method('query')->willReturn($events);
+        $store->method('count')->willReturn(1);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query');
 
         $exit = $command->execute($input, $this->output);
@@ -83,10 +81,11 @@ final class ConsoleQueryCommandTest extends TestCase
             ],
         ];
 
-        $this->store->method('query')->willReturn($events);
-        $this->store->method('count')->willReturn(10);
+        $store = $this->createStub(EventStoreInterface::class);
+        $store->method('query')->willReturn($events);
+        $store->method('count')->willReturn(10);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], ['json' => true]);
 
         $exit = $command->execute($input, $this->output);
@@ -105,7 +104,8 @@ final class ConsoleQueryCommandTest extends TestCase
     #[Test]
     public function executeWithTypeFilter(): void
     {
-        $this->store->expects(self::once())
+        $store = $this->createMock(EventStoreInterface::class);
+        $store->expects(self::once())
             ->method('query')
             ->with(
                 ['event_type' => ['http.request', 'http.response']],
@@ -113,9 +113,9 @@ final class ConsoleQueryCommandTest extends TestCase
                 0,
             )
             ->willReturn([]);
-        $this->store->method('count')->willReturn(0);
+        $store->method('count')->willReturn(0);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], ['type' => 'http.request,http.response']);
 
         $command->execute($input, $this->output);
@@ -124,7 +124,8 @@ final class ConsoleQueryCommandTest extends TestCase
     #[Test]
     public function executeWithRequestIdFilter(): void
     {
-        $this->store->expects(self::once())
+        $store = $this->createMock(EventStoreInterface::class);
+        $store->expects(self::once())
             ->method('query')
             ->with(
                 ['request_id' => 'req-12345'],
@@ -132,9 +133,9 @@ final class ConsoleQueryCommandTest extends TestCase
                 0,
             )
             ->willReturn([]);
-        $this->store->method('count')->willReturn(0);
+        $store->method('count')->willReturn(0);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], ['request-id' => 'req-12345']);
 
         $command->execute($input, $this->output);
@@ -143,7 +144,8 @@ final class ConsoleQueryCommandTest extends TestCase
     #[Test]
     public function executeWithJobIdFilter(): void
     {
-        $this->store->expects(self::once())
+        $store = $this->createMock(EventStoreInterface::class);
+        $store->expects(self::once())
             ->method('query')
             ->with(
                 ['job_id' => 'job-abc'],
@@ -151,9 +153,9 @@ final class ConsoleQueryCommandTest extends TestCase
                 0,
             )
             ->willReturn([]);
-        $this->store->method('count')->willReturn(0);
+        $store->method('count')->willReturn(0);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], ['job-id' => 'job-abc']);
 
         $command->execute($input, $this->output);
@@ -162,7 +164,8 @@ final class ConsoleQueryCommandTest extends TestCase
     #[Test]
     public function executeWithTraceIdFilter(): void
     {
-        $this->store->expects(self::once())
+        $store = $this->createMock(EventStoreInterface::class);
+        $store->expects(self::once())
             ->method('query')
             ->with(
                 ['trace_id' => 'trace-xyz'],
@@ -170,9 +173,9 @@ final class ConsoleQueryCommandTest extends TestCase
                 0,
             )
             ->willReturn([]);
-        $this->store->method('count')->willReturn(0);
+        $store->method('count')->willReturn(0);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], ['trace-id' => 'trace-xyz']);
 
         $command->execute($input, $this->output);
@@ -181,7 +184,8 @@ final class ConsoleQueryCommandTest extends TestCase
     #[Test]
     public function executeWithCustomLimitAndOffset(): void
     {
-        $this->store->expects(self::once())
+        $store = $this->createMock(EventStoreInterface::class);
+        $store->expects(self::once())
             ->method('query')
             ->with(
                 [],
@@ -189,9 +193,9 @@ final class ConsoleQueryCommandTest extends TestCase
                 10,
             )
             ->willReturn([]);
-        $this->store->method('count')->willReturn(0);
+        $store->method('count')->willReturn(0);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], ['limit' => '25', 'offset' => '10']);
 
         $command->execute($input, $this->output);
@@ -200,7 +204,8 @@ final class ConsoleQueryCommandTest extends TestCase
     #[Test]
     public function executeWithMultipleFilters(): void
     {
-        $this->store->expects(self::once())
+        $store = $this->createMock(EventStoreInterface::class);
+        $store->expects(self::once())
             ->method('query')
             ->with(
                 [
@@ -212,9 +217,9 @@ final class ConsoleQueryCommandTest extends TestCase
                 50,
             )
             ->willReturn([]);
-        $this->store->method('count')->willReturn(0);
+        $store->method('count')->willReturn(0);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], [
             'type' => 'http.request',
             'request-id' => 'req-123',
@@ -229,13 +234,14 @@ final class ConsoleQueryCommandTest extends TestCase
     #[Test]
     public function executeHandlesNonNumericLimitGracefully(): void
     {
-        $this->store->expects(self::once())
+        $store = $this->createMock(EventStoreInterface::class);
+        $store->expects(self::once())
             ->method('query')
             ->with([], 50, 0) // Falls back to default 50
             ->willReturn([]);
-        $this->store->method('count')->willReturn(0);
+        $store->method('count')->willReturn(0);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], ['limit' => 'invalid']);
 
         $command->execute($input, $this->output);
@@ -244,13 +250,14 @@ final class ConsoleQueryCommandTest extends TestCase
     #[Test]
     public function executeHandlesNonNumericOffsetGracefully(): void
     {
-        $this->store->expects(self::once())
+        $store = $this->createMock(EventStoreInterface::class);
+        $store->expects(self::once())
             ->method('query')
             ->with([], 50, 0) // Falls back to default 0
             ->willReturn([]);
-        $this->store->method('count')->willReturn(0);
+        $store->method('count')->willReturn(0);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], ['offset' => 'invalid']);
 
         $command->execute($input, $this->output);
@@ -267,10 +274,11 @@ final class ConsoleQueryCommandTest extends TestCase
             ],
         ];
 
-        $this->store->method('query')->willReturn($events);
-        $this->store->method('count')->willReturn(1);
+        $store = $this->createStub(EventStoreInterface::class);
+        $store->method('query')->willReturn($events);
+        $store->method('count')->willReturn(1);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query');
 
         $exit = $command->execute($input, $this->output);
@@ -290,10 +298,11 @@ final class ConsoleQueryCommandTest extends TestCase
             ],
         ];
 
-        $this->store->method('query')->willReturn($events);
-        $this->store->method('count')->willReturn(1);
+        $store = $this->createStub(EventStoreInterface::class);
+        $store->method('query')->willReturn($events);
+        $store->method('count')->willReturn(1);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query');
 
         $exit = $command->execute($input, $this->output);
@@ -314,10 +323,11 @@ final class ConsoleQueryCommandTest extends TestCase
             ],
         ];
 
-        $this->store->method('query')->willReturn($events);
-        $this->store->method('count')->willReturn(1);
+        $store = $this->createStub(EventStoreInterface::class);
+        $store->method('query')->willReturn($events);
+        $store->method('count')->willReturn(1);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query');
 
         $exit = $command->execute($input, $this->output);
@@ -338,10 +348,11 @@ final class ConsoleQueryCommandTest extends TestCase
             ],
         ];
 
-        $this->store->method('query')->willReturn($events);
-        $this->store->method('count')->willReturn(1);
+        $store = $this->createStub(EventStoreInterface::class);
+        $store->method('query')->willReturn($events);
+        $store->method('count')->willReturn(1);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query');
 
         $exit = $command->execute($input, $this->output);
@@ -359,10 +370,11 @@ final class ConsoleQueryCommandTest extends TestCase
             ['event_id' => 'evt-2', 'event_type' => 'http.request', 'timestamp_us' => 1704067201000000],
         ];
 
-        $this->store->method('query')->willReturn($events);
-        $this->store->method('count')->willReturn(100);
+        $store = $this->createStub(EventStoreInterface::class);
+        $store->method('query')->willReturn($events);
+        $store->method('count')->willReturn(100);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         $input = new ArrayInput('studio:console:query', [], ['offset' => '10', 'limit' => '50']);
 
         $exit = $command->execute($input, $this->output);
@@ -376,7 +388,8 @@ final class ConsoleQueryCommandTest extends TestCase
     public function executeWithNonStringTypeFilter(): void
     {
         // When type filter is not a string, it should use empty array
-        $this->store->expects(self::once())
+        $store = $this->createMock(EventStoreInterface::class);
+        $store->expects(self::once())
             ->method('query')
             ->with(
                 ['event_type' => []], // Empty array when type is not string
@@ -384,9 +397,9 @@ final class ConsoleQueryCommandTest extends TestCase
                 0,
             )
             ->willReturn([]);
-        $this->store->method('count')->willReturn(0);
+        $store->method('count')->willReturn(0);
 
-        $command = new ConsoleQueryCommand($this->store);
+        $command = new ConsoleQueryCommand($store);
         // Simulate a non-string option value (e.g., boolean true when just --type is passed)
         $input = new ArrayInput('studio:console:query', [], ['type' => true]);
 

@@ -21,7 +21,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function typeAddsEventTypesToQuery(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->type(EventType::HttpRequest, EventType::DatabaseQuery);
@@ -33,7 +33,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function typeAccumulatesMultipleCalls(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->type(EventType::HttpRequest);
@@ -46,7 +46,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function typeReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->type(EventType::HttpRequest);
@@ -57,7 +57,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function requestIdSetsRequestId(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->requestId('req-123');
@@ -69,7 +69,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function requestIdReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->requestId('req-123');
@@ -80,7 +80,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function traceIdSetsTraceId(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->traceId('trace-abc');
@@ -92,7 +92,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function traceIdReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->traceId('trace-abc');
@@ -103,7 +103,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function jobIdSetsJobId(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->jobId('job-456');
@@ -115,7 +115,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function jobIdReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->jobId('job-456');
@@ -126,7 +126,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function tenantHashSetsTenantHash(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->tenantHash('tenant-hash-789');
@@ -138,7 +138,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function tenantHashReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->tenantHash('tenant-hash-789');
@@ -149,7 +149,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function sinceSetsSinceUs(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->since(1_700_000_000_000_000);
@@ -161,7 +161,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function sinceReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->since(1_700_000_000_000_000);
@@ -172,7 +172,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function untilSetsUntilUs(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->until(1_700_000_001_000_000);
@@ -184,7 +184,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function untilReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->until(1_700_000_001_000_000);
@@ -195,7 +195,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function sinceIdSetsSinceId(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->sinceId(100);
@@ -207,7 +207,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function sinceIdReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->sinceId(100);
@@ -218,7 +218,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function searchSetsSearch(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query->search('search term');
@@ -230,7 +230,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function searchReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->search('search term');
@@ -241,7 +241,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function limitSetsLimit(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -255,7 +255,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function limitReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->limit(25);
@@ -266,7 +266,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function limitEnforcesMinimumOfOne(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -280,7 +280,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function limitEnforcesMinimumOfOneForNegative(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -294,7 +294,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function offsetSetsOffset(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -308,7 +308,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function offsetReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->offset(50);
@@ -319,7 +319,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function offsetEnforcesMinimumOfZero(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -333,7 +333,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function pageCalculatesLimitAndOffset(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -348,7 +348,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function pageDefaultsToPerPage50(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -363,7 +363,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function pageReturnsSelfForChaining(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $result = $query->page(1);
@@ -374,7 +374,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function pageEnforcesMinimumPageOfOne(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -388,7 +388,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function pageEnforcesMinimumPerPageOfOne(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -402,7 +402,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function filterReturnsEventFilterWithAllValues(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $query = new EventQuery($store);
 
         $query
@@ -495,7 +495,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function getReturnsEventQueryResult(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -508,7 +508,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function chainingWorksCorrectly(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(100);
 
@@ -527,7 +527,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function defaultLimitIs50(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 
@@ -540,7 +540,7 @@ final class EventQueryTest extends TestCase
     #[Test]
     public function defaultOffsetIsZero(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
         $store->method('count')->willReturn(0);
 

@@ -9,7 +9,7 @@ use function is_file;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
@@ -24,14 +24,14 @@ use function unlink;
 #[CoversClass(ConsoleExportCommand::class)]
 final class ConsoleExportCommandTest extends TestCase
 {
-    /** @var EventStoreInterface&MockObject */
+    /** @var EventStoreInterface&Stub */
     private EventStoreInterface $store;
     private BufferedOutput $output;
     private string $tempDir;
 
     protected function setUp(): void
     {
-        $this->store = $this->createMock(EventStoreInterface::class);
+        $this->store = $this->createStub(EventStoreInterface::class);
         $this->output = new BufferedOutput();
         $this->tempDir = sys_get_temp_dir();
     }

@@ -32,7 +32,7 @@ final class EvidenceExporterTest extends TestCase
             ['event_id' => 'evt-2', 'event_type' => 'http_response'],
         ];
 
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn($events);
 
         $exporter = new EvidenceExporter($store);
@@ -53,7 +53,7 @@ final class EvidenceExporterTest extends TestCase
             ['event_id' => 'evt-3'],
         ];
 
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn($events);
 
         $exporter = new EvidenceExporter($store);
@@ -90,7 +90,7 @@ final class EvidenceExporterTest extends TestCase
     #[Test]
     public function exportThrowsWhenEncryptedWithoutDecryptionKey(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
 
         $exporter = new EvidenceExporter(
             store: $store,
@@ -107,7 +107,7 @@ final class EvidenceExporterTest extends TestCase
     #[Test]
     public function exportSucceedsWhenEncryptedWithDecryptionKey(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
 
         $exporter = new EvidenceExporter(
@@ -146,9 +146,9 @@ final class EvidenceExporterTest extends TestCase
     public function exportRetrievesChainLinksFromEncryptedStoreInner(): void
     {
         // This test verifies the behavior when an EncryptedEventStore wraps a SqliteEventStore.
-        // Since both classes are final, we use a simple EventStoreInterface mock to test
+        // Since both classes are final, we use a simple EventStoreInterface stub to test
         // that non-SqliteEventStore stores return empty chain links.
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
 
         $exporter = new EvidenceExporter($store);
@@ -163,7 +163,7 @@ final class EvidenceExporterTest extends TestCase
     #[Test]
     public function exportReturnsEmptyChainLinksForNonSqliteStore(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
 
         $exporter = new EvidenceExporter($store);
@@ -177,7 +177,7 @@ final class EvidenceExporterTest extends TestCase
     #[Test]
     public function exportComputesMacWhenKeyProvided(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
 
         // HMAC requires minimum 16-byte key
@@ -197,7 +197,7 @@ final class EvidenceExporterTest extends TestCase
     #[Test]
     public function exportDoesNotIncludeMacWhenKeyNotProvided(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
 
         $exporter = new EvidenceExporter($store);
@@ -213,10 +213,10 @@ final class EvidenceExporterTest extends TestCase
         $events = [['event_id' => 'evt-1']];
         $macKey = 'test-mac-key-1234567890';
 
-        $store1 = $this->createMock(EventStoreInterface::class);
+        $store1 = $this->createStub(EventStoreInterface::class);
         $store1->method('query')->willReturn($events);
 
-        $store2 = $this->createMock(EventStoreInterface::class);
+        $store2 = $this->createStub(EventStoreInterface::class);
         $store2->method('query')->willReturn($events);
 
         // Note: MAC depends on manifest which includes exported_at timestamp,
@@ -243,7 +243,7 @@ final class EvidenceExporterTest extends TestCase
             'request_id' => 'req-123',
         ];
 
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
 
         $exporter = new EvidenceExporter($store);
@@ -256,7 +256,7 @@ final class EvidenceExporterTest extends TestCase
     #[Test]
     public function exportWithEmptyFiltersRecordsEmptyFilters(): void
     {
-        $store = $this->createMock(EventStoreInterface::class);
+        $store = $this->createStub(EventStoreInterface::class);
         $store->method('query')->willReturn([]);
 
         $exporter = new EvidenceExporter($store);

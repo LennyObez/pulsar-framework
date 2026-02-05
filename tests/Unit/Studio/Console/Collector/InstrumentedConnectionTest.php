@@ -57,7 +57,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryEmitsDatabaseQueryEvent(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([['id' => 1]]));
         $inner->method('name')->willReturn('default');
 
@@ -72,7 +72,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryRecordsNormalizedSql(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('default');
 
@@ -89,7 +89,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryRecordsSqlFingerprint(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('default');
 
@@ -106,7 +106,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryRecordsConnectionName(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('analytics');
 
@@ -122,7 +122,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryRecordsDuration(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturnCallback(function (): Result {
             usleep(5000); // 5ms
             return Result::fromArrays([]);
@@ -141,7 +141,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryRecordsRowCount(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([
             ['id' => 1],
             ['id' => 2],
@@ -161,7 +161,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryRecordsQueryType(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('default');
 
@@ -177,7 +177,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryDoesNotStoreRawSqlByDefault(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('default');
 
@@ -193,7 +193,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryStoresRawSqlWhenEnabledInLocalMode(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('default');
 
@@ -218,7 +218,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryDoesNotStoreRawSqlInProductionEvenWhenEnabled(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('default');
 
@@ -259,7 +259,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function executeEmitsDatabaseQueryEvent(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('execute')->willReturn(1);
         $inner->method('name')->willReturn('default');
 
@@ -276,7 +276,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function executeRecordsAffectedRowCount(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('execute')->willReturn(42);
         $inner->method('name')->willReturn('default');
 
@@ -375,7 +375,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function isEnabledReturnsTrueByDefault(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
 
         $connection = $this->createConnection($inner);
 
@@ -385,7 +385,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function setEnabledChangesEnabledState(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
 
         $connection = $this->createConnection($inner);
 
@@ -399,7 +399,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function querySkipsInstrumentationWhenDisabled(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
 
         $connection = $this->createConnection($inner);
@@ -413,7 +413,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function executeSkipsInstrumentationWhenDisabled(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('execute')->willReturn(1);
 
         $connection = $this->createConnection($inner);
@@ -427,7 +427,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function innerReturnsUnderlyingConnection(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
 
         $connection = $this->createConnection($inner);
 
@@ -437,7 +437,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function querySilentlySwallowsEmitExceptions(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([['id' => 1]]));
         $inner->method('name')->willReturn('default');
 
@@ -458,7 +458,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function executeSilentlySwallowsEmitExceptions(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('execute')->willReturn(5);
         $inner->method('name')->willReturn('default');
 
@@ -479,7 +479,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryIncludesCorrelationContext(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('default');
 
@@ -503,7 +503,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryHandlesInsertQueries(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('default');
 
@@ -520,7 +520,7 @@ final class InstrumentedConnectionTest extends TestCase
     #[Test]
     public function queryHandlesDeleteQueries(): void
     {
-        $inner = $this->createMock(ConnectionInterface::class);
+        $inner = $this->createStub(ConnectionInterface::class);
         $inner->method('query')->willReturn(Result::fromArrays([]));
         $inner->method('name')->willReturn('default');
 

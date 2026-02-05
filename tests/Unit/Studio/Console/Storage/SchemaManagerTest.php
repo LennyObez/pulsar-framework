@@ -309,8 +309,8 @@ final class SchemaManagerTest extends TestCase
     #[Test]
     public function ensureSchemaThrowsStudioExceptionOnPdoError(): void
     {
-        // Create a mock PDO that throws on exec
-        $pdo = $this->createMock(PDO::class);
+        // Create a stub PDO that throws on exec
+        $pdo = $this->createStub(PDO::class);
         $pdo->method('exec')->willThrowException(new PDOException('Database error'));
 
         $this->expectException(StudioException::class);
