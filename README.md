@@ -79,7 +79,7 @@ No dependency on external monitoring vendors.
 
 - PHPBench benchmark suite covering critical hot paths (bootstrap, routing, container, middleware)
 - Performance budgets defined in `tools/php/performance-budgets.json`
-- CI-enforced regression detection -- pull requests that exceed budgets will fail the pipeline
+- Advisory CI benchmark job -- results appear in PR summary for human review
 
 ## Documentation
 
