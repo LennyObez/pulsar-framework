@@ -5,6 +5,32 @@ All notable changes to Pulsar Framework are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-rc.2] — 2026-02-05
+
+### Breaking
+
+- **MetricsConfig property rename**: `prometheusEnabled` → `exporterEnabled`, `prometheusEndpoint` → `exporterEndpoint`. The `fromArray()` factory accepts both the new `'openmetrics'` and legacy `'prometheus'` exporter keys for backward compatibility. Update any code that directly accesses these properties.
+
+### Changed
+
+- `PrometheusExporter` renamed to `OpenMetricsExporter` (internal class — not a public API break). Docblocks updated to reference OpenMetrics text exposition format 0.0.4.
+- Config stub `config/observability.php` uses `'openmetrics'` exporter key (legacy `'prometheus'` key still accepted by the DTO factory).
+- Performance benchmark CI job is now advisory — it does not block merges. Results appear in PR job summary and are uploaded as a 14-day build artifact for human review.
+- Vendor product names removed from README and OBSERVABILITY.md in favor of standards-based or generic phrasing.
+
+### Added
+
+- Public API snapshot system: `tools/api/generate-snapshot.php` generates a deterministic JSON snapshot of all `#[Api]` and `#[Internal]` annotated types. `PublicApiSnapshotTest` verifies the committed snapshot matches the codebase. Run `composer api:snapshot` to regenerate.
+- KernelBootPipelineTest (11 tests) covering config-conditional service creation branches.
+- OpenMetricsExporter edge case tests: histogram with labels, escaping, negative gauges, empty histograms.
+- TenantAwareConnectionManager tests: SeparateConnection strategy, disconnect delegation, prefix edge cases.
+- FeatureFlagManager tests: percentage fallback to tenantId, contextual priority, allFlags retrieval.
+- RetryPolicy tests: fromConfig factory, jitter with small base delay, single-attempt policy.
+
+### Removed
+
+- `ApiAttributeDiscoveryTest` (replaced by snapshot-based `PublicApiSnapshotTest`).
+
 ## [1.0.0-rc.1] — 2026-02-04
 
 ### Added
