@@ -2,6 +2,7 @@
   "name": "pulsar/psr7-bridge",
   "version": "1.0.0-rc.8",
   "description": "Bidirectional PSR-7/PSR-15 adapters for Pulsar HTTP abstractions",
+  "trust_tier": "core",
   "extension_class": "Pulsar\\Extension\\Psr7Bridge\\Psr7BridgeExtension",
   "pulsar": { "min_version": "1.0.0-rc.8" },
   "provides": {
