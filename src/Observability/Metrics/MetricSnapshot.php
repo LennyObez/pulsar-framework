@@ -14,8 +14,9 @@ use Pulsar\Api\Api;
 final readonly class MetricSnapshot
 {
     /**
-     * @param array<string, float>                                                       $values  Label-key => value (counters/gauges)
-     * @param array<string, array{buckets: array<int|string, int>, sum: float, count: int}>|null $series  Histogram series data
+     * @param array<string, float>                                                       $values     Label-key => value (counters/gauges)
+     * @param array<string, array{buckets: array<int|string, int>, sum: float, count: int}>|null $series     Histogram series data
+     * @param list<float>                                                                $boundaries Histogram bucket boundaries
      */
     public function __construct(
         public string $name,
@@ -23,6 +24,7 @@ final readonly class MetricSnapshot
         public string $help,
         public array $values = [],
         public ?array $series = null,
+        public array $boundaries = [],
     ) {}
 
     /**
@@ -76,6 +78,7 @@ final readonly class MetricSnapshot
             type: MetricType::Histogram,
             help: $histogram->help,
             series: $series,
+            boundaries: $histogram->boundaries(),
         );
     }
 }

@@ -29,3 +29,17 @@ parameters:
 			identifier: staticMethod.alreadyNarrowedType
 			count: 1
 			path: ../../tests/Unit/Auth/Identity/IdentityTest.php
+
+		# PsySH is a suggested (optional) dependency — class_exists() guards all usage
+		-
+			message: '#^PHPDoc tag @var for variable \$(configClass|shellClass) contains unknown class Psy\\(Configuration|Shell)\.$#'
+			identifier: class.notFound
+			count: 2
+			path: ../../src/Console/Repl/ShellCommand.php
+
+		-
+			message: '#^Call to method (setScopeVariables|addInput|run)\(\) on an unknown class Psy\\Shell\.$#'
+			identifier: class.notFound
+			count: 3
+			path: ../../src/Console/Repl/ShellCommand.php
+
