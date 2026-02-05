@@ -209,7 +209,7 @@ final class InstrumentedSchedulerTest extends TestCase
 
         $scheduler = new Scheduler($registry);
         $instrumented = $this->createScheduler($scheduler);
-        $instrumented->setEnabled(false);
+        $instrumented->enabled = false;
 
         $result = $instrumented->tick(new DateTimeImmutable());
 
@@ -257,7 +257,7 @@ final class InstrumentedSchedulerTest extends TestCase
         $registry = new JobRegistry();
         $scheduler = new Scheduler($registry);
         $instrumented = $this->createScheduler($scheduler);
-        $instrumented->setEnabled(false);
+        $instrumented->enabled = false;
 
         $result = $instrumented->runJob($job);
 
@@ -330,7 +330,7 @@ final class InstrumentedSchedulerTest extends TestCase
         $scheduler = new Scheduler($registry);
         $instrumented = $this->createScheduler($scheduler);
 
-        self::assertTrue($instrumented->isEnabled());
+        self::assertTrue($instrumented->enabled);
     }
 
     #[Test]
@@ -340,11 +340,11 @@ final class InstrumentedSchedulerTest extends TestCase
         $scheduler = new Scheduler($registry);
         $instrumented = $this->createScheduler($scheduler);
 
-        $instrumented->setEnabled(false);
-        self::assertFalse($instrumented->isEnabled());
+        $instrumented->enabled = false;
+        self::assertFalse($instrumented->enabled);
 
-        $instrumented->setEnabled(true);
-        self::assertTrue($instrumented->isEnabled());
+        $instrumented->enabled = true;
+        self::assertTrue($instrumented->enabled);
     }
 
     #[Test]

@@ -38,6 +38,8 @@ use function usort;
 #[Internal]
 final readonly class DashboardAggregator
 {
+    private const int TOP_EXCEPTIONS_LIMIT = 10;
+
     private readonly PDO $pdo;
 
     public function __construct(
@@ -298,41 +300,7 @@ final readonly class DashboardAggregator
      */
     public function throughputTimeSeries(int $windowUs, int $buckets = 12): array
     {
-        $since = $this->nowUs() - $windowUs;
-        $bucketSize = intdiv($windowUs, $buckets);
-
-        if ($bucketSize <= 0) {
-            return array_fill(0, $buckets, 0);
-        }
-
-        $stmt = $this->pdo->prepare(
-            'SELECT (timestamp_us - :since) / :bucket_size AS bucket, COUNT(*) AS cnt
-             FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since2
-             GROUP BY bucket
-             ORDER BY bucket',
-        );
-        $stmt->execute([
-            'since' => $since,
-            'bucket_size' => $bucketSize,
-            'type' => 'http.response',
-            'since2' => $since,
-        ]);
-        /** @var list<array{bucket: int, cnt: int}> $rows */
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // Initialize all buckets to zero
-        $series = array_fill(0, $buckets, 0);
-
-        foreach ($rows as $row) {
-            $idx = $row['bucket'];
-            if ($idx >= 0 && $idx < $buckets) {
-                $series[$idx] = $row['cnt'];
-            }
-        }
-
-        /** @var list<int> */
-        return array_values($series);
+        return $this->eventTimeSeries('http.response', $windowUs, $buckets);
     }
 
     /**
@@ -341,6 +309,16 @@ final readonly class DashboardAggregator
      * @return list<int>
      */
     public function errorTimeSeries(int $windowUs, int $buckets = 12): array
+    {
+        return $this->eventTimeSeries('exception', $windowUs, $buckets);
+    }
+
+    /**
+     * Get time-series for a specific event type.
+     *
+     * @return list<int>
+     */
+    private function eventTimeSeries(string $eventType, int $windowUs, int $buckets): array
     {
         $since = $this->nowUs() - $windowUs;
         $bucketSize = intdiv($windowUs, $buckets);
@@ -359,7 +337,7 @@ final readonly class DashboardAggregator
         $stmt->execute([
             'since' => $since,
             'bucket_size' => $bucketSize,
-            'type' => 'exception',
+            'type' => $eventType,
             'since2' => $since,
         ]);
         /** @var list<array{bucket: int, cnt: int}> $rows */
@@ -417,7 +395,7 @@ final readonly class DashboardAggregator
      *
      * @return list<array{class: string, count: int, last_seen_us: int}>
      */
-    private function topExceptions(int $windowUs, int $limit = 10): array
+    private function topExceptions(int $windowUs): array
     {
         $since = $this->nowUs() - $windowUs;
 
@@ -431,7 +409,7 @@ final readonly class DashboardAggregator
              ORDER BY cnt DESC
              LIMIT :limit",
         );
-        $stmt->execute(['type' => 'exception', 'since' => $since, 'limit' => $limit]);
+        $stmt->execute(['type' => 'exception', 'since' => $since, 'limit' => self::TOP_EXCEPTIONS_LIMIT]);
         /** @var list<array{exception_class: string|null, cnt: int, last_seen_us: int}> $rows */
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

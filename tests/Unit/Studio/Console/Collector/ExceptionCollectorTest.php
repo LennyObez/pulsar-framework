@@ -161,7 +161,7 @@ final class ExceptionCollectorTest extends TestCase
     public function handleErrorSkipsEmissionWhenDisabled(): void
     {
         $collector = $this->createCollector();
-        $collector->setEnabled(false);
+        $collector->enabled = false;
         $errorEvent = $this->createErrorEvent();
 
         $collector->handleError($errorEvent);
@@ -174,7 +174,7 @@ final class ExceptionCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
 
-        self::assertTrue($collector->isEnabled());
+        self::assertTrue($collector->enabled);
     }
 
     #[Test]
@@ -182,11 +182,11 @@ final class ExceptionCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
 
-        $collector->setEnabled(false);
-        self::assertFalse($collector->isEnabled());
+        $collector->enabled = false;
+        self::assertFalse($collector->enabled);
 
-        $collector->setEnabled(true);
-        self::assertTrue($collector->isEnabled());
+        $collector->enabled = true;
+        self::assertTrue($collector->enabled);
     }
 
     #[Test]

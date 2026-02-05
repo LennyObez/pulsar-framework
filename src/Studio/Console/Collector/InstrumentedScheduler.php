@@ -12,6 +12,7 @@ use function count;
 
 use DateInvalidTimeZoneException;
 use DateTimeImmutable;
+use Exception;
 use Pulsar\Api\Internal;
 use Pulsar\Scheduler\Exception\SchedulerException;
 use Pulsar\Scheduler\JobInterface;
@@ -42,7 +43,7 @@ use Throwable;
 #[Internal]
 final class InstrumentedScheduler implements CollectorInterface
 {
-    private bool $enabled = true;
+    public bool $enabled = true;
 
     /**
      * @param Closure(ConsoleEvent, ?CorrelationContext): void $emit
@@ -58,6 +59,7 @@ final class InstrumentedScheduler implements CollectorInterface
      *
      * @throws DateInvalidTimeZoneException
      * @throws SchedulerException
+     * @throws Exception From random_bytes during job execution
      */
     public function tick(?DateTimeImmutable $now = null): SchedulerTickResult
     {
@@ -132,16 +134,6 @@ final class InstrumentedScheduler implements CollectorInterface
     public function inner(): Scheduler
     {
         return $this->inner;
-    }
-
-    public function isEnabled(): bool
-    {
-        return $this->enabled;
-    }
-
-    public function setEnabled(bool $enabled): void
-    {
-        $this->enabled = $enabled;
     }
 
     private function emitJobEvent(JobResult $result, CorrelationContext $context): void

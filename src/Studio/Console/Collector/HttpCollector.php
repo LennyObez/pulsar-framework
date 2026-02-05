@@ -38,7 +38,7 @@ use Throwable;
 #[Internal]
 final class HttpCollector implements MiddlewareInterface, CollectorInterface
 {
-    private bool $enabled = true;
+    public bool $enabled = true;
 
     /**
      * @param Closure(ConsoleEvent, ?CorrelationContext): void $emit
@@ -82,16 +82,6 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         } finally {
             $scope->close();
         }
-    }
-
-    public function isEnabled(): bool
-    {
-        return $this->enabled;
-    }
-
-    public function setEnabled(bool $enabled): void
-    {
-        $this->enabled = $enabled;
     }
 
     private function emitRequest(Request $request, CorrelationContext $context): void

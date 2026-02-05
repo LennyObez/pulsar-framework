@@ -230,7 +230,7 @@ final class FeatureFlagCollectorTest extends TestCase
     public function handleEvaluationSkipsEmissionWhenDisabled(): void
     {
         $collector = $this->createCollector();
-        $collector->setEnabled(false);
+        $collector->enabled = false;
 
         $evaluation = new FlagEvaluation(
             flagName: 'any-flag',
@@ -250,7 +250,7 @@ final class FeatureFlagCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
 
-        self::assertTrue($collector->isEnabled());
+        self::assertTrue($collector->enabled);
     }
 
     #[Test]
@@ -258,11 +258,11 @@ final class FeatureFlagCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
 
-        $collector->setEnabled(false);
-        self::assertFalse($collector->isEnabled());
+        $collector->enabled = false;
+        self::assertFalse($collector->enabled);
 
-        $collector->setEnabled(true);
-        self::assertTrue($collector->isEnabled());
+        $collector->enabled = true;
+        self::assertTrue($collector->enabled);
     }
 
     #[Test]

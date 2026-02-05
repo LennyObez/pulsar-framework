@@ -77,40 +77,42 @@ final readonly class TimelineBuilder
 
         if ($jobId !== null) {
             $jobEvents = $this->store->query(['job_id' => $jobId], limit: 1000);
-            // Merge without duplicates by event_id
-            $existingIds = [];
-            foreach ($events as $e) {
-                /** @var string $eId */
-                $eId = $e['event_id'] ?? '';
-                $existingIds[$eId] = true;
-            }
-            foreach ($jobEvents as $je) {
-                /** @var string $jeId */
-                $jeId = $je['event_id'] ?? '';
-                if (!isset($existingIds[$jeId])) {
-                    $events[] = $je;
-                }
-            }
+            $events = $this->mergeEventsWithoutDuplicates($events, $jobEvents);
         }
 
         if ($traceId !== null) {
             $traceEvents = $this->store->query(['trace_id' => $traceId], limit: 1000);
-            $existingIds = [];
-            foreach ($events as $e) {
-                /** @var string $eId */
-                $eId = $e['event_id'] ?? '';
-                $existingIds[$eId] = true;
-            }
-            foreach ($traceEvents as $te) {
-                /** @var string $teId */
-                $teId = $te['event_id'] ?? '';
-                if (!isset($existingIds[$teId])) {
-                    $events[] = $te;
-                }
-            }
+            $events = $this->mergeEventsWithoutDuplicates($events, $traceEvents);
         }
 
         return $this->sortByTimestamp($events);
+    }
+
+    /**
+     * Merge new events into existing list without duplicates by event_id.
+     *
+     * @param list<array<string, mixed>> $existing
+     * @param list<array<string, mixed>> $new
+     * @return list<array<string, mixed>>
+     */
+    private function mergeEventsWithoutDuplicates(array $existing, array $new): array
+    {
+        $existingIds = [];
+        foreach ($existing as $e) {
+            /** @var string $eId */
+            $eId = $e['event_id'] ?? '';
+            $existingIds[$eId] = true;
+        }
+
+        foreach ($new as $ne) {
+            /** @var string $neId */
+            $neId = $ne['event_id'] ?? '';
+            if (!isset($existingIds[$neId])) {
+                $existing[] = $ne;
+            }
+        }
+
+        return $existing;
     }
 
     /**

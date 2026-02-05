@@ -11,6 +11,7 @@ use function is_string;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Studio\Console\Event\EventEnvelope;
+use RuntimeException;
 
 /**
  * Decorator that encrypts event payloads before storage.
@@ -65,6 +66,9 @@ final readonly class EncryptedEventStore implements EventStoreInterface
         $stmt->execute(['hash' => $ciphertextHash, 'id' => $envelope->eventId]);
     }
 
+    /**
+     * @throws RuntimeException If decryption fails
+     */
     public function query(array $filters = [], int $limit = 50, int $offset = 0): array
     {
         $rows = $this->inner->query($filters, $limit, $offset);
@@ -77,6 +81,9 @@ final readonly class EncryptedEventStore implements EventStoreInterface
         return $this->inner->count($filters);
     }
 
+    /**
+     * @throws RuntimeException If decryption fails
+     */
     public function find(string $eventId): ?array
     {
         $row = $this->inner->find($eventId);
@@ -125,6 +132,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
      *
      * @param array<string, mixed> $row
      * @return array<string, mixed>
+     * @throws RuntimeException If decryption fails
      */
     private function decryptRow(array $row): array
     {

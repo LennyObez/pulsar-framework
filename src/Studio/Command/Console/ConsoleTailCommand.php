@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Studio\Command\Console;
 
 use function explode;
-use function is_int;
 use function is_string;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\InputInterface;
@@ -71,8 +71,8 @@ final class ConsoleTailCommand extends Command
         $lastId = 0;
         foreach ($recent as $event) {
             $this->outputEvent($event, $isJson, $output);
-            $rawId = $event['id'] ?? 0;
-            $lastId = is_int($rawId) ? $rawId : (int) (is_numeric($rawId) ? $rawId : 0);
+            $extractor = new EventDataExtractor($event);
+            $lastId = $extractor->id();
         }
 
         if (!$isJson) {
@@ -90,10 +90,10 @@ final class ConsoleTailCommand extends Command
 
             foreach ($events as $event) {
                 $this->outputEvent($event, $isJson, $output);
-                $rawEventId = $event['id'] ?? 0;
-                $_eventId = is_int($rawEventId) ? $rawEventId : (int) (is_numeric($rawEventId) ? $rawEventId : 0);
-                if ($_eventId > $lastId) {
-                    $lastId = $_eventId;
+                $extractor = new EventDataExtractor($event);
+                $eventId = $extractor->id();
+                if ($eventId > $lastId) {
+                    $lastId = $eventId;
                 }
             }
 
@@ -103,6 +103,7 @@ final class ConsoleTailCommand extends Command
 
     /**
      * @param array<string, mixed> $event
+     * @throws JsonException If JSON encoding fails
      */
     private function outputEvent(array $event, bool $isJson, OutputInterface $output): void
     {
@@ -111,21 +112,13 @@ final class ConsoleTailCommand extends Command
             return;
         }
 
-        $rawEventType = $event['event_type'] ?? 'unknown';
-        $eventType = is_string($rawEventType) ? $rawEventType : 'unknown';
-        $rawEventId = $event['event_id'] ?? '';
-        $eventId = is_string($rawEventId) ? $rawEventId : '';
-        $rawTimestampUs = $event['timestamp_us'] ?? 0;
-        $timestampUs = is_int($rawTimestampUs) ? $rawTimestampUs : (int) (is_numeric($rawTimestampUs) ? $rawTimestampUs : 0);
-        $rawRequestId = $event['request_id'] ?? '';
-        $requestId = is_string($rawRequestId) ? $rawRequestId : '';
-
-        $time = date('H:i:s', (int) ($timestampUs / 1_000_000));
+        $extractor = new EventDataExtractor($event);
+        $requestId = $extractor->requestId();
 
         $line = sprintf(
             '[%s] %-20s %s',
-            $time,
-            $eventType,
+            $extractor->formattedTime('H:i:s'),
+            $extractor->eventType(),
             $requestId !== '' ? sprintf('req=%s', substr($requestId, 0, 12)) : '',
         );
 

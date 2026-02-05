@@ -20,6 +20,8 @@ use function time;
 #[Internal]
 final readonly class RetentionEnforcer
 {
+    private const int SIZE_DELETION_BATCH_SIZE = 100;
+
     public function __construct(
         private readonly SqliteEventStore $store,
         private readonly RetentionPolicy $policy,
@@ -56,7 +58,7 @@ final readonly class RetentionEnforcer
 
         while ($this->store->sizeInBytes() > $maxBytes && $iterations < $maxIterations) {
             $countBefore = $this->countChainLinks();
-            $deleted = $this->deleteOldestBatch(100);
+            $deleted = $this->deleteOldestBatch();
             $countAfter = $this->countChainLinks();
             $batchPruned = $countBefore - $countAfter;
 
@@ -108,7 +110,7 @@ final readonly class RetentionEnforcer
     /**
      * Delete the oldest batch of events.
      */
-    private function deleteOldestBatch(int $batchSize): int
+    private function deleteOldestBatch(): int
     {
         $pdo = $this->store->pdo();
         $stmt = $pdo->prepare(<<<'SQL'
@@ -116,7 +118,7 @@ final readonly class RetentionEnforcer
                     SELECT id FROM studio_events ORDER BY timestamp_us ASC LIMIT :batch_size
                 )
             SQL);
-        $stmt->bindValue(':batch_size', $batchSize, PDO::PARAM_INT);
+        $stmt->bindValue(':batch_size', self::SIZE_DELETION_BATCH_SIZE, PDO::PARAM_INT);
         $stmt->execute();
 
         return $stmt->rowCount();

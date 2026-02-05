@@ -66,6 +66,8 @@ final readonly class ViewRenderer
      * @param string $template Template name
      * @param array<string, mixed> $data Variables for the template
      * @param string $title Page title
+     * @throws RuntimeException If template not found
+     * @throws Throwable If template execution fails
      */
     public function renderWithLayout(string $template, array $data = [], string $title = 'Pulsar Studio'): string
     {

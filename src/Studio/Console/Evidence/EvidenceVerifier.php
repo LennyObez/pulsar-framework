@@ -14,8 +14,10 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Hmac;
+use SodiumException;
 
 /**
  * Verifies the integrity of an evidence chain.
@@ -47,6 +49,7 @@ final class EvidenceVerifier
      *     mac_verified: ?bool,
      *     failures: list<array{index: int, event_id: string, reason: string}>
      * }
+     * @throws SodiumException If MAC verification fails due to sodium error
      */
     public function verify(
         array $chainLinks,
@@ -140,6 +143,8 @@ final class EvidenceVerifier
 
     /**
      * Verify an archive's MAC.
+     *
+     * @throws JsonException If JSON encoding fails
      */
     public function verifyArchiveMac(EvidenceArchive $archive, string $archiveMacKey): bool
     {

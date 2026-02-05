@@ -30,7 +30,7 @@ use Throwable;
 #[Internal]
 final class InstrumentedConnection implements ConnectionInterface, CollectorInterface
 {
-    private bool $enabled = true;
+    public bool $enabled = true;
 
     /**
      * @param Closure(ConsoleEvent, ?CorrelationContext): void $emit
@@ -115,16 +115,6 @@ final class InstrumentedConnection implements ConnectionInterface, CollectorInte
     public function disconnect(): void
     {
         $this->inner->disconnect();
-    }
-
-    public function isEnabled(): bool
-    {
-        return $this->enabled;
-    }
-
-    public function setEnabled(bool $enabled): void
-    {
-        $this->enabled = $enabled;
     }
 
     /**

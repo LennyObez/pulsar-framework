@@ -6,7 +6,6 @@ namespace Pulsar\Studio\Command\Console;
 
 use function count;
 use function explode;
-use function is_int;
 use function is_string;
 use function json_encode;
 
@@ -97,15 +96,13 @@ final class ConsoleQueryCommand extends Command
         $output->newLine();
 
         foreach ($events as $event) {
-            $rawEventType = $event['event_type'] ?? 'unknown';
-            $eventType = is_string($rawEventType) ? $rawEventType : 'unknown';
-            $rawEventId = $event['event_id'] ?? '';
-            $eventId = is_string($rawEventId) ? $rawEventId : '';
-            $rawTimestampUs = $event['timestamp_us'] ?? 0;
-            $timestampUs = is_int($rawTimestampUs) ? $rawTimestampUs : (int) (is_numeric($rawTimestampUs) ? $rawTimestampUs : 0);
-            $time = date('Y-m-d H:i:s', (int) ($timestampUs / 1_000_000));
-
-            $output->writeln(sprintf('  [%s] %-20s  id=%s', $time, $eventType, substr($eventId, 0, 16)));
+            $extractor = new EventDataExtractor($event);
+            $output->writeln(sprintf(
+                '  [%s] %-20s  id=%s',
+                $extractor->formattedTime(),
+                $extractor->eventType(),
+                substr($extractor->eventId(), 0, 16),
+            ));
         }
 
         return ExitCode::Success->value;

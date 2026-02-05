@@ -21,7 +21,7 @@ use Throwable;
 #[Internal]
 final class FeatureFlagCollector implements CollectorInterface
 {
-    private bool $enabled = true;
+    public bool $enabled = true;
 
     /**
      * @param Closure(ConsoleEvent, ?CorrelationContext): void $emit
@@ -57,13 +57,4 @@ final class FeatureFlagCollector implements CollectorInterface
         }
     }
 
-    public function isEnabled(): bool
-    {
-        return $this->enabled;
-    }
-
-    public function setEnabled(bool $enabled): void
-    {
-        $this->enabled = $enabled;
-    }
 }

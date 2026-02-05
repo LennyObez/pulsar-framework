@@ -12,6 +12,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Studio\Console\Storage\EncryptedEventStore;
@@ -43,6 +44,7 @@ final readonly class EvidenceExporter
      *
      * @param array<string, mixed> $filters Optional filters to limit export
      * @throws StudioException If encryption is active but key is missing
+     * @throws JsonException If JSON encoding fails
      */
     public function export(array $filters = []): EvidenceArchive
     {

@@ -387,7 +387,7 @@ final class HttpCollectorTest extends TestCase
     public function processSkipsEmissionWhenDisabled(): void
     {
         $collector = $this->createCollector();
-        $collector->setEnabled(false);
+        $collector->enabled = false;
         $request = $this->createRequest();
 
         $collector->process($request, fn(Request $r): Response => new Response());
@@ -400,7 +400,7 @@ final class HttpCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
 
-        self::assertTrue($collector->isEnabled());
+        self::assertTrue($collector->enabled);
     }
 
     #[Test]
@@ -408,13 +408,13 @@ final class HttpCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
 
-        $collector->setEnabled(false);
+        $collector->enabled = false;
 
-        self::assertFalse($collector->isEnabled());
+        self::assertFalse($collector->enabled);
 
-        $collector->setEnabled(true);
+        $collector->enabled = true;
 
-        self::assertTrue($collector->isEnabled());
+        self::assertTrue($collector->enabled);
     }
 
     #[Test]

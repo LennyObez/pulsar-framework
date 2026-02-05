@@ -18,10 +18,5 @@ interface CollectorInterface
     /**
      * Whether this collector is currently enabled.
      */
-    public function isEnabled(): bool;
-
-    /**
-     * Enable or disable this collector.
-     */
-    public function setEnabled(bool $enabled): void;
+    public bool $enabled { get; set; }
 }

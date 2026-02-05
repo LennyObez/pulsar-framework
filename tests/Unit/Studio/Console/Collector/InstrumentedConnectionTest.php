@@ -379,7 +379,7 @@ final class InstrumentedConnectionTest extends TestCase
 
         $connection = $this->createConnection($inner);
 
-        self::assertTrue($connection->isEnabled());
+        self::assertTrue($connection->enabled);
     }
 
     #[Test]
@@ -389,11 +389,11 @@ final class InstrumentedConnectionTest extends TestCase
 
         $connection = $this->createConnection($inner);
 
-        $connection->setEnabled(false);
-        self::assertFalse($connection->isEnabled());
+        $connection->enabled = false;
+        self::assertFalse($connection->enabled);
 
-        $connection->setEnabled(true);
-        self::assertTrue($connection->isEnabled());
+        $connection->enabled = true;
+        self::assertTrue($connection->enabled);
     }
 
     #[Test]
@@ -403,7 +403,7 @@ final class InstrumentedConnectionTest extends TestCase
         $inner->method('query')->willReturn(Result::fromArrays([]));
 
         $connection = $this->createConnection($inner);
-        $connection->setEnabled(false);
+        $connection->enabled = false;
 
         $connection->query('SELECT * FROM users');
 
@@ -417,7 +417,7 @@ final class InstrumentedConnectionTest extends TestCase
         $inner->method('execute')->willReturn(1);
 
         $connection = $this->createConnection($inner);
-        $connection->setEnabled(false);
+        $connection->enabled = false;
 
         $connection->execute('UPDATE users SET active = 1');
 

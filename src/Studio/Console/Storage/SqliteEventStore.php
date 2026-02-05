@@ -173,77 +173,7 @@ final class SqliteEventStore implements EventStoreInterface
 
     public function query(array $filters = [], int $limit = 50, int $offset = 0): array
     {
-        $where = [];
-        $bindings = [];
-
-        if (isset($filters['event_type'])) {
-            $eventTypeFilter = $filters['event_type'];
-            if (is_array($eventTypeFilter)) {
-                $placeholders = [];
-                /** @var list<string> $eventTypeFilter */
-                foreach ($eventTypeFilter as $i => $type) {
-                    $key = 'event_type_' . $i;
-                    $placeholders[] = ':' . $key;
-                    $bindings[$key] = $type;
-                }
-                $where[] = 'event_type IN (' . implode(', ', $placeholders) . ')';
-            } else {
-                /** @var string $eventTypeFilter */
-                $where[] = 'event_type = :event_type';
-                $bindings['event_type'] = $eventTypeFilter;
-            }
-        }
-
-        if (isset($filters['request_id'])) {
-            $where[] = 'request_id = :request_id';
-            /** @var string $requestIdFilter */
-            $requestIdFilter = $filters['request_id'];
-            $bindings['request_id'] = $requestIdFilter;
-        }
-
-        if (isset($filters['trace_id'])) {
-            $where[] = 'trace_id = :trace_id';
-            /** @var string $traceIdFilter */
-            $traceIdFilter = $filters['trace_id'];
-            $bindings['trace_id'] = $traceIdFilter;
-        }
-
-        if (isset($filters['job_id'])) {
-            $where[] = 'job_id = :job_id';
-            /** @var string $jobIdFilter */
-            $jobIdFilter = $filters['job_id'];
-            $bindings['job_id'] = $jobIdFilter;
-        }
-
-        if (isset($filters['tenant_hash'])) {
-            $where[] = 'tenant_hash = :tenant_hash';
-            /** @var string $tenantHashFilter */
-            $tenantHashFilter = $filters['tenant_hash'];
-            $bindings['tenant_hash'] = $tenantHashFilter;
-        }
-
-        if (isset($filters['since_us'])) {
-            $where[] = 'timestamp_us >= :since_us';
-            /** @var int $sinceUsFilter */
-            $sinceUsFilter = $filters['since_us'];
-            $bindings['since_us'] = $sinceUsFilter;
-        }
-
-        if (isset($filters['until_us'])) {
-            $where[] = 'timestamp_us <= :until_us';
-            /** @var int $untilUsFilter */
-            $untilUsFilter = $filters['until_us'];
-            $bindings['until_us'] = $untilUsFilter;
-        }
-
-        if (isset($filters['since_id'])) {
-            $where[] = 'id > :since_id';
-            /** @var int $sinceIdFilter */
-            $sinceIdFilter = $filters['since_id'];
-            $bindings['since_id'] = $sinceIdFilter;
-        }
-
-        $whereClause = $where !== [] ? 'WHERE ' . implode(' AND ', $where) : '';
+        [$whereClause, $bindings] = $this->buildWhereClause($filters, forQuery: true);
 
         $sql = sprintf(
             'SELECT * FROM studio_events %s ORDER BY timestamp_us DESC LIMIT :limit OFFSET :offset',
@@ -264,6 +194,26 @@ final class SqliteEventStore implements EventStoreInterface
     }
 
     public function count(array $filters = []): int
+    {
+        [$whereClause, $bindings] = $this->buildWhereClause($filters, forQuery: false);
+        $sql = sprintf('SELECT COUNT(*) FROM studio_events %s', $whereClause);
+
+        $stmt = $this->pdo->prepare($sql);
+        foreach ($bindings as $key => $value) {
+            $stmt->bindValue(':' . $key, $value);
+        }
+        $stmt->execute();
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Build WHERE clause and bindings from filters.
+     *
+     * @param array<string, mixed> $filters
+     * @return array{0: string, 1: array<string, mixed>}
+     */
+    private function buildWhereClause(array $filters, bool $forQuery): array
     {
         $where = [];
         $bindings = [];
@@ -300,16 +250,47 @@ final class SqliteEventStore implements EventStoreInterface
             $bindings['until_us'] = $untilUsFilter;
         }
 
-        $whereClause = $where !== [] ? 'WHERE ' . implode(' AND ', $where) : '';
-        $sql = sprintf('SELECT COUNT(*) FROM studio_events %s', $whereClause);
+        // Additional filters only for query (not count)
+        if ($forQuery) {
+            if (isset($filters['request_id'])) {
+                $where[] = 'request_id = :request_id';
+                /** @var string $requestIdFilter */
+                $requestIdFilter = $filters['request_id'];
+                $bindings['request_id'] = $requestIdFilter;
+            }
 
-        $stmt = $this->pdo->prepare($sql);
-        foreach ($bindings as $key => $value) {
-            $stmt->bindValue(':' . $key, $value);
+            if (isset($filters['trace_id'])) {
+                $where[] = 'trace_id = :trace_id';
+                /** @var string $traceIdFilter */
+                $traceIdFilter = $filters['trace_id'];
+                $bindings['trace_id'] = $traceIdFilter;
+            }
+
+            if (isset($filters['job_id'])) {
+                $where[] = 'job_id = :job_id';
+                /** @var string $jobIdFilter */
+                $jobIdFilter = $filters['job_id'];
+                $bindings['job_id'] = $jobIdFilter;
+            }
+
+            if (isset($filters['tenant_hash'])) {
+                $where[] = 'tenant_hash = :tenant_hash';
+                /** @var string $tenantHashFilter */
+                $tenantHashFilter = $filters['tenant_hash'];
+                $bindings['tenant_hash'] = $tenantHashFilter;
+            }
+
+            if (isset($filters['since_id'])) {
+                $where[] = 'id > :since_id';
+                /** @var int $sinceIdFilter */
+                $sinceIdFilter = $filters['since_id'];
+                $bindings['since_id'] = $sinceIdFilter;
+            }
         }
-        $stmt->execute();
 
-        return (int) $stmt->fetchColumn();
+        $whereClause = $where !== [] ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        return [$whereClause, $bindings];
     }
 
     public function find(string $eventId): ?array
@@ -429,6 +410,8 @@ final class SqliteEventStore implements EventStoreInterface
      * Retry a transaction closure on SQLITE_BUSY/LOCKED.
      *
      * @param Closure(): void $transaction
+     * @throws StudioException If maximum retry attempts exceeded due to database busy
+     * @throws PDOException If a non-retryable database error occurs
      */
     private function ingestWithRetry(Closure $transaction): void
     {
