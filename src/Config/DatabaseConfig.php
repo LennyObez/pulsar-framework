@@ -6,7 +6,12 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Database\Cache\QueryCacheConfig;
 use Pulsar\Database\Exception\DatabaseException;
+use Pulsar\Database\Failover\FailoverConfig;
+use Pulsar\Database\Monitor\MonitorConfig;
+use Pulsar\Database\Pool\PoolConfig;
+use Pulsar\Database\Routing\ReadWriteConfig;
 
 /**
  * Top-level typed configuration DTO for `config/database.php`.
@@ -24,6 +29,11 @@ readonly class DatabaseConfig
         public array $connections,
         public string $migrationsTable,
         public string $migrationsPath,
+        public PoolConfig $pool = new PoolConfig(),
+        public ReadWriteConfig $readWrite = new ReadWriteConfig(),
+        public FailoverConfig $failover = new FailoverConfig(),
+        public QueryCacheConfig $queryCache = new QueryCacheConfig(),
+        public MonitorConfig $monitor = new MonitorConfig(),
     ) {}
 
     /**
@@ -55,11 +65,27 @@ readonly class DatabaseConfig
         /** @var string $migrationsPath */
         $migrationsPath = $migrationsData['path'] ?? 'database/migrations';
 
+        /** @var array<string, mixed> $poolData */
+        $poolData = $data['pool'] ?? [];
+        /** @var array<string, mixed> $readWriteData */
+        $readWriteData = $data['read_write'] ?? [];
+        /** @var array<string, mixed> $failoverData */
+        $failoverData = $data['failover'] ?? [];
+        /** @var array<string, mixed> $queryCacheData */
+        $queryCacheData = $data['query_cache'] ?? [];
+        /** @var array<string, mixed> $monitorData */
+        $monitorData = $data['monitor'] ?? [];
+
         return new self(
             defaultConnection: $defaultConnection,
             connections: $connections,
             migrationsTable: $migrationsTable,
             migrationsPath: $migrationsPath,
+            pool: $poolData !== [] ? PoolConfig::fromArray($poolData) : new PoolConfig(),
+            readWrite: $readWriteData !== [] ? ReadWriteConfig::fromArray($readWriteData) : new ReadWriteConfig(),
+            failover: $failoverData !== [] ? FailoverConfig::fromArray($failoverData) : new FailoverConfig(),
+            queryCache: $queryCacheData !== [] ? QueryCacheConfig::fromArray($queryCacheData) : new QueryCacheConfig(),
+            monitor: $monitorData !== [] ? MonitorConfig::fromArray($monitorData) : new MonitorConfig(),
         );
     }
 
