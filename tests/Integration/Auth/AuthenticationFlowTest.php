@@ -7,6 +7,9 @@ namespace Pulsar\Tests\Integration\Auth;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\AuthManager;
 use Pulsar\Auth\Guard\SessionGuard;
 use Pulsar\Auth\Guard\TokenGuard;
@@ -16,10 +19,8 @@ use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Auth\Middleware\AuthenticationMiddleware;
 use Pulsar\Auth\SecurityContext;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Security\Session\SessionInterface;
 
@@ -69,13 +70,10 @@ final class AuthenticationFlowTest extends TestCase
         $guard->login($identity);
 
         // Authenticate retrieves it
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
+            headers: [],
         );
 
         $result = $manager->authenticate($request);
@@ -98,20 +96,16 @@ final class AuthenticationFlowTest extends TestCase
 
         $resolver = $this->createStub(TokenResolverInterface::class);
         $resolver->method('resolve')
-            ->with('valid-api-token')
             ->willReturn($expectedIdentity);
 
         $guard = new TokenGuard($resolver);
         $manager = new AuthManager();
         $manager->addGuard($guard);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/api/data',
-            path: '/api/data',
-            queryString: '',
-            headers: new HeaderBag(['Authorization' => 'Bearer valid-api-token']),
-            body: '',
+            headers: ['Authorization' => 'Bearer valid-api-token'],
         );
 
         $result = $manager->authenticate($request);
@@ -139,19 +133,27 @@ final class AuthenticationFlowTest extends TestCase
 
         $middleware = new AuthenticationMiddleware($manager);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/dashboard',
-            path: '/dashboard',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
+            headers: [],
         );
 
+        /** @var ServerRequestInterface|null $capturedRequest */
         $capturedRequest = null;
-        $handler = function (Request $req) use (&$capturedRequest): Response {
-            $capturedRequest = $req;
-            return new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = new class ($capturedRequest) implements RequestHandlerInterface {
+            public ?ServerRequestInterface $captured;
+
+            public function __construct(?ServerRequestInterface &$captured)
+            {
+                $this->captured = &$captured;
+            }
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->captured = $request;
+                return new Response(statusCode: ResponseStatus::OK->value, body: 'OK');
+            }
         };
 
         $middleware->process($request, $handler);
@@ -159,12 +161,12 @@ final class AuthenticationFlowTest extends TestCase
         self::assertNotNull($capturedRequest);
 
         // Default identity is anonymous
-        $defaultIdentity = $capturedRequest->attribute('_identity');
+        $defaultIdentity = $capturedRequest->getAttribute('_identity');
         self::assertInstanceOf(AnonymousIdentity::class, $defaultIdentity);
 
         // SecurityContext resolves to real identity on access
         /** @var SecurityContext $context */
-        $context = $capturedRequest->attribute('_security_context');
+        $context = $capturedRequest->getAttribute('_security_context');
         self::assertInstanceOf(SecurityContext::class, $context);
 
         $resolved = $context->identity();
@@ -191,7 +193,6 @@ final class AuthenticationFlowTest extends TestCase
         // Token guard resolves the token
         $resolver = $this->createStub(TokenResolverInterface::class);
         $resolver->method('resolve')
-            ->with('my-token')
             ->willReturn($tokenIdentity);
 
         $tokenGuard = new TokenGuard($resolver);
@@ -200,13 +201,10 @@ final class AuthenticationFlowTest extends TestCase
         $manager->addGuard($sessionGuard);
         $manager->addGuard($tokenGuard);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/api/resource',
-            path: '/api/resource',
-            queryString: '',
-            headers: new HeaderBag(['Authorization' => 'Bearer my-token']),
-            body: '',
+            headers: ['Authorization' => 'Bearer my-token'],
         );
 
         $result = $manager->authenticate($request);
@@ -254,13 +252,10 @@ final class AuthenticationFlowTest extends TestCase
 
         $guard->login($identity);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
+            headers: [],
         );
 
         // Before logout
