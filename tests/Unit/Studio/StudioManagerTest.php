@@ -336,6 +336,16 @@ final class StudioManagerTest extends TestCase
                 return 0;
             }
 
+            public function deleteByEventTypes(array $eventTypes): int
+            {
+                return 0;
+            }
+
+            public function deleteByPayloadKey(string $eventType, string $jsonPath, string $value): int
+            {
+                return 0;
+            }
+
             public function clear(): void {}
 
             public function vacuum(): void {}

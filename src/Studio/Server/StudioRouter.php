@@ -16,6 +16,8 @@ use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Studio\Security\ProductionSafetyMode;
 use Pulsar\Studio\Server\Controller\ApiController;
+use Pulsar\Studio\Server\Controller\BenchmarkApiController;
+use Pulsar\Studio\Server\Controller\BenchmarkController;
 use Pulsar\Studio\Server\Controller\ConsoleOverviewController;
 use Pulsar\Studio\Server\Controller\DatabaseExplorerController;
 use Pulsar\Studio\Server\Controller\ExceptionExplorerController;
@@ -42,6 +44,8 @@ final readonly class StudioRouter
         private ExceptionExplorerController $exceptionExplorer,
         private TimelineController $timeline,
         private ApiController $api,
+        private BenchmarkController $benchmark,
+        private BenchmarkApiController $benchmarkApi,
         private ProductionSafetyMode $safetyMode,
     ) {}
 
@@ -54,6 +58,20 @@ final readonly class StudioRouter
     {
         $path = '/' . trim($request->path, '/');
         $method = $request->method;
+
+        // POST routes — mutable API actions
+        if ($method === Method::POST) {
+            return match (true) {
+                $path === '/studio/api/benchmark/run' => $this->guardMutableApi($request, fn() => $this->benchmarkApi->run($request)),
+                $path === '/studio/api/benchmark/delete' => $this->guardMutableApi($request, fn() => $this->benchmarkApi->deleteRuns($request)),
+                $path === '/studio/api/benchmark/clear' => $this->guardMutableApi($request, fn() => $this->benchmarkApi->clearHistory($request)),
+                default => new Response(
+                    body: 'Method Not Allowed',
+                    status: ResponseStatus::MethodNotAllowed,
+                    headers: new HeaderBag(['Allow' => 'GET, HEAD']),
+                ),
+            };
+        }
 
         if ($method !== Method::GET && $method !== Method::HEAD) {
             return new Response(
@@ -70,6 +88,7 @@ final readonly class StudioRouter
             $path === '/studio/console/database' => $this->guardDrillDown($request, fn() => $this->databaseExplorer->handle($request)),
             $path === '/studio/console/logs' => $this->guardDrillDown($request, fn() => $this->logExplorer->handle($request)),
             $path === '/studio/console/exceptions' => $this->exceptionExplorer->handle($request),
+            $path === '/studio/console/benchmarks' => $this->guardDrillDown($request, fn() => $this->benchmark->handle($request)),
             $this->matchesTimeline($path) => $this->guardDrillDown($request, fn() => $this->timeline->handle($request, $this->extractTimelineId($path))),
             $path === '/studio/api/events' => $this->guardApi($request, fn() => $this->api->events($request)),
             $path === '/studio/api/live' => $this->guardSse($request, fn() => $this->api->live($request)),
@@ -112,6 +131,21 @@ final readonly class StudioRouter
         if (!$this->safetyMode->allowApi()) {
             return Response::json(
                 ['error' => 'API access is disabled in production mode'],
+                ResponseStatus::Forbidden,
+            );
+        }
+
+        return $handler();
+    }
+
+    /**
+     * @param callable(): Response $handler
+     */
+    private function guardMutableApi(Request $_request, callable $handler): Response
+    {
+        if (!$this->safetyMode->allowMutableApi()) {
+            return Response::json(
+                ['error' => 'Mutable API actions are restricted to local development mode'],
                 ResponseStatus::Forbidden,
             );
         }
