@@ -15,6 +15,7 @@ use Pulsar\Console\Command\NewProject\ProjectPreset;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Random\RandomException;
 use RuntimeException;
 
 use function sprintf;
@@ -42,6 +43,7 @@ final class NewCommand extends Command
 
     /**
      * @throws JsonException If composer.json encoding fails (propagated from generator)
+     * @throws RandomException If cryptographic random generation fails
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {

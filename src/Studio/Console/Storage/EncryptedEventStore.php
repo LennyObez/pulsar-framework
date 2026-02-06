@@ -9,10 +9,12 @@ use function hash;
 use function is_string;
 
 use JsonException;
+use PDOException;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Studio\Console\Event\EventEnvelope;
+use Pulsar\Studio\Exception\StudioException;
 use Random\RandomException;
 use RuntimeException;
 use SodiumException;
@@ -56,7 +58,10 @@ final readonly class EncryptedEventStore implements EventStoreInterface
     /**
      * Store with chain link, encrypting the payload.
      *
+     * @throws JsonException If JSON encoding fails
+     * @throws PDOException If a non-retryable database error occurs
      * @throws SecurityException If encryption fails
+     * @throws StudioException If maximum retry attempts exceeded due to database busy
      * @throws RandomException
      * @throws SodiumException
      */

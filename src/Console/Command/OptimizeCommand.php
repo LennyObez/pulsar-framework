@@ -10,7 +10,9 @@ use Closure;
 
 use function count;
 
+use JsonException;
 use Pulsar\Api\Internal;
+use Pulsar\Cache\CacheException;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Console\Command;
@@ -21,7 +23,9 @@ use Pulsar\Container\Container;
 use Pulsar\Core\Kernel;
 use Pulsar\Routing\Router;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionNamedType;
+use SodiumException;
 
 use function sprintf;
 
@@ -50,6 +54,12 @@ final class OptimizeCommand extends Command
         $this->addOption('encrypt', 'Encrypt cache payloads at rest', 'e');
     }
 
+    /**
+     * @throws CacheException If cache write operations fail
+     * @throws JsonException If JSON serialization fails during caching
+     * @throws ReflectionException If class reflection fails during container caching
+     * @throws SodiumException If a sodium cryptographic operation fails during cache signing
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $strict = $input->hasOption('strict');

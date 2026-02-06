@@ -30,6 +30,12 @@ exclude:
   - name: PhpComposerExtensionStubsInspection
     paths:
       - src/Queue/Worker.php
+  # Duplicated code - Studio CLI commands share structural patterns (extract values,
+  # format output) but operate on different data; further extraction is over-engineering.
+  - name: DuplicatedCode
+    paths:
+      - src/Studio/Command/Console/ConsoleExportCommand.php
+      - src/Studio/Command/Console/ConsoleVerifyCommand.php
   # Development-only router file references non-existent autoload
   - name: PhpIncludeInspection
     paths:

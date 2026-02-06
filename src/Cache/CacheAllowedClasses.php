@@ -132,7 +132,6 @@ final class CacheAllowedClasses
         }
 
         try {
-            /** @var mixed $decoded */
             $decoded = json_decode($content, true, $depth, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return null;

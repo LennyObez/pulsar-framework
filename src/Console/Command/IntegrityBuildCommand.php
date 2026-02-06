@@ -55,6 +55,7 @@ final class IntegrityBuildCommand extends Command
     }
 
     /**
+     * @throws JsonException If manifest canonicalization fails during signing
      * @throws SecurityException If the master key is missing or invalid when --sign is used
      */
     public function execute(InputInterface $input, OutputInterface $output): int

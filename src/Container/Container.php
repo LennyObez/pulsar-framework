@@ -104,6 +104,7 @@ final class Container implements ContainerInterface
      * Resolve a binding to its concrete implementation.
      *
      * @throws ContainerException
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function resolve(string $id): object
     {

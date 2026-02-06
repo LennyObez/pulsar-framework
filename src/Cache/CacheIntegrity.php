@@ -29,6 +29,7 @@ use const PHP_OS_FAMILY;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\Hmac;
+use Random\RandomException;
 
 use function rename;
 
@@ -93,6 +94,7 @@ final readonly class CacheIntegrity
      * The outer envelope uses ['allowed_classes' => false] on read.
      *
      * @throws CacheException
+     * @throws RandomException If nonce generation fails during encryption
      * @throws SodiumException
      */
     public function writeEnvelope(string $path, string $serializedPayload, bool $encrypt): void
