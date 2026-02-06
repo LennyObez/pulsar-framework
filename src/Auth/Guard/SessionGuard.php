@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Guard;
 
+use Override;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Http\Request;
@@ -22,6 +23,7 @@ final class SessionGuard implements GuardInterface
         private readonly SessionInterface $session,
     ) {}
 
+    #[Override]
     public function authenticate(Request $request): ?IdentityInterface
     {
         if (!$this->session->isStarted()) {
@@ -42,6 +44,7 @@ final class SessionGuard implements GuardInterface
         return Identity::fromArray($data);
     }
 
+    #[Override]
     public function name(): string
     {
         return 'session';

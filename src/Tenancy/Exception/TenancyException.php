@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -18,6 +19,7 @@ final class TenancyException extends RuntimeException
     /**
      * No tenant could be resolved from the request.
      */
+    #[NoDiscard]
     public static function tenantNotResolved(): self
     {
         return new self('Tenant could not be resolved from the current request');
@@ -26,6 +28,7 @@ final class TenancyException extends RuntimeException
     /**
      * The resolved tenant identifier does not match any configured tenant.
      */
+    #[NoDiscard]
     public static function tenantNotFound(string $identifier): self
     {
         return new self(sprintf('Tenant not found: "%s"', $identifier));
@@ -34,6 +37,7 @@ final class TenancyException extends RuntimeException
     /**
      * Tenancy configuration is invalid.
      */
+    #[NoDiscard]
     public static function invalidConfiguration(string $reason): self
     {
         return new self(sprintf('Invalid tenancy configuration: %s', $reason));

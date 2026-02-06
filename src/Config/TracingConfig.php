@@ -8,6 +8,7 @@ use function is_float;
 use function is_int;
 use function is_numeric;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -26,6 +27,7 @@ readonly class TracingConfig
      *
      * @param array<string, mixed> $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
         $rate = $data['sampling_rate'] ?? 0.1;

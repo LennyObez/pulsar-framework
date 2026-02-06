@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Deploy\CheckResult;
 use Pulsar\Deploy\DeployCheckInterface;
@@ -30,16 +31,19 @@ final readonly class HealthEndpointCheck implements DeployCheckInterface
         private Router $router,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return self::CHECK_NAME;
     }
 
+    #[Override]
     public function getDescription(): string
     {
         return 'Validates a health check endpoint is registered for monitoring';
     }
 
+    #[Override]
     public function check(string $environment): CheckResult
     {
         foreach ($this->router->routes as $route) {

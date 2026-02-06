@@ -6,6 +6,7 @@ namespace Pulsar\Http\Validation\Rule;
 
 use function is_numeric;
 
+use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
@@ -24,6 +25,7 @@ readonly class Between implements RuleInterface
         private string $message = '',
     ) {}
 
+    #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation
     {
         if ($value === null) {
@@ -61,6 +63,7 @@ readonly class Between implements RuleInterface
         return null;
     }
 
+    #[Override]
     public function name(): string
     {
         return 'between';

@@ -15,10 +15,14 @@ use function json_encode;
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 
+use function json_validate;
+
 use JsonException;
 
 use const LOCK_EX;
 
+use NoDiscard;
+use Override;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 use Pulsar\FeatureFlag\FlagDefinition;
 use Pulsar\FeatureFlag\FlagStorageInterface;
@@ -37,6 +41,8 @@ final class FileFlagStorage implements FlagStorageInterface
         private readonly string $filePath,
     ) {}
 
+    #[Override]
+    #[NoDiscard]
     public function get(string $name): ?FlagDefinition
     {
         $flags = $this->loadFlags();
@@ -44,11 +50,13 @@ final class FileFlagStorage implements FlagStorageInterface
         return $flags[$name] ?? null;
     }
 
+    #[Override]
     public function all(): array
     {
         return $this->loadFlags();
     }
 
+    #[Override]
     public function has(string $name): bool
     {
         $flags = $this->loadFlags();
@@ -60,6 +68,7 @@ final class FileFlagStorage implements FlagStorageInterface
      * @throws FeatureFlagException
      * @throws JsonException
      */
+    #[Override]
     public function set(FlagDefinition $flag): void
     {
         $flags = $this->loadFlags();
@@ -71,6 +80,7 @@ final class FileFlagStorage implements FlagStorageInterface
      * @throws FeatureFlagException
      * @throws JsonException
      */
+    #[Override]
     public function remove(string $name): void
     {
         $flags = $this->loadFlags();
@@ -95,10 +105,11 @@ final class FileFlagStorage implements FlagStorageInterface
             return [];
         }
 
-        $content = file_get_contents($this->filePath);
+        $content = file_get_contents($this->filePath)
+            ?: throw FeatureFlagException::storageError(sprintf('Cannot read file: %s', $this->filePath));
 
-        if ($content === false) {
-            throw FeatureFlagException::storageError(sprintf('Cannot read file: %s', $this->filePath));
+        if (!json_validate($content)) {
+            throw FeatureFlagException::storageError(sprintf('Invalid JSON in %s', $this->filePath));
         }
 
         try {

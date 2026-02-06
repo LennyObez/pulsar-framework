@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy;
 
+use Override;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManagerInterface;
@@ -24,6 +25,7 @@ final readonly class TenantAwareConnectionManager implements ConnectionManagerIn
         private TenancyConfig $config,
     ) {}
 
+    #[Override]
     public function connection(?string $name = null): ConnectionInterface
     {
         $strategy = $this->config->database->strategy;
@@ -38,11 +40,13 @@ final readonly class TenantAwareConnectionManager implements ConnectionManagerIn
         return $this->inner->connection($name);
     }
 
+    #[Override]
     public function getDefaultConnectionName(): string
     {
         return $this->inner->getDefaultConnectionName();
     }
 
+    #[Override]
     public function disconnect(?string $name = null): void
     {
         $this->inner->disconnect($name);

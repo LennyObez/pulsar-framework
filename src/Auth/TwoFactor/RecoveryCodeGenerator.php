@@ -6,9 +6,10 @@ namespace Pulsar\Auth\TwoFactor;
 
 use function bin2hex;
 
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
-use function random_bytes;
 use function sprintf;
 use function strtoupper;
 use function substr;
@@ -18,6 +19,13 @@ use function substr;
  */
 final readonly class RecoveryCodeGenerator
 {
+    private Randomizer $randomizer;
+
+    public function __construct(?Randomizer $randomizer = null)
+    {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
+
     /**
      * Generate a set of recovery codes.
      *
@@ -31,7 +39,7 @@ final readonly class RecoveryCodeGenerator
         $codes = [];
 
         for ($i = 0; $i < $count; $i++) {
-            $bytes = random_bytes(4);
+            $bytes = $this->randomizer->getBytes(4);
             $hex = strtoupper(bin2hex($bytes));
             $codes[] = sprintf('%s-%s', substr($hex, 0, 4), substr($hex, 4, 4));
         }

@@ -67,7 +67,7 @@ final class ApplicationTest extends TestCase
     {
         $this->expectException(CommandNotFoundException::class);
 
-        $this->application->get('nonexistent');
+        $_ = $this->application->get('nonexistent');
     }
 
     #[Test]

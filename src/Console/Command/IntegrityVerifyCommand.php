@@ -15,6 +15,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
+use Override;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -41,6 +42,7 @@ final class IntegrityVerifyCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'integrity:verify';
@@ -52,6 +54,7 @@ final class IntegrityVerifyCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $strict = $input->hasOption('strict');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Request;
 
@@ -26,6 +27,7 @@ readonly class FlagContext
     /**
      * Build a FlagContext from an HTTP request.
      */
+    #[NoDiscard]
     public static function fromRequest(Request $request): self
     {
         /** @var ?string $tenantId */

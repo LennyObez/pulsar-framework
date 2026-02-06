@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Identity;
 
+use Override;
 use Pulsar\Api\Api;
 
 /**
@@ -14,41 +15,49 @@ use Pulsar\Api\Api;
 #[Api]
 readonly class AnonymousIdentity implements IdentityInterface
 {
+    #[Override]
     public function id(): string
     {
         return '';
     }
 
+    #[Override]
     public function displayName(): string
     {
         return 'Anonymous';
     }
 
+    #[Override]
     public function roles(): array
     {
         return [];
     }
 
-    public function hasRole(string $role): bool
+    #[Override]
+    public function hasRole(string $role): false
     {
         return false;
     }
 
+    #[Override]
     public function twoFactorStatus(): TwoFactorStatus
     {
         return TwoFactorStatus::Disabled;
     }
 
-    public function isAuthenticated(): bool
+    #[Override]
+    public function isAuthenticated(): false
     {
         return false;
     }
 
+    #[Override]
     public function attributes(): array
     {
         return [];
     }
 
+    #[Override]
     public function attribute(string $key, mixed $default = null): mixed
     {
         return $default;

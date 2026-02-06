@@ -11,6 +11,7 @@ use Closure;
 use function count;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\CacheException;
 use Pulsar\Cache\FrameworkCache;
@@ -46,6 +47,7 @@ final class OptimizeCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'optimize';
@@ -60,6 +62,7 @@ final class OptimizeCommand extends Command
      * @throws ReflectionException If class reflection fails during container caching
      * @throws SodiumException If a sodium cryptographic operation fails during cache signing
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $strict = $input->hasOption('strict');

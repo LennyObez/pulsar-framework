@@ -8,6 +8,7 @@ use Closure;
 
 use function microtime;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Database\ConnectionInterface;
@@ -43,6 +44,7 @@ final class InstrumentedConnection implements ConnectionInterface, CollectorInte
         private readonly EnvironmentMode $environmentMode = EnvironmentMode::Local,
     ) {}
 
+    #[Override]
     public function query(string $sql, array $bindings = []): Result
     {
         if (!$this->enabled) {
@@ -60,6 +62,7 @@ final class InstrumentedConnection implements ConnectionInterface, CollectorInte
         return $result;
     }
 
+    #[Override]
     public function execute(string $sql, array $bindings = []): int
     {
         if (!$this->enabled) {
@@ -77,41 +80,49 @@ final class InstrumentedConnection implements ConnectionInterface, CollectorInte
         return $rowCount;
     }
 
+    #[Override]
     public function prepare(string $sql): Statement
     {
         return $this->inner->prepare($sql);
     }
 
+    #[Override]
     public function beginTransaction(): Transaction
     {
         return $this->inner->beginTransaction();
     }
 
+    #[Override]
     public function transaction(callable $callback): mixed
     {
         return $this->inner->transaction($callback);
     }
 
+    #[Override]
     public function lastInsertId(): string
     {
         return $this->inner->lastInsertId();
     }
 
+    #[Override]
     public function driver(): Driver
     {
         return $this->inner->driver();
     }
 
+    #[Override]
     public function name(): string
     {
         return $this->inner->name();
     }
 
+    #[Override]
     public function inTransaction(): bool
     {
         return $this->inner->inTransaction();
     }
 
+    #[Override]
     public function disconnect(): void
     {
         $this->inner->disconnect();

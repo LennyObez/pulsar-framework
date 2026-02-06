@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -26,6 +27,7 @@ readonly class Tenant
      *
      * @param array<string, mixed> $data
      */
+    #[NoDiscard]
     public static function fromArray(string $id, array $data): self
     {
         /** @var array<string, mixed> $metadata */

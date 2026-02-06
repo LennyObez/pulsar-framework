@@ -10,10 +10,9 @@ use DateTimeImmutable;
 use JsonException;
 use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Hmac;
+use Random\Engine\Secure;
 use Random\RandomException;
-
-use function random_bytes;
-
+use Random\Randomizer;
 use SodiumException;
 
 /**
@@ -36,11 +35,18 @@ final class AuditLogger
     /**
      * @throws SodiumException
      */
+    private readonly Randomizer $randomizer;
+
+    /**
+     * @throws SodiumException
+     */
     public function __construct(
         private readonly AuditSinkInterface $sink,
         private readonly string $auditKey,
+        ?Randomizer $randomizer = null,
     ) {
         $this->previousHmac = Hmac::computeHex(self::SEED_MESSAGE, $this->auditKey);
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
 
     /**
@@ -63,7 +69,7 @@ final class AuditLogger
         string $resource = '',
         array $metadata = [],
     ): AuditEntry {
-        $id = bin2hex(random_bytes(16));
+        $id = bin2hex($this->randomizer->getBytes(16));
         $timestamp = new DateTimeImmutable();
 
         $entry = AuditEntry::create(

@@ -6,6 +6,8 @@ namespace Pulsar\Security\Session;
 
 use function array_key_exists;
 
+use NoDiscard;
+use Override;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Security\Exception\SecurityException;
 
@@ -35,6 +37,7 @@ final class Session implements SessionInterface
      *
      * @throws SecurityException If the session cannot be started
      */
+    #[Override]
     public function start(): void
     {
         if ($this->started || session_status() === PHP_SESSION_ACTIVE) {
@@ -60,17 +63,14 @@ final class Session implements SessionInterface
         $this->started = true;
     }
 
-    /**
-     * Check if the session is active.
-     */
+    #[Override]
     public function isStarted(): bool
     {
         return $this->started || session_status() === PHP_SESSION_ACTIVE;
     }
 
-    /**
-     * Get a value from the session.
-     */
+    #[Override]
+    #[NoDiscard]
     public function get(string $key, mixed $default = null): mixed
     {
         $this->ensureStarted();
@@ -78,9 +78,7 @@ final class Session implements SessionInterface
         return $_SESSION[$key] ?? $default;
     }
 
-    /**
-     * Set a value in the session.
-     */
+    #[Override]
     public function set(string $key, mixed $value): void
     {
         $this->ensureStarted();
@@ -88,9 +86,7 @@ final class Session implements SessionInterface
         $_SESSION[$key] = $value;
     }
 
-    /**
-     * Check if a key exists in the session.
-     */
+    #[Override]
     public function has(string $key): bool
     {
         $this->ensureStarted();
@@ -99,9 +95,7 @@ final class Session implements SessionInterface
         return array_key_exists($key, $_SESSION);
     }
 
-    /**
-     * Remove a key from the session.
-     */
+    #[Override]
     public function remove(string $key): void
     {
         $this->ensureStarted();
@@ -109,9 +103,7 @@ final class Session implements SessionInterface
         unset($_SESSION[$key]);
     }
 
-    /**
-     * Get the current session ID.
-     */
+    #[Override]
     public function id(): string
     {
         return session_id() ?: '';
@@ -122,6 +114,7 @@ final class Session implements SessionInterface
      *
      * Use after privilege escalation (login, role change) to prevent session fixation.
      */
+    #[Override]
     public function regenerate(bool $deleteOldSession = true): void
     {
         $this->ensureStarted();
@@ -129,9 +122,7 @@ final class Session implements SessionInterface
         session_regenerate_id($deleteOldSession);
     }
 
-    /**
-     * Destroy the session completely.
-     */
+    #[Override]
     public function destroy(): void
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
@@ -149,6 +140,7 @@ final class Session implements SessionInterface
      *
      * @psalm-suppress InvalidReturnType, InvalidReturnStatement -- $_SESSION keys are strings after session_start()
      */
+    #[Override]
     public function all(): array
     {
         $this->ensureStarted();

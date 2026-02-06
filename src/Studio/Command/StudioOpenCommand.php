@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Command;
 
+use Override;
+
 use const PHP_OS_FAMILY;
 
 use Pulsar\Api\Internal;
@@ -27,12 +29,14 @@ final class StudioOpenCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:open';
         $this->description = 'Open Studio in the default browser';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $url = sprintf('http://%s:%d/studio', $this->config->server->host, $this->config->server->port);

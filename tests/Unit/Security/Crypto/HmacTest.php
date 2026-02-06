@@ -103,6 +103,6 @@ final class HmacTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('HMAC key must be at least');
 
-        Hmac::computeHex('message', 'short');
+        $_ = Hmac::computeHex('message', 'short');
     }
 }

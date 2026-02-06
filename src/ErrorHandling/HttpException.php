@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\ErrorHandling;
 
+use NoDiscard;
+use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\ResponseStatus;
 use RuntimeException;
@@ -27,6 +29,7 @@ class HttpException extends RuntimeException implements HttpExceptionInterface
         parent::__construct($message, $statusCode->value, $previous);
     }
 
+    #[Override]
     public function getStatusCode(): ResponseStatus
     {
         return $this->statusCode;
@@ -35,6 +38,7 @@ class HttpException extends RuntimeException implements HttpExceptionInterface
     /**
      * @return array<string, string>
      */
+    #[Override]
     public function getHeaders(): array
     {
         return $this->headers;
@@ -43,6 +47,7 @@ class HttpException extends RuntimeException implements HttpExceptionInterface
     /**
      * 404 Not Found.
      */
+    #[NoDiscard]
     public static function notFound(string $message = 'Not Found'): self
     {
         return new self(ResponseStatus::NotFound, $message);
@@ -51,6 +56,7 @@ class HttpException extends RuntimeException implements HttpExceptionInterface
     /**
      * 403 Forbidden.
      */
+    #[NoDiscard]
     public static function forbidden(string $message = 'Forbidden'): self
     {
         return new self(ResponseStatus::Forbidden, $message);
@@ -59,6 +65,7 @@ class HttpException extends RuntimeException implements HttpExceptionInterface
     /**
      * 400 Bad Request.
      */
+    #[NoDiscard]
     public static function badRequest(string $message = 'Bad Request'): self
     {
         return new self(ResponseStatus::BadRequest, $message);
@@ -67,6 +74,7 @@ class HttpException extends RuntimeException implements HttpExceptionInterface
     /**
      * 503 Service Unavailable.
      */
+    #[NoDiscard]
     public static function serviceUnavailable(string $message = 'Service Unavailable'): self
     {
         return new self(ResponseStatus::ServiceUnavailable, $message);

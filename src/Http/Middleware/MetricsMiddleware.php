@@ -6,6 +6,7 @@ namespace Pulsar\Http\Middleware;
 
 use function hrtime;
 
+use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Observability\Metrics\LabelSet;
@@ -25,6 +26,7 @@ final readonly class MetricsMiddleware implements MiddlewareInterface
         private MetricRegistry $registry,
     ) {}
 
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         $start = hrtime(true);

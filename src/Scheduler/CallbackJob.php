@@ -6,6 +6,7 @@ namespace Pulsar\Scheduler;
 
 use Closure;
 use DateTimeImmutable;
+use Override;
 use Throwable;
 
 /**
@@ -23,16 +24,19 @@ final readonly class CallbackJob implements JobInterface
         private string $description = '',
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return $this->name;
     }
 
+    #[Override]
     public function getSchedule(): Schedule
     {
         return $this->schedule;
     }
 
+    #[Override]
     public function execute(JobContext $context): JobResult
     {
         $startedAt = new DateTimeImmutable();
@@ -46,6 +50,7 @@ final readonly class CallbackJob implements JobInterface
         }
     }
 
+    #[Override]
     public function getDescription(): string
     {
         return $this->description;

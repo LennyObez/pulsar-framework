@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -20,6 +21,7 @@ final class SecurityException extends RuntimeException
     /**
      * CSRF token validation failed.
      */
+    #[NoDiscard]
     public static function csrfTokenMissing(): self
     {
         return new self('CSRF token is missing from the request');
@@ -28,6 +30,7 @@ final class SecurityException extends RuntimeException
     /**
      * CSRF token does not match expected value.
      */
+    #[NoDiscard]
     public static function csrfTokenInvalid(): self
     {
         return new self('CSRF token is invalid');
@@ -36,6 +39,7 @@ final class SecurityException extends RuntimeException
     /**
      * Session has not been started.
      */
+    #[NoDiscard]
     public static function sessionNotStarted(): self
     {
         return new self('Session has not been started');
@@ -44,6 +48,7 @@ final class SecurityException extends RuntimeException
     /**
      * Session could not be started.
      */
+    #[NoDiscard]
     public static function sessionStartFailed(): self
     {
         return new self('Failed to start session');
@@ -52,6 +57,7 @@ final class SecurityException extends RuntimeException
     /**
      * Master key is missing from environment.
      */
+    #[NoDiscard]
     public static function masterKeyMissing(): self
     {
         return new self('PULSAR_MASTER_KEY environment variable is not set');
@@ -60,6 +66,7 @@ final class SecurityException extends RuntimeException
     /**
      * Master key has invalid format.
      */
+    #[NoDiscard]
     public static function masterKeyInvalid(string $reason): self
     {
         return new self(sprintf('Invalid master key: %s', $reason));
@@ -68,6 +75,7 @@ final class SecurityException extends RuntimeException
     /**
      * Encryption failed.
      */
+    #[NoDiscard]
     public static function encryptionFailed(string $reason): self
     {
         return new self(sprintf('Encryption failed: %s', $reason));
@@ -76,6 +84,7 @@ final class SecurityException extends RuntimeException
     /**
      * Decryption failed (wrong key, tampered ciphertext, etc.).
      */
+    #[NoDiscard]
     public static function decryptionFailed(): self
     {
         return new self('Decryption failed: ciphertext is invalid or has been tampered with');
@@ -84,6 +93,7 @@ final class SecurityException extends RuntimeException
     /**
      * Audit log integrity verification failed.
      */
+    #[NoDiscard]
     public static function auditIntegrityViolation(string $entryId): self
     {
         return new self(sprintf('Audit log integrity violation for entry "%s"', $entryId));
@@ -92,6 +102,7 @@ final class SecurityException extends RuntimeException
     /**
      * Audit sink write failure.
      */
+    #[NoDiscard]
     public static function auditWriteFailed(string $reason): self
     {
         return new self(sprintf('Failed to write audit entry: %s', $reason));

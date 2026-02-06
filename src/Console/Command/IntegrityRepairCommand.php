@@ -16,6 +16,7 @@ use JsonException;
 
 use function mkdir;
 
+use Override;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -50,6 +51,7 @@ final class IntegrityRepairCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'integrity:repair';
@@ -62,6 +64,7 @@ final class IntegrityRepairCommand extends Command
      * @throws JsonException
      * @throws SodiumException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$input->hasOption('confirm')) {
