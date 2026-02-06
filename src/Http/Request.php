@@ -14,7 +14,10 @@ use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
 
+use function json_validate;
+
 use JsonException;
+use NoDiscard;
 use Pulsar\Api\Api;
 
 use function str_contains;
@@ -97,47 +100,27 @@ readonly class Request
 
     /**
      * Return a new request with an added attribute.
+     *
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement -- Psalm does not yet infer clone() return type
      */
+    #[NoDiscard]
     public function withAttribute(string $key, mixed $value): self
     {
-        return new self(
-            method: $this->method,
-            uri: $this->uri,
-            path: $this->path,
-            queryString: $this->queryString,
-            headers: $this->headers,
-            body: $this->body,
-            query: $this->query,
-            post: $this->post,
-            cookies: $this->cookies,
-            server: $this->server,
-            attributes: [...$this->attributes, $key => $value],
-            protocolVersion: $this->protocolVersion,
-        );
+        return clone($this, ['attributes' => [...$this->attributes, $key => $value]]);
     }
 
     /**
      * Return a new request without the specified attribute.
+     *
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
+    #[NoDiscard]
     public function withoutAttribute(string $key): self
     {
         $attributes = $this->attributes;
         unset($attributes[$key]);
 
-        return new self(
-            method: $this->method,
-            uri: $this->uri,
-            path: $this->path,
-            queryString: $this->queryString,
-            headers: $this->headers,
-            body: $this->body,
-            query: $this->query,
-            post: $this->post,
-            cookies: $this->cookies,
-            server: $this->server,
-            attributes: $attributes,
-            protocolVersion: $this->protocolVersion,
-        );
+        return clone($this, ['attributes' => $attributes]);
     }
 
     /**
@@ -154,7 +137,7 @@ readonly class Request
             return [];
         }
 
-        if ($this->body === '') {
+        if ($this->body === '' || !json_validate($this->body)) {
             return [];
         }
 
@@ -285,6 +268,7 @@ readonly class Request
      * @param array<string, mixed>|null $cookies
      * @param array<string, mixed>|null $server
      */
+    #[NoDiscard]
     public static function fromGlobals(
         ?array $get = null,
         ?array $post = null,

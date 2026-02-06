@@ -7,6 +7,7 @@ namespace Pulsar\Observability\Log\Sink;
 use function dirname;
 use function is_dir;
 
+use Override;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogFormatter;
 use Pulsar\Observability\Log\LogSinkInterface;
@@ -27,6 +28,7 @@ final readonly class FileSink implements LogSinkInterface
         $this->formatter = $formatter ?? new LogFormatter();
     }
 
+    #[Override]
     public function write(LogEntry $entry): void
     {
         $directory = dirname($this->path);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 
 /**
@@ -27,6 +28,7 @@ readonly class StudioCollectorConfig
     /**
      * @param array<string, mixed> $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         /** @var array<string, mixed> $httpData */

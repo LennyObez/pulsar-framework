@@ -6,6 +6,7 @@ namespace Pulsar\Console\Command;
 
 use function count;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -27,6 +28,7 @@ final class MigrateRollbackCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'migrate:rollback';
@@ -34,6 +36,7 @@ final class MigrateRollbackCommand extends Command
         $this->addOption('all', 'Rollback all migrations (reset)');
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         try {

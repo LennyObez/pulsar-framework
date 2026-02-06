@@ -7,6 +7,7 @@ namespace Pulsar\Studio\Command\Console\Guardian;
 use function is_string;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -30,6 +31,7 @@ final class GuardianDeployCheckCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:guardian:deploy:check';
@@ -42,6 +44,7 @@ final class GuardianDeployCheckCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

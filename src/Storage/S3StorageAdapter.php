@@ -22,6 +22,10 @@ use const CURLOPT_URL;
 use function hash;
 use function is_string;
 use function ltrim;
+
+use NoDiscard;
+use Override;
+
 use function simplexml_load_string;
 use function sprintf;
 use function str_starts_with;
@@ -46,6 +50,7 @@ final class S3StorageAdapter implements StorageAdapterInterface
         private readonly ?string $secretKey = null,
     ) {}
 
+    #[Override]
     public function put(string $key, string $content, ?StorageMetadata $metadata = null): void
     {
         $objectKey = $this->buildObjectKey($key);
@@ -71,6 +76,8 @@ final class S3StorageAdapter implements StorageAdapterInterface
         }
     }
 
+    #[Override]
+    #[NoDiscard]
     public function get(string $key): string
     {
         $objectKey = $this->buildObjectKey($key);
@@ -87,6 +94,7 @@ final class S3StorageAdapter implements StorageAdapterInterface
         return $response['body'];
     }
 
+    #[Override]
     public function exists(string $key): bool
     {
         $objectKey = $this->buildObjectKey($key);
@@ -95,6 +103,7 @@ final class S3StorageAdapter implements StorageAdapterInterface
         return $response['status'] === 200;
     }
 
+    #[Override]
     public function delete(string $key): void
     {
         $objectKey = $this->buildObjectKey($key);
@@ -105,6 +114,7 @@ final class S3StorageAdapter implements StorageAdapterInterface
         }
     }
 
+    #[Override]
     public function list(string $prefix = ''): array
     {
         $fullPrefix = $this->prefix !== '' ? trim($this->prefix, '/') . '/' : '';
@@ -125,6 +135,7 @@ final class S3StorageAdapter implements StorageAdapterInterface
     }
 
     /** @phpstan-ignore return.unusedType (interface requires ?string for adapters that don't support presigned URLs) */
+    #[Override]
     public function temporaryUrl(string $key, int $expiresInSeconds = 3600): ?string
     {
         $signer = $this->getSigner();

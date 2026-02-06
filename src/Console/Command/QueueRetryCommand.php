@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -24,6 +25,7 @@ final class QueueRetryCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'queue:retry';
@@ -32,6 +34,7 @@ final class QueueRetryCommand extends Command
         $this->addArgument('id', 'The failed job ID, or "all" to retry everything', true);
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         /** @var string $id */

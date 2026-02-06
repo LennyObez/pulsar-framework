@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -22,6 +23,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Failed to establish a database connection.
      */
+    #[NoDiscard]
     public static function connectionFailed(string $name, ?Throwable $previous = null): self
     {
         return new self(
@@ -33,6 +35,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Requested connection is not configured.
      */
+    #[NoDiscard]
     public static function connectionNotConfigured(string $name): self
     {
         return new self(sprintf('Database connection "%s" is not configured', $name));
@@ -41,6 +44,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Query execution failed.
      */
+    #[NoDiscard]
     public static function queryFailed(string $sql, ?Throwable $previous = null): self
     {
         return new self(
@@ -52,6 +56,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Prepared statement creation failed.
      */
+    #[NoDiscard]
     public static function prepareError(string $sql, ?Throwable $previous = null): self
     {
         return new self(
@@ -63,6 +68,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Expected a non-empty result set.
      */
+    #[NoDiscard]
     public static function emptyResult(): self
     {
         return new self('Query returned an empty result set');
@@ -71,6 +77,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Column not found in row data.
      */
+    #[NoDiscard]
     public static function columnNotFound(string $column): self
     {
         return new self(sprintf('Column "%s" not found in row', $column));
@@ -79,6 +86,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Type cast failed for a column value.
      */
+    #[NoDiscard]
     public static function typeCastFailed(string $column, string $expectedType): self
     {
         return new self(sprintf('Cannot cast column "%s" to %s', $column, $expectedType));
@@ -87,6 +95,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Transaction is already finished (committed or rolled back).
      */
+    #[NoDiscard]
     public static function transactionAlreadyFinished(): self
     {
         return new self('Transaction has already been committed or rolled back');
@@ -95,6 +104,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Migration execution failed.
      */
+    #[NoDiscard]
     public static function migrationFailed(string $version, string $direction, ?Throwable $previous = null): self
     {
         return new self(
@@ -106,6 +116,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Migration tracking table could not be created or queried.
      */
+    #[NoDiscard]
     public static function migrationTableError(string $reason, ?Throwable $previous = null): self
     {
         return new self(
@@ -117,6 +128,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Migration file not found on disk.
      */
+    #[NoDiscard]
     public static function migrationNotFound(string $version): self
     {
         return new self(sprintf('Migration "%s" not found', $version));
@@ -125,6 +137,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Duplicate migration version detected.
      */
+    #[NoDiscard]
     public static function duplicateMigrationVersion(string $version): self
     {
         return new self(sprintf('Duplicate migration version: %s', $version));
@@ -133,6 +146,7 @@ final class DatabaseException extends RuntimeException
     /**
      * Migration file is invalid (does not return a MigrationInterface).
      */
+    #[NoDiscard]
     public static function migrationFileInvalid(string $path): self
     {
         return new self(sprintf('Migration file "%s" must return a MigrationInterface instance', $path));

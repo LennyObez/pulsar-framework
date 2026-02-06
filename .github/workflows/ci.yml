@@ -147,25 +147,38 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
-      - name: Run performance benchmarks with budget assertions
+      - name: Run PHPBench microbenchmarks
         continue-on-error: true
-        run: composer bench:ci | tee benchmark-output.txt
+        run: composer bench:ci | tee benchmark-phpbench.txt
+
+      - name: Run OPcache/JIT/preload profile matrix
+        continue-on-error: true
+        run: composer bench:profiles:ci | tee benchmark-profiles.txt
 
       - name: Upload benchmark results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
-          path: benchmark-output.txt
+          path: |
+            benchmark-phpbench.txt
+            benchmark-profiles.txt
+            var/bench/results.json
           retention-days: 14
 
       - name: Add benchmark results to job summary
         if: always()
         run: |
-          echo '## Performance Benchmark Results' >> "$GITHUB_STEP_SUMMARY"
+          echo '## PHPBench Microbenchmarks' >> "$GITHUB_STEP_SUMMARY"
           echo '' >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-output.txt >> "$GITHUB_STEP_SUMMARY"
+          cat benchmark-phpbench.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '## OPcache / JIT / Preload Profile Matrix' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat benchmark-profiles.txt >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
   js:

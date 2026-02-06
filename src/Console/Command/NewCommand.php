@@ -8,6 +8,7 @@ use function basename;
 use function is_string;
 
 use JsonException;
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\Command\NewProject\EnvironmentPreset;
 use Pulsar\Console\Command\NewProject\ProjectGenerator;
@@ -32,6 +33,7 @@ final class NewCommand extends Command
 {
     use ScaffoldTrait;
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'new';
@@ -45,6 +47,7 @@ final class NewCommand extends Command
      * @throws JsonException If composer.json encoding fails (propagated from generator)
      * @throws RandomException If cryptographic random generation fails
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);

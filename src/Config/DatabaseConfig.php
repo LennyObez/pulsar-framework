@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
@@ -30,6 +31,7 @@ readonly class DatabaseConfig
      *
      * @param array<string, mixed> $data Raw array from config/database.php
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         /** @var string $defaultFromConfig */
@@ -68,10 +70,6 @@ readonly class DatabaseConfig
      */
     public function connection(string $name): ConnectionConfig
     {
-        if (!isset($this->connections[$name])) {
-            throw DatabaseException::connectionNotConfigured($name);
-        }
-
-        return $this->connections[$name];
+        return $this->connections[$name] ?? throw DatabaseException::connectionNotConfigured($name);
     }
 }

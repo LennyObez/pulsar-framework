@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Rule;
 
+use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
@@ -20,6 +21,7 @@ readonly class Required implements RuleInterface
         private string $message = '',
     ) {}
 
+    #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation
     {
         $missing = $value === null
@@ -37,6 +39,7 @@ readonly class Required implements RuleInterface
         return null;
     }
 
+    #[Override]
     public function name(): string
     {
         return 'required';

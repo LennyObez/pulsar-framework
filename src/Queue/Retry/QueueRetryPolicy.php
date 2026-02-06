@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Queue\Retry;
 
 use function min;
+
+use NoDiscard;
+
 use function pow;
 
 use Pulsar\Api\Api;
@@ -54,6 +57,7 @@ final readonly class QueueRetryPolicy
     /**
      * Build a retry policy from queue configuration.
      */
+    #[NoDiscard]
     public static function fromConfig(QueueConfig $config): self
     {
         return new self(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy;
 
+use NoDiscard;
 use Pulsar\Tenancy\Exception\TenancyException;
 
 /**
@@ -26,13 +27,10 @@ final class TenantContext
      *
      * @throws TenancyException If no tenant has been resolved.
      */
+    #[NoDiscard]
     public function get(): Tenant
     {
-        if ($this->tenant === null) {
-            throw TenancyException::tenantNotResolved();
-        }
-
-        return $this->tenant;
+        return $this->tenant ?? throw TenancyException::tenantNotResolved();
     }
 
     /**

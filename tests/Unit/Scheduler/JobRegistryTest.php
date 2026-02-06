@@ -199,6 +199,6 @@ final class JobRegistryTest extends TestCase
         $this->expectException(SchedulerException::class);
         $this->expectExceptionMessage('Scheduled job not found: "nonexistent"');
 
-        $registry->get('nonexistent');
+        $_ = $registry->get('nonexistent');
     }
 }

@@ -7,6 +7,7 @@ namespace Pulsar\Database;
 use function array_map;
 use function count;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
@@ -36,6 +37,7 @@ readonly class Result
      *
      * @param list<array<string, mixed>> $data
      */
+    #[NoDiscard]
     public static function fromArrays(array $data): self
     {
         return new self(array_map(

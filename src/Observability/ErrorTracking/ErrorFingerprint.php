@@ -6,6 +6,7 @@ namespace Pulsar\Observability\ErrorTracking;
 
 use function hash;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 use function sprintf;
@@ -28,6 +29,7 @@ final readonly class ErrorFingerprint
     /**
      * Generate a fingerprint from a throwable.
      */
+    #[NoDiscard]
     public static function fromThrowable(Throwable $throwable): self
     {
         $input = sprintf(

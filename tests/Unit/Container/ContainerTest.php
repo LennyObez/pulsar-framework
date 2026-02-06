@@ -63,7 +63,7 @@ final class ContainerTest extends TestCase
         $this->expectException(NotFoundException::class);
         $this->expectExceptionMessage('No binding found for "unbound"');
 
-        $container->get('unbound');
+        $_ = $container->get('unbound');
     }
 
     #[Test]
@@ -122,7 +122,7 @@ final class ContainerTest extends TestCase
             return new stdClass();
         });
 
-        $container->get('service');
+        $_ = $container->get('service');
 
         self::assertSame($container, $receivedContainer);
     }
@@ -200,7 +200,7 @@ final class ContainerTest extends TestCase
         $this->expectException(ContainerException::class);
         $this->expectExceptionMessage('Circular dependency');
 
-        $container->get('a');
+        $_ = $container->get('a');
     }
 
     #[Test]
@@ -214,7 +214,7 @@ final class ContainerTest extends TestCase
         $this->expectException(ContainerException::class);
         $this->expectExceptionMessage('does not exist');
 
-        $container->get('service');
+        $_ = $container->get('service');
     }
 
     #[Test]
@@ -226,7 +226,7 @@ final class ContainerTest extends TestCase
         $this->expectException(ContainerException::class);
         $this->expectExceptionMessage('must return an object');
 
-        $container->get('service');
+        $_ = $container->get('service');
     }
 
     #[Test]
@@ -248,7 +248,7 @@ final class ContainerTest extends TestCase
         $container = new Container();
         $container->instance('a', new stdClass());
         $container->bind('b', fn() => new stdClass());
-        $container->get('b');
+        $_ = $container->get('b');
 
         $instances = $container->getInstances();
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Console\Command;
@@ -25,12 +26,14 @@ final class OptimizeClearCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'optimize:clear';
         $this->description = 'Clear all framework cache files';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->frameworkCache->clear();
