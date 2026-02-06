@@ -14,7 +14,7 @@ use Pulsar\Studio\Console\Event\EventType;
  * per-event-type policies can be registered for targeted redaction.
  */
 #[Internal]
-final class RedactionPipeline
+final class RedactionPipeline implements RedactionPipelineInterface
 {
     /** @var list<RedactionPolicyInterface> */
     private array $globalPolicies = [];

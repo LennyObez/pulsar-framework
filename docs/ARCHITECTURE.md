@@ -308,6 +308,125 @@ Retention enforcement (`RetentionEnforcer`) deletes old events and their chain l
 - `links_pruned` counter in `studio_meta` tracks how many links were removed
 - Verification reports include mode (`full` / `window`), anchor type, and pruned count
 
+## Operational Layer
+
+The operational layer provides production-grade subsystems for job processing, process supervision, file integrity verification, and deploy readiness checks. These subsystems are wired into the Kernel boot pipeline and integrate with Studio for observability.
+
+### Queue (`src/Queue/`)
+
+Asynchronous job processing with pluggable drivers.
+
+Components:
+
+- `QueueManager` — central orchestrator for job dispatch and queue state queries
+- `Worker` — long-running process that polls a queue, executes jobs, and handles graceful shutdown
+- `WorkerOptions` — configurable limits (max jobs, memory, timeout, sleep interval)
+- `QueueDriverInterface` — pluggable backend contract
+- `SyncDriver` — executes jobs immediately in the same process (local/testing)
+- `InMemoryDriver` — in-memory FIFO queue (testing)
+- `DatabaseDriver` — persistent queue backed by a database table (production)
+- `QueueRetryPolicy` — configurable retry with exponential backoff and max attempts
+- `DeadLetterQueue` — stores permanently failed jobs for inspection and manual retry
+
+Worker lifecycle:
+
+```
+Start → Register signal handlers → Poll loop
+  ├── Pop next job
+  ├── Execute (instantiate class, call handle())
+  ├── Acknowledge or reject
+  ├── Check recycle conditions (max jobs, memory, uptime)
+  └── Sleep if idle
+→ Graceful shutdown (SIGINT/SIGTERM or recycle)
+```
+
+Configuration via `config/queue.php`. See [`docs/CLI_REFERENCE.md`](CLI_REFERENCE.md) for queue commands.
+
+### Supervisor (`src/Supervisor/`)
+
+Process health monitoring and automated recovery.
+
+Components:
+
+- `Supervisor` — central orchestrator for worker lifecycle evaluation
+- `WorkerRecyclePolicy` — threshold-based recycling (request count, memory, uptime)
+- `StuckJobDetector` / `StuckJobPolicy` — detects jobs that exceed expected execution time
+- `PreflightRunner` — pre-start health checks (e.g., database connectivity, disk space)
+- `InvariantRunner` — runtime invariant checks during worker execution
+
+Key operations:
+
+- `shouldRecycle()` — evaluates if a worker should be recycled based on configured thresholds; returns a `RecycleRecord` with the reason and recommended action
+- `detectStuckJobs()` — queries the queue driver for jobs exceeding the stuck timeout
+- `recoverStuckJobs()` — dead-letters stuck jobs and returns healing actions
+- `runPreflightChecks()` / `runInvariantChecks()` — executes registered check lists
+
+Configuration via `config/supervisor.php`.
+
+### File Integrity (`src/Integrity/`)
+
+Filesystem integrity verification using cryptographic manifests.
+
+Components:
+
+- `ManifestBuilder` — scans configured paths, computes SHA-256 hashes, produces an `IntegrityManifest`
+- `ManifestVerifier` — compares a stored manifest against the current filesystem; reports modified, missing, and added files
+- `ManifestSigner` — HMAC-BLAKE2b signing and verification using a derived subkey (subKeyId=6, context=`integ_sg`)
+- `IntegrityPolicy` — resolved policy from configuration (enforcement mode)
+
+Verification flow:
+
+```
+Build manifest → Sign (optional, requires PULSAR_MASTER_KEY)
+                → Store on disk
+                → Later: verify against current filesystem
+                  ├── Modified files (hash mismatch)
+                  ├── Missing files (in manifest, not on disk)
+                  └── Added files (on disk, not in manifest)
+```
+
+Configuration via `config/integrity.php`. See [`docs/INTEGRITY.md`](INTEGRITY.md) for detailed usage.
+
+### Deploy Checks (`src/Deploy/`)
+
+Pre-deployment readiness validation.
+
+Components:
+
+- `DeployCheck` — orchestrator that runs all registered checks against a target environment
+- `DeployCheckInterface` — contract for individual checks (`getName()`, `getDescription()`, `check()`)
+- `CheckResult` — result DTO with severity level and actionable recommendations
+- `DeployReport` — aggregated report with pass/warning/error counts
+
+Deploy checks validate environment-specific requirements before deployment (e.g., config completeness, cache state, security settings). Checks can target specific environments (`local`, `staging`, `production`).
+
+Configuration via `config/deploy.php`. See [`docs/DEPLOYMENT.md`](DEPLOYMENT.md) for detailed usage.
+
+### Framework Caching (`src/Cache/`)
+
+Build-time cache system for configuration, routes, and container bindings.
+
+Components:
+
+- `FrameworkCache` — top-level orchestrator for warm/clear/load operations
+- `ConfigCache` — serializes `ConfigRepository` with optional encryption
+- `RouteCache` — serializes compiled route tables
+- `ContainerCache` — serializes container bindings
+- `CacheIntegrity` — HMAC signing and atomic file writes
+- `CacheManifest` — HMAC-signed manifest with deterministic invalidation keys
+- `CacheLock` — `flock()`-based write lock for concurrent safety
+
+Cache-aware boot path:
+
+```
+Kernel::boot()
+  ├── Check FrameworkCache in container
+  ├── If cached: load ConfigRepository from cache (skip file parsing)
+  └── If not cached: normal config load from PHP files
+```
+
+The cache invalidation key is computed from a hash of config file contents and `composer.lock`, ensuring automatic invalidation when dependencies or configuration change.
+
 ## Extension Points
 
 Extensions can hook into:

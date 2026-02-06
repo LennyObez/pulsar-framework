@@ -167,7 +167,14 @@ $request = new Request(
     body: $body,
 );
 
-$response = $router->dispatch($request);
+try {
+    $response = $router->dispatch($request);
+} catch (JsonException $e) {
+    http_response_code(500);
+    echo 'Internal Server Error: ' . $e->getMessage();
+
+    return;
+}
 
 // Emit response
 http_response_code($response->status->value);

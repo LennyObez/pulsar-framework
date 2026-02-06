@@ -18,7 +18,7 @@ use function time;
  * window verification reporting.
  */
 #[Internal]
-final readonly class RetentionEnforcer
+final readonly class RetentionEnforcer implements RetentionEnforcerInterface
 {
     private const int SIZE_DELETION_BATCH_SIZE = 100;
 
