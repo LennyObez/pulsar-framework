@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Runtime;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Core\KernelInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Throwable;
 
 /**
@@ -49,14 +49,14 @@ final class FpmRuntime implements RuntimeInterface
     }
 
     #[Override]
-    public function beforeRequest(Request $request): Request
+    public function beforeRequest(ServerRequestInterface $request): ServerRequestInterface
     {
         // FPM provides process-level isolation — no sandbox needed
         return $request;
     }
 
     #[Override]
-    public function afterRequest(Request $request, Response $response): void
+    public function afterRequest(ServerRequestInterface $request, ResponseInterface $response): void
     {
         // FPM provides process-level isolation — no cleanup needed
     }

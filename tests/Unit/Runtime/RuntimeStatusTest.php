@@ -18,6 +18,7 @@ final class RuntimeStatusTest extends TestCase
         self::assertSame('stopped', RuntimeStatus::Stopped->value);
         self::assertSame('starting', RuntimeStatus::Starting->value);
         self::assertSame('running', RuntimeStatus::Running->value);
+        self::assertSame('draining', RuntimeStatus::Draining->value);
         self::assertSame('stopping', RuntimeStatus::Stopping->value);
     }
 
@@ -29,8 +30,8 @@ final class RuntimeStatusTest extends TestCase
     }
 
     #[Test]
-    public function it_has_four_cases(): void
+    public function it_has_five_cases(): void
     {
-        self::assertCount(4, RuntimeStatus::cases());
+        self::assertCount(5, RuntimeStatus::cases());
     }
 }

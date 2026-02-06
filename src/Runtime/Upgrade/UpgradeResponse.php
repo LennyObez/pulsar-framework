@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Runtime\Upgrade;
 
 use Pulsar\Api\Api;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 /**
@@ -16,14 +15,17 @@ use Pulsar\Http\ResponseStatus;
  * and transfers socket ownership to the UpgradeHandlerInterface.
  */
 #[Api(since: '1.0.0')]
-final readonly class UpgradeResponse extends Response
+final class UpgradeResponse extends Response
 {
+    /**
+     * @param array<string, string|list<string>> $headers
+     */
     public function __construct(
-        public UpgradeHandlerInterface $handler,
-        HeaderBag $headers = new HeaderBag(),
+        public readonly UpgradeHandlerInterface $handler,
+        array $headers = [],
     ) {
         parent::__construct(
-            status: ResponseStatus::SwitchingProtocols,
+            statusCode: ResponseStatus::SwitchingProtocols->value,
             headers: $headers,
         );
     }

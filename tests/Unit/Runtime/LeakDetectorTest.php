@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Pulsar\Runtime\Exception\ResourceLeakException;
 use Pulsar\Runtime\LeakDetector;
 
 #[CoversClass(LeakDetector::class)]
@@ -104,5 +105,66 @@ final class LeakDetectorTest extends TestCase
         $detector->beginRequest();
         $detector->trackResource('leaked', 'test', 'Test resource');
         $detector->endRequest();
+    }
+
+    #[Test]
+    public function strict_mode_throws_on_unreleased_resources(): void
+    {
+        $detector = new LeakDetector(strictMode: true);
+        $detector->beginRequest();
+
+        $detector->trackResource('conn-1', 'database', 'MySQL connection');
+
+        $this->expectException(ResourceLeakException::class);
+        $this->expectExceptionMessageMatches('/1 unclosed resource\(s\) detected/');
+
+        $detector->endRequest();
+    }
+
+    #[Test]
+    public function strict_mode_throws_with_multiple_unreleased_resources(): void
+    {
+        $detector = new LeakDetector(strictMode: true);
+        $detector->beginRequest();
+
+        $detector->trackResource('conn-1', 'database', 'MySQL connection');
+        $detector->trackResource('stream-1', 'file', 'Log file handle');
+
+        $this->expectException(ResourceLeakException::class);
+        $this->expectExceptionMessageMatches('/2 unclosed resource\(s\) detected/');
+
+        $detector->endRequest();
+    }
+
+    #[Test]
+    public function strict_mode_clears_resources_after_throwing(): void
+    {
+        $detector = new LeakDetector(strictMode: true);
+        $detector->beginRequest();
+
+        $detector->trackResource('conn-1', 'database', 'MySQL connection');
+
+        try {
+            $detector->endRequest();
+        } catch (ResourceLeakException) {
+            // Expected
+        }
+
+        // Resources should be cleared after the exception
+        self::assertSame([], $detector->trackedResources());
+    }
+
+    #[Test]
+    public function strict_mode_does_not_throw_when_all_resources_released(): void
+    {
+        $detector = new LeakDetector(strictMode: true);
+        $detector->beginRequest();
+
+        $detector->trackResource('conn-1', 'database', 'MySQL connection');
+        $detector->releaseResource('conn-1');
+
+        $warnings = $detector->endRequest();
+
+        self::assertSame([], $warnings);
     }
 }

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 
 /**
  * Contract for runtime instrumentation collectors.
@@ -29,8 +29,8 @@ interface RuntimeCollectorInterface
     public function trackFiberSpawn(): void;
 
     public function recordRequest(
-        Request $request,
-        Response $response,
+        ServerRequestInterface $request,
+        ResponseInterface $response,
         float $durationMs,
         int $memoryDeltaBytes,
     ): void;
