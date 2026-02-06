@@ -11,11 +11,9 @@ use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\Kernel;
 use Pulsar\Core\Version;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Routing\Router;
 
 /**
@@ -29,15 +27,11 @@ use Pulsar\Routing\Router;
 #[CoversClass(Container::class)]
 final class BootPipelineTest extends TestCase
 {
-    private function createRequest(string $path = '/'): Request
+    private function createRequest(string $path = '/'): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 
@@ -118,7 +112,7 @@ final class BootPipelineTest extends TestCase
         $response = $kernel->handle($this->createRequest());
 
         self::assertTrue($kernel->booted);
-        self::assertSame('auto-booted', $response->body);
+        self::assertSame('auto-booted', (string) $response->getBody());
     }
 
     #[Test]
@@ -148,7 +142,7 @@ final class BootPipelineTest extends TestCase
         $response = $kernel->handle($this->createRequest());
 
         self::assertTrue($kernel->booted);
-        self::assertSame('rebooted', $response->body);
+        self::assertSame('rebooted', (string) $response->getBody());
     }
 
     #[Test]
@@ -176,7 +170,7 @@ final class BootPipelineTest extends TestCase
 
         $response = $kernel->handle($this->createRequest('/custom'));
 
-        self::assertSame('custom-router', $response->body);
+        self::assertSame('custom-router', (string) $response->getBody());
     }
 
     #[Test]

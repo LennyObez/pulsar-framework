@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\ErrorHandling;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
-use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
 use Throwable;
 
@@ -18,5 +18,5 @@ interface ExceptionRendererInterface
     /**
      * Render an exception as an HTML string.
      */
-    public function render(Throwable $exception, Request $request, ResponseStatus $status): string;
+    public function render(Throwable $exception, ServerRequestInterface $request, ResponseStatus $status): string;
 }

@@ -7,10 +7,11 @@ namespace Pulsar\Tests\Unit\Http\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use RuntimeException;
 
 #[CoversClass(MiddlewareRegistry::class)]
@@ -153,9 +154,9 @@ final class MiddlewareRegistryTest extends TestCase
  */
 class StubAuthMiddleware implements MiddlewareInterface
 {
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        return $next($request);
+        return $handler->handle($request);
     }
 }
 
@@ -164,8 +165,8 @@ class StubAuthMiddleware implements MiddlewareInterface
  */
 class StubCorsMiddleware implements MiddlewareInterface
 {
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        return $next($request);
+        return $handler->handle($request);
     }
 }

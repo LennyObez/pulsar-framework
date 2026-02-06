@@ -7,10 +7,6 @@ namespace Pulsar\Extension\Psr7Bridge;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
-use Pulsar\Extension\Psr7Bridge\Adapter\Psr7ToPulsarRequest;
-use Pulsar\Extension\Psr7Bridge\Adapter\Psr7ToPulsarResponse;
-use Pulsar\Extension\Psr7Bridge\Adapter\PulsarToPsr7Request;
-use Pulsar\Extension\Psr7Bridge\Adapter\PulsarToPsr7Response;
 use Pulsar\Routing\RouterInterface;
 
 /**
@@ -19,6 +15,9 @@ use Pulsar\Routing\RouterInterface;
  * Provides bidirectional conversion between Pulsar HTTP objects and PSR-7
  * interfaces, plus a PSR-15 middleware adapter for using PSR-15 middleware
  * in the Pulsar pipeline.
+ *
+ * @deprecated Since 1.0.0-rc.11. Pulsar now uses PSR-7/PSR-15 natively.
+ *             This entire extension is no longer needed.
  */
 final class Psr7BridgeExtension implements ExtensionInterface
 {
@@ -29,25 +28,8 @@ final class Psr7BridgeExtension implements ExtensionInterface
 
     public function register(ContainerInterface $container): void
     {
-        $container->bind(
-            PulsarToPsr7Request::class,
-            PulsarToPsr7Request::class,
-        );
-
-        $container->bind(
-            Psr7ToPulsarRequest::class,
-            Psr7ToPulsarRequest::class,
-        );
-
-        $container->bind(
-            PulsarToPsr7Response::class,
-            PulsarToPsr7Response::class,
-        );
-
-        $container->bind(
-            Psr7ToPulsarResponse::class,
-            Psr7ToPulsarResponse::class,
-        );
+        // No-op: Pulsar uses PSR-7 natively since v1.0.0-rc.11.
+        // The bridge adapters are deprecated and will be removed in v2.0.
     }
 
     public function boot(ContainerInterface $container, RouterInterface $router): void

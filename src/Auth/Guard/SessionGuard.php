@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Auth\Guard;
 
 use Override;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Http\Request;
 use Pulsar\Security\Session\SessionInterface;
 
 /**
@@ -24,7 +24,7 @@ final class SessionGuard implements GuardInterface
     ) {}
 
     #[Override]
-    public function authenticate(Request $request): ?IdentityInterface
+    public function authenticate(ServerRequestInterface $request): ?IdentityInterface
     {
         if (!$this->session->isStarted()) {
             return null;

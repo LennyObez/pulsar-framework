@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Domain\SavedView;
 use Pulsar\Extension\Admin\Features\SavedViews\SavedViewsHandler;
 use Pulsar\Extension\Admin\Features\SavedViews\SavedViewsRequest;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function bin2hex;
@@ -28,7 +28,7 @@ final readonly class SavedViewsController
         private SavedViewsHandler $handler,
     ) {}
 
-    public function list(Request $request, string $resource): Response
+    public function list(ServerRequestInterface $request, string $resource): Response
     {
         $result = $this->handler->execute(new SavedViewsRequest(
             operation: 'list',
@@ -50,17 +50,20 @@ final readonly class SavedViewsController
         ]);
     }
 
-    public function store(Request $request, string $resource): Response
+    public function store(ServerRequestInterface $request, string $resource): Response
     {
         /** @var IdentityInterface|null $identity */
-        $identity = $request->attribute('identity');
+        $identity = $request->getAttribute('identity');
         $actor = $identity?->id() ?? 'anonymous';
 
-        $label = $request->input('label', '') ?? '';
-        $filters = $request->input('filters', []) ?? [];
-        $sort = $request->input('sort', []) ?? [];
-        $perPage = (int) ($request->input('per_page', 25) ?? 25);
-        $isDefault = (bool) ($request->input('is_default', false) ?? false);
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
+        $label = $body['label'] ?? '';
+        $filters = $body['filters'] ?? [];
+        $sort = $body['sort'] ?? [];
+        $perPage = (int) ($body['per_page'] ?? 25);
+        $isDefault = (bool) ($body['is_default'] ?? false);
 
         if (!is_array($filters)) {
             $filters = [];
@@ -88,11 +91,11 @@ final readonly class SavedViewsController
 
         return Response::json(
             ['success' => $result->success],
-            $result->success ? ResponseStatus::Created : ResponseStatus::InternalServerError,
+            $result->success ? ResponseStatus::Created->value : ResponseStatus::InternalServerError->value,
         );
     }
 
-    public function delete(Request $request, string $resource, string $viewId): Response
+    public function delete(ServerRequestInterface $request, string $resource, string $viewId): Response
     {
         $result = $this->handler->execute(new SavedViewsRequest(
             operation: 'delete',

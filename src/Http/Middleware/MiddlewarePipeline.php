@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Http\Middleware;
 
 use InvalidArgumentException;
+use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface as PsrRequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use RuntimeException;
 
 use function array_reverse;
 use function assert;
@@ -16,27 +20,24 @@ use function count;
 use function sprintf;
 
 /**
- * Executes a stack of middleware around a core handler.
+ * PSR-15 middleware pipeline.
+ *
+ * Executes a stack of PSR-15 middleware around a core request handler.
  */
 #[Internal]
-final class MiddlewarePipeline implements MiddlewarePipelineInterface
+final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrRequestHandlerInterface
 {
     /**
-     * @var list<MiddlewareInterface|class-string<MiddlewareInterface>>
+     * @var list<PsrMiddlewareInterface|class-string<PsrMiddlewareInterface>>
      */
     private array $middleware = [];
 
     /**
-     * Cached resolved+reversed middleware list.
-     *
-     * Populated on first `handle()` call. Subsequent calls reuse this list,
-     * skipping both container resolution and array_reverse().
-     *
-     * Invalidated when new middleware is piped via `pipe()`.
-     *
-     * @var list<MiddlewareInterface>|null
+     * @var list<PsrMiddlewareInterface>|null
      */
     private ?array $resolvedMiddleware = null;
+
+    private ?PsrRequestHandlerInterface $fallbackHandler = null;
 
     public function __construct(
         private readonly ?ContainerInterface $container = null,
@@ -47,103 +48,62 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface
      *
      * Middleware is executed in the order it is added (FIFO).
      *
-     * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
+     * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
      */
-    public function pipe(MiddlewareInterface|string $middleware): self
+    public function pipe(PsrMiddlewareInterface|string $middleware): self
     {
         $this->middleware[] = $middleware;
-        $this->resolvedMiddleware = null; // Invalidate cache
+        $this->resolvedMiddleware = null;
 
         return $this;
     }
 
     /**
-     * Process a request through the middleware stack.
-     *
-     * @param Request $request The incoming request
-     * @param callable(Request): Response $handler The core handler
-     * @return Response The response
+     * Process a request through the middleware stack with a final handler.
      */
-    public function handle(Request $request, callable $handler): Response
+    public function process(ServerRequestInterface $request, PsrRequestHandlerInterface $handler): ResponseInterface
     {
-        $pipeline = $this->createPipeline($handler);
-        return $pipeline($request);
+        $this->fallbackHandler = $handler;
+
+        return $this->handle($request);
     }
 
     /**
-     * Create the middleware pipeline function.
+     * Handle a request through the middleware stack.
      *
-     * @param callable(Request): Response $handler
-     * @return callable(Request): Response
+     * Uses the fallback handler set via process() as the core handler.
      */
-    private function createPipeline(callable $handler): callable
+    #[Override]
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        // Start with the core handler
-        $next = $handler;
-
-        // Resolve and cache the reversed middleware list on first call
-        $resolved = $this->resolvedMiddleware ??= $this->resolveAllMiddleware();
-
-        // Wrap in middleware from inside out (already reversed)
-        foreach ($resolved as $middlewareInstance) {
-            $next = $this->createLayer($middlewareInstance, $next);
+        if ($this->fallbackHandler === null) {
+            throw new RuntimeException('No fallback handler set. Call process() or setHandler() first.');
         }
 
-        return $next;
+        $pipeline = $this->createPipeline($this->fallbackHandler);
+
+        return $pipeline->handle($request);
     }
 
     /**
-     * Resolve all middleware instances and return them in reversed order.
-     *
-     * @return list<MiddlewareInterface>
+     * Set the fallback handler for handle() calls.
      */
-    private function resolveAllMiddleware(): array
+    public function setHandler(PsrRequestHandlerInterface $handler): void
     {
-        $resolved = [];
-
-        foreach (array_reverse($this->middleware) as $middleware) {
-            $resolved[] = $this->resolveMiddleware($middleware);
-        }
-
-        return $resolved;
+        $this->fallbackHandler = $handler;
     }
 
     /**
-     * Create a single middleware layer.
+     * Process a request through the middleware stack with a callable handler.
      *
-     * @param callable(Request): Response $next
-     * @return callable(Request): Response
+     * @param callable(ServerRequestInterface): ResponseInterface $handler
      */
-    private function createLayer(MiddlewareInterface $middleware, callable $next): callable
+    public function dispatch(ServerRequestInterface $request, callable $handler): ResponseInterface
     {
-        return static fn(Request $request): Response => $middleware->process($request, $next);
-    }
+        $wrappedHandler = new CallableRequestHandler($handler);
+        $pipeline = $this->createPipeline($wrappedHandler);
 
-    /**
-     * Resolve a middleware instance.
-     *
-     * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
-     */
-    private function resolveMiddleware(MiddlewareInterface|string $middleware): MiddlewareInterface
-    {
-        if ($middleware instanceof MiddlewareInterface) {
-            return $middleware;
-        }
-
-        if ($this->container !== null && $this->container->has($middleware)) {
-            $resolved = $this->container->get($middleware);
-            assert($resolved instanceof MiddlewareInterface);
-            return $resolved;
-        }
-
-        if (class_exists($middleware)) {
-            return new $middleware();
-        }
-
-        throw new InvalidArgumentException(sprintf(
-            'Middleware "%s" could not be resolved. Ensure it is a valid class or registered in the container.',
-            $middleware,
-        ));
+        return $pipeline->handle($request);
     }
 
     /**
@@ -160,5 +120,61 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface
     public function isEmpty(): bool
     {
         return $this->middleware === [];
+    }
+
+    /**
+     * Build a chained RequestHandler from the middleware stack and a final handler.
+     */
+    private function createPipeline(PsrRequestHandlerInterface $handler): PsrRequestHandlerInterface
+    {
+        $resolved = $this->resolvedMiddleware ??= $this->resolveAllMiddleware();
+
+        $current = $handler;
+
+        foreach ($resolved as $middleware) {
+            $current = new MiddlewareHandler($middleware, $current);
+        }
+
+        return $current;
+    }
+
+    /**
+     * @return list<PsrMiddlewareInterface>
+     */
+    private function resolveAllMiddleware(): array
+    {
+        $resolved = [];
+
+        foreach (array_reverse($this->middleware) as $middleware) {
+            $resolved[] = $this->resolveMiddleware($middleware);
+        }
+
+        return $resolved;
+    }
+
+    /**
+     * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
+     */
+    private function resolveMiddleware(PsrMiddlewareInterface|string $middleware): PsrMiddlewareInterface
+    {
+        if ($middleware instanceof PsrMiddlewareInterface) {
+            return $middleware;
+        }
+
+        if ($this->container !== null && $this->container->has($middleware)) {
+            $resolved = $this->container->get($middleware);
+            assert($resolved instanceof PsrMiddlewareInterface);
+
+            return $resolved;
+        }
+
+        if (class_exists($middleware)) {
+            return new $middleware();
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'Middleware "%s" could not be resolved. Ensure it is a valid class or registered in the container.',
+            $middleware,
+        ));
     }
 }

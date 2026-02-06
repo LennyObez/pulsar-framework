@@ -7,11 +7,12 @@ namespace Pulsar\Tests\Unit\Http\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MetricsMiddleware;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -20,15 +21,11 @@ use RuntimeException;
 #[CoversClass(MetricsMiddleware::class)]
 final class MetricsMiddlewareTest extends TestCase
 {
-    private function createRequest(string $path = '/users/42'): Request
+    private function createRequest(string $path = '/users/42'): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
     }
 
@@ -43,14 +40,21 @@ final class MetricsMiddlewareTest extends TestCase
         $request = $this->createRequest('/users/42');
 
         // Simulate Kernel populating RouteContext after matching
-        $response = $middleware->process($request, static function () use ($routeContext): Response {
-            $routeContext->pattern = '/users/{id}';
-            $routeContext->name = 'users.show';
+        $handler = new class ($routeContext) implements RequestHandlerInterface {
+            public function __construct(private RouteContext $routeContext) {}
 
-            return Response::text('OK');
-        });
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->routeContext->pattern = '/users/{id}';
+                $this->routeContext->name = 'users.show';
 
-        self::assertSame(200, $response->status->value);
+                return Response::text('OK');
+            }
+        };
+
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(200, $response->getStatusCode());
 
         // Verify counter was recorded with route label, not raw path
         $counter = $registry->counter('pulsar_http_requests_total', '');
@@ -71,7 +75,10 @@ final class MetricsMiddlewareTest extends TestCase
 
         $request = $this->createRequest('/health');
 
-        $middleware->process($request, static fn(): Response => Response::text('OK'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $middleware->process($request, $handler);
 
         $counter = $registry->counter('pulsar_http_requests_total', '');
         $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/health', 'status' => '200']));
@@ -88,10 +95,11 @@ final class MetricsMiddlewareTest extends TestCase
 
         $request = $this->createRequest('/fail');
 
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willThrowException(new RuntimeException('handler error'));
+
         try {
-            $middleware->process($request, static function (): never {
-                throw new RuntimeException('handler error');
-            });
+            $middleware->process($request, $handler);
         } catch (RuntimeException) {
             // Expected
         }

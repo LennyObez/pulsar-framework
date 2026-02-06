@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Payments\Contracts;
 
 use Pulsar\Api\Api;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 /**
  * Webhook processor port — verifies, deduplicates, and dispatches webhook events.

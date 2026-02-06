@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardHandler;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardRequest;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+
+use function str_contains;
 
 /**
  * Admin dashboard controller.
@@ -22,11 +24,11 @@ final readonly class DashboardController
         private AdminConfig $config,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(ServerRequestInterface $request): Response
     {
         $result = $this->handler->execute(new DashboardRequest());
 
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json([
                 'widgets' => $result->widgets,
                 'resources' => $result->resources,

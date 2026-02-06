@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -21,9 +22,7 @@ use Pulsar\Extension\Admin\Features\Schema\DropTableHandler;
 use Pulsar\Extension\Admin\Features\Schema\PreviewDdlHandler;
 use Pulsar\Extension\Admin\Features\Schema\RenameTableHandler;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function array_map;
@@ -45,7 +44,7 @@ final readonly class SchemaApiController
         private SchemaChangeLogStoreInterface $changeLog,
     ) {}
 
-    public function create(Request $request): Response
+    public function create(ServerRequestInterface $request): Response
     {
         $context = $this->extractContext($request);
         $definition = $this->buildTableDefinition($request);
@@ -54,35 +53,37 @@ final readonly class SchemaApiController
 
         return Response::json(
             $result,
-            $result['success'] ? ResponseStatus::Created : ResponseStatus::BadRequest,
+            $result['success'] ? ResponseStatus::Created->value : ResponseStatus::BadRequest->value,
         );
     }
 
-    public function dropTable(Request $request, string $table): Response
+    public function dropTable(ServerRequestInterface $request, string $table): Response
     {
         $context = $this->extractContext($request);
         $result = $this->dropHandler->execute($table, $context);
 
         return Response::json(
             $result,
-            $result['success'] ? ResponseStatus::OK : ResponseStatus::BadRequest,
+            $result['success'] ? ResponseStatus::OK->value : ResponseStatus::BadRequest->value,
         );
     }
 
-    public function renameTable(Request $request, string $table): Response
+    public function renameTable(ServerRequestInterface $request, string $table): Response
     {
         $context = $this->extractContext($request);
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
         /** @var string $newName */
-        $newName = $request->input('new_name', '') ?? '';
+        $newName = $body['new_name'] ?? '';
         $result = $this->renameHandler->execute($table, $newName, $context);
 
         return Response::json(
             $result,
-            $result['success'] ? ResponseStatus::OK : ResponseStatus::BadRequest,
+            $result['success'] ? ResponseStatus::OK->value : ResponseStatus::BadRequest->value,
         );
     }
 
-    public function addColumn(Request $request, string $table): Response
+    public function addColumn(ServerRequestInterface $request, string $table): Response
     {
         $context = $this->extractContext($request);
         $column = $this->buildColumn($request);
@@ -91,22 +92,22 @@ final readonly class SchemaApiController
 
         return Response::json(
             $result,
-            $result['success'] ? ResponseStatus::Created : ResponseStatus::BadRequest,
+            $result['success'] ? ResponseStatus::Created->value : ResponseStatus::BadRequest->value,
         );
     }
 
-    public function dropColumn(Request $request, string $table, string $col): Response
+    public function dropColumn(ServerRequestInterface $request, string $table, string $col): Response
     {
         $context = $this->extractContext($request);
         $result = $this->alterHandler->dropColumn($table, $col, $context);
 
         return Response::json(
             $result,
-            $result['success'] ? ResponseStatus::OK : ResponseStatus::BadRequest,
+            $result['success'] ? ResponseStatus::OK->value : ResponseStatus::BadRequest->value,
         );
     }
 
-    public function addIndex(Request $request, string $table): Response
+    public function addIndex(ServerRequestInterface $request, string $table): Response
     {
         $context = $this->extractContext($request);
         $index = $this->buildIndex($request);
@@ -115,24 +116,24 @@ final readonly class SchemaApiController
 
         return Response::json(
             $result,
-            $result['success'] ? ResponseStatus::Created : ResponseStatus::BadRequest,
+            $result['success'] ? ResponseStatus::Created->value : ResponseStatus::BadRequest->value,
         );
     }
 
-    public function dropIndex(Request $request, string $table, string $name): Response
+    public function dropIndex(ServerRequestInterface $request, string $table, string $name): Response
     {
         $context = $this->extractContext($request);
         $result = $this->alterHandler->dropIndex($table, $name, $context);
 
         return Response::json(
             $result,
-            $result['success'] ? ResponseStatus::OK : ResponseStatus::BadRequest,
+            $result['success'] ? ResponseStatus::OK->value : ResponseStatus::BadRequest->value,
         );
     }
 
     // Preview endpoints
 
-    public function previewCreate(Request $request): Response
+    public function previewCreate(ServerRequestInterface $request): Response
     {
         $definition = $this->buildTableDefinition($request);
         $result = $this->previewHandler->previewCreate($definition);
@@ -140,7 +141,7 @@ final readonly class SchemaApiController
         return Response::json($result);
     }
 
-    public function previewAddColumn(Request $request, string $table): Response
+    public function previewAddColumn(ServerRequestInterface $request, string $table): Response
     {
         $column = $this->buildColumn($request);
         $result = $this->previewHandler->previewAddColumn($table, $column);
@@ -148,16 +149,18 @@ final readonly class SchemaApiController
         return Response::json($result);
     }
 
-    public function previewDropColumn(Request $request, string $table): Response
+    public function previewDropColumn(ServerRequestInterface $request, string $table): Response
     {
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
         /** @var string $column */
-        $column = $request->input('column', '') ?? '';
+        $column = $body['column'] ?? '';
         $result = $this->previewHandler->previewDropColumn($table, $column);
 
         return Response::json($result);
     }
 
-    public function previewAddIndex(Request $request, string $table): Response
+    public function previewAddIndex(ServerRequestInterface $request, string $table): Response
     {
         $index = $this->buildIndex($request);
         $result = $this->previewHandler->previewAddIndex($table, $index);
@@ -165,34 +168,40 @@ final readonly class SchemaApiController
         return Response::json($result);
     }
 
-    public function previewDropIndex(Request $request, string $table): Response
+    public function previewDropIndex(ServerRequestInterface $request, string $table): Response
     {
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
         /** @var string $indexName */
-        $indexName = $request->input('name', '') ?? '';
+        $indexName = $body['name'] ?? '';
         $result = $this->previewHandler->previewDropIndex($table, $indexName);
 
         return Response::json($result);
     }
 
-    public function previewDropTable(Request $request, string $table): Response
+    public function previewDropTable(ServerRequestInterface $request, string $table): Response
     {
         $result = $this->previewHandler->previewDropTable($table);
 
         return Response::json($result);
     }
 
-    public function previewRenameTable(Request $request, string $table): Response
+    public function previewRenameTable(ServerRequestInterface $request, string $table): Response
     {
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
         /** @var string $newName */
-        $newName = $request->input('new_name', '') ?? '';
+        $newName = $body['new_name'] ?? '';
         $result = $this->previewHandler->previewRenameTable($table, $newName);
 
         return Response::json($result);
     }
 
-    public function changelog(Request $request): Response
+    public function changelog(ServerRequestInterface $request): Response
     {
-        $limit = (int) ($request->input('limit', '100') ?? '100');
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+        $limit = (int) ($body['limit'] ?? '100');
         $entries = $this->changeLog->recent($limit);
 
         $entryData = array_map(
@@ -213,28 +222,31 @@ final readonly class SchemaApiController
         return Response::json(['entries' => $entryData]);
     }
 
-    public function exportBundle(Request $request): Response
+    public function exportBundle(ServerRequestInterface $request): Response
     {
         $bundle = $this->changeLog->exportSqlBundle();
 
         return new Response(
-            body: $bundle,
-            status: ResponseStatus::OK,
-            headers: new HeaderBag([
+            statusCode: ResponseStatus::OK->value,
+            headers: [
                 'Content-Type' => 'text/plain; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="schema-changelog.sql"',
-            ]),
+            ],
+            body: $bundle,
         );
     }
 
-    private function extractContext(Request $request): MutationContext
+    private function extractContext(ServerRequestInterface $request): MutationContext
     {
         /** @var IdentityInterface|null $identity */
-        $identity = $request->attribute('identity');
+        $identity = $request->getAttribute('identity');
         $actor = $identity?->id() ?? 'anonymous';
 
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
         /** @var string $reason */
-        $reason = $request->input('reason', '') ?? '';
+        $reason = $body['reason'] ?? '';
 
         if (!is_string($reason) || mb_strlen($reason) < 5) {
             throw new AdminException(
@@ -248,19 +260,22 @@ final readonly class SchemaApiController
         );
     }
 
-    private function buildTableDefinition(Request $request): TableDefinition
+    private function buildTableDefinition(ServerRequestInterface $request): TableDefinition
     {
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
         /** @var string $name */
-        $name = $request->input('name', '') ?? '';
+        $name = $body['name'] ?? '';
 
         /** @var list<array<string, mixed>> $columnsData */
-        $columnsData = $request->input('columns', []) ?? [];
+        $columnsData = $body['columns'] ?? [];
 
         /** @var list<array<string, mixed>> $indexesData */
-        $indexesData = $request->input('indexes', []) ?? [];
+        $indexesData = $body['indexes'] ?? [];
 
         /** @var list<array<string, mixed>> $foreignKeysData */
-        $foreignKeysData = $request->input('foreign_keys', []) ?? [];
+        $foreignKeysData = $body['foreign_keys'] ?? [];
 
         $columns = array_map(fn(array $c): SchemaColumn => $this->buildColumnFromArray($c), $columnsData);
         $indexes = array_map(fn(array $i): SchemaIndex => $this->buildIndexFromArray($i), $indexesData);
@@ -274,18 +289,18 @@ final readonly class SchemaApiController
         );
     }
 
-    private function buildColumn(Request $request): SchemaColumn
+    private function buildColumn(ServerRequestInterface $request): SchemaColumn
     {
         /** @var array<string, mixed> $data */
-        $data = $request->all();
+        $data = (array) ($request->getParsedBody() ?? []);
 
         return $this->buildColumnFromArray($data);
     }
 
-    private function buildIndex(Request $request): SchemaIndex
+    private function buildIndex(ServerRequestInterface $request): SchemaIndex
     {
         /** @var array<string, mixed> $data */
-        $data = $request->all();
+        $data = (array) ($request->getParsedBody() ?? []);
 
         return $this->buildIndexFromArray($data);
     }

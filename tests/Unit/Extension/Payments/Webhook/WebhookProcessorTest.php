@@ -52,8 +52,8 @@ final class WebhookProcessorTest extends TestCase
 
         $response = $processor->process($body, $header);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('processed', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('processed', (string) $response->getBody());
         self::assertCount(1, $handler->events);
     }
 
@@ -67,7 +67,7 @@ final class WebhookProcessorTest extends TestCase
 
         $response = $processor->process($body, 't=1700000000,v1=invalid');
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
         self::assertCount(0, $handler->events);
     }
 
@@ -86,8 +86,8 @@ final class WebhookProcessorTest extends TestCase
         // Second request — same event ID
         $response = $processor->process($body, $header);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('already_processed', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('already_processed', (string) $response->getBody());
         self::assertCount(1, $handler->events); // Handler called only once
     }
 
@@ -108,7 +108,7 @@ final class WebhookProcessorTest extends TestCase
 
         $response = $processor->process($body, $header);
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
 
         // Event should be released — retry allowed
         $body2 = $this->createEventBody('evt_fail', 'payment_intent.created');
@@ -119,7 +119,7 @@ final class WebhookProcessorTest extends TestCase
 
         $response2 = $processor2->process($body2, $header2);
 
-        self::assertSame(ResponseStatus::OK, $response2->status);
+        self::assertSame(ResponseStatus::OK->value, $response2->getStatusCode());
     }
 
     #[Test]

@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
 use Pulsar\Database\Schema\SchemaCapabilities;
 use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 use function array_map;
 use function count;
+use function str_contains;
 
 /**
  * Admin schema builder HTML page controller.
@@ -28,7 +29,7 @@ final readonly class SchemaController
         private SchemaChangeLogStoreInterface $changeLog,
     ) {}
 
-    public function list(Request $request): Response
+    public function list(ServerRequestInterface $request): Response
     {
         $tables = $this->introspector->tables();
 
@@ -46,7 +47,7 @@ final readonly class SchemaController
             $tables,
         );
 
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json([
                 'tables' => $tableData,
                 'capabilities' => $this->capabilities->toArray(),
@@ -61,7 +62,7 @@ final readonly class SchemaController
         ]));
     }
 
-    public function createForm(Request $request): Response
+    public function createForm(ServerRequestInterface $request): Response
     {
         $tables = $this->introspector->tables();
         $tableNames = array_map(static fn($t): string => $t->name, $tables);
@@ -74,7 +75,7 @@ final readonly class SchemaController
         ]));
     }
 
-    public function view(Request $request, string $table): Response
+    public function view(ServerRequestInterface $request, string $table): Response
     {
         $columns = $this->introspector->columns($table);
         $pk = $this->introspector->primaryKey($table);
@@ -90,7 +91,7 @@ final readonly class SchemaController
             $columns,
         );
 
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json([
                 'table' => $table,
                 'columns' => $columnData,
@@ -109,7 +110,7 @@ final readonly class SchemaController
         ]));
     }
 
-    public function changelog(Request $request): Response
+    public function changelog(ServerRequestInterface $request): Response
     {
         $entries = $this->changeLog->recent();
 
@@ -127,7 +128,7 @@ final readonly class SchemaController
             $entries,
         );
 
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json(['entries' => $entryData]);
         }
 

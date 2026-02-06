@@ -13,24 +13,18 @@ use Pulsar\Auth\Guard\GuardInterface;
 use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 
 #[CoversClass(AuthManager::class)]
 final class AuthManagerTest extends TestCase
 {
-    private Request $request;
+    private ServerRequest $request;
 
     protected function setUp(): void
     {
-        $this->request = new Request(
-            method: Method::GET,
+        $this->request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
     }
 

@@ -4,25 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
+use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Api;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 
 /**
  * HTTP middleware contract.
  *
- * Middleware can inspect/modify requests before they reach handlers,
- * and inspect/modify responses after handlers complete.
+ * Extends PSR-15 MiddlewareInterface directly. All Pulsar middleware
+ * is PSR-15 compatible without adapters.
  */
 #[Api(since: '1.0.0')]
-interface MiddlewareInterface
-{
-    /**
-     * Process the request and return a response.
-     *
-     * @param Request $request The incoming request
-     * @param callable(Request): Response $next The next handler in the pipeline
-     * @return Response The response
-     */
-    public function process(Request $request, callable $next): Response;
-}
+interface MiddlewareInterface extends PsrMiddlewareInterface {}

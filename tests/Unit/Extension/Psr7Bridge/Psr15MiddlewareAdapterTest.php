@@ -12,10 +12,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as Psr15MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Psr7Bridge\Middleware\Psr15MiddlewareAdapter;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 use function assert;
@@ -38,32 +36,29 @@ final class Psr15MiddlewareAdapterTest extends TestCase
 
         $adapter = new Psr15MiddlewareAdapter($psr15Middleware);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         $expectedResponse = new Response(
             body: 'Hello from Pulsar',
-            status: ResponseStatus::OK,
+            statusCode: ResponseStatus::OK->value,
         );
 
-        $next = static fn(Request $req): Response => $expectedResponse;
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn($expectedResponse);
 
-        $result = $adapter->process($request, $next);
+        $result = $adapter->process($request, $handler);
 
-        self::assertSame('Hello from Pulsar', $result->body);
-        self::assertSame(ResponseStatus::OK, $result->status);
+        self::assertSame('Hello from Pulsar', (string) $result->getBody());
+        self::assertSame(ResponseStatus::OK->value, $result->getStatusCode());
     }
 
     #[Test]
     public function psr15MiddlewareCanModifyRequest(): void
     {
-        // Create a PSR-15 middleware that adds a header to the request
+        // Create a PSR-15 middleware that adds an attribute to the request
         $psr15Middleware = new class implements Psr15MiddlewareInterface {
             public function process(
                 ServerRequestInterface $request,
@@ -77,23 +72,21 @@ final class Psr15MiddlewareAdapterTest extends TestCase
 
         $adapter = new Psr15MiddlewareAdapter($psr15Middleware);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         $capturedAttribute = null;
-        $next = static function (Request $req) use (&$capturedAttribute): Response {
-            $capturedAttribute = $req->attribute('middleware_applied');
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$capturedAttribute): ResponseInterface {
+                $capturedAttribute = $req->getAttribute('middleware_applied');
+                return new Response(body: 'OK', statusCode: ResponseStatus::OK->value);
+            },
+        );
 
-            return new Response(body: 'OK', status: ResponseStatus::OK);
-        };
-
-        $adapter->process($request, $next);
+        $adapter->process($request, $handler);
 
         self::assertTrue($capturedAttribute);
     }
@@ -122,27 +115,18 @@ final class Psr15MiddlewareAdapterTest extends TestCase
 
         $adapter = new Psr15MiddlewareAdapter($psr15Middleware);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/admin',
-            path: '/admin',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
-        $nextCalled = false;
-        $next = static function (Request $req) use (&$nextCalled): Response {
-            $nextCalled = true;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->never())->method('handle');
 
-            return new Response(body: 'Should not reach here', status: ResponseStatus::OK);
-        };
+        $result = $adapter->process($request, $handler);
 
-        $result = $adapter->process($request, $next);
-
-        self::assertFalse($nextCalled);
-        self::assertSame(ResponseStatus::Forbidden, $result->status);
-        self::assertSame('Access denied', $result->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $result->getStatusCode());
+        self::assertSame('Access denied', (string) $result->getBody());
     }
 
     #[Test]
@@ -162,24 +146,21 @@ final class Psr15MiddlewareAdapterTest extends TestCase
 
         $adapter = new Psr15MiddlewareAdapter($psr15Middleware);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
-        $next = static fn(Request $req): Response => new Response(
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(
             body: 'Original',
-            status: ResponseStatus::OK,
-        );
+            statusCode: ResponseStatus::OK->value,
+        ));
 
-        $result = $adapter->process($request, $next);
+        $result = $adapter->process($request, $handler);
 
-        self::assertSame('Original', $result->body);
-        self::assertSame('PSR-15', $result->headers->first('X-Processed-By'));
+        self::assertSame('Original', (string) $result->getBody());
+        self::assertSame('PSR-15', $result->getHeaderLine('X-Processed-By'));
     }
 
     #[Test]
@@ -201,28 +182,28 @@ final class Psr15MiddlewareAdapterTest extends TestCase
 
         $adapter = new Psr15MiddlewareAdapter($psr15Middleware);
 
-        $request = new Request(
-            method: Method::POST,
+        $request = new ServerRequest(
+            method: 'POST',
             uri: '/api/data?page=1',
-            path: '/api/data',
-            queryString: 'page=1',
-            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            headers: ['Content-Type' => 'application/json'],
             body: '{"key":"value"}',
-            query: ['page' => '1'],
-            post: ['key' => 'value'],
+            queryParams: ['page' => '1'],
+            parsedBody: ['key' => 'value'],
         );
 
         $capturedRequest = null;
-        $next = static function (Request $req) use (&$capturedRequest): Response {
-            $capturedRequest = $req;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$capturedRequest): ResponseInterface {
+                $capturedRequest = $req;
+                return new Response(body: 'Done', statusCode: ResponseStatus::OK->value);
+            },
+        );
 
-            return new Response(body: 'Done', status: ResponseStatus::OK);
-        };
-
-        $adapter->process($request, $next);
+        $adapter->process($request, $handler);
 
         self::assertNotNull($capturedRequest);
-        self::assertSame(Method::POST, $capturedRequest->method);
-        self::assertSame(['page' => '1'], $capturedRequest->query);
+        self::assertSame('POST', $capturedRequest->getMethod());
+        self::assertSame(['page' => '1'], $capturedRequest->getQueryParams());
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Http\Request;
 
 /**
  * Lazy identity resolver.
@@ -20,7 +20,7 @@ final class SecurityContext
 
     public function __construct(
         private readonly AuthManagerInterface $authManager,
-        private readonly Request $request,
+        private readonly ServerRequestInterface $request,
     ) {}
 
     /**

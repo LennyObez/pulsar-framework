@@ -7,6 +7,8 @@ namespace Pulsar\Tests\Unit\Auth\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\Identity;
@@ -14,30 +16,24 @@ use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Auth\Middleware\TwoFactorMiddleware;
 use Pulsar\Auth\SecurityContext;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(TwoFactorMiddleware::class)]
 final class TwoFactorMiddlewareTest extends TestCase
 {
-    private function createRequest(string $path = '/test'): Request
+    private function createRequest(string $path = '/test'): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
     }
 
     private function createSecurityContextWithIdentity(
         IdentityInterface $identity,
-        Request $request,
+        ServerRequestInterface $request,
     ): SecurityContext {
         $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($identity);
@@ -51,11 +47,12 @@ final class TwoFactorMiddlewareTest extends TestCase
         $middleware = new TwoFactorMiddleware();
 
         $request = $this->createRequest();
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: ResponseStatus::OK->value, body: 'OK'));
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -74,11 +71,12 @@ final class TwoFactorMiddlewareTest extends TestCase
         $securityContext = $this->createSecurityContextWithIdentity($identity, $request);
         $request = $request->withAttribute('_security_context', $securityContext);
 
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: ResponseStatus::OK->value, body: 'OK'));
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -97,11 +95,12 @@ final class TwoFactorMiddlewareTest extends TestCase
         $securityContext = $this->createSecurityContextWithIdentity($identity, $request);
         $request = $request->withAttribute('_security_context', $securityContext);
 
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: ResponseStatus::OK->value, body: 'OK'));
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -120,11 +119,12 @@ final class TwoFactorMiddlewareTest extends TestCase
         $securityContext = $this->createSecurityContextWithIdentity($identity, $request);
         $request = $request->withAttribute('_security_context', $securityContext);
 
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: ResponseStatus::OK->value, body: 'OK'));
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -139,10 +139,11 @@ final class TwoFactorMiddlewareTest extends TestCase
         );
         $request = $request->withAttribute('_security_context', $securityContext);
 
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: ResponseStatus::OK->value, body: 'OK'));
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 }

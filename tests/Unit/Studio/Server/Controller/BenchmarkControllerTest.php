@@ -10,23 +10,17 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Extension\Studio\Server\Controller\BenchmarkController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(BenchmarkController::class)]
 final class BenchmarkControllerTest extends TestCase
 {
-    private function createRequest(): Request
+    private function createRequest(): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/studio/console/benchmarks',
-            path: '/studio/console/benchmarks',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 
@@ -39,9 +33,9 @@ final class BenchmarkControllerTest extends TestCase
         $controller = new BenchmarkController($aggregator);
         $response = $controller->handle($this->createRequest());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('text/html; charset=utf-8', $response->contentType());
-        self::assertStringContainsString('<!DOCTYPE html>', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('<!DOCTYPE html>', (string) $response->getBody());
     }
 
     #[Test]
@@ -53,7 +47,7 @@ final class BenchmarkControllerTest extends TestCase
         $controller = new BenchmarkController($aggregator);
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('data-page="benchmark-dashboard"', $response->body);
+        self::assertStringContainsString('data-page="benchmark-dashboard"', (string) $response->getBody());
     }
 
     #[Test]
@@ -65,7 +59,7 @@ final class BenchmarkControllerTest extends TestCase
         $controller = new BenchmarkController($aggregator);
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('data-payload="', $response->body);
+        self::assertStringContainsString('data-payload="', (string) $response->getBody());
     }
 
     #[Test]
@@ -77,8 +71,8 @@ final class BenchmarkControllerTest extends TestCase
         $controller = new BenchmarkController($aggregator);
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('&quot;runs&quot;:[]', $response->body);
-        self::assertStringContainsString('&quot;latest_profiles&quot;:[]', $response->body);
+        self::assertStringContainsString('&quot;runs&quot;:[]', (string) $response->getBody());
+        self::assertStringContainsString('&quot;latest_profiles&quot;:[]', (string) $response->getBody());
     }
 
     #[Test]
@@ -90,7 +84,7 @@ final class BenchmarkControllerTest extends TestCase
         $controller = new BenchmarkController($aggregator);
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('<title>Benchmarks - Pulsar Studio</title>', $response->body);
+        self::assertStringContainsString('<title>Benchmarks - Pulsar Studio</title>', (string) $response->getBody());
     }
 
     #[Test]
@@ -102,7 +96,7 @@ final class BenchmarkControllerTest extends TestCase
         $controller = new BenchmarkController($aggregator);
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('href="/studio/assets/studio.css"', $response->body);
-        self::assertStringContainsString('src="/studio/assets/main.js"', $response->body);
+        self::assertStringContainsString('href="/studio/assets/studio.css"', (string) $response->getBody());
+        self::assertStringContainsString('src="/studio/assets/main.js"', (string) $response->getBody());
     }
 }

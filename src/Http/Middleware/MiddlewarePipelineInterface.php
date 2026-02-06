@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
+use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Api;
 
 /**
@@ -18,7 +19,7 @@ interface MiddlewarePipelineInterface
     /**
      * Add middleware to the pipeline.
      *
-     * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
+     * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
      */
-    public function pipe(MiddlewareInterface|string $middleware): MiddlewarePipelineInterface;
+    public function pipe(PsrMiddlewareInterface|string $middleware): MiddlewarePipelineInterface;
 }

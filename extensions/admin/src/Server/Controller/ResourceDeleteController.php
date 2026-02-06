@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceHandler;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceRequest;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 /**
@@ -23,15 +23,18 @@ final readonly class ResourceDeleteController
         private DeleteResourceHandler $handler,
     ) {}
 
-    public function delete(Request $request, string $resource, string $id): Response
+    public function delete(ServerRequestInterface $request, string $resource, string $id): Response
     {
         /** @var IdentityInterface|null $identity */
-        $identity = $request->attribute('identity');
+        $identity = $request->getAttribute('identity');
         $actor = $identity?->id() ?? 'anonymous';
+
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
 
         $context = new MutationContext(
             actor: $actor,
-            reason: $request->input('reason', 'Admin panel delete') ?? 'Admin panel delete',
+            reason: (string) ($body['reason'] ?? 'Admin panel delete'),
         );
 
         $result = $this->handler->execute(new DeleteResourceRequest(
@@ -42,7 +45,7 @@ final readonly class ResourceDeleteController
 
         return Response::json(
             ['success' => $result->result->success, 'message' => $result->result->message],
-            $result->result->success ? ResponseStatus::OK : ResponseStatus::NotFound,
+            $result->result->success ? ResponseStatus::OK->value : ResponseStatus::NotFound->value,
         );
     }
 }

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
 /**
@@ -23,15 +25,15 @@ final readonly class AdminAccessMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if (!$this->config->enabled) {
             return Response::json(
                 ['error' => 'Admin panel is disabled'],
-                ResponseStatus::NotFound,
+                ResponseStatus::NotFound->value,
             );
         }
 
-        return $next($request);
+        return $handler->handle($request);
     }
 }

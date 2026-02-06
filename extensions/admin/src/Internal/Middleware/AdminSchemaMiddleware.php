@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\PolicyContext;
 use Pulsar\Auth\Authorization\PolicyInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
 use Pulsar\Extension\Admin\Domain\AdminPermission;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function in_array;
@@ -34,22 +36,22 @@ final readonly class AdminSchemaMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if (!$this->config->enabled) {
             return Response::json(
                 ['error' => 'Schema management is disabled'],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 
         /** @var IdentityInterface|null $identity */
-        $identity = $request->attribute('identity');
+        $identity = $request->getAttribute('identity');
 
         if ($identity === null) {
             return Response::json(
                 ['error' => 'Authentication required'],
-                ResponseStatus::Unauthorized,
+                ResponseStatus::Unauthorized->value,
             );
         }
 
@@ -62,7 +64,7 @@ final readonly class AdminSchemaMiddleware implements MiddlewareInterface
         if ($result !== true) {
             return Response::json(
                 ['error' => 'Schema viewing not permitted'],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 
@@ -81,31 +83,31 @@ final readonly class AdminSchemaMiddleware implements MiddlewareInterface
                 if ($opResult !== true) {
                     return Response::json(
                         ['error' => "Permission denied for schema operation: $operation"],
-                        ResponseStatus::Forbidden,
+                        ResponseStatus::Forbidden->value,
                     );
                 }
 
                 // Step-up auth check for destructive operations
                 if (in_array($operation, $this->config->requireStepUpFor, true)) {
-                    $stepUpVerified = $request->attribute('step_up_verified');
+                    $stepUpVerified = $request->getAttribute('step_up_verified');
 
-                    if ($stepUpVerified !== true && $request->header('X-Step-Up-Token') === null) {
+                    if ($stepUpVerified !== true && $request->getHeaderLine('X-Step-Up-Token') === '') {
                         return Response::json(
                             ['error' => 'Step-up authentication required for this operation', 'step_up_required' => true],
-                            ResponseStatus::Forbidden,
+                            ResponseStatus::Forbidden->value,
                         );
                     }
                 }
             }
         }
 
-        return $next($request);
+        return $handler->handle($request);
     }
 
-    private function detectOperation(Request $request): ?string
+    private function detectOperation(ServerRequestInterface $request): ?string
     {
-        $method = $request->method->value;
-        $path = $request->path;
+        $method = $request->getMethod();
+        $path = $request->getUri()->getPath();
 
         // Preview routes are read-only
         if (str_contains($path, '/preview/')) {
