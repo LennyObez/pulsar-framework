@@ -52,6 +52,7 @@ use Pulsar\Console\Command\MigrateStatusCommand;
 use Pulsar\Console\Command\NewCommand;
 use Pulsar\Console\Command\OptimizeCommand;
 use Pulsar\Console\Command\OptimizeClearCommand;
+use Pulsar\Console\Command\PreloadDumpCommand;
 use Pulsar\Console\Command\QueueFailedCommand;
 use Pulsar\Console\Command\QueueFlushCommand;
 use Pulsar\Console\Command\QueueRetryCommand;
@@ -171,6 +172,7 @@ $application->addCommands([
     new NewCommand(),
     new ScaffoldModuleCommand(),
     new ScaffoldExtensionCommand(),
+    new PreloadDumpCommand(),
 ]);
 
 // Register optimize commands (cache subsystem)

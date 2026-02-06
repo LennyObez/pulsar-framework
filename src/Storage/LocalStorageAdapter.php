@@ -18,6 +18,10 @@ use function is_file;
 use const LOCK_EX;
 
 use function mkdir;
+
+use NoDiscard;
+use Override;
+
 use function str_contains;
 use function str_starts_with;
 use function strlen;
@@ -38,6 +42,7 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
         $this->basePath = rtrim($basePath, '/\\');
     }
 
+    #[Override]
     public function put(string $key, string $content, ?StorageMetadata $metadata = null): void
     {
         $path = $this->resolvePath($key);
@@ -54,6 +59,8 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
         }
     }
 
+    #[Override]
+    #[NoDiscard]
     public function get(string $key): string
     {
         $path = $this->resolvePath($key);
@@ -71,11 +78,13 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
         return $content;
     }
 
+    #[Override]
     public function exists(string $key): bool
     {
         return is_file($this->resolvePath($key));
     }
 
+    #[Override]
     public function delete(string $key): void
     {
         $path = $this->resolvePath($key);
@@ -89,6 +98,7 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
         }
     }
 
+    #[Override]
     public function list(string $prefix = ''): array
     {
         $dir = $prefix !== '' ? $this->resolvePath($prefix) : $this->basePath;
@@ -103,6 +113,7 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
         return $objects;
     }
 
+    #[Override]
     public function temporaryUrl(string $key, int $expiresInSeconds = 3600): ?string
     {
         return null;

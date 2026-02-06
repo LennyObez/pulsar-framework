@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -21,82 +22,70 @@ readonly class Response
 
     /**
      * Return a new response with the given body.
+     *
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement -- Psalm does not yet infer clone() return type
      */
+    #[NoDiscard]
     public function withBody(string $body): self
     {
-        return new self(
-            body: $body,
-            status: $this->status,
-            headers: $this->headers,
-            protocolVersion: $this->protocolVersion,
-        );
+        return clone($this, ['body' => $body]);
     }
 
     /**
      * Return a new response with the given status.
+     *
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
+    #[NoDiscard]
     public function withStatus(ResponseStatus $status): self
     {
-        return new self(
-            body: $this->body,
-            status: $status,
-            headers: $this->headers,
-            protocolVersion: $this->protocolVersion,
-        );
+        return clone($this, ['status' => $status]);
     }
 
     /**
      * Return a new response with the given header.
      *
      * @param string|list<string> $value
+     *
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
+    #[NoDiscard]
     public function withHeader(string $name, string|array $value): self
     {
-        return new self(
-            body: $this->body,
-            status: $this->status,
-            headers: $this->headers->with($name, $value),
-            protocolVersion: $this->protocolVersion,
-        );
+        return clone($this, ['headers' => $this->headers->with($name, $value)]);
     }
 
     /**
      * Return a new response with an added header value.
+     *
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
+    #[NoDiscard]
     public function withAddedHeader(string $name, string $value): self
     {
-        return new self(
-            body: $this->body,
-            status: $this->status,
-            headers: $this->headers->withAdded($name, $value),
-            protocolVersion: $this->protocolVersion,
-        );
+        return clone($this, ['headers' => $this->headers->withAdded($name, $value)]);
     }
 
     /**
      * Return a new response without the given header.
+     *
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
+    #[NoDiscard]
     public function withoutHeader(string $name): self
     {
-        return new self(
-            body: $this->body,
-            status: $this->status,
-            headers: $this->headers->without($name),
-            protocolVersion: $this->protocolVersion,
-        );
+        return clone($this, ['headers' => $this->headers->without($name)]);
     }
 
     /**
      * Return a new response with the given protocol version.
+     *
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
+    #[NoDiscard]
     public function withProtocolVersion(string $version): self
     {
-        return new self(
-            body: $this->body,
-            status: $this->status,
-            headers: $this->headers,
-            protocolVersion: $version,
-        );
+        return clone($this, ['protocolVersion' => $version]);
     }
 
     /**
@@ -133,6 +122,7 @@ readonly class Response
      *
      * @return self
      */
+    #[NoDiscard]
     public static function json(
         mixed $data,
         ResponseStatus $status = ResponseStatus::OK,
@@ -154,6 +144,7 @@ readonly class Response
     /**
      * Create an HTML response.
      */
+    #[NoDiscard]
     public static function html(
         string $html,
         ResponseStatus $status = ResponseStatus::OK,
@@ -170,6 +161,7 @@ readonly class Response
     /**
      * Create a plain text response.
      */
+    #[NoDiscard]
     public static function text(
         string $text,
         ResponseStatus $status = ResponseStatus::OK,
@@ -186,6 +178,7 @@ readonly class Response
     /**
      * Create a redirect response.
      */
+    #[NoDiscard]
     public static function redirect(
         string $url,
         ResponseStatus $status = ResponseStatus::Found,
@@ -202,6 +195,7 @@ readonly class Response
     /**
      * Create an empty response (204 No Content).
      */
+    #[NoDiscard]
     public static function noContent(): self
     {
         return new self(
@@ -215,6 +209,7 @@ readonly class Response
      *
      * @param list<array{field: string, message: string, rule: string}> $violations
      */
+    #[NoDiscard]
     public static function validationError(array $violations): self
     {
         return self::json(

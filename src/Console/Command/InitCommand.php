@@ -7,6 +7,7 @@ namespace Pulsar\Console\Command;
 use function dirname;
 use function is_string;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -19,6 +20,7 @@ use function sprintf;
  */
 final class InitCommand extends Command
 {
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'init';
@@ -27,6 +29,7 @@ final class InitCommand extends Command
         $this->addOption('force', 'Overwrite existing files', 'f');
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $directory = $input->getArgument(0) ?? getcwd();

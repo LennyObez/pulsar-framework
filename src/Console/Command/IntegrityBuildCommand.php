@@ -17,6 +17,7 @@ use JsonException;
 
 use function mkdir;
 
+use Override;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -46,6 +47,7 @@ final class IntegrityBuildCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'integrity:build';
@@ -58,6 +60,7 @@ final class IntegrityBuildCommand extends Command
      * @throws JsonException If manifest canonicalization fails during signing
      * @throws SecurityException If the master key is missing or invalid when --sign is used
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $sign = $input->hasOption('sign');

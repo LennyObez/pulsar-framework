@@ -6,6 +6,7 @@ namespace Pulsar\Studio\Console\Evidence;
 
 use function hash;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Studio\Console\Event\EventEnvelope;
@@ -30,6 +31,7 @@ final class HashChain
     /**
      * Get the seed hash (anchor for the first link).
      */
+    #[NoDiscard]
     public static function seedHash(): string
     {
         return hash('sha256', self::CHAIN_SEED_INPUT);
@@ -60,6 +62,7 @@ final class HashChain
     /**
      * Verify a chain link's hash against its predecessor and canonical event data.
      */
+    #[NoDiscard]
     public static function verifyLinkHash(string $previousHash, string $canonical, string $expectedHash): bool
     {
         $computed = hash('sha256', $previousHash . '|' . $canonical);
@@ -72,6 +75,7 @@ final class HashChain
      *
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function verifyLinkMac(string $currentHash, string $expectedMac, string $chainMacKey): bool
     {
         return Hmac::verifyHex($currentHash, $expectedMac, $chainMacKey);

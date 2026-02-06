@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\AppConfig;
 use Pulsar\Deploy\CheckResult;
@@ -21,16 +22,19 @@ final readonly class DebugModeCheck implements DeployCheckInterface
         private AppConfig $appConfig,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return self::CHECK_NAME;
     }
 
+    #[Override]
     public function getDescription(): string
     {
         return 'Validates debug mode is disabled in staging and production';
     }
 
+    #[Override]
     public function check(string $environment): CheckResult
     {
         if (!$this->appConfig->debug) {

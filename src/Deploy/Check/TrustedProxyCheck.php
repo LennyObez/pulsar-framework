@@ -6,6 +6,7 @@ namespace Pulsar\Deploy\Check;
 
 use function count;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\DeployConfig;
 use Pulsar\Deploy\CheckResult;
@@ -29,16 +30,19 @@ final readonly class TrustedProxyCheck implements DeployCheckInterface
         private DeployConfig $deployConfig,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return self::CHECK_NAME;
     }
 
+    #[Override]
     public function getDescription(): string
     {
         return 'Validates trusted proxies are configured for reverse-proxy environments';
     }
 
+    #[Override]
     public function check(string $environment): CheckResult
     {
         if ($this->deployConfig->trustedProxies !== []) {

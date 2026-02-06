@@ -7,6 +7,7 @@ namespace Pulsar\Studio\Command\Console;
 use function count;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -30,6 +31,7 @@ final class ConsoleTimelineCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:timeline';
@@ -41,6 +43,7 @@ final class ConsoleTimelineCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         /** @var string $rawLimit */

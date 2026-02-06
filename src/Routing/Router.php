@@ -215,11 +215,8 @@ final class Router
      */
     public function url(string $name, array $parameters = []): string
     {
-        $route = $this->getByName($name);
-
-        if ($route === null) {
-            throw new InvalidArgumentException(sprintf('Route "%s" not found', $name));
-        }
+        $route = $this->getByName($name)
+            ?? throw new InvalidArgumentException(sprintf('Route "%s" not found', $name));
 
         $path = $route->path;
 

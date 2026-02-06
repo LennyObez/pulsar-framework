@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Integrity;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\IntegrityPolicyMode;
@@ -21,6 +22,7 @@ final readonly class IntegrityPolicy
     /**
      * Create an IntegrityPolicy from the integrity configuration.
      */
+    #[NoDiscard]
     public static function fromConfig(IntegrityConfig $config): self
     {
         return new self(

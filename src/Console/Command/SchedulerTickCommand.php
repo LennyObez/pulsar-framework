@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Console\Command;
 
 use DateInvalidTimeZoneException;
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -25,6 +26,7 @@ final class SchedulerTickCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'scheduler:tick';
@@ -35,6 +37,7 @@ final class SchedulerTickCommand extends Command
      * @throws DateInvalidTimeZoneException If a job's schedule has an invalid timezone.
      * @throws SchedulerException If a job's cron expression is invalid.
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $result = $this->scheduler->tick();

@@ -59,7 +59,7 @@ final class TenantContextTest extends TestCase
 
         $this->expectException(TenancyException::class);
 
-        $context->get();
+        $_ = $context->get();
     }
 
     #[Test]

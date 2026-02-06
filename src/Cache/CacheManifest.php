@@ -25,6 +25,7 @@ use function ksort;
 
 use const LOCK_EX;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Hmac;
 use SodiumException;
@@ -119,6 +120,7 @@ final class CacheManifest
      * @throws JsonException
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function load(string $cachePath, string $hmacKey): ?self
     {
         $path = $cachePath . DIRECTORY_SEPARATOR . self::FILENAME;
@@ -227,6 +229,7 @@ final class CacheManifest
      *
      * @throws JsonException
      */
+    #[NoDiscard]
     public static function canonicalize(array $data): string
     {
         self::recursiveKsort($data);

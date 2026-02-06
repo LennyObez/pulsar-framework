@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -25,6 +26,7 @@ readonly class AuthGuardConfig
      *
      * @param array<string, mixed> $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
         $rawName = $data['name'] ?? '';

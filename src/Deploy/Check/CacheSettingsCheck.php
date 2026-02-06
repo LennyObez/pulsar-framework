@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Deploy\Check;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Deploy\CheckResult;
@@ -26,11 +27,13 @@ final readonly class CacheSettingsCheck implements DeployCheckInterface
         private FrameworkCache $frameworkCache,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return self::CHECK_NAME;
     }
 
+    #[Override]
     public function getDescription(): string
     {
         return 'Validates the framework cache is warm for production performance';
@@ -40,6 +43,7 @@ final readonly class CacheSettingsCheck implements DeployCheckInterface
      * @throws JsonException If cache manifest deserialization fails
      * @throws SodiumException If HMAC verification fails during cache check
      */
+    #[Override]
     public function check(string $environment): CheckResult
     {
         $isWarm = $this->frameworkCache->isWarm();

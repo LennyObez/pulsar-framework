@@ -8,6 +8,9 @@ use function count;
 use function ctype_xdigit;
 use function explode;
 use function hexdec;
+
+use NoDiscard;
+
 use function sprintf;
 use function strlen;
 use function strtolower;
@@ -27,6 +30,7 @@ final class W3CTraceContextParser
      *
      * Returns null if the header is malformed.
      */
+    #[NoDiscard]
     public static function parse(string $header): ?TraceContext
     {
         $parts = explode('-', strtolower($header));
@@ -67,6 +71,7 @@ final class W3CTraceContextParser
     /**
      * Serialize a TraceContext to a traceparent header value.
      */
+    #[NoDiscard]
     public static function serialize(TraceContext $context): string
     {
         return sprintf(

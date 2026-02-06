@@ -12,6 +12,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\InputInterface;
@@ -33,6 +34,7 @@ final class ConsoleTailCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:tail';
@@ -44,6 +46,7 @@ final class ConsoleTailCommand extends Command
     }
 
     /** @psalm-suppress InvalidReturnType Infinite poll loop — exits only via SIGINT */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $rawTypeOption = $input->hasOption('type') ? $input->getOption('type') : null;

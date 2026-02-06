@@ -22,10 +22,9 @@ use Pulsar\Studio\Console\Redaction\RedactionPipeline;
 use Pulsar\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Tenancy\TenantContext;
+use Random\Engine\Secure;
 use Random\RandomException;
-
-use function random_int;
-
+use Random\Randomizer;
 use Throwable;
 
 /**
@@ -38,6 +37,8 @@ use Throwable;
 #[Internal]
 final readonly class StudioManager
 {
+    private Randomizer $randomizer;
+
     public function __construct(
         private EventStoreInterface $store,
         private EventFactory $eventFactory,
@@ -45,7 +46,10 @@ final readonly class StudioManager
         private ?TenantContext $tenantContext = null,
         private ?string $chainMacKey = null,
         private float $samplingRate = 1.0,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * Ingest a console event through the full pipeline.
@@ -163,6 +167,6 @@ final readonly class StudioManager
     private function shouldSample(): bool
     {
         // samplingRate 1.0 = 100%, 0.1 = 10%
-        return (float) random_int(1, 10000) <= $this->samplingRate * 10000.0;
+        return (float) $this->randomizer->getInt(1, 10000) <= $this->samplingRate * 10000.0;
     }
 }

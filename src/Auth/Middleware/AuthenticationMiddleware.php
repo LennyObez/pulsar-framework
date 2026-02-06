@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Middleware;
 
+use Override;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\SecurityContext;
@@ -26,6 +27,7 @@ final readonly class AuthenticationMiddleware implements MiddlewareInterface
         private AuthManagerInterface $authManager,
     ) {}
 
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
         $securityContext = new SecurityContext($this->authManager, $request);

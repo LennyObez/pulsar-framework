@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\FeatureFlag;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -33,6 +34,7 @@ readonly class FlagDefinition
      *
      * @param array<string, mixed> $data
      */
+    #[NoDiscard]
     public static function fromArray(string $name, array $data): self
     {
         /** @var string $typeValue */

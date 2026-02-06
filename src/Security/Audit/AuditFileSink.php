@@ -18,6 +18,7 @@ use const LOCK_EX;
 
 use function mkdir;
 
+use Override;
 use Pulsar\Security\Exception\SecurityException;
 
 use function sprintf;
@@ -43,6 +44,7 @@ final class AuditFileSink implements AuditSinkInterface
     /**
      * @throws JsonException
      */
+    #[Override]
     public function write(AuditEntry $entry): void
     {
         $this->ensureDirectory();

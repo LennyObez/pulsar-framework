@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Tracing;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Random\RandomException;
 
@@ -49,6 +50,7 @@ final readonly class TraceContext
      *
      * @throws RandomException
      */
+    #[NoDiscard]
     public static function create(): self
     {
         return new self(

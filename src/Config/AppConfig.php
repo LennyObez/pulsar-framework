@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -29,6 +30,7 @@ readonly class AppConfig
      *
      * @param array<string, mixed> $data Raw array from config/app.php
      */
+    #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
         // Resolve mode: env var overrides file value
