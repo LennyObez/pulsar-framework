@@ -54,12 +54,12 @@ final readonly class StudioManager
      */
     public function ingest(ConsoleEvent $event, ?CorrelationContext $context = null): void
     {
-        // Sampling: skip event based on configured rate
-        if ($this->samplingRate < 1.0 && !$this->shouldSample()) {
-            return;
-        }
-
         try {
+            // Sampling: skip event based on configured rate
+            if ($this->samplingRate < 1.0 && !$this->shouldSample()) {
+                return;
+            }
+
             $this->doIngest($event, $context);
         } catch (Throwable) {
             // Ingest failures are silently swallowed — Studio must never crash the app

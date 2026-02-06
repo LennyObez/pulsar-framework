@@ -10,6 +10,7 @@ use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command\ScaffoldTrait;
 use Pulsar\Console\OutputInterface;
+use Random\RandomException;
 use RuntimeException;
 
 use function sprintf;
@@ -45,6 +46,7 @@ final class ProjectGenerator
      *
      * @throws RuntimeException If the target path already exists
      * @throws JsonException If composer.json encoding fails
+     * @throws RandomException If cryptographic random generation fails
      */
     public function generate(
         string $name,

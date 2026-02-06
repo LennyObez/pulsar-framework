@@ -17,7 +17,7 @@ use Pulsar\Api\Internal;
 final readonly class TemplateRegistry
 {
     public function __construct(
-        private readonly ComposerJsonGenerator $composerGenerator,
+        private ComposerJsonGenerator $composerGenerator,
     ) {}
 
     /**

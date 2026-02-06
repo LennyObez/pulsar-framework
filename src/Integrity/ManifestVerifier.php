@@ -38,7 +38,7 @@ use function substr;
 final readonly class ManifestVerifier
 {
     public function __construct(
-        private readonly string $basePath,
+        private string $basePath,
     ) {}
 
     /**

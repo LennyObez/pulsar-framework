@@ -21,6 +21,7 @@ use Pulsar\Core\Version;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
+use ReflectionException;
 use SodiumException;
 
 use function sort;
@@ -98,6 +99,11 @@ final class FrameworkCache
      * @param list<Route> $routes
      * @param array<class-string, list<array{name: string, type: class-string}>> $containerHints
      * @return array{configCached: bool, routesCached: int, routesSkipped: int, skippedRoutes: list<string>, containerCached: bool}
+     *
+     * @throws CacheException
+     * @throws JsonException
+     * @throws ReflectionException
+     * @throws SodiumException
      */
     public function warm(
         ConfigRepository $repository,
@@ -118,6 +124,8 @@ final class FrameworkCache
 
     /**
      * Clear all cache files.
+     *
+     * @throws CacheException
      */
     public function clear(): void
     {
@@ -146,6 +154,7 @@ final class FrameworkCache
     /**
      * Check if a warm cache exists and is valid.
      *
+     * @throws JsonException
      * @throws SodiumException
      */
     public function isWarm(): bool
@@ -160,6 +169,8 @@ final class FrameworkCache
      *
      * @return array{manifest: CacheManifest, config: ?ConfigRepository, routes: ?list<CachedRoute>, containerHints: ?array<class-string, list<array{name: string, type: class-string}>>}|null
      *
+     * @throws CacheException
+     * @throws JsonException
      * @throws SodiumException
      */
     public function load(string $configPath): ?array
@@ -282,7 +293,9 @@ final class FrameworkCache
      * @param array<class-string, list<array{name: string, type: class-string}>> $containerHints
      * @return array{configCached: bool, routesCached: int, routesSkipped: int, skippedRoutes: list<string>, containerCached: bool}
      *
+     * @throws CacheException
      * @throws JsonException
+     * @throws ReflectionException
      * @throws SodiumException
      */
     private function doWarm(

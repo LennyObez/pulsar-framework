@@ -5,8 +5,10 @@
   "license": "Apache-2.0",
   "require": {
     "ext-ctype": "*",
+    "ext-curl": "*",
     "ext-mbstring": "*",
     "ext-pdo": "*",
+    "ext-simplexml": "*",
     "ext-sodium": "*",
     "php": "^8.5",
     "psr/container": "^2.0",
@@ -22,9 +24,7 @@
     "vimeo/psalm": "^6.15"
   },
   "suggest": {
-    "ext-curl": "Required for S3 storage adapter",
-    "ext-pcntl": "Required for queue worker signal handling",
-    "ext-simplexml": "Required for S3 XML response parsing"
+    "ext-pcntl": "Required for queue worker signal handling (Unix only)"
   },
   "autoload": {
     "psr-4": {

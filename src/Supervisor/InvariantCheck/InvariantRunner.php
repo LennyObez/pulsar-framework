@@ -13,7 +13,7 @@ use Pulsar\Api\Internal;
 final readonly class InvariantRunner
 {
     /** @var list<InvariantCheckInterface> */
-    private readonly array $checks;
+    private array $checks;
 
     /**
      * @param list<InvariantCheckInterface> $checks

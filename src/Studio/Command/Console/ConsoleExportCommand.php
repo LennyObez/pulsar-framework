@@ -18,6 +18,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Studio\Exception\StudioException;
+use SodiumException;
 
 use function sprintf;
 use function strlen;
@@ -45,6 +46,7 @@ final class ConsoleExportCommand extends Command
 
     /**
      * @throws JsonException
+     * @throws SodiumException If HMAC computation fails during export
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -89,10 +91,10 @@ final class ConsoleExportCommand extends Command
             $output->writeln(JsonOutputHelper::formatJson($metadata));
         } else {
             $output->success(sprintf('Archive exported to %s', $outputPath));
-            $output->writeln(sprintf('  Events:      %d', $eventCount));
-            $output->writeln(sprintf('  Chain links: %d', $chainLinkCount));
-            $output->writeln(sprintf('  Size:        %d bytes', $metadata['size_bytes']));
-            $output->writeln(sprintf('  MAC:         %s', $metadata['mac_included'] ? 'Included' : 'None'));
+            JsonOutputHelper::writeField($output, 'Events', (string) $eventCount);
+            JsonOutputHelper::writeField($output, 'Chain links', (string) $chainLinkCount);
+            JsonOutputHelper::writeField($output, 'Size', sprintf('%d bytes', $metadata['size_bytes']));
+            JsonOutputHelper::writeField($output, 'MAC', $metadata['mac_included'] ? 'Included' : 'None');
         }
 
         return ExitCode::Success->value;

@@ -22,8 +22,8 @@ use function time;
 final readonly class StuckJobDetector
 {
     public function __construct(
-        private readonly StuckJobPolicy $policy,
-        private readonly QueueDriverInterface $driver,
+        private StuckJobPolicy $policy,
+        private QueueDriverInterface $driver,
     ) {}
 
     /**

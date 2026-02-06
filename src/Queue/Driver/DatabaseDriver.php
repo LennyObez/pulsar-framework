@@ -12,6 +12,7 @@ use Pulsar\Database\Row;
 use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueDriverInterface;
+use Random\RandomException;
 
 use function random_bytes;
 use function time;
@@ -39,10 +40,10 @@ use function time;
 final readonly class DatabaseDriver implements QueueDriverInterface
 {
     public function __construct(
-        private readonly ConnectionManagerInterface $connections,
+        private ConnectionManagerInterface $connections,
     ) {}
 
-    /** @throws \Random\RandomException If random byte generation fails */
+    /** @throws RandomException If random byte generation fails */
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string
     {
         $id = bin2hex(random_bytes(16));

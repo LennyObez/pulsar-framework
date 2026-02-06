@@ -19,6 +19,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Studio\Console\Evidence\EvidenceArchive;
 use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
+use SodiumException;
 
 use function sprintf;
 use function str_repeat;
@@ -48,6 +49,7 @@ final class ConsoleVerifyCommand extends Command
 
     /**
      * @throws JsonException
+     * @throws SodiumException If MAC verification fails
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -141,13 +143,13 @@ final class ConsoleVerifyCommand extends Command
         /** @var int $linksPruned */
         $linksPruned = $result['links_pruned'] ?? 0;
 
-        $this->writeField($output, 'Mode', $verificationMode);
-        $this->writeField($output, 'Chain mode', $chainMode);
-        $this->writeField($output, 'Anchor', $anchorType);
-        $this->writeField($output, 'Links', sprintf('%d verified', $linksVerified));
+        JsonOutputHelper::writeField($output, 'Mode', $verificationMode, 14);
+        JsonOutputHelper::writeField($output, 'Chain mode', $chainMode, 14);
+        JsonOutputHelper::writeField($output, 'Anchor', $anchorType, 14);
+        JsonOutputHelper::writeField($output, 'Links', sprintf('%d verified', $linksVerified), 14);
 
         if ($linksPruned > 0) {
-            $this->writeField($output, 'Pruned', sprintf('%d links (by retention)', $linksPruned));
+            JsonOutputHelper::writeField($output, 'Pruned', sprintf('%d links (by retention)', $linksPruned), 14);
         }
 
         $output->newLine();
@@ -180,20 +182,12 @@ final class ConsoleVerifyCommand extends Command
 
         if (isset($result['mac_verified'])) {
             $output->newLine();
-            $this->writeField($output, 'MAC verified', $result['mac_verified'] ? 'Yes' : 'FAILED');
+            JsonOutputHelper::writeField($output, 'MAC verified', $result['mac_verified'] ? 'Yes' : 'FAILED', 14);
         }
 
         if (isset($result['archive_mac_verified'])) {
-            $this->writeField($output, 'Archive MAC', $result['archive_mac_verified'] ? 'Verified' : 'FAILED');
+            JsonOutputHelper::writeField($output, 'Archive MAC', $result['archive_mac_verified'] ? 'Verified' : 'FAILED', 14);
         }
-    }
-
-    /**
-     * Write a labeled key-value field to console output.
-     */
-    private function writeField(OutputInterface $output, string $label, string $value): void
-    {
-        $output->writeln(sprintf('  %-14s %s', $label . ':', $value));
     }
 
     /**

@@ -8,6 +8,7 @@ use function base64_encode;
 use function bin2hex;
 
 use Pulsar\Api\Internal;
+use Random\RandomException;
 
 use function random_bytes;
 use function sprintf;
@@ -24,7 +25,7 @@ final class SecureEnvGenerator
     /**
      * Generate `.env` file content.
      *
-     * @throws \Random\RandomException
+     * @throws RandomException
      */
     public function generate(string $appName, EnvironmentPreset $env): string
     {

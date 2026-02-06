@@ -27,6 +27,7 @@ use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Integrity\ManifestSigner;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Exception\SecurityException;
 use SodiumException;
 
 use function sprintf;
@@ -53,6 +54,9 @@ final class IntegrityBuildCommand extends Command
         $this->addOption('output', 'Custom output path for the manifest file', 'o');
     }
 
+    /**
+     * @throws SecurityException If the master key is missing or invalid when --sign is used
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $sign = $input->hasOption('sign');

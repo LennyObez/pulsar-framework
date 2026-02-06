@@ -7,6 +7,7 @@ namespace Pulsar\Cache;
 use function is_array;
 
 use Pulsar\Api\Internal;
+use SodiumException;
 
 /**
  * Optimization-hint cache for constructor parameter type maps.
@@ -33,6 +34,9 @@ final class ContainerCache
      * Write container resolution hints to a cache file.
      *
      * @param array<class-string, list<array{name: string, type: class-string}>> $hints
+     *
+     * @throws CacheException
+     * @throws SodiumException
      */
     public function write(string $cachePath, array $hints, bool $encrypt): void
     {
@@ -52,6 +56,9 @@ final class ContainerCache
      *
      * @param list<class-string> $allowedClasses
      * @return array<class-string, list<array{name: string, type: class-string}>>|null
+     *
+     * @throws CacheException
+     * @throws SodiumException
      */
     public function load(string $cachePath, array $allowedClasses): ?array
     {

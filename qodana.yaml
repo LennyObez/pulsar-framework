@@ -26,6 +26,10 @@ exclude:
   - name: PhpNoninstalledComposerPackagesInspection
   # Unused parameters with underscore prefix are intentionally unused (PHP naming convention)
   - name: PhpUnusedParameterInspection
+  # ext-pcntl is intentionally in `suggest` (Unix-only, guarded by function_exists())
+  - name: PhpComposerExtensionStubsInspection
+    paths:
+      - src/Queue/Worker.php
   # Development-only router file references non-existent autoload
   - name: PhpIncludeInspection
     paths:

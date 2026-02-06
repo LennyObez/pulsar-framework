@@ -35,7 +35,7 @@ final class Router
      * Whether the router is locked (strict cache mode).
      * When locked, addRoute() throws RoutingException::routerLocked().
      */
-    private bool $locked = false;
+    public private(set) bool $locked = false;
 
     /**
      * Add a route to the router.
@@ -255,14 +255,6 @@ final class Router
     public function lock(): void
     {
         $this->locked = true;
-    }
-
-    /**
-     * Check if the router is locked.
-     */
-    public function isLocked(): bool
-    {
-        return $this->locked;
     }
 
     /**

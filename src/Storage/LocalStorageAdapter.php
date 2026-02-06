@@ -31,7 +31,7 @@ use function unlink;
  */
 final readonly class LocalStorageAdapter implements StorageAdapterInterface
 {
-    private readonly string $basePath;
+    private string $basePath;
 
     public function __construct(string $basePath)
     {

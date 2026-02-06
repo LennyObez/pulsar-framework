@@ -110,14 +110,14 @@ final class QueueFailedCommand extends Command
     }
 
     /**
-     * Truncate a string to a maximum length, appending "..." if needed.
+     * Truncate a string to 120 characters, appending "..." if needed.
      */
-    private function truncate(string $text, int $maxLength = 120): string
+    private function truncate(string $text): string
     {
-        if (strlen($text) <= $maxLength) {
+        if (strlen($text) <= 120) {
             return $text;
         }
 
-        return substr($text, 0, $maxLength - 3) . '...';
+        return substr($text, 0, 117) . '...';
     }
 }

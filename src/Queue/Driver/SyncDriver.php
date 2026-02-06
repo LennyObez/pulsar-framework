@@ -14,6 +14,7 @@ use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueableInterface;
 use Pulsar\Queue\QueueDriverInterface;
+use Random\RandomException;
 
 use function random_bytes;
 
@@ -28,7 +29,7 @@ use function random_bytes;
 final class SyncDriver implements QueueDriverInterface
 {
     /**
-     * @throws \Random\RandomException If random byte generation fails
+     * @throws RandomException If random byte generation fails
      * @throws QueueException If the job class does not exist or is not queueable
      */
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string

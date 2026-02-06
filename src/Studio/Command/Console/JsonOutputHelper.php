@@ -14,6 +14,8 @@ use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\OutputInterface;
 
+use function sprintf;
+
 /**
  * Shared helper for consistent JSON output in Studio CLI commands.
  */
@@ -61,6 +63,8 @@ final class JsonOutputHelper
      * When $isJson is true, the error is written as a JSON object with
      * "error" and "message" keys. Otherwise, the message is written
      * as a plain-text error line.
+     *
+     * @throws JsonException
      */
     public static function writeError(
         OutputInterface $output,
@@ -76,5 +80,15 @@ final class JsonOutputHelper
         } else {
             $output->errorln($message);
         }
+    }
+
+    /**
+     * Write a labeled key-value field to console output.
+     *
+     * Formats as "  label:      value" with consistent label-column width.
+     */
+    public static function writeField(OutputInterface $output, string $label, string $value, int $labelWidth = 12): void
+    {
+        $output->writeln(sprintf('  %-' . $labelWidth . 's %s', $label . ':', $value));
     }
 }

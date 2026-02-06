@@ -78,6 +78,7 @@ use Pulsar\Deploy\DeployCheck;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
+use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 use Pulsar\FeatureFlag\FeatureFlagManager;
@@ -254,6 +255,9 @@ final class Kernel
      * @throws NotFoundException If a required binding is not found during bootstrap
      * @throws FeatureFlagException If flag storage fails during boot
      * @throws JsonException If flag serialization fails during boot
+     * @throws SodiumException If a sodium cryptographic operation fails during boot
+     * @throws RoutingException If the router is locked in strict cache mode
+     * @throws ExtensionException If extension registration or boot fails
      */
     public function boot(): void
     {
@@ -616,6 +620,8 @@ final class Kernel
 
     /**
      * Create the metrics subsystem and register MetricsMiddleware as inner global middleware.
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     private function createMetrics(): void
     {
@@ -1627,6 +1633,8 @@ final class Kernel
 
     /**
      * Register the diagnostics route (debug mode only).
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     private function registerDiagnosticsRoute(): void
     {

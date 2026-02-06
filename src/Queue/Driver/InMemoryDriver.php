@@ -13,6 +13,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueDriverInterface;
+use Random\RandomException;
 
 use function random_bytes;
 use function time;
@@ -29,7 +30,7 @@ final class InMemoryDriver implements QueueDriverInterface
     /** @var array<string, JobRecord> */
     private array $records = [];
 
-    /** @throws \Random\RandomException If random byte generation fails */
+    /** @throws RandomException If random byte generation fails */
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string
     {
         $id = bin2hex(random_bytes(16));

@@ -27,6 +27,7 @@ use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
+use Random\RandomException;
 use SodiumException;
 
 use function sprintf;
@@ -57,7 +58,7 @@ final class IntegrityRepairCommand extends Command
     }
 
     /**
-     * @throws \Random\RandomException
+     * @throws RandomException
      * @throws JsonException
      * @throws SodiumException
      */

@@ -13,7 +13,7 @@ use Pulsar\Api\Internal;
 final readonly class PreflightRunner
 {
     /** @var list<PreflightCheckInterface> */
-    private readonly array $checks;
+    private array $checks;
 
     /**
      * @param list<PreflightCheckInterface> $checks

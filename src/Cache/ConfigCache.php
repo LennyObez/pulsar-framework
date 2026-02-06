@@ -6,6 +6,7 @@ namespace Pulsar\Cache;
 
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigRepository;
+use SodiumException;
 
 /**
  * Serializes and deserializes ConfigRepository with HMAC-protected payload.
@@ -21,6 +22,9 @@ final class ConfigCache
 
     /**
      * Write the config repository to a cache file.
+     *
+     * @throws CacheException
+     * @throws SodiumException
      */
     public function write(string $cachePath, ConfigRepository $repository, bool $encrypt): void
     {
@@ -33,6 +37,9 @@ final class ConfigCache
      * Load the config repository from a cache file.
      *
      * @param list<class-string> $allowedClasses
+     *
+     * @throws CacheException
+     * @throws SodiumException
      */
     public function load(string $cachePath, array $allowedClasses): ?ConfigRepository
     {

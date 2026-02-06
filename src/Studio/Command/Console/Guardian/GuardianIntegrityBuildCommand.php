@@ -21,10 +21,12 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Integrity\ManifestSigner;
 use Pulsar\Studio\Command\Console\JsonOutputHelper;
+use SodiumException;
 
 use function sprintf;
 
@@ -53,6 +55,8 @@ final class GuardianIntegrityBuildCommand extends Command
 
     /**
      * @throws JsonException
+     * @throws IntegrityException If the manifest build process fails
+     * @throws SodiumException If manifest signing fails
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {

@@ -47,8 +47,8 @@ use function unlink;
 final readonly class CacheIntegrity
 {
     public function __construct(
-        private readonly string $hmacKey,
-        private readonly ?Encryptor $encryptor = null,
+        private string $hmacKey,
+        private ?Encryptor $encryptor = null,
     ) {}
 
     /**
@@ -127,6 +127,9 @@ final readonly class CacheIntegrity
      *
      * @param list<string> $allowedClasses Classes allowed for inner payload deserialization
      * @return mixed The deserialized payload, or null if verification fails
+     *
+     * @throws CacheException
+     * @throws SodiumException
      */
     public function readEnvelope(string $path, array $allowedClasses): mixed
     {
@@ -189,6 +192,8 @@ final readonly class CacheIntegrity
      * Validate that a cache file is safe to read.
      *
      * Rejects symlinks, non-regular files, and (on Unix) world-writable files.
+     *
+     * @throws CacheException
      */
     public function validateFile(string $path): void
     {
@@ -212,6 +217,8 @@ final readonly class CacheIntegrity
      * Validate that the cache directory is safe.
      *
      * Rejects symlinks, non-directories, and (on Unix) world-writable directories.
+     *
+     * @throws CacheException
      */
     public function validateDirectory(string $dir): void
     {
@@ -233,6 +240,8 @@ final readonly class CacheIntegrity
 
     /**
      * Atomic file write with cross-platform safety.
+     *
+     * @throws CacheException
      */
     private function atomicWrite(string $path, string $content): void
     {

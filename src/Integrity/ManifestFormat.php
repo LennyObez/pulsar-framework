@@ -82,7 +82,6 @@ final class ManifestFormat
             throw IntegrityException::manifestCorrupted('(string)', 'expected JSON object at root');
         }
 
-        /** @var array<string, mixed> $data */
         if (!isset($data['version']) || !is_int($data['version'])) {
             throw IntegrityException::manifestCorrupted('(string)', 'missing or invalid "version" field');
         }

@@ -12,6 +12,7 @@ use function is_string;
 
 use Pulsar\Api\Internal;
 use Pulsar\Routing\Route;
+use SodiumException;
 
 /**
  * Serializes routes via CachedRoute DTOs; skips closures.
@@ -30,6 +31,9 @@ final class RouteCache
      *
      * @param list<Route> $routes
      * @return array{cached: int, skipped: int, skippedRoutes: list<string>}
+     *
+     * @throws CacheException
+     * @throws SodiumException
      */
     public function write(string $cachePath, array $routes, bool $encrypt): array
     {
@@ -72,6 +76,9 @@ final class RouteCache
      *
      * @param list<class-string> $allowedClasses
      * @return list<CachedRoute>|null
+     *
+     * @throws CacheException
+     * @throws SodiumException
      */
     public function load(string $cachePath, array $allowedClasses): ?array
     {

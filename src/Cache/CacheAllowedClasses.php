@@ -74,6 +74,8 @@ final class CacheAllowedClasses
      * Scan Pulsar source tree to discover all classes eligible for cache deserialization.
      *
      * @return list<class-string>
+     *
+     * @throws ReflectionException
      */
     public static function scan(string $vendorPath, string $srcPath): array
     {
@@ -140,7 +142,6 @@ final class CacheAllowedClasses
             return null;
         }
 
-        /** @var array<array-key, mixed> $decoded */
         return $decoded;
     }
 

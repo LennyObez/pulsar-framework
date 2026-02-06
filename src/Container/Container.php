@@ -150,6 +150,7 @@ final class Container implements ContainerInterface
      * @param class-string $className
      *
      * @throws ContainerException
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function build(string $className): object
     {

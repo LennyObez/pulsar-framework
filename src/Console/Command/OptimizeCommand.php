@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use function assert;
+
 use Closure;
 
 use function count;
@@ -147,10 +149,7 @@ final class OptimizeCommand extends Command
     private function buildContainerHints(): array
     {
         $container = $this->kernel->container();
-
-        if (!$container instanceof Container) {
-            return [];
-        }
+        assert($container instanceof Container);
 
         $hints = [];
 

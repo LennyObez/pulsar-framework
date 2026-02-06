@@ -50,6 +50,7 @@ final class DeployCheckCommand extends Command
 
     /**
      * @throws DeployException
+     * @throws JsonException If JSON encoding fails in JSON output mode
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {

@@ -24,6 +24,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Studio\Console\Evidence\EvidenceArchive;
 use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
+use SodiumException;
 
 use function sprintf;
 use function str_repeat;
@@ -55,6 +56,7 @@ final class EvidenceVerifyCommand extends Command
 
     /**
      * @throws JsonException
+     * @throws SodiumException If MAC verification fails
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {

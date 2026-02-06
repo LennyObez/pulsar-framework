@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Deploy\CheckResult;
 use Pulsar\Deploy\DeployCheckInterface;
+use SodiumException;
 
 /**
  * Validates that the framework cache is warm in production.
@@ -34,6 +36,10 @@ final readonly class CacheSettingsCheck implements DeployCheckInterface
         return 'Validates the framework cache is warm for production performance';
     }
 
+    /**
+     * @throws JsonException If cache manifest deserialization fails
+     * @throws SodiumException If HMAC verification fails during cache check
+     */
     public function check(string $environment): CheckResult
     {
         $isWarm = $this->frameworkCache->isWarm();

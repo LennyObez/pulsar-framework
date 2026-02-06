@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Supervisor;
 
+use JsonException;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\SupervisorConfig;
@@ -17,6 +18,8 @@ use Pulsar\Supervisor\InvariantCheck\InvariantRunner;
 use Pulsar\Supervisor\PreflightCheck\PreflightCheckInterface;
 use Pulsar\Supervisor\PreflightCheck\PreflightCheckResult;
 use Pulsar\Supervisor\PreflightCheck\PreflightRunner;
+use Random\RandomException;
+use SodiumException;
 
 use function time;
 
@@ -30,13 +33,13 @@ use function time;
 #[Internal]
 final readonly class Supervisor
 {
-    private readonly ?WorkerRecyclePolicy $recyclePolicy;
+    private ?WorkerRecyclePolicy $recyclePolicy;
 
-    private readonly ?StuckJobPolicy $stuckJobPolicy;
+    private ?StuckJobPolicy $stuckJobPolicy;
 
-    private readonly PreflightRunner $preflightRunner;
+    private PreflightRunner $preflightRunner;
 
-    private readonly InvariantRunner $invariantRunner;
+    private InvariantRunner $invariantRunner;
 
     /**
      * @param list<PreflightCheckInterface>|null $preflightChecks
@@ -48,8 +51,8 @@ final readonly class Supervisor
         ?StuckJobPolicy $stuckJobPolicy = null,
         ?array $preflightChecks = null,
         ?array $invariantChecks = null,
-        private readonly ?LoggerInterface $logger = null,
-        private readonly ?AuditLogger $auditLogger = null,
+        private ?LoggerInterface $logger = null,
+        private ?AuditLogger $auditLogger = null,
     ) {
         $this->recyclePolicy = $recyclePolicy ?? ($config->enabled
             ? WorkerRecyclePolicy::fromConfig($config)
@@ -138,6 +141,10 @@ final readonly class Supervisor
      * @param list<JobRecord> $stuckJobs
      *
      * @return list<HealingAction>
+     *
+     * @throws RandomException If cryptographic random generation fails
+     * @throws JsonException If JSON serialization fails during audit logging
+     * @throws SodiumException If a sodium cryptographic operation fails during audit logging
      */
     public function recoverStuckJobs(array $stuckJobs, DeadLetterQueue $deadLetterQueue): array
     {

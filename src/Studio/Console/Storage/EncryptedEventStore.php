@@ -82,6 +82,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
     /**
      * @throws RuntimeException If decryption fails
      * @throws SecurityException If decryption fails
+     * @throws JsonException If JSON encoding fails
      * @throws SodiumException
      */
     public function query(array $filters = [], int $limit = 50, int $offset = 0): array
@@ -99,6 +100,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
     /**
      * @throws RuntimeException If decryption fails
      * @throws SecurityException If decryption fails
+     * @throws JsonException If JSON encoding fails
      * @throws SodiumException
      */
     public function find(string $eventId): ?array

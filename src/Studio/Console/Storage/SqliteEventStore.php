@@ -29,9 +29,6 @@ use Pulsar\Studio\Exception\StudioException;
 use Random\RandomException;
 
 use function random_int;
-
-use SodiumException;
-
 use function sprintf;
 use function str_contains;
 
@@ -124,6 +121,7 @@ final class SqliteEventStore implements EventStoreInterface
      *
      * @throws StudioException If maximum retry attempts exceeded due to database busy
      * @throws PDOException If a non-retryable database error occurs
+     * @throws JsonException If JSON encoding fails
      * @throws RandomException
      */
     public function storeWithChain(

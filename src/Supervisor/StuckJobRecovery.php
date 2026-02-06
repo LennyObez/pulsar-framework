@@ -31,9 +31,9 @@ use function time;
 final readonly class StuckJobRecovery
 {
     public function __construct(
-        private readonly DeadLetterQueue $deadLetterQueue,
-        private readonly ?LoggerInterface $logger = null,
-        private readonly ?AuditLogger $auditLogger = null,
+        private DeadLetterQueue $deadLetterQueue,
+        private ?LoggerInterface $logger = null,
+        private ?AuditLogger $auditLogger = null,
     ) {}
 
     /**

@@ -23,6 +23,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Studio\Exception\StudioException;
+use SodiumException;
 
 use function sprintf;
 use function strlen;
@@ -52,6 +53,7 @@ final class EvidenceExportCommand extends Command
 
     /**
      * @throws JsonException
+     * @throws SodiumException If HMAC computation fails during export
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {

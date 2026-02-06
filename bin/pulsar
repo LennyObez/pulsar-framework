@@ -114,6 +114,7 @@ use Pulsar\Studio\Console\Retention\RetentionEnforcer;
 use Pulsar\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Studio\StudioManager;
 use Pulsar\Supervisor\Supervisor;
+use SodiumException;
 
 // Create kernel with optional extension support
 $extensionBootstrap = null;
@@ -368,7 +369,7 @@ if ($kernel->container()->has(StudioConfig::class)) {
                 $manifestSigner = $kernel->container()->has(MasterKey::class)
                     ? new ManifestSigner($kernel->container()->get(MasterKey::class))
                     : null;
-            } catch (\SodiumException $e) {
+            } catch (Throwable $e) {
                 fwrite(STDERR, "Warning: Failed to initialize manifest signer: {$e->getMessage()}\n");
                 $manifestSigner = null;
             }
