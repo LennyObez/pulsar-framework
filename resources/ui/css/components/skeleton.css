@@ -1,0 +1,96 @@
+/* Pulsar UI — Skeleton Component v1.0.0
+ * Loading skeleton placeholder.
+ * ARIA: aria-busy="true", aria-label="Loading"
+ */
+
+.pui-skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-tertiary) 25%,
+    var(--color-bg-secondary) 50%,
+    var(--color-bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius-md);
+  animation: pui-skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes pui-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Shape variants */
+.pui-skeleton--text {
+  height: 1em;
+  width: 100%;
+}
+
+.pui-skeleton--heading {
+  height: 1.5em;
+  width: 60%;
+}
+
+.pui-skeleton--circle {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-full);
+}
+
+.pui-skeleton--rect {
+  width: 100%;
+  height: 8rem;
+}
+
+.pui-skeleton--avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-full);
+}
+
+/* Card skeleton */
+.pui-skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+}
+
+.pui-skeleton-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* Table skeleton */
+.pui-skeleton-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.pui-skeleton-table__row {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-block-end: 1px solid var(--color-border-muted);
+}
+
+.pui-skeleton-table__cell {
+  flex: 1;
+}
+
+/* Disable animation for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .pui-skeleton {
+    animation: none;
+    background: var(--color-bg-tertiary);
+  }
+}

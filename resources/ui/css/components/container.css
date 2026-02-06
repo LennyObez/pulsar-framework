@@ -1,0 +1,51 @@
+/* Pulsar UI — Container Component v1.0.0 */
+
+.pui-container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .pui-container {
+    max-width: var(--container-sm);
+    padding-inline: var(--space-6);
+  }
+}
+
+@media (min-width: 768px) {
+  .pui-container {
+    max-width: var(--container-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .pui-container {
+    max-width: var(--container-lg);
+    padding-inline: var(--space-8);
+  }
+}
+
+@media (min-width: 1280px) {
+  .pui-container {
+    max-width: var(--container-xl);
+  }
+}
+
+@media (min-width: 1536px) {
+  .pui-container {
+    max-width: var(--container-2xl);
+  }
+}
+
+.pui-container--fluid {
+  max-width: none;
+}
+
+.pui-container--narrow {
+  max-width: 48rem;
+}
+
+.pui-container--wide {
+  max-width: 90rem;
+}
