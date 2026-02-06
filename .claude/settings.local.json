@@ -1,0 +1,31 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(git -C \"C:\\\\Users\\\\Lenny\\\\OneDrive\\\\Documents\\\\GitHub\\\\pulsar-framework\" status)",
+      "Bash(git -C \"C:\\\\Users\\\\Lenny\\\\OneDrive\\\\Documents\\\\GitHub\\\\pulsar-framework\" log --oneline -20)",
+      "Bash(git -C \"C:\\\\Users\\\\Lenny\\\\OneDrive\\\\Documents\\\\GitHub\\\\pulsar-framework\" diff --stat)",
+      "Bash(git -C \"C:\\\\Users\\\\Lenny\\\\OneDrive\\\\Documents\\\\GitHub\\\\pulsar-framework\" diff --cached --stat)",
+      "Bash(find:*)",
+      "Bash(vendor/bin/phpunit:*)",
+      "Bash(php vendor/bin/phpunit:*)",
+      "Bash(composer cs:fix:*)",
+      "Bash(pnpm format:fix:*)",
+      "Bash(php:*)",
+      "Bash(python:*)",
+      "Bash(findstr:*)",
+      "Bash(timeout 30:*)",
+      "Bash(vendorbinpsalm:*)",
+      "Bash(composer psalm:*)",
+      "Bash(composer test)",
+      "Bash(select-string:*)",
+      "Bash(select-object -first 50)",
+      "Bash(git add:*)",
+      "Bash(python3 -c \"import os, glob; files = [f for f in os.listdir\\(''.''\\) if f.startswith\\(''C''\\) and ''Temp'' in f]; [os.remove\\(f\\) for f in files]; print\\(''removed:'', files\\)\")",
+      "Bash(python3:*)"
+    ]
+  }
+}

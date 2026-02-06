@@ -30,42 +30,91 @@ if ($autoloader === null) {
 
 require $autoloader;
 
+use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DatabaseConfig;
+use Pulsar\Config\DeployConfig;
+use Pulsar\Config\IntegrityConfig;
+use Pulsar\Config\QueueConfig;
 use Pulsar\Config\StudioConfig;
+use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\Application;
+use Pulsar\Console\Command\DeployCheckCommand;
 use Pulsar\Console\Command\DiagnosticsCommand;
 use Pulsar\Console\Command\InitCommand;
+use Pulsar\Console\Command\IntegrityBuildCommand;
+use Pulsar\Console\Command\IntegrityRepairCommand;
+use Pulsar\Console\Command\IntegrityVerifyCommand;
 use Pulsar\Console\Command\ListCommand;
 use Pulsar\Console\Command\MigrateCreateCommand;
 use Pulsar\Console\Command\MigrateRollbackCommand;
 use Pulsar\Console\Command\MigrateRunCommand;
 use Pulsar\Console\Command\MigrateStatusCommand;
+use Pulsar\Console\Command\NewCommand;
+use Pulsar\Console\Command\OptimizeCommand;
+use Pulsar\Console\Command\OptimizeClearCommand;
+use Pulsar\Console\Command\QueueFailedCommand;
+use Pulsar\Console\Command\QueueFlushCommand;
+use Pulsar\Console\Command\QueueRetryCommand;
+use Pulsar\Console\Command\QueueStatusCommand;
+use Pulsar\Console\Command\QueueWorkCommand;
 use Pulsar\Console\Command\ScaffoldExtensionCommand;
 use Pulsar\Console\Command\ScaffoldModuleCommand;
 use Pulsar\Console\Command\ShowContainerCommand;
 use Pulsar\Console\Command\ShowRoutesCommand;
+use Pulsar\Console\Command\SupervisorCheckCommand;
+use Pulsar\Console\Command\SupervisorStatusCommand;
 use Pulsar\Console\CommandInterface;
 use Pulsar\Core\Kernel;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\Migration\MigrationRepository;
 use Pulsar\Database\Migration\MigrationRunner;
+use Pulsar\Deploy\DeployCheck;
 use Pulsar\Extensibility\ExtensionBootstrap;
-use Pulsar\Studio\Command\Console\ConsoleExportCommand;
+use Pulsar\Integrity\ManifestBuilder;
+use Pulsar\Integrity\ManifestSigner;
+use Pulsar\Integrity\ManifestVerifier;
+use Pulsar\Queue\DeadLetterQueue;
+use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Queue\QueueManager;
+use Pulsar\Security\Audit\AuditLogger;
+use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Studio\Command\Console\ConsoleExceptionsCommand;
+use Pulsar\Studio\Command\Console\ConsoleJobsCommand;
+use Pulsar\Studio\Command\Console\ConsoleMetricsCommand;
 use Pulsar\Studio\Command\Console\ConsoleQueryCommand;
+use Pulsar\Studio\Command\Console\ConsoleRoutesCommand;
 use Pulsar\Studio\Command\Console\ConsoleStatusCommand;
 use Pulsar\Studio\Command\Console\ConsoleTailCommand;
-use Pulsar\Studio\Command\Console\ConsoleVerifyCommand;
+use Pulsar\Studio\Command\Console\ConsoleTimelineCommand;
+use Pulsar\Studio\Command\Console\Evidence\EvidenceExportCommand;
+use Pulsar\Studio\Command\Console\Evidence\EvidencePurgeCommand;
+use Pulsar\Studio\Command\Console\Evidence\EvidenceStatusCommand;
+use Pulsar\Studio\Command\Console\Evidence\EvidenceVerifyCommand;
+use Pulsar\Studio\Command\Console\Evidence\RedactionTestCommand;
+use Pulsar\Studio\Command\Console\Evidence\RetentionApplyCommand;
+use Pulsar\Studio\Command\Console\Guardian\GuardianCheckCommand;
+use Pulsar\Studio\Command\Console\Guardian\GuardianDeployCheckCommand;
+use Pulsar\Studio\Command\Console\Guardian\GuardianIntegrityBuildCommand;
+use Pulsar\Studio\Command\Console\Guardian\GuardianIntegrityVerifyCommand;
+use Pulsar\Studio\Command\Console\Guardian\GuardianStatusCommand;
+use Pulsar\Studio\Command\Console\Guardian\GuardianSupervisorRunOnceCommand;
+use Pulsar\Studio\Command\Console\Guardian\GuardianSupervisorStatusCommand;
 use Pulsar\Studio\Command\StudioDoctorCommand;
 use Pulsar\Studio\Command\StudioDisableCommand;
 use Pulsar\Studio\Command\StudioEnableCommand;
 use Pulsar\Studio\Command\StudioOpenCommand;
 use Pulsar\Studio\Command\StudioStartCommand;
 use Pulsar\Studio\Command\StudioStatusCommand;
+use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
+use Pulsar\Studio\Console\Aggregation\TimelineBuilder;
 use Pulsar\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
+use Pulsar\Studio\Console\Redaction\RedactionPipeline;
+use Pulsar\Studio\Console\Retention\RetentionEnforcer;
 use Pulsar\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Studio\StudioManager;
+use Pulsar\Supervisor\Supervisor;
 
 // Create kernel with optional extension support
 $extensionBootstrap = null;
@@ -120,9 +169,74 @@ $application->addCommands([
     new ShowContainerCommand($kernel),
     new DiagnosticsCommand($kernel),
     new InitCommand(),
+    new NewCommand(),
     new ScaffoldModuleCommand(),
     new ScaffoldExtensionCommand(),
 ]);
+
+// Register optimize commands (cache subsystem)
+if ($kernel->container()->has(FrameworkCache::class)) {
+    /** @var FrameworkCache $frameworkCache */
+    $frameworkCache = $kernel->container()->get(FrameworkCache::class);
+
+    $application->addCommands([
+        new OptimizeCommand($kernel, $frameworkCache),
+        new OptimizeClearCommand($frameworkCache),
+    ]);
+}
+
+// Register queue commands (only if queue is configured)
+if ($kernel->container()->has(QueueConfig::class)) {
+    if ($kernel->container()->has(QueueDriverInterface::class)) {
+        /** @var QueueDriverInterface $queueDriver */
+        $queueDriver = $kernel->container()->get(QueueDriverInterface::class);
+        $application->add(new QueueWorkCommand($queueDriver));
+        $application->add(new QueueFlushCommand($queueDriver));
+    }
+
+    if ($kernel->container()->has(QueueManager::class) && $kernel->container()->has(DeadLetterQueue::class)) {
+        /** @var QueueManager $queueManager */
+        $queueManager = $kernel->container()->get(QueueManager::class);
+        /** @var DeadLetterQueue $deadLetterQueue */
+        $deadLetterQueue = $kernel->container()->get(DeadLetterQueue::class);
+        $application->add(new QueueStatusCommand($queueManager, $deadLetterQueue));
+        $application->add(new QueueRetryCommand($deadLetterQueue));
+        $application->add(new QueueFailedCommand($deadLetterQueue));
+    }
+}
+
+// Register supervisor commands (only if supervisor is configured)
+if ($kernel->container()->has(SupervisorConfig::class)) {
+    /** @var SupervisorConfig $supervisorConfig */
+    $supervisorConfig = $kernel->container()->get(SupervisorConfig::class);
+    $application->add(new SupervisorStatusCommand($supervisorConfig));
+    $application->add(new SupervisorCheckCommand([]));
+}
+
+// Register integrity commands (only if integrity is configured)
+$basePath = $configPath !== null ? dirname($configPath) : getcwd();
+if ($kernel->container()->has(IntegrityConfig::class)) {
+    /** @var IntegrityConfig $integrityConfig */
+    $integrityConfig = $kernel->container()->get(IntegrityConfig::class);
+
+    $application->addCommands([
+        new IntegrityBuildCommand($integrityConfig, $basePath),
+        new IntegrityVerifyCommand($integrityConfig, $basePath),
+    ]);
+
+    if ($kernel->container()->has(AuditLogger::class)) {
+        /** @var AuditLogger $auditLogger */
+        $auditLogger = $kernel->container()->get(AuditLogger::class);
+        $application->add(new IntegrityRepairCommand($integrityConfig, $auditLogger, $basePath));
+    }
+}
+
+// Register deploy check command (only if deploy is configured)
+if ($kernel->container()->has(DeployCheck::class)) {
+    /** @var DeployCheck $deployCheck */
+    $deployCheck = $kernel->container()->get(DeployCheck::class);
+    $application->add(new DeployCheckCommand($deployCheck));
+}
 
 // Register migration commands (only if database is configured)
 if ($kernel->container()->has(ConnectionManager::class)) {
@@ -152,8 +266,6 @@ if ($kernel->container()->has(StudioConfig::class)) {
     /** @var StudioConfig $studioConfig */
     $studioConfig = $kernel->container()->get(StudioConfig::class);
 
-    $basePath = $configPath !== null ? dirname($configPath) : getcwd();
-
     // Umbrella commands (always available when config exists)
     $studioStore = $kernel->container()->has(EventStoreInterface::class)
         ? $kernel->container()->get(EventStoreInterface::class)
@@ -177,16 +289,88 @@ if ($kernel->container()->has(StudioConfig::class)) {
             new ConsoleQueryCommand($studioStore),
         ]);
 
+        // Observability commands
+        if ($kernel->container()->has(DashboardAggregator::class)) {
+            /** @var DashboardAggregator $aggregator */
+            $aggregator = $kernel->container()->get(DashboardAggregator::class);
+
+            $application->addCommands([
+                new ConsoleMetricsCommand($aggregator),
+                new ConsoleRoutesCommand($aggregator),
+                new ConsoleExceptionsCommand($aggregator),
+            ]);
+        }
+
+        if ($kernel->container()->has(TimelineBuilder::class)) {
+            /** @var TimelineBuilder $timelineBuilder */
+            $timelineBuilder = $kernel->container()->get(TimelineBuilder::class);
+            $application->add(new ConsoleTimelineCommand($studioStore, $timelineBuilder));
+        }
+
+        $application->add(new ConsoleJobsCommand($studioStore));
+
+        // Evidence commands
         if ($kernel->container()->has(EvidenceExporter::class)) {
             /** @var EvidenceExporter $exporter */
             $exporter = $kernel->container()->get(EvidenceExporter::class);
-            $application->add(new ConsoleExportCommand($exporter));
+            $application->add(new EvidenceExportCommand($exporter));
         }
 
         if ($kernel->container()->has(EvidenceVerifier::class)) {
             /** @var EvidenceVerifier $verifier */
             $verifier = $kernel->container()->get(EvidenceVerifier::class);
-            $application->add(new ConsoleVerifyCommand($verifier));
+            $application->add(new EvidenceVerifyCommand($verifier));
+        }
+
+        $application->add(new EvidenceStatusCommand($studioStore));
+        $application->add(new EvidencePurgeCommand($studioStore));
+
+        if ($kernel->container()->has(RetentionEnforcer::class)) {
+            /** @var RetentionEnforcer $retentionEnforcer */
+            $retentionEnforcer = $kernel->container()->get(RetentionEnforcer::class);
+            $application->add(new RetentionApplyCommand($retentionEnforcer));
+        }
+
+        if ($kernel->container()->has(RedactionPipeline::class)) {
+            /** @var RedactionPipeline $redactionPipeline */
+            $redactionPipeline = $kernel->container()->get(RedactionPipeline::class);
+            $application->add(new RedactionTestCommand($redactionPipeline));
+        }
+
+        // Guardian commands
+        $application->add(new GuardianStatusCommand($studioStore));
+
+        if ($kernel->container()->has(Supervisor::class)) {
+            /** @var Supervisor $supervisor */
+            $supervisor = $kernel->container()->get(Supervisor::class);
+            $application->add(new GuardianCheckCommand($supervisor));
+            $application->add(new GuardianSupervisorRunOnceCommand($supervisor));
+        }
+
+        if ($kernel->container()->has(SupervisorConfig::class)) {
+            /** @var SupervisorConfig $supervisorConfig */
+            $supervisorConfig = $kernel->container()->get(SupervisorConfig::class);
+            $application->add(new GuardianSupervisorStatusCommand($supervisorConfig));
+        }
+
+        if ($kernel->container()->has(DeployCheck::class)) {
+            /** @var DeployCheck $deployCheck */
+            $deployCheck = $kernel->container()->get(DeployCheck::class);
+            $application->add(new GuardianDeployCheckCommand($deployCheck));
+        }
+
+        if ($kernel->container()->has(IntegrityConfig::class)) {
+            /** @var IntegrityConfig $integrityConfig */
+            $integrityConfig = $kernel->container()->get(IntegrityConfig::class);
+            $manifestBuilder = new ManifestBuilder($basePath);
+            $manifestVerifier = new ManifestVerifier($basePath);
+
+            $manifestSigner = $kernel->container()->has(MasterKey::class)
+                ? new ManifestSigner($kernel->container()->get(MasterKey::class))
+                : null;
+
+            $application->add(new GuardianIntegrityBuildCommand($manifestBuilder, $integrityConfig, $manifestSigner));
+            $application->add(new GuardianIntegrityVerifyCommand($manifestVerifier, $integrityConfig, $manifestSigner));
         }
     }
 }

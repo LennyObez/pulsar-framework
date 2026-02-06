@@ -9,6 +9,8 @@ use function in_array;
 
 use InvalidArgumentException;
 use Pulsar\Api\Api;
+use Pulsar\Cache\CachedRoute;
+use Pulsar\Cache\RouteHandlerType;
 use Pulsar\Http\Method;
 
 use function sprintf;
@@ -30,10 +32,22 @@ final class Router
     public private(set) array $namedRoutes = [];
 
     /**
+     * Whether the router is locked (strict cache mode).
+     * When locked, addRoute() throws RoutingException::routerLocked().
+     */
+    private bool $locked = false;
+
+    /**
      * Add a route to the router.
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     public function add(Route $route): self
     {
+        if ($this->locked) {
+            throw RoutingException::routerLocked();
+        }
+
         $this->routes[] = $route;
 
         if ($route->name !== null) {
@@ -217,5 +231,59 @@ final class Router
     public function count(): int
     {
         return count($this->routes);
+    }
+
+    /**
+     * Lock the router (strict cache mode).
+     *
+     * When locked, any attempt to register routes throws RoutingException::routerLocked().
+     */
+    public function lock(): void
+    {
+        $this->locked = true;
+    }
+
+    /**
+     * Check if the router is locked.
+     */
+    public function isLocked(): bool
+    {
+        return $this->locked;
+    }
+
+    /**
+     * Load cached routes from the cache subsystem.
+     *
+     * Converts CachedRoute DTOs back to Route objects with handler arrays/strings.
+     *
+     * @param list<CachedRoute> $cachedRoutes
+     */
+    public function loadCachedRoutes(array $cachedRoutes): void
+    {
+        foreach ($cachedRoutes as $cached) {
+            /** @var class-string $resolvable */
+            $resolvable = $cached->handler->resolvable;
+            $handler = match ($cached->handler->type) {
+                RouteHandlerType::Invokable => $resolvable,
+                RouteHandlerType::Method => [$resolvable, $cached->handler->method ?? '__invoke'],
+            };
+
+            $route = new Route(
+                methods: $cached->methods,
+                path: $cached->path,
+                handler: $handler,
+                name: $cached->name,
+                attributes: $cached->attributes,
+                middleware: $cached->middleware,
+                constraints: $cached->constraints,
+                host: $cached->host,
+            );
+
+            $this->routes[] = $route;
+
+            if ($route->name !== null) {
+                $this->namedRoutes[$route->name] = $route;
+            }
+        }
     }
 }

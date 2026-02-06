@@ -78,4 +78,15 @@ final class RoutingException extends Exception
     {
         return $this->getCode() === 405;
     }
+
+    /**
+     * Create a "router locked" exception for strict cache mode.
+     */
+    public static function routerLocked(): self
+    {
+        return new self(
+            'Router is locked in strict cached mode. Register all routes before `pulsar optimize --strict`, or use non-strict mode.',
+            423,
+        );
+    }
 }

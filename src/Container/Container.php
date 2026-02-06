@@ -16,6 +16,8 @@ use ReflectionNamedType;
 
 use function sprintf;
 
+use Throwable;
+
 /**
  * Array-based dependency injection container.
  *
@@ -43,6 +45,13 @@ final class Container implements ContainerInterface
      * @var list<string>
      */
     private array $resolving = [];
+
+    /**
+     * Cached constructor parameter type maps (optimization hints).
+     *
+     * @var array<class-string, list<array{name: string, type: class-string}>>
+     */
+    private array $resolutionHints = [];
 
     #[Override]
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
@@ -132,6 +141,9 @@ final class Container implements ContainerInterface
     /**
      * Build a class instance using autowiring.
      *
+     * If resolution hints exist for this class, tries the cached parameter
+     * map first. On any failure, falls back transparently to reflection.
+     *
      * @param class-string $className
      *
      * @throws ContainerException
@@ -145,6 +157,44 @@ final class Container implements ContainerInterface
             );
         }
 
+        // Try cached resolution hints first
+        if (isset($this->resolutionHints[$className])) {
+            try {
+                return $this->buildFromHints($className, $this->resolutionHints[$className]);
+            } catch (Throwable) {
+                // Fallback to reflection
+            }
+        }
+
+        return $this->buildFromReflection($className);
+    }
+
+    /**
+     * Build from cached resolution hints (optimization path).
+     *
+     * @param class-string $className
+     * @param list<array{name: string, type: class-string}> $hints
+     */
+    private function buildFromHints(string $className, array $hints): object
+    {
+        $dependencies = [];
+
+        foreach ($hints as $hint) {
+            $dependencies[] = $this->get($hint['type']);
+        }
+
+        return new $className(...$dependencies);
+    }
+
+    /**
+     * Build from reflection (standard path).
+     *
+     * @param class-string $className
+     *
+     * @throws ContainerException
+     */
+    private function buildFromReflection(string $className): object
+    {
         $reflector = new ReflectionClass($className);
 
         if (!$reflector->isInstantiable()) {
@@ -242,5 +292,18 @@ final class Container implements ContainerInterface
     {
         /** @var list<string> */
         return array_keys($this->instances);
+    }
+
+    /**
+     * Set resolution hints from the framework cache.
+     *
+     * Hints are optimization-only: on any resolution failure using cached data,
+     * the container transparently falls back to ReflectionClass.
+     *
+     * @param array<class-string, list<array{name: string, type: class-string}>> $hints
+     */
+    public function setResolutionHints(array $hints): void
+    {
+        $this->resolutionHints = $hints;
     }
 }

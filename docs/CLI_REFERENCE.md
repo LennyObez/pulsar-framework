@@ -257,6 +257,234 @@ php bin/pulsar health:repair
 
 First diagnoses all registered repair jobs, then runs repairs for any that need attention. Each repair reports status (FIXED or FAILED) and lists the actions performed. Exit code 0 if all repairs succeed, 1 if any fail.
 
+### Project Creation
+
+#### `new`
+
+Create a new Pulsar project with a standard structure, secure `.env` generation, and configurable presets.
+
+```bash
+php bin/pulsar new my-app
+php bin/pulsar new my-app --preset=api --env=production
+```
+
+| Argument | Required | Description                   |
+| -------- | -------- | ----------------------------- |
+| `name`   | Yes      | Project name / directory name |
+
+| Option     | Short | Default | Description                        |
+| ---------- | ----- | ------- | ---------------------------------- |
+| `--preset` | `-p`  | `web`   | Project preset (web, api, minimal) |
+| `--env`    | `-e`  | `local` | Target environment mode            |
+
+Creates a project directory with application scaffolding, configuration files, a secure `.env` with generated keys, and a `composer.json` pre-configured for the selected preset.
+
+### Optimization
+
+#### `optimize`
+
+Cache configuration, routes, and container bindings for production.
+
+```bash
+php bin/pulsar optimize
+php bin/pulsar optimize --strict --encrypt
+```
+
+| Option      | Short | Description                                      |
+| ----------- | ----- | ------------------------------------------------ |
+| `--strict`  | `-s`  | Fail on any cache build warning                  |
+| `--encrypt` | `-e`  | Encrypt cached data (requires PULSAR_MASTER_KEY) |
+
+Builds and writes framework caches with an HMAC-signed manifest for integrity. The cache invalidation key is computed from config file contents and `composer.lock`.
+
+#### `optimize:clear`
+
+Clear all framework cache files.
+
+```bash
+php bin/pulsar optimize:clear
+```
+
+Removes all cached configuration, route, and container files.
+
+### Queue
+
+#### `queue:work`
+
+Start processing jobs from a queue.
+
+```bash
+php bin/pulsar queue:work
+php bin/pulsar queue:work emails --max-jobs=500 --memory=256
+```
+
+| Argument | Required | Description                           |
+| -------- | -------- | ------------------------------------- |
+| `queue`  | No       | Queue name (defaults to config value) |
+
+| Option       | Short | Default | Description                                      |
+| ------------ | ----- | ------- | ------------------------------------------------ |
+| `--max-jobs` | --    | `1000`  | Maximum jobs before worker recycles              |
+| `--memory`   | --    | `128`   | Memory limit in MB before worker recycles        |
+| `--timeout`  | --    | `3600`  | Maximum uptime in seconds before worker recycles |
+| `--sleep`    | --    | `1000`  | Sleep duration in ms when no jobs available      |
+
+Starts a long-running worker that polls the queue, executes jobs, and automatically recycles when resource limits are reached. Handles SIGINT/SIGTERM for graceful shutdown on Unix.
+
+#### `queue:status`
+
+Display queue system status.
+
+```bash
+php bin/pulsar queue:status
+php bin/pulsar queue:status --json
+```
+
+| Option   | Short | Description    |
+| -------- | ----- | -------------- |
+| `--json` | --    | Output as JSON |
+
+Shows the configured driver, default queue name, and pending job counts.
+
+#### `queue:failed`
+
+List all failed jobs.
+
+```bash
+php bin/pulsar queue:failed
+php bin/pulsar queue:failed --json
+```
+
+| Option   | Short | Description    |
+| -------- | ----- | -------------- |
+| `--json` | --    | Output as JSON |
+
+Displays failed jobs from the dead letter queue with job ID, class, queue, failure reason, and timestamp.
+
+#### `queue:retry`
+
+Retry a failed job or all failed jobs.
+
+```bash
+php bin/pulsar queue:retry job-abc-123
+php bin/pulsar queue:retry all
+```
+
+| Argument | Required | Description              |
+| -------- | -------- | ------------------------ |
+| `id`     | Yes      | Job ID or `all` to retry |
+
+Moves failed jobs from the dead letter queue back to their original queue for reprocessing.
+
+#### `queue:flush`
+
+Purge all jobs from a queue.
+
+```bash
+php bin/pulsar queue:flush
+php bin/pulsar queue:flush emails
+```
+
+| Argument | Required | Description                           |
+| -------- | -------- | ------------------------------------- |
+| `queue`  | No       | Queue name (defaults to config value) |
+
+Removes all pending jobs from the specified queue.
+
+### Supervisor
+
+#### `supervisor:check`
+
+Run supervisor preflight checks.
+
+```bash
+php bin/pulsar supervisor:check
+```
+
+Executes all registered preflight checks (database connectivity, disk space, etc.) and reports results. Exit code 0 if all checks pass.
+
+#### `supervisor:status`
+
+Show supervisor configuration and policy info.
+
+```bash
+php bin/pulsar supervisor:status
+php bin/pulsar supervisor:status --json
+```
+
+| Option   | Short | Description    |
+| -------- | ----- | -------------- |
+| `--json` | --    | Output as JSON |
+
+Displays supervisor configuration including recycle thresholds, stuck job timeout, and registered check counts.
+
+### File Integrity
+
+#### `integrity:build`
+
+Build an integrity manifest from configured file paths.
+
+```bash
+php bin/pulsar integrity:build
+php bin/pulsar integrity:build --sign --output=manifest.json
+```
+
+| Option     | Short | Description                                    |
+| ---------- | ----- | ---------------------------------------------- |
+| `--sign`   | `-s`  | Sign the manifest (requires PULSAR_MASTER_KEY) |
+| `--output` | `-o`  | Output file path (defaults to config value)    |
+
+Scans configured include paths, computes SHA-256 hashes for each file, and writes an integrity manifest.
+
+#### `integrity:verify`
+
+Verify filesystem integrity against a stored manifest.
+
+```bash
+php bin/pulsar integrity:verify
+php bin/pulsar integrity:verify --strict --json
+```
+
+| Option     | Short | Description                       |
+| ---------- | ----- | --------------------------------- |
+| `--strict` | `-s`  | Fail on any added or missing file |
+| `--json`   | `-j`  | Output as JSON                    |
+
+Compares the stored manifest against the current filesystem and reports modified, missing, and added files.
+
+#### `integrity:repair`
+
+Regenerate the integrity manifest from the current filesystem state.
+
+```bash
+php bin/pulsar integrity:repair --confirm
+```
+
+| Option      | Short | Description                     |
+| ----------- | ----- | ------------------------------- |
+| `--confirm` | `-c`  | Required safety gate to proceed |
+
+Rebuilds the manifest from the current filesystem. Requires `--confirm` to prevent accidental execution.
+
+### Deploy Readiness
+
+#### `deploy:check`
+
+Run deploy readiness checks for a target environment.
+
+```bash
+php bin/pulsar deploy:check
+php bin/pulsar deploy:check --env=staging --json
+```
+
+| Option     | Short | Default      | Description                        |
+| ---------- | ----- | ------------ | ---------------------------------- |
+| `--env`    | `-e`  | `production` | Target environment to check        |
+| `--json`   | `-j`  | --           | Output as JSON                     |
+| `--strict` | `-s`  | --           | Fail on warnings (not just errors) |
+
+Runs all registered deploy checks and produces a report with pass/warning/error counts. See [`docs/DEPLOYMENT.md`](DEPLOYMENT.md) for details.
+
 ### Scheduler
 
 #### `scheduler:list`
