@@ -27,6 +27,7 @@ final readonly class BenchmarkRunPayload implements ConsoleEvent
         public int $profileCount,
         public int $successCount,
         public int $failureCount,
+        public int $skippedCount,
         public float $totalDurationMs,
         public array $profileNames,
     ) {}
@@ -52,6 +53,7 @@ final readonly class BenchmarkRunPayload implements ConsoleEvent
             'profile_count' => $this->profileCount,
             'success_count' => $this->successCount,
             'failure_count' => $this->failureCount,
+            'skipped_count' => $this->skippedCount,
             'total_duration_ms' => $this->totalDurationMs,
             'profile_names' => $this->profileNames,
         ];

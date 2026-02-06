@@ -50,6 +50,7 @@ use Pulsar\Support\AtomicFileWriter;
 
 use function random_bytes;
 use function sprintf;
+use function str_repeat;
 use function sys_get_temp_dir;
 
 use Throwable;
@@ -112,7 +113,7 @@ final class ConsoleBenchmarkCommand extends Command
             return ExitCode::Error->value;
         }
 
-        /** @var array<string, array{description: string, ini: array<string, string>, preload: bool}> $profiles */
+        /** @var array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool}> $profiles */
         $profiles = json_decode($profilesContent, true, 512, JSON_THROW_ON_ERROR);
 
         if ($singleProfile !== null) {
@@ -129,17 +130,32 @@ final class ConsoleBenchmarkCommand extends Command
             $profiles = [$singleProfile => $profiles[$singleProfile]];
         }
 
-        ksort($profiles);
+        // Partition into non-optimized and optimized groups
+        $unoptimized = [];
+        $optimized = [];
 
-        $runId = bin2hex(random_bytes(16));
+        foreach ($profiles as $name => $profile) {
+            if ($profile['optimize']) {
+                $optimized[$name] = $profile;
+            } else {
+                $unoptimized[$name] = $profile;
+            }
+        }
+
+        ksort($unoptimized);
+        ksort($optimized);
+
+        $runId = bin2hex(random_bytes(12));
         $phpBinary = PHP_BINARY;
         $workerScript = $this->basePath . '/tools/bench/worker.php';
-        $tempPreloadFile = $this->generatePreloadIfNeeded($profiles, $phpBinary, $output);
+        $allProfiles = $unoptimized + $optimized;
+        $tempPreloadFile = $this->generatePreloadIfNeeded($allProfiles, $phpBinary, $output);
 
         $runStart = hrtime(true);
         $results = [];
         $successCount = 0;
         $failureCount = 0;
+        $skipCount = 0;
 
         if (!$isJson) {
             $output->writeln('Pulsar Performance Profile Matrix');
@@ -148,78 +164,99 @@ final class ConsoleBenchmarkCommand extends Command
             $output->writeln('');
         }
 
-        foreach ($profiles as $name => $profile) {
-            if ($profile['preload'] && $tempPreloadFile === null) {
-                $failureCount++;
-                $results[$name] = ['error' => 'preload generation failed'];
-
-                if (!$isJson) {
-                    $output->writeln(sprintf('  [skip] %s — preload unavailable', $name));
-                }
-
-                continue;
+        // Phase 1: Non-optimized profiles
+        if ($unoptimized !== []) {
+            if (!$isJson) {
+                $output->writeln('--- Non-optimized profiles ---');
             }
 
-            $metrics = $this->runWorker($name, $profile, $phpBinary, $workerScript, $tempPreloadFile);
-
-            if ($metrics === null) {
-                $failureCount++;
-                $results[$name] = ['error' => 'worker failed'];
-
-                if (!$isJson) {
-                    $output->writeln(sprintf('  [fail] %s', $name));
-                }
-
-                continue;
-            }
-
-            $successCount++;
-            $results[$name] = $metrics;
-
-            $jitMode = $profile['ini']['opcache.jit'] ?? 'off';
-            $jitEnabled = $jitMode !== 'off' && $jitMode !== '0';
-
-            $payload = new BenchmarkProfilePayload(
-                runId: $runId,
-                profileName: $name,
-                profileDescription: $profile['description'],
-                bootUs: $metrics['boot_us'],
-                warmBootUs: $metrics['warm_boot_us'],
-                p50Us: $metrics['p50_us'],
-                p95Us: $metrics['p95_us'],
-                rps: $metrics['rps'],
-                peakRssKb: $metrics['peak_rss_kb'],
-                memoryUsageKb: $metrics['memory_usage_kb'],
-                opcacheMemoryKb: $metrics['opcache_memory_kb'],
-                iterations: $metrics['iterations'],
-                jitEnabled: $jitEnabled,
-                jitMode: $jitMode,
-                preloadEnabled: $profile['preload'],
-            );
-
-            try {
-                ($this->emit)($payload, null);
-            } catch (Throwable) {
-                // Silently ignore emission errors
+            foreach ($unoptimized as $name => $profile) {
+                $this->executeProfile(
+                    $name,
+                    $profile,
+                    $runId,
+                    $phpBinary,
+                    $workerScript,
+                    $tempPreloadFile,
+                    $isJson,
+                    $output,
+                    $results,
+                    $successCount,
+                    $failureCount,
+                    $skipCount,
+                );
             }
 
             if (!$isJson) {
-                $opcDisplay = $metrics['opcache_memory_kb'] !== null
-                    ? number_format($metrics['opcache_memory_kb']) . ' KB'
-                    : '-';
+                $output->writeln('');
+            }
+        }
 
-                $output->writeln(sprintf(
-                    '  [ok]   %-25s  boot=%s us  warm=%s us  p50=%s us  p95=%s us  rps=%s  alloc=%s KB  rss=%s KB  opc=%s',
+        // Phase 2 + 3: Optimized profiles
+        if ($optimized !== []) {
+            $optimizeFailed = false;
+
+            if (!$isJson) {
+                $output->writeln('--- Warming framework cache ---');
+            }
+
+            if ($this->runOptimize($phpBinary)) {
+                if (!$isJson) {
+                    $output->writeln('  [ok]   Framework cache warmed');
+                    $output->writeln('');
+                    $output->writeln('--- Optimized profiles ---');
+                }
+            } else {
+                $optimizeFailed = true;
+
+                if (!$isJson) {
+                    $output->writeln('  [fail] Framework cache could not be warmed');
+                    $output->writeln('');
+                    $output->writeln('--- Optimized profiles ---');
+                }
+            }
+
+            foreach ($optimized as $name => $profile) {
+                if ($optimizeFailed) {
+                    $skipCount++;
+                    $results[$name] = ['error' => 'optimize command failed'];
+
+                    if (!$isJson) {
+                        $output->writeln(sprintf('  [skip] %s — optimize command failed', $name));
+                    }
+
+                    continue;
+                }
+
+                $this->executeProfile(
                     $name,
-                    number_format($metrics['boot_us']),
-                    number_format($metrics['warm_boot_us']),
-                    number_format($metrics['p50_us']),
-                    number_format($metrics['p95_us']),
-                    number_format($metrics['rps']),
-                    number_format($metrics['memory_usage_kb']),
-                    number_format($metrics['peak_rss_kb']),
-                    $opcDisplay,
-                ));
+                    $profile,
+                    $runId,
+                    $phpBinary,
+                    $workerScript,
+                    $tempPreloadFile,
+                    $isJson,
+                    $output,
+                    $results,
+                    $successCount,
+                    $failureCount,
+                    $skipCount,
+                );
+            }
+
+            if (!$isJson) {
+                $output->writeln('');
+                $output->writeln('--- Clearing framework cache ---');
+            }
+
+            if ($this->runOptimizeClear($phpBinary)) {
+                if (!$isJson) {
+                    $output->writeln('  [ok]   Framework cache cleared');
+                }
+            } else {
+                if (!$isJson) {
+                    $output->writeln('  [warn] Framework cache could not be cleared');
+                }
             }
         }
 
@@ -231,11 +268,12 @@ final class ConsoleBenchmarkCommand extends Command
             phpSapi: PHP_SAPI,
             osPlatform: PHP_OS_FAMILY,
             osArch: php_uname('m'),
-            profileCount: count($profiles),
+            profileCount: count($allProfiles),
             successCount: $successCount,
             failureCount: $failureCount,
+            skippedCount: $skipCount,
             totalDurationMs: round($totalDurationMs, 2),
-            profileNames: array_keys($profiles),
+            profileNames: array_keys($allProfiles),
         );
 
         try {
@@ -283,11 +321,15 @@ final class ConsoleBenchmarkCommand extends Command
         }
 
         $output->writeln('');
+        $completedSuffix = $skipCount > 0
+            ? sprintf(' (%d skipped)', $skipCount)
+            : '';
         $output->writeln(sprintf(
-            'Completed: %d/%d profiles in %.1f ms (run %s)',
+            'Completed: %d/%d profiles in %.1f ms%s (run %s)',
             $successCount,
-            count($profiles),
+            count($allProfiles),
             $totalDurationMs,
+            $completedSuffix,
             $runId,
         ));
 
@@ -295,7 +337,100 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @param array<string, array{description: string, ini: array<string, string>, preload: bool}> $profiles
+     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool} $profile
+     * @param array<string, mixed> $results
+     */
+    private function executeProfile(
+        string $name,
+        array $profile,
+        string $runId,
+        string $phpBinary,
+        string $workerScript,
+        ?string $tempPreloadFile,
+        bool $isJson,
+        OutputInterface $output,
+        array &$results,
+        int &$successCount,
+        int &$failureCount,
+        int &$skipCount,
+    ): void {
+        if ($profile['preload'] && $tempPreloadFile === null) {
+            $skipCount++;
+            $results[$name] = ['error' => 'preload not supported on this platform'];
+
+            if (!$isJson) {
+                $output->writeln(sprintf('  [skip] %s — preloading requires Linux/macOS', $name));
+            }
+
+            return;
+        }
+
+        $metrics = $this->runWorker($name, $profile, $phpBinary, $workerScript, $tempPreloadFile);
+
+        if ($metrics === null) {
+            $failureCount++;
+            $results[$name] = ['error' => 'worker failed'];
+
+            if (!$isJson) {
+                $output->writeln(sprintf('  [fail] %s', $name));
+            }
+
+            return;
+        }
+
+        $successCount++;
+        $results[$name] = $metrics;
+
+        $jitMode = $profile['ini']['opcache.jit'] ?? 'off';
+        $jitEnabled = $jitMode !== 'off' && $jitMode !== '0';
+
+        $payload = new BenchmarkProfilePayload(
+            runId: $runId,
+            profileName: $name,
+            profileDescription: $profile['description'],
+            bootUs: $metrics['boot_us'],
+            warmBootUs: $metrics['warm_boot_us'],
+            p50Us: $metrics['p50_us'],
+            p95Us: $metrics['p95_us'],
+            rps: $metrics['rps'],
+            peakRssKb: $metrics['peak_rss_kb'],
+            memoryUsageKb: $metrics['memory_usage_kb'],
+            opcacheMemoryKb: $metrics['opcache_memory_kb'],
+            iterations: $metrics['iterations'],
+            jitEnabled: $jitEnabled,
+            jitMode: $jitMode,
+            preloadEnabled: $profile['preload'],
+            optimizeEnabled: $profile['optimize'],
+        );
+
+        try {
+            ($this->emit)($payload, null);
+        } catch (Throwable) {
+            // Silently ignore emission errors
+        }
+
+        if (!$isJson) {
+            $opcDisplay = $metrics['opcache_memory_kb'] !== null
+                ? number_format($metrics['opcache_memory_kb']) . ' KB'
+                : '-';
+
+            $output->writeln(sprintf(
+                '  [ok]   %-25s  boot=%s us  warm=%s us  p50=%s us  p95=%s us  rps=%s  alloc=%s KB  rss=%s KB  opc=%s',
+                $name,
+                number_format($metrics['boot_us']),
+                number_format($metrics['warm_boot_us']),
+                number_format($metrics['p50_us']),
+                number_format($metrics['p95_us']),
+                number_format($metrics['rps']),
+                number_format($metrics['memory_usage_kb']),
+                number_format($metrics['peak_rss_kb']),
+                $opcDisplay,
+            ));
+        }
+    }
+
+    /**
+     * @param array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool}> $profiles
      */
     private function generatePreloadIfNeeded(array $profiles, string $phpBinary, OutputInterface $output): ?string
     {
@@ -310,6 +445,10 @@ final class ConsoleBenchmarkCommand extends Command
         }
 
         if (!$needsPreload) {
+            return null;
+        }
+
+        if (PHP_OS_FAMILY === 'Windows') {
             return null;
         }
 
@@ -334,7 +473,7 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @param array{description: string, ini: array<string, string>, preload: bool} $profile
+     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool} $profile
      *
      * @return array{boot_us: int, warm_boot_us: int, iterations: int, memory_usage_kb: int, opcache_memory_kb: ?int, p50_us: int, p95_us: int, peak_rss_kb: int, rps: int}|null
      */
@@ -382,5 +521,35 @@ final class ConsoleBenchmarkCommand extends Command
         }
 
         return $metrics;
+    }
+
+    private function runOptimize(string $phpBinary): bool
+    {
+        $cmd = sprintf(
+            '%s %s/bin/pulsar optimize 2>&1',
+            escapeshellarg($phpBinary),
+            escapeshellarg($this->basePath),
+        );
+
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+
+        return $exitCode === 0;
+    }
+
+    private function runOptimizeClear(string $phpBinary): bool
+    {
+        $cmd = sprintf(
+            '%s %s/bin/pulsar optimize:clear 2>&1',
+            escapeshellarg($phpBinary),
+            escapeshellarg($this->basePath),
+        );
+
+        $output = [];
+        $exitCode = 0;
+        exec($cmd, $output, $exitCode);
+
+        return $exitCode === 0;
     }
 }

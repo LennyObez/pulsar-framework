@@ -613,6 +613,44 @@ final class DashboardAggregatorTest extends TestCase
     }
 
     #[Test]
+    public function benchmarkRunsIncludesSkippedCount(): void
+    {
+        $this->storeBenchmarkRunEvent(runId: 'run-skip', profileCount: 6, successCount: 3, skippedCount: 3);
+
+        $result = $this->aggregator->benchmarkRuns();
+
+        self::assertCount(1, $result);
+        self::assertSame(3, $result[0]['skipped_count']);
+        self::assertSame(0, $result[0]['failure_count']);
+    }
+
+    #[Test]
+    public function benchmarkRunsDefaultsSkippedCountToZeroForOldEvents(): void
+    {
+        // Simulate an old event without skipped_count
+        $this->storeEvent(
+            eventType: EventType::BenchmarkRun,
+            payload: [
+                'run_id' => 'old-run',
+                'php_version' => '8.4.0',
+                'php_sapi' => 'cli',
+                'os_platform' => 'Linux',
+                'os_arch' => 'x86_64',
+                'profile_count' => 3,
+                'success_count' => 3,
+                'failure_count' => 0,
+                'total_duration_ms' => 1000.0,
+                'profile_names' => ['baseline'],
+            ],
+        );
+
+        $result = $this->aggregator->benchmarkRuns();
+
+        self::assertCount(1, $result);
+        self::assertSame(0, $result[0]['skipped_count']);
+    }
+
+    #[Test]
     public function benchmarkRunsRespectsLimit(): void
     {
         for ($i = 0; $i < 5; $i++) {
@@ -662,6 +700,50 @@ final class DashboardAggregatorTest extends TestCase
 
         self::assertCount(1, $result);
         self::assertSame('baseline', $result[0]['profile_name']);
+    }
+
+    #[Test]
+    public function benchmarkProfilesExtractsOptimizeEnabled(): void
+    {
+        $this->storeBenchmarkProfileEvent(runId: 'run-opt', profileName: 'baseline', bootUs: 1000);
+        $this->storeBenchmarkProfileEvent(runId: 'run-opt', profileName: 'baseline-optimized', bootUs: 700, optimizeEnabled: true);
+
+        $result = $this->aggregator->benchmarkProfiles('run-opt');
+
+        self::assertCount(2, $result);
+        self::assertFalse($result[0]['optimize_enabled']);
+        self::assertTrue($result[1]['optimize_enabled']);
+    }
+
+    #[Test]
+    public function benchmarkProfilesDefaultsOptimizeEnabledToFalseForOldEvents(): void
+    {
+        // Simulate an old profile event without optimize_enabled
+        $this->storeEvent(
+            eventType: EventType::BenchmarkProfile,
+            payload: [
+                'run_id' => 'old-run',
+                'profile_name' => 'baseline',
+                'profile_description' => 'Test profile',
+                'boot_us' => 1000,
+                'warm_boot_us' => 600,
+                'p50_us' => 25,
+                'p95_us' => 120,
+                'rps' => 40000,
+                'peak_rss_kb' => 32768,
+                'memory_usage_kb' => 16384,
+                'opcache_memory_kb' => 8192,
+                'iterations' => 1000,
+                'jit_enabled' => false,
+                'jit_mode' => 'off',
+                'preload_enabled' => false,
+            ],
+        );
+
+        $result = $this->aggregator->benchmarkProfiles('old-run');
+
+        self::assertCount(1, $result);
+        self::assertFalse($result[0]['optimize_enabled']);
     }
 
     // -------------------------------------------------------------------------
@@ -771,8 +853,12 @@ final class DashboardAggregatorTest extends TestCase
         );
     }
 
-    private function storeBenchmarkRunEvent(string $runId, int $profileCount, int $successCount): void
-    {
+    private function storeBenchmarkRunEvent(
+        string $runId,
+        int $profileCount,
+        int $successCount,
+        int $skippedCount = 0,
+    ): void {
         $this->storeEvent(
             eventType: EventType::BenchmarkRun,
             payload: [
@@ -783,15 +869,20 @@ final class DashboardAggregatorTest extends TestCase
                 'os_arch' => 'x86_64',
                 'profile_count' => $profileCount,
                 'success_count' => $successCount,
-                'failure_count' => $profileCount - $successCount,
+                'failure_count' => $profileCount - $successCount - $skippedCount,
+                'skipped_count' => $skippedCount,
                 'total_duration_ms' => 5000.0,
                 'profile_names' => ['baseline', 'jit-tracing'],
             ],
         );
     }
 
-    private function storeBenchmarkProfileEvent(string $runId, string $profileName, int $bootUs): void
-    {
+    private function storeBenchmarkProfileEvent(
+        string $runId,
+        string $profileName,
+        int $bootUs,
+        bool $optimizeEnabled = false,
+    ): void {
         $this->storeEvent(
             eventType: EventType::BenchmarkProfile,
             payload: [
@@ -810,6 +901,7 @@ final class DashboardAggregatorTest extends TestCase
                 'jit_enabled' => false,
                 'jit_mode' => 'off',
                 'preload_enabled' => false,
+                'optimize_enabled' => $optimizeEnabled,
             ],
         );
     }

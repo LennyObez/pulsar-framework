@@ -49,6 +49,7 @@ final class BenchmarkProfilePayloadTest extends TestCase
             jitEnabled: true,
             jitMode: 'tracing',
             preloadEnabled: false,
+            optimizeEnabled: false,
         );
 
         $array = $payload->toArray();
@@ -68,6 +69,7 @@ final class BenchmarkProfilePayloadTest extends TestCase
         self::assertTrue($array['jit_enabled']);
         self::assertSame('tracing', $array['jit_mode']);
         self::assertFalse($array['preload_enabled']);
+        self::assertFalse($array['optimize_enabled']);
     }
 
     #[Test]
@@ -89,11 +91,39 @@ final class BenchmarkProfilePayloadTest extends TestCase
             jitEnabled: false,
             jitMode: 'off',
             preloadEnabled: false,
+            optimizeEnabled: false,
         );
 
         $array = $payload->toArray();
 
         self::assertNull($array['opcache_memory_kb']);
+    }
+
+    #[Test]
+    public function toArraySerializesOptimizeEnabled(): void
+    {
+        $payload = new BenchmarkProfilePayload(
+            runId: 'opt-run',
+            profileName: 'baseline-optimized',
+            profileDescription: 'OPcache + framework cache',
+            bootUs: 900,
+            warmBootUs: 400,
+            p50Us: 15,
+            p95Us: 80,
+            rps: 60000,
+            peakRssKb: 16384,
+            memoryUsageKb: 8192,
+            opcacheMemoryKb: 4096,
+            iterations: 1000,
+            jitEnabled: false,
+            jitMode: 'off',
+            preloadEnabled: false,
+            optimizeEnabled: true,
+        );
+
+        $array = $payload->toArray();
+
+        self::assertTrue($array['optimize_enabled']);
     }
 
     private function createPayload(): BenchmarkProfilePayload
@@ -114,6 +144,7 @@ final class BenchmarkProfilePayloadTest extends TestCase
             jitEnabled: false,
             jitMode: 'off',
             preloadEnabled: false,
+            optimizeEnabled: false,
         );
     }
 }

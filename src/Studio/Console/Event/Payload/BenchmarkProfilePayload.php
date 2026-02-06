@@ -31,6 +31,7 @@ final readonly class BenchmarkProfilePayload implements ConsoleEvent
         public bool $jitEnabled,
         public string $jitMode,
         public bool $preloadEnabled,
+        public bool $optimizeEnabled,
     ) {}
 
     public function eventType(): EventType
@@ -61,6 +62,7 @@ final readonly class BenchmarkProfilePayload implements ConsoleEvent
             'jit_enabled' => $this->jitEnabled,
             'jit_mode' => $this->jitMode,
             'preload_enabled' => $this->preloadEnabled,
+            'optimize_enabled' => $this->optimizeEnabled,
         ];
     }
 }

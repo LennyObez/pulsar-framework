@@ -7,6 +7,7 @@ namespace Pulsar\Studio\Console\Aggregation;
 use function array_fill;
 use function array_filter;
 use function array_map;
+use function array_reverse;
 use function array_slice;
 use function array_sum;
 use function array_values;
@@ -48,9 +49,12 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
 
     private PDO $pdo;
 
+    private EventStoreInterface $store;
+
     public function __construct(
         EventStoreInterface $store,
     ) {
+        $this->store = $store;
         $this->pdo = $this->resolvePdo($store);
     }
 
@@ -416,7 +420,10 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
              ORDER BY cnt DESC
              LIMIT :limit",
         );
-        $stmt->execute(['type' => 'exception', 'since' => $since, 'limit' => self::TOP_EXCEPTIONS_LIMIT]);
+        $stmt->bindValue(':type', 'exception');
+        $stmt->bindValue(':since', $since, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', self::TOP_EXCEPTIONS_LIMIT, PDO::PARAM_INT);
+        $stmt->execute();
         /** @var list<array{exception_class: string|null, cnt: int, last_seen_us: int}> $rows */
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -453,30 +460,26 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
     /**
      * Get recent benchmark run summaries.
      *
-     * @return list<array{run_id: string, profile_count: int, success_count: int, failure_count: int, total_duration_ms: float, php_version: string, timestamp_us: int}>
+     * Uses the store's query() method instead of raw SQL so that
+     * EncryptedEventStore can transparently decrypt payload_json.
+     *
+     * @return list<array{run_id: string, profile_count: int, success_count: int, failure_count: int, skipped_count: int, total_duration_ms: float, php_version: string, timestamp_us: int}>
      */
     public function benchmarkRuns(int $limit = 10): array
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT payload_json, timestamp_us
-             FROM studio_events
-             WHERE event_type = :type
-             ORDER BY timestamp_us DESC
-             LIMIT :limit',
-        );
-        $stmt->execute(['type' => 'benchmark.run', 'limit' => $limit]);
         /** @var list<array{payload_json: string, timestamp_us: int}> $rows */
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $this->store->query(['event_type' => 'benchmark.run'], $limit);
 
         $result = [];
         foreach ($rows as $row) {
-            /** @var array{run_id: string, profile_count: int, success_count: int, failure_count: int, total_duration_ms: float, php_version: string} $payload */
+            /** @var array{run_id: string, profile_count: int, success_count: int, failure_count: int, skipped_count?: int, total_duration_ms: float, php_version: string} $payload */
             $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
             $result[] = [
                 'run_id' => $payload['run_id'],
                 'profile_count' => $payload['profile_count'],
                 'success_count' => $payload['success_count'],
                 'failure_count' => $payload['failure_count'],
+                'skipped_count' => $payload['skipped_count'] ?? 0,
                 'total_duration_ms' => $payload['total_duration_ms'],
                 'php_version' => $payload['php_version'],
                 'timestamp_us' => $row['timestamp_us'],
@@ -489,25 +492,25 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
     /**
      * Get benchmark profile events for a specific run.
      *
-     * @return list<array{profile_name: string, boot_us: int, warm_boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int, memory_usage_kb: int, opcache_memory_kb: ?int}>
+     * Uses the store's query() method for encryption-transparent reads,
+     * then filters by run_id in PHP (json_extract won't work on ciphertext).
+     *
+     * @return list<array{profile_name: string, boot_us: int, warm_boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int, memory_usage_kb: int, opcache_memory_kb: ?int, optimize_enabled: bool}>
      */
     public function benchmarkProfiles(string $runId): array
     {
-        $stmt = $this->pdo->prepare(
-            "SELECT payload_json
-             FROM studio_events
-             WHERE event_type = :type
-               AND json_extract(payload_json, '$.run_id') = :run_id
-             ORDER BY timestamp_us ASC",
-        );
-        $stmt->execute(['type' => 'benchmark.profile', 'run_id' => $runId]);
-        /** @var list<array{payload_json: string}> $rows */
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        /** @var list<array{payload_json: string, timestamp_us: int}> $rows */
+        $rows = $this->store->query(['event_type' => 'benchmark.profile'], 500);
 
         $result = [];
         foreach ($rows as $row) {
-            /** @var array{profile_name: string, boot_us: int, warm_boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int, memory_usage_kb: int, opcache_memory_kb: ?int} $payload */
+            /** @var array{run_id: string, profile_name: string, boot_us: int, warm_boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int, memory_usage_kb: int, opcache_memory_kb: ?int, optimize_enabled?: bool} $payload */
             $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+
+            if ($payload['run_id'] !== $runId) {
+                continue;
+            }
+
             $result[] = [
                 'profile_name' => $payload['profile_name'],
                 'boot_us' => $payload['boot_us'],
@@ -518,10 +521,12 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
                 'peak_rss_kb' => $payload['peak_rss_kb'],
                 'memory_usage_kb' => $payload['memory_usage_kb'],
                 'opcache_memory_kb' => $payload['opcache_memory_kb'],
+                'optimize_enabled' => $payload['optimize_enabled'] ?? false,
             ];
         }
 
-        return $result;
+        // Store query returns DESC; restore original execution order (ASC)
+        return array_reverse($result);
     }
 
     /**

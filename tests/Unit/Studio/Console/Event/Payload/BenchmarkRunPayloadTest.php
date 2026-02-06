@@ -42,6 +42,7 @@ final class BenchmarkRunPayloadTest extends TestCase
             profileCount: 6,
             successCount: 5,
             failureCount: 1,
+            skippedCount: 0,
             totalDurationMs: 12345.67,
             profileNames: ['baseline', 'jit-function', 'jit-tracing'],
         );
@@ -56,6 +57,7 @@ final class BenchmarkRunPayloadTest extends TestCase
         self::assertSame(6, $array['profile_count']);
         self::assertSame(5, $array['success_count']);
         self::assertSame(1, $array['failure_count']);
+        self::assertSame(0, $array['skipped_count']);
         self::assertSame(12345.67, $array['total_duration_ms']);
         self::assertSame(['baseline', 'jit-function', 'jit-tracing'], $array['profile_names']);
     }
@@ -72,6 +74,7 @@ final class BenchmarkRunPayloadTest extends TestCase
             profileCount: 0,
             successCount: 0,
             failureCount: 0,
+            skippedCount: 0,
             totalDurationMs: 0.0,
             profileNames: [],
         );
@@ -93,6 +96,7 @@ final class BenchmarkRunPayloadTest extends TestCase
             profileCount: 3,
             successCount: 3,
             failureCount: 0,
+            skippedCount: 0,
             totalDurationMs: 5000.0,
             profileNames: ['baseline', 'jit-function', 'jit-tracing'],
         );
