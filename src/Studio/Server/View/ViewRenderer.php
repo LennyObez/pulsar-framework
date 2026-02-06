@@ -37,6 +37,9 @@ final readonly class ViewRenderer
      *
      * @param string $template Template name (e.g., 'console/overview')
      * @param array<string, mixed> $data Variables to extract into template scope
+     *
+     * @throws RuntimeException If template not found
+     * @throws Throwable If template execution fails
      */
     public function render(string $template, array $data = []): string
     {

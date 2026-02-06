@@ -48,9 +48,8 @@ final class Encryptor
 
     private function __construct(
         private readonly string $key,
-        ?Randomizer $randomizer = null,
     ) {
-        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+        $this->randomizer = new Randomizer(new Secure());
     }
 
     /**

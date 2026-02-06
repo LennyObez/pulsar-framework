@@ -66,6 +66,7 @@ final class Container implements ContainerInterface
      *
      * @param array<class-string, list<array{name: string, type: class-string}>>|null $hints
      */
+    #[Override]
     public function setResolutionHints(?array $hints): void
     {
         $this->resolutionHints = $hints ?? [];
@@ -98,6 +99,7 @@ final class Container implements ContainerInterface
     /**
      * @throws NotFoundException
      * @throws ContainerException
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     #[NoDiscard]
     #[Override]

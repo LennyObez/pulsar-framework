@@ -69,7 +69,6 @@ final class Validator
      *
      * @throws ValidationException When validation fails
      */
-    #[NoDiscard]
     public function validateOrFail(array $data, array $rules): ValidationResult
     {
         $result = $this->validate($data, $rules);

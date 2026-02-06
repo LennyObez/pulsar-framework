@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use function array_any;
 use function count;
 
 use const DIRECTORY_SEPARATOR;
@@ -18,6 +19,8 @@ use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
+
 use function ksort;
 
 use Override;
@@ -29,6 +32,9 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Support\AtomicFileWriter;
 
 use function realpath;
+
+use RuntimeException;
+
 use function sort;
 use function sprintf;
 use function str_starts_with;
@@ -85,6 +91,10 @@ final class PreloadDumpCommand extends Command
         $this->addOption('no-meta', 'Suppress .meta.json sidecar file generation');
     }
 
+    /**
+     * @throws RuntimeException If atomic file write fails
+     * @throws \Random\RandomException If random byte generation fails
+     */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -210,13 +220,7 @@ final class PreloadDumpCommand extends Command
      */
     private function isHotPath(string $className): bool
     {
-        foreach (self::HOT_PATH_NAMESPACES as $prefix) {
-            if (str_starts_with($className, $prefix)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(self::HOT_PATH_NAMESPACES, static fn(string $prefix): bool => str_starts_with($className, $prefix));
     }
 
     /**
@@ -273,6 +277,8 @@ final class PreloadDumpCommand extends Command
      *
      * This file is informational only — never loaded by PHP, never
      * referenced by the preload script. Exists for human/CI inspection.
+     *
+     * @throws JsonException If JSON encoding fails
      */
     private function generateMetaContent(int $classCount): string
     {

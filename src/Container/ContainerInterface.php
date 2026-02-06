@@ -49,4 +49,11 @@ interface ContainerInterface extends PsrContainerInterface
      */
     #[NoDiscard]
     public function get(string $id): mixed;
+
+    /**
+     * Set pre-computed constructor resolution hints for autowiring.
+     *
+     * @param array<class-string, list<array{name: string, type: class-string}>>|null $hints
+     */
+    public function setResolutionHints(?array $hints): void;
 }

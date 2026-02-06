@@ -35,7 +35,7 @@ abstract class ValidationMiddleware implements MiddlewareInterface
     #[Override]
     public function process(Request $request, callable $next): Response
     {
-        $result = $this->validator->validateOrFail($request->all(), $this->rules($request));
+        $this->validator->validateOrFail($request->all(), $this->rules($request));
 
         return $next($request);
     }

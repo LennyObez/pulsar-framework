@@ -284,7 +284,7 @@ final class Kernel
                     $cacheLoaded = $this->configManager->loadFromCache($cached['config']);
                 }
 
-                if ($cached !== null && $cached['containerHints'] !== null && $this->container instanceof Container) {
+                if ($cached !== null && $cached['containerHints'] !== null) {
                     $this->container->setResolutionHints($cached['containerHints']);
                 }
             }
@@ -605,6 +605,8 @@ final class Kernel
 
     /**
      * Create the tracing subsystem and register TracingMiddleware as outermost global middleware.
+     *
+     * @throws NotFoundException|ContainerException
      */
     private function createTracer(): void
     {
@@ -741,6 +743,8 @@ final class Kernel
      * Registers: Session, CsrfTokenManager, CsrfMiddleware,
      * SecurityHeadersMiddleware. If PULSAR_MASTER_KEY is set,
      * also registers MasterKey, Encryptor, and AuditLogger.
+     *
+     * @throws NotFoundException|ContainerException
      */
     private function createSecurityServices(): void
     {

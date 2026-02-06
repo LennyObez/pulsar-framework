@@ -13,6 +13,7 @@ use function file_exists;
 use function file_put_contents;
 
 use Pulsar\Api\Internal;
+use Random\RandomException;
 
 use function random_bytes;
 use function rename;
@@ -36,6 +37,7 @@ final class AtomicFileWriter
      * Write content atomically to the given path.
      *
      * @throws RuntimeException If the write or rename fails
+     * @throws RandomException If random byte generation fails
      */
     public static function write(string $path, string $content): void
     {

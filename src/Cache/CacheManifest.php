@@ -74,7 +74,6 @@ final class CacheManifest
      * @throws JsonException
      * @throws SodiumException
      */
-    #[NoDiscard]
     public static function write(
         string $cachePath,
         string $hmacKey,

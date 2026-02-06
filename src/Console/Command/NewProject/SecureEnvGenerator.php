@@ -21,9 +21,9 @@ use function sprintf;
  * values derived from `random_bytes()`. Keys are never printed to stdout.
  */
 #[Internal]
-final class SecureEnvGenerator
+final readonly class SecureEnvGenerator
 {
-    private readonly Randomizer $randomizer;
+    private Randomizer $randomizer;
 
     public function __construct(?Randomizer $randomizer = null)
     {

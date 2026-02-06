@@ -339,7 +339,7 @@ final class FrameworkCache
 
         // Write manifest
         $hmacKey = $this->masterKey->deriveSubKey(self::HMAC_SUB_KEY_ID, self::HMAC_CONTEXT);
-        $manifest = CacheManifest::write(
+        CacheManifest::write(
             cachePath: $this->cachePath,
             hmacKey: $hmacKey,
             schemaVersion: self::SCHEMA_VERSION,

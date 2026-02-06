@@ -27,9 +27,9 @@ use Random\Randomizer;
  * actually stored in a queue.
  */
 #[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
-final class SyncDriver implements QueueDriverInterface
+final readonly class SyncDriver implements QueueDriverInterface
 {
-    private readonly Randomizer $randomizer;
+    private Randomizer $randomizer;
 
     public function __construct(?Randomizer $randomizer = null)
     {
