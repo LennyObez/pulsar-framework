@@ -1,0 +1,31 @@
+/* Pulsar UI — Stack Component v1.0.0
+ * Vertical stack layout with configurable gap.
+ */
+
+.pui-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.pui-stack--xs {
+  gap: var(--space-1);
+}
+.pui-stack--sm {
+  gap: var(--space-2);
+}
+.pui-stack--md {
+  gap: var(--space-4);
+}
+.pui-stack--lg {
+  gap: var(--space-6);
+}
+.pui-stack--xl {
+  gap: var(--space-8);
+}
+
+/* Divider variant — adds a border between children */
+.pui-stack--divided > * + * {
+  border-block-start: 1px solid var(--color-border);
+  padding-block-start: var(--space-4);
+}

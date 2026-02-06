@@ -1,0 +1,518 @@
+# Template Engine
+
+Pulsar ships a compile-to-PHP template engine for trusted templates and a sandboxed AST interpreter for untrusted (user-provided) templates. Both share the same expressive syntax while enforcing strict security boundaries.
+
+## Configuration
+
+Create `config/view.php` to enable the View module:
+
+```php
+return [
+    'template_paths' => [
+        'resources/views',
+    ],
+    'cache_path' => 'storage/cache/views',
+    'auto_escape' => true,
+    'active_theme' => 'default',
+    'php_directive_allowed' => false,
+    'sandbox_step_limit' => 10_000,
+    'sandbox_loop_limit' => 1_000,
+    'sandbox_output_size_limit' => 1_048_576,
+    'sandbox_wall_clock_check_interval' => 500,
+];
+```
+
+### Config Fields
+
+| Field                               | Type           | Default     | Description                                                |
+| ----------------------------------- | -------------- | ----------- | ---------------------------------------------------------- |
+| `template_paths`                    | `list<string>` | `[]`        | Ordered search directories; first match wins               |
+| `cache_path`                        | `string`       | `''`        | Directory for compiled PHP cache files (must be writable)  |
+| `auto_escape`                       | `bool`         | `true`      | HTML-escape all `{{ }}` output by default                  |
+| `active_theme`                      | `string`       | `'default'` | Active theme name (maps to `resources/themes/{name}.css`)  |
+| `php_directive_allowed`             | `bool`         | `false`     | Whether `@php` blocks are permitted at compile time        |
+| `sandbox_step_limit`                | `int`          | `10000`     | Max AST node evaluations in untrusted mode                 |
+| `sandbox_loop_limit`                | `int`          | `1000`      | Max iterations per loop in untrusted mode                  |
+| `sandbox_output_size_limit`         | `int`          | `1048576`   | Max rendered output bytes (1 MB) in untrusted mode         |
+| `sandbox_wall_clock_check_interval` | `int`          | `500`       | AST steps between wall-clock time checks in untrusted mode |
+
+## Getting Started
+
+### Basic Rendering
+
+Inject `TemplateEngineInterface` and call `render()`:
+
+```php
+use Pulsar\View\Engine\TemplateEngineInterface;
+
+final readonly class DashboardController
+{
+    public function __construct(
+        private TemplateEngineInterface $view,
+    ) {}
+
+    public function index(): string
+    {
+        return $this->view->render('dashboard.index', [
+            'title' => 'Dashboard',
+            'user' => $currentUser,
+        ]);
+    }
+}
+```
+
+Templates use the `.pulsar.php` extension. A render call to `'dashboard.index'` resolves to `resources/views/dashboard/index.pulsar.php` (dot notation maps to directory separators).
+
+### Template File Structure
+
+```
+resources/views/
+  layouts/
+    app.pulsar.php
+  dashboard/
+    index.pulsar.php
+  partials/
+    header.pulsar.php
+    footer.pulsar.php
+  components/
+    alert.pulsar.php
+    card.pulsar.php
+```
+
+## Template Syntax
+
+### Escaped Output
+
+All `{{ }}` expressions are HTML-escaped by default using `htmlspecialchars()` with `ENT_QUOTES | ENT_SUBSTITUTE` and UTF-8 encoding:
+
+```html
+<h1>{{ $title }}</h1>
+<p>{{ $user->name }}</p>
+<span>{{ strtoupper($status) }}</span>
+```
+
+### Raw (Unescaped) Output
+
+Use `{!! !!}` for trusted, pre-sanitized content. This is only available in trusted templates:
+
+```html
+{!! $trustedHtml !!}
+```
+
+Raw output is **not available** in untrusted (sandboxed) templates. All output in untrusted mode is auto-escaped with no bypass.
+
+### Comments
+
+Template comments are stripped entirely from compiled output:
+
+```html
+{{-- This comment will not appear in the rendered HTML --}}
+```
+
+## Directives Reference
+
+### Control Flow
+
+#### @if / @elseif / @else / @endif
+
+```html
+@if($users->count() > 0)
+<p>{{ $users->count() }} users found.</p>
+@elseif($showEmpty)
+<p>No users yet.</p>
+@else
+<p>Access denied.</p>
+@endif
+```
+
+#### @foreach / @endforeach
+
+```html
+<ul>
+  @foreach($items as $item)
+  <li>{{ $item->name }}</li>
+  @endforeach
+</ul>
+```
+
+#### @for / @endfor
+
+```html
+@for($i = 0; $i < 10; $i++)
+<span>{{ $i }}</span>
+@endfor
+```
+
+#### @while / @endwhile
+
+```html
+@while($condition)
+<p>Still processing...</p>
+@endwhile
+```
+
+#### @switch / @case / @default / @endswitch
+
+```html
+@switch($role) @case('admin')
+<span class="badge badge-danger">Admin</span>
+@case('editor')
+<span class="badge badge-warning">Editor</span>
+@default
+<span class="badge badge-info">User</span>
+@endswitch
+```
+
+### Template Inheritance
+
+#### @extends / @section / @yield
+
+Define a layout with `@yield` placeholders:
+
+```html
+{{-- layouts/app.pulsar.php --}}
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>@yield('title', 'Pulsar App')</title>
+  </head>
+  <body>
+    <main>@yield('content')</main>
+    <footer>
+      @yield('footer', '
+      <p>Default footer</p>
+      ')
+    </footer>
+  </body>
+</html>
+```
+
+Extend the layout and fill sections:
+
+```html
+{{-- dashboard/index.pulsar.php --}} @extends('layouts.app') @section('title') Dashboard @endsection
+@section('content')
+<h1>Welcome, {{ $user->name }}</h1>
+<p>You have {{ $notifications }} new notifications.</p>
+@endsection
+```
+
+The `@yield` directive accepts an optional second argument as a default value when no section is provided.
+
+### Partials
+
+#### @include
+
+Include another template inline with optional scoped data:
+
+```html
+@include('partials.header')
+
+<div class="content">@include('partials.user-card', ['user' => $currentUser])</div>
+
+@include('partials.footer')
+```
+
+### Components and Slots
+
+#### @component / @slot / @endcomponent / @endslot
+
+Define reusable components with named slots:
+
+```html
+{{-- components/card.pulsar.php --}}
+<div class="card">
+  <div class="card-header">@yield('header')</div>
+  <div class="card-body">@yield('body')</div>
+</div>
+```
+
+Use the component with slot content:
+
+```html
+@component('components.card') @slot('header')
+<h3>{{ $title }}</h3>
+@endslot @slot('body')
+<p>{{ $description }}</p>
+@endslot @endcomponent
+```
+
+Content outside named slots becomes the default slot.
+
+### Authentication Directives
+
+#### @auth / @endauth
+
+Render content only for authenticated users:
+
+```html
+@auth
+<p>Welcome back, {{ $user->name }}!</p>
+@endauth
+```
+
+Optionally specify a guard:
+
+```html
+@auth('admin')
+<a href="/admin">Admin Panel</a>
+@endauth
+```
+
+#### @guest / @endguest
+
+Render content only for unauthenticated users:
+
+```html
+@guest
+<a href="/login">Sign In</a>
+@endguest
+```
+
+#### @can / @endcan
+
+Render content based on authorization:
+
+```html
+@can('edit', $post)
+<a href="/posts/{{ $post->id }}/edit">Edit</a>
+@endcan
+```
+
+### Form Directives
+
+#### @csrf
+
+Outputs a hidden input with the CSRF token:
+
+```html
+<form method="POST" action="/submit">
+  @csrf
+  <input type="text" name="title" />
+  <button type="submit">Submit</button>
+</form>
+```
+
+Renders: `<input type="hidden" name="_token" value="...">` (value is HTML-escaped).
+
+#### @method
+
+Outputs a hidden input for HTTP method spoofing:
+
+```html
+<form method="POST" action="/posts/{{ $post->id }}">
+  @csrf @method('DELETE')
+  <button type="submit">Delete</button>
+</form>
+```
+
+Renders: `<input type="hidden" name="_method" value="DELETE">`.
+
+### Internationalization
+
+#### @i18n
+
+Outputs a translated string (HTML-escaped):
+
+```html
+<h1>@i18n('messages.welcome')</h1>
+<p>@i18n('messages.greeting', ['name' => $user->name])</p>
+```
+
+Integrates with the `__()` translation helper from the i18n module.
+
+### Inline PHP
+
+#### @php / @endphp
+
+Execute arbitrary PHP within a template:
+
+```html
+@php $total = array_sum(array_column($items, 'price')); @endphp
+
+<p>Total: {{ number_format($total, 2) }}</p>
+```
+
+**Policy**: `@php` is **disabled by default** in production. When `ViewConfig::phpDirectiveAllowed` is `false`, the compiler rejects `@php` blocks at compile time with a clear error. When enabled and used, a compliance-grade audit event is emitted via `AuditLoggerInterface` with the template ID, file hash, actor identity, and correlation ID.
+
+## Context-Aware Escaping
+
+All `{{ }}` output is HTML-escaped by default. For other contexts, use the dedicated escape helpers:
+
+| Helper               | Context        | Description                                              |
+| -------------------- | -------------- | -------------------------------------------------------- |
+| `{{ $value }}`       | HTML (default) | `htmlspecialchars()` with `ENT_QUOTES \| ENT_SUBSTITUTE` |
+| `{{ url($value) }}`  | URL            | URL-encodes; blocks `javascript:`, `data:`, `vbscript:`  |
+| `{{ attr($value) }}` | HTML attribute | Encodes non-alphanumeric chars as numeric HTML entities  |
+| `{{ js($value) }}`   | JavaScript     | JSON-encodes with HTML-safe flags for inline `<script>`  |
+| `{{ css($value) }}`  | CSS            | Encodes non-alphanumeric chars as CSS hex escapes        |
+| `{!! $value !!}`     | Raw            | No escaping; trusted content only                        |
+
+### Examples
+
+```html
+{{-- URL context: safe for href/src attributes --}}
+<a href="{{ url($profileUrl) }}">Profile</a>
+
+{{-- Attribute context: safe inside quoted attribute values --}}
+<div data-name="{{ attr($userName) }}">
+  {{-- JavaScript context: safe in inline script blocks --}}
+  <script>
+    var config = {{ js($configJson) }};
+  </script>
+
+  {{-- CSS context: safe in inline styles --}}
+  <div style="color: {{ css($userColor) }};"></div>
+</div>
+```
+
+The `url()` helper actively blocks dangerous URI schemes (`javascript:`, `data:`, `vbscript:`) by normalizing away invisible Unicode characters before checking, preventing bypass attempts.
+
+## Trusted vs Untrusted Templates
+
+Pulsar enforces a strict separation between trusted and untrusted templates with fundamentally different execution models.
+
+### Trusted Templates
+
+Trusted templates are shipped with the application and written by developers:
+
+- **Compiled to PHP** for maximum performance
+- Full directive set available (including `@php` if enabled)
+- Cached as compiled PHP files in the configured cache directory
+- Standard code review provides security assurance
+
+```php
+use Pulsar\View\Engine\TemplateEngineInterface;
+
+// Trusted rendering — compile-to-PHP
+$html = $engine->render('dashboard.index', ['user' => $user]);
+```
+
+### Untrusted Templates
+
+Untrusted templates are user-provided, uploaded, or stored in a database:
+
+- **Never compiled to PHP** under any circumstances
+- Executed via a restricted AST interpreter that walks the parsed template tree
+- Restricted directive set: `@if`, `@foreach`, `@include` (allowlisted template IDs only), `@i18n`, and variable interpolation
+- No `@php`, no raw output `{!! !!}`, no file system access
+- Deterministic resource bounds prevent runaway execution
+
+```php
+use Pulsar\View\Sandbox\SandboxConfig;
+use Pulsar\View\Sandbox\SandboxEngine;
+
+$config = new SandboxConfig(
+    stepLimit: 10_000,
+    loopLimit: 1_000,
+    outputSizeLimit: 1_048_576,
+    wallClockCheckInterval: 500,
+    wallClockLimitSeconds: 5.0,
+    includeAllowlist: [
+        'header' => '<header>{{ $siteName }}</header>',
+        'footer' => '<footer>Copyright {{ $year }}</footer>',
+    ],
+);
+
+$sandbox = new SandboxEngine($config);
+$html = $sandbox->render($userTemplate, ['siteName' => 'Acme', 'year' => '2026']);
+```
+
+### Sandbox Resource Bounds
+
+| Bound             | Default   | Description                                  |
+| ----------------- | --------- | -------------------------------------------- |
+| Step limit        | 10,000    | Max AST node evaluations per render          |
+| Loop limit        | 1,000     | Max iterations per individual loop construct |
+| Output size limit | 1 MB      | Max total bytes of rendered output           |
+| Wall-clock check  | Every 500 | Steps between wall-clock time checks         |
+| Wall-clock limit  | 5.0s      | Maximum wall-clock execution time            |
+
+All limits produce deterministic failure modes with specific error messages (not silent truncation). Exceeding any bound throws a `ViewException`.
+
+### Sandbox Include Allowlist
+
+In untrusted mode, `@include` accepts **template IDs** from a preconfigured allowlist, not file paths. This prevents path traversal and data exfiltration:
+
+```php
+$config = new SandboxConfig(
+    includeAllowlist: [
+        'company-header' => '<header class="brand">{{ $companyName }}</header>',
+        'legal-footer' => '<footer>{{ $legalText }}</footer>',
+    ],
+);
+```
+
+Template IDs are registered in the sandbox configuration and map to known, pre-validated template content.
+
+## Build-Time Compilation
+
+### view:compile Command
+
+Pre-compile all templates during the build/deploy step so that no runtime compilation is needed in production:
+
+```bash
+pulsar view:compile
+```
+
+Options:
+
+| Option    | Short | Description                            |
+| --------- | ----- | -------------------------------------- |
+| `--force` | `-f`  | Recompile all templates even if cached |
+
+The command scans all configured `template_paths` for `.pulsar.php` files, compiles them, and writes the artifacts to the `cache_path` directory. Deploy this directory as a build artifact.
+
+Output example:
+
+```
+Compiling templates...
+Compilation complete: 47 compiled, 0 skipped, 0 errors in 0.182s
+All 47 template(s) are compiled and cached at: storage/cache/views
+```
+
+### Development Mode
+
+In development, the engine automatically recompiles templates when the source file changes. Cache invalidation is based on file modification time and content hash (SHA-256). Same source input always produces identical compiled output (no timestamps or non-deterministic elements).
+
+### Production Deployment
+
+1. Run `pulsar view:compile` during the build step
+2. Deploy the `storage/cache/views/` directory alongside your application
+3. Set `php_directive_allowed` to `false` in production config
+4. The engine uses cached artifacts with no runtime compilation
+
+## Performance
+
+- Template compilation target: < 5ms per template (trusted path)
+- Compiled templates execute as native PHP with `include` (zero overhead)
+- Content-hash-based cache validation avoids unnecessary recompilation
+- Sandbox AST interpretation has measurable overhead but enforces strict security bounds
+
+## Security Considerations
+
+### XSS Prevention
+
+- All `{{ }}` output is HTML-escaped by default
+- Context-aware helpers (`url()`, `attr()`, `js()`, `css()`) prevent injection in non-HTML contexts
+- The `url()` helper blocks `javascript:`, `data:`, and `vbscript:` URI schemes after normalizing invisible Unicode characters
+- Raw output `{!! !!}` is an explicit opt-in for trusted content only
+
+### Untrusted Template Isolation
+
+- Untrusted templates are **never compiled to PHP** and cannot execute arbitrary code
+- Only a restricted subset of directives is available in sandbox mode
+- `@include` uses template IDs from an allowlist, not file paths
+- Resource bounds prevent denial-of-service via runaway templates
+- All output is auto-escaped with no bypass in untrusted mode
+
+### @php Audit Trail
+
+When `@php` is enabled (non-production environments), each usage emits a compliance-grade audit event via `AuditLoggerInterface` containing:
+
+- Template ID
+- File content hash
+- Actor / build identity
+- Correlation ID
+
+This is designed for SOC 2, HIPAA, and similar audit trail requirements.
