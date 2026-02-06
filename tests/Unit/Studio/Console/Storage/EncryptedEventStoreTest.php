@@ -396,6 +396,90 @@ final class EncryptedEventStoreTest extends TestCase
     }
 
     #[Test]
+    public function querySkipsDecryptionForPlaintextRowsWithoutCiphertextHash(): void
+    {
+        // Store directly to the inner store (bypassing encryption)
+        // This simulates rows stored before encryption was enabled
+        $plainPayload = json_encode(['legacy' => 'data'], JSON_THROW_ON_ERROR);
+        $envelope = $this->createEnvelope('plaintext-event');
+        $this->innerStore->store($envelope, $plainPayload);
+
+        // Verify inner store has no ciphertext_hash
+        $innerRow = $this->innerStore->find('plaintext-event');
+        self::assertNotNull($innerRow);
+        self::assertNull($innerRow['ciphertext_hash']);
+
+        // Query through encrypted store — should return plaintext without error
+        $result = $this->store->find('plaintext-event');
+        self::assertNotNull($result);
+        self::assertSame($plainPayload, $result['payload_json']);
+    }
+
+    #[Test]
+    public function queryMixesEncryptedAndPlaintextRows(): void
+    {
+        // Store a plaintext row directly in the inner store
+        $plainPayload = json_encode(['type' => 'plain'], JSON_THROW_ON_ERROR);
+        $this->innerStore->store($this->createEnvelope('plain-1'), $plainPayload);
+        usleep(10);
+
+        // Store an encrypted row through the encrypted store
+        $encPayload = json_encode(['type' => 'encrypted'], JSON_THROW_ON_ERROR);
+        $this->store->store($this->createEnvelope('enc-1'), $encPayload);
+        usleep(10);
+
+        // Query all — both should be readable
+        $results = $this->store->query();
+        self::assertCount(2, $results);
+
+        $payloads = [];
+        foreach ($results as $row) {
+            self::assertIsString($row['payload_json']);
+            /** @var array{type: string} $decoded */
+            $decoded = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $payloads[] = $decoded['type'];
+        }
+
+        self::assertContains('plain', $payloads);
+        self::assertContains('encrypted', $payloads);
+    }
+
+    #[Test]
+    public function deleteByEventTypesDelegatesToInnerStore(): void
+    {
+        $this->store->store($this->createEnvelope('http-1', EventType::HttpRequest), '{}');
+        $this->store->store($this->createEnvelope('http-2', EventType::HttpRequest), '{}');
+        $this->store->store($this->createEnvelope('db-1', EventType::DatabaseQuery), '{}');
+
+        $deleted = $this->store->deleteByEventTypes([EventType::HttpRequest->value]);
+
+        self::assertSame(2, $deleted);
+        self::assertSame(1, $this->store->count());
+    }
+
+    #[Test]
+    public function deleteByPayloadKeyDelegatesToInnerStore(): void
+    {
+        $this->innerStore->store(
+            $this->createEnvelope('http-1', EventType::HttpRequest),
+            json_encode(['method' => 'GET', 'uri' => '/delete-me'], JSON_THROW_ON_ERROR),
+        );
+        $this->innerStore->store(
+            $this->createEnvelope('http-2', EventType::HttpRequest),
+            json_encode(['method' => 'POST', 'uri' => '/keep'], JSON_THROW_ON_ERROR),
+        );
+
+        $deleted = $this->store->deleteByPayloadKey(
+            EventType::HttpRequest->value,
+            '$.uri',
+            '/delete-me',
+        );
+
+        self::assertSame(1, $deleted);
+        self::assertSame(1, $this->store->count());
+    }
+
+    #[Test]
     public function queryHandlesRowWithoutPayloadJson(): void
     {
         // Store an event normally
