@@ -84,3 +84,13 @@ Pulsar provides the following concurrency guarantees:
 3. **RAII safety**: `ContextScope` guards ensure correlation contexts are properly cleaned up, even if exceptions are thrown. The guard validates Fiber identity on close to prevent cross-Fiber scope corruption.
 4. **No implicit parallelism**: The framework never runs user code concurrently. Middleware, controllers, event listeners, and jobs execute one at a time.
 5. **WeakMap lifecycle**: Fiber context entries are automatically reclaimed when the Fiber is garbage-collected. There are no memory leaks from abandoned Fibers.
+
+## JIT Compatibility
+
+Pulsar's Fiber usage (Studio context isolation only) is compatible with both tracing and function JIT modes. Because Pulsar does not implement a Fiber scheduler or suspend/resume Fibers for concurrency, there are no JIT interaction edge cases.
+
+- **Tracing JIT**: Works correctly. Pulsar's synchronous execution model produces predictable hot paths that the tracing JIT can optimize effectively.
+- **Function JIT**: Works correctly. Individual function compilation is straightforward since there is no control-flow complexity from Fiber suspension.
+- **Preloaded classes**: Preloaded classes are JIT-compiled at server start, eliminating the first-request compilation cost. This applies to all hot-path classes included in the preload script.
+
+See [`docs/DEPLOYMENT.md`](DEPLOYMENT.md) for JIT configuration and [`docs/PERFORMANCE.md`](PERFORMANCE.md) for benchmarking.

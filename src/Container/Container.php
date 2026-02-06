@@ -57,6 +57,20 @@ final class Container implements ContainerInterface
         set(array $value) => $value;
     }
 
+    /**
+     * Load optimization hints from cache.
+     *
+     * Hints are fallible — if a hint fails at resolution time,
+     * the container silently falls back to reflection. Passing null
+     * clears all hints.
+     *
+     * @param array<class-string, list<array{name: string, type: class-string}>>|null $hints
+     */
+    public function setResolutionHints(?array $hints): void
+    {
+        $this->resolutionHints = $hints ?? [];
+    }
+
     #[Override]
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {

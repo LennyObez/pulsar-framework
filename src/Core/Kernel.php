@@ -75,6 +75,8 @@ use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Deploy\DeployCheck;
+use Pulsar\Deploy\Runtime\PhpRuntime;
+use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
@@ -280,6 +282,10 @@ final class Kernel
 
                 if ($cached !== null && $cached['config'] !== null) {
                     $cacheLoaded = $this->configManager->loadFromCache($cached['config']);
+                }
+
+                if ($cached !== null && $cached['containerHints'] !== null && $this->container instanceof Container) {
+                    $this->container->setResolutionHints($cached['containerHints']);
                 }
             }
         }
@@ -1336,6 +1342,9 @@ final class Kernel
         /** @var DeployConfig $deployConfig */
         $deployConfig = $repository->get(DeployConfig::class);
         $this->container->instance(DeployConfig::class, $deployConfig);
+
+        $phpRuntime = new PhpRuntime();
+        $this->container->instance(PhpRuntimeInterface::class, $phpRuntime);
 
         $deployCheck = new DeployCheck();
         $this->container->instance(DeployCheck::class, $deployCheck);
