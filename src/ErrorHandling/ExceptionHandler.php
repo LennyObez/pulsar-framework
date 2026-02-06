@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\ErrorHandling;
 
 use DateMalformedStringException;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Context\RequestContext;
 use Pulsar\Context\RequestContextHolder;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\Validation\ValidationException;
 use Pulsar\Observability\ErrorTracking\ErrorAggregatorInterface;
@@ -20,6 +21,7 @@ use Pulsar\Routing\RoutingException;
 use Throwable;
 
 use function sprintf;
+use function str_contains;
 
 /**
  * Central exception handler.
@@ -41,7 +43,7 @@ final readonly class ExceptionHandler
     /**
      * Handle an exception and produce an HTTP response.
      */
-    public function handle(Throwable $exception, Request $request): Response
+    public function handle(Throwable $exception, ServerRequestInterface $request): ResponseInterface
     {
         $status = $this->resolveStatus($exception);
         $headers = $this->resolveHeaders($exception);
@@ -55,7 +57,8 @@ final readonly class ExceptionHandler
         }
 
         // Content-negotiation: JSON error for clients that want JSON
-        if ($request->wantsJson()) {
+        $accept = $request->getHeaderLine('Accept');
+        if ($accept !== '' && str_contains($accept, 'application/json')) {
             $response = $this->renderJson($exception, $status, $request);
             foreach ($headers as $name => $value) {
                 $response = $response->withHeader($name, $value);
@@ -70,7 +73,7 @@ final readonly class ExceptionHandler
             $body = $this->fallbackBody($status);
         }
 
-        $response = Response::html($body, $status);
+        $response = Response::html($body, $status->value);
 
         foreach ($headers as $name => $value) {
             $response = $response->withHeader($name, $value);
@@ -122,7 +125,7 @@ final readonly class ExceptionHandler
     /**
      * Log the exception with structured context.
      */
-    private function logException(Throwable $exception, Request $request, ResponseStatus $status): void
+    private function logException(Throwable $exception, ServerRequestInterface $request, ResponseStatus $status): void
     {
         if ($this->logger === null) {
             return;
@@ -131,8 +134,8 @@ final readonly class ExceptionHandler
         $context = [
             'exception' => $exception,
             'status' => $status->value,
-            'method' => $request->method->value,
-            'uri' => $request->uri,
+            'method' => $request->getMethod(),
+            'uri' => (string) $request->getUri(),
         ];
 
         $requestContext = $this->resolveRequestContext($request);
@@ -150,7 +153,7 @@ final readonly class ExceptionHandler
     /**
      * Capture the error into the aggregator for grouping/tracking.
      */
-    private function captureError(Throwable $exception, Request $request): void
+    private function captureError(Throwable $exception, ServerRequestInterface $request): void
     {
         if ($this->errorAggregator === null) {
             return;
@@ -158,9 +161,9 @@ final readonly class ExceptionHandler
 
         // Build scrubbed context from request
         $context = [
-            'method' => $request->method->value,
-            'uri' => $request->uri,
-            'query' => $request->query,
+            'method' => $request->getMethod(),
+            'uri' => (string) $request->getUri(),
+            'query' => $request->getQueryParams(),
         ];
 
         $requestContext = $this->resolveRequestContext($request);
@@ -174,7 +177,7 @@ final readonly class ExceptionHandler
 
         // Extract trace ID from request attributes if available
         $traceId = null;
-        $traceContext = $request->attribute('_trace_context');
+        $traceContext = $request->getAttribute('_trace_context');
 
         if ($traceContext instanceof TraceContext) {
             $traceId = $traceContext->traceId;
@@ -193,7 +196,7 @@ final readonly class ExceptionHandler
     /**
      * Render a ValidationException as a 422 JSON response.
      */
-    private function renderValidationJson(ValidationException $exception): Response
+    private function renderValidationJson(ValidationException $exception): ResponseInterface
     {
         return Response::validationError($exception->violations());
     }
@@ -201,7 +204,7 @@ final readonly class ExceptionHandler
     /**
      * Render a generic JSON error response for clients that prefer JSON.
      */
-    private function renderJson(Throwable $_exception, ResponseStatus $status, Request $request): Response
+    private function renderJson(Throwable $_exception, ResponseStatus $status, ServerRequestInterface $request): ResponseInterface
     {
         $data = [
             'error' => $status->reasonPhrase(),
@@ -215,14 +218,14 @@ final readonly class ExceptionHandler
 
         return Response::json(
             data: $data,
-            status: $status,
+            status: $status->value,
         );
     }
 
     /**
      * Resolve the current RequestContext from holder or request attribute.
      */
-    private function resolveRequestContext(Request $request): ?RequestContext
+    private function resolveRequestContext(ServerRequestInterface $request): ?RequestContext
     {
         if ($this->requestContextHolder !== null) {
             $context = $this->requestContextHolder->tryGet();
@@ -231,7 +234,7 @@ final readonly class ExceptionHandler
             }
         }
 
-        $attribute = $request->attribute('_request_context');
+        $attribute = $request->getAttribute('_request_context');
 
         return $attribute instanceof RequestContext ? $attribute : null;
     }

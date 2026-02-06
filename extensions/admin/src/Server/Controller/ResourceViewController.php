@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Exception\ResourceNotFoundException;
 use Pulsar\Extension\Admin\Features\ViewResource\ViewResourceHandler;
 use Pulsar\Extension\Admin\Features\ViewResource\ViewResourceRequest;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
+
+use function str_contains;
 
 /**
  * Controller for viewing a single resource record.
@@ -26,7 +28,7 @@ final readonly class ResourceViewController
         private AdminConfig $config,
     ) {}
 
-    public function view(Request $request, string $resource, string $id): Response
+    public function view(ServerRequestInterface $request, string $resource, string $id): Response
     {
         try {
             $result = $this->handler->execute(new ViewResourceRequest(
@@ -36,11 +38,11 @@ final readonly class ResourceViewController
         } catch (ResourceNotFoundException $e) {
             return Response::json(
                 ['error' => $e->getMessage()],
-                ResponseStatus::NotFound,
+                ResponseStatus::NotFound->value,
             );
         }
 
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json(['data' => $result->data]);
         }
 

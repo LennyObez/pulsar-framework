@@ -7,13 +7,14 @@ namespace Pulsar\Tests\E2E;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Core\Kernel;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\TracingMiddleware;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\Logger;
@@ -42,19 +43,32 @@ use Pulsar\Observability\Tracing\W3CTraceContextParser;
 #[CoversClass(Logger::class)]
 final class ObservabilityPipelineTest extends TestCase
 {
+    /**
+     * @param array<string, string|list<string>> $headers
+     */
     private function createRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $path = '/',
-        HeaderBag $headers = new HeaderBag(),
-    ): Request {
-        return new Request(
+        array $headers = [],
+    ): ServerRequest {
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
             headers: $headers,
-            body: '',
         );
+    }
+
+    private function createHandler(callable $fn): RequestHandlerInterface
+    {
+        return new class ($fn) implements RequestHandlerInterface {
+            /** @param callable(ServerRequestInterface): ResponseInterface $fn */
+            public function __construct(private readonly mixed $fn) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return ($this->fn)($request);
+            }
+        };
     }
 
     // ---- Metrics ----
@@ -94,14 +108,14 @@ final class ObservabilityPipelineTest extends TestCase
         $registry = new MetricRegistry();
         $middleware = new MetricsMiddleware($registry);
 
-        $request = $this->createRequest(Method::GET, '/api/users');
+        $request = $this->createRequest('GET', '/api/users');
 
         $response = $middleware->process(
             $request,
-            fn(Request $req): Response => Response::json(['users' => []]),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::json(['users' => []])),
         );
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
 
         // Verify request counter was incremented
         self::assertTrue($registry->has('pulsar_http_requests_total'));
@@ -126,8 +140,8 @@ final class ObservabilityPipelineTest extends TestCase
         // Simulate 3 GET requests
         for ($i = 0; $i < 3; $i++) {
             $middleware->process(
-                $this->createRequest(Method::GET, '/health'),
-                fn(Request $req): Response => Response::text('ok'),
+                $this->createRequest('GET', '/health'),
+                $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('ok')),
             );
         }
 
@@ -160,15 +174,15 @@ final class ObservabilityPipelineTest extends TestCase
         $collector = new InMemorySpanCollector();
         $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
 
-        $request = $this->createRequest(Method::GET, '/api/items');
+        $request = $this->createRequest('GET', '/api/items');
 
         $response = $middleware->process(
             $request,
-            fn(Request $req): Response => Response::text('traced'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('traced')),
         );
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('traced', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('traced', (string) $response->getBody());
 
         // Verify span was collected
         self::assertSame(1, $collector->count());
@@ -194,11 +208,11 @@ final class ObservabilityPipelineTest extends TestCase
 
         $response = $middleware->process(
             $this->createRequest(),
-            fn(Request $req): Response => Response::text('ok'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('ok')),
         );
 
-        $traceparent = $response->headers->first('traceparent');
-        self::assertNotNull($traceparent);
+        $traceparent = $response->getHeaderLine('traceparent');
+        self::assertNotEmpty($traceparent);
         self::assertMatchesRegularExpression(
             '/^00-[a-f0-9]{32}-[a-f0-9]{16}-[a-f0-9]{2}$/',
             $traceparent,
@@ -213,12 +227,12 @@ final class ObservabilityPipelineTest extends TestCase
 
         $incomingTraceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
         $request = $this->createRequest(
-            headers: new HeaderBag(['traceparent' => $incomingTraceparent]),
+            headers: ['traceparent' => $incomingTraceparent],
         );
 
         $response = $middleware->process(
             $request,
-            fn(Request $req): Response => Response::text('propagated'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('propagated')),
         );
 
         // Verify the span uses the incoming trace ID
@@ -229,8 +243,8 @@ final class ObservabilityPipelineTest extends TestCase
         self::assertSame('4bf92f3577b34da6a3ce929d0e0e4736', $span->context->traceId->value);
 
         // Response should contain traceparent with same trace ID
-        $responseTraceparent = $response->headers->first('traceparent');
-        self::assertNotNull($responseTraceparent);
+        $responseTraceparent = $response->getHeaderLine('traceparent');
+        self::assertNotEmpty($responseTraceparent);
         self::assertStringContainsString('4bf92f3577b34da6a3ce929d0e0e4736', $responseTraceparent);
     }
 
@@ -245,11 +259,11 @@ final class ObservabilityPipelineTest extends TestCase
 
         $middleware->process(
             $this->createRequest(),
-            function (Request $req) use (&$capturedContext, &$capturedSpan): Response {
-                $capturedContext = $req->attribute('_trace_context');
-                $capturedSpan = $req->attribute('_root_span');
+            $this->createHandler(function (ServerRequestInterface $req) use (&$capturedContext, &$capturedSpan): ResponseInterface {
+                $capturedContext = $req->getAttribute('_trace_context');
+                $capturedSpan = $req->getAttribute('_root_span');
                 return Response::text('ok');
-            },
+            }),
         );
 
         self::assertInstanceOf(TraceContext::class, $capturedContext);
@@ -264,10 +278,10 @@ final class ObservabilityPipelineTest extends TestCase
 
         $middleware->process(
             $this->createRequest(),
-            fn(Request $req): Response => new Response(
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => new Response(
+                statusCode: ResponseStatus::InternalServerError->value,
                 body: 'Server Error',
-                status: ResponseStatus::InternalServerError,
-            ),
+            )),
         );
 
         $spans = $collector->spans();
@@ -376,18 +390,28 @@ final class ObservabilityPipelineTest extends TestCase
         $metricsMiddleware = new MetricsMiddleware($registry);
         $tracingMiddleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
 
-        $request = $this->createRequest(Method::POST, '/api/orders');
+        $request = $this->createRequest('POST', '/api/orders');
 
-        // Tracing wraps metrics wraps handler (same as kernel pipeline order)
-        $response = $tracingMiddleware->process(
-            $request,
-            fn(Request $req): Response => $metricsMiddleware->process(
-                $req,
-                fn(Request $r): Response => Response::json(['order_id' => 'ORD-001']),
-            ),
+        $innerHandler = $this->createHandler(
+            fn(ServerRequestInterface $r): ResponseInterface => Response::json(['order_id' => 'ORD-001']),
         );
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        $metricsHandler = new class ($metricsMiddleware, $innerHandler) implements RequestHandlerInterface {
+            public function __construct(
+                private readonly MetricsMiddleware $middleware,
+                private readonly RequestHandlerInterface $inner,
+            ) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->middleware->process($request, $this->inner);
+            }
+        };
+
+        // Tracing wraps metrics wraps handler (same as kernel pipeline order)
+        $response = $tracingMiddleware->process($request, $metricsHandler);
+
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
 
         // Verify metrics were recorded
         $counter = $registry->counter('pulsar_http_requests_total');
@@ -401,7 +425,7 @@ final class ObservabilityPipelineTest extends TestCase
         self::assertSame(SpanStatus::Ok, $span->status);
 
         // Verify traceparent header was propagated
-        self::assertNotNull($response->headers->first('traceparent'));
+        self::assertNotEmpty($response->getHeaderLine('traceparent'));
     }
 }
 

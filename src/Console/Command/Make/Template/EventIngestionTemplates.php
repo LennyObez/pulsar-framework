@@ -189,8 +189,8 @@ final readonly class EventIngestionTemplates
 
             namespace $namespace\\Controller;
 
-            use Pulsar\\Http\\Request;
-            use Pulsar\\Http\\Response;
+            use Psr\\Http\\Message\\ServerRequestInterface;
+            use Pulsar\\Http\\Message\\Response;
             use Pulsar\\Http\\ResponseStatus;
             use Pulsar\\Webhook\\WebhookProcessor;
             use Pulsar\\Webhook\\WebhookProcessingStatus;
@@ -206,29 +206,29 @@ final readonly class EventIngestionTemplates
                     private WebhookProcessor \$processor,
                 ) {}
 
-                public function __invoke(Request \$request): Response
+                public function __invoke(ServerRequestInterface \$request): Response
                 {
                     \$result = \$this->processor->process(
-                        \$request->rawBody(),
-                        \$request->header(self::SIGNATURE_HEADER) ?? '',
+                        (string) \$request->getBody(),
+                        \$request->getHeaderLine(self::SIGNATURE_HEADER),
                     );
 
                     return match (\$result->status) {
                         WebhookProcessingStatus::Processed => Response::json(
                             ['status' => 'processed', 'event_id' => \$result->eventId],
-                            ResponseStatus::Ok,
+                            ResponseStatus::OK->value,
                         ),
                         WebhookProcessingStatus::Replay => Response::json(
                             ['status' => 'duplicate', 'event_id' => \$result->eventId],
-                            ResponseStatus::Ok,
+                            ResponseStatus::OK->value,
                         ),
                         WebhookProcessingStatus::InvalidSignature => Response::json(
                             ['error' => 'Invalid signature'],
-                            ResponseStatus::Forbidden,
+                            ResponseStatus::Forbidden->value,
                         ),
                         WebhookProcessingStatus::HandlerError => Response::json(
                             ['error' => 'Processing failed'],
-                            ResponseStatus::InternalServerError,
+                            ResponseStatus::InternalServerError->value,
                         ),
                     };
                 }
@@ -493,7 +493,8 @@ final readonly class EventIngestionTemplates
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
             use PHPUnit\\Framework\\TestCase;
-            use Pulsar\\Http\\Request;
+            use Psr\\Http\\Message\\ServerRequestInterface;
+            use Psr\\Http\\Message\\StreamInterface;
             use Pulsar\\Http\\ResponseStatus;
             use Pulsar\\Webhook\\WebhookProcessingResult;
             use Pulsar\\Webhook\\WebhookProcessingStatus;
@@ -513,13 +514,15 @@ final readonly class EventIngestionTemplates
 
                     \$controller = new {$name}WebhookController(\$processor);
 
-                    \$request = \$this->createStub(Request::class);
-                    \$request->method('rawBody')->willReturn('{}');
-                    \$request->method('header')->willReturn('sig');
+                    \$body = \$this->createStub(StreamInterface::class);
+                    \$body->method('__toString')->willReturn('{}');
+                    \$request = \$this->createStub(ServerRequestInterface::class);
+                    \$request->method('getBody')->willReturn(\$body);
+                    \$request->method('getHeaderLine')->willReturn('sig');
 
                     \$response = \$controller(\$request);
 
-                    self::assertSame(ResponseStatus::Ok, \$response->status);
+                    self::assertSame(ResponseStatus::OK->value, \$response->getStatusCode());
                 }
             }
             PHP;

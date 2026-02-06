@@ -7,9 +7,8 @@ namespace Pulsar\Tests\Unit\Runtime\Http;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Http\ConnectionContext;
 use Pulsar\Runtime\Http\HttpRequestParser;
@@ -46,13 +45,13 @@ final class HttpRequestParserTest extends TestCase
 
         $result = $this->parser->parse($ctx);
 
-        self::assertInstanceOf(Request::class, $result);
-        self::assertSame(Method::GET, $result->method);
-        self::assertSame('/hello', $result->path);
-        self::assertSame('name=world', $result->queryString);
-        self::assertSame('1.1', $result->protocolVersion);
-        self::assertSame('localhost', $result->header('Host'));
-        self::assertSame('', $result->body);
+        self::assertInstanceOf(ServerRequest::class, $result);
+        self::assertSame('GET', $result->getMethod());
+        self::assertSame('/hello', $result->getUri()->getPath());
+        self::assertSame('name=world', $result->getUri()->getQuery());
+        self::assertSame('1.1', $result->getProtocolVersion());
+        self::assertSame('localhost', $result->getHeaderLine('Host'));
+        self::assertSame('', (string) $result->getBody());
     }
 
     #[Test]
@@ -69,10 +68,10 @@ final class HttpRequestParserTest extends TestCase
 
         $result = $this->parser->parse($ctx);
 
-        self::assertInstanceOf(Request::class, $result);
-        self::assertSame(Method::POST, $result->method);
-        self::assertSame('/api/data', $result->path);
-        self::assertSame($body, $result->body);
+        self::assertInstanceOf(ServerRequest::class, $result);
+        self::assertSame('POST', $result->getMethod());
+        self::assertSame('/api/data', $result->getUri()->getPath());
+        self::assertSame($body, (string) $result->getBody());
     }
 
     #[Test]
@@ -106,7 +105,7 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::BadRequest, $result->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -118,7 +117,7 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::BadRequest, $result->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -131,7 +130,7 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx, maxHeaderSize: 8192);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge, $result->status);
+        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -143,7 +142,7 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx, maxBodySize: 1024);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::PayloadTooLarge, $result->status);
+        self::assertSame(ResponseStatus::PayloadTooLarge->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -154,9 +153,9 @@ final class HttpRequestParserTest extends TestCase
 
         $result = $this->parser->parse($ctx);
 
-        self::assertInstanceOf(Request::class, $result);
-        self::assertSame('abc123', $result->cookies['session']);
-        self::assertSame('dark', $result->cookies['theme']);
+        self::assertInstanceOf(ServerRequest::class, $result);
+        self::assertSame('abc123', $result->getCookieParams()['session']);
+        self::assertSame('dark', $result->getCookieParams()['theme']);
     }
 
     #[Test]
@@ -168,13 +167,13 @@ final class HttpRequestParserTest extends TestCase
         $ctx = $this->createContext($req1 . $req2);
 
         $result1 = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $result1);
-        self::assertSame('/first', $result1->path);
+        self::assertInstanceOf(ServerRequest::class, $result1);
+        self::assertSame('/first', $result1->getUri()->getPath());
 
         // Buffer should have the second request remaining
         $result2 = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $result2);
-        self::assertSame('/second', $result2->path);
+        self::assertInstanceOf(ServerRequest::class, $result2);
+        self::assertSame('/second', $result2->getUri()->getPath());
     }
 
     #[Test]
@@ -191,8 +190,8 @@ final class HttpRequestParserTest extends TestCase
 
         $result = $this->parser->parse($ctx);
 
-        self::assertInstanceOf(Request::class, $result);
-        self::assertSame('Hello World', $result->body);
+        self::assertInstanceOf(ServerRequest::class, $result);
+        self::assertSame('Hello World', (string) $result->getBody());
     }
 
     #[Test]
@@ -208,7 +207,7 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::BadRequest, $result->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -222,7 +221,7 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::NotImplemented, $result->status);
+        self::assertSame(ResponseStatus::NotImplemented->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -240,7 +239,7 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx, maxBodySize: 1024);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::PayloadTooLarge, $result->status);
+        self::assertSame(ResponseStatus::PayloadTooLarge->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -259,7 +258,7 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx, maxHeaderSize: 100_000);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge, $result->status);
+        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -270,8 +269,8 @@ final class HttpRequestParserTest extends TestCase
 
         $result = $this->parser->parse($ctx);
 
-        self::assertInstanceOf(Request::class, $result);
-        self::assertSame('1.0', $result->protocolVersion);
+        self::assertInstanceOf(ServerRequest::class, $result);
+        self::assertSame('1.0', $result->getProtocolVersion());
     }
 
     #[Test]
@@ -283,7 +282,7 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::BadRequest, $result->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -294,9 +293,9 @@ final class HttpRequestParserTest extends TestCase
 
         $result = $this->parser->parse($ctx);
 
-        self::assertInstanceOf(Request::class, $result);
-        self::assertSame(Method::DELETE, $result->method);
-        self::assertSame('', $result->body);
+        self::assertInstanceOf(ServerRequest::class, $result);
+        self::assertSame('DELETE', $result->getMethod());
+        self::assertSame('', (string) $result->getBody());
     }
 
     #[Test]
@@ -309,6 +308,6 @@ final class HttpRequestParserTest extends TestCase
         $result = $this->parser->parse($ctx, maxHeaderSize: 1024);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge, $result->status);
+        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge->value, $result->getStatusCode());
     }
 }
