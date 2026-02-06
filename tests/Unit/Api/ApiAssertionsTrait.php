@@ -6,6 +6,8 @@ namespace Pulsar\Tests\Unit\Api;
 
 use function count;
 
+use NoDiscard;
+use Override;
 use Pulsar\Api\Api;
 use Pulsar\Api\Internal;
 use ReflectionClass;
@@ -190,6 +192,48 @@ trait ApiAssertionsTrait
         self::assertTrue(
             $ref->implementsInterface($interface),
             sprintf('Class %s must implement %s', $class, $interface),
+        );
+    }
+
+    /**
+     * Assert that a method has the #[Override] attribute.
+     *
+     * @param class-string $class
+     */
+    private static function assertMethodHasOverrideAttribute(string $class, string $method): void
+    {
+        $ref = new ReflectionClass($class);
+        self::assertTrue(
+            $ref->hasMethod($method),
+            sprintf('Class %s must have method %s()', $class, $method),
+        );
+
+        $methodRef = $ref->getMethod($method);
+        $attrs = $methodRef->getAttributes(Override::class);
+        self::assertNotEmpty(
+            $attrs,
+            sprintf('%s::%s() must have #[Override] attribute', $class, $method),
+        );
+    }
+
+    /**
+     * Assert that a method has the #[NoDiscard] attribute.
+     *
+     * @param class-string $class
+     */
+    private static function assertMethodHasNoDiscardAttribute(string $class, string $method): void
+    {
+        $ref = new ReflectionClass($class);
+        self::assertTrue(
+            $ref->hasMethod($method),
+            sprintf('Class %s must have method %s()', $class, $method),
+        );
+
+        $methodRef = $ref->getMethod($method);
+        $attrs = $methodRef->getAttributes(NoDiscard::class);
+        self::assertNotEmpty(
+            $attrs,
+            sprintf('%s::%s() must have #[NoDiscard] attribute', $class, $method),
         );
     }
 }

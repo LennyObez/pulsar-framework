@@ -7,6 +7,7 @@ namespace Pulsar\Deploy\Check;
 use function extension_loaded;
 use function ini_get;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Deploy\CheckResult;
 use Pulsar\Deploy\DeployCheckInterface;
@@ -24,16 +25,19 @@ final readonly class OpcacheCheck implements DeployCheckInterface
 {
     private const string CHECK_NAME = 'opcache';
 
+    #[Override]
     public function getName(): string
     {
         return self::CHECK_NAME;
     }
 
+    #[Override]
     public function getDescription(): string
     {
         return 'Validates OPcache is enabled and configured for the target environment';
     }
 
+    #[Override]
     public function check(string $environment): CheckResult
     {
         if (!extension_loaded('Zend OPcache')) {

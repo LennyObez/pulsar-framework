@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Core;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 
 /**
@@ -22,6 +23,7 @@ final class Version
     /**
      * Get the full version string (e.g. "1.0.0-rc.1" or "1.0.0").
      */
+    #[NoDiscard]
     public static function full(): string
     {
         return self::short() . self::PRERELEASE_SUFFIX;
@@ -30,6 +32,7 @@ final class Version
     /**
      * Get the short version string (major.minor.patch).
      */
+    #[NoDiscard]
     public static function short(): string
     {
         return self::MAJOR . '.' . self::MINOR . '.' . self::PATCH;

@@ -6,6 +6,7 @@ namespace Pulsar\Console\Output;
 
 use function function_exists;
 
+use Override;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Console\Verbosity;
 
@@ -57,6 +58,7 @@ final class ConsoleOutput implements OutputInterface
         return function_exists('posix_isatty') && @posix_isatty($this->stdout);
     }
 
+    #[Override]
     public function write(string $message): void
     {
         if ($this->verbosity === Verbosity::Quiet) {
@@ -66,11 +68,13 @@ final class ConsoleOutput implements OutputInterface
         fwrite($this->stdout, $message);
     }
 
+    #[Override]
     public function writeln(string $message = ''): void
     {
         $this->write($message . PHP_EOL);
     }
 
+    #[Override]
     public function error(string $message): void
     {
         if ($this->verbosity === Verbosity::Quiet) {
@@ -84,11 +88,13 @@ final class ConsoleOutput implements OutputInterface
         fwrite($this->stderr, $formatted);
     }
 
+    #[Override]
     public function errorln(string $message = ''): void
     {
         $this->error($message . PHP_EOL);
     }
 
+    #[Override]
     public function success(string $message): void
     {
         $formatted = $this->decorated
@@ -98,6 +104,7 @@ final class ConsoleOutput implements OutputInterface
         $this->writeln($formatted);
     }
 
+    #[Override]
     public function info(string $message): void
     {
         $formatted = $this->decorated
@@ -107,6 +114,7 @@ final class ConsoleOutput implements OutputInterface
         $this->writeln($formatted);
     }
 
+    #[Override]
     public function warning(string $message): void
     {
         $formatted = $this->decorated
@@ -116,21 +124,25 @@ final class ConsoleOutput implements OutputInterface
         $this->writeln($formatted);
     }
 
+    #[Override]
     public function isQuiet(): bool
     {
         return $this->verbosity === Verbosity::Quiet;
     }
 
+    #[Override]
     public function isVerbose(): bool
     {
         return $this->verbosity->showsVerbose();
     }
 
+    #[Override]
     public function isDebug(): bool
     {
         return $this->verbosity->showsDebug();
     }
 
+    #[Override]
     public function newLine(int $count = 1): void
     {
         $this->write(str_repeat(PHP_EOL, $count));

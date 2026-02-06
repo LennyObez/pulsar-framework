@@ -7,6 +7,7 @@ namespace Pulsar\Observability\ErrorTracking;
 use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
+use NoDiscard;
 use Pulsar\Observability\Tracing\TraceId;
 use Throwable;
 
@@ -38,6 +39,7 @@ final readonly class ErrorEvent
      *
      * @throws DateMalformedStringException
      */
+    #[NoDiscard]
     public static function fromThrowable(
         Throwable $throwable,
         array $context = [],

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\NewProject;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 
 /**
@@ -38,6 +39,7 @@ final class DirectoryLayout
      *
      * @return list<string>
      */
+    #[NoDiscard]
     public static function forPreset(ProjectPreset $preset): array
     {
         return match ($preset) {

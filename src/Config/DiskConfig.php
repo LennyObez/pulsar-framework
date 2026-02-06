@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use function is_string;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -29,6 +30,7 @@ readonly class DiskConfig
     /**
      * @param array<string, mixed> $data Raw array for a single disk entry
      */
+    #[NoDiscard]
     public static function fromArray(string $name, array $data): self
     {
         $rawDriver = $data['driver'] ?? 'local';

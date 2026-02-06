@@ -39,7 +39,7 @@ final class ConfigRepositoryTest extends TestCase
         $repo = new ConfigRepository();
 
         $this->expectException(ConfigException::class);
-        $repo->get(AppConfig::class);
+        $_ = $repo->get(AppConfig::class);
     }
 
     #[Test]

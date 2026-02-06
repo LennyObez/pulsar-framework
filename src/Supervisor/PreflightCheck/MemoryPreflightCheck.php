@@ -6,6 +6,7 @@ namespace Pulsar\Supervisor\PreflightCheck;
 
 use function memory_get_usage;
 
+use Override;
 use Pulsar\Api\Internal;
 
 use function round;
@@ -26,11 +27,13 @@ final class MemoryPreflightCheck implements PreflightCheckInterface
         private readonly int $thresholdMb = 128,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return 'memory';
     }
 
+    #[Override]
     public function check(): PreflightCheckResult
     {
         $usageBytes = memory_get_usage(true);

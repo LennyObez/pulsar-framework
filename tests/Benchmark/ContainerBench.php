@@ -28,28 +28,28 @@ final class ContainerBench
         $this->container->instance('instance', new stdClass());
         $this->container->bind('singleton', fn() => new stdClass());
         $this->container->bind('factory', fn() => new stdClass(), BindingType::Factory);
-        $this->container->get('singleton');
+        $_ = $this->container->get('singleton');
     }
 
     #[Subject]
     #[Assert('mode(variant.time.avg) < 100 microseconds')]
     public function benchInstanceResolution(): void
     {
-        $this->container->get('instance');
+        $result = $this->container->get('instance');
     }
 
     #[Subject]
     #[Assert('mode(variant.time.avg) < 100 microseconds')]
     public function benchSingletonCachedResolution(): void
     {
-        $this->container->get('singleton');
+        $result = $this->container->get('singleton');
     }
 
     #[Subject]
     #[Assert('mode(variant.time.avg) < 1 millisecond')]
     public function benchFactoryResolution(): void
     {
-        $this->container->get('factory');
+        $result = $this->container->get('factory');
     }
 
     #[Subject]

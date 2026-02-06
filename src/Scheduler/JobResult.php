@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Scheduler;
 
 use DateTimeImmutable;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Throwable;
 
@@ -37,6 +38,7 @@ readonly class JobResult
     /**
      * Create a success result.
      */
+    #[NoDiscard]
     public static function success(string $jobName, DateTimeImmutable $startedAt, string $output = ''): self
     {
         return new self(
@@ -51,6 +53,7 @@ readonly class JobResult
     /**
      * Create a failure result.
      */
+    #[NoDiscard]
     public static function failure(string $jobName, DateTimeImmutable $startedAt, Throwable $exception): self
     {
         return new self(
@@ -65,6 +68,7 @@ readonly class JobResult
     /**
      * Create a skipped result.
      */
+    #[NoDiscard]
     public static function skipped(string $jobName): self
     {
         $now = new DateTimeImmutable();

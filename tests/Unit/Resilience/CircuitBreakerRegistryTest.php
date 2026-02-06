@@ -44,7 +44,7 @@ final class CircuitBreakerRegistryTest extends TestCase
 
         self::assertFalse($registry->has('api'));
 
-        $registry->get('api');
+        $_ = $registry->get('api');
 
         self::assertTrue($registry->has('api'));
         self::assertFalse($registry->has('unknown'));
@@ -57,8 +57,8 @@ final class CircuitBreakerRegistryTest extends TestCase
 
         self::assertSame([], $registry->all());
 
-        $registry->get('api');
-        $registry->get('database');
+        $_ = $registry->get('api');
+        $_ = $registry->get('database');
 
         $all = $registry->all();
 

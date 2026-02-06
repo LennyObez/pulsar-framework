@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Crypto;
 
+use NoDiscard;
 use Pulsar\Security\Exception\SecurityException;
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
 use function sodium_crypto_secretbox;
 use function sodium_crypto_secretbox_open;
@@ -41,9 +44,14 @@ final class Encryptor
      *
      * @param string $key Raw 32-byte secretbox key
      */
+    private readonly Randomizer $randomizer;
+
     private function __construct(
         private readonly string $key,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * Create an Encryptor using the default subkey derivation (subKeyId=1, context='encrypt_').
@@ -52,6 +60,7 @@ final class Encryptor
      *
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function fromMasterKey(MasterKey $masterKey): self
     {
         return new self($masterKey->deriveSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT));
@@ -65,6 +74,7 @@ final class Encryptor
      *
      * @throws SodiumException
      */
+    #[NoDiscard]
     public static function fromDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self
     {
         return new self($masterKey->deriveSubKey($subKeyId, $context));
@@ -81,7 +91,7 @@ final class Encryptor
      */
     public function encrypt(string $plaintext): string
     {
-        $nonce = random_bytes(self::NONCE_LENGTH);
+        $nonce = $this->randomizer->getBytes(self::NONCE_LENGTH);
         $ciphertext = sodium_crypto_secretbox($plaintext, $nonce, $this->key);
 
         return base64_encode($nonce . $ciphertext);

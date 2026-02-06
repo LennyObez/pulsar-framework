@@ -19,6 +19,8 @@ use JsonException;
 use function mb_strtolower;
 use function mkdir;
 
+use NoDiscard;
+use Override;
 use PDO;
 use PDOException;
 use Pulsar\Api\Internal;
@@ -26,9 +28,10 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Studio\Console\Event\EventEnvelope;
 use Pulsar\Studio\Exception\StudioException;
+use Random\Engine\Secure;
 use Random\RandomException;
+use Random\Randomizer;
 
-use function random_int;
 use function sprintf;
 use function str_contains;
 
@@ -74,11 +77,13 @@ final class SqliteEventStore implements EventStoreInterface
     /**
      * Create a store using an in-memory SQLite database (for testing).
      */
+    #[NoDiscard]
     public static function inMemory(?MetricRegistry $metricRegistry = null): self
     {
         return new self(':memory:', $metricRegistry);
     }
 
+    #[Override]
     public function store(EventEnvelope $envelope, string $payloadJson, ?string $tenantHash = null): void
     {
         $stmt = $this->pdo->prepare(<<<'SQL'
@@ -180,6 +185,7 @@ final class SqliteEventStore implements EventStoreInterface
         });
     }
 
+    #[Override]
     public function query(array $filters = [], int $limit = 50, int $offset = 0): array
     {
         [$whereClause, $bindings] = $this->buildWhereClause($filters, forQuery: true);
@@ -202,6 +208,7 @@ final class SqliteEventStore implements EventStoreInterface
         return $stmt->fetchAll();
     }
 
+    #[Override]
     public function count(array $filters = []): int
     {
         [$whereClause, $bindings] = $this->buildWhereClause($filters, forQuery: false);
@@ -302,6 +309,7 @@ final class SqliteEventStore implements EventStoreInterface
         return [$whereClause, $bindings];
     }
 
+    #[Override]
     public function find(string $eventId): ?array
     {
         $stmt = $this->pdo->prepare('SELECT * FROM studio_events WHERE event_id = :event_id');
@@ -313,6 +321,7 @@ final class SqliteEventStore implements EventStoreInterface
         return $row !== false ? $row : null;
     }
 
+    #[Override]
     public function sizeInBytes(): int
     {
         $stmt = $this->pdo->query('SELECT page_count * page_size AS size FROM pragma_page_count(), pragma_page_size()');
@@ -327,6 +336,7 @@ final class SqliteEventStore implements EventStoreInterface
         return $row !== false ? (int) $row['size'] : 0;
     }
 
+    #[Override]
     public function deleteOlderThan(int $timestampUs): int
     {
         $stmt = $this->pdo->prepare('DELETE FROM studio_events WHERE timestamp_us < :timestamp_us');
@@ -335,12 +345,14 @@ final class SqliteEventStore implements EventStoreInterface
         return $stmt->rowCount();
     }
 
+    #[Override]
     public function clear(): void
     {
         $this->pdo->exec('DELETE FROM studio_events');
         $this->pdo->exec('DELETE FROM studio_chain');
     }
 
+    #[Override]
     public function vacuum(): void
     {
         $this->pdo->exec('VACUUM');
@@ -445,7 +457,7 @@ final class SqliteEventStore implements EventStoreInterface
                 }
 
                 $delay = (int) ((float) self::BASE_DELAY_MS * (self::DELAY_MULTIPLIER ** (float) ($attempt - 1)));
-                $jitter = random_int(0, (int) ((float) $delay * 0.5));
+                $jitter = new Randomizer(new Secure())->getInt(0, (int) ((float) $delay * 0.5));
                 usleep(($delay + $jitter) * 1000);
             }
         }

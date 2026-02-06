@@ -8,6 +8,7 @@ use const FILTER_VALIDATE_EMAIL;
 
 use function filter_var;
 
+use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
@@ -24,6 +25,7 @@ readonly class Email implements RuleInterface
         private string $message = '',
     ) {}
 
+    #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation
     {
         if ($value === null) {
@@ -41,6 +43,7 @@ readonly class Email implements RuleInterface
         );
     }
 
+    #[Override]
     public function name(): string
     {
         return 'email';

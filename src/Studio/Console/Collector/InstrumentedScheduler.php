@@ -25,9 +25,8 @@ use Pulsar\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Studio\Console\Event\Payload\SchedulerRunPayload;
 use Pulsar\Studio\CorrelationContext;
 use Pulsar\Studio\FiberScopedContextProvider;
-
-use function random_bytes;
-
+use Random\Engine\Secure;
+use Random\Randomizer;
 use Throwable;
 
 /**
@@ -45,6 +44,8 @@ final class InstrumentedScheduler implements CollectorInterface
 {
     public bool $enabled = true;
 
+    private readonly Randomizer $randomizer;
+
     /**
      * @param Closure(ConsoleEvent, ?CorrelationContext): void $emit
      */
@@ -52,7 +53,10 @@ final class InstrumentedScheduler implements CollectorInterface
         private readonly Scheduler $inner,
         private readonly FiberScopedContextProvider $contextProvider,
         private readonly Closure $emit,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * Execute a single tick: find and run all due jobs.
@@ -104,7 +108,7 @@ final class InstrumentedScheduler implements CollectorInterface
             requestId: $existing?->requestId,
             traceId: $existing?->traceId,
             spanId: $existing?->spanId,
-            jobId: bin2hex(random_bytes(16)),
+            jobId: bin2hex($this->randomizer->getBytes(16)),
         );
 
         $scope = $this->contextProvider->enter($jobContext);

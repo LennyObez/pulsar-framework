@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Console\Redaction;
 
+use NoDiscard;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Studio\Console\Event\EventType;
 
@@ -45,6 +47,7 @@ final class RedactionPipeline implements RedactionPipelineInterface
      * @param array<string, mixed> $payload
      * @return array<string, mixed>
      */
+    #[Override]
     public function redact(array $payload, EventType $eventType): array
     {
         // Apply global policies first
@@ -65,6 +68,7 @@ final class RedactionPipeline implements RedactionPipelineInterface
     /**
      * Create a pipeline with the default redaction policy.
      */
+    #[NoDiscard]
     public static function withDefaults(): self
     {
         $pipeline = new self();

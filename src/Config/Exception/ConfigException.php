@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Config\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -18,6 +19,7 @@ final class ConfigException extends RuntimeException
     /**
      * Config file not found at path.
      */
+    #[NoDiscard]
     public static function fileNotFound(string $path): self
     {
         return new self(sprintf('Configuration file not found: "%s"', $path));
@@ -26,6 +28,7 @@ final class ConfigException extends RuntimeException
     /**
      * Config file did not return an array.
      */
+    #[NoDiscard]
     public static function invalidValue(string $path, string $reason): self
     {
         return new self(sprintf('Invalid configuration value in "%s": %s', $path, $reason));
@@ -34,6 +37,7 @@ final class ConfigException extends RuntimeException
     /**
      * Required config key is missing.
      */
+    #[NoDiscard]
     public static function missingRequired(string $key, string $context): self
     {
         return new self(sprintf('Missing required configuration key "%s" in %s', $key, $context));

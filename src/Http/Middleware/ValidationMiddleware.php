@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
+use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\Validation\RuleInterface;
@@ -31,9 +32,10 @@ abstract class ValidationMiddleware implements MiddlewareInterface
      */
     abstract protected function rules(Request $request): array;
 
+    #[Override]
     public function process(Request $request, callable $next): Response
     {
-        $this->validator->validateOrFail($request->all(), $this->rules($request));
+        $result = $this->validator->validateOrFail($request->all(), $this->rules($request));
 
         return $next($request);
     }

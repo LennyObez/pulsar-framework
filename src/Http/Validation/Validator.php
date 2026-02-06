@@ -4,8 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation;
 
+use function array_is_list;
+
+use InvalidArgumentException;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\Rule\Required;
+
+use function sprintf;
 
 /**
  * Stateless request data validator.
@@ -25,12 +31,17 @@ final class Validator
      * @param array<string, mixed> $data Input data to validate
      * @param array<string, list<RuleInterface>> $rules Field → rule-list map
      */
+    #[NoDiscard]
     public function validate(array $data, array $rules): ValidationResult
     {
         /** @var list<Violation> $violations */
         $violations = [];
 
         foreach ($rules as $field => $fieldRules) {
+            if (!array_is_list($fieldRules)) {
+                throw new InvalidArgumentException(sprintf('Rules for field "%s" must be a list', $field));
+            }
+
             $value = $data[$field] ?? null;
 
             foreach ($fieldRules as $rule) {
@@ -58,6 +69,7 @@ final class Validator
      *
      * @throws ValidationException When validation fails
      */
+    #[NoDiscard]
     public function validateOrFail(array $data, array $rules): ValidationResult
     {
         $result = $this->validate($data, $rules);

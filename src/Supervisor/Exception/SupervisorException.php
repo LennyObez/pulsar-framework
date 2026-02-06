@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Supervisor\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -20,6 +21,7 @@ final class SupervisorException extends RuntimeException
     /**
      * A preflight check failed, preventing the supervisor from starting.
      */
+    #[NoDiscard]
     public static function preflightFailed(string $checkName, string $reason): self
     {
         return new self(sprintf(
@@ -32,6 +34,7 @@ final class SupervisorException extends RuntimeException
     /**
      * A runtime invariant was violated while the supervisor was active.
      */
+    #[NoDiscard]
     public static function invariantViolation(string $checkName, string $reason): self
     {
         return new self(sprintf(
@@ -44,6 +47,7 @@ final class SupervisorException extends RuntimeException
     /**
      * A stuck job recovery operation failed.
      */
+    #[NoDiscard]
     public static function recoveryFailed(string $jobId, string $reason): self
     {
         return new self(sprintf(

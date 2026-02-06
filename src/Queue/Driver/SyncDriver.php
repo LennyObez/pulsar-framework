@@ -7,6 +7,7 @@ namespace Pulsar\Queue\Driver;
 use function bin2hex;
 use function class_exists;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\JobContext;
@@ -14,9 +15,9 @@ use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueableInterface;
 use Pulsar\Queue\QueueDriverInterface;
+use Random\Engine\Secure;
 use Random\RandomException;
-
-use function random_bytes;
+use Random\Randomizer;
 
 /**
  * Synchronous queue driver that executes jobs immediately in-process.
@@ -28,13 +29,21 @@ use function random_bytes;
 #[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
 final class SyncDriver implements QueueDriverInterface
 {
+    private readonly Randomizer $randomizer;
+
+    public function __construct(?Randomizer $randomizer = null)
+    {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
+
     /**
      * @throws RandomException If random byte generation fails
      * @throws QueueException If the job class does not exist or is not queueable
      */
+    #[Override]
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string
     {
-        $jobId = bin2hex(random_bytes(16));
+        $jobId = bin2hex($this->randomizer->getBytes(16));
 
         if (!class_exists($jobClass)) {
             throw QueueException::serializationFailed($jobClass);
@@ -63,26 +72,31 @@ final class SyncDriver implements QueueDriverInterface
         return $jobId;
     }
 
+    #[Override]
     public function pop(string $queue): ?JobRecord
     {
         return null;
     }
 
+    #[Override]
     public function acknowledge(string $jobId): void
     {
         // No-op: sync driver executes immediately during push.
     }
 
+    #[Override]
     public function reject(string $jobId, string $reason): void
     {
         // No-op: sync driver executes immediately during push.
     }
 
+    #[Override]
     public function size(string $queue): int
     {
         return 0;
     }
 
+    #[Override]
     public function purge(string $queue): int
     {
         return 0;
@@ -91,6 +105,7 @@ final class SyncDriver implements QueueDriverInterface
     /**
      * @return list<JobRecord>
      */
+    #[Override]
     public function findByStatus(JobRecordStatus $status): array
     {
         return [];

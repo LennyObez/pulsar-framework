@@ -171,6 +171,8 @@ use Pulsar\Tenancy\TenantAwareConnectionManager;
 use Pulsar\Tenancy\TenantContext;
 use Pulsar\Tenancy\TenantResolverInterface;
 use Pulsar\Tenancy\TenantResolverStrategy;
+use Random\Engine\Secure;
+use Random\Randomizer;
 use RuntimeException;
 use SodiumException;
 
@@ -281,6 +283,10 @@ final class Kernel
                 }
             }
         }
+
+        // Register shared Randomizer (CSPRNG) singleton
+        $randomizer = new Randomizer(new Secure());
+        $this->container->instance(Randomizer::class, $randomizer);
 
         // Config phase: load config, create services
         if ($this->configManager !== null) {
@@ -609,9 +615,13 @@ final class Kernel
         $collector = new InMemorySpanCollector();
         $this->container->instance(InMemorySpanCollector::class, $collector);
 
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+
         $tracingMiddleware = new TracingMiddleware(
             $collector,
             $observabilityConfig->tracing->samplingRate,
+            $randomizer,
         );
 
         // Tracing is outermost: registered first
@@ -741,7 +751,9 @@ final class Kernel
         $this->container->instance(SessionInterface::class, $session);
 
         // CSRF
-        $csrfTokenManager = new CsrfTokenManager($session, $securityConfig->csrf);
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+        $csrfTokenManager = new CsrfTokenManager($session, $securityConfig->csrf, $randomizer);
         $this->container->instance(CsrfTokenManager::class, $csrfTokenManager);
         $this->container->instance(CsrfTokenManagerInterface::class, $csrfTokenManager);
 
@@ -773,7 +785,7 @@ final class Kernel
                     $this->container->instance(AuditSinkInterface::class, $auditSink);
                     $this->container->instance(AuditFileSink::class, $auditSink);
 
-                    $auditLogger = new AuditLogger($auditSink, $auditKey);
+                    $auditLogger = new AuditLogger($auditSink, $auditKey, $randomizer);
                     $this->container->instance(AuditLogger::class, $auditLogger);
                 }
             } catch (SecurityException | SodiumException) {
@@ -854,12 +866,16 @@ final class Kernel
 
         // 2FA services
         if ($authConfig->twoFactor->enabled) {
+            /** @var Randomizer $randomizer */
+            $randomizer = $this->container->get(Randomizer::class);
+
             $totpGenerator = new TotpGenerator(
                 codeDigits: $authConfig->twoFactor->codeDigits,
                 period: $authConfig->twoFactor->codePeriod,
+                randomizer: $randomizer,
             );
             $totpVerifier = new TotpVerifier($totpGenerator, $authConfig->twoFactor->verificationWindow);
-            $recoveryCodeGenerator = new RecoveryCodeGenerator();
+            $recoveryCodeGenerator = new RecoveryCodeGenerator($randomizer);
             $recoveryCodeVerifier = new RecoveryCodeVerifier();
 
             $twoFactorManager = new TwoFactorManager(
@@ -1158,9 +1174,12 @@ final class Kernel
         }
 
         // Queue driver
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+
         $driver = match ($queueConfig->driver) {
-            QueueDriverType::Sync => new SyncDriver(),
-            QueueDriverType::Memory => new InMemoryDriver(),
+            QueueDriverType::Sync => new SyncDriver($randomizer),
+            QueueDriverType::Memory => new InMemoryDriver($randomizer),
             QueueDriverType::Database => $this->container->has(QueueDriverInterface::class)
                 ? $this->container->get(QueueDriverInterface::class)
                 : new InMemoryDriver(),
@@ -1480,7 +1499,9 @@ final class Kernel
         $this->container->instance(CorrelationContextProviderInterface::class, $contextProvider);
 
         // Event factory
-        $eventFactory = EventFactory::create($appConfig->mode->value);
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+        $eventFactory = EventFactory::create($appConfig->mode->value, $randomizer);
         $this->container->instance(EventFactory::class, $eventFactory);
 
         // Tenant context (if available)
@@ -1498,6 +1519,7 @@ final class Kernel
             tenantContext: $tenantContext,
             chainMacKey: $chainMacKey,
             samplingRate: $studioConfig->samplingRate,
+            randomizer: $randomizer,
         );
         $this->container->instance(StudioManager::class, $studioManager);
 
@@ -1550,9 +1572,12 @@ final class Kernel
         /** @var AppConfig $appConfig */
         $appConfig = $this->container->get(AppConfig::class);
 
+        /** @var Randomizer $randomizer */
+        $randomizer = $this->container->get(Randomizer::class);
+
         // 1. HTTP collector (global middleware, after MetricsMiddleware)
         if ($collectorConfig->http) {
-            $httpCollector = new HttpCollector($contextProvider, $emit);
+            $httpCollector = new HttpCollector($contextProvider, $emit, $randomizer);
             $this->container->instance(HttpCollector::class, $httpCollector);
             $this->middleware->pipe($httpCollector);
         }
@@ -1598,7 +1623,7 @@ final class Kernel
             /** @var Scheduler $scheduler */
             $scheduler = $this->container->get(Scheduler::class);
 
-            $instrumentedScheduler = new InstrumentedScheduler($scheduler, $contextProvider, $emit);
+            $instrumentedScheduler = new InstrumentedScheduler($scheduler, $contextProvider, $emit, $randomizer);
             $this->container->instance(InstrumentedScheduler::class, $instrumentedScheduler);
         }
 
@@ -1625,7 +1650,7 @@ final class Kernel
                 /** @var Worker $worker */
                 $worker = $this->container->get(Worker::class);
 
-                $instrumentedWorker = new InstrumentedWorker($worker, $contextProvider, $emit);
+                $instrumentedWorker = new InstrumentedWorker($worker, $contextProvider, $emit, $randomizer);
                 $this->container->instance(InstrumentedWorker::class, $instrumentedWorker);
             }
         }

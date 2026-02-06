@@ -14,10 +14,9 @@ use Pulsar\Queue\JobRecord;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
+use Random\Engine\Secure;
 use Random\RandomException;
-
-use function random_bytes;
-
+use Random\Randomizer;
 use SodiumException;
 
 use function sprintf;
@@ -30,11 +29,16 @@ use function time;
 #[Internal]
 final readonly class StuckJobRecovery
 {
+    private Randomizer $randomizer;
+
     public function __construct(
         private DeadLetterQueue $deadLetterQueue,
         private ?LoggerInterface $logger = null,
         private ?AuditLogger $auditLogger = null,
-    ) {}
+        ?Randomizer $randomizer = null,
+    ) {
+        $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
 
     /**
      * Recover a single stuck job by dead-lettering it.
@@ -76,7 +80,7 @@ final readonly class StuckJobRecovery
         );
 
         return new HealingAction(
-            id: bin2hex(random_bytes(16)),
+            id: bin2hex($this->randomizer->getBytes(16)),
             type: HealingActionType::StuckJobRecovery,
             description: $reason,
             performedAt: time(),

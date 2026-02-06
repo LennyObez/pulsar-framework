@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Container;
 
+use NoDiscard;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Pulsar\Api\Api;
 
@@ -46,5 +47,6 @@ interface ContainerInterface extends PsrContainerInterface
      * @param string|class-string<T> $id The binding identifier
      * @return ($id is class-string<T> ? T : mixed)
      */
+    #[NoDiscard]
     public function get(string $id): mixed;
 }

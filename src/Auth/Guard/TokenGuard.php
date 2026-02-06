@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Guard;
 
+use Override;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Http\Request;
 
@@ -23,6 +24,7 @@ final readonly class TokenGuard implements GuardInterface
         private TokenResolverInterface $resolver,
     ) {}
 
+    #[Override]
     public function authenticate(Request $request): ?IdentityInterface
     {
         $authorization = $request->header('Authorization');
@@ -44,6 +46,7 @@ final readonly class TokenGuard implements GuardInterface
         return $this->resolver->resolve($token);
     }
 
+    #[Override]
     public function name(): string
     {
         return 'token';

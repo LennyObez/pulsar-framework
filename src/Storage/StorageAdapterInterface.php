@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Storage;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -24,6 +25,7 @@ interface StorageAdapterInterface
      *
      * @throws StorageException If the object does not exist or read fails
      */
+    #[NoDiscard]
     public function get(string $key): string;
 
     /**

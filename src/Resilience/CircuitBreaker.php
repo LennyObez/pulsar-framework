@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Resilience;
 
 use Closure;
+use NoDiscard;
 use Pulsar\Config\CircuitBreakerConfig;
 use Pulsar\Resilience\Exception\ResilienceException;
 use Throwable;
@@ -33,6 +34,7 @@ final class CircuitBreaker
     /**
      * Create a CircuitBreaker from a config DTO.
      */
+    #[NoDiscard]
     public static function fromConfig(string $name, CircuitBreakerConfig $config): self
     {
         return new self(

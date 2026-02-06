@@ -8,6 +8,7 @@ use function in_array;
 use function is_callable;
 use function is_object;
 
+use NoDiscard;
 use Override;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
@@ -84,6 +85,7 @@ final class Container implements ContainerInterface
      * @throws NotFoundException
      * @throws ContainerException
      */
+    #[NoDiscard]
     #[Override]
     public function get(string $id): mixed
     {

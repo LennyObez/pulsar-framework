@@ -7,6 +7,7 @@ namespace Pulsar\Scheduler;
 use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use DateTimeZone;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Scheduler\Exception\SchedulerException;
 
@@ -41,6 +42,7 @@ readonly class Schedule
     /**
      * Every minute.
      */
+    #[NoDiscard]
     public static function everyMinute(string $timezone = 'UTC'): self
     {
         return new self('* * * * *', $timezone);
@@ -49,6 +51,7 @@ readonly class Schedule
     /**
      * Every five minutes.
      */
+    #[NoDiscard]
     public static function everyFiveMinutes(string $timezone = 'UTC'): self
     {
         return new self('*/5 * * * *', $timezone);
@@ -57,6 +60,7 @@ readonly class Schedule
     /**
      * Every hour at minute 0.
      */
+    #[NoDiscard]
     public static function hourly(string $timezone = 'UTC'): self
     {
         return new self('0 * * * *', $timezone);
@@ -65,6 +69,7 @@ readonly class Schedule
     /**
      * Daily at midnight.
      */
+    #[NoDiscard]
     public static function daily(string $timezone = 'UTC'): self
     {
         return new self('0 0 * * *', $timezone);
@@ -73,6 +78,7 @@ readonly class Schedule
     /**
      * Daily at a specific time (HH:MM).
      */
+    #[NoDiscard]
     public static function dailyAt(string $time, string $timezone = 'UTC'): self
     {
         [$hour, $minute] = explode(':', $time);
@@ -83,6 +89,7 @@ readonly class Schedule
     /**
      * Weekly on Sunday at midnight.
      */
+    #[NoDiscard]
     public static function weekly(string $timezone = 'UTC'): self
     {
         return new self('0 0 * * 0', $timezone);
@@ -91,6 +98,7 @@ readonly class Schedule
     /**
      * Monthly on the 1st at midnight.
      */
+    #[NoDiscard]
     public static function monthly(string $timezone = 'UTC'): self
     {
         return new self('0 0 1 * *', $timezone);
@@ -99,6 +107,7 @@ readonly class Schedule
     /**
      * Custom cron expression.
      */
+    #[NoDiscard]
     public static function cron(string $expression, string $timezone = 'UTC'): self
     {
         return new self($expression, $timezone);
