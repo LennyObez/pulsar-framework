@@ -21,7 +21,7 @@ use Pulsar\Console\OutputInterface;
 final class OptimizeClearCommand extends Command
 {
     public function __construct(
-        private readonly FrameworkCache $frameworkCache,
+        private readonly ?FrameworkCache $frameworkCache = null,
     ) {
         parent::__construct();
     }
@@ -36,6 +36,14 @@ final class OptimizeClearCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
+        if ($this->frameworkCache === null) {
+            $output->errorln('PULSAR_MASTER_KEY is required for FrameworkCache integrity (HMAC/encryption).');
+            $output->errorln('Set it via shell environment or a .env file.');
+            $output->errorln('Generate one with: php bin/pulsar key:generate');
+
+            return ExitCode::Error->value;
+        }
+
         $this->frameworkCache->clear();
 
         $output->writeln('Framework cache cleared.');

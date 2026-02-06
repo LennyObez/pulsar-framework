@@ -16,6 +16,8 @@ use Pulsar\Cache\ConfigCache;
 use Pulsar\Cache\ContainerCache;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\RouteCache;
+use Pulsar\Config\ConfigManager;
+use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function random_bytes;
@@ -36,11 +38,8 @@ final class FrameworkCacheTest extends TestCase
         mkdir($this->basePath . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'composer', 0o750, true);
         mkdir($this->basePath . DIRECTORY_SEPARATOR . 'src', 0o750, true);
 
-        // Write a minimal app.php config so invalidation key is deterministic
-        file_put_contents(
-            $this->basePath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'app.php',
-            "<?php\nreturn ['name' => 'test', 'debug' => true];\n",
-        );
+        // Write minimal config stubs (app, observability, security are mandatory)
+        $this->writeConfigStubs($this->basePath . DIRECTORY_SEPARATOR . 'config');
 
         $this->masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
     }
@@ -134,6 +133,59 @@ final class FrameworkCacheTest extends TestCase
     }
 
     #[Test]
+    public function it_warms_and_becomes_warm(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $routes = [
+            Route::get('/test', self::class, 'test.index'),
+        ];
+
+        $result = $cache->warm($repository, $routes, [], 'testing', false);
+
+        self::assertTrue($result['configCached']);
+        self::assertSame(1, $result['routesCached']);
+        self::assertSame(0, $result['routesSkipped']);
+        self::assertTrue($cache->isWarm());
+    }
+
+    #[Test]
+    public function it_warms_with_container_hints(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        /** @var array<class-string, list<array{name: string, type: class-string}>> $hints */
+        $hints = [];
+
+        $result = $cache->warm($repository, [], $hints, 'production', true);
+
+        self::assertTrue($result['configCached']);
+        self::assertTrue($result['containerCached']);
+        self::assertTrue($cache->isWarm());
+    }
+
+    #[Test]
+    public function it_clears_after_warming(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey);
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $cache->warm($repository, [], [], 'testing', false);
+        self::assertTrue($cache->isWarm());
+
+        $cache->clear();
+        self::assertFalse($cache->isWarm());
+    }
+
+    #[Test]
     public function it_includes_composer_lock_in_invalidation_key(): void
     {
         $cache = new FrameworkCache($this->basePath, $this->masterKey);
@@ -149,6 +201,22 @@ final class FrameworkCacheTest extends TestCase
         $key2 = $cache->computeInvalidationKey($configPath);
 
         self::assertNotSame($key1, $key2);
+    }
+
+    private function writeConfigStubs(string $configPath): void
+    {
+        file_put_contents(
+            $configPath . DIRECTORY_SEPARATOR . 'app.php',
+            "<?php\nreturn ['name' => 'test', 'env' => 'testing', 'debug' => true, 'timezone' => 'UTC', 'locale' => 'en'];\n",
+        );
+        file_put_contents(
+            $configPath . DIRECTORY_SEPARATOR . 'observability.php',
+            "<?php\nreturn ['logging' => ['default_channel' => 'file', 'level' => 'info', 'channels' => []], 'metrics' => ['enabled' => false, 'exporters' => []], 'tracing' => ['enabled' => false, 'sampling_rate' => 0.0], 'error_tracking' => ['enabled' => false, 'max_groups' => 100, 'max_recent_events_per_group' => 5, 'sensitive_fields' => []], 'audit' => ['enabled' => false, 'log_path' => '/dev/null', 'events' => []]];\n",
+        );
+        file_put_contents(
+            $configPath . DIRECTORY_SEPARATOR . 'security.php',
+            "<?php\nreturn ['session' => ['cookie_name' => 'TEST', 'lifetime' => 3600, 'cookie_httponly' => true, 'cookie_secure' => false, 'cookie_samesite' => 'Lax', 'regenerate_on_privilege_change' => true], 'csrf' => ['enabled' => false, 'token_length' => 32, 'header_name' => 'X-CSRF-Token', 'form_field_name' => '_csrf'], 'headers' => [], 'rate_limiting' => ['enabled' => false, 'default_limit' => 60, 'default_window' => 60], 'auth' => ['default_guard' => 'session', 'guards' => [], 'two_factor' => ['enabled' => false, 'issuer' => 'Test', 'code_digits' => 6, 'code_period' => 30, 'verification_window' => 1, 'recovery_code_count' => 8], 'authorization' => ['roles' => [], 'super_roles' => []]]];\n",
+        );
     }
 
     private function removeDirectory(string $dir): void

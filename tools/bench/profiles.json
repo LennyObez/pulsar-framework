@@ -6,7 +6,18 @@
       "opcache.jit": "off",
       "opcache.jit_buffer_size": "0"
     },
-    "preload": false
+    "preload": false,
+    "optimize": false
+  },
+  "baseline-optimized": {
+    "description": "OPcache + framework cache (config/routes/container)",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "off",
+      "opcache.jit_buffer_size": "0"
+    },
+    "preload": false,
+    "optimize": true
   },
   "jit-function": {
     "description": "OPcache + JIT function mode",
@@ -15,7 +26,18 @@
       "opcache.jit": "function",
       "opcache.jit_buffer_size": "128M"
     },
-    "preload": false
+    "preload": false,
+    "optimize": false
+  },
+  "jit-function-optimized": {
+    "description": "OPcache + JIT function mode + framework cache",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "function",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": false,
+    "optimize": true
   },
   "jit-tracing": {
     "description": "OPcache + JIT tracing mode",
@@ -24,7 +46,18 @@
       "opcache.jit": "tracing",
       "opcache.jit_buffer_size": "128M"
     },
-    "preload": false
+    "preload": false,
+    "optimize": false
+  },
+  "jit-tracing-optimized": {
+    "description": "OPcache + JIT tracing + framework cache",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "tracing",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": false,
+    "optimize": true
   },
   "preload-jit-function": {
     "description": "OPcache + preload + JIT function mode",
@@ -33,7 +66,8 @@
       "opcache.jit": "function",
       "opcache.jit_buffer_size": "128M"
     },
-    "preload": true
+    "preload": true,
+    "optimize": false
   },
   "preload-jit-tracing": {
     "description": "OPcache + preload + JIT tracing mode",
@@ -42,7 +76,18 @@
       "opcache.jit": "tracing",
       "opcache.jit_buffer_size": "128M"
     },
-    "preload": true
+    "preload": true,
+    "optimize": false
+  },
+  "preload-jit-tracing-optimized": {
+    "description": "OPcache + preload + JIT tracing + framework cache (Linux/macOS only)",
+    "ini": {
+      "opcache.enable_cli": "1",
+      "opcache.jit": "tracing",
+      "opcache.jit_buffer_size": "128M"
+    },
+    "preload": true,
+    "optimize": true
   },
   "preload-only": {
     "description": "OPcache + preload, JIT off",
@@ -51,6 +96,7 @@
       "opcache.jit": "off",
       "opcache.jit_buffer_size": "0"
     },
-    "preload": true
+    "preload": true,
+    "optimize": false
   }
 }

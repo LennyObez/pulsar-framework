@@ -791,6 +791,17 @@ final class Kernel
                 $encryptor = Encryptor::fromMasterKey($masterKey);
                 $this->container->instance(Encryptor::class, $encryptor);
 
+                // Framework cache (skip if pre-boot already registered)
+                if (!$this->container->has(FrameworkCache::class)) {
+                    $encrypt = $environment->get('CACHE_ENCRYPT') === 'true'
+                        || $environment->get('CACHE_ENCRYPT') === '1';
+                    $configPath = $this->configManager?->configPath();
+                    if ($configPath !== null) {
+                        $frameworkCache = new FrameworkCache(dirname($configPath), $masterKey, $encrypt);
+                        $this->container->instance(FrameworkCache::class, $frameworkCache);
+                    }
+                }
+
                 // Audit logger with HMAC chain
                 /** @var ObservabilityConfig $obsConfig */
                 $obsConfig = $configManager->repository()->get(ObservabilityConfig::class);

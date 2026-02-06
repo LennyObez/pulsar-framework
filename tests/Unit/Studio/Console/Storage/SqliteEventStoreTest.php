@@ -587,6 +587,110 @@ final class SqliteEventStoreTest extends TestCase
     }
 
     #[Test]
+    public function deleteByEventTypesRemovesMatchingEvents(): void
+    {
+        $this->store->store(
+            $this->createEnvelope('http-1', EventType::HttpRequest),
+            '{}',
+        );
+        $this->store->store(
+            $this->createEnvelope('db-1', EventType::DatabaseQuery),
+            '{}',
+        );
+        $this->store->store(
+            $this->createEnvelope('cache-1', EventType::CacheOperation),
+            '{}',
+        );
+
+        $deleted = $this->store->deleteByEventTypes([EventType::HttpRequest->value, EventType::DatabaseQuery->value]);
+
+        self::assertSame(2, $deleted);
+        self::assertSame(1, $this->store->count());
+        self::assertNotNull($this->store->find('cache-1'));
+    }
+
+    #[Test]
+    public function deleteByEventTypesReturnsCount(): void
+    {
+        $this->store->store(
+            $this->createEnvelope('http-1', EventType::HttpRequest),
+            '{}',
+        );
+        $this->store->store(
+            $this->createEnvelope('http-2', EventType::HttpRequest),
+            '{}',
+        );
+
+        $deleted = $this->store->deleteByEventTypes([EventType::HttpRequest->value]);
+
+        self::assertSame(2, $deleted);
+    }
+
+    #[Test]
+    public function deleteByEventTypesWithEmptyArrayDeletesNothing(): void
+    {
+        $this->store->store(
+            $this->createEnvelope('http-1', EventType::HttpRequest),
+            '{}',
+        );
+
+        $deleted = $this->store->deleteByEventTypes([]);
+
+        self::assertSame(0, $deleted);
+        self::assertSame(1, $this->store->count());
+    }
+
+    #[Test]
+    public function deleteByPayloadKeyRemovesMatchingEvents(): void
+    {
+        $this->store->store(
+            $this->createEnvelope('bench-1', EventType::BenchmarkProfile),
+            '{"run_id":"abc123","profile_name":"default"}',
+        );
+        $this->store->store(
+            $this->createEnvelope('bench-2', EventType::BenchmarkProfile),
+            '{"run_id":"abc123","profile_name":"opcache"}',
+        );
+        $this->store->store(
+            $this->createEnvelope('bench-3', EventType::BenchmarkProfile),
+            '{"run_id":"def456","profile_name":"default"}',
+        );
+
+        $deleted = $this->store->deleteByPayloadKey(
+            EventType::BenchmarkProfile->value,
+            '$.run_id',
+            'abc123',
+        );
+
+        self::assertSame(2, $deleted);
+        self::assertSame(1, $this->store->count());
+        self::assertNotNull($this->store->find('bench-3'));
+    }
+
+    #[Test]
+    public function deleteByPayloadKeyDoesNotAffectOtherTypes(): void
+    {
+        $this->store->store(
+            $this->createEnvelope('profile-1', EventType::BenchmarkProfile),
+            '{"run_id":"abc123"}',
+        );
+        $this->store->store(
+            $this->createEnvelope('run-1', EventType::BenchmarkRun),
+            '{"run_id":"abc123"}',
+        );
+
+        $deleted = $this->store->deleteByPayloadKey(
+            EventType::BenchmarkProfile->value,
+            '$.run_id',
+            'abc123',
+        );
+
+        self::assertSame(1, $deleted);
+        self::assertSame(1, $this->store->count());
+        self::assertNotNull($this->store->find('run-1'));
+    }
+
+    #[Test]
     public function clearRemovesAllEvents(): void
     {
         $this->storeMultipleEvents(5);
