@@ -41,6 +41,7 @@ use Pulsar\Console\Application;
 use Pulsar\Console\Command\DeployCheckCommand;
 use Pulsar\Console\Command\DiagnosticsCommand;
 use Pulsar\Console\Command\InitCommand;
+use Pulsar\Console\Command\KeyGenerateCommand;
 use Pulsar\Console\Command\IntegrityBuildCommand;
 use Pulsar\Console\Command\IntegrityRepairCommand;
 use Pulsar\Console\Command\IntegrityVerifyCommand;
@@ -146,14 +147,34 @@ if (!is_dir($configPath)) {
 }
 
 $configManager = null;
+$basePath = $configPath !== null ? dirname($configPath) : getcwd();
+
 if (is_dir($configPath)) {
-    $configManager = new ConfigManager(configPath: $configPath);
+    $envFile = $basePath . DIRECTORY_SEPARATOR . '.env';
+    $configManager = new ConfigManager(
+        configPath: $configPath,
+        envFilePath: is_file($envFile) ? $envFile : null,
+    );
 }
 
 $kernel = new Kernel(
     extensionBootstrap: $extensionBootstrap,
     configManager: $configManager,
 );
+
+// Pre-boot FrameworkCache registration so cache-aware boot path works
+$masterKeyHex = getenv('PULSAR_MASTER_KEY');
+if ($masterKeyHex !== false && $masterKeyHex !== '' && $configManager !== null) {
+    try {
+        $earlyMasterKey = MasterKey::fromHex($masterKeyHex);
+        $encrypt = getenv('CACHE_ENCRYPT') === 'true' || getenv('CACHE_ENCRYPT') === '1';
+        $earlyCache = new FrameworkCache($basePath, $earlyMasterKey, $encrypt);
+        $kernel->container()->instance(FrameworkCache::class, $earlyCache);
+    } catch (Throwable) {
+        // Invalid key or sodium failure — skip pre-boot cache
+    }
+}
+
 try {
     $kernel->boot();
 } catch (Throwable $e) {
@@ -176,16 +197,17 @@ $application->addCommands([
     new PreloadDumpCommand(),
 ]);
 
-// Register optimize commands (cache subsystem)
-if ($kernel->container()->has(FrameworkCache::class)) {
-    /** @var FrameworkCache $frameworkCache */
-    $frameworkCache = $kernel->container()->get(FrameworkCache::class);
+// Register optimize + key commands (always visible)
+$frameworkCache = $kernel->container()->has(FrameworkCache::class)
+    ? $kernel->container()->get(FrameworkCache::class)
+    : null;
+/** @var FrameworkCache|null $frameworkCache */
 
-    $application->addCommands([
-        new OptimizeCommand($kernel, $frameworkCache),
-        new OptimizeClearCommand($frameworkCache),
-    ]);
-}
+$application->addCommands([
+    new OptimizeCommand($kernel, $frameworkCache),
+    new OptimizeClearCommand($frameworkCache),
+    new KeyGenerateCommand($basePath),
+]);
 
 // Register queue commands (only if queue is configured)
 if ($kernel->container()->has(QueueConfig::class)) {
@@ -216,7 +238,6 @@ if ($kernel->container()->has(SupervisorConfig::class)) {
 }
 
 // Register integrity commands (only if integrity is configured)
-$basePath = $configPath !== null ? dirname($configPath) : getcwd();
 if ($kernel->container()->has(IntegrityConfig::class)) {
     /** @var IntegrityConfig $integrityConfig */
     $integrityConfig = $kernel->container()->get(IntegrityConfig::class);

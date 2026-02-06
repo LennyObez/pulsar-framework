@@ -9,6 +9,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Console\Command\OptimizeCommand;
+use Pulsar\Console\ExitCode;
+use Pulsar\Console\Input\ArrayInput;
+use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Core\Kernel;
 use Pulsar\Security\Crypto\MasterKey;
 
@@ -59,6 +62,27 @@ final class OptimizeCommandTest extends TestCase
         $command = $this->createCommand();
 
         self::assertArrayHasKey('encrypt', $command->options);
+    }
+
+    #[Test]
+    public function nullCacheReturnsErrorWithHelpfulMessage(): void
+    {
+        $command = new OptimizeCommand(new Kernel());
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('optimize'), $output);
+
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringContainsString('PULSAR_MASTER_KEY', $output->errorBuffer);
+        self::assertStringContainsString('key:generate', $output->errorBuffer);
+    }
+
+    #[Test]
+    public function acceptsNullCache(): void
+    {
+        $command = new OptimizeCommand(new Kernel());
+
+        self::assertSame('optimize', $command->name);
     }
 
     private function createCommand(): OptimizeCommand

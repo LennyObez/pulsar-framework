@@ -9,6 +9,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Console\Command\OptimizeClearCommand;
+use Pulsar\Console\ExitCode;
+use Pulsar\Console\Input\ArrayInput;
+use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Security\Crypto\MasterKey;
 
 #[CoversClass(OptimizeClearCommand::class)]
@@ -42,6 +45,27 @@ final class OptimizeClearCommandTest extends TestCase
 
         self::assertNotEmpty($command->description);
         self::assertStringContainsString('Clear', $command->description);
+    }
+
+    #[Test]
+    public function nullCacheReturnsErrorWithHelpfulMessage(): void
+    {
+        $command = new OptimizeClearCommand();
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('optimize:clear'), $output);
+
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringContainsString('PULSAR_MASTER_KEY', $output->errorBuffer);
+        self::assertStringContainsString('key:generate', $output->errorBuffer);
+    }
+
+    #[Test]
+    public function acceptsNullCache(): void
+    {
+        $command = new OptimizeClearCommand();
+
+        self::assertSame('optimize:clear', $command->name);
     }
 
     private function createCommand(): OptimizeClearCommand
