@@ -30,6 +30,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Support\AtomicFileWriter;
+use Random\RandomException;
 
 use function realpath;
 
@@ -93,7 +94,8 @@ final class PreloadDumpCommand extends Command
 
     /**
      * @throws RuntimeException If atomic file write fails
-     * @throws \Random\RandomException If random byte generation fails
+     * @throws RandomException If random byte generation fails
+     * @throws JsonException If metadata JSON encoding fails
      */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int

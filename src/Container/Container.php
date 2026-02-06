@@ -200,6 +200,7 @@ final class Container implements ContainerInterface
      *
      * @throws NotFoundException If a dependency cannot be found in the container
      * @throws ContainerException If a container error occurs during resolution
+     * @throws ReflectionException If class reflection fails during dependency autowiring
      */
     private function buildFromHints(string $className, array $hints): object
     {

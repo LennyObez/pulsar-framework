@@ -175,6 +175,7 @@ use Pulsar\Tenancy\TenantResolverInterface;
 use Pulsar\Tenancy\TenantResolverStrategy;
 use Random\Engine\Secure;
 use Random\Randomizer;
+use ReflectionException;
 use RuntimeException;
 use SodiumException;
 
@@ -257,6 +258,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs during bootstrap
      * @throws NotFoundException If a required binding is not found during bootstrap
+     * @throws ReflectionException If class reflection fails during autowiring
      * @throws FeatureFlagException If flag storage fails during boot
      * @throws JsonException If flag serialization fails during boot
      * @throws SodiumException If a sodium cryptographic operation fails during boot
@@ -525,6 +527,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs during resolution
      * @throws NotFoundException If the resolved binding is not found
+     * @throws ReflectionException If class reflection fails during autowiring
      * @throws Error If the class cannot be instantiated
      */
     private function resolveController(string $class): object
@@ -607,6 +610,7 @@ final class Kernel
      * Create the tracing subsystem and register TracingMiddleware as outermost global middleware.
      *
      * @throws NotFoundException|ContainerException
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createTracer(): void
     {
@@ -705,6 +709,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createExceptionHandler(): void
     {
@@ -745,6 +750,7 @@ final class Kernel
      * also registers MasterKey, Encryptor, and AuditLogger.
      *
      * @throws NotFoundException|ContainerException
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createSecurityServices(): void
     {
@@ -814,6 +820,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createAuthServices(): void
     {
@@ -962,6 +969,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createTenancyServices(): void
     {
@@ -1075,6 +1083,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createSchedulerServices(): void
     {
@@ -1164,6 +1173,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createQueueServices(): void
     {
@@ -1233,6 +1243,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createSupervisorServices(): void
     {
@@ -1279,6 +1290,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createIntegrityServices(): void
     {
@@ -1403,6 +1415,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      * @throws SodiumException If a sodium cryptographic operation fails
      */
     private function studioPreboot(): void
@@ -1568,6 +1581,7 @@ final class Kernel
      *
      * @throws ContainerException If a container error occurs while resolving dependencies
      * @throws NotFoundException If a required binding is not found in the container
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function attachStudioCollectors(): void
     {

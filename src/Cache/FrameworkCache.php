@@ -21,6 +21,7 @@ use Pulsar\Core\Version;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
+use Random\RandomException;
 use ReflectionException;
 use SodiumException;
 
@@ -102,6 +103,7 @@ final class FrameworkCache
      *
      * @throws CacheException
      * @throws JsonException
+     * @throws RandomException
      * @throws ReflectionException
      * @throws SodiumException
      */
@@ -295,6 +297,7 @@ final class FrameworkCache
      *
      * @throws CacheException
      * @throws JsonException
+     * @throws RandomException
      * @throws ReflectionException
      * @throws SodiumException
      */
