@@ -15,6 +15,10 @@ use function count;
 use function date;
 use function in_array;
 use function intdiv;
+use function json_decode;
+
+use const JSON_THROW_ON_ERROR;
+
 use function max;
 use function microtime;
 use function min;
@@ -73,6 +77,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
             'logs' => ['log.entry'],
             'cache' => ['cache.hit', 'cache.miss', 'cache.write', 'cache.delete'],
             'queue' => ['job.queued', 'job.processing', 'job.completed', 'job.failed'],
+            'benchmark' => ['benchmark.run'],
         ];
 
         $available = [];
@@ -446,6 +451,80 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
     }
 
     /**
+     * Get recent benchmark run summaries.
+     *
+     * @return list<array{run_id: string, profile_count: int, success_count: int, failure_count: int, total_duration_ms: float, php_version: string, timestamp_us: int}>
+     */
+    public function benchmarkRuns(int $limit = 10): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT payload_json, timestamp_us
+             FROM studio_events
+             WHERE event_type = :type
+             ORDER BY timestamp_us DESC
+             LIMIT :limit',
+        );
+        $stmt->execute(['type' => 'benchmark.run', 'limit' => $limit]);
+        /** @var list<array{payload_json: string, timestamp_us: int}> $rows */
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($rows as $row) {
+            /** @var array{run_id: string, profile_count: int, success_count: int, failure_count: int, total_duration_ms: float, php_version: string} $payload */
+            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $result[] = [
+                'run_id' => $payload['run_id'],
+                'profile_count' => $payload['profile_count'],
+                'success_count' => $payload['success_count'],
+                'failure_count' => $payload['failure_count'],
+                'total_duration_ms' => $payload['total_duration_ms'],
+                'php_version' => $payload['php_version'],
+                'timestamp_us' => $row['timestamp_us'],
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get benchmark profile events for a specific run.
+     *
+     * @return list<array{profile_name: string, boot_us: int, warm_boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int, memory_usage_kb: int, opcache_memory_kb: ?int}>
+     */
+    public function benchmarkProfiles(string $runId): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT payload_json
+             FROM studio_events
+             WHERE event_type = :type
+               AND json_extract(payload_json, '$.run_id') = :run_id
+             ORDER BY timestamp_us ASC",
+        );
+        $stmt->execute(['type' => 'benchmark.profile', 'run_id' => $runId]);
+        /** @var list<array{payload_json: string}> $rows */
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($rows as $row) {
+            /** @var array{profile_name: string, boot_us: int, warm_boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int, memory_usage_kb: int, opcache_memory_kb: ?int} $payload */
+            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $result[] = [
+                'profile_name' => $payload['profile_name'],
+                'boot_us' => $payload['boot_us'],
+                'warm_boot_us' => $payload['warm_boot_us'],
+                'p50_us' => $payload['p50_us'],
+                'p95_us' => $payload['p95_us'],
+                'rps' => $payload['rps'],
+                'peak_rss_kb' => $payload['peak_rss_kb'],
+                'memory_usage_kb' => $payload['memory_usage_kb'],
+                'opcache_memory_kb' => $payload['opcache_memory_kb'],
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
      * Aggregate all dashboard metrics into a single array.
      *
      * Uses a 5-minute default window for all sub-queries.
@@ -483,7 +562,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
             ];
         }
 
-        return [
+        $result = [
             'total_events' => array_sum(array_values($counts)),
             'total_requests' => $throughput['total'],
             'avg_response_ms' => $latency['p50'],
@@ -493,6 +572,20 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
             'exceptions' => $exceptions,
             'slow_queries' => $slowQueries,
         ];
+
+        $benchmarkRuns = $this->benchmarkRuns(1);
+
+        if ($benchmarkRuns !== []) {
+            $latestRun = $benchmarkRuns[0];
+            $result['benchmark'] = [
+                'latest_run_id' => $latestRun['run_id'],
+                'profile_count' => $latestRun['profile_count'],
+                'success_count' => $latestRun['success_count'],
+                'total_duration_ms' => $latestRun['total_duration_ms'],
+            ];
+        }
+
+        return $result;
     }
 
     private function nowUs(): int

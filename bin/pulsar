@@ -79,6 +79,7 @@ use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Studio\Command\Console\ConsoleBenchmarkCommand;
 use Pulsar\Studio\Command\Console\ConsoleExceptionsCommand;
 use Pulsar\Studio\Command\Console\ConsoleJobsCommand;
 use Pulsar\Studio\Command\Console\ConsoleMetricsCommand;
@@ -377,6 +378,16 @@ if ($kernel->container()->has(StudioConfig::class)) {
 
             $application->add(new GuardianIntegrityBuildCommand($manifestBuilder, $integrityConfig, $manifestSigner));
             $application->add(new GuardianIntegrityVerifyCommand($manifestVerifier, $integrityConfig, $manifestSigner));
+        }
+
+        // Benchmark command
+        if ($kernel->container()->has(StudioManager::class)) {
+            /** @var StudioManager $studioManager */
+            $studioManager = $kernel->container()->get(StudioManager::class);
+            $application->add(new ConsoleBenchmarkCommand(
+                $studioManager->emitCallback(),
+                $basePath,
+            ));
         }
     }
 }
