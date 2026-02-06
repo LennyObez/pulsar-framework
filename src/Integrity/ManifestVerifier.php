@@ -10,6 +10,9 @@ use function array_keys;
 use const DIRECTORY_SEPARATOR;
 
 use function dirname;
+
+use FilesystemIterator;
+
 use function hash_file;
 use function is_dir;
 use function is_file;
@@ -32,7 +35,7 @@ use function substr;
  * and added files (on disk but not in manifest).
  */
 #[Internal]
-final class ManifestVerifier
+final readonly class ManifestVerifier
 {
     public function __construct(
         private readonly string $basePath,
@@ -170,7 +173,7 @@ final class ManifestVerifier
             $iterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator(
                     $scanPath,
-                    RecursiveDirectoryIterator::SKIP_DOTS,
+                    FilesystemIterator::SKIP_DOTS,
                 ),
             );
 

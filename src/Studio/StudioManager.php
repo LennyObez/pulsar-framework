@@ -13,6 +13,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Studio\Console\Event\EventEnvelope;
@@ -21,6 +22,7 @@ use Pulsar\Studio\Console\Redaction\RedactionPipeline;
 use Pulsar\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Tenancy\TenantContext;
+use Random\RandomException;
 
 use function random_int;
 
@@ -82,6 +84,10 @@ final readonly class StudioManager
         return $this->store;
     }
 
+    /**
+     * @throws JsonException
+     * @throws RandomException
+     */
     private function doIngest(ConsoleEvent $event, ?CorrelationContext $context): void
     {
         // 1. Create envelope (includes raw payload + payload hash)
@@ -151,6 +157,9 @@ final readonly class StudioManager
         return hash('sha256', $tenant->id);
     }
 
+    /**
+     * @throws RandomException
+     */
     private function shouldSample(): bool
     {
         // samplingRate 1.0 = 100%, 0.1 = 10%

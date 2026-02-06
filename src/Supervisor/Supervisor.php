@@ -28,7 +28,7 @@ use function time;
  * stuck job recovery into a single entry point for the runtime.
  */
 #[Internal]
-final class Supervisor
+final readonly class Supervisor
 {
     private readonly ?WorkerRecyclePolicy $recyclePolicy;
 

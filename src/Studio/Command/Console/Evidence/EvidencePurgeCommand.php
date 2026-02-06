@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Command\Console\Evidence;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -32,6 +33,9 @@ final class EvidencePurgeCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
@@ -63,7 +67,7 @@ final class EvidencePurgeCommand extends Command
         }
 
         $output->writeln('Evidence Store Purged');
-        $output->writeln("  Removed {$countBefore} events.");
+        $output->writeln("  Removed $countBefore events.");
 
         return ExitCode::Success->value;
     }

@@ -39,7 +39,7 @@ final readonly class HttpsReadinessCheck implements DeployCheckInterface
     public function check(string $environment): CheckResult
     {
         $headers = $this->securityConfig->headers->headers;
-        $hasHsts = $this->hasHeader($headers, 'Strict-Transport-Security');
+        $hasHsts = array_any($headers, static fn(string $value, string $key): bool => strtolower($key) === 'strict-transport-security');
 
         if ($hasHsts) {
             return CheckResult::pass(
@@ -71,23 +71,5 @@ final readonly class HttpsReadinessCheck implements DeployCheckInterface
                 'HSTS not required in local environment',
             ),
         };
-    }
-
-    /**
-     * Check if a header exists in the headers map (case-insensitive key match).
-     *
-     * @param array<string, string> $headers
-     */
-    private function hasHeader(array $headers, string $name): bool
-    {
-        $lowerName = strtolower($name);
-
-        foreach ($headers as $key => $value) {
-            if (strtolower($key) === $lowerName) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

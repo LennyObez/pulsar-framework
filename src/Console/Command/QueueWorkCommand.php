@@ -32,7 +32,7 @@ final class QueueWorkCommand extends Command
         $this->name = 'queue:work';
         $this->description = 'Start processing jobs from a queue';
 
-        $this->addArgument('queue', 'The queue name to process', false);
+        $this->addArgument('queue', 'The queue name to process');
         $this->addOption('max-jobs', 'Maximum number of jobs to process', null, '1000');
         $this->addOption('memory', 'Memory limit in megabytes', null, '128');
         $this->addOption('timeout', 'Time limit in seconds', null, '3600');

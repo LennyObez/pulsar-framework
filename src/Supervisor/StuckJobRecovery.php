@@ -6,6 +6,7 @@ namespace Pulsar\Supervisor;
 
 use function bin2hex;
 
+use JsonException;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Queue\DeadLetterQueue;
@@ -13,8 +14,12 @@ use Pulsar\Queue\JobRecord;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
+use Random\RandomException;
 
 use function random_bytes;
+
+use SodiumException;
+
 use function sprintf;
 use function time;
 
@@ -23,7 +28,7 @@ use function time;
  * and recording the healing action for audit purposes.
  */
 #[Internal]
-final class StuckJobRecovery
+final readonly class StuckJobRecovery
 {
     public function __construct(
         private readonly DeadLetterQueue $deadLetterQueue,
@@ -35,6 +40,10 @@ final class StuckJobRecovery
      * Recover a single stuck job by dead-lettering it.
      *
      * Logs the recovery to both the application logger and the audit trail.
+     *
+     * @throws RandomException
+     * @throws JsonException
+     * @throws SodiumException
      */
     public function recover(JobRecord $stuckJob): HealingAction
     {

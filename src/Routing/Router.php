@@ -59,6 +59,8 @@ final class Router
 
     /**
      * Add multiple routes from a group.
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     public function addGroup(RouteGroup $group): self
     {
@@ -73,6 +75,8 @@ final class Router
      * Register a GET route.
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     public function get(string $path, mixed $handler, ?string $name = null): self
     {
@@ -83,6 +87,8 @@ final class Router
      * Register a POST route.
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     public function post(string $path, mixed $handler, ?string $name = null): self
     {
@@ -93,6 +99,8 @@ final class Router
      * Register a PUT route.
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     public function put(string $path, mixed $handler, ?string $name = null): self
     {
@@ -103,6 +111,8 @@ final class Router
      * Register a PATCH route.
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     public function patch(string $path, mixed $handler, ?string $name = null): self
     {
@@ -113,6 +123,8 @@ final class Router
      * Register a DELETE route.
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     public function delete(string $path, mixed $handler, ?string $name = null): self
     {
@@ -123,6 +135,8 @@ final class Router
      * Register a route matching any method.
      *
      * @param callable|class-string|array{0: class-string, 1: string} $handler
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     public function any(string $path, mixed $handler, ?string $name = null): self
     {

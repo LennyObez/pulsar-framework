@@ -19,7 +19,7 @@ use function time;
  * status for longer than the policy's timeout threshold.
  */
 #[Internal]
-final class StuckJobDetector
+final readonly class StuckJobDetector
 {
     public function __construct(
         private readonly StuckJobPolicy $policy,

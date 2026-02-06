@@ -36,12 +36,13 @@ use function time;
  *   )
  */
 #[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
-final class DatabaseDriver implements QueueDriverInterface
+final readonly class DatabaseDriver implements QueueDriverInterface
 {
     public function __construct(
         private readonly ConnectionManagerInterface $connections,
     ) {}
 
+    /** @throws \Random\RandomException If random byte generation fails */
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string
     {
         $id = bin2hex(random_bytes(16));

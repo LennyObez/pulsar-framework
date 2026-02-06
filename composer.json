@@ -21,6 +21,11 @@
     "roave/security-advisories": "dev-latest",
     "vimeo/psalm": "^6.15"
   },
+  "suggest": {
+    "ext-curl": "Required for S3 storage adapter",
+    "ext-pcntl": "Required for queue worker signal handling",
+    "ext-simplexml": "Required for S3 XML response parsing"
+  },
   "autoload": {
     "psr-4": {
       "Pulsar\\": "src/",

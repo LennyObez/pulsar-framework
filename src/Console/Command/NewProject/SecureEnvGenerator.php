@@ -23,6 +23,8 @@ final class SecureEnvGenerator
 {
     /**
      * Generate `.env` file content.
+     *
+     * @throws \Random\RandomException
      */
     public function generate(string $appName, EnvironmentPreset $env): string
     {

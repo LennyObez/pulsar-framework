@@ -27,6 +27,7 @@ use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
+use SodiumException;
 
 use function sprintf;
 
@@ -55,6 +56,11 @@ final class IntegrityRepairCommand extends Command
         $this->addOption('confirm', 'Confirm manifest regeneration (safety gate)', 'c');
     }
 
+    /**
+     * @throws \Random\RandomException
+     * @throws JsonException
+     * @throws SodiumException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$input->hasOption('confirm')) {

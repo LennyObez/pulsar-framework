@@ -10,6 +10,7 @@ use function json_encode;
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 
+use JsonException;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -39,6 +40,9 @@ final class QueueStatusCommand extends Command
         $this->addOption('json', 'Output in JSON format');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $pendingCount = $this->manager->size();

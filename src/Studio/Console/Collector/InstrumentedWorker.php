@@ -17,6 +17,7 @@ use Pulsar\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Studio\Console\Event\Payload\JobPayload;
 use Pulsar\Studio\CorrelationContext;
 use Pulsar\Studio\FiberScopedContextProvider;
+use Random\RandomException;
 
 use function random_bytes;
 
@@ -47,6 +48,9 @@ final class InstrumentedWorker implements CollectorInterface
      * Attempt to pop and process the next available job with instrumentation.
      *
      * Emits "processing" on start and "completed" or "failed" on finish.
+     *
+     * @throws RandomException
+     * @throws Throwable
      */
     public function processNextJob(string $queue): bool
     {

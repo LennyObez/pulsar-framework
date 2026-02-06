@@ -12,6 +12,7 @@ use Override;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionNamedType;
 
 use function sprintf;
@@ -51,7 +52,9 @@ final class Container implements ContainerInterface
      *
      * @var array<class-string, list<array{name: string, type: class-string}>>
      */
-    private array $resolutionHints = [];
+    public array $resolutionHints = [] {
+        set(array $value) => $value;
+    }
 
     #[Override]
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
@@ -174,6 +177,9 @@ final class Container implements ContainerInterface
      *
      * @param class-string $className
      * @param list<array{name: string, type: class-string}> $hints
+     *
+     * @throws NotFoundException If a dependency cannot be found in the container
+     * @throws ContainerException If a container error occurs during resolution
      */
     private function buildFromHints(string $className, array $hints): object
     {
@@ -192,6 +198,7 @@ final class Container implements ContainerInterface
      * @param class-string $className
      *
      * @throws ContainerException
+     * @throws ReflectionException If class reflection fails
      */
     private function buildFromReflection(string $className): object
     {
@@ -294,16 +301,4 @@ final class Container implements ContainerInterface
         return array_keys($this->instances);
     }
 
-    /**
-     * Set resolution hints from the framework cache.
-     *
-     * Hints are optimization-only: on any resolution failure using cached data,
-     * the container transparently falls back to ReflectionClass.
-     *
-     * @param array<class-string, list<array{name: string, type: class-string}>> $hints
-     */
-    public function setResolutionHints(array $hints): void
-    {
-        $this->resolutionHints = $hints;
-    }
 }

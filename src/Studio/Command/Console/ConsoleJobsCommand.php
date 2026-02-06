@@ -6,6 +6,7 @@ namespace Pulsar\Studio\Command\Console;
 
 use function count;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -36,6 +37,9 @@ final class ConsoleJobsCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         /** @var string $rawLimit */
@@ -83,7 +87,7 @@ final class ConsoleJobsCommand extends Command
             $output->writeln(sprintf('  [%s] %s: %s', $timestamp, $type, $jobClass));
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln(sprintf('  Total: %d events', count($events)));
 
         return ExitCode::Success->value;

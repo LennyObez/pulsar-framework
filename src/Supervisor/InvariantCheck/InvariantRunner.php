@@ -10,7 +10,7 @@ use Pulsar\Api\Internal;
  * Executes all registered invariant checks and aggregates the results.
  */
 #[Internal]
-final class InvariantRunner
+final readonly class InvariantRunner
 {
     /** @var list<InvariantCheckInterface> */
     private readonly array $checks;
@@ -44,12 +44,6 @@ final class InvariantRunner
      */
     public function allPassed(): bool
     {
-        foreach ($this->checks as $check) {
-            if (!$check->check()->passed) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($this->checks, static fn(InvariantCheckInterface $check): bool => $check->check()->passed);
     }
 }

@@ -43,13 +43,11 @@ final readonly class HealthEndpointCheck implements DeployCheckInterface
     public function check(string $environment): CheckResult
     {
         foreach ($this->router->routes as $route) {
-            foreach (self::HEALTH_PATHS as $healthPath) {
-                if ($route->path === $healthPath || str_starts_with($route->path, $healthPath . '/')) {
-                    return CheckResult::pass(
-                        self::CHECK_NAME,
-                        sprintf('Health endpoint found at %s', $route->path),
-                    );
-                }
+            if (array_any(self::HEALTH_PATHS, static fn(string $healthPath): bool => $route->path === $healthPath || str_starts_with($route->path, $healthPath . '/'))) {
+                return CheckResult::pass(
+                    self::CHECK_NAME,
+                    sprintf('Health endpoint found at %s', $route->path),
+                );
             }
         }
 

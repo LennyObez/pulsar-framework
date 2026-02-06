@@ -27,6 +27,10 @@ use function random_bytes;
 #[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
 final class SyncDriver implements QueueDriverInterface
 {
+    /**
+     * @throws \Random\RandomException If random byte generation fails
+     * @throws QueueException If the job class does not exist or is not queueable
+     */
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string
     {
         $jobId = bin2hex(random_bytes(16));

@@ -89,11 +89,11 @@ final class NewCommand extends Command
         $output->writeln(sprintf('  cd %s', basename($targetPath)));
         $output->writeln('  composer install');
 
+        $output->writeln('  php -S localhost:8000 -t public');
+
         if ($preset === ProjectPreset::Api) {
-            $output->writeln('  php -S localhost:8000 -t public');
             $output->writeln('  curl http://localhost:8000/health');
         } else {
-            $output->writeln('  php -S localhost:8000 -t public');
             $output->writeln('  Open http://localhost:8000 in your browser');
         }
 

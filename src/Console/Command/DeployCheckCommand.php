@@ -11,6 +11,7 @@ use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -19,6 +20,8 @@ use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Deploy\CheckSeverity;
 use Pulsar\Deploy\DeployCheck;
+use Pulsar\Deploy\DeployReport;
+use Pulsar\Deploy\Exception\DeployException;
 
 use function sprintf;
 
@@ -45,6 +48,9 @@ final class DeployCheckCommand extends Command
         $this->addOption('strict', 'Exit with error code if any Error-severity results', 's');
     }
 
+    /**
+     * @throws DeployException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $environment = $input->getOption('env', 'production');
@@ -70,7 +76,7 @@ final class DeployCheckCommand extends Command
      */
     private function renderTable(
         OutputInterface $output,
-        \Pulsar\Deploy\DeployReport $report,
+        DeployReport $report,
         bool $strict,
     ): int {
         $output->writeln(sprintf('Deploy Readiness Check — %s', $report->environment));
@@ -157,10 +163,12 @@ final class DeployCheckCommand extends Command
 
     /**
      * Render results as JSON.
+     *
+     * @throws JsonException
      */
     private function renderJson(
         OutputInterface $output,
-        \Pulsar\Deploy\DeployReport $report,
+        DeployReport $report,
         bool $strict,
     ): int {
         $hasStrictErrors = $strict && $report->errors > 0;

@@ -10,6 +10,7 @@ use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -42,6 +43,9 @@ final class RedactionTestCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
@@ -63,7 +67,7 @@ final class RedactionTestCommand extends Command
             return ExitCode::Error->value;
         }
 
-        if ($payloadJson === null || !is_string($payloadJson)) {
+        if (!is_string($payloadJson)) {
             $payload = $this->samplePayload();
         } else {
             /** @var array<string, mixed> $payload */
@@ -87,10 +91,10 @@ final class RedactionTestCommand extends Command
         $output->writeln('Redaction Test');
         $output->writeln(str_repeat('=', 50));
         $output->writeln(sprintf('  Event type: %s', $eventType->value));
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('  Original:');
         $this->printPayload($output, $payload, '    ');
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('  Redacted:');
         $this->printPayload($output, $redacted, '    ');
 
@@ -106,7 +110,7 @@ final class RedactionTestCommand extends Command
             'url' => 'https://user:secret@example.com/api',
             'headers' => [
                 'Authorization' => 'Bearer eyJhbGciOiJIUzI1NiJ9.test',
-                'X-Api-Key' => 'sk_live_abc123def456',
+                'X-Api-Key' => 'test_key_placeholder_value',
             ],
             'password' => 'my-secret-password',
             'dsn' => 'mysql://root:hunter2@db.example.com/app',
@@ -125,7 +129,7 @@ final class RedactionTestCommand extends Command
                 $this->printPayload($output, $value, $indent . '  ');
             } else {
                 /** @var scalar $value */
-                $output->writeln(sprintf('%s%s: %s', $indent, $key, (string) $value));
+                $output->writeln(sprintf('%s%s: %s', $indent, $key, $value));
             }
         }
     }

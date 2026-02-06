@@ -14,7 +14,7 @@ use Pulsar\Api\Internal;
  * the initial file tree of a new Pulsar project.
  */
 #[Internal]
-final class TemplateRegistry
+final readonly class TemplateRegistry
 {
     public function __construct(
         private readonly ComposerJsonGenerator $composerGenerator,
@@ -181,7 +181,7 @@ final class TemplateRegistry
             declare(strict_types=1);
 
             return [
-                'name' => '{$appName}',
+                'name' => '$appName',
                 'debug' => (bool) (\$_ENV['APP_DEBUG'] ?? true),
 
                 'extensions' => [
@@ -218,7 +218,7 @@ final class TemplateRegistry
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>{$appName}</title>
+                <title>$appName</title>
                 <style>
                     body {
                         font-family: system-ui, -apple-system, sans-serif;
@@ -253,7 +253,7 @@ final class TemplateRegistry
             </head>
             <body>
                 <div class="container">
-                    <h1>Welcome to {$appName}</h1>
+                    <h1>Welcome to $appName</h1>
                     <p>Powered by the Pulsar Framework.</p>
                     <p>Edit <code>resources/views/welcome.php</code> to get started.</p>
                 </div>

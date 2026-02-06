@@ -29,6 +29,7 @@ final class InMemoryDriver implements QueueDriverInterface
     /** @var array<string, JobRecord> */
     private array $records = [];
 
+    /** @throws \Random\RandomException If random byte generation fails */
     public function push(string $queue, string $jobClass, string $payload, int $delay = 0): string
     {
         $id = bin2hex(random_bytes(16));

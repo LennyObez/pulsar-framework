@@ -14,6 +14,7 @@ use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -48,6 +49,9 @@ final class IntegrityVerifyCommand extends Command
         $this->addOption('json', 'Output results as JSON envelope', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $strict = $input->hasOption('strict');
@@ -179,6 +183,8 @@ final class IntegrityVerifyCommand extends Command
      * Write a JSON envelope to output.
      *
      * @param array<string, mixed> $data
+     *
+     * @throws JsonException
      */
     private function writeJsonEnvelope(OutputInterface $output, bool $success, array $data): void
     {

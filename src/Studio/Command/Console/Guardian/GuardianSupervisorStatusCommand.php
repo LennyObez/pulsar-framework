@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Command\Console\Guardian;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\Command;
@@ -33,6 +34,9 @@ final class GuardianSupervisorStatusCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
@@ -60,12 +64,12 @@ final class GuardianSupervisorStatusCommand extends Command
         $output->writeln('Supervisor Status');
         $output->writeln(str_repeat('=', 50));
         $output->writeln(sprintf('  Enabled: %s', $this->config->enabled ? 'yes' : 'no'));
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('  Recycle Policy:');
         $output->writeln(sprintf('    Max requests:        %d', $this->config->recycleMaxRequests));
         $output->writeln(sprintf('    Memory threshold:    %d MB', $this->config->recycleMemoryThresholdMb));
         $output->writeln(sprintf('    Time limit:          %d s', $this->config->recycleTimeLimitSeconds));
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('  Stuck Job Policy:');
         $output->writeln(sprintf('    Timeout:             %d s', $this->config->stuckJobTimeoutSeconds));
         $output->writeln(sprintf('    Check interval:      %d s', $this->config->stuckJobCheckIntervalSeconds));

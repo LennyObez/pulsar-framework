@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Command\Console\Guardian;
 
+use JsonException;
+
 use function memory_get_usage;
 
 use Pulsar\Api\Internal;
@@ -43,6 +45,9 @@ final class GuardianSupervisorRunOnceCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
@@ -93,7 +98,7 @@ final class GuardianSupervisorRunOnceCommand extends Command
         $output->writeln(sprintf('  Memory:    %d MB', $memoryMb));
         $output->writeln(sprintf('  Uptime:    %d s', $uptimeSeconds));
         $output->writeln(sprintf('  Requests:  %d', $requestCount));
-        $output->writeln('');
+        $output->writeln();
 
         if ($recycleRecord !== null) {
             $output->writeln(sprintf('  Recycle:   TRIGGERED (%s -> %s)', $recycleRecord->reason->value, $recycleRecord->action->value));
@@ -101,7 +106,7 @@ final class GuardianSupervisorRunOnceCommand extends Command
             $output->writeln('  Recycle:   not triggered');
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln(sprintf('  Preflight: %d passed, %d failed', $preflightPassed, $preflightFailed));
 
         return ExitCode::Success->value;

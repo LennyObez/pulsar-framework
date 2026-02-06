@@ -15,9 +15,10 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Container\Container;
 use Pulsar\Core\Kernel;
+use Pulsar\Routing\Router;
 use ReflectionClass;
-use ReflectionException;
 use ReflectionNamedType;
 
 use function sprintf;
@@ -61,8 +62,8 @@ final class OptimizeCommand extends Command
             return ExitCode::Success->value;
         }
 
-        $routes = $this->kernel->container()->has(\Pulsar\Routing\Router::class)
-            ? $this->kernel->container()->get(\Pulsar\Routing\Router::class)->routes
+        $routes = $this->kernel->container()->has(Router::class)
+            ? $this->kernel->container()->get(Router::class)->routes
             : [];
 
         // Strict mode check: fail on closure routes
@@ -75,7 +76,7 @@ final class OptimizeCommand extends Command
             }
 
             if ($closureRoutes !== []) {
-                $output->writeln('');
+                $output->writeln();
                 $output->writeln('  Strict mode: all routes must use class-based handlers for caching.');
                 $output->writeln(sprintf('  Found %d closure-based route(s):', count($closureRoutes)));
 
@@ -83,7 +84,7 @@ final class OptimizeCommand extends Command
                     $output->writeln(sprintf('    - %s', $path));
                 }
 
-                $output->writeln('');
+                $output->writeln();
                 $output->writeln('  Convert all handlers to class-based or run without --strict.');
 
                 return ExitCode::Error->value;
@@ -95,7 +96,7 @@ final class OptimizeCommand extends Command
 
         $result = $this->frameworkCache->warm($repository, $routes, $containerHints, $appEnv, $strict);
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('  Config: cached');
         $output->writeln(sprintf('  Routes: %d cached, %d skipped', $result['routesCached'], $result['routesSkipped']));
 
@@ -103,12 +104,12 @@ final class OptimizeCommand extends Command
             foreach ($result['skippedRoutes'] as $skipped) {
                 $output->writeln(sprintf('    - %s (closure handler)', $skipped));
             }
-            $output->writeln('');
+            $output->writeln();
             $output->writeln('  For best production performance, use --strict and convert all handlers to class-based.');
         }
 
         $output->writeln('  Container: cached');
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('Framework optimized successfully.');
 
         return ExitCode::Success->value;
@@ -146,54 +147,51 @@ final class OptimizeCommand extends Command
     private function buildContainerHints(): array
     {
         $container = $this->kernel->container();
-        $hints = [];
 
-        if (!$container instanceof \Pulsar\Container\Container) {
-            return $hints;
+        if (!$container instanceof Container) {
+            return [];
         }
+
+        $hints = [];
 
         foreach ($container->getBindings() as $id) {
             if (!class_exists($id)) {
                 continue;
             }
 
-            try {
-                $ref = new ReflectionClass($id);
-                $constructor = $ref->getConstructor();
+            $ref = new ReflectionClass($id);
+            $constructor = $ref->getConstructor();
 
-                if ($constructor === null) {
-                    continue;
-                }
-
-                $params = [];
-                $skip = false;
-
-                foreach ($constructor->getParameters() as $param) {
-                    $type = $param->getType();
-
-                    // Skip if no named type, union/intersection, builtin, variadic, or self/static/parent
-                    if (!$type instanceof ReflectionNamedType || $type->isBuiltin() || $param->isVariadic()) {
-                        $skip = true;
-                        break;
-                    }
-
-                    $typeName = $type->getName();
-                    /** @psalm-suppress TypeDoesNotContainType — getName() returns class-string but can be 'self'/'static'/'parent' at runtime */
-                    if ($typeName === 'self' || $typeName === 'static' || $typeName === 'parent') {
-                        $skip = true;
-                        break;
-                    }
-
-                    /** @var class-string $typeName */
-                    $params[] = ['name' => $param->getName(), 'type' => $typeName];
-                }
-
-                if (!$skip && $params !== []) {
-                    /** @var class-string $id */
-                    $hints[$id] = $params;
-                }
-            } catch (ReflectionException) {
+            if ($constructor === null) {
                 continue;
+            }
+
+            $params = [];
+            $skip = false;
+
+            foreach ($constructor->getParameters() as $param) {
+                $type = $param->getType();
+
+                // Skip if no named type, union/intersection, builtin, variadic, or self/static/parent
+                if (!$type instanceof ReflectionNamedType || $type->isBuiltin() || $param->isVariadic()) {
+                    $skip = true;
+                    break;
+                }
+
+                $typeName = $type->getName();
+                /** @psalm-suppress TypeDoesNotContainType — getName() returns class-string but can be 'self'/'static'/'parent' at runtime */
+                if ($typeName === 'self' || $typeName === 'static' || $typeName === 'parent') {
+                    $skip = true;
+                    break;
+                }
+
+                /** @var class-string $typeName */
+                $params[] = ['name' => $param->getName(), 'type' => $typeName];
+            }
+
+            if (!$skip && $params !== []) {
+                /** @var class-string $id */
+                $hints[$id] = $params;
             }
         }
 

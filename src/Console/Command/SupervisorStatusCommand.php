@@ -10,6 +10,7 @@ use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
 use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -38,6 +39,9 @@ final class SupervisorStatusCommand extends Command
         $this->addOption('json', 'Output as JSON');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $recyclePolicy = $this->config->enabled
@@ -55,6 +59,9 @@ final class SupervisorStatusCommand extends Command
         return $this->renderText($output, $recyclePolicy, $stuckJobPolicy);
     }
 
+    /**
+     * @throws JsonException
+     */
     private function renderJson(
         OutputInterface $output,
         ?WorkerRecyclePolicy $recyclePolicy,

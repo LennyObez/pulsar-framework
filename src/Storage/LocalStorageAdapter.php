@@ -29,7 +29,7 @@ use function unlink;
  *
  * Maps storage keys to files under a base path with path traversal prevention.
  */
-final class LocalStorageAdapter implements StorageAdapterInterface
+final readonly class LocalStorageAdapter implements StorageAdapterInterface
 {
     private readonly string $basePath;
 

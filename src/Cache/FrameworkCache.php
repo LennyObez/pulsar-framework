@@ -14,12 +14,14 @@ use function implode;
 use function is_dir;
 use function is_file;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Core\Version;
 use Pulsar\Routing\Route;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
+use SodiumException;
 
 use function sort;
 
@@ -69,6 +71,7 @@ final class FrameworkCache
     private readonly RouteCache $routeCache;
     private readonly ContainerCache $containerCache;
 
+    /** @throws SodiumException */
     public function __construct(
         private readonly string $basePath,
         private readonly MasterKey $masterKey,
@@ -142,6 +145,8 @@ final class FrameworkCache
 
     /**
      * Check if a warm cache exists and is valid.
+     *
+     * @throws SodiumException
      */
     public function isWarm(): bool
     {
@@ -154,6 +159,8 @@ final class FrameworkCache
      * Load caches if the manifest is valid and the invalidation key matches.
      *
      * @return array{manifest: CacheManifest, config: ?ConfigRepository, routes: ?list<CachedRoute>, containerHints: ?array<class-string, list<array{name: string, type: class-string}>>}|null
+     *
+     * @throws SodiumException
      */
     public function load(string $configPath): ?array
     {
@@ -274,6 +281,9 @@ final class FrameworkCache
      * @param list<Route> $routes
      * @param array<class-string, list<array{name: string, type: class-string}>> $containerHints
      * @return array{configCached: bool, routesCached: int, routesSkipped: int, skippedRoutes: list<string>, containerCached: bool}
+     *
+     * @throws JsonException
+     * @throws SodiumException
      */
     private function doWarm(
         ConfigRepository $repository,

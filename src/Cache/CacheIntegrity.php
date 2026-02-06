@@ -32,6 +32,7 @@ use Pulsar\Security\Crypto\Hmac;
 
 use function rename;
 
+use SodiumException;
 use Throwable;
 
 use function unlink;
@@ -43,7 +44,7 @@ use function unlink;
  * for signing and verification. All comparisons use hash_equals().
  */
 #[Internal]
-final class CacheIntegrity
+final readonly class CacheIntegrity
 {
     public function __construct(
         private readonly string $hmacKey,
@@ -54,6 +55,8 @@ final class CacheIntegrity
      * Sign a payload: compute SHA-256, then HMAC the hash.
      *
      * @return array{sha256: string, hmac: string}
+     *
+     * @throws SodiumException
      */
     public function sign(string $payload): array
     {
@@ -67,6 +70,8 @@ final class CacheIntegrity
      * Verify a payload against its expected SHA-256 and HMAC.
      *
      * Uses constant-time comparison for both hash and HMAC.
+     *
+     * @throws SodiumException
      */
     public function verify(string $payload, string $expectedSha256, string $expectedHmac): bool
     {
@@ -86,6 +91,9 @@ final class CacheIntegrity
      *
      * Format: serialized envelope with schema, payload, sha256, hmac, encrypted flag.
      * The outer envelope uses ['allowed_classes' => false] on read.
+     *
+     * @throws CacheException
+     * @throws SodiumException
      */
     public function writeEnvelope(string $path, string $serializedPayload, bool $encrypt): void
     {

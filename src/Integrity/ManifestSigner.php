@@ -9,6 +9,7 @@ use function json_encode;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\MasterKey;
@@ -43,6 +44,7 @@ final class ManifestSigner
      * except the signature field itself).
      *
      * @throws SodiumException
+     * @throws JsonException If JSON encoding fails during canonicalization
      */
     public function sign(IntegrityManifest $manifest): string
     {
@@ -58,6 +60,7 @@ final class ManifestSigner
      * against the stored signature using constant-time comparison.
      *
      * @throws SodiumException
+     * @throws JsonException If JSON encoding fails during canonicalization
      */
     public function verify(IntegrityManifest $manifest): bool
     {
@@ -75,6 +78,8 @@ final class ManifestSigner
      *
      * Includes all fields except the signature to allow round-trip
      * sign-then-verify without circularity.
+     *
+     * @throws JsonException If JSON encoding fails
      */
     private function canonicalize(IntegrityManifest $manifest): string
     {

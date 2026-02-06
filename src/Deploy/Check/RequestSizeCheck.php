@@ -78,12 +78,7 @@ final readonly class RequestSizeCheck implements DeployCheckInterface
         $recommendations[] = 'Large request limits increase the risk of denial-of-service through resource exhaustion.';
 
         return match ($environment) {
-            'production' => CheckResult::warning(
-                self::CHECK_NAME,
-                $message,
-                $recommendations,
-            ),
-            'staging' => CheckResult::warning(
+            'production', 'staging' => CheckResult::warning(
                 self::CHECK_NAME,
                 $message,
                 $recommendations,

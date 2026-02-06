@@ -12,6 +12,8 @@ use const DIRECTORY_SEPARATOR;
 use function explode;
 use function filesize;
 
+use FilesystemIterator;
+
 use const FNM_PATHNAME;
 
 use function fnmatch;
@@ -138,14 +140,14 @@ final class ManifestBuilder
                 $iterator = new RecursiveIteratorIterator(
                     new RecursiveDirectoryIterator(
                         $scanPath,
-                        RecursiveDirectoryIterator::SKIP_DOTS,
+                        FilesystemIterator::SKIP_DOTS,
                     ),
                 );
             } else {
                 $iterator = new RecursiveIteratorIterator(
                     new RecursiveDirectoryIterator(
                         $scanPath,
-                        RecursiveDirectoryIterator::SKIP_DOTS,
+                        FilesystemIterator::SKIP_DOTS,
                     ),
                     RecursiveIteratorIterator::SELF_FIRST,
                     RecursiveIteratorIterator::CATCH_GET_CHILD,

@@ -100,6 +100,25 @@ final class CacheAllowedClasses
     {
         $path = $cachePath . DIRECTORY_SEPARATOR . self::FILENAME;
 
+        $decoded = self::readJsonFile($path, 16);
+
+        if ($decoded === null) {
+            return null;
+        }
+
+        /** @var list<class-string> $decoded */
+        return $decoded;
+    }
+
+    /**
+     * Read and decode a JSON file, returning null on any failure.
+     *
+     * @param int<1, 2147483647> $depth
+     *
+     * @return array<array-key, mixed>|null
+     */
+    private static function readJsonFile(string $path, int $depth = 512): ?array
+    {
         if (!is_file($path)) {
             return null;
         }
@@ -112,7 +131,7 @@ final class CacheAllowedClasses
 
         try {
             /** @var mixed $decoded */
-            $decoded = json_decode($content, true, 16, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($content, true, $depth, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return null;
         }
@@ -121,7 +140,7 @@ final class CacheAllowedClasses
             return null;
         }
 
-        /** @var list<class-string> $decoded */
+        /** @var array<array-key, mixed> $decoded */
         return $decoded;
     }
 
@@ -129,6 +148,8 @@ final class CacheAllowedClasses
      * Save the allowlist to disk as JSON.
      *
      * @param list<class-string> $classes
+     *
+     * @throws JsonException
      */
     public static function save(string $cachePath, array $classes): void
     {
@@ -189,6 +210,8 @@ final class CacheAllowedClasses
      * 1. Class is either a readonly class or a backed enum
      * 2. Class does NOT implement Serializable
      * 3. Class does NOT define any dangerous magic methods
+     *
+     * @throws ReflectionException
      */
     private static function isEligible(string $className): bool
     {
@@ -198,13 +221,9 @@ final class CacheAllowedClasses
 
         // Check if it's a backed enum
         if (enum_exists($className)) {
-            try {
-                $ref = new ReflectionEnum($className);
+            $ref = new ReflectionEnum($className);
 
-                return $ref->isBacked() && !self::hasDangerousMethods($ref);
-            } catch (ReflectionException) {
-                return false;
-            }
+            return $ref->isBacked() && !self::hasDangerousMethods($ref);
         }
 
         /** @var ReflectionClass<object> $ref */

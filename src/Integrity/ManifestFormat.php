@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Integrity;
 
+use function array_map;
 use function is_array;
 use function is_int;
 use function is_string;
@@ -36,15 +37,14 @@ final class ManifestFormat
      */
     public static function toJson(IntegrityManifest $manifest, ?string $signature = null): string
     {
-        $entries = [];
-
-        foreach ($manifest->entries as $entry) {
-            $entries[] = [
+        $entries = array_map(
+            static fn(ManifestEntry $entry): array => [
                 'path' => $entry->path,
                 'hash' => $entry->hash,
                 'size' => $entry->size,
-            ];
-        }
+            ],
+            $manifest->entries,
+        );
 
         $data = [
             'version' => $manifest->version,

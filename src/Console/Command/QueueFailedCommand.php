@@ -11,6 +11,7 @@ use function json_encode;
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 
+use JsonException;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -42,6 +43,9 @@ final class QueueFailedCommand extends Command
         $this->addOption('json', 'Output in JSON format');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $failedJobs = $this->deadLetterQueue->list();
@@ -60,6 +64,8 @@ final class QueueFailedCommand extends Command
 
     /**
      * @param list<FailedJob> $failedJobs
+     *
+     * @throws JsonException
      */
     private function outputJson(array $failedJobs, OutputInterface $output): int
     {
@@ -96,7 +102,7 @@ final class QueueFailedCommand extends Command
             $output->writeln(sprintf('  Job:       %s', $job->jobClass));
             $output->writeln(sprintf('  Attempts:  %d', $job->attempts));
             $output->writeln(sprintf('  Failed At: %s', date('Y-m-d H:i:s', $job->failedAt)));
-            $output->writeln(sprintf('  Error:     %s', $this->truncate($job->exception, 120)));
+            $output->writeln(sprintf('  Error:     %s', $this->truncate($job->exception)));
             $output->newLine();
         }
 
@@ -106,7 +112,7 @@ final class QueueFailedCommand extends Command
     /**
      * Truncate a string to a maximum length, appending "..." if needed.
      */
-    private function truncate(string $text, int $maxLength): string
+    private function truncate(string $text, int $maxLength = 120): string
     {
         if (strlen($text) <= $maxLength) {
             return $text;

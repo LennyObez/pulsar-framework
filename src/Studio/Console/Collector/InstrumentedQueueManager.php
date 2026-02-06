@@ -45,7 +45,7 @@ final class InstrumentedQueueManager implements CollectorInterface
         $jobId = $this->inner->dispatch($jobClass, $payload, $queue, $delay);
 
         if ($this->enabled) {
-            $this->emitJobEvent($jobClass, 'queued', $queue);
+            $this->emitJobEvent($jobClass, $queue);
         }
 
         return $jobId;
@@ -67,11 +67,11 @@ final class InstrumentedQueueManager implements CollectorInterface
         return $this->inner;
     }
 
-    private function emitJobEvent(string $jobClass, string $status, ?string $queue): void
+    private function emitJobEvent(string $jobClass, ?string $queue): void
     {
         $event = new JobPayload(
             jobClass: $jobClass,
-            status: $status,
+            status: 'queued',
             queue: $queue,
         );
 

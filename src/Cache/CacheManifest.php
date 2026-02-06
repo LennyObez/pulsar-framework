@@ -27,6 +27,7 @@ use const LOCK_EX;
 
 use Pulsar\Api\Internal;
 use Pulsar\Security\Crypto\Hmac;
+use SodiumException;
 use Throwable;
 
 /**
@@ -68,6 +69,9 @@ final class CacheManifest
      * Build, sign, and save a manifest to disk.
      *
      * @param array<string, array{sha256: string, hmac: string}> $caches
+     *
+     * @throws JsonException
+     * @throws SodiumException
      */
     public static function write(
         string $cachePath,
@@ -111,6 +115,9 @@ final class CacheManifest
      * Load and verify a manifest from disk.
      *
      * @return self|null Null if the manifest is missing, invalid, or signature fails
+     *
+     * @throws JsonException
+     * @throws SodiumException
      */
     public static function load(string $cachePath, string $hmacKey): ?self
     {
@@ -127,7 +134,6 @@ final class CacheManifest
         }
 
         try {
-            /** @var mixed $data */
             $data = json_decode($content, true, 16, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return null;
@@ -218,6 +224,8 @@ final class CacheManifest
      * stable encoding regardless of platform or insertion order.
      *
      * @param array<string, mixed> $data
+     *
+     * @throws JsonException
      */
     public static function canonicalize(array $data): string
     {

@@ -9,6 +9,8 @@ use function file_put_contents;
 use function is_dir;
 use function is_string;
 
+use JsonException;
+
 use const LOCK_EX;
 
 use function mkdir;
@@ -49,6 +51,9 @@ final class GuardianIntegrityBuildCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Storage;
 
-use function curl_close;
 use function curl_errno;
 use function curl_error;
 use function curl_exec;
@@ -196,12 +195,10 @@ final class S3StorageAdapter implements StorageAdapterInterface
 
         if (curl_errno($ch) !== 0) {
             $error = curl_error($ch);
-            curl_close($ch);
             throw StorageException::connectionFailed($error);
         }
 
         $statusCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
 
         return [
             'status' => $statusCode,

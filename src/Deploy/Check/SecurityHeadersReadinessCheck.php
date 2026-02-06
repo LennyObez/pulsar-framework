@@ -99,12 +99,6 @@ final readonly class SecurityHeadersReadinessCheck implements DeployCheckInterfa
     {
         $lowerName = strtolower($name);
 
-        foreach ($headers as $key => $value) {
-            if (strtolower($key) === $lowerName) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($headers, static fn(string $value, string $key): bool => strtolower($key) === $lowerName);
     }
 }

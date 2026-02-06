@@ -6,6 +6,7 @@ namespace Pulsar\Studio\Command\Console;
 
 use function count;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -37,6 +38,9 @@ final class ConsoleTimelineCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         /** @var string $rawLimit */
@@ -73,7 +77,7 @@ final class ConsoleTimelineCommand extends Command
             $output->writeln(sprintf('  [%s] %s: %s', $timestamp, $type, $summary));
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln(sprintf('  Total: %d events', count($entries)));
 
         return ExitCode::Success->value;

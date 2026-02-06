@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Command\Console\Guardian;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -34,6 +35,9 @@ final class GuardianStatusCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
@@ -57,7 +61,7 @@ final class GuardianStatusCommand extends Command
 
         $output->writeln('Guardian Status');
         $output->writeln(str_repeat('=', 50));
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('  Evidence Store:');
         $output->writeln(sprintf('    Events:  %d', $totalEvents));
         $output->writeln(sprintf('    Size:    %.2f MB', $sizeBytes / (1024 * 1024)));

@@ -26,8 +26,12 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Studio\Console\Event\EventEnvelope;
 use Pulsar\Studio\Exception\StudioException;
+use Random\RandomException;
 
 use function random_int;
+
+use SodiumException;
+
 use function sprintf;
 use function str_contains;
 
@@ -117,6 +121,10 @@ final class SqliteEventStore implements EventStoreInterface
      *
      * Uses BEGIN IMMEDIATE to acquire write lock before reading chain tip.
      * Retries on SQLITE_BUSY/LOCKED with exponential backoff.
+     *
+     * @throws StudioException If maximum retry attempts exceeded due to database busy
+     * @throws PDOException If a non-retryable database error occurs
+     * @throws RandomException
      */
     public function storeWithChain(
         EventEnvelope $envelope,
@@ -416,6 +424,7 @@ final class SqliteEventStore implements EventStoreInterface
      * @throws StudioException If maximum retry attempts exceeded due to database busy
      * @throws PDOException If a non-retryable database error occurs
      * @throws JsonException If JSON encoding fails
+     * @throws RandomException
      */
     private function ingestWithRetry(Closure $transaction): void
     {

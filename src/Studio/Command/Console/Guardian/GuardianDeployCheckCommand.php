@@ -6,6 +6,7 @@ namespace Pulsar\Studio\Command\Console\Guardian;
 
 use function is_string;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -38,6 +39,9 @@ final class GuardianDeployCheckCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
@@ -85,7 +89,7 @@ final class GuardianDeployCheckCommand extends Command
             }
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln(sprintf('  Passed: %d  Warnings: %d  Errors: %d', $report->passed, $report->warnings, $report->errors));
 
         return $success ? ExitCode::Success->value : ExitCode::Error->value;

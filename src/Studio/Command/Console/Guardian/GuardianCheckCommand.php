@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Command\Console\Guardian;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -33,6 +34,9 @@ final class GuardianCheckCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
@@ -87,7 +91,7 @@ final class GuardianCheckCommand extends Command
         $output->writeln('Guardian Checks');
         $output->writeln(str_repeat('=', 50));
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln(sprintf('  Preflight:  %d passed, %d failed', $preflightPassed, $preflightFailed));
 
         foreach ($preflightResults as $result) {
@@ -95,7 +99,7 @@ final class GuardianCheckCommand extends Command
             $output->writeln(sprintf('    [%s] %s', $icon, $result->message));
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln(sprintf('  Invariant:  %d passed, %d failed', $invariantPassed, $invariantFailed));
 
         foreach ($invariantResults as $result) {
@@ -103,7 +107,7 @@ final class GuardianCheckCommand extends Command
             $output->writeln(sprintf('    [%s] %s', $icon, $result->message));
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln($allPassed ? '  All checks passed.' : '  Some checks failed.');
 
         return $allPassed ? ExitCode::Success->value : ExitCode::Error->value;

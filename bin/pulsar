@@ -33,7 +33,6 @@ require $autoloader;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DatabaseConfig;
-use Pulsar\Config\DeployConfig;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\QueueConfig;
 use Pulsar\Config\StudioConfig;
@@ -365,9 +364,14 @@ if ($kernel->container()->has(StudioConfig::class)) {
             $manifestBuilder = new ManifestBuilder($basePath);
             $manifestVerifier = new ManifestVerifier($basePath);
 
-            $manifestSigner = $kernel->container()->has(MasterKey::class)
-                ? new ManifestSigner($kernel->container()->get(MasterKey::class))
-                : null;
+            try {
+                $manifestSigner = $kernel->container()->has(MasterKey::class)
+                    ? new ManifestSigner($kernel->container()->get(MasterKey::class))
+                    : null;
+            } catch (\SodiumException $e) {
+                fwrite(STDERR, "Warning: Failed to initialize manifest signer: {$e->getMessage()}\n");
+                $manifestSigner = null;
+            }
 
             $application->add(new GuardianIntegrityBuildCommand($manifestBuilder, $integrityConfig, $manifestSigner));
             $application->add(new GuardianIntegrityVerifyCommand($manifestVerifier, $integrityConfig, $manifestSigner));

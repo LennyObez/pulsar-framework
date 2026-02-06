@@ -1129,6 +1129,9 @@ final class Kernel
      * Only activates when config/queue.php was loaded and queue is enabled.
      * Registers QueueConfig, QueueDriver, QueueManager, WorkerOptions,
      * Worker, QueueRetryPolicy, and DeadLetterQueue.
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createQueueServices(): void
     {
@@ -1192,6 +1195,9 @@ final class Kernel
      *
      * Only activates when config/supervisor.php was loaded and supervisor is enabled.
      * Registers SupervisorConfig and Supervisor.
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createSupervisorServices(): void
     {
@@ -1235,6 +1241,9 @@ final class Kernel
      * Only activates when config/integrity.php was loaded and integrity is enabled.
      * Registers IntegrityConfig, IntegrityPolicy, ManifestBuilder, ManifestVerifier,
      * and ManifestSigner (if MasterKey is available).
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function createIntegrityServices(): void
     {
@@ -1353,6 +1362,10 @@ final class Kernel
      * Called after all core services are created, before Extensions.
      * Creates StudioManager and supporting services. If disabled via
      * config, returns early (DeferredSink stays a no-op).
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
+     * @throws SodiumException If a sodium cryptographic operation fails
      */
     private function studioPreboot(): void
     {
@@ -1511,6 +1524,9 @@ final class Kernel
      *
      * Called AFTER Extensions boot. Decorates the final service instances
      * (including any modifications made by extensions during their boot phase).
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function attachStudioCollectors(): void
     {

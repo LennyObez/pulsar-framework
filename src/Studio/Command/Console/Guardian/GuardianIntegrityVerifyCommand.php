@@ -7,6 +7,7 @@ namespace Pulsar\Studio\Command\Console\Guardian;
 use function file_exists;
 use function file_get_contents;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\IntegrityPolicyMode;
@@ -44,6 +45,9 @@ final class GuardianIntegrityVerifyCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
@@ -136,7 +140,7 @@ final class GuardianIntegrityVerifyCommand extends Command
         $output->writeln(sprintf('  Added:     %d', $result->added));
 
         if ($files !== []) {
-            $output->writeln('');
+            $output->writeln();
             $output->writeln('  Discrepancies:');
 
             foreach ($files as $file) {
@@ -144,7 +148,7 @@ final class GuardianIntegrityVerifyCommand extends Command
             }
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln($result->passed ? '  Integrity check passed.' : '  Integrity check failed.');
 
         if (!$result->passed && $isStrict) {

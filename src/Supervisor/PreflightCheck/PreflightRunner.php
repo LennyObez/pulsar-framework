@@ -10,7 +10,7 @@ use Pulsar\Api\Internal;
  * Executes all registered preflight checks and aggregates the results.
  */
 #[Internal]
-final class PreflightRunner
+final readonly class PreflightRunner
 {
     /** @var list<PreflightCheckInterface> */
     private readonly array $checks;
@@ -44,12 +44,6 @@ final class PreflightRunner
      */
     public function allPassed(): bool
     {
-        foreach ($this->checks as $check) {
-            if (!$check->check()->passed) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($this->checks, static fn(PreflightCheckInterface $check): bool => $check->check()->passed);
     }
 }

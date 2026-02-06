@@ -28,7 +28,7 @@ final class QueueFlushCommand extends Command
         $this->name = 'queue:flush';
         $this->description = 'Purge all jobs from a queue';
 
-        $this->addArgument('queue', 'The queue name to flush', false);
+        $this->addArgument('queue', 'The queue name to flush');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
