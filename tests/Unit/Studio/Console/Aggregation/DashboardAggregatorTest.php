@@ -771,6 +771,103 @@ final class DashboardAggregatorTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // aggregate() tests
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function aggregateReturnsCompleteMetrics(): void
+    {
+        // Populate with mixed events
+        $this->storeHttpResponseEvent(durationMs: 100, statusCode: 200);
+        $this->storeHttpResponseEvent(durationMs: 200, statusCode: 200);
+        $this->storeHttpResponseEvent(durationMs: 50, statusCode: 404);
+        $this->storeHttpResponseEventWithRoute(durationMs: 150, routeName: 'users.index');
+        $this->storeExceptionEvent('RuntimeException');
+        $this->storeExceptionEvent('RuntimeException');
+        $this->storeDbQueryEvent('SELECT * FROM users', durationMs: 25);
+
+        $result = $this->aggregator->aggregate();
+
+        // Verify top-level keys
+        self::assertArrayHasKey('total_events', $result);
+        self::assertArrayHasKey('total_requests', $result);
+        self::assertArrayHasKey('avg_response_ms', $result);
+        self::assertArrayHasKey('total_exceptions', $result);
+        self::assertArrayHasKey('total_queries', $result);
+        self::assertArrayHasKey('routes', $result);
+        self::assertArrayHasKey('exceptions', $result);
+        self::assertArrayHasKey('slow_queries', $result);
+
+        self::assertSame(7, $result['total_events']);
+        self::assertSame(4, $result['total_requests']);
+        self::assertSame(2, $result['total_exceptions']);
+        self::assertSame(1, $result['total_queries']);
+        self::assertIsArray($result['routes']);
+        self::assertIsArray($result['exceptions']);
+        self::assertIsArray($result['slow_queries']);
+    }
+
+    #[Test]
+    public function aggregateIncludesBenchmarkDataWhenPresent(): void
+    {
+        $this->storeBenchmarkRunEvent(runId: 'bench-run-1', profileCount: 3, successCount: 3);
+
+        $result = $this->aggregator->aggregate();
+
+        self::assertArrayHasKey('benchmark', $result);
+        /** @var array{latest_run_id: string, profile_count: int, success_count: int, total_duration_ms: float} $benchmark */
+        $benchmark = $result['benchmark'];
+        self::assertSame('bench-run-1', $benchmark['latest_run_id']);
+        self::assertSame(3, $benchmark['profile_count']);
+        self::assertSame(3, $benchmark['success_count']);
+    }
+
+    #[Test]
+    public function aggregateExcludesBenchmarkWhenNoBenchmarkRuns(): void
+    {
+        $this->storeHttpResponseEvent(durationMs: 100, statusCode: 200);
+
+        $result = $this->aggregator->aggregate();
+
+        self::assertArrayNotHasKey('benchmark', $result);
+    }
+
+    #[Test]
+    public function aggregateFormatsExceptionsWithLastSeen(): void
+    {
+        $this->storeExceptionEvent('RuntimeException');
+        $this->storeExceptionEvent('LogicException');
+
+        $result = $this->aggregator->aggregate();
+
+        self::assertIsArray($result['exceptions']);
+        self::assertCount(2, $result['exceptions']);
+        /** @var array{class: string, count: int, last_seen: string} $first */
+        $first = $result['exceptions'][0];
+        self::assertArrayHasKey('class', $first);
+        self::assertArrayHasKey('count', $first);
+        self::assertArrayHasKey('last_seen', $first);
+        self::assertIsString($first['last_seen']);
+    }
+
+    #[Test]
+    public function aggregateFormatsRoutesWithPathAndHits(): void
+    {
+        $this->storeHttpResponseEventWithRoute(durationMs: 100, routeName: 'users.index');
+        $this->storeHttpResponseEventWithRoute(durationMs: 150, routeName: 'users.index');
+
+        $result = $this->aggregator->aggregate();
+
+        self::assertIsArray($result['routes']);
+        self::assertCount(1, $result['routes']);
+        /** @var array{path: string, hits: int, avg_ms: float, errors: int} $route */
+        $route = $result['routes'][0];
+        self::assertSame('users.index', $route['path']);
+        self::assertSame(2, $route['hits']);
+        self::assertSame(0, $route['errors']);
+    }
+
+    // -------------------------------------------------------------------------
     // Edge case tests
     // -------------------------------------------------------------------------
 

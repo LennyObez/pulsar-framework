@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Console\Command;
 
+use function file_put_contents;
+use function mkdir;
+
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -13,6 +16,9 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Security\Crypto\MasterKey;
+
+use function random_bytes;
+use function sodium_bin2hex;
 
 #[CoversClass(OptimizeClearCommand::class)]
 final class OptimizeClearCommandTest extends TestCase
@@ -66,6 +72,27 @@ final class OptimizeClearCommandTest extends TestCase
         $command = new OptimizeClearCommand();
 
         self::assertSame('optimize:clear', $command->name);
+    }
+
+    #[Test]
+    public function successPathClearsCacheAndReturnsSuccess(): void
+    {
+        $command = $this->createCommand();
+        $output = new BufferedOutput();
+
+        // Create the cache directory with a dummy file
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $cache = new FrameworkCache($this->tempDir, $masterKey);
+        $cachePath = $cache->cachePath();
+        mkdir($cachePath, 0o750, true);
+        file_put_contents($cachePath . DIRECTORY_SEPARATOR . 'manifest.json', '{}');
+
+        $command = new OptimizeClearCommand($cache);
+        $exit = $command->execute(new ArrayInput('optimize:clear'), $output);
+
+        self::assertSame(ExitCode::Success->value, $exit);
+        self::assertStringContainsString('cleared', $output->buffer);
+        self::assertFileDoesNotExist($cachePath . DIRECTORY_SEPARATOR . 'manifest.json');
     }
 
     private function createCommand(): OptimizeClearCommand
