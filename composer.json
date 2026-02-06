@@ -5,8 +5,10 @@
   "license": "Apache-2.0",
   "require": {
     "ext-ctype": "*",
+    "ext-curl": "*",
     "ext-mbstring": "*",
     "ext-pdo": "*",
+    "ext-simplexml": "*",
     "ext-sodium": "*",
     "php": "^8.5",
     "psr/container": "^2.0",
@@ -20,6 +22,9 @@
     "rector/rector": "^2.0",
     "roave/security-advisories": "dev-latest",
     "vimeo/psalm": "^6.15"
+  },
+  "suggest": {
+    "ext-pcntl": "Required for queue worker signal handling (Unix only)"
   },
   "autoload": {
     "psr-4": {

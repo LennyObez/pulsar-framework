@@ -36,6 +36,10 @@ coverage/
 .env.*
 !.env.example
 
+# PHP-CS-Fixer cache
+.php-cs-fixer.cache
+
 # Internal / local-only agent instructions (keep out of GitHub)
 CLAUDE.md
+.claude/
 docs/internal/

@@ -10,12 +10,8 @@ use function file_get_contents;
 use InvalidArgumentException;
 
 use function is_string;
-use function json_encode;
 
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -23,8 +19,10 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Studio\Console\Evidence\EvidenceArchive;
 use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
+use SodiumException;
 
 use function sprintf;
+use function str_repeat;
 
 /**
  * Verifies the integrity of a Studio evidence archive.
@@ -49,6 +47,10 @@ final class ConsoleVerifyCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     * @throws SodiumException If MAC verification fails
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $rawFilePath = $input->getArgument(0);
@@ -59,7 +61,7 @@ final class ConsoleVerifyCommand extends Command
 
         if (!file_exists($filePath)) {
             if ($isJson) {
-                $output->writeln(json_encode(['error' => 'file_not_found', 'message' => 'Archive file not found'], JSON_THROW_ON_ERROR));
+                JsonOutputHelper::writeError($output, true, 'file_not_found', 'Archive file not found');
             } else {
                 $output->errorln(sprintf('Archive file not found: %s', $filePath));
             }
@@ -76,7 +78,7 @@ final class ConsoleVerifyCommand extends Command
             $archive = EvidenceArchive::fromJson($contents);
         } catch (InvalidArgumentException $e) {
             if ($isJson) {
-                $output->writeln(json_encode(['error' => 'invalid_archive', 'message' => $e->getMessage()], JSON_THROW_ON_ERROR));
+                JsonOutputHelper::writeError($output, true, 'invalid_archive', $e->getMessage());
             } else {
                 $output->errorln(sprintf('Invalid archive: %s', $e->getMessage()));
             }
@@ -88,14 +90,12 @@ final class ConsoleVerifyCommand extends Command
         if ($mode === 'tamper-evident' || $mode === 'full') {
             $macKey = $this->chainMacKey;
             if ($macKey === null) {
-                if ($isJson) {
-                    $output->writeln(json_encode([
-                        'error' => 'mac_key_required',
-                        'message' => 'Tamper-evident verification requires the chain MAC key (PULSAR_MASTER_KEY must be set)',
-                    ], JSON_THROW_ON_ERROR));
-                } else {
-                    $output->errorln('Tamper-evident verification requires the chain MAC key (PULSAR_MASTER_KEY must be set)');
-                }
+                JsonOutputHelper::writeError(
+                    $output,
+                    $isJson,
+                    'mac_key_required',
+                    'Tamper-evident verification requires the chain MAC key (PULSAR_MASTER_KEY must be set)',
+                );
                 return ExitCode::Error->value;
             }
         }
@@ -114,7 +114,7 @@ final class ConsoleVerifyCommand extends Command
         $result['verification_mode'] = $mode;
 
         if ($isJson) {
-            $output->writeln(json_encode($result, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $output->writeln(JsonOutputHelper::formatJson($result));
             return $result['chain_intact'] ? ExitCode::Success->value : ExitCode::Error->value;
         }
 
@@ -143,13 +143,13 @@ final class ConsoleVerifyCommand extends Command
         /** @var int $linksPruned */
         $linksPruned = $result['links_pruned'] ?? 0;
 
-        $output->writeln(sprintf('  Mode:          %s', $verificationMode));
-        $output->writeln(sprintf('  Chain mode:    %s', $chainMode));
-        $output->writeln(sprintf('  Anchor:        %s', $anchorType));
-        $output->writeln(sprintf('  Links:         %d verified', $linksVerified));
+        JsonOutputHelper::writeField($output, 'Mode', $verificationMode, 14);
+        JsonOutputHelper::writeField($output, 'Chain mode', $chainMode, 14);
+        JsonOutputHelper::writeField($output, 'Anchor', $anchorType, 14);
+        JsonOutputHelper::writeField($output, 'Links', sprintf('%d verified', $linksVerified), 14);
 
         if ($linksPruned > 0) {
-            $output->writeln(sprintf('  Pruned:        %d links (by retention)', $linksPruned));
+            JsonOutputHelper::writeField($output, 'Pruned', sprintf('%d links (by retention)', $linksPruned), 14);
         }
 
         $output->newLine();
@@ -182,11 +182,11 @@ final class ConsoleVerifyCommand extends Command
 
         if (isset($result['mac_verified'])) {
             $output->newLine();
-            $output->writeln(sprintf('  MAC verified:  %s', $result['mac_verified'] ? 'Yes' : 'FAILED'));
+            JsonOutputHelper::writeField($output, 'MAC verified', $result['mac_verified'] ? 'Yes' : 'FAILED', 14);
         }
 
         if (isset($result['archive_mac_verified'])) {
-            $output->writeln(sprintf('  Archive MAC:   %s', $result['archive_mac_verified'] ? 'Verified' : 'FAILED'));
+            JsonOutputHelper::writeField($output, 'Archive MAC', $result['archive_mac_verified'] ? 'Verified' : 'FAILED', 14);
         }
     }
 
@@ -197,21 +197,21 @@ final class ConsoleVerifyCommand extends Command
      */
     private function mergeChainWithEvents(EvidenceArchive $archive): array
     {
-        $eventMap = [];
+        $eventsByEventId = [];
         foreach ($archive->events as $event) {
             /** @var string $eventId */
             $eventId = $event['event_id'] ?? '';
-            $eventMap[$eventId] = $event;
+            $eventsByEventId[$eventId] = $event;
         }
 
-        $merged = [];
-        foreach ($archive->chainLinks as $link) {
-            /** @var string $linkEventId */
-            $linkEventId = $link['event_id'] ?? '';
-            $event = $eventMap[$linkEventId] ?? [];
-            $merged[] = [...$link, ...$event];
-        }
+        return array_map(
+            static function (array $link) use ($eventsByEventId): array {
+                /** @var string $linkEventId */
+                $linkEventId = $link['event_id'] ?? '';
 
-        return $merged;
+                return [...$link, ...($eventsByEventId[$linkEventId] ?? [])];
+            },
+            $archive->chainLinks,
+        );
     }
 }

@@ -9,6 +9,7 @@ use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Example\Controller\ExampleController;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\RoutingException;
 
 /**
  * Example extension demonstrating the extension system.
@@ -31,6 +32,9 @@ final class ExampleExtension implements ExtensionInterface
         // The service provider handles ExampleService
     }
 
+    /**
+     * @throws RoutingException If the router is locked in strict cache mode
+     */
     public function boot(ContainerInterface $container, Router $router): void
     {
         // Register extension routes

@@ -129,5 +129,8 @@ return [
         'feature_flags' => [
             'enabled' => true,
         ],
+        'queue' => [
+            'enabled' => true,
+        ],
     ],
 ];

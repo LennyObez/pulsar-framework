@@ -13,6 +13,8 @@ use function json_encode;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
+
 use function ob_end_flush;
 
 use Pulsar\Api\Internal;
@@ -80,6 +82,8 @@ final readonly class ApiController
 
     /**
      * GET /studio/api/live — Server-Sent Events stream.
+     *
+     * @throws JsonException
      */
     public function live(Request $request): Response
     {

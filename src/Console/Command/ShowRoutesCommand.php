@@ -20,7 +20,10 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Core\Kernel;
+use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
+use Pulsar\Routing\RoutingException;
+use SodiumException;
 
 use function sprintf;
 
@@ -45,9 +48,12 @@ final class ShowRoutesCommand extends Command
 
     /**
      * @throws ContainerException
+     * @throws ExtensionException If extension registration or boot fails
      * @throws NotFoundException
      * @throws FeatureFlagException
      * @throws JsonException
+     * @throws RoutingException If the router is locked in strict cache mode
+     * @throws SodiumException If a sodium cryptographic operation fails during boot
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
