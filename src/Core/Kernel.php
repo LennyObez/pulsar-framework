@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Core;
 
+use function dirname;
+
 use Error;
 
 use function getenv;
@@ -36,6 +38,7 @@ use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
 use Pulsar\Auth\TwoFactor\TwoFactorManager;
 use Pulsar\Auth\TwoFactor\TwoFactorManagerInterface;
+use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\AuditConfig;
 use Pulsar\Config\AuthConfig;
@@ -45,11 +48,15 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Config\DatabaseConfig;
+use Pulsar\Config\DeployConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Config\FeatureFlagConfig;
 use Pulsar\Config\HealthCheckConfig;
+use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\ObservabilityConfig;
+use Pulsar\Config\QueueConfig;
+use Pulsar\Config\QueueDriverType;
 use Pulsar\Config\ResilienceConfig;
 use Pulsar\Config\RetryConfig;
 use Pulsar\Config\SchedulerConfig;
@@ -57,6 +64,7 @@ use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Config\StudioConfig;
+use Pulsar\Config\SupervisorConfig;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Config\TenantDatabaseConfig;
 use Pulsar\Config\TwoFactorConfig;
@@ -66,9 +74,11 @@ use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Deploy\DeployCheck;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\ProductionRenderer;
+use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 use Pulsar\FeatureFlag\FeatureFlagManager;
@@ -88,6 +98,10 @@ use Pulsar\Http\Middleware\TracingMiddleware;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseEmitter;
+use Pulsar\Integrity\IntegrityPolicy;
+use Pulsar\Integrity\ManifestBuilder;
+use Pulsar\Integrity\ManifestSigner;
+use Pulsar\Integrity\ManifestVerifier;
 use Pulsar\Observability\Diagnostics\DiagnosticsRenderer;
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
@@ -96,6 +110,14 @@ use Pulsar\Observability\Log\Sink\DeferredSink;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Metrics\OpenMetricsExporter;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
+use Pulsar\Queue\DeadLetterQueue;
+use Pulsar\Queue\Driver\InMemoryDriver;
+use Pulsar\Queue\Driver\SyncDriver;
+use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Queue\QueueManager;
+use Pulsar\Queue\Retry\QueueRetryPolicy;
+use Pulsar\Queue\Worker;
+use Pulsar\Queue\WorkerOptions;
 use Pulsar\Resilience\CircuitBreakerRegistry;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunner;
 use Pulsar\Resilience\Repair\RepairRunner;
@@ -123,7 +145,9 @@ use Pulsar\Studio\Console\Collector\ExceptionCollector;
 use Pulsar\Studio\Console\Collector\FeatureFlagCollector;
 use Pulsar\Studio\Console\Collector\HttpCollector;
 use Pulsar\Studio\Console\Collector\InstrumentedConnection;
+use Pulsar\Studio\Console\Collector\InstrumentedQueueManager;
 use Pulsar\Studio\Console\Collector\InstrumentedScheduler;
+use Pulsar\Studio\Console\Collector\InstrumentedWorker;
 use Pulsar\Studio\Console\Collector\LogCollector;
 use Pulsar\Studio\Console\Event\EventFactory;
 use Pulsar\Studio\Console\Evidence\EvidenceExporter;
@@ -138,6 +162,7 @@ use Pulsar\Studio\CorrelationContextProviderInterface;
 use Pulsar\Studio\FiberScopedContextProvider;
 use Pulsar\Studio\Security\StudioAccessGate;
 use Pulsar\Studio\StudioManager;
+use Pulsar\Supervisor\Supervisor;
 use Pulsar\Tenancy\Middleware\TenantResolutionMiddleware;
 use Pulsar\Tenancy\Resolver\HeaderTenantResolver;
 use Pulsar\Tenancy\Resolver\PathPrefixTenantResolver;
@@ -162,6 +187,7 @@ use Throwable;
  * Boot pipeline order:
  * Config -> Logger -> Tracer -> Metrics -> ErrorTracker -> ExceptionHandler
  * -> Security -> Auth -> Database -> Tenancy -> FeatureFlags -> Scheduler -> Resilience
+ * -> Queue -> Supervisor -> Integrity -> Deploy
  * -> DiagnosticsRoute -> Studio preboot -> Extensions -> Studio attach
  */
 #[Internal]
@@ -229,6 +255,9 @@ final class Kernel
      * @throws NotFoundException If a required binding is not found during bootstrap
      * @throws FeatureFlagException If flag storage fails during boot
      * @throws JsonException If flag serialization fails during boot
+     * @throws SodiumException If a sodium cryptographic operation fails during boot
+     * @throws RoutingException If the router is locked in strict cache mode
+     * @throws ExtensionException If extension registration or boot fails
      */
     public function boot(): void
     {
@@ -236,9 +265,28 @@ final class Kernel
             return;
         }
 
+        // Cache-aware boot: attempt to load config from FrameworkCache
+        $cacheLoaded = false;
+
+        if ($this->configManager !== null && $this->container->has(FrameworkCache::class)) {
+            /** @var FrameworkCache $frameworkCache */
+            $frameworkCache = $this->container->get(FrameworkCache::class);
+            $configPath = $this->configManager->configPath();
+
+            if ($configPath !== null) {
+                $cached = $frameworkCache->load($configPath);
+
+                if ($cached !== null && $cached['config'] !== null) {
+                    $cacheLoaded = $this->configManager->loadFromCache($cached['config']);
+                }
+            }
+        }
+
         // Config phase: load config, create services
         if ($this->configManager !== null) {
-            $this->configManager->load();
+            if (!$cacheLoaded) {
+                $this->configManager->load();
+            }
             $this->registerConfigServices();
             $this->createLogger();
             $this->createTracer();
@@ -252,6 +300,10 @@ final class Kernel
             $this->createFeatureFlagServices();
             $this->createSchedulerServices();
             $this->createResilienceServices();
+            $this->createQueueServices();
+            $this->createSupervisorServices();
+            $this->createIntegrityServices();
+            $this->createDeployServices();
             $this->registerDiagnosticsRoute();
             $this->studioPreboot();
         }
@@ -568,6 +620,8 @@ final class Kernel
 
     /**
      * Create the metrics subsystem and register MetricsMiddleware as inner global middleware.
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     private function createMetrics(): void
     {
@@ -1076,6 +1130,199 @@ final class Kernel
     }
 
     /**
+     * Create queue services and register in the container.
+     *
+     * Only activates when config/queue.php was loaded and queue is enabled.
+     * Registers QueueConfig, QueueDriver, QueueManager, WorkerOptions,
+     * Worker, QueueRetryPolicy, and DeadLetterQueue.
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
+     */
+    private function createQueueServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(QueueConfig::class)) {
+            return;
+        }
+
+        /** @var QueueConfig $queueConfig */
+        $queueConfig = $repository->get(QueueConfig::class);
+        $this->container->instance(QueueConfig::class, $queueConfig);
+
+        if (!$queueConfig->enabled) {
+            return;
+        }
+
+        // Queue driver
+        $driver = match ($queueConfig->driver) {
+            QueueDriverType::Sync => new SyncDriver(),
+            QueueDriverType::Memory => new InMemoryDriver(),
+            QueueDriverType::Database => $this->container->has(QueueDriverInterface::class)
+                ? $this->container->get(QueueDriverInterface::class)
+                : new InMemoryDriver(),
+        };
+
+        if (!$this->container->has(QueueDriverInterface::class)) {
+            $this->container->instance(QueueDriverInterface::class, $driver);
+        }
+
+        // Queue manager
+        $queueManager = new QueueManager($queueConfig, $driver);
+        $this->container->instance(QueueManager::class, $queueManager);
+
+        // Worker options
+        $workerOptions = WorkerOptions::fromConfig($queueConfig);
+        $this->container->instance(WorkerOptions::class, $workerOptions);
+
+        // Worker
+        $logger = $this->container->has(LoggerInterface::class)
+            ? $this->container->get(LoggerInterface::class)
+            : null;
+
+        /** @var LoggerInterface|null $logger */
+        $worker = new Worker($driver, $workerOptions, $logger);
+        $this->container->instance(Worker::class, $worker);
+
+        // Retry policy
+        $retryPolicy = QueueRetryPolicy::fromConfig($queueConfig);
+        $this->container->instance(QueueRetryPolicy::class, $retryPolicy);
+
+        // Dead letter queue
+        $deadLetterQueue = new DeadLetterQueue($driver);
+        $this->container->instance(DeadLetterQueue::class, $deadLetterQueue);
+    }
+
+    /**
+     * Create supervisor services and register in the container.
+     *
+     * Only activates when config/supervisor.php was loaded and supervisor is enabled.
+     * Registers SupervisorConfig and Supervisor.
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
+     */
+    private function createSupervisorServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(SupervisorConfig::class)) {
+            return;
+        }
+
+        /** @var SupervisorConfig $supervisorConfig */
+        $supervisorConfig = $repository->get(SupervisorConfig::class);
+        $this->container->instance(SupervisorConfig::class, $supervisorConfig);
+
+        if (!$supervisorConfig->enabled) {
+            return;
+        }
+
+        $logger = $this->container->has(LoggerInterface::class)
+            ? $this->container->get(LoggerInterface::class)
+            : null;
+
+        $auditLogger = $this->container->has(AuditLogger::class)
+            ? $this->container->get(AuditLogger::class)
+            : null;
+
+        /** @var LoggerInterface|null $logger */
+        /** @var AuditLogger|null $auditLogger */
+        $supervisor = new Supervisor(
+            config: $supervisorConfig,
+            logger: $logger,
+            auditLogger: $auditLogger,
+        );
+        $this->container->instance(Supervisor::class, $supervisor);
+    }
+
+    /**
+     * Create file integrity services and register in the container.
+     *
+     * Only activates when config/integrity.php was loaded and integrity is enabled.
+     * Registers IntegrityConfig, IntegrityPolicy, ManifestBuilder, ManifestVerifier,
+     * and ManifestSigner (if MasterKey is available).
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
+     */
+    private function createIntegrityServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(IntegrityConfig::class)) {
+            return;
+        }
+
+        /** @var IntegrityConfig $integrityConfig */
+        $integrityConfig = $repository->get(IntegrityConfig::class);
+        $this->container->instance(IntegrityConfig::class, $integrityConfig);
+
+        if (!$integrityConfig->enabled) {
+            return;
+        }
+
+        // Policy
+        $policy = IntegrityPolicy::fromConfig($integrityConfig);
+        $this->container->instance(IntegrityPolicy::class, $policy);
+
+        // Builder and verifier need a base path
+        $basePath = $configManager->configPath() !== null
+            ? dirname($configManager->configPath())
+            : '.';
+
+        $builder = new ManifestBuilder($basePath);
+        $this->container->instance(ManifestBuilder::class, $builder);
+
+        $verifier = new ManifestVerifier($basePath);
+        $this->container->instance(ManifestVerifier::class, $verifier);
+
+        // Signer (requires MasterKey)
+        if ($this->container->has(MasterKey::class)) {
+            /** @var MasterKey $masterKey */
+            $masterKey = $this->container->get(MasterKey::class);
+
+            try {
+                $signer = new ManifestSigner($masterKey);
+                $this->container->instance(ManifestSigner::class, $signer);
+            } catch (SodiumException) {
+                // Signing key derivation failed — skip signer registration
+            }
+        }
+    }
+
+    /**
+     * Create deploy check services and register in the container.
+     *
+     * Only activates when config/deploy.php was loaded.
+     * Registers DeployConfig and DeployCheck.
+     */
+    private function createDeployServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(DeployConfig::class)) {
+            return;
+        }
+
+        /** @var DeployConfig $deployConfig */
+        $deployConfig = $repository->get(DeployConfig::class);
+        $this->container->instance(DeployConfig::class, $deployConfig);
+
+        $deployCheck = new DeployCheck();
+        $this->container->instance(DeployCheck::class, $deployCheck);
+    }
+
+    /**
      * Lightweight Studio-enabled check for the early boot phase.
      *
      * Runs BEFORE full StudioConfig hydration. Uses only env vars and
@@ -1121,6 +1368,10 @@ final class Kernel
      * Called after all core services are created, before Extensions.
      * Creates StudioManager and supporting services. If disabled via
      * config, returns early (DeferredSink stays a no-op).
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
+     * @throws SodiumException If a sodium cryptographic operation fails
      */
     private function studioPreboot(): void
     {
@@ -1279,6 +1530,9 @@ final class Kernel
      *
      * Called AFTER Extensions boot. Decorates the final service instances
      * (including any modifications made by extensions during their boot phase).
+     *
+     * @throws ContainerException If a container error occurs while resolving dependencies
+     * @throws NotFoundException If a required binding is not found in the container
      */
     private function attachStudioCollectors(): void
     {
@@ -1357,10 +1611,30 @@ final class Kernel
             $evaluationLog = $this->container->get(FlagEvaluationLog::class);
             $evaluationLog->addObserver($featureFlagCollector->handleEvaluation(...));
         }
+
+        // 7. Queue collector (decorator on QueueManager)
+        if ($collectorConfig->queue && $this->container->has(QueueManager::class)) {
+            /** @var QueueManager $queueManager */
+            $queueManager = $this->container->get(QueueManager::class);
+
+            $instrumentedQueueManager = new InstrumentedQueueManager($queueManager, $contextProvider, $emit);
+            $this->container->instance(InstrumentedQueueManager::class, $instrumentedQueueManager);
+
+            // Worker decorator (if worker is registered)
+            if ($this->container->has(Worker::class)) {
+                /** @var Worker $worker */
+                $worker = $this->container->get(Worker::class);
+
+                $instrumentedWorker = new InstrumentedWorker($worker, $contextProvider, $emit);
+                $this->container->instance(InstrumentedWorker::class, $instrumentedWorker);
+            }
+        }
     }
 
     /**
      * Register the diagnostics route (debug mode only).
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
      */
     private function registerDiagnosticsRoute(): void
     {

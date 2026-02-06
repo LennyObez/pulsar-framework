@@ -10,6 +10,7 @@ use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Config\StudioConfig;
 use Pulsar\Console\Command;
@@ -40,6 +41,9 @@ final class StudioStatusCommand extends Command
         $this->addOption('json', 'Output as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');

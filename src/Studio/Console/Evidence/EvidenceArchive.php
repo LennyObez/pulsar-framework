@@ -40,6 +40,8 @@ final readonly class EvidenceArchive
 
     /**
      * Serialize the archive to a JSON string.
+     *
+     * @throws JsonException
      */
     public function toJson(): string
     {

@@ -33,6 +33,27 @@ final class ConfigManager
     ) {}
 
     /**
+     * Load configuration from a cached ConfigRepository.
+     *
+     * Restores Environment and sets the pre-built repository directly,
+     * skipping file reads and DTO construction. The cached repository
+     * must contain all required config DTOs.
+     *
+     * @return bool True if the cache was successfully loaded.
+     */
+    public function loadFromCache(ConfigRepository $cached): bool
+    {
+        if (!$cached->has(AppConfig::class)) {
+            return false;
+        }
+
+        $this->environment = Environment::load($this->envFilePath);
+        $this->repository = $cached;
+
+        return true;
+    }
+
+    /**
      * Load all configuration.
      *
      * Creates Environment, reads config files, applies overrides,
@@ -91,6 +112,41 @@ final class ConfigManager
             $resilienceData = $this->loadConfigFile('resilience');
             $resilienceConfig = ResilienceConfig::fromArray($resilienceData, $this->environment);
             $this->repository->set($resilienceConfig);
+        }
+
+        // Load queue config (optional — only if config/queue.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'queue.php')) {
+            $queueData = $this->loadConfigFile('queue');
+            $queueConfig = QueueConfig::fromArray($queueData, $this->environment);
+            $this->repository->set($queueConfig);
+        }
+
+        // Load storage config (optional — only if config/storage.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'storage.php')) {
+            $storageData = $this->loadConfigFile('storage');
+            $storageConfig = StorageConfig::fromArray($storageData, $this->environment);
+            $this->repository->set($storageConfig);
+        }
+
+        // Load supervisor config (optional — only if config/supervisor.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'supervisor.php')) {
+            $supervisorData = $this->loadConfigFile('supervisor');
+            $supervisorConfig = SupervisorConfig::fromArray($supervisorData, $this->environment);
+            $this->repository->set($supervisorConfig);
+        }
+
+        // Load integrity config (optional — only if config/integrity.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'integrity.php')) {
+            $integrityData = $this->loadConfigFile('integrity');
+            $integrityConfig = IntegrityConfig::fromArray($integrityData, $this->environment);
+            $this->repository->set($integrityConfig);
+        }
+
+        // Load deploy config (optional — only if config/deploy.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'deploy.php')) {
+            $deployData = $this->loadConfigFile('deploy');
+            $deployConfig = DeployConfig::fromArray($deployData, $this->environment);
+            $this->repository->set($deployConfig);
         }
 
         // Studio config is NOT loaded here — it is loaded directly by Kernel::studioPreboot()

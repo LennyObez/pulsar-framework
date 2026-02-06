@@ -19,6 +19,7 @@ use Pulsar\Studio\Console\Storage\EncryptedEventStore;
 use Pulsar\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Studio\Exception\StudioException;
+use SodiumException;
 
 use function time;
 
@@ -45,6 +46,7 @@ final readonly class EvidenceExporter
      * @param array<string, mixed> $filters Optional filters to limit export
      * @throws StudioException If encryption is active but key is missing
      * @throws JsonException If JSON encoding fails
+     * @throws SodiumException If HMAC computation fails
      */
     public function export(array $filters = []): EvidenceArchive
     {
