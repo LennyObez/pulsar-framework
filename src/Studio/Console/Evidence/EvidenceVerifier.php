@@ -145,6 +145,7 @@ final class EvidenceVerifier
      * Verify an archive's MAC.
      *
      * @throws JsonException If JSON encoding fails
+     * @throws SodiumException If HMAC verification fails due to sodium error
      */
     public function verifyArchiveMac(EvidenceArchive $archive, string $archiveMacKey): bool
     {

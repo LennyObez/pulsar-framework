@@ -19,6 +19,7 @@ readonly class StudioCollectorConfig
         public bool $exceptions = true,
         public bool $scheduler = true,
         public bool $featureFlags = true,
+        public bool $queue = true,
         public bool $storeRawSql = false,
         public bool $redactTableNames = false,
     ) {}
@@ -46,6 +47,9 @@ readonly class StudioCollectorConfig
         /** @var array<string, mixed> $featureFlagsData */
         $featureFlagsData = $data['feature_flags'] ?? [];
 
+        /** @var array<string, mixed> $queueData */
+        $queueData = $data['queue'] ?? [];
+
         $storeRawSql = $environment->get('STUDIO_STORE_RAW_SQL') !== null
             ? $environment->get('STUDIO_STORE_RAW_SQL') === 'true'
             : (bool) ($databaseData['store_raw_sql'] ?? false);
@@ -57,6 +61,7 @@ readonly class StudioCollectorConfig
             exceptions: (bool) ($exceptionsData['enabled'] ?? true),
             scheduler: (bool) ($schedulerData['enabled'] ?? true),
             featureFlags: (bool) ($featureFlagsData['enabled'] ?? true),
+            queue: (bool) ($queueData['enabled'] ?? true),
             storeRawSql: $storeRawSql,
             redactTableNames: (bool) ($databaseData['redact_table_names'] ?? false),
         );

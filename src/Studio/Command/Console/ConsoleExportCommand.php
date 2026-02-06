@@ -9,12 +9,8 @@ use function file_put_contents;
 use function is_dir;
 use function is_int;
 use function is_string;
-use function json_encode;
 
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -22,6 +18,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Studio\Exception\StudioException;
+use SodiumException;
 
 use function sprintf;
 use function strlen;
@@ -47,6 +44,10 @@ final class ConsoleExportCommand extends Command
         $this->addOption('json', 'Output metadata as JSON', 'j');
     }
 
+    /**
+     * @throws JsonException
+     * @throws SodiumException If HMAC computation fails during export
+     */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
@@ -59,15 +60,7 @@ final class ConsoleExportCommand extends Command
         try {
             $archive = $this->exporter->export();
         } catch (StudioException $e) {
-            if ($isJson) {
-                $error = [
-                    'error' => 'encryption_key_required',
-                    'message' => $e->getMessage(),
-                ];
-                $output->writeln(json_encode($error, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-            } else {
-                $output->errorln($e->getMessage());
-            }
+            JsonOutputHelper::writeError($output, $isJson, 'encryption_key_required', $e->getMessage());
             return ExitCode::Error->value;
         }
 
@@ -95,13 +88,13 @@ final class ConsoleExportCommand extends Command
         ];
 
         if ($isJson) {
-            $output->writeln(json_encode($metadata, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            $output->writeln(JsonOutputHelper::formatJson($metadata));
         } else {
             $output->success(sprintf('Archive exported to %s', $outputPath));
-            $output->writeln(sprintf('  Events:      %d', $eventCount));
-            $output->writeln(sprintf('  Chain links: %d', $chainLinkCount));
-            $output->writeln(sprintf('  Size:        %d bytes', $metadata['size_bytes']));
-            $output->writeln(sprintf('  MAC:         %s', $metadata['mac_included'] ? 'Included' : 'None'));
+            JsonOutputHelper::writeField($output, 'Events', (string) $eventCount);
+            JsonOutputHelper::writeField($output, 'Chain links', (string) $chainLinkCount);
+            JsonOutputHelper::writeField($output, 'Size', sprintf('%d bytes', $metadata['size_bytes']));
+            JsonOutputHelper::writeField($output, 'MAC', $metadata['mac_included'] ? 'Included' : 'None');
         }
 
         return ExitCode::Success->value;

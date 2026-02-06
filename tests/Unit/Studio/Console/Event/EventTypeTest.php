@@ -120,7 +120,7 @@ final class EventTypeTest extends TestCase
     public function totalCaseCount(): void
     {
         // If this fails, a new case was added - update the test accordingly
-        self::assertCount(15, EventType::cases());
+        self::assertCount(18, EventType::cases());
     }
 
     #[Test]

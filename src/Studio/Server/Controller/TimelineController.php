@@ -12,6 +12,7 @@ use function json_encode;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
@@ -28,6 +29,9 @@ final readonly class TimelineController
         private TimelineBuilder $timelineBuilder,
     ) {}
 
+    /**
+     * @throws JsonException
+     */
     public function handle(Request $_request, string $correlationId): Response
     {
         $events = $this->timelineBuilder->forCorrelation(
