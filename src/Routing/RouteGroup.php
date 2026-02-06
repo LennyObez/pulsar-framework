@@ -24,9 +24,9 @@ final class RouteGroup
      * @param string|null $host Host pattern applied to all routes in this group
      */
     public function __construct(
-        private readonly string $prefix = '',
-        private readonly array $middleware = [],
-        private readonly array $attributes = [],
+        public readonly string $prefix = '',
+        public readonly array $middleware = [],
+        public readonly array $attributes = [],
         private readonly ?string $host = null,
     ) {}
 
@@ -46,34 +46,6 @@ final class RouteGroup
     {
         $this->routes[] = $group;
         return $this;
-    }
-
-    /**
-     * Get the prefix for this group.
-     */
-    public function getPrefix(): string
-    {
-        return $this->prefix;
-    }
-
-    /**
-     * Get the middleware for this group.
-     *
-     * @return list<string>
-     */
-    public function getMiddleware(): array
-    {
-        return $this->middleware;
-    }
-
-    /**
-     * Get the attributes for this group.
-     *
-     * @return array<string, mixed>
-     */
-    public function getAttributes(): array
-    {
-        return $this->attributes;
     }
 
     /**
