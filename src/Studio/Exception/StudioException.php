@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Studio\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Internal;
 use RuntimeException;
 
@@ -22,6 +23,7 @@ final class StudioException extends RuntimeException
     /**
      * Studio storage is not writable.
      */
+    #[NoDiscard]
     public static function storageNotWritable(string $path): self
     {
         return new self(sprintf('Studio storage path is not writable: %s', $path));
@@ -30,6 +32,7 @@ final class StudioException extends RuntimeException
     /**
      * Studio storage is busy after maximum retry attempts.
      */
+    #[NoDiscard]
     public static function storeBusy(int $attempts, ?Throwable $previous = null): self
     {
         return new self(
@@ -41,6 +44,7 @@ final class StudioException extends RuntimeException
     /**
      * Export requires decryption key but it is not available.
      */
+    #[NoDiscard]
     public static function exportRequiresDecryptionKey(): self
     {
         return new self(
@@ -53,6 +57,7 @@ final class StudioException extends RuntimeException
     /**
      * Schema migration failed.
      */
+    #[NoDiscard]
     public static function schemaFailed(string $reason, ?Throwable $previous = null): self
     {
         return new self(
@@ -64,6 +69,7 @@ final class StudioException extends RuntimeException
     /**
      * Evidence chain verification failed.
      */
+    #[NoDiscard]
     public static function chainBroken(int $linkIndex, string $reason): self
     {
         return new self(
@@ -74,6 +80,7 @@ final class StudioException extends RuntimeException
     /**
      * Studio is not enabled.
      */
+    #[NoDiscard]
     public static function notEnabled(): self
     {
         return new self('Studio is not enabled');
@@ -82,6 +89,7 @@ final class StudioException extends RuntimeException
     /**
      * Studio server failed to start.
      */
+    #[NoDiscard]
     public static function serverStartFailed(string $reason): self
     {
         return new self(sprintf('Studio server failed to start: %s', $reason));
@@ -90,6 +98,7 @@ final class StudioException extends RuntimeException
     /**
      * Access denied to Studio.
      */
+    #[NoDiscard]
     public static function accessDenied(string $reason = 'unauthorized'): self
     {
         return new self(sprintf('Studio access denied: %s', $reason));
@@ -98,6 +107,7 @@ final class StudioException extends RuntimeException
     /**
      * Invalid Studio configuration.
      */
+    #[NoDiscard]
     public static function invalidConfig(string $reason): self
     {
         return new self(sprintf('Invalid Studio configuration: %s', $reason));
@@ -106,6 +116,7 @@ final class StudioException extends RuntimeException
     /**
      * Archive file is invalid or corrupted.
      */
+    #[NoDiscard]
     public static function invalidArchive(string $reason): self
     {
         return new self(sprintf('Invalid Studio archive: %s', $reason));

@@ -8,6 +8,7 @@ use function htmlspecialchars;
 use function is_scalar;
 use function is_string;
 
+use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
 
@@ -23,6 +24,7 @@ use Throwable;
  */
 final class DevelopmentRenderer implements ExceptionRendererInterface
 {
+    #[Override]
     public function render(Throwable $exception, Request $request, ResponseStatus $status): string
     {
         $title = sprintf('%d %s', $status->value, $this->escape($status->reasonPhrase()));

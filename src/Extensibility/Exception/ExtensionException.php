@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -18,6 +19,7 @@ class ExtensionException extends RuntimeException
     /**
      * Create exception for extension not found.
      */
+    #[NoDiscard]
     public static function notFound(string $name): self
     {
         return new self(sprintf('Extension "%s" not found', $name));
@@ -26,6 +28,7 @@ class ExtensionException extends RuntimeException
     /**
      * Create exception for extension already registered.
      */
+    #[NoDiscard]
     public static function alreadyRegistered(string $name): self
     {
         return new self(sprintf('Extension "%s" is already registered', $name));
@@ -34,6 +37,7 @@ class ExtensionException extends RuntimeException
     /**
      * Create exception for invalid extension class.
      */
+    #[NoDiscard]
     public static function invalidExtensionClass(string $class): self
     {
         return new self(sprintf(
@@ -45,6 +49,7 @@ class ExtensionException extends RuntimeException
     /**
      * Create exception for extension in invalid state.
      */
+    #[NoDiscard]
     public static function invalidState(string $name, string $currentState, string $expectedState): self
     {
         return new self(sprintf(
@@ -58,6 +63,7 @@ class ExtensionException extends RuntimeException
     /**
      * Create exception for boot failure.
      */
+    #[NoDiscard]
     public static function bootFailed(string $name, string $reason): self
     {
         return new self(sprintf('Failed to boot extension "%s": %s', $name, $reason));
@@ -66,6 +72,7 @@ class ExtensionException extends RuntimeException
     /**
      * Create exception for registration failure.
      */
+    #[NoDiscard]
     public static function registrationFailed(string $name, string $reason): self
     {
         return new self(sprintf('Failed to register extension "%s": %s', $name, $reason));

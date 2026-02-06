@@ -17,6 +17,7 @@ use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -45,6 +46,7 @@ final class EvidenceVerifyCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:evidence:verify';
@@ -58,6 +60,7 @@ final class EvidenceVerifyCommand extends Command
      * @throws JsonException
      * @throws SodiumException If MAC verification fails
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $rawFilePath = $input->getArgument(0);

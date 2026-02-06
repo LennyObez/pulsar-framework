@@ -6,6 +6,7 @@ namespace Pulsar\Http\Validation\Rule;
 
 use function is_string;
 
+use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
@@ -22,6 +23,7 @@ readonly class StringType implements RuleInterface
         private string $message = '',
     ) {}
 
+    #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation
     {
         if ($value === null) {
@@ -39,6 +41,7 @@ readonly class StringType implements RuleInterface
         return null;
     }
 
+    #[Override]
     public function name(): string
     {
         return 'string';

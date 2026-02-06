@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\ErrorTracking\Exception;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -15,6 +16,7 @@ use function sprintf;
 #[Api]
 final class ErrorTrackingException extends RuntimeException
 {
+    #[NoDiscard]
     public static function maxGroupsExceeded(int $max): self
     {
         return new self(sprintf(

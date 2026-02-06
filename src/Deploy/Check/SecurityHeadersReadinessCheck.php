@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Deploy\CheckResult;
@@ -27,16 +28,19 @@ final readonly class SecurityHeadersReadinessCheck implements DeployCheckInterfa
         private SecurityHeadersConfig $headersConfig,
     ) {}
 
+    #[Override]
     public function getName(): string
     {
         return self::CHECK_NAME;
     }
 
+    #[Override]
     public function getDescription(): string
     {
         return 'Validates X-Content-Type-Options and X-Frame-Options headers are configured';
     }
 
+    #[Override]
     public function check(string $environment): CheckResult
     {
         $headers = $this->headersConfig->headers;

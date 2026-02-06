@@ -9,6 +9,9 @@ use function file_put_contents;
 use function is_dir;
 use function is_string;
 use function mkdir;
+
+use Override;
+
 use function preg_replace;
 
 use Pulsar\Console\Command;
@@ -31,6 +34,7 @@ final class MigrateCreateCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'migrate:create';
@@ -38,6 +42,7 @@ final class MigrateCreateCommand extends Command
         $this->addArgument('name', 'Migration name (e.g., create_users_table)', true);
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $name = $input->getArgument(0);

@@ -6,6 +6,7 @@ namespace Pulsar\Console\Command;
 
 use function count;
 
+use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
@@ -27,12 +28,14 @@ final class MigrateRunCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'migrate:run';
         $this->description = 'Run all pending database migrations';
     }
 
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         try {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Manifest;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Core\Version;
 
@@ -25,6 +26,7 @@ readonly class PulsarVersionConfig
      *
      * @param array{min_version?: string, max_version?: string} $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(

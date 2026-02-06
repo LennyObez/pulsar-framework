@@ -6,6 +6,9 @@ namespace Pulsar\Studio\Console\Collector;
 
 use function hash;
 use function mb_strtolower;
+
+use NoDiscard;
+
 use function preg_replace;
 
 use Pulsar\Api\Internal;
@@ -45,6 +48,7 @@ final class SqlNormalizer
     /**
      * Normalize an SQL query: strip literals, collapse whitespace, lowercase keywords.
      */
+    #[NoDiscard]
     public static function normalize(string $sql): string
     {
         // 1. Replace single-quoted string literals with ?
@@ -71,6 +75,7 @@ final class SqlNormalizer
     /**
      * Compute a SHA-256 fingerprint of the normalized SQL.
      */
+    #[NoDiscard]
     public static function fingerprint(string $sql): string
     {
         return hash('sha256', self::normalize($sql));
@@ -79,6 +84,7 @@ final class SqlNormalizer
     /**
      * Detect the query type from the SQL prefix.
      */
+    #[NoDiscard]
     public static function detectQueryType(string $sql): string
     {
         $trimmed = trim($sql);

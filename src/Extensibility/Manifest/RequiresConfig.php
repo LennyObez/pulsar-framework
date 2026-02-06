@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Manifest;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -24,6 +25,7 @@ readonly class RequiresConfig
      *
      * @param array<string, string> $data
      */
+    #[NoDiscard]
     public static function fromArray(array $data): self
     {
         return new self(extensions: $data);

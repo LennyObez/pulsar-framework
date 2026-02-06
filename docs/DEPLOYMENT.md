@@ -202,6 +202,95 @@ php bin/pulsar studio:console:guardian:deploy:check --env=production
 php bin/pulsar studio:console:guardian:integrity:verify --strict --json
 ```
 
+## PHP JIT Compilation
+
+JIT (Just-In-Time) compilation converts PHP bytecode into native machine code at runtime, improving performance for CPU-intensive operations.
+
+### Recommended Production Configuration
+
+```ini
+opcache.jit=tracing
+opcache.jit_buffer_size=128M
+```
+
+### JIT Modes
+
+| Mode       | Best for                                | Trade-off                            |
+| ---------- | --------------------------------------- | ------------------------------------ |
+| `tracing`  | General-purpose workloads (recommended) | Higher warmup cost, best peak perf   |
+| `function` | Short-lived scripts, simpler workloads  | Lower warmup cost, less optimization |
+| `off`      | Debugging, profiling                    | No JIT overhead                      |
+
+### SAPI Awareness
+
+PHP ini settings differ between CLI and FPM SAPIs. Always verify JIT configuration in the SAPI that handles production traffic. The `deploy:check` command validates JIT settings for the current SAPI.
+
+### Monitoring
+
+```php
+$status = opcache_get_status();
+$jitStatus = $status['jit'] ?? [];
+// Check: enabled, on, buffer_size, buffer_free
+```
+
+## OPcache Preloading
+
+Preloading loads PHP classes into shared memory at server start, eliminating per-request autoloading and compilation overhead for hot-path classes.
+
+### Safe Workflow
+
+1. **Generate** the preload script:
+
+   ```bash
+   php bin/pulsar preload:dump --output=preload.generated.php
+   ```
+
+2. **Configure** in `php.ini`:
+
+   ```ini
+   opcache.preload=/absolute/path/to/app/preload.generated.php
+   opcache.preload_user=www-data
+   ```
+
+3. **Restart** the web server (preloading takes effect at startup).
+
+The generated file uses absolute paths and is fully deterministic — running `preload:dump` twice on the same codebase produces byte-for-byte identical output.
+
+### Security
+
+Store the generated file in an immutable deploy path. **Never place executable preload scripts in writable directories** (e.g., `var/cache/`). OPcache preloading executes at server start, before framework defenses.
+
+The `deploy:check` command validates that the preload path is:
+
+- An absolute path (not relative)
+- Outside known unsafe directories (`/tmp/`, `/var/cache/`, etc.)
+- Readable by the web server user
+
+### Strictness Modes
+
+```bash
+# Strict (default, CI-friendly): fails on any invalid classmap entry
+php bin/pulsar preload:dump --output=preload.generated.php --strict
+
+# Lenient: skips invalid entries with warnings
+php bin/pulsar preload:dump --output=preload.generated.php --lenient
+
+# Suppress metadata sidecar
+php bin/pulsar preload:dump --output=preload.generated.php --no-meta
+```
+
+## Combined JIT + Preloading
+
+Preloaded classes are JIT-compiled immediately at server start, eliminating the first-request compilation cost entirely. This combination provides the best performance for production workloads.
+
+Run the benchmark harness to measure the impact on your specific deployment:
+
+```bash
+php tools/bench/run.php
+```
+
+See [`docs/PERFORMANCE.md`](PERFORMANCE.md) for details on interpreting benchmark results.
+
 ## Environment Variables
 
 Key deployment environment variables:

@@ -6,6 +6,9 @@ namespace Pulsar\Studio\Console\Redaction;
 
 use function is_array;
 use function is_string;
+
+use Override;
+
 use function preg_replace;
 
 use Pulsar\Api\Internal;
@@ -54,6 +57,7 @@ final class DefaultRedactionPolicy implements RedactionPolicyInterface
         '/(?:api[_-]?key|apikey)\s*[=:]\s*[^\s,;]+/i',
     ];
 
+    #[Override]
     public function redact(array $payload): array
     {
         // First pass: use the base scrubber for key-based redaction

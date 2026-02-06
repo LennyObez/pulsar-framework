@@ -10,6 +10,8 @@ use DateTimeImmutable;
 
 use function in_array;
 
+use Override;
+
 /**
  * Feature flag evaluation engine.
  *
@@ -24,11 +26,13 @@ final readonly class FeatureFlagManager implements FeatureFlagManagerInterface
         private bool $defaultState = false,
     ) {}
 
+    #[Override]
     public function isEnabled(string $flagName, ?FlagContext $context = null): bool
     {
         return $this->evaluate($flagName, $context)->result;
     }
 
+    #[Override]
     public function evaluate(string $flagName, ?FlagContext $context = null): FlagEvaluation
     {
         $context ??= new FlagContext();
@@ -71,6 +75,7 @@ final readonly class FeatureFlagManager implements FeatureFlagManagerInterface
         return $evaluation;
     }
 
+    #[Override]
     public function allFlags(): array
     {
         return $this->storage->all();

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -60,6 +61,7 @@ enum Method: string
     /**
      * Create from string, case-insensitive.
      */
+    #[NoDiscard]
     public static function fromString(string $method): self
     {
         return self::from(strtoupper($method));

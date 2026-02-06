@@ -11,6 +11,9 @@ use DateTimeImmutable;
 
 use function explode;
 use function in_array;
+
+use NoDiscard;
+
 use function preg_match;
 
 use Pulsar\Api\Api;
@@ -40,6 +43,7 @@ readonly class CronFields
      *
      * @throws SchedulerException If the expression is invalid.
      */
+    #[NoDiscard]
     public static function parse(string $expression): self
     {
         $parts = explode(' ', trim($expression));

@@ -7,6 +7,7 @@ namespace Pulsar\Http\Validation\Rule;
 use function is_string;
 use function mb_strlen;
 
+use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
@@ -24,6 +25,7 @@ readonly class MaxLength implements RuleInterface
         private string $message = '',
     ) {}
 
+    #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation
     {
         if ($value === null) {
@@ -41,6 +43,7 @@ readonly class MaxLength implements RuleInterface
         );
     }
 
+    #[Override]
     public function name(): string
     {
         return 'max_length';

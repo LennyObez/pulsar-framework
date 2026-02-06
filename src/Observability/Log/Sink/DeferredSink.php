@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log\Sink;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogSinkInterface;
@@ -27,6 +28,7 @@ final class DeferredSink implements LogSinkInterface
         $this->sinks[] = $sink;
     }
 
+    #[Override]
     public function write(LogEntry $entry): void
     {
         foreach ($this->sinks as $sink) {

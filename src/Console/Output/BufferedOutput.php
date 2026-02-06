@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Output;
 
+use Override;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Console\Verbosity;
 
@@ -21,6 +22,7 @@ final class BufferedOutput implements OutputInterface
         $this->verbosity = $verbosity;
     }
 
+    #[Override]
     public function write(string $message): void
     {
         if ($this->verbosity === Verbosity::Quiet) {
@@ -30,11 +32,13 @@ final class BufferedOutput implements OutputInterface
         $this->buffer .= $message;
     }
 
+    #[Override]
     public function writeln(string $message = ''): void
     {
         $this->write($message . PHP_EOL);
     }
 
+    #[Override]
     public function error(string $message): void
     {
         if ($this->verbosity === Verbosity::Quiet) {
@@ -44,41 +48,49 @@ final class BufferedOutput implements OutputInterface
         $this->errorBuffer .= $message;
     }
 
+    #[Override]
     public function errorln(string $message = ''): void
     {
         $this->error($message . PHP_EOL);
     }
 
+    #[Override]
     public function success(string $message): void
     {
         $this->writeln('[SUCCESS] ' . $message);
     }
 
+    #[Override]
     public function info(string $message): void
     {
         $this->writeln('[INFO] ' . $message);
     }
 
+    #[Override]
     public function warning(string $message): void
     {
         $this->writeln('[WARNING] ' . $message);
     }
 
+    #[Override]
     public function isQuiet(): bool
     {
         return $this->verbosity === Verbosity::Quiet;
     }
 
+    #[Override]
     public function isVerbose(): bool
     {
         return $this->verbosity->showsVerbose();
     }
 
+    #[Override]
     public function isDebug(): bool
     {
         return $this->verbosity->showsDebug();
     }
 
+    #[Override]
     public function newLine(int $count = 1): void
     {
         $this->write(str_repeat(PHP_EOL, $count));

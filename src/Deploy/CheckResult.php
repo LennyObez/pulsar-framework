@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -27,6 +28,7 @@ readonly class CheckResult
      *
      * @param list<string> $recommendations
      */
+    #[NoDiscard]
     public static function pass(string $name, string $message, array $recommendations = []): self
     {
         return new self(
@@ -42,6 +44,7 @@ readonly class CheckResult
      *
      * @param list<string> $recommendations
      */
+    #[NoDiscard]
     public static function warning(string $name, string $message, array $recommendations = []): self
     {
         return new self(
@@ -57,6 +60,7 @@ readonly class CheckResult
      *
      * @param list<string> $recommendations
      */
+    #[NoDiscard]
     public static function error(string $name, string $message, array $recommendations = []): self
     {
         return new self(

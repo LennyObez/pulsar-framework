@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Studio\Command\Console\Evidence;
 
 use JsonException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -27,6 +28,7 @@ final class RetentionApplyCommand extends Command
         parent::__construct();
     }
 
+    #[Override]
     protected function configure(): void
     {
         $this->name = 'studio:console:evidence:retention:apply';
@@ -37,6 +39,7 @@ final class RetentionApplyCommand extends Command
     /**
      * @throws JsonException
      */
+    #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $isJson = $input->hasOption('json');
