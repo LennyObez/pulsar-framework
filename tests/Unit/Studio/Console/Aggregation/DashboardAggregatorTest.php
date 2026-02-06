@@ -587,6 +587,108 @@ final class DashboardAggregatorTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // benchmarkRuns() tests
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function benchmarkRunsReturnsEmptyWhenNoBenchmarks(): void
+    {
+        $result = $this->aggregator->benchmarkRuns();
+
+        self::assertSame([], $result);
+    }
+
+    #[Test]
+    public function benchmarkRunsReturnsRecentRuns(): void
+    {
+        $this->storeBenchmarkRunEvent(runId: 'run-1', profileCount: 3, successCount: 3);
+        $this->storeBenchmarkRunEvent(runId: 'run-2', profileCount: 6, successCount: 5);
+
+        $result = $this->aggregator->benchmarkRuns();
+
+        self::assertCount(2, $result);
+        // Most recent first
+        self::assertSame('run-2', $result[0]['run_id']);
+        self::assertSame('run-1', $result[1]['run_id']);
+    }
+
+    #[Test]
+    public function benchmarkRunsRespectsLimit(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->storeBenchmarkRunEvent(runId: "run-{$i}", profileCount: 3, successCount: 3);
+        }
+
+        $result = $this->aggregator->benchmarkRuns(limit: 2);
+
+        self::assertCount(2, $result);
+    }
+
+    // -------------------------------------------------------------------------
+    // benchmarkProfiles() tests
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function benchmarkProfilesReturnsEmptyWhenNoProfiles(): void
+    {
+        $result = $this->aggregator->benchmarkProfiles('nonexistent-run');
+
+        self::assertSame([], $result);
+    }
+
+    #[Test]
+    public function benchmarkProfilesReturnsProfilesForRun(): void
+    {
+        $this->storeBenchmarkProfileEvent(runId: 'run-a', profileName: 'baseline', bootUs: 1000);
+        $this->storeBenchmarkProfileEvent(runId: 'run-a', profileName: 'jit-tracing', bootUs: 800);
+        $this->storeBenchmarkProfileEvent(runId: 'run-b', profileName: 'baseline', bootUs: 1200);
+
+        $result = $this->aggregator->benchmarkProfiles('run-a');
+
+        self::assertCount(2, $result);
+        self::assertSame('baseline', $result[0]['profile_name']);
+        self::assertSame(1000, $result[0]['boot_us']);
+        self::assertSame('jit-tracing', $result[1]['profile_name']);
+        self::assertSame(800, $result[1]['boot_us']);
+    }
+
+    #[Test]
+    public function benchmarkProfilesDoesNotReturnOtherRunProfiles(): void
+    {
+        $this->storeBenchmarkProfileEvent(runId: 'run-a', profileName: 'baseline', bootUs: 1000);
+        $this->storeBenchmarkProfileEvent(runId: 'run-b', profileName: 'jit-tracing', bootUs: 800);
+
+        $result = $this->aggregator->benchmarkProfiles('run-a');
+
+        self::assertCount(1, $result);
+        self::assertSame('baseline', $result[0]['profile_name']);
+    }
+
+    // -------------------------------------------------------------------------
+    // availableSections() benchmark tests
+    // -------------------------------------------------------------------------
+
+    #[Test]
+    public function availableSectionsIncludesBenchmarkWhenEventsExist(): void
+    {
+        $this->storeBenchmarkRunEvent(runId: 'run-1', profileCount: 3, successCount: 3);
+
+        $sections = $this->aggregator->availableSections();
+
+        self::assertContains('benchmark', $sections);
+    }
+
+    #[Test]
+    public function availableSectionsExcludesBenchmarkWhenNoEvents(): void
+    {
+        $this->storeHttpResponseEvent(durationMs: 100, statusCode: 200);
+
+        $sections = $this->aggregator->availableSections();
+
+        self::assertNotContains('benchmark', $sections);
+    }
+
+    // -------------------------------------------------------------------------
     // Edge case tests
     // -------------------------------------------------------------------------
 
@@ -666,6 +768,49 @@ final class DashboardAggregatorTest extends TestCase
                 'exception_class' => $exceptionClass,
             ],
             timestampUs: $timestampUs,
+        );
+    }
+
+    private function storeBenchmarkRunEvent(string $runId, int $profileCount, int $successCount): void
+    {
+        $this->storeEvent(
+            eventType: EventType::BenchmarkRun,
+            payload: [
+                'run_id' => $runId,
+                'php_version' => '8.5.0',
+                'php_sapi' => 'cli',
+                'os_platform' => 'Linux',
+                'os_arch' => 'x86_64',
+                'profile_count' => $profileCount,
+                'success_count' => $successCount,
+                'failure_count' => $profileCount - $successCount,
+                'total_duration_ms' => 5000.0,
+                'profile_names' => ['baseline', 'jit-tracing'],
+            ],
+        );
+    }
+
+    private function storeBenchmarkProfileEvent(string $runId, string $profileName, int $bootUs): void
+    {
+        $this->storeEvent(
+            eventType: EventType::BenchmarkProfile,
+            payload: [
+                'run_id' => $runId,
+                'profile_name' => $profileName,
+                'profile_description' => 'Test profile',
+                'boot_us' => $bootUs,
+                'warm_boot_us' => (int) ($bootUs * 0.6),
+                'p50_us' => 25,
+                'p95_us' => 120,
+                'rps' => 40000,
+                'peak_rss_kb' => 32768,
+                'memory_usage_kb' => 16384,
+                'opcache_memory_kb' => 8192,
+                'iterations' => 1000,
+                'jit_enabled' => false,
+                'jit_mode' => 'off',
+                'preload_enabled' => false,
+            ],
         );
     }
 
