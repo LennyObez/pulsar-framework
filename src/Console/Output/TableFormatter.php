@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Output;
 
+use Pulsar\Api\Api;
 use Pulsar\Console\OutputInterface;
 
 /**
  * Formats tabular data for console output.
  */
+#[Api(since: '1.0.0')]
 final class TableFormatter
 {
     /** @var list<string> */
