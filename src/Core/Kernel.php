@@ -102,6 +102,7 @@ use Pulsar\Http\Middleware\TracingMiddleware;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseEmitter;
+use Pulsar\Http\RouteContext;
 use Pulsar\Integrity\IntegrityPolicy;
 use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestSigner;
@@ -211,6 +212,7 @@ final class Kernel
     private ?ExtensionBootstrap $extensionBootstrap;
     private ?ConfigManager $configManager;
     private ?ExceptionHandler $exceptionHandler = null;
+    private ?RouteContext $routeContext = null;
 
     public function __construct(
         ?ContainerInterface $container = null,
@@ -402,6 +404,9 @@ final class Kernel
     {
         $this->boot();
 
+        // Reset route context for this request (worker reuse safety)
+        $this->routeContext?->reset();
+
         try {
             return $this->middleware->handle($request, fn(Request $req) => $this->dispatchRoute($req));
         } catch (Throwable $e) {
@@ -440,6 +445,12 @@ final class Kernel
     {
         $host = $request->header('Host');
         $matched = $this->router->match($request->method, $request->path, $host);
+
+        // Populate RouteContext for observability middleware (metrics/tracing)
+        if ($this->routeContext !== null) {
+            $this->routeContext->pattern = $matched->route->path;
+            $this->routeContext->name = $matched->getName();
+        }
 
         // Add route parameters to request attributes
         $request = $this->addRouteAttributesToRequest($request, $matched);
@@ -636,10 +647,17 @@ final class Kernel
         /** @var Randomizer $randomizer */
         $randomizer = $this->container->get(Randomizer::class);
 
+        // Create shared RouteContext (populated after route matching)
+        if ($this->routeContext === null) {
+            $this->routeContext = new RouteContext();
+            $this->container->instance(RouteContext::class, $this->routeContext);
+        }
+
         $tracingMiddleware = new TracingMiddleware(
             $collector,
             $observabilityConfig->tracing->samplingRate,
             $randomizer,
+            $this->routeContext,
         );
 
         // Tracing is outermost: registered first
@@ -666,7 +684,13 @@ final class Kernel
         $registry = new MetricRegistry();
         $this->container->instance(MetricRegistry::class, $registry);
 
-        $metricsMiddleware = new MetricsMiddleware($registry);
+        // Create shared RouteContext if not already created by tracing
+        if ($this->routeContext === null) {
+            $this->routeContext = new RouteContext();
+            $this->container->instance(RouteContext::class, $this->routeContext);
+        }
+
+        $metricsMiddleware = new MetricsMiddleware($registry, $this->routeContext);
 
         // Metrics is inner: registered after tracing
         $this->middleware->pipe($metricsMiddleware);
