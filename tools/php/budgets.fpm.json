@@ -1,0 +1,39 @@
+{
+  "description": "Performance budgets for PHP-FPM runtime (per-request process, cold bootstrap)",
+  "runtime": "fpm",
+  "inherits": "performance-budgets.json",
+  "overrides": {
+    "request.anonymous_json_api": {
+      "max_avg": "2 milliseconds",
+      "description": "Full anonymous JSON API request — FPM cold bootstrap included"
+    },
+    "request.authenticated_session": {
+      "max_avg": "3 milliseconds",
+      "description": "Session-authenticated request — FPM cold bootstrap + session load"
+    },
+    "request.authenticated_token": {
+      "max_avg": "2 milliseconds",
+      "description": "Token-authenticated request — FPM cold bootstrap + token resolve"
+    },
+    "request.with_audit": {
+      "max_avg": "4 milliseconds",
+      "description": "Request with full audit trail — FPM cold bootstrap + auth + audit"
+    },
+    "request.compliance_event": {
+      "max_avg": "5 milliseconds",
+      "description": "Request with compliance event — FPM cold bootstrap + auth + audit + compliance"
+    },
+    "memory.peak_anonymous": {
+      "max_bytes": 2097152,
+      "description": "Peak memory for anonymous JSON API request — FPM (< 2 MB)"
+    },
+    "memory.peak_authenticated": {
+      "max_bytes": 4194304,
+      "description": "Peak memory for authenticated request — FPM (< 4 MB)"
+    },
+    "memory.peak_compliance": {
+      "max_bytes": 6291456,
+      "description": "Peak memory for compliance-event request — FPM (< 6 MB)"
+    }
+  }
+}
