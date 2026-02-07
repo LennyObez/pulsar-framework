@@ -101,8 +101,8 @@ final class MiddlewareRegistryTest extends TestCase
         $registry = new MiddlewareRegistry();
         $registry->alias('a', StubAuthMiddleware::class);
         // Create alias 'a' -> alias 'b' -> alias 'a' cycle
-        $registry->alias('a', 'b');
-        $registry->alias('b', 'a');
+        $registry->alias('a', 'b'); // @phpstan-ignore argument.type (intentional: testing cycle detection with non-class-string)
+        $registry->alias('b', 'a'); // @phpstan-ignore argument.type (intentional: testing cycle detection with non-class-string)
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Circular middleware reference detected: "a"');
@@ -114,9 +114,9 @@ final class MiddlewareRegistryTest extends TestCase
     {
         $registry = new MiddlewareRegistry();
         // Group 'web' contains alias 'x', which points to group 'web'
-        $registry->group('web', ['x']);
-        $registry->alias('x', 'web');
-        $registry->group('web', ['x']);
+        $registry->group('web', ['x']); // @phpstan-ignore argument.type (intentional: testing cycle detection)
+        $registry->alias('x', 'web'); // @phpstan-ignore argument.type (intentional: testing cycle detection)
+        $registry->group('web', ['x']); // @phpstan-ignore argument.type (intentional: testing cycle detection)
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Circular middleware reference detected');
@@ -129,7 +129,7 @@ final class MiddlewareRegistryTest extends TestCase
         $registry = new MiddlewareRegistry();
         $registry->alias('auth', StubAuthMiddleware::class);
         $registry->alias('cors', StubCorsMiddleware::class);
-        $registry->group('web', ['auth', 'cors']);
+        $registry->group('web', ['auth', 'cors']); // @phpstan-ignore argument.type (intentional: aliases resolve recursively)
 
         $resolved = $registry->resolve('web');
         self::assertSame([StubAuthMiddleware::class, StubCorsMiddleware::class], $resolved);
@@ -141,7 +141,7 @@ final class MiddlewareRegistryTest extends TestCase
         $registry = new MiddlewareRegistry();
         $registry->alias('auth', StubAuthMiddleware::class);
         // 'auth' appears in the group twice — should not trigger cycle detection
-        $registry->group('doubled', ['auth', StubCorsMiddleware::class, 'auth']);
+        $registry->group('doubled', ['auth', StubCorsMiddleware::class, 'auth']); // @phpstan-ignore argument.type (intentional: aliases resolve recursively)
 
         $resolved = $registry->resolve('doubled');
         self::assertSame([StubAuthMiddleware::class, StubCorsMiddleware::class, StubAuthMiddleware::class], $resolved);

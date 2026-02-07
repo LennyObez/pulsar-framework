@@ -6,16 +6,15 @@ namespace Pulsar\Security\Audit;
 
 use function dirname;
 use function fclose;
-use function feof;
 
 use const FILE_APPEND;
 
-use function file_get_contents;
 use function file_put_contents;
 use function fopen;
 use function fread;
 use function fseek;
 use function fstat;
+use function is_array;
 use function is_dir;
 use function is_file;
 use function is_string;
@@ -36,6 +35,9 @@ use const SEEK_END;
 use function sprintf;
 use function strrpos;
 use function substr;
+
+use Throwable;
+
 use function trim;
 
 /**
@@ -110,6 +112,7 @@ final class AuditFileSink implements ChainableAuditSinkInterface
             $fileSize = $stat['size'];
 
             // Read up to 8KB from the end — enough for one JSONL audit entry
+            /** @var positive-int $readSize */
             $readSize = min($fileSize, 8192);
             fseek($handle, -$readSize, SEEK_END);
             $chunk = fread($handle, $readSize);
@@ -137,7 +140,7 @@ final class AuditFileSink implements ChainableAuditSinkInterface
             }
 
             return $data['hmac'];
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return null;
         }
     }

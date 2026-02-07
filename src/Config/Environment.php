@@ -7,12 +7,15 @@ namespace Pulsar\Config;
 use function array_key_exists;
 use function is_file;
 use function is_readable;
-use function preg_replace;
-use function rtrim;
 
 use NoDiscard;
+
+use function preg_replace;
+
 use Pulsar\Api\Api;
 use Pulsar\Config\Exception\ConfigException;
+
+use function rtrim;
 
 /**
  * Loads environment variables from the OS and an optional `.env` file.

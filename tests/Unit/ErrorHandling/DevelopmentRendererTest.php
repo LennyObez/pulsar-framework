@@ -12,7 +12,6 @@ use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
-use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use RuntimeException;
 
 #[CoversClass(DevelopmentRenderer::class)]
