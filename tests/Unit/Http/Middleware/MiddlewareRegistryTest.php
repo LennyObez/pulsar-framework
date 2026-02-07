@@ -11,6 +11,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
+use RuntimeException;
 
 #[CoversClass(MiddlewareRegistry::class)]
 final class MiddlewareRegistryTest extends TestCase
@@ -92,6 +93,58 @@ final class MiddlewareRegistryTest extends TestCase
         $resolved = $registry->resolve('auth');
         self::assertCount(1, $resolved);
         self::assertSame($instance, $resolved[0]);
+    }
+
+    #[Test]
+    public function throwsOnCircularAliasReference(): void
+    {
+        $registry = new MiddlewareRegistry();
+        $registry->alias('a', StubAuthMiddleware::class);
+        // Create alias 'a' -> alias 'b' -> alias 'a' cycle
+        $registry->alias('a', 'b');
+        $registry->alias('b', 'a');
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Circular middleware reference detected: "a"');
+        $registry->resolve('a');
+    }
+
+    #[Test]
+    public function throwsOnCircularGroupReference(): void
+    {
+        $registry = new MiddlewareRegistry();
+        // Group 'web' contains alias 'x', which points to group 'web'
+        $registry->group('web', ['x']);
+        $registry->alias('x', 'web');
+        $registry->group('web', ['x']);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Circular middleware reference detected');
+        $registry->resolve('web');
+    }
+
+    #[Test]
+    public function recursivelyResolvesNestedGroups(): void
+    {
+        $registry = new MiddlewareRegistry();
+        $registry->alias('auth', StubAuthMiddleware::class);
+        $registry->alias('cors', StubCorsMiddleware::class);
+        $registry->group('web', ['auth', 'cors']);
+
+        $resolved = $registry->resolve('web');
+        self::assertSame([StubAuthMiddleware::class, StubCorsMiddleware::class], $resolved);
+    }
+
+    #[Test]
+    public function sameAliasInMultipleGroupsDoesNotFalsePositive(): void
+    {
+        $registry = new MiddlewareRegistry();
+        $registry->alias('auth', StubAuthMiddleware::class);
+        // 'auth' appears in the group twice — should not trigger cycle detection
+        $registry->group('doubled', ['auth', StubCorsMiddleware::class, 'auth']);
+
+        $resolved = $registry->resolve('doubled');
+        self::assertSame([StubAuthMiddleware::class, StubCorsMiddleware::class, StubAuthMiddleware::class], $resolved);
     }
 }
 
