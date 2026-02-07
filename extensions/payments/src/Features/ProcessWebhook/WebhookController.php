@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Controller;
+namespace Pulsar\Extension\Payments\Features\ProcessWebhook;
 
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
-use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 
@@ -15,7 +14,7 @@ use Pulsar\Http\Response;
 final readonly class WebhookController
 {
     public function __construct(
-        private WebhookProcessor $processor,
+        private ProcessWebhookHandler $handler,
         private PaymentsConfig $config,
     ) {}
 
@@ -23,6 +22,8 @@ final readonly class WebhookController
     {
         $signatureHeader = $request->header($this->config->webhook->signatureHeader) ?? '';
 
-        return $this->processor->process($request->body, $signatureHeader);
+        return $this->handler->execute(
+            new ProcessWebhookRequest($request->body, $signatureHeader),
+        )->response;
     }
 }

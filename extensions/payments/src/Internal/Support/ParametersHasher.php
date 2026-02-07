@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Gateway;
+namespace Pulsar\Extension\Payments\Internal\Support;
 
 use NoDiscard;
+use JsonException;
+use Pulsar\Api\Internal;
 
 use function is_array;
 
@@ -14,12 +16,15 @@ use function is_array;
  * Produces deterministic SHA-256 hashes by recursively sorting array keys
  * and using stable JSON encoding.
  */
+#[Internal]
 final readonly class ParametersHasher
 {
     /**
      * Produce a deterministic SHA-256 hash from operation parameters.
      *
      * @param array<string, mixed> $parameters
+     *
+     * @throws JsonException
      */
     #[NoDiscard]
     public static function hash(string $operation, array $parameters): string

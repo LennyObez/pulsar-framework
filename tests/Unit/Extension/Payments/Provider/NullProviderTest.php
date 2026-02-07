@@ -7,14 +7,14 @@ namespace Pulsar\Tests\Unit\Extension\Payments\Provider;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use Pulsar\Extension\Payments\Clock\FixedClock;
-use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
+use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
 use Pulsar\Extension\Payments\Domain\ChargeStatus;
 use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\RefundStatus;
 use Pulsar\Extension\Payments\Exception\PaymentException;
-use Pulsar\Extension\Payments\Provider\NullProvider;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\NullProvider;
 use Pulsar\Tests\Unit\Extension\Payments\Contract\PaymentProviderContractTestCase;
 
 #[CoversClass(NullProvider::class)]
