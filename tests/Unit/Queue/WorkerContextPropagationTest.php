@@ -7,11 +7,10 @@ namespace Pulsar\Tests\Unit\Queue;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Context\CausationId;
-use Pulsar\Context\ContextPropagator;
-use Pulsar\Context\CorrelationId;
-use Pulsar\Context\RequestContext;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Queue\Envelope\BackoffStrategy;
+use Pulsar\Queue\Envelope\EnvelopeSerializer;
+use Pulsar\Queue\Envelope\JobEnvelope;
 use Pulsar\Queue\JobContext;
 use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
@@ -23,18 +22,19 @@ use Random\Engine\Secure;
 use Random\Randomizer;
 use RuntimeException;
 
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
+use function bin2hex;
 
 #[CoversClass(Worker::class)]
 final class WorkerContextPropagationTest extends TestCase
 {
     private Randomizer $randomizer;
 
+    private EnvelopeSerializer $serializer;
+
     protected function setUp(): void
     {
         $this->randomizer = new Randomizer(new Secure());
+        $this->serializer = new EnvelopeSerializer();
         WorkerContextCapture::$capturedContext = null;
     }
 
@@ -46,27 +46,37 @@ final class WorkerContextPropagationTest extends TestCase
     #[Test]
     public function it_extracts_context_from_payload_envelope(): void
     {
-        $correlationId = CorrelationId::generate($this->randomizer);
-        $causationId = CausationId::generate($this->randomizer);
-        $requestContext = new RequestContext(
+        $envelopeId = bin2hex($this->randomizer->getBytes(16));
+        $correlationId = bin2hex($this->randomizer->getBytes(16));
+
+        $envelope = new JobEnvelope(
+            id: $envelopeId,
+            jobClass: WorkerContextCapture::class,
+            payload: '{"order_id":123}',
+            queue: 'default',
+            idempotencyKey: 'idem-001',
             correlationId: $correlationId,
-            causationId: $causationId,
-            actor: 'user-42',
+            traceId: null,
+            spanId: null,
+            schemaVersion: 1,
+            keyId: null,
+            retryMaxAttempts: 3,
+            retryBackoffStrategy: BackoffStrategy::Exponential,
+            retryDelayMs: 1000,
+            tenantId: null,
+            subjectId: 'user-42',
+            batchId: null,
+            chainIndex: null,
+            attempt: 1,
+            dispatchedAt: 1700000000,
+            encrypted: false,
         );
-
-        $carrier = [];
-        ContextPropagator::inject($requestContext, $carrier);
-
-        $envelopePayload = json_encode([
-            '_ctx' => $carrier,
-            '_payload' => '{"order_id":123}',
-        ], JSON_THROW_ON_ERROR);
 
         $record = new JobRecord(
             id: 'ctx-job-001',
             queue: 'default',
             jobClass: WorkerContextCapture::class,
-            payload: $envelopePayload,
+            payload: $this->serializer->serialize($envelope),
             attempts: 1,
             status: JobRecordStatus::Processing,
             createdAt: 1700000000,
@@ -83,33 +93,46 @@ final class WorkerContextPropagationTest extends TestCase
 
         self::assertNotNull(WorkerContextCapture::$capturedContext);
         self::assertNotNull(WorkerContextCapture::$capturedContext->requestContext);
-        self::assertSame($correlationId->value, WorkerContextCapture::$capturedContext->requestContext->correlationId->value);
-        self::assertSame($causationId->value, WorkerContextCapture::$capturedContext->requestContext->causationId->value);
+        self::assertSame($correlationId, WorkerContextCapture::$capturedContext->requestContext->correlationId->value);
+        // Causation ID is set to the envelope's id
+        self::assertSame($envelopeId, WorkerContextCapture::$capturedContext->requestContext->causationId->value);
         self::assertSame('user-42', WorkerContextCapture::$capturedContext->requestContext->actor);
     }
 
     #[Test]
     public function it_sets_context_in_holder_during_job_execution(): void
     {
-        $requestContext = new RequestContext(
-            correlationId: CorrelationId::generate($this->randomizer),
-            causationId: CausationId::generate($this->randomizer),
-            actor: 'holder-test',
+        $envelopeId = bin2hex($this->randomizer->getBytes(16));
+        $correlationId = bin2hex($this->randomizer->getBytes(16));
+
+        $envelope = new JobEnvelope(
+            id: $envelopeId,
+            jobClass: WorkerContextCapture::class,
+            payload: '{}',
+            queue: 'default',
+            idempotencyKey: 'idem-holder-001',
+            correlationId: $correlationId,
+            traceId: null,
+            spanId: null,
+            schemaVersion: 1,
+            keyId: null,
+            retryMaxAttempts: 3,
+            retryBackoffStrategy: BackoffStrategy::Exponential,
+            retryDelayMs: 1000,
+            tenantId: 'tenant-abc',
+            subjectId: 'holder-test',
+            batchId: null,
+            chainIndex: null,
+            attempt: 1,
+            dispatchedAt: 1700000000,
+            encrypted: false,
         );
-
-        $carrier = [];
-        ContextPropagator::inject($requestContext, $carrier);
-
-        $envelopePayload = json_encode([
-            '_ctx' => $carrier,
-            '_payload' => '{}',
-        ], JSON_THROW_ON_ERROR);
 
         $record = new JobRecord(
             id: 'ctx-holder-001',
             queue: 'default',
             jobClass: WorkerContextCapture::class,
-            payload: $envelopePayload,
+            payload: $this->serializer->serialize($envelope),
             attempts: 1,
             status: JobRecordStatus::Processing,
             createdAt: 1700000000,
@@ -131,24 +154,37 @@ final class WorkerContextPropagationTest extends TestCase
     #[Test]
     public function it_clears_holder_even_when_job_throws(): void
     {
-        $requestContext = new RequestContext(
-            correlationId: CorrelationId::generate($this->randomizer),
-            causationId: CausationId::generate($this->randomizer),
+        $envelopeId = bin2hex($this->randomizer->getBytes(16));
+        $correlationId = bin2hex($this->randomizer->getBytes(16));
+
+        $envelope = new JobEnvelope(
+            id: $envelopeId,
+            jobClass: WorkerContextFailingJob::class,
+            payload: '{}',
+            queue: 'default',
+            idempotencyKey: 'idem-fail-001',
+            correlationId: $correlationId,
+            traceId: null,
+            spanId: null,
+            schemaVersion: 1,
+            keyId: null,
+            retryMaxAttempts: 3,
+            retryBackoffStrategy: BackoffStrategy::Exponential,
+            retryDelayMs: 1000,
+            tenantId: null,
+            subjectId: null,
+            batchId: null,
+            chainIndex: null,
+            attempt: 1,
+            dispatchedAt: 1700000000,
+            encrypted: false,
         );
-
-        $carrier = [];
-        ContextPropagator::inject($requestContext, $carrier);
-
-        $envelopePayload = json_encode([
-            '_ctx' => $carrier,
-            '_payload' => '{}',
-        ], JSON_THROW_ON_ERROR);
 
         $record = new JobRecord(
             id: 'ctx-fail-001',
             queue: 'default',
             jobClass: WorkerContextFailingJob::class,
-            payload: $envelopePayload,
+            payload: $this->serializer->serialize($envelope),
             attempts: 1,
             status: JobRecordStatus::Processing,
             createdAt: 1700000000,
@@ -168,13 +204,38 @@ final class WorkerContextPropagationTest extends TestCase
     }
 
     #[Test]
-    public function it_passes_null_context_for_plain_payloads(): void
+    public function it_passes_null_context_for_envelope_without_correlation_id(): void
     {
+        $envelopeId = bin2hex($this->randomizer->getBytes(16));
+
+        $envelope = new JobEnvelope(
+            id: $envelopeId,
+            jobClass: WorkerContextCapture::class,
+            payload: '{"simple":"data"}',
+            queue: 'default',
+            idempotencyKey: 'idem-plain-001',
+            correlationId: '',
+            traceId: null,
+            spanId: null,
+            schemaVersion: 1,
+            keyId: null,
+            retryMaxAttempts: 3,
+            retryBackoffStrategy: BackoffStrategy::Exponential,
+            retryDelayMs: 1000,
+            tenantId: null,
+            subjectId: null,
+            batchId: null,
+            chainIndex: null,
+            attempt: 1,
+            dispatchedAt: 1700000000,
+            encrypted: false,
+        );
+
         $record = new JobRecord(
             id: 'plain-001',
             queue: 'default',
             jobClass: WorkerContextCapture::class,
-            payload: '{"simple":"data"}',
+            payload: $this->serializer->serialize($envelope),
             attempts: 1,
             status: JobRecordStatus::Processing,
             createdAt: 1700000000,
@@ -194,7 +255,7 @@ final class WorkerContextPropagationTest extends TestCase
     }
 
     #[Test]
-    public function it_handles_non_json_payloads_gracefully(): void
+    public function it_rejects_job_with_invalid_envelope_payload(): void
     {
         $record = new JobRecord(
             id: 'raw-001',
@@ -207,39 +268,57 @@ final class WorkerContextPropagationTest extends TestCase
             availableAt: 1700000000,
         );
 
-        $driver = $this->createStub(QueueDriverInterface::class);
+        $driver = $this->createMock(QueueDriverInterface::class);
         $driver->method('pop')->willReturn($record);
+        $driver->expects(self::once())
+            ->method('reject')
+            ->with('raw-001', self::stringContains('Envelope deserialization failed'));
 
         $holder = new RequestContextHolder();
         $worker = new Worker($driver, new WorkerOptions(), null, $holder);
 
-        $worker->processNextJob('default');
+        $result = $worker->processNextJob('default');
 
-        self::assertNotNull(WorkerContextCapture::$capturedContext);
-        self::assertNull(WorkerContextCapture::$capturedContext->requestContext);
+        // Job was popped and processed (returned true) but rejected due to bad envelope
+        self::assertTrue($result);
+        // The job handler was never invoked
+        self::assertNull(WorkerContextCapture::$capturedContext);
     }
 
     #[Test]
     public function it_works_without_context_holder(): void
     {
-        $requestContext = new RequestContext(
-            correlationId: CorrelationId::generate($this->randomizer),
-            causationId: CausationId::generate($this->randomizer),
+        $envelopeId = bin2hex($this->randomizer->getBytes(16));
+        $correlationId = bin2hex($this->randomizer->getBytes(16));
+
+        $envelope = new JobEnvelope(
+            id: $envelopeId,
+            jobClass: WorkerContextCapture::class,
+            payload: '{}',
+            queue: 'default',
+            idempotencyKey: 'idem-no-holder-001',
+            correlationId: $correlationId,
+            traceId: null,
+            spanId: null,
+            schemaVersion: 1,
+            keyId: null,
+            retryMaxAttempts: 3,
+            retryBackoffStrategy: BackoffStrategy::Exponential,
+            retryDelayMs: 1000,
+            tenantId: null,
+            subjectId: null,
+            batchId: null,
+            chainIndex: null,
+            attempt: 1,
+            dispatchedAt: 1700000000,
+            encrypted: false,
         );
-
-        $carrier = [];
-        ContextPropagator::inject($requestContext, $carrier);
-
-        $envelopePayload = json_encode([
-            '_ctx' => $carrier,
-            '_payload' => '{}',
-        ], JSON_THROW_ON_ERROR);
 
         $record = new JobRecord(
             id: 'no-holder-001',
             queue: 'default',
             jobClass: WorkerContextCapture::class,
-            payload: $envelopePayload,
+            payload: $this->serializer->serialize($envelope),
             attempts: 1,
             status: JobRecordStatus::Processing,
             createdAt: 1700000000,

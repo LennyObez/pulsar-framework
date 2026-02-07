@@ -15,6 +15,12 @@ use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
 
+use function is_array;
+use function is_string;
+use function json_decode;
+use function str_contains;
+use function strlen;
+
 #[CoversClass(QueueManager::class)]
 final class QueueManagerTest extends TestCase
 {
@@ -25,7 +31,24 @@ final class QueueManagerTest extends TestCase
         $driver
             ->expects(self::once())
             ->method('push')
-            ->with('default', 'App\\Jobs\\SendEmail', '{"to":"a@b.com"}', 0)
+            ->with(
+                'default',
+                'App\\Jobs\\SendEmail',
+                self::callback(static function (mixed $payload): bool {
+                    if (!is_string($payload)) {
+                        return false;
+                    }
+                    $decoded = json_decode($payload, true);
+                    if (!is_array($decoded)) {
+                        return false;
+                    }
+
+                    return $decoded['payload'] === '{"to":"a@b.com"}'
+                        && $decoded['queue'] === 'default'
+                        && $decoded['jobClass'] === 'App\\Jobs\\SendEmail';
+                }),
+                0,
+            )
             ->willReturn('job-001');
 
         $config = new QueueConfig(defaultQueue: 'default');
@@ -33,7 +56,8 @@ final class QueueManagerTest extends TestCase
 
         $id = $manager->dispatch('App\\Jobs\\SendEmail', '{"to":"a@b.com"}');
 
-        self::assertSame('job-001', $id);
+        self::assertNotEmpty($id);
+        self::assertSame(32, strlen($id));
     }
 
     #[Test]
@@ -43,7 +67,23 @@ final class QueueManagerTest extends TestCase
         $driver
             ->expects(self::once())
             ->method('push')
-            ->with('emails', 'App\\Jobs\\SendEmail', '{}', 0)
+            ->with(
+                'emails',
+                'App\\Jobs\\SendEmail',
+                self::callback(static function (mixed $payload): bool {
+                    if (!is_string($payload)) {
+                        return false;
+                    }
+                    $decoded = json_decode($payload, true);
+                    if (!is_array($decoded)) {
+                        return false;
+                    }
+
+                    return $decoded['queue'] === 'emails'
+                        && $decoded['jobClass'] === 'App\\Jobs\\SendEmail';
+                }),
+                0,
+            )
             ->willReturn('job-002');
 
         $config = new QueueConfig(defaultQueue: 'default');
@@ -51,7 +91,7 @@ final class QueueManagerTest extends TestCase
 
         $id = $manager->dispatch('App\\Jobs\\SendEmail', '{}', 'emails');
 
-        self::assertSame('job-002', $id);
+        self::assertNotEmpty($id);
     }
 
     #[Test]
@@ -61,7 +101,23 @@ final class QueueManagerTest extends TestCase
         $driver
             ->expects(self::once())
             ->method('push')
-            ->with('default', 'App\\Jobs\\Delayed', '{}', 60)
+            ->with(
+                'default',
+                'App\\Jobs\\Delayed',
+                self::callback(static function (mixed $payload): bool {
+                    if (!is_string($payload)) {
+                        return false;
+                    }
+                    $decoded = json_decode($payload, true);
+                    if (!is_array($decoded)) {
+                        return false;
+                    }
+
+                    return $decoded['jobClass'] === 'App\\Jobs\\Delayed'
+                        && $decoded['queue'] === 'default';
+                }),
+                60,
+            )
             ->willReturn('job-003');
 
         $config = new QueueConfig();
@@ -69,7 +125,7 @@ final class QueueManagerTest extends TestCase
 
         $id = $manager->dispatch('App\\Jobs\\Delayed', '{}', null, 60);
 
-        self::assertSame('job-003', $id);
+        self::assertNotEmpty($id);
     }
 
     #[Test]
@@ -167,12 +223,92 @@ final class QueueManagerTest extends TestCase
         $driver
             ->expects(self::once())
             ->method('push')
-            ->with('my-custom-queue', 'App\\Jobs\\Noop', '{}', 0)
+            ->with(
+                'my-custom-queue',
+                'App\\Jobs\\Noop',
+                self::callback(static function (mixed $payload): bool {
+                    if (!is_string($payload)) {
+                        return false;
+                    }
+                    $decoded = json_decode($payload, true);
+                    if (!is_array($decoded)) {
+                        return false;
+                    }
+
+                    return $decoded['queue'] === 'my-custom-queue';
+                }),
+                0,
+            )
             ->willReturn('job-004');
 
         $config = new QueueConfig(defaultQueue: 'my-custom-queue');
         $manager = new QueueManager($config, $driver);
 
         $manager->dispatch('App\\Jobs\\Noop', '{}');
+    }
+
+    #[Test]
+    public function it_includes_retry_config_in_envelope(): void
+    {
+        $driver = $this->createMock(QueueDriverInterface::class);
+        $driver
+            ->expects(self::once())
+            ->method('push')
+            ->with(
+                'default',
+                'App\\Jobs\\Test',
+                self::callback(static function (mixed $payload): bool {
+                    if (!is_string($payload)) {
+                        return false;
+                    }
+                    $decoded = json_decode($payload, true);
+                    if (!is_array($decoded)) {
+                        return false;
+                    }
+
+                    return $decoded['retryMaxAttempts'] === 5
+                        && $decoded['retryDelayMs'] === 2000
+                        && $decoded['attempt'] === 1
+                        && $decoded['encrypted'] === false;
+                }),
+                0,
+            )
+            ->willReturn('job-005');
+
+        $config = new QueueConfig(retryMaxAttempts: 5, retryBaseDelayMs: 2000);
+        $manager = new QueueManager($config, $driver);
+
+        $manager->dispatch('App\\Jobs\\Test', '{}');
+    }
+
+    #[Test]
+    public function dispatch_returns_32_hex_character_id(): void
+    {
+        $driver = $this->createStub(QueueDriverInterface::class);
+        $driver->method('push')->willReturn('driver-id');
+
+        $config = new QueueConfig();
+        $manager = new QueueManager($config, $driver);
+
+        $id = $manager->dispatch('App\\Jobs\\Test', '{}');
+
+        self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $id);
+    }
+
+    #[Test]
+    public function it_lazily_resolves_driver_types_from_config(): void
+    {
+        foreach ([QueueDriverType::Redis, QueueDriverType::Amqp, QueueDriverType::Sqs, QueueDriverType::PubSub] as $driverType) {
+            $config = new QueueConfig(driver: $driverType);
+            $manager = new QueueManager($config);
+
+            try {
+                $driver = $manager->driver();
+                self::assertInstanceOf(QueueDriverInterface::class, $driver);
+            } catch (QueueException $e) {
+                // Driver throws when its required extension/package is not installed
+                self::assertTrue(str_contains($e->getMessage(), 'not configured'));
+            }
+        }
     }
 }
