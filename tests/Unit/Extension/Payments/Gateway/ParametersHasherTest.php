@@ -7,7 +7,11 @@ namespace Pulsar\Tests\Unit\Extension\Payments\Gateway;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+<<<<<<< feat/modular-monolith-payments
 use Pulsar\Extension\Payments\Internal\Support\ParametersHasher;
+=======
+use Pulsar\Extension\Payments\Gateway\ParametersHasher;
+>>>>>>> main
 
 use function strlen;
 

@@ -8,10 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\Container;
+<<<<<<< feat/modular-monolith-payments
+=======
+use Pulsar\Extension\Payments\Clock\SystemClock;
+>>>>>>> main
 use Pulsar\Extension\Payments\Config\IdempotencyConfig;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
+<<<<<<< feat/modular-monolith-payments
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
 use Pulsar\Extension\Payments\Contracts\IdempotencyStoreInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentGatewayInterface;
@@ -30,6 +35,21 @@ use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\SimulatorProvider
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Extension\Payments\PaymentsServiceProvider;
+=======
+use Pulsar\Extension\Payments\Contract\ClockInterface;
+use Pulsar\Extension\Payments\Contract\IdempotencyStoreInterface;
+use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
+use Pulsar\Extension\Payments\Contract\WebhookEventLogInterface;
+use Pulsar\Extension\Payments\Contract\WebhookVerifierInterface;
+use Pulsar\Extension\Payments\Controller\WebhookController;
+use Pulsar\Extension\Payments\Gateway\PaymentGateway;
+use Pulsar\Extension\Payments\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Extension\Payments\PaymentsServiceProvider;
+use Pulsar\Extension\Payments\Provider\NullProvider;
+use Pulsar\Extension\Payments\Provider\SimulatorProvider;
+use Pulsar\Extension\Payments\Webhook\HmacWebhookVerifier;
+use Pulsar\Extension\Payments\Webhook\InMemoryWebhookEventLog;
+>>>>>>> main
 use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
 
 #[CoversClass(PaymentsServiceProvider::class)]
@@ -48,12 +68,17 @@ final class PaymentsServiceProviderTest extends TestCase
         self::assertContains(IdempotencyStoreInterface::class, $provides);
         self::assertContains(WebhookEventLogInterface::class, $provides);
         self::assertContains(WebhookVerifierInterface::class, $provides);
+<<<<<<< feat/modular-monolith-payments
         self::assertContains(CreatePaymentIntentHandler::class, $provides);
         self::assertContains(ProcessWebhookHandler::class, $provides);
         self::assertContains(PaymentGateway::class, $provides);
         self::assertContains(PaymentGatewayInterface::class, $provides);
         self::assertContains(WebhookProcessor::class, $provides);
         self::assertContains(WebhookProcessorInterface::class, $provides);
+=======
+        self::assertContains(PaymentGateway::class, $provides);
+        self::assertContains(WebhookProcessor::class, $provides);
+>>>>>>> main
         self::assertContains(WebhookController::class, $provides);
     }
 

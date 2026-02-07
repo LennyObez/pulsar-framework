@@ -8,7 +8,11 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
+<<<<<<< feat/modular-monolith-payments
 use Pulsar\Extension\Payments\Features\ProcessWebhook\WebhookController;
+=======
+use Pulsar\Extension\Payments\Controller\WebhookController;
+>>>>>>> main
 use Pulsar\Routing\Router;
 
 /**
