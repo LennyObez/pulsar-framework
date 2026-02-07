@@ -27,9 +27,14 @@ exclude:
   # Unused parameters with underscore prefix are intentionally unused (PHP naming convention)
   - name: PhpUnusedParameterInspection
   # ext-pcntl is intentionally in `suggest` (Unix-only, guarded by function_exists())
+  # ext-sockets is intentionally in `suggest` (guarded by extension_loaded() at PersistentRuntime:88)
   - name: PhpComposerExtensionStubsInspection
     paths:
       - src/Queue/Worker.php
+      - src/Runtime/PersistentRuntime.php
+      - src/Runtime/Fiber/FiberScheduler.php
+      - src/Runtime/Http/ConnectionContext.php
+      - src/Console/Command/RuntimeServeCommand.php
   # Duplicated code - Studio CLI commands share structural patterns (extract values,
   # format output) but operate on different data; further extraction is over-engineering.
   - name: DuplicatedCode
@@ -45,6 +50,16 @@ exclude:
   - name: PhpLoopCanBeConvertedToArrayFindInspection
     paths:
       - src/Deploy/Check/OpcacheCheck.php
+  # RuntimeConfig helper methods (string/int/bool/envString) are generic factories called
+  # with varying args at design time; "parameter always same" is a false positive.
+  - name: PhpParameterAlwaysNullInspection
+    paths:
+      - src/Config/RuntimeConfig.php
+  # Explicit getters with @return phpdoc are clearer than property hooks for array types
+  # with mutation via register methods.
+  - name: PhpAccessorCanBeReplacedWithPropertyHookInspection
+    paths:
+      - src/Runtime/RequestResetRegistry.php
   - name: All
     paths:
       - composer.json

@@ -24,7 +24,8 @@
     "vimeo/psalm": "^6.15"
   },
   "suggest": {
-    "ext-pcntl": "Required for queue worker signal handling (Unix only)"
+    "ext-pcntl": "Required for queue worker signal handling (Unix only)",
+    "ext-sockets": "Required for persistent HTTP runtime (optional, guarded by runtime check)"
   },
   "autoload": {
     "psr-4": {
