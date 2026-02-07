@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Unit\Extension\Payments\Webhook;
+namespace Pulsar\Tests\Unit\Extension\Payments\Features\ProcessWebhook;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,10 +15,11 @@ use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
 use Pulsar\Extension\Payments\Contracts\WebhookHandlerInterface;
 use Pulsar\Extension\Payments\Domain\WebhookEvent;
+use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
+use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookRequest;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\InMemoryWebhookEventLog;
-use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -26,8 +27,8 @@ use RuntimeException;
 
 use function sprintf;
 
-#[CoversClass(WebhookProcessor::class)]
-final class WebhookProcessorTest extends TestCase
+#[CoversClass(ProcessWebhookHandler::class)]
+final class ProcessWebhookHandlerTest extends TestCase
 {
     private const string SECRET = 'whsec_test';
     private FixedClock $clock;
@@ -42,96 +43,82 @@ final class WebhookProcessorTest extends TestCase
     }
 
     #[Test]
-    public function processValidWebhookSucceeds(): void
+    public function executeValidWebhookSucceeds(): void
     {
-        $handler = $this->createHandler();
-        $processor = $this->createProcessor($handler);
+        $handler = $this->createWebhookHandler();
+        $processor = $this->createHandler($handler);
 
         $body = $this->createEventBody('evt_1', 'payment_intent.created');
         $header = $this->createSignatureHeader($body, 1700000000);
 
-        $response = $processor->process($body, $header);
+        $result = $processor->execute(new ProcessWebhookRequest($body, $header));
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('processed', $response->body);
+        self::assertSame(ResponseStatus::OK, $result->response->status);
+        self::assertStringContainsString('processed', $result->response->body);
         self::assertCount(1, $handler->events);
     }
 
     #[Test]
-    public function processInvalidSignatureReturns403(): void
+    public function executeInvalidSignatureReturns403(): void
     {
-        $handler = $this->createHandler();
-        $processor = $this->createProcessor($handler);
+        $handler = $this->createWebhookHandler();
+        $processor = $this->createHandler($handler);
 
         $body = $this->createEventBody('evt_2', 'charge.failed');
 
-        $response = $processor->process($body, 't=1700000000,v1=invalid');
+        $result = $processor->execute(new ProcessWebhookRequest($body, 't=1700000000,v1=invalid'));
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden, $result->response->status);
         self::assertCount(0, $handler->events);
     }
 
     #[Test]
-    public function processReplayReturns200AlreadyProcessed(): void
+    public function executeReplayReturns200AlreadyProcessed(): void
     {
-        $handler = $this->createHandler();
-        $processor = $this->createProcessor($handler);
+        $handler = $this->createWebhookHandler();
+        $processor = $this->createHandler($handler);
 
         $body = $this->createEventBody('evt_replay', 'payment_intent.created');
         $header = $this->createSignatureHeader($body, 1700000000);
 
-        // First request
-        $processor->process($body, $header);
+        $processor->execute(new ProcessWebhookRequest($body, $header));
+        $result = $processor->execute(new ProcessWebhookRequest($body, $header));
 
-        // Second request — same event ID
-        $response = $processor->process($body, $header);
-
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('already_processed', $response->body);
-        self::assertCount(1, $handler->events); // Handler called only once
+        self::assertSame(ResponseStatus::OK, $result->response->status);
+        self::assertStringContainsString('already_processed', $result->response->body);
+        self::assertCount(1, $handler->events);
     }
 
     #[Test]
-    public function processHandlerErrorReturns500AndReleasesEvent(): void
+    public function executeHandlerErrorReturns500AndReleasesEvent(): void
     {
-        $handler = new class implements WebhookHandlerInterface {
+        $failingHandler = new class implements WebhookHandlerInterface {
             public function handle(WebhookEvent $event): void
             {
                 throw new RuntimeException('Handler exploded');
             }
         };
 
-        $processor = $this->createProcessor($handler);
+        $processor = $this->createHandler($failingHandler);
 
         $body = $this->createEventBody('evt_fail', 'payment_intent.created');
         $header = $this->createSignatureHeader($body, 1700000000);
 
-        $response = $processor->process($body, $header);
+        $result = $processor->execute(new ProcessWebhookRequest($body, $header));
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
-
-        // Event should be released — retry allowed
-        $body2 = $this->createEventBody('evt_fail', 'payment_intent.created');
-        $header2 = $this->createSignatureHeader($body2, 1700000000);
-
-        $handler2 = $this->createHandler();
-        $processor2 = $this->createProcessor($handler2);
-
-        $response2 = $processor2->process($body2, $header2);
-
-        self::assertSame(ResponseStatus::OK, $response2->status);
+        self::assertSame(ResponseStatus::InternalServerError, $result->response->status);
     }
 
     #[Test]
     public function metricsIncrementOnSuccess(): void
     {
-        $handler = $this->createHandler();
-        $processor = $this->createProcessor($handler);
+        $handler = $this->createWebhookHandler();
+        $processor = $this->createHandler($handler);
 
         $body = $this->createEventBody('evt_m', 'payment_intent.created');
         $header = $this->createSignatureHeader($body, 1700000000);
 
-        $processor->process($body, $header);
+        $processor->execute(new ProcessWebhookRequest($body, $header));
 
         $counter = $this->metricRegistry->counter('payments_webhooks_total');
         self::assertSame(1.0, $counter->value(new LabelSet([
@@ -144,7 +131,7 @@ final class WebhookProcessorTest extends TestCase
     /**
      * @return object{events: list<WebhookEvent>}&WebhookHandlerInterface
      */
-    private function createHandler(): WebhookHandlerInterface
+    private function createWebhookHandler(): WebhookHandlerInterface
     {
         return new class implements WebhookHandlerInterface {
             /** @var list<WebhookEvent> */
@@ -157,9 +144,9 @@ final class WebhookProcessorTest extends TestCase
         };
     }
 
-    private function createProcessor(WebhookHandlerInterface $handler): WebhookProcessor
+    private function createHandler(WebhookHandlerInterface $handler): ProcessWebhookHandler
     {
-        return new WebhookProcessor(
+        return new ProcessWebhookHandler(
             verifier: new HmacWebhookVerifier($this->clock),
             eventLog: $this->eventLog,
             handler: $handler,

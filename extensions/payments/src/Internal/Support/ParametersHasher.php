@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Gateway;
+namespace Pulsar\Extension\Payments\Internal\Support;
 
 use NoDiscard;
+use Pulsar\Api\Internal;
 
 use function is_array;
 
@@ -14,6 +15,7 @@ use function is_array;
  * Produces deterministic SHA-256 hashes by recursively sorting array keys
  * and using stable JSON encoding.
  */
+#[Internal]
 final readonly class ParametersHasher
 {
     /**

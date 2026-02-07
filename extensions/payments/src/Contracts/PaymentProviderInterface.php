@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Contract;
+namespace Pulsar\Extension\Payments\Contracts;
 
 use Pulsar\Api\Api;
 use Pulsar\Extension\Payments\Domain\Charge;

@@ -2,16 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Webhook;
+namespace Pulsar\Extension\Payments\Internal\Infrastructure\Webhook;
 
 use DateTimeImmutable;
 use Override;
-use Pulsar\Extension\Payments\Contract\WebhookEventLogInterface;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Payments\Contracts\WebhookEventLogInterface;
 use Pulsar\Extension\Payments\Exception\WebhookException;
+use Pulsar\Extension\Payments\Webhook\WebhookClaim;
+use Pulsar\Extension\Payments\Webhook\WebhookClaimStatus;
 
 /**
  * In-memory webhook replay prevention store with Fiber-safe mutex.
  */
+#[Internal]
 final class InMemoryWebhookEventLog implements WebhookEventLogInterface
 {
     /** @var array<string, DateTimeImmutable> eventId => processedAt */
