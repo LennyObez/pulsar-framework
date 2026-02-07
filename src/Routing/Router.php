@@ -7,6 +7,7 @@ namespace Pulsar\Routing;
 use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
+use Pulsar\Routing\Binding\ExplicitBinding;
 
 use function count;
 use function in_array;
@@ -38,6 +39,13 @@ final class Router implements RouterInterface
      * @var array<string, list<Route>>
      */
     private array $routesByMethod = [];
+
+    /**
+     * Explicit parameter-to-model bindings registered via model().
+     *
+     * @var list<ExplicitBinding>
+     */
+    public private(set) array $explicitBindings = [];
 
     /**
      * Whether the router is locked (strict cache mode).
@@ -161,6 +169,42 @@ final class Router implements RouterInterface
     public function any(string $path, mixed $handler, ?string $name = null): self
     {
         return $this->add(Route::any($path, $handler, $name));
+    }
+
+    /**
+     * Register a group of routes under a common prefix.
+     *
+     * Creates a temporary router, passes it to the callback, then
+     * adds all registered routes with the prefix prepended to their paths.
+     *
+     * @param string   $prefix   The URL prefix for all routes in the group.
+     * @param callable $callback Receives a RouterInterface to register grouped routes.
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
+     */
+    public function group(string $prefix, callable $callback): self
+    {
+        $prefix = '/' . trim($prefix, '/');
+        $subRouter = new self();
+
+        $callback($subRouter);
+
+        foreach ($subRouter->routes as $route) {
+            $prefixedPath = $prefix . '/' . trim($route->path, '/');
+
+            $this->add(new Route(
+                methods: $route->methods,
+                path: $prefixedPath,
+                handler: $route->handler,
+                name: $route->name,
+                attributes: $route->attributes,
+                middleware: $route->middleware,
+                constraints: $route->constraints,
+                host: $route->host,
+            ));
+        }
+
+        return $this;
     }
 
     /**
@@ -306,6 +350,22 @@ final class Router implements RouterInterface
     public function lock(): void
     {
         $this->locked = true;
+    }
+
+    /**
+     * Register an explicit parameter-to-model binding.
+     *
+     * When the model binding middleware resolves route parameters, explicit
+     * bindings take precedence over implicit type-hint resolution.
+     *
+     * @param class-string $modelClass
+     * @param class-string|null $resolverClass
+     */
+    public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self
+    {
+        $this->explicitBindings[] = new ExplicitBinding($parameter, $modelClass, $resolverClass);
+
+        return $this;
     }
 
     /**

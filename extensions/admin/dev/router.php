@@ -26,9 +26,7 @@ use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Core\Kernel;
 use Pulsar\Extensibility\ExtensionBootstrap;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
@@ -139,18 +137,20 @@ try {
 }
 
 // Build Request from PHP globals
-$method = Method::tryFrom($_SERVER['REQUEST_METHOD'] ?? 'GET') ?? Method::GET;
-$queryString = $_SERVER['QUERY_STRING'] ?? '';
-$headers = new HeaderBag(function_exists('getallheaders') ? (getallheaders() ?: []) : []);
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$headers = function_exists('getallheaders') ? (getallheaders() ?: []) : [];
 $body = file_get_contents('php://input') ?: '';
 
-$request = new Request(
+parse_str($_SERVER['QUERY_STRING'] ?? '', $queryParams);
+
+$request = new ServerRequest(
     method: $method,
     uri: $requestUri,
-    path: $path,
-    queryString: $queryString,
     headers: $headers,
     body: $body,
+    serverParams: $_SERVER,
+    cookieParams: $_COOKIE,
+    queryParams: $queryParams,
 );
 
 try {
@@ -163,9 +163,9 @@ try {
 }
 
 // Emit response
-http_response_code($response->status->value);
+http_response_code($response->getStatusCode());
 
-foreach ($response->headers as $name => $values) {
+foreach ($response->getHeaders() as $name => $values) {
     $first = true;
     foreach ($values as $value) {
         header($name . ': ' . $value, $first);
@@ -173,4 +173,4 @@ foreach ($response->headers as $name => $values) {
     }
 }
 
-echo $response->body;
+echo $response->getBody();
