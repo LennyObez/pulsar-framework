@@ -725,8 +725,13 @@ final class Kernel
         /** @var AppConfig $appConfig */
         $appConfig = $configManager->repository()->get(AppConfig::class);
 
+        $scrubber = $this->container->has(SensitiveDataScrubber::class)
+            ? $this->container->get(SensitiveDataScrubber::class)
+            : null;
+
+        /** @var SensitiveDataScrubber|null $scrubber */
         $renderer = $appConfig->debug
-            ? new DevelopmentRenderer()
+            ? new DevelopmentRenderer($scrubber ?? new SensitiveDataScrubber())
             : new ProductionRenderer();
 
         $logger = $this->container->has(LoggerInterface::class)
@@ -735,10 +740,6 @@ final class Kernel
 
         $aggregator = $this->container->has(ErrorAggregator::class)
             ? $this->container->get(ErrorAggregator::class)
-            : null;
-
-        $scrubber = $this->container->has(SensitiveDataScrubber::class)
-            ? $this->container->get(SensitiveDataScrubber::class)
             : null;
 
         /** @var LoggerInterface|null $logger */

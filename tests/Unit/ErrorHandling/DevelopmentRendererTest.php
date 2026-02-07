@@ -12,6 +12,7 @@ use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use RuntimeException;
 
 #[CoversClass(DevelopmentRenderer::class)]
@@ -134,5 +135,36 @@ final class DevelopmentRendererTest extends TestCase
 
         self::assertStringContainsString('404', $html);
         self::assertStringContainsString('Not Found', $html);
+    }
+
+    #[Test]
+    public function scrubsSensitiveHeaders(): void
+    {
+        $renderer = new DevelopmentRenderer();
+        $exception = new RuntimeException('test');
+
+        $request = new Request(
+            method: Method::GET,
+            uri: '/',
+            path: '/',
+            queryString: '',
+            headers: new HeaderBag([
+                'Authorization' => 'Bearer secret-token-123',
+                'Content-Type' => 'application/json',
+                'Cookie' => 'session=abc123',
+            ]),
+            body: '',
+        );
+
+        $html = $renderer->render($exception, $request, ResponseStatus::InternalServerError);
+
+        // Sensitive headers should be redacted
+        self::assertStringNotContainsString('secret-token-123', $html);
+        self::assertStringNotContainsString('abc123', $html);
+        self::assertStringContainsString('[REDACTED]', $html);
+
+        // Normal headers should still appear
+        self::assertStringContainsString('Content-Type', $html);
+        self::assertStringContainsString('application/json', $html);
     }
 }
