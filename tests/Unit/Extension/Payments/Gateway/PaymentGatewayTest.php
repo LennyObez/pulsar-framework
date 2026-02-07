@@ -14,9 +14,12 @@ use Pulsar\Extension\Payments\Config\IdempotencyConfig;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
+use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
+use Pulsar\Extension\Payments\Domain\ChargeStatus;
 use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;
+use Pulsar\Extension\Payments\Domain\RefundStatus;
 use Pulsar\Extension\Payments\Exception\IdempotencyException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
 use Pulsar\Extension\Payments\Gateway\PaymentGateway;
@@ -25,8 +28,10 @@ use Pulsar\Extension\Payments\Provider\NullProvider;
 use Pulsar\Extension\Payments\Provider\SimulatorProvider;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditSinkInterface;
+use Throwable;
 
 #[CoversClass(PaymentGateway::class)]
 final class PaymentGatewayTest extends TestCase
@@ -221,6 +226,205 @@ final class PaymentGatewayTest extends TestCase
         self::assertSame($intent->id, $retrieved->id);
     }
 
+    #[Test]
+    public function captureIntentIdempotencyReplay(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        $intent = $gateway->createIntent(Money::of(2000, Currency::USD), 'idem-cap-replay-1');
+        $firstCharge = $gateway->captureIntent($intent->id, 'idem-cap-replay-2');
+        $secondCharge = $gateway->captureIntent($intent->id, 'idem-cap-replay-2');
+
+        self::assertSame($firstCharge->id, $secondCharge->id);
+        self::assertSame(ChargeStatus::Succeeded, $secondCharge->status);
+    }
+
+    #[Test]
+    public function cancelIntentIdempotencyReplay(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        $intent = $gateway->createIntent(Money::of(2000, Currency::USD), 'idem-cancel-replay-1');
+        $firstCancel = $gateway->cancelIntent($intent->id, 'idem-cancel-replay-2');
+        $secondCancel = $gateway->cancelIntent($intent->id, 'idem-cancel-replay-2');
+
+        self::assertSame($firstCancel->id, $secondCancel->id);
+        self::assertSame(PaymentIntentStatus::Cancelled, $secondCancel->status);
+    }
+
+    #[Test]
+    public function refundIdempotencyReplay(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        $intent = $gateway->createIntent(Money::of(2000, Currency::USD), 'idem-ref-replay-1');
+        $charge = $gateway->captureIntent($intent->id, 'idem-ref-replay-2');
+        $firstRefund = $gateway->refund($charge->id, null, 'idem-ref-replay-3');
+        $secondRefund = $gateway->refund($charge->id, null, 'idem-ref-replay-3');
+
+        self::assertSame($firstRefund->id, $secondRefund->id);
+        self::assertSame(RefundStatus::Succeeded, $secondRefund->status);
+    }
+
+    #[Test]
+    public function captureIntentMismatchThrows(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        $intent1 = $gateway->createIntent(Money::of(2000, Currency::USD), 'idem-cap-mis-1');
+        $intent2 = $gateway->createIntent(Money::of(3000, Currency::USD), 'idem-cap-mis-2');
+        $gateway->captureIntent($intent1->id, 'idem-cap-mis-shared');
+
+        $this->expectException(IdempotencyException::class);
+        $gateway->captureIntent($intent2->id, 'idem-cap-mis-shared');
+    }
+
+    #[Test]
+    public function refundMismatchThrows(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        $intent = $gateway->createIntent(Money::of(5000, Currency::USD), 'idem-ref-mis-1');
+        $charge = $gateway->captureIntent($intent->id, 'idem-ref-mis-2');
+        $gateway->refund($charge->id, null, 'idem-ref-mis-shared');
+
+        $this->expectException(IdempotencyException::class);
+        $gateway->refund($charge->id, Money::of(1000, Currency::USD), 'idem-ref-mis-shared');
+    }
+
+    #[Test]
+    public function captureIntentMetricsIncrement(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        $intent = $gateway->createIntent(Money::of(2000, Currency::USD), 'idem-cap-met-1');
+        $gateway->captureIntent($intent->id, 'idem-cap-met-2');
+
+        $counter = $this->metricRegistry->counter('payments_captures_total');
+        self::assertSame(1.0, $counter->value(new LabelSet([
+            'provider' => 'simulator',
+            'currency' => 'USD',
+            'status' => 'succeeded',
+        ])));
+    }
+
+    #[Test]
+    public function refundMetricsIncrement(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        $intent = $gateway->createIntent(Money::of(2000, Currency::USD), 'idem-ref-met-1');
+        $charge = $gateway->captureIntent($intent->id, 'idem-ref-met-2');
+        $gateway->refund($charge->id, null, 'idem-ref-met-3');
+
+        $counter = $this->metricRegistry->counter('payments_refunds_total');
+        self::assertSame(1.0, $counter->value(new LabelSet([
+            'provider' => 'simulator',
+            'currency' => 'USD',
+            'status' => 'succeeded',
+        ])));
+    }
+
+    #[Test]
+    public function getChargeDelegatesToProvider(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        $intent = $gateway->createIntent(Money::of(2000, Currency::USD), 'idem-gc-1');
+        $charge = $gateway->captureIntent($intent->id, 'idem-gc-2');
+        $retrieved = $gateway->getCharge($charge->id);
+
+        self::assertSame($charge->id, $retrieved->id);
+    }
+
+    #[Test]
+    public function getRefundDelegatesToProvider(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        $intent = $gateway->createIntent(Money::of(2000, Currency::USD), 'idem-gr-1');
+        $charge = $gateway->captureIntent($intent->id, 'idem-gr-2');
+        $refund = $gateway->refund($charge->id, null, 'idem-gr-3');
+        $retrieved = $gateway->getRefund($refund->id);
+
+        self::assertSame($refund->id, $retrieved->id);
+    }
+
+    #[Test]
+    public function captureProviderErrorReleasesClaimAndIncrementsMetric(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        // Try to capture a nonexistent intent — provider error propagates
+        try {
+            $gateway->captureIntent('nonexistent', 'idem-cap-err');
+        } catch (Throwable) {
+            // Expected — provider throws on nonexistent intent
+        }
+
+        $errorCounter = $this->metricRegistry->counter('payments_provider_errors_total');
+        self::assertSame(1.0, $errorCounter->value(new LabelSet([
+            'provider' => 'simulator',
+            'operation' => 'captureIntent',
+            'error_type' => 'unknown',
+        ])));
+    }
+
+    #[Test]
+    public function refundProviderErrorReleasesClaimAndIncrementsMetric(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        // 3030 triggers refund failure
+        $intent = $gateway->createIntent(Money::of(3030, Currency::USD), 'idem-ref-err-1');
+        $charge = $gateway->captureIntent($intent->id, 'idem-ref-err-2');
+
+        try {
+            $gateway->refund($charge->id, null, 'idem-ref-err-3');
+        } catch (PaymentProviderException) {
+            // Expected
+        }
+
+        $errorCounter = $this->metricRegistry->counter('payments_provider_errors_total');
+        self::assertSame(1.0, $errorCounter->value(new LabelSet([
+            'provider' => 'simulator',
+            'operation' => 'refund',
+            'error_type' => 'refund_failed',
+        ])));
+    }
+
+    #[Test]
+    public function cancelProviderErrorReleasesClaimAndIncrementsMetric(): void
+    {
+        $provider = new SimulatorProvider($this->clock);
+        $gateway = $this->createGatewayWith($provider);
+
+        // Try to cancel a nonexistent intent — provider error propagates
+        try {
+            $gateway->cancelIntent('nonexistent', 'idem-can-err');
+        } catch (Throwable) {
+            // Expected — provider throws on nonexistent intent
+        }
+
+        $errorCounter = $this->metricRegistry->counter('payments_provider_errors_total');
+        self::assertSame(1.0, $errorCounter->value(new LabelSet([
+            'provider' => 'simulator',
+            'operation' => 'cancelIntent',
+            'error_type' => 'unknown',
+        ])));
+    }
+
     private function createGateway(): PaymentGateway
     {
         $provider = new NullProvider($this->clock);
@@ -228,13 +432,13 @@ final class PaymentGatewayTest extends TestCase
         return $this->createGatewayWith($provider);
     }
 
-    private function createGatewayWith(\Pulsar\Extension\Payments\Contract\PaymentProviderInterface $provider): PaymentGateway
+    private function createGatewayWith(PaymentProviderInterface $provider): PaymentGateway
     {
         $sink = new class implements AuditSinkInterface {
-            /** @var list<\Pulsar\Security\Audit\AuditEntry> */
+            /** @var list<AuditEntry> */
             public array $entries = [];
 
-            public function write(\Pulsar\Security\Audit\AuditEntry $entry): void
+            public function write(AuditEntry $entry): void
             {
                 $this->entries[] = $entry;
             }

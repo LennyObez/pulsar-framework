@@ -8,6 +8,8 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Payments\Exception\MoneyException;
 
+use function sprintf;
+
 /**
  * Immutable money value object using integer minor units.
  *
@@ -162,7 +164,7 @@ final readonly class Money
         $whole = intdiv($this->amount, $divisor);
         $fraction = $this->amount % $divisor;
 
-        return \sprintf('%d.%0' . $digits . 'd', $whole, $fraction);
+        return sprintf('%d.%0' . $digits . 'd', $whole, $fraction);
     }
 
     /**

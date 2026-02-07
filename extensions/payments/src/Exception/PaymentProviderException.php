@@ -8,6 +8,8 @@ use NoDiscard;
 use RuntimeException;
 use Throwable;
 
+use function sprintf;
+
 /**
  * Provider-level payment exceptions.
  */
@@ -25,7 +27,7 @@ final class PaymentProviderException extends RuntimeException
     public static function declined(string $reason): self
     {
         return new self(
-            \sprintf('Payment declined: %s', $reason),
+            sprintf('Payment declined: %s', $reason),
             'declined',
         );
     }
@@ -58,7 +60,7 @@ final class PaymentProviderException extends RuntimeException
     public static function refundFailed(string $reason): self
     {
         return new self(
-            \sprintf('Refund failed: %s', $reason),
+            sprintf('Refund failed: %s', $reason),
             'refund_failed',
         );
     }

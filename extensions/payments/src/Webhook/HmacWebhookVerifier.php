@@ -9,6 +9,10 @@ use Pulsar\Extension\Payments\Contract\ClockInterface;
 use Pulsar\Extension\Payments\Contract\WebhookVerifierInterface;
 use Pulsar\Extension\Payments\Exception\WebhookException;
 
+use function abs;
+use function str_starts_with;
+use function substr;
+
 /**
  * HMAC-SHA256 webhook signature verifier.
  *
@@ -34,7 +38,7 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 
         // Check timestamp tolerance
         $now = $this->clock->now()->getTimestamp();
-        $age = \abs($now - $timestamp);
+        $age = abs($now - $timestamp);
 
         if ($age > $toleranceSeconds) {
             throw WebhookException::expiredTimestamp($age, $toleranceSeconds);
@@ -72,14 +76,14 @@ final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
         foreach ($parts as $part) {
             $part = trim($part);
 
-            if (\str_starts_with($part, 't=')) {
-                $value = \substr($part, 2);
+            if (str_starts_with($part, 't=')) {
+                $value = substr($part, 2);
                 if (!ctype_digit($value) || $value === '') {
                     throw WebhookException::malformedHeader('invalid timestamp');
                 }
                 $timestamp = (int) $value;
-            } elseif (\str_starts_with($part, 'v1=')) {
-                $value = \substr($part, 3);
+            } elseif (str_starts_with($part, 'v1=')) {
+                $value = substr($part, 3);
                 if ($value !== '') {
                     $signatures[] = $value;
                 }

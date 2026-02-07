@@ -73,11 +73,95 @@ final class CurrencyTest extends TestCase
     }
 
     #[Test]
+    public function chfSymbolIsCHF(): void
+    {
+        self::assertSame('CHF', Currency::CHF->symbol());
+    }
+
+    #[Test]
+    public function sekSymbolIsKr(): void
+    {
+        self::assertSame('kr', Currency::SEK->symbol());
+    }
+
+    #[Test]
+    public function nokSymbolIsKr(): void
+    {
+        self::assertSame('kr', Currency::NOK->symbol());
+    }
+
+    #[Test]
+    public function dkkSymbolIsKr(): void
+    {
+        self::assertSame('kr', Currency::DKK->symbol());
+    }
+
+    #[Test]
+    public function brlSymbolIsReal(): void
+    {
+        self::assertSame('R$', Currency::BRL->symbol());
+    }
+
+    #[Test]
+    public function inrSymbolIsRupee(): void
+    {
+        self::assertSame('₹', Currency::INR->symbol());
+    }
+
+    #[Test]
+    public function zarSymbolIsRand(): void
+    {
+        self::assertSame('R', Currency::ZAR->symbol());
+    }
+
+    #[Test]
+    public function plnSymbolIsZloty(): void
+    {
+        self::assertSame('zł', Currency::PLN->symbol());
+    }
+
+    #[Test]
+    public function czkSymbolIsKoruna(): void
+    {
+        self::assertSame('Kč', Currency::CZK->symbol());
+    }
+
+    #[Test]
+    public function hufSymbolIsForint(): void
+    {
+        self::assertSame('Ft', Currency::HUF->symbol());
+    }
+
+    #[Test]
+    public function bhdSymbolIsCurrencyCode(): void
+    {
+        self::assertSame('BHD', Currency::BHD->symbol());
+    }
+
+    #[Test]
+    public function cadSymbolIsDollar(): void
+    {
+        self::assertSame('$', Currency::CAD->symbol());
+    }
+
+    #[Test]
+    public function audSymbolIsDollar(): void
+    {
+        self::assertSame('$', Currency::AUD->symbol());
+    }
+
+    #[Test]
     public function currencyValueIsIso4217(): void
     {
         self::assertSame('USD', Currency::USD->value);
         self::assertSame('EUR', Currency::EUR->value);
         self::assertSame('JPY', Currency::JPY->value);
         self::assertSame('BHD', Currency::BHD->value);
+    }
+
+    #[Test]
+    public function omrHasThreeMinorDigits(): void
+    {
+        self::assertSame(3, Currency::OMR->minorDigits());
     }
 }

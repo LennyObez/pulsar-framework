@@ -7,11 +7,13 @@ namespace Pulsar\Tests\Unit\Extension\Payments\Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Exception\IdempotencyException;
 use Pulsar\Extension\Payments\Exception\MoneyException;
 use Pulsar\Extension\Payments\Exception\PaymentException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
 use Pulsar\Extension\Payments\Exception\WebhookException;
+use RuntimeException;
 
 #[CoversClass(PaymentException::class)]
 #[CoversClass(PaymentProviderException::class)]
@@ -125,8 +127,8 @@ final class PaymentExceptionTest extends TestCase
     public function moneyExceptionCurrencyMismatch(): void
     {
         $e = MoneyException::currencyMismatch(
-            \Pulsar\Extension\Payments\Domain\Currency::USD,
-            \Pulsar\Extension\Payments\Domain\Currency::EUR,
+            Currency::USD,
+            Currency::EUR,
         );
 
         self::assertStringContainsString('USD', $e->getMessage());
@@ -139,5 +141,76 @@ final class PaymentExceptionTest extends TestCase
         $e = MoneyException::negativeAmount(-5);
 
         self::assertStringContainsString('-5', $e->getMessage());
+    }
+
+    #[Test]
+    public function moneyExceptionInvalidParts(): void
+    {
+        $e = MoneyException::invalidParts(0);
+
+        self::assertStringContainsString('0', $e->getMessage());
+        self::assertStringContainsString('positive', $e->getMessage());
+    }
+
+    #[Test]
+    public function moneyExceptionNegativeMultiplier(): void
+    {
+        $e = MoneyException::negativeMultiplier(-2);
+
+        self::assertStringContainsString('-2', $e->getMessage());
+    }
+
+    #[Test]
+    public function moneyExceptionInvalidBasisPoints(): void
+    {
+        $e = MoneyException::invalidBasisPoints(-100);
+
+        self::assertStringContainsString('-100', $e->getMessage());
+    }
+
+    #[Test]
+    public function paymentProviderExceptionProviderError(): void
+    {
+        $previous = new RuntimeException('original');
+        $e = PaymentProviderException::providerError('something broke', $previous);
+
+        self::assertSame('provider_error', $e->errorType);
+        self::assertStringContainsString('something broke', $e->getMessage());
+        self::assertSame($previous, $e->getPrevious());
+    }
+
+    #[Test]
+    public function paymentProviderExceptionRefundFailed(): void
+    {
+        $e = PaymentProviderException::refundFailed('card_not_found');
+
+        self::assertSame('refund_failed', $e->errorType);
+        self::assertStringContainsString('card_not_found', $e->getMessage());
+    }
+
+    #[Test]
+    public function idempotencyExceptionCommitFailed(): void
+    {
+        $e = IdempotencyException::commitFailed('key-x');
+
+        self::assertStringContainsString('key-x', $e->getMessage());
+        self::assertStringContainsString('commit', strtolower($e->getMessage()));
+    }
+
+    #[Test]
+    public function webhookExceptionHandlerFailed(): void
+    {
+        $e = WebhookException::handlerFailed('evt_42', 'db timeout');
+
+        self::assertStringContainsString('evt_42', $e->getMessage());
+        self::assertStringContainsString('db timeout', $e->getMessage());
+    }
+
+    #[Test]
+    public function webhookExceptionMalformedHeader(): void
+    {
+        $e = WebhookException::malformedHeader('missing t= field');
+
+        self::assertStringContainsString('missing t= field', $e->getMessage());
     }
 }

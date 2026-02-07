@@ -17,6 +17,8 @@ use Pulsar\Extension\Payments\Domain\Refund;
 use Pulsar\Extension\Payments\Domain\RefundStatus;
 use Pulsar\Extension\Payments\Exception\PaymentException;
 
+use function substr;
+
 /**
  * No-op success provider for testing and development.
  *
@@ -38,7 +40,7 @@ final readonly class NullProvider implements PaymentProviderInterface
     public function createIntent(Money $amount, string $idempotencyKey, array $metadata = []): PaymentIntent
     {
         return new PaymentIntent(
-            id: self::generateId('null', 'create_intent', $idempotencyKey),
+            id: self::generateId('create_intent', $idempotencyKey),
             amount: $amount,
             status: PaymentIntentStatus::Created,
             provider: $this->name(),
@@ -52,7 +54,7 @@ final readonly class NullProvider implements PaymentProviderInterface
     public function captureIntent(string $intentId, string $idempotencyKey): Charge
     {
         return new Charge(
-            id: self::generateId('null', 'capture_intent', $idempotencyKey, $intentId),
+            id: self::generateId('capture_intent', $idempotencyKey, $intentId),
             intentId: $intentId,
             amount: Money::of(0, Currency::USD),
             status: ChargeStatus::Succeeded,
@@ -78,7 +80,7 @@ final readonly class NullProvider implements PaymentProviderInterface
     public function refund(string $chargeId, ?Money $amount, string $idempotencyKey): Refund
     {
         return new Refund(
-            id: self::generateId('null', 'refund', $idempotencyKey, $chargeId),
+            id: self::generateId('refund', $idempotencyKey, $chargeId),
             chargeId: $chargeId,
             amount: $amount ?? Money::of(0, Currency::USD),
             status: RefundStatus::Succeeded,
@@ -105,10 +107,10 @@ final readonly class NullProvider implements PaymentProviderInterface
         throw PaymentException::notFound('Refund', $refundId);
     }
 
-    private static function generateId(string $provider, string $operation, string $idempotencyKey, string $resourceId = ''): string
+    private static function generateId(string $operation, string $idempotencyKey, string $resourceId = ''): string
     {
-        $input = $provider . ':' . $operation . ':' . $idempotencyKey . ':' . $resourceId;
+        $input = 'null:' . $operation . ':' . $idempotencyKey . ':' . $resourceId;
 
-        return \substr(hash('sha256', $input), 0, 32);
+        return substr(hash('sha256', $input), 0, 32);
     }
 }

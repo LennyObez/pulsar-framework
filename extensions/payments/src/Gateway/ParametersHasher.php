@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Payments\Gateway;
 
 use NoDiscard;
 
+use function is_array;
+
 /**
  * Canonical parameter hashing utility for idempotency.
  *
@@ -38,7 +40,7 @@ final readonly class ParametersHasher
         ksort($array);
 
         foreach ($array as &$value) {
-            if (\is_array($value)) {
+            if (is_array($value)) {
                 self::sortRecursive($value);
             }
         }

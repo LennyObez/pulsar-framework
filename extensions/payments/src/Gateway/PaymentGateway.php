@@ -28,6 +28,8 @@ use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
 use Throwable;
 
+use function strlen;
+
 /**
  * Payment gateway orchestrator.
  *
@@ -290,7 +292,7 @@ final readonly class PaymentGateway
      */
     private function validateIdempotencyKey(string $key): void
     {
-        if ($key === '' || \strlen($key) > $this->config->idempotency->maxKeyLength) {
+        if ($key === '' || strlen($key) > $this->config->idempotency->maxKeyLength) {
             throw IdempotencyException::invalidKey(
                 'must be 1-' . $this->config->idempotency->maxKeyLength . ' ASCII printable characters',
             );

@@ -17,6 +17,8 @@ use Pulsar\Extension\Payments\Domain\RefundStatus;
 use Pulsar\Extension\Payments\Exception\PaymentException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
 
+use function substr;
+
 /**
  * Deterministic test vector provider for integration testing.
  *
@@ -65,7 +67,7 @@ final class SimulatorProvider implements PaymentProviderInterface
     {
         $this->applyTestVector($amount->amount);
 
-        $id = self::generateId('simulator', 'create_intent', $idempotencyKey);
+        $id = self::generateId('create_intent', $idempotencyKey);
         $intent = new PaymentIntent(
             id: $id,
             amount: $amount,
@@ -86,7 +88,7 @@ final class SimulatorProvider implements PaymentProviderInterface
     {
         $intent = $this->intents[$intentId] ?? throw PaymentException::notFound('PaymentIntent', $intentId);
 
-        $chargeId = self::generateId('simulator', 'capture_intent', $idempotencyKey, $intentId);
+        $chargeId = self::generateId('capture_intent', $idempotencyKey, $intentId);
         $charge = new Charge(
             id: $chargeId,
             intentId: $intentId,
@@ -133,7 +135,7 @@ final class SimulatorProvider implements PaymentProviderInterface
         }
 
         $refundAmount = $amount ?? $charge->amount;
-        $refundId = self::generateId('simulator', 'refund', $idempotencyKey, $chargeId);
+        $refundId = self::generateId('refund', $idempotencyKey, $chargeId);
         $refund = new Refund(
             id: $refundId,
             chargeId: $chargeId,
@@ -192,10 +194,10 @@ final class SimulatorProvider implements PaymentProviderInterface
         };
     }
 
-    private static function generateId(string $provider, string $operation, string $idempotencyKey, string $resourceId = ''): string
+    private static function generateId(string $operation, string $idempotencyKey, string $resourceId = ''): string
     {
-        $input = $provider . ':' . $operation . ':' . $idempotencyKey . ':' . $resourceId;
+        $input = 'simulator:' . $operation . ':' . $idempotencyKey . ':' . $resourceId;
 
-        return \substr(hash('sha256', $input), 0, 32);
+        return substr(hash('sha256', $input), 0, 32);
     }
 }
