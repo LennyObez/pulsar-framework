@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Routing;
 
+use function array_filter;
+
+use const ARRAY_FILTER_USE_KEY;
+
 use function in_array;
 use function is_string;
 
@@ -230,18 +234,13 @@ readonly class Route
      *
      * @param array<int|string, string> $matches
      *
+     * @psalm-suppress InvalidReturnType — Psalm cannot narrow key types through ARRAY_FILTER_USE_KEY
+     *
      * @return array<string, string>
      */
     private function extractNamedParameters(array $matches): array
     {
-        $params = [];
-
-        foreach ($matches as $key => $value) {
-            if (is_string($key)) {
-                $params[$key] = $value;
-            }
-        }
-
-        return $params;
+        /** @psalm-suppress InvalidReturnStatement */
+        return array_filter($matches, static fn(int|string $key): bool => is_string($key), ARRAY_FILTER_USE_KEY);
     }
 }

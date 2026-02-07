@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
+use function array_find;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Deploy\CheckResult;
@@ -251,28 +253,11 @@ final readonly class OpcacheCheck implements DeployCheckInterface
         }
 
         // Unix unsafe prefixes
-        foreach (self::UNSAFE_PATH_PREFIXES as $prefix) {
-            if (str_starts_with($path, $prefix)) {
-                return $prefix;
-            }
-        }
-
-        // Windows unsafe prefixes (case-insensitive)
-        $lowerPath = strtolower($path);
-
-        foreach (self::UNSAFE_PATH_PREFIXES_WINDOWS as $prefix) {
-            if (str_starts_with($lowerPath, $prefix)) {
-                return $prefix;
-            }
-        }
-
-        // Relative unsafe prefixes (shouldn't appear in absolute paths, but belt-and-suspenders)
-        foreach (self::UNSAFE_RELATIVE_PREFIXES as $prefix) {
-            if (str_contains($path, $prefix)) {
-                return $prefix;
-            }
-        }
-
-        return null;
+        /** @psalm-suppress MixedReturnStatement — Psalm 6.x lacks return-type inference for array_find() */
+        return array_find(self::UNSAFE_PATH_PREFIXES, static fn(string $prefix): bool => str_starts_with($path, $prefix))
+            // Windows unsafe prefixes (case-insensitive)
+            ?? array_find(self::UNSAFE_PATH_PREFIXES_WINDOWS, static fn(string $prefix): bool => str_starts_with(strtolower($path), $prefix))
+            // Relative unsafe prefixes (shouldn't appear in absolute paths, but belt-and-suspenders)
+            ?? array_find(self::UNSAFE_RELATIVE_PREFIXES, static fn(string $prefix): bool => str_contains($path, $prefix));
     }
 }

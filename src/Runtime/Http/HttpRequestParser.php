@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime\Http;
 
+use function array_filter;
+
+use const ARRAY_FILTER_USE_KEY;
+
 use function array_key_exists;
 use function count;
 use function explode;
@@ -400,6 +404,8 @@ final class HttpRequestParser
     /**
      * Parse a query string into a string-keyed parameter array.
      *
+     * @psalm-suppress MixedReturnTypeCoercion — Psalm cannot narrow key types through ARRAY_FILTER_USE_KEY
+     *
      * @return array<string, mixed>
      */
     private function parseQueryParams(string $queryString): array
@@ -411,14 +417,7 @@ final class HttpRequestParser
         $raw = [];
         parse_str($queryString, $raw);
 
-        $params = [];
-
-        foreach ($raw as $key => $value) {
-            if (is_string($key)) {
-                $params[$key] = $value;
-            }
-        }
-
-        return $params;
+        /** @psalm-suppress MixedReturnTypeCoercion */
+        return array_filter($raw, static fn(int|string $key): bool => is_string($key), ARRAY_FILTER_USE_KEY);
     }
 }

@@ -46,17 +46,6 @@ exclude:
   - name: PhpIncludeInspection
     paths:
       - resources/studio/router.php
-  # Loop → array_find() — Psalm 6.x lacks return-type inference for array_find(),
-  # so using it introduces a MixedReturnStatement error. Keep foreach until Psalm supports it.
-  - name: PhpLoopCanBeConvertedToArrayFindInspection
-    paths:
-      - src/Deploy/Check/OpcacheCheck.php
-  # Loop → array_filter() — Psalm 6.x cannot narrow key types through ARRAY_FILTER_USE_KEY
-  # callbacks, producing array<int|string, string> instead of array<string, string>.
-  - name: PhpLoopCanBeConvertedToArrayFilterInspection
-    paths:
-      - src/Routing/Route.php
-      - src/Runtime/Http/HttpRequestParser.php
   - name: All
     paths:
       - composer.json
