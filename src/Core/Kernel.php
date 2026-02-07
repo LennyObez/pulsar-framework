@@ -32,6 +32,7 @@ use Pulsar\Auth\Middleware\AuthorizationMiddleware;
 use Pulsar\Auth\Middleware\TwoFactorMiddleware;
 use Pulsar\Auth\Password\PasswordHasher;
 use Pulsar\Auth\Password\PasswordHasherInterface;
+use Pulsar\Auth\SecurityContext;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\RecoveryCodeVerifier;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
@@ -1388,6 +1389,9 @@ final class Kernel
      * Registers RuntimeConfig, RequestResetRegistry, LeakDetector, and
      * RequestSandbox. Also populates the registry with known resettable
      * and evictable service IDs.
+     *
+     * @throws ContainerException If a container resolution fails
+     * @throws NotFoundException If a required service is not registered
      */
     private function createRuntimeServices(): void
     {
@@ -1407,7 +1411,7 @@ final class Kernel
         $registry = new RequestResetRegistry();
 
         // Register evictable services (re-created per request by middleware)
-        $registry->registerEvictable(\Pulsar\Auth\SecurityContext::class);
+        $registry->registerEvictable(SecurityContext::class);
 
         // Register resettable services (state reset between requests)
         if ($this->container->has(TenantContext::class)) {
@@ -1418,8 +1422,8 @@ final class Kernel
             $registry->registerResettable(FlagEvaluationLog::class);
         }
 
-        if ($this->container->has(\Pulsar\Auth\AuthManagerInterface::class)) {
-            $registry->registerResettable(\Pulsar\Auth\AuthManagerInterface::class);
+        if ($this->container->has(AuthManagerInterface::class)) {
+            $registry->registerResettable(AuthManagerInterface::class);
         }
 
         $this->container->instance(RequestResetRegistry::class, $registry);

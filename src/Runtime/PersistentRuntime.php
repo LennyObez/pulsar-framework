@@ -93,6 +93,9 @@ final class PersistentRuntime implements RuntimeInterface
         $this->serializer = new HttpResponseSerializer();
     }
 
+    /**
+     * @throws RuntimeException If the server socket cannot be created or bound
+     */
     #[Override]
     public function start(): void
     {
@@ -163,6 +166,8 @@ final class PersistentRuntime implements RuntimeInterface
 
     /**
      * Synchronous accept loop — one connection at a time.
+     *
+     * @codeCoverageIgnore Requires a running server socket and real network connections
      */
     private function runSynchronous(): void
     {
@@ -198,6 +203,8 @@ final class PersistentRuntime implements RuntimeInterface
 
     /**
      * Fiber-based concurrent accept loop.
+     *
+     * @codeCoverageIgnore Requires a running server socket and real network connections
      */
     private function runWithFibers(): void
     {
@@ -241,6 +248,8 @@ final class PersistentRuntime implements RuntimeInterface
 
     /**
      * Handle a single client connection (keep-alive loop).
+     *
+     * @codeCoverageIgnore Requires real socket connections; delegates to independently tested parser/serializer/sandbox
      */
     private function handleConnection(Socket $clientSocket): void
     {
@@ -307,7 +316,8 @@ final class PersistentRuntime implements RuntimeInterface
                     // Always close on 5xx
                     $requestKeepAlive = false;
                 } finally {
-                    $this->afterRequest($request, $response ?? new Response());
+                    /** @var Response $response — always assigned: try sets via handle(), catch sets error response */
+                    $this->afterRequest($request, $response);
                 }
 
                 // Handle upgrade responses (Kernel::handle() may return UpgradeResponse)
@@ -352,6 +362,8 @@ final class PersistentRuntime implements RuntimeInterface
 
     /**
      * Read data from socket and attempt to parse a request.
+     *
+     * @codeCoverageIgnore Requires real socket I/O; parser is independently tested
      */
     private function readAndParse(ConnectionContext $ctx): Request|Response|null
     {
@@ -366,12 +378,7 @@ final class PersistentRuntime implements RuntimeInterface
             );
 
             if ($result !== null) {
-                // If we got headers and now need body, switch phase
-                if ($result instanceof Request) {
-                    return $result;
-                }
-
-                return $result; // Error response
+                return $result;
             }
 
             // Need more data — read from socket
@@ -451,6 +458,9 @@ final class PersistentRuntime implements RuntimeInterface
         );
     }
 
+    /**
+     * @codeCoverageIgnore Requires real socket creation and binding
+     */
     private function createServerSocket(): Socket
     {
         $socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
@@ -502,6 +512,9 @@ final class PersistentRuntime implements RuntimeInterface
         $this->status = RuntimeStatus::Stopped;
     }
 
+    /**
+     * @codeCoverageIgnore Requires real socket I/O
+     */
     private function socketWrite(Socket $socket, string $data): void
     {
         $total = strlen($data);
@@ -518,6 +531,9 @@ final class PersistentRuntime implements RuntimeInterface
         }
     }
 
+    /**
+     * @codeCoverageIgnore Requires POSIX signal handling (pcntl)
+     */
     private function registerSignalHandlers(): void
     {
         if (PHP_OS_FAMILY === 'Windows') {
@@ -583,6 +599,9 @@ final class PersistentRuntime implements RuntimeInterface
         });
     }
 
+    /**
+     * @codeCoverageIgnore Requires real socket I/O for upgrade handshake
+     */
     private function handleUpgradeResponse(
         UpgradeResponse $response,
         Request $request,

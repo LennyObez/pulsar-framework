@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Core\Kernel;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
+use Throwable;
 
 /**
  * Default FPM runtime — zero behavioral change from Kernel::run().
@@ -26,10 +27,12 @@ final class FpmRuntime implements RuntimeInterface
         private readonly Kernel $kernel,
     ) {}
 
+    /**
+     * @throws Throwable If the kernel request lifecycle throws
+     */
     #[Override]
     public function start(): void
     {
-        $this->status = RuntimeStatus::Starting;
         $this->status = RuntimeStatus::Running;
 
         $this->kernel->run();

@@ -16,12 +16,12 @@ use Pulsar\Http\Response;
  * reset resettable singletons, and run leak detection.
  */
 #[Internal]
-final class RequestSandbox
+final readonly class RequestSandbox
 {
     public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly RequestResetRegistry $registry,
-        private readonly LeakDetector $leakDetector,
+        private ContainerInterface $container,
+        private RequestResetRegistry $registry,
+        private LeakDetector $leakDetector,
     ) {}
 
     /**

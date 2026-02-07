@@ -20,6 +20,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Core\Kernel;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Runtime\FpmRuntime;
 use Pulsar\Runtime\LeakDetector;
 use Pulsar\Runtime\PersistentRuntime;
 use Pulsar\Runtime\RequestResetRegistry;
@@ -52,12 +53,12 @@ final class RuntimeServeCommand extends Command
         $this->name = 'runtime:serve';
         $this->description = 'Start the persistent HTTP runtime server';
 
-        $this->addOption('host', 'Address to bind', null, null);
-        $this->addOption('port', 'Port to listen on', null, null);
-        $this->addOption('max-requests', 'Maximum requests before recycling', null, null);
-        $this->addOption('memory', 'Memory threshold in MB', null, null);
-        $this->addOption('timeout', 'Time limit in seconds', null, null);
-        $this->addOption('concurrency', 'Fiber concurrency (0 = synchronous)', null, null);
+        $this->addOption('host', 'Address to bind');
+        $this->addOption('port', 'Port to listen on');
+        $this->addOption('max-requests', 'Maximum requests before recycling');
+        $this->addOption('memory', 'Memory threshold in MB');
+        $this->addOption('timeout', 'Time limit in seconds');
+        $this->addOption('concurrency', 'Fiber concurrency (0 = synchronous)');
         $this->addOption('public', 'Allow binding to non-loopback address');
     }
 
@@ -111,7 +112,7 @@ final class RuntimeServeCommand extends Command
 
         if ($this->metricRegistry !== null && $this->contextProvider !== null) {
             $collector = new InstrumentedRuntime(
-                inner: new \Pulsar\Runtime\FpmRuntime($this->kernel),
+                inner: new FpmRuntime($this->kernel),
                 contextProvider: $this->contextProvider,
                 metricRegistry: $this->metricRegistry,
                 emit: static function (): void {},

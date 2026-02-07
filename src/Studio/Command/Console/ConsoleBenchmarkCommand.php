@@ -84,7 +84,8 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @throws JsonException
+     * @throws JsonException If profile JSON cannot be decoded or results cannot be encoded
+     * @throws \Random\RandomException If random_bytes() fails for run ID generation
      */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
@@ -161,7 +162,7 @@ final class ConsoleBenchmarkCommand extends Command
             $output->writeln('Pulsar Performance Profile Matrix');
             $output->writeln(sprintf('PHP %s (%s) | %s %s', PHP_VERSION, PHP_SAPI, PHP_OS_FAMILY, php_uname('m')));
             $output->writeln(str_repeat('=', 70));
-            $output->writeln('');
+            $output->writeln();
         }
 
         // Phase 1: Non-optimized profiles
@@ -188,7 +189,7 @@ final class ConsoleBenchmarkCommand extends Command
             }
 
             if (!$isJson) {
-                $output->writeln('');
+                $output->writeln();
             }
         }
 
@@ -203,7 +204,7 @@ final class ConsoleBenchmarkCommand extends Command
             if ($this->runOptimize($phpBinary)) {
                 if (!$isJson) {
                     $output->writeln('  [ok]   Framework cache warmed');
-                    $output->writeln('');
+                    $output->writeln();
                     $output->writeln('--- Optimized profiles ---');
                 }
             } else {
@@ -211,7 +212,7 @@ final class ConsoleBenchmarkCommand extends Command
 
                 if (!$isJson) {
                     $output->writeln('  [fail] Framework cache could not be warmed');
-                    $output->writeln('');
+                    $output->writeln();
                     $output->writeln('--- Optimized profiles ---');
                 }
             }
@@ -245,7 +246,7 @@ final class ConsoleBenchmarkCommand extends Command
             }
 
             if (!$isJson) {
-                $output->writeln('');
+                $output->writeln();
                 $output->writeln('--- Clearing framework cache ---');
             }
 
@@ -298,7 +299,7 @@ final class ConsoleBenchmarkCommand extends Command
             AtomicFileWriter::write($outputPath, $resultsJson . "\n");
 
             if (!$isJson) {
-                $output->writeln('');
+                $output->writeln();
                 $output->writeln(sprintf('Results saved to %s', $outputPath));
             }
         }
@@ -320,7 +321,7 @@ final class ConsoleBenchmarkCommand extends Command
             return ExitCode::Success->value;
         }
 
-        $output->writeln('');
+        $output->writeln();
         $completedSuffix = $skipCount > 0
             ? sprintf(' (%d skipped)', $skipCount)
             : '';

@@ -23,7 +23,6 @@ final readonly class UpgradeResponse extends Response
         HeaderBag $headers = new HeaderBag(),
     ) {
         parent::__construct(
-            body: '',
             status: ResponseStatus::SwitchingProtocols,
             headers: $headers,
         );
