@@ -36,11 +36,26 @@ export default tseslint.config(
   },
   {
     files: ['**/*.js'],
+    ignores: ['resources/**/*.js', 'extensions/**/resources/**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
       globals: {
         ...globals.node,
+      },
+    },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      'no-console': 'warn',
+    },
+  },
+  {
+    files: ['resources/**/*.js', 'extensions/**/resources/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'script',
+      globals: {
+        ...globals.browser,
       },
     },
     rules: {
