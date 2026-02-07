@@ -15,6 +15,7 @@
     "psr/log": "^3.0"
   },
   "require-dev": {
+    "deptrac/deptrac": "^4.6",
     "friendsofphp/php-cs-fixer": "^3.0",
     "phpbench/phpbench": "^1.3",
     "phpstan/phpstan": "^2.0",
@@ -54,10 +55,12 @@
     "bench:ci": "phpbench run --config=tools/php/phpbench.json --report=default --progress=none",
     "bench:profiles": "php tools/bench/run.php",
     "bench:profiles:ci": "php tools/bench/run.php --output=var/bench/results.json",
+    "deptrac": "deptrac analyse --config-file=tools/php/deptrac.yaml",
     "qa": [
       "@cs:check",
       "@phpstan",
       "@psalm",
+      "@deptrac",
       "@test"
     ]
   },
