@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Csrf;
 
+use function htmlspecialchars;
 use function is_string;
 
 use Override;
@@ -12,6 +13,8 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+
+use function sprintf;
 
 /**
  * CSRF protection middleware.
@@ -47,11 +50,11 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
         $token = $this->extractToken($request);
 
         if ($token === null) {
-            return self::forbiddenResponse('CSRF token is missing');
+            return $this->forbiddenResponse($request, 'CSRF token is missing');
         }
 
         if (!$this->tokenManager->validate($token)) {
-            return self::forbiddenResponse('CSRF token is invalid');
+            return $this->forbiddenResponse($request, 'CSRF token is invalid');
         }
 
         return $next($request);
@@ -80,12 +83,25 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
     }
 
     /**
-     * Create a 403 Forbidden JSON response.
+     * Create a 403 Forbidden response, content-negotiated for the client.
      */
-    private static function forbiddenResponse(string $message): Response
+    private function forbiddenResponse(Request $request, string $message): Response
     {
-        return Response::json(
-            ['error' => 'Forbidden', 'message' => $message],
+        if ($request->wantsJson() || $request->isAjax()) {
+            return Response::json(
+                ['error' => 'Forbidden', 'message' => $message],
+                ResponseStatus::Forbidden,
+            );
+        }
+
+        $escapedMessage = htmlspecialchars($message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return Response::html(
+            sprintf(
+                '<!DOCTYPE html><html><head><title>403 Forbidden</title></head>'
+                . '<body><h1>403 Forbidden</h1><p>%s</p></body></html>',
+                $escapedMessage,
+            ),
             ResponseStatus::Forbidden,
         );
     }
