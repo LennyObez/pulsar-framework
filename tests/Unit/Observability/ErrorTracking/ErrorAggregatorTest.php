@@ -82,4 +82,33 @@ final class ErrorAggregatorTest extends TestCase
         self::assertSame(0, $aggregator->count());
         self::assertSame([], $aggregator->groups());
     }
+
+    #[Test]
+    public function addObserverCallsObserverOnCapture(): void
+    {
+        $aggregator = new ErrorAggregator();
+        $called = false;
+
+        $aggregator->addObserver(static function () use (&$called): void {
+            $called = true;
+        });
+
+        $aggregator->capture(ErrorEvent::fromThrowable(new RuntimeException('test')));
+
+        self::assertTrue($called);
+    }
+
+    #[Test]
+    public function observerExceptionDoesNotPreventCapture(): void
+    {
+        $aggregator = new ErrorAggregator();
+
+        $aggregator->addObserver(static function (): void {
+            throw new RuntimeException('observer failure');
+        });
+
+        $aggregator->capture(ErrorEvent::fromThrowable(new RuntimeException('test')));
+
+        self::assertSame(1, $aggregator->count());
+    }
 }
