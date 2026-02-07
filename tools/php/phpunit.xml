@@ -22,6 +22,7 @@
     <source>
         <include>
             <directory>../../src</directory>
+            <directory>../../extensions/payments/src</directory>
         </include>
     </source>
 </phpunit>
