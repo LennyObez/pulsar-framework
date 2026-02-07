@@ -41,4 +41,12 @@ final class TraceIdTest extends TestCase
 
         new TraceId('not-valid');
     }
+
+    #[Test]
+    public function toStringReturnsValue(): void
+    {
+        $id = new TraceId('4bf92f3577b34da6a3ce929d0e0e4736');
+
+        self::assertSame('4bf92f3577b34da6a3ce929d0e0e4736', $id->toString());
+    }
 }

@@ -41,4 +41,12 @@ final class SpanIdTest extends TestCase
 
         new SpanId('invalid');
     }
+
+    #[Test]
+    public function toStringReturnsValue(): void
+    {
+        $id = new SpanId('00f067aa0ba902b7');
+
+        self::assertSame('00f067aa0ba902b7', $id->toString());
+    }
 }

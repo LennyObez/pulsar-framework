@@ -95,7 +95,7 @@ readonly class ExtensionManifest
         $pulsarData = $data['pulsar'] ?? [];
         $pulsar = PulsarVersionConfig::fromArray($pulsarData);
 
-        /** @var array{services?: list<string>, commands?: list<string>, routes?: bool, middleware?: list<string>} $providesData */
+        /** @var array<string, mixed> $providesData */
         $providesData = $data['provides'] ?? [];
         $provides = ProvidesConfig::fromArray($providesData);
 

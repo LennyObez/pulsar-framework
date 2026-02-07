@@ -8,6 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\FeatureFlag\FlagContext;
+use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Method;
+use Pulsar\Http\Request;
 
 #[CoversClass(FlagContext::class)]
 final class FlagContextTest extends TestCase
@@ -37,5 +40,44 @@ final class FlagContextTest extends TestCase
         self::assertNull($context->userId);
         self::assertNull($context->environment);
         self::assertSame([], $context->attributes);
+    }
+
+    #[Test]
+    public function fromRequestExtractsTenantAndUserId(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/test',
+            path: '/test',
+            queryString: '',
+            headers: new HeaderBag([]),
+            body: '',
+            attributes: ['_tenant_id' => 'acme', '_user_id' => 'user-42'],
+        );
+
+        $context = FlagContext::fromRequest($request);
+
+        self::assertSame('acme', $context->tenantId);
+        self::assertSame('user-42', $context->userId);
+        self::assertNull($context->environment);
+        self::assertSame([], $context->attributes);
+    }
+
+    #[Test]
+    public function fromRequestHandlesMissingAttributes(): void
+    {
+        $request = new Request(
+            method: Method::GET,
+            uri: '/test',
+            path: '/test',
+            queryString: '',
+            headers: new HeaderBag([]),
+            body: '',
+        );
+
+        $context = FlagContext::fromRequest($request);
+
+        self::assertNull($context->tenantId);
+        self::assertNull($context->userId);
     }
 }
