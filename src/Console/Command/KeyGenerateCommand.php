@@ -25,6 +25,9 @@ use Pulsar\Support\AtomicFileWriter;
 
 use function random_bytes;
 use function sodium_bin2hex;
+
+use SodiumException;
+
 use function sprintf;
 
 use const STDERR;
@@ -75,6 +78,10 @@ final class KeyGenerateCommand extends Command
         $this->addOption('force', 'Overwrite an existing PULSAR_MASTER_KEY without confirmation', 'f');
     }
 
+    /**
+     * @throws \Random\RandomException If random_bytes() fails
+     * @throws SodiumException If sodium_bin2hex() fails
+     */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {

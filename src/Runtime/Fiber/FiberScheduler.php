@@ -9,6 +9,7 @@ use Closure;
 use function count;
 
 use Fiber;
+use FiberError;
 use Pulsar\Api\Internal;
 use Socket;
 
@@ -44,6 +45,8 @@ final class FiberScheduler
      *
      * @param Closure(Socket): void $handler
      * @return bool True if spawned, false if at concurrency limit
+     *
+     * @throws FiberError If the Fiber fails to start
      */
     public function spawn(Socket $socket, Closure $handler): bool
     {
@@ -75,6 +78,8 @@ final class FiberScheduler
      *
      * @param float $timeoutSeconds Timeout for socket_select (default 0.1s)
      * @return int Number of fibers resumed
+     *
+     * @throws FiberError If a Fiber fails to resume
      */
     public function tick(float $timeoutSeconds = 0.1): int
     {
@@ -147,6 +152,8 @@ final class FiberScheduler
      *
      * @param float $timeoutSeconds Maximum drain time
      * @return int Number of Fibers still active after drain
+     *
+     * @throws FiberError If a Fiber fails to resume
      */
     public function drain(float $timeoutSeconds = 5.0): int
     {
