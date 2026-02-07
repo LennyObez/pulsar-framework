@@ -47,7 +47,7 @@ final readonly class WebhookEvent
         return new self(
             id: $id,
             type: WebhookEventType::from($type),
-            createdAt: (new DateTimeImmutable())->setTimestamp($timestamp),
+            createdAt: new DateTimeImmutable('@' . $timestamp),
             data: $data,
         );
     }

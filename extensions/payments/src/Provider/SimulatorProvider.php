@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Payments\Provider;
 
-use DateTimeImmutable;
 use Override;
 use Pulsar\Extension\Payments\Contract\ClockInterface;
 use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
 use Pulsar\Extension\Payments\Domain\Charge;
 use Pulsar\Extension\Payments\Domain\ChargeStatus;
-use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\PaymentIntent;
 use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;

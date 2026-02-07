@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Payments\Gateway;
 
+use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Contract\ClockInterface;
 use Pulsar\Extension\Payments\Contract\IdempotencyStoreInterface;
 use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
 use Pulsar\Extension\Payments\Domain\Charge;
+use Pulsar\Extension\Payments\Domain\ChargeStatus;
+use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\PaymentIntent;
+use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;
 use Pulsar\Extension\Payments\Domain\Refund;
+use Pulsar\Extension\Payments\Domain\RefundStatus;
 use Pulsar\Extension\Payments\Exception\IdempotencyException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
 use Pulsar\Extension\Payments\Idempotency\IdempotencyClaimStatus;
@@ -366,11 +371,11 @@ final readonly class PaymentGateway
 
         return new PaymentIntent(
             id: (string) $data['id'],
-            amount: Money::of((int) $data['amount'], \Pulsar\Extension\Payments\Domain\Currency::from((string) $data['currency'])),
-            status: \Pulsar\Extension\Payments\Domain\PaymentIntentStatus::from((string) $data['status']),
+            amount: Money::of((int) $data['amount'], Currency::from((string) $data['currency'])),
+            status: PaymentIntentStatus::from((string) $data['status']),
             provider: (string) $data['provider'],
             idempotencyKey: (string) $data['idempotency_key'],
-            createdAt: (new \DateTimeImmutable())->setTimestamp((int) $data['created_at']),
+            createdAt: new DateTimeImmutable('@' . (int) $data['created_at']),
             metadata: (array) ($data['metadata'] ?? []),
         );
     }
@@ -384,10 +389,10 @@ final readonly class PaymentGateway
         return new Charge(
             id: (string) $data['id'],
             intentId: (string) $data['intent_id'],
-            amount: Money::of((int) $data['amount'], \Pulsar\Extension\Payments\Domain\Currency::from((string) $data['currency'])),
-            status: \Pulsar\Extension\Payments\Domain\ChargeStatus::from((string) $data['status']),
+            amount: Money::of((int) $data['amount'], Currency::from((string) $data['currency'])),
+            status: ChargeStatus::from((string) $data['status']),
             provider: (string) $data['provider'],
-            createdAt: (new \DateTimeImmutable())->setTimestamp((int) $data['created_at']),
+            createdAt: new DateTimeImmutable('@' . (int) $data['created_at']),
             failureReason: $data['failure_reason'] !== null ? (string) $data['failure_reason'] : null,
             metadata: (array) ($data['metadata'] ?? []),
         );
@@ -402,10 +407,10 @@ final readonly class PaymentGateway
         return new Refund(
             id: (string) $data['id'],
             chargeId: (string) $data['charge_id'],
-            amount: Money::of((int) $data['amount'], \Pulsar\Extension\Payments\Domain\Currency::from((string) $data['currency'])),
-            status: \Pulsar\Extension\Payments\Domain\RefundStatus::from((string) $data['status']),
+            amount: Money::of((int) $data['amount'], Currency::from((string) $data['currency'])),
+            status: RefundStatus::from((string) $data['status']),
             provider: (string) $data['provider'],
-            createdAt: (new \DateTimeImmutable())->setTimestamp((int) $data['created_at']),
+            createdAt: new DateTimeImmutable('@' . (int) $data['created_at']),
             failureReason: $data['failure_reason'] !== null ? (string) $data['failure_reason'] : null,
             metadata: (array) ($data['metadata'] ?? []),
         );

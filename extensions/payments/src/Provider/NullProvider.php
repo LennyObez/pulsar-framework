@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Payments\Provider;
 
-use DateTimeImmutable;
 use Override;
 use Pulsar\Extension\Payments\Contract\ClockInterface;
 use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
 use Pulsar\Extension\Payments\Domain\Charge;
 use Pulsar\Extension\Payments\Domain\ChargeStatus;
+use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\PaymentIntent;
 use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;
@@ -24,22 +24,9 @@ use Pulsar\Extension\Payments\Exception\PaymentException;
  */
 final readonly class NullProvider implements PaymentProviderInterface
 {
-    /** @var array<string, PaymentIntent> */
-    private array $intents;
-
-    /** @var array<string, Charge> */
-    private array $charges;
-
-    /** @var array<string, Refund> */
-    private array $refunds;
-
     public function __construct(
         private ClockInterface $clock,
-    ) {
-        $this->intents = [];
-        $this->charges = [];
-        $this->refunds = [];
-    }
+    ) {}
 
     #[Override]
     public function name(): string
@@ -67,7 +54,7 @@ final readonly class NullProvider implements PaymentProviderInterface
         return new Charge(
             id: self::generateId('null', 'capture_intent', $idempotencyKey, $intentId),
             intentId: $intentId,
-            amount: Money::of(0, \Pulsar\Extension\Payments\Domain\Currency::USD),
+            amount: Money::of(0, Currency::USD),
             status: ChargeStatus::Succeeded,
             provider: $this->name(),
             createdAt: $this->clock->now(),
@@ -79,7 +66,7 @@ final readonly class NullProvider implements PaymentProviderInterface
     {
         return new PaymentIntent(
             id: $intentId,
-            amount: Money::of(0, \Pulsar\Extension\Payments\Domain\Currency::USD),
+            amount: Money::of(0, Currency::USD),
             status: PaymentIntentStatus::Cancelled,
             provider: $this->name(),
             idempotencyKey: $idempotencyKey,
@@ -93,7 +80,7 @@ final readonly class NullProvider implements PaymentProviderInterface
         return new Refund(
             id: self::generateId('null', 'refund', $idempotencyKey, $chargeId),
             chargeId: $chargeId,
-            amount: $amount ?? Money::of(0, \Pulsar\Extension\Payments\Domain\Currency::USD),
+            amount: $amount ?? Money::of(0, Currency::USD),
             status: RefundStatus::Succeeded,
             provider: $this->name(),
             createdAt: $this->clock->now(),
