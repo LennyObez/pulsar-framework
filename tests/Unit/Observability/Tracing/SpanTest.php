@@ -97,4 +97,28 @@ final class SpanTest extends TestCase
         self::assertNotNull($seconds);
         self::assertGreaterThanOrEqual(0.0, $seconds);
     }
+
+    #[Test]
+    public function durationSecondsReturnsNullWhenNotEnded(): void
+    {
+        $span = new Span('test', TraceContext::create());
+
+        self::assertNull($span->durationSeconds());
+    }
+
+    #[Test]
+    public function startTimeReturnsPositiveValue(): void
+    {
+        $span = new Span('test', TraceContext::create());
+
+        self::assertGreaterThan(0, $span->startTime());
+    }
+
+    #[Test]
+    public function parentSpanIdIsNullByDefault(): void
+    {
+        $span = new Span('test', TraceContext::create());
+
+        self::assertNull($span->parentSpanId);
+    }
 }

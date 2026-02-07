@@ -255,6 +255,124 @@ final class ContainerTest extends TestCase
         self::assertContains('a', $instances);
         self::assertContains('b', $instances);
     }
+
+    #[Test]
+    public function forgetInstanceRemovesCachedInstance(): void
+    {
+        $container = new Container();
+        $container->instance('service', new stdClass());
+
+        self::assertTrue($container->has('service'));
+
+        $container->forgetInstance('service');
+
+        self::assertFalse($container->has('service'));
+    }
+
+    #[Test]
+    public function setResolutionHintsLoadsHints(): void
+    {
+        $container = new Container();
+        $container->setResolutionHints([
+            ServiceStub::class => [
+                ['name' => 'dependency', 'type' => DependencyStub::class],
+            ],
+        ]);
+
+        self::assertNotEmpty($container->resolutionHints);
+    }
+
+    #[Test]
+    public function setResolutionHintsNullClearsHints(): void
+    {
+        $container = new Container();
+        $container->setResolutionHints([
+            ServiceStub::class => [
+                ['name' => 'dependency', 'type' => DependencyStub::class],
+            ],
+        ]);
+
+        $container->setResolutionHints(null);
+
+        self::assertEmpty($container->resolutionHints);
+    }
+
+    #[Test]
+    public function buildFromHintsResolvesWithCachedHints(): void
+    {
+        $container = new Container();
+        $container->bind(DependencyStub::class, DependencyStub::class);
+        $container->bind(ServiceStub::class, ServiceStub::class);
+
+        $container->setResolutionHints([
+            ServiceStub::class => [
+                ['name' => 'dependency', 'type' => DependencyStub::class],
+            ],
+        ]);
+
+        $service = $container->get(ServiceStub::class);
+
+        self::assertInstanceOf(ServiceStub::class, $service);
+        self::assertInstanceOf(DependencyStub::class, $service->dependency);
+    }
+
+    #[Test]
+    public function buildFallsBackToReflectionWhenHintsFail(): void
+    {
+        $container = new Container();
+        $container->bind(DependencyStub::class, DependencyStub::class);
+        $container->bind(ServiceStub::class, ServiceStub::class);
+
+        // Set invalid hints — type doesn't exist in container
+        /** @var class-string $bogus */
+        $bogus = trim('NonExistentClass');
+        $container->setResolutionHints([
+            ServiceStub::class => [
+                ['name' => 'dependency', 'type' => $bogus],
+            ],
+        ]);
+
+        // Should still resolve via reflection fallback
+        $service = $container->get(ServiceStub::class);
+
+        self::assertInstanceOf(ServiceStub::class, $service);
+    }
+
+    #[Test]
+    public function untypedParameterWithoutDefaultThrows(): void
+    {
+        $container = new Container();
+        $container->bind(UntypedParamStub::class, UntypedParamStub::class);
+
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessage('no type hint');
+
+        $_ = $container->get(UntypedParamStub::class);
+    }
+
+    #[Test]
+    public function builtinTypeParameterWithoutDefaultThrows(): void
+    {
+        $container = new Container();
+        $container->bind(BuiltinTypeStub::class, BuiltinTypeStub::class);
+
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessage('non-class type');
+
+        $_ = $container->get(BuiltinTypeStub::class);
+    }
+
+    #[Test]
+    public function uninstantiableClassThrows(): void
+    {
+        $container = new Container();
+        $container->bind(AbstractStub::class, AbstractStub::class);
+
+        $this->expectException(ContainerException::class);
+        $this->expectExceptionMessage('not instantiable');
+
+        $_ = $container->get(AbstractStub::class);
+    }
 }
 
 // Test stubs
@@ -280,3 +398,24 @@ class NullableDependencyStub
         public readonly ?DependencyStub $dependency = null,
     ) {}
 }
+
+class UntypedParamStub
+{
+    /** @var mixed */
+    public $value;
+
+    /** @param mixed $value */
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+}
+
+class BuiltinTypeStub
+{
+    public function __construct(
+        public readonly int $count,
+    ) {}
+}
+
+abstract class AbstractStub {}

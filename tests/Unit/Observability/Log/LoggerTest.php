@@ -173,6 +173,64 @@ final class LoggerTest extends TestCase
         self::assertCount(1, $sink->entries);
         self::assertSame(LogLevel::Warning, $sink->entries[0]->level);
     }
+
+    #[Test]
+    public function fromConfigWithExtraSinks(): void
+    {
+        $extraSink = new CollectingSink();
+        $config = new ObservabilityConfig(
+            defaultLoggingChannel: 'app',
+            loggingLevel: 'debug',
+            loggingChannels: [],
+            audit: new \Pulsar\Config\AuditConfig(
+                enabled: false,
+                logPath: 'var/logs/audit.jsonl',
+                events: [],
+            ),
+        );
+
+        $logger = Logger::fromConfigWithExtraSinks($config, [$extraSink]);
+        $logger->info('extra sink test');
+
+        self::assertCount(1, $extraSink->entries);
+    }
+
+    #[Test]
+    public function createSinkReturnsNullForUnknownDriver(): void
+    {
+        $config = new ObservabilityConfig(
+            defaultLoggingChannel: 'custom',
+            loggingLevel: 'debug',
+            loggingChannels: [
+                new LoggingChannelConfig(
+                    name: 'custom',
+                    driver: 'unknown_driver',
+                ),
+            ],
+            audit: new \Pulsar\Config\AuditConfig(
+                enabled: false,
+                logPath: 'var/logs/audit.jsonl',
+                events: [],
+            ),
+        );
+
+        $logger = Logger::fromConfig($config);
+
+        // Logger should be created even with unknown driver — it just has no sinks
+        self::assertInstanceOf(Logger::class, $logger);
+    }
+
+    #[Test]
+    public function logMethodFallsBackToDebugForNonStringLevel(): void
+    {
+        $sink = new CollectingSink();
+        $logger = new Logger([$sink], LogLevel::Debug);
+
+        $logger->log(42, 'non-string level');
+
+        self::assertCount(1, $sink->entries);
+        self::assertSame(LogLevel::Debug, $sink->entries[0]->level);
+    }
 }
 
 /**
