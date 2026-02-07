@@ -149,6 +149,13 @@ final class ConfigManager
             $this->repository->set($deployConfig);
         }
 
+        // Load runtime config (optional — only if config/runtime.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'runtime.php')) {
+            $runtimeData = $this->loadConfigFile('runtime');
+            $runtimeConfig = RuntimeConfig::fromArray($runtimeData, $this->environment);
+            $this->repository->set($runtimeConfig);
+        }
+
         // Studio config is NOT loaded here — it is loaded directly by Kernel::studioPreboot()
         // to avoid introducing a StudioConfig dependency in ConfigManager.
     }

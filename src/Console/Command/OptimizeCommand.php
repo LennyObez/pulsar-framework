@@ -23,6 +23,7 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Container\Container;
 use Pulsar\Core\Kernel;
 use Pulsar\Routing\Router;
+use Random\RandomException;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
@@ -59,6 +60,7 @@ final class OptimizeCommand extends Command
     /**
      * @throws CacheException If cache write operations fail
      * @throws JsonException If JSON serialization fails during caching
+     * @throws RandomException If random byte generation fails during cache signing
      * @throws ReflectionException If class reflection fails during container caching
      * @throws SodiumException If a sodium cryptographic operation fails during cache signing
      */
