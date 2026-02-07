@@ -1,0 +1,201 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extension\Cms\Http\Middleware;
+
+use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Api\Internal;
+use Pulsar\Auth\Identity\IdentityInterface;
+use Pulsar\Cache\Application\TaggedCacheInterface;
+use Pulsar\Extension\Cms\Config\CmsCacheConfig;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Middleware\MiddlewareInterface;
+
+use function array_filter;
+use function array_key_exists;
+use function array_values;
+use function hash;
+use function in_array;
+use function is_array;
+use function is_string;
+use function json_decode;
+use function json_encode;
+use function sprintf;
+use function str_starts_with;
+use function strtoupper;
+
+use const JSON_THROW_ON_ERROR;
+
+/**
+ * Full-page cache middleware for CMS content pages.
+ *
+ * Computes a cache key from tenant, locale, and path, then checks
+ * TaggedCacheInterface for a cached response. On miss, captures the
+ * response, stores it with content-aware tags, and serves it.
+ *
+ * Bypass conditions:
+ * - Authenticated admin users (any cms.* role)
+ * - Non-GET/HEAD methods
+ * - _nocache query parameter present
+ */
+#[Internal(reason: 'CMS middleware — not a public API surface')]
+final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
+{
+    public function __construct(
+        private TaggedCacheInterface $cache,
+        private CmsCacheConfig $cacheConfig,
+    ) {}
+
+    #[Override]
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
+    {
+        if ($this->shouldBypass($request)) {
+            return $handler->handle($request);
+        }
+
+        $cacheKey = $this->computeCacheKey($request);
+
+        $cached = $this->cache->get($cacheKey);
+
+        if ($cached !== null && is_string($cached)) {
+            /** @var array{body: string, status: int, headers: array<string, string>} $decoded */
+            $decoded = json_decode($cached, true);
+
+            if (is_array($decoded) && array_key_exists('body', $decoded)) {
+                $response = new Response(
+                    statusCode: (int) ($decoded['status'] ?? 200),
+                    headers: (array) ($decoded['headers'] ?? []),
+                    body: (string) $decoded['body'],
+                );
+
+                return $response->withHeader('X-CMS-Cache', 'HIT');
+            }
+        }
+
+        $response = $handler->handle($request);
+
+        // Only cache successful HTML responses
+        $statusCode = $response->getStatusCode();
+        if ($statusCode >= 200 && $statusCode < 300) {
+            $this->storeResponse($cacheKey, $response, $request);
+        }
+
+        return $response->withHeader('X-CMS-Cache', 'MISS');
+    }
+
+    private function shouldBypass(ServerRequestInterface $request): bool
+    {
+        $method = strtoupper($request->getMethod());
+
+        if (!in_array($method, ['GET', 'HEAD'], true)) {
+            return true;
+        }
+
+        $queryParams = $request->getQueryParams();
+
+        if (array_key_exists('_nocache', $queryParams)) {
+            return true;
+        }
+
+        /** @var IdentityInterface|null $identity */
+        $identity = $request->getAttribute('identity');
+
+        if ($identity !== null && $identity->isAuthenticated()) {
+            $roles = $identity->roles();
+
+            foreach ($roles as $role) {
+                if (str_starts_with($role, 'cms.')) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function computeCacheKey(ServerRequestInterface $request): string
+    {
+        /** @var string|null $tenantId */
+        $tenantId = $request->getAttribute('tenant_id') ?? 'default';
+
+        /** @var string $locale */
+        $locale = $request->getAttribute('locale') ?? 'en';
+
+        $path = ltrim($request->getUri()->getPath(), '/');
+
+        return sprintf('cms_page:%s:%s:%s', $tenantId, $locale, hash('xxh3', $path));
+    }
+
+    private function storeResponse(string $cacheKey, ResponseInterface $response, ServerRequestInterface $request): void
+    {
+        $body = (string) $response->getBody();
+
+        $serialized = json_encode([
+            'body' => $body,
+            'status' => $response->getStatusCode(),
+            'headers' => $this->extractCacheableHeaders($response),
+        ], JSON_THROW_ON_ERROR);
+
+        $tags = $this->computeTags($request);
+
+        $this->cache->set($cacheKey, $serialized, $tags, $this->cacheConfig->pageCacheTtlSeconds);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function extractCacheableHeaders(ResponseInterface $response): array
+    {
+        $cacheableNames = ['Content-Type', 'Content-Language', 'Cache-Control'];
+        $headers = [];
+
+        foreach ($cacheableNames as $name) {
+            $line = $response->getHeaderLine($name);
+
+            if ($line !== '') {
+                $headers[$name] = $line;
+            }
+        }
+
+        return $headers;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function computeTags(ServerRequestInterface $request): array
+    {
+        $tags = ['cms_pages'];
+
+        /** @var string|null $contentId */
+        $contentId = $request->getAttribute('cms_content_id');
+
+        if ($contentId !== null) {
+            $tags[] = "cms_content:{$contentId}";
+        }
+
+        /** @var string|null $contentType */
+        $contentType = $request->getAttribute('cms_content_type');
+
+        if ($contentType !== null) {
+            $tags[] = "cms_type:{$contentType}";
+        }
+
+        /** @var list<string>|null $menuIds */
+        $menuIds = $request->getAttribute('cms_menu_ids');
+
+        if ($menuIds !== null) {
+            foreach ($menuIds as $menuId) {
+                $tags[] = "cms_menu:{$menuId}";
+            }
+        }
+
+        $tags[] = 'cms_settings';
+
+        return array_values(array_filter($tags));
+    }
+}
