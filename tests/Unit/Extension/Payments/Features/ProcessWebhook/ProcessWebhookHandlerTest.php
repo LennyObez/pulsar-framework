@@ -13,13 +13,16 @@ use Pulsar\Extension\Payments\Config\IdempotencyConfig;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
+use Pulsar\Extension\Payments\Contracts\WebhookEventLogInterface;
 use Pulsar\Extension\Payments\Contracts\WebhookHandlerInterface;
 use Pulsar\Extension\Payments\Domain\WebhookEvent;
+use Pulsar\Extension\Payments\Exception\WebhookException;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookRequest;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\InMemoryWebhookEventLog;
+use Pulsar\Extension\Payments\Webhook\WebhookClaim;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -126,6 +129,84 @@ final class ProcessWebhookHandlerTest extends TestCase
             'event_type' => 'payment_intent.created',
             'status' => 'ok',
         ])));
+    }
+
+    #[Test]
+    public function executeMalformedJsonReturns400(): void
+    {
+        $handler = $this->createWebhookHandler();
+        $processor = $this->createHandler($handler);
+
+        $body = 'not valid json{{{';
+        $header = $this->createSignatureHeader($body, 1700000000);
+
+        $result = $processor->execute(new ProcessWebhookRequest($body, $header));
+
+        self::assertSame(ResponseStatus::BadRequest, $result->response->status);
+        self::assertStringContainsString('malformed_payload', $result->response->body);
+        self::assertCount(0, $handler->events);
+    }
+
+    #[Test]
+    public function executeInvalidEventTypeReturns400(): void
+    {
+        $handler = $this->createWebhookHandler();
+        $processor = $this->createHandler($handler);
+
+        $body = json_encode([
+            'id' => 'evt_bad',
+            'type' => 'completely_invalid_type',
+            'created_at' => 1700000000,
+            'data' => [],
+        ], JSON_THROW_ON_ERROR);
+        $header = $this->createSignatureHeader($body, 1700000000);
+
+        $result = $processor->execute(new ProcessWebhookRequest($body, $header));
+
+        self::assertSame(ResponseStatus::BadRequest, $result->response->status);
+        self::assertStringContainsString('malformed_payload', $result->response->body);
+        self::assertCount(0, $handler->events);
+    }
+
+    #[Test]
+    public function executeConcurrentClaimReturns409(): void
+    {
+        $handler = $this->createWebhookHandler();
+
+        $concurrentEventLog = new class implements WebhookEventLogInterface {
+            public function claim(string $eventId, DateTimeImmutable $now, int $ttlSeconds): WebhookClaim
+            {
+                throw WebhookException::concurrentClaim($eventId);
+            }
+
+            public function commit(string $eventId): void {}
+
+            public function release(string $eventId): void {}
+
+            public function prune(DateTimeImmutable $before): int
+            {
+                return 0;
+            }
+        };
+
+        $processor = new ProcessWebhookHandler(
+            verifier: new HmacWebhookVerifier($this->clock),
+            eventLog: $concurrentEventLog,
+            handler: $handler,
+            clock: $this->clock,
+            metricRegistry: $this->metricRegistry,
+            logger: new \Psr\Log\NullLogger(),
+            config: $this->createConfig(),
+        );
+
+        $body = $this->createEventBody('evt_concurrent', 'payment_intent.created');
+        $header = $this->createSignatureHeader($body, 1700000000);
+
+        $result = $processor->execute(new ProcessWebhookRequest($body, $header));
+
+        self::assertSame(ResponseStatus::Conflict, $result->response->status);
+        self::assertStringContainsString('concurrent_processing', $result->response->body);
+        self::assertCount(0, $handler->events);
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Payments\Internal\Support;
 
 use NoDiscard;
+use JsonException;
 use Pulsar\Api\Internal;
 
 use function is_array;
@@ -22,6 +23,8 @@ final readonly class ParametersHasher
      * Produce a deterministic SHA-256 hash from operation parameters.
      *
      * @param array<string, mixed> $parameters
+     *
+     * @throws JsonException
      */
     #[NoDiscard]
     public static function hash(string $operation, array $parameters): string

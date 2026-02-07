@@ -10,7 +10,6 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Payments\Contracts\WebhookEventLogInterface;
 use Pulsar\Extension\Payments\Exception\WebhookException;
 use Pulsar\Extension\Payments\Webhook\WebhookClaim;
-use Pulsar\Extension\Payments\Webhook\WebhookClaimStatus;
 
 /**
  * In-memory webhook replay prevention store with Fiber-safe mutex.

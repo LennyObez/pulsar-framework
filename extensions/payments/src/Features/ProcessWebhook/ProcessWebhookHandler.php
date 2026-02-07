@@ -7,16 +7,19 @@ namespace Pulsar\Extension\Payments\Features\ProcessWebhook;
 use Psr\Log\LoggerInterface;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
+use JsonException;
 use Pulsar\Extension\Payments\Contracts\WebhookEventLogInterface;
 use Pulsar\Extension\Payments\Contracts\WebhookHandlerInterface;
 use Pulsar\Extension\Payments\Contracts\WebhookVerifierInterface;
 use Pulsar\Extension\Payments\Domain\WebhookEvent;
+use Pulsar\Extension\Payments\Exception\WebhookException;
 use Pulsar\Extension\Payments\Webhook\WebhookClaimStatus;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Throwable;
+use ValueError;
 
 /**
  * Process webhook use case handler.
@@ -63,16 +66,44 @@ final readonly class ProcessWebhookHandler
         }
 
         // 2. Parse event
-        /** @var array<string, mixed> $decoded */
-        $decoded = json_decode($request->rawBody, true, 512, JSON_THROW_ON_ERROR);
-        $event = WebhookEvent::fromArray($decoded);
+        try {
+            /** @var array<string, mixed> $decoded */
+            $decoded = json_decode($request->rawBody, true, 512, JSON_THROW_ON_ERROR);
+            $event = WebhookEvent::fromArray($decoded);
+        } catch (JsonException|ValueError $e) {
+            $this->incrementWebhookMetric($provider, 'unknown', 'malformed');
+            $this->logger->warning('Webhook payload malformed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return new ProcessWebhookResult(
+                Response::json(
+                    ['status' => 'malformed_payload'],
+                    ResponseStatus::BadRequest,
+                ),
+            );
+        }
 
         // 3. Claim event for deduplication
-        $claim = $this->eventLog->claim(
-            $event->id,
-            $this->clock->now(),
-            $this->config->webhookLog->ttlSeconds,
-        );
+        try {
+            $claim = $this->eventLog->claim(
+                $event->id,
+                $this->clock->now(),
+                $this->config->webhookLog->ttlSeconds,
+            );
+        } catch (WebhookException $e) {
+            $this->logger->warning('Webhook event concurrent claim', [
+                'event_id' => $event->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return new ProcessWebhookResult(
+                Response::json(
+                    ['status' => 'concurrent_processing'],
+                    ResponseStatus::Conflict,
+                ),
+            );
+        }
 
         if ($claim->status === WebhookClaimStatus::Replay) {
             $this->incrementWebhookMetric($provider, $event->type->value, 'replay');

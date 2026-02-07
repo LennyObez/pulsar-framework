@@ -11,7 +11,6 @@ use Pulsar\Extension\Payments\Contracts\IdempotencyStoreInterface;
 use Pulsar\Extension\Payments\Domain\IdempotencyRecord;
 use Pulsar\Extension\Payments\Exception\IdempotencyException;
 use Pulsar\Extension\Payments\Idempotency\IdempotencyClaim;
-use Pulsar\Extension\Payments\Idempotency\IdempotencyClaimStatus;
 
 /**
  * In-memory idempotency store with Fiber-safe mutex.

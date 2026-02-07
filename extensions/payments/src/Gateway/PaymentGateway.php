@@ -7,16 +7,11 @@ namespace Pulsar\Extension\Payments\Gateway;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
-<<<<<<< feat/modular-monolith-payments
+use JsonException;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
 use Pulsar\Extension\Payments\Contracts\IdempotencyStoreInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentGatewayInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
-=======
-use Pulsar\Extension\Payments\Contract\ClockInterface;
-use Pulsar\Extension\Payments\Contract\IdempotencyStoreInterface;
-use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
->>>>>>> main
 use Pulsar\Extension\Payments\Domain\Charge;
 use Pulsar\Extension\Payments\Domain\ChargeStatus;
 use Pulsar\Extension\Payments\Domain\Currency;
@@ -27,14 +22,10 @@ use Pulsar\Extension\Payments\Domain\Refund;
 use Pulsar\Extension\Payments\Domain\RefundStatus;
 use Pulsar\Extension\Payments\Exception\IdempotencyException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
-<<<<<<< feat/modular-monolith-payments
 use Pulsar\Extension\Payments\Features\CreatePaymentIntent\CreatePaymentIntentHandler;
 use Pulsar\Extension\Payments\Features\CreatePaymentIntent\CreatePaymentIntentRequest;
 use Pulsar\Extension\Payments\Idempotency\IdempotencyClaimStatus;
 use Pulsar\Extension\Payments\Internal\Support\ParametersHasher;
-=======
-use Pulsar\Extension\Payments\Idempotency\IdempotencyClaimStatus;
->>>>>>> main
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Security\Audit\AuditEvent;
@@ -50,11 +41,7 @@ use function strlen;
  * Wraps the payment provider with cross-cutting concerns:
  * idempotency enforcement, audit logging, and metrics.
  */
-<<<<<<< feat/modular-monolith-payments
 final readonly class PaymentGateway implements PaymentGatewayInterface
-=======
-final readonly class PaymentGateway
->>>>>>> main
 {
     private const string IDEMPOTENCY_KEY_PATTERN = '/^[\x21-\x7E]{1,256}$/';
 
@@ -66,10 +53,7 @@ final readonly class PaymentGateway
         private LoggerInterface $logger,
         private ClockInterface $clock,
         private PaymentsConfig $config,
-<<<<<<< feat/modular-monolith-payments
         private ?CreatePaymentIntentHandler $createHandler = null,
-=======
->>>>>>> main
     ) {}
 
     /**
@@ -79,10 +63,10 @@ final readonly class PaymentGateway
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
+     * @throws JsonException
      */
     public function createIntent(Money $amount, string $idempotencyKey, array $metadata = []): PaymentIntent
     {
-<<<<<<< feat/modular-monolith-payments
         $handler = $this->createHandler ?? new CreatePaymentIntentHandler(
             $this->provider,
             $this->idempotencyStore,
@@ -96,51 +80,6 @@ final readonly class PaymentGateway
         return $handler->execute(
             new CreatePaymentIntentRequest($amount, $idempotencyKey, $metadata),
         )->intent;
-=======
-        $this->validateIdempotencyKey($idempotencyKey);
-
-        $parametersHash = ParametersHasher::hash('createIntent', [
-            'amount_minor' => $amount->amount,
-            'currency' => $amount->currency->value,
-            'provider' => $this->provider->name(),
-        ]);
-
-        $claim = $this->idempotencyStore->claim(
-            $idempotencyKey,
-            $parametersHash,
-            'createIntent',
-            $this->clock->now(),
-            $this->config->idempotency->ttlSeconds,
-        );
-
-        if ($claim->status === IdempotencyClaimStatus::Mismatch) {
-            throw IdempotencyException::parameterMismatch($idempotencyKey);
-        }
-
-        if ($claim->status === IdempotencyClaimStatus::Replay) {
-            $this->incrementReplayMetric('createIntent');
-
-            /** @var string $payload */
-            $payload = $claim->resultPayload;
-
-            return $this->deserializeIntent($payload);
-        }
-
-        try {
-            $intent = $this->provider->createIntent($amount, $idempotencyKey, $metadata);
-
-            $this->commitResult($idempotencyKey, 'payment_intent', $intent);
-            $this->auditPayment('create_intent', $intent->id, $amount, $intent->status->value);
-            $this->incrementIntentMetric($amount, $intent->status->value);
-
-            return $intent;
-        } catch (Throwable $e) {
-            $this->idempotencyStore->release($idempotencyKey);
-            $this->incrementProviderErrorMetric('createIntent', $e);
-
-            throw $e;
-        }
->>>>>>> main
     }
 
     /**
@@ -148,6 +87,7 @@ final readonly class PaymentGateway
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
+     * @throws JsonException
      */
     public function captureIntent(string $intentId, string $idempotencyKey): Charge
     {
@@ -200,6 +140,7 @@ final readonly class PaymentGateway
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
+     * @throws JsonException
      */
     public function cancelIntent(string $intentId, string $idempotencyKey): PaymentIntent
     {
@@ -252,6 +193,7 @@ final readonly class PaymentGateway
      *
      * @throws IdempotencyException
      * @throws PaymentProviderException
+     * @throws JsonException
      */
     public function refund(string $chargeId, ?Money $amount, string $idempotencyKey): Refund
     {
@@ -303,6 +245,8 @@ final readonly class PaymentGateway
 
     /**
      * Get a payment intent (read-only, no idempotency).
+     *
+     * @throws PaymentProviderException
      */
     public function getIntent(string $intentId): PaymentIntent
     {
@@ -311,6 +255,8 @@ final readonly class PaymentGateway
 
     /**
      * Get a charge (read-only, no idempotency).
+     *
+     * @throws PaymentProviderException
      */
     public function getCharge(string $chargeId): Charge
     {
@@ -319,6 +265,8 @@ final readonly class PaymentGateway
 
     /**
      * Get a refund (read-only, no idempotency).
+     *
+     * @throws PaymentProviderException
      */
     public function getRefund(string $refundId): Refund
     {

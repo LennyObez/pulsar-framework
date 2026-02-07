@@ -10,6 +10,7 @@ use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
 use Pulsar\Extension\Payments\Contracts\IdempotencyStoreInterface;
 use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
+use JsonException;
 use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\PaymentIntent;
@@ -49,6 +50,7 @@ final readonly class CreatePaymentIntentHandler
     /**
      * @throws IdempotencyException
      * @throws PaymentProviderException
+     * @throws JsonException
      */
     public function execute(CreatePaymentIntentRequest $request): CreatePaymentIntentResult
     {
