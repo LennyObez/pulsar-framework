@@ -7,6 +7,8 @@ namespace Pulsar\Config;
 use function array_key_exists;
 use function is_file;
 use function is_readable;
+use function preg_replace;
+use function rtrim;
 
 use NoDiscard;
 use Pulsar\Api\Api;
@@ -137,7 +139,8 @@ final class Environment
      *
      * Supports:
      * - `KEY=VALUE`
-     * - `#` comments
+     * - `export KEY=VALUE` (export prefix stripped)
+     * - `#` comments (full-line and inline on unquoted values)
      * - Blank lines
      * - Quoted values (single and double quotes stripped from both ends)
      *
@@ -162,6 +165,11 @@ final class Environment
                 continue;
             }
 
+            // Strip export prefix
+            if (str_starts_with($line, 'export ')) {
+                $line = substr($line, 7);
+            }
+
             $equalsPos = strpos($line, '=');
 
             if ($equalsPos === false) {
@@ -170,6 +178,12 @@ final class Environment
 
             $key = trim(substr($line, 0, $equalsPos));
             $value = trim(substr($line, $equalsPos + 1));
+
+            // Strip inline comments for unquoted values
+            if ($value !== '' && $value[0] !== '"' && $value[0] !== "'") {
+                $value = preg_replace('/\s+#.*$/', '', $value) ?? $value;
+                $value = rtrim($value);
+            }
 
             // Strip surrounding quotes
             if (
