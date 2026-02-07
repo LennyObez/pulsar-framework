@@ -32,6 +32,7 @@ use function substr;
  * Sub-key IDs:
  * - 1 = encryption (used by Encryptor)
  * - 2 = audit HMAC chain
+ * - 3 = pseudonymization (used by PseudonymizationService)
  */
 #[Api(since: '1.0.0')]
 final class MasterKey implements KeyProviderInterface
