@@ -8,8 +8,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Payments\Clock\FixedClock;
-use Pulsar\Extension\Payments\Clock\SystemClock;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\SystemClock;
 
 #[CoversClass(FixedClock::class)]
 #[CoversClass(SystemClock::class)]
