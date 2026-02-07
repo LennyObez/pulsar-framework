@@ -47,6 +47,7 @@ use Pulsar\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Studio\Console\Event\Payload\BenchmarkProfilePayload;
 use Pulsar\Studio\Console\Event\Payload\BenchmarkRunPayload;
 use Pulsar\Support\AtomicFileWriter;
+use Random\RandomException;
 
 use function random_bytes;
 use function sprintf;
@@ -85,7 +86,7 @@ final class ConsoleBenchmarkCommand extends Command
 
     /**
      * @throws JsonException If profile JSON cannot be decoded or results cannot be encoded
-     * @throws \Random\RandomException If random_bytes() fails for run ID generation
+     * @throws RandomException If random_bytes() fails for run ID generation
      */
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
@@ -432,6 +433,8 @@ final class ConsoleBenchmarkCommand extends Command
 
     /**
      * @param array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string}> $profiles
+     *
+     * @throws RandomException If random_bytes() fails for temp file naming
      */
     private function generatePreloadIfNeeded(array $profiles, string $phpBinary, OutputInterface $output): ?string
     {

@@ -95,6 +95,7 @@ final class PersistentRuntime implements RuntimeInterface
 
     /**
      * @throws RuntimeException If the server socket cannot be created or bound
+     * @throws Throwable If the kernel fails to boot
      */
     #[Override]
     public function start(): void
@@ -299,8 +300,6 @@ final class PersistentRuntime implements RuntimeInterface
                 );
 
                 // Run request through sandbox and kernel
-                $response = null;
-
                 try {
                     $request = $this->beforeRequest($request);
                     $response = $this->kernel->handle($request);
@@ -315,10 +314,9 @@ final class PersistentRuntime implements RuntimeInterface
                     );
                     // Always close on 5xx
                     $requestKeepAlive = false;
-                } finally {
-                    /** @var Response $response — always assigned: try sets via handle(), catch sets error response */
-                    $this->afterRequest($request, $response);
                 }
+
+                $this->afterRequest($request, $response);
 
                 // Handle upgrade responses (Kernel::handle() may return UpgradeResponse)
                 if ($response instanceof UpgradeResponse) { // @phpstan-ignore instanceof.alwaysFalse

@@ -34,6 +34,7 @@ exclude:
       - src/Runtime/PersistentRuntime.php
       - src/Runtime/Fiber/FiberScheduler.php
       - src/Runtime/Http/ConnectionContext.php
+      - src/Runtime/Upgrade/UpgradeHandlerInterface.php
       - src/Console/Command/RuntimeServeCommand.php
   # Duplicated code - Studio CLI commands share structural patterns (extract values,
   # format output) but operate on different data; further extraction is over-engineering.
@@ -50,16 +51,12 @@ exclude:
   - name: PhpLoopCanBeConvertedToArrayFindInspection
     paths:
       - src/Deploy/Check/OpcacheCheck.php
-  # RuntimeConfig helper methods (string/int/bool/envString) are generic factories called
-  # with varying args at design time; "parameter always same" is a false positive.
-  - name: PhpParameterAlwaysNullInspection
+  # Loop → array_filter() — Psalm 6.x cannot narrow key types through ARRAY_FILTER_USE_KEY
+  # callbacks, producing array<int|string, string> instead of array<string, string>.
+  - name: PhpLoopCanBeConvertedToArrayFilterInspection
     paths:
-      - src/Config/RuntimeConfig.php
-  # Explicit getters with @return phpdoc are clearer than property hooks for array types
-  # with mutation via register methods.
-  - name: PhpAccessorCanBeReplacedWithPropertyHookInspection
-    paths:
-      - src/Runtime/RequestResetRegistry.php
+      - src/Routing/Route.php
+      - src/Runtime/Http/HttpRequestParser.php
   - name: All
     paths:
       - composer.json

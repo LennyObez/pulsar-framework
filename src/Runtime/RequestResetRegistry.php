@@ -18,10 +18,10 @@ use Pulsar\Api\Internal;
 final class RequestResetRegistry
 {
     /** @var list<string> Service IDs implementing ResettableInterface */
-    private array $resettableIds = [];
+    public private(set) array $resettableIds = [];
 
     /** @var list<string> Service IDs to evict (forgetInstance) between requests */
-    private array $evictableIds = [];
+    public private(set) array $evictableIds = [];
 
     /**
      * Register a service ID as resettable (implements ResettableInterface).
@@ -41,25 +41,5 @@ final class RequestResetRegistry
         if (!in_array($serviceId, $this->evictableIds, true)) {
             $this->evictableIds[] = $serviceId;
         }
-    }
-
-    /**
-     * Get all registered resettable service IDs in registration order.
-     *
-     * @return list<string>
-     */
-    public function getResettableIds(): array
-    {
-        return $this->resettableIds;
-    }
-
-    /**
-     * Get all registered evictable service IDs in registration order.
-     *
-     * @return list<string>
-     */
-    public function getEvictableIds(): array
-    {
-        return $this->evictableIds;
     }
 }

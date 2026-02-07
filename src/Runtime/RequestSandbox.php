@@ -47,12 +47,12 @@ final readonly class RequestSandbox
     public function afterRequest(Request $request, Response $response): array
     {
         // 1. Evict request-bound services first
-        foreach ($this->registry->getEvictableIds() as $id) {
+        foreach ($this->registry->evictableIds as $id) {
             $this->container->forgetInstance($id);
         }
 
         // 2. Reset resettable singletons in deterministic order
-        foreach ($this->registry->getResettableIds() as $id) {
+        foreach ($this->registry->resettableIds as $id) {
             if ($this->container->has($id)) {
                 $service = $this->container->get($id);
 

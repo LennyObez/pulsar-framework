@@ -482,7 +482,7 @@ final class Kernel
     /**
      * Invoke the route handler.
      *
-     * @throws RuntimeException If the handler is invalid or returns an unexpected type
+     * @throws Throwable If the handler throws or is invalid
      * @throws ContainerException If a container error occurs resolving a controller
      * @throws NotFoundException If a controller binding is not found in the container
      * @throws Error If a controller class cannot be instantiated
@@ -1392,6 +1392,7 @@ final class Kernel
      *
      * @throws ContainerException If a container resolution fails
      * @throws NotFoundException If a required service is not registered
+     * @throws ReflectionException If class reflection fails during autowiring
      */
     private function createRuntimeServices(): void
     {

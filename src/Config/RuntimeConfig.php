@@ -39,9 +39,11 @@ final readonly class RuntimeConfig
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
+        $host = $environment->get('RUNTIME_HOST');
+        $hostValue = is_string($data['host'] ?? null) ? $data['host'] : '127.0.0.1';
+
         return new self(
-            host: self::envString($environment, 'RUNTIME_HOST')
-                ?? self::string($data, 'host', '127.0.0.1'),
+            host: $host ?? $hostValue,
             port: self::envInt($environment, 'RUNTIME_PORT')
                 ?? self::int($data, 'port', 8080),
             maxRequests: self::envInt($environment, 'RUNTIME_MAX_REQUESTS')
@@ -50,7 +52,7 @@ final readonly class RuntimeConfig
                 ?? self::int($data, 'memory_threshold_mb', 256),
             timeLimitSeconds: self::envInt($environment, 'RUNTIME_TIME_LIMIT_SECONDS')
                 ?? self::int($data, 'time_limit_seconds', 7200),
-            keepAlive: self::bool($data, 'keep_alive', true),
+            keepAlive: self::bool($data, 'keep_alive'),
             keepAliveTimeout: self::int($data, 'keep_alive_timeout', 15),
             headerTimeoutSeconds: self::int($data, 'header_timeout_seconds', 15),
             bodyTimeoutSeconds: self::int($data, 'body_timeout_seconds', 60),
@@ -58,13 +60,8 @@ final readonly class RuntimeConfig
                 ?? self::int($data, 'fiber_concurrency', 0),
             maxHeaderSize: self::int($data, 'max_header_size', 8192),
             maxBodySize: self::int($data, 'max_body_size', 10_485_760),
-            addDateHeader: self::bool($data, 'add_date_header', true),
+            addDateHeader: self::bool($data, 'add_date_header'),
         );
-    }
-
-    private static function envString(Environment $environment, string $key): ?string
-    {
-        return $environment->get($key);
     }
 
     private static function envInt(Environment $environment, string $key): ?int
@@ -72,16 +69,6 @@ final readonly class RuntimeConfig
         $value = $environment->get($key);
 
         return $value !== null ? (int) $value : null;
-    }
-
-    /**
-     * @param array<string, mixed> $data
-     */
-    private static function string(array $data, string $key, string $default): string
-    {
-        $value = $data[$key] ?? null;
-
-        return is_string($value) ? $value : $default;
     }
 
     /**
@@ -97,10 +84,10 @@ final readonly class RuntimeConfig
     /**
      * @param array<string, mixed> $data
      */
-    private static function bool(array $data, string $key, bool $default): bool
+    private static function bool(array $data, string $key): bool
     {
         $value = $data[$key] ?? null;
 
-        return is_bool($value) ? $value : $default;
+        return is_bool($value) ? $value : true;
     }
 }

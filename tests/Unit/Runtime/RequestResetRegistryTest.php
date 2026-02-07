@@ -17,8 +17,8 @@ final class RequestResetRegistryTest extends TestCase
     {
         $registry = new RequestResetRegistry();
 
-        self::assertSame([], $registry->getResettableIds());
-        self::assertSame([], $registry->getEvictableIds());
+        self::assertSame([], $registry->resettableIds);
+        self::assertSame([], $registry->evictableIds);
     }
 
     #[Test]
@@ -31,7 +31,7 @@ final class RequestResetRegistryTest extends TestCase
         self::assertSame([
             'App\\Service\\SessionStore',
             'App\\Service\\TenantContext',
-        ], $registry->getResettableIds());
+        ], $registry->resettableIds);
     }
 
     #[Test]
@@ -44,7 +44,7 @@ final class RequestResetRegistryTest extends TestCase
         self::assertSame([
             'App\\Auth\\SecurityContext',
             'App\\Auth\\TokenBag',
-        ], $registry->getEvictableIds());
+        ], $registry->evictableIds);
     }
 
     #[Test]
@@ -55,8 +55,8 @@ final class RequestResetRegistryTest extends TestCase
         $registry->registerResettable('App\\Service\\TenantContext');
         $registry->registerResettable('App\\Service\\TenantContext');
 
-        self::assertCount(1, $registry->getResettableIds());
-        self::assertSame(['App\\Service\\TenantContext'], $registry->getResettableIds());
+        self::assertCount(1, $registry->resettableIds);
+        self::assertSame(['App\\Service\\TenantContext'], $registry->resettableIds);
     }
 
     #[Test]
@@ -66,8 +66,8 @@ final class RequestResetRegistryTest extends TestCase
         $registry->registerEvictable('App\\Auth\\SecurityContext');
         $registry->registerEvictable('App\\Auth\\SecurityContext');
 
-        self::assertCount(1, $registry->getEvictableIds());
-        self::assertSame(['App\\Auth\\SecurityContext'], $registry->getEvictableIds());
+        self::assertCount(1, $registry->evictableIds);
+        self::assertSame(['App\\Auth\\SecurityContext'], $registry->evictableIds);
     }
 
     #[Test]
@@ -79,7 +79,7 @@ final class RequestResetRegistryTest extends TestCase
         $registry->registerResettable('second');
 
         // Should maintain insertion order, not sorted
-        self::assertSame(['third', 'first', 'second'], $registry->getResettableIds());
+        self::assertSame(['third', 'first', 'second'], $registry->resettableIds);
     }
 
     #[Test]
@@ -89,7 +89,7 @@ final class RequestResetRegistryTest extends TestCase
         $registry->registerResettable('shared.id');
         $registry->registerEvictable('shared.id');
 
-        self::assertSame(['shared.id'], $registry->getResettableIds());
-        self::assertSame(['shared.id'], $registry->getEvictableIds());
+        self::assertSame(['shared.id'], $registry->resettableIds);
+        self::assertSame(['shared.id'], $registry->evictableIds);
     }
 }
