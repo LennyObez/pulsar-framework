@@ -113,7 +113,7 @@ final class ConsoleBenchmarkCommand extends Command
             return ExitCode::Error->value;
         }
 
-        /** @var array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool}> $profiles */
+        /** @var array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string}> $profiles */
         $profiles = json_decode($profilesContent, true, 512, JSON_THROW_ON_ERROR);
 
         if ($singleProfile !== null) {
@@ -337,7 +337,7 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool} $profile
+     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string} $profile
      * @param array<string, mixed> $results
      */
     private function executeProfile(
@@ -430,7 +430,7 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @param array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool}> $profiles
+     * @param array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string}> $profiles
      */
     private function generatePreloadIfNeeded(array $profiles, string $phpBinary, OutputInterface $output): ?string
     {
@@ -473,7 +473,7 @@ final class ConsoleBenchmarkCommand extends Command
     }
 
     /**
-     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool} $profile
+     * @param array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string} $profile
      *
      * @return array{boot_us: int, warm_boot_us: int, iterations: int, memory_usage_kb: int, opcache_memory_kb: ?int, p50_us: int, p95_us: int, peak_rss_kb: int, rps: int}|null
      */
@@ -484,6 +484,13 @@ final class ConsoleBenchmarkCommand extends Command
         string $workerScript,
         ?string $tempPreloadFile,
     ): ?array {
+        // Select worker script based on profile type
+        $worker = $profile['worker'] ?? 'default';
+
+        if ($worker === 'runtime') {
+            $workerScript = $this->basePath . '/tools/bench/runtime-worker.php';
+        }
+
         $iniFlags = [];
 
         foreach ($profile['ini'] as $key => $value) {

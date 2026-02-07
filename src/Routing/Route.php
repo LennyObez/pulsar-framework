@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Routing;
 
-use function array_filter;
-
-use const ARRAY_FILTER_USE_KEY;
-
 use function in_array;
+use function is_string;
 
 use NoDiscard;
 use Pulsar\Api\Api;
@@ -54,8 +51,6 @@ readonly class Route
      *
      * Returns extracted parameters on match, null on no match.
      *
-     * @psalm-suppress MixedReturnTypeCoercion array_filter with is_string key filter guarantees string keys
-     *
      * @return array<string, string>|null
      */
     public function matchesPath(string $path): ?array
@@ -73,9 +68,7 @@ readonly class Route
         $pattern = $this->pathToPattern($routePath);
 
         if (preg_match($pattern, $requestPath, $matches)) {
-            // Extract named parameters (filter out numeric keys from preg_match)
-            /** @psalm-suppress MixedReturnTypeCoercion array_filter with is_string key filter guarantees string keys */
-            return array_filter($matches, is_string(...), ARRAY_FILTER_USE_KEY);
+            return $this->extractNamedParameters($matches);
         }
 
         return null;
@@ -127,8 +120,6 @@ readonly class Route
      * Returns extracted host parameters on match, null on no match.
      * Routes without a host pattern match any host (returns empty array).
      *
-     * @psalm-suppress MixedReturnTypeCoercion array_filter with is_string key filter guarantees string keys
-     *
      * @return array<string, string>|null
      */
     public function matchesHost(string $host): ?array
@@ -154,8 +145,7 @@ readonly class Route
         $pattern = '#^' . ($replaced ?? $pattern) . '$#i';
 
         if (preg_match($pattern, $host, $matches)) {
-            /** @psalm-suppress MixedReturnTypeCoercion array_filter with is_string key filter guarantees string keys */
-            return array_filter($matches, is_string(...), ARRAY_FILTER_USE_KEY);
+            return $this->extractNamedParameters($matches);
         }
 
         return null;
@@ -230,5 +220,28 @@ readonly class Route
             $handler,
             $name,
         );
+    }
+
+    /**
+     * Extract named parameters from preg_match results.
+     *
+     * Filters out numeric keys (capture group indices) and returns
+     * only the named capture groups as string-keyed values.
+     *
+     * @param array<int|string, string> $matches
+     *
+     * @return array<string, string>
+     */
+    private function extractNamedParameters(array $matches): array
+    {
+        $params = [];
+
+        foreach ($matches as $key => $value) {
+            if (is_string($key)) {
+                $params[$key] = $value;
+            }
+        }
+
+        return $params;
     }
 }

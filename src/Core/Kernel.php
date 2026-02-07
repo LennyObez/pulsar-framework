@@ -59,6 +59,7 @@ use Pulsar\Config\QueueConfig;
 use Pulsar\Config\QueueDriverType;
 use Pulsar\Config\ResilienceConfig;
 use Pulsar\Config\RetryConfig;
+use Pulsar\Config\RuntimeConfig;
 use Pulsar\Config\SchedulerConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
@@ -127,6 +128,9 @@ use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RoutingException;
+use Pulsar\Runtime\LeakDetector;
+use Pulsar\Runtime\RequestResetRegistry;
+use Pulsar\Runtime\RequestSandbox;
 use Pulsar\Scheduler\JobRegistry;
 use Pulsar\Scheduler\Scheduler;
 use Pulsar\Security\Audit\AuditFileSink;
@@ -318,6 +322,7 @@ final class Kernel
             $this->createSupervisorServices();
             $this->createIntegrityServices();
             $this->createDeployServices();
+            $this->createRuntimeServices();
             $this->registerDiagnosticsRoute();
             $this->studioPreboot();
         }
@@ -1375,6 +1380,62 @@ final class Kernel
 
         $deployCheck = new DeployCheck();
         $this->container->instance(DeployCheck::class, $deployCheck);
+    }
+
+    /**
+     * Create runtime services for the persistent worker runtime.
+     *
+     * Registers RuntimeConfig, RequestResetRegistry, LeakDetector, and
+     * RequestSandbox. Also populates the registry with known resettable
+     * and evictable service IDs.
+     */
+    private function createRuntimeServices(): void
+    {
+        /** @var ConfigManager $configManager Already checked non-null before calling */
+        $configManager = $this->configManager;
+        $repository = $configManager->repository();
+
+        if (!$repository->has(RuntimeConfig::class)) {
+            return;
+        }
+
+        /** @var RuntimeConfig $runtimeConfig */
+        $runtimeConfig = $repository->get(RuntimeConfig::class);
+        $this->container->instance(RuntimeConfig::class, $runtimeConfig);
+
+        // Create the request reset registry
+        $registry = new RequestResetRegistry();
+
+        // Register evictable services (re-created per request by middleware)
+        $registry->registerEvictable(\Pulsar\Auth\SecurityContext::class);
+
+        // Register resettable services (state reset between requests)
+        if ($this->container->has(TenantContext::class)) {
+            $registry->registerResettable(TenantContext::class);
+        }
+
+        if ($this->container->has(FlagEvaluationLog::class)) {
+            $registry->registerResettable(FlagEvaluationLog::class);
+        }
+
+        if ($this->container->has(\Pulsar\Auth\AuthManagerInterface::class)) {
+            $registry->registerResettable(\Pulsar\Auth\AuthManagerInterface::class);
+        }
+
+        $this->container->instance(RequestResetRegistry::class, $registry);
+
+        // Create leak detector
+        $logger = $this->container->has(LoggerInterface::class)
+            ? $this->container->get(LoggerInterface::class)
+            : null;
+
+        /** @var LoggerInterface|null $logger */
+        $leakDetector = new LeakDetector(logger: $logger);
+        $this->container->instance(LeakDetector::class, $leakDetector);
+
+        // Create request sandbox
+        $sandbox = new RequestSandbox($this->container, $registry, $leakDetector);
+        $this->container->instance(RequestSandbox::class, $sandbox);
     }
 
     /**
