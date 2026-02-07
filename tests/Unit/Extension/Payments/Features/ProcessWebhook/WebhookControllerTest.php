@@ -2,24 +2,24 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Unit\Extension\Payments\Controller;
+namespace Pulsar\Tests\Unit\Extension\Payments\Features\ProcessWebhook;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Pulsar\Extension\Payments\Clock\FixedClock;
 use Pulsar\Extension\Payments\Config\IdempotencyConfig;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Config\WebhookConfig;
 use Pulsar\Extension\Payments\Config\WebhookLogConfig;
-use Pulsar\Extension\Payments\Contract\WebhookHandlerInterface;
-use Pulsar\Extension\Payments\Controller\WebhookController;
+use Pulsar\Extension\Payments\Contracts\WebhookHandlerInterface;
 use Pulsar\Extension\Payments\Domain\WebhookEvent;
-use Pulsar\Extension\Payments\Webhook\HmacWebhookVerifier;
-use Pulsar\Extension\Payments\Webhook\InMemoryWebhookEventLog;
-use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
+use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
+use Pulsar\Extension\Payments\Features\ProcessWebhook\WebhookController;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\InMemoryWebhookEventLog;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
@@ -30,7 +30,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 final class WebhookControllerTest extends TestCase
 {
     #[Test]
-    public function handleExtractsSignatureAndDelegatesToProcessor(): void
+    public function handleExtractsSignatureAndDelegatesToHandler(): void
     {
         $secret = 'test-webhook-secret';
         $timestamp = 1735689600;
@@ -39,7 +39,7 @@ final class WebhookControllerTest extends TestCase
         $signatureHeader = 't=' . $timestamp . ',v1=' . $signature;
 
         $clock = new FixedClock(new DateTimeImmutable('@' . $timestamp));
-        $handler = new class implements WebhookHandlerInterface {
+        $webhookHandler = new class implements WebhookHandlerInterface {
             public bool $called = false;
 
             public function handle(WebhookEvent $event): void
@@ -49,17 +49,17 @@ final class WebhookControllerTest extends TestCase
         };
 
         $config = $this->createConfig($secret);
-        $processor = new WebhookProcessor(
+        $processHandler = new ProcessWebhookHandler(
             verifier: new HmacWebhookVerifier($clock),
             eventLog: new InMemoryWebhookEventLog(),
-            handler: $handler,
+            handler: $webhookHandler,
             clock: $clock,
             metricRegistry: new MetricRegistry(),
             logger: new NullLogger(),
             config: $config,
         );
 
-        $controller = new WebhookController($processor, $config);
+        $controller = new WebhookController($processHandler, $config);
 
         $request = new Request(
             method: Method::POST,
@@ -73,28 +73,28 @@ final class WebhookControllerTest extends TestCase
         $response = $controller->handle($request);
 
         self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertTrue($handler->called);
+        self::assertTrue($webhookHandler->called);
     }
 
     #[Test]
     public function handleUsesEmptyStringWhenSignatureHeaderMissing(): void
     {
         $clock = new FixedClock(new DateTimeImmutable('2025-01-01T00:00:00Z'));
-        $handler = $this->createMock(WebhookHandlerInterface::class);
-        $handler->expects(self::never())->method('handle');
+        $webhookHandler = $this->createMock(WebhookHandlerInterface::class);
+        $webhookHandler->expects(self::never())->method('handle');
 
         $config = $this->createConfig('test-secret');
-        $processor = new WebhookProcessor(
+        $processHandler = new ProcessWebhookHandler(
             verifier: new HmacWebhookVerifier($clock),
             eventLog: new InMemoryWebhookEventLog(),
-            handler: $handler,
+            handler: $webhookHandler,
             clock: $clock,
             metricRegistry: new MetricRegistry(),
             logger: new NullLogger(),
             config: $config,
         );
 
-        $controller = new WebhookController($processor, $config);
+        $controller = new WebhookController($processHandler, $config);
 
         $request = new Request(
             method: Method::POST,
@@ -107,7 +107,6 @@ final class WebhookControllerTest extends TestCase
 
         $response = $controller->handle($request);
 
-        // Empty signature causes verification failure → 403
         self::assertSame(ResponseStatus::Forbidden, $response->status);
     }
 

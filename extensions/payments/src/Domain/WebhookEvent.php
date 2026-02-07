@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Payments\Domain;
 use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
+use ValueError;
 
 /**
  * Inbound webhook event DTO.
@@ -28,6 +29,8 @@ final readonly class WebhookEvent
      * Build from a decoded JSON array.
      *
      * @param array<string, mixed> $payload
+     *
+     * @throws ValueError If the event type is not a valid WebhookEventType
      */
     #[NoDiscard]
     public static function fromArray(array $payload): self

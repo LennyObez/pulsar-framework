@@ -6,7 +6,7 @@ namespace Pulsar\Tests\Unit\Extension\Payments\Contract;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Payments\Contract\PaymentProviderInterface;
+use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
 use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\PaymentIntentStatus;

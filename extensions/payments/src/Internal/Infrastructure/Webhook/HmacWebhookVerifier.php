@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Webhook;
+namespace Pulsar\Extension\Payments\Internal\Infrastructure\Webhook;
 
 use Override;
-use Pulsar\Extension\Payments\Contract\ClockInterface;
-use Pulsar\Extension\Payments\Contract\WebhookVerifierInterface;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Payments\Contracts\ClockInterface;
+use Pulsar\Extension\Payments\Contracts\WebhookVerifierInterface;
 use Pulsar\Extension\Payments\Exception\WebhookException;
 
 use function abs;
@@ -19,6 +20,7 @@ use function substr;
  * Header format: t={unix_timestamp},v1={hex_signature}[,v1={hex_signature}...]
  * Multiple v1= values are allowed for secret rotation.
  */
+#[Internal]
 final readonly class HmacWebhookVerifier implements WebhookVerifierInterface
 {
     public function __construct(

@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Payments\Exception\IdempotencyException;
 use Pulsar\Extension\Payments\Idempotency\IdempotencyClaimStatus;
-use Pulsar\Extension\Payments\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Extension\Payments\Internal\Infrastructure\Idempotency\InMemoryIdempotencyStore;
 
 #[CoversClass(InMemoryIdempotencyStore::class)]
 final class InMemoryIdempotencyStoreTest extends TestCase
