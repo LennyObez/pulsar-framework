@@ -51,6 +51,16 @@ interface ContainerInterface extends PsrContainerInterface
     public function get(string $id): mixed;
 
     /**
+     * Remove a cached singleton instance, forcing re-resolution on next get().
+     *
+     * Used by the persistent runtime to evict request-bound services
+     * between requests. Does nothing if the ID has no cached instance.
+     *
+     * @param string $id The binding identifier to evict
+     */
+    public function forgetInstance(string $id): void;
+
+    /**
      * Set pre-computed constructor resolution hints for autowiring.
      *
      * @param array<class-string, list<array{name: string, type: class-string}>>|null $hints

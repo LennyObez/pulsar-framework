@@ -20,6 +20,8 @@ use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
 
+use JsonException;
+
 use function max;
 use function microtime;
 use function min;
@@ -464,6 +466,8 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
      * EncryptedEventStore can transparently decrypt payload_json.
      *
      * @return list<array{run_id: string, profile_count: int, success_count: int, failure_count: int, skipped_count: int, total_duration_ms: float, php_version: string, timestamp_us: int}>
+     *
+     * @throws JsonException If payload JSON cannot be decoded
      */
     public function benchmarkRuns(int $limit = 10): array
     {
@@ -496,6 +500,8 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
      * then filters by run_id in PHP (json_extract won't work on ciphertext).
      *
      * @return list<array{profile_name: string, boot_us: int, warm_boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int, memory_usage_kb: int, opcache_memory_kb: ?int, optimize_enabled: bool}>
+     *
+     * @throws JsonException If payload JSON cannot be decoded
      */
     public function benchmarkProfiles(string $runId): array
     {
@@ -535,6 +541,8 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
      * Uses a 5-minute default window for all sub-queries.
      *
      * @return array<string, mixed>
+     *
+     * @throws JsonException If benchmark payload JSON cannot be decoded
      */
     #[Override]
     public function aggregate(): array
