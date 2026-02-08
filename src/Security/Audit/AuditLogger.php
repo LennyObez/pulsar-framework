@@ -8,7 +8,10 @@ use function bin2hex;
 
 use DateTimeImmutable;
 use JsonException;
+use Override;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Context\RequestContextHolder;
 use Pulsar\Security\Crypto\Hmac;
 use Random\Engine\Secure;
 use Random\RandomException;
@@ -21,9 +24,12 @@ use SodiumException;
  * Tracks the previousHmac state across entries to maintain the chain.
  * The seed HMAC is computed from a well-known string and the audit key,
  * so verification tools can reconstruct the chain from the beginning.
+ *
+ * When a RequestContextHolder is available, auto-enriches entries with
+ * correlation/causation IDs and auto-fills actor from context.
  */
 #[Api]
-final class AuditLogger
+final class AuditLogger implements AuditLoggerInterface
 {
     /**
      * Seed message used to compute the initial chain HMAC.
@@ -44,6 +50,7 @@ final class AuditLogger
         private readonly AuditSinkInterface $sink,
         private readonly string $auditKey,
         ?Randomizer $randomizer = null,
+        private readonly ?RequestContextHolder $contextHolder = null,
     ) {
         $this->previousHmac = Hmac::computeHex(self::SEED_MESSAGE, $this->auditKey);
 
@@ -63,7 +70,9 @@ final class AuditLogger
      * Log an audit event.
      *
      * Creates an AuditEntry with HMAC chain, writes it to the sink,
-     * and advances the chain state.
+     * and advances the chain state. When actor is null and RequestContext
+     * is available, auto-fills from context. Always enriches metadata
+     * with correlation_id and causation_id when context is available.
      *
      * @param array<string, mixed> $metadata
      *
@@ -71,14 +80,30 @@ final class AuditLogger
      * @throws JsonException
      * @throws SodiumException
      */
+    #[Override]
     public function log(
         AuditEvent $event,
         AuditOutcome $outcome,
-        string $actor,
+        ?string $actor,
         string $action,
         string $resource = '',
         array $metadata = [],
     ): AuditEntry {
+        $resolvedActor = $actor;
+        $enrichedMetadata = $metadata;
+
+        // Auto-enrich from request context when available
+        $requestContext = $this->contextHolder?->tryGet();
+
+        if ($requestContext !== null) {
+            if ($resolvedActor === null) {
+                $resolvedActor = $requestContext->actor;
+            }
+
+            $enrichedMetadata['correlation_id'] ??= $requestContext->correlationId->value;
+            $enrichedMetadata['causation_id'] ??= $requestContext->causationId->value;
+        }
+
         $id = bin2hex($this->randomizer->getBytes(16));
         $timestamp = new DateTimeImmutable();
 
@@ -86,11 +111,11 @@ final class AuditLogger
             id: $id,
             event: $event,
             outcome: $outcome,
-            actor: $actor,
+            actor: $resolvedActor ?? 'system',
             action: $action,
             resource: $resource,
             timestamp: $timestamp,
-            metadata: $metadata,
+            metadata: $enrichedMetadata,
             previousHmac: $this->previousHmac,
             auditKey: $this->auditKey,
         );
