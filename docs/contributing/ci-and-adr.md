@@ -20,7 +20,7 @@ The CI workflow (`.github/workflows/ci.yml`) runs on every push and pull request
 | --------------- | ----------------------------------------- | ------------- |
 | `php-benchmark` | PHPBench microbenchmarks + profile matrix | `php-quality` |
 
-Advisory jobs use `continue-on-error: true` and never block merges. They produce artifact reports for human review.
+Advisory jobs currently use `continue-on-error: true`. Individual benchmarks may be promoted to merge-blocking as signal stability improves (see ADR-0012).
 
 ### Job dependency graph
 
@@ -87,7 +87,10 @@ An ADR is **required by CI** when a pull request modifies any of these core arch
 - `src/Api/`
 - `src/Config/`
 
-For trivial changes to core paths (typo fixes, import reordering, doc comment updates), updating an existing ADR with a brief note is sufficient — a new ADR is not always required.
+For trivial changes to core paths (typo fixes, import reordering, doc comment updates) that do not alter behavior, API, or architecture, you have two options:
+
+1. Update an existing ADR with a brief note — a new ADR is not always required.
+2. Label the PR `adr-exempt` to skip the check. This requires maintainer approval and is visible in the PR history.
 
 ADRs are also encouraged (but not CI-enforced) for significant changes to extensions, new subsystems, or changes to the CI/build pipeline itself.
 
@@ -95,7 +98,7 @@ ADRs are also encouraged (but not CI-enforced) for significant changes to extens
 
 1. Copy the template: `docs/adr/0000-template.md`
 2. Name the file: `docs/adr/NNNN-short-slug.md` where `NNNN` is the next sequential number
-3. Fill in all sections: Status, Context, Decision, Consequences
+3. Fill in all sections: Status, Context, Decision Drivers, Decision, Alternatives Considered, Consequences, Security Impact, Performance Impact, Migration/Rollback Plan, Links
 4. Set the status to `Proposed` for the PR. It becomes `Accepted` when merged.
 
 ### ADR numbering

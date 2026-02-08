@@ -53,4 +53,5 @@ The `MasterKey` class manages derivation. Subkeys are derived on demand and cach
 
 ### Neutral
 
-- **Key rotation** requires re-encrypting data encrypted with the old master key. This is an operational procedure, not a framework limitation.
+- **Key rotation** requires re-encrypting data encrypted with the old master key. For audit chains, multi-key verification (checking entries against both old and new keys) can be used during the transition window. This is an operational procedure, not a framework limitation.
+- **Operational guidance.** `PULSAR_MASTER_KEY` should be stored in a secret manager (Vault, AWS Secrets Manager, etc.) with a documented break-glass procedure for emergency access. The key must never appear in source code, config files, or CI logs. The `key:generate` command produces a cryptographically random key for initial setup.

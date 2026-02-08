@@ -21,13 +21,20 @@ Execution model:
 - **Workers.** Blocking model. A worker pops one job, executes it to completion, then pops the next.
 - **Console commands.** Run synchronously from start to finish.
 
-Fibers are used in exactly **one place**: Studio context isolation via `FiberScopedContextProvider`. This component uses a `WeakMap<object, SplStack<CorrelationContext>>` keyed by Fiber identity to isolate observability context when third-party code or test harnesses create Fibers. When no Fiber is active (the normal case), all operations use a stable root key with zero Fiber overhead.
+Fibers are permitted only in two approved subsystems:
+
+1. **Studio context isolation** — `FiberScopedContextProvider` uses a `WeakMap<object, SplStack<CorrelationContext>>` keyed by Fiber identity to isolate observability context when third-party code or test harnesses create Fibers. When no Fiber is active (the normal case), all operations use a stable root key with zero Fiber overhead.
+2. **Persistent runtime connection multiplexing** — The `runtime:serve` command's `--concurrency N` flag uses Fibers for accepting multiple connections. Individual request handling within each Fiber remains sequential.
+
+Fibers are not used in request business logic, middleware, controllers, or extension code.
 
 Extensions are explicitly prohibited from:
 
 - Creating Fiber schedulers or event loops.
 - Using `Fiber::suspend()` to yield across framework boundaries.
 - Assuming any particular Fiber execution context.
+
+These restrictions are documented in `docs/ASYNC_MODEL.md`. Enforcement is via code review and architecture tests; runtime guardrails are a future consideration.
 
 ## Consequences
 
@@ -46,5 +53,4 @@ Extensions are explicitly prohibited from:
 
 ### Neutral
 
-- **The persistent worker runtime** (`runtime:serve`) optionally uses Fibers for connection-level concurrency (accepting multiple connections), but individual request handling remains sequential. This is a controlled use that does not change the synchronous execution model within a request.
 - **External async runtimes** can be used alongside Pulsar for dedicated I/O-heavy workloads. The framework does not prevent this — it simply does not provide or manage async infrastructure.

@@ -51,3 +51,4 @@ Pulsar uses two PHP attributes to classify every type in the framework:
 ### Neutral
 
 - **IDE support.** Current PHP IDEs do not natively distinguish `#[Api]` from `#[Internal]` in autocompletion. This may improve as tooling matures.
+- **Method-level granularity.** A class can be `#[Internal]` while exposing individual `#[Api]` factory methods or constants. Rule: public factory methods may exist on internal classes, but the constructor remains internal. Consumers use the factory, never `new`.

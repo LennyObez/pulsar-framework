@@ -17,13 +17,17 @@ PHP frameworks typically represent configuration as nested associative arrays ac
 
 All configuration in Pulsar is represented as `readonly` DTO classes with `fromArray()` factory methods, loaded in a deterministic, documented order.
 
-### Load order (strict precedence, highest wins)
+### Load order (strict precedence)
 
-1. **OS environment variables** — always present, highest priority.
-2. **`.env` file** — optional. Values never override existing OS vars.
-3. **PHP config files** (`config/app.php`, `config/security.php`, etc.) — return raw arrays.
-4. **Runtime overrides** — `ConfigOverrides` applied via `array_replace_recursive` on raw arrays.
-5. **Typed DTO construction** — `AppConfig::fromArray()`, `SecurityConfig::fromArray()`, etc. Env vars are resolved inside factory methods, providing final override opportunity.
+Configuration is assembled in a single pass, not layered with multiple override opportunities:
+
+1. **OS environment variables** — loaded into `Environment` (always present).
+2. **`.env` file** — optional, merged into `Environment`. `.env` values never override existing OS vars.
+3. **PHP config files** (`config/app.php`, `config/security.php`, etc.) — return raw arrays with default values.
+4. **Runtime overrides** — `ConfigOverrides` applied via `array_replace_recursive` on the raw arrays.
+5. **Typed DTO construction** — `AppConfig::fromArray()`, `SecurityConfig::fromArray()`, etc. Factory methods read env vars for documented override keys (e.g., `APP_NAME`, `APP_ENV`). Env vars win over array values — this is where the "env is highest priority" rule is enforced, not as a separate layer.
+
+The key invariant: env vars are the canonical source of truth for any setting they override. Factory methods are pure mapping + validation with env var lookups for documented keys. There is no additional override layer after DTO construction.
 
 ### DTO conventions
 

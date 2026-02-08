@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Pulsar is approaching 1.0.0 GA. The CI pipeline enforces code quality (PHPStan, Psalm, CS-Fixer), tests with coverage thresholds, and JS/TS linting. However, two categories of regression are not yet caught by CI:
+Pulsar is in the Release Candidate phase (1.0.0-rc.x), stabilizing toward 1.0.0 GA. The CI pipeline enforces code quality (PHPStan, Psalm, CS-Fixer), tests with coverage thresholds, and JS/TS linting. However, two categories of regression are not yet caught by CI:
 
 1. **Cache warmup breakage.** The framework provides `optimize` and `optimize:clear` commands for production cache warming. If these commands fail, deployments break. There is no CI gate verifying they work.
 2. **Undocumented architectural changes.** Core framework components (`Core/`, `Container/`, `Routing/`, `Http/`, `Extensibility/`, `Api/`, `Config/`) form the public contract. Changes to these paths can silently alter framework behavior without any record of the reasoning. Architecture Decision Records (ADRs) exist as a concept but are not enforced.
@@ -19,7 +19,7 @@ Add two new merge-blocking CI jobs and establish ADR governance:
 
 ### 1. Cache Warmup Smoke Test (`cache-warmup`)
 
-A CI job that runs after `php-quality` passes. It installs the framework, then runs the cache warmup and clear commands to verify the pipeline works end-to-end. If `optimize:validate` is available (from a future plan), it uses the strict validation mode instead.
+A CI job that runs after `php-quality` passes. It installs the framework with a deterministic test environment (CI-provided `PULSAR_MASTER_KEY`), then runs the cache warmup and clear commands to verify the pipeline works end-to-end. If `optimize:validate` is available, it uses the strict validation mode instead.
 
 ### 2. ADR Governance Check (`adr-check`)
 
@@ -35,9 +35,13 @@ Core architecture paths that trigger the requirement:
 - `src/Api/`
 - `src/Config/`
 
+#### Escape hatch
+
+For trivial core changes (typo fixes, import reordering, doc comment updates) that do not alter behavior, API, or architecture, the PR can be labeled `adr-exempt` to skip the check. The label requires maintainer approval and is visible in the PR history for audit purposes. This prevents ADR fatigue while keeping the gate meaningful.
+
 ### 3. ADR Template and Process
 
-A standardized template (`docs/adr/0000-template.md`) and sequential numbering convention (`NNNN-slug.md`). ADRs are immutable records — superseded decisions reference their replacement rather than being deleted.
+A standardized template (`docs/adr/0000-template.md`) with sections for decision drivers, alternatives considered, security/performance impact, and migration/rollback plans. Sequential numbering convention (`NNNN-slug.md`). ADRs are immutable records — superseded decisions reference their replacement rather than being deleted.
 
 ## Consequences
 
@@ -47,10 +51,10 @@ A standardized template (`docs/adr/0000-template.md`) and sequential numbering c
 - **Architectural traceability.** Every significant core change has a documented rationale. Future maintainers can understand why decisions were made.
 - **Low friction.** The ADR check only triggers for core paths, not for tests, docs, extensions, or peripheral code.
 - **Fork-safe CI.** The ADR check uses explicit base SHA comparison, working correctly for PRs from forks.
+- **Escape hatch prevents fatigue.** The `adr-exempt` label provides a reviewable, auditable bypass for trivial changes.
 
 ### Negative
 
-- **ADR overhead for small core changes.** Even trivial changes to core paths require an ADR. Mitigation: updating an existing ADR with a note is sufficient — a new ADR is not always required.
 - **Additional CI time.** The cache warmup job adds a few minutes to the pipeline. Mitigated by running it in parallel with tests (both depend on `php-quality`).
 
 ### Neutral

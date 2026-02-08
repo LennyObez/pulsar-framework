@@ -1,4 +1,4 @@
-# ADR-0012: Performance Budgets as Advisory CI Gates
+# ADR-0012: Performance Budgets with Hybrid CI Enforcement
 
 ## Status
 
@@ -17,7 +17,7 @@ Pulsar needs a middle ground: defined performance contracts that are visible and
 
 ## Decision
 
-Define explicit performance budgets for framework-critical operations. Budgets are enforced by PHPBench benchmarks in CI, but the benchmark job is **advisory** (`continue-on-error: true`). Results are uploaded as artifacts and added to the GitHub Actions job summary for human review.
+Define explicit performance budgets for framework-critical operations. Use a **hybrid enforcement model**: benchmarks block merges when run-to-run signal is stable, and fall back to advisory mode when variance is high.
 
 ### Budget categories
 
@@ -34,7 +34,12 @@ Define explicit performance budgets for framework-critical operations. Budgets a
 - **CI job** (`php-benchmark`) runs after `php-quality`, produces benchmark text output and JSON results.
 - **Artifacts** are retained for 14 days, enabling historical comparison across PRs.
 - **Job summary** displays results directly in the GitHub Actions UI.
-- **Non-blocking.** The job never fails the build. Regressions are flagged in the report for human review.
+
+### Hybrid blocking strategy
+
+- **Stable signal (low variance):** When run-to-run coefficient of variation is below a threshold (e.g., <10%), the benchmark is considered reliable. Regressions exceeding the budget are **merge-blocking**.
+- **Unstable signal (high variance):** When CI runner variance is high (noisy neighbors, inconsistent hardware), the job remains **advisory** (`continue-on-error: true`). Results are uploaded as artifacts and PR summary for human review.
+- **Current state:** The CI job starts as advisory. As benchmark infrastructure matures (dedicated runners, consistent hardware), individual budgets can be promoted to blocking by adjusting the variance threshold.
 
 ### Relative thresholds
 
@@ -45,15 +50,15 @@ Budgets use relative regression detection (e.g., "no more than 5% slower than ba
 ### Positive
 
 - **Visible performance contracts.** Every critical operation has a documented budget. Developers know the expected performance characteristics.
-- **No false-positive blocks.** CI runner variance does not create flaky merge-blocking failures.
+- **Graduated enforcement.** Stable benchmarks block; unstable ones advise. No false-positive merge blocks, no silent regressions on reliable metrics.
 - **Historical tracking.** Artifact retention enables comparing benchmarks across PRs and releases.
 - **Actionable reports.** Job summary integration surfaces results without requiring developers to download artifacts.
 
 ### Negative
 
-- **Regressions can be ignored.** Advisory means a developer can merge despite a 10x regression if they choose not to read the report. Mitigation: PR review process should include benchmark review for performance-sensitive changes.
-- **No automated rollback.** Unlike hard gates, advisory budgets do not prevent regressions from reaching the main branch.
+- **Variance detection adds complexity.** The CI job must compute coefficient of variation and decide blocking vs. advisory per benchmark. This logic lives in the benchmark runner, not in the CI workflow.
+- **Advisory budgets can be ignored.** Until a budget is promoted to blocking, developers can merge despite regressions. Mitigation: PR review process should include benchmark review for performance-sensitive changes.
 
 ### Neutral
 
-- **Can be promoted to hard gates.** If CI infrastructure stabilizes (dedicated runners, consistent hardware), the `continue-on-error` flag can be removed to make budgets merge-blocking. The benchmark infrastructure is the same either way.
+- **Promotion is incremental.** Individual budgets can be promoted to blocking independently. Router benchmarks might become blocking while container factory benchmarks remain advisory.

@@ -20,10 +20,11 @@ Ship an optional persistent worker runtime (`runtime:serve`) as a built-in comma
 
 1. **Boot once.** The kernel boots a single time when the worker starts. Config loading, extension registration, container compilation, and route registration happen once.
 2. **Accept connections.** The worker accepts HTTP connections on a configurable host/port using `ext-sockets`.
-3. **Request sandbox.** `RequestSandbox` enforces per-request isolation:
-   - **Eviction.** Request-bound services (e.g., `SecurityContext`) are removed from the container between requests. Middleware recreates them.
-   - **Reset.** Stateful singletons implementing `ResettableInterface` (e.g., `TenantContext`, `FlagEvaluationLog`) have their state cleared via `reset()`.
+3. **Request sandbox.** `RequestSandbox` enforces per-request isolation using a `RequestResetRegistry` populated during kernel boot. The registry maintains two explicit lists:
+   - **Evictable services** (`registry->evictableIds`): Service IDs that are removed from the container (`forgetInstance`) between requests. These are request-bound services (e.g., `SecurityContext`) that middleware recreates for each new request. Services are registered as evictable during boot via `RequestResetRegistry::registerEvictable()`.
+   - **Resettable services** (`registry->resettableIds`): Service IDs of stateful singletons implementing `ResettableInterface` (e.g., `TenantContext`, `FlagEvaluationLog`). Their `resetRequestState()` method is called between requests. Services are registered via `RequestResetRegistry::registerResettable()`.
    - **Leak detection.** `LeakDetector` monitors unreleased resources and memory growth, emitting warnings via Studio.
+   - **Execution order is deterministic:** (1) evict, (2) reset, (3) leak check.
 4. **Graceful recycling.** Workers shut down gracefully after configurable thresholds (request count, memory usage, uptime) and are restarted by a process supervisor.
 5. **Optional Fiber concurrency.** The `--concurrency N` flag enables Fiber-based connection multiplexing for accepting multiple connections. Individual request handling remains sequential (see ADR-0005).
 
@@ -44,7 +45,7 @@ Ship an optional persistent worker runtime (`runtime:serve`) as a built-in comma
 
 ### Negative
 
-- **State leakage risk.** Any service that holds request state and does not implement `ResettableInterface` can leak between requests. This requires developer discipline and testing.
+- **State leakage risk.** Any service that holds request state and is not registered in the `RequestResetRegistry` can leak between requests. This requires developer discipline and testing. A key integration test scenario: two sequential requests must not share `SecurityContext`, tenant context, or feature flag evaluation state.
 - **Requires process supervisor.** Unlike PHP-FPM (self-managing), the persistent worker needs systemd, supervisord, or Docker for restart management.
 - **No built-in TLS.** Production deployments require a reverse proxy (nginx, Caddy) for HTTPS.
 

@@ -12,6 +12,16 @@ CORE_PATHS=(
   "src/Config/"
 )
 
+# Escape hatch: skip check if PR has 'adr-exempt' label
+if [ -n "${GITHUB_EVENT_PATH:-}" ]; then
+  LABELS=$(jq -r '.pull_request.labels[]?.name // empty' "$GITHUB_EVENT_PATH" 2>/dev/null || true)
+  if echo "$LABELS" | grep -q '^adr-exempt$'; then
+    echo "SKIP: PR labeled 'adr-exempt' — ADR check bypassed."
+    echo "Ensure a maintainer approved the exemption."
+    exit 0
+  fi
+fi
+
 # Use GitHub-provided base SHA (fork-safe), fall back to branch name, then HEAD~1
 if [ -n "${BASE_SHA:-}" ]; then
   CHANGED=$(git diff --name-only "${BASE_SHA}...HEAD")
@@ -39,8 +49,9 @@ if [ "$CORE_CHANGED" = true ]; then
       echo "  - $f"
     done
     echo ""
-    echo "Add or update an ADR in docs/adr/ explaining the decision."
-    echo "Template: docs/adr/0000-template.md"
+    echo "Options:"
+    echo "  1. Add or update an ADR in docs/adr/ (template: docs/adr/0000-template.md)"
+    echo "  2. Label the PR 'adr-exempt' if this is a trivial change (requires maintainer approval)"
     exit 1
   fi
 fi

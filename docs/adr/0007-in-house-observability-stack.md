@@ -32,6 +32,10 @@ Build a complete first-party observability suite with no external vendor depende
 
 The framework collects and stores observability data using its own APIs. Export to external systems is handled by optional, standards-based exporters (e.g., OpenMetrics exposition format for metrics). Exporters are extensions — they are not part of the core observability API.
 
+### Scope commitment
+
+The core observability API stays small: one logger interface, one metric registry, one tracing API. Advanced features (dashboards, alerting, anomaly detection, long-term storage) live in Studio or other extensions, never in the core API.
+
 ## Consequences
 
 ### Positive

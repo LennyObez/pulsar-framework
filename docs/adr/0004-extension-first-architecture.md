@@ -21,10 +21,11 @@ Adopt an extension-first architecture where all optional functionality — inclu
 Key design choices:
 
 - **`pulsar.json` manifest.** Every extension declares its identity, version, capabilities (services, routes, commands, middleware, migrations), framework compatibility, and dependencies on other extensions.
-- **Four-phase lifecycle.** Extensions progress through Register → PreBoot → Boot → PostBoot in dependency-resolved order. Each phase is a separate pass over all extensions, guaranteeing that all registrations complete before any boot logic runs.
+- **Four-phase lifecycle.** Extensions progress through Register → PreBoot → Boot → PostBoot. Each phase is a separate pass over all extensions in dependency-resolved order. All registrations complete before any preBoot runs; all preBoot completes before any boot runs. This guarantees that preBoot can safely resolve any service registered by any extension. Interfaces: `ExtensionInterface` (register + boot), `PreBootExtensionInterface` (optional preBoot), `PostBootExtensionInterface` (optional postBoot).
 - **No privileged access.** First-party extensions (`extensions/studio/`, `extensions/payments/`) use `ExtensionInterface` and lifecycle hooks identically to third-party code. There are no internal backdoors.
-- **Deterministic ordering.** Extensions are topologically sorted by their declared dependencies. Circular dependencies are detected and rejected at validation time.
+- **Deterministic ordering.** Extensions are topologically sorted by their declared dependencies via `ExtensionBootstrap`. Circular dependencies are detected and rejected at validation time.
 - **State machine enforcement.** The `ExtensionLifecycle` enum tracks each extension's state (Discovered → Validated → Registered → Booted → Failed). Invalid transitions are rejected.
+- **Capability declaration.** Manifests declare provided capabilities: services, routes, commands, middleware, and migrations. This enables auditing and static analysis of what each extension contributes.
 
 ## Consequences
 

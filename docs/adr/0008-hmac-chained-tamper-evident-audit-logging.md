@@ -23,8 +23,9 @@ Implement a separate audit logging subsystem with HMAC-BLAKE2b hash chaining. Au
 ### Design
 
 - **Structured entries.** Each `AuditEntry` is a readonly value object with fields: `id`, `event` (enum: authentication, authorization, data_access, configuration_change, system), `outcome` (enum: success, failure, denied), `actor`, `action`, `resource`, `timestamp`, and `metadata`.
-- **HMAC chain.** Each entry's HMAC is computed over all its fields plus the previous entry's HMAC. The first entry chains from a zero HMAC. Modifying any entry invalidates all subsequent entries in the chain.
-- **Verification.** `AuditEntry::verify(auditKey)` validates a single entry's HMAC. Walking the chain from the first entry detects any tampering.
+- **HMAC chain with deterministic seed.** The chain starts from a seed HMAC computed as `HMAC-BLAKE2b("PULSAR_AUDIT_SEED", auditKey)`. This is not a zero value — it is a deterministic, key-dependent seed that verification tools can reconstruct from the audit key alone. Each subsequent entry's HMAC is computed over all its fields plus the previous entry's HMAC.
+- **Restart continuity.** If the sink implements `ChainableAuditSinkInterface`, the `AuditLogger` reads the last entry's HMAC via `lastHmac()` on construction and resumes the chain from that point. If the sink does not support chaining or the file is empty/corrupt, the chain falls back to the seed HMAC. This ensures the chain is continuous across process restarts.
+- **Verification.** `AuditEntry::verify(auditKey)` validates a single entry's HMAC. Walking the chain from the seed detects any tampering — modifying any entry invalidates all subsequent entries.
 - **Append-only sink.** `AuditFileSink` writes JSON Lines with `LOCK_EX` for safe concurrent appends. The sink interface (`AuditSinkInterface`) allows alternative backends.
 - **Derived audit key.** The HMAC key is derived from the master key via KDF with the `pulsar__audit_hmac` context (see ADR-0006). It is never stored in configuration files.
 

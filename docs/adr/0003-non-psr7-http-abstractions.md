@@ -46,4 +46,5 @@ Key design choices:
 
 ### Neutral
 
-- **PSR-7 bridge is possible.** A future extension could provide bidirectional adapters (`Request → ServerRequestInterface`, `ResponseInterface → Response`) for interop scenarios. This is not planned for 1.0.0.
+- **PSR-7 bridge will be an extension.** Consistent with ADR-0004 (extension-first architecture), a future extension will provide bidirectional adapters (`Request → ServerRequestInterface`, `ResponseInterface → Response`) and a PSR-15 middleware adapter. This is not planned for 1.0.0 but is architecturally straightforward.
+- **`Request::all()` precedence is fixed.** Merge order is: JSON body > POST > query. This is documented in `docs/HTTP.md` and enforced by tests. The order is a stable API contract — changing it would be a breaking change.
