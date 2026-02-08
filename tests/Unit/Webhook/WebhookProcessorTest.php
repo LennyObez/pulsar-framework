@@ -39,7 +39,7 @@ final class WebhookProcessorTest extends TestCase
         $handler = $this->createMock(WebhookHandlerInterface::class);
         $handler->expects($this->once())
             ->method('handle')
-            ->with('payment.created', $this->isType('array'));
+            ->with('payment.created', $this->isArray());
 
         $processor = $this->createProcessor($handler);
         $payload = json_encode(['id' => 'evt-1', 'type' => 'payment.created'], JSON_THROW_ON_ERROR);
@@ -91,7 +91,7 @@ final class WebhookProcessorTest extends TestCase
     #[Test]
     public function processHandlerErrorReleasesClaimAndReturnsError(): void
     {
-        $handler = $this->createMock(WebhookHandlerInterface::class);
+        $handler = $this->createStub(WebhookHandlerInterface::class);
         $handler->method('handle')->willThrowException(new RuntimeException('Handler boom'));
 
         $eventLog = new InMemoryWebhookEventLog();

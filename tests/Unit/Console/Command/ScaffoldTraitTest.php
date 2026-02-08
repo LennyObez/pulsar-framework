@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Console\Command;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\ScaffoldTrait;
+use Pulsar\Console\OutputInterface;
 
-#[CoversClass(ScaffoldTrait::class)]
+#[CoversNothing]
 final class ScaffoldTraitTest extends TestCase
 {
     use ScaffoldTrait;
@@ -90,5 +91,101 @@ final class ScaffoldTraitTest extends TestCase
 
         self::assertIsString($result);
         self::assertStringEndsWith('app' . DIRECTORY_SEPARATOR . 'Modules', $result);
+    }
+
+    #[Test]
+    public function confirm_action_returns_true_on_yes(): void
+    {
+        $stdin = fopen('php://memory', 'r+');
+        self::assertNotFalse($stdin);
+
+        fwrite($stdin, "y\n");
+        rewind($stdin);
+
+        $output = $this->createMock(OutputInterface::class);
+        $output->expects(self::once())->method('write');
+
+        self::assertTrue($this->confirmAction($stdin, $output, 'Delete?'));
+
+        fclose($stdin);
+    }
+
+    #[Test]
+    public function confirm_action_returns_false_on_no(): void
+    {
+        $stdin = fopen('php://memory', 'r+');
+        self::assertNotFalse($stdin);
+
+        fwrite($stdin, "n\n");
+        rewind($stdin);
+
+        $output = $this->createStub(OutputInterface::class);
+
+        self::assertFalse($this->confirmAction($stdin, $output, 'Delete?'));
+
+        fclose($stdin);
+    }
+
+    #[Test]
+    public function confirm_action_returns_false_on_empty_input(): void
+    {
+        $stdin = fopen('php://memory', 'r+');
+        self::assertNotFalse($stdin);
+
+        fwrite($stdin, "\n");
+        rewind($stdin);
+
+        $output = $this->createStub(OutputInterface::class);
+
+        self::assertFalse($this->confirmAction($stdin, $output, 'Delete?'));
+
+        fclose($stdin);
+    }
+
+    #[Test]
+    public function remove_directory_recursive_removes_nested_structure(): void
+    {
+        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_scaffold_trait_' . bin2hex(random_bytes(8));
+        mkdir($tempDir . DIRECTORY_SEPARATOR . 'sub' . DIRECTORY_SEPARATOR . 'deep', 0o755, true);
+        file_put_contents($tempDir . DIRECTORY_SEPARATOR . 'file.txt', 'test');
+        file_put_contents($tempDir . DIRECTORY_SEPARATOR . 'sub' . DIRECTORY_SEPARATOR . 'deep' . DIRECTORY_SEPARATOR . 'nested.txt', 'test');
+
+        self::assertDirectoryExists($tempDir);
+
+        $this->removeDirectoryRecursive($tempDir);
+
+        self::assertDirectoryDoesNotExist($tempDir);
+    }
+
+    #[Test]
+    public function remove_directory_recursive_handles_nonexistent_dir(): void
+    {
+        $this->removeDirectoryRecursive('/nonexistent/path/that/does/not/exist');
+
+        // Should not throw — just a no-op. Assert the dir still doesn't exist.
+        self::assertDirectoryDoesNotExist('/nonexistent/path/that/does/not/exist');
+    }
+
+    #[Test]
+    public function list_files_recursive_returns_all_files(): void
+    {
+        $tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_list_files_' . bin2hex(random_bytes(8));
+        mkdir($tempDir . DIRECTORY_SEPARATOR . 'sub', 0o755, true);
+        file_put_contents($tempDir . DIRECTORY_SEPARATOR . 'a.txt', 'a');
+        file_put_contents($tempDir . DIRECTORY_SEPARATOR . 'sub' . DIRECTORY_SEPARATOR . 'b.txt', 'b');
+
+        $files = $this->listFilesRecursive($tempDir);
+
+        self::assertCount(2, $files);
+        self::assertContains($tempDir . DIRECTORY_SEPARATOR . 'a.txt', $files);
+        self::assertContains($tempDir . DIRECTORY_SEPARATOR . 'sub' . DIRECTORY_SEPARATOR . 'b.txt', $files);
+
+        $this->removeDirectoryRecursive($tempDir);
+    }
+
+    #[Test]
+    public function list_files_recursive_returns_empty_for_nonexistent(): void
+    {
+        self::assertSame([], $this->listFilesRecursive('/nonexistent'));
     }
 }

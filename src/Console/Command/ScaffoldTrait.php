@@ -9,7 +9,7 @@ use Pulsar\Console\OutputInterface;
 use function sprintf;
 
 /**
- * Shared filesystem scaffolding helpers for scaffold commands.
+ * Shared filesystem scaffolding helpers for scaffold and removal commands.
  */
 trait ScaffoldTrait
 {
@@ -105,5 +105,127 @@ trait ScaffoldTrait
         }
 
         return $cwd . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+    }
+
+    /**
+     * Prompt the user for confirmation before a destructive operation.
+     *
+     * @param resource $stdin Readable stream for interactive input
+     */
+    private function confirmAction(mixed $stdin, OutputInterface $output, string $message): bool
+    {
+        $output->write($message . ' [y/N] ');
+
+        $answer = fgets($stdin);
+
+        if ($answer === false) {
+            return false;
+        }
+
+        return strtolower(trim($answer)) === 'y';
+    }
+
+    /**
+     * Recursively remove a directory and all its contents.
+     *
+     * Includes retry logic for environments (e.g. Windows/OneDrive) where
+     * file handles may not be released immediately after unlink()/rmdir().
+     */
+    private function removeDirectoryRecursive(string $dir): void
+    {
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $items = scandir($dir);
+        if ($items === false) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $path = $dir . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($path)) {
+                $this->removeDirectoryRecursive($path);
+            } else {
+                @unlink($path);
+            }
+        }
+
+        // Release scandir handle references so Windows can free the directory
+        unset($items);
+        gc_collect_cycles();
+        clearstatcache(true, $dir);
+
+        $this->rmdirWithRetry($dir);
+    }
+
+    /**
+     * Remove a directory with retry logic for Windows/OneDrive handle locking.
+     */
+    private function rmdirWithRetry(string $dir): void
+    {
+        // Escalating delays: 100ms, 200ms, 400ms, 800ms, 1600ms (~3.1s total)
+        $delays = [100_000, 200_000, 400_000, 800_000, 1_600_000];
+
+        foreach ($delays as $delay) {
+            if (@rmdir($dir)) {
+                return;
+            }
+            usleep($delay);
+            clearstatcache(true, $dir);
+        }
+
+        // Final attempt — let the warning through if it still fails
+        @rmdir($dir);
+    }
+
+    /**
+     * Remove a single file and report it.
+     */
+    private function removeFileWithOutput(string $path, OutputInterface $output): void
+    {
+        if (!is_file($path)) {
+            return;
+        }
+
+        unlink($path);
+        $output->writeln(sprintf('  Removed %s', $path));
+    }
+
+    /**
+     * List all files in a directory recursively.
+     *
+     * @return list<string>
+     */
+    private function listFilesRecursive(string $dir): array
+    {
+        if (!is_dir($dir)) {
+            return [];
+        }
+
+        $files = [];
+        $items = scandir($dir);
+        if ($items === false) {
+            return [];
+        }
+
+        foreach ($items as $item) {
+            if ($item === '.' || $item === '..') {
+                continue;
+            }
+
+            $path = $dir . DIRECTORY_SEPARATOR . $item;
+            if (is_dir($path)) {
+                $files = [...$files, ...$this->listFilesRecursive($path)];
+            } else {
+                $files[] = $path;
+            }
+        }
+
+        return $files;
     }
 }

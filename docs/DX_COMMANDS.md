@@ -1,8 +1,8 @@
 # DX Commands Reference
 
-Pulsar ships CLI scaffolding commands that generate boundary-compliant module structures with `Contracts/Internal` separation, config DTOs, observability wiring, and test stubs.
+Pulsar ships CLI scaffolding commands that generate boundary-compliant module structures with `Contracts/Internal` separation, config DTOs, observability wiring, and test stubs. Each `make:*` command has a corresponding `remove:*` command for teardown.
 
-## Commands
+## Scaffold Commands
 
 ### `make:module`
 
@@ -157,6 +157,99 @@ php bin/pulsar make:event-ingestion <name> --module=<module> [--path=app/Modules
 ```
 
 The `--events` flag populates the backed enum with custom event types.
+
+### `make:extension`
+
+Generate a new extension structure.
+
+```bash
+php bin/pulsar make:extension <name> [--vendor=acme] [--path=extensions]
+```
+
+**Generated structure:**
+
+```
+extensions/{name}/
+  pulsar.json                                  # extension manifest
+  composer.json                                # PSR-4 autoload
+  src/{Name}Extension.php                      # ExtensionInterface impl
+  src/{Name}ServiceProvider.php
+  src/{Name}Service.php
+  src/Controller/{Name}Controller.php
+```
+
+## Remove Commands
+
+Every `remove:*` command supports these flags:
+
+- `--force` — skip the interactive confirmation prompt
+- `--dry-run` — list files that would be removed without deleting anything
+
+### `remove:module`
+
+Remove a scaffolded module and its associated test directory.
+
+```bash
+php bin/pulsar remove:module <name> [--path=app/Modules] [--force] [--dry-run]
+```
+
+### `remove:feature`
+
+Remove a scaffolded feature slice from a module.
+
+```bash
+php bin/pulsar remove:feature <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+Also removes the corresponding route entry from the module's `routes.php`.
+
+### `remove:port`
+
+Remove a scaffolded port interface from a module.
+
+```bash
+php bin/pulsar remove:port <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+### `remove:adapter`
+
+Remove a scaffolded adapter and its test file.
+
+```bash
+php bin/pulsar remove:adapter <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+### `remove:webhook-handler`
+
+Remove a scaffolded webhook handler and all its associated files.
+
+```bash
+php bin/pulsar remove:webhook-handler <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+### `remove:payment-flow`
+
+Remove a scaffolded payment flow and all its associated files.
+
+```bash
+php bin/pulsar remove:payment-flow <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+### `remove:event-ingestion`
+
+Remove a scaffolded event ingestion pipeline and all its associated files.
+
+```bash
+php bin/pulsar remove:event-ingestion <name> --module=<module> [--path=app/Modules] [--force] [--dry-run]
+```
+
+### `remove:extension`
+
+Remove a scaffolded extension directory.
+
+```bash
+php bin/pulsar remove:extension <name> [--path=extensions] [--force] [--dry-run]
+```
 
 ## Conventions
 

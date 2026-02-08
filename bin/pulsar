@@ -61,14 +61,23 @@ use Pulsar\Console\Command\QueueFlushCommand;
 use Pulsar\Console\Command\QueueRetryCommand;
 use Pulsar\Console\Command\QueueStatusCommand;
 use Pulsar\Console\Command\QueueWorkCommand;
+use Pulsar\Console\Command\HelpCommand;
 use Pulsar\Console\Command\Make\MakeAdapterCommand;
 use Pulsar\Console\Command\Make\MakeEventIngestionCommand;
+use Pulsar\Console\Command\Make\MakeExtensionCommand;
 use Pulsar\Console\Command\Make\MakeFeatureCommand;
 use Pulsar\Console\Command\Make\MakeModuleCommand;
 use Pulsar\Console\Command\Make\MakePaymentFlowCommand;
 use Pulsar\Console\Command\Make\MakePortCommand;
 use Pulsar\Console\Command\Make\MakeWebhookHandlerCommand;
-use Pulsar\Console\Command\ScaffoldExtensionCommand;
+use Pulsar\Console\Command\Remove\RemoveAdapterCommand;
+use Pulsar\Console\Command\Remove\RemoveEventIngestionCommand;
+use Pulsar\Console\Command\Remove\RemoveExtensionCommand;
+use Pulsar\Console\Command\Remove\RemoveFeatureCommand;
+use Pulsar\Console\Command\Remove\RemoveModuleCommand;
+use Pulsar\Console\Command\Remove\RemovePaymentFlowCommand;
+use Pulsar\Console\Command\Remove\RemovePortCommand;
+use Pulsar\Console\Command\Remove\RemoveWebhookHandlerCommand;
 use Pulsar\Console\Command\ShowContainerCommand;
 use Pulsar\Console\Command\ShowRoutesCommand;
 use Pulsar\Console\Command\SupervisorCheckCommand;
@@ -194,13 +203,13 @@ $application = new Application($kernel);
 
 // Register built-in commands
 $application->addCommands([
+    new HelpCommand($application),
     new ListCommand($application),
     new ShowRoutesCommand($kernel),
     new ShowContainerCommand($kernel),
     new DiagnosticsCommand($kernel),
     new InitCommand(),
     new NewCommand(),
-    new ScaffoldExtensionCommand(),
     new PreloadDumpCommand(),
     new MakeModuleCommand(),
     new MakeFeatureCommand(),
@@ -209,6 +218,15 @@ $application->addCommands([
     new MakeWebhookHandlerCommand(),
     new MakePaymentFlowCommand(),
     new MakeEventIngestionCommand(),
+    new MakeExtensionCommand(),
+    new RemoveModuleCommand(),
+    new RemoveFeatureCommand(),
+    new RemovePortCommand(),
+    new RemoveAdapterCommand(),
+    new RemoveWebhookHandlerCommand(),
+    new RemovePaymentFlowCommand(),
+    new RemoveEventIngestionCommand(),
+    new RemoveExtensionCommand(),
 ]);
 
 // Register optimize + key commands (always visible)
