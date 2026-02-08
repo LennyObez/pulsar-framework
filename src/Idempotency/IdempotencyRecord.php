@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Payments\Domain;
+namespace Pulsar\Idempotency;
 
 use DateTimeImmutable;
 use Pulsar\Api\Api;

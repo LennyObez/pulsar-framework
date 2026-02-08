@@ -10,7 +10,7 @@ use Pulsar\Extension\Payments\Domain\Charge;
 use Pulsar\Extension\Payments\Domain\Money;
 use Pulsar\Extension\Payments\Domain\PaymentIntent;
 use Pulsar\Extension\Payments\Domain\Refund;
-use Pulsar\Extension\Payments\Exception\IdempotencyException;
+use Pulsar\Idempotency\Exception\IdempotencyException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
 
 /**

@@ -4,14 +4,25 @@ declare(strict_types=1);
 
 namespace Pulsar\Queue;
 
+use function array_key_exists;
 use function class_exists;
 use function function_exists;
+use function is_array;
+use function json_decode;
+
+use const JSON_THROW_ON_ERROR;
+
+use JsonException;
+
 use function memory_get_usage;
 
 use const PHP_OS_FAMILY;
 
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
+use Pulsar\Context\ContextPropagator;
+use Pulsar\Context\RequestContext;
+use Pulsar\Context\RequestContextHolder;
 use Pulsar\Queue\Exception\QueueException;
 
 use const SIGINT;
@@ -40,6 +51,7 @@ final class Worker
         private readonly QueueDriverInterface $driver,
         private readonly WorkerOptions $options,
         private readonly ?LoggerInterface $logger = null,
+        private readonly ?RequestContextHolder $contextHolder = null,
     ) {}
 
     /**
@@ -129,6 +141,10 @@ final class Worker
 
     /**
      * Instantiate and execute the job class.
+     *
+     * If the payload contains a context envelope (injected by QueueManager),
+     * the RequestContext is extracted and set in the holder for the duration
+     * of job execution.
      */
     private function executeJob(JobRecord $record): void
     {
@@ -145,18 +161,52 @@ final class Worker
             throw QueueException::serializationFailed($jobClass);
         }
 
+        $requestContext = $this->extractRequestContext($record->payload);
+
+        if ($requestContext !== null) {
+            $this->contextHolder?->set($requestContext);
+        }
+
         $context = new JobContext(
             jobId: $record->id,
             queue: $record->queue,
             attempt: $record->attempts,
             maxAttempts: $job->maxAttempts(),
+            requestContext: $requestContext,
         );
 
         try {
             $job->handle($context);
         } finally {
+            $this->contextHolder?->clear();
             unset($job, $context);
         }
+    }
+
+    /**
+     * Extract request context from a payload that may contain a context envelope.
+     *
+     * The QueueManager wraps payloads in a JSON envelope of the form
+     * {"_ctx": {...}, "_payload": "..."} when a RequestContext is available
+     * at dispatch time. This method extracts the context from such envelopes.
+     */
+    private function extractRequestContext(string $payload): ?RequestContext
+    {
+        try {
+            /** @var mixed $decoded */
+            $decoded = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
+
+            if (is_array($decoded) && array_key_exists('_ctx', $decoded) && array_key_exists('_payload', $decoded)) {
+                /** @var array<string, mixed> $carrier */
+                $carrier = $decoded['_ctx'];
+
+                return ContextPropagator::extract($carrier);
+            }
+        } catch (JsonException) {
+            // Not a JSON envelope — no context to extract
+        }
+
+        return null;
     }
 
     /**

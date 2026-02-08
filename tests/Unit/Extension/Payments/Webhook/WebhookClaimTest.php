@@ -8,8 +8,8 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Payments\Webhook\WebhookClaim;
-use Pulsar\Extension\Payments\Webhook\WebhookClaimStatus;
+use Pulsar\Webhook\WebhookClaim;
+use Pulsar\Webhook\WebhookClaimStatus;
 
 #[CoversClass(WebhookClaim::class)]
 final class WebhookClaimTest extends TestCase
