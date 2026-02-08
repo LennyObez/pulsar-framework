@@ -64,18 +64,13 @@ return [
     |
     */
     'checks' => [
-        'debug-mode' => ['enabled' => true, 'severity' => 'fail'],
-        'opcache' => ['enabled' => true, 'severity' => 'fail'],
-        'jit' => ['enabled' => true, 'severity' => 'warn'],
-        'cache-settings' => ['enabled' => true, 'severity' => 'fail'],
-        'filesystem-scan' => ['enabled' => true, 'severity' => 'fail'],
-        'security-headers' => ['enabled' => true, 'severity' => 'fail'],
-        'https-readiness' => ['enabled' => true, 'severity' => 'warn'],
-        'http3-readiness' => ['enabled' => true, 'severity' => 'warn'],
-        'health-endpoint' => ['enabled' => true, 'severity' => 'warn'],
-        'rate-limiting' => ['enabled' => true, 'severity' => 'warn'],
-        'request-size-limits' => ['enabled' => true, 'severity' => 'warn'],
-        'trusted-proxies' => ['enabled' => true, 'severity' => 'warn'],
-        'integrity' => ['enabled' => true, 'severity' => 'fail'],
+        ...array_fill_keys(
+            ['debug-mode', 'opcache', 'cache-settings', 'filesystem-scan', 'security-headers', 'integrity'],
+            ['enabled' => true, 'severity' => 'fail'],
+        ),
+        ...array_fill_keys(
+            ['jit', 'https-readiness', 'http3-readiness', 'health-endpoint', 'rate-limiting', 'request-size-limits', 'trusted-proxies'],
+            ['enabled' => true, 'severity' => 'warn'],
+        ),
     ],
 ];

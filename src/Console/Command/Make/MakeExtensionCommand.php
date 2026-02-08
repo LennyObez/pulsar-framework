@@ -245,6 +245,7 @@ final class MakeExtensionCommand extends Command
     private function getControllerContent(string $namespace, string $className): string
     {
         $serviceName = $this->toCamelCase($className) . 'Service';
+        $messageCall = '$this->' . $serviceName . '->getMessage()';
 
         return <<<PHP
             <?php
@@ -266,7 +267,7 @@ final class MakeExtensionCommand extends Command
                 public function index(Request \$request): Response
                 {
                     return Response::json([
-                        'message' => \$this->{$serviceName}->getMessage(),
+                        'message' => $messageCall,
                     ]);
                 }
             }

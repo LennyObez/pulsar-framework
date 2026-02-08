@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\Remove;
 
-use function is_dir;
 use function is_file;
-use function is_string;
+use function is_int;
 
 use Override;
 use Pulsar\Console\Command;
@@ -51,41 +50,14 @@ final class RemoveAdapterCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $name = $input->getArgument(0);
-        $module = $input->getOption('module');
-        $basePath = $input->getOption('path', 'app/Modules');
+        $context = $this->resolveModuleContext($input, $output, 'Adapter');
+        if (is_int($context)) {
+            return $context;
+        }
+
+        [$name, $module, $modulePath] = $context;
         $force = $input->hasOption('force');
         $dryRun = $input->hasOption('dry-run');
-
-        if (!is_string($name) || $name === '') {
-            $output->errorln('Adapter name is required.');
-            return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($module) || $module === '') {
-            $output->errorln('Module name is required (--module).');
-            return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($basePath)) {
-            $basePath = 'app/Modules';
-        }
-
-        $name = $this->toPascalCase($name);
-        $module = $this->toPascalCase($module);
-
-        $resolved = $this->resolveBasePath($basePath, 'app/Modules');
-        if ($resolved === false) {
-            $output->errorln('Failed to get current working directory.');
-            return ExitCode::Error->value;
-        }
-
-        $modulePath = $resolved . DIRECTORY_SEPARATOR . $module;
-
-        if (!is_dir($modulePath)) {
-            $output->errorln(sprintf('Module "%s" does not exist at %s', $module, $modulePath));
-            return ExitCode::Error->value;
-        }
 
         $adapterFile = $modulePath . DIRECTORY_SEPARATOR . 'Internal' . DIRECTORY_SEPARATOR . 'Infrastructure' . DIRECTORY_SEPARATOR . $name . '.php';
 
