@@ -109,7 +109,7 @@ namespace Acme\MyFeature;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
-use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 use Acme\MyFeature\Controller\MyFeatureController;
 
 final class MyFeatureExtension implements ExtensionInterface
@@ -124,7 +124,7 @@ final class MyFeatureExtension implements ExtensionInterface
         // Register services directly, or leave empty if using providers
     }
 
-    public function boot(ContainerInterface $container, Router $router): void
+    public function boot(ContainerInterface $container, RouterInterface $router): void
     {
         // Register routes
         $router->get('/my-feature', [MyFeatureController::class, 'index'], 'my-feature.index');
@@ -194,7 +194,7 @@ Service providers listed in an extension's `providers()` method are instantiated
 Extensions that declare `"routes": true` in their manifest can register routes in the `boot()` method:
 
 ```php
-public function boot(ContainerInterface $container, Router $router): void
+public function boot(ContainerInterface $container, RouterInterface $router): void
 {
     $router->get('/api/widgets', [WidgetController::class, 'list'], 'widgets.list');
     $router->post('/api/widgets', [WidgetController::class, 'create'], 'widgets.create');
@@ -305,7 +305,7 @@ namespace Myapp\Notifications;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
-use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 
 final class NotificationsExtension implements ExtensionInterface
 {
@@ -319,7 +319,7 @@ final class NotificationsExtension implements ExtensionInterface
         // Direct bindings (or use a service provider)
     }
 
-    public function boot(ContainerInterface $container, Router $router): void
+    public function boot(ContainerInterface $container, RouterInterface $router): void
     {
         $router->get('/notifications', [NotificationController::class, 'index'], 'notifications.index');
         $router->post('/notifications/{id}/read', [NotificationController::class, 'markRead'], 'notifications.read');

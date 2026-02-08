@@ -8,7 +8,7 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
-use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 use Throwable;
 
 /**
@@ -115,7 +115,7 @@ final class ExtensionBootstrap
      *
      * @throws ExtensionException If booting fails
      */
-    public function boot(ContainerInterface $container, Router $router): void
+    public function boot(ContainerInterface $container, RouterInterface $router): void
     {
         if ($this->booted) {
             return;

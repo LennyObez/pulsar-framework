@@ -129,6 +129,7 @@ use Pulsar\Resilience\Repair\RepairRunner;
 use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
 use Pulsar\Runtime\LeakDetector;
 use Pulsar\Runtime\RequestResetRegistry;
@@ -230,6 +231,7 @@ final class Kernel
         // Register core services in container
         $this->container->instance(ContainerInterface::class, $this->container);
         $this->container->instance(Router::class, $this->router);
+        $this->container->instance(RouterInterface::class, $this->router);
         $this->container->instance(MiddlewareRegistry::class, $this->middlewareRegistry);
         $this->container->instance(self::class, $this);
 

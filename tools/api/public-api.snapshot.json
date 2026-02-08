@@ -935,6 +935,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Routing\\RouterInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Routing\\RoutingException": {
       "since": "",
       "methods": [],

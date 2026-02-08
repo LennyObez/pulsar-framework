@@ -18,6 +18,7 @@ use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\ExtensionRegistry;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\RouterInterface;
 
 #[CoversClass(ExtensionBootstrap::class)]
 final class ExtensionBootstrapTest extends TestCase
@@ -69,7 +70,7 @@ final class ExtensionBootstrapTest extends TestCase
                 $this->registered = true;
             }
 
-            public function boot(ContainerInterface $container, Router $router): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
             public function providers(): array
             {
@@ -100,7 +101,7 @@ final class ExtensionBootstrapTest extends TestCase
                 $this->callCount++;
             }
 
-            public function boot(ContainerInterface $container, Router $router): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
             public function providers(): array
             {
@@ -128,7 +129,7 @@ final class ExtensionBootstrapTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void
+            public function boot(ContainerInterface $container, RouterInterface $router): void
             {
                 $this->booted = true;
             }
@@ -169,7 +170,7 @@ final class ExtensionBootstrapTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void
+            public function boot(ContainerInterface $container, RouterInterface $router): void
             {
                 $this->callCount++;
             }
@@ -204,7 +205,7 @@ final class ExtensionBootstrapTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
             public function providers(): array
             {
@@ -286,6 +287,40 @@ final class ExtensionBootstrapTest extends TestCase
         self::assertSame(['TestCommand', 'OtherCommand'], $commands);
     }
 
+    #[Test]
+    public function bootPassesRouterInterfaceToExtension(): void
+    {
+        $extension = new class implements ExtensionInterface {
+            public bool $booted = false;
+
+            public function name(): string
+            {
+                return 'test/router-interface';
+            }
+
+            public function register(ContainerInterface $container): void {}
+
+            public function boot(ContainerInterface $container, RouterInterface $router): void
+            {
+                $this->booted = true;
+                $router->get('/interface-test', fn() => 'ok', 'interface.test');
+            }
+
+            public function providers(): array
+            {
+                return [];
+            }
+        };
+
+        $this->bootstrap->addExtension($extension, $this->createManifest('test/router-interface'));
+        $this->bootstrap->register($this->container);
+        $this->bootstrap->boot($this->container, $this->router);
+
+        self::assertTrue($extension->booted);
+        self::assertSame(1, $this->router->count());
+        self::assertSame('/interface-test', $this->router->routes[0]->path);
+    }
+
     private function createTestExtension(string $name): ExtensionInterface
     {
         return new class ($name) implements ExtensionInterface {
@@ -298,7 +333,7 @@ final class ExtensionBootstrapTest extends TestCase
 
             public function register(ContainerInterface $container): void {}
 
-            public function boot(ContainerInterface $container, Router $router): void {}
+            public function boot(ContainerInterface $container, RouterInterface $router): void {}
 
             public function providers(): array
             {
