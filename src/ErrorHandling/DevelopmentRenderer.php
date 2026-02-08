@@ -24,7 +24,7 @@ use Throwable;
  * Shows exception class/message, full stack trace, request details, and
  * chained previous exceptions. All values are HTML-escaped. Inline CSS, no external deps.
  */
-final class DevelopmentRenderer implements ExceptionRendererInterface
+final readonly class DevelopmentRenderer implements ExceptionRendererInterface
 {
     public function __construct(
         private readonly SensitiveDataScrubber $scrubber = new SensitiveDataScrubber(),
