@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\ErrorHandling;
 
 use function htmlspecialchars;
+use function is_array;
 use function is_scalar;
 use function is_string;
 
 use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 
 use function sprintf;
 
@@ -22,8 +24,11 @@ use Throwable;
  * Shows exception class/message, full stack trace, request details, and
  * chained previous exceptions. All values are HTML-escaped. Inline CSS, no external deps.
  */
-final class DevelopmentRenderer implements ExceptionRendererInterface
+final readonly class DevelopmentRenderer implements ExceptionRendererInterface
 {
+    public function __construct(
+        private SensitiveDataScrubber $scrubber = new SensitiveDataScrubber(),
+    ) {}
     #[Override]
     public function render(Throwable $exception, Request $request, ResponseStatus $status): string
     {
@@ -114,10 +119,13 @@ final class DevelopmentRenderer implements ExceptionRendererInterface
     private function renderHeaders(Request $request): string
     {
         $html = '';
+        $headers = $this->scrubber->scrubHeaders($request->headers->toArray());
 
-        foreach ($request->headers->toArray() as $name => $values) {
+        foreach ($headers as $name => $values) {
             $escapedName = $this->escape($name);
-            $escapedValue = $this->escape(implode(', ', $values));
+            $escapedValue = $this->escape(
+                is_array($values) ? implode(', ', $values) : $values,
+            );
             $html .= "<tr><td>$escapedName</td><td>$escapedValue</td></tr>";
         }
 

@@ -7,15 +7,15 @@ namespace Pulsar\Tests\Unit\Studio\Server\Controller;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Config\StudioCollectorConfig;
-use Pulsar\Config\StudioConfig;
-use Pulsar\Config\StudioRetentionConfig;
+use Pulsar\Extension\Studio\Config\StudioCollectorConfig;
+use Pulsar\Extension\Studio\Config\StudioConfig;
+use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Server\Controller\LandingController;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Studio\Server\Controller\LandingController;
 
 #[CoversClass(LandingController::class)]
 final class LandingControllerTest extends TestCase
