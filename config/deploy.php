@@ -49,4 +49,33 @@ return [
         'enabled' => false,
         'alt_svc_max_age' => 86400,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Deploy Checks
+    |--------------------------------------------------------------------------
+    |
+    | Per-check configuration for `deploy:check`. Each check can be enabled/disabled
+    | and assigned a severity level: 'fail' (blocking error), 'warn' (advisory),
+    | or 'off' (disabled entirely).
+    |
+    | Env override: DEPLOY_CHECK_{NAME}_SEVERITY=fail|warn|off
+    | (name is uppercased, hyphens become underscores)
+    |
+    */
+    'checks' => [
+        'debug-mode' => ['enabled' => true, 'severity' => 'fail'],
+        'opcache' => ['enabled' => true, 'severity' => 'fail'],
+        'jit' => ['enabled' => true, 'severity' => 'warn'],
+        'cache-settings' => ['enabled' => true, 'severity' => 'fail'],
+        'filesystem-scan' => ['enabled' => true, 'severity' => 'fail'],
+        'security-headers' => ['enabled' => true, 'severity' => 'fail'],
+        'https-readiness' => ['enabled' => true, 'severity' => 'warn'],
+        'http3-readiness' => ['enabled' => true, 'severity' => 'warn'],
+        'health-endpoint' => ['enabled' => true, 'severity' => 'warn'],
+        'rate-limiting' => ['enabled' => true, 'severity' => 'warn'],
+        'request-size-limits' => ['enabled' => true, 'severity' => 'warn'],
+        'trusted-proxies' => ['enabled' => true, 'severity' => 'warn'],
+        'integrity' => ['enabled' => true, 'severity' => 'fail'],
+    ],
 ];

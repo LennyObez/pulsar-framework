@@ -111,4 +111,90 @@ final class DeployConfigTest extends TestCase
         self::assertSame(32, $config->maxPostSizeMb);
         self::assertSame(10, $config->maxUploadSizeMb);
     }
+
+    #[Test]
+    public function defaultChecksIncludeAllThirteenEntries(): void
+    {
+        $config = new DeployConfig();
+
+        self::assertCount(13, $config->checks);
+        self::assertArrayHasKey('debug-mode', $config->checks);
+        self::assertArrayHasKey('opcache', $config->checks);
+        self::assertArrayHasKey('jit', $config->checks);
+        self::assertArrayHasKey('cache-settings', $config->checks);
+        self::assertArrayHasKey('filesystem-scan', $config->checks);
+        self::assertArrayHasKey('security-headers', $config->checks);
+        self::assertArrayHasKey('https-readiness', $config->checks);
+        self::assertArrayHasKey('http3-readiness', $config->checks);
+        self::assertArrayHasKey('health-endpoint', $config->checks);
+        self::assertArrayHasKey('rate-limiting', $config->checks);
+        self::assertArrayHasKey('request-size-limits', $config->checks);
+        self::assertArrayHasKey('trusted-proxies', $config->checks);
+        self::assertArrayHasKey('integrity', $config->checks);
+    }
+
+    #[Test]
+    public function checkConfigReturnsDefaultForUnknownCheck(): void
+    {
+        $config = new DeployConfig();
+
+        $result = $config->checkConfig('nonexistent');
+
+        self::assertTrue($result['enabled']);
+        self::assertSame('warn', $result['severity']);
+    }
+
+    #[Test]
+    public function checkConfigReturnsConfiguredValues(): void
+    {
+        $config = new DeployConfig();
+
+        $debugConfig = $config->checkConfig('debug-mode');
+
+        self::assertTrue($debugConfig['enabled']);
+        self::assertSame('fail', $debugConfig['severity']);
+    }
+
+    #[Test]
+    public function isCheckEnabledReturnsTrueByDefault(): void
+    {
+        $config = new DeployConfig();
+
+        self::assertTrue($config->isCheckEnabled('debug-mode'));
+        self::assertTrue($config->isCheckEnabled('unknown-check'));
+    }
+
+    #[Test]
+    public function isCheckEnabledReturnsFalseWhenDisabled(): void
+    {
+        $config = new DeployConfig(
+            checks: ['debug-mode' => ['enabled' => false, 'severity' => 'fail']],
+        );
+
+        self::assertFalse($config->isCheckEnabled('debug-mode'));
+    }
+
+    #[Test]
+    public function fromArrayParsesChecksSection(): void
+    {
+        $config = DeployConfig::fromArray([
+            'checks' => [
+                'debug-mode' => ['enabled' => false, 'severity' => 'warn'],
+                'jit' => ['enabled' => true, 'severity' => 'fail'],
+            ],
+        ], $this->environment);
+
+        self::assertFalse($config->isCheckEnabled('debug-mode'));
+        self::assertSame('warn', $config->checkConfig('debug-mode')['severity']);
+        self::assertSame('fail', $config->checkConfig('jit')['severity']);
+    }
+
+    #[Test]
+    public function fromArrayUsesDefaultsWhenNoChecksProvided(): void
+    {
+        $config = DeployConfig::fromArray([], $this->environment);
+
+        self::assertCount(13, $config->checks);
+        self::assertSame('fail', $config->checkConfig('debug-mode')['severity']);
+    }
 }
