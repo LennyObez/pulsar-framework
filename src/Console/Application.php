@@ -170,7 +170,7 @@ final class Application
     /**
      * Render the main help screen.
      */
-    private function renderHelp(OutputInterface $output): void
+    public function renderHelp(OutputInterface $output): void
     {
         $this->renderVersion($output);
         $output->newLine();
