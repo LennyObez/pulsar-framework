@@ -39,7 +39,7 @@ php bin/pulsar optimize:clear
 
 When framework caches are present, the Kernel boot path skips file-based config parsing and loads the pre-built `ConfigRepository` directly from cache. This eliminates config file I/O and PHP array merging on every request.
 
-The boot pipeline detects cached data automatically — no code changes are needed.
+The boot pipeline detects cached data automatically — no code changes are needed. See [`docs/CACHING.md`](CACHING.md) for details on boot profiling, cache validation, and metrics.
 
 ## Deploy Checks
 
@@ -64,6 +64,18 @@ Use `--strict` to treat warnings as errors:
 
 ```bash
 php bin/pulsar deploy:check --strict
+```
+
+### Severity Overrides
+
+Individual check severity can be configured in `config/deploy.php` or via environment variables. See [`docs/CACHING.md`](CACHING.md#deploy-check-severity-overrides) for full details.
+
+```php
+// config/deploy.php
+'checks' => [
+    'opcache_enabled'  => 'off',   // Skip this check
+    'filesystem_scan'  => 'warn',  // Downgrade errors to warnings
+],
 ```
 
 ### Writing Custom Checks
