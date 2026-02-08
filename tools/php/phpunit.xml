@@ -19,9 +19,6 @@
             <directory>../../tests/E2E</directory>
         </testsuite>
     </testsuites>
-    <php>
-        <ini name="pcov.directory" value="../../"/>
-    </php>
     <source>
         <include>
             <directory>../../src</directory>
