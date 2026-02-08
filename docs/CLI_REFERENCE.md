@@ -307,6 +307,36 @@ php bin/pulsar optimize:clear
 
 Removes all cached configuration, route, and container files.
 
+#### `optimize:validate`
+
+Validate that framework cache generation succeeds and the cache is loadable. Designed for CI pipelines.
+
+```bash
+php bin/pulsar optimize:validate
+php bin/pulsar optimize:validate --strict --encrypt
+```
+
+| Option      | Short | Description                                      |
+| ----------- | ----- | ------------------------------------------------ |
+| `--strict`  | `-s`  | Fail if any closure-based route is detected      |
+| `--encrypt` | `-e`  | Encrypt cached data (requires PULSAR_MASTER_KEY) |
+
+Runs a full cache round-trip: warm, verify `isWarm()`, verify `load()` returns all sections, then clear. Exit code 0 on success, 1 on any failure. See [`docs/CACHING.md`](CACHING.md) for CI usage examples.
+
+#### `cache:warmup`
+
+Warm config, route, and container caches. This is an alias for `optimize` — same behavior, discoverable under the `cache:` namespace.
+
+```bash
+php bin/pulsar cache:warmup
+php bin/pulsar cache:warmup --strict --encrypt
+```
+
+| Option      | Short | Description                                      |
+| ----------- | ----- | ------------------------------------------------ |
+| `--strict`  | `-s`  | Fail if any closure-based route is detected      |
+| `--encrypt` | `-e`  | Encrypt cached data (requires PULSAR_MASTER_KEY) |
+
 ### Queue
 
 #### `queue:work`
