@@ -46,13 +46,13 @@ final readonly class InterfaceParser
             }
 
             // Find method name
-            $name = $this->findNextToken($tokens, $i, $tokenCount, T_STRING);
+            $name = $this->findNextToken($tokens, $i, $tokenCount);
             if ($name === null) {
                 continue;
             }
 
             // Find opening parenthesis
-            $parenStart = $this->findNextChar($tokens, $i, $tokenCount, '(');
+            $parenStart = $this->findNextChar($tokens, $i, $tokenCount);
             if ($parenStart === null) {
                 continue;
             }
@@ -77,11 +77,11 @@ final readonly class InterfaceParser
      *
      * @param list<array{int, string, int}|string> $tokens
      */
-    private function findNextToken(array $tokens, int $from, int $count, int $type): ?string
+    private function findNextToken(array $tokens, int $from, int $count): ?string
     {
         for ($i = $from + 1; $i < $count; $i++) {
             $token = $tokens[$i];
-            if (is_array($token) && $token[0] === $type) {
+            if (is_array($token) && $token[0] === T_STRING) {
                 /** @var string */
                 return $token[1];
             }
@@ -98,11 +98,11 @@ final readonly class InterfaceParser
      *
      * @param list<array{int, string, int}|string> $tokens
      */
-    private function findNextChar(array $tokens, int $from, int $count, string $char): ?int
+    private function findNextChar(array $tokens, int $from, int $count): ?int
     {
         for ($i = $from + 1; $i < $count; $i++) {
             $token = $tokens[$i];
-            if ($token === $char) {
+            if ($token === '(') {
                 return $i;
             }
         }
@@ -183,7 +183,6 @@ final readonly class InterfaceParser
         $name = '';
         /** @var list<string> $typeParts */
         $typeParts = [];
-        $default = null;
         $inDefault = false;
         /** @var list<string> $defaultParts */
         $defaultParts = [];

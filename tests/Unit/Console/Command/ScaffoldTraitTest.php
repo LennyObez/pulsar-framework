@@ -188,4 +188,40 @@ final class ScaffoldTraitTest extends TestCase
     {
         self::assertSame([], $this->listFilesRecursive('/nonexistent'));
     }
+
+    #[Test]
+    public function parse_comma_separated_option_returns_trimmed_list(): void
+    {
+        self::assertSame(['push', 'pull_request', 'issues'], $this->parseCommaSeparatedOption('push, pull_request, issues'));
+    }
+
+    #[Test]
+    public function parse_comma_separated_option_filters_empty_values(): void
+    {
+        self::assertSame(['a', 'b'], $this->parseCommaSeparatedOption('a,,b,'));
+    }
+
+    #[Test]
+    public function parse_comma_separated_option_returns_empty_for_empty_string(): void
+    {
+        self::assertSame([], $this->parseCommaSeparatedOption(''));
+    }
+
+    #[Test]
+    public function parse_comma_separated_option_returns_empty_for_non_string(): void
+    {
+        self::assertSame([], $this->parseCommaSeparatedOption(null));
+    }
+
+    #[Test]
+    public function resolve_test_base_path_creates_subdirectories(): void
+    {
+        $testBase = $this->resolveTestBasePath('TestModule', ['Controller']);
+
+        self::assertIsString($testBase);
+        self::assertStringEndsWith('tests' . DIRECTORY_SEPARATOR . 'Unit' . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . 'TestModule', $testBase);
+        self::assertDirectoryExists($testBase . DIRECTORY_SEPARATOR . 'Controller');
+
+        $this->removeDirectoryRecursive($testBase);
+    }
 }

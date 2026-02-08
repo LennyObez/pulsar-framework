@@ -4,9 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
+use function array_filter;
+use function array_map;
+use function array_values;
+use function explode;
+use function is_dir;
+use function is_string;
+
+use Pulsar\Console\ExitCode;
+use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
 use function sprintf;
+use function trim;
 
 /**
  * Shared filesystem scaffolding helpers for scaffold and removal commands.
@@ -86,6 +96,98 @@ trait ScaffoldTrait
         $name = preg_replace('/[A-Z]/', '_$0', $name) ?? $name;
 
         return strtolower(trim($name, '_'));
+    }
+
+    /**
+     * Validate and resolve module context from input.
+     *
+     * @return array{string, string, string, string}|int Tuple of [name, module, modulePath, namespace] or exit code
+     */
+    private function resolveModuleContext(
+        InputInterface $input,
+        OutputInterface $output,
+        string $nameLabel,
+    ): array|int {
+        $name = $input->getArgument(0);
+        $module = $input->getOption('module');
+        $basePath = $input->getOption('path', 'app/Modules');
+
+        if (!is_string($name) || $name === '') {
+            $output->errorln($nameLabel . ' name is required.');
+            return ExitCode::Invalid->value;
+        }
+
+        if (!is_string($module) || $module === '') {
+            $output->errorln('Module name is required (--module).');
+            return ExitCode::Invalid->value;
+        }
+
+        if (!is_string($basePath)) {
+            $basePath = 'app/Modules';
+        }
+
+        $name = $this->toPascalCase($name);
+        $module = $this->toPascalCase($module);
+
+        $resolved = $this->resolveBasePath($basePath, 'app/Modules');
+        if ($resolved === false) {
+            $output->errorln('Failed to get current working directory.');
+            return ExitCode::Error->value;
+        }
+
+        $modulePath = $resolved . DIRECTORY_SEPARATOR . $module;
+
+        if (!is_dir($modulePath)) {
+            $output->errorln(sprintf('Module "%s" does not exist at %s', $module, $modulePath));
+            return ExitCode::Error->value;
+        }
+
+        $namespace = 'App\\Modules\\' . $module;
+
+        return [$name, $module, $modulePath, $namespace];
+    }
+
+    /**
+     * Parse a comma-separated option value into a list of trimmed, non-empty strings.
+     *
+     * @return list<string>
+     */
+    private function parseCommaSeparatedOption(mixed $value): array
+    {
+        if (!is_string($value) || $value === '') {
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            trim(...),
+            explode(',', $value),
+        )));
+    }
+
+    /**
+     * Resolve test base path and create required subdirectories.
+     *
+     * @param list<string> $subdirs Subdirectories to create under the test base
+     * @return string|false The test base path, or false if cwd is unavailable
+     */
+    private function resolveTestBasePath(string $module, array $subdirs): string|false
+    {
+        $cwd = getcwd();
+        if ($cwd === false) {
+            return false;
+        }
+
+        $testBase = $cwd . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'Unit'
+            . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . $module;
+
+        foreach ($subdirs as $dir) {
+            $fullDir = $testBase . DIRECTORY_SEPARATOR . $dir;
+            if (!is_dir($fullDir)) {
+                mkdir($fullDir, 0o755, true);
+            }
+        }
+
+        return $testBase;
     }
 
     /**

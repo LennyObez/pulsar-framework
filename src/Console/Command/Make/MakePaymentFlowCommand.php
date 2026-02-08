@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Console\Command\Make;
 
 use function is_dir;
-use function is_string;
+use function is_int;
 
 use Override;
 use Pulsar\Console\Command;
@@ -45,41 +45,12 @@ final class MakePaymentFlowCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $name = $input->getArgument(0);
-        $module = $input->getOption('module');
-        $basePath = $input->getOption('path', 'app/Modules');
-
-        if (!is_string($name) || $name === '') {
-            $output->errorln('Payment flow name is required.');
-            return ExitCode::Invalid->value;
+        $context = $this->resolveModuleContext($input, $output, 'Payment flow');
+        if (is_int($context)) {
+            return $context;
         }
 
-        if (!is_string($module) || $module === '') {
-            $output->errorln('Module name is required (--module).');
-            return ExitCode::Invalid->value;
-        }
-
-        if (!is_string($basePath)) {
-            $basePath = 'app/Modules';
-        }
-
-        $name = $this->toPascalCase($name);
-        $module = $this->toPascalCase($module);
-
-        $resolved = $this->resolveBasePath($basePath, 'app/Modules');
-        if ($resolved === false) {
-            $output->errorln('Failed to get current working directory.');
-            return ExitCode::Error->value;
-        }
-
-        $modulePath = $resolved . DIRECTORY_SEPARATOR . $module;
-
-        if (!is_dir($modulePath)) {
-            $output->errorln(sprintf('Module "%s" does not exist at %s', $module, $modulePath));
-            return ExitCode::Error->value;
-        }
-
-        $namespace = 'App\\Modules\\' . $module;
+        [$name, $module, $modulePath, $namespace] = $context;
 
         $output->writeln(sprintf('Creating payment flow: %s in %s', $name, $module));
         $output->newLine();
@@ -114,18 +85,10 @@ final class MakePaymentFlowCommand extends Command
         ], $output);
 
         // Create tests
-        $cwd = getcwd();
-        if ($cwd !== false) {
-            $testDir = $cwd . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'Unit'
-                . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . $module
-                . DIRECTORY_SEPARATOR . 'Gateway';
-
-            if (!is_dir($testDir)) {
-                mkdir($testDir, 0o755, true);
-            }
-
-            $this->writeFiles($testDir, [
-                $name . 'GatewayTest.php' => $this->templates->gatewayTest($name, $module, $namespace),
+        $testBase = $this->resolveTestBasePath($module, ['Gateway']);
+        if ($testBase !== false) {
+            $this->writeFiles($testBase, [
+                'Gateway' . DIRECTORY_SEPARATOR . $name . 'GatewayTest.php' => $this->templates->gatewayTest($name, $module, $namespace),
             ], $output);
         }
 

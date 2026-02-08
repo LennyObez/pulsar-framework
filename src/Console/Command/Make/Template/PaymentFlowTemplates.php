@@ -16,16 +16,16 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Contracts;
+            namespace $namespace\\Contracts;
 
             use Pulsar\\Api\\Api;
-            use {$namespace}\\Domain\\{$name}Charge;
-            use {$namespace}\\Domain\\{$name}Intent;
-            use {$namespace}\\Domain\\{$name}Refund;
-            use {$namespace}\\Domain\\Money;
+            use $namespace\\Domain\\{$name}Charge;
+            use $namespace\\Domain\\{$name}Intent;
+            use $namespace\\Domain\\{$name}Refund;
+            use $namespace\\Domain\\Money;
 
             /**
-             * Payment provider contract for {$name} flows.
+             * Payment provider contract for $name flows.
              */
             #[Api]
             interface {$name}ProviderInterface
@@ -46,17 +46,17 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Internal\\Infrastructure;
+            namespace $namespace\\Internal\\Infrastructure;
 
             use Override;
-            use {$namespace}\\Contracts\\{$name}ProviderInterface;
-            use {$namespace}\\Domain\\{$name}Charge;
-            use {$namespace}\\Domain\\{$name}ChargeStatus;
-            use {$namespace}\\Domain\\{$name}Intent;
-            use {$namespace}\\Domain\\{$name}IntentStatus;
-            use {$namespace}\\Domain\\{$name}Refund;
-            use {$namespace}\\Domain\\{$name}RefundStatus;
-            use {$namespace}\\Domain\\Money;
+            use $namespace\\Contracts\\{$name}ProviderInterface;
+            use $namespace\\Domain\\{$name}Charge;
+            use $namespace\\Domain\\{$name}ChargeStatus;
+            use $namespace\\Domain\\{$name}Intent;
+            use $namespace\\Domain\\{$name}IntentStatus;
+            use $namespace\\Domain\\{$name}Refund;
+            use $namespace\\Domain\\{$name}RefundStatus;
+            use $namespace\\Domain\\Money;
 
             /**
              * Null-object provider for testing and development.
@@ -106,7 +106,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Gateway;
+            namespace $namespace\\Gateway;
 
             use DateTimeImmutable;
             use Psr\\Clock\\ClockInterface;
@@ -115,11 +115,11 @@ final readonly class PaymentFlowTemplates
             use Pulsar\\Idempotency\\IdempotencyStoreInterface;
             use Pulsar\\Observability\\Metrics\\MetricRegistry;
             use Pulsar\\Security\\Audit\\AuditLogger;
-            use {$namespace}\\Config\\{$name}Config;
-            use {$namespace}\\Contracts\\{$name}ProviderInterface;
-            use {$namespace}\\Domain\\{$name}Intent;
-            use {$namespace}\\Domain\\Money;
-            use {$namespace}\\Exception\\{$name}Exception;
+            use $namespace\\Config\\{$name}Config;
+            use $namespace\\Contracts\\{$name}ProviderInterface;
+            use $namespace\\Domain\\{$name}Intent;
+            use $namespace\\Domain\\Money;
+            use $namespace\\Exception\\{$name}Exception;
 
             use function json_decode;
             use function json_encode;
@@ -127,7 +127,7 @@ final readonly class PaymentFlowTemplates
             use const JSON_THROW_ON_ERROR;
 
             /**
-             * Payment gateway orchestrator for {$name} flows.
+             * Payment gateway orchestrator for $name flows.
              *
              * Handles idempotency, audit logging, and metrics.
              */
@@ -184,7 +184,7 @@ final readonly class PaymentFlowTemplates
                             json_encode(\$intent->toArray(), JSON_THROW_ON_ERROR),
                         );
 
-                        \$this->auditLogger->log('{$lcName}.intent.created', [
+                        \$this->auditLogger->log('$lcName.intent.created', [
                             'intent_id' => \$intent->id,
                             'amount' => \$amount->amount,
                             'currency' => \$currency,
@@ -195,7 +195,7 @@ final readonly class PaymentFlowTemplates
                         return \$intent;
                     } catch (\\Throwable \$e) {
                         \$this->idempotencyStore->release(\$idempotencyKey);
-                        \$this->logger->error('Failed to create {$lcName} intent', [
+                        \$this->logger->error('Failed to create $lcName intent', [
                             'error' => \$e->getMessage(),
                         ]);
 
@@ -213,7 +213,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Gateway;
+            namespace $namespace\\Gateway;
 
             use function json_encode;
 
@@ -247,13 +247,13 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Config;
+            namespace $namespace\\Config;
 
             use NoDiscard;
             use Pulsar\\Api\\Api;
 
             /**
-             * Configuration DTO for {$name} payment flows.
+             * Configuration DTO for $name payment flows.
              */
             #[Api]
             final readonly class {$name}Config
@@ -287,7 +287,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             use NoDiscard;
 
@@ -337,7 +337,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             enum {$name}IntentStatus: string
             {
@@ -355,7 +355,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             final readonly class {$name}Charge
             {
@@ -375,7 +375,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             enum {$name}ChargeStatus: string
             {
@@ -392,7 +392,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             final readonly class {$name}Refund
             {
@@ -413,7 +413,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             enum {$name}RefundStatus: string
             {
@@ -431,7 +431,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             /**
              * Value object representing a monetary amount in minor units (cents).
@@ -452,7 +452,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Exception;
+            namespace $namespace\\Exception;
 
             use NoDiscard;
             use Pulsar\\Api\\Api;
@@ -461,7 +461,7 @@ final readonly class PaymentFlowTemplates
             use function sprintf;
 
             /**
-             * {$name} payment flow exceptions.
+             * $name payment flow exceptions.
              */
             #[Api]
             #[\\NoDiscard]
@@ -470,7 +470,7 @@ final readonly class PaymentFlowTemplates
                 #[NoDiscard]
                 public static function providerFailed(string \$reason): self
                 {
-                    return new self(sprintf('{$name} provider failed: %s', \$reason));
+                    return new self(sprintf('$name provider failed: %s', \$reason));
                 }
 
                 #[NoDiscard]
@@ -492,7 +492,7 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Exception;
+            namespace $namespace\\Exception;
 
             use NoDiscard;
             use RuntimeException;
@@ -500,20 +500,20 @@ final readonly class PaymentFlowTemplates
             use function sprintf;
 
             /**
-             * Provider-specific exceptions for {$name} flows.
+             * Provider-specific exceptions for $name flows.
              */
             final class {$name}ProviderException extends RuntimeException
             {
                 #[NoDiscard]
                 public static function unavailable(string \$reason): self
                 {
-                    return new self(sprintf('{$name} provider unavailable: %s', \$reason));
+                    return new self(sprintf('$name provider unavailable: %s', \$reason));
                 }
 
                 #[NoDiscard]
                 public static function rejected(string \$reason): self
                 {
-                    return new self(sprintf('{$name} provider rejected request: %s', \$reason));
+                    return new self(sprintf('$name provider rejected request: %s', \$reason));
                 }
             }
             PHP;
@@ -526,12 +526,12 @@ final readonly class PaymentFlowTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace};
+            namespace $namespace;
 
             use Pulsar\\Container\\ContainerInterface;
             use Pulsar\\Extensibility\\ServiceProviderInterface;
-            use {$namespace}\\Contracts\\{$name}ProviderInterface;
-            use {$namespace}\\Internal\\Infrastructure\\Null{$name}Provider;
+            use $namespace\\Contracts\\{$name}ProviderInterface;
+            use $namespace\\Internal\\Infrastructure\\Null{$name}Provider;
 
             final class {$name}ServiceProvider implements ServiceProviderInterface
             {
@@ -553,7 +553,7 @@ final readonly class PaymentFlowTemplates
     public function readme(string $name): string
     {
         return <<<MD
-            # {$name} Payment Flow
+            # $name Payment Flow
 
             ## Structure
 
@@ -568,13 +568,12 @@ final readonly class PaymentFlowTemplates
 
     public function gatewayTest(string $name, string $module, string $namespace): string
     {
-        $lcName = lcfirst($name);
         return <<<PHP
             <?php
 
             declare(strict_types=1);
 
-            namespace Pulsar\\Tests\\Unit\\Modules\\{$module}\\Gateway;
+            namespace Pulsar\\Tests\\Unit\\Modules\\$module\\Gateway;
 
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
@@ -585,12 +584,12 @@ final readonly class PaymentFlowTemplates
             use Pulsar\\Idempotency\\IdempotencyStoreInterface;
             use Pulsar\\Observability\\Metrics\\MetricRegistry;
             use Pulsar\\Security\\Audit\\AuditLogger;
-            use {$namespace}\\Config\\{$name}Config;
-            use {$namespace}\\Contracts\\{$name}ProviderInterface;
-            use {$namespace}\\Domain\\{$name}Intent;
-            use {$namespace}\\Domain\\{$name}IntentStatus;
-            use {$namespace}\\Domain\\Money;
-            use {$namespace}\\Gateway\\{$name}Gateway;
+            use $namespace\\Config\\{$name}Config;
+            use $namespace\\Contracts\\{$name}ProviderInterface;
+            use $namespace\\Domain\\{$name}Intent;
+            use $namespace\\Domain\\{$name}IntentStatus;
+            use $namespace\\Domain\\Money;
+            use $namespace\\Gateway\\{$name}Gateway;
 
             use DateTimeImmutable;
 

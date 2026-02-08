@@ -23,7 +23,7 @@ final readonly class PortTemplates
             $stubs = [];
             foreach ($methods as $method) {
                 $stubs[] = <<<STUB
-                        public function {$method}(): void;
+                        public function $method(): void;
                     STUB;
             }
             $methodStubs = "\n" . implode("\n\n", $stubs) . "\n";
@@ -34,12 +34,12 @@ final readonly class PortTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Contracts;
+            namespace $namespace\\Contracts;
 
             use Pulsar\\Api\\Api;
 
             /**
-             * Port interface for {$name} operations.
+             * Port interface for $name operations.
              */
             #[Api]
             interface {$interfaceName}

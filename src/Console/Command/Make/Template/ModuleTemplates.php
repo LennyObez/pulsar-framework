@@ -16,12 +16,12 @@ final readonly class ModuleTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Contracts;
+            namespace $namespace\\Contracts;
 
             use Pulsar\\Api\\Api;
 
             /**
-             * Public API contract for the {$name} module.
+             * Public API contract for the $name module.
              */
             #[Api]
             interface {$name}ServiceInterface
@@ -32,19 +32,18 @@ final readonly class ModuleTemplates
 
     public function serviceImplementation(string $name, string $namespace): string
     {
-        $lcName = lcfirst($name);
         return <<<PHP
             <?php
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Internal\\Infrastructure;
+            namespace $namespace\\Internal\\Infrastructure;
 
             use Override;
-            use {$namespace}\\Contracts\\{$name}ServiceInterface;
+            use $namespace\\Contracts\\{$name}ServiceInterface;
 
             /**
-             * Default {$name} service implementation.
+             * Default $name service implementation.
              */
             final readonly class {$name}Service implements {$name}ServiceInterface
             {
@@ -60,11 +59,11 @@ final readonly class ModuleTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Controller;
+            namespace $namespace\\Controller;
 
             use Pulsar\\Http\\Request;
             use Pulsar\\Http\\Response;
-            use {$namespace}\\Contracts\\{$name}ServiceInterface;
+            use $namespace\\Contracts\\{$name}ServiceInterface;
 
             final class {$name}Controller
             {
@@ -75,7 +74,7 @@ final readonly class ModuleTemplates
                 public function index(Request \$request): Response
                 {
                     return Response::json([
-                        'module' => '{$name}',
+                        'module' => '$name',
                     ]);
                 }
             }
@@ -89,13 +88,13 @@ final readonly class ModuleTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Config;
+            namespace $namespace\\Config;
 
             use NoDiscard;
             use Pulsar\\Api\\Api;
 
             /**
-             * Configuration DTO for the {$name} module.
+             * Configuration DTO for the $name module.
              */
             #[Api]
             final readonly class {$name}Config
@@ -125,12 +124,12 @@ final readonly class ModuleTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace};
+            namespace $namespace;
 
             use Pulsar\\Container\\ContainerInterface;
             use Pulsar\\Extensibility\\ServiceProviderInterface;
-            use {$namespace}\\Contracts\\{$name}ServiceInterface;
-            use {$namespace}\\Internal\\Infrastructure\\{$name}Service;
+            use $namespace\\Contracts\\{$name}ServiceInterface;
+            use $namespace\\Internal\\Infrastructure\\{$name}Service;
 
             final class ModuleServiceProvider implements ServiceProviderInterface
             {
@@ -158,10 +157,10 @@ final readonly class ModuleTemplates
             declare(strict_types=1);
 
             use Pulsar\\Routing\\Router;
-            use {$namespace}\\Controller\\{$name}Controller;
+            use $namespace\\Controller\\{$name}Controller;
 
             return function (Router \$router): void {
-                \$router->get('/{$lcName}', [{$name}Controller::class, 'index'], '{$lcName}.index');
+                \$router->get('/$lcName', [{$name}Controller::class, 'index'], '$lcName.index');
             };
             PHP;
     }
@@ -169,7 +168,7 @@ final readonly class ModuleTemplates
     public function readme(string $name): string
     {
         return <<<MD
-            # {$name} Module
+            # $name Module
 
             ## Structure
 
@@ -190,13 +189,13 @@ final readonly class ModuleTemplates
 
             declare(strict_types=1);
 
-            namespace Pulsar\\Tests\\Unit\\Modules\\{$name}\\Internal\\Infrastructure;
+            namespace Pulsar\\Tests\\Unit\\Modules\\$name\\Internal\\Infrastructure;
 
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
             use PHPUnit\\Framework\\TestCase;
-            use {$namespace}\\Contracts\\{$name}ServiceInterface;
-            use {$namespace}\\Internal\\Infrastructure\\{$name}Service;
+            use $namespace\\Contracts\\{$name}ServiceInterface;
+            use $namespace\\Internal\\Infrastructure\\{$name}Service;
 
             #[CoversClass({$name}Service::class)]
             final class {$name}ServiceTest extends TestCase
@@ -214,21 +213,20 @@ final readonly class ModuleTemplates
 
     public function controllerTest(string $name, string $namespace): string
     {
-        $lcName = lcfirst($name);
         return <<<PHP
             <?php
 
             declare(strict_types=1);
 
-            namespace Pulsar\\Tests\\Unit\\Modules\\{$name}\\Controller;
+            namespace Pulsar\\Tests\\Unit\\Modules\\$name\\Controller;
 
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
             use PHPUnit\\Framework\\TestCase;
             use Pulsar\\Http\\Request;
             use Pulsar\\Http\\ResponseStatus;
-            use {$namespace}\\Contracts\\{$name}ServiceInterface;
-            use {$namespace}\\Controller\\{$name}Controller;
+            use $namespace\\Contracts\\{$name}ServiceInterface;
+            use $namespace\\Controller\\{$name}Controller;
 
             #[CoversClass({$name}Controller::class)]
             final class {$name}ControllerTest extends TestCase

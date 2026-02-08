@@ -4,12 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\Make;
 
-use function array_filter;
-use function array_map;
-use function array_values;
-use function explode;
 use function is_dir;
-use function is_string;
+use function is_int;
 
 use Override;
 use Pulsar\Console\Command;
@@ -20,7 +16,6 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
 use function sprintf;
-use function trim;
 
 /**
  * Scaffold an event ingestion pipeline with webhook verification and deduplication.
@@ -51,51 +46,14 @@ final class MakeEventIngestionCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $name = $input->getArgument(0);
-        $module = $input->getOption('module');
-        $basePath = $input->getOption('path', 'app/Modules');
-        $eventsRaw = $input->getOption('events', '');
-
-        if (!is_string($name) || $name === '') {
-            $output->errorln('Ingestion name is required.');
-            return ExitCode::Invalid->value;
+        $context = $this->resolveModuleContext($input, $output, 'Ingestion');
+        if (is_int($context)) {
+            return $context;
         }
 
-        if (!is_string($module) || $module === '') {
-            $output->errorln('Module name is required (--module).');
-            return ExitCode::Invalid->value;
-        }
+        [$name, $module, $modulePath, $namespace] = $context;
 
-        if (!is_string($basePath)) {
-            $basePath = 'app/Modules';
-        }
-
-        $name = $this->toPascalCase($name);
-        $module = $this->toPascalCase($module);
-
-        /** @var list<string> $events */
-        $events = [];
-        if (is_string($eventsRaw) && $eventsRaw !== '') {
-            $events = array_values(array_filter(array_map(
-                fn(string $e): string => trim($e),
-                explode(',', $eventsRaw),
-            )));
-        }
-
-        $resolved = $this->resolveBasePath($basePath, 'app/Modules');
-        if ($resolved === false) {
-            $output->errorln('Failed to get current working directory.');
-            return ExitCode::Error->value;
-        }
-
-        $modulePath = $resolved . DIRECTORY_SEPARATOR . $module;
-
-        if (!is_dir($modulePath)) {
-            $output->errorln(sprintf('Module "%s" does not exist at %s', $module, $modulePath));
-            return ExitCode::Error->value;
-        }
-
-        $namespace = 'App\\Modules\\' . $module;
+        $events = $this->parseCommaSeparatedOption($input->getOption('events', ''));
 
         $output->writeln(sprintf('Creating event ingestion: %s in %s', $name, $module));
         $output->newLine();
@@ -125,18 +83,11 @@ final class MakeEventIngestionCommand extends Command
         ], $output);
 
         // Create tests
-        $cwd = getcwd();
-        if ($cwd !== false) {
-            $testBase = $cwd . DIRECTORY_SEPARATOR . 'tests' . DIRECTORY_SEPARATOR . 'Unit'
-                . DIRECTORY_SEPARATOR . 'Modules' . DIRECTORY_SEPARATOR . $module;
-
-            foreach (['Internal' . DIRECTORY_SEPARATOR . 'Infrastructure', 'Controller'] as $dir) {
-                $fullDir = $testBase . DIRECTORY_SEPARATOR . $dir;
-                if (!is_dir($fullDir)) {
-                    mkdir($fullDir, 0o755, true);
-                }
-            }
-
+        $testBase = $this->resolveTestBasePath($module, [
+            'Internal' . DIRECTORY_SEPARATOR . 'Infrastructure',
+            'Controller',
+        ]);
+        if ($testBase !== false) {
             $this->writeFiles($testBase, [
                 'Internal' . DIRECTORY_SEPARATOR . 'Infrastructure' . DIRECTORY_SEPARATOR . $name . 'EventHandlerTest.php' => $this->templates->eventHandlerTest($name, $module, $namespace),
                 'Controller' . DIRECTORY_SEPARATOR . $name . 'WebhookControllerTest.php' => $this->templates->controllerTest($name, $module, $namespace),

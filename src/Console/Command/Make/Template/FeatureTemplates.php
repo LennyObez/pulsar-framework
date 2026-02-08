@@ -16,14 +16,14 @@ final readonly class FeatureTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Features\\{$feature}\\Contracts;
+            namespace $namespace\\Features\\$feature\\Contracts;
 
             use Pulsar\\Api\\Api;
             use Pulsar\\Http\\Request;
             use Pulsar\\Http\\Response;
 
             /**
-             * Handler contract for the {$feature} feature.
+             * Handler contract for the $feature feature.
              */
             #[Api]
             interface {$feature}HandlerInterface
@@ -40,12 +40,12 @@ final readonly class FeatureTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Features\\{$feature};
+            namespace $namespace\\Features\\$feature;
 
             use Override;
             use Pulsar\\Http\\Request;
             use Pulsar\\Http\\Response;
-            use {$namespace}\\Features\\{$feature}\\Contracts\\{$feature}HandlerInterface;
+            use $namespace\\Features\\$feature\\Contracts\\{$feature}HandlerInterface;
 
             final readonly class {$feature}Handler implements {$feature}HandlerInterface
             {
@@ -53,7 +53,7 @@ final readonly class FeatureTemplates
                 public function handle(Request \$request): Response
                 {
                     return Response::json([
-                        'feature' => '{$feature}',
+                        'feature' => '$feature',
                         'status' => 'ok',
                     ]);
                 }
@@ -68,15 +68,15 @@ final readonly class FeatureTemplates
 
             declare(strict_types=1);
 
-            namespace Pulsar\\Tests\\Unit\\Modules\\{$module}\\Features\\{$feature};
+            namespace Pulsar\\Tests\\Unit\\Modules\\$module\\Features\\$feature;
 
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
             use PHPUnit\\Framework\\TestCase;
             use Pulsar\\Http\\Request;
             use Pulsar\\Http\\ResponseStatus;
-            use {$namespace}\\Features\\{$feature}\\Contracts\\{$feature}HandlerInterface;
-            use {$namespace}\\Features\\{$feature}\\{$feature}Handler;
+            use $namespace\\Features\\$feature\\Contracts\\{$feature}HandlerInterface;
+            use $namespace\\Features\\$feature\\{$feature}Handler;
 
             #[CoversClass({$feature}Handler::class)]
             final class {$feature}HandlerTest extends TestCase
@@ -110,8 +110,8 @@ final readonly class FeatureTemplates
 
         return <<<PHP
 
-            // {$feature} feature
-            \$router->{$routeMethod}('/{$lcFeature}', [{$feature}Handler::class, 'handle'], '{$lcFeature}.handle');
+            // $feature feature
+            \$router->$routeMethod('/$lcFeature', [{$feature}Handler::class, 'handle'], '$lcFeature.handle');
             PHP;
     }
 }

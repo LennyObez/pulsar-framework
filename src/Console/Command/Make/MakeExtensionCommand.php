@@ -260,7 +260,7 @@ final class MakeExtensionCommand extends Command
             final class {$className}Controller
             {
                 public function __construct(
-                    private readonly {$className}Service \${$serviceName},
+                    private readonly {$className}Service \$$serviceName,
                 ) {}
 
                 public function index(Request \$request): Response

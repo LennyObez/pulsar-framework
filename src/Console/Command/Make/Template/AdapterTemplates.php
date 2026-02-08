@@ -40,7 +40,7 @@ final readonly class AdapterTemplates
 
                 $stubs[] = <<<STUB
                         #[Override]
-                        public function {$method->name}({$paramList}){$returnType}
+                        public function $method->name($paramList)$returnType
                         {
                             throw new \LogicException('Not implemented.');
                         }
@@ -50,21 +50,22 @@ final readonly class AdapterTemplates
         }
 
         $useOverride = $methods !== [] ? "\nuse Override;" : '';
+        $classBody = '{' . $methodBodies . '}';
 
         return <<<PHP
             <?php
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Internal\\Infrastructure;
-            {$useOverride}
-            use {$namespace}\\Contracts\\{$implements};
+            namespace $namespace\\Internal\\Infrastructure;
+            $useOverride
+            use $namespace\\Contracts\\$implements;
 
             /**
-             * {$name} adapter implementing {$implements}.
+             * $name adapter implementing $implements.
              */
-            final readonly class {$name} implements {$implements}
-            {{$methodBodies}}
+            final readonly class $name implements $implements
+            $classBody
             PHP;
     }
 
@@ -75,21 +76,21 @@ final readonly class AdapterTemplates
 
             declare(strict_types=1);
 
-            namespace Pulsar\\Tests\\Unit\\Modules\\{$module}\\Internal\\Infrastructure;
+            namespace Pulsar\\Tests\\Unit\\Modules\\$module\\Internal\\Infrastructure;
 
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
             use PHPUnit\\Framework\\TestCase;
-            use {$namespace}\\Contracts\\{$portName}Interface;
-            use {$namespace}\\Internal\\Infrastructure\\{$name};
+            use $namespace\\Contracts\\{$portName}Interface;
+            use $namespace\\Internal\\Infrastructure\\$name;
 
-            #[CoversClass({$name}::class)]
+            #[CoversClass($name::class)]
             final class {$name}Test extends TestCase
             {
                 #[Test]
                 public function it_implements_the_port_interface(): void
                 {
-                    \$adapter = new {$name}();
+                    \$adapter = new $name();
 
                     self::assertInstanceOf({$portName}Interface::class, \$adapter);
                 }

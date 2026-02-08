@@ -21,13 +21,13 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Contracts;
+            namespace $namespace\\Contracts;
 
             use Pulsar\\Api\\Api;
             use Pulsar\\Webhook\\WebhookHandlerInterface;
 
             /**
-             * Event handler contract for {$name} ingestion.
+             * Event handler contract for $name ingestion.
              */
             #[Api]
             interface {$name}EventHandlerInterface extends WebhookHandlerInterface
@@ -43,13 +43,13 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Internal\\Infrastructure;
+            namespace $namespace\\Internal\\Infrastructure;
 
             use Override;
             use Psr\\Log\\LoggerInterface;
-            use {$namespace}\\Contracts\\{$name}EventHandlerInterface;
-            use {$namespace}\\Domain\\{$name}Event;
-            use {$namespace}\\Domain\\{$name}EventType;
+            use $namespace\\Contracts\\{$name}EventHandlerInterface;
+            use $namespace\\Domain\\{$name}Event;
+            use $namespace\\Domain\\{$name}EventType;
 
             final readonly class {$name}EventHandler implements {$name}EventHandlerInterface
             {
@@ -88,7 +88,7 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Internal\\Infrastructure;
+            namespace $namespace\\Internal\\Infrastructure;
 
             use Override;
             use Pulsar\\Webhook\\Exception\\WebhookException;
@@ -98,7 +98,7 @@ final readonly class EventIngestionTemplates
             use function hash_hmac;
 
             /**
-             * HMAC-SHA256 verifier for {$name} event ingestion.
+             * HMAC-SHA256 verifier for $name event ingestion.
              */
             final readonly class {$name}HmacVerifier implements WebhookVerifierInterface
             {
@@ -126,7 +126,7 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Internal\\Infrastructure;
+            namespace $namespace\\Internal\\Infrastructure;
 
             use DateTimeImmutable;
             use Override;
@@ -134,7 +134,7 @@ final readonly class EventIngestionTemplates
             use Pulsar\\Webhook\\WebhookEventLogInterface;
 
             /**
-             * In-memory event log for {$name} event deduplication.
+             * In-memory event log for $name event deduplication.
              */
             final class InMemory{$name}EventLog implements WebhookEventLogInterface
             {
@@ -187,7 +187,7 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Controller;
+            namespace $namespace\\Controller;
 
             use Pulsar\\Http\\Request;
             use Pulsar\\Http\\Response;
@@ -196,7 +196,7 @@ final readonly class EventIngestionTemplates
             use Pulsar\\Webhook\\WebhookProcessingStatus;
 
             /**
-             * HTTP controller for {$name} event ingestion.
+             * HTTP controller for $name event ingestion.
              */
             final readonly class {$name}WebhookController
             {
@@ -243,13 +243,13 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Config;
+            namespace $namespace\\Config;
 
             use NoDiscard;
             use Pulsar\\Api\\Api;
 
             /**
-             * Configuration DTO for {$name} event ingestion.
+             * Configuration DTO for $name event ingestion.
              */
             #[Api]
             final readonly class {$name}IngestionConfig
@@ -283,12 +283,12 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             use NoDiscard;
 
             /**
-             * Event envelope DTO for {$name} ingestion.
+             * Event envelope DTO for $name ingestion.
              */
             final readonly class {$name}Event
             {
@@ -342,14 +342,14 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             /**
-             * Event types for {$name} ingestion.
+             * Event types for $name ingestion.
              */
             enum {$name}EventType: string
             {
-            {$caseBlock}
+            $caseBlock
             }
             PHP;
     }
@@ -361,7 +361,7 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Exception;
+            namespace $namespace\\Exception;
 
             use NoDiscard;
             use Pulsar\\Api\\Api;
@@ -370,7 +370,7 @@ final readonly class EventIngestionTemplates
             use function sprintf;
 
             /**
-             * {$name} ingestion exceptions.
+             * $name ingestion exceptions.
              */
             #[Api]
             final class {$name}IngestionException extends RuntimeException
@@ -378,14 +378,14 @@ final readonly class EventIngestionTemplates
                 #[NoDiscard]
                 public static function invalidPayload(string \$reason): self
                 {
-                    return new self(sprintf('Invalid {$name} event payload: %s', \$reason));
+                    return new self(sprintf('Invalid $name event payload: %s', \$reason));
                 }
 
                 #[NoDiscard]
                 public static function handlerFailed(string \$eventId, string \$reason): self
                 {
                     return new self(sprintf(
-                        '{$name} event handler failed for event "%s": %s',
+                        '$name event handler failed for event "%s": %s',
                         \$eventId,
                         \$reason,
                     ));
@@ -401,12 +401,12 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace};
+            namespace $namespace;
 
             use Pulsar\\Container\\ContainerInterface;
             use Pulsar\\Extensibility\\ServiceProviderInterface;
-            use {$namespace}\\Contracts\\{$name}EventHandlerInterface;
-            use {$namespace}\\Internal\\Infrastructure\\{$name}EventHandler;
+            use $namespace\\Contracts\\{$name}EventHandlerInterface;
+            use $namespace\\Internal\\Infrastructure\\{$name}EventHandler;
 
             final class {$name}IngestionServiceProvider implements ServiceProviderInterface
             {
@@ -428,7 +428,7 @@ final readonly class EventIngestionTemplates
     public function readme(string $name): string
     {
         return <<<MD
-            # {$name} Event Ingestion
+            # $name Event Ingestion
 
             ## Structure
 
@@ -448,14 +448,14 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace Pulsar\\Tests\\Unit\\Modules\\{$module}\\Internal\\Infrastructure;
+            namespace Pulsar\\Tests\\Unit\\Modules\\$module\\Internal\\Infrastructure;
 
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
             use PHPUnit\\Framework\\TestCase;
             use Psr\\Log\\NullLogger;
-            use {$namespace}\\Contracts\\{$name}EventHandlerInterface;
-            use {$namespace}\\Internal\\Infrastructure\\{$name}EventHandler;
+            use $namespace\\Contracts\\{$name}EventHandlerInterface;
+            use $namespace\\Internal\\Infrastructure\\{$name}EventHandler;
 
             #[CoversClass({$name}EventHandler::class)]
             final class {$name}EventHandlerTest extends TestCase
@@ -488,7 +488,7 @@ final readonly class EventIngestionTemplates
 
             declare(strict_types=1);
 
-            namespace Pulsar\\Tests\\Unit\\Modules\\{$module}\\Controller;
+            namespace Pulsar\\Tests\\Unit\\Modules\\$module\\Controller;
 
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
@@ -498,7 +498,7 @@ final readonly class EventIngestionTemplates
             use Pulsar\\Webhook\\WebhookProcessingResult;
             use Pulsar\\Webhook\\WebhookProcessingStatus;
             use Pulsar\\Webhook\\WebhookProcessor;
-            use {$namespace}\\Controller\\{$name}WebhookController;
+            use $namespace\\Controller\\{$name}WebhookController;
 
             #[CoversClass({$name}WebhookController::class)]
             final class {$name}WebhookControllerTest extends TestCase

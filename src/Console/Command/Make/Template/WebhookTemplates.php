@@ -16,13 +16,13 @@ final readonly class WebhookTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Contracts;
+            namespace $namespace\\Contracts;
 
             use Pulsar\\Api\\Api;
             use Pulsar\\Webhook\\WebhookHandlerInterface;
 
             /**
-             * Webhook handler contract for {$name} events.
+             * Webhook handler contract for $name events.
              */
             #[Api]
             interface {$name}WebhookHandlerInterface extends WebhookHandlerInterface
@@ -38,11 +38,11 @@ final readonly class WebhookTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Internal\\Infrastructure;
+            namespace $namespace\\Internal\\Infrastructure;
 
             use Override;
             use Psr\\Log\\LoggerInterface;
-            use {$namespace}\\Contracts\\{$name}WebhookHandlerInterface;
+            use $namespace\\Contracts\\{$name}WebhookHandlerInterface;
 
             final readonly class {$name}WebhookHandler implements {$name}WebhookHandlerInterface
             {
@@ -71,7 +71,7 @@ final readonly class WebhookTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Internal\\Infrastructure;
+            namespace $namespace\\Internal\\Infrastructure;
 
             use Override;
             use Pulsar\\Webhook\\Exception\\WebhookException;
@@ -81,7 +81,7 @@ final readonly class WebhookTemplates
             use function hash_hmac;
 
             /**
-             * HMAC-SHA256 verifier for {$name} webhooks.
+             * HMAC-SHA256 verifier for $name webhooks.
              */
             final readonly class {$name}HmacVerifier implements WebhookVerifierInterface
             {
@@ -109,7 +109,7 @@ final readonly class WebhookTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Internal\\Infrastructure;
+            namespace $namespace\\Internal\\Infrastructure;
 
             use DateTimeImmutable;
             use Override;
@@ -117,7 +117,7 @@ final readonly class WebhookTemplates
             use Pulsar\\Webhook\\WebhookEventLogInterface;
 
             /**
-             * In-memory webhook event log for {$name} webhooks.
+             * In-memory webhook event log for $name webhooks.
              */
             final class InMemory{$name}EventLog implements WebhookEventLogInterface
             {
@@ -165,13 +165,12 @@ final readonly class WebhookTemplates
 
     public function controller(string $name, string $namespace): string
     {
-        $lcName = lcfirst($name);
         return <<<PHP
             <?php
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Controller;
+            namespace $namespace\\Controller;
 
             use Pulsar\\Http\\Request;
             use Pulsar\\Http\\Response;
@@ -180,7 +179,7 @@ final readonly class WebhookTemplates
             use Pulsar\\Webhook\\WebhookProcessingStatus;
 
             /**
-             * HTTP controller for {$name} webhook ingestion.
+             * HTTP controller for $name webhook ingestion.
              */
             final readonly class {$name}WebhookController
             {
@@ -227,13 +226,13 @@ final readonly class WebhookTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Config;
+            namespace $namespace\\Config;
 
             use NoDiscard;
             use Pulsar\\Api\\Api;
 
             /**
-             * Configuration DTO for {$name} webhook processing.
+             * Configuration DTO for $name webhook processing.
              */
             #[Api]
             final readonly class {$name}WebhookConfig
@@ -267,12 +266,12 @@ final readonly class WebhookTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             use NoDiscard;
 
             /**
-             * Webhook event envelope for {$name} events.
+             * Webhook event envelope for $name events.
              */
             final readonly class {$name}WebhookEvent
             {
@@ -308,10 +307,10 @@ final readonly class WebhookTemplates
 
             declare(strict_types=1);
 
-            namespace {$namespace}\\Domain;
+            namespace $namespace\\Domain;
 
             /**
-             * Webhook event types for {$name}.
+             * Webhook event types for $name.
              */
             enum {$name}WebhookEventType: string
             {
@@ -329,14 +328,14 @@ final readonly class WebhookTemplates
 
             declare(strict_types=1);
 
-            namespace Pulsar\\Tests\\Unit\\Modules\\{$module}\\Internal\\Infrastructure;
+            namespace Pulsar\\Tests\\Unit\\Modules\\$module\\Internal\\Infrastructure;
 
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
             use PHPUnit\\Framework\\TestCase;
             use Psr\\Log\\NullLogger;
-            use {$namespace}\\Contracts\\{$name}WebhookHandlerInterface;
-            use {$namespace}\\Internal\\Infrastructure\\{$name}WebhookHandler;
+            use $namespace\\Contracts\\{$name}WebhookHandlerInterface;
+            use $namespace\\Internal\\Infrastructure\\{$name}WebhookHandler;
 
             #[CoversClass({$name}WebhookHandler::class)]
             final class {$name}WebhookHandlerTest extends TestCase
@@ -369,7 +368,7 @@ final readonly class WebhookTemplates
 
             declare(strict_types=1);
 
-            namespace Pulsar\\Tests\\Unit\\Modules\\{$module}\\Controller;
+            namespace Pulsar\\Tests\\Unit\\Modules\\$module\\Controller;
 
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
@@ -379,7 +378,7 @@ final readonly class WebhookTemplates
             use Pulsar\\Webhook\\WebhookProcessingResult;
             use Pulsar\\Webhook\\WebhookProcessingStatus;
             use Pulsar\\Webhook\\WebhookProcessor;
-            use {$namespace}\\Controller\\{$name}WebhookController;
+            use $namespace\\Controller\\{$name}WebhookController;
 
             #[CoversClass({$name}WebhookController::class)]
             final class {$name}WebhookControllerTest extends TestCase
