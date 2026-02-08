@@ -206,7 +206,7 @@ jobs:
 
       - name: Verify cache warmup pipeline
         env:
-          PULSAR_MASTER_KEY: ci-test-key-00000000000000000000
+          PULSAR_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
         run: |
           if php bin/pulsar list 2>/dev/null | grep -q 'optimize:validate'; then
             php bin/pulsar optimize:validate --strict
