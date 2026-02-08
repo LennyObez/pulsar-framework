@@ -19,7 +19,7 @@ use function sprintf;
  * Executes a stack of middleware around a core handler.
  */
 #[Internal]
-final class MiddlewarePipeline
+final class MiddlewarePipeline implements MiddlewarePipelineInterface
 {
     /**
      * @var list<MiddlewareInterface|class-string<MiddlewareInterface>>
@@ -37,7 +37,7 @@ final class MiddlewarePipeline
      *
      * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
      */
-    public function pipe(MiddlewareInterface|string $middleware): self
+    public function pipe(MiddlewareInterface|string $middleware): static
     {
         $this->middleware[] = $middleware;
         return $this;

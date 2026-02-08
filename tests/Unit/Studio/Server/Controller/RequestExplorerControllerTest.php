@@ -7,12 +7,12 @@ namespace Pulsar\Tests\Unit\Studio\Server\Controller;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Server\Controller\RequestExplorerController;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Studio\Server\Controller\RequestExplorerController;
 
 #[CoversClass(RequestExplorerController::class)]
 final class RequestExplorerControllerTest extends TestCase

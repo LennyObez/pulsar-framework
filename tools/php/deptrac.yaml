@@ -82,6 +82,14 @@ deptrac:
               value: PaymentsDomain
 
     # -----------------------------------------------------------------
+    # Studio Extension — development console
+    # -----------------------------------------------------------------
+    - name: StudioExtension
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Studio\\
+
+    # -----------------------------------------------------------------
     # Example Extension — no contracts/internal split
     # -----------------------------------------------------------------
     - name: ExampleExtension
@@ -112,6 +120,10 @@ deptrac:
       - Core
       - PaymentsContracts
       - PaymentsDomain
+
+    # Studio extension may depend on core only
+    StudioExtension:
+      - Core
 
     # Example extension may depend on core only
     ExampleExtension:

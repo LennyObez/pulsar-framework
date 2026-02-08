@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Redaction\DefaultRedactionPolicy;
+use Pulsar\Extension\Studio\Console\Redaction\DefaultRedactionPolicy;
 
 #[CoversClass(DefaultRedactionPolicy::class)]
 final class DefaultRedactionPolicyTest extends TestCase

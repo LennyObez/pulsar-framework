@@ -1,6 +1,6 @@
 # Extension System Guide
 
-Pulsar's extension system provides modular, manifest-driven extensibility with a deterministic two-phase lifecycle. Extensions are the primary mechanism for adding functionality to a Pulsar application -- including routing, DI bindings, console commands, middleware, and migrations.
+Pulsar's extension system provides modular, manifest-driven extensibility with a deterministic four-phase lifecycle. Extensions are the primary mechanism for adding functionality to a Pulsar application -- including routing, DI bindings, console commands, middleware, and migrations.
 
 This is an original design. It is not a clone of Laravel service providers or Symfony bundles. The system enforces explicit capability declaration, strong versioning, compatibility checks, and a "zero entropy" principle: there is one obvious way to wire an extension.
 
@@ -9,9 +9,9 @@ This is an original design. It is not a clone of Laravel service providers or Sy
 ### Core Concepts
 
 - **Manifest-driven**: Every extension declares its capabilities in a `pulsar.json` file.
-- **Two-phase lifecycle**: Extensions progress through Register (bind services) and Boot (register routes, initialize).
-- **Deterministic boot pipeline**: Extensions are discovered, validated, dependency-sorted, and booted in a predictable order.
-- **No privileged access**: Built-in framework features use the same extension API as third-party code.
+- **Four-phase lifecycle**: Extensions progress through Register, PreBoot (optional), Boot, and PostBoot (optional) phases.
+- **Deterministic boot pipeline**: Extensions are discovered, validated, dependency-sorted, and booted in a predictable order. All four lifecycle phases use the same dependency-resolved extension order.
+- **No privileged access**: Built-in framework features use the same extension API as third-party code. The Studio development console is a first-party extension using these lifecycle hooks.
 
 ### Lifecycle States
 
@@ -26,6 +26,17 @@ Extensions progress through these states during the boot process, defined by the
 | `Failed`     | An error occurred (can happen from any preceding state) |
 
 State transitions are enforced: an extension can only register from the `Validated` state and can only boot from the `Registered` state.
+
+The boot pipeline executes four separate passes, each iterating over extensions in the same dependency-resolved order:
+
+```
+Pass 1 (Register):  foreach extensions → call register()
+Pass 2 (PreBoot):   foreach extensions → if PreBootExtensionInterface → call preBoot()
+Pass 3 (Boot):      foreach extensions → call boot()
+Pass 4 (PostBoot):  foreach extensions → if PostBootExtensionInterface → call postBoot()
+```
+
+**Invariant:** PreBoot runs only after ALL extensions have registered their bindings. This ensures preBoot can safely resolve any service registered by any extension. Similarly, PostBoot runs only after ALL extensions have booted.
 
 ## Creating an Extension
 
@@ -152,6 +163,64 @@ final class MyFeatureExtension implements ExtensionInterface
 | `providers()` | Register | Return class names of `ServiceProviderInterface` implementations |
 
 The `register()` method is called first for all extensions before any `boot()` method runs. This guarantees that all services are available during the boot phase.
+
+### Lifecycle Hook Interfaces (Optional)
+
+Extensions can implement additional interfaces for pre-boot and post-boot hooks:
+
+#### PreBootExtensionInterface
+
+Called after ALL extensions have registered but BEFORE any `boot()` runs. Use this to create services that must be available during other extensions' boot phase.
+
+```php
+use Pulsar\Extensibility\PreBootExtensionInterface;
+
+final class MyExtension implements ExtensionInterface, PreBootExtensionInterface
+{
+    public function preBoot(ContainerInterface $container): void
+    {
+        // Create core services, load config, build DTOs
+        // All extensions have registered — you can resolve any service
+    }
+}
+```
+
+#### PostBootExtensionInterface
+
+Called after ALL extensions (including the caller) have booted. Use this to wire decorators, collectors, or observers into the final post-boot state of services.
+
+```php
+use Pulsar\Extensibility\PostBootExtensionInterface;
+
+final class MyExtension implements ExtensionInterface, PostBootExtensionInterface
+{
+    public function postBoot(ContainerInterface $container): void
+    {
+        // Wire collectors, decorators, or observers into final service bindings
+        // All extensions have booted — you can safely wrap services
+    }
+}
+```
+
+Both interfaces are optional. Extensions that do not implement them are simply skipped during those phases.
+
+#### Piping Global Middleware
+
+Extensions that need to add global middleware can resolve `MiddlewarePipelineInterface` from the container during `boot()` or `postBoot()`:
+
+```php
+use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
+
+public function postBoot(ContainerInterface $container): void
+{
+    if ($container->has(MiddlewarePipelineInterface::class)) {
+        $pipeline = $container->get(MiddlewarePipelineInterface::class);
+        $pipeline->pipe(new MyMiddleware());
+    }
+}
+```
+
+The `pipe()` method appends middleware (FIFO). Middleware piped later runs closer to the handler (innermost). Use `postBoot()` to pipe middleware that should wrap the final state of all services.
 
 ## Service Providers
 

@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\Environment;
-use Pulsar\Config\StudioRetentionConfig;
+use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
 
 #[CoversClass(StudioRetentionConfig::class)]
 final class StudioRetentionConfigTest extends TestCase

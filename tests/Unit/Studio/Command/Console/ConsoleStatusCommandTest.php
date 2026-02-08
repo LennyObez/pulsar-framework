@@ -11,8 +11,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\ConsoleStatusCommand;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Command\Console\ConsoleStatusCommand;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 #[CoversClass(ConsoleStatusCommand::class)]
 final class ConsoleStatusCommandTest extends TestCase

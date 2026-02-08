@@ -14,9 +14,12 @@ use Throwable;
 /**
  * Bootstraps extensions into the kernel lifecycle.
  *
- * Manages the two-phase extension lifecycle:
+ * Manages the four-phase extension lifecycle (all phases respect the
+ * dependency-resolved extension order from ExtensionLoader):
  * 1. Register phase: All extensions register their services
- * 2. Boot phase: All extensions boot (in dependency order)
+ * 2. PreBoot phase: Extensions implementing PreBootExtensionInterface
+ * 3. Boot phase: All extensions boot (in dependency order)
+ * 4. PostBoot phase: Extensions implementing PostBootExtensionInterface
  */
 #[Internal]
 final class ExtensionBootstrap
@@ -111,7 +114,11 @@ final class ExtensionBootstrap
     }
 
     /**
-     * Boot phase: Call boot() on all extensions.
+     * Boot phase: preBoot → boot → postBoot on all extensions.
+     *
+     * Each sub-phase iterates ALL extensions in dependency order before
+     * advancing to the next phase. This guarantees that preBoot completes
+     * for every extension before any boot() runs.
      *
      * @throws ExtensionException If booting fails
      */
@@ -125,6 +132,27 @@ final class ExtensionBootstrap
             throw new ExtensionException('Extensions must be registered before booting');
         }
 
+        // Phase 2: preBoot (optional — only PreBootExtensionInterface implementors)
+        foreach ($this->registry->all() as $name => $extension) {
+            if (!$extension instanceof PreBootExtensionInterface) {
+                continue;
+            }
+
+            $state = $this->registry->getState($name);
+
+            if (!$state->canBoot()) {
+                continue;
+            }
+
+            try {
+                $extension->preBoot($container);
+            } catch (Throwable $e) {
+                $this->registry->setState($name, ExtensionLifecycle::Failed);
+                throw ExtensionException::bootFailed($name, $e->getMessage());
+            }
+        }
+
+        // Phase 3: boot (all extensions)
         foreach ($this->registry->all() as $name => $extension) {
             $state = $this->registry->getState($name);
 
@@ -135,6 +163,20 @@ final class ExtensionBootstrap
             try {
                 $extension->boot($container, $router);
                 $this->registry->setState($name, ExtensionLifecycle::Booted);
+            } catch (Throwable $e) {
+                $this->registry->setState($name, ExtensionLifecycle::Failed);
+                throw ExtensionException::bootFailed($name, $e->getMessage());
+            }
+        }
+
+        // Phase 4: postBoot (optional — only PostBootExtensionInterface implementors)
+        foreach ($this->registry->all() as $name => $extension) {
+            if (!$extension instanceof PostBootExtensionInterface) {
+                continue;
+            }
+
+            try {
+                $extension->postBoot($container);
             } catch (Throwable $e) {
                 $this->registry->setState($name, ExtensionLifecycle::Failed);
                 throw ExtensionException::bootFailed($name, $e->getMessage());

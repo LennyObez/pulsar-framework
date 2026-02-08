@@ -14,10 +14,10 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\ConsoleVerifyCommand;
-use Pulsar\Studio\Console\Evidence\EvidenceArchive;
-use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
-use Pulsar\Studio\Console\Evidence\HashChain;
+use Pulsar\Extension\Studio\Command\Console\ConsoleVerifyCommand;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
+use Pulsar\Extension\Studio\Console\Evidence\HashChain;
 
 use function sys_get_temp_dir;
 use function unlink;

@@ -10,13 +10,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Collector\LogCollector;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\Payload\LogEntryPayload;
+use Pulsar\Observability\Context\CorrelationContext;
+use Pulsar\Observability\Context\CorrelationContextProviderInterface;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogLevel;
-use Pulsar\Studio\Console\Collector\LogCollector;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Studio\Console\Event\Payload\LogEntryPayload;
-use Pulsar\Studio\CorrelationContext;
-use Pulsar\Studio\CorrelationContextProviderInterface;
 use RuntimeException;
 
 #[CoversClass(LogCollector::class)]

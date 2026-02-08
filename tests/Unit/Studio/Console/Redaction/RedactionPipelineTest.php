@@ -7,10 +7,10 @@ namespace Pulsar\Tests\Unit\Studio\Console\Redaction;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Redaction\DefaultRedactionPolicy;
-use Pulsar\Studio\Console\Redaction\RedactionPipeline;
-use Pulsar\Studio\Console\Redaction\RedactionPolicyInterface;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Redaction\DefaultRedactionPolicy;
+use Pulsar\Extension\Studio\Console\Redaction\RedactionPipeline;
+use Pulsar\Extension\Studio\Console\Redaction\RedactionPolicyInterface;
 
 #[CoversClass(RedactionPipeline::class)]
 final class RedactionPipelineTest extends TestCase

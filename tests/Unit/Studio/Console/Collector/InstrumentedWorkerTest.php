@@ -7,6 +7,11 @@ namespace Pulsar\Tests\Unit\Studio\Console\Collector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Collector\InstrumentedWorker;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\Payload\JobPayload;
+use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Queue\JobContext;
 use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
@@ -15,11 +20,6 @@ use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\Worker;
 use Pulsar\Queue\WorkerOptions;
 use Pulsar\Queue\WorkerStatus;
-use Pulsar\Studio\Console\Collector\InstrumentedWorker;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Studio\Console\Event\Payload\JobPayload;
-use Pulsar\Studio\CorrelationContext;
-use Pulsar\Studio\FiberScopedContextProvider;
 use RuntimeException;
 
 #[CoversClass(InstrumentedWorker::class)]

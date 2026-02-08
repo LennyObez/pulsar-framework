@@ -7,13 +7,13 @@ namespace Pulsar\Tests\Unit\Studio\Server\Controller;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
+use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Extension\Studio\Server\Controller\BenchmarkController;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
-use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
-use Pulsar\Studio\Console\Storage\SqliteEventStore;
-use Pulsar\Studio\Server\Controller\BenchmarkController;
 
 #[CoversClass(BenchmarkController::class)]
 final class BenchmarkControllerTest extends TestCase
