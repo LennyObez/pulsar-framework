@@ -8,11 +8,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Payments\Domain\Currency;
-use Pulsar\Extension\Payments\Exception\IdempotencyException;
 use Pulsar\Extension\Payments\Exception\MoneyException;
 use Pulsar\Extension\Payments\Exception\PaymentException;
 use Pulsar\Extension\Payments\Exception\PaymentProviderException;
-use Pulsar\Extension\Payments\Exception\WebhookException;
+use Pulsar\Idempotency\Exception\IdempotencyException;
+use Pulsar\Webhook\Exception\WebhookException;
 use RuntimeException;
 
 #[CoversClass(PaymentException::class)]

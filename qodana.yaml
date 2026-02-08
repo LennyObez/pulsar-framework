@@ -57,6 +57,10 @@ exclude:
       - extensions/studio/src/Command/Console/ConsoleVerifyCommand.php
       - extensions/payments/src/Gateway/PaymentGateway.php
       - extensions/payments/src/Features/CreatePaymentIntent/CreatePaymentIntentHandler.php
+      # Payments HmacWebhookVerifier shares verification logic with core copy (lifted from extension)
+      - extensions/payments/src/Internal/Infrastructure/Webhook/HmacWebhookVerifier.php
+      # DTO fromArray() factories share structural deserialization pattern across Context/Event
+      - src/Context/RequestContext.php
   # Same parameter value — auditPayment() is designed for reuse across payment
   # operations; currently only cancel_intent calls it, but capture/refund will follow.
   - name: PhpSameParameterValueInspection

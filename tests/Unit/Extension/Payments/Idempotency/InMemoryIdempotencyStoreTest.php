@@ -8,9 +8,9 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Payments\Exception\IdempotencyException;
-use Pulsar\Extension\Payments\Idempotency\IdempotencyClaimStatus;
-use Pulsar\Extension\Payments\Internal\Infrastructure\Idempotency\InMemoryIdempotencyStore;
+use Pulsar\Idempotency\Exception\IdempotencyException;
+use Pulsar\Idempotency\IdempotencyClaimStatus;
+use Pulsar\Idempotency\InMemoryIdempotencyStore;
 
 #[CoversClass(InMemoryIdempotencyStore::class)]
 final class InMemoryIdempotencyStoreTest extends TestCase

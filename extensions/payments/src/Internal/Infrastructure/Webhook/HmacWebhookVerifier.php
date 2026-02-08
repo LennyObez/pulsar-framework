@@ -7,8 +7,8 @@ namespace Pulsar\Extension\Payments\Internal\Infrastructure\Webhook;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
-use Pulsar\Extension\Payments\Contracts\WebhookVerifierInterface;
-use Pulsar\Extension\Payments\Exception\WebhookException;
+use Pulsar\Webhook\Exception\WebhookException;
+use Pulsar\Webhook\WebhookVerifierInterface;
 
 use function abs;
 use function str_starts_with;
