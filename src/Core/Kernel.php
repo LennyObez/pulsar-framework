@@ -386,12 +386,10 @@ final class Kernel
         );
 
         // Emit boot duration metric if MetricRegistry is available
-        if ($this->metricsRegistry !== null) {
-            $this->metricsRegistry->gauge(
-                'pulsar_boot_duration_us',
-                'Total kernel boot duration in microseconds',
-            )->set((float) $totalUs);
-        }
+        $this->metricsRegistry?->gauge(
+            'pulsar_boot_duration_us',
+            'Total kernel boot duration in microseconds',
+        )->set((float) $totalUs);
     }
 
     /**

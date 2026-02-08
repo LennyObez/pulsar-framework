@@ -132,8 +132,7 @@ readonly class DeployConfig
             $envKey = 'DEPLOY_CHECK_' . strtoupper(str_replace('-', '_', $name)) . '_SEVERITY';
             $envValue = $environment->get($envKey);
 
-            if ($envValue !== null && in_array($envValue, ['fail', 'warn', 'off'], true)) {
-                /** @var 'fail'|'warn'|'off' $envValue */
+            if (in_array($envValue, ['fail', 'warn', 'off'], true)) {
                 $config['severity'] = $envValue;
 
                 if ($envValue === 'off') {

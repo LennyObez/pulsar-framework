@@ -31,6 +31,7 @@ use const LOCK_EX;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
+use Pulsar\Config\ConfigRepository;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
@@ -71,7 +72,7 @@ final class CacheAllowedClasses
      * @var list<class-string>
      */
     private const array ALWAYS_ALLOWED = [
-        \Pulsar\Config\ConfigRepository::class,
+        ConfigRepository::class,
     ];
 
     /** Magic methods that make a class unsafe for deserialization. */
