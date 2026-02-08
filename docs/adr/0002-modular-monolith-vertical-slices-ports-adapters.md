@@ -30,14 +30,14 @@ Each extension follows a standardized directory structure:
 - **`Features/`** — Vertical slices. Each slice contains a Handler, Request DTO, and Result DTO. Internal by default.
 - **`Internal/Infrastructure/`** — Adapter implementations of port interfaces. Marked with `#[Internal]`.
 - **`Internal/Support/`** — Internal utilities. Marked with `#[Internal]`.
-- **`Gateway/`** — Public orchestrator facades that delegate to slices.
+- **`Gateway/`** — Public orchestrator facades that delegate to slices. "Gateway" in this context means "use-case facade" (not a payment/API gateway). It is the entry point that external consumers call, delegating internally to one or more slice handlers.
 
 ### Visibility Model
 
 - Types marked with `#[Api]` are part of the public contract and follow SemVer stability guarantees.
 - Types without `#[Api]` are internal by default and may change without notice.
 - Types marked with `#[Internal]` are explicitly private implementation details.
-- External consumers must only depend on `Contracts/` interfaces and `Domain/` types.
+- External consumers must only depend on `Contracts/` interfaces, `Domain/` types, and `Config/` DTOs (which are also `#[Api]`-marked and semver-stable).
 
 ### Vertical Slice Structure
 
@@ -75,7 +75,7 @@ Interfaces in `Contracts/` define what the module needs (ports). Implementations
 ### Neutral
 
 - **No hierarchical dispatch.** This decision formally documents that Pulsar uses single-level dispatch. This is a hard constraint, not a limitation.
-- **Slice granularity is a judgment call.** Simple reads and trivial delegations can remain on orchestrators. The threshold is cross-cutting concerns.
+- **Slice granularity is a judgment call.** Simple reads and trivial delegations can remain on orchestrators. The threshold is cross-cutting concerns. Examples of when to extract a slice: (1) a payment charge flow that coordinates idempotency checks, provider API calls, metrics emission, and audit logging; (2) a user registration flow that validates input, hashes credentials, sends a welcome email, and emits domain events. A simple "get user by ID" lookup does not warrant a slice.
 
 ## Migration Notes
 
