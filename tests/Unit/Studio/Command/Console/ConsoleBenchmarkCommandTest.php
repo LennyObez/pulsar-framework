@@ -14,8 +14,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\ConsoleBenchmarkCommand;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Command\Console\ConsoleBenchmarkCommand;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 
 #[CoversClass(ConsoleBenchmarkCommand::class)]
 final class ConsoleBenchmarkCommandTest extends TestCase
