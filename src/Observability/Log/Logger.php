@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use function fwrite;
 use function is_string;
 
 use NoDiscard;
@@ -12,6 +13,9 @@ use Pulsar\Config\LoggingChannelConfig;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Observability\Log\Sink\FileSink;
 use Pulsar\Observability\Log\Sink\StreamSink;
+
+use function sprintf;
+
 use Stringable;
 use Throwable;
 
@@ -26,11 +30,14 @@ final readonly class Logger implements LoggerInterface
 {
     /**
      * @param list<LogSinkInterface> $sinks
+     * @param resource|null $stderr Stream to write sink failure notices to (when debug is true)
      */
     public function __construct(
         private array $sinks,
         private LogLevel $threshold,
         private string $channel = 'app',
+        private bool $debug = false,
+        private mixed $stderr = null,
     ) {}
 
     /**
@@ -137,8 +144,10 @@ final readonly class Logger implements LoggerInterface
         foreach ($this->sinks as $sink) {
             try {
                 $sink->write($entry);
-            } catch (Throwable) {
-                // Sink failures are silently swallowed — logging never crashes a request
+            } catch (Throwable $e) {
+                if ($this->debug && $this->stderr !== null) {
+                    @fwrite($this->stderr, sprintf("[Pulsar Logger] Sink failure: %s\n", $e->getMessage()));
+                }
             }
         }
     }

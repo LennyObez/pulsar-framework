@@ -11,11 +11,11 @@ use Pulsar\Config\EnvironmentMode;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
-use Pulsar\Studio\Console\Collector\InstrumentedConnection;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Studio\Console\Event\Payload\DatabaseQueryPayload;
-use Pulsar\Studio\CorrelationContext;
-use Pulsar\Studio\FiberScopedContextProvider;
+use Pulsar\Extension\Studio\Console\Collector\InstrumentedConnection;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\Payload\DatabaseQueryPayload;
+use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Observability\Context\CorrelationContext;
 use RuntimeException;
 
 use function strlen;

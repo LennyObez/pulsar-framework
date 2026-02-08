@@ -13,12 +13,12 @@ use const JSON_THROW_ON_ERROR;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Event\EventEnvelope;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Event\EventVersion;
-use Pulsar\Studio\Console\Retention\RetentionEnforcer;
-use Pulsar\Studio\Console\Retention\RetentionPolicy;
-use Pulsar\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Event\EventVersion;
+use Pulsar\Extension\Studio\Console\Retention\RetentionEnforcer;
+use Pulsar\Extension\Studio\Console\Retention\RetentionPolicy;
+use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 
 use function random_bytes;
 

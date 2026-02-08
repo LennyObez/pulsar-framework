@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Studio\Console\Retention;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Retention\RetentionPolicy;
+use Pulsar\Extension\Studio\Console\Retention\RetentionPolicy;
 
 #[CoversClass(RetentionPolicy::class)]
 final class RetentionPolicyTest extends TestCase

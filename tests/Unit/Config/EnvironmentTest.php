@@ -166,4 +166,59 @@ final class EnvironmentTest extends TestCase
         // Should not throw; file is optional
         self::assertInstanceOf(Environment::class, $env);
     }
+
+    #[Test]
+    public function parsesExportPrefix(): void
+    {
+        $envFile = $this->tempDir . '/.env';
+        file_put_contents($envFile, "export PULSAR_EXPORTED=exported_value\n");
+
+        $env = Environment::load($envFile);
+
+        self::assertSame('exported_value', $env->get('PULSAR_EXPORTED'));
+    }
+
+    #[Test]
+    public function stripsInlineCommentsWithSpace(): void
+    {
+        $envFile = $this->tempDir . '/.env';
+        file_put_contents($envFile, "PULSAR_COMMENTED=value # this is a comment\n");
+
+        $env = Environment::load($envFile);
+
+        self::assertSame('value', $env->get('PULSAR_COMMENTED'));
+    }
+
+    #[Test]
+    public function stripsInlineCommentsWithTab(): void
+    {
+        $envFile = $this->tempDir . '/.env';
+        file_put_contents($envFile, "PULSAR_TAB_COMMENT=value\t# tab comment\n");
+
+        $env = Environment::load($envFile);
+
+        self::assertSame('value', $env->get('PULSAR_TAB_COMMENT'));
+    }
+
+    #[Test]
+    public function preservesHashInQuotedValues(): void
+    {
+        $envFile = $this->tempDir . '/.env';
+        file_put_contents($envFile, "PULSAR_QUOTED=\"value # not a comment\"\n");
+
+        $env = Environment::load($envFile);
+
+        self::assertSame('value # not a comment', $env->get('PULSAR_QUOTED'));
+    }
+
+    #[Test]
+    public function preservesMidWordHash(): void
+    {
+        $envFile = $this->tempDir . '/.env';
+        file_put_contents($envFile, "PULSAR_HASH=value#notcomment\n");
+
+        $env = Environment::load($envFile);
+
+        self::assertSame('value#notcomment', $env->get('PULSAR_HASH'));
+    }
 }

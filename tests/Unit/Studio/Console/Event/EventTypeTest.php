@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Event\EventType;
 
 #[CoversClass(EventType::class)]
 final class EventTypeTest extends TestCase

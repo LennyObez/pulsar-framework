@@ -14,9 +14,9 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Studio\Command\Console\ConsoleExportCommand;
-use Pulsar\Studio\Console\Evidence\EvidenceExporter;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Command\Console\ConsoleExportCommand;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
 use function sys_get_temp_dir;
 use function unlink;

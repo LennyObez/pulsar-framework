@@ -8,10 +8,10 @@ use Fiber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\ContextScope;
-use Pulsar\Studio\CorrelationContext;
-use Pulsar\Studio\CorrelationContextProviderInterface;
-use Pulsar\Studio\FiberScopedContextProvider;
+use Pulsar\Extension\Studio\ContextScope;
+use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Observability\Context\CorrelationContext;
+use Pulsar\Observability\Context\CorrelationContextProviderInterface;
 
 #[CoversClass(FiberScopedContextProvider::class)]
 final class FiberScopedContextProviderTest extends TestCase
