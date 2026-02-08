@@ -27,7 +27,7 @@ use Throwable;
 final readonly class DevelopmentRenderer implements ExceptionRendererInterface
 {
     public function __construct(
-        private readonly SensitiveDataScrubber $scrubber = new SensitiveDataScrubber(),
+        private SensitiveDataScrubber $scrubber = new SensitiveDataScrubber(),
     ) {}
     #[Override]
     public function render(Throwable $exception, Request $request, ResponseStatus $status): string

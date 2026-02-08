@@ -11,6 +11,7 @@ use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Core\Kernel;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
@@ -244,7 +245,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             $metricRegistry = $container->get(MetricRegistry::class);
 
             $collector = new InstrumentedRuntime(
-                inner: new FpmRuntime($container->get(\Pulsar\Core\Kernel::class)),
+                inner: new FpmRuntime($container->get(Kernel::class)),
                 contextProvider: $contextProvider,
                 metricRegistry: $metricRegistry,
                 emit: $studioManager->emitCallback(),
