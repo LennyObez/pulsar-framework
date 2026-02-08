@@ -152,13 +152,13 @@ app/Modules/User/
 
 The module name is automatically converted to PascalCase. Generated files include a service provider implementing `ServiceProviderInterface`, a controller with `index` and `show` methods, a service class, and a routes file.
 
-#### `scaffold:extension`
+#### `make:extension`
 
 Generate a new extension structure with manifest.
 
 ```bash
-php bin/pulsar scaffold:extension my-feature
-php bin/pulsar scaffold:extension payments --vendor=acme --path=extensions
+php bin/pulsar make:extension my-feature
+php bin/pulsar make:extension payments --vendor=acme --path=extensions
 ```
 
 | Argument | Required | Description                         |

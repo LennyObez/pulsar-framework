@@ -11,6 +11,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Pulsar\Context\CausationId;
+use Pulsar\Context\CorrelationId;
+use Pulsar\Context\RequestContext;
+use Pulsar\Context\RequestContextHolder;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\HttpException;
@@ -150,6 +154,86 @@ final class ExceptionHandlerTest extends TestCase
 
         // Should not throw, should produce a response
         self::assertSame(ResponseStatus::InternalServerError, $response->status);
+    }
+
+    #[Test]
+    public function logsCorrelationIdFromContextHolder(): void
+    {
+        $logger = new TestLogger();
+        $holder = new RequestContextHolder();
+        $correlationId = CorrelationId::fromString(str_repeat('ab', 16));
+
+        $holder->set(new RequestContext(
+            correlationId: $correlationId,
+            causationId: CausationId::fromString(str_repeat('cd', 16)),
+        ));
+
+        $handler = new ExceptionHandler(
+            new DevelopmentRenderer(),
+            $logger,
+            requestContextHolder: $holder,
+        );
+
+        $handler->handle(
+            new RuntimeException('Correlated error'),
+            $this->createRequest('/api/test'),
+        );
+
+        self::assertCount(1, $logger->logs);
+        self::assertArrayHasKey('correlation_id', $logger->logs[0]['context']);
+        self::assertSame(str_repeat('ab', 16), $logger->logs[0]['context']['correlation_id']);
+    }
+
+    #[Test]
+    public function jsonResponseIncludesCorrelationId(): void
+    {
+        $holder = new RequestContextHolder();
+        $correlationId = CorrelationId::fromString(str_repeat('ef', 16));
+
+        $holder->set(new RequestContext(
+            correlationId: $correlationId,
+            causationId: CausationId::fromString(str_repeat('12', 16)),
+        ));
+
+        $handler = new ExceptionHandler(
+            new DevelopmentRenderer(),
+            requestContextHolder: $holder,
+        );
+
+        $request = new Request(
+            method: Method::GET,
+            uri: '/api/data',
+            path: '/api/data',
+            queryString: '',
+            headers: new HeaderBag(['Accept' => 'application/json']),
+            body: '',
+        );
+
+        $response = $handler->handle(
+            new RuntimeException('JSON error'),
+            $request,
+        );
+
+        /** @var array<string, mixed> $body */
+        $body = json_decode($response->body, true);
+        self::assertIsArray($body);
+        self::assertArrayHasKey('correlation_id', $body);
+        self::assertSame(str_repeat('ef', 16), $body['correlation_id']);
+    }
+
+    #[Test]
+    public function worksWithoutCorrelationId(): void
+    {
+        $logger = new TestLogger();
+        $handler = new ExceptionHandler(new DevelopmentRenderer(), $logger);
+
+        $handler->handle(
+            new RuntimeException('No context'),
+            $this->createRequest(),
+        );
+
+        self::assertCount(1, $logger->logs);
+        self::assertArrayNotHasKey('correlation_id', $logger->logs[0]['context']);
     }
 }
 
