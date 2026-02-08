@@ -50,4 +50,60 @@ trait ScaffoldTrait
             $output->writeln(sprintf('  Created %s', $file));
         }
     }
+
+    /**
+     * Convert a name to PascalCase.
+     */
+    private function toPascalCase(string $name): string
+    {
+        return str_replace([' ', '-'], '', ucwords(str_replace(['_', '-'], ' ', $name)));
+    }
+
+    /**
+     * Convert a name to kebab-case.
+     */
+    private function toKebabCase(string $name): string
+    {
+        $name = preg_replace('/[A-Z]/', '-$0', $name) ?? $name;
+        $name = strtolower(trim($name, '-'));
+
+        return str_replace(['_', ' '], '-', $name);
+    }
+
+    /**
+     * Convert a name to camelCase.
+     */
+    private function toCamelCase(string $name): string
+    {
+        return lcfirst($this->toPascalCase($name));
+    }
+
+    /**
+     * Convert a name to snake_case.
+     */
+    private function toSnakeCase(string $name): string
+    {
+        $name = preg_replace('/[A-Z]/', '_$0', $name) ?? $name;
+
+        return strtolower(trim($name, '_'));
+    }
+
+    /**
+     * Resolve a base path from an option, falling back to a default relative to cwd.
+     *
+     * @return string|false The resolved absolute path, or false if cwd is unavailable
+     */
+    private function resolveBasePath(
+        string $optionValue,
+        string $default,
+    ): string|false {
+        $path = $optionValue !== '' ? $optionValue : $default;
+
+        $cwd = getcwd();
+        if ($cwd === false) {
+            return false;
+        }
+
+        return $cwd . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+    }
 }

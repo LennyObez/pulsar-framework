@@ -61,8 +61,14 @@ use Pulsar\Console\Command\QueueFlushCommand;
 use Pulsar\Console\Command\QueueRetryCommand;
 use Pulsar\Console\Command\QueueStatusCommand;
 use Pulsar\Console\Command\QueueWorkCommand;
+use Pulsar\Console\Command\Make\MakeAdapterCommand;
+use Pulsar\Console\Command\Make\MakeEventIngestionCommand;
+use Pulsar\Console\Command\Make\MakeFeatureCommand;
+use Pulsar\Console\Command\Make\MakeModuleCommand;
+use Pulsar\Console\Command\Make\MakePaymentFlowCommand;
+use Pulsar\Console\Command\Make\MakePortCommand;
+use Pulsar\Console\Command\Make\MakeWebhookHandlerCommand;
 use Pulsar\Console\Command\ScaffoldExtensionCommand;
-use Pulsar\Console\Command\ScaffoldModuleCommand;
 use Pulsar\Console\Command\ShowContainerCommand;
 use Pulsar\Console\Command\ShowRoutesCommand;
 use Pulsar\Console\Command\SupervisorCheckCommand;
@@ -194,9 +200,15 @@ $application->addCommands([
     new DiagnosticsCommand($kernel),
     new InitCommand(),
     new NewCommand(),
-    new ScaffoldModuleCommand(),
     new ScaffoldExtensionCommand(),
     new PreloadDumpCommand(),
+    new MakeModuleCommand(),
+    new MakeFeatureCommand(),
+    new MakePortCommand(),
+    new MakeAdapterCommand(),
+    new MakeWebhookHandlerCommand(),
+    new MakePaymentFlowCommand(),
+    new MakeEventIngestionCommand(),
 ]);
 
 // Register optimize + key commands (always visible)

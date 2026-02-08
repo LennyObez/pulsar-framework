@@ -102,18 +102,6 @@ final class ScaffoldExtensionCommand extends Command
         return ExitCode::Success->value;
     }
 
-    private function toKebabCase(string $name): string
-    {
-        $name = preg_replace('/[A-Z]/', '-$0', $name) ?? $name;
-        $name = strtolower(trim($name, '-'));
-        return str_replace(['_', ' '], '-', $name);
-    }
-
-    private function toPascalCase(string $name): string
-    {
-        return str_replace([' ', '-'], '', ucwords(str_replace(['_', '-'], ' ', $name)));
-    }
-
     /**
      * @throws JsonException
      */
