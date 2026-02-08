@@ -10,14 +10,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\EnvironmentMode;
-use Pulsar\Config\StudioSecurityConfig;
+use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
+use Pulsar\Extension\Studio\Security\StudioAccessGate;
+use Pulsar\Extension\Studio\Server\Middleware\StudioAccessMiddleware;
 use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
-use Pulsar\Studio\Security\StudioAccessGate;
-use Pulsar\Studio\Server\Middleware\StudioAccessMiddleware;
 
 #[CoversClass(StudioAccessMiddleware::class)]
 final class StudioAccessMiddlewareTest extends TestCase

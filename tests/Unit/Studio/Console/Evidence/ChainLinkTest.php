@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Studio\Console\Evidence;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Evidence\ChainLink;
+use Pulsar\Extension\Studio\Console\Evidence\ChainLink;
 use ReflectionClass;
 use ReflectionNamedType;
 

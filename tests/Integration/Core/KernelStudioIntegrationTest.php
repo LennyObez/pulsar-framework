@@ -8,23 +8,27 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigManager;
-use Pulsar\Config\StudioConfig;
 use Pulsar\Core\Kernel;
+use Pulsar\Extensibility\ExtensionBootstrap;
+use Pulsar\Extensibility\ExtensionManifest;
+use Pulsar\Extension\Studio\Config\StudioConfig;
+use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
+use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
+use Pulsar\Extension\Studio\Console\Collector\ExceptionCollector;
+use Pulsar\Extension\Studio\Console\Collector\HttpCollector;
+use Pulsar\Extension\Studio\Console\Collector\LogCollector;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
+use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Extension\Studio\Security\StudioAccessGate;
+use Pulsar\Extension\Studio\StudioExtension;
+use Pulsar\Extension\Studio\StudioManager;
+use Pulsar\Observability\Context\CorrelationContextProviderInterface;
 use Pulsar\Observability\Log\Sink\DeferredSink;
-use Pulsar\Studio\Console\Aggregation\DashboardAggregator;
-use Pulsar\Studio\Console\Aggregation\TimelineBuilder;
-use Pulsar\Studio\Console\Collector\ExceptionCollector;
-use Pulsar\Studio\Console\Collector\HttpCollector;
-use Pulsar\Studio\Console\Collector\LogCollector;
-use Pulsar\Studio\Console\Evidence\EvidenceExporter;
-use Pulsar\Studio\Console\Evidence\EvidenceVerifier;
-use Pulsar\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Studio\CorrelationContextProviderInterface;
-use Pulsar\Studio\FiberScopedContextProvider;
-use Pulsar\Studio\Security\StudioAccessGate;
-use Pulsar\Studio\StudioManager;
 
 #[CoversClass(Kernel::class)]
+#[CoversClass(StudioExtension::class)]
 final class KernelStudioIntegrationTest extends TestCase
 {
     private string $tempDir;
@@ -69,7 +73,7 @@ final class KernelStudioIntegrationTest extends TestCase
         $this->writeBaseConfigFiles();
         $this->writeStudioConfig(enabled: true);
 
-        $kernel = $this->createKernel();
+        $kernel = $this->createKernelWithStudio();
         $kernel->boot();
         $container = $kernel->container();
 
@@ -91,7 +95,7 @@ final class KernelStudioIntegrationTest extends TestCase
         $this->writeBaseConfigFiles();
         // No studio.php written
 
-        $kernel = $this->createKernel();
+        $kernel = $this->createKernelWithStudio();
         $kernel->boot();
         $container = $kernel->container();
 
@@ -105,14 +109,14 @@ final class KernelStudioIntegrationTest extends TestCase
         $this->writeBaseConfigFiles();
         $this->writeStudioConfig(enabled: false);
 
-        $kernel = $this->createKernel();
+        $kernel = $this->createKernelWithStudio();
         $kernel->boot();
         $container = $kernel->container();
 
-        // StudioConfig IS loaded (file exists, so studioPreboot loads and registers it)
+        // StudioConfig IS loaded (file exists, so preBoot loads and registers it)
         self::assertTrue($container->has(StudioConfig::class));
 
-        // StudioManager is NOT registered (preboot returned early because enabled=false)
+        // StudioManager is NOT registered (preBoot returned early because enabled=false)
         self::assertFalse($container->has(StudioManager::class));
     }
 
@@ -122,7 +126,7 @@ final class KernelStudioIntegrationTest extends TestCase
         $this->writeBaseConfigFiles();
         $this->writeStudioConfig(enabled: true);
 
-        $kernel = $this->createKernel();
+        $kernel = $this->createKernelWithStudio();
         $kernel->boot();
         $container = $kernel->container();
 
@@ -130,16 +134,17 @@ final class KernelStudioIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function testNoDeferredSinkWhenStudioConfigMissing(): void
+    public function testDeferredSinkAlwaysPresentEvenWithoutStudioConfig(): void
     {
         $this->writeBaseConfigFiles();
         // No studio.php written
 
-        $kernel = $this->createKernel();
+        $kernel = $this->createKernelWithStudio();
         $kernel->boot();
         $container = $kernel->container();
 
-        self::assertFalse($container->has(DeferredSink::class));
+        // DeferredSink is always-present as a generic extension point
+        self::assertTrue($container->has(DeferredSink::class));
     }
 
     #[Test]
@@ -149,7 +154,7 @@ final class KernelStudioIntegrationTest extends TestCase
         $this->writeStudioConfig(enabled: true);
         $this->writeObservabilityConfigWithErrorTracking();
 
-        $kernel = $this->createKernel();
+        $kernel = $this->createKernelWithStudio();
         $kernel->boot();
         $container = $kernel->container();
 
@@ -164,18 +169,31 @@ final class KernelStudioIntegrationTest extends TestCase
         $this->writeBaseConfigFiles();
         $this->writeStudioConfig(enabled: false);
 
-        $kernel = $this->createKernel();
+        $kernel = $this->createKernelWithStudio();
         $kernel->boot();
         $container = $kernel->container();
 
         self::assertFalse($container->has(HttpCollector::class));
     }
 
-    private function createKernel(): Kernel
+    private function createKernelWithStudio(): Kernel
     {
         $configManager = new ConfigManager(configPath: $this->tempDir);
 
-        return new Kernel(configManager: $configManager);
+        $bootstrap = ExtensionBootstrap::create();
+        $bootstrap->addExtension(
+            new StudioExtension(),
+            ExtensionManifest::fromArray([
+                'name' => 'pulsar/studio',
+                'version' => '1.0.0-rc.1',
+                'extension_class' => StudioExtension::class,
+            ]),
+        );
+
+        return new Kernel(
+            extensionBootstrap: $bootstrap,
+            configManager: $configManager,
+        );
     }
 
     private function writeBaseConfigFiles(): void

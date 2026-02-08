@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\Environment;
-use Pulsar\Config\StudioCollectorConfig;
+use Pulsar\Extension\Studio\Config\StudioCollectorConfig;
 
 #[CoversClass(StudioCollectorConfig::class)]
 final class StudioCollectorConfigTest extends TestCase

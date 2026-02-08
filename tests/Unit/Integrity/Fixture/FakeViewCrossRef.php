@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Integrity\Fixture;
 
 // Cross-module view reference — architecture violation.
-use Pulsar\Studio\Server\View\ViewRenderer;
+use Pulsar\Extension\Studio\Server\View\ViewRenderer;
 
 /**
  * Test fixture: references a view class from a different module.

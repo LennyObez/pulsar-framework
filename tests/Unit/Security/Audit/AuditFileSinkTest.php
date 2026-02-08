@@ -12,6 +12,7 @@ use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditOutcome;
+use Pulsar\Security\Audit\ChainableAuditSinkInterface;
 
 #[CoversClass(AuditFileSink::class)]
 final class AuditFileSinkTest extends TestCase
@@ -119,6 +120,57 @@ final class AuditFileSinkTest extends TestCase
 
         self::assertFileExists($logPath);
         self::assertDirectoryExists($this->tempDir . '/nested/dir');
+    }
+
+    #[Test]
+    public function implementsChainableAuditSinkInterface(): void
+    {
+        $sink = new AuditFileSink($this->tempDir . '/audit.jsonl');
+        self::assertInstanceOf(ChainableAuditSinkInterface::class, $sink);
+    }
+
+    #[Test]
+    public function lastHmacReadsCorrectHmacFromMultiLineFile(): void
+    {
+        $logPath = $this->tempDir . '/audit.jsonl';
+        $sink = new AuditFileSink($logPath);
+
+        $entry1 = $this->createEntry('entry-1');
+        $entry2 = $this->createEntry('entry-2');
+        $sink->write($entry1);
+        $sink->write($entry2);
+
+        self::assertSame($entry2->hmac, $sink->lastHmac());
+    }
+
+    #[Test]
+    public function lastHmacReturnsNullForEmptyFile(): void
+    {
+        $logPath = $this->tempDir . '/audit.jsonl';
+        file_put_contents($logPath, '');
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertNull($sink->lastHmac());
+    }
+
+    #[Test]
+    public function lastHmacReturnsNullForMissingFile(): void
+    {
+        $sink = new AuditFileSink($this->tempDir . '/nonexistent.jsonl');
+
+        self::assertNull($sink->lastHmac());
+    }
+
+    #[Test]
+    public function lastHmacReturnsNullForCorruptLastLine(): void
+    {
+        $logPath = $this->tempDir . '/audit.jsonl';
+        file_put_contents($logPath, "not valid json\n");
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertNull($sink->lastHmac());
     }
 
     #[Test]

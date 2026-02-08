@@ -46,6 +46,16 @@ final class AuditLogger
         ?Randomizer $randomizer = null,
     ) {
         $this->previousHmac = Hmac::computeHex(self::SEED_MESSAGE, $this->auditKey);
+
+        // Resume chain from the last entry if the sink supports it
+        if ($sink instanceof ChainableAuditSinkInterface) {
+            $lastHmac = $sink->lastHmac();
+
+            if ($lastHmac !== null) {
+                $this->previousHmac = $lastHmac;
+            }
+        }
+
         $this->randomizer = $randomizer ?? new Randomizer(new Secure());
     }
 

@@ -7,10 +7,10 @@ namespace Pulsar\Tests\Unit\Studio\Console\Event\Payload;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Studio\Console\Event\EventType;
-use Pulsar\Studio\Console\Event\EventVersion;
-use Pulsar\Studio\Console\Event\Payload\LogEntryPayload;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\EventType;
+use Pulsar\Extension\Studio\Console\Event\EventVersion;
+use Pulsar\Extension\Studio\Console\Event\Payload\LogEntryPayload;
 
 #[CoversClass(LogEntryPayload::class)]
 final class LogEntryPayloadTest extends TestCase

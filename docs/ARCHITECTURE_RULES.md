@@ -18,7 +18,7 @@ A module must not import controllers from another module. Controllers are intern
 ```php
 namespace Pulsar\Auth;
 
-use Pulsar\Studio\Server\Controller\ApiController; // FORBIDDEN
+use Pulsar\Extension\Studio\Server\Controller\ApiController; // FORBIDDEN
 ```
 
 **Fix:** Use a route or event to trigger behavior in another module. Never reference another module's controllers directly.
@@ -32,7 +32,7 @@ A module must not import view classes from another module. Views are internal to
 ```php
 namespace Pulsar\Auth;
 
-use Pulsar\Studio\Server\View\ViewRenderer; // FORBIDDEN
+use Pulsar\Extension\Studio\Server\View\ViewRenderer; // FORBIDDEN
 ```
 
 **Fix:** If you need rendering capabilities, depend on an `#[Api]` rendering interface, not a concrete view implementation from another module.
@@ -44,7 +44,7 @@ When importing a class from another module, the target class must have the `#[Ap
 **Violation:**
 
 ```php
-namespace Pulsar\Studio\Command;
+namespace Pulsar\Extension\Studio\Command;
 
 use Pulsar\Cache\FrameworkCache; // FORBIDDEN — FrameworkCache is #[Internal]
 ```

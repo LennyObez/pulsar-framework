@@ -45,7 +45,7 @@ final class PdoConnection implements ConnectionInterface
     #[NoDiscard]
     public static function fromConfig(ConnectionConfig $config): self
     {
-        $dsn = $config->driver->buildDsn($config->host, $config->port, $config->database);
+        $dsn = $config->driver->buildDsn($config->host, $config->port, $config->database, $config->charset);
 
         /** @var array<int, mixed> $pdoOptions */
         $pdoOptions = $config->options;

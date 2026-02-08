@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\EnvironmentMode;
-use Pulsar\Studio\Security\ProductionSafetyMode;
+use Pulsar\Extension\Studio\Security\ProductionSafetyMode;
 
 #[CoversClass(ProductionSafetyMode::class)]
 final class ProductionSafetyModeTest extends TestCase
