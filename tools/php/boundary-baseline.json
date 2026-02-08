@@ -1,0 +1,620 @@
+{
+  "generated": "2026-02-08T21:39:17+00:00",
+  "violations": [
+    {
+      "file": "extensions/payments/src/Features/CreatePaymentIntent/CreatePaymentIntentHandler.php",
+      "import": "Pulsar\\Observability\\Metrics\\LabelSet",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/payments/src/Features/ProcessWebhook/ProcessWebhookHandler.php",
+      "import": "Pulsar\\Observability\\Metrics\\LabelSet",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/payments/src/Gateway/PaymentGateway.php",
+      "import": "Pulsar\\Observability\\Metrics\\LabelSet",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleBenchmarkCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleBenchmarkCommand.php",
+      "import": "Pulsar\\Support\\AtomicFileWriter",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleExceptionsCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleExportCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleJobsCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleMetricsCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleQueryCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleRoutesCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleStatusCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleTailCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleTimelineCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/ConsoleVerifyCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Evidence/EvidenceExportCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Evidence/EvidencePurgeCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Evidence/EvidenceStatusCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Evidence/EvidenceVerifyCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Evidence/RedactionTestCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Evidence/RetentionApplyCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianCheckCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianCheckCommand.php",
+      "import": "Pulsar\\Supervisor\\Supervisor",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianDeployCheckCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianDeployCheckCommand.php",
+      "import": "Pulsar\\Deploy\\DeployCheck",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianIntegrityBuildCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianIntegrityBuildCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestBuilder",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianIntegrityBuildCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestFormat",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianIntegrityBuildCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestSigner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianIntegrityVerifyCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianIntegrityVerifyCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestFormat",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianIntegrityVerifyCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestSigner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianIntegrityVerifyCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestVerifier",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianStatusCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianSupervisorRunOnceCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianSupervisorRunOnceCommand.php",
+      "import": "Pulsar\\Supervisor\\Supervisor",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/Console/Guardian/GuardianSupervisorStatusCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/StudioDisableCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/StudioDoctorCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/StudioEnableCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/StudioOpenCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/StudioStartCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Command/StudioStatusCommand.php",
+      "import": "Pulsar\\Console\\Command",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/ExceptionCollector.php",
+      "import": "Pulsar\\Observability\\ErrorTracking\\ErrorEvent",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/HttpCollector.php",
+      "import": "Pulsar\\Observability\\Tracing\\TraceId",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/InstrumentedConnection.php",
+      "import": "Pulsar\\Database\\Statement",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/InstrumentedConnection.php",
+      "import": "Pulsar\\Database\\Transaction",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/InstrumentedScheduler.php",
+      "import": "Pulsar\\Scheduler\\JobRegistry",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/InstrumentedScheduler.php",
+      "import": "Pulsar\\Scheduler\\Scheduler",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Evidence/EvidenceExporter.php",
+      "import": "Pulsar\\Security\\Crypto\\Hmac",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Evidence/EvidenceVerifier.php",
+      "import": "Pulsar\\Security\\Crypto\\Hmac",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Evidence/HashChain.php",
+      "import": "Pulsar\\Security\\Crypto\\Hmac",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Redaction/DefaultRedactionPolicy.php",
+      "import": "Pulsar\\Observability\\ErrorTracking\\SensitiveDataScrubber",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Storage/EncryptedEventStore.php",
+      "import": "Pulsar\\Security\\Crypto\\Encryptor",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/Console/Storage/SqliteEventStore.php",
+      "import": "Pulsar\\Security\\Crypto\\Hmac",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioExtension.php",
+      "import": "Pulsar\\Config\\ConfigManager",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioExtension.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioExtension.php",
+      "import": "Pulsar\\FeatureFlag\\FlagEvaluationLog",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioExtension.php",
+      "import": "Pulsar\\Observability\\ErrorTracking\\ErrorAggregator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioExtension.php",
+      "import": "Pulsar\\Observability\\Log\\Sink\\DeferredSink",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioExtension.php",
+      "import": "Pulsar\\Scheduler\\Scheduler",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioExtension.php",
+      "import": "Pulsar\\Security\\Crypto\\Encryptor",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioExtension.php",
+      "import": "Pulsar\\Security\\Crypto\\MasterKey",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioExtension.php",
+      "import": "Pulsar\\Tenancy\\TenantContext",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/studio/src/StudioManager.php",
+      "import": "Pulsar\\Tenancy\\TenantContext",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Cache/CacheIntegrity.php",
+      "import": "Pulsar\\Security\\Crypto\\Encryptor",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Cache/CacheIntegrity.php",
+      "import": "Pulsar\\Security\\Crypto\\Hmac",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Cache/CacheManifest.php",
+      "import": "Pulsar\\Security\\Crypto\\Hmac",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Cache/FrameworkCache.php",
+      "import": "Pulsar\\Security\\Crypto\\Encryptor",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Cache/FrameworkCache.php",
+      "import": "Pulsar\\Security\\Crypto\\MasterKey",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/CacheWarmupCommand.php",
+      "import": "Pulsar\\Cache\\FrameworkCache",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/CacheWarmupCommand.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/DeployCheckCommand.php",
+      "import": "Pulsar\\Deploy\\DeployCheck",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/DiagnosticsCommand.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/HealthCheckCommand.php",
+      "import": "Pulsar\\Resilience\\HealthCheck\\HealthCheckRunner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/IntegrityBuildCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestBuilder",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/IntegrityBuildCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestFormat",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/IntegrityBuildCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestSigner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/IntegrityBuildCommand.php",
+      "import": "Pulsar\\Security\\Crypto\\MasterKey",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/IntegrityRepairCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestBuilder",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/IntegrityRepairCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestFormat",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/IntegrityVerifyCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestFormat",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/IntegrityVerifyCommand.php",
+      "import": "Pulsar\\Integrity\\ManifestVerifier",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/KeyGenerateCommand.php",
+      "import": "Pulsar\\Support\\AtomicFileWriter",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/MigrateRollbackCommand.php",
+      "import": "Pulsar\\Database\\Migration\\MigrationRunner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/MigrateRunCommand.php",
+      "import": "Pulsar\\Database\\Migration\\MigrationRunner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/MigrateStatusCommand.php",
+      "import": "Pulsar\\Database\\Migration\\MigrationRepository",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/MigrateStatusCommand.php",
+      "import": "Pulsar\\Database\\Migration\\MigrationRunner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/OptimizeClearCommand.php",
+      "import": "Pulsar\\Cache\\FrameworkCache",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/OptimizeCommand.php",
+      "import": "Pulsar\\Cache\\CacheException",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/OptimizeCommand.php",
+      "import": "Pulsar\\Cache\\FrameworkCache",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/OptimizeCommand.php",
+      "import": "Pulsar\\Container\\Container",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/OptimizeCommand.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/OptimizeValidateCommand.php",
+      "import": "Pulsar\\Cache\\FrameworkCache",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/OptimizeValidateCommand.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/PreloadDumpCommand.php",
+      "import": "Pulsar\\Support\\AtomicFileWriter",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/RepairCommand.php",
+      "import": "Pulsar\\Resilience\\Repair\\RepairRunner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/RuntimeServeCommand.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/RuntimeServeCommand.php",
+      "import": "Pulsar\\Runtime\\LeakDetector",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/RuntimeServeCommand.php",
+      "import": "Pulsar\\Runtime\\PersistentRuntime",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/RuntimeServeCommand.php",
+      "import": "Pulsar\\Runtime\\RequestResetRegistry",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/RuntimeServeCommand.php",
+      "import": "Pulsar\\Runtime\\RequestSandbox",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/SchedulerListCommand.php",
+      "import": "Pulsar\\Scheduler\\JobRegistry",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/SchedulerTickCommand.php",
+      "import": "Pulsar\\Scheduler\\Scheduler",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/ShowContainerCommand.php",
+      "import": "Pulsar\\Container\\Container",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/ShowContainerCommand.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/ShowRoutesCommand.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Console/Command/SupervisorCheckCommand.php",
+      "import": "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Deploy/Check/CacheSettingsCheck.php",
+      "import": "Pulsar\\Cache\\FrameworkCache",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Deploy/Check/FilesystemScanCheck.php",
+      "import": "Pulsar\\Cache\\FrameworkCache",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/ErrorHandling/DevelopmentRenderer.php",
+      "import": "Pulsar\\Observability\\ErrorTracking\\SensitiveDataScrubber",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/ErrorHandling/ExceptionHandler.php",
+      "import": "Pulsar\\Observability\\ErrorTracking\\ErrorAggregator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/ErrorHandling/ExceptionHandler.php",
+      "import": "Pulsar\\Observability\\ErrorTracking\\ErrorEvent",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/ErrorHandling/ExceptionHandler.php",
+      "import": "Pulsar\\Observability\\ErrorTracking\\SensitiveDataScrubber",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Http/Middleware/MetricsMiddleware.php",
+      "import": "Pulsar\\Observability\\Metrics\\LabelSet",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Http/Middleware/TracingMiddleware.php",
+      "import": "Pulsar\\Observability\\Tracing\\InMemorySpanCollector",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Http/Middleware/TracingMiddleware.php",
+      "import": "Pulsar\\Observability\\Tracing\\W3CTraceContextParser",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Integrity/ManifestSigner.php",
+      "import": "Pulsar\\Security\\Crypto\\Hmac",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Integrity/ManifestSigner.php",
+      "import": "Pulsar\\Security\\Crypto\\MasterKey",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Routing/Router.php",
+      "import": "Pulsar\\Cache\\CachedRoute",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Routing/Router.php",
+      "import": "Pulsar\\Cache\\RouteHandlerType",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Runtime/FpmRuntime.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Runtime/PersistentRuntime.php",
+      "import": "Pulsar\\Core\\Kernel",
+      "rule": "cross_module_non_api"
+    }
+  ]
+}
