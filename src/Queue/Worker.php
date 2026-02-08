@@ -193,7 +193,6 @@ final class Worker
     private function extractRequestContext(string $payload): ?RequestContext
     {
         try {
-            /** @var mixed $decoded */
             $decoded = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
 
             if (is_array($decoded) && array_key_exists('_ctx', $decoded) && array_key_exists('_payload', $decoded)) {
