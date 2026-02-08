@@ -205,6 +205,8 @@ jobs:
       - run: composer install --no-interaction --no-progress
 
       - name: Verify cache warmup pipeline
+        env:
+          PULSAR_MASTER_KEY: ci-test-key-00000000000000000000
         run: |
           if php bin/pulsar list 2>/dev/null | grep -q 'optimize:validate'; then
             php bin/pulsar optimize:validate --strict
