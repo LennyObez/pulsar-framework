@@ -28,7 +28,7 @@ class UserResource extends AbstractApiResource
     #[ClassificationTag(DataClassification::Confidential)]
     public string $email;
 
-    // NOT exposed — denied by default
+    // NOT exposed - denied by default
     public string $passwordHash;
     public string $internalNotes;
 }

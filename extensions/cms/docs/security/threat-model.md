@@ -341,6 +341,6 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 
 ## Next Steps
 
-- [Security Model](security-model.md) -- Detailed security controls
-- [Audit Events Reference](audit-events.md) -- Monitoring security events
-- [Compliance Guide](compliance-guide.md) -- Regulatory compliance
+- [Security Model](security-model.md) - Detailed security controls
+- [Audit Events Reference](audit-events.md) - Monitoring security events
+- [Compliance Guide](compliance-guide.md) - Regulatory compliance

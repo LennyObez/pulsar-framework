@@ -1,6 +1,7 @@
 # OS / editor
 .DS_Store
 Thumbs.db
+nul
 .idea/
 .vscode/
 *.swp
@@ -17,6 +18,8 @@ Thumbs.db
 
 # Database
 /database/*.sqlite
+/database/*.sqlite-journal
+/database/*.sqlite-wal
 
 # Runtime / app temp
 /bootstrap/cache/

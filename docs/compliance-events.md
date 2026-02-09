@@ -385,10 +385,10 @@ $snapshot = SnapshotCapture::capture(
 );
 
 // Result:
-// - amount: 15000.00 (Confidential -- captured as-is)
-// - currency: USD (Internal -- captured as-is)
-// - account_number: [REDACTED] (Restricted -- redacted)
-// - description: excluded (Public -- not in snapshot)
+// - amount: 15000.00 (Confidential - captured as-is)
+// - currency: USD (Internal - captured as-is)
+// - account_number: [REDACTED] (Restricted - redacted)
+// - description: excluded (Public - not in snapshot)
 ```
 
 ### Before/After Diffs

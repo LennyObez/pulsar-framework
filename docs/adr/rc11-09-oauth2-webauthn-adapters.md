@@ -6,21 +6,21 @@ Accepted
 
 ## Context
 
-Pulsar targets regulated domains (banking, healthcare, legal) where OAuth2/OIDC authorization and WebAuthn/Passkeys authentication are table-stakes requirements. Implementing these protocols from scratch is infeasible — the specifications are large (RFC 6749, RFC 7636, RFC 7662, RFC 7009, OpenID Connect Core 1.0, WebAuthn Level 2) and security-critical. A single implementation flaw in token signing, PKCE validation, or attestation parsing creates exploitable vulnerabilities.
+Pulsar targets regulated domains (banking, healthcare, legal) where OAuth2/OIDC authorization and WebAuthn/Passkeys authentication are table-stakes requirements. Implementing these protocols from scratch is infeasible - the specifications are large (RFC 6749, RFC 7636, RFC 7662, RFC 7009, OpenID Connect Core 1.0, WebAuthn Level 2) and security-critical. A single implementation flaw in token signing, PKCE validation, or attestation parsing creates exploitable vulnerabilities.
 
 Pulsar already has precedent for vendor-neutral protocol integration: the `social-sso` extension (`extensions/social-sso/`) wraps OpenSSL JWT operations behind `JwtSignatureDriverInterface` and delegates JWKS fetching to a pluggable `JwksFetcher`. This ADR extends that pattern to OAuth2 server-side authorization and WebAuthn server-side authentication.
 
 ### Constraints
 
 - **Extension-first architecture (ADR-0004).** OAuth2 and WebAuthn ship as extensions under `extensions/`, not in `src/`. They use the same `pulsar.json` manifest, lifecycle hooks, and capability model as any third-party extension.
-- **Libsodium-only core crypto (ADR-0006).** The framework's own crypto uses libsodium exclusively. OAuth2/OIDC requires RSA/ECDSA signing (RS256, ES256) for JWT access tokens and ID tokens — these algorithms are outside libsodium's scope and must come from adapter libraries.
+- **Libsodium-only core crypto (ADR-0006).** The framework's own crypto uses libsodium exclusively. OAuth2/OIDC requires RSA/ECDSA signing (RS256, ES256) for JWT access tokens and ID tokens - these algorithms are outside libsodium's scope and must come from adapter libraries.
 - **No framework-level composer dependencies.** Pulsar's root `composer.json` has zero non-dev external dependencies. Extension adapters declare their own library requirements in per-extension `composer.json` files.
 - **Trust tier model (ADR-0023).** OAuth2/WebAuthn extensions are first-party `Core` tier, granting `CryptoKeyAccess` for signing key management via KeyRing.
 
 ### Forces
 
 1. **Correctness over control.** Mature, audited libraries with thousands of deployments are more trustworthy than greenfield implementations for protocol compliance.
-2. **Upgradeability.** Libraries are behind Pulsar port interfaces. Swapping a library (or a library major version) is an adapter-only change — no consumer-facing API changes.
+2. **Upgradeability.** Libraries are behind Pulsar port interfaces. Swapping a library (or a library major version) is an adapter-only change - no consumer-facing API changes.
 3. **Supply chain risk.** Each external dependency is a potential attack vector. Minimizing the dependency tree and selecting well-maintained packages reduces this risk.
 4. **PHP 8.5 compatibility.** All selected libraries must run on PHP 8.5 without modification.
 
@@ -35,7 +35,7 @@ Pulsar already has precedent for vendor-neutral protocol integration: the `socia
 
 ## Decision
 
-Adopt a **Contract-First + Audited Library Adapter** architecture. Pulsar defines port interfaces (the public API) in each extension's `Contracts/` directory. Internal adapter classes wrap third-party library calls behind these ports. Consumers depend only on Pulsar interfaces — never on library types directly.
+Adopt a **Contract-First + Audited Library Adapter** architecture. Pulsar defines port interfaces (the public API) in each extension's `Contracts/` directory. Internal adapter classes wrap third-party library calls behind these ports. Consumers depend only on Pulsar interfaces - never on library types directly.
 
 ### Selected Libraries
 
@@ -44,13 +44,13 @@ Adopt a **Contract-First + Audited Library Adapter** architecture. Pulsar define
 | Criterion            | Assessment                                                                                                                                                      |
 | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Version**          | 9.3.0 (released 2025-11-25)                                                                                                                                     |
-| **PHP constraint**   | `~8.1.0 \| ~8.2.0 \| ~8.3.0 \| ~8.4.0 \| ~8.5.0` — PHP 8.5 explicitly supported                                                                                 |
+| **PHP constraint**   | `~8.1.0 \| ~8.2.0 \| ~8.3.0 \| ~8.4.0 \| ~8.5.0` - PHP 8.5 explicitly supported                                                                                 |
 | **License**          | MIT                                                                                                                                                             |
 | **Security audit**   | Mozilla Secure Open Source programme audit; findings fixed in 5.1.4/6.0.0. CVE-2023-37260 (key exposure in error messages) fixed in 8.5.3. No open CVEs in v9.x |
 | **Grant types**      | Authorization Code + PKCE (mandatory for public clients), Client Credentials, Refresh Token. Password grant deprecated (aligns with OAuth 2.1 draft)            |
 | **Token management** | Built-in revocation via `RevokeTokenHandler` (RFC 7009). Introspection requires adapter-level implementation against repository interfaces                      |
 | **Key dependencies** | `lcobucci/jwt` (JWT encoding/signing), `defuse/php-encryption` (optional encryption), `league/event`                                                            |
-| **Downloads**        | 431M+ on Packagist — the most deployed PHP OAuth2 server implementation                                                                                         |
+| **Downloads**        | 431M+ on Packagist - the most deployed PHP OAuth2 server implementation                                                                                         |
 | **Maintenance**      | Active. 9.3.0 shipped Nov 2025. Regular releases addressing security and compatibility                                                                          |
 
 **Rationale.** `league/oauth2-server` is the de facto standard PHP OAuth2 server library. Its repository-based architecture (implementer provides `ClientRepositoryInterface`, `AccessTokenRepositoryInterface`, `ScopeRepositoryInterface`, etc.) maps naturally to Pulsar's port/adapter model. Pulsar adapters will implement League's repository interfaces by delegating to Pulsar's own storage contracts, keeping the database layer fully decoupled.
@@ -62,7 +62,7 @@ Adopt a **Contract-First + Audited Library Adapter** architecture. Pulsar define
 | Criterion               | Assessment                                                                                                                        |
 | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | **Version**             | 5.2.2 (released 2025-03-16)                                                                                                       |
-| **PHP constraint**      | `>=8.2` — PHP 8.5 compatible via open upper bound                                                                                 |
+| **PHP constraint**      | `>=8.2` - PHP 8.5 compatible via open upper bound                                                                                 |
 | **License**             | MIT                                                                                                                               |
 | **FIDO conformance**    | FIDO Alliance conformance-tested. Supports registration and authentication ceremonies, passkeys, resident keys, user verification |
 | **Attestation formats** | `none`, `packed`, `fido-u2f`, `android-key`, `android-safetynet`, `apple`, `tpm`                                                  |
@@ -79,7 +79,7 @@ Adopt a **Contract-First + Audited Library Adapter** architecture. Pulsar define
 | Criterion            | Assessment                                                                                      |
 | -------------------- | ----------------------------------------------------------------------------------------------- |
 | **Version**          | 4.0.x (latest stable)                                                                           |
-| **PHP constraint**   | `>=8.2` — PHP 8.5 compatible via open upper bound                                               |
+| **PHP constraint**   | `>=8.2` - PHP 8.5 compatible via open upper bound                                               |
 | **License**          | MIT                                                                                             |
 | **Standards**        | Full JOSE suite: JWS (RFC 7515), JWE (RFC 7516), JWK (RFC 7517), JWA (RFC 7518), JWT (RFC 7519) |
 | **Algorithms**       | RS256, RS384, RS512, ES256, ES384, ES512, EdDSA, PS256, PS384, PS512, and symmetric algorithms  |
@@ -90,7 +90,7 @@ Adopt a **Contract-First + Audited Library Adapter** architecture. Pulsar define
 
 **Rationale.** While `league/oauth2-server` ships with `lcobucci/jwt` for basic JWT operations, Pulsar's OIDC provider layer requires full JOSE capabilities: JWK Set publishing (`.well-known/jwks.json`), key rotation with `kid` matching, ID token signing with multiple algorithm support, and eventually JWE for encrypted tokens. `web-token/jwt-framework` provides the complete JOSE stack needed for a compliant OIDC provider.
 
-`firebase/php-jwt` was considered but rejected — it covers basic JWT encode/decode but lacks JWK Set management, key rotation, JWE support, and the broader JOSE specification coverage required for a full OIDC provider implementation.
+`firebase/php-jwt` was considered but rejected - it covers basic JWT encode/decode but lacks JWK Set management, key rotation, JWE support, and the broader JOSE specification coverage required for a full OIDC provider implementation.
 
 **What Pulsar wraps.** The OAuth2/OIDC extension uses `web-token/jwt-framework` internally for: signing access tokens and ID tokens (JWS), publishing JWK Sets for token verification, resolving signing keys by `kid` during key rotation, and (future) encrypting tokens (JWE) for confidential clients. These operations are behind Pulsar's `JwtServiceInterface` and `JwkSetProviderInterface` ports.
 
@@ -138,7 +138,7 @@ Every security-relevant OAuth2/WebAuthn event is logged via `AuditLoggerInterfac
 
 All audit entries include `correlation_id` and `causation_id` from `RequestContext` when available (auto-enrichment by `AuditLogger`).
 
-**Replay safety:** Token issuance events include the `jti` (JWT ID) claim, which is both unique and auditable. Refresh token rotation invalidates the old token atomically — if the old token is replayed, the audit trail shows the revocation event and the token repository rejects it. WebAuthn authentication includes the `signCount` from the authenticator, which is monotonically increasing and detects cloned credentials.
+**Replay safety:** Token issuance events include the `jti` (JWT ID) claim, which is both unique and auditable. Refresh token rotation invalidates the old token atomically - if the old token is replayed, the audit trail shows the revocation event and the token repository rejects it. WebAuthn authentication includes the `signCount` from the authenticator, which is monotonically increasing and detects cloned credentials.
 
 ### Session Integration
 
@@ -160,8 +160,8 @@ Session data is encrypted at rest when `SessionEncryption` is configured (defaul
 
 Two new guards integrate with `AuthManagerInterface`:
 
-- **`OAuth2Guard`** — Implements `GuardInterface`. Extracts Bearer tokens from the `Authorization` header (like the existing `TokenGuard`), validates the JWT signature and claims using the JOSE library, and resolves the token to an `IdentityInterface`. Supports both JWT access tokens (self-contained validation) and opaque tokens (repository lookup + introspection).
-- **`WebAuthnGuard`** — Implements `GuardInterface`. For session-based WebAuthn flows, delegates to `SessionGuard` after successful WebAuthn ceremony. For token-based API access after WebAuthn authentication, the WebAuthn ceremony issues an OAuth2 token that is then validated by `OAuth2Guard`.
+- **`OAuth2Guard`** - Implements `GuardInterface`. Extracts Bearer tokens from the `Authorization` header (like the existing `TokenGuard`), validates the JWT signature and claims using the JOSE library, and resolves the token to an `IdentityInterface`. Supports both JWT access tokens (self-contained validation) and opaque tokens (repository lookup + introspection).
+- **`WebAuthnGuard`** - Implements `GuardInterface`. For session-based WebAuthn flows, delegates to `SessionGuard` after successful WebAuthn ceremony. For token-based API access after WebAuthn authentication, the WebAuthn ceremony issues an OAuth2 token that is then validated by `OAuth2Guard`.
 
 Guard priority: `OAuth2Guard` runs before `SessionGuard` (Bearer token takes precedence over session cookie in API contexts).
 
@@ -258,7 +258,7 @@ extensions/webauthn/
 ### Positive
 
 - **Protocol compliance via proven libraries.** `league/oauth2-server` has 431M+ installs and a Mozilla security audit. `web-auth/webauthn-lib` is FIDO conformance-tested. These libraries carry far more real-world validation than any greenfield implementation could achieve.
-- **Adapter isolation.** Pulsar consumers depend on `Contracts/` interfaces, not library types. Library major version upgrades (e.g., League v9 to v10) require adapter changes only — zero impact on application code.
+- **Adapter isolation.** Pulsar consumers depend on `Contracts/` interfaces, not library types. Library major version upgrades (e.g., League v9 to v10) require adapter changes only - zero impact on application code.
 - **No core dependency bloat.** Libraries are extension-level dependencies in per-extension `composer.json`. Applications that do not enable OAuth2/WebAuthn pull zero additional packages.
 - **KeyRing-centralized key management.** All signing keys flow through `KeyRingInterface`, enabling unified rotation, audit, and access control via the trust tier model.
 - **Full audit trail.** Every token lifecycle event and WebAuthn ceremony is HMAC-chain logged, satisfying compliance requirements for authentication audit trails.
@@ -271,7 +271,7 @@ extensions/webauthn/
 
 ### Neutral
 
-- **Dual JWT libraries.** The OAuth2 extension will have both `lcobucci/jwt` (transitive via League) and `web-token/jwt-framework` (direct dependency for OIDC). This is acceptable — `lcobucci/jwt` is used internally by League for its token encoding, while `web-token/jwt-framework` handles the OIDC-specific JOSE operations (JWK Sets, key rotation, ID token signing). They operate at different layers and do not conflict.
+- **Dual JWT libraries.** The OAuth2 extension will have both `lcobucci/jwt` (transitive via League) and `web-token/jwt-framework` (direct dependency for OIDC). This is acceptable - `lcobucci/jwt` is used internally by League for its token encoding, while `web-token/jwt-framework` handles the OIDC-specific JOSE operations (JWK Sets, key rotation, ID token signing). They operate at different layers and do not conflict.
 - **Attestation format policy.** For most deployments, `none` attestation suffices. Regulated environments requiring hardware attestation (`packed`, `tpm`) can configure the WebAuthn extension's attestation policy via `WebAuthnConfig`. The library supports all formats out of the box.
 
 ## Security Considerations
@@ -301,7 +301,7 @@ Minimal impact on hot paths:
 
 - **Token validation** (OAuth2Guard): JWT signature verification is a single OpenSSL operation (~0.1ms for RS256, ~0.05ms for ES256). JWK Set is cached in memory after first load.
 - **Token issuance**: One signing operation per token request. Not on the hot path (token endpoints are low-frequency relative to API requests).
-- **WebAuthn ceremonies**: CBOR decoding and attestation validation occur only during registration/authentication — not per-request.
+- **WebAuthn ceremonies**: CBOR decoding and attestation validation occur only during registration/authentication - not per-request.
 
 No performance budget violations expected. Token validation is comparable to the existing `TokenGuard` + `TokenResolverInterface` flow.
 

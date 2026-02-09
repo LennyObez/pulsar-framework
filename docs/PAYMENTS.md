@@ -109,7 +109,7 @@ Every mutating gateway operation requires an idempotency key. The gateway enforc
 
 ### Parameters Hash
 
-The gateway computes a canonical SHA-256 hash of operation parameters to detect misuse of idempotency keys. Metadata is explicitly excluded from the hash — contextual information should not cause a mismatch.
+The gateway computes a canonical SHA-256 hash of operation parameters to detect misuse of idempotency keys. Metadata is explicitly excluded from the hash - contextual information should not cause a mismatch.
 
 ### Commit Failure Policy
 
@@ -205,7 +205,7 @@ Every mutating operation writes a tamper-evident audit entry via `AuditLogger`. 
 ## Security Considerations
 
 - All signature comparisons use `hash_equals()` (constant-time)
-- Raw request body bytes are verified — no transformation before HMAC
+- Raw request body bytes are verified - no transformation before HMAC
 - Webhook secrets should be loaded from environment variables
 - Idempotency keys prevent replay attacks on mutating operations
 - The in-memory stores use Fiber-safe mutexes to prevent concurrent claim races

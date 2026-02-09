@@ -1,6 +1,6 @@
 # Interactive REPL (`pulsar shell`)
 
-Pulsar ships with an interactive PHP REPL powered by [PsySH](https://psysh.org/) that gives you a live shell with full framework context — container access, configuration, services, and more.
+Pulsar ships with an interactive PHP REPL powered by [PsySH](https://psysh.org/) that gives you a live shell with full framework context - container access, configuration, services, and more.
 
 ## Installation
 
@@ -37,8 +37,8 @@ php bin/pulsar shell
 
 This starts an interactive session with:
 
-- `$container` — the framework DI container
-- `$redactor` — the `SecretRedactor` instance (when available) for scrubbing sensitive output
+- `$container` - the framework DI container
+- `$redactor` - the `SecretRedactor` instance (when available) for scrubbing sensitive output
 
 ### Options
 
@@ -83,9 +83,9 @@ The REPL enforces environment-based access controls:
 
 When audit logging is enabled (`audit => true` in config), the REPL logs session lifecycle events:
 
-- **Session start** — actor, environment, safe mode status
-- **Session end** — actor, duration (logged even if the shell crashes, via try/finally)
-- **Production overrides** — when `--i-know-what-im-doing` is used
+- **Session start** - actor, environment, safe mode status
+- **Session end** - actor, duration (logged even if the shell crashes, via try/finally)
+- **Production overrides** - when `--i-know-what-im-doing` is used
 
 Disable audit for a session with `--no-audit`.
 
@@ -102,10 +102,10 @@ $clean = $redactor->scrubArray($someArray);
 
 Redaction strategies:
 
-- **Known secrets** — registered values are replaced with `********`
-- **DSN credentials** — `://user:password@host` patterns are redacted
-- **`#[Sensitive]` properties** — object properties annotated with `#[Sensitive]` are redacted in dumps
-- **Array scrubbing** — delegates to `SensitiveDataScrubber` for key-based redaction (password, token, secret, etc.)
+- **Known secrets** - registered values are replaced with `********`
+- **DSN credentials** - `://user:password@host` patterns are redacted
+- **`#[Sensitive]` properties** - object properties annotated with `#[Sensitive]` are redacted in dumps
+- **Array scrubbing** - delegates to `SensitiveDataScrubber` for key-based redaction (password, token, secret, etc.)
 
 ### Marking Properties as Sensitive
 

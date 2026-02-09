@@ -2,7 +2,7 @@
 
 ## Overview
 
-Pulsar includes a built-in feature flag system designed for regulated environments where controlled rollouts, audit trails, and deterministic evaluation are mandatory. Feature flags enable progressive delivery, A/B testing, tenant-specific features, and environment-gated functionality -- all without code deployments.
+Pulsar includes a built-in feature flag system designed for regulated environments where controlled rollouts, audit trails, and deterministic evaluation are mandatory. Feature flags enable progressive delivery, A/B testing, tenant-specific features, and environment-gated functionality - all without code deployments.
 
 The system supports three flag types (boolean, percentage, contextual), two storage backends (in-memory, file-based JSON), and full evaluation audit logging suitable for compliance reporting.
 
@@ -116,7 +116,7 @@ The simplest flag type. When the flag exists and is enabled, it evaluates to `tr
 
 ### Percentage
 
-Rolls a feature out to a deterministic subset of users or tenants. The percentage value (0-100) controls how many identifiers receive the feature. The evaluation is deterministic -- the same user/tenant always gets the same result for a given flag.
+Rolls a feature out to a deterministic subset of users or tenants. The percentage value (0-100) controls how many identifiers receive the feature. The evaluation is deterministic - the same user/tenant always gets the same result for a given flag.
 
 ```php
 'new-checkout' => [
@@ -350,11 +350,11 @@ Each evaluation produces an immutable `FlagEvaluation` record:
 use Pulsar\FeatureFlag\FlagEvaluation;
 
 // Properties:
-$evaluation->flagName;    // string -- the flag that was evaluated
-$evaluation->result;      // bool -- the evaluation outcome
-$evaluation->reason;      // FlagEvaluationReason -- why this result was produced
-$evaluation->context;     // FlagContext -- the context used for evaluation
-$evaluation->evaluatedAt; // DateTimeImmutable -- when the evaluation occurred
+$evaluation->flagName;    // string - the flag that was evaluated
+$evaluation->result;      // bool - the evaluation outcome
+$evaluation->reason;      // FlagEvaluationReason - why this result was produced
+$evaluation->context;     // FlagContext - the context used for evaluation
+$evaluation->evaluatedAt; // DateTimeImmutable - when the evaluation occurred
 ```
 
 ### FlagEvaluationReason
@@ -387,7 +387,7 @@ use Pulsar\FeatureFlag\FlagStorageInterface;
 $manager = new FeatureFlagManager(
     storage: $storage,          // FlagStorageInterface
     log: $evaluationLog,        // FlagEvaluationLog
-    defaultState: false,        // bool -- returned when a flag is not found
+    defaultState: false,        // bool - returned when a flag is not found
 );
 ```
 

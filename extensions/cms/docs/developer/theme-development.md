@@ -219,7 +219,7 @@ assets/
 
 The `ThemeAssetResolverInterface` resolves logical asset names (declared in `theme.json` under `assets`) to their physical paths within the theme's storage directory. The resolution respects the `assetDeployMode` setting:
 
-- **`copy`** (default) -- Assets are copied to the public web directory during installation.
+- **`copy`** (default) - Assets are copied to the public web directory during installation.
 - **`symlink`** -- Assets are symlinked from the theme storage to the public web directory.
 
 ### CSS Bundling
@@ -419,6 +419,6 @@ footer {
 
 ## Related Documentation
 
-- [Plugin Development Guide](plugin-development.md) -- Plugins can register custom content types that themes must template
-- [Content Type API](content-type-api.md) -- Field definitions drive admin form generation
-- [Architecture Overview](architecture.md) -- Module boundaries and integration map
+- [Plugin Development Guide](plugin-development.md) - Plugins can register custom content types that themes must template
+- [Content Type API](content-type-api.md) - Field definitions drive admin form generation
+- [Architecture Overview](architecture.md) - Module boundaries and integration map

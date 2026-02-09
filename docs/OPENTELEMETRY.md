@@ -284,7 +284,7 @@ service:
 
 ## Sampling Strategies
 
-Sampling controls which traces are recorded and exported. The sampler is evaluated once per root span -- child spans inherit the parent's decision.
+Sampling controls which traces are recorded and exported. The sampler is evaluated once per root span - child spans inherit the parent's decision.
 
 | Strategy     | Config Value   | When to Use                                           |
 | ------------ | -------------- | ----------------------------------------------------- |
@@ -417,7 +417,7 @@ $childSpan->setAttribute('gateway.provider', 'stripe');
 $childSpan->end();
 ```
 
-When OTLP export is enabled, the `SpanProcessorInterface` bridge converts completed `Span` objects into `OtlpSpan` DTOs, which flow through the batch exporter and out via the configured transport. Your application code does not need to know about OTLP -- just create spans and call `end()`.
+When OTLP export is enabled, the `SpanProcessorInterface` bridge converts completed `Span` objects into `OtlpSpan` DTOs, which flow through the batch exporter and out via the configured transport. Your application code does not need to know about OTLP - just create spans and call `end()`.
 
 ## Dual Export (Studio + Collector)
 
@@ -432,7 +432,7 @@ return [
 
 Set `dual_export` to `false` if you want OTLP-only export (e.g., in production where Studio is disabled).
 
-When `enabled` is `false` and Studio is active, spans still flow to Studio's in-memory collector. The OTLP path is fully inactive -- no serialization, no network calls, no allocations.
+When `enabled` is `false` and Studio is active, spans still flow to Studio's in-memory collector. The OTLP path is fully inactive - no serialization, no network calls, no allocations.
 
 ## Performance
 
@@ -440,7 +440,7 @@ The extension is designed for near-zero overhead on the hot path.
 
 ### Disabled Mode
 
-When `enabled` is `false`, the extension registers `NoopSpanProcessor` and `NoopLogSink` implementations. These are empty method bodies with no allocations, no conditionals, and no logging. The overhead is a single virtual method dispatch per span/log -- effectively zero.
+When `enabled` is `false`, the extension registers `NoopSpanProcessor` and `NoopLogSink` implementations. These are empty method bodies with no allocations, no conditionals, and no logging. The overhead is a single virtual method dispatch per span/log - effectively zero.
 
 ### Enabled Mode
 

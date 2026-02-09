@@ -1,4 +1,4 @@
-# Zero-Trust Architecture — Regulatory Compliance Mapping
+# Zero-Trust Architecture - Regulatory Compliance Mapping
 
 This document maps Pulsar's zero-trust architecture to applicable regulatory frameworks and security standards. It identifies how the framework's controls support compliance requirements in regulated domains (banking, healthcare, legal).
 
@@ -6,7 +6,7 @@ This document maps Pulsar's zero-trust architecture to applicable regulatory fra
 
 ---
 
-## 1. NIST SP 800-207 Zero Trust Architecture — Tenet Mapping
+## 1. NIST SP 800-207 Zero Trust Architecture - Tenet Mapping
 
 NIST Special Publication 800-207 defines seven tenets for zero-trust architecture. The following maps each tenet to Pulsar's zero-trust module components.
 
@@ -16,7 +16,7 @@ NIST Special Publication 800-207 defines seven tenets for zero-trust architectur
 
 **Control coverage in Pulsar**:
 
-- **Entrypoint-scoped enforcement**: The zero-trust module applies policy evaluation at all framework entrypoints — HTTP/API requests, privileged CLI commands, and background jobs accessing privileged resources. Each entrypoint is treated as a resource boundary requiring authorization.
+- **Entrypoint-scoped enforcement**: The zero-trust module applies policy evaluation at all framework entrypoints - HTTP/API requests, privileged CLI commands, and background jobs accessing privileged resources. Each entrypoint is treated as a resource boundary requiring authorization.
 - **Resource-level policy rules**: `PolicyRule` definitions bind to specific resources and actions (e.g., payment endpoints, PHI access endpoints, admin CLI commands). Access decisions are made per resource, not per network zone.
 - **No implicit trust for internal services**: Background jobs re-evaluate authorization at execution time, preventing stale or escalated privileges from persisting across asynchronous boundaries.
 
@@ -31,7 +31,7 @@ NIST Special Publication 800-207 defines seven tenets for zero-trust architectur
 **Control coverage in Pulsar**:
 
 - **Network-agnostic claims**: The `NetworkSignal` provider produces claims such as `NetworkZone`, `TorExit`, and `KnownProxy`. These claims inform policy decisions but do not grant implicit trust. A request originating from an internal network zone is still subject to full policy evaluation.
-- **Claims-based decisions, not perimeter-based**: The policy engine evaluates the complete claim set for every request. Network location is one signal among many — it cannot substitute for identity verification or device attestation.
+- **Claims-based decisions, not perimeter-based**: The policy engine evaluates the complete claim set for every request. Network location is one signal among many - it cannot substitute for identity verification or device attestation.
 - **Transport-layer controls**: Pulsar's `SecurityHeadersMiddleware` enforces HSTS, preventing TLS downgrade. Session cookies are marked `Secure` and `SameSite=Strict` (per the session threat model). These controls operate independently of network topology.
 
 **Relevant components**: `NetworkSignal`, `PolicyEngine`, `SecurityHeadersMiddleware`, session security controls
@@ -55,16 +55,16 @@ NIST Special Publication 800-207 defines seven tenets for zero-trust architectur
 
 ### Tenet 4: Access to resources is determined by dynamic policy
 
-> _"Access is determined by dynamic policy — including the observable state of client identity, application/service, and the requesting asset — and may include other behavioral and environmental attributes."_
+> _"Access is determined by dynamic policy - including the observable state of client identity, application/service, and the requesting asset - and may include other behavioral and environmental attributes."_
 
 **Control coverage in Pulsar**:
 
 - **Multi-signal policy evaluation**: The policy engine evaluates claims produced by five signal provider categories:
-  - `DeviceSignal` — device registration status, attestation validity, known device recognition
-  - `LocationSignal` — geographic anomalies, impossible travel detection, country-level location
-  - `TimeSignal` — off-hours access, unusual time patterns
-  - `BehaviorSignal` — anomalous request patterns, rapid request detection
-  - `NetworkSignal` — network zone, Tor exit node detection, known proxy identification
+ - `DeviceSignal` - device registration status, attestation validity, known device recognition
+ - `LocationSignal` - geographic anomalies, impossible travel detection, country-level location
+ - `TimeSignal` - off-hours access, unusual time patterns
+ - `BehaviorSignal` - anomalous request patterns, rapid request detection
+ - `NetworkSignal` - network zone, Tor exit node detection, known proxy identification
 - **Confidence and source gating**: Policy rules specify minimum confidence levels and allowed claim sources. A claim from a low-confidence source (e.g., browser fingerprinting) cannot satisfy a policy requiring high-confidence device attestation. This prevents weak signals from being treated as authoritative.
 - **Dynamic step-up decisions**: When claims are insufficient for a resource's policy requirements, the policy engine returns a `step-up` decision, triggering additional authentication factors. This enables adaptive, risk-proportional access control.
 - **Configurable policy rules**: `ZeroTrustConfig` DTO supports per-resource policy definitions with explicit claim requirements, confidence thresholds, and allowed sources. Policies are stored as diffable configuration.
@@ -80,7 +80,7 @@ NIST Special Publication 800-207 defines seven tenets for zero-trust architectur
 **Control coverage in Pulsar**:
 
 - **Device identity with cryptographic proof**: The `DeviceIdentity` component tracks registered devices using secure cookies with cryptographic key pairs. WebAuthn attestation provides high-assurance device binding. Browser fingerprinting is treated as a weak supplementary signal only.
-- **Trust score as diagnostic metric**: `TrustScore::fromClaims()` computes a real-time aggregate metric from the current claim set. The `ScoreExplanation` object provides full transparency into which claims contributed to the score and by how much. This score serves dashboards, telemetry, and anomaly detection — providing continuous visibility into asset security posture.
+- **Trust score as diagnostic metric**: `TrustScore::fromClaims()` computes a real-time aggregate metric from the current claim set. The `ScoreExplanation` object provides full transparency into which claims contributed to the score and by how much. This score serves dashboards, telemetry, and anomaly detection - providing continuous visibility into asset security posture.
 - **Signal-based posture assessment**: Each request triggers signal evaluation across all configured providers. Claims reflect the current observable state of the requesting asset (device registration status, network characteristics, behavioral patterns, temporal context).
 
 **Relevant components**: `DeviceIdentity`, `TrustScore`, `ScoreExplanation`, signal providers, `ContinuousVerification`
@@ -96,11 +96,11 @@ NIST Special Publication 800-207 defines seven tenets for zero-trust architectur
 - **Pre-access enforcement**: `ZeroTrustMiddleware` evaluates policy rules before granting access to any protected resource. No request reaches a protected endpoint without a policy decision.
 - **Continuous re-evaluation**: The `ContinuousVerification` component re-evaluates claims during active sessions at entrypoints, not only at initial authentication. A session that was granted access may have that access revoked if claims change (e.g., device becomes unrecognized, anomalous behavior detected).
 - **Step-up authentication with loop safety**: When policy requires additional verification, step-up authentication is triggered. The step-up mechanism includes:
-  - Attempt counter per policy rule (configurable maximum, default 3)
-  - Cooldown period after maximum attempts are exhausted (default 5 minutes)
-  - Audit events for each attempt (`StepUpAttempted`) and lockout (`StepUpLockout`)
-  - Deterministic fallback to deny during lockout (no retry loops)
-- **Three-valued decisions**: Every policy evaluation produces one of three outcomes — grant, deny, or step-up. There is no implicit grant; every access decision is explicit and logged.
+ - Attempt counter per policy rule (configurable maximum, default 3)
+ - Cooldown period after maximum attempts are exhausted (default 5 minutes)
+ - Audit events for each attempt (`StepUpAttempted`) and lockout (`StepUpLockout`)
+ - Deterministic fallback to deny during lockout (no retry loops)
+- **Three-valued decisions**: Every policy evaluation produces one of three outcomes - grant, deny, or step-up. There is no implicit grant; every access decision is explicit and logged.
 
 **Relevant components**: `ZeroTrustMiddleware`, `ContinuousVerification`, `PolicyDecision`, step-up loop protection, Auth module integration
 
@@ -113,10 +113,10 @@ NIST Special Publication 800-207 defines seven tenets for zero-trust architectur
 **Control coverage in Pulsar**:
 
 - **Comprehensive audit logging**: All policy decisions are audit-logged with:
-  - Claim set snapshot (inline for small sets, or content-addressable hash referencing the compliance evidence sink for large sets)
-  - Trust score with full explanation (per-claim weight contributions)
-  - Decision outcome (grant, deny, or step-up)
-  - Correlation ID for request tracing
+ - Claim set snapshot (inline for small sets, or content-addressable hash referencing the compliance evidence sink for large sets)
+ - Trust score with full explanation (per-claim weight contributions)
+ - Decision outcome (grant, deny, or step-up)
+ - Correlation ID for request tracing
 - **HMAC-chained audit trail**: Audit entries use HMAC-BLAKE2b chain integrity (per ADR-0008), providing tamper-evident logging suitable for forensic analysis and compliance audits.
 - **Signal data for security analytics**: Trust scores, claim patterns, and anomaly signals (geolocation anomalies, impossible travel, behavioral anomalies) generate structured data suitable for security posture analysis and policy refinement.
 - **Versioned signal retention policies**: Signal retention policies are versioned and changes emit `SignalRetentionPolicyChanged` events. This provides an audit trail of how data collection and retention practices evolve over time.
@@ -155,7 +155,7 @@ PSD2 Article 2 and Regulatory Technical Standards (RTS) require transaction risk
 
 ### SCA Exemptions
 
-PSD2 RTS Article 10-18 define SCA exemptions (low-value transactions, trusted beneficiaries, recurring payments, transaction risk analysis). The policy engine's configurable rules support exemption modeling — specific resources or transaction types can have reduced claim requirements while maintaining audit evidence of the exemption rationale.
+PSD2 RTS Article 10-18 define SCA exemptions (low-value transactions, trusted beneficiaries, recurring payments, transaction risk analysis). The policy engine's configurable rules support exemption modeling - specific resources or transaction types can have reduced claim requirements while maintaining audit evidence of the exemption rationale.
 
 ---
 
@@ -163,7 +163,7 @@ PSD2 RTS Article 10-18 define SCA exemptions (low-value transactions, trusted be
 
 The Health Insurance Portability and Accountability Act (HIPAA) Security Rule (45 CFR Part 164) establishes standards for protecting electronic Protected Health Information (ePHI). The following maps Pulsar's zero-trust controls to relevant HIPAA requirements.
 
-### 164.312(a)(1) — Access Control
+### 164.312(a)(1) - Access Control
 
 > _"Implement technical policies and procedures for electronic information systems that maintain electronic protected health information to allow access only to those persons or software programs that have been granted access rights."_
 
@@ -173,27 +173,27 @@ The Health Insurance Portability and Accountability Act (HIPAA) Security Rule (4
 - **Minimum necessary access**: Policy rules are defined per resource and action, supporting the HIPAA minimum necessary standard. Access to PHI endpoints requires specific claims that are not required for non-PHI resources.
 - **No implicit access**: The three-valued decision model (grant/deny/step-up) ensures that PHI access is never implicitly granted. Every access attempt receives an explicit policy evaluation.
 
-### 164.312(a)(2)(i) — Unique User Identification
+### 164.312(a)(2)(i) - Unique User Identification
 
 **Control coverage**:
 
 - **Identity claims**: The claims model carries identity information (`IdentityVerified`, `MfaCompleted`) tied to authenticated users. Device identity via `DeviceRegistered` and `DeviceAttestationValid` provides additional identification assurance.
 - **Correlation IDs**: Each policy decision includes a correlation ID linking the access decision to the authenticated user and session context.
 
-### 164.312(a)(2)(iii) — Automatic Logoff
+### 164.312(a)(2)(iii) - Automatic Logoff
 
 **Control coverage**:
 
 - **Continuous verification**: Session-level claim re-evaluation supports automatic access revocation when trust posture degrades. Combined with session timeout controls (per the session management module), this supports automatic logoff requirements.
 
-### 164.312(a)(2)(iv) — Encryption and Decryption
+### 164.312(a)(2)(iv) - Encryption and Decryption
 
 **Control coverage**:
 
 - **Signal data encryption**: Sensitive signal data (device identifiers, location data) is handled with privacy controls. Device identifiers are pseudonymized in logs. Signal data is stored only for the configured retention period.
 - **Session encryption**: Session data is encrypted using AEAD XChaCha20-Poly1305 via the KeyRing (per ADR-0006), protecting session-bound ePHI at rest and in transit.
 
-### 164.312(b) — Audit Controls
+### 164.312(b) - Audit Controls
 
 > _"Implement hardware, software, and/or procedural mechanisms that record and examine activity in information systems that contain or use electronic protected health information."_
 
@@ -203,14 +203,14 @@ The Health Insurance Portability and Accountability Act (HIPAA) Security Rule (4
 - **Claim set snapshots**: For PHI access decisions, the full claim set at the time of the decision is either stored inline in the audit event or referenced via a content-addressable hash in the compliance evidence sink. This provides forensic-grade evidence of the trust basis for each access decision.
 - **Chain verification**: The HMAC chain can be independently verified using only the audit key, supporting audit integrity requirements without external infrastructure.
 
-### 164.312(c)(1) — Integrity Controls
+### 164.312(c)(1) - Integrity Controls
 
 **Control coverage**:
 
 - **Tamper-evident audit trail**: HMAC-BLAKE2b chain integrity ensures that modification of any audit entry is detectable by re-computing the chain from the deterministic seed (per ADR-0008).
 - **Immutable audit entries**: `AuditEntry` is a readonly value object. Once written, entries cannot be modified in memory. The `AuditFileSink` uses `LOCK_EX` for concurrent-safe, append-only writes.
 
-### 164.312(d) — Person or Entity Authentication
+### 164.312(d) - Person or Entity Authentication
 
 **Control coverage**:
 
@@ -221,11 +221,11 @@ The Health Insurance Portability and Accountability Act (HIPAA) Security Rule (4
 ```
 Resource: /api/patients/{id}/records
 Required claims:
-  - IdentityVerified=true (confidence >= 0.95, source: AuthModule)
-  - MfaCompleted=true (confidence >= 0.95, source: AuthModule)
-  - DeviceAttestationValid=true (confidence >= 0.9, source: DeviceSignal)
-  - NetworkZone=internal (confidence >= 0.8, source: NetworkSignal)
-  - GeoAnomaly=false (confidence >= 0.8, source: LocationSignal)
+ - IdentityVerified=true (confidence >= 0.95, source: AuthModule)
+ - MfaCompleted=true (confidence >= 0.95, source: AuthModule)
+ - DeviceAttestationValid=true (confidence >= 0.9, source: DeviceSignal)
+ - NetworkZone=internal (confidence >= 0.8, source: NetworkSignal)
+ - GeoAnomaly=false (confidence >= 0.8, source: LocationSignal)
 Decision on insufficient claims: step-up
 Decision on failed claims: deny
 Audit: full claim set snapshot to compliance evidence sink
@@ -233,7 +233,7 @@ Audit: full claim set snapshot to compliance evidence sink
 
 ---
 
-## 4. Privacy Compliance — GDPR and CCPA Considerations
+## 4. Privacy Compliance - GDPR and CCPA Considerations
 
 The zero-trust module collects and processes contextual data (device metadata, location indicators, behavioral patterns, network characteristics) as trust signals. This data processing must align with privacy requirements under the General Data Protection Regulation (GDPR), the California Consumer Privacy Act (CCPA), and equivalent frameworks.
 
@@ -245,7 +245,7 @@ The zero-trust module collects and processes contextual data (device metadata, l
 
 - **Purpose-limited signal collection**: Each signal provider collects only the data necessary for its specific claim production. For example, `LocationSignal` produces geographic claims but does not store raw IP addresses beyond the request lifecycle unless explicitly configured.
 - **Claim outcomes over raw data**: Audit logs store claim outcomes (grant/deny/step-up + claim names and values) rather than raw signal data. Raw IP addresses, raw device metadata, and raw behavioral data are not persisted in audit logs.
-- **Fingerprint data evaluated and discarded**: When browser fingerprinting is used as a weak supplementary signal, fingerprint data is evaluated during the request and discarded — it is not stored persistently.
+- **Fingerprint data evaluated and discarded**: When browser fingerprinting is used as a weak supplementary signal, fingerprint data is evaluated during the request and discarded - it is not stored persistently.
 - **Configurable signal activation**: `ZeroTrustConfig` allows organizations to enable only the signal providers necessary for their risk profile, avoiding unnecessary data collection.
 
 ### 4.2 Storage Limitation and Retention (GDPR Article 5(1)(e))
@@ -274,9 +274,9 @@ The zero-trust module collects and processes contextual data (device metadata, l
 
 - **Device registration data**: Device identity records (registered devices, key pairs) are associated with user accounts. The framework's signal retention configuration supports defining erasure procedures for device data when a user exercises their right to erasure.
 - **Audit trail integrity vs. erasure**: HMAC-chained audit entries present a tension with right-to-erasure requests. Removing individual entries would break chain integrity. Organizations should consider:
-  - Pseudonymization of actor identifiers in audit logs as the primary privacy control (reducing the need for erasure)
-  - Legal basis for audit log retention under legitimate interest or legal obligation (GDPR Article 17(3)(b) and (e))
-  - Retention policies that limit the audit log lifetime to what is legally required
+ - Pseudonymization of actor identifiers in audit logs as the primary privacy control (reducing the need for erasure)
+ - Legal basis for audit log retention under legitimate interest or legal obligation (GDPR Article 17(3)(b) and (e))
+ - Retention policies that limit the audit log lifetime to what is legally required
 - **Behavioral baselines**: Behavioral signal data used for anomaly detection should be subject to erasure procedures consistent with the configured retention period.
 
 ### 4.5 Privacy by Design (GDPR Article 25)
@@ -303,7 +303,7 @@ The California Consumer Privacy Act provides rights including disclosure, deleti
 
 The Digital Operational Resilience Act (DORA, Regulation (EU) 2022/2554) establishes requirements for ICT risk management, incident reporting, and operational resilience testing for financial entities.
 
-### Article 6 — ICT Risk Management Framework
+### Article 6 - ICT Risk Management Framework
 
 > _"Financial entities shall have [...] an ICT risk management framework."_
 
@@ -312,7 +312,7 @@ The Digital Operational Resilience Act (DORA, Regulation (EU) 2022/2554) establi
 - **Continuous verification as ongoing monitoring**: The `ContinuousVerification` component re-evaluates trust claims during active sessions. This supports the DORA requirement for ongoing monitoring of ICT risks rather than point-in-time assessment.
 - **Configurable risk signals**: Signal providers (behavior, network, location, device, time) produce claims that reflect the current ICT risk posture of each access request. The modular signal architecture allows organizations to extend monitoring as their risk landscape evolves.
 
-### Article 9 — Protection and Prevention
+### Article 9 - Protection and Prevention
 
 > _"Financial entities shall continuously monitor and control the security and functioning of ICT systems."_
 
@@ -321,7 +321,7 @@ The Digital Operational Resilience Act (DORA, Regulation (EU) 2022/2554) establi
 - **Anomaly detection signals**: `BehaviorSignal` detects anomalous patterns and rapid requests. `LocationSignal` detects impossible travel and geographic anomalies. `NetworkSignal` identifies Tor exit nodes and known proxies. These signals support early detection of potentially malicious activity.
 - **Automated policy enforcement**: The policy engine automatically enforces access restrictions when anomaly signals are detected, reducing response time between detection and containment.
 
-### Article 10 — Detection
+### Article 10 - Detection
 
 > _"Financial entities shall have in place mechanisms to promptly detect anomalous activities."_
 
@@ -331,7 +331,7 @@ The Digital Operational Resilience Act (DORA, Regulation (EU) 2022/2554) establi
 - **Audit event stream**: All policy decisions (particularly denials and step-up triggers) generate structured audit events with full context. These events can feed into incident detection and response systems.
 - **Step-up lockout events**: `StepUpLockout` events indicate potential brute-force or account takeover attempts, providing detection signals for security operations.
 
-### Article 17 — ICT-Related Incident Management
+### Article 17 - ICT-Related Incident Management
 
 **Control coverage**:
 
@@ -368,12 +368,12 @@ The Digital Operational Resilience Act (DORA, Regulation (EU) 2022/2554) establi
 | Requirement                 | NIST 800-207   | PSD2 SCA    | HIPAA              | GDPR             | DORA        |
 | --------------------------- | -------------- | ----------- | ------------------ | ---------------- | ----------- |
 | Claims-based access control | Tenets 1, 3, 4 | Art. 97     | 164.312(a)         | Art. 25          | Art. 9      |
-| Multi-factor authentication | Tenet 6        | Art. 97(1)  | 164.312(d)         | —                | Art. 9      |
-| Continuous verification     | Tenets 5, 6    | —           | 164.312(a)(2)(iii) | —                | Art. 6, 9   |
+| Multi-factor authentication | Tenet 6        | Art. 97(1)  | 164.312(d)         | -                | Art. 9      |
+| Continuous verification     | Tenets 5, 6    | -           | 164.312(a)(2)(iii) | -                | Art. 6, 9   |
 | Device identity/attestation | Tenet 5        | RTS Art. 9  | 164.312(d)         | Art. 25          | Art. 9      |
-| Anomaly detection           | Tenet 7        | RTS Art. 18 | —                  | —                | Art. 10     |
-| Tamper-evident audit trail  | Tenet 7        | —           | 164.312(b), (c)    | Art. 5(2)        | Art. 17     |
-| Data minimization           | —              | —           | Min. necessary     | Art. 5(1)(c)     | —           |
-| Pseudonymization            | —              | —           | —                  | Art. 25, Rec. 78 | —           |
-| Retention management        | —              | —           | 164.530(j)         | Art. 5(1)(e)     | —           |
-| Incident detection          | Tenet 7        | —           | 164.308(a)(6)      | Art. 33          | Art. 10, 17 |
+| Anomaly detection           | Tenet 7        | RTS Art. 18 | -                  | -                | Art. 10     |
+| Tamper-evident audit trail  | Tenet 7        | -           | 164.312(b), (c)    | Art. 5(2)        | Art. 17     |
+| Data minimization           | -              | -           | Min. necessary     | Art. 5(1)(c)     | -           |
+| Pseudonymization            | -              | -           | -                  | Art. 25, Rec. 78 | -           |
+| Retention management        | -              | -           | 164.530(j)         | Art. 5(1)(e)     | -           |
+| Incident detection          | Tenet 7        | -           | 164.308(a)(6)      | Art. 33          | Art. 10, 17 |

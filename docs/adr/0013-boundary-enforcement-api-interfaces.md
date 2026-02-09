@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-ADR-0009 established `#[Api]` / `#[Internal]` attributes to classify public vs. internal types. However, enforcement was limited to snapshot tests — no automated tool prevented cross-module imports of `#[Internal]` types at development time.
+ADR-0009 established `#[Api]` / `#[Internal]` attributes to classify public vs. internal types. However, enforcement was limited to snapshot tests - no automated tool prevented cross-module imports of `#[Internal]` types at development time.
 
 A boundary-checking script (`scripts/boundary_check.php`) was introduced to scan `use` statements for cross-module imports of non-`#[Api]` types. The initial baseline identified 123 violations across 41 unique classes. These violations existed because many cross-module dependencies targeted concrete `#[Internal]` implementations rather than `#[Api]` contracts.
 
@@ -20,7 +20,7 @@ Three root causes drove the violations:
 
 1. **Enforce ADR-0009 at CI level.** Without tooling, attribute-based API classification is advisory only.
 2. **Preserve implementation flexibility.** Consumers should depend on contracts, not concrete classes that may change.
-3. **Minimize churn.** Prefer the narrowest fix for each violation — new interface only when abstraction is warranted.
+3. **Minimize churn.** Prefer the narrowest fix for each violation - new interface only when abstraction is warranted.
 
 ## Decision
 
@@ -32,16 +32,16 @@ For internal classes where cross-module consumers need only a subset of the publ
 
 Key interfaces introduced:
 
-- `Core\KernelInterface` — stable subset (`boot`, `handle`, `run`, `shutdown`, `container`, `router`)
-- `Cache\FrameworkCacheInterface` — cache read/write contract
-- `Security\Crypto\EncryptorInterface`, `HmacInterface`, `KeyProviderInterface` — crypto contracts
+- `Core\KernelInterface` - stable subset (`boot`, `handle`, `run`, `shutdown`, `container`, `router`)
+- `Cache\FrameworkCacheInterface` - cache read/write contract
+- `Security\Crypto\EncryptorInterface`, `HmacInterface`, `KeyProviderInterface` - crypto contracts
 - `Integrity\ManifestBuilderInterface`, `ManifestSignerInterface`, `ManifestVerifierInterface`
 - `Supervisor\SupervisorInterface`, `PreflightCheck\PreflightRunnerInterface`
 - `Deploy\DeployCheckRunnerInterface`
 - `Resilience\HealthCheck\HealthCheckRunnerInterface`, `Repair\RepairRunnerInterface`
 - `Observability\ErrorTracking\ErrorAggregatorInterface`, `Log\Sink\DeferredSinkInterface`
 - `FeatureFlag\FlagEvaluationLogInterface`
-- `Runtime\PersistentRuntimeFactoryInterface` — encapsulates runtime bootstrap internals
+- `Runtime\PersistentRuntimeFactoryInterface` - encapsulates runtime bootstrap internals
 
 An adapter class (`HmacService`) was introduced for `HmacInterface` to avoid converting `Hmac`'s static API to instance methods.
 
@@ -58,7 +58,7 @@ Where an `#[Api]` interface already existed, update imports to target the interf
 
 ### Strategy 3: Promote stable types to `#[Api]` (15 types, 62 violations)
 
-For types that are genuinely stable public API — value objects, exceptions, base classes, and entry-point orchestrators — add or change the attribute to `#[Api]`:
+For types that are genuinely stable public API - value objects, exceptions, base classes, and entry-point orchestrators - add or change the attribute to `#[Api]`:
 
 - Value objects: `LabelSet`, `ErrorEvent`, `TraceId`, `Statement`, `Transaction`
 - Exception: `CacheException`
@@ -99,22 +99,22 @@ Rejected. Would require mass-renaming and lose the granularity of attribute-leve
 
 ### Neutral
 
-- **API snapshot grows.** The public API snapshot includes the new interfaces. This is intentional — they are the stable contracts.
+- **API snapshot grows.** The public API snapshot includes the new interfaces. This is intentional - they are the stable contracts.
 - **Existing extension code.** Extensions already importing concrete classes will need to update imports. This is a one-time migration during the RC phase.
 
 ## Field Report
 
 _Optional. Document operational experience that validates or challenges this decision. Add entries as they accumulate._
 
-- **rc.6 – rc.10** | PR #29, boundary enforcement rollout: Initial scan identified 123 violations across 41 classes. The three-strategy remediation — 16 new interfaces, 11 dependency direction fixes, 15 type promotions — achieved zero violations within a single release cycle. Post-enforcement, two subsequent refactors (cache subsystem and observability pipeline) confirmed the value: internal class constructors were restructured without breaking any cross-module consumer. CI boundary checks caught three accidental concrete imports during code review, preventing regressions before merge. Measurable improvement in refactoring safety and developer confidence when modifying internal implementations.
+- **rc.6 – rc.10** | PR #29, boundary enforcement rollout: Initial scan identified 123 violations across 41 classes. The three-strategy remediation - 16 new interfaces, 11 dependency direction fixes, 15 type promotions - achieved zero violations within a single release cycle. Post-enforcement, two subsequent refactors (cache subsystem and observability pipeline) confirmed the value: internal class constructors were restructured without breaking any cross-module consumer. CI boundary checks caught three accidental concrete imports during code review, preventing regressions before merge. Measurable improvement in refactoring safety and developer confidence when modifying internal implementations.
 
 ## Security Impact
 
-None. The change is purely structural (import paths and DI wiring). No changes to authentication, authorization, encryption, or data handling. Crypto contracts (`EncryptorInterface`, `HmacInterface`, `KeyProviderInterface`) expose the same operations as the concrete classes — no new attack surface.
+None. The change is purely structural (import paths and DI wiring). No changes to authentication, authorization, encryption, or data handling. Crypto contracts (`EncryptorInterface`, `HmacInterface`, `KeyProviderInterface`) expose the same operations as the concrete classes - no new attack surface.
 
 ## Performance Impact
 
-None. Interface dispatch in PHP adds no measurable overhead. DI container bindings are resolved at boot time, not on the hot path. The `HmacService` adapter adds one static method delegation per call — negligible compared to the sodium operations it wraps.
+None. Interface dispatch in PHP adds no measurable overhead. DI container bindings are resolved at boot time, not on the hot path. The `HmacService` adapter adds one static method delegation per call - negligible compared to the sodium operations it wraps.
 
 ## Migration / Rollback Plan
 

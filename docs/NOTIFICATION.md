@@ -1,6 +1,6 @@
 # Notifications
 
-Pulsar's notification module provides multi-channel delivery with consent tracking, legal basis enforcement, and preference management. Notifications can be delivered through mail, SMS, database, Slack, webhooks, and logs -- with full audit trails for regulated industries.
+Pulsar's notification module provides multi-channel delivery with consent tracking, legal basis enforcement, and preference management. Notifications can be delivered through mail, SMS, database, Slack, webhooks, and logs - with full audit trails for regulated industries.
 
 ## Quick Start
 
@@ -302,7 +302,7 @@ $registry->register(PasswordResetNotification::class, LegalBasis::Contract);
 $registry->register(SecurityAlertNotification::class, LegalBasis::LegitimateInterest);
 $registry->register(NewsletterNotification::class, LegalBasis::Consent);
 
-// Validate at boot -- throws if any registered type lacks a mapping
+// Validate at boot - throws if any registered type lacks a mapping
 $registry->validate();
 ```
 
@@ -434,8 +434,8 @@ For mail channel testing, combine with `ArrayTransport` (see [MAIL.md](MAIL.md#t
 
 ## See Also
 
-- [`MAIL.md`](MAIL.md) -- Mail system (used by the mail channel)
-- [`COMPLIANCE.md`](COMPLIANCE.md) -- Compliance framework
-- [`AUDIT_LOGGING.md`](AUDIT_LOGGING.md) -- Audit logging
-- [`EVENTS.md`](EVENTS.md) -- Event system
-- [`I18N.md`](I18N.md) -- Internationalization
+- [`MAIL.md`](MAIL.md) - Mail system (used by the mail channel)
+- [`COMPLIANCE.md`](COMPLIANCE.md) - Compliance framework
+- [`AUDIT_LOGGING.md`](AUDIT_LOGGING.md) - Audit logging
+- [`EVENTS.md`](EVENTS.md) - Event system
+- [`I18N.md`](I18N.md) - Internationalization

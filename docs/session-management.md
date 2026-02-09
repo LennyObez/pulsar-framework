@@ -1,6 +1,6 @@
 # Session Management
 
-Pulsar's session management provides pluggable handlers, encryption at rest, session validators, flash messages, and concurrent session control — designed for regulated, mission-critical deployments.
+Pulsar's session management provides pluggable handlers, encryption at rest, session validators, flash messages, and concurrent session control - designed for regulated, mission-critical deployments.
 
 ## Architecture
 
@@ -8,11 +8,11 @@ Pulsar's session management provides pluggable handlers, encryption at rest, ses
 SessionMiddleware (per-request lifecycle)
   └─ SessionManager (orchestrator, implements SessionInterface)
        ├─ Handler (storage backend)
-       │   ├─ FileHandler      — file-based, development/single-server
-       │   ├─ DatabaseHandler   — PDO-backed, regulated-recommended
-       │   ├─ RedisHandler      — Redis-backed, regulated-recommended
-       │   ├─ CookieHandler     — encrypted stateless, small payloads only
-       │   └─ ArrayHandler      — in-memory, testing only
+       │   ├─ FileHandler     - file-based, development/single-server
+       │   ├─ DatabaseHandler  - PDO-backed, regulated-recommended
+       │   ├─ RedisHandler     - Redis-backed, regulated-recommended
+       │   ├─ CookieHandler    - encrypted stateless, small payloads only
+       │   └─ ArrayHandler     - in-memory, testing only
        ├─ SessionEncryption (AEAD via Keyring)
        ├─ Validators
        │   ├─ UserAgentValidator
@@ -136,7 +136,7 @@ When `encryption` is enabled and `PULSAR_MASTER_KEY` is set, all session data is
 ### How It Works
 
 - **Algorithm**: XChaCha20-Poly1305 (libsodium AEAD)
-- **AAD**: Session ID, handler type, and domain are bound as Additional Authenticated Data — preventing payload transplant between sessions or handlers
+- **AAD**: Session ID, handler type, and domain are bound as Additional Authenticated Data - preventing payload transplant between sessions or handlers
 - **Key derivation**: Session encryption key is derived from the master key using KDF with sub-key ID 3 and context `session_`
 - **Key rotation**: Each encrypted payload includes a `key_id` header. On rotation, old keys decrypt existing sessions while new keys encrypt on write
 
@@ -210,7 +210,7 @@ The cookie handler provides stateless sessions via encrypted cookies. Guarantees
 
 ### Limitations
 
-- No server-side state — cannot revoke or list sessions
+- No server-side state - cannot revoke or list sessions
 - No concurrency control
 - Size constraints: configurable max (default 2KB), hard cap 4KB
 - Replay prevention is best-effort (issued_at timestamp validation)
