@@ -129,14 +129,15 @@ Each audit chain link and Studio evidence entry includes a `kid` field that iden
 
 The master key derives purpose-specific subkeys via KDF. Rotation replaces all derived keys simultaneously:
 
-| Purpose               | Subkey ID | Context              |
-| --------------------- | --------- | -------------------- |
-| Encryption            | 1         | `encrypt_`           |
-| Audit HMAC            | 2         | `pulsar__audit_hmac` |
-| Studio encryption     | 3         | `studio_enc__`       |
-| Studio archive MAC    | 4         | `studio_mac__`       |
-| Studio chain link MAC | 5         | `studio_chain_mac__` |
-| Integrity manifest    | 6         | `integ_sg`           |
+| Purpose               | Subkey ID | Context    |
+| --------------------- | --------- | ---------- |
+| Encryption            | 1         | `encrypt_` |
+| Audit HMAC            | 2         | `audit___` |
+| Studio encryption     | 3         | `stud_enc` |
+| Studio archive MAC    | 4         | `stud_mac` |
+| Studio chain link MAC | 5         | `stud_chn` |
+| Integrity manifest    | 6         | `integ_sg` |
+| Cache HMAC            | 7         | `fw_cache` |
 
 ## Emergency Rotation
 
