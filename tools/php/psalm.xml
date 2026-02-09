@@ -14,6 +14,7 @@
         <directory name="../../extensions/studio/src"/>
         <directory name="../../extensions/payments/src"/>
         <directory name="../../extensions/psr7-bridge/src"/>
+        <directory name="../../extensions/observability-export/src"/>
         <ignoreFiles>
             <directory name="../../vendor"/>
         </ignoreFiles>

@@ -990,6 +990,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Observability\\Metrics\\MetricSnapshot": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\Metrics\\MetricType": {
       "since": "",
       "methods": [],

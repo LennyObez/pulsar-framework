@@ -585,6 +585,12 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Psr7Bridge\\
 
+    # --- Observability Export Extension (Pulsar\\Extension\\Observability-export → ObservabilityExport) ---
+    - name: ObservabilityExportExtension
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\ObservabilityExport\\
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -855,6 +861,7 @@ deptrac:
       - PaymentsContracts
       - PaymentsDomain
 
+    ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps
     StudioExtension: *public_deps
     ExampleExtension: *public_deps
