@@ -9,6 +9,10 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
+use Pulsar\I18n\Locale\UrlPrefixExtractor;
+use Pulsar\I18n\LocaleNegotiatorInterface;
+
+use function ltrim;
 
 /**
  * Resolves content by locale prefix and path from a request URL.
@@ -27,7 +31,8 @@ use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 final readonly class LocaleSlugResolver
 {
     public function __construct(
-        private LocaleResolver $localeResolver,
+        private UrlPrefixExtractor $extractor,
+        private LocaleNegotiatorInterface $negotiator,
         private ContentTranslationRepositoryInterface $translationRepository,
         private RedirectRepositoryInterface $redirectRepository,
     ) {}
@@ -43,12 +48,15 @@ final readonly class LocaleSlugResolver
         CmsConfig $config,
         bool $fallbackToDefault = false,
     ): ?LocaleSlugResult {
-        $locale = $this->localeResolver->resolve($request, $config);
-        $contentPath = $this->localeResolver->stripLocalePrefix(
-            $request->getUri()->getPath(),
-            $locale,
-            $config,
-        );
+        $path = $request->getUri()->getPath();
+        $extractedLocale = $this->extractor->extract($path, $config->supportedLocales);
+
+        $locale = $extractedLocale
+            ?? $this->negotiator->negotiate($request, $config->supportedLocales, $config->defaultLocale);
+
+        $contentPath = $extractedLocale !== null
+            ? ltrim($this->extractor->stripPrefix($path, $extractedLocale), '/')
+            : ltrim($path, '/');
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');

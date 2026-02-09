@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\I18n\Locale\LocaleUrlStrategy;
 
 use function is_array;
 use function is_int;
@@ -31,6 +32,9 @@ readonly class I18nConfig
         public bool $regulated,
         public int $maxSupportedLocales,
         public bool $strictMode,
+        public LocaleUrlStrategy $urlStrategy = LocaleUrlStrategy::None,
+        public bool $defaultLocaleInUrl = false,
+        public bool $canonicalRedirect = true,
     ) {}
 
     /**
@@ -81,6 +85,18 @@ readonly class I18nConfig
         // Resolve strict mode
         $strictMode = (bool) ($data['strict_mode'] ?? false);
 
+        // Resolve URL strategy
+        $rawUrlStrategy = $data['url_strategy'] ?? 'none';
+        $urlStrategy = is_string($rawUrlStrategy)
+            ? (LocaleUrlStrategy::tryFrom($rawUrlStrategy) ?? LocaleUrlStrategy::None)
+            : LocaleUrlStrategy::None;
+
+        // Resolve default locale in URL
+        $defaultLocaleInUrl = (bool) ($data['default_locale_in_url'] ?? false);
+
+        // Resolve canonical redirect
+        $canonicalRedirect = (bool) ($data['canonical_redirect'] ?? true);
+
         return new self(
             defaultLocale: $defaultLocale,
             supportedLocales: $supportedLocales,
@@ -89,6 +105,9 @@ readonly class I18nConfig
             regulated: $regulated,
             maxSupportedLocales: $maxSupportedLocales,
             strictMode: $strictMode,
+            urlStrategy: $urlStrategy,
+            defaultLocaleInUrl: $defaultLocaleInUrl,
+            canonicalRedirect: $canonicalRedirect,
         );
     }
 

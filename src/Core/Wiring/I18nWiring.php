@@ -27,10 +27,17 @@ use Pulsar\I18n\Format\MessageFormatterInterface;
 use Pulsar\I18n\Format\NumberFormatterInterface;
 use Pulsar\I18n\Locale\LocaleMiddleware;
 use Pulsar\I18n\Locale\LocaleNegotiator;
+use Pulsar\I18n\Locale\LocalePrefixMiddleware;
+use Pulsar\I18n\Locale\LocaleUrlGenerator;
+use Pulsar\I18n\Locale\LocaleUrlResolverInterface;
+use Pulsar\I18n\Locale\LocaleUrlStrategy;
+use Pulsar\I18n\Locale\RouteBasedLocaleUrlResolver;
+use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\I18n\LocaleNegotiatorInterface;
 use Pulsar\I18n\Translator;
 use Pulsar\I18n\TranslatorInterface;
 use Pulsar\Routing\Router;
+use Pulsar\View\Engine\TemplateLocaleHelper;
 
 use function extension_loaded;
 
@@ -96,9 +103,43 @@ final readonly class I18nWiring implements ServiceWiringInterface
             $container->instance(CurrencyFormatterInterface::class, $currencyFormatter);
         }
 
-        // Add LocaleMiddleware to pipeline
-        $localeMiddleware = new LocaleMiddleware($negotiator, $config, $translator);
-        $middleware->pipe($localeMiddleware);
+        // Wire middleware based on URL strategy
+        if ($config->urlStrategy === LocaleUrlStrategy::PathPrefix) {
+            $this->wireLocaleUrlRouting($container, $middleware, $config, $negotiator, $translator);
+        } else {
+            $middleware->pipe(new LocaleMiddleware($negotiator, $config, $translator));
+        }
+    }
+
+    private function wireLocaleUrlRouting(
+        ContainerInterface $container,
+        MiddlewarePipeline $middleware,
+        I18nConfig $config,
+        LocaleNegotiatorInterface $negotiator,
+        TranslatorInterface $translator,
+    ): void {
+        $extractor = new UrlPrefixExtractor();
+        $container->instance(UrlPrefixExtractor::class, $extractor);
+
+        // LocalePrefixMiddleware replaces LocaleMiddleware
+        $middleware->pipe(new LocalePrefixMiddleware($extractor, $negotiator, $config, $translator));
+
+        // Default URL resolver (extensions may override with content-aware impl)
+        $resolver = new RouteBasedLocaleUrlResolver($extractor, $config);
+
+        if (!$container->has(LocaleUrlResolverInterface::class)) {
+            $container->instance(LocaleUrlResolverInterface::class, $resolver);
+        }
+
+        // URL generator
+        $resolverInstance = $container->get(LocaleUrlResolverInterface::class);
+        /** @var LocaleUrlResolverInterface $resolverInstance */
+        $urlGenerator = new LocaleUrlGenerator($extractor, $config, $resolverInstance);
+        $container->instance(LocaleUrlGenerator::class, $urlGenerator);
+
+        // Template helper (reads locale from translator, updated per-request by middleware)
+        $helper = new TemplateLocaleHelper($translator, $urlGenerator);
+        $container->instance(TemplateLocaleHelper::class, $helper);
     }
 
     private function buildCatalog(I18nConfig $config): CatalogInterface

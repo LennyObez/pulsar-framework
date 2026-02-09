@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Cms\I18n;
+namespace Pulsar\I18n\Locale;
 
 use Pulsar\Api\Api;
 
 /**
- * Value object representing a single hreflang alternate link.
+ * Value object representing an hreflang alternate link.
  *
- * Rendered as `<link rel="alternate" hreflang="{locale}" href="{href}">` in the HTML head.
+ * Used by locale URL generation to produce `<link rel="alternate" hreflang="...">`
+ * tags for search engine locale discovery.
  */
 #[Api(since: '1.0.0')]
 final readonly class HreflangLink

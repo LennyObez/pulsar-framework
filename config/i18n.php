@@ -70,4 +70,33 @@ return [
     | returning the raw key.
     */
     'strict_mode' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | URL Strategy
+    |--------------------------------------------------------------------------
+    | Controls how locale information is encoded in URLs.
+    | 'none' — no URL-based locale routing (default).
+    | 'path_prefix' — locale as first path segment (e.g., /fr/about).
+    */
+    'url_strategy' => 'none',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Locale in URL
+    |--------------------------------------------------------------------------
+    | When url_strategy is 'path_prefix', controls whether the default
+    | locale appears as a prefix. When false, /about is the default
+    | locale and /fr/about is French. When true, /en/about is English.
+    */
+    'default_locale_in_url' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Canonical Redirect
+    |--------------------------------------------------------------------------
+    | When url_strategy is 'path_prefix' and default_locale_in_url is
+    | false, redirect /en/about → /about with a 301 (GET/HEAD only).
+    */
+    'canonical_redirect' => true,
 ];
