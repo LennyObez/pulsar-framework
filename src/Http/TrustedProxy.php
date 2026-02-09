@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use function array_any;
 use function array_map;
 use function count;
 use function explode;
@@ -19,7 +20,6 @@ use Pulsar\Api\Api;
 
 use function str_contains;
 use function substr;
-use function trim;
 use function unpack;
 
 /**
@@ -70,13 +70,7 @@ final readonly class TrustedProxy
 
     private function isTrusted(string $ip): bool
     {
-        foreach ($this->trustedCidrs as $cidr) {
-            if ($this->ipInCidr($ip, $cidr)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->trustedCidrs, fn(string $cidr): bool => $this->ipInCidr($ip, $cidr));
     }
 
     private function ipInCidr(string $ip, string $cidr): bool

@@ -132,11 +132,11 @@ final class KeyRotateCommand extends Command
         $output->writeln(sprintf('  PULSAR_MASTER_KEY_PREVIOUS = %s...', substr($currentHex, 0, 8)));
 
         if ($input->hasOption('clear-cache')) {
-            $output->writeln('');
+            $output->writeln();
             $output->writeln('Run `php bin/pulsar optimize:clear` to clear cached data.');
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('Next steps:');
         $output->writeln('  1. Restart application workers to pick up new keys');
         $output->writeln('  2. Verify audit log integrity with the new key ring');
@@ -148,9 +148,9 @@ final class KeyRotateCommand extends Command
     private function printInstructions(string $newHex, OutputInterface $output): void
     {
         $output->writeln('Generated new master key:');
-        $output->writeln('');
+        $output->writeln();
         $output->writeln(sprintf('  PULSAR_MASTER_KEY=%s', $newHex));
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('To rotate, update your environment:');
         $output->writeln('  1. Set PULSAR_MASTER_KEY_PREVIOUS to your current PULSAR_MASTER_KEY value');
         $output->writeln('  2. Set PULSAR_MASTER_KEY to the new value above');
@@ -158,7 +158,7 @@ final class KeyRotateCommand extends Command
         $output->writeln('  4. Clear caches: php bin/pulsar optimize:clear');
         $output->writeln('  5. Verify audit log integrity');
         $output->writeln('  6. After confirming, remove PULSAR_MASTER_KEY_PREVIOUS');
-        $output->writeln('');
+        $output->writeln();
         $output->writeln('Or use --write to update .env automatically:');
         $output->writeln('  php bin/pulsar key:rotate --write');
     }

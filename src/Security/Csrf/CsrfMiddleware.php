@@ -144,8 +144,7 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
     {
         $origin = strtolower(trim($origin));
         $origin = preg_replace('#^https://([^/]+):443$#', 'https://$1', $origin) ?? $origin;
-        $origin = preg_replace('#^http://([^/]+):80$#', 'http://$1', $origin) ?? $origin;
-        return $origin;
+        return preg_replace('#^http://([^/]+):80$#', 'http://$1', $origin) ?? $origin;
     }
 
     private function extractOriginFromUrl(string $url): ?string

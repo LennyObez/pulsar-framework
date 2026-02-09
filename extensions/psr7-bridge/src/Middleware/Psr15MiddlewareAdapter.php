@@ -51,7 +51,7 @@ final readonly class Psr15MiddlewareAdapter implements PulsarMiddlewareInterface
         $toPsr7Response = $this->toPsr7Response;
 
         // Create a PSR-15 handler that bridges back into the Pulsar pipeline
-        $handler = new class ($next, $toPulsarRequest, $toPsr7Response) implements RequestHandlerInterface {
+        $handler = new readonly class ($next, $toPulsarRequest, $toPsr7Response) implements RequestHandlerInterface {
             /**
              * @param callable(Request): Response $next
              */

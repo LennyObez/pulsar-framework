@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\RateLimit;
 
-use function dirname;
-use function is_dir;
 use function max;
-use function mkdir;
 
 use PDO;
 use PDOException;
 use Pulsar\Api\Internal;
+use Pulsar\Support\SqliteWalFactory;
 
 use function random_int;
 use function time;
@@ -27,25 +25,16 @@ use function time;
  * All clients share the same window boundaries.
  */
 #[Internal]
-final class SqliteRateLimiter implements RateLimiterInterface
+final readonly class SqliteRateLimiter implements RateLimiterInterface
 {
-    private readonly PDO $db;
+    private PDO $db;
 
     public function __construct(
-        private readonly int $maxAttempts,
-        private readonly int $windowSeconds,
+        private int $maxAttempts,
+        private int $windowSeconds,
         string $storagePath,
     ) {
-        $dir = dirname($storagePath);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0o750, true);
-        }
-
-        $this->db = new PDO('sqlite:' . $storagePath);
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->db->exec('PRAGMA journal_mode=WAL');
-        $this->db->exec('PRAGMA busy_timeout=5000');
-        $this->db->exec(<<<'SQL'
+        $this->db = SqliteWalFactory::create($storagePath, <<<'SQL'
             CREATE TABLE IF NOT EXISTS rate_limits (
                 key TEXT PRIMARY KEY,
                 count INTEGER NOT NULL DEFAULT 0,

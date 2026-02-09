@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
-use function dirname;
 use function hash;
-use function is_dir;
-use function mkdir;
 
 use PDO;
 use PDOException;
 use Pulsar\Api\Internal;
+use Pulsar\Support\SqliteWalFactory;
 
 use function random_int;
 
@@ -23,22 +21,13 @@ use function random_int;
  * from multiple PHP-FPM workers.
  */
 #[Internal]
-final class SqliteTotpReplayGuard implements TotpReplayGuardInterface
+final readonly class SqliteTotpReplayGuard implements TotpReplayGuardInterface
 {
-    private readonly PDO $db;
+    private PDO $db;
 
     public function __construct(string $storagePath)
     {
-        $dir = dirname($storagePath);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0o750, true);
-        }
-
-        $this->db = new PDO('sqlite:' . $storagePath);
-        $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->db->exec('PRAGMA journal_mode=WAL');
-        $this->db->exec('PRAGMA busy_timeout=5000');
-        $this->db->exec(<<<'SQL'
+        $this->db = SqliteWalFactory::create($storagePath, <<<'SQL'
             CREATE TABLE IF NOT EXISTS totp_used (
                 identity_code TEXT PRIMARY KEY,
                 used_at INTEGER NOT NULL

@@ -111,13 +111,7 @@ final class BoundaryAnalyzer
             return true;
         }
 
-        foreach (self::COMPOSITION_ROOT_NAMESPACES as $prefix) {
-            if (str_starts_with($fqcn, $prefix)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(self::COMPOSITION_ROOT_NAMESPACES, static fn(string $prefix): bool => str_starts_with($fqcn, $prefix));
     }
 
     /**

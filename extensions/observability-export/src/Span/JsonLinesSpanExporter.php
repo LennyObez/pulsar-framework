@@ -5,20 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Extension\ObservabilityExport\Span;
 
 use function count;
-use function fclose;
-use function fflush;
-use function flock;
-use function fopen;
-use function fwrite;
 
 use Override;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\ObservabilityExport\Internal\JsonLinesFileWriter;
 use Pulsar\Extension\ObservabilityExport\Schema\SpanSchema;
 use Pulsar\Observability\Tracing\Span;
-use RuntimeException;
 
-use const LOCK_EX;
-use const LOCK_UN;
 use const PHP_EOL;
 
 /**
@@ -35,10 +28,14 @@ final class JsonLinesSpanExporter implements SpanExporterInterface
 
     private bool $isShutdown = false;
 
+    private readonly JsonLinesFileWriter $writer;
+
     public function __construct(
-        private readonly string $filePath,
+        string $filePath,
         private readonly int $flushThreshold = 10,
-    ) {}
+    ) {
+        $this->writer = new JsonLinesFileWriter($filePath);
+    }
 
     #[Override]
     public function export(Span $span): void
@@ -68,7 +65,7 @@ final class JsonLinesSpanExporter implements SpanExporterInterface
         }
 
         $this->buffer = [];
-        $this->writeToFile($lines);
+        $this->writer->write($lines);
     }
 
     #[Override]
@@ -88,23 +85,5 @@ final class JsonLinesSpanExporter implements SpanExporterInterface
     public function buffer(): array
     {
         return $this->buffer;
-    }
-
-    private function writeToFile(string $data): void
-    {
-        $handle = fopen($this->filePath, 'a');
-
-        if ($handle === false) {
-            throw new RuntimeException("Failed to open file for writing: {$this->filePath}");
-        }
-
-        try {
-            flock($handle, LOCK_EX);
-            fwrite($handle, $data);
-            fflush($handle);
-            flock($handle, LOCK_UN);
-        } finally {
-            fclose($handle);
-        }
     }
 }

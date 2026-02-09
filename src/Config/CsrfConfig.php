@@ -54,7 +54,7 @@ readonly class CsrfConfig
         /** @var list<string> $trustedOrigins */
         $trustedOrigins = is_array($data['trusted_origins'] ?? null) ? array_values(array_filter($data['trusted_origins'], is_string(...))) : [];
         $rawOriginValidation = $data['origin_validation'] ?? 'optional';
-        $originValidation = is_string($rawOriginValidation) && in_array($rawOriginValidation, ['off', 'optional', 'required'], true)
+        $originValidation = in_array($rawOriginValidation, ['off', 'optional', 'required'], true)
             ? $rawOriginValidation
             : 'optional';
 

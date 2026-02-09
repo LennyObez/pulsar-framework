@@ -102,12 +102,12 @@ final class Encryptor implements EncryptorInterface
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromMasterKey(KeyProviderInterface $masterKey): self
+    public static function fromMasterKey(MasterKey $masterKey): self
     {
         $key = $masterKey->deriveSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT);
 
         $previousKey = null;
-        if ($masterKey instanceof MasterKey && $masterKey->hasPreviousKey()) {
+        if ($masterKey->hasPreviousKey()) {
             $previousKey = $masterKey->derivePreviousSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT);
         }
 
@@ -120,12 +120,12 @@ final class Encryptor implements EncryptorInterface
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromDerivedKey(KeyProviderInterface $masterKey, int $subKeyId, string $context): self
+    public static function fromDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self
     {
         $key = $masterKey->deriveSubKey($subKeyId, $context);
 
         $previousKey = null;
-        if ($masterKey instanceof MasterKey && $masterKey->hasPreviousKey()) {
+        if ($masterKey->hasPreviousKey()) {
             $previousKey = $masterKey->derivePreviousSubKey($subKeyId, $context);
         }
 
@@ -200,7 +200,14 @@ final class Encryptor implements EncryptorInterface
     #[NoDiscard]
     public function withDerivedKey(KeyProviderInterface $masterKey, int $subKeyId, string $context): self
     {
-        return self::fromDerivedKey($masterKey, $subKeyId, $context);
+        $key = $masterKey->deriveSubKey($subKeyId, $context);
+
+        $previousKey = null;
+        if ($masterKey instanceof MasterKey && $masterKey->hasPreviousKey()) {
+            $previousKey = $masterKey->derivePreviousSubKey($subKeyId, $context);
+        }
+
+        return new self($key, $previousKey);
     }
 
     /**

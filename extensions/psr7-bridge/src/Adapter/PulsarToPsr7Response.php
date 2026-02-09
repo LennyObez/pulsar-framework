@@ -42,8 +42,6 @@ final readonly class PulsarToPsr7Response
             $this->factory->createStream($response->body),
         );
 
-        $psrResponse = $psrResponse->withProtocolVersion($response->protocolVersion);
-
-        return $psrResponse;
+        return $psrResponse->withProtocolVersion($response->protocolVersion);
     }
 }
