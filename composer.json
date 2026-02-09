@@ -67,6 +67,7 @@
       "Pulsar\\Extension\\OAuth2\\": "extensions/oauth2/src/",
       "Pulsar\\Extension\\Form\\": "extensions/form/src/",
       "Pulsar\\Extension\\WebAuthn\\": "extensions/webauthn/src/",
+      "Pulsar\\Extension\\Analytics\\": "extensions/analytics/src/",
       "Pulsar\\Extension\\Cms\\": "extensions/cms/src/",
       "Pulsar\\Extension\\Graphql\\": "extensions/graphql/src/"
     }
