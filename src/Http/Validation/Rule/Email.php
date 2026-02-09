@@ -18,7 +18,7 @@ use function sprintf;
 /**
  * Value must be a valid email address via FILTER_VALIDATE_EMAIL. Skips null values.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Email implements RuleInterface
 {
     public function __construct(

@@ -154,18 +154,21 @@ final readonly class CreatePaymentIntentHandler
 
     private function deserializeIntent(string $payload): PaymentIntent
     {
-        /** @var array{data: array<string, mixed>} $envelope */
+        /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
         $envelope = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
         $data = $envelope['data'];
 
+        /** @var array<string, mixed> $metadata */
+        $metadata = $data['metadata'] ?? [];
+
         return new PaymentIntent(
-            id: (string) $data['id'],
-            amount: Money::of((int) $data['amount'], Currency::from((string) $data['currency'])),
-            status: PaymentIntentStatus::from((string) $data['status']),
-            provider: (string) $data['provider'],
-            idempotencyKey: (string) $data['idempotency_key'],
-            createdAt: new DateTimeImmutable('@' . (int) $data['created_at']),
-            metadata: (array) ($data['metadata'] ?? []),
+            id: $data['id'],
+            amount: Money::of($data['amount'], Currency::from($data['currency'])),
+            status: PaymentIntentStatus::from($data['status']),
+            provider: $data['provider'],
+            idempotencyKey: $data['idempotency_key'],
+            createdAt: new DateTimeImmutable('@' . $data['created_at']),
+            metadata: $metadata,
         );
     }
 

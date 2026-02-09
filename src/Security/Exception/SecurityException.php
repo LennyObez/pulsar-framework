@@ -15,7 +15,7 @@ use function sprintf;
  *
  * Provides static factory methods for specific security error scenarios.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class SecurityException extends RuntimeException
 {
     /**
@@ -106,5 +106,11 @@ final class SecurityException extends RuntimeException
     public static function auditWriteFailed(string $reason): self
     {
         return new self(sprintf('Failed to write audit entry: %s', $reason));
+    }
+
+    #[NoDiscard]
+    public static function serializationForbidden(string $class): self
+    {
+        return new self(sprintf('Serialization of %s is forbidden — key material must not leave process memory', $class));
     }
 }

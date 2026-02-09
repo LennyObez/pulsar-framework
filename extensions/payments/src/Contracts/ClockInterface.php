@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Testable time abstraction.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ClockInterface
 {
     public function now(): DateTimeImmutable;

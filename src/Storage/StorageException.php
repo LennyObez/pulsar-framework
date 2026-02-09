@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Exception thrown for storage operation failures.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class StorageException extends RuntimeException
 {
     #[NoDiscard]

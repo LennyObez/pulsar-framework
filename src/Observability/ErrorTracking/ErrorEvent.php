@@ -15,7 +15,7 @@ use Throwable;
 /**
  * Readonly value object representing a single error occurrence.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class ErrorEvent
 {
     /**

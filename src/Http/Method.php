@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum Method: string
 {
     case GET = 'GET';

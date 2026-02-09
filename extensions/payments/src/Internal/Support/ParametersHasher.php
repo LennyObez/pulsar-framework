@@ -46,6 +46,7 @@ final readonly class ParametersHasher
 
         foreach ($array as &$value) {
             if (is_array($value)) {
+                /** @var array<string, mixed> $value */
                 self::sortRecursive($value);
             }
         }

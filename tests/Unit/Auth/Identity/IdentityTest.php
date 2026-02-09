@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Auth\Identity;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Auth\Exception\AuthenticationException;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 
@@ -158,6 +159,51 @@ final class IdentityTest extends TestCase
 
         // They are not the same instance
         self::assertNotSame($original, $updated);
+    }
+
+    #[Test]
+    public function fromArrayRejectsEmptyId(): void
+    {
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('id must be a non-empty string');
+
+        (void) Identity::fromArray(['id' => '', 'display_name' => 'Test']);
+    }
+
+    #[Test]
+    public function fromArrayRejectsNonStringId(): void
+    {
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('id must be a non-empty string');
+
+        (void) Identity::fromArray(['id' => 123, 'display_name' => 'Test']);
+    }
+
+    #[Test]
+    public function fromArrayRejectsNonStringDisplayName(): void
+    {
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('display_name must be a string');
+
+        (void) Identity::fromArray(['id' => 'user-1', 'display_name' => 42]);
+    }
+
+    #[Test]
+    public function fromArrayRejectsNonStringRoles(): void
+    {
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('roles must be a list of strings');
+
+        (void) Identity::fromArray(['id' => 'user-1', 'display_name' => 'Test', 'roles' => [1, 2]]);
+    }
+
+    #[Test]
+    public function fromArrayRejectsNonArrayAttributes(): void
+    {
+        $this->expectException(AuthenticationException::class);
+        $this->expectExceptionMessage('attributes must be an array');
+
+        (void) Identity::fromArray(['id' => 'user-1', 'display_name' => 'Test', 'attributes' => 'bad']);
     }
 
     #[Test]

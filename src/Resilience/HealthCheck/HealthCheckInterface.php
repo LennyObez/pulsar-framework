@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Interface for system health checks.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface HealthCheckInterface
 {
     /**

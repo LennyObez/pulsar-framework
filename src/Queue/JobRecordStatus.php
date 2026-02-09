@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Lifecycle status of a queued job record.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum JobRecordStatus: string
 {
     case Pending = 'pending';

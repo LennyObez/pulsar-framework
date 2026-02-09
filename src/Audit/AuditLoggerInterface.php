@@ -18,7 +18,7 @@ use SodiumException;
  * Implementations auto-enrich entries with correlation/causation IDs
  * from the current RequestContext when available.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface AuditLoggerInterface
 {
     /**

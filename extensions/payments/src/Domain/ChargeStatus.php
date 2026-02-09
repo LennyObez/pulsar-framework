@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Charge status values.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum ChargeStatus: string
 {
     case Succeeded = 'succeeded';

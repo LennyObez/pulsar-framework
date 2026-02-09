@@ -29,7 +29,7 @@ final readonly class EventIngestionTemplates
             /**
              * Event handler contract for $name ingestion.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             interface {$name}EventHandlerInterface extends WebhookHandlerInterface
             {
             }
@@ -251,7 +251,7 @@ final readonly class EventIngestionTemplates
             /**
              * Configuration DTO for $name event ingestion.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             final readonly class {$name}IngestionConfig
             {
                 public function __construct(
@@ -372,7 +372,7 @@ final readonly class EventIngestionTemplates
             /**
              * $name ingestion exceptions.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             final class {$name}IngestionException extends RuntimeException
             {
                 #[NoDiscard]
@@ -432,7 +432,7 @@ final readonly class EventIngestionTemplates
 
             ## Structure
 
-            - `Contracts/` — Public API interfaces (`#[Api]`)
+            - `Contracts/` — Public API interfaces (`#[Api(since: '1.0.0')]`)
             - `Internal/Infrastructure/` — Handler and verifier implementations
             - `Controller/` — Webhook HTTP endpoint
             - `Config/` — Configuration DTOs

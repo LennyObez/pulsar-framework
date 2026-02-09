@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Immutable feature flag definition.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class FlagDefinition
 {
     /**

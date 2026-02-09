@@ -1,6 +1,6 @@
 # Configuration
 
-Pulsar 0.3.0 introduces a typed configuration system that loads settings from PHP files, environment variables, and optional `.env` files. Configuration is deterministic, explicit, and available to the entire framework before extensions boot.
+Pulsar provides a typed configuration system that loads settings from PHP files, environment variables, and optional `.env` files. Configuration is deterministic, explicit, and available to the entire framework before extensions boot.
 
 ## Load Order
 
@@ -146,4 +146,4 @@ interface ConfigLoaderInterface
 }
 ```
 
-Not consumed by core in 0.3.0. Extensions can implement this interface to integrate with future config discovery.
+Extensions can implement this interface to integrate with config discovery.

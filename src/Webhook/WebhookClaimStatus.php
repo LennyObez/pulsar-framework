@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Status of a webhook event claim.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum WebhookClaimStatus
 {
     case Replay;

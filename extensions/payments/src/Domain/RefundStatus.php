@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Refund status values.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum RefundStatus: string
 {
     case Pending = 'pending';

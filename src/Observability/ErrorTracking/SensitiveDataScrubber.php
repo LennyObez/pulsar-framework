@@ -21,7 +21,7 @@ use function strtolower;
  * Uses case-insensitive substring matching against a configurable list
  * of sensitive field names.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class SensitiveDataScrubber
 {
     private const string REDACTED = '[REDACTED]';

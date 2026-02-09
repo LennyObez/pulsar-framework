@@ -13,7 +13,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * A policy can explicitly allow, explicitly deny, or abstain (return null).
  * Explicit deny always takes precedence over allow.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface PolicyInterface
 {
     /**

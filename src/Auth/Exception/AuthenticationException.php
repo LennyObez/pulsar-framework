@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Exception for authentication failures.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class AuthenticationException extends RuntimeException
 {
     #[NoDiscard]
@@ -50,5 +50,11 @@ final class AuthenticationException extends RuntimeException
     public static function tokenInvalid(): self
     {
         return new self('Authentication token is invalid');
+    }
+
+    #[NoDiscard]
+    public static function invalidIdentityData(string $reason): self
+    {
+        return new self(sprintf('Invalid identity data: %s', $reason));
     }
 }
