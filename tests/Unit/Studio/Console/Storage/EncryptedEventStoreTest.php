@@ -19,6 +19,7 @@ use Pulsar\Extension\Studio\Console\Event\EventVersion;
 use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function random_bytes;
@@ -35,7 +36,7 @@ final class EncryptedEventStoreTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->innerStore = SqliteEventStore::inMemory();
+        $this->innerStore = new SqliteEventStore(':memory:', null, new HmacService());
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $this->encryptor = Encryptor::fromMasterKey($masterKey);
         $this->store = new EncryptedEventStore($this->innerStore, $this->encryptor);

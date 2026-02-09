@@ -27,7 +27,7 @@ use const LOCK_EX;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Crypto\HmacInterface;
 use SodiumException;
 use Throwable;
 
@@ -75,6 +75,7 @@ final class CacheManifest
      * @throws SodiumException
      */
     public static function write(
+        HmacInterface $hmac,
         string $cachePath,
         string $hmacKey,
         int $schemaVersion,
@@ -100,9 +101,9 @@ final class CacheManifest
 
         $data = $manifest->toArray();
         $canonicalJson = self::canonicalize($data);
-        $hmac = Hmac::computeHex($canonicalJson, $hmacKey);
+        $hmacValue = $hmac->computeHex($canonicalJson, $hmacKey);
 
-        $data['manifest_hmac'] = $hmac;
+        $data['manifest_hmac'] = $hmacValue;
 
         $json = json_encode($data, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
@@ -121,7 +122,7 @@ final class CacheManifest
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function load(string $cachePath, string $hmacKey): ?self
+    public static function load(HmacInterface $hmac, string $cachePath, string $hmacKey): ?self
     {
         $path = $cachePath . DIRECTORY_SEPARATOR . self::FILENAME;
 
@@ -156,7 +157,7 @@ final class CacheManifest
         // Remove manifest_hmac, reconstruct canonical JSON, verify
         unset($data['manifest_hmac']);
         $canonicalJson = self::canonicalize($data);
-        $computedHmac = Hmac::computeHex($canonicalJson, $hmacKey);
+        $computedHmac = $hmac->computeHex($canonicalJson, $hmacKey);
 
         if (!hash_equals($storedHmac, $computedHmac)) {
             return null;

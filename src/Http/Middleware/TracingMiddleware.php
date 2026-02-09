@@ -8,11 +8,11 @@ use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\RouteContext;
-use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\Span;
+use Pulsar\Observability\Tracing\SpanProcessorInterface;
 use Pulsar\Observability\Tracing\SpanStatus;
 use Pulsar\Observability\Tracing\TraceContext;
-use Pulsar\Observability\Tracing\W3CTraceContextParser;
+use Pulsar\Observability\Tracing\TraceContextParserInterface;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
@@ -31,7 +31,8 @@ final readonly class TracingMiddleware implements MiddlewareInterface
     private Randomizer $randomizer;
 
     public function __construct(
-        private InMemorySpanCollector $collector,
+        private SpanProcessorInterface $collector,
+        private TraceContextParserInterface $traceContextParser,
         private float $samplingRate = 1.0,
         ?Randomizer $randomizer = null,
         private ?RouteContext $routeContext = null,
@@ -50,7 +51,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
         $traceparent = $request->headers->first('traceparent');
 
         if ($traceparent !== null) {
-            $parentContext = W3CTraceContextParser::parse($traceparent);
+            $parentContext = $this->traceContextParser->parse($traceparent);
         }
 
         // Determine if this request should be sampled
@@ -90,7 +91,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             // Add traceparent to response
             return $response->withHeader(
                 'traceparent',
-                W3CTraceContextParser::serialize($context),
+                $this->traceContextParser->serialize($context),
             );
         } finally {
             // Update span name with resolved route for bounded cardinality

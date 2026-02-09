@@ -27,8 +27,8 @@ use function mkdir;
 use const PHP_OS_FAMILY;
 
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\Encryptor;
-use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Crypto\EncryptorInterface;
+use Pulsar\Security\Crypto\HmacInterface;
 use Random\RandomException;
 
 use function rename;
@@ -48,8 +48,9 @@ use function unlink;
 final readonly class CacheIntegrity
 {
     public function __construct(
+        private HmacInterface $hmac,
         private string $hmacKey,
-        private ?Encryptor $encryptor = null,
+        private ?EncryptorInterface $encryptor = null,
     ) {}
 
     /**
@@ -62,7 +63,7 @@ final readonly class CacheIntegrity
     public function sign(string $payload): array
     {
         $sha256 = hash('sha256', $payload);
-        $hmac = Hmac::computeHex($sha256, $this->hmacKey);
+        $hmac = $this->hmac->computeHex($sha256, $this->hmacKey);
 
         return ['sha256' => $sha256, 'hmac' => $hmac];
     }
@@ -82,7 +83,7 @@ final readonly class CacheIntegrity
             return false;
         }
 
-        $actualHmac = Hmac::computeHex($actualSha256, $this->hmacKey);
+        $actualHmac = $this->hmac->computeHex($actualSha256, $this->hmacKey);
 
         return hash_equals($expectedHmac, $actualHmac);
     }

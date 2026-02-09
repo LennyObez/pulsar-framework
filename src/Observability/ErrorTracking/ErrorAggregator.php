@@ -18,7 +18,7 @@ use function usort;
  * When the maximum number of groups is reached, the oldest group
  * (by lastSeen) is evicted to make room.
  */
-final class ErrorAggregator
+final class ErrorAggregator implements ErrorAggregatorInterface
 {
     /** @var array<string, ErrorGroup> fingerprint => group */
     private array $groups = [];

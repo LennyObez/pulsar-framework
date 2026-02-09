@@ -8,7 +8,7 @@ use function hash;
 
 use NoDiscard;
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use SodiumException;
 
@@ -25,6 +25,7 @@ final class HashChain
     private const string CHAIN_SEED_INPUT = 'PULSAR_STUDIO_CHAIN_SEED';
 
     public function __construct(
+        private readonly ?HmacInterface $hmac = null,
         private readonly ?string $chainMacKey = null,
     ) {}
 
@@ -48,7 +49,7 @@ final class HashChain
 
         $linkMac = null;
         if ($this->chainMacKey !== null) {
-            $linkMac = Hmac::computeHex($currentHash, $this->chainMacKey);
+            $linkMac = $this->hmac?->computeHex($currentHash, $this->chainMacKey);
         }
 
         return new ChainLink(
@@ -76,9 +77,9 @@ final class HashChain
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function verifyLinkMac(string $currentHash, string $expectedMac, string $chainMacKey): bool
+    public static function verifyLinkMac(string $currentHash, string $expectedMac, string $chainMacKey, HmacInterface $hmac): bool
     {
-        return Hmac::verifyHex($currentHash, $expectedMac, $chainMacKey);
+        return $hmac->verifyHex($currentHash, $expectedMac, $chainMacKey);
     }
 
     /**

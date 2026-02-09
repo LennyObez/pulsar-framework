@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Console\Command\Make;
 
 use function is_dir;
+use function is_int;
 use function is_string;
 
 use Override;
@@ -62,10 +63,9 @@ final class MakeModuleCommand extends Command
         $withConfig = $input->hasOption('with-config');
         $withTests = $input->hasOption('with-tests');
 
-        $resolved = $this->resolveBasePath($basePath, 'app/Modules');
-        if ($resolved === false) {
-            $output->errorln('Failed to get current working directory.');
-            return ExitCode::Error->value;
+        $resolved = $this->resolveBasePathOrFail($basePath, 'app/Modules', $output);
+        if (is_int($resolved)) {
+            return $resolved;
         }
 
         $modulePath = $resolved . DIRECTORY_SEPARATOR . $name;

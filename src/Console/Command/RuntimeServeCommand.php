@@ -18,12 +18,9 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
-use Pulsar\Runtime\LeakDetector;
-use Pulsar\Runtime\PersistentRuntime;
-use Pulsar\Runtime\RequestResetRegistry;
-use Pulsar\Runtime\RequestSandbox;
+use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
 use Pulsar\Runtime\RuntimeCollectorInterface;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
 
@@ -35,11 +32,11 @@ use function sprintf;
 final class RuntimeServeCommand extends Command
 {
     public function __construct(
-        private readonly Kernel $kernel,
+        private readonly KernelInterface $kernel,
+        private readonly PersistentRuntimeFactoryInterface $runtimeFactory,
         private readonly ?RuntimeConfig $runtimeConfig = null,
         private readonly ?LoggerInterface $logger = null,
         private readonly ?MetricRegistry $metricRegistry = null,
-        private readonly ?RequestResetRegistry $resetRegistry = null,
         private readonly ?RuntimeCollectorInterface $collector = null,
     ) {
         parent::__construct();
@@ -97,24 +94,15 @@ final class RuntimeServeCommand extends Command
             $config->memoryThresholdMb,
         ));
 
-        // Build runtime dependencies
-        $registry = $this->resetRegistry ?? new RequestResetRegistry();
-        $leakDetector = new LeakDetector(logger: $this->logger);
-        $sandbox = new RequestSandbox(
-            $this->kernel->container(),
-            $registry,
-            $leakDetector,
-        );
-
+        // Build runtime via factory (encapsulates internal runtime dependencies)
         $upgradeContext = new UpgradeContext(
             logger: $this->logger,
             metrics: $this->metricRegistry,
             config: $config,
         );
 
-        $runtime = new PersistentRuntime(
+        $runtime = $this->runtimeFactory->create(
             kernel: $this->kernel,
-            sandbox: $sandbox,
             config: $config,
             logger: $this->logger,
             collector: $this->collector,

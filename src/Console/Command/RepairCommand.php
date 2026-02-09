@@ -11,7 +11,7 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Resilience\Repair\RepairRunner;
+use Pulsar\Resilience\Repair\RepairRunnerInterface;
 
 use function sprintf;
 
@@ -21,7 +21,7 @@ use function sprintf;
 final class RepairCommand extends Command
 {
     public function __construct(
-        private readonly RepairRunner $runner,
+        private readonly RepairRunnerInterface $runner,
     ) {
         parent::__construct();
     }

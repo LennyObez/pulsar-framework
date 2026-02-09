@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestEntry;
 use Pulsar\Integrity\ManifestSigner;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function random_bytes;
@@ -18,17 +20,19 @@ use function sodium_bin2hex;
 #[CoversClass(ManifestSigner::class)]
 final class ManifestSignerTest extends TestCase
 {
+    private HmacInterface $hmac;
     private MasterKey $masterKey;
 
     protected function setUp(): void
     {
+        $this->hmac = new HmacService();
         $this->masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
     }
 
     #[Test]
     public function it_signs_a_manifest_and_returns_hex_string(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
         $manifest = $this->createTestManifest();
 
         $signature = $signer->sign($manifest);
@@ -40,7 +44,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function it_produces_deterministic_signatures(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
         $manifest = $this->createTestManifest();
 
         $sig1 = $signer->sign($manifest);
@@ -52,7 +56,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function it_verifies_a_valid_signature(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
         $manifest = $this->createTestManifest();
 
         $signature = $signer->sign($manifest);
@@ -73,7 +77,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function it_rejects_manifest_with_no_signature(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
         $manifest = $this->createTestManifest();
 
         // Manifest has signature=null by default
@@ -83,7 +87,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function it_rejects_manifest_with_wrong_signature(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
         $manifest = $this->createTestManifest();
 
         $tamperedManifest = new IntegrityManifest(
@@ -102,7 +106,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function it_rejects_signature_when_manifest_content_changes(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
         $manifest = $this->createTestManifest();
 
         $signature = $signer->sign($manifest);
@@ -126,7 +130,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function it_rejects_when_version_changes(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
         $manifest = $this->createTestManifest();
         $signature = $signer->sign($manifest);
 
@@ -146,7 +150,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function it_rejects_when_generated_at_changes(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
         $manifest = $this->createTestManifest();
         $signature = $signer->sign($manifest);
 
@@ -169,8 +173,8 @@ final class ManifestSignerTest extends TestCase
         $key1 = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $key2 = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
 
-        $signer1 = new ManifestSigner($key1);
-        $signer2 = new ManifestSigner($key2);
+        $signer1 = new ManifestSigner($this->hmac, $key1);
+        $signer2 = new ManifestSigner($this->hmac, $key2);
 
         $manifest = $this->createTestManifest();
 
@@ -186,8 +190,8 @@ final class ManifestSignerTest extends TestCase
         $key1 = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $key2 = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
 
-        $signer1 = new ManifestSigner($key1);
-        $signer2 = new ManifestSigner($key2);
+        $signer1 = new ManifestSigner($this->hmac, $key1);
+        $signer2 = new ManifestSigner($this->hmac, $key2);
 
         $manifest = $this->createTestManifest();
         $signature = $signer1->sign($manifest);
@@ -208,7 +212,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function it_signs_manifest_with_empty_entries(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
 
         $manifest = new IntegrityManifest(
             version: 1,
@@ -238,7 +242,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function it_signs_manifest_with_multiple_entries(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
 
         $manifest = new IntegrityManifest(
             version: 1,
@@ -271,7 +275,7 @@ final class ManifestSignerTest extends TestCase
     #[Test]
     public function signature_does_not_include_signature_field(): void
     {
-        $signer = new ManifestSigner($this->masterKey);
+        $signer = new ManifestSigner($this->hmac, $this->masterKey);
 
         // Two identical manifests, one with a signature field and one without,
         // should produce the same HMAC (signature field is excluded from canonicalization)
