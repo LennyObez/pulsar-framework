@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Severity level for a deploy check result.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum CheckSeverity: string
 {
     case Pass = 'pass';

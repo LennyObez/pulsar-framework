@@ -20,7 +20,7 @@ use Pulsar\Extensibility\Manifest\RequiresConfig;
 /**
  * Readonly DTO representing an extension's pulsar.json manifest.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class ExtensionManifest
 {
     public function __construct(

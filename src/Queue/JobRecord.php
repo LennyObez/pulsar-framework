@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Immutable snapshot of a queued job's state.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class JobRecord
 {
     public function __construct(

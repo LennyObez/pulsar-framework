@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Auth\TwoFactor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Auth\TwoFactor\InMemoryTotpReplayGuard;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
 
@@ -60,5 +61,40 @@ final class TotpVerifierTest extends TestCase
         // Code generated for two periods ahead (outside window of 1)
         $farFutureCode = $this->generator->computeCode($secret, $timestamp + 60);
         self::assertFalse($this->verifier->verify($secret, $farFutureCode, $timestamp));
+    }
+
+    #[Test]
+    public function verifyWithReplayGuardRejectsSecondUse(): void
+    {
+        $secret = $this->generator->generateSecret();
+        $timestamp = 1000000;
+        $code = $this->generator->computeCode($secret, $timestamp);
+        $guard = new InMemoryTotpReplayGuard();
+
+        self::assertTrue($this->verifier->verify($secret, $code, $timestamp, $guard, 'user-1'));
+        self::assertFalse($this->verifier->verify($secret, $code, $timestamp, $guard, 'user-1'));
+    }
+
+    #[Test]
+    public function verifyWithReplayGuardAllowsDifferentIdentities(): void
+    {
+        $secret = $this->generator->generateSecret();
+        $timestamp = 1000000;
+        $code = $this->generator->computeCode($secret, $timestamp);
+        $guard = new InMemoryTotpReplayGuard();
+
+        self::assertTrue($this->verifier->verify($secret, $code, $timestamp, $guard, 'user-1'));
+        self::assertTrue($this->verifier->verify($secret, $code, $timestamp, $guard, 'user-2'));
+    }
+
+    #[Test]
+    public function verifyWithoutReplayGuardAllowsReuse(): void
+    {
+        $secret = $this->generator->generateSecret();
+        $timestamp = 1000000;
+        $code = $this->generator->computeCode($secret, $timestamp);
+
+        self::assertTrue($this->verifier->verify($secret, $code, $timestamp));
+        self::assertTrue($this->verifier->verify($secret, $code, $timestamp));
     }
 }

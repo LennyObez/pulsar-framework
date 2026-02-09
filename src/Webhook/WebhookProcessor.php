@@ -23,7 +23,7 @@ use Throwable;
  * HTTP-agnostic — returns WebhookProcessingResult, not a Response.
  * Domain-specific controllers map the result to their HTTP response format.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class WebhookProcessor
 {
     public function __construct(

@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * between requests in the persistent runtime. The reset is called
  * deterministically via the RequestResetRegistry.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ResettableInterface
 {
     /**

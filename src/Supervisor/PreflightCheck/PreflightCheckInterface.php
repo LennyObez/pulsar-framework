@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Preflight checks run before the supervisor starts accepting work
  * to verify that the runtime environment meets minimum requirements.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface PreflightCheckInterface
 {
     /**

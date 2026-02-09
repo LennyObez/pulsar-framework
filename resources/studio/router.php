@@ -133,7 +133,7 @@ $masterKeyHex = $environment->get('PULSAR_MASTER_KEY') ?? '';
 if ($masterKeyHex !== '') {
     try {
         $masterKey = MasterKey::fromHex($masterKeyHex);
-        $studioEncryptor = Encryptor::fromDerivedKey($masterKey, 3, 'studio_enc__');
+        $studioEncryptor = Encryptor::fromDerivedKey($masterKey, 3, 'stud_enc');
         $store = new EncryptedEventStore($sqliteStore, $studioEncryptor);
     } catch (Throwable) {
         // Invalid key or sodium failure — use plain store

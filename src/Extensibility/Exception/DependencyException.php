@@ -12,7 +12,7 @@ use function sprintf;
 /**
  * Exception for extension dependency resolution errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class DependencyException extends ExtensionException
 {
     /**

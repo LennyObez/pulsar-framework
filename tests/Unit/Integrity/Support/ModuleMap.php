@@ -21,6 +21,27 @@ final class ModuleMap
     /** Classes that are composition roots and exempt from cross-module internal import rules. */
     private const array COMPOSITION_ROOTS = [
         'Pulsar\Core\Kernel',
+        'Pulsar\Core\Wiring\ServiceWiringInterface',
+        'Pulsar\Core\Wiring\AuthWiring',
+        'Pulsar\Core\Wiring\ConfigWiring',
+        'Pulsar\Core\Wiring\DatabaseWiring',
+        'Pulsar\Core\Wiring\DeployWiring',
+        'Pulsar\Core\Wiring\DiagnosticsWiring',
+        'Pulsar\Core\Wiring\ErrorTrackingWiring',
+        'Pulsar\Core\Wiring\ExceptionHandlerWiring',
+        'Pulsar\Core\Wiring\FeatureFlagWiring',
+        'Pulsar\Core\Wiring\IntegrityWiring',
+        'Pulsar\Core\Wiring\LoggingWiring',
+        'Pulsar\Core\Wiring\MetricsWiring',
+        'Pulsar\Core\Wiring\QueueWiring',
+        'Pulsar\Core\Wiring\RequestContextWiring',
+        'Pulsar\Core\Wiring\ResilienceWiring',
+        'Pulsar\Core\Wiring\RuntimeWiring',
+        'Pulsar\Core\Wiring\SchedulerWiring',
+        'Pulsar\Core\Wiring\SecurityWiring',
+        'Pulsar\Core\Wiring\SupervisorWiring',
+        'Pulsar\Core\Wiring\TenancyWiring',
+        'Pulsar\Core\Wiring\TracingWiring',
         'Pulsar\Console\Application',
     ];
 

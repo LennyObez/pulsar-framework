@@ -17,7 +17,7 @@ use Pulsar\Http\Method;
  * Internal-only methods (lock, loadRoutes, etc.) are intentionally
  * excluded to keep the public surface focused.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface RouterInterface
 {
     /**

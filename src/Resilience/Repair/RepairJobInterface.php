@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Interface for self-healing repair jobs.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface RepairJobInterface
 {
     /**

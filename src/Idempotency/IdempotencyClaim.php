@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Result of an idempotency claim attempt.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class IdempotencyClaim
 {
     private function __construct(

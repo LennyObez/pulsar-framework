@@ -13,7 +13,7 @@ use function sprintf;
  *
  * Provides common functionality and a structured approach to command implementation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 abstract class Command implements CommandInterface
 {
     public protected(set) string $name = '';

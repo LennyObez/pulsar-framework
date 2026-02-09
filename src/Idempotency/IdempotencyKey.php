@@ -16,7 +16,7 @@ use Pulsar\Api\Api;
  * Can be created from a raw string or deterministically derived from
  * component parts via SHA-256 hashing.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class IdempotencyKey
 {
     public function __construct(

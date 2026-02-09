@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Exception for multi-tenancy errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class TenancyException extends RuntimeException
 {
     /**

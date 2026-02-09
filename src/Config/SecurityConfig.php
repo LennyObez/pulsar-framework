@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  *
  * Composes sub-config DTOs for session, CSRF, security headers, and rate limiting.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class SecurityConfig
 {
     public function __construct(

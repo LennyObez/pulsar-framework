@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * from the backing store, allowing the AuditLogger to resume the chain
  * across process restarts instead of always re-seeding.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ChainableAuditSinkInterface extends AuditSinkInterface
 {
     /**

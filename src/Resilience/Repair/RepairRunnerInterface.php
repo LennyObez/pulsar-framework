@@ -6,7 +6,7 @@ namespace Pulsar\Resilience\Repair;
 
 use Pulsar\Api\Api;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface RepairRunnerInterface
 {
     public function register(RepairJobInterface $job): void;

@@ -201,8 +201,8 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
 
         $parametersHash = ParametersHasher::hash('refund', [
             'chargeId' => $chargeId,
-            'amount_minor' => $amount?->amount ?? 'full',
-            'currency' => $amount?->currency->value ?? 'full',
+            'amount_minor' => $amount !== null ? $amount->amount : 'full',
+            'currency' => $amount !== null ? $amount->currency->value : 'full',
             'provider' => $this->provider->name(),
         ]);
 
@@ -353,54 +353,63 @@ final readonly class PaymentGateway implements PaymentGatewayInterface
 
     private function deserializeIntent(string $payload): PaymentIntent
     {
-        /** @var array{data: array<string, mixed>} $envelope */
+        /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
         $envelope = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
         $data = $envelope['data'];
 
+        /** @var array<string, mixed> $metadata */
+        $metadata = $data['metadata'] ?? [];
+
         return new PaymentIntent(
-            id: (string) $data['id'],
-            amount: Money::of((int) $data['amount'], Currency::from((string) $data['currency'])),
-            status: PaymentIntentStatus::from((string) $data['status']),
-            provider: (string) $data['provider'],
-            idempotencyKey: (string) $data['idempotency_key'],
-            createdAt: new DateTimeImmutable('@' . (int) $data['created_at']),
-            metadata: (array) ($data['metadata'] ?? []),
+            id: $data['id'],
+            amount: Money::of($data['amount'], Currency::from($data['currency'])),
+            status: PaymentIntentStatus::from($data['status']),
+            provider: $data['provider'],
+            idempotencyKey: $data['idempotency_key'],
+            createdAt: new DateTimeImmutable('@' . $data['created_at']),
+            metadata: $metadata,
         );
     }
 
     private function deserializeCharge(string $payload): Charge
     {
-        /** @var array{data: array<string, mixed>} $envelope */
+        /** @var array{data: array{id: string, intent_id: string, amount: int, currency: string, status: string, provider: string, created_at: int, failure_reason: string|null, metadata?: array<string, mixed>}} $envelope */
         $envelope = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
         $data = $envelope['data'];
 
+        /** @var array<string, mixed> $metadata */
+        $metadata = $data['metadata'] ?? [];
+
         return new Charge(
-            id: (string) $data['id'],
-            intentId: (string) $data['intent_id'],
-            amount: Money::of((int) $data['amount'], Currency::from((string) $data['currency'])),
-            status: ChargeStatus::from((string) $data['status']),
-            provider: (string) $data['provider'],
-            createdAt: new DateTimeImmutable('@' . (int) $data['created_at']),
-            failureReason: $data['failure_reason'] !== null ? (string) $data['failure_reason'] : null,
-            metadata: (array) ($data['metadata'] ?? []),
+            id: $data['id'],
+            intentId: $data['intent_id'],
+            amount: Money::of($data['amount'], Currency::from($data['currency'])),
+            status: ChargeStatus::from($data['status']),
+            provider: $data['provider'],
+            createdAt: new DateTimeImmutable('@' . $data['created_at']),
+            failureReason: $data['failure_reason'],
+            metadata: $metadata,
         );
     }
 
     private function deserializeRefund(string $payload): Refund
     {
-        /** @var array{data: array<string, mixed>} $envelope */
+        /** @var array{data: array{id: string, charge_id: string, amount: int, currency: string, status: string, provider: string, created_at: int, failure_reason: string|null, metadata?: array<string, mixed>}} $envelope */
         $envelope = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
         $data = $envelope['data'];
 
+        /** @var array<string, mixed> $metadata */
+        $metadata = $data['metadata'] ?? [];
+
         return new Refund(
-            id: (string) $data['id'],
-            chargeId: (string) $data['charge_id'],
-            amount: Money::of((int) $data['amount'], Currency::from((string) $data['currency'])),
-            status: RefundStatus::from((string) $data['status']),
-            provider: (string) $data['provider'],
-            createdAt: new DateTimeImmutable('@' . (int) $data['created_at']),
-            failureReason: $data['failure_reason'] !== null ? (string) $data['failure_reason'] : null,
-            metadata: (array) ($data['metadata'] ?? []),
+            id: $data['id'],
+            chargeId: $data['charge_id'],
+            amount: Money::of($data['amount'], Currency::from($data['currency'])),
+            status: RefundStatus::from($data['status']),
+            provider: $data['provider'],
+            createdAt: new DateTimeImmutable('@' . $data['created_at']),
+            failureReason: $data['failure_reason'],
+            metadata: $metadata,
         );
     }
 

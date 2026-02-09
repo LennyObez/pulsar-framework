@@ -42,7 +42,7 @@ use function usleep;
  * polling-based status checks on Windows. Automatically recycles
  * when memory, job count, or time limits are exceeded.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class Worker
 {
     public protected(set) WorkerStatus $status = WorkerStatus::Stopped;

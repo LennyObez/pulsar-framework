@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Metric instrument types supported by the metrics system.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum MetricType: string
 {
     case Counter = 'counter';

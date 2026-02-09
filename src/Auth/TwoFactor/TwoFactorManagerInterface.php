@@ -10,7 +10,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
 /**
  * Contract for two-factor authentication management.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface TwoFactorManagerInterface
 {
     /**

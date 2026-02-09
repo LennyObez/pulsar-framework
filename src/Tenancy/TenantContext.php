@@ -13,7 +13,7 @@ use Pulsar\Tenancy\Exception\TenancyException;
 /**
  * Holds the current tenant for the active request.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class TenantContext implements ResettableInterface
 {
     private ?Tenant $tenant = null;

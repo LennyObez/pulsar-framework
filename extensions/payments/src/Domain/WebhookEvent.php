@@ -12,7 +12,7 @@ use ValueError;
 /**
  * Inbound webhook event DTO.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class WebhookEvent
 {
     /**

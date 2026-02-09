@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Observability\Metrics;
 
 use NoDiscard;
+use Pulsar\Api\Api;
 
 /**
  * Readonly value object capturing point-in-time metric state.
  */
+#[Api(since: '1.0.0')]
 final readonly class MetricSnapshot
 {
     /**

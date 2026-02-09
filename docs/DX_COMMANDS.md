@@ -1,5 +1,7 @@
 # DX Commands Reference
 
+> **Note**: This document is superseded by [`CLI_REFERENCE.md`](CLI_REFERENCE.md), which contains the complete and consolidated CLI reference including all `make:*` and `remove:*` commands. This file is retained for historical reference.
+
 Pulsar ships CLI scaffolding commands that generate boundary-compliant module structures with `Contracts/Internal` separation, config DTOs, observability wiring, and test stubs. Each `make:*` command has a corresponding `remove:*` command for teardown.
 
 ## Scaffold Commands

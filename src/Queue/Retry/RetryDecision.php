@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Outcome of a retry policy evaluation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum RetryDecision: string
 {
     case Retry = 'retry';

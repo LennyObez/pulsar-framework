@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Immutable HTTP response value object.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Response
 {
     public function __construct(
@@ -128,9 +128,8 @@ readonly class Response
         ResponseStatus $status = ResponseStatus::OK,
         int $options = JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
     ): self {
-        // JSON_THROW_ON_ERROR ensures this returns string or throws
-        $encoded = json_encode($data, $options);
-        $body = $encoded === false ? '' : $encoded;
+        /** @var non-empty-string $body JSON_THROW_ON_ERROR guarantees string return */
+        $body = json_encode($data, $options);
 
         return new self(
             body: $body,

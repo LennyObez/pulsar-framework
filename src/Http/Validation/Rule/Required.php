@@ -14,7 +14,7 @@ use function sprintf;
 /**
  * Fails on null, empty string, or empty array.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Required implements RuleInterface
 {
     public function __construct(

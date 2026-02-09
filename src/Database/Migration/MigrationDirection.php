@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Direction of a migration operation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum MigrationDirection: string
 {
     case Up = 'up';

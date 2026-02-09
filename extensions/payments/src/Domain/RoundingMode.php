@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Rounding mode for Money arithmetic.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum RoundingMode
 {
     case HalfUp;

@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * Abstracts session operations for testability while allowing
  * the concrete implementation to remain final.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface SessionInterface
 {
     /**
