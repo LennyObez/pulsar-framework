@@ -7,6 +7,9 @@ namespace Pulsar\DataProtection;
 use DateInterval;
 use DateTimeImmutable;
 
+use function is_int;
+use function is_numeric;
+use function is_string;
 use function max;
 
 use NoDiscard;
@@ -51,13 +54,13 @@ final readonly class DefaultRetentionPolicy implements RetentionPolicyInterface
     public static function fromArray(array $data): self
     {
         $rawCategory = $data['category'] ?? '';
-        $category = \is_string($rawCategory) ? $rawCategory : '';
+        $category = is_string($rawCategory) ? $rawCategory : '';
 
         $rawDays = $data['retention_days'] ?? 0;
-        $retentionDays = max(0, \is_int($rawDays) ? $rawDays : (int) (\is_numeric($rawDays) ? $rawDays : 0));
+        $retentionDays = max(0, is_int($rawDays) ? $rawDays : (int) (is_numeric($rawDays) ? $rawDays : 0));
 
         $rawBasis = $data['legal_basis'] ?? '';
-        $legalBasis = \is_string($rawBasis) ? $rawBasis : '';
+        $legalBasis = is_string($rawBasis) ? $rawBasis : '';
 
         return new self(
             category: $category,
