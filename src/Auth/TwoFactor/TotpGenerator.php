@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use function assert;
 use function hash_hmac;
 use function intdiv;
 use function ord;
@@ -33,7 +34,34 @@ final readonly class TotpGenerator
         private string $algorithm = 'sha1',
         ?Randomizer $randomizer = null,
     ) {
+        assert($period > 0, 'TOTP period must be positive');
+        assert($codeDigits >= 6 && $codeDigits <= 10, 'TOTP digits must be between 6 and 10');
+
         $this->randomizer = $randomizer ?? new Randomizer(new Secure());
+    }
+
+    /**
+     * Get the TOTP period in seconds.
+     *
+     * @return positive-int
+     */
+    public function period(): int
+    {
+        assert($this->period > 0);
+
+        return $this->period;
+    }
+
+    /**
+     * Get the number of digits in generated codes.
+     *
+     * @return int<6, 10>
+     */
+    public function digits(): int
+    {
+        assert($this->codeDigits >= 6 && $this->codeDigits <= 10);
+
+        return $this->codeDigits;
     }
 
     /**

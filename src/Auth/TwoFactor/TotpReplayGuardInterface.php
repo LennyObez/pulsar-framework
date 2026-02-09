@@ -9,21 +9,25 @@ use Pulsar\Api\Api;
 /**
  * Prevents TOTP code replay attacks.
  *
- * Implementations track which codes have been used for each identity
- * within the current time window to prevent the same code from being
- * accepted more than once.
+ * Implementations track which time steps have been used for each identity
+ * and purpose to prevent the same code from being accepted more than once.
+ *
+ * The key scope is (identityId, purpose, timeStep) — not (identityId, code).
+ * This prevents replay across different purposes and correctly ties the
+ * guard to the accepted time step rather than the code string.
  */
 #[Api(since: '1.0.0')]
 interface TotpReplayGuardInterface
 {
     /**
-     * Mark a TOTP code as used and return whether it was previously unused.
+     * Mark a time step as used and return whether it was previously unused.
      *
      * @param string $identityId Identity that submitted the code
-     * @param string $code The TOTP code
-     * @param int $timestamp Unix timestamp of the verification
+     * @param TwoFactorPurpose $purpose The verification purpose
+     * @param int $timeStep The accepted TOTP time step (counter value, not timestamp)
+     * @param int $timestamp Unix timestamp of the verification (for TTL pruning)
      *
-     * @return bool true if the code was not previously used (now marked), false if already used
+     * @return bool true if the time step was not previously used (now marked), false if already used
      */
-    public function markUsed(string $identityId, string $code, int $timestamp): bool;
+    public function markUsed(string $identityId, TwoFactorPurpose $purpose, int $timeStep, int $timestamp): bool;
 }

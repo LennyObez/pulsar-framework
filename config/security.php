@@ -80,6 +80,14 @@ return [
             'code_period' => 30,
             'verification_window' => 1,
             'recovery_code_count' => 8,
+            // Bytes of entropy per recovery code (8 = 64-bit, 4 = 32-bit legacy)
+            'recovery_code_bytes' => 8,
+            // Minutes before step-up authentication expires
+            'step_up_timeout_minutes' => 15,
+            // Recovery code algorithm version (2 = 64-bit hashed, 1 = 32-bit plaintext legacy)
+            'recovery_code_algorithm_version' => 2,
+            // Set to true to suppress warnings about in-memory stores in production
+            'allow_in_memory' => false,
         ],
 
         'authorization' => [
