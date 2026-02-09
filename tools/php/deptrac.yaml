@@ -607,6 +607,37 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\ObservabilityExport\\
 
+    # --- Social SSO Extension (Pulsar\\Extension\\Social-sso → SocialSso) ---
+
+    # --- Social SSO: public contracts ---
+    - name: SocialSsoContracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\SocialSso\\Contracts\\
+
+    # --- Social SSO: domain types (value objects, enums, exceptions, config) ---
+    - name: SocialSsoDomain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\SocialSso\\Domain\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\SocialSso\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\SocialSso\\Config\\
+
+    # --- Social SSO: internal implementation ---
+    - name: SocialSsoInternal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\SocialSso\\
+          must_not:
+            - type: layer
+              value: SocialSsoContracts
+            - type: layer
+              value: SocialSsoDomain
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -883,6 +914,79 @@ deptrac:
       - Webhook
       - PaymentsContracts
       - PaymentsDomain
+
+    SocialSsoContracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - SocialSsoDomain
+
+    SocialSsoDomain: *public_deps
+
+    SocialSsoInternal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - SocialSsoContracts
+      - SocialSsoDomain
 
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps
