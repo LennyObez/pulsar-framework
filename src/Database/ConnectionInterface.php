@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Provides a thin abstraction over PDO for executing queries,
  * preparing statements, and managing transactions.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ConnectionInterface
 {
     /**

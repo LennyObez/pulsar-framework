@@ -21,7 +21,7 @@ use Throwable;
  * 3. Boot phase: All extensions boot (in dependency order)
  * 4. PostBoot phase: Extensions implementing PostBootExtensionInterface
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ExtensionBootstrap
 {
     public private(set) bool $registered = false;

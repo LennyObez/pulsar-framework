@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Webhook sub-configuration.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class WebhookConfig
 {
     public function __construct(

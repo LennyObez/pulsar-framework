@@ -18,7 +18,7 @@ use Pulsar\Auth\Exception\AuthenticationException;
 /**
  * Immutable value object representing an authenticated identity.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Identity implements IdentityInterface
 {
     /**

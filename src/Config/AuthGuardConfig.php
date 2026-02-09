@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
 /**
  * Typed configuration DTO for a single authentication guard.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class AuthGuardConfig
 {
     public function __construct(

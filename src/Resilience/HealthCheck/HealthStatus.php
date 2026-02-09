@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Health status of a system component.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum HealthStatus: string
 {
     case Healthy = 'healthy';

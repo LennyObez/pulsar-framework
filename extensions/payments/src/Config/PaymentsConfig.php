@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Top-level payments configuration DTO.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class PaymentsConfig
 {
     public function __construct(

@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Base exception for extension-related errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 class ExtensionException extends RuntimeException
 {
     /**

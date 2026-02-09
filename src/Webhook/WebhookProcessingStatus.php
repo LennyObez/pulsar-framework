@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Status of webhook processing.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum WebhookProcessingStatus
 {
     case Processed;

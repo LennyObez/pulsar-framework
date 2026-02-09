@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Implementations track request counts per key within time windows
  * and determine whether requests should be allowed or throttled.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface RateLimiterInterface
 {
     /**

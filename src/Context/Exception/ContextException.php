@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Exception for request context errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ContextException extends RuntimeException
 {
     #[NoDiscard]

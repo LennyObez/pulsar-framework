@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Immutable HTTP response value object.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Response
 {
     public function __construct(

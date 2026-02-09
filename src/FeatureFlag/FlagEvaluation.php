@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Record of a feature flag evaluation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class FlagEvaluation
 {
     public function __construct(

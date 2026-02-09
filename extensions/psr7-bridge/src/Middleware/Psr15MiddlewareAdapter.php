@@ -26,7 +26,7 @@ use Pulsar\Http\Response;
  * sees standard PSR-7 objects and a PSR-15 RequestHandlerInterface that delegates
  * to the Pulsar pipeline's next handler.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class Psr15MiddlewareAdapter implements PulsarMiddlewareInterface
 {
     private PulsarToPsr7Request $toPsr7Request;

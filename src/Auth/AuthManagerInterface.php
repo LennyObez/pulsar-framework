@@ -14,7 +14,7 @@ use Pulsar\Http\Request;
  *
  * Orchestrates multiple guards to resolve an identity from a request.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface AuthManagerInterface
 {
     /**

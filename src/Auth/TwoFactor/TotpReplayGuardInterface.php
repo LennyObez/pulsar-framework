@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * within the current time window to prevent the same code from being
  * accepted more than once.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface TotpReplayGuardInterface
 {
     /**

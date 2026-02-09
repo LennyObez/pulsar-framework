@@ -9,7 +9,7 @@ use Pulsar\Security\Exception\SecurityException;
 use Random\RandomException;
 use SodiumException;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface EncryptorInterface
 {
     /**

@@ -15,7 +15,7 @@ use function is_array;
 /**
  * Converts a PSR-7 ServerRequestInterface into a Pulsar Request.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class Psr7ToPulsarRequest
 {
     /**

@@ -6,7 +6,7 @@ namespace Pulsar\Observability\ErrorTracking;
 
 use Pulsar\Api\Api;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface ErrorAggregatorInterface
 {
     public function capture(ErrorEvent $event): void;

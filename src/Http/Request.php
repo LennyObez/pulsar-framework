@@ -27,7 +27,7 @@ use WeakMap;
 /**
  * Immutable HTTP request value object.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Request
 {
     /**

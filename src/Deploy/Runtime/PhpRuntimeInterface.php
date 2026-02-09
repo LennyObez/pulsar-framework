@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Wraps ini_get(), extension_loaded(), and function_exists() behind an
  * interface so deploy checks can be tested without environment manipulation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface PhpRuntimeInterface
 {
     /**

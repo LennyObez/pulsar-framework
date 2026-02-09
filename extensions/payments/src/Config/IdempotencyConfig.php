@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Idempotency sub-configuration.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class IdempotencyConfig
 {
     public function __construct(

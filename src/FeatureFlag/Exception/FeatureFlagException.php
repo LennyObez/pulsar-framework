@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Exception for feature flag errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class FeatureFlagException extends RuntimeException
 {
     /**

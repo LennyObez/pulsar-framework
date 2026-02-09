@@ -21,7 +21,7 @@ use function trim;
 /**
  * Represents a single route definition.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class Route
 {
     /**

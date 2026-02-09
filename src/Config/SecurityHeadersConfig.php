@@ -15,7 +15,7 @@ use Pulsar\Api\Api;
  *
  * Maps from the `headers` key of `config/security.php`.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class SecurityHeadersConfig
 {
     private const array MINIMUM_HEADERS = [

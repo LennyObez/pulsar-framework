@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Webhook replay log sub-configuration.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class WebhookLogConfig
 {
     public function __construct(

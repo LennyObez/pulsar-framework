@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
 /**
  * Readonly value object capturing point-in-time metric state.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class MetricSnapshot
 {
     /**

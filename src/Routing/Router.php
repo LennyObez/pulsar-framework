@@ -16,7 +16,7 @@ use function sprintf;
 /**
  * HTTP router for route registration and matching.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class Router implements RouterInterface
 {
     /**

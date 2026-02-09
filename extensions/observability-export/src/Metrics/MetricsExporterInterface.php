@@ -10,7 +10,7 @@ use Pulsar\Observability\Metrics\MetricSnapshot;
 /**
  * Contract for exporting metric snapshots to an external destination.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface MetricsExporterInterface
 {
     /**

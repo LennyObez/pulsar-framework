@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  *
  * Failed can occur from any state if an error occurs.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum ExtensionLifecycle: string
 {
     case Discovered = 'discovered';

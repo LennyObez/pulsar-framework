@@ -14,7 +14,7 @@ use Pulsar\Http\Response;
  *
  * Uses Nyholm/PSR-7 as the concrete PSR-7 implementation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class PulsarToPsr7Response
 {
     private Psr17Factory $factory;

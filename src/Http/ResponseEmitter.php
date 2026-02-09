@@ -12,7 +12,7 @@ use function sprintf;
 /**
  * Emits an HTTP response to the client.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ResponseEmitter
 {
     /**

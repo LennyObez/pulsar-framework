@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  *
  * Environment variables `APP_NAME`, `APP_ENV`, `APP_DEBUG` override file values.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class AppConfig
 {
     public function __construct(

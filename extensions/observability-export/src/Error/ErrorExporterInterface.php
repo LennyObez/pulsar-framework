@@ -10,7 +10,7 @@ use Pulsar\Observability\ErrorTracking\ErrorEvent;
 /**
  * Contract for exporting error events to an external destination.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ErrorExporterInterface
 {
     /**

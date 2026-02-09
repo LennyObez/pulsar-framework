@@ -6,7 +6,7 @@ namespace Pulsar\FeatureFlag;
 
 use Pulsar\Api\Api;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface FlagEvaluationLogInterface
 {
     public function record(FlagEvaluation $evaluation): void;

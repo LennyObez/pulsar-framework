@@ -27,7 +27,7 @@ final readonly class PaymentFlowTemplates
             /**
              * Payment provider contract for $name flows.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             interface {$name}ProviderInterface
             {
                 public function createIntent(Money \$amount, string \$currency): {$name}Intent;
@@ -255,7 +255,7 @@ final readonly class PaymentFlowTemplates
             /**
              * Configuration DTO for $name payment flows.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             final readonly class {$name}Config
             {
                 public function __construct(
@@ -463,7 +463,7 @@ final readonly class PaymentFlowTemplates
             /**
              * $name payment flow exceptions.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             #[\\NoDiscard]
             final class {$name}Exception extends RuntimeException
             {
@@ -557,7 +557,7 @@ final readonly class PaymentFlowTemplates
 
             ## Structure
 
-            - `Contracts/` — Public API interfaces (`#[Api]`)
+            - `Contracts/` — Public API interfaces (`#[Api(since: '1.0.0')]`)
             - `Internal/Infrastructure/` — Provider implementations
             - `Gateway/` — Payment orchestration with idempotency
             - `Config/` — Configuration DTOs

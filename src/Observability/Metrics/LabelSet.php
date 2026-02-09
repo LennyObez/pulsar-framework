@@ -15,7 +15,7 @@ use Pulsar\Api\Api;
  * Labels are sorted deterministically by key to produce a stable
  * map lookup key via {@see key()}.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class LabelSet
 {
     /** @var array<string, string> */

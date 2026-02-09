@@ -14,7 +14,7 @@ use Pulsar\Supervisor\PreflightCheck\PreflightCheckResult;
 use Random\RandomException;
 use SodiumException;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface SupervisorInterface
 {
     public function shouldRecycle(int $requestCount, int $memoryUsageMb, int $uptimeSeconds): ?RecycleRecord;

@@ -12,7 +12,7 @@ use Throwable;
 /**
  * Result of a scheduled job execution.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class JobResult
 {
     public function __construct(

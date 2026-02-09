@@ -28,7 +28,7 @@ use function unpack;
  * When the request arrives through a trusted proxy, reads X-Forwarded-For
  * and walks right-to-left to find the first untrusted (client) IP.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class TrustedProxy
 {
     /**

@@ -17,7 +17,7 @@ use Pulsar\Routing\RouterInterface;
  * - Register routes in the router
  * - Provide service providers for deferred loading
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface ExtensionInterface
 {
     /**

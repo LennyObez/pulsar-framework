@@ -14,7 +14,7 @@ use function sprintf;
 /**
  * Exception thrown when routing fails.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class RoutingException extends Exception
 {
     /** @var list<Method> */

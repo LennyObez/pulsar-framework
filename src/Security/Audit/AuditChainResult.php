@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Contains the overall verification outcome and details about any entries
  * that failed verification (HMAC mismatch or broken chain linkage).
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class AuditChainResult
 {
     /**

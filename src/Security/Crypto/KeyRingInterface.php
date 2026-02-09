@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  *
  * Supports key rotation by maintaining multiple keys indexed by kid.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface KeyRingInterface
 {
     /**

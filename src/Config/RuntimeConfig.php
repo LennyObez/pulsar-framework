@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
 /**
  * Configuration for the persistent HTTP runtime.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class RuntimeConfig
 {
     public function __construct(

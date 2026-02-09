@@ -13,7 +13,7 @@ use Pulsar\Http\ResponseStatus;
 /**
  * Converts a PSR-7 ResponseInterface into a Pulsar Response.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class Psr7ToPulsarResponse
 {
     /**

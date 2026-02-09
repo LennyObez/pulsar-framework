@@ -21,7 +21,7 @@ use function sprintf;
  * Value must be an integer or a numeric string that passes FILTER_VALIDATE_INT.
  * Skips null values.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class IntegerType implements RuleInterface
 {
     public function __construct(

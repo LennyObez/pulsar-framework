@@ -12,7 +12,7 @@ use function sprintf;
 /**
  * Runtime-specific exceptions with static factory methods.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class RuntimeException extends BaseRuntimeException
 {
     public static function socketError(string $message): self

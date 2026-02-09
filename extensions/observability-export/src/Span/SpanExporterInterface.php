@@ -10,7 +10,7 @@ use Pulsar\Observability\Tracing\Span;
 /**
  * Contract for exporting completed spans to an external destination.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface SpanExporterInterface
 {
     /**
