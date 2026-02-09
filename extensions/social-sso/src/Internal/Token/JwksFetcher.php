@@ -8,6 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\SocialSso\Domain\JwkKey;
 use Pulsar\Extension\SocialSso\Exception\SsoException;
 
+use function array_find;
 use function array_key_exists;
 use function file_get_contents;
 use function is_array;
@@ -101,11 +102,10 @@ final class JwksFetcher
     public function fetchKey(string $jwksUri, string $kid): ?JwkKey
     {
         $keys = $this->fetchKeys($jwksUri);
+        $found = array_find($keys, static fn (JwkKey $key): bool => $key->kid === $kid);
 
-        foreach ($keys as $key) {
-            if ($key->kid === $kid) {
-                return $key;
-            }
+        if ($found !== null) {
+            return $found;
         }
 
         // Key not found — clear cache and re-fetch for rotation support
@@ -113,12 +113,6 @@ final class JwksFetcher
 
         $keys = $this->fetchKeys($jwksUri);
 
-        foreach ($keys as $key) {
-            if ($key->kid === $kid) {
-                return $key;
-            }
-        }
-
-        return null;
+        return array_find($keys, static fn (JwkKey $key): bool => $key->kid === $kid);
     }
 }

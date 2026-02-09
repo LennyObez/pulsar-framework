@@ -163,7 +163,6 @@ final readonly class AuthWiring implements ServiceWiringInterface
             }
 
             // Secret store
-            $secretStore = null;
             if ($container->has(TotpSecretStoreInterface::class)) {
                 /** @var TotpSecretStoreInterface $secretStore */
                 $secretStore = $container->get(TotpSecretStoreInterface::class);
@@ -181,7 +180,6 @@ final readonly class AuthWiring implements ServiceWiringInterface
 
             // Recovery code hasher + store
             $recoveryCodeHasher = null;
-            $recoveryCodeStore = null;
             if ($container->has(MasterKey::class)) {
                 /** @var MasterKey $masterKey */
                 $masterKey = $container->get(MasterKey::class);
@@ -250,7 +248,7 @@ final readonly class AuthWiring implements ServiceWiringInterface
 
                 foreach ($inMemoryStores as $store) {
                     $logger->warning(
-                        "In-memory 2FA store [{$store}] is active — data will not persist across restarts. Bind a persistent implementation.",
+                        "In-memory 2FA store [$store] is active — data will not persist across restarts. Bind a persistent implementation.",
                     );
                 }
             }

@@ -7,7 +7,6 @@ namespace Pulsar\Extension\SocialSso\Exception;
 use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
-use Throwable;
 
 use function sprintf;
 
@@ -23,9 +22,8 @@ final class SsoException extends RuntimeException
     private function __construct(
         string $message,
         public readonly string $errorType,
-        ?Throwable $previous = null,
     ) {
-        parent::__construct($message, 0, $previous);
+        parent::__construct($message);
     }
 
     #[NoDiscard]

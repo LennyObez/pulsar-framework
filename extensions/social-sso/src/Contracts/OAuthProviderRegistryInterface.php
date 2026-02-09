@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\SocialSso\Contracts;
 
 use Pulsar\Api\Api;
+use Pulsar\Extension\SocialSso\Exception\SsoException;
 
 /**
  * Registry for OAuth provider implementations.
@@ -22,7 +23,7 @@ interface OAuthProviderRegistryInterface
     /**
      * Retrieve a registered provider by name.
      *
-     * @throws \Pulsar\Extension\SocialSso\Exception\SsoException if the provider is not registered
+     * @throws SsoException if the provider is not registered
      */
     public function get(string $name): OAuthProviderInterface;
 }

@@ -97,7 +97,7 @@ final readonly class JwkKey
 
         $der = self::asn1Sequence($algorithmIdentifier . $pubKeyBitString);
         $pem = "-----BEGIN PUBLIC KEY-----\n"
-            . chunk_split(base64_encode($der), 64, "\n")
+            . chunk_split(base64_encode($der), 64)
             . "-----END PUBLIC KEY-----";
 
         // Validate the generated PEM
@@ -150,7 +150,7 @@ final readonly class JwkKey
         $der = self::asn1Sequence($algorithmIdentifier . $pubKeyBitString);
 
         $pem = "-----BEGIN PUBLIC KEY-----\n"
-            . chunk_split(base64_encode($der), 64, "\n")
+            . chunk_split(base64_encode($der), 64)
             . "-----END PUBLIC KEY-----";
 
         $key = openssl_pkey_get_public($pem);

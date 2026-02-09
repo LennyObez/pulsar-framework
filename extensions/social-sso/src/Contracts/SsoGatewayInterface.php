@@ -6,6 +6,7 @@ namespace Pulsar\Extension\SocialSso\Contracts;
 
 use Pulsar\Api\Api;
 use Pulsar\Extension\SocialSso\Domain\SsoLoginResult;
+use Pulsar\Extension\SocialSso\Exception\SsoException;
 
 /**
  * Top-level gateway for social SSO login flows.
@@ -19,7 +20,7 @@ interface SsoGatewayInterface
     /**
      * Execute the full social login flow for an OAuth callback.
      *
-     * @throws \Pulsar\Extension\SocialSso\Exception\SsoException on any SSO failure
+     * @throws SsoException on any SSO failure
      */
     public function fullLogin(string $providerName, string $code, string $state): SsoLoginResult;
 }

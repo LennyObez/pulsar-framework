@@ -7,7 +7,6 @@ namespace Pulsar\Extension\SocialSso;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
-use Pulsar\Extension\SocialSso\Config\SocialSsoConfig;
 use Pulsar\Routing\RouterInterface;
 
 /**
@@ -30,13 +29,6 @@ final class SocialSsoExtension implements ExtensionInterface
 
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
-        /** @var SocialSsoConfig $config */
-        $config = $container->get(SocialSsoConfig::class);
-
-        if (!$config->enabled) {
-            return;
-        }
-
         // Routes are registered by the service provider or manually by the app
     }
 

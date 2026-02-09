@@ -13,6 +13,7 @@ use Pulsar\Extension\SocialSso\Domain\IdTokenVerificationContext;
 use Pulsar\Extension\SocialSso\Domain\JwkKey;
 use Pulsar\Extension\SocialSso\Exception\SsoException;
 
+use function array_filter;
 use function base64_decode;
 use function count;
 use function explode;
@@ -25,6 +26,7 @@ use function str_replace;
 use function strlen;
 use function time;
 
+use const ARRAY_FILTER_USE_BOTH;
 use const JSON_THROW_ON_ERROR;
 
 /**
@@ -102,9 +104,7 @@ final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
         $iss = $claims['iss'];
         /** @var string|list<string> $aud */
         $aud = $claims['aud'];
-        /** @var int $exp */
         $exp = (int) $claims['exp'];
-        /** @var int $iat */
         $iat = (int) $claims['iat'];
 
         $nonce = isset($claims['nonce']) && is_string($claims['nonce']) ? $claims['nonce'] : null;
@@ -112,13 +112,11 @@ final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
 
         // Remove standard claims from the extras
         $standardKeys = ['sub', 'iss', 'aud', 'exp', 'iat', 'nonce', 'azp'];
-        $extraClaims = [];
-
-        foreach ($claims as $claimKey => $claimValue) {
-            if (!in_array($claimKey, $standardKeys, true)) {
-                $extraClaims[$claimKey] = $claimValue;
-            }
-        }
+        $extraClaims = array_filter(
+            $claims,
+            static fn (mixed $v, string $k): bool => !in_array($k, $standardKeys, true),
+            ARRAY_FILTER_USE_BOTH,
+        );
 
         return new IdTokenClaims(
             sub: $sub,

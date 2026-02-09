@@ -7,6 +7,7 @@ namespace Pulsar\Extension\SocialSso\Contracts;
 use Pulsar\Api\Api;
 use Pulsar\Extension\SocialSso\Domain\IdTokenClaims;
 use Pulsar\Extension\SocialSso\Domain\IdTokenVerificationContext;
+use Pulsar\Extension\SocialSso\Exception\SsoException;
 
 /**
  * Verifies OpenID Connect ID tokens.
@@ -20,7 +21,7 @@ interface IdTokenVerifierInterface
     /**
      * Verify an ID token and extract its claims.
      *
-     * @throws \Pulsar\Extension\SocialSso\Exception\SsoException on verification failure
+     * @throws SsoException on verification failure
      */
     public function verify(string $idToken, IdTokenVerificationContext $context): IdTokenClaims;
 }

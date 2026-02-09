@@ -7,6 +7,7 @@ namespace Pulsar\Extension\SocialSso\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extension\SocialSso\Exception\SsoException;
+use SensitiveParameter;
 
 #[Api(since: '1.0.0')]
 final readonly class ProviderConfig
@@ -16,7 +17,7 @@ final readonly class ProviderConfig
         public string $name,
         public string $type,
         public string $clientId,
-        #[\SensitiveParameter] public string $clientSecret,
+        #[SensitiveParameter] public string $clientSecret,
         public string $authorizationUrl,
         public string $tokenUrl,
         public ?string $jwksUri,
