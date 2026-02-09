@@ -1014,6 +1014,25 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Cms\\Internal\\
 
+    # --- Analytics Extension (Pulsar\\Extension\\Analytics) ---
+
+    # --- Analytics: public surface (excludes \Internal\ namespace) ---
+    - name: AnalyticsExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Analytics\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Analytics\\Internal\\
+
+    # --- Analytics: internal implementation (\Internal\ only) ---
+    - name: AnalyticsExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Analytics\\Internal\\
+
     # --- GraphQL Extension (Pulsar\\Extension\\Graphql) ---
 
     # --- GraphQL: public surface (excludes \Internal\ namespace) ---
@@ -1899,6 +1918,43 @@ deptrac:
       - Scheduler
       - Storage
       - StudioExtension
+
+    AnalyticsExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Extensibility
+      - Auth
+      - Cache
+      - Database
+      - Observability
+      - Queue
+      - Scheduler
+      - Security
+      - AnalyticsExtension_Internal
+
+    AnalyticsExtension_Internal:
+      - AnalyticsExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Database
+      - Auth
+      - Cache
+      - Http
+      - Routing
+      - Queue
+      - Security
+      - Scheduler
 
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps
