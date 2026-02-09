@@ -19,7 +19,7 @@ use Pulsar\Runtime\Upgrade\UpgradeContext;
  * that consumers only depend on the factory interface.
  */
 #[Internal]
-final class PersistentRuntimeFactory implements PersistentRuntimeFactoryInterface
+final readonly class PersistentRuntimeFactory implements PersistentRuntimeFactoryInterface
 {
     public function __construct(
         private readonly ContainerInterface $container,

@@ -19,6 +19,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use Pulsar\Api\Api;
+
 // ---------------------------------------------------------------------------
 // BoundaryAnalyzer — core analysis logic (testable independently)
 // ---------------------------------------------------------------------------
@@ -135,12 +137,12 @@ final class BoundaryAnalyzer
         // Reflection fallback
         if (class_exists($fqcn, false) || interface_exists($fqcn, false) || enum_exists($fqcn, false)) {
             try {
-                $ref = new \ReflectionClass($fqcn);
-                $hasApi = $ref->getAttributes(\Pulsar\Api\Api::class) !== [];
+                $ref = new ReflectionClass($fqcn);
+                $hasApi = $ref->getAttributes(Api::class) !== [];
                 $this->reflectionCache[$fqcn] = $hasApi;
 
                 return $hasApi;
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 $this->reflectionCache[$fqcn] = null;
 
                 return null;
@@ -150,13 +152,13 @@ final class BoundaryAnalyzer
         // Try autoloading
         try {
             if (class_exists($fqcn) || interface_exists($fqcn) || enum_exists($fqcn)) {
-                $ref = new \ReflectionClass($fqcn);
-                $hasApi = $ref->getAttributes(\Pulsar\Api\Api::class) !== [];
+                $ref = new ReflectionClass($fqcn);
+                $hasApi = $ref->getAttributes(Api::class) !== [];
                 $this->reflectionCache[$fqcn] = $hasApi;
 
                 return $hasApi;
             }
-        } catch (\Throwable) {
+        } catch (Throwable) {
             // Cannot load class
         }
 
@@ -314,7 +316,8 @@ final class BoundaryAnalyzer
             }
 
             // Rule 4: Cross-extension internal import
-            if ($this->isExtension($sourceClass) && $this->isExtension($ref) && $targetModule !== $sourceModule) {
+            // ($targetModule !== $sourceModule is guaranteed by the early continue on line 269)
+            if ($this->isExtension($sourceClass) && $this->isExtension($ref)) {
                 // Cross-extension imports should target #[Api] classes
                 $hasApi = $this->hasApiAttribute($ref);
                 if ($hasApi === false || $hasApi === null) {
@@ -472,7 +475,7 @@ final class BoundaryAnalyzer
         // Skip "use function" and "use const"
         if ($i < $count && is_array($tokens[$i])) {
             if ($tokens[$i][0] === T_FUNCTION || $tokens[$i][0] === T_CONST) {
-                while ($i < $count && $tokens[$i] !== ';') {
+                while ($i < $count && (!is_string($tokens[$i]) || $tokens[$i] !== ';')) {
                     $i++;
                 }
 
@@ -599,7 +602,7 @@ if ($diffBase !== null) {
         $changedFiles = array_filter($output, static fn (string $f): bool => str_ends_with($f, '.php'));
         $changedFiles = array_values($changedFiles);
     } else {
-        fwrite(STDERR, "Warning: Could not resolve diff-base '{$diffBase}'. Running full scan.\n");
+        fwrite(STDERR, "Warning: Could not resolve diff-base '$diffBase'. Running full scan.\n");
         $hasDiffBase = false;
     }
 }
@@ -700,9 +703,9 @@ if ($generateBaseline) {
     file_put_contents($baselinePath, $json);
 
     $count = count($baselineData['violations']);
-    echo "Baseline generated: {$baselinePath}\n";
-    echo "  Violations baselined: {$count}\n";
-    echo "  Files scanned: {$scannedFiles}\n";
+    echo "Baseline generated: $baselinePath\n";
+    echo "  Violations baselined: $count\n";
+    echo "  Files scanned: $scannedFiles\n";
     exit(0);
 }
 
@@ -736,10 +739,10 @@ foreach ($allViolations as $v) {
     $ruleLabel = $ruleLabels[$v['rule']] ?? $v['rule'];
 
     echo "\n";
-    echo "BOUNDARY VIOLATION [{$severityLabel}]\n";
+    echo "BOUNDARY VIOLATION [$severityLabel]\n";
     echo "  File:   {$v['file']}:{$v['line']}\n";
     echo "  Import: {$v['import']}\n";
-    echo "  Rule:   {$ruleLabel}\n";
+    echo "  Rule:   $ruleLabel\n";
     echo "  Fix:    {$v['fix']}\n";
 }
 
@@ -747,6 +750,6 @@ if ($errorCount > 0 || $warningCount > 0) {
     echo "\n";
 }
 
-echo "Found {$errorCount} error(s) and {$warningCount} warning(s) in {$scannedFiles} files scanned.\n";
+echo "Found $errorCount error(s) and $warningCount warning(s) in $scannedFiles files scanned.\n";
 
 exit($errorCount > 0 ? 1 : 0);

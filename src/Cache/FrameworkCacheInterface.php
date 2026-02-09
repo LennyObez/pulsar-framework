@@ -7,6 +7,7 @@ namespace Pulsar\Cache;
 use JsonException;
 use Pulsar\Api\Api;
 use Pulsar\Config\ConfigRepository;
+use Pulsar\Routing\Route;
 use Random\RandomException;
 use ReflectionException;
 use SodiumException;
@@ -15,7 +16,7 @@ use SodiumException;
 interface FrameworkCacheInterface
 {
     /**
-     * @param list<\Pulsar\Routing\Route> $routes
+     * @param list<Route> $routes
      * @param array<class-string, list<array{name: string, type: class-string}>> $containerHints
      *
      * @return array{configCached: bool, routesCached: int, routesSkipped: int, skippedRoutes: list<string>, containerCached: bool}

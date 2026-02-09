@@ -30,7 +30,7 @@ use SodiumException;
  * Handles both full-from-seed and window verification (after retention pruning).
  */
 #[Internal]
-final class EvidenceVerifier
+final readonly class EvidenceVerifier
 {
     public function __construct(
         private readonly ?HmacInterface $hmac = null,

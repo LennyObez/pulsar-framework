@@ -426,14 +426,6 @@ final class Kernel implements KernelInterface
     }
 
     /**
-     * Whether the kernel has completed booting.
-     */
-    public function isBooted(): bool
-    {
-        return $this->booted;
-    }
-
-    /**
      * Get the extension bootstrap instance.
      */
     public function extensionBootstrap(): ?ExtensionBootstrap

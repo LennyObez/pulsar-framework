@@ -56,7 +56,7 @@ final class DiagnosticsCommand extends Command
     {
         $output->info('Framework');
         $output->writeln(sprintf('  Version:      %s', Version::full()));
-        $output->writeln(sprintf('  Kernel:       %s', $this->kernel->isBooted() ? 'Booted' : 'Not booted'));
+        $output->writeln(sprintf('  Kernel:       %s', $this->kernel->booted ? 'Booted' : 'Not booted'));
 
         $extensions = $this->kernel->extensionBootstrap()?->registry;
         if ($extensions !== null) {

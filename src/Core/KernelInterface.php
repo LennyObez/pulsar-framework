@@ -30,7 +30,7 @@ interface KernelInterface
     /**
      * Whether the kernel has completed booting.
      */
-    public function isBooted(): bool;
+    public bool $booted { get; }
 
     /**
      * Get the extension bootstrap instance.

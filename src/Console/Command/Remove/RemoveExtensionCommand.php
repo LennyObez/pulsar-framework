@@ -65,13 +65,13 @@ final class RemoveExtensionCommand extends Command
 
         $dirName = $this->toKebabCase($name);
 
-        $cwd = getcwd();
-        if ($cwd === false) {
+        $resolved = $this->resolveBasePath($basePath, 'extensions');
+        if ($resolved === false) {
             $output->errorln('Failed to get current working directory.');
             return ExitCode::Error->value;
         }
 
-        $extensionPath = $cwd . DIRECTORY_SEPARATOR . $basePath . DIRECTORY_SEPARATOR . $dirName;
+        $extensionPath = $resolved . DIRECTORY_SEPARATOR . $dirName;
 
         if (!is_dir($extensionPath)) {
             $output->errorln(sprintf('Extension "%s" does not exist at %s', $dirName, $extensionPath));

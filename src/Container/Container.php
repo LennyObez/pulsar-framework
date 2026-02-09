@@ -311,6 +311,7 @@ final class Container implements ContainerInterface
      *
      * @return list<string>
      */
+    #[NoDiscard]
     #[Override]
     public function getBindings(): array
     {
@@ -323,6 +324,7 @@ final class Container implements ContainerInterface
      *
      * @return list<string>
      */
+    #[NoDiscard]
     #[Override]
     public function getInstances(): array
     {
