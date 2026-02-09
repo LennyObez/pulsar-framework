@@ -10,11 +10,13 @@ concurrency:
 
 jobs:
   php-quality:
-    name: PHP Quality (CS, PHPStan, Psalm)
+    name: PHP Quality (CS, PHPStan, Psalm, Boundaries)
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: shivammathur/setup-php@v2
         with:
@@ -36,6 +38,21 @@ jobs:
       - run: composer phpstan
 
       - run: composer psalm
+
+      - name: Fetch base ref for boundary diff
+        if: github.event_name == 'pull_request'
+        run: git fetch origin ${{ github.base_ref }} --depth=1
+
+      - name: Boundary enforcement (Deptrac)
+        run: composer boundary:deptrac
+
+      - name: Boundary enforcement (API targeting)
+        if: github.event_name == 'pull_request'
+        run: php scripts/boundary_check.php --diff-base=origin/${{ github.base_ref }}
+
+      - name: Boundary enforcement (API targeting, full scan)
+        if: github.event_name != 'pull_request'
+        run: php scripts/boundary_check.php
 
       - name: Audit dependencies for vulnerabilities
         run: composer audit --abandoned=report

@@ -13,6 +13,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheException;
 use Pulsar\Cache\CacheIntegrity;
 use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function strlen;
@@ -27,7 +28,7 @@ final class CacheIntegrityTest extends TestCase
     protected function setUp(): void
     {
         $this->hmacKey = random_bytes(32);
-        $this->integrity = new CacheIntegrity($this->hmacKey);
+        $this->integrity = new CacheIntegrity(new HmacService(), $this->hmacKey);
         $this->tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_cache_integrity_test_' . bin2hex(random_bytes(8));
         mkdir($this->tempDir, 0o750, true);
     }
@@ -145,7 +146,7 @@ final class CacheIntegrityTest extends TestCase
     {
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $encryptor = Encryptor::fromDerivedKey($masterKey, 8, 'fw_c_enc');
-        $integrity = new CacheIntegrity($this->hmacKey, $encryptor);
+        $integrity = new CacheIntegrity(new HmacService(), $this->hmacKey, $encryptor);
 
         $path = $this->tempDir . DIRECTORY_SEPARATOR . 'encrypted.cache.bin';
         $data = ['secret' => 'classified', 'level' => 5];
@@ -197,7 +198,7 @@ final class CacheIntegrityTest extends TestCase
         // Write encrypted envelope with an encryptor
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $encryptor = Encryptor::fromDerivedKey($masterKey, 8, 'fw_c_enc');
-        $encryptedIntegrity = new CacheIntegrity($this->hmacKey, $encryptor);
+        $encryptedIntegrity = new CacheIntegrity(new HmacService(), $this->hmacKey, $encryptor);
 
         $path = $this->tempDir . DIRECTORY_SEPARATOR . 'no_decryptor.cache.bin';
         $encryptedIntegrity->writeEnvelope($path, serialize(['data' => true]), true);
@@ -276,7 +277,7 @@ final class CacheIntegrityTest extends TestCase
     public function differentHmacKeysProduceDifferentSignatures(): void
     {
         $key2 = random_bytes(32);
-        $integrity2 = new CacheIntegrity($key2);
+        $integrity2 = new CacheIntegrity(new HmacService(), $key2);
 
         $payload = 'same payload';
         $sig1 = $this->integrity->sign($payload);
@@ -297,7 +298,7 @@ final class CacheIntegrityTest extends TestCase
 
         // Read with a different key
         $differentKey = random_bytes(32);
-        $differentIntegrity = new CacheIntegrity($differentKey);
+        $differentIntegrity = new CacheIntegrity(new HmacService(), $differentKey);
 
         $result = $differentIntegrity->readEnvelope($path, []);
 

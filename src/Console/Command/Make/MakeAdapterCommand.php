@@ -8,6 +8,7 @@ use function count;
 use function file_get_contents;
 use function is_dir;
 use function is_file;
+use function is_int;
 use function is_string;
 
 use Override;
@@ -79,10 +80,9 @@ final class MakeAdapterCommand extends Command
         $module = $this->toPascalCase($module);
         $portName = $this->toPascalCase($portName);
 
-        $resolved = $this->resolveBasePath($basePath, 'app/Modules');
-        if ($resolved === false) {
-            $output->errorln('Failed to get current working directory.');
-            return ExitCode::Error->value;
+        $resolved = $this->resolveBasePathOrFail($basePath, 'app/Modules', $output);
+        if (is_int($resolved)) {
+            return $resolved;
         }
 
         $modulePath = $resolved . DIRECTORY_SEPARATOR . $module;

@@ -10,6 +10,7 @@ use function explode;
 use function hexdec;
 
 use NoDiscard;
+use Override;
 
 use function sprintf;
 use function strlen;
@@ -23,7 +24,7 @@ use function strtolower;
  *
  * @see https://www.w3.org/TR/trace-context/
  */
-final class W3CTraceContextParser
+final readonly class W3CTraceContextParser implements TraceContextParserInterface
 {
     /**
      * Parse a traceparent header value into a TraceContext.
@@ -31,7 +32,8 @@ final class W3CTraceContextParser
      * Returns null if the header is malformed.
      */
     #[NoDiscard]
-    public static function parse(string $header): ?TraceContext
+    #[Override]
+    public function parse(string $header): ?TraceContext
     {
         $parts = explode('-', strtolower($header));
 
@@ -72,7 +74,8 @@ final class W3CTraceContextParser
      * Serialize a TraceContext to a traceparent header value.
      */
     #[NoDiscard]
-    public static function serialize(TraceContext $context): string
+    #[Override]
+    public function serialize(TraceContext $context): string
     {
         return sprintf(
             '00-%s-%s-%02x',

@@ -8,12 +8,14 @@ use DateMalformedStringException;
 use DateTimeImmutable;
 use DateTimeZone;
 use NoDiscard;
+use Pulsar\Api\Api;
 use Pulsar\Observability\Tracing\TraceId;
 use Throwable;
 
 /**
  * Readonly value object representing a single error occurrence.
  */
+#[Api]
 final readonly class ErrorEvent
 {
     /**

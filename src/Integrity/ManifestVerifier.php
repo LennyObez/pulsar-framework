@@ -35,7 +35,7 @@ use function substr;
  * and added files (on disk but not in manifest).
  */
 #[Internal]
-final readonly class ManifestVerifier
+final readonly class ManifestVerifier implements ManifestVerifierInterface
 {
     public function __construct(
         private string $basePath,

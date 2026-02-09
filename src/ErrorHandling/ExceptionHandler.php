@@ -12,7 +12,7 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\Validation\ValidationException;
-use Pulsar\Observability\ErrorTracking\ErrorAggregator;
+use Pulsar\Observability\ErrorTracking\ErrorAggregatorInterface;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Observability\Tracing\TraceContext;
@@ -34,7 +34,7 @@ final readonly class ExceptionHandler
     public function __construct(
         private ExceptionRendererInterface $renderer,
         private ?LoggerInterface $logger = null,
-        private ?ErrorAggregator $errorAggregator = null,
+        private ?ErrorAggregatorInterface $errorAggregator = null,
         private ?SensitiveDataScrubber $scrubber = null,
         private ?RequestContextHolder $requestContextHolder = null,
     ) {}

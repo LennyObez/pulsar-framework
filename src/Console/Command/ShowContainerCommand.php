@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function assert;
 use function count;
 use function in_array;
 use function is_string;
@@ -16,10 +15,9 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Container\Container;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 use Pulsar\Routing\RoutingException;
@@ -35,7 +33,7 @@ use function strlen;
 final class ShowContainerCommand extends Command
 {
     public function __construct(
-        private readonly Kernel $kernel,
+        private readonly KernelInterface $kernel,
     ) {
         parent::__construct();
     }
@@ -64,8 +62,6 @@ final class ShowContainerCommand extends Command
         $this->kernel->boot();
 
         $container = $this->kernel->container();
-
-        assert($container instanceof Container, 'Container introspection requires Pulsar\\Container\\Container.');
 
         $bindings = $container->getBindings();
         $instances = $container->getInstances();
