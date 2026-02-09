@@ -90,10 +90,10 @@ final class ValidationMiddlewareTest extends TestCase
 
         file_put_contents($this->tempDir . '/observability.php', '<?php return [
             "logging" => [
-                "default_channel" => "stderr",
+                "default_channel" => "null",
                 "level" => "debug",
                 "channels" => [
-                    "stderr" => ["driver" => "stream", "stream" => "php://stderr"],
+                    "null" => ["driver" => "stream", "stream" => "php://memory"],
                 ],
             ],
             "audit" => [
