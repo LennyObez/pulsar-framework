@@ -30,6 +30,17 @@ final class Router implements RouterInterface
     public private(set) array $namedRoutes = [];
 
     /**
+     * Method-indexed lookup table for fast matching.
+     *
+     * Maps each HTTP method value to the list of routes that accept it.
+     * Built incrementally at registration time so that `match()` only
+     * scans routes for the requested method on the hot path.
+     *
+     * @var array<string, list<Route>>
+     */
+    private array $routesByMethod = [];
+
+    /**
      * Whether the router is locked (strict cache mode).
      * When locked, addRoute() throws RoutingException::routerLocked().
      */
@@ -52,7 +63,19 @@ final class Router implements RouterInterface
             $this->namedRoutes[$route->name] = $route;
         }
 
+        $this->indexRouteByMethod($route);
+
         return $this;
+    }
+
+    /**
+     * Add a route to the method-indexed lookup table.
+     */
+    private function indexRouteByMethod(Route $route): void
+    {
+        foreach ($route->methods as $method) {
+            $this->routesByMethod[$method->value][] = $route;
+        }
     }
 
     /**
@@ -144,6 +167,11 @@ final class Router implements RouterInterface
     /**
      * Match a request path and method to a route.
      *
+     * Uses a method-indexed lookup table on the hot path so that only
+     * routes accepting the requested HTTP method are scanned. On a miss,
+     * falls back to scanning all routes for method-not-allowed detection
+     * (cold path).
+     *
      * @param Method $method The HTTP method
      * @param string $path The request path
      * @param string|null $host The request Host header (for host-based routing)
@@ -151,40 +179,30 @@ final class Router implements RouterInterface
      */
     public function match(Method $method, string $path, ?string $host = null): MatchedRoute
     {
-        $pathMatches = [];
+        // Hot path: only scan routes that accept the requested method
+        $candidates = $this->routesByMethod[$method->value] ?? [];
 
-        foreach ($this->routes as $route) {
-            // Check host constraint first
-            if ($host !== null) {
-                $hostParams = $route->matchesHost($host);
-                if ($hostParams === null) {
-                    continue;
-                }
-            } else {
-                $hostParams = [];
-                // Skip routes that require a specific host when no host is provided
-                if ($route->host !== null) {
-                    continue;
-                }
-            }
-
-            $params = $route->matchesPath($path);
-
-            if ($params !== null) {
-                $mergedParams = [...$hostParams, ...$params];
-                $pathMatches[] = ['route' => $route, 'params' => $mergedParams];
-
-                if ($route->matchesMethod($method)) {
-                    return new MatchedRoute($route, $mergedParams);
-                }
+        foreach ($candidates as $route) {
+            $matchResult = $this->matchRouteAgainstHostAndPath($route, $path, $host);
+            if ($matchResult !== null) {
+                return new MatchedRoute($route, $matchResult);
             }
         }
 
-        // Path matched but method didn't
+        // Cold path: no match found — scan all routes for 405 detection
+        $pathMatches = [];
+
+        foreach ($this->routes as $route) {
+            $matchResult = $this->matchRouteAgainstHostAndPath($route, $path, $host);
+            if ($matchResult !== null) {
+                $pathMatches[] = $route;
+            }
+        }
+
         if ($pathMatches !== []) {
             $allowedMethods = [];
-            foreach ($pathMatches as $match) {
-                foreach ($match['route']->methods as $m) {
+            foreach ($pathMatches as $route) {
+                foreach ($route->methods as $m) {
                     if (!in_array($m, $allowedMethods, true)) {
                         $allowedMethods[] = $m;
                     }
@@ -195,6 +213,35 @@ final class Router implements RouterInterface
         }
 
         throw RoutingException::notFound($path);
+    }
+
+    /**
+     * Check if a route matches the given host and path.
+     *
+     * Returns merged host+path parameters on match, null on no match.
+     *
+     * @return array<string, string>|null
+     */
+    private function matchRouteAgainstHostAndPath(Route $route, string $path, ?string $host): ?array
+    {
+        if ($host !== null) {
+            $hostParams = $route->matchesHost($host);
+            if ($hostParams === null) {
+                return null;
+            }
+        } else {
+            $hostParams = [];
+            if ($route->host !== null) {
+                return null;
+            }
+        }
+
+        $params = $route->matchesPath($path);
+        if ($params === null) {
+            return null;
+        }
+
+        return [...$hostParams, ...$params];
     }
 
     /**
@@ -275,6 +322,8 @@ final class Router implements RouterInterface
             if ($route->name !== null) {
                 $this->namedRoutes[$route->name] = $route;
             }
+
+            $this->indexRouteByMethod($route);
         }
     }
 }
