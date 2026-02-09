@@ -16,7 +16,7 @@ use Throwable;
 /**
  * In-memory log of feature flag evaluations.
  */
-final class FlagEvaluationLog implements ResettableInterface
+final class FlagEvaluationLog implements FlagEvaluationLogInterface, ResettableInterface
 {
     /** @var list<FlagEvaluation> */
     private array $evaluations = [];

@@ -20,7 +20,7 @@ use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 use Pulsar\Routing\RoutingException;
@@ -35,7 +35,7 @@ use function sprintf;
 final class ShowRoutesCommand extends Command
 {
     public function __construct(
-        private readonly Kernel $kernel,
+        private readonly KernelInterface $kernel,
     ) {
         parent::__construct();
     }
@@ -64,7 +64,7 @@ final class ShowRoutesCommand extends Command
     {
         $this->kernel->boot();
 
-        $routes = $this->kernel->router()->routes;
+        $routes = $this->kernel->router()->routes();
 
         if ($routes === []) {
             $output->writeln('No routes registered.');

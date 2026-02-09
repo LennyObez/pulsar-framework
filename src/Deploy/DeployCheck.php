@@ -20,7 +20,7 @@ use Throwable;
  * and aggregates results into a DeployReport.
  */
 #[Internal]
-final class DeployCheck
+final class DeployCheck implements DeployCheckRunnerInterface
 {
     /** @var list<DeployCheckInterface> */
     private array $checks;

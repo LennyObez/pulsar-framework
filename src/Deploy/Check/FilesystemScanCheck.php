@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Deploy\Check;
 
 use Pulsar\Api\Internal;
-use Pulsar\Cache\FrameworkCache;
+use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Deploy\CheckResult;
 use Pulsar\Deploy\DeployCheckInterface;
 
@@ -19,7 +19,7 @@ use Pulsar\Deploy\DeployCheckInterface;
 final readonly class FilesystemScanCheck implements DeployCheckInterface
 {
     public function __construct(
-        private FrameworkCache $frameworkCache,
+        private FrameworkCacheInterface $frameworkCache,
     ) {}
 
     public function getName(): string

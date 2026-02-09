@@ -100,6 +100,16 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Cache\\CacheException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\FrameworkCacheInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\AppConfig": {
       "since": "",
       "methods": [],
@@ -131,6 +141,11 @@
       "constants": []
     },
     "Pulsar\\Config\\ConfigLoaderInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ConfigManagerInterface": {
       "since": "",
       "methods": [],
       "constants": []
@@ -305,6 +320,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Console\\Command": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Console\\CommandInterface": {
       "since": "",
       "methods": [],
@@ -405,6 +425,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Core\\KernelInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Core\\Version": {
       "since": "1.0.0-rc.1",
       "methods": [],
@@ -455,12 +480,32 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Database\\Migration\\MigrationRepository": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Migration\\MigrationRunner": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\Result": {
       "since": "",
       "methods": [],
       "constants": []
     },
     "Pulsar\\Database\\Row": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Statement": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Transaction": {
       "since": "",
       "methods": [],
       "constants": []
@@ -476,6 +521,11 @@
       "constants": []
     },
     "Pulsar\\Deploy\\DeployCheckInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\DeployCheckRunnerInterface": {
       "since": "",
       "methods": [],
       "constants": []
@@ -536,6 +586,11 @@
       "constants": []
     },
     "Pulsar\\Extensibility\\Exception\\ManifestException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\ExtensionBootstrap": {
       "since": "",
       "methods": [],
       "constants": []
@@ -606,6 +661,11 @@
       "constants": []
     },
     "Pulsar\\FeatureFlag\\FlagEvaluation": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FlagEvaluationLogInterface": {
       "since": "",
       "methods": [],
       "constants": []
@@ -815,7 +875,27 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Integrity\\ManifestBuilderInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Integrity\\ManifestEntry": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\ManifestFormat": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\ManifestSignerInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\ManifestVerifierInterface": {
       "since": "",
       "methods": [],
       "constants": []
@@ -835,12 +915,27 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Observability\\ErrorTracking\\ErrorAggregatorInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\ErrorTracking\\ErrorEvent": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\ErrorTracking\\ErrorFingerprint": {
       "since": "",
       "methods": [],
       "constants": []
     },
     "Pulsar\\Observability\\ErrorTracking\\Exception\\ErrorTrackingException": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\ErrorTracking\\SensitiveDataScrubber": {
       "since": "",
       "methods": [],
       "constants": []
@@ -861,6 +956,16 @@
       "constants": []
     },
     "Pulsar\\Observability\\Log\\LogSinkInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Log\\Sink\\DeferredSinkInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\LabelSet": {
       "since": "",
       "methods": [],
       "constants": []
@@ -896,6 +1001,16 @@
       "constants": []
     },
     "Pulsar\\Observability\\Tracing\\TraceContext": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\TraceContextParserInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\TraceId": {
       "since": "",
       "methods": [],
       "constants": []
@@ -990,6 +1105,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Resilience\\HealthCheck\\HealthCheckRunnerInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Resilience\\HealthCheck\\HealthReport": {
       "since": "",
       "methods": [],
@@ -1011,6 +1131,11 @@
       "constants": []
     },
     "Pulsar\\Resilience\\Repair\\RepairResult": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\Repair\\RepairRunnerInterface": {
       "since": "",
       "methods": [],
       "constants": []
@@ -1061,6 +1186,11 @@
       "constants": []
     },
     "Pulsar\\Runtime\\FpmRuntime": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\PersistentRuntimeFactoryInterface": {
       "since": "",
       "methods": [],
       "constants": []
@@ -1125,6 +1255,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Scheduler\\JobRegistry": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Scheduler\\JobResult": {
       "since": "",
       "methods": [],
@@ -1136,6 +1271,11 @@
       "constants": []
     },
     "Pulsar\\Scheduler\\Schedule": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\Scheduler": {
       "since": "",
       "methods": [],
       "constants": []
@@ -1171,6 +1311,21 @@
       "constants": []
     },
     "Pulsar\\Security\\Audit\\ChainableAuditSinkInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\EncryptorInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\HmacInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\KeyProviderInterface": {
       "since": "",
       "methods": [],
       "constants": []
@@ -1260,6 +1415,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunnerInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Supervisor\\RecycleAction": {
       "since": "",
       "methods": [],
@@ -1280,7 +1440,17 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Supervisor\\SupervisorInterface": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Supervisor\\WorkerRecyclePolicy": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Support\\AtomicFileWriter": {
       "since": "",
       "methods": [],
       "constants": []
@@ -1291,6 +1461,11 @@
       "constants": []
     },
     "Pulsar\\Tenancy\\Tenant": {
+      "since": "",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\TenantContext": {
       "since": "",
       "methods": [],
       "constants": []
@@ -1363,7 +1538,6 @@
   },
   "internal_classes": [
     "Pulsar\\Cache\\CacheAllowedClasses",
-    "Pulsar\\Cache\\CacheException",
     "Pulsar\\Cache\\CacheIntegrity",
     "Pulsar\\Cache\\CacheLock",
     "Pulsar\\Cache\\CacheManifest",
@@ -1413,14 +1587,12 @@
     "Pulsar\\Deploy\\Runtime\\PhpRuntime",
     "Pulsar\\Deploy\\Snippet\\ProxySnippetGenerator",
     "Pulsar\\Deploy\\Snippet\\TlsSnippetGenerator",
-    "Pulsar\\Extensibility\\ExtensionBootstrap",
     "Pulsar\\Extensibility\\ExtensionLoader",
     "Pulsar\\Extensibility\\ExtensionRegistry",
     "Pulsar\\Http\\Middleware\\MiddlewarePipeline",
     "Pulsar\\Http\\Middleware\\MiddlewareRegistry",
     "Pulsar\\Http\\RouteContext",
     "Pulsar\\Integrity\\ManifestBuilder",
-    "Pulsar\\Integrity\\ManifestFormat",
     "Pulsar\\Integrity\\ManifestSigner",
     "Pulsar\\Integrity\\ManifestVerifier",
     "Pulsar\\Observability\\Log\\Sink\\DeferredSink",
@@ -1433,16 +1605,17 @@
     "Pulsar\\Runtime\\Http\\HttpResponseSerializer",
     "Pulsar\\Runtime\\LeakDetector",
     "Pulsar\\Runtime\\PersistentRuntime",
+    "Pulsar\\Runtime\\PersistentRuntimeFactory",
     "Pulsar\\Runtime\\RequestResetRegistry",
     "Pulsar\\Runtime\\RequestSandbox",
     "Pulsar\\Runtime\\ResourceEntry",
+    "Pulsar\\Security\\Crypto\\HmacService",
     "Pulsar\\Supervisor\\InvariantCheck\\InvariantRunner",
     "Pulsar\\Supervisor\\PreflightCheck\\DiskSpacePreflightCheck",
     "Pulsar\\Supervisor\\PreflightCheck\\MemoryPreflightCheck",
     "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunner",
     "Pulsar\\Supervisor\\StuckJobDetector",
     "Pulsar\\Supervisor\\StuckJobRecovery",
-    "Pulsar\\Supervisor\\Supervisor",
-    "Pulsar\\Support\\AtomicFileWriter"
+    "Pulsar\\Supervisor\\Supervisor"
   ]
 }

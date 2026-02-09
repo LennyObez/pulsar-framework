@@ -12,7 +12,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
-use Pulsar\Supervisor\Supervisor;
+use Pulsar\Supervisor\SupervisorInterface;
 
 use function sprintf;
 
@@ -23,7 +23,7 @@ use function sprintf;
 final class GuardianCheckCommand extends Command
 {
     public function __construct(
-        private readonly Supervisor $supervisor,
+        private readonly SupervisorInterface $supervisor,
     ) {
         parent::__construct();
     }

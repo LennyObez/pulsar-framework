@@ -13,7 +13,7 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 use Pulsar\Core\Version;
 
 use function sprintf;
@@ -24,7 +24,7 @@ use function sprintf;
 final class DiagnosticsCommand extends Command
 {
     public function __construct(
-        private readonly Kernel $kernel,
+        private readonly KernelInterface $kernel,
     ) {
         parent::__construct();
     }
@@ -56,7 +56,7 @@ final class DiagnosticsCommand extends Command
     {
         $output->info('Framework');
         $output->writeln(sprintf('  Version:      %s', Version::full()));
-        $output->writeln(sprintf('  Kernel:       %s', $this->kernel->booted ? 'Booted' : 'Not booted'));
+        $output->writeln(sprintf('  Kernel:       %s', $this->kernel->isBooted() ? 'Booted' : 'Not booted'));
 
         $extensions = $this->kernel->extensionBootstrap()?->registry;
         if ($extensions !== null) {

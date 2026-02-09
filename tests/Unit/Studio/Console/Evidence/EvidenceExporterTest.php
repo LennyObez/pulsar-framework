@@ -18,6 +18,7 @@ use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Extension\Studio\Exception\StudioException;
+use Pulsar\Security\Crypto\HmacService;
 
 use function strlen;
 
@@ -185,6 +186,7 @@ final class EvidenceExporterTest extends TestCase
 
         $exporter = new EvidenceExporter(
             store: $store,
+            hmac: new HmacService(),
             archiveMacKey: $macKey,
         );
 
@@ -222,8 +224,9 @@ final class EvidenceExporterTest extends TestCase
         // Note: MAC depends on manifest which includes exported_at timestamp,
         // so two sequential exports will have different MACs unless at same second.
         // We just verify both MACs are computed.
-        $exporter1 = new EvidenceExporter($store1, $macKey);
-        $exporter2 = new EvidenceExporter($store2, $macKey);
+        $hmac = new HmacService();
+        $exporter1 = new EvidenceExporter($store1, $hmac, $macKey);
+        $exporter2 = new EvidenceExporter($store2, $hmac, $macKey);
 
         $archive1 = $exporter1->export();
         $archive2 = $exporter2->export();

@@ -40,13 +40,17 @@ use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
 use Pulsar\Auth\TwoFactor\TwoFactorManager;
 use Pulsar\Auth\TwoFactor\TwoFactorManagerInterface;
+use Pulsar\Cache\CachedRoute;
 use Pulsar\Cache\FrameworkCache;
+use Pulsar\Cache\FrameworkCacheInterface;
+use Pulsar\Cache\RouteHandlerType;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\AuditConfig;
 use Pulsar\Config\AuthConfig;
 use Pulsar\Config\AuthorizationConfig;
 use Pulsar\Config\CircuitBreakerConfig;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Config\DatabaseConfig;
@@ -95,6 +99,7 @@ use Pulsar\Deploy\Check\TrustedProxyCheck;
 use Pulsar\Deploy\CheckSeverity;
 use Pulsar\Deploy\DeployCheck;
 use Pulsar\Deploy\DeployCheckInterface;
+use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Deploy\DeploySeverity;
 use Pulsar\Deploy\Runtime\PhpRuntime;
 use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
@@ -108,6 +113,7 @@ use Pulsar\FeatureFlag\FeatureFlagManager;
 use Pulsar\FeatureFlag\FeatureFlagManagerInterface;
 use Pulsar\FeatureFlag\FlagDefinition;
 use Pulsar\FeatureFlag\FlagEvaluationLog;
+use Pulsar\FeatureFlag\FlagEvaluationLogInterface;
 use Pulsar\FeatureFlag\FlagStorageDriver;
 use Pulsar\FeatureFlag\FlagStorageInterface;
 use Pulsar\FeatureFlag\Storage\FileFlagStorage;
@@ -125,16 +131,22 @@ use Pulsar\Http\ResponseEmitter;
 use Pulsar\Http\RouteContext;
 use Pulsar\Integrity\IntegrityPolicy;
 use Pulsar\Integrity\ManifestBuilder;
+use Pulsar\Integrity\ManifestBuilderInterface;
 use Pulsar\Integrity\ManifestSigner;
+use Pulsar\Integrity\ManifestSignerInterface;
 use Pulsar\Integrity\ManifestVerifier;
+use Pulsar\Integrity\ManifestVerifierInterface;
 use Pulsar\Observability\Diagnostics\DiagnosticsRenderer;
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
+use Pulsar\Observability\ErrorTracking\ErrorAggregatorInterface;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Observability\Log\Logger;
 use Pulsar\Observability\Log\Sink\DeferredSink;
+use Pulsar\Observability\Log\Sink\DeferredSinkInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Metrics\OpenMetricsExporter;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
+use Pulsar\Observability\Tracing\W3CTraceContextParser;
 use Pulsar\Queue\DeadLetterQueue;
 use Pulsar\Queue\Driver\InMemoryDriver;
 use Pulsar\Queue\Driver\SyncDriver;
@@ -145,13 +157,18 @@ use Pulsar\Queue\Worker;
 use Pulsar\Queue\WorkerOptions;
 use Pulsar\Resilience\CircuitBreakerRegistry;
 use Pulsar\Resilience\HealthCheck\HealthCheckRunner;
+use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
 use Pulsar\Resilience\Repair\RepairRunner;
+use Pulsar\Resilience\Repair\RepairRunnerInterface;
 use Pulsar\Resilience\RetryPolicy;
 use Pulsar\Routing\MatchedRoute;
+use Pulsar\Routing\Route;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
 use Pulsar\Runtime\LeakDetector;
+use Pulsar\Runtime\PersistentRuntimeFactory;
+use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
 use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
 use Pulsar\Scheduler\JobRegistry;
@@ -160,6 +177,10 @@ use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditSinkInterface;
 use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\EncryptorInterface;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\HmacService;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
@@ -168,7 +189,10 @@ use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
+use Pulsar\Supervisor\PreflightCheck\PreflightRunner;
+use Pulsar\Supervisor\PreflightCheck\PreflightRunnerInterface;
 use Pulsar\Supervisor\Supervisor;
+use Pulsar\Supervisor\SupervisorInterface;
 use Pulsar\Tenancy\Middleware\TenantResolutionMiddleware;
 use Pulsar\Tenancy\Resolver\HeaderTenantResolver;
 use Pulsar\Tenancy\Resolver\PathPrefixTenantResolver;
@@ -200,7 +224,7 @@ use Throwable;
  * -> DiagnosticsRoute -> Extensions (register -> preBoot -> boot -> postBoot)
  */
 #[Internal]
-final class Kernel
+final class Kernel implements KernelInterface
 {
     public private(set) bool $booted = false;
     private ContainerInterface $container;
@@ -234,6 +258,7 @@ final class Kernel
         $this->container->instance(MiddlewarePipelineInterface::class, $this->middleware);
         $this->container->instance(MiddlewareRegistry::class, $this->middlewareRegistry);
         $this->container->instance(self::class, $this);
+        $this->container->instance(KernelInterface::class, $this);
 
         // Register extension bootstrap if provided
         if ($this->extensionBootstrap !== null) {
@@ -307,7 +332,7 @@ final class Kernel
 
                 // Apply cached routes to the router
                 if ($cached !== null && $cached['routes'] !== null && $cached['routes'] !== []) {
-                    $this->router->loadCachedRoutes($cached['routes']);
+                    $this->router->loadRoutes($this->reconstructCachedRoutes($cached['routes']));
                     $routesCached = true;
 
                     if ($cached['manifest']->strict) {
@@ -401,6 +426,14 @@ final class Kernel
     }
 
     /**
+     * Whether the kernel has completed booting.
+     */
+    public function isBooted(): bool
+    {
+        return $this->booted;
+    }
+
+    /**
      * Get the extension bootstrap instance.
      */
     public function extensionBootstrap(): ?ExtensionBootstrap
@@ -411,7 +444,7 @@ final class Kernel
     /**
      * Get the config manager instance.
      */
-    public function configManager(): ?ConfigManager
+    public function configManager(): ?ConfigManagerInterface
     {
         return $this->configManager;
     }
@@ -427,7 +460,7 @@ final class Kernel
     /**
      * Get the router instance.
      */
-    public function router(): Router
+    public function router(): RouterInterface
     {
         return $this->router;
     }
@@ -637,6 +670,7 @@ final class Kernel
         $environment = $configManager->environment();
 
         $this->container->instance(ConfigManager::class, $configManager);
+        $this->container->instance(ConfigManagerInterface::class, $configManager);
         $this->container->instance(ConfigRepository::class, $repository);
         $this->container->instance(Environment::class, $environment);
 
@@ -681,6 +715,7 @@ final class Kernel
 
         $deferredSink = new DeferredSink();
         $this->container->instance(DeferredSink::class, $deferredSink);
+        $this->container->instance(DeferredSinkInterface::class, $deferredSink);
         $logger = Logger::fromConfigWithExtraSinks($observabilityConfig, [$deferredSink]);
 
         $this->container->instance(LoggerInterface::class, $logger);
@@ -717,8 +752,11 @@ final class Kernel
             $this->container->instance(RouteContext::class, $this->routeContext);
         }
 
+        $traceContextParser = new W3CTraceContextParser();
+
         $tracingMiddleware = new TracingMiddleware(
             $collector,
+            $traceContextParser,
             $observabilityConfig->tracing->samplingRate,
             $randomizer,
             $this->routeContext,
@@ -819,6 +857,7 @@ final class Kernel
 
         $this->container->instance(SensitiveDataScrubber::class, $scrubber);
         $this->container->instance(ErrorAggregator::class, $aggregator);
+        $this->container->instance(ErrorAggregatorInterface::class, $aggregator);
     }
 
     /**
@@ -898,6 +937,10 @@ final class Kernel
         $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers);
         $this->container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
 
+        // HmacService adapter — always available (no key required, delegates to static Hmac methods)
+        $hmacService = new HmacService();
+        $this->container->instance(HmacInterface::class, $hmacService);
+
         // Crypto + Audit (only if master key is available)
         $masterKeyHex = $environment->get('PULSAR_MASTER_KEY');
 
@@ -905,9 +948,11 @@ final class Kernel
             try {
                 $masterKey = MasterKey::fromHex($masterKeyHex);
                 $this->container->instance(MasterKey::class, $masterKey);
+                $this->container->instance(KeyProviderInterface::class, $masterKey);
 
                 $encryptor = Encryptor::fromMasterKey($masterKey);
                 $this->container->instance(Encryptor::class, $encryptor);
+                $this->container->instance(EncryptorInterface::class, $encryptor);
 
                 // Framework cache (skip if pre-boot already registered)
                 if (!$this->container->has(FrameworkCache::class)) {
@@ -915,8 +960,9 @@ final class Kernel
                         || $environment->get('CACHE_ENCRYPT') === '1';
                     $configPath = $this->configManager?->configPath();
                     if ($configPath !== null) {
-                        $frameworkCache = new FrameworkCache(dirname($configPath), $masterKey, $encrypt);
+                        $frameworkCache = new FrameworkCache(dirname($configPath), $masterKey, $hmacService, $encrypt, $encrypt ? $encryptor : null);
                         $this->container->instance(FrameworkCache::class, $frameworkCache);
+                        $this->container->instance(FrameworkCacheInterface::class, $frameworkCache);
                     }
                 }
 
@@ -1208,6 +1254,7 @@ final class Kernel
         // Evaluation log
         $evaluationLog = new FlagEvaluationLog();
         $this->container->instance(FlagEvaluationLog::class, $evaluationLog);
+        $this->container->instance(FlagEvaluationLogInterface::class, $evaluationLog);
 
         // Manager
         $manager = new FeatureFlagManager($storage, $evaluationLog, $flagConfig->defaultState);
@@ -1308,10 +1355,12 @@ final class Kernel
         // Health check runner
         $healthCheckRunner = new HealthCheckRunner();
         $this->container->instance(HealthCheckRunner::class, $healthCheckRunner);
+        $this->container->instance(HealthCheckRunnerInterface::class, $healthCheckRunner);
 
         // Repair runner
         $repairRunner = new RepairRunner();
         $this->container->instance(RepairRunner::class, $repairRunner);
+        $this->container->instance(RepairRunnerInterface::class, $repairRunner);
     }
 
     /**
@@ -1434,6 +1483,12 @@ final class Kernel
             auditLogger: $auditLogger,
         );
         $this->container->instance(Supervisor::class, $supervisor);
+        $this->container->instance(SupervisorInterface::class, $supervisor);
+
+        // Preflight runner (extracted for direct injection)
+        $preflightRunner = new PreflightRunner([]);
+        $this->container->instance(PreflightRunner::class, $preflightRunner);
+        $this->container->instance(PreflightRunnerInterface::class, $preflightRunner);
     }
 
     /**
@@ -1476,9 +1531,11 @@ final class Kernel
 
         $builder = new ManifestBuilder($basePath);
         $this->container->instance(ManifestBuilder::class, $builder);
+        $this->container->instance(ManifestBuilderInterface::class, $builder);
 
         $verifier = new ManifestVerifier($basePath);
         $this->container->instance(ManifestVerifier::class, $verifier);
+        $this->container->instance(ManifestVerifierInterface::class, $verifier);
 
         // Signer (requires MasterKey)
         if ($this->container->has(MasterKey::class)) {
@@ -1486,8 +1543,11 @@ final class Kernel
             $masterKey = $this->container->get(MasterKey::class);
 
             try {
-                $signer = new ManifestSigner($masterKey);
+                /** @var HmacInterface $hmacService */
+                $hmacService = $this->container->get(HmacInterface::class);
+                $signer = new ManifestSigner($hmacService, $masterKey);
                 $this->container->instance(ManifestSigner::class, $signer);
+                $this->container->instance(ManifestSignerInterface::class, $signer);
             } catch (SodiumException) {
                 // Signing key derivation failed — skip signer registration
             }
@@ -1576,6 +1636,7 @@ final class Kernel
         });
 
         $this->container->instance(DeployCheck::class, $deployCheck);
+        $this->container->instance(DeployCheckRunnerInterface::class, $deployCheck);
     }
 
     /**
@@ -1674,6 +1735,11 @@ final class Kernel
         // Create request sandbox
         $sandbox = new RequestSandbox($this->container, $registry, $leakDetector);
         $this->container->instance(RequestSandbox::class, $sandbox);
+
+        // Runtime factory (encapsulates PersistentRuntime construction)
+        $runtimeFactory = new PersistentRuntimeFactory($this->container);
+        $this->container->instance(PersistentRuntimeFactory::class, $runtimeFactory);
+        $this->container->instance(PersistentRuntimeFactoryInterface::class, $runtimeFactory);
     }
 
     /**
@@ -1717,6 +1783,42 @@ final class Kernel
 
             return Response::html($renderer->render());
         });
+    }
+
+    /**
+     * Reconstruct Route objects from cached route DTOs.
+     *
+     * This conversion lives in the composition root so that Router
+     * never imports Cache-internal types (CachedRoute, RouteHandlerType).
+     *
+     * @param list<CachedRoute> $cachedRoutes
+     * @return list<Route>
+     */
+    private function reconstructCachedRoutes(array $cachedRoutes): array
+    {
+        $routes = [];
+
+        foreach ($cachedRoutes as $cached) {
+            /** @var class-string $resolvable */
+            $resolvable = $cached->handler->resolvable;
+            $handler = match ($cached->handler->type) {
+                RouteHandlerType::Invokable => $resolvable,
+                RouteHandlerType::Method => [$resolvable, $cached->handler->method ?? '__invoke'],
+            };
+
+            $routes[] = new Route(
+                methods: $cached->methods,
+                path: $cached->path,
+                handler: $handler,
+                name: $cached->name,
+                attributes: $cached->attributes,
+                middleware: $cached->middleware,
+                constraints: $cached->constraints,
+                host: $cached->host,
+            );
+        }
+
+        return $routes;
     }
 
     /**

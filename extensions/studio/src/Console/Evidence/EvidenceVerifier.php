@@ -16,7 +16,7 @@ use const JSON_UNESCAPED_UNICODE;
 
 use JsonException;
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Crypto\HmacInterface;
 use SodiumException;
 
 /**
@@ -32,6 +32,10 @@ use SodiumException;
 #[Internal]
 final class EvidenceVerifier
 {
+    public function __construct(
+        private readonly ?HmacInterface $hmac = null,
+    ) {}
+
     /**
      * Verify an evidence archive or chain links.
      *
@@ -107,7 +111,7 @@ final class EvidenceVerifier
             }
 
             if ($chainMacKey !== null && isset($link['link_mac']) && is_string($link['link_mac'])) {
-                if (!Hmac::verifyHex($expectedHash, $link['link_mac'], $chainMacKey)) {
+                if ($this->hmac !== null && !$this->hmac->verifyHex($expectedHash, $link['link_mac'], $chainMacKey)) {
                     $failures[] = [
                         'index' => $index,
                         'event_id' => $eventId,
@@ -156,7 +160,11 @@ final class EvidenceVerifier
         $manifestJson = json_encode($archive->manifest, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         $archiveDigest = hash('sha256', $manifestJson);
 
-        return Hmac::verifyHex($archiveDigest, $archive->mac, $archiveMacKey);
+        if ($this->hmac === null) {
+            return false;
+        }
+
+        return $this->hmac->verifyHex($archiveDigest, $archive->mac, $archiveMacKey);
     }
 
     /**

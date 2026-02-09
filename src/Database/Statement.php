@@ -10,6 +10,7 @@ use function is_int;
 use PDO;
 use PDOException;
 use PDOStatement;
+use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
 /**
@@ -17,6 +18,7 @@ use Pulsar\Database\Exception\DatabaseException;
  *
  * Provides a fluent interface for binding parameters and executing statements.
  */
+#[Api]
 final class Statement
 {
     /** @var array<string, mixed> */

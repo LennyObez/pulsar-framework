@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\CacheIntegrity;
 use Pulsar\Cache\ContainerCache;
+use Pulsar\Security\Crypto\HmacService;
 
 use function strlen;
 
@@ -23,7 +24,7 @@ final class ContainerCacheTest extends TestCase
     protected function setUp(): void
     {
         $this->hmacKey = random_bytes(32);
-        $this->integrity = new CacheIntegrity($this->hmacKey);
+        $this->integrity = new CacheIntegrity(new HmacService(), $this->hmacKey);
         $this->containerCache = new ContainerCache($this->integrity);
         $this->tempDir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'pulsar_container_cache_test_' . bin2hex(random_bytes(8));
         mkdir($this->tempDir, 0o750, true);

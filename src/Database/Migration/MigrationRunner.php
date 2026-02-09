@@ -8,6 +8,7 @@ use function array_diff_key;
 use function array_filter;
 use function array_values;
 
+use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Exception\DatabaseException;
@@ -26,6 +27,7 @@ use function usort;
  * assigns one batch number; `rollbackLastBatch()` rolls back all
  * migrations in the highest batch in reverse version order.
  */
+#[Api]
 final readonly class MigrationRunner
 {
     public function __construct(
