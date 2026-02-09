@@ -51,4 +51,10 @@ final class AuthenticationException extends RuntimeException
     {
         return new self('Authentication token is invalid');
     }
+
+    #[NoDiscard]
+    public static function invalidIdentityData(string $reason): self
+    {
+        return new self(sprintf('Invalid identity data: %s', $reason));
+    }
 }

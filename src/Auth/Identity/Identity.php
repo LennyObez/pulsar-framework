@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Identity;
 
+use function array_all;
 use function array_key_exists;
 use function in_array;
+use function is_array;
+use function is_string;
 
 use NoDiscard;
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Auth\Exception\AuthenticationException;
 
 /**
  * Immutable value object representing an authenticated identity.
@@ -101,22 +105,37 @@ readonly class Identity implements IdentityInterface
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $id */
         $id = $data['id'] ?? '';
-        /** @var string $displayName */
-        $displayName = $data['display_name'] ?? '';
-        /** @var list<string> $roles */
-        $roles = $data['roles'] ?? [];
-        /** @var string $twoFactorStatusValue */
-        $twoFactorStatusValue = $data['two_factor_status'] ?? TwoFactorStatus::Disabled->value;
-        /** @var array<string, mixed> $attributes */
-        $attributes = $data['attributes'] ?? [];
+        if (!is_string($id) || $id === '') {
+            throw AuthenticationException::invalidIdentityData('id must be a non-empty string');
+        }
 
+        $displayName = $data['display_name'] ?? '';
+        if (!is_string($displayName)) {
+            throw AuthenticationException::invalidIdentityData('display_name must be a string');
+        }
+
+        $roles = $data['roles'] ?? [];
+        if (!is_array($roles) || !array_all($roles, static fn(mixed $v): bool => is_string($v))) {
+            throw AuthenticationException::invalidIdentityData('roles must be a list of strings');
+        }
+
+        $attributes = $data['attributes'] ?? [];
+        if (!is_array($attributes)) {
+            throw AuthenticationException::invalidIdentityData('attributes must be an array');
+        }
+
+        /** @var int|string $twoFactorStatusRaw */
+        $twoFactorStatusRaw = $data['two_factor_status'] ?? TwoFactorStatus::Disabled->value;
+        $twoFactorStatus = TwoFactorStatus::from($twoFactorStatusRaw);
+
+        /** @var list<string> $roles */
+        /** @var array<string, mixed> $attributes */
         return new self(
             id: $id,
             displayName: $displayName,
             roles: $roles,
-            twoFactorStatus: TwoFactorStatus::from($twoFactorStatusValue),
+            twoFactorStatus: $twoFactorStatus,
             attributes: $attributes,
         );
     }

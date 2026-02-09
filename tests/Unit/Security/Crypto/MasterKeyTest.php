@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\Crypto;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -86,25 +87,25 @@ final class MasterKeyTest extends TestCase
     }
 
     #[Test]
-    public function contextNormalizationPadShort(): void
+    public function shortContextThrows(): void
     {
         $masterKey = MasterKey::fromHex($this->validHex);
 
-        // Short context should be padded — no error
-        $subKey = $masterKey->deriveSubKey(1, 'ab');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('KDF context must be exactly 8 bytes, got 2');
 
-        self::assertSame(SODIUM_CRYPTO_SECRETBOX_KEYBYTES, strlen($subKey));
+        $masterKey->deriveSubKey(1, 'ab');
     }
 
     #[Test]
-    public function contextNormalizationTruncateLong(): void
+    public function longContextThrows(): void
     {
         $masterKey = MasterKey::fromHex($this->validHex);
 
-        // Long context should be truncated — no error
-        $subKey = $masterKey->deriveSubKey(1, 'this_is_a_very_long_context');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('KDF context must be exactly 8 bytes, got 27');
 
-        self::assertSame(SODIUM_CRYPTO_SECRETBOX_KEYBYTES, strlen($subKey));
+        $masterKey->deriveSubKey(1, 'this_is_a_very_long_context');
     }
 
     #[Test]

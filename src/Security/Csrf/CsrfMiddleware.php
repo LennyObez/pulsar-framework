@@ -8,13 +8,20 @@ use function htmlspecialchars;
 use function is_string;
 
 use Override;
+
+use function parse_url;
+use function preg_replace;
+
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
+use function rtrim;
 use function sprintf;
+use function strtolower;
+use function trim;
 
 /**
  * CSRF protection middleware.
@@ -42,11 +49,22 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
             return $next($request);
         }
 
-        // Safe methods do not require CSRF validation
         if ($request->method->isSafe()) {
             return $next($request);
         }
 
+        // Layer 1: Origin/Referer validation
+        if ($this->config->originValidation !== 'off' && $this->config->trustedOrigins !== []) {
+            $originResult = $this->validateOrigin($request);
+            if ($originResult === false) {
+                return $this->forbiddenResponse($request, 'Cross-origin request rejected');
+            }
+            if ($originResult === null && $this->config->originValidation === 'required') {
+                return $this->forbiddenResponse($request, 'Origin header required for unsafe methods');
+            }
+        }
+
+        // Layer 2: Synchronizer token (always required)
         $token = $this->extractToken($request);
 
         if ($token === null) {
@@ -80,6 +98,67 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
         }
 
         return null;
+    }
+
+    /**
+     * Validate Origin (or Referer fallback) against configured trusted origins.
+     *
+     * @return bool|null true = matched, false = rejected, null = no header present
+     */
+    private function validateOrigin(Request $request): ?bool
+    {
+        $origin = $request->header('Origin');
+        if ($origin !== null && $origin !== 'null') {
+            return $this->originMatchesTrusted($origin);
+        }
+
+        $referer = $request->header('Referer');
+        if ($referer !== null) {
+            $refererOrigin = $this->extractOriginFromUrl($referer);
+            if ($refererOrigin !== null) {
+                return $this->originMatchesTrusted($refererOrigin);
+            }
+        }
+
+        return null;
+    }
+
+    private function originMatchesTrusted(string $origin): bool
+    {
+        $origin = strtolower(rtrim(trim($origin), '/'));
+
+        foreach ($this->config->trustedOrigins as $trusted) {
+            $trusted = strtolower(rtrim($trusted, '/'));
+            if ($origin === $trusted) {
+                return true;
+            }
+            if ($this->normalizePort($origin) === $this->normalizePort($trusted)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function normalizePort(string $origin): string
+    {
+        $origin = strtolower(trim($origin));
+        $origin = preg_replace('#^https://([^/]+):443$#', 'https://$1', $origin) ?? $origin;
+        $origin = preg_replace('#^http://([^/]+):80$#', 'http://$1', $origin) ?? $origin;
+        return $origin;
+    }
+
+    private function extractOriginFromUrl(string $url): ?string
+    {
+        $parsed = parse_url($url);
+        if (!isset($parsed['scheme'], $parsed['host'])) {
+            return null;
+        }
+        $origin = $parsed['scheme'] . '://' . $parsed['host'];
+        if (isset($parsed['port'])) {
+            $origin .= ':' . $parsed['port'];
+        }
+        return $origin;
     }
 
     /**

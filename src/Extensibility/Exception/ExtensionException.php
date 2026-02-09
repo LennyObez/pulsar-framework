@@ -77,4 +77,10 @@ class ExtensionException extends RuntimeException
     {
         return new self(sprintf('Failed to register extension "%s": %s', $name, $reason));
     }
+
+    #[NoDiscard]
+    public static function bootBeforeRegister(): self
+    {
+        return new self('Extensions must be registered before booting');
+    }
 }

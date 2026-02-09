@@ -15,6 +15,8 @@ use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Hmac;
 use SodiumException;
 
+use function strlen;
+
 /**
  * Immutable audit log entry with HMAC chain for tamper evidence.
  *
@@ -142,6 +144,11 @@ readonly class AuditEntry
 
     /**
      * Build the message string for HMAC computation.
+     *
+     * Uses length-prefixed encoding for each field to prevent canonicalization
+     * collisions. Each field is encoded as `<byte-length>:<value>`, joined by
+     * newlines. This is unambiguous: field boundaries are explicit via
+     * byte-length prefix, so no field content can shift the boundary.
      */
     private static function buildMessage(
         string $id,
@@ -154,16 +161,11 @@ readonly class AuditEntry
         string $metadataJson,
         string $previousHmac,
     ): string {
-        return implode('|', [
-            $id,
-            $event,
-            $outcome,
-            $actor,
-            $action,
-            $resource,
-            $timestamp,
-            $metadataJson,
-            $previousHmac,
-        ]);
+        $fields = [$id, $event, $outcome, $actor, $action, $resource, $timestamp, $metadataJson, $previousHmac];
+        $parts = [];
+        foreach ($fields as $field) {
+            $parts[] = strlen($field) . ':' . $field;
+        }
+        return implode("\n", $parts);
     }
 }

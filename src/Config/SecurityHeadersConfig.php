@@ -18,12 +18,33 @@ use Pulsar\Api\Api;
 #[Api]
 readonly class SecurityHeadersConfig
 {
+    private const array MINIMUM_HEADERS = [
+        'X-Content-Type-Options' => 'nosniff',
+        'X-Frame-Options' => 'DENY',
+        'Referrer-Policy' => 'strict-origin-when-cross-origin',
+        'X-XSS-Protection' => '0',
+        'Permissions-Policy' => 'camera=(), microphone=(), geolocation=()',
+    ];
+
     /**
      * @param array<string, string> $headers Header name => value pairs applied to every response
      */
     public function __construct(
         public array $headers,
     ) {}
+
+    /**
+     * Return the effective headers: minimum defaults merged with user config.
+     *
+     * User-configured headers take precedence over minimum defaults.
+     *
+     * @return array<string, string>
+     */
+    #[NoDiscard]
+    public function effectiveHeaders(): array
+    {
+        return [...self::MINIMUM_HEADERS, ...$this->headers];
+    }
 
     /**
      * Build from the raw security headers config array.

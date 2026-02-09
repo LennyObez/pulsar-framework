@@ -181,4 +181,76 @@ final class AuditEntryTest extends TestCase
 
         self::assertNotSame($entry1->hmac, $entry2->hmac);
     }
+
+    #[Test]
+    public function fieldsContainingDelimitersProduceDistinctHmacs(): void
+    {
+        $ts = new DateTimeImmutable('2025-01-01T00:00:00.000000+00:00');
+
+        // Actor "admin\nlogin" vs actor "admin" + action "login" should never collide
+        $entry1 = AuditEntry::create(
+            id: 'e1',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: "admin\nlogin",
+            action: 'x',
+            resource: '',
+            timestamp: $ts,
+            metadata: [],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        $entry2 = AuditEntry::create(
+            id: 'e1',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: 'admin',
+            action: "login\nx",
+            resource: '',
+            timestamp: $ts,
+            metadata: [],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        self::assertNotSame($entry1->hmac, $entry2->hmac);
+    }
+
+    #[Test]
+    public function multiBytUtf8MetadataProducesCorrectHmac(): void
+    {
+        $ts = new DateTimeImmutable('2025-01-01T00:00:00.000000+00:00');
+
+        $entry = AuditEntry::create(
+            id: 'utf8-test',
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: 'operador',
+            action: 'transferência',
+            resource: '/pagamento',
+            timestamp: $ts,
+            metadata: ['descrição' => 'Ação: €100'],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        self::assertTrue($entry->verify($this->auditKey));
+
+        // Different UTF-8 content must produce different HMAC
+        $entry2 = AuditEntry::create(
+            id: 'utf8-test',
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: 'operador',
+            action: 'transferência',
+            resource: '/pagamento',
+            timestamp: $ts,
+            metadata: ['descrição' => 'Ação: £100'],
+            previousHmac: 'seed',
+            auditKey: $this->auditKey,
+        );
+
+        self::assertNotSame($entry->hmac, $entry2->hmac);
+    }
 }

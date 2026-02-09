@@ -129,7 +129,7 @@ final class ExtensionBootstrap
         }
 
         if (!$this->registered) {
-            throw new ExtensionException('Extensions must be registered before booting');
+            throw ExtensionException::bootBeforeRegister();
         }
 
         // Phase 2: preBoot (optional — only PreBootExtensionInterface implementors)

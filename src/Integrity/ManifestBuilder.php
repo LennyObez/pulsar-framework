@@ -24,6 +24,7 @@ use function is_file;
 use function ltrim;
 
 use Pulsar\Api\Internal;
+use Pulsar\Core\Version;
 use Pulsar\Integrity\Exception\IntegrityException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -51,8 +52,6 @@ final class ManifestBuilder implements ManifestBuilderInterface
 {
     private const string ALGORITHM = 'sha256';
     private const int MANIFEST_VERSION = 1;
-    private const string FRAMEWORK_VERSION = '1.0.0-rc.2';
-
     public function __construct(
         private readonly string $basePath,
     ) {}
@@ -108,7 +107,7 @@ final class ManifestBuilder implements ManifestBuilderInterface
             version: self::MANIFEST_VERSION,
             algorithm: self::ALGORITHM,
             generatedAt: time(),
-            frameworkVersion: self::FRAMEWORK_VERSION,
+            frameworkVersion: Version::full(),
             entryCount: count($entries),
             entries: $entries,
         );

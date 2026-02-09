@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Crypto;
 
+use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Security\Exception\SecurityException;
 
@@ -123,14 +124,21 @@ final class MasterKey implements KeyProviderInterface
     }
 
     /**
-     * Normalize context to exactly CONTEXT_LENGTH bytes.
+     * Validate that context is exactly CONTEXT_LENGTH bytes.
+     *
+     * @throws InvalidArgumentException If context length does not match
      */
     private static function normalizeContext(string $context): string
     {
-        if (strlen($context) >= self::CONTEXT_LENGTH) {
-            return substr($context, 0, self::CONTEXT_LENGTH);
+        if (strlen($context) !== self::CONTEXT_LENGTH) {
+            throw new InvalidArgumentException(sprintf(
+                'KDF context must be exactly %d bytes, got %d. Context: "%s"',
+                self::CONTEXT_LENGTH,
+                strlen($context),
+                $context,
+            ));
         }
 
-        return str_pad($context, self::CONTEXT_LENGTH, '_');
+        return $context;
     }
 }

@@ -204,11 +204,7 @@ use Pulsar\Tenancy\TenantResolverStrategy;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use ReflectionException;
-use RuntimeException;
 use SodiumException;
-
-use function sprintf;
-
 use Throwable;
 
 /**
@@ -516,8 +512,7 @@ final class Kernel implements KernelInterface
     /**
      * Dispatch the request to the matched route handler.
      *
-     * @throws RoutingException When no route matches or method is not allowed
-     * @throws RuntimeException If the handler is invalid or returns an unexpected type
+     * @throws RoutingException When no route matches, method is not allowed, or handler is invalid
      * @throws ContainerException If a container error occurs resolving a controller
      * @throws NotFoundException If a controller binding is not found in the container
      * @throws Error If a controller class cannot be instantiated
@@ -607,13 +602,10 @@ final class Kernel implements KernelInterface
             if (method_exists($controller, '__invoke')) {
                 $response = $controller($request, $matched->parameters);
             } else {
-                throw new RuntimeException(sprintf(
-                    'Controller "%s" must be callable or specify a method',
-                    $handler,
-                ));
+                throw RoutingException::invalidHandler($handler);
             }
         } else {
-            throw new RuntimeException('Invalid route handler');
+            throw RoutingException::nonCallableHandler();
         }
 
         // Convert string responses to Response objects
@@ -622,10 +614,7 @@ final class Kernel implements KernelInterface
         }
 
         if (!$response instanceof Response) {
-            throw new RuntimeException(sprintf(
-                'Handler must return a Response or string, got %s',
-                get_debug_type($response),
-            ));
+            throw RoutingException::unexpectedReturnType(get_debug_type($response));
         }
 
         return $response;
