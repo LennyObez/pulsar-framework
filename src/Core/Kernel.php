@@ -448,14 +448,11 @@ final class Kernel implements KernelInterface
      */
     private function addRouteAttributesToRequest(Request $request, MatchedRoute $matched): Request
     {
-        $request = $request->withAttribute('_route', $matched);
-        $request = $request->withAttribute('_route_name', $matched->getName());
-
-        foreach ($matched->parameters as $name => $value) {
-            $request = $request->withAttribute($name, $value);
-        }
-
-        return $request;
+        return $request->withAttributes([
+            '_route' => $matched,
+            '_route_name' => $matched->getName(),
+            ...$matched->parameters,
+        ]);
     }
 
     /**

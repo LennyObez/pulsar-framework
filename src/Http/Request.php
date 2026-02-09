@@ -22,6 +22,8 @@ use Pulsar\Api\Api;
 
 use function str_contains;
 
+use WeakMap;
+
 /**
  * Immutable HTTP request value object.
  */
@@ -110,6 +112,22 @@ readonly class Request
     }
 
     /**
+     * Return a new request with multiple attributes merged at once.
+     *
+     * More efficient than chaining multiple `withAttribute()` calls because
+     * only a single clone is performed regardless of the number of attributes.
+     *
+     * @param array<string, mixed> $attributes Attributes to merge (overwrites existing keys)
+     *
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
+     */
+    #[NoDiscard]
+    public function withAttributes(array $attributes): self
+    {
+        return clone($this, ['attributes' => [...$this->attributes, ...$attributes]]);
+    }
+
+    /**
      * Return a new request without the specified attribute.
      *
      * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
@@ -127,10 +145,44 @@ readonly class Request
      * Decode the request body as JSON when Content-Type contains application/json.
      *
      * Returns an empty array on invalid JSON, empty body, or wrong content type.
+     * Results are memoized per-instance via a WeakMap so that repeated calls
+     * (e.g. `all()`, `input()`, `has()`) do not re-decode the body.
      *
      * @return array<string, mixed>
      */
     public function json(): array
+    {
+        /**
+         * Function-scoped static WeakMap avoids the readonly-class restriction
+         * on static properties while still providing per-instance memoization.
+         *
+         * @var WeakMap<self, array<string, mixed>>|null $cache
+         */
+        static $cache = null;
+
+        if ($cache === null) {
+            /** @var WeakMap<self, array<string, mixed>> $map */
+            $map = new WeakMap();
+            $cache = $map;
+        }
+
+        if (isset($cache[$this])) {
+            /** @var array<string, mixed> */
+            return $cache[$this];
+        }
+
+        $result = $this->decodeJsonBody();
+        $cache[$this] = $result;
+
+        return $result;
+    }
+
+    /**
+     * Perform the actual JSON body decoding (no caching).
+     *
+     * @return array<string, mixed>
+     */
+    private function decodeJsonBody(): array
     {
         $contentType = $this->header('Content-Type');
         if ($contentType === null || !str_contains($contentType, 'application/json')) {
