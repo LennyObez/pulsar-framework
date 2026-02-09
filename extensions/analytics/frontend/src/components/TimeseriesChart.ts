@@ -1,4 +1,4 @@
-import type { TimeseriesPoint } from "../types";
+import type { TimeseriesPoint } from '../types';
 
 /**
  * Lightweight canvas-based time-series chart.
@@ -7,15 +7,15 @@ import type { TimeseriesPoint } from "../types";
  * For production with uPlot, replace this with the uPlot wrapper.
  */
 export function renderTimeseriesChart(container: HTMLElement, data: TimeseriesPoint[]): void {
-  container.innerHTML = "";
+  container.innerHTML = '';
 
   if (data.length === 0) {
     container.innerHTML = '<p class="chart-empty">No data for this period</p>';
     return;
   }
 
-  const canvas = document.createElement("canvas");
-  canvas.className = "timeseries-canvas";
+  const canvas = document.createElement('canvas');
+  canvas.className = 'timeseries-canvas';
   container.appendChild(canvas);
 
   const rect = container.getBoundingClientRect();
@@ -28,7 +28,7 @@ export function renderTimeseriesChart(container: HTMLElement, data: TimeseriesPo
   canvas.style.width = `${w}px`;
   canvas.style.height = `${h}px`;
 
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
   ctx.scale(dpr, dpr);
@@ -41,17 +41,17 @@ export function renderTimeseriesChart(container: HTMLElement, data: TimeseriesPo
   const maxVal = Math.max(...values, 1);
 
   // Grid lines
-  const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const gridColor = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
-  const textColor = isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)";
-  const lineColor = isDark ? "#818cf8" : "#6366f1";
-  const fillColor = isDark ? "rgba(129,140,248,0.15)" : "rgba(99,102,241,0.1)";
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const textColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
+  const lineColor = isDark ? '#818cf8' : '#6366f1';
+  const fillColor = isDark ? 'rgba(129,140,248,0.15)' : 'rgba(99,102,241,0.1)';
 
   ctx.strokeStyle = gridColor;
   ctx.lineWidth = 1;
-  ctx.font = "11px system-ui, -apple-system, sans-serif";
+  ctx.font = '11px system-ui, -apple-system, sans-serif';
   ctx.fillStyle = textColor;
-  ctx.textAlign = "right";
+  ctx.textAlign = 'right';
 
   for (let i = 0; i <= 4; i++) {
     const y = pad.top + plotH - (plotH * i) / 4;
@@ -63,7 +63,7 @@ export function renderTimeseriesChart(container: HTMLElement, data: TimeseriesPo
   }
 
   // X-axis labels
-  ctx.textAlign = "center";
+  ctx.textAlign = 'center';
   const labelInterval = Math.max(1, Math.floor(data.length / 7));
   for (let i = 0; i < data.length; i += labelInterval) {
     const x = pad.left + (plotW * i) / (data.length - 1 || 1);
@@ -89,7 +89,7 @@ export function renderTimeseriesChart(container: HTMLElement, data: TimeseriesPo
   ctx.beginPath();
   ctx.strokeStyle = lineColor;
   ctx.lineWidth = 2;
-  ctx.lineJoin = "round";
+  ctx.lineJoin = 'round';
   for (let i = 0; i < data.length; i++) {
     const x = pad.left + (plotW * i) / (data.length - 1 || 1);
     const y = pad.top + plotH - (plotH * data[i].value) / maxVal;

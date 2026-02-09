@@ -41,6 +41,16 @@ final class Router implements RouterInterface
     private array $routesByMethod = [];
 
     /**
+     * O(1) hash map for static routes (no dynamic segments).
+     *
+     * Indexed by HTTP method then normalized path, enabling constant-time
+     * lookups for routes without parameters — the most common case.
+     *
+     * @var array<string, array<string, Route>>
+     */
+    private array $staticRoutes = [];
+
+    /**
      * Explicit parameter-to-model bindings registered via model().
      *
      * @var list<ExplicitBinding>
@@ -76,12 +86,20 @@ final class Router implements RouterInterface
     }
 
     /**
-     * Add a route to the method-indexed lookup table.
+     * Add a route to the method-indexed and static lookup tables.
      */
     private function indexRouteByMethod(Route $route): void
     {
         foreach ($route->methods as $method) {
             $this->routesByMethod[$method->value][] = $route;
+        }
+
+        // Index static routes (no dynamic segments) for O(1) lookup
+        if ($route->compiledPattern === null && $route->host === null) {
+            $normalizedPath = '/' . trim($route->path, '/');
+            foreach ($route->methods as $method) {
+                $this->staticRoutes[$method->value][$normalizedPath] = $route;
+            }
         }
     }
 
@@ -222,6 +240,13 @@ final class Router implements RouterInterface
      */
     public function match(Method $method, string $path, ?string $host = null): MatchedRoute
     {
+        $normalizedPath = '/' . trim($path, '/');
+
+        // Fast path: O(1) lookup for static routes without host constraints
+        if ($host === null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
+            return new MatchedRoute($this->staticRoutes[$method->value][$normalizedPath], []);
+        }
+
         // Hot path: only scan routes that accept the requested method
         $candidates = $this->routesByMethod[$method->value] ?? [];
 

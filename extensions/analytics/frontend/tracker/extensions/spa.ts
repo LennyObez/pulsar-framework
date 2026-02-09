@@ -8,7 +8,7 @@ window.plsr.ext((send, site) => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       send({
-        type: "pageview",
+        type: 'pageview',
         site,
         url: location.href,
         referrer: document.referrer,
@@ -18,20 +18,16 @@ window.plsr.ext((send, site) => {
   };
 
   const orig = history.pushState.bind(history);
-  history.pushState = function (
-    ...args: Parameters<typeof history.pushState>
-  ): void {
+  history.pushState = function (...args: Parameters<typeof history.pushState>): void {
     orig(...args);
     fire();
   };
 
   const origR = history.replaceState.bind(history);
-  history.replaceState = function (
-    ...args: Parameters<typeof history.replaceState>
-  ): void {
+  history.replaceState = function (...args: Parameters<typeof history.replaceState>): void {
     origR(...args);
     fire();
   };
 
-  window.addEventListener("popstate", fire);
+  window.addEventListener('popstate', fire);
 });

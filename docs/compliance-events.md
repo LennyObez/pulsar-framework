@@ -15,9 +15,9 @@ The system supports controls for:
 
 All compliance events require envelope-based dispatch (`#[RequiresEnvelope]`), which adds integrity hashing, correlation metadata, and schema versioning to every event in transit.
 
-## Event Taxonomy
+## Event taxonomy
 
-### GDPR Events
+### GDPR events
 
 | Event Class                | Event Type                   | Description                                                          |
 | -------------------------- | ---------------------------- | -------------------------------------------------------------------- |
@@ -30,7 +30,7 @@ All compliance events require envelope-based dispatch (`#[RequiresEnvelope]`), w
 | `BreachNotified`           | `breach_notified`            | Records notification of a breach to a supervisory authority          |
 | `DpiaCompleted`            | `dpia_completed`             | Records completion of a Data Protection Impact Assessment            |
 
-### HIPAA Events
+### HIPAA events
 
 | Event Class            | Event Type               | Description                                    |
 | ---------------------- | ------------------------ | ---------------------------------------------- |
@@ -41,7 +41,7 @@ All compliance events require envelope-based dispatch (`#[RequiresEnvelope]`), w
 | `SecurityIncident`     | `security_incident`      | Records a security incident affecting ePHI     |
 | `AuditReviewCompleted` | `audit_review_completed` | Records completion of a HIPAA audit review     |
 
-### PCI-DSS Events
+### PCI-DSS events
 
 | Event Class                | Event Type                   | Description                                 |
 | -------------------------- | ---------------------------- | ------------------------------------------- |
@@ -51,7 +51,7 @@ All compliance events require envelope-based dispatch (`#[RequiresEnvelope]`), w
 | `PenetrationTestCompleted` | `penetration_test_completed` | Records completion of a penetration test    |
 | `VulnerabilityFound`       | `vulnerability_found`        | Records discovery of a vulnerability        |
 
-### SOX Events
+### SOX events
 
 | Event Class             | Event Type                | Description                                                |
 | ----------------------- | ------------------------- | ---------------------------------------------------------- |
@@ -60,7 +60,7 @@ All compliance events require envelope-based dispatch (`#[RequiresEnvelope]`), w
 | `AuditTrailVerified`    | `audit_trail_verified`    | Records verification of audit trail integrity              |
 | `ControlTestCompleted`  | `control_test_completed`  | Records completion of an internal control test             |
 
-### DORA Events
+### DORA events
 
 | Event Class               | Event Type                  | Description                                         |
 | ------------------------- | --------------------------- | --------------------------------------------------- |
@@ -69,7 +69,7 @@ All compliance events require envelope-based dispatch (`#[RequiresEnvelope]`), w
 | `ResilienceTestCompleted` | `resilience_test_completed` | Records completion of a resilience test             |
 | `ThirdPartyRiskAssessed`  | `third_party_risk_assessed` | Records completion of a third-party risk assessment |
 
-### AML/KYC Events
+### AML/KYC events
 
 | Event Class                  | Event Type                     | Description                                            |
 | ---------------------------- | ------------------------------ | ------------------------------------------------------ |
@@ -78,7 +78,7 @@ All compliance events require envelope-based dispatch (`#[RequiresEnvelope]`), w
 | `SanctionsChecked`           | `sanctions_checked`            | Records completion of a sanctions list check           |
 | `SuspiciousActivityDetected` | `suspicious_activity_detected` | Records detection of suspicious activity requiring SAR |
 
-## Authorization Events
+## Authorization events
 
 Authorization events live in `Pulsar\Auth\Authorization\Event` and implement `EnvelopeRequiredEvent` directly (rather than extending `ComplianceEvent`). They support controls for SOX audit trail requirements, HIPAA access logging, and PCI-DSS privileged access tracking.
 
@@ -105,7 +105,7 @@ $event = AuthorizationGranted::create(
 );
 ```
 
-## Emitting Compliance Events
+## Emitting compliance events
 
 All compliance events are marked with `#[RequiresEnvelope]` and must be dispatched via `EventEnvelope`. The envelope adds a SHA-256 payload hash computed from canonical serialization (event type + schema version + recursively key-sorted JSON payload).
 
@@ -143,9 +143,9 @@ The `EventEnvelope` computes a `payloadHash` using SHA-256 over a canonical inpu
 
 ## Pseudonymization
 
-The pseudonymization service (`PseudonymizationService`) provides HMAC-based pseudonym generation backed by libsodium's BLAKE2b keyed hashing. It supports controls for GDPR Article 4(5) pseudonymization and HIPAA Safe Harbor de-identification.
+The pseudonymization service (`PseudonymizationService`) provides pseudonym generation backed by libsodium's keyed BLAKE2b hashing (`sodium_crypto_generichash` with a key parameter). It supports controls for GDPR Article 4(5) pseudonymization and HIPAA Safe Harbor de-identification.
 
-### How It Works
+### How it works
 
 1. A purpose-specific subkey is derived from the application `MasterKey` using `sodium_crypto_kdf_derive_from_key` with sub-key ID `3` and context `pseudo__`.
 2. A 16-byte random salt is generated per subject.
@@ -153,7 +153,7 @@ The pseudonymization service (`PseudonymizationService`) provides HMAC-based pse
 4. The salt is encrypted at rest via `EncryptorInterface` before being stored in the lookup table.
 5. On subsequent calls for the same subject, the existing pseudonym is returned.
 
-### Reverse Lookup
+### Reverse lookup
 
 The `resolve()` method performs reverse lookup from pseudonym to subject ID. Every resolution is audit-logged as a `DataAccess` event with action `pseudonym.resolve`.
 
@@ -167,11 +167,11 @@ $pseudonym = $pseudonymizer->pseudonymize($userId);
 $originalId = $pseudonymizer->resolve($pseudonym);
 ```
 
-### Key Isolation
+### Key isolation
 
 The pseudonymization subkey is derived with sub-key ID `3`, which is isolated from the encryption subkey (ID `1`) and the audit HMAC chain subkey (ID `2`). Compromise of one subkey does not compromise the others.
 
-## Right to Forget
+## Right to forget
 
 The `ForgetService` implements GDPR Article 17 right-to-erasure by deleting pseudonym mappings while preserving audit chain integrity.
 
@@ -219,11 +219,11 @@ $result = $forgetService->forget($subjectId);
 // $result->forgottenAt records the exact deletion time
 ```
 
-## Retention Management
+## Retention management
 
 Retention policies define how long compliance records must be kept before they may be purged. Each policy is versioned for auditable policy changes.
 
-### Default Retention Periods
+### Default retention periods
 
 | Regulation | Period  | Policy Reference                                             |
 | ---------- | ------- | ------------------------------------------------------------ |
@@ -234,7 +234,7 @@ Retention policies define how long compliance records must be kept before they m
 | PCI-DSS    | 1 year  | PCI DSS Requirement 10.7 -- audit trail history              |
 | GDPR       | 1 year  | GDPR Article 5(1)(e) -- storage limitation principle minimum |
 
-### Custom Policies
+### Custom policies
 
 Build a `RetentionSchedule` with custom `RetentionPolicy` instances:
 
@@ -257,7 +257,7 @@ $schedule = new RetentionSchedule([
 
 Or use `RetentionSchedule::default()` for standard regulatory defaults.
 
-### Purge Workflow
+### Purge workflow
 
 The `RetentionManager` evaluates retention policies and orchestrates purges:
 
@@ -276,7 +276,7 @@ $expired = $manager->isExpired('SOX', $record->createdAt);
 
 On actual purge (not dry-run), the manager emits a `DataModification` audit event with action `retention.purge`, recording the policy applied, affected date range, record count, and operator identity.
 
-## Evidence Export
+## Evidence export
 
 The `EvidenceExporterInterface` produces tamper-evident archives with integrity hash manifests for regulatory audits.
 
@@ -301,11 +301,11 @@ The `hashManifest` is a SHA-256 digest of the JSON-serialized records. Store thi
 
 The built-in `InMemoryEvidenceExporter` is provided for testing and development. Production deployments should implement `EvidenceExporterInterface` with encrypted storage and operator authentication.
 
-## Compliance Log Formatters
+## Compliance log formatters
 
 The `ComplianceLogSink` routes log entries through regulation-specific formatters before writing to an underlying sink. When an `EncryptorInterface` is provided, the entire log entry is encrypted after formatting.
 
-### Formatter Stack
+### Formatter stack
 
 ```php
 use Pulsar\Observability\Log\Compliance\ComplianceLogSink;
@@ -324,7 +324,7 @@ $complianceSink = new ComplianceLogSink(
 );
 ```
 
-### PCI-DSS: Card Masking
+### PCI-DSS: card masking
 
 `PciDssLogFormatter` performs irreversible masking on cardholder data:
 
@@ -334,18 +334,18 @@ $complianceSink = new ComplianceLogSink(
 
 Masking is applied to both the log message and all context values recursively.
 
-### GDPR: Pseudonymization
+### GDPR: pseudonymization
 
 `GdprLogFormatter` replaces personal data fields with SHA-256 based pseudonyms (truncated to 16 hex characters, prefixed with `pseudonym_`). Default fields: `user_id`, `email`, `subject_id`, `name`, `ip_address`. Custom field lists can be provided via the constructor.
 
-### HIPAA: PHI Markers
+### HIPAA: PHI markers
 
 `HipaaLogFormatter` detects PHI categories in log context and:
 
 - Adds a `phi_access: true` flag when any PHI key is present
 - Pseudonymizes patient identifier fields (`patient_id`, `patient_name`, `ssn`, `mrn`, `health_plan_id`) using SHA-256 hashing with a `patient_` prefix
 
-### SOX: Snapshot Handling
+### SOX: snapshot handling
 
 `SoxLogFormatter` adds financial data classification metadata and restructures change snapshots:
 
@@ -353,11 +353,11 @@ Masking is applied to both the log message and all context values recursively.
 - Restructures `before`/`after` keys into a nested `change_snapshot` object
 - Adds `sox_controlled: true` to all processed entries
 
-## Snapshot Capture
+## Snapshot capture
 
 The `SnapshotCapture` utility produces immutable, classification-aware snapshots of entity state. It supports controls for SOX Section 302/404 internal controls over financial reporting.
 
-### Data Classification
+### Data classification
 
 Every field in a snapshot carries a `DataClassification` level:
 
@@ -368,7 +368,7 @@ Every field in a snapshot carries a `DataClassification` level:
 | `Confidential` | Captured as-is                   |
 | `Restricted`   | Value replaced with `[REDACTED]` |
 
-### Capturing Snapshots
+### Capturing snapshots
 
 ```php
 use Pulsar\Security\Compliance\Snapshot\SnapshotCapture;
@@ -391,7 +391,7 @@ $snapshot = SnapshotCapture::capture(
 // - description: excluded (Public - not in snapshot)
 ```
 
-### Before/After Diffs
+### Before/after diffs
 
 For SOX change tracking, capture snapshots before and after a mutation:
 

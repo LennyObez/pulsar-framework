@@ -36,7 +36,7 @@ export interface Goal {
   id: string;
   site_id: string;
   name: string;
-  goal_type: "page_visit" | "custom_event";
+  goal_type: 'page_visit' | 'custom_event';
   target_value: string;
   created_at: string;
 }

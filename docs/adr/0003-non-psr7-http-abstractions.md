@@ -46,5 +46,5 @@ Key design choices:
 
 ### Neutral
 
-- **PSR-7 bridge will be an extension.** Consistent with ADR-0004 (extension-first architecture), a future extension will provide bidirectional adapters (`Request → ServerRequestInterface`, `ResponseInterface → Response`) and a PSR-15 middleware adapter. This is not planned for 1.0.0 but is architecturally straightforward.
-- **`Request::all()` precedence is fixed.** Merge order is: JSON body > POST > query. This is documented in `docs/HTTP.md` and enforced by tests. The order is a stable API contract - changing it would be a breaking change.
+- **PSR-7 bridge is a first-party extension.** Consistent with ADR-0004 (extension-first architecture), a PSR-7 bridge extension exists at `extensions/psr7-bridge/` providing bidirectional adapters (`Request → ServerRequestInterface`, `ResponseInterface → Response`) and a PSR-15 middleware adapter. This allows integration with PSR-7/PSR-15 ecosystem libraries without coupling the core to PSR interfaces.
+- **`Request::all()` precedence is fixed.** Merge order is: JSON body > POST > query. This is documented in `docs/http.md` and enforced by tests. The order is a stable API contract - changing it would be a breaking change.

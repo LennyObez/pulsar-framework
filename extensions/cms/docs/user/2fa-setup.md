@@ -1,4 +1,4 @@
-# Two-Factor Authentication (2FA) Setup Guide
+# Two-factor authentication (2FA) setup guide
 
 This guide explains how to enable two-factor authentication on your CMS account, enroll your authenticator app, manage recovery codes, and understand step-up authentication.
 
@@ -12,7 +12,7 @@ Pulsar CMS supports TOTP-based two-factor authentication (2FA) using any compati
 - A CMS account with the `cms.users.manage` permission (Admin role)
 - Step-up authentication verified for the current session
 
-## Step 1: Begin Enrollment
+## Step 1: begin enrollment
 
 1. Navigate to **Admin > CMS > 2FA** or use the 2FA enrollment endpoint.
 2. The system requires step-up authentication before proceeding. You may be prompted to re-enter your password.
@@ -33,7 +33,7 @@ The enrollment endpoint returns:
 | `digits`           | Number of digits in the TOTP code (6)      |
 | `period`           | Time step in seconds (30)                  |
 
-## Step 2: Scan the QR Code
+## Step 2: scan the QR code
 
 <!-- Screenshot: QR code enrollment screen -->
 
@@ -43,7 +43,7 @@ The enrollment endpoint returns:
 4. Point your camera at the QR code displayed on screen.
 5. The app adds a new entry labeled **PulsarCMS** (or the configured issuer name).
 
-### Manual Entry
+### Manual entry
 
 If you cannot scan the QR code:
 
@@ -53,7 +53,7 @@ If you cannot scan the QR code:
 4. Set the type to **Time-based** (TOTP).
 5. Set digits to **6** and period to **30 seconds**.
 
-## Step 3: Verify Your Setup
+## Step 3: verify your setup
 
 After adding the account to your authenticator app:
 
@@ -73,7 +73,7 @@ Content-Type: application/json
 
 If the code is valid, 2FA is enabled on your account. If the code is invalid, you receive an error and can try again.
 
-### Verification Failure
+### Verification failure
 
 If verification fails:
 
@@ -82,7 +82,7 @@ If verification fails:
 - Verify you scanned the correct QR code
 - Try manual entry if QR scanning did not work
 
-## Step 4: Save Recovery Codes
+## Step 4: save recovery codes
 
 Recovery codes are single-use backup codes for when you cannot access your authenticator app.
 
@@ -101,7 +101,7 @@ A5B6-C7D8
 E9F0-G1H2
 ```
 
-### Storage Recommendations
+### Storage recommendations
 
 - Print them and store in a secure physical location
 - Save in an encrypted password manager
@@ -110,7 +110,7 @@ E9F0-G1H2
 
 ## Using 2FA
 
-### Regular Login
+### Regular login
 
 After 2FA is enabled, the login flow adds a second step:
 
@@ -119,7 +119,7 @@ After 2FA is enabled, the login flow adds a second step:
 3. Open your authenticator app and enter the current 6-digit code.
 4. Access is granted.
 
-### Step-Up Authentication
+### Step-up authentication
 
 Certain sensitive operations require step-up authentication, which means re-verifying your identity even within an active session:
 
@@ -140,7 +140,7 @@ Step-up authentication is valid for a configurable duration:
 
 After the TTL expires, you must re-authenticate for the next sensitive operation.
 
-### Using Recovery Codes
+### Using recovery codes
 
 If you lose access to your authenticator app:
 
@@ -152,7 +152,7 @@ After using recovery codes, regenerate new ones immediately.
 
 ## Managing 2FA
 
-### Regenerating Recovery Codes
+### Regenerating recovery codes
 
 If you have used some recovery codes or suspect they may be compromised:
 
@@ -185,7 +185,7 @@ Content-Type: application/json
 
 The reason is recorded in the audit log for compliance purposes.
 
-### Admin: Resetting Another User's 2FA
+### Admin: resetting another user's 2FA
 
 Administrators can reset 2FA for other users:
 
@@ -200,7 +200,7 @@ POST /admin/cms/users/{id}/reset-2fa
 
 This action is audit-logged with the administrator's identity and the affected user's ID.
 
-## Audit Events
+## Audit events
 
 All 2FA operations are recorded in the audit log:
 
@@ -214,7 +214,7 @@ All 2FA operations are recorded in the audit log:
 | `cms.2fa.disabled`                   | 2FA is disabled (with reason)           |
 | `cms.2fa.recovery_codes_regenerated` | New recovery codes generated            |
 
-## TOTP Technical Details
+## TOTP technical details
 
 | Parameter       | Value                  |
 | --------------- | ---------------------- |
@@ -242,7 +242,7 @@ Contact your CMS administrator. They can reset your 2FA using the admin user man
 
 Re-enter your password when prompted. Step-up sessions expire after the configured TTL (default: 15 minutes).
 
-## Next Steps
+## Next steps
 
 - [Security Model](../security/security-model.md) - Complete security architecture
 - [Audit Events Reference](../security/audit-events.md) - All audit-logged events

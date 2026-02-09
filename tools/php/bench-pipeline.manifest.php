@@ -15,7 +15,7 @@ declare(strict_types=1);
  * - Changes that reduce security/compliance coverage also require Architecture sign-off.
  * - This file is content-hashed in CI; unauthorized changes fail the build.
  *
- * @see docs/performance-budgets.md
+ * @see docs/performance.md
  */
 
 return [

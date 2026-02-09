@@ -118,6 +118,9 @@ final class Kernel implements KernelInterface
     /** @var array<string, bool> */
     private array $handlerUsesArrayParams = [];
 
+    /** @var array<string, list<array{name: string, hasDefault: bool, default: mixed}>> */
+    private array $handlerParamMap = [];
+
     public function __construct(
         ?ContainerInterface $container = null,
         ?Router $router = null,
@@ -610,26 +613,37 @@ final class Kernel implements KernelInterface
         // Spread named route params into positional args after $request
         $args = [$request];
 
-        try {
-            $reflection = new ReflectionMethod($class, $method);
+        if (!isset($this->handlerParamMap[$cacheKey])) {
+            try {
+                $reflection = new ReflectionMethod($class, $method);
+                $paramMap = [];
 
-            foreach ($reflection->getParameters() as $i => $param) {
-                if ($i === 0) {
-                    continue; // Skip $request (already added)
+                foreach ($reflection->getParameters() as $i => $param) {
+                    if ($i === 0) {
+                        continue; // Skip $request
+                    }
+
+                    $paramMap[] = [
+                        'name' => $param->getName(),
+                        'hasDefault' => $param->isDefaultValueAvailable(),
+                        'default' => $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null,
+                    ];
                 }
 
-                $name = $param->getName();
-
-                if (isset($routeParams[$name])) {
-                    $args[] = $routeParams[$name];
-                } elseif ($param->isDefaultValueAvailable()) {
-                    $args[] = $param->getDefaultValue();
-                }
-                // If no route param and no default, skip — PHP will throw a clear error
+                $this->handlerParamMap[$cacheKey] = $paramMap;
+            } catch (ReflectionException) {
+                // Fall back to passing the array
+                return [$request, $routeParams];
             }
-        } catch (ReflectionException) {
-            // Fall back to passing the array
-            $args[] = $routeParams;
+        }
+
+        foreach ($this->handlerParamMap[$cacheKey] as $entry) {
+            if (isset($routeParams[$entry['name']])) {
+                $args[] = $routeParams[$entry['name']];
+            } elseif ($entry['hasDefault']) {
+                $args[] = $entry['default'];
+            }
+            // If no route param and no default, skip — PHP will throw a clear error
         }
 
         return $args;

@@ -1,4 +1,4 @@
-# Plugin Management Guide
+# Plugin management guide
 
 This guide covers installing, configuring, and managing CMS plugins in Pulsar CMS, including capability review, provenance verification, and the scoped plugin sandbox.
 
@@ -6,11 +6,11 @@ This guide covers installing, configuring, and managing CMS plugins in Pulsar CM
 
 CMS plugins extend the functionality of Pulsar CMS without modifying core code. Plugins can add custom content types, admin pages, shortcodes, block types, and hooks. Every plugin operates within a security sandbox with declared capabilities.
 
-## Plugin Structure
+## Plugin structure
 
 Each plugin is a directory containing a `plugin.json` manifest and PHP code.
 
-### Plugin Manifest (plugin.json)
+### Plugin manifest (plugin.json)
 
 ```json
 {
@@ -32,7 +32,7 @@ Each plugin is a directory containing a `plugin.json` manifest and PHP code.
 }
 ```
 
-### Manifest Fields
+### Manifest fields
 
 | Field            | Required | Description                                                  |
 | ---------------- | -------- | ------------------------------------------------------------ |
@@ -49,7 +49,7 @@ Each plugin is a directory containing a `plugin.json` manifest and PHP code.
 | `entry_point`    | Yes      | Fully qualified class name implementing `CmsPluginInterface` |
 | `settings`       | No       | Plugin-specific configurable settings with defaults          |
 
-## Plugin Capabilities
+## Plugin capabilities
 
 Every plugin must declare its capabilities in the manifest. The CMS enforces these declarations at runtime.
 
@@ -61,7 +61,7 @@ Every plugin must declare its capabilities in the manifest. The CMS enforces the
 | `shortcodes`    | Register shortcodes for inline content rendering            |
 | `block_types`   | Register custom content block types                         |
 
-### Capability Review
+### Capability review
 
 Before enabling a plugin, review its declared capabilities:
 
@@ -74,18 +74,20 @@ Before enabling a plugin, review its declared capabilities:
 
 Plugins cannot access functionality beyond their declared capabilities. The `ScopedContainerProxy` restricts container access to only the services relevant to the plugin's declared capabilities.
 
-## Installing a Plugin
+## Installing a plugin
 
-### Via Admin Panel
+### Via admin panel
 
 1. Navigate to **Admin > CMS > Plugins** (`/admin/cms/plugins`).
 2. Click **Install New Plugin**.
 3. Upload a plugin archive (`.zip` file).
 4. The system validates:
-  - Manifest presence and required fields
-  - Version constraint compatibility
-  - Capability declarations
-  - Signature verification (if `security.require_signed_plugins` is enabled)
+
+- Manifest presence and required fields
+- Version constraint compatibility
+- Capability declarations
+- Signature verification (if `security.require_signed_plugins` is enabled)
+
 5. After validation, the plugin appears in the installed plugins list in **disabled** state.
 
 ### Via API
@@ -97,7 +99,7 @@ Content-Type: multipart/form-data
 file: [plugin-archive.zip]
 ```
 
-## Enabling and Disabling Plugins
+## Enabling and disabling plugins
 
 Newly installed plugins are disabled by default. You must explicitly enable them.
 
@@ -122,16 +124,16 @@ POST /admin/cms/plugins/{id}/toggle
 
 This toggles the plugin between enabled and disabled states.
 
-## Plugin Settings
+## Plugin settings
 
 Plugins can expose configurable settings.
 
-### Viewing Settings
+### Viewing settings
 
 1. Navigate to **Admin > CMS > Plugins > {id} > Settings** (`/admin/cms/plugins/{id}/settings`).
 2. View all available settings with their current values and defaults.
 
-### Updating Settings
+### Updating settings
 
 1. Modify the desired settings values.
 2. Click **Save**.
@@ -150,7 +152,7 @@ Content-Type: application/json
 }
 ```
 
-## Plugin Signature Verification
+## Plugin signature verification
 
 For regulated environments, plugins can require cryptographic signatures.
 
@@ -166,7 +168,7 @@ For regulated environments, plugins can require cryptographic signatures.
 ],
 ```
 
-### Provenance Verification
+### Provenance verification
 
 The `PluginProvenanceVerifier` checks:
 
@@ -174,7 +176,7 @@ The `PluginProvenanceVerifier` checks:
 2. The integrity of all files within the archive
 3. That the manifest has not been tampered with
 
-### Integrity Check on Boot
+### Integrity check on boot
 
 When `integrity_check_on_boot` is enabled (default: `true`):
 
@@ -184,11 +186,11 @@ When `integrity_check_on_boot` is enabled (default: `true`):
 
 This prevents unauthorized modifications to plugin code on the server.
 
-## Plugin Sandbox
+## Plugin sandbox
 
 Plugins run within a security sandbox that limits their access:
 
-### Scoped Container
+### Scoped container
 
 The `ScopedContainerProxy` wraps the application container for each plugin:
 
@@ -196,7 +198,7 @@ The `ScopedContainerProxy` wraps the application container for each plugin:
 - Direct database access is not available to plugins
 - Container access is read-only (plugins cannot register new bindings)
 
-### Hook Execution
+### Hook execution
 
 The `HookExecutionEngine` manages plugin hook execution:
 
@@ -205,7 +207,7 @@ The `HookExecutionEngine` manages plugin hook execution:
 - Hook execution time is bounded
 - Hook output is validated before integration
 
-### Hook Registry
+### Hook registry
 
 The `HookRegistry` tracks all registered hooks across plugins:
 
@@ -213,7 +215,7 @@ The `HookRegistry` tracks all registered hooks across plugins:
 - Before/after comment submit
 - Before/after page render
 
-## Plugin Events
+## Plugin events
 
 The plugin system dispatches events:
 
@@ -226,7 +228,7 @@ The plugin system dispatches events:
 
 These events can trigger notifications or audit log entries.
 
-## Deleting a Plugin
+## Deleting a plugin
 
 1. Disable the plugin first (it must not be active).
 2. Navigate to **Admin > CMS > Plugins**.
@@ -267,7 +269,7 @@ The CMS validates dependencies during installation:
 - A plugin cannot be disabled if other enabled plugins depend on it
 - Circular dependencies are detected and rejected
 
-## Next Steps
+## Next steps
 
 - [Theme Management](theme-management.md) - Managing themes alongside plugins
 - [Security Model](../security/security-model.md) - Plugin security model

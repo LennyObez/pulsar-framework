@@ -1,4 +1,4 @@
-# Quickstart: Import a Site Definition
+# Quickstart: import a site definition
 
 **Estimated time: 10 minutes**
 
@@ -10,7 +10,7 @@ This quickstart walks you through preparing a JSON site definition, importing it
 - The CMS extension installed and configured
 - Database migrations completed
 
-## Step 1: Prepare the Site Definition
+## Step 1: prepare the site definition
 
 Create a JSON file named `my-site.json` with the following structure:
 
@@ -133,20 +133,20 @@ Create a JSON file named `my-site.json` with the following structure:
 }
 ```
 
-### Key Requirements
+### Key requirements
 
 - `version` must be `"1.0"`
 - `site` object is required with at least a name
 - All other top-level keys (`taxonomies`, `content`, `menus`, `media`, `redirects`, `seo`) are optional
 
-## Step 2: Navigate to Site Import
+## Step 2: navigate to site import
 
 1. Log in to the CMS admin panel.
 2. Navigate to **Admin > CMS > Site Import** (`/admin/cms/site-import`).
 
 <!-- Screenshot: Site import form -->
 
-## Step 3: Run a Dry Run
+## Step 3: run a dry run
 
 Before importing, preview what will happen:
 
@@ -178,7 +178,7 @@ The dry run report shows:
 
 Review the report to confirm everything looks correct.
 
-### Handling Conflicts
+### Handling conflicts
 
 If the dry run reports conflicts (e.g., a slug already exists), you can:
 
@@ -186,7 +186,7 @@ If the dry run reports conflicts (e.g., a slug already exists), you can:
 - Delete the existing content first
 - Let the import skip conflicting items
 
-## Step 4: Execute the Import
+## Step 4: execute the import
 
 After reviewing the dry run:
 
@@ -211,30 +211,32 @@ The import processes entities in dependency order:
 
 Each step is validated before proceeding. If an error occurs, previously imported items are preserved, and the error is reported.
 
-## Step 5: Verify the Imported Site
+## Step 5: verify the imported site
 
-### Check Content
+### Check content
 
 1. Navigate to **Admin > CMS > Content** (`/admin/cms/content`).
 2. Verify all 3 content items are present:
-  - About Us (page)
-  - Contact (page)
-  - Welcome to Acme (article)
+
+- About Us (page)
+- Contact (page)
+- Welcome to Acme (article)
+
 3. Open each item and confirm translations are correct for both `en` and `fr`.
 
 <!-- Screenshot: Content list showing imported items -->
 
-### Check Taxonomies
+### Check taxonomies
 
 1. Navigate to **Admin > CMS > Taxonomies** (`/admin/cms/taxonomies`).
 2. Verify the "Categories" taxonomy with "News" and "Products" terms.
 
-### Check Menus
+### Check menus
 
 1. Navigate to **Admin > CMS > Menus** (`/admin/cms/menus`).
 2. Verify the "Main Navigation" menu with 4 items.
 
-### Check Public Site
+### Check public site
 
 Open your site in a browser:
 
@@ -243,7 +245,7 @@ Open your site in a browser:
 - `https://your-site.com/welcome` -- English welcome article
 - `https://your-site.com/fr/bienvenue-chez-acme` -- French welcome article
 
-### Publish Content
+### Publish content
 
 Imported content starts in **Draft** status. To make it public:
 
@@ -261,7 +263,7 @@ Your site is bootstrapped with content, taxonomies, menus, and translations from
 - AI-assisted site generation (generate the JSON, then import)
 - Reproducible site setups for testing
 
-## Next Steps
+## Next steps
 
 - [Import/Export Guide](../user/import-export-guide.md) - Full import/export documentation
 - [Content Management Guide](../user/content-management.md) - Editing imported content

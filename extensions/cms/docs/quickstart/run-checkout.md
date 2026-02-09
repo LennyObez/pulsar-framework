@@ -1,4 +1,4 @@
-# Quickstart: Run a Checkout
+# Quickstart: run a checkout
 
 **Estimated time: 10 minutes**
 
@@ -10,7 +10,7 @@ This quickstart walks you through enabling the commerce subsystem, creating a pr
 - Commerce subsystem enabled in configuration
 - A payment gateway configured (or use the test simulator)
 
-## Step 1: Enable Commerce
+## Step 1: enable commerce
 
 Add the `commerce` section to `config/cms.php`:
 
@@ -26,16 +26,18 @@ Add the `commerce` section to `config/cms.php`:
 
 Restart your application to apply the configuration. The CMS registers all commerce routes when the `commerce` key is present.
 
-## Step 2: Create a Product
+## Step 2: create a product
 
 1. Navigate to **Admin > CMS > Products** (`/admin/cms/products`).
 2. Click **Create New Product** (`/admin/cms/products/create`).
 3. Fill in the form:
-  - **SKU**: `DEMO-WIDGET-001`
-  - **Price**: `2999` (29.99 EUR in minor units/cents)
-  - **Currency**: `EUR`
-  - **Stock Quantity**: `100`
-  - **Digital**: No (leave unchecked for a physical product)
+
+- **SKU**: `DEMO-WIDGET-001`
+- **Price**: `2999` (29.99 EUR in minor units/cents)
+- **Currency**: `EUR`
+- **Stock Quantity**: `100`
+- **Digital**: No (leave unchecked for a physical product)
+
 4. Click **Save**.
 
 <!-- Screenshot: Product creation form -->
@@ -55,7 +57,7 @@ Content-Type: application/json
 }
 ```
 
-## Step 3: Navigate to Checkout
+## Step 3: navigate to checkout
 
 Open a browser and go to the public checkout page:
 
@@ -71,13 +73,15 @@ The checkout page shows:
 
 <!-- Screenshot: Public checkout page with cart summary -->
 
-## Step 4: Process the Checkout
+## Step 4: process the checkout
 
 1. Add the product to the cart.
 2. Fill in the checkout form:
-  - Customer name and email
-  - Billing address
-  - Payment details (use test card details for your payment gateway simulator)
+
+- Customer name and email
+- Billing address
+- Payment details (use test card details for your payment gateway simulator)
+
 3. Click **Complete Purchase**.
 
 ```
@@ -92,7 +96,7 @@ The `CheckoutService` processes the order:
 4. Payment is initiated with the gateway.
 5. On success, the order is confirmed.
 
-## Step 5: View the Success Page
+## Step 5: view the success page
 
 After successful payment, you are redirected to:
 
@@ -109,7 +113,7 @@ The page confirms the order with:
 - Total amount paid
 - Expected delivery information
 
-## Step 6: View the Order in Admin
+## Step 6: view the order in admin
 
 1. Navigate to **Admin > CMS > Orders** (`/admin/cms/orders`).
 2. Find your order in the list.
@@ -127,7 +131,7 @@ The order detail shows:
 - **Payment**: Confirmed via test gateway
 - **Invoice**: Auto-generated
 
-## Step 7: View the Invoice
+## Step 7: view the invoice
 
 1. On the order detail page, click the invoice link.
 2. Or navigate to **Admin > CMS > Invoices > {id}** (`/admin/cms/invoices/{id}`).
@@ -149,7 +153,7 @@ Click **Download** to save the invoice:
 GET /admin/cms/invoices/{id}/download
 ```
 
-## Testing a Refund
+## Testing a refund
 
 To test the refund flow:
 
@@ -174,7 +178,7 @@ The order status changes to **Refunded**.
 
 You have completed a full checkout cycle: product creation, checkout, payment, order confirmation, invoice generation, and refund.
 
-## Next Steps
+## Next steps
 
 - [Commerce Guide](../user/commerce-guide.md) - Variants, promotions, digital products, and tax configuration
 - [Import/Export Guide](../user/import-export-guide.md) - Exporting order data

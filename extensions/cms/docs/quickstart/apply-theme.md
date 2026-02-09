@@ -1,4 +1,4 @@
-# Quickstart: Apply a Theme
+# Quickstart: apply a theme
 
 **Estimated time: 5 minutes**
 
@@ -9,7 +9,7 @@ This quickstart walks you through downloading a theme archive, uploading it to t
 - CMS admin access (the `cms.admin` role with theme permissions)
 - A theme archive (`.zip` file) conforming to the Pulsar CMS theme format
 
-## Step 1: Prepare Your Theme Archive
+## Step 1: prepare your theme archive
 
 A valid theme archive must contain a `theme.json` manifest at the root. Example:
 
@@ -36,7 +36,7 @@ A valid theme archive must contain a `theme.json` manifest at the root. Example:
 
 The archive should also contain the referenced template and asset files.
 
-## Step 2: Upload the Theme
+## Step 2: upload the theme
 
 1. Navigate to **Admin > CMS > Themes** (`/admin/cms/themes`).
 2. Click **Install New Theme**.
@@ -54,7 +54,7 @@ The CMS validates:
 
 After successful validation, the theme appears in the installed themes list.
 
-## Step 3: Preview the Theme
+## Step 3: preview the theme
 
 Before activating, preview how the theme looks:
 
@@ -77,7 +77,7 @@ Browse several pages to verify the theme renders correctly:
 - Test navigation menus
 - Check mobile responsiveness
 
-## Step 4: Activate the Theme
+## Step 4: activate the theme
 
 Satisfied with the preview? Activate the theme:
 
@@ -93,11 +93,11 @@ The theme is now live for all visitors.
 
 <!-- Screenshot: Theme list showing "Modern Business" as active -->
 
-## Step 5: Verify
+## Step 5: verify
 
 Open a new browser tab (or incognito window) and visit your site. Confirm the new theme is rendering correctly for public visitors.
 
-## Rolling Back
+## Rolling back
 
 If something is wrong, quickly revert:
 
@@ -111,7 +111,7 @@ If the theme causes a critical error preventing admin access, Pulsar CMS will au
 
 Your site is now running with the new theme. Theme assets are deployed to the public directory, and all pages render with the new templates.
 
-## Next Steps
+## Next steps
 
 - [Theme Management Guide](../user/theme-management.md) - Inheritance, safe mode, and provenance
 - [Live CSS Guide](../user/live-css-guide.md) - Customize theme styles without editing files

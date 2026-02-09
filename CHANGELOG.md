@@ -188,7 +188,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `PrometheusExporter` renamed to `OpenMetricsExporter` (internal class, not a public API break). Docblocks updated to reference OpenMetrics text exposition format 0.0.4.
 - Config stub `config/observability.php` uses `'openmetrics'` exporter key (legacy `'prometheus'` key still accepted by the DTO factory).
 - Performance benchmark CI job is now advisory and does not block merges. Results appear in PR job summary and are uploaded as a 14-day build artifact for human review.
-- Vendor product names removed from README and OBSERVABILITY.md in favor of standards-based or generic phrasing.
+- Vendor product names removed from README and observability.md in favor of standards-based or generic phrasing.
 
 ### Added
 
@@ -214,14 +214,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Performance budgets CI job (`php-benchmark`) enforcing regression detection.
 - `composer bench` and `composer bench:ci` scripts for running benchmarks.
 - 4 E2E test files: FullRequestLifecycle, BootPipeline, SecurityPipeline, ObservabilityPipeline.
-- 6 new documentation files: INSTALL.md, EXTENSIONS.md, CLI_REFERENCE.md, UPGRADE.md, PUBLIC_API.md, PERFORMANCE_BUDGETS.md.
+- 6 new documentation files: install.md, extensions.md, cli-reference.md, upgrade.md, public-api.md, performance-budgets.md.
 
 ### Changed
 
 - Version bumped from 0.9.0 to 1.0.0-rc.1.
 - Coverage threshold raised from 55% to 70%.
 - Benchmarks migrated from `benchmarks/` to `tests/Benchmark/` with PHP 8 attributes.
-- Updated ARCHITECTURE.md, REPOSITORY_STRUCTURE.md, PHP_FEATURE_MATRIX.md, README.md.
+- Updated architecture.md, repository-structure.md, php-feature-matrix.md, README.md.
 
 ### Internal
 

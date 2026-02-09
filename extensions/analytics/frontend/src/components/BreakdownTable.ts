@@ -1,4 +1,4 @@
-import type { BreakdownItem } from "../types";
+import type { BreakdownItem } from '../types';
 
 export function renderBreakdownTable(container: HTMLElement, items: BreakdownItem[]): void {
   if (items.length === 0) {
@@ -30,14 +30,14 @@ export function renderBreakdownTable(container: HTMLElement, items: BreakdownIte
             </tr>
           `;
           })
-          .join("")}
+          .join('')}
       </tbody>
     </table>
   `;
 }
 
 function escapeHtml(str: string): string {
-  const div = document.createElement("div");
+  const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }

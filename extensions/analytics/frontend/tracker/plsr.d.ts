@@ -1,5 +1,5 @@
 type PlsrPayload = {
-  type: "pageview" | "event";
+  type: 'pageview' | 'event';
   site: string;
   url: string;
   referrer?: string;

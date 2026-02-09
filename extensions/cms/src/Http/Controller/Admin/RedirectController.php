@@ -233,8 +233,8 @@ final readonly class RedirectController
                 $r->statusCode,
                 $this->escapeCsv($r->locale ?? ''),
                 $r->hits,
-                $r->lastHitAt?->format('c') ?? '',
-                $r->createdAt->format('c'),
+                $this->escapeCsv($r->lastHitAt?->format('c') ?? ''),
+                $this->escapeCsv($r->createdAt->format('c')),
             );
         }
 
@@ -250,6 +250,11 @@ final readonly class RedirectController
 
     private function escapeCsv(string $value): string
     {
+        // Protect against CSV formula injection: prefix dangerous leading characters
+        if ($value !== '' && str_contains("=+-@\t\r", $value[0])) {
+            $value = "\t" . $value;
+        }
+
         if (str_contains($value, ',') || str_contains($value, '"') || str_contains($value, "\n")) {
             return '"' . str_replace('"', '""', $value) . '"';
         }

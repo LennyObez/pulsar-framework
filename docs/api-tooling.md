@@ -2,11 +2,11 @@
 
 Pulsar provides a complete API layer for building secure, documented, and standards-compliant REST APIs. Every component enforces deny-by-default field exposure, strict input validation, and authorization-gated access.
 
-## API Resources
+## API resources
 
 API resources are the **only** path for serializing data to API responses. Entities and ORM models cannot be returned directly from controllers.
 
-### Defining a Resource
+### Defining a resource
 
 ```php
 use Pulsar\Api\Resource\AbstractApiResource;
@@ -36,7 +36,7 @@ class UserResource extends AbstractApiResource
 
 Fields without `#[Expose]` are **never** serialized. This is enforced at the framework level and cannot be bypassed.
 
-### Sparse Fieldsets
+### Sparse fieldsets
 
 Clients can request specific fields using the `?fields=` parameter:
 
@@ -46,7 +46,7 @@ GET /api/v1/users?fields=id,name
 
 Requesting an undeclared field returns `400 Bad Request`.
 
-### Conditional Fields
+### Conditional fields
 
 Fields can be conditionally included based on runtime logic:
 
@@ -59,7 +59,7 @@ $resource->email = new ConditionalField(
 );
 ```
 
-### Nested Resources
+### Nested resources
 
 Resources can embed other resources as properties:
 
@@ -74,9 +74,9 @@ public array $recentOrders;
 
 Nested resources respect the same deny-by-default rules and authorization checks.
 
-## Field Authorization
+## Field authorization
 
-### Per-Field Permissions
+### Per-field permissions
 
 Individual fields can require specific permissions or roles via `FieldPolicy`:
 
@@ -86,7 +86,7 @@ Individual fields can require specific permissions or roles via `FieldPolicy`:
 
 Unauthorized fields are **silently omitted** from the response. The `_redactions` metadata is only included when the caller has a debug/audit flag enabled, preventing information leakage about hidden fields.
 
-### Classification Tags
+### Classification tags
 
 Fields tagged with data classification levels are filtered based on the request's clearance:
 
@@ -98,7 +98,7 @@ public string $ssn;
 
 The clearance snapshot is computed once at the request boundary and remains immutable for the entire request lifetime. This guarantees deterministic field exposure: the same request always produces the same fields.
 
-### Redaction Rules
+### Redaction rules
 
 Sensitive fields can define redaction rules for partial access:
 
@@ -118,7 +118,7 @@ Strategies: `Mask`, `Truncate`, `Hash`.
 
 Filters are explicitly registered per resource. Open-ended query parameters are not permitted.
 
-### Registering Filters
+### Registering filters
 
 ```php
 use Pulsar\Api\Filter\Filter;
@@ -134,7 +134,7 @@ $registry->register('users', [
 ]);
 ```
 
-### Available Operators
+### Available operators
 
 | Operator      | Description              |
 | ------------- | ------------------------ |
@@ -148,7 +148,7 @@ $registry->register('users', [
 | `contains`    | Contains substring       |
 | `starts_with` | Starts with prefix       |
 
-### Query Format
+### Query format
 
 ```
 GET /api/v1/users?filter[status]=eq:active&filter[age]=gte:18
@@ -157,7 +157,7 @@ GET /api/v1/users?filter[role]=in:admin,editor
 
 Unknown operators or fields return `400 Bad Request`. Authorization-guarded filters require the specified role.
 
-### Safe Query Mapping
+### Safe query mapping
 
 Each filter maps to a query builder expression. Raw SQL is never constructed from filter input. LIKE wildcards (`%`, `_`) are escaped to prevent injection.
 
@@ -165,7 +165,7 @@ Each filter maps to a query builder expression. Raw SQL is never constructed fro
 
 Sorts are explicitly registered per resource, similar to filters.
 
-### Registering Sorts
+### Registering sorts
 
 ```php
 use Pulsar\Api\Sort\SortDefinition;
@@ -179,7 +179,7 @@ $registry->register('users', [
 ]);
 ```
 
-### Query Format
+### Query format
 
 ```
 GET /api/v1/users?sort=name,-created_at
@@ -191,7 +191,7 @@ Prefix `-` for descending order. Unknown fields return `400 Bad Request`.
 
 Three pagination strategies are available: offset, cursor, and keyset.
 
-### Offset Pagination
+### Offset pagination
 
 Traditional page-based pagination:
 
@@ -199,7 +199,7 @@ Traditional page-based pagination:
 GET /api/v1/users?page=2&per_page=25
 ```
 
-### Cursor Pagination
+### Cursor pagination
 
 Opaque cursor-based pagination, safe from enumeration:
 
@@ -207,7 +207,7 @@ Opaque cursor-based pagination, safe from enumeration:
 GET /api/v1/users?cursor=Y3Vyc29yOjI1&per_page=25
 ```
 
-### Keyset Pagination
+### Keyset pagination
 
 Efficient for large datasets using the last item's sort key:
 
@@ -215,7 +215,7 @@ Efficient for large datasets using the last item's sort key:
 GET /api/v1/users?after=eyJrIjoiNTAifQ==&per_page=25
 ```
 
-### Response Metadata
+### Response metadata
 
 All pagination strategies return consistent metadata:
 
@@ -238,7 +238,7 @@ All pagination strategies return consistent metadata:
 }
 ```
 
-## Content Negotiation
+## Content negotiation
 
 Pulsar supports three response formats via the `Accept` header:
 
@@ -252,11 +252,11 @@ JSON is the default format. JSON:API and HAL are opt-in extensions that must be 
 
 The `ContentNegotiator` middleware reads the `Accept` header and selects the correct renderer. When no match is found, it falls back to the configured default.
 
-## API Versioning
+## API versioning
 
 Three versioning strategies are supported:
 
-### URL Prefix (Default)
+### URL prefix (default)
 
 ```
 GET /api/v1/users
@@ -270,7 +270,7 @@ GET /api/users
 Api-Version: 2
 ```
 
-### Query Parameter
+### Query parameter
 
 ```
 GET /api/users?api-version=2
@@ -280,7 +280,7 @@ GET /api/users?api-version=2
 
 The versioning strategy, supported versions, and deprecation notices are configured in `ApiConfig`. Deprecated versions include a `Sunset` response header. Unsupported versions return `400 Bad Request`.
 
-## OpenAPI Generation
+## OpenAPI generation
 
 Pulsar generates OpenAPI v3 specs at **build time** as a versioned artifact. No runtime reflection is used for spec generation.
 
@@ -297,7 +297,7 @@ use Pulsar\Api\OpenApi\Attribute\ApiResponse;
 public function index(): ResourceCollection { ... }
 ```
 
-### CLI Commands
+### CLI commands
 
 ```bash
 # Generate versioned OpenAPI spec
@@ -307,7 +307,7 @@ php pulsar api:spec
 php pulsar api:routes
 ```
 
-### Vendor Extensions
+### Vendor extensions
 
 The generated spec includes compliance metadata:
 
@@ -319,7 +319,7 @@ The generated spec includes compliance metadata:
 
 The `SwaggerUiController` serves the pre-built spec at a configurable route. It does not generate the spec at runtime.
 
-## Complexity Limits
+## Complexity limits
 
 To prevent abuse and resource exhaustion, configurable complexity caps are enforced:
 
@@ -331,7 +331,7 @@ To prevent abuse and resource exhaustion, configurable complexity caps are enfor
 
 Exceeding any limit returns `400 Bad Request` with a descriptive error message identifying which limit was exceeded. Limits are configurable per resource or globally via `ApiConfig`.
 
-## Entity Serialization Ban
+## Entity serialization ban
 
 Entities and ORM models **cannot** be serialized directly to API responses. Attempting to return an entity from a controller produces:
 

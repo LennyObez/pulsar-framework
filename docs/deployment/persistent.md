@@ -8,7 +8,7 @@ This guide covers deploying a Pulsar application with the built-in persistent HT
 - A process supervisor (systemd, supervisord, Docker) for automatic restarts
 - A reverse proxy (nginx, Caddy) for TLS termination in production
 
-## Quick Start
+## Quick start
 
 ```bash
 # Start with default settings (127.0.0.1:8080, synchronous)
@@ -21,7 +21,7 @@ php bin/pulsar runtime:serve --port 3000 --concurrency 64
 php bin/pulsar runtime:serve --host 0.0.0.0 --port 8080 --public
 ```
 
-## Production Architecture
+## Production architecture
 
 ```
 Internet -> Reverse Proxy (TLS 1.3, HTTP/2, HTTP/3)
@@ -81,7 +81,7 @@ Reload workers gracefully:
 sudo systemctl reload pulsar-runtime
 ```
 
-### Multiple Workers
+### Multiple workers
 
 Run multiple worker instances on different ports behind a load balancer:
 
@@ -147,7 +147,7 @@ stdout_logfile=/var/log/pulsar/runtime-%(process_num)02d.log
 stderr_logfile=/var/log/pulsar/runtime-%(process_num)02d-error.log
 ```
 
-## Docker Setup
+## Docker setup
 
 ### Dockerfile
 
@@ -184,7 +184,7 @@ services:
   app:
     build: .
     ports:
-     - '8080:8080'
+      - '8080:8080'
     environment:
       APP_ENV: production
       APP_DEBUG: 'false'
@@ -201,9 +201,9 @@ services:
       retries: 3
 ```
 
-## Nginx Reverse Proxy
+## Nginx reverse proxy
 
-### Single Worker
+### Single worker
 
 ```nginx
 upstream pulsar {
@@ -237,7 +237,7 @@ server {
 }
 ```
 
-### Multiple Workers (Load Balanced)
+### Multiple workers (load balanced)
 
 ```nginx
 upstream pulsar {
@@ -266,7 +266,7 @@ server {
 }
 ```
 
-### Caddy Reverse Proxy
+### Caddy reverse proxy
 
 ```caddyfile
 example.com {
@@ -274,7 +274,7 @@ example.com {
 }
 ```
 
-## Fiber Concurrency Tuning
+## Fiber concurrency tuning
 
 The `--concurrency` flag (or `fiber_concurrency` config) controls how many connections the worker handles concurrently using PHP Fibers.
 
@@ -287,7 +287,7 @@ The `--concurrency` flag (or `fiber_concurrency` config) controls how many conne
 
 Fibers provide I/O concurrency only. PHP remains single-threaded. Blocking database calls without async drivers do not benefit from higher concurrency. Monitor `runtime_active_fibers` and request latency to find the right setting.
 
-## Memory Threshold Configuration
+## Memory threshold configuration
 
 The persistent runtime recycles when any threshold is exceeded:
 
@@ -301,7 +301,7 @@ After recycling, the process exits and the supervisor restarts it. Tune threshol
 
 ## Monitoring
 
-### Health Endpoint
+### Health endpoint
 
 The built-in `/_health` endpoint responds with worker status:
 
@@ -312,7 +312,7 @@ curl http://localhost:8080/_health
 
 Use this for load balancer health checks. A `503` response means the worker is draining or shutting down - the load balancer should stop routing traffic to it.
 
-### Prometheus Integration
+### Prometheus integration
 
 Pulsar registers runtime metrics in `MetricRegistry`. Expose them via your Prometheus exporter:
 
@@ -322,7 +322,7 @@ Pulsar registers runtime metrics in `MetricRegistry`. Expose them via your Prome
 - `runtime_worker_restarts_total` -- recycling events
 - `runtime_active_fibers` -- concurrent Fiber count
 
-### Log Monitoring
+### Log monitoring
 
 The persistent runtime logs key events to the configured `LoggerInterface`:
 
@@ -338,5 +338,7 @@ The persistent runtime logs key events to the configured `LoggerInterface`:
 **"Address already in use"**: Another process is listening on the port. Check with `ss -tlnp | grep 8080`.
 
 **Memory growing unboundedly**: Lower `max_requests` to recycle more frequently. Check for services that hold request state without implementing `ResettableInterface`.
+
+**Tenant state leaking between requests**: Framework services that hold per-request state (`TenantContext`, `AuthManager`, `RequestContextHolder`, `FlagEvaluationLog`) implement `ResettableInterface` and are automatically reset by `RequestSandbox` between requests. If you create custom request-scoped services, implement `ResettableInterface` and register them with `RequestResetRegistry`.
 
 **High p99 latency**: If using Fibers, check whether database queries block the event loop. Consider lowering `fiber_concurrency` or using async database drivers.

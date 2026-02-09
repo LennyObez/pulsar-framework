@@ -16,6 +16,11 @@ use Pulsar\Api\Internal;
 #[Internal]
 final class IcuMessageFormatter implements MessageFormatterInterface
 {
+    private const int MAX_CACHE_SIZE = 200;
+
+    /** @var array<string, MessageFormatter> */
+    private array $cache = [];
+
     /**
      * @param array<string, mixed> $parameters
      */
@@ -25,10 +30,23 @@ final class IcuMessageFormatter implements MessageFormatterInterface
             return $pattern;
         }
 
-        $formatter = MessageFormatter::create($locale, $pattern);
+        $cacheKey = $locale . '|' . $pattern;
 
-        if ($formatter === null) {
-            return $pattern;
+        if (isset($this->cache[$cacheKey])) {
+            $formatter = $this->cache[$cacheKey];
+        } else {
+            $formatter = MessageFormatter::create($locale, $pattern);
+
+            if ($formatter === null) {
+                return $pattern;
+            }
+
+            // Evict oldest entries when cache is full
+            if (\count($this->cache) >= self::MAX_CACHE_SIZE) {
+                \array_shift($this->cache);
+            }
+
+            $this->cache[$cacheKey] = $formatter;
         }
 
         $result = $formatter->format($parameters);

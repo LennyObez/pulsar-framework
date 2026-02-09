@@ -8,12 +8,8 @@
     "min_version": "1.0.0-rc.11"
   },
   "provides": {
-    "services": [
-      "McpToolRegistryInterface"
-    ],
+    "services": ["McpToolRegistryInterface"],
     "routes": false,
-    "commands": [
-      "mcp:serve"
-    ]
+    "commands": ["mcp:serve"]
   }
 }

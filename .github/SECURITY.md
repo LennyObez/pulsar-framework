@@ -9,10 +9,10 @@ Security is a core design goal of Pulsar. We prioritize secure defaults, auditab
 
 ## Supported versions
 
-| Version         | Supported |
-| --------------- | --------- |
-| 1.0.0-rc.11     | Yes       |
-| < 1.0.0-rc.11   | No        |
+| Version       | Supported |
+| ------------- | --------- |
+| 1.0.0-rc.11   | Yes       |
+| < 1.0.0-rc.11 | No        |
 
 Security fixes are applied to the `main` branch and the latest release candidate tag. Older RC tags do not receive backports.
 
@@ -25,10 +25,10 @@ Prefer **GitHub Private Vulnerability Reporting** (Security Advisories) if enabl
 - Email: security@pulsar-framework.com
 - Subject: `[SECURITY] <short summary>`
 - Include:
- - affected version/commit
- - impact and attack scenario
- - reproduction steps or PoC (safe and minimal)
- - any mitigations you're aware of
+- affected version/commit
+- impact and attack scenario
+- reproduction steps or PoC (safe and minimal)
+- any mitigations you're aware of
 
 **Do not include real secrets, PII, PHI, or PCI data in reports.** Use synthetic/redacted values only.
 
@@ -59,6 +59,6 @@ Please do not publish details until a fix is available, unless we explicitly agr
 - Never commit secrets, private keys, or real customer data.
 - Avoid adding new cryptography unless explicitly approved (prefer vetted primitives and well-reviewed designs).
 - Security-relevant changes require:
- - tests
- - documentation updates
- - clear threat model notes when applicable
+- tests
+- documentation updates
+- clear threat model notes when applicable
