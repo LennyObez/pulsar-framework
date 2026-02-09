@@ -15,12 +15,23 @@ use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
+use function str_contains;
+use function trim;
+
 /**
  * Represents a single route definition.
  */
 #[Api]
 readonly class Route
 {
+    /**
+     * Pre-compiled regex pattern for parameterized routes.
+     *
+     * Null for static routes (no `{` in path). Computed eagerly in
+     * the constructor so that `matchesPath()` never recomputes it.
+     */
+    public ?string $compiledPattern;
+
     /**
      * @param list<Method> $methods Allowed HTTP methods
      * @param string $path The route path pattern
@@ -40,7 +51,12 @@ readonly class Route
         public array $middleware = [],
         public array $constraints = [],
         public ?string $host = null,
-    ) {}
+    ) {
+        $normalizedPath = '/' . trim($this->path, '/');
+        $this->compiledPattern = str_contains($normalizedPath, '{')
+            ? $this->pathToPattern($normalizedPath)
+            : null;
+    }
 
     /**
      * Check if this route matches the given method.
@@ -59,19 +75,16 @@ readonly class Route
      */
     public function matchesPath(string $path): ?array
     {
-        // Normalize paths
-        $routePath = '/' . trim($this->path, '/');
         $requestPath = '/' . trim($path, '/');
 
-        // Exact match (no parameters)
-        if (!str_contains($routePath, '{')) {
+        // Static route — no parameters
+        if ($this->compiledPattern === null) {
+            $routePath = '/' . trim($this->path, '/');
             return $routePath === $requestPath ? [] : null;
         }
 
-        // Build regex pattern from route path
-        $pattern = $this->pathToPattern($routePath);
-
-        if (preg_match($pattern, $requestPath, $matches)) {
+        // Use pre-compiled regex pattern
+        if (preg_match($this->compiledPattern, $requestPath, $matches)) {
             return $this->extractNamedParameters($matches);
         }
 
