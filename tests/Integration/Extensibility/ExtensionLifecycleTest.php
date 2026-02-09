@@ -51,7 +51,7 @@ final class ExtensionLifecycleTest extends TestCase
         self::assertInstanceOf(TestableService::class, $service);
 
         // Assert: Route is registered
-        $routes = $kernel->router()->routes;
+        $routes = $kernel->router()->routes();
         self::assertNotEmpty($routes);
         self::assertSame('/test', $routes[0]->path);
 

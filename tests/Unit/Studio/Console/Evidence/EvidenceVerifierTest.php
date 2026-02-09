@@ -19,6 +19,7 @@ use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
 use Pulsar\Extension\Studio\Console\Evidence\HashChain;
 use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Crypto\HmacService;
 
 use function random_bytes;
 
@@ -31,7 +32,7 @@ final class EvidenceVerifierTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->verifier = new EvidenceVerifier();
+        $this->verifier = new EvidenceVerifier(new HmacService());
         $this->macKey = random_bytes(32);
         $this->archiveMacKey = random_bytes(32);
     }

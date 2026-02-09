@@ -6,7 +6,7 @@ namespace Pulsar\Runtime;
 
 use Override;
 use Pulsar\Api\Api;
-use Pulsar\Core\Kernel;
+use Pulsar\Core\KernelInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Throwable;
@@ -24,7 +24,7 @@ final class FpmRuntime implements RuntimeInterface
     private RuntimeStatus $status = RuntimeStatus::Stopped;
 
     public function __construct(
-        private readonly Kernel $kernel,
+        private readonly KernelInterface $kernel,
     ) {}
 
     /**

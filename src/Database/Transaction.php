@@ -6,6 +6,7 @@ namespace Pulsar\Database;
 
 use PDO;
 use PDOException;
+use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
 use function sprintf;
@@ -16,6 +17,7 @@ use function sprintf;
  * Depth 0 = real BEGIN/COMMIT/ROLLBACK.
  * Depth > 0 = SAVEPOINT/RELEASE SAVEPOINT/ROLLBACK TO SAVEPOINT.
  */
+#[Api]
 final class Transaction
 {
     public private(set) bool $active = true;

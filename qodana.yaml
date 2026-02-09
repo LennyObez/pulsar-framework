@@ -66,10 +66,11 @@ exclude:
   - name: PhpSameParameterValueInspection
     paths:
       - extensions/payments/src/Gateway/PaymentGateway.php
-  # Development-only router file references non-existent autoload
+  # Development-only router file and CI scripts reference vendor autoload unavailable during scan
   - name: PhpIncludeInspection
     paths:
       - resources/studio/router.php
+      - scripts/boundary_check.php
   - name: All
     paths:
       - composer.json

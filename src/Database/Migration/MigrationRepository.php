@@ -9,6 +9,7 @@ use function is_dir;
 use function ksort;
 use function preg_match;
 
+use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
 
 use function scandir;
@@ -21,6 +22,7 @@ use function substr;
  * Migration filenames must follow the convention:
  * {YYYYMMDDHHMMSS}_description_snake_case.php
  */
+#[Api]
 final readonly class MigrationRepository
 {
     public function __construct(
