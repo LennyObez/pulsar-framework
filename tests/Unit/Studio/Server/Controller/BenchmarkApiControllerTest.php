@@ -7,14 +7,13 @@ namespace Pulsar\Tests\Unit\Studio\Server\Controller;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Event\EventVersion;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Extension\Studio\Server\Controller\BenchmarkApiController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 use function hash;
@@ -31,7 +30,8 @@ final class BenchmarkApiControllerTest extends TestCase
     protected function setUp(): void
     {
         $this->store = SqliteEventStore::inMemory();
-        $this->controller = new BenchmarkApiController($this->store, __DIR__);
+        $aggregator = new DashboardAggregator($this->store);
+        $this->controller = new BenchmarkApiController($this->store, $aggregator, __DIR__);
     }
 
     #[Test]
@@ -41,7 +41,7 @@ final class BenchmarkApiControllerTest extends TestCase
 
         $response = $this->controller->deleteRuns($request);
 
-        self::assertSame(ResponseStatus::BadRequest, $response->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -51,7 +51,7 @@ final class BenchmarkApiControllerTest extends TestCase
 
         $response = $this->controller->deleteRuns($request);
 
-        self::assertSame(ResponseStatus::BadRequest, $response->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -61,7 +61,7 @@ final class BenchmarkApiControllerTest extends TestCase
 
         $response = $this->controller->deleteRuns($request);
 
-        self::assertSame(ResponseStatus::BadRequest, $response->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -82,9 +82,9 @@ final class BenchmarkApiControllerTest extends TestCase
         $request = $this->createPostRequest(['run_ids' => [$runId]]);
         $response = $this->controller->deleteRuns($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
 
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertSame(3, $data['deleted']);
 
@@ -123,9 +123,9 @@ final class BenchmarkApiControllerTest extends TestCase
         $request = $this->createPostRequest([]);
         $response = $this->controller->clearHistory($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
 
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertSame(2, $data['deleted']);
 
@@ -159,17 +159,19 @@ final class BenchmarkApiControllerTest extends TestCase
         );
     }
 
-    private function createPostRequest(mixed $body): Request
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function createPostRequest(array $body): ServerRequest
     {
         $json = json_encode($body, JSON_THROW_ON_ERROR);
 
-        return new Request(
-            method: Method::POST,
+        return new ServerRequest(
+            method: 'POST',
             uri: '/studio/api/benchmark/delete',
-            path: '/studio/api/benchmark/delete',
-            queryString: '',
-            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            headers: ['Content-Type' => 'application/json'],
             body: $json,
+            parsedBody: $body,
         );
     }
 }

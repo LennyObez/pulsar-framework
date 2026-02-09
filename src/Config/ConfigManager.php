@@ -7,6 +7,7 @@ namespace Pulsar\Config;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Exception\ConfigException;
+use Pulsar\View\ViewConfig;
 
 use function is_array;
 use function is_file;
@@ -79,6 +80,20 @@ final class ConfigManager implements ConfigManagerInterface
         $securityData = $this->loadConfigFile('security');
         $securityConfig = SecurityConfig::fromArray($securityData, $this->environment);
         $this->repository->set($securityConfig);
+
+        // Load i18n config (optional — only if config/i18n.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'i18n.php')) {
+            $i18nData = $this->loadConfigFile('i18n');
+            $i18nConfig = I18nConfig::fromArray($i18nData, $this->environment);
+            $this->repository->set($i18nConfig);
+        }
+
+        // Load event config (optional — only if config/event.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'event.php')) {
+            $eventData = $this->loadConfigFile('event');
+            $eventConfig = EventConfig::fromArray($eventData, $this->environment);
+            $this->repository->set($eventConfig);
+        }
 
         // Load database config (optional — only if config/database.php exists)
         if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'database.php')) {
@@ -155,6 +170,41 @@ final class ConfigManager implements ConfigManagerInterface
             $runtimeData = $this->loadConfigFile('runtime');
             $runtimeConfig = RuntimeConfig::fromArray($runtimeData, $this->environment);
             $this->repository->set($runtimeConfig);
+        }
+
+        // Load cache config (optional — only if config/cache.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'cache.php')) {
+            $cacheData = $this->loadConfigFile('cache');
+            $cacheConfig = CacheConfig::fromArray($cacheData, $this->environment);
+            $this->repository->set($cacheConfig);
+        }
+
+        // Load mail config (optional — only if config/mail.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'mail.php')) {
+            $mailData = $this->loadConfigFile('mail');
+            $mailConfig = MailConfig::fromArray($mailData, $this->environment);
+            $this->repository->set($mailConfig);
+        }
+
+        // Load notification config (optional — only if config/notification.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'notification.php')) {
+            $notificationData = $this->loadConfigFile('notification');
+            $notificationConfig = NotificationConfig::fromArray($notificationData, $this->environment);
+            $this->repository->set($notificationConfig);
+        }
+
+        // Load API config (optional — only if config/api.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'api.php')) {
+            $apiData = $this->loadConfigFile('api');
+            $apiConfig = ApiConfig::fromArray($apiData);
+            $this->repository->set($apiConfig);
+        }
+
+        // Load view config (optional — only if config/view.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'view.php')) {
+            $viewData = $this->loadConfigFile('view');
+            $viewConfig = ViewConfig::fromArray($viewData);
+            $this->repository->set($viewConfig);
         }
 
         // Studio config is NOT loaded here — it is loaded directly by Kernel::studioPreboot()

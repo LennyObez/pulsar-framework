@@ -29,7 +29,6 @@ use Throwable;
 use function dirname;
 use function is_array;
 use function is_file;
-use function is_object;
 use function is_string;
 
 use const DIRECTORY_SEPARATOR;
@@ -214,12 +213,13 @@ final readonly class IntrospectionWiring implements ServiceWiringInterface
     /**
      * Discover registered config DTO class names from the repository.
      *
+     * @param object $repository Config repository (duck-typed for `all()` method)
      * @return list<class-string>
      */
-    private function discoverConfigClasses(mixed $repository): array
+    private function discoverConfigClasses(object $repository): array
     {
         // The repository stores configs keyed by class name
-        if (!is_object($repository) || !method_exists($repository, 'all')) {
+        if (!method_exists($repository, 'all')) {
             return [];
         }
 

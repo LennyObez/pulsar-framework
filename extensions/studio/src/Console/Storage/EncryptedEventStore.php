@@ -13,7 +13,6 @@ use Pulsar\Extension\Studio\Exception\StudioException;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Exception\SecurityException;
 use Random\RandomException;
-use RuntimeException;
 use SodiumException;
 
 use function array_map;
@@ -86,12 +85,6 @@ final readonly class EncryptedEventStore implements EventStoreInterface
         $stmt->execute(['hash' => $ciphertextHash, 'id' => $envelope->eventId]);
     }
 
-    /**
-     * @throws RuntimeException If decryption fails
-     * @throws SecurityException If decryption fails
-     * @throws JsonException If JSON encoding fails
-     * @throws SodiumException
-     */
     #[Override]
     public function query(array $filters = [], int $limit = 50, int $offset = 0): array
     {
@@ -106,12 +99,6 @@ final readonly class EncryptedEventStore implements EventStoreInterface
         return $this->inner->count($filters);
     }
 
-    /**
-     * @throws RuntimeException If decryption fails
-     * @throws SecurityException If decryption fails
-     * @throws JsonException If JSON encoding fails
-     * @throws SodiumException
-     */
     #[Override]
     public function find(string $eventId): ?array
     {
@@ -175,19 +162,23 @@ final readonly class EncryptedEventStore implements EventStoreInterface
     /**
      * Decrypt the payload_json field of a row.
      *
+     * Gracefully handles undecryptable rows (key rotation, dev session changes)
+     * by returning a fallback marker instead of throwing.
+     *
      * @param array<string, mixed> $row
      * @return array<string, mixed>
-     * @throws RuntimeException If decryption fails
-     * @throws JsonException If JSON encoding fails
-     * @throws SecurityException If decryption fails
-     * @throws SodiumException
      */
     private function decryptRow(array $row): array
     {
         // Skip decryption for plaintext rows (stored before encryption was enabled).
         // Encrypted rows always have a ciphertext_hash; plaintext rows have NULL.
         if (isset($row['payload_json']) && is_string($row['payload_json']) && isset($row['ciphertext_hash'])) {
-            $row['payload_json'] = $this->encryptor->decrypt($row['payload_json']);
+            try {
+                $row['payload_json'] = $this->encryptor->decrypt($row['payload_json']);
+            } catch (SecurityException | SodiumException) {
+                // Key rotation or dev session change — return a fallback marker
+                $row['payload_json'] = '{"_decryption_failed":true}';
+            }
         }
 
         return $row;
