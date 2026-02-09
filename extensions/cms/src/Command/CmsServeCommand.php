@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Admin\Command;
+namespace Pulsar\Extension\Cms\Command;
 
 use Override;
 use Pulsar\Api\Internal;
@@ -10,23 +10,24 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Extension\Admin\Config\AdminConfig;
 
+use function escapeshellarg;
+use function file_exists;
 use function is_int;
 use function is_string;
+use function passthru;
 use function sprintf;
 
 /**
- * Starts the Admin panel development server.
+ * Starts the CMS development server.
  *
- * Bootstraps the full framework kernel so Admin routes, database,
- * auth, and all extensions are available.
+ * Bootstraps the full framework kernel so CMS routes (public + admin),
+ * database, auth, and all extensions are available.
  */
 #[Internal]
-final class AdminStartCommand extends Command
+final class CmsServeCommand extends Command
 {
     public function __construct(
-        private readonly AdminConfig $config,
         private readonly string $basePath,
     ) {
         parent::__construct();
@@ -35,8 +36,8 @@ final class AdminStartCommand extends Command
     #[Override]
     protected function configure(): void
     {
-        $this->name = 'admin:start';
-        $this->description = 'Start the Admin panel development server';
+        $this->name = 'cms:serve';
+        $this->description = 'Start the CMS development server';
         $this->addOption('host', 'Host to bind to', 'H');
         $this->addOption('port', 'Port to listen on', 'p');
     }
@@ -44,12 +45,6 @@ final class AdminStartCommand extends Command
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (!$this->config->enabled) {
-            $output->errorln('Admin panel is not enabled. Set enabled: true in config/admin.php');
-
-            return ExitCode::Error->value;
-        }
-
         $hostOption = $input->getOption('host');
         $host = $input->hasOption('host') && is_string($hostOption)
             ? $hostOption
@@ -58,9 +53,9 @@ final class AdminStartCommand extends Command
         $portOption = $input->getOption('port');
         $port = $input->hasOption('port') && (is_int($portOption) || is_string($portOption))
             ? (int) $portOption
-            : 8686;
+            : 8787;
 
-        $routerScript = $this->basePath . '/extensions/admin/dev/router.php';
+        $routerScript = $this->basePath . '/extensions/cms/dev/router.php';
         if (!file_exists($routerScript)) {
             $output->errorln(sprintf('Router script not found: %s', $routerScript));
 
@@ -69,8 +64,8 @@ final class AdminStartCommand extends Command
 
         $documentRoot = $this->basePath;
 
-        $output->info(sprintf('Starting Admin panel on http://%s:%d%s', $host, $port, $this->config->routePrefix));
-        $output->writeln(sprintf('  Route prefix:  %s', $this->config->routePrefix));
+        $output->info(sprintf('Starting CMS server on http://%s:%d', $host, $port));
+        $output->writeln(sprintf('  Document root: %s', $documentRoot));
         $output->newLine();
         $output->writeln('Press Ctrl+C to stop.');
         $output->newLine();

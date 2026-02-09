@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
-use Pulsar\Extension\Studio\Command\StudioStartCommand;
+use Pulsar\Extension\Studio\Command\StudioServeCommand;
 use Pulsar\Extension\Studio\Config\StudioCollectorConfig;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
@@ -20,8 +20,8 @@ use function mkdir;
 use function sys_get_temp_dir;
 use function uniqid;
 
-#[CoversClass(StudioStartCommand::class)]
-final class StudioStartCommandTest extends TestCase
+#[CoversClass(StudioServeCommand::class)]
+final class StudioServeCommandTest extends TestCase
 {
     private string $tmpDir;
 
@@ -40,9 +40,9 @@ final class StudioStartCommandTest extends TestCase
     public function configuredCorrectly(): void
     {
         $config = $this->createConfig(enabled: true);
-        $command = new StudioStartCommand($config, $this->tmpDir);
+        $command = new StudioServeCommand($config, $this->tmpDir);
 
-        self::assertSame('studio:start', $command->name);
+        self::assertSame('studio:serve', $command->name);
         self::assertSame('Start the Studio development server', $command->description);
         self::assertArrayHasKey('host', $command->options);
         self::assertArrayHasKey('port', $command->options);
@@ -54,7 +54,7 @@ final class StudioStartCommandTest extends TestCase
     public function hostOptionHasCorrectDescription(): void
     {
         $config = $this->createConfig();
-        $command = new StudioStartCommand($config, $this->tmpDir);
+        $command = new StudioServeCommand($config, $this->tmpDir);
 
         self::assertSame('Host to bind to', $command->options['host']['description']);
     }
@@ -63,7 +63,7 @@ final class StudioStartCommandTest extends TestCase
     public function portOptionHasCorrectDescription(): void
     {
         $config = $this->createConfig();
-        $command = new StudioStartCommand($config, $this->tmpDir);
+        $command = new StudioServeCommand($config, $this->tmpDir);
 
         self::assertSame('Port to listen on', $command->options['port']['description']);
     }
@@ -72,10 +72,10 @@ final class StudioStartCommandTest extends TestCase
     public function returnsErrorWhenStudioNotEnabled(): void
     {
         $config = $this->createConfig(enabled: false);
-        $command = new StudioStartCommand($config, $this->tmpDir);
+        $command = new StudioServeCommand($config, $this->tmpDir);
         $output = new BufferedOutput();
 
-        $exit = $command->execute(new ArrayInput('studio:start'), $output);
+        $exit = $command->execute(new ArrayInput('studio:serve'), $output);
 
         self::assertSame(ExitCode::Error->value, $exit);
         self::assertStringContainsString('Studio is not enabled', $output->errorBuffer);
@@ -86,10 +86,10 @@ final class StudioStartCommandTest extends TestCase
     public function returnsErrorWhenDocumentRootMissing(): void
     {
         $config = $this->createConfig(enabled: true, documentRoot: 'nonexistent/path');
-        $command = new StudioStartCommand($config, $this->tmpDir);
+        $command = new StudioServeCommand($config, $this->tmpDir);
         $output = new BufferedOutput();
 
-        $exit = $command->execute(new ArrayInput('studio:start'), $output);
+        $exit = $command->execute(new ArrayInput('studio:serve'), $output);
 
         self::assertSame(ExitCode::Error->value, $exit);
         self::assertStringContainsString('Document root does not exist', $output->errorBuffer);
@@ -99,10 +99,10 @@ final class StudioStartCommandTest extends TestCase
     public function errorMessageIncludesDocumentRootPath(): void
     {
         $config = $this->createConfig(enabled: true, documentRoot: 'missing/directory');
-        $command = new StudioStartCommand($config, $this->tmpDir);
+        $command = new StudioServeCommand($config, $this->tmpDir);
         $output = new BufferedOutput();
 
-        $command->execute(new ArrayInput('studio:start'), $output);
+        $command->execute(new ArrayInput('studio:serve'), $output);
 
         self::assertStringContainsString('missing/directory', $output->errorBuffer);
     }
@@ -111,7 +111,7 @@ final class StudioStartCommandTest extends TestCase
     public function commandUsageIncludesOptions(): void
     {
         $config = $this->createConfig();
-        $command = new StudioStartCommand($config, $this->tmpDir);
+        $command = new StudioServeCommand($config, $this->tmpDir);
 
         $usage = $command->getUsage();
 
@@ -130,21 +130,21 @@ final class StudioStartCommandTest extends TestCase
             enabled: true,
             documentRoot: 'extensions/studio/dev/public',
         );
-        $command = new StudioStartCommand($config, $this->tmpDir);
+        $command = new StudioServeCommand($config, $this->tmpDir);
 
         // Verify the document root path is correctly constructed
         // We can't execute (would call passthru which blocks), but we verify config is passed
-        self::assertSame('studio:start', $command->name);
+        self::assertSame('studio:serve', $command->name);
     }
 
     #[Test]
     public function errorMessageContainsConfigFile(): void
     {
         $config = $this->createConfig(enabled: false);
-        $command = new StudioStartCommand($config, $this->tmpDir);
+        $command = new StudioServeCommand($config, $this->tmpDir);
         $output = new BufferedOutput();
 
-        $command->execute(new ArrayInput('studio:start'), $output);
+        $command->execute(new ArrayInput('studio:serve'), $output);
 
         // The error message should reference the config file
         self::assertStringContainsString('config/studio.php', $output->errorBuffer);

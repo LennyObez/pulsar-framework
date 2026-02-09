@@ -14,10 +14,8 @@ declare(strict_types=1);
 require __DIR__ . '/../../vendor/autoload.php';
 
 use Pulsar\Core\Kernel;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 
 $warmupIterations = 200;
 $measuredIterations = 1000;
@@ -29,13 +27,9 @@ $kernel->router()->get('/bench', fn () => Response::text('ok'));
 $kernel->boot();
 $bootUs = (int) ((hrtime(true) - $bootStart) / 1_000);
 
-$request = new Request(
-    method: Method::GET,
+$request = new ServerRequest(
+    method: 'GET',
     uri: '/bench',
-    path: '/bench',
-    queryString: '',
-    headers: new HeaderBag(),
-    body: '',
 );
 
 // Warmup (not measured)
