@@ -107,4 +107,10 @@ final class SecurityException extends RuntimeException
     {
         return new self(sprintf('Failed to write audit entry: %s', $reason));
     }
+
+    #[NoDiscard]
+    public static function serializationForbidden(string $class): self
+    {
+        return new self(sprintf('Serialization of %s is forbidden — key material must not leave process memory', $class));
+    }
 }

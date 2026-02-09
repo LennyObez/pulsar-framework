@@ -173,14 +173,17 @@ use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
 use Pulsar\Scheduler\JobRegistry;
 use Pulsar\Scheduler\Scheduler;
+use Pulsar\Security\Audit\AuditChainVerifier;
 use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditSinkInterface;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\EncryptorInterface;
+use Pulsar\Security\Crypto\EnvKeyRing;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Security\Crypto\KeyRingInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
@@ -927,7 +930,11 @@ final class Kernel implements KernelInterface
 
         if ($masterKeyHex !== null && $masterKeyHex !== '') {
             try {
-                $masterKey = MasterKey::fromHex($masterKeyHex);
+                $previousKeyHex = $environment->get('PULSAR_MASTER_KEY_PREVIOUS');
+                $masterKey = MasterKey::fromHex(
+                    $masterKeyHex,
+                    ($previousKeyHex !== null && $previousKeyHex !== '') ? $previousKeyHex : null,
+                );
                 $this->container->instance(MasterKey::class, $masterKey);
                 $this->container->instance(KeyProviderInterface::class, $masterKey);
 
@@ -965,6 +972,14 @@ final class Kernel implements KernelInterface
                     $auditLogger = new AuditLogger($auditSink, $auditKey, $randomizer, $contextHolder);
                     $this->container->instance(AuditLogger::class, $auditLogger);
                     $this->container->instance(AuditLoggerInterface::class, $auditLogger);
+
+                    // Key ring + chain verifier for audit verification across key rotations
+                    $auditKeyRing = EnvKeyRing::fromMasterKey($masterKey, 2, 'audit___');
+                    $this->container->instance(KeyRingInterface::class, $auditKeyRing);
+                    $this->container->instance(EnvKeyRing::class, $auditKeyRing);
+
+                    $chainVerifier = new AuditChainVerifier($auditKeyRing);
+                    $this->container->instance(AuditChainVerifier::class, $chainVerifier);
                 }
             } catch (SecurityException | SodiumException) {
                 // Master key is invalid or sodium operation failed — skip crypto/audit registration.

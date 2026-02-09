@@ -12,6 +12,7 @@ use Random\Randomizer;
 
 use function sodium_crypto_secretbox;
 use function sodium_crypto_secretbox_open;
+use function sodium_memzero;
 
 use SodiumException;
 
@@ -21,6 +22,9 @@ use function strlen;
  * Authenticated encryption using libsodium's secretbox (XSalsa20-Poly1305).
  *
  * Ciphertext format: nonce (24 bytes) || ciphertext+mac.
+ *
+ * Supports an optional previous key for transparent fallback decryption
+ * during key rotation windows.
  */
 final class Encryptor implements EncryptorInterface
 {
@@ -39,50 +43,100 @@ final class Encryptor implements EncryptorInterface
      */
     private const int NONCE_LENGTH = SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
 
-    /**
-     * Create an Encryptor with a raw key directly.
-     *
-     * @param string $key Raw 32-byte secretbox key
-     */
     private readonly Randomizer $randomizer;
 
     private function __construct(
-        private readonly string $key,
+        private string $key,
+        private ?string $previousKey = null,
     ) {
         $this->randomizer = new Randomizer(new Secure());
     }
 
+    public function __destruct()
+    {
+        // Zero key material from memory. Use a local variable because
+        // sodium_memzero() sets its argument to null by reference, which
+        // conflicts with the string property type.
+        $key = $this->key;
+        $this->key = '';
+
+        try {
+            sodium_memzero($key);
+        } catch (SodiumException) {
+            // Best-effort zeroing
+        }
+
+        if ($this->previousKey !== null) {
+            $prev = $this->previousKey;
+            $this->previousKey = null;
+
+            try {
+                sodium_memzero($prev);
+            } catch (SodiumException) {
+                // Best-effort zeroing
+            }
+        }
+    }
+
+    /**
+     * @return array<string, string>
+     * @throws SecurityException
+     */
+    public function __serialize(): array
+    {
+        throw SecurityException::serializationForbidden('Encryptor');
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @throws SecurityException
+     */
+    public function __unserialize(array $data): void
+    {
+        throw SecurityException::serializationForbidden('Encryptor');
+    }
+
     /**
      * Create an Encryptor using the default subkey derivation (subKeyId=1, context='encrypt_').
-     *
-     * This is the standard construction path for general-purpose encryption.
      *
      * @throws SodiumException
      */
     #[NoDiscard]
     public static function fromMasterKey(KeyProviderInterface $masterKey): self
     {
-        return new self($masterKey->deriveSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT));
+        $key = $masterKey->deriveSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT);
+
+        $previousKey = null;
+        if ($masterKey instanceof MasterKey && $masterKey->hasPreviousKey()) {
+            $previousKey = $masterKey->derivePreviousSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT);
+        }
+
+        return new self($key, $previousKey);
     }
 
     /**
      * Create an Encryptor using a specific subkey derivation.
-     *
-     * Enables domain separation for subsystems that need their own
-     * encryption keys (e.g., Studio uses subKeyId=3, context='studio_enc__').
      *
      * @throws SodiumException
      */
     #[NoDiscard]
     public static function fromDerivedKey(KeyProviderInterface $masterKey, int $subKeyId, string $context): self
     {
-        return new self($masterKey->deriveSubKey($subKeyId, $context));
+        $key = $masterKey->deriveSubKey($subKeyId, $context);
+
+        $previousKey = null;
+        if ($masterKey instanceof MasterKey && $masterKey->hasPreviousKey()) {
+            $previousKey = $masterKey->derivePreviousSubKey($subKeyId, $context);
+        }
+
+        return new self($key, $previousKey);
     }
 
     /**
      * Encrypt plaintext and return base64-encoded ciphertext.
      *
      * Output format: base64(nonce || ciphertext_with_mac)
+     * Always encrypts with the current key.
      *
      * @throws SecurityException If encryption fails
      * @throws RandomException
@@ -98,6 +152,9 @@ final class Encryptor implements EncryptorInterface
 
     /**
      * Decrypt a base64-encoded ciphertext produced by encrypt().
+     *
+     * Tries the current key first, then falls back to the previous key
+     * if available. Throws the original exception if both fail.
      *
      * @throws SecurityException If decryption fails (wrong key, tampered data, etc.)
      * @throws SodiumException
@@ -117,20 +174,26 @@ final class Encryptor implements EncryptorInterface
         $nonce = substr($decoded, 0, self::NONCE_LENGTH);
         $ciphertext = substr($decoded, self::NONCE_LENGTH);
 
+        // Try current key
         $plaintext = sodium_crypto_secretbox_open($ciphertext, $nonce, $this->key);
 
-        if ($plaintext === false) {
-            throw SecurityException::decryptionFailed();
+        if ($plaintext !== false) {
+            return $plaintext;
         }
 
-        return $plaintext;
+        // Fallback to previous key if available
+        if ($this->previousKey !== null) {
+            $plaintext = sodium_crypto_secretbox_open($ciphertext, $nonce, $this->previousKey);
+            if ($plaintext !== false) {
+                return $plaintext;
+            }
+        }
+
+        throw SecurityException::decryptionFailed();
     }
 
     /**
      * Create an encryptor using a specific subkey derivation.
-     *
-     * Instance-based alternative to the static fromDerivedKey() factory,
-     * allowing creation through the EncryptorInterface contract.
      *
      * @throws SodiumException
      */
@@ -147,6 +210,9 @@ final class Encryptor implements EncryptorInterface
      */
     public function __debugInfo(): array
     {
-        return ['key' => '[REDACTED]'];
+        return [
+            'key' => '[REDACTED]',
+            'previousKey' => $this->previousKey !== null ? '[REDACTED]' : '[NONE]',
+        ];
     }
 }
