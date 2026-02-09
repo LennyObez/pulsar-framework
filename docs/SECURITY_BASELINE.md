@@ -197,24 +197,82 @@ Applies configured HTTP security headers to every response. Add this middleware 
 $middleware = new SecurityHeadersMiddleware($headersConfig);
 ```
 
-Default headers from `config/security.php`:
+### Minimum Default Headers
 
-| Header                   | Value                             |
-| ------------------------ | --------------------------------- |
-| `X-Content-Type-Options` | `nosniff`                         |
-| `X-Frame-Options`        | `DENY`                            |
-| `Referrer-Policy`        | `strict-origin-when-cross-origin` |
+Pulsar ships with three security headers enabled by default. These represent the minimum baseline and are applied to every response when `SecurityHeadersMiddleware` is registered:
 
-Additional recommended headers can be added via configuration:
+| Header                   | Default Value                     | Purpose                                            |
+| ------------------------ | --------------------------------- | -------------------------------------------------- |
+| `X-Content-Type-Options` | `nosniff`                         | Prevents MIME-type sniffing attacks                |
+| `X-Frame-Options`        | `DENY`                            | Prevents clickjacking by blocking iframe embedding |
+| `Referrer-Policy`        | `strict-origin-when-cross-origin` | Controls referrer information leakage              |
+
+These defaults protect against common attack vectors without requiring any configuration.
+
+### Override Mechanism
+
+All security headers are configurable via `config/security.php`. The `headers` key accepts an associative array of header name to value pairs. You can override defaults, add new headers, or remove headers by setting them to an empty string:
+
+```php
+// config/security.php
+return [
+    // ...
+    'headers' => [
+        // Override a default
+        'X-Frame-Options'        => 'SAMEORIGIN',
+
+        // Add new headers
+        'Strict-Transport-Security' => 'max-age=31536000; includeSubDomains',
+        'Content-Security-Policy'   => "default-src 'self'",
+        'Permissions-Policy'        => 'camera=(), microphone=(), geolocation=()',
+
+        // Keep the defaults you want
+        'X-Content-Type-Options' => 'nosniff',
+        'Referrer-Policy'        => 'strict-origin-when-cross-origin',
+    ],
+];
+```
+
+The `SecurityHeadersConfig` DTO is a readonly object constructed from this array via `fromArray()`. Headers are applied in the order they appear in the configuration.
+
+### HSTS Recommendation
+
+For production deployments served over HTTPS, add the `Strict-Transport-Security` (HSTS) header to instruct browsers to only connect via HTTPS:
 
 ```php
 'headers' => [
-    'X-Content-Type-Options'            => 'nosniff',
-    'X-Frame-Options'                   => 'DENY',
-    'Referrer-Policy'                   => 'strict-origin-when-cross-origin',
-    'Strict-Transport-Security'         => 'max-age=31536000; includeSubDomains',
-    'Content-Security-Policy'           => "default-src 'self'",
-    'Permissions-Policy'                => 'camera=(), microphone=(), geolocation=()',
+    // ... other headers ...
+    'Strict-Transport-Security' => 'max-age=31536000; includeSubDomains',
+],
+```
+
+| Directive           | Description                                                   |
+| ------------------- | ------------------------------------------------------------- |
+| `max-age=31536000`  | Browsers remember HTTPS-only for 1 year (recommended minimum) |
+| `includeSubDomains` | Apply the policy to all subdomains                            |
+| `preload`           | Optional: submit to the HSTS preload list for browser vendors |
+
+**Do not enable HSTS** unless all of the following are true:
+
+- Your domain is served exclusively over HTTPS.
+- All subdomains (if using `includeSubDomains`) also support HTTPS.
+- You are prepared to maintain HTTPS for at least the `max-age` duration.
+
+HSTS is not included in the defaults because it requires TLS to be correctly configured at the reverse proxy level. Enabling it without HTTPS will lock users out of the site.
+
+### Recommended Production Configuration
+
+For production environments behind a TLS-terminating reverse proxy, the recommended header set is:
+
+```php
+'headers' => [
+    'X-Content-Type-Options'        => 'nosniff',
+    'X-Frame-Options'               => 'DENY',
+    'Referrer-Policy'               => 'strict-origin-when-cross-origin',
+    'Strict-Transport-Security'     => 'max-age=31536000; includeSubDomains',
+    'Content-Security-Policy'       => "default-src 'self'",
+    'Permissions-Policy'            => 'camera=(), microphone=(), geolocation=()',
+    'X-Permitted-Cross-Domain-Policies' => 'none',
 ],
 ```
 

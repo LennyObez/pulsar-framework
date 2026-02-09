@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
 /**
  * Typed configuration DTO for the metrics section of observability config.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class MetricsConfig
 {
     public function __construct(

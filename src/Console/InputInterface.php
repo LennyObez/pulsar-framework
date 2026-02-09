@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Contract for console input.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface InputInterface
 {
     /**

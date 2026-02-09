@@ -17,7 +17,7 @@ use Pulsar\Scheduler\Exception\SchedulerException;
 /**
  * Registry of scheduled jobs.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class JobRegistry
 {
     /** @var array<string, JobInterface> */

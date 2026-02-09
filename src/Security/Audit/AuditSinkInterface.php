@@ -13,7 +13,7 @@ use Pulsar\Security\Exception\SecurityException;
  * Implementations must guarantee that entries are durably written
  * before returning from write().
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface AuditSinkInterface
 {
     /**

@@ -18,7 +18,7 @@ use Pulsar\Database\Exception\DatabaseException;
  *
  * Provides a fluent interface for binding parameters and executing statements.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class Statement
 {
     /** @var array<string, mixed> */

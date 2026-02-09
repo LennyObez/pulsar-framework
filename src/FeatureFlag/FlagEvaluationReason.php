@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Reason for a feature flag evaluation result.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum FlagEvaluationReason: string
 {
     case FlagDisabled = 'flag_disabled';

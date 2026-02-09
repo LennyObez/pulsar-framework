@@ -27,7 +27,7 @@ use function usort;
  * assigns one batch number; `rollbackLastBatch()` rolls back all
  * migrations in the highest batch in reverse version order.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class MigrationRunner
 {
     public function __construct(

@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * Domain-specific extensions (e.g., payments) can adapt this by creating typed
  * events inside their handler implementations.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface WebhookHandlerInterface
 {
     /**

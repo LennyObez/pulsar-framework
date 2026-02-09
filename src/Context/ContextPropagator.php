@@ -20,7 +20,7 @@ use Throwable;
  * Used to propagate context through queue job payloads, external HTTP calls,
  * and any other boundary that accepts key-value carriers.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class ContextPropagator
 {
     private const string KEY_CORRELATION_ID = '_ctx_correlation_id';

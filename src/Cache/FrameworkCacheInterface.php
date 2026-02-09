@@ -12,7 +12,7 @@ use Random\RandomException;
 use ReflectionException;
 use SodiumException;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface FrameworkCacheInterface
 {
     /**

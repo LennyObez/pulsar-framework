@@ -9,7 +9,6 @@ use function array_values;
 use function count;
 
 use Override;
-use Pulsar\Api\Internal;
 use Pulsar\Runtime\ResettableInterface;
 use Throwable;
 
@@ -44,7 +43,7 @@ final class FlagEvaluationLog implements FlagEvaluationLogInterface, ResettableI
      *
      * @param callable(FlagEvaluation): void $observer
      */
-    #[Internal]
+    #[Override]
     public function addObserver(callable $observer): void
     {
         $this->observers[] = $observer;

@@ -5,6 +5,10 @@ parameters:
     level: max
     paths:
         - ../../src
+        - ../../extensions/studio/src
+        - ../../extensions/payments/src
+        - ../../extensions/psr7-bridge/src
+        - ../../extensions/observability-export/src
         - ../../tests
     excludePaths:
         - ../../vendor

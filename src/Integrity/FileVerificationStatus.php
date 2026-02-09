@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Status of a single file during integrity verification.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum FileVerificationStatus: string
 {
     case Verified = 'verified';

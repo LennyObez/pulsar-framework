@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Available storage driver types.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum StorageDriver: string
 {
     case Local = 'local';

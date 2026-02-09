@@ -15,7 +15,7 @@ use Pulsar\Config\SupervisorConfig;
  * When any threshold is exceeded the supervisor should initiate a
  * graceful restart of the affected worker.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class WorkerRecyclePolicy
 {
     public function __construct(

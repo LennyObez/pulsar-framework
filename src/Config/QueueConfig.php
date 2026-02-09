@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
 /**
  * Typed configuration DTO for `config/queue.php`.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class QueueConfig
 {
     public function __construct(

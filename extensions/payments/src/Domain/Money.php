@@ -16,7 +16,7 @@ use function sprintf;
  * All arithmetic operations return new instances. Cross-currency
  * operations are rejected at the type level.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class Money
 {
     private function __construct(

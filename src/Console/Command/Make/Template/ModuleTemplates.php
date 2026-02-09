@@ -23,7 +23,7 @@ final readonly class ModuleTemplates
             /**
              * Public API contract for the $name module.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             interface {$name}ServiceInterface
             {
             }
@@ -96,7 +96,7 @@ final readonly class ModuleTemplates
             /**
              * Configuration DTO for the $name module.
              */
-            #[Api]
+            #[Api(since: '1.0.0')]
             final readonly class {$name}Config
             {
                 public function __construct(
@@ -172,7 +172,7 @@ final readonly class ModuleTemplates
 
             ## Structure
 
-            - `Contracts/` — Public API interfaces (`#[Api]`)
+            - `Contracts/` — Public API interfaces (`#[Api(since: '1.0.0')]`)
             - `Internal/Infrastructure/` — Implementation details
             - `Controller/` — HTTP controllers
             - `Config/` — Configuration DTOs

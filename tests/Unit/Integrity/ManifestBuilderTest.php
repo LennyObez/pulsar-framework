@@ -18,6 +18,7 @@ use function mkdir;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Core\Version;
 use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestEntry;
@@ -215,7 +216,7 @@ final class ManifestBuilderTest extends TestCase
         self::assertSame('sha256', $manifest->algorithm);
         self::assertGreaterThanOrEqual($before, $manifest->generatedAt);
         self::assertLessThanOrEqual($after, $manifest->generatedAt);
-        self::assertNotEmpty($manifest->frameworkVersion);
+        self::assertSame(Version::full(), $manifest->frameworkVersion);
         self::assertNull($manifest->signature);
     }
 

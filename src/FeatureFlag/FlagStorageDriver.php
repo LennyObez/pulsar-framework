@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Available storage backends for feature flag definitions.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum FlagStorageDriver: string
 {
     case Memory = 'memory';

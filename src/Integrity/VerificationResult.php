@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Aggregate result of verifying an entire integrity manifest against the filesystem.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class VerificationResult
 {
     /**

@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Contract for classes that can be dispatched as queued jobs.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface QueueableInterface
 {
     /**

@@ -22,7 +22,7 @@ use function sprintf;
  * When a Required rule fails for a field, remaining rules for that field
  * are skipped (short-circuit).
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class Validator
 {
     /**
