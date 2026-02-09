@@ -25,7 +25,6 @@ use function unlink;
 use function var_export;
 
 use const PHP_BINARY;
-use const PHP_EOL;
 use const PHP_OS_FAMILY;
 
 use Pulsar\Api\Internal;

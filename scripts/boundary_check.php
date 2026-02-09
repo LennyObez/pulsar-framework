@@ -33,6 +33,11 @@ final class BoundaryAnalyzer
         'Pulsar\\Console\\Application',
     ];
 
+    /** Namespace prefixes that are composition roots (all classes within are exempt). */
+    private const array COMPOSITION_ROOT_NAMESPACES = [
+        'Pulsar\\Core\\Wiring\\',
+    ];
+
     /** The Api/Internal attribute FQCNs are always accessible. */
     private const array ALWAYS_ACCESSIBLE = [
         'Pulsar\\Api\\Api',
@@ -102,7 +107,17 @@ final class BoundaryAnalyzer
      */
     public function isCompositionRoot(string $fqcn): bool
     {
-        return in_array($fqcn, self::COMPOSITION_ROOTS, true);
+        if (in_array($fqcn, self::COMPOSITION_ROOTS, true)) {
+            return true;
+        }
+
+        foreach (self::COMPOSITION_ROOT_NAMESPACES as $prefix) {
+            if (str_starts_with($fqcn, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
