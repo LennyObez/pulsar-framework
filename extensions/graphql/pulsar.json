@@ -1,0 +1,8 @@
+{
+  "name": "pulsar/graphql",
+  "description": "GraphQL API for Pulsar CMS content",
+  "version": "1.0.0",
+  "extension": "Pulsar\\Extension\\Graphql\\GraphqlExtension",
+  "providers": ["Pulsar\\Extension\\Graphql\\GraphqlServiceProvider"],
+  "require": { "pulsar/cms": "^1.0" }
+}
