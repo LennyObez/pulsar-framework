@@ -18,22 +18,30 @@
   "require-dev": {
     "deptrac/deptrac": "^4.6",
     "friendsofphp/php-cs-fixer": "^3.0",
+    "nyholm/psr7": "^1.8",
     "phpbench/phpbench": "^1.3",
     "phpstan/phpstan": "^2.0",
     "phpunit/phpunit": "^12.0",
+    "psr/http-factory": "^1.0",
+    "psr/http-message": "^2.0",
+    "psr/http-server-handler": "^1.0",
+    "psr/http-server-middleware": "^1.0",
     "rector/rector": "^2.0",
     "roave/security-advisories": "dev-latest",
     "vimeo/psalm": "^6.15"
   },
   "suggest": {
     "ext-pcntl": "Required for queue worker signal handling (Unix only)",
-    "ext-sockets": "Required for persistent HTTP runtime (optional, guarded by runtime check)"
+    "ext-sockets": "Required for persistent HTTP runtime (optional, guarded by runtime check)",
+    "psr/http-message": "Required for PSR-7 bridge extension (bidirectional request/response conversion)",
+    "nyholm/psr7": "Required for PSR-7 bridge extension (PSR-7/PSR-17 implementation)"
   },
   "autoload": {
     "psr-4": {
       "Pulsar\\": "src/",
       "Pulsar\\Extension\\Example\\": "extensions/example/src/",
       "Pulsar\\Extension\\Payments\\": "extensions/payments/src/",
+      "Pulsar\\Extension\\Psr7Bridge\\": "extensions/psr7-bridge/src/",
       "Pulsar\\Extension\\Studio\\": "extensions/studio/src/"
     }
   },

@@ -23,6 +23,7 @@
         <include>
             <directory>../../src</directory>
             <directory>../../extensions/payments/src</directory>
+            <directory>../../extensions/psr7-bridge/src</directory>
             <directory>../../extensions/studio/src</directory>
         </include>
     </source>

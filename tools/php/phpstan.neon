@@ -7,6 +7,7 @@ parameters:
         - ../../src
         - ../../extensions/studio/src
         - ../../extensions/payments/src
+        - ../../extensions/psr7-bridge/src
         - ../../tests
     excludePaths:
         - ../../vendor

@@ -579,6 +579,12 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Studio\\
 
+    # --- PSR-7 Bridge Extension (Pulsar\\Extension\\Psr7-bridge → Psr7Bridge) ---
+    - name: Psr7BridgeExtension
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Psr7Bridge\\
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -849,6 +855,7 @@ deptrac:
       - PaymentsContracts
       - PaymentsDomain
 
+    Psr7BridgeExtension: *public_deps
     StudioExtension: *public_deps
     ExampleExtension: *public_deps
 

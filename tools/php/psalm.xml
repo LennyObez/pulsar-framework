@@ -13,6 +13,7 @@
         <directory name="../../src"/>
         <directory name="../../extensions/studio/src"/>
         <directory name="../../extensions/payments/src"/>
+        <directory name="../../extensions/psr7-bridge/src"/>
         <ignoreFiles>
             <directory name="../../vendor"/>
         </ignoreFiles>
