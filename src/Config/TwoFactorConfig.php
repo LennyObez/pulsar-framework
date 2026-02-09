@@ -23,6 +23,10 @@ readonly class TwoFactorConfig
         public int $codePeriod = 30,
         public int $verificationWindow = 1,
         public int $recoveryCodeCount = 8,
+        public int $recoveryCodeBytes = 8,
+        public int $stepUpTimeoutMinutes = 15,
+        public int $recoveryCodeAlgorithmVersion = 2,
+        public bool $allowInMemory = false,
     ) {}
 
     /**
@@ -44,6 +48,13 @@ readonly class TwoFactorConfig
         $verificationWindow = is_int($rawVerificationWindow) ? $rawVerificationWindow : (int) (is_numeric($rawVerificationWindow) ? $rawVerificationWindow : 1);
         $rawRecoveryCodeCount = $data['recovery_code_count'] ?? 8;
         $recoveryCodeCount = is_int($rawRecoveryCodeCount) ? $rawRecoveryCodeCount : (int) (is_numeric($rawRecoveryCodeCount) ? $rawRecoveryCodeCount : 8);
+        $rawRecoveryCodeBytes = $data['recovery_code_bytes'] ?? 8;
+        $recoveryCodeBytes = is_int($rawRecoveryCodeBytes) ? $rawRecoveryCodeBytes : (int) (is_numeric($rawRecoveryCodeBytes) ? $rawRecoveryCodeBytes : 8);
+        $rawStepUpTimeoutMinutes = $data['step_up_timeout_minutes'] ?? 15;
+        $stepUpTimeoutMinutes = is_int($rawStepUpTimeoutMinutes) ? $rawStepUpTimeoutMinutes : (int) (is_numeric($rawStepUpTimeoutMinutes) ? $rawStepUpTimeoutMinutes : 15);
+        $rawRecoveryCodeAlgorithmVersion = $data['recovery_code_algorithm_version'] ?? 2;
+        $recoveryCodeAlgorithmVersion = is_int($rawRecoveryCodeAlgorithmVersion) ? $rawRecoveryCodeAlgorithmVersion : (int) (is_numeric($rawRecoveryCodeAlgorithmVersion) ? $rawRecoveryCodeAlgorithmVersion : 2);
+        $allowInMemory = (bool) ($data['allow_in_memory'] ?? false);
 
         return new self(
             enabled: $enabled,
@@ -52,6 +63,10 @@ readonly class TwoFactorConfig
             codePeriod: $codePeriod,
             verificationWindow: $verificationWindow,
             recoveryCodeCount: $recoveryCodeCount,
+            recoveryCodeBytes: $recoveryCodeBytes,
+            stepUpTimeoutMinutes: $stepUpTimeoutMinutes,
+            recoveryCodeAlgorithmVersion: $recoveryCodeAlgorithmVersion,
+            allowInMemory: $allowInMemory,
         );
     }
 }
