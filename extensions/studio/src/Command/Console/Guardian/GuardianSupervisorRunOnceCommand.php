@@ -15,7 +15,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
-use Pulsar\Supervisor\Supervisor;
+use Pulsar\Supervisor\SupervisorInterface;
 
 use function sprintf;
 use function time;
@@ -32,7 +32,7 @@ final class GuardianSupervisorRunOnceCommand extends Command
     private readonly int $startTime;
 
     public function __construct(
-        private readonly Supervisor $supervisor,
+        private readonly SupervisorInterface $supervisor,
     ) {
         $this->startTime = time();
         parent::__construct();

@@ -24,7 +24,7 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\FileVerificationStatus;
 use Pulsar\Integrity\ManifestFormat;
-use Pulsar\Integrity\ManifestVerifier;
+use Pulsar\Integrity\ManifestVerifierInterface;
 
 use function sprintf;
 
@@ -37,6 +37,7 @@ final class IntegrityVerifyCommand extends Command
 {
     public function __construct(
         private readonly IntegrityConfig $config,
+        private readonly ManifestVerifierInterface $verifier,
         private readonly string $basePath,
     ) {
         parent::__construct();
@@ -103,8 +104,7 @@ final class IntegrityVerifyCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $verifier = new ManifestVerifier($this->basePath);
-        $result = $verifier->verify($manifest);
+        $result = $this->verifier->verify($manifest);
 
         if ($jsonOutput) {
             $files = [];

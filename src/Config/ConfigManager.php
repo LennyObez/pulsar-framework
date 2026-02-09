@@ -7,6 +7,7 @@ namespace Pulsar\Config;
 use function is_array;
 use function is_file;
 
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Exception\ConfigException;
 
@@ -21,7 +22,7 @@ use Pulsar\Config\Exception\ConfigException;
  * 5. Typed DTO construction (env vars override array values inside factories)
  */
 #[Internal]
-final class ConfigManager
+final class ConfigManager implements ConfigManagerInterface
 {
     private ?Environment $environment = null;
     private ?ConfigRepository $repository = null;
@@ -163,6 +164,7 @@ final class ConfigManager
     /**
      * Get the config directory path.
      */
+    #[Override]
     public function configPath(): ?string
     {
         return $this->configPath;
@@ -173,6 +175,7 @@ final class ConfigManager
      *
      * @throws ConfigException If load() has not been called.
      */
+    #[Override]
     public function environment(): Environment
     {
         return $this->environment ?? throw ConfigException::missingRequired('environment', 'ConfigManager (call load() first)');
@@ -183,6 +186,7 @@ final class ConfigManager
      *
      * @throws ConfigException If load() has not been called.
      */
+    #[Override]
     public function repository(): ConfigRepository
     {
         return $this->repository ?? throw ConfigException::missingRequired('repository', 'ConfigManager (call load() first)');

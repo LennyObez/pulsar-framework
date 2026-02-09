@@ -28,7 +28,7 @@ use PDO;
 use PDOException;
 use Pulsar\Api\Internal;
 use Pulsar\Observability\Metrics\MetricRegistry;
-use Pulsar\Security\Crypto\Hmac;
+use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use Pulsar\Extension\Studio\Exception\StudioException;
 use Random\Engine\Secure;
@@ -60,6 +60,7 @@ final class SqliteEventStore implements EventStoreInterface
     public function __construct(
         string $storagePath,
         private readonly ?MetricRegistry $metricRegistry = null,
+        private readonly ?HmacInterface $hmac = null,
     ) {
         if ($storagePath !== ':memory:') {
             $dir = dirname($storagePath);
@@ -81,9 +82,9 @@ final class SqliteEventStore implements EventStoreInterface
      * Create a store using an in-memory SQLite database (for testing).
      */
     #[NoDiscard]
-    public static function inMemory(?MetricRegistry $metricRegistry = null): self
+    public static function inMemory(?MetricRegistry $metricRegistry = null, ?HmacInterface $hmac = null): self
     {
-        return new self(':memory:', $metricRegistry);
+        return new self(':memory:', $metricRegistry, $hmac);
     }
 
     #[Override]
@@ -161,7 +162,7 @@ final class SqliteEventStore implements EventStoreInterface
                 // Compute optional per-link MAC
                 $linkMac = null;
                 if ($chainMacKey !== null) {
-                    $linkMac = Hmac::computeHex($currentHash, $chainMacKey);
+                    $linkMac = $this->hmac?->computeHex($currentHash, $chainMacKey);
                 }
 
                 // Insert chain link

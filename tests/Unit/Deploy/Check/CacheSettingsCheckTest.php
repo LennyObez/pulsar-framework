@@ -19,6 +19,7 @@ use Pulsar\Cache\CacheManifest;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Deploy\Check\CacheSettingsCheck;
 use Pulsar\Deploy\CheckSeverity;
+use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function random_bytes;
@@ -132,7 +133,7 @@ final class CacheSettingsCheckTest extends TestCase
     {
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
 
-        return new FrameworkCache($this->tempDir, $masterKey);
+        return new FrameworkCache($this->tempDir, $masterKey, new HmacService());
     }
 
     /**
@@ -141,7 +142,7 @@ final class CacheSettingsCheckTest extends TestCase
     private function buildWarmCache(): FrameworkCache
     {
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
-        $cache = new FrameworkCache($this->tempDir, $masterKey);
+        $cache = new FrameworkCache($this->tempDir, $masterKey, new HmacService());
 
         // Create the cache directory structure and write a valid signed manifest
         $cachePath = $cache->cachePath();
@@ -152,6 +153,7 @@ final class CacheSettingsCheckTest extends TestCase
         $hmacKey = $masterKey->deriveSubKey(7, 'fw_cache');
 
         CacheManifest::write(
+            hmac: new HmacService(),
             cachePath: $cachePath,
             hmacKey: $hmacKey,
             schemaVersion: 1,

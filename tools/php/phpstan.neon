@@ -8,5 +8,7 @@ parameters:
         - ../../tests
     excludePaths:
         - ../../vendor
+    bootstrapFiles:
+        - ../../scripts/boundary_check.php
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true
