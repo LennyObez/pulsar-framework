@@ -5,6 +5,8 @@ parameters:
     level: max
     paths:
         - ../../src
+        - ../../extensions/studio/src
+        - ../../extensions/payments/src
         - ../../tests
     excludePaths:
         - ../../vendor

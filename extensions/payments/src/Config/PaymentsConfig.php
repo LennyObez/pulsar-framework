@@ -38,9 +38,14 @@ final readonly class PaymentsConfig
         /** @var array<string, mixed> $webhookLogData */
         $webhookLogData = $data['webhook_log'] ?? [];
 
+        /** @var string $provider */
+        $provider = $data['provider'] ?? 'null';
+        /** @var string $defaultCurrency */
+        $defaultCurrency = $data['default_currency'] ?? 'USD';
+
         return new self(
-            provider: (string) ($data['provider'] ?? 'null'),
-            defaultCurrency: (string) ($data['default_currency'] ?? 'USD'),
+            provider: $provider,
+            defaultCurrency: $defaultCurrency,
             webhook: WebhookConfig::fromArray($webhookData),
             idempotency: IdempotencyConfig::fromArray($idempotencyData),
             webhookLog: WebhookLogConfig::fromArray($webhookLogData),

@@ -12,6 +12,13 @@ interface FlagEvaluationLogInterface
     public function record(FlagEvaluation $evaluation): void;
 
     /**
+     * Register an observer to be notified on every flag evaluation.
+     *
+     * @param callable(FlagEvaluation): void $observer
+     */
+    public function addObserver(callable $observer): void;
+
+    /**
      * @return list<FlagEvaluation>
      */
     public function all(): array;

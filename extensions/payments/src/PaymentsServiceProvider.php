@@ -59,6 +59,7 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             /** @var ClockInterface $clock */
             $clock = $container->get(ClockInterface::class);
 
+            /** @var PaymentProviderInterface */
             return match ($config->provider) {
                 'null' => new NullProvider($clock),
                 'simulator' => new SimulatorProvider($clock),
@@ -71,6 +72,7 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             /** @var PaymentsConfig $config */
             $config = $container->get(PaymentsConfig::class);
 
+            /** @var IdempotencyStoreInterface */
             return match ($config->idempotency->store) {
                 'memory' => new InMemoryIdempotencyStore(),
                 default => $container->get($config->idempotency->store),
@@ -82,6 +84,7 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             /** @var PaymentsConfig $config */
             $config = $container->get(PaymentsConfig::class);
 
+            /** @var WebhookEventLogInterface */
             return match ($config->webhookLog->store) {
                 'memory' => new InMemoryWebhookEventLog(),
                 default => $container->get($config->webhookLog->store),

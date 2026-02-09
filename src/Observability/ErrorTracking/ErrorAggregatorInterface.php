@@ -12,6 +12,13 @@ interface ErrorAggregatorInterface
     public function capture(ErrorEvent $event): void;
 
     /**
+     * Register an observer to be notified on every captured error event.
+     *
+     * @param callable(ErrorEvent): void $observer
+     */
+    public function addObserver(callable $observer): void;
+
+    /**
      * @return list<ErrorGroup>
      */
     public function groups(): array;

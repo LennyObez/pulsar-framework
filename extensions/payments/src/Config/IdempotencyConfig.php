@@ -25,10 +25,17 @@ final readonly class IdempotencyConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        /** @var int $ttlSeconds */
+        $ttlSeconds = $data['ttl_seconds'] ?? 86400;
+        /** @var string $store */
+        $store = $data['store'] ?? 'memory';
+        /** @var int $maxKeyLength */
+        $maxKeyLength = $data['max_key_length'] ?? 256;
+
         return new self(
-            ttlSeconds: (int) ($data['ttl_seconds'] ?? 86400),
-            store: (string) ($data['store'] ?? 'memory'),
-            maxKeyLength: (int) ($data['max_key_length'] ?? 256),
+            ttlSeconds: $ttlSeconds,
+            store: $store,
+            maxKeyLength: $maxKeyLength,
         );
     }
 }
