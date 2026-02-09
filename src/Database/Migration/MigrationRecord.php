@@ -15,7 +15,7 @@ use Pulsar\Api\Api;
 /**
  * Readonly value object for an applied migration row.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class MigrationRecord
 {
     public function __construct(

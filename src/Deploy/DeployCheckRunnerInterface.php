@@ -6,7 +6,7 @@ namespace Pulsar\Deploy;
 
 use Pulsar\Api\Api;
 
-#[Api]
+#[Api(since: '1.0.0')]
 interface DeployCheckRunnerInterface
 {
     public function register(DeployCheckInterface $check): void;

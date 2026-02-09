@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Result of webhook processing.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class WebhookProcessingResult
 {
     public function __construct(

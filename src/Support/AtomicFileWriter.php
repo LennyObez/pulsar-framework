@@ -30,7 +30,7 @@ use function unlink;
  * On Windows, rename() fails if the target exists, so we unlink first.
  * A small race window exists on Windows — acceptable for build artifacts.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class AtomicFileWriter
 {
     /**

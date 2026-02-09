@@ -13,7 +13,7 @@ use Pulsar\Http\Response;
  *
  * Defines the lifecycle for both traditional PHP-FPM and persistent worker runtimes.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface RuntimeInterface
 {
     /**

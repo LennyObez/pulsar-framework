@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
 /**
  * Result of a webhook event claim attempt.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class WebhookClaim
 {
     private function __construct(

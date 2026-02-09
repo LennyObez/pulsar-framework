@@ -50,7 +50,7 @@ final class SecurityHeadersMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function emptyConfigAddsNoHeaders(): void
+    public function emptyConfigAppliesMinimumDefaults(): void
     {
         $config = new SecurityHeadersConfig(headers: []);
         $middleware = new SecurityHeadersMiddleware($config);
@@ -59,8 +59,11 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         $response = $middleware->process($this->createRequest(), $handler);
 
         self::assertSame(ResponseStatus::OK, $response->status);
-        // Only the Content-Type from Response::text()
-        self::assertSame('text/plain; charset=utf-8', $response->headers->first('Content-Type'));
+        self::assertSame('nosniff', $response->headers->first('X-Content-Type-Options'));
+        self::assertSame('DENY', $response->headers->first('X-Frame-Options'));
+        self::assertSame('strict-origin-when-cross-origin', $response->headers->first('Referrer-Policy'));
+        self::assertSame('0', $response->headers->first('X-XSS-Protection'));
+        self::assertSame('camera=(), microphone=(), geolocation=()', $response->headers->first('Permissions-Policy'));
     }
 
     #[Test]
@@ -79,6 +82,24 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         self::assertStringContainsString('application/json', $response->headers->first('Content-Type') ?? '');
         // Security header added
         self::assertSame('DENY', $response->headers->first('X-Frame-Options'));
+    }
+
+    #[Test]
+    public function userHeadersOverrideMinimumDefaults(): void
+    {
+        $config = new SecurityHeadersConfig(headers: [
+            'X-Frame-Options' => 'SAMEORIGIN',
+        ]);
+
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $handler = fn(Request $r): Response => Response::text('OK');
+        $response = $middleware->process($this->createRequest(), $handler);
+
+        // User override takes precedence
+        self::assertSame('SAMEORIGIN', $response->headers->first('X-Frame-Options'));
+        // Other minimums still present
+        self::assertSame('nosniff', $response->headers->first('X-Content-Type-Options'));
     }
 
     #[Test]

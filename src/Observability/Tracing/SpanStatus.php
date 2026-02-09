@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Status of a trace span.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum SpanStatus: string
 {
     case Unset = 'unset';

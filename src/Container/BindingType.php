@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Defines how a container binding should be resolved.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum BindingType: string
 {
     /**

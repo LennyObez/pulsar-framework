@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Idempotency violation exceptions.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class IdempotencyException extends RuntimeException
 {
     #[NoDiscard]

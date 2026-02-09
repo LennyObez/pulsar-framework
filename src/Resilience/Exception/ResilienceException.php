@@ -15,7 +15,7 @@ use Throwable;
 /**
  * Exception for resilience/self-healing errors.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ResilienceException extends RuntimeException
 {
     /**

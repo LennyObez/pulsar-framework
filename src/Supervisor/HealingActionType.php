@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Categories of self-healing actions the supervisor can perform.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum HealingActionType: string
 {
     case WorkerRecycle = 'worker_recycle';

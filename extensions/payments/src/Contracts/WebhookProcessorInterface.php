@@ -10,7 +10,7 @@ use Pulsar\Http\Response;
 /**
  * Webhook processor port — verifies, deduplicates, and dispatches webhook events.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface WebhookProcessorInterface
 {
     /**

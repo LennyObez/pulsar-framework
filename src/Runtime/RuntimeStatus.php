@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Runtime lifecycle status.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum RuntimeStatus: string
 {
     case Stopped = 'stopped';

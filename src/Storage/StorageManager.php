@@ -12,7 +12,7 @@ use Pulsar\Config\StorageDriver;
 /**
  * Storage manager that provides disk-based storage adapter resolution.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class StorageManager
 {
     /** @var array<string, StorageAdapterInterface> */

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Security\Session;
 
 use function array_key_exists;
+use function ini_get;
 
 use NoDiscard;
 use Override;
@@ -12,11 +13,13 @@ use Pulsar\Config\SessionConfig;
 use Pulsar\Security\Exception\SecurityException;
 
 use function session_destroy;
+use function session_get_cookie_params;
 use function session_id;
 use function session_name;
 use function session_regenerate_id;
 use function session_start;
 use function session_status;
+use function setcookie;
 
 /**
  * Secure session wrapper around PHP's native session functions.
@@ -127,6 +130,22 @@ final class Session implements SessionInterface
     {
         if (session_status() === PHP_SESSION_ACTIVE) {
             $_SESSION = [];
+
+            if (ini_get('session.use_cookies')) {
+                $params = session_get_cookie_params();
+                $name = session_name();
+                if ($name !== false) {
+                    setcookie($name, '', [
+                        'expires' => 1,
+                        'path' => $params['path'],
+                        'domain' => $params['domain'],
+                        'secure' => $params['secure'],
+                        'httponly' => $params['httponly'],
+                        'samesite' => $params['samesite'],
+                    ]);
+                }
+            }
+
             session_destroy();
         }
 

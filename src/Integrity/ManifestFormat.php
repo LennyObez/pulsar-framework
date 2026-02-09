@@ -23,7 +23,7 @@ use Pulsar\Integrity\Exception\IntegrityException;
 /**
  * Serializes and deserializes integrity manifests to/from JSON.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class ManifestFormat
 {
     private function __construct() {}

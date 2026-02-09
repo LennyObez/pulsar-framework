@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Version constraint configuration for Pulsar framework compatibility.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 readonly class PulsarVersionConfig
 {
     public function __construct(

@@ -16,7 +16,7 @@ use Pulsar\Extension\Payments\Exception\PaymentProviderException;
 /**
  * Payment gateway port — orchestrates provider calls with cross-cutting concerns.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface PaymentGatewayInterface
 {
     /**

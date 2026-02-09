@@ -27,7 +27,7 @@ use function strlen;
  * generates CausationId, and creates RequestContext from request metadata.
  * On outbound: echoes X-Correlation-ID and X-Causation-ID on response headers.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class RequestContextMiddleware implements MiddlewareInterface
 {
     private const string HEADER_CORRELATION_ID = 'X-Correlation-ID';

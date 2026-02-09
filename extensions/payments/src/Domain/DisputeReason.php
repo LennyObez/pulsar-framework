@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Dispute reason codes.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 enum DisputeReason: string
 {
     case Fraudulent = 'fraudulent';

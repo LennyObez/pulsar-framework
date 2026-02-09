@@ -24,7 +24,7 @@ use function rtrim;
  * The `.env` parser supports `KEY=VALUE` lines, `#` comments, and blank lines.
  * No interpolation is performed.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final class Environment
 {
     /**

@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Rules inspect a field value and return a Violation on failure,
  * or null when the value passes validation.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 interface RuleInterface
 {
     /**
