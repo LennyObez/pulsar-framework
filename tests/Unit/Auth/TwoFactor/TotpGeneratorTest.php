@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Auth\TwoFactor;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
@@ -99,5 +100,73 @@ final class TotpGeneratorTest extends TestCase
         // timestamp 90 => time step = intdiv(90, 30) = 3, which differs from step 1
         // This is overwhelmingly likely to be different
         self::assertMatchesRegularExpression('/^\d{6}$/', $codeDifferentTime);
+    }
+
+    /**
+     * RFC 6238 Appendix B SHA-1 test vectors (8-digit mode).
+     *
+     * @return array<string, array{int, string}>
+     */
+    public static function rfc6238Sha1EightDigitProvider(): array
+    {
+        return [
+            'T=59'          => [59,          '94287082'],
+            'T=1111111109'  => [1111111109,  '07081804'],
+            'T=1111111111'  => [1111111111,  '14050471'],
+            'T=1234567890'  => [1234567890,  '89005924'],
+            'T=2000000000'  => [2000000000,  '69279037'],
+            'T=20000000000' => [20000000000, '65353130'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('rfc6238Sha1EightDigitProvider')]
+    public function rfc6238AppendixBEightDigitVectors(int $timestamp, string $expected): void
+    {
+        $generator8 = new TotpGenerator(codeDigits: 8);
+        $secret = '12345678901234567890';
+
+        $code = $generator8->computeCode($secret, $timestamp);
+
+        self::assertSame($expected, $code, "RFC 6238 SHA-1 8-digit vector failed at T={$timestamp}");
+    }
+
+    /**
+     * RFC 6238 Appendix B SHA-1 test vectors — 6-digit variants (last 6 digits of 8-digit values).
+     *
+     * @return array<string, array{int, string}>
+     */
+    public static function rfc6238Sha1SixDigitProvider(): array
+    {
+        return [
+            'T=59'          => [59,          '287082'],
+            'T=1111111109'  => [1111111109,  '081804'],
+            'T=1111111111'  => [1111111111,  '050471'],
+            'T=1234567890'  => [1234567890,  '005924'],
+            'T=2000000000'  => [2000000000,  '279037'],
+            'T=20000000000' => [20000000000, '353130'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('rfc6238Sha1SixDigitProvider')]
+    public function rfc6238AppendixBSixDigitVectors(int $timestamp, string $expected): void
+    {
+        $secret = '12345678901234567890';
+
+        $code = $this->generator->computeCode($secret, $timestamp);
+
+        self::assertSame($expected, $code, "RFC 6238 SHA-1 6-digit vector failed at T={$timestamp}");
+    }
+
+    #[Test]
+    public function periodAndDigitsAccessors(): void
+    {
+        self::assertSame(30, $this->generator->period());
+        self::assertSame(6, $this->generator->digits());
+
+        $custom = new TotpGenerator(codeDigits: 8, period: 60);
+        self::assertSame(60, $custom->period());
+        self::assertSame(8, $custom->digits());
     }
 }

@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Auth\TwoFactor;
 
 use function hash_equals;
+use function intdiv;
+
+use SensitiveParameter;
 
 /**
  * Verifies TOTP codes with a configurable time window to account for clock drift.
+ *
+ * Returns the accepted time step on success for replay guard keying and diagnostics.
  */
 final readonly class TotpVerifier
 {
@@ -20,37 +25,48 @@ final readonly class TotpVerifier
      * Verify a TOTP code against the given secret.
      *
      * Checks the code against the current time step and ±window adjacent steps.
-     * When a replay guard and identity ID are provided, ensures the same code
-     * cannot be accepted twice within the time window.
+     * When a replay guard, identity ID, and purpose are provided, ensures the same
+     * time step cannot be accepted twice within the window.
+     *
+     * Returns the accepted time step on match (for replay guard keying), or null on failure.
      *
      * @param string $secret Raw binary secret
      * @param string $code User-provided code
      * @param int|null $timestamp Unix timestamp (defaults to current time)
      * @param TotpReplayGuardInterface|null $replayGuard Replay protection (recommended for production)
      * @param string|null $identityId Identity submitting the code (required with replay guard)
+     * @param TwoFactorPurpose $purpose The verification purpose
      */
     public function verify(
+        #[SensitiveParameter]
         string $secret,
+        #[SensitiveParameter]
         string $code,
         ?int $timestamp = null,
         ?TotpReplayGuardInterface $replayGuard = null,
         ?string $identityId = null,
-    ): bool {
+        TwoFactorPurpose $purpose = TwoFactorPurpose::Login,
+    ): ?int {
         $timestamp ??= time();
+        $period = $this->generator->period();
 
         for ($i = -$this->window; $i <= $this->window; $i++) {
-            $checkTime = $timestamp + ($i * 30);
+            $checkTime = $timestamp + ($i * $period);
             $expected = $this->generator->computeCode($secret, $checkTime);
 
             if (hash_equals($expected, $code)) {
+                $timeStep = intdiv($checkTime, $period);
+
                 if ($replayGuard !== null && $identityId !== null) {
-                    return $replayGuard->markUsed($identityId, $code, $timestamp);
+                    if (!$replayGuard->markUsed($identityId, $purpose, $timeStep, $timestamp)) {
+                        return null;
+                    }
                 }
 
-                return true;
+                return $timeStep;
             }
         }
 
-        return false;
+        return null;
     }
 }
