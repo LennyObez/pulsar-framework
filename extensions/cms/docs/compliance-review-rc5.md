@@ -1,15 +1,15 @@
-# CMS Commerce Module - Legal & Compliance Review (RC.11 Phase 5)
+# CMS commerce module - legal & compliance review (RC.11 phase 5)
 
 **Reviewer:** Legal & Compliance Specialist
 **Date:** 2026-02-19
 **Scope:** Tax/VAT, invoicing, GDPR, financial records, digital goods consumer rights
-**Status:** Review Complete
+**Status:** Review complete
 
 ---
 
-## 1. Tax/VAT Calculation Review
+## 1. Tax/VAT calculation review
 
-### 1.1 Rate Lookup Design
+### 1.1 Rate lookup design
 
 The `TaxCalculator` uses `CommerceConfig.taxRates` with per-`tax_category` rate definitions, each carrying `country_codes[]` and a decimal `rate`. Tax is computed at checkout based on the billing address country.
 
@@ -19,7 +19,7 @@ The `TaxCalculator` uses `CommerceConfig.taxRates` with per-`tax_category` rate 
 - **Correct:** Fallback to zero tax when no matching rate exists is acceptable for non-EU sales, but the `taxRequired: true` flag that rejects checkout without a matching rate is essential for EU sellers - document this as mandatory for EU-based operators.
 - **Gap: No tax jurisdiction date-effectiveness.** Tax rates change over time (e.g., Germany temporarily reduced VAT from 19% to 16% in 2020). The current `TaxRateConfig` has no `effective_from` / `effective_until` dates. Orders placed during rate transitions would use whatever rate is configured at checkout time, which is correct for new orders, but historical orders must store the applied rate at time of purchase (addressed in OrderItem - see below). **Recommendation:** Add `effective_from: ?DateTimeImmutable` and `effective_until: ?DateTimeImmutable` to `TaxRateConfig` for operators who need to pre-configure upcoming rate changes. This is not a blocker but is a significant DX improvement for EU operators.
 
-### 1.2 EU VAT Reverse Charge
+### 1.2 EU VAT reverse charge
 
 The plan specifies: if buyer provides a valid VAT number and is in a different EU country, tax rate = 0% with a `reverse_charge` flag on the order.
 
@@ -29,7 +29,7 @@ The plan specifies: if buyer provides a valid VAT number and is in a different E
 - **Gap: The `Order` entity lacks a `vat_number` field.** The buyer's VAT number must be stored on the order for invoice compliance (see Section 2). The current `Order` entity has no field for this. **Recommendation:** Add `?string $vatNumber` and `bool $reverseCharge = false` to the `Order` entity.
 - **Gap: No VIES validation.** Checksum validation per country format is a minimum, but EU reverse charge requires that the VAT number is actually valid (registered). The EU provides the VIES (VAT Information Exchange System) SOAP/REST API for real-time validation. While full VIES integration can be a plugin, the `TaxCalculator` should accept a `VatValidatorInterface` with a default `ChecksumVatValidator` and document that EU operators should install a VIES-checking implementation. **Recommendation:** Define `VatValidatorInterface` with `validate(string $vatNumber, string $countryCode): VatValidationResult` and inject it into the tax calculation flow.
 
-### 1.3 VAT Number Format Validation
+### 1.3 VAT number format validation
 
 Per-country VAT number format validation (checksum algorithms) is specified. This covers the 27 EU member states, each with distinct formats (e.g., DE + 9 digits, FR + 2 chars + 9 digits, NL + 9 digits + B + 2 digits).
 
@@ -38,7 +38,7 @@ Per-country VAT number format validation (checksum algorithms) is specified. Thi
 - The format-level validation is sufficient as a first gate.
 - Document clearly that format validation does NOT confirm active registration - operators selling B2B cross-border must implement VIES verification to safely apply zero-rating.
 
-### 1.4 Rounding Strategy
+### 1.4 Rounding strategy
 
 **Critical compliance point.** EU VAT rules (Council Directive 2006/112/EC, Article 175) require that VAT is calculated per line item, not as a percentage of the order total.
 
@@ -52,7 +52,7 @@ Per-country VAT number format validation (checksum algorithms) is specified. Thi
   3. Never compute order tax as `round(subtotal * rate)` - this produces rounding discrepancies that fail EU tax authority audits.
   4. Document the rounding strategy in a code comment at the calculation site.
 
-### 1.5 Tax Reporting Data Completeness
+### 1.5 Tax reporting data completeness
 
 **Assessment: Adequate.**
 
@@ -63,9 +63,9 @@ Per-country VAT number format validation (checksum algorithms) is specified. Thi
 
 ---
 
-## 2. Invoice Legal Requirements
+## 2. Invoice legal requirements
 
-### 2.1 Required Fields (EU VAT Directive Article 226)
+### 2.1 Required fields (EU VAT directive article 226)
 
 EU VAT invoices must contain specific mandatory fields. Review against the `Invoice` entity:
 
@@ -98,7 +98,7 @@ EU VAT invoices must contain specific mandatory fields. Review against the `Invo
 4. The invoice template (HTML or PDF) must render ALL of the above fields. The `HtmlInvoiceRenderer` template should be reviewed against this checklist.
 5. For reverse charge invoices, the template must include the text "Reverse charge - VAT to be accounted for by the recipient" (or equivalent in the invoice locale).
 
-### 2.2 Sequential Immutable Numbering
+### 2.2 Sequential immutable numbering
 
 The plan specifies `invoice_number` as "sequential, immutable" with type `string(50)`.
 
@@ -110,17 +110,17 @@ The plan specifies `invoice_number` as "sequential, immutable" with type `string
 - **Recommendation:** Once an invoice number is assigned, it must NEVER be reused or reassigned. The `Invoice` entity is already `readonly`, which is correct. The database should have a `UNIQUE` constraint on `(tenant_id, invoice_number)`.
 - **Credit notes:** When a refund occurs, a credit note (negative invoice) must be generated with its own sequential number referencing the original invoice. The current design does not include a `CreditNote` entity or a `type` field on `Invoice`. **Recommendation:** Add `InvoiceType` enum (`invoice`, `credit_note`) and `?string $referenceInvoiceId` to `Invoice` for credit notes.
 
-### 2.3 Evidence Hash for Tamper Detection
+### 2.3 Evidence hash for tamper detection
 
 The plan specifies `evidence_hash` (SHA-256 of invoice data) and `pdf_hash` (BLAKE2b of PDF).
 
 **Assessment: Good design with one correction needed.**
 
-- The `Invoice` entity currently documents `pdfHash` as "SHA-256" but the plan specifies BLAKE2b. The implementation should use BLAKE2b consistently with the rest of the audit chain (which uses HMAC-BLAKE2b).
+- The `Invoice` entity currently documents `pdfHash` as "SHA-256" but the plan specifies BLAKE2b. The implementation should use BLAKE2b consistently with the rest of the audit chain (which uses keyed BLAKE2b).
 - **Recommendation:** The `evidence_hash` should cover: `invoice_number`, `order_id`, `issued_at`, `due_at`, all line item data (product, quantity, unit price, tax), totals, seller details, and buyer details. Document the exact field set that feeds the hash.
-- **Recommendation:** The evidence hash should be computed using `HMAC-BLAKE2b` with the audit key (consistent with the audit chain), not plain SHA-256.
+- **Recommendation:** The evidence hash should be computed using `keyed BLAKE2b` with the audit key (consistent with the audit chain), not plain SHA-256.
 
-### 2.4 Record Retention
+### 2.4 Record retention
 
 EU jurisdictions require financial record retention between 6-10 years:
 
@@ -140,9 +140,9 @@ EU jurisdictions require financial record retention between 6-10 years:
 
 ---
 
-## 3. Financial Record Retention Policy
+## 3. Financial record retention policy
 
-### 3.1 "Never Delete" Policy
+### 3.1 "Never delete" policy
 
 **Assessment: Correct and compliant.**
 
@@ -154,7 +154,7 @@ This aligns with:
 - National accounting laws (see Section 2.4 table).
 - PCI DSS Requirement 3.1: retain cardholder data only as long as needed - but the CMS does NOT store card data (delegated to `pulsar/payments`), so this is not applicable.
 
-### 3.2 Soft Delete Implementation
+### 3.2 Soft delete implementation
 
 **Assessment: Needs explicit implementation.**
 
@@ -162,7 +162,7 @@ This aligns with:
 - **Recommendation:** For financial records, soft delete should be implemented at the repository level (query filter), not as a column. Financial records should genuinely never be soft-deleted either - the "never delete" policy should mean exactly that. Admin can archive/close orders but never delete them. The `OrderStatus::Cancelled` state is sufficient for orders that should not be fulfilled.
 - **Recommendation:** Add a database-level trigger or application check that prevents `DELETE` statements on `cms_orders`, `cms_order_items`, and `cms_invoices`. A `BEFORE DELETE` trigger that raises an exception is a robust safety net.
 
-### 3.3 Audit Trail Completeness
+### 3.3 Audit trail completeness
 
 **Assessment: Good coverage.**
 
@@ -184,7 +184,7 @@ The audit events table (plan Section I.5) covers:
 
 **Recommendation:** Add these audit events to the specification and mark all financial audit events as "permanent" retention.
 
-### 3.4 GDPR Article 17(3)(b) Exception
+### 3.4 GDPR article 17(3)(b) exception
 
 **Assessment: Correctly identified and applied.**
 
@@ -194,9 +194,9 @@ GDPR Article 17(3)(b) provides an exception to the right to erasure for "complia
 
 ---
 
-## 4. GDPR Compliance on Order Data
+## 4. GDPR compliance on order data
 
-### 4.1 PII Encrypted at Rest
+### 4.1 PII encrypted at rest
 
 **Assessment: Correct design.**
 
@@ -215,7 +215,7 @@ The `Order` entity correctly defaults `dataClassification` to `DataClassificatio
 3. Stores a key version identifier with encrypted data to support key rotation.
 4. Logs every decryption as an audit event for PII access monitoring.
 
-### 4.2 Right to Erasure: Pseudonymization
+### 4.2 Right to erasure: pseudonymization
 
 **Assessment: Correct approach.**
 
@@ -229,13 +229,15 @@ The plan (Section G.8, GDPR) specifies:
 
 1. **Pseudonymization must be irreversible.** The email hash should use a keyed hash (HMAC) with a key that is destroyed after the pseudonymization batch completes, OR use a one-way hash with a per-erasure salt that is not stored. Simply hashing with SHA-256 without a key is reversible via rainbow tables for common email addresses.
 2. **All PII fields must be covered.** Beyond email and addresses, check for PII in:
-  - `Order.notes` (admin notes may contain customer names/details - redact)
-  - `OrderItem.productSnapshot` (if it contains customer-specific data like personalization - redact)
-  - `Invoice.pdfStoragePath` (the stored PDF/HTML contains customer PII - the file must be regenerated with redacted data or deleted with a note in the audit trail)
+
+- `Order.notes` (admin notes may contain customer names/details - redact)
+- `OrderItem.productSnapshot` (if it contains customer-specific data like personalization - redact)
+- `Invoice.pdfStoragePath` (the stored PDF/HTML contains customer PII - the file must be regenerated with redacted data or deleted with a note in the audit trail)
+
 3. **Cross-reference with comments.** If the same customer left comments, the comment PII erasure must run as part of the same operation. The `ToolsServiceInterface::eraseUserData(userId, reason)` should handle this atomically.
 4. **Response timeline.** GDPR Article 12(3) requires response within one month. Document this SLA for operators.
 
-### 4.3 Data Export (GDPR Article 20 - Portability)
+### 4.3 Data export (GDPR article 20 - portability)
 
 **Assessment: Adequate design.**
 
@@ -248,7 +250,7 @@ The plan (Section G.8, GDPR) specifies:
 3. The export itself is an audit event (`cms.user.data_exported`) and must be logged.
 4. Rate-limit data export requests (once per 24 hours per user is reasonable) to prevent abuse.
 
-### 4.4 Data Classification Propagation
+### 4.4 Data classification propagation
 
 **Assessment: Correct.**
 
@@ -261,9 +263,9 @@ No changes needed.
 
 ---
 
-## 5. Digital Goods Consumer Rights
+## 5. Digital goods consumer rights
 
-### 5.1 EU Consumer Rights Directive (2011/83/EU)
+### 5.1 EU consumer rights directive (2011/83/EU)
 
 For digital content (not supplied on a tangible medium), the consumer has a 14-day right of withdrawal UNLESS:
 
@@ -282,7 +284,7 @@ The `DigitalDownload` entity tracks download tokens, expiry, and download counts
 4. **Refund logic:** If a digital product has not been downloaded (download count = 0) and is within 14 days, the consumer has a right to a full refund regardless of the consent checkbox. The `OrderService::refund()` method should check this.
 5. **Mixed orders:** If an order contains both physical and digital products, the withdrawal right applies separately to each. Physical products have a 14-day return right from delivery; digital products follow the consent-based waiver.
 
-### 5.2 Download Token Security
+### 5.2 Download token security
 
 **Assessment: Adequate design.**
 
@@ -298,7 +300,7 @@ The `DigitalDownload` entity tracks download tokens, expiry, and download counts
 3. Expired or exhausted tokens must return 404 (not 403) to avoid information leakage about the existence of the asset.
 4. Rate-limit download attempts per token to prevent brute-force enumeration.
 
-### 5.3 Refund Implications for Digital Deliveries
+### 5.3 Refund implications for digital deliveries
 
 **Assessment: Needs design consideration.**
 
@@ -310,9 +312,9 @@ When a refund is processed for a digital order:
 
 ---
 
-## 6. Summary of Recommendations
+## 6. Summary of recommendations
 
-### Critical (Must Fix Before GA)
+### Critical (must fix before GA)
 
 | #   | Issue                                     | Affected Entity    | Recommendation                                                                                             |
 | --- | ----------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------- |
@@ -323,18 +325,18 @@ When a refund is processed for a digital order:
 | C5  | Per-item tax rounding                     | `TaxCalculator`    | Implement per-item rounding (not order-total rounding) per EU VAT rules                                    |
 | C6  | Digital goods withdrawal consent          | `Order` / Checkout | Add withdrawal waiver consent capture, storage, and enforcement                                            |
 
-### Important (Should Fix Before GA)
+### Important (should fix before GA)
 
 | #   | Issue                                 | Affected Area    | Recommendation                                                                                                 |
 | --- | ------------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------- |
-| I1  | Invoice evidence hash algorithm       | `Invoice`        | Use HMAC-BLAKE2b (consistent with audit chain), not SHA-256                                                    |
+| I1  | Invoice evidence hash algorithm       | `Invoice`        | Use keyed BLAKE2b (consistent with audit chain), not SHA-256                                                   |
 | I2  | Missing financial audit events        | Audit            | Add `order.status_changed`, `order.cancelled`, `credit_note.generated`, `order.exported`, `order.pii_accessed` |
 | I3  | DELETE prevention on financial tables | Database         | Add `BEFORE DELETE` triggers on `cms_orders`, `cms_order_items`, `cms_invoices`                                |
 | I4  | Invoice number gap prevention         | `InvoiceService` | Use database-level sequence or `SELECT FOR UPDATE` counter                                                     |
 | I5  | VAT validator interface               | `TaxCalculator`  | Define `VatValidatorInterface` for VIES integration extensibility                                              |
 | I6  | Pseudonymization irreversibility      | `ToolsService`   | Use keyed hash with destroyed key or per-erasure salt                                                          |
 
-### Nice to Have (Post-GA)
+### Nice to have (post-ga)
 
 | #   | Issue                             | Recommendation                                               |
 | --- | --------------------------------- | ------------------------------------------------------------ |
@@ -343,7 +345,7 @@ When a refund is processed for a digital order:
 | N3  | Data export rate limiting         | Limit to once per 24 hours per user                          |
 | N4  | Supply date on invoices           | Add `?DateTimeImmutable $supplyDate` to `Invoice`            |
 
-### Documentation Requirements for Site Operators
+### Documentation requirements for site operators
 
 The following must be documented in a CMS Commerce Compliance Guide:
 

@@ -1,13 +1,13 @@
-import type { AggregateStats } from "../types";
+import type { AggregateStats } from '../types';
 
 export function renderMetricCards(container: HTMLElement, stats: AggregateStats): void {
   const metrics = [
-    { label: "Unique Visitors", value: formatNumber(stats.visitors), key: "visitors" },
-    { label: "Total Pageviews", value: formatNumber(stats.pageviews), key: "pageviews" },
-    { label: "Bounce Rate", value: `${stats.bounce_rate.toFixed(1)}%`, key: "bounce_rate" },
-    { label: "Avg. Duration", value: formatDuration(stats.avg_duration), key: "avg_duration" },
-    { label: "Sessions", value: formatNumber(stats.sessions), key: "sessions" },
-    { label: "Events", value: formatNumber(stats.events_count), key: "events_count" },
+    { label: 'Unique Visitors', value: formatNumber(stats.visitors), key: 'visitors' },
+    { label: 'Total Pageviews', value: formatNumber(stats.pageviews), key: 'pageviews' },
+    { label: 'Bounce Rate', value: `${stats.bounce_rate.toFixed(1)}%`, key: 'bounce_rate' },
+    { label: 'Avg. Duration', value: formatDuration(stats.avg_duration), key: 'avg_duration' },
+    { label: 'Sessions', value: formatNumber(stats.sessions), key: 'sessions' },
+    { label: 'Events', value: formatNumber(stats.events_count), key: 'events_count' },
   ];
 
   container.innerHTML = metrics
@@ -19,7 +19,7 @@ export function renderMetricCards(container: HTMLElement, stats: AggregateStats)
     </div>
   `,
     )
-    .join("");
+    .join('');
 }
 
 function formatNumber(n: number): string {

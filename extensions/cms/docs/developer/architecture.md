@@ -1,8 +1,8 @@
-# CMS Extension Architecture
+# CMS extension architecture
 
 The Pulsar CMS extension provides a complete content management system for regulated, mission-critical domains. It is organized into 18 modules, each with strict boundaries and well-defined responsibilities.
 
-## Module Map
+## Module map
 
 | Module            | Namespace        | Responsibility                                                                                                           |
 | ----------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -25,7 +25,7 @@ The Pulsar CMS extension provides a complete content management system for regul
 | **Tools**         | `Tools\`         | Import/export, site definition import, backups, GDPR data tools                                                          |
 | **Dashboard**     | `Dashboard\`     | Admin dashboard widgets (traffic, SEO, system health, moderation, audit)                                                 |
 
-## Extension Entry Point
+## Extension entry point
 
 The CMS is registered as a Pulsar extension via `CmsExtension`, which implements three lifecycle interfaces:
 
@@ -37,9 +37,9 @@ PostBootExtensionInterface - postBoot()
 
 Source: `extensions/cms/src/CmsExtension.php`
 
-## Boot Sequence (4 Phases)
+## Boot sequence (4 phases)
 
-### Phase 1: Service Provider Registration
+### Phase 1: service provider registration
 
 `CmsServiceProvider::register()` is invoked by the framework. It binds all repository interfaces to their database-backed implementations and wires service dependencies. This phase has three sub-steps:
 
@@ -47,28 +47,28 @@ Source: `extensions/cms/src/CmsExtension.php`
 2. **`bindServices()`** -- Creates and registers service stacks (Media, Comments, Search, SEO, Themes, Plugins, Tools, LiveCSS, Commerce).
 3. **`registerPermissions()`** -- Registers 9 CMS roles and 50+ permissions with Pulsar's `RoleRegistryInterface`.
 
-### Phase 2: Pre-Boot (`preBoot`)
+### Phase 2: pre-boot (`preBoot`)
 
 Runs before route registration. Performs two operations:
 
 1. **Configuration loading** -- Loads `config/cms.php` if present, parses it into a `CmsConfig` DTO via `CmsConfig::fromArray()`, and binds it to the container. Falls back to defaults if no config file exists.
 2. **Breadcrumb generator binding** -- Creates and binds `BreadcrumbGenerator` if its dependencies (`ContentRepositoryInterface`, `ContentTranslationRepositoryInterface`) are available.
 
-### Phase 3: Boot (Route Registration)
+### Phase 3: boot (route registration)
 
 `boot()` registers all HTTP routes in two groups:
 
 - **Public routes** -- Locale-aware content rendering (`/{locale}/{path}` or `/{path}` for the default locale), commerce checkout, digital downloads, and payment webhooks.
 - **Admin routes** -- All admin panel endpoints under `/admin/cms/` covering content CRUD, taxonomies, menus, fields, settings, themes, plugins, users, commerce, live CSS, import/export, backups, and 2FA.
 
-### Phase 4: Post-Boot (`postBoot`)
+### Phase 4: post-boot (`postBoot`)
 
 Runs after all extensions have booted:
 
 1. **Settings cache warming** -- Pre-loads settings for the default locale to avoid cold-cache latency.
 2. **`CmsReady` event dispatch** -- Signals that the CMS is fully initialized. Plugins and other extensions can listen for this event.
 
-## Configuration Architecture
+## Configuration architecture
 
 All configuration flows through `CmsConfig`, a readonly DTO loaded from `config/cms.php`:
 
@@ -94,9 +94,9 @@ CmsConfig
 
 Every sub-config uses the same pattern: a `readonly` class with a `fromArray()` static factory. All values have sensible defaults; regulated deployments should enable `editorialWorkflow`, `eventSourcing`, and `atomicSnapshots`.
 
-## Integration Map
+## Integration map
 
-### Pulsar Core Dependencies
+### Pulsar core dependencies
 
 | Pulsar Module | CMS Usage                                                                   |
 | ------------- | --------------------------------------------------------------------------- |
@@ -112,14 +112,14 @@ Every sub-config uses the same pattern: a `readonly` class with a `fromArray()` 
 | `Http`        | `UploadedFile` for media uploads                                            |
 | `Pagination`  | `PaginationResult` for paginated queries                                    |
 
-### CMS Extension Integrations
+### CMS extension integrations
 
 - **Admin (Pulsar Admin)** -- Admin routes are registered under `/admin/cms/` and integrate with the admin panel navigation.
 - **Studio (Pulsar Studio)** -- A dedicated `CmsStudioModule` provides audit panel, cache inspector, media queue, and SEO health panels.
 - **ORM** -- Raw database queries via `ConnectionInterface` (no ORM abstraction layer).
 - **Payments** -- Commerce subsystem integrates with `PaymentGateway` for checkout and webhook handling.
 
-## Data Flow: Content Lifecycle
+## Data flow: content lifecycle
 
 ```
   [Author creates content]
@@ -141,7 +141,7 @@ Every sub-config uses the same pattern: a `readonly` class with a `fromArray()` 
 
 Each transition is validated by `PublishingStatus::canTransitionTo()`, which encodes the state machine rules for both standard and editorial workflow modes.
 
-### Content Creation to Rendering
+### Content creation to rendering
 
 1. **Creation** -- Admin creates a `Content` entity (aggregate root) and one or more `ContentTranslation` records (per-locale title, slug, body, SEO metadata).
 2. **Field values** -- Custom field values are stored via `FieldRegistryRepositoryInterface` using typed columns (`value_string`, `value_int`, `value_float`, `value_bool`, `value_datetime`, `value_json`).
@@ -152,7 +152,7 @@ Each transition is validated by `PublishingStatus::canTransitionTo()`, which enc
 7. **Rendering** -- Public requests hit the `ContentController`, which resolves content by locale and path, applies the active theme's template, and returns the rendered page.
 8. **Cache invalidation** -- On content update, cache tags associated with the content ID and content type are invalidated.
 
-### Cache Invalidation Flow
+### Cache invalidation flow
 
 ```
   Content updated/published
@@ -167,7 +167,7 @@ Each transition is validated by `PublishingStatus::canTransitionTo()`, which enc
   Next request rebuilds from database
 ```
 
-## Module Dependency Graph
+## Module dependency graph
 
 ```
   Config ----+
@@ -207,9 +207,9 @@ Each transition is validated by `PublishingStatus::canTransitionTo()`, which enc
      +-- Dashboard (widgets display Content statistics)
 ```
 
-## Security Architecture
+## Security architecture
 
-### Permission Model
+### Permission model
 
 The CMS defines 9 hierarchical roles with 50+ granular permissions:
 
@@ -225,7 +225,7 @@ The CMS defines 9 hierarchical roles with 50+ granular permissions:
 | `cms.analytics_viewer` | viewer        | View search analytics                                                                       |
 | `cms.admin`            | all roles     | Full access including themes, plugins, settings, users, import/export, backups, live CSS    |
 
-### Data Classification
+### Data classification
 
 Content items carry a `DataClassification` level that controls access and audit behavior:
 
@@ -234,7 +234,7 @@ Content items carry a `DataClassification` level that controls access and audit 
 - `Confidential` -- Restricted access with enhanced audit logging
 - `PII` -- Personal data subject to GDPR/privacy regulations
 
-### Plugin Sandboxing
+### Plugin sandboxing
 
 Plugins operate within strict guardrails:
 
@@ -244,7 +244,7 @@ Plugins operate within strict guardrails:
 - **Output buffering** -- Hook callbacks cannot produce output (captured and discarded).
 - **Provenance verification** -- Plugin packages can be required to have valid Ed25519 signatures.
 
-### Theme Sandboxing
+### Theme sandboxing
 
 Themes have similar protections:
 
@@ -253,7 +253,7 @@ Themes have similar protections:
 - **Provenance verification** -- Theme packages can be required to have valid Ed25519 signatures.
 - **File limits** -- Maximum archive size (50 MB) and file count (10,000).
 
-## Multi-Tenancy
+## Multi-tenancy
 
 All entities support optional multi-tenancy via a nullable `tenantId` field (UUIDv7). When tenancy is disabled, `tenantId` is `null` and all data is shared. When enabled, queries are scoped by tenant ID at the repository level.
 

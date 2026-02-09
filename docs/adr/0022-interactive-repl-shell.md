@@ -8,7 +8,7 @@ Accepted
 
 Developers debugging regulated applications need an interactive shell with full framework context - container services, database connections, cache pools, queue drivers. However, production REPL access is a significant security risk: an unsandboxed shell can modify data, dispatch jobs, and access secrets. The shell must provide safe-mode sandboxing that blocks mutations, mandatory audit logging in production, secret redaction in output, and environment guards that prevent accidental production access.
 
-## Decision Drivers
+## Decision drivers
 
 1. **Security by default**: Production REPL access is blocked unless explicitly overridden with both configuration and a CLI flag. CI environments are always blocked.
 2. **Safe mode**: In regulated domains, read-only inspection is the primary REPL use case. Mutations (database writes, queue dispatch, cache writes, storage writes) must be blockable.
@@ -20,7 +20,7 @@ Developers debugging regulated applications need an interactive shell with full 
 
 Implement `src/Console/Repl/` as the interactive shell module with the following architecture:
 
-### Shell Command
+### Shell command
 
 `ShellCommand` extends the framework console `Command` and orchestrates the REPL lifecycle:
 
@@ -39,7 +39,7 @@ $shellClass = 'Psy\\Shell';
 $shell = new $shellClass(new $configClass([...]));
 ```
 
-### Environment Guard
+### Environment guard
 
 `EnvironmentGuard` enforces a three-tier access policy:
 
@@ -54,7 +54,7 @@ $shell = new $shellClass(new $configClass([...]));
 
 The guard returns a `GuardResult` value object with `allowed`, `reason`, and `isProductionOverride` fields - enabling the shell command to log overrides and display actionable error messages.
 
-### Safe Mode
+### Safe mode
 
 `SafeModeProvider` replaces mutable container bindings with read-only decorators:
 
@@ -70,7 +70,7 @@ The guard returns a `GuardResult` value object with `allowed`, `reason`, and `is
 
 All wrappers throw `ReplSafeModeException` on mutation attempts with a clear message identifying the blocked operation.
 
-### Secret Redaction
+### Secret redaction
 
 `SecretRedactor` applies four redaction strategies:
 
@@ -79,7 +79,7 @@ All wrappers throw `ReplSafeModeException` on mutation attempts with a clear mes
 3. **`#[Sensitive]` properties**: Object dump redaction - properties annotated with `#[Sensitive]` are replaced with `********`
 4. **Framework scrubber**: Array key scrubbing via `SensitiveDataScrubber` for keys matching patterns like `password`, `secret`, `token`, `api_key`
 
-### Audit Logging
+### Audit logging
 
 `ReplAuditLogger` wraps the framework `AuditLoggerInterface` with REPL-specific events:
 
@@ -96,7 +96,7 @@ Result summaries are type descriptions with truncated previews (`object(App\User
 
 `ReplConfig` follows the readonly DTO pattern (ADR-0011): `safeMode` (default true), `audit` (default true), `historyFile`, `startupCommands`.
 
-## Alternatives Considered
+## Alternatives considered
 
 ### Custom eval loop
 
@@ -131,7 +131,7 @@ Rejected: the primary value of a framework REPL is access to the application con
 - Actor identity is resolved from `$_SERVER['USER']`/`$_SERVER['USERNAME']` (OS username) - sufficient for audit trails but not authenticated identity
 - Safe mode is applied by replacing container bindings - services already resolved before safe mode activation retain mutable references
 
-## Security Impact
+## Security impact
 
 The REPL is the highest-risk developer tool in a regulated framework. Mitigations:
 
@@ -142,11 +142,11 @@ The REPL is the highest-risk developer tool in a regulated framework. Mitigation
 - **Secret redaction**: Four-strategy defense prevents credential exposure through REPL output
 - **No network exposure**: CLI-only - no HTTP endpoint, no WebSocket listener, no remote access
 
-## Performance Impact
+## Performance impact
 
 No impact on application performance. The REPL module is only loaded when the `shell` console command is invoked. Safe mode wrappers are applied once at session start. Audit logging adds one log entry per session start/end - negligible.
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 Additive change - introduces `src/Console/Repl/` as a new module. To roll back: remove the module and the `shell` console command registration. No data migrations required. Audit logs are written through the standard `AuditLoggerInterface` and persist independently.
 

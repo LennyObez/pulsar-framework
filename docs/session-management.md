@@ -21,7 +21,7 @@ SessionMiddleware (per-request lifecycle)
        └─ FlashBag (single-use messages)
 ```
 
-## Quick Start
+## Quick start
 
 Session management is configured in `config/security.php` under the `session` key. The default configuration uses file-based storage with encryption enabled.
 
@@ -47,7 +47,7 @@ public function dashboard(FlashBag $flash): Response
 }
 ```
 
-## Handler Selection Guide
+## Handler selection guide
 
 | Handler      | Use Case                   | Concurrency        | Listing | Scaling       |
 | ------------ | -------------------------- | ------------------ | ------- | ------------- |
@@ -57,7 +57,7 @@ public function dashboard(FlashBag $flash): Response
 | **Cookie**   | Stateless APIs, small data | No                 | No      | Inherent      |
 | **Array**    | Testing only               | No                 | No      | N/A           |
 
-### Regulated Deployments
+### Regulated deployments
 
 For banking, healthcare, and legal workloads, use **Redis** (primary) or **Database** (alternative). These handlers support:
 
@@ -66,7 +66,7 @@ For banking, healthcare, and legal workloads, use **Redis** (primary) or **Datab
 - Server-side storage with encryption at rest
 - Horizontal scaling across multiple servers
 
-### Handler Capability Matrix
+### Handler capability matrix
 
 | Capability                 | File       | Database   | Redis     | Cookie      | Array |
 | -------------------------- | ---------- | ---------- | --------- | ----------- | ----- |
@@ -76,7 +76,7 @@ For banking, healthcare, and legal workloads, use **Redis** (primary) or **Datab
 | Horizontal scaling         | No         | Yes        | Yes       | Yes         | No    |
 | Garbage collection         | File mtime | SQL DELETE | TTL-based | N/A         | N/A   |
 
-## Configuration Reference
+## Configuration reference
 
 ```php
 // config/security.php
@@ -129,18 +129,18 @@ For banking, healthcare, and legal workloads, use **Redis** (primary) or **Datab
 ],
 ```
 
-## Session Encryption
+## Session encryption
 
 When `encryption` is enabled and `PULSAR_MASTER_KEY` is set, all session data is encrypted at rest using AEAD (XChaCha20-Poly1305) via the central Keyring service.
 
-### How It Works
+### How it works
 
 - **Algorithm**: XChaCha20-Poly1305 (libsodium AEAD)
 - **AAD**: Session ID, handler type, and domain are bound as Additional Authenticated Data - preventing payload transplant between sessions or handlers
 - **Key derivation**: Session encryption key is derived from the master key using KDF with sub-key ID 3 and context `session_`
 - **Key rotation**: Each encrypted payload includes a `key_id` header. On rotation, old keys decrypt existing sessions while new keys encrypt on write
 
-### Key Rotation
+### Key rotation
 
 1. Set `PULSAR_MASTER_KEY_PREVIOUS` to the old key
 2. Set `PULSAR_MASTER_KEY` to the new key
@@ -149,7 +149,7 @@ When `encryption` is enabled and `PULSAR_MASTER_KEY` is set, all session data is
 
 ## Validators
 
-### User Agent Validator (enabled by default)
+### User agent validator (enabled by default)
 
 Detects session hijacking by comparing the user agent between requests.
 
@@ -157,7 +157,7 @@ Detects session hijacking by comparing the user agent between requests.
 
 **Strict mode**: Exact string comparison of the full user agent.
 
-### Remote Address Validator (disabled by default)
+### Remote address validator (disabled by default)
 
 Validates that the client IP matches the session's original IP.
 
@@ -165,11 +165,11 @@ Validates that the client IP matches the session's original IP.
 
 **Strict mode**: Exact IP match for high-security contexts.
 
-### Fingerprint Validator (disabled by default)
+### Fingerprint validator (disabled by default)
 
 HMAC-based fingerprint of configurable request attributes. Default attributes: Accept-Language + Accept-Encoding. Privacy-aware: no canvas fingerprinting, font enumeration, or tracking attributes.
 
-## Flash Messages
+## Flash messages
 
 Flash messages are single-use session data that persist for exactly one request.
 
@@ -190,7 +190,7 @@ $flash->keep('status');
 $messages = $flash->all();
 ```
 
-## Concurrent Session Limits
+## Concurrent session limits
 
 Redis and Database handlers support limiting active sessions per user. Default: 3 concurrent sessions.
 
@@ -200,11 +200,11 @@ Redis and Database handlers support limiting active sessions per user. Default: 
 
 When the limit is exceeded, `SecurityException::sessionConcurrencyExceeded()` is thrown.
 
-## Session Fixation Protection
+## Session fixation protection
 
 Session IDs are regenerated on privilege changes (login, role escalation) when `regenerate_on_privilege_change` is enabled (default: true). This is a non-configurable security requirement for regulated deployments.
 
-## Cookie Handler
+## Cookie handler
 
 The cookie handler provides stateless sessions via encrypted cookies. Guarantees: **confidentiality + integrity + bounded lifetime**. Replay prevention is best-effort.
 

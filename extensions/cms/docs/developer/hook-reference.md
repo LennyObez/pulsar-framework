@@ -1,8 +1,8 @@
-# Hook Reference
+# Hook reference
 
 The Pulsar CMS plugin hook system enables plugins to observe and react to CMS events without modifying core code. Hooks are dispatched by the `HookExecutionEngine` and registered via `CmsPluginContext::registerHook()`.
 
-## How Hooks Work
+## How hooks work
 
 ### Registration
 
@@ -19,7 +19,7 @@ public function boot(CmsPluginContext $context): void
 
 The `HookExecutionEngine` retrieves all registered callbacks for a hook point from the `HookRegistry`, sorts them by priority (ascending), and calls each one in sequence with the provided arguments.
 
-### Priority System
+### Priority system
 
 | Priority | Use Case                                      |
 | -------- | --------------------------------------------- |
@@ -30,7 +30,7 @@ The `HookExecutionEngine` retrieves all registered callbacks for a hook point fr
 
 Lower values execute first. Callbacks at the same priority execute in registration order.
 
-## Content Lifecycle Hooks
+## Content lifecycle hooks
 
 These hooks correspond to domain events dispatched by the Content module.
 
@@ -137,7 +137,7 @@ $context->registerHook('content.revision_created', function (
 });
 ```
 
-## CMS Lifecycle Hooks
+## CMS lifecycle hooks
 
 ### `cms.ready`
 
@@ -151,7 +151,7 @@ $context->registerHook('cms.ready', function (
 });
 ```
 
-## Theme Hooks
+## Theme hooks
 
 ### `theme.installed`
 
@@ -192,7 +192,7 @@ $context->registerHook('theme.deleted', function (
 });
 ```
 
-## Plugin Hooks
+## Plugin hooks
 
 ### `plugin.installed`
 
@@ -243,7 +243,7 @@ $context->registerHook('plugin.deleted', function (
 });
 ```
 
-## SEO Hooks
+## SEO hooks
 
 ### `seo.link_health_check_completed`
 
@@ -259,7 +259,7 @@ $context->registerHook('seo.link_health_check_completed', function (
 });
 ```
 
-## Commerce Hooks
+## Commerce hooks
 
 ### `commerce.order.created`
 
@@ -326,9 +326,9 @@ $context->registerHook('commerce.refund.processed', function (
 });
 ```
 
-## Safety Rules
+## Safety rules
 
-### Hooks Must Not
+### Hooks must not
 
 1. **Produce output** -- All output is captured and discarded. Use logging instead.
 2. **Throw exceptions for flow control** -- Exceptions are caught and counted toward the circuit breaker. Use return values for control flow.
@@ -336,14 +336,14 @@ $context->registerHook('commerce.refund.processed', function (
 4. **Access restricted services** -- Only services available through `ScopedContainerProxy` are accessible.
 5. **Block indefinitely** -- Long-running operations should be deferred to a queue.
 
-### Hooks Should
+### Hooks should
 
 1. **Be idempotent** -- The same hook may fire multiple times; handle gracefully.
 2. **Fail fast** -- Return early if the hook is not relevant to the current context.
 3. **Log errors** -- Use `LoggerInterface` from the scoped container for diagnostics.
 4. **Keep state minimal** -- Avoid accumulating state across multiple hook invocations.
 
-## Circuit Breaker Behavior
+## Circuit breaker behavior
 
 The `HookExecutionEngine` tracks failures per plugin:
 
@@ -360,7 +360,7 @@ When the threshold is reached:
 3. An audit event (`cms.plugin.circuit_breaker_tripped`) is recorded
 4. The plugin remains circuit-broken until the application process restarts
 
-## Inspecting Registered Hooks
+## Inspecting registered hooks
 
 The `HookRegistry` provides introspection methods:
 
@@ -376,7 +376,7 @@ $callbacks = $hookRegistry->getCallbacks('content.published');
 // Returns: list<array{callback: Closure, priority: int, pluginSlug: string}>
 ```
 
-## Related Documentation
+## Related documentation
 
 - [Plugin Development Guide](plugin-development.md) - How to register hooks in a plugin
 - [Architecture Overview](architecture.md) - Event dispatch and plugin sandboxing

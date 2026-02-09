@@ -1,12 +1,12 @@
-# Compliance Guide
+# Compliance guide
 
 This document covers regulatory compliance considerations for Pulsar CMS deployments, including GDPR, financial record retention, data classification, and data subject rights.
 
-## GDPR Compliance
+## GDPR compliance
 
 Pulsar CMS is designed for deployment in regulated European environments. The following features support GDPR compliance.
 
-### Personal Data Inventory
+### Personal data inventory
 
 | Data Category         | Where Stored                    | Lawful Basis                              |
 | --------------------- | ------------------------------- | ----------------------------------------- |
@@ -22,7 +22,7 @@ Pulsar CMS is designed for deployment in regulated European environments. The fo
 | Search queries        | `cms_search_analytics`          | Legitimate interest (service improvement) |
 | Media EXIF data       | Stripped by default             | Not stored (privacy by design)            |
 
-### Data Minimization
+### Data minimization
 
 Pulsar CMS implements data minimization through:
 
@@ -31,11 +31,11 @@ Pulsar CMS implements data minimization through:
 3. **Optional email collection**: Guest commenter email is configurable and not required by default
 4. **PII-aware exports**: The export system can exclude PII by default
 
-### Right of Access (Article 15)
+### Right of access (article 15)
 
 Data subjects can request a copy of all personal data held about them.
 
-#### GDPR Data Export
+#### GDPR data export
 
 Administrators can export all data for a specific user:
 
@@ -59,11 +59,11 @@ This exports:
 
 The export is returned in a machine-readable JSON format suitable for data portability (Article 20).
 
-### Right to Erasure (Article 17)
+### Right to erasure (article 17)
 
 Data subjects can request deletion of their personal data, subject to legal retention requirements.
 
-#### GDPR Data Erasure
+#### GDPR data erasure
 
 ```
 POST /admin/cms/tools/gdpr/erase
@@ -83,7 +83,7 @@ The erasure process:
 5. **Audit logs**: Actor references are anonymized. The audit entries themselves are retained for security compliance.
 6. **Search analytics**: Any user-identifiable query data is purged.
 
-#### Retention Exceptions
+#### Retention exceptions
 
 Erasure does not apply to data retained for:
 
@@ -93,7 +93,7 @@ Erasure does not apply to data retained for:
 
 These exceptions are documented in the erasure response so administrators can communicate them to data subjects.
 
-### Privacy by Design
+### Privacy by design
 
 Pulsar CMS implements privacy by design (Article 25) through:
 
@@ -105,7 +105,7 @@ Pulsar CMS implements privacy by design (Article 25) through:
 | Integrity          | Audit logging, integrity checks                             |
 | Confidentiality    | RBAC, step-up auth, encryption at rest (via infrastructure) |
 
-### Data Protection Impact Assessment (DPIA)
+### Data protection impact assessment (DPIA)
 
 Operators handling large-scale personal data should conduct a DPIA. Key areas to assess:
 
@@ -114,7 +114,7 @@ Operators handling large-scale personal data should conduct a DPIA. Key areas to
 3. **User tracking**: Search analytics and audit logging
 4. **Content classification**: Handling of confidential/internal data
 
-### Consent Management
+### Consent management
 
 For cookie consent and tracking consent, Pulsar CMS:
 
@@ -123,9 +123,9 @@ For cookie consent and tracking consent, Pulsar CMS:
 - Search analytics are aggregate and do not use browser fingerprinting
 - Third-party integrations (analytics, CDN) require separate consent handling
 
-## Financial Record Retention
+## Financial record retention
 
-### Order Records
+### Order records
 
 Commerce orders and their associated data must be retained according to local regulations:
 
@@ -137,7 +137,7 @@ Commerce orders and their associated data must be retained according to local re
 | UK           | 6 years          | Companies Act 2006        |
 | US           | 7 years          | IRS requirements          |
 
-### Invoice Records
+### Invoice records
 
 Invoices are financial documents with strict retention requirements:
 
@@ -146,7 +146,7 @@ Invoices are financial documents with strict retention requirements:
 - Invoice data (amounts, tax breakdown, parties) must be immutable
 - Anonymized customer data is permitted if the financial transaction details are preserved
 
-### Tax Records
+### Tax records
 
 Tax calculation records should be retained alongside orders:
 
@@ -155,7 +155,7 @@ Tax calculation records should be retained alongside orders:
 - Customer jurisdiction information
 - Total tax collected
 
-### Order Export
+### Order export
 
 For accounting integration, use the order export feature:
 
@@ -165,7 +165,7 @@ GET /admin/cms/orders/export
 
 This generates a CSV suitable for import into accounting software, containing all required financial fields.
 
-## Data Classification
+## Data classification
 
 Pulsar CMS supports data classification at the content level:
 
@@ -175,7 +175,7 @@ Pulsar CMS supports data classification at the content level:
 | `internal`     | Organization-internal content   | Requires authentication       |
 | `confidential` | Restricted access, audit-logged | Requires specific permissions |
 
-### Classification Recommendations
+### Classification recommendations
 
 | Content Type            | Recommended Classification |
 | ----------------------- | -------------------------- |
@@ -185,16 +185,16 @@ Pulsar CMS supports data classification at the content level:
 | Legal documents         | `confidential`             |
 | Customer communications | `internal`                 |
 
-### Handling Classified Content
+### Handling classified content
 
 - **Internal** content is not indexed in public sitemaps
 - **Confidential** content access is audit-logged
 - Export operations respect classification: confidential content requires explicit PII inclusion flag
 - Backup operations include classification metadata for proper handling
 
-## Audit Trail Requirements
+## Audit trail requirements
 
-### What Is Logged
+### What is logged
 
 See the [Audit Events Reference](audit-events.md) for the complete taxonomy. Key compliance-relevant events:
 
@@ -205,7 +205,7 @@ See the [Audit Events Reference](audit-events.md) for the complete taxonomy. Key
 | Security events   | 2FA lifecycle, sanitizer bypass detection, bot detection |
 | Financial events  | Order creation, payment, refund, invoice generation      |
 
-### Audit Log Integrity
+### Audit log integrity
 
 Recommendations for maintaining audit log integrity:
 
@@ -226,7 +226,7 @@ Set up monitoring for:
 - Unusual settings changes (`cms.settings.updated`)
 - Force-unlock events (`cms.content.lock.force_unlocked`)
 
-## Cross-Border Data Transfer
+## Cross-border data transfer
 
 If your CMS deployment serves users across jurisdictions:
 
@@ -235,9 +235,9 @@ If your CMS deployment serves users across jurisdictions:
 3. **Backup location**: Store backups in compliant locations
 4. **Standard contractual clauses**: Ensure third-party services have appropriate agreements
 
-## Compliance Checklist
+## Compliance checklist
 
-### Before Go-Live
+### Before go-live
 
 - [ ] Complete Data Protection Impact Assessment (if required)
 - [ ] Configure data retention policies
@@ -260,7 +260,7 @@ If your CMS deployment serves users across jurisdictions:
 - [ ] Security patch management
 - [ ] Access control review (user roles and permissions)
 
-## Next Steps
+## Next steps
 
 - [Security Model](security-model.md) - Security controls supporting compliance
 - [Audit Events Reference](audit-events.md) - Complete audit event taxonomy

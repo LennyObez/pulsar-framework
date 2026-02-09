@@ -16,7 +16,7 @@ Key constraints:
 - All UI components must meet WCAG 2.1 AA accessibility standards.
 - Zero external CSS/JS dependencies - the framework must not impose a third-party design framework on applications.
 
-## Decision Drivers
+## Decision drivers
 
 1. **Security**: Untrusted user templates must never execute arbitrary PHP code, even if the trusted template engine uses compile-to-PHP for performance.
 2. **Performance**: Trusted templates must compile to native PHP with sub-5ms compilation time and zero runtime overhead.
@@ -26,7 +26,7 @@ Key constraints:
 
 ## Decision
 
-### Template Engine: Dual Execution Model
+### Template engine: dual execution model
 
 Implement a compile-to-PHP engine for **trusted templates** and a restricted AST interpreter for **untrusted templates**:
 
@@ -34,7 +34,7 @@ Implement a compile-to-PHP engine for **trusted templates** and a restricted AST
 
 - **Untrusted path** (`SandboxEngine`): Parses templates into an AST and interprets them without generating PHP. Supports only safe directives (`@if`, `@foreach`, `@include` from an allowlist, `@i18n`, variable interpolation). Enforces deterministic resource bounds: step counter, loop iteration limit, output size cap, and periodic wall-clock checks. Raw output (`{!! !!}`) is blocked. `@include` uses registered template IDs rather than file paths.
 
-### Escaping Model
+### Escaping model
 
 Default HTML escaping on all `{{ }}` output via `htmlspecialchars()` with `ENT_QUOTES | ENT_SUBSTITUTE`. Context-aware helpers (`url()`, `attr()`, `js()`, `css()`) for non-HTML output contexts. The `url()` helper normalizes invisible Unicode characters before blocking dangerous URI schemes (`javascript:`, `data:`, `vbscript:`).
 
@@ -53,7 +53,7 @@ A zero-dependency CSS framework using CSS custom properties (design tokens) as t
 - Component library organized by category: layout, navigation, forms, data display, feedback, actions, typography, media, and miscellaneous
 - Print stylesheet for clean printed output
 
-### Design Token Governance
+### Design token governance
 
 Tokens and component CSS APIs are versioned following semver. All components reference tokens, never raw values. CI verifies no drift between compiled tokens and CSS output.
 
@@ -61,7 +61,7 @@ Tokens and component CSS APIs are versioned following semver. All components ref
 
 A local dev server (`pulsar playground:serve`) providing a component catalog with a built-in CSS editor, real-time preview, and theme file management. Dev-only (disabled in production). Custom-built with vanilla HTML/CSS/JS - no external editor dependencies.
 
-## Alternatives Considered
+## Alternatives considered
 
 ### Alternative A: Adopt Twig
 
@@ -105,7 +105,7 @@ Plates uses native PHP files as templates (no compilation step). While simple, i
 - The playground is dev-only and adds no production footprint
 - Design token versioning follows the same semver discipline as the rest of the framework
 
-## Security Impact
+## Security impact
 
 - **Untrusted template sandboxing**: User-provided templates cannot execute arbitrary PHP, access the filesystem, or perform function calls outside an explicit allowlist. Resource bounds prevent denial-of-service.
 - **Context-aware escaping**: Default HTML escaping on all output with dedicated helpers for URL, attribute, JS, and CSS contexts. The URL escaper blocks `javascript:`, `data:`, and `vbscript:` schemes after normalizing invisible Unicode characters.
@@ -113,7 +113,7 @@ Plates uses native PHP files as templates (no compilation step). While simple, i
 - **@php audit logging**: When enabled, produces compliance-grade events suitable for SOC 2 / HIPAA audit trails.
 - **Playground isolation**: Dev server is disabled in production. CSRF protection on write endpoints. Path traversal prevention on file operations.
 
-## Performance Impact
+## Performance impact
 
 - Trusted template compilation target: < 5ms per template
 - Compiled templates execute as native PHP `include` with zero framework overhead
@@ -121,7 +121,7 @@ Plates uses native PHP files as templates (no compilation step). While simple, i
 - Build-time compilation (`view:compile`) eliminates all runtime compilation in production
 - Sandbox AST interpretation adds overhead for untrusted templates (intentional tradeoff for security isolation)
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 **Adoption**: Add `config/view.php`, create template files in `resources/views/` with the `.pulsar.php` extension, inject `TemplateEngineInterface` in controllers. Existing raw PHP views continue to work alongside Pulsar templates.
 

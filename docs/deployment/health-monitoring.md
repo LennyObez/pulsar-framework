@@ -2,7 +2,7 @@
 
 This guide covers health checking, monitoring, and observability for Pulsar applications running on persistent runtimes (Persistent, FrankenPHP, RoadRunner).
 
-## Health Endpoint
+## Health endpoint
 
 All persistent runtimes serve a `/_health` endpoint that bypasses the kernel entirely. It responds with the worker's current state, request count, memory usage, and uptime.
 
@@ -13,7 +13,7 @@ GET /_health HTTP/1.1
 Host: localhost:8080
 ```
 
-### Response (Healthy)
+### Response (healthy)
 
 ```http
 HTTP/1.1 200 OK
@@ -27,7 +27,7 @@ Content-Type: application/json
 }
 ```
 
-### Response (Draining)
+### Response (draining)
 
 ```http
 HTTP/1.1 503 Service Unavailable
@@ -41,7 +41,7 @@ Content-Type: application/json
 }
 ```
 
-### Response Fields
+### Response fields
 
 | Field       | Type   | Description                                      |
 | ----------- | ------ | ------------------------------------------------ |
@@ -50,7 +50,7 @@ Content-Type: application/json
 | `memory_mb` | int    | Current memory usage in megabytes                |
 | `uptime_s`  | int    | Seconds since the worker started                 |
 
-### HTTP Status Codes
+### HTTP status codes
 
 | Worker State  | HTTP Status               | Meaning                                |
 | ------------- | ------------------------- | -------------------------------------- |
@@ -66,9 +66,9 @@ If your infrastructure uses a custom health-check path, disable the built-in end
 'health_endpoint' => false,
 ```
 
-## Docker Health Checks
+## Docker health checks
 
-### Persistent Runtime
+### Persistent runtime
 
 ```dockerfile
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
@@ -89,7 +89,7 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
     CMD curl -sf http://localhost:8080/_health || exit 1
 ```
 
-### docker-compose Health Check
+### docker-compose health check
 
 ```yaml
 services:
@@ -111,9 +111,9 @@ HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
     CMD php -r "exit(json_decode(file_get_contents('http://localhost:8080/_health'))?->status === 'healthy' ? 0 : 1);"
 ```
 
-## Prometheus Integration
+## Prometheus integration
 
-### Pulsar Metrics
+### Pulsar metrics
 
 Pulsar registers runtime metrics in `MetricRegistry`. These are available through your Prometheus exporter:
 
@@ -126,7 +126,7 @@ Pulsar registers runtime metrics in `MetricRegistry`. These are available throug
 | `runtime_active_fibers`         | Gauge     | Active Fiber connections        |
 | `runtime_slow_requests_total`   | Counter   | Requests exceeding 1s threshold |
 
-### Scrape Configuration
+### Scrape configuration
 
 ```yaml
 # prometheus.yml
@@ -151,7 +151,7 @@ scrape_configs:
      - targets: ['localhost:2019']
 ```
 
-### Alerting Rules
+### Alerting rules
 
 ```yaml
 # alerts.yml
@@ -186,9 +186,9 @@ groups:
           summary: 'No healthy Pulsar workers available'
 ```
 
-## Load Balancer Integration
+## Load balancer integration
 
-### Health Check Behavior
+### Health check behavior
 
 Load balancers should use the `/_health` endpoint to determine routing:
 
@@ -197,7 +197,7 @@ Load balancers should use the `/_health` endpoint to determine routing:
 
 This enables zero-downtime deploys and graceful worker recycling.
 
-### nginx Upstream Health
+### Nginx upstream health
 
 ```nginx
 upstream pulsar {
@@ -252,9 +252,9 @@ spec:
 
 The readiness probe removes the pod from the service when the worker returns `503` (draining), while the liveness probe restarts the pod if the worker becomes unresponsive.
 
-## Graceful Reload Procedure
+## Graceful reload procedure
 
-### Triggering a Reload
+### Triggering a reload
 
 ```bash
 # Via POSIX signal
@@ -267,7 +267,7 @@ php bin/pulsar runtime:reload
 sudo systemctl reload pulsar-runtime
 ```
 
-### Reload Lifecycle
+### Reload lifecycle
 
 1. Worker receives `SIGUSR1`
 2. Status changes to `draining`
@@ -277,7 +277,7 @@ sudo systemctl reload pulsar-runtime
 6. Process supervisor restarts a fresh worker
 7. New worker boots, health endpoint returns `200`
 
-### Drain Timeout
+### Drain timeout
 
 Configure how long to wait for in-flight requests during a reload:
 
@@ -294,7 +294,7 @@ RUNTIME_DRAIN_TIMEOUT_SECONDS=30
 
 After the drain timeout, remaining requests are forcefully terminated and the worker exits.
 
-## Studio Events
+## Studio events
 
 The runtime emits structured events for observability:
 

@@ -1,9 +1,9 @@
-import { fetchRealtime } from "../api";
+import { fetchRealtime } from '../api';
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
 export function startRealtimeCounter(siteId: string): void {
-  const el = document.getElementById("realtime-counter");
+  const el = document.getElementById('realtime-counter');
   if (!el) return;
 
   async function update(): Promise<void> {

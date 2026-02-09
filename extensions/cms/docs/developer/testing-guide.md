@@ -1,8 +1,8 @@
-# Testing CMS Extensions Guide
+# Testing CMS extensions guide
 
 This guide covers how to test CMS plugins, themes, content types, and custom functionality using Pulsar's testing infrastructure.
 
-## Test Directory Structure
+## Test directory structure
 
 CMS tests are organized by module under `tests/Unit/Extension/Cms/`:
 
@@ -30,35 +30,35 @@ tests/Unit/Extension/Cms/
   Workflow/
 ```
 
-## Running Tests
+## Running tests
 
-### Run All CMS Tests
+### Run all CMS tests
 
 ```bash
 vendor/bin/phpunit -c tools/php/phpunit.xml --filter 'Extension\\Cms'
 ```
 
-### Run a Specific Module
+### Run a specific module
 
 ```bash
 vendor/bin/phpunit -c tools/php/phpunit.xml --filter 'Extension\\Cms\\Content'
 ```
 
-### Run a Single Test Class
+### Run a single test class
 
 ```bash
 vendor/bin/phpunit -c tools/php/phpunit.xml --filter ContentTest
 ```
 
-### Run a Single Test Method
+### Run a single test method
 
 ```bash
 vendor/bin/phpunit -c tools/php/phpunit.xml --filter 'ContentTest::test_create_returns_draft_content'
 ```
 
-## Test Conventions
+## Test conventions
 
-### PHPUnit Attributes
+### PHPUnit attributes
 
 All CMS tests use PHPUnit attributes for metadata:
 
@@ -73,7 +73,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
-#[CoversClass(Content::class)]
+# [Coversclass(content::class)]
 final class ContentTest extends TestCase
 {
     #[Test]
@@ -98,9 +98,9 @@ private const string AUTHOR_ID = '01912345-6789-7abc-8def-0123456789cd';
 private const string TENANT_ID = '01912345-0000-7abc-8def-000000000001';
 ```
 
-## Testing Content Entities
+## Testing content entities
 
-### Testing Content Creation
+### Testing content creation
 
 ```php
 use Pulsar\Extension\Cms\Content\Content;
@@ -109,7 +109,7 @@ use Pulsar\Extension\Cms\Content\CommentPolicy;
 use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 
-#[Test]
+# [Test]
 public function test_create_returns_draft_content(): void
 {
     $content = Content::create(
@@ -125,12 +125,12 @@ public function test_create_returns_draft_content(): void
 }
 ```
 
-### Testing State Transitions
+### Testing state transitions
 
 ```php
 use Pulsar\Extension\Cms\Exception\CmsException;
 
-#[Test]
+# [Test]
 public function test_publish_transitions_draft_to_published(): void
 {
     $content = Content::create(
@@ -145,7 +145,7 @@ public function test_publish_transitions_draft_to_published(): void
     self::assertNotNull($published->publishedAt);
 }
 
-#[Test]
+# [Test]
 public function test_publish_from_archived_throws(): void
 {
     $content = Content::create(
@@ -162,10 +162,10 @@ public function test_publish_from_archived_throws(): void
 }
 ```
 
-### Testing Editorial Workflow
+### Testing editorial workflow
 
 ```php
-#[Test]
+# [Test]
 public function test_editorial_workflow_transitions(): void
 {
     $content = Content::create(
@@ -188,12 +188,12 @@ public function test_editorial_workflow_transitions(): void
 }
 ```
 
-## Testing Content Translations
+## Testing content translations
 
 ```php
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 
-#[Test]
+# [Test]
 public function test_create_translation_with_valid_slug(): void
 {
     $translation = ContentTranslation::create(
@@ -210,7 +210,7 @@ public function test_create_translation_with_valid_slug(): void
     self::assertSame('getting-started', $translation->slugSegment);
 }
 
-#[Test]
+# [Test]
 public function test_invalid_slug_throws_exception(): void
 {
     $this->expectException(CmsException::class);
@@ -227,7 +227,7 @@ public function test_invalid_slug_throws_exception(): void
 }
 ```
 
-## Mocking Repository Interfaces
+## Mocking repository interfaces
 
 Use PHPUnit mocks or stubs for repository interfaces:
 
@@ -241,7 +241,7 @@ protected function setUp(): void
     $this->repository = $this->createMock(ContentRepositoryInterface::class);
 }
 
-#[Test]
+# [Test]
 public function test_find_by_path_returns_content(): void
 {
     $content = Content::create(
@@ -262,14 +262,14 @@ public function test_find_by_path_returns_content(): void
 }
 ```
 
-## Testing Plugin Hooks
+## Testing plugin hooks
 
-### Testing Hook Registration
+### Testing hook registration
 
 ```php
 use Pulsar\Extension\Cms\Plugins\HookRegistry;
 
-#[Test]
+# [Test]
 public function test_hook_registry_stores_callbacks(): void
 {
     $registry = new HookRegistry();
@@ -291,14 +291,14 @@ public function test_hook_registry_stores_callbacks(): void
 }
 ```
 
-### Testing Hook Execution with Error Isolation
+### Testing hook execution with error isolation
 
 ```php
 use Pulsar\Extension\Cms\Internal\Plugins\HookExecutionEngine;
 use Psr\Log\NullLogger;
 use Pulsar\Audit\AuditLoggerInterface;
 
-#[Test]
+# [Test]
 public function test_hook_exception_does_not_propagate(): void
 {
     $hookRegistry = new HookRegistry();
@@ -321,10 +321,10 @@ public function test_hook_exception_does_not_propagate(): void
 }
 ```
 
-### Testing Circuit Breaker
+### Testing circuit breaker
 
 ```php
-#[Test]
+# [Test]
 public function test_circuit_breaker_trips_after_threshold(): void
 {
     $hookRegistry = new HookRegistry();
@@ -346,15 +346,15 @@ public function test_circuit_breaker_trips_after_threshold(): void
 }
 ```
 
-## Testing Manifest Validation
+## Testing manifest validation
 
-### Theme Manifest
+### Theme manifest
 
 ```php
 use Pulsar\Extension\Cms\Internal\Themes\ThemeManifestValidator;
 use Pulsar\Extension\Cms\Themes\ThemeManifest;
 
-#[Test]
+# [Test]
 public function test_valid_theme_manifest_passes(): void
 {
     $validator = new ThemeManifestValidator();
@@ -368,7 +368,7 @@ public function test_valid_theme_manifest_passes(): void
     self::assertTrue($result->isValid);
 }
 
-#[Test]
+# [Test]
 public function test_missing_slug_fails_validation(): void
 {
     $validator = new ThemeManifestValidator();
@@ -383,13 +383,13 @@ public function test_missing_slug_fails_validation(): void
 }
 ```
 
-### Plugin Manifest
+### Plugin manifest
 
 ```php
 use Pulsar\Extension\Cms\Internal\Plugins\PluginManifestValidator;
 use Pulsar\Extension\Cms\Plugins\PluginManifest;
 
-#[Test]
+# [Test]
 public function test_valid_plugin_manifest_passes(): void
 {
     $validator = new PluginManifestValidator();
@@ -405,7 +405,7 @@ public function test_valid_plugin_manifest_passes(): void
     self::assertTrue($result->isValid);
 }
 
-#[Test]
+# [Test]
 public function test_invalid_semver_fails_validation(): void
 {
     $validator = new PluginManifestValidator();
@@ -420,14 +420,14 @@ public function test_invalid_semver_fails_validation(): void
 }
 ```
 
-## Testing Custom Field Types
+## Testing custom field types
 
 ```php
 use Pulsar\Extension\Cms\FieldRegistry\ContentTypeDefinition;
 use Pulsar\Extension\Cms\FieldRegistry\ContentTypeField;
 use Pulsar\Extension\Cms\FieldRegistry\FieldType;
 
-#[Test]
+# [Test]
 public function test_field_type_maps_to_correct_column(): void
 {
     self::assertSame('value_string', FieldType::String->valueColumn());
@@ -446,7 +446,7 @@ public function test_field_type_maps_to_correct_column(): void
     self::assertSame('value_string', FieldType::Email->valueColumn());
 }
 
-#[Test]
+# [Test]
 public function test_content_type_definition_holds_fields(): void
 {
     $definition = new ContentTypeDefinition(
@@ -478,13 +478,13 @@ public function test_content_type_definition_holds_fields(): void
 }
 ```
 
-## Testing SEO Services
+## Testing SEO services
 
 ```php
 use Pulsar\Extension\Cms\Seo\MetaTagCollection;
 use Pulsar\Extension\Cms\Seo\JsonLdCollection;
 
-#[Test]
+# [Test]
 public function test_meta_tag_collection_renders_html(): void
 {
     $meta = new MetaTagCollection(
@@ -504,7 +504,7 @@ public function test_meta_tag_collection_renders_html(): void
     self::assertStringContainsString('hreflang="en"', $html);
 }
 
-#[Test]
+# [Test]
 public function test_json_ld_collection_renders_script(): void
 {
     $jsonLd = new JsonLdCollection([
@@ -521,12 +521,12 @@ public function test_json_ld_collection_renders_script(): void
 }
 ```
 
-## Testing Configuration DTOs
+## Testing configuration dtos
 
 ```php
 use Pulsar\Extension\Cms\Config\CmsConfig;
 
-#[Test]
+# [Test]
 public function test_cms_config_defaults(): void
 {
     $config = CmsConfig::fromArray([]);
@@ -538,7 +538,7 @@ public function test_cms_config_defaults(): void
     self::assertNull($config->commerce);
 }
 
-#[Test]
+# [Test]
 public function test_cms_config_from_array(): void
 {
     $config = CmsConfig::fromArray([
@@ -564,7 +564,7 @@ public function test_cms_config_from_array(): void
 use Pulsar\Extension\Cms\Tools\SiteDefinition;
 use InvalidArgumentException;
 
-#[Test]
+# [Test]
 public function test_site_definition_parses_valid_json(): void
 {
     $json = json_encode([
@@ -581,7 +581,7 @@ public function test_site_definition_parses_valid_json(): void
     self::assertSame([], $definition->taxonomies);
 }
 
-#[Test]
+# [Test]
 public function test_site_definition_rejects_invalid_version(): void
 {
     $json = json_encode([
@@ -594,7 +594,7 @@ public function test_site_definition_rejects_invalid_version(): void
     SiteDefinition::fromJson($json);
 }
 
-#[Test]
+# [Test]
 public function test_site_definition_requires_site_key(): void
 {
     $json = json_encode(['version' => '1.0']);
@@ -605,9 +605,9 @@ public function test_site_definition_requires_site_key(): void
 }
 ```
 
-## Integration Test Patterns
+## Integration test patterns
 
-### Setting Up the CMS Test Environment
+### Setting up the CMS test environment
 
 For integration tests that require the full CMS stack, create a test case base class:
 
@@ -658,7 +658,7 @@ abstract class CmsIntegrationTestCase extends TestCase
 }
 ```
 
-### Testing Repository Implementations
+### Testing repository implementations
 
 ```php
 final class ContentRepositoryIntegrationTest extends CmsIntegrationTestCase
@@ -683,7 +683,7 @@ final class ContentRepositoryIntegrationTest extends CmsIntegrationTestCase
 }
 ```
 
-## Quality Gates
+## Quality gates
 
 After writing tests, verify the full quality pipeline:
 
@@ -702,7 +702,7 @@ vendor/bin/php-cs-fixer fix --dry-run --diff
 composer test
 ```
 
-## Related Documentation
+## Related documentation
 
 - [Architecture Overview](architecture.md) - Module structure and dependencies
 - [Plugin Development Guide](plugin-development.md) - Plugin contract for testing

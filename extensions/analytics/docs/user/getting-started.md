@@ -1,4 +1,4 @@
-# Getting Started with Pulsar Analytics
+# Getting started with Pulsar Analytics
 
 This guide walks you through installing and configuring the Pulsar Analytics extension, adding the tracker to your site, and viewing your first dashboard.
 
@@ -9,7 +9,7 @@ This guide walks you through installing and configuring the Pulsar Analytics ext
 - Composer installed
 - A supported database (PostgreSQL, MySQL, or SQLite)
 
-## Step 1: Install the Analytics Extension
+## Step 1: install the analytics extension
 
 The Analytics extension ships with the Pulsar framework. Enable it by registering it in your application's extension configuration.
 
@@ -27,7 +27,7 @@ return [
 ];
 ```
 
-## Step 2: Create the Configuration File
+## Step 2: create the configuration file
 
 Create `config/analytics.php` in your project's configuration directory:
 
@@ -72,7 +72,7 @@ return [
 ];
 ```
 
-### Configuration Reference
+### Configuration reference
 
 | Key                                       | Type     | Default                 | Description                                        |
 | ----------------------------------------- | -------- | ----------------------- | -------------------------------------------------- |
@@ -90,7 +90,7 @@ return [
 | `rate_limit.max_events_per_ip_per_minute` | int      | `30`                    | Maximum events accepted per IP per minute          |
 | `rate_limit.burst`                        | int      | `5`                     | Additional burst capacity above the sustained rate |
 
-## Step 3: Run Migrations
+## Step 3: run migrations
 
 Run the analytics database migrations to create the required tables:
 
@@ -100,7 +100,7 @@ php bin/pulsar migrate
 
 This creates 12 tables: sites, page views, sessions, events, goals, goal conversions, daily stats, hourly stats, and four daily breakdown tables (pages, referrers, devices, locations).
 
-## Step 4: Register a Site
+## Step 4: register a site
 
 Before tracking, register the site you want to monitor. Navigate to the analytics dashboard at:
 
@@ -118,7 +118,7 @@ curl -X POST https://your-site.com/plsr/api/v1/sites \
 
 The response includes a `trackingId` (e.g., `plsr_a1b2c3d4`), which you'll use in the tracker script.
 
-## Step 5: Add the Tracker Script
+## Step 5: add the tracker script
 
 Add the tracker script to your website's HTML, just before the closing `</body>` tag:
 
@@ -133,7 +133,7 @@ Add the tracker script to your website's HTML, just before the closing `</body>`
 
 Replace `plsr_a1b2c3d4` with your actual tracking ID, and update the domain to match your Pulsar application.
 
-### Script Attributes
+### Script attributes
 
 | Attribute         | Required | Description                                              |
 | ----------------- | -------- | -------------------------------------------------------- |
@@ -141,11 +141,11 @@ Replace `plsr_a1b2c3d4` with your actual tracking ID, and update the domain to m
 | `data-api`        | Yes      | Full URL of the collection endpoint                      |
 | `data-extensions` | No       | Comma-separated list of tracker extensions (e.g., `spa`) |
 
-### Do Not Track
+### Do not track
 
 When `privacy.respect_dnt` is enabled in the config, the tracker automatically checks the browser's DNT (Do Not Track) setting and skips all tracking for visitors who have it enabled.
 
-## Step 6: View the Dashboard
+## Step 6: view the dashboard
 
 Navigate to the analytics dashboard at:
 
@@ -167,7 +167,7 @@ The dashboard shows:
 - **Devices**: Browser, OS, and device type breakdown
 - **Locations**: Country-level visitor distribution
 
-## Step 7: Track Custom Events
+## Step 7: track custom events
 
 The tracker script exposes a global `window.plsr` object for custom events:
 
@@ -181,7 +181,7 @@ plsr.event('purchase', { product: 'widget' }, 29.99);
 
 Custom events are visible in the dashboard and can be used to create goals.
 
-## Reverse Proxy Setup
+## Reverse proxy setup
 
 If your application runs behind a reverse proxy (nginx, Cloudflare, AWS ALB), configure trusted proxies so that visitor IP addresses are resolved correctly:
 
@@ -194,7 +194,7 @@ If your application runs behind a reverse proxy (nginx, Cloudflare, AWS ALB), co
 
 Without this, all visitors appear as the proxy's IP address, which breaks visitor counting and rate limiting.
 
-## Queue-Based Collection
+## Queue-based collection
 
 For high-traffic sites, switch to queue-based collection to offload tracking from the HTTP request cycle:
 
@@ -206,7 +206,7 @@ For high-traffic sites, switch to queue-based collection to offload tracking fro
 
 Page views and events are dispatched as background jobs and processed asynchronously.
 
-## Next Steps
+## Next steps
 
 - [Dashboard Guide](dashboard-guide.md) - Detailed dashboard features and filters
 - [Goals Guide](goals-guide.md) - Setting up conversion goals

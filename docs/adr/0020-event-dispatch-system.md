@@ -10,7 +10,7 @@ Pulsar needs an event dispatch system that supports PSR-14 interoperability, pri
 
 In regulated domains, events carry compliance significance: security-sensitive actions must be auditable, event storms must be detectable before they exhaust resources, and module boundaries must be respected to maintain architectural integrity.
 
-## Decision Drivers
+## Decision drivers
 
 1. **PSR-14 compliance**: The dispatcher and listener provider must implement `Psr\EventDispatcher\EventDispatcherInterface` and `Psr\EventDispatcher\ListenerProviderInterface` for interoperability.
 2. **Production performance**: Listener resolution must not involve reflection or directory scanning at runtime. Compiled listener maps are the production default.
@@ -32,7 +32,7 @@ Implement `src/Event/` as a core event module with the following architecture:
 4. Respect `StoppableEventInterface` for propagation control
 5. Emit dispatch metrics (`pulsar_event_dispatched_total`, `pulsar_event_dispatch_depth`)
 
-### Listener Providers
+### Listener providers
 
 Two implementations serve different runtime modes:
 
@@ -45,7 +45,7 @@ Two implementations serve different runtime modes:
 
 Listener resolution supports class hierarchy: dispatching a `UserCreatedEvent` also triggers listeners registered for parent classes and implemented interfaces.
 
-### Event Envelope
+### Event envelope
 
 `EventEnvelope` is a readonly value object wrapping event payload with metadata:
 
@@ -67,7 +67,7 @@ final readonly class EventEnvelope
 
 The payload hash is computed from canonical serialization: `eventType|schemaVersion|recursiveKsort(JSON(payload))`. This enables tamper detection and idempotency checking downstream.
 
-### Module-Scoped Dispatch
+### Module-scoped dispatch
 
 `ModuleEventDispatcher` wraps the core dispatcher and stamps `originModule` on all envelopes dispatched through it. The core dispatcher then computes `EventScope` (Internal vs. CrossModule) by comparing the origin module against listener module IDs. This enables:
 
@@ -75,7 +75,7 @@ The payload hash is computed from canonical serialization: `eventType|schemaVers
 - Metrics segmented by module and scope
 - Future enforcement of module boundary policies
 
-### Storm Protection
+### Storm protection
 
 `StormGuard` provides two protection mechanisms:
 
@@ -91,7 +91,7 @@ Events can override the depth ceiling via `#[StormOverride(maxDepth: 20)]` for k
 | `#[RequiresEnvelope]` | Event class must be dispatched via `EventEnvelope`, not plain `dispatch()` |
 | `#[StormOverride]`    | Override `StormGuard` max depth for a specific event class                 |
 
-## Alternatives Considered
+## Alternatives considered
 
 ### Third-party event library
 
@@ -126,21 +126,21 @@ Rejected: creates tight coupling between modules. Event-driven architecture enab
 - Storm guard state is per-process - in persistent worker mode (ADR-0010), the guard resets between requests via `reset()`
 - `EventMapCompiler` runs at build time and outputs a PHP array - no file format migration concerns
 
-## Security Impact
+## Security impact
 
 - `EventEnvelope.payloadHash` (SHA-256) enables tamper detection for events persisted to event stores or transmitted over network boundaries
 - `#[RequiresEnvelope]` enforces that security-sensitive events always carry audit metadata (actor, tenant, correlation ID)
 - Storm protection prevents resource exhaustion from malicious or buggy event loops
 - `ReplAuditLogger` integration (ADR-0022) logs security events dispatched through the system
 
-## Performance Impact
+## Performance impact
 
 - **Development mode**: Listener resolution involves sorting on every dispatch. Acceptable for development iteration speed.
 - **Production mode**: `CompiledListenerProvider` is a single array lookup per event class (with class hierarchy cache). Listener instantiation is deferred to the container.
 - **Storm guard**: O(n) scan of dispatch chain per `enter()` call, where n is current chain depth. Maximum chain depth is bounded by `maxDepth` (default: 10), making this effectively O(1).
 - **Envelope hashing**: SHA-256 + JSON serialization adds ~10-50μs per envelope creation. Negligible for typical event volumes; high-throughput paths should use plain dispatch without envelopes.
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 Additive change - introduces `src/Event/` as a new core module. To roll back: remove the module and inline direct method calls at dispatch sites. Event store data (if any) is application-owned and unaffected by framework rollback.
 

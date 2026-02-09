@@ -16,7 +16,7 @@ Without a unified introspection layer, each consumer would independently crawl f
 
 The introspection layer must balance openness (useful metadata) with security (no secrets, no absolute paths, bounded resource usage from untrusted contributors).
 
-## Decision Drivers
+## Decision drivers
 
 1. **Single source of truth**: All consumers read the same `ProjectMetadataSnapshot` DTO - no divergent crawling logic.
 2. **Security boundary**: Only `Introspection\Internal\` touches `#[Internal]` core types. The public surface is stable DTOs and a service facade.
@@ -42,7 +42,7 @@ Introduce `src/Introspection/` as a new core module with the following architect
 - `ConfigSchemaReflector` - reflects on config DTO classes to extract property schemas (no instantiation, no env var reading)
 - `SnapshotFileReader` - reads `tools/api/public-api.snapshot.json` from disk
 
-### Resource Limits
+### Resource limits
 
 | Limit                              | Value                   | Rationale                         |
 | ---------------------------------- | ----------------------- | --------------------------------- |
@@ -61,7 +61,7 @@ Introduce `src/Introspection/` as a new core module with the following architect
 2. **At generation**: `build()` scrubs with `SensitiveDataScrubber`; `ConfigSchemaReflector` scrubs sensitive property defaults
 3. **At export**: CLI and MCP apply final `SensitiveDataScrubber::scrub()` pass
 
-### Path Handling
+### Path handling
 
 All paths in snapshot output are project-root-relative. Route handlers formatted as `Namespace\Class::method`. Config schema uses DTO class names. Bindings filtered to FQCN-like keys only (regex: `~^\\?[A-Za-z_][A-Za-z0-9_]*(?:\\[A-Za-z_][A-Za-z0-9_]*)*$~`).
 
@@ -69,9 +69,9 @@ All paths in snapshot output are project-root-relative. Route handlers formatted
 
 `IntrospectionWiring` registers the module in the Kernel boot pipeline. The service is available to extensions during the boot phase.
 
-## Alternatives Considered
+## Alternatives considered
 
-### Expose Container/Router/Registry directly to consumers
+### Expose container/router/registry directly to consumers
 
 Rejected: creates coupling to `#[Internal]` types, no sanitization boundary, each consumer must independently filter secrets and normalize paths.
 
@@ -102,7 +102,7 @@ Rejected: no resource limits, no type safety, no sanitization guarantee. The bui
 - Snapshot is memoized per-process - stale if services change after first call (acceptable for diagnostic tooling)
 - Contributors run synchronously during snapshot generation - acceptable for the expected contributor count
 
-## Security Impact
+## Security impact
 
 The introspection layer is a potential information disclosure vector. Mitigations:
 
@@ -112,11 +112,11 @@ The introspection layer is a potential information disclosure vector. Mitigation
 - Binding keys filtered to FQCN patterns - service-locator keys like `db.password` excluded
 - Contributor payloads scrubbed through `SensitiveDataScrubber`
 
-## Performance Impact
+## Performance impact
 
 Snapshot generation involves reflection (config DTOs), registry iteration (extensions, routes, commands), and file I/O (API snapshot JSON). All operations are O(n) in the number of registered services/routes/extensions. Memoization ensures at most one generation per process. Not on the hot path - only invoked by CLI commands, Studio dashboard, or MCP tool calls.
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 Additive change - no existing APIs modified. To roll back: remove `src/Introspection/`, `IntrospectionWiring`, and `config/introspection.php`. No data migrations required.
 

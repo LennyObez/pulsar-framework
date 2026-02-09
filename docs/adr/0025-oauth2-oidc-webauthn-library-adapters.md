@@ -12,7 +12,7 @@ These are security-critical protocols with extensive RFCs (6749, 7636, 8414, 825
 
 The Social SSO extension (`pulsar/social-sso`) already provides OAuth2 _client-side_ flows but not server-side provider capability. Plan 09 adds server-side OAuth2/OIDC provider and WebAuthn authenticator support as two new extensions.
 
-## Decision Drivers
+## Decision drivers
 
 1. **Protocol correctness.** OAuth2/OIDC and WebAuthn have complex state machines where implementation errors create security vulnerabilities. Audited libraries reduce this risk.
 2. **Supply chain minimalism.** Pulsar's crypto policy (ADR-0006) prefers minimal external dependencies. Libraries must be well-maintained, MIT-licensed, and widely deployed.
@@ -22,11 +22,11 @@ The Social SSO extension (`pulsar/social-sso`) already provides OAuth2 _client-s
 
 ## Decision
 
-### Contract-First Architecture
+### Contract-first architecture
 
 Pulsar defines port interfaces (contracts) as its public API surface. Default implementations wrap proven, audited libraries behind these ports. The libraries are extension-level Composer dependencies, not framework-level dependencies.
 
-### Selected Libraries
+### Selected libraries
 
 #### OAuth2/OIDC Server: `league/oauth2-server`
 
@@ -53,7 +53,7 @@ Pulsar defines port interfaces (contracts) as its public API surface. Default im
 - **Algorithms:** RS256, RS384, RS512, ES256, ES384, ES512, EdDSA
 - **Rationale:** Full JOSE implementation supporting all algorithms needed for OIDC ID tokens and JWKS endpoints. Same maintainer as the WebAuthn library ensures version compatibility. Preferred over `firebase/php-jwt` for its complete JWK/JWKS support and algorithm coverage.
 
-### Extension Structure
+### Extension structure
 
 Two new extensions following the pattern established by `pulsar/social-sso`:
 
@@ -92,9 +92,9 @@ extensions/webauthn/
 
 Both extensions declare `"trust_tier": "core"` in their manifests (ADR-0023) since they require `CryptoKeyAccess` for signing key material via Keyring.
 
-## Integration Architecture
+## Integration architecture
 
-### Keyring Integration (Finding B)
+### Keyring integration (finding B)
 
 Libraries never manage keys independently. Pulsar's adapter layer bridges library key interfaces to `KeyRingInterface`:
 
@@ -106,7 +106,7 @@ The Keyring sub-key derivation context for OAuth2/OIDC signing:
 
 - `pulsar__oauth_sign` - JWT signing key (RSA/EC private key material)
 
-### Replay-Safety and Audit (Finding D)
+### Replay-safety and audit (finding D)
 
 All security-sensitive operations emit auditable events via `AuditLoggerInterface`:
 
@@ -122,7 +122,7 @@ All security-sensitive operations emit auditable events via `AuditLoggerInterfac
 
 Refresh token replay detection: if a rotated-out refresh token is reused, the entire token family (all tokens issued from the same authorization) is revoked and a `SecurityEvent` audit entry is emitted.
 
-### Session Integration (Plan 08)
+### Session integration (plan 08)
 
 OAuth2 authorization code flow uses `SessionManager` for:
 
@@ -131,14 +131,14 @@ OAuth2 authorization code flow uses `SessionManager` for:
 - User consent state during multi-step authorization
 - Login session binding for refresh token issuance
 
-### Guard System Integration
+### Guard system integration
 
 Two new guards integrate with `AuthManagerInterface`:
 
 - **`OAuth2Guard`** - Validates bearer tokens (reference or JWT) from `Authorization: Bearer` headers. Resolves to `IdentityInterface` via token introspection.
 - **`WebAuthnGuard`** - Validates WebAuthn assertion results during authentication ceremonies. Works with `SessionGuard` for session binding post-authentication.
 
-### Token Storage Model
+### Token storage model
 
 | Token Type               | Storage                    | Lifetime             | Binding                               |
 | ------------------------ | -------------------------- | -------------------- | ------------------------------------- |
@@ -148,7 +148,7 @@ Two new guards integrate with `AuthManagerInterface`:
 | Authorization code       | Hashed in repository       | 10 min default       | client + redirect_uri + PKCE verifier |
 | ID token                 | Not stored (JWT)           | Matches access token | client + subject + nonce              |
 
-## Alternatives Considered
+## Alternatives considered
 
 ### Custom OAuth2/OIDC implementation
 
@@ -182,11 +182,11 @@ Packaging OAuth2 and WebAuthn in one extension. Rejected: they serve different u
 - **Trust tier.** Both extensions are `Core` tier, consistent with their access to cryptographic key material.
 - **Existing Social SSO.** The `pulsar/social-sso` extension (OAuth2 client) remains independent. The new `pulsar/oauth2` extension (OAuth2 server) complements it.
 
-## Field Report
+## Field report
 
 _Placeholder - to be filled after operational experience._
 
-## Security Impact
+## Security impact
 
 Significant expansion of the framework's security surface:
 
@@ -194,14 +194,14 @@ Significant expansion of the framework's security surface:
 - **Mitigations:** PKCE mandatory, strict redirect URI matching, refresh token rotation with family revocation, hashed token storage, one-time authorization codes, challenge-response ceremonies, attestation format policies.
 - **Threat model required:** A formal threat model document must be completed and reviewed by the Security Red Team before release (see plan acceptance criteria).
 
-## Performance Impact
+## Performance impact
 
 - **Token issuance:** JWT signing (RS256/ES256) adds ~1-5ms per token issuance. Acceptable for auth endpoints which are not high-frequency hot paths.
 - **Token validation:** JWT verification on every authenticated request adds ~0.5-2ms. Reference tokens require a repository lookup instead. Both are within Tier A budget tolerances for authenticated request classes.
 - **WebAuthn ceremonies:** Public key operations are CPU-bound but occur only during registration/authentication (not per-request). No hot-path impact.
 - **JWKS endpoint:** Cacheable, served from Keyring. No computation per request after initial key derivation.
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 **Adoption:**
 

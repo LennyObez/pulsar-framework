@@ -48,6 +48,7 @@ final class Encryptor implements EncryptorInterface
     private function __construct(
         private string $key,
         private ?string $previousKey = null,
+        private ?CipherSuiteInterface $cipherSuite = null,
     ) {
         $this->randomizer = new Randomizer(new Secure());
     }
@@ -102,7 +103,7 @@ final class Encryptor implements EncryptorInterface
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromMasterKey(MasterKey $masterKey): self
+    public static function fromMasterKey(MasterKey $masterKey, ?CipherSuiteInterface $cipherSuite = null): self
     {
         $key = $masterKey->deriveSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT);
 
@@ -111,7 +112,7 @@ final class Encryptor implements EncryptorInterface
             $previousKey = $masterKey->derivePreviousSubKey(self::DEFAULT_SUB_KEY_ID, self::DEFAULT_KDF_CONTEXT);
         }
 
-        return new self($key, $previousKey);
+        return new self($key, $previousKey, $cipherSuite);
     }
 
     /**
@@ -120,7 +121,7 @@ final class Encryptor implements EncryptorInterface
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function fromDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self
+    public static function fromDerivedKey(MasterKey $masterKey, int $subKeyId, string $context, ?CipherSuiteInterface $cipherSuite = null): self
     {
         $key = $masterKey->deriveSubKey($subKeyId, $context);
 
@@ -129,13 +130,18 @@ final class Encryptor implements EncryptorInterface
             $previousKey = $masterKey->derivePreviousSubKey($subKeyId, $context);
         }
 
-        return new self($key, $previousKey);
+        return new self($key, $previousKey, $cipherSuite);
     }
 
     /**
      * Encrypt plaintext and return base64-encoded ciphertext.
      *
-     * Output format: base64(nonce || ciphertext_with_mac)
+     * When a cipher suite is configured, delegates to it. Otherwise uses
+     * the legacy sodium_crypto_secretbox path for backward compatibility.
+     *
+     * Output format: base64(nonce || ciphertext_with_mac) [legacy]
+     *                base64(version || nonce || ciphertext_with_mac) [cipher suite]
+     *
      * Always encrypts with the current key.
      *
      * @throws SecurityException If encryption fails
@@ -144,6 +150,12 @@ final class Encryptor implements EncryptorInterface
      */
     public function encrypt(string $plaintext): string
     {
+        if ($this->cipherSuite !== null) {
+            $raw = $this->cipherSuite->encrypt($plaintext, $this->key);
+
+            return base64_encode($raw);
+        }
+
         $nonce = $this->randomizer->getBytes(self::NONCE_LENGTH);
         $ciphertext = sodium_crypto_secretbox($plaintext, $nonce, $this->key);
 
@@ -167,6 +179,88 @@ final class Encryptor implements EncryptorInterface
             throw SecurityException::decryptionFailed();
         }
 
+        if ($this->cipherSuite !== null) {
+            return $this->decryptWithCipherSuite($decoded);
+        }
+
+        return $this->decryptLegacy($decoded);
+    }
+
+    /**
+     * Create an encryptor using a specific subkey derivation.
+     *
+     * @throws SodiumException
+     */
+    #[NoDiscard]
+    public function withDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self
+    {
+        $key = $masterKey->deriveSubKey($subKeyId, $context);
+
+        $previousKey = $masterKey->hasPreviousKey()
+            ? $masterKey->derivePreviousSubKey($subKeyId, $context)
+            : null;
+
+        return new self($key, $previousKey, $this->cipherSuite);
+    }
+
+    /**
+     * Return the configured cipher suite, if any.
+     */
+    #[NoDiscard]
+    public function cipherSuite(): ?CipherSuiteInterface
+    {
+        return $this->cipherSuite;
+    }
+
+    /**
+     * Prevent key from leaking in debug output.
+     *
+     * @return array<string, string>
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'key' => '[REDACTED]',
+            'previousKey' => $this->previousKey !== null ? '[REDACTED]' : '[NONE]',
+            'cipherSuite' => $this->cipherSuite?->name() ?? 'legacy-sodium',
+        ];
+    }
+
+    /**
+     * Decrypt using the cipher suite with key rotation fallback.
+     *
+     * @throws SecurityException
+     */
+    private function decryptWithCipherSuite(string $decoded): string
+    {
+        /** @var CipherSuiteInterface $suite (non-null guaranteed by caller) */
+        $suite = $this->cipherSuite;
+
+        try {
+            return $suite->decrypt($decoded, $this->key);
+        } catch (SecurityException) {
+            // Try previous key
+        }
+
+        if ($this->previousKey !== null) {
+            try {
+                return $suite->decrypt($decoded, $this->previousKey);
+            } catch (SecurityException) {
+                // Both keys failed
+            }
+        }
+
+        throw SecurityException::decryptionFailed();
+    }
+
+    /**
+     * Decrypt using the legacy sodium_crypto_secretbox path.
+     *
+     * @throws SecurityException
+     * @throws SodiumException
+     */
+    private function decryptLegacy(string $decoded): string
+    {
         if (strlen($decoded) < self::NONCE_LENGTH + SODIUM_CRYPTO_SECRETBOX_MACBYTES) {
             throw SecurityException::decryptionFailed();
         }
@@ -190,35 +284,5 @@ final class Encryptor implements EncryptorInterface
         }
 
         throw SecurityException::decryptionFailed();
-    }
-
-    /**
-     * Create an encryptor using a specific subkey derivation.
-     *
-     * @throws SodiumException
-     */
-    #[NoDiscard]
-    public function withDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self
-    {
-        $key = $masterKey->deriveSubKey($subKeyId, $context);
-
-        $previousKey = $masterKey->hasPreviousKey()
-            ? $masterKey->derivePreviousSubKey($subKeyId, $context)
-            : null;
-
-        return new self($key, $previousKey);
-    }
-
-    /**
-     * Prevent key from leaking in debug output.
-     *
-     * @return array<string, string>
-     */
-    public function __debugInfo(): array
-    {
-        return [
-            'key' => '[REDACTED]',
-            'previousKey' => $this->previousKey !== null ? '[REDACTED]' : '[NONE]',
-        ];
     }
 }

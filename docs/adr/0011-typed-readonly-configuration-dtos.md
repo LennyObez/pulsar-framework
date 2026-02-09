@@ -62,7 +62,7 @@ The key invariant: env vars are the canonical source of truth for any setting th
 
 - **Config stubs in `config/`.** The framework ships stub config files that return default arrays. Applications override only the values they need. The stubs serve as living documentation.
 
-## Field Report
+## Field report
 
 _Optional. Document operational experience that validates or challenges this decision. Add entries as they accumulate._
 

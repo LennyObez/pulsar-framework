@@ -1,6 +1,6 @@
 window.plsr.ext(() => {
-  document.addEventListener("click", (e: MouseEvent) => {
-    const link = (e.target as HTMLElement).closest("a");
+  document.addEventListener('click', (e: MouseEvent) => {
+    const link = (e.target as HTMLElement).closest('a');
     if (!link) return;
 
     const href = link.href;
@@ -10,9 +10,9 @@ window.plsr.ext(() => {
       const url = new URL(href);
       if (url.hostname === location.hostname) return;
 
-      window.plsr.event("Outbound Link: Click", { url: href });
+      window.plsr.event('Outbound Link: Click', { url: href });
 
-      if (!link.target || link.target === "_self") {
+      if (!link.target || link.target === '_self') {
         e.preventDefault();
         setTimeout(() => {
           location.href = href;

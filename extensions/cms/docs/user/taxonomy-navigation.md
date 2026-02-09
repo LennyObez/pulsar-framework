@@ -1,4 +1,4 @@
-# Taxonomy & Navigation Guide
+# Taxonomy & navigation guide
 
 This guide covers creating and managing taxonomies (categories and tags), building menus, configuring breadcrumbs, and organizing your site's navigation structure.
 
@@ -6,14 +6,16 @@ This guide covers creating and managing taxonomies (categories and tags), buildi
 
 Taxonomies are classification systems for organizing content. Pulsar CMS supports an unlimited number of custom taxonomies, each with a hierarchical tree of terms.
 
-### Creating a Taxonomy
+### Creating a taxonomy
 
 1. Navigate to **Admin > CMS > Taxonomies** (`/admin/cms/taxonomies`).
 2. Click **Create New Taxonomy**.
 3. Fill in the fields:
-  - **Slug**: URL-safe identifier (e.g., `categories`, `tags`, `topics`)
-  - **Name**: Human-readable name per locale
-  - **Description**: Optional description per locale
+
+- **Slug**: URL-safe identifier (e.g., `categories`, `tags`, `topics`)
+- **Name**: Human-readable name per locale
+- **Description**: Optional description per locale
+
 4. Save the taxonomy.
 
 ### Via API
@@ -31,19 +33,21 @@ Content-Type: application/json
 }
 ```
 
-### Managing Taxonomy Terms
+### Managing taxonomy terms
 
 Each taxonomy contains terms (e.g., "Technology", "Business", "Health").
 
 1. Open a taxonomy at **Admin > CMS > Taxonomies > {slug}** (`/admin/cms/taxonomies/{slug}`).
 2. Add terms with:
-  - **Slug**: URL-safe identifier
-  - **Name**: Translated display name per locale
-  - **Description**: Optional translated description
-  - **Parent term**: For hierarchical taxonomies, select a parent
+
+- **Slug**: URL-safe identifier
+- **Name**: Translated display name per locale
+- **Description**: Optional translated description
+- **Parent term**: For hierarchical taxonomies, select a parent
+
 3. Drag and drop terms to reorder them within their hierarchy level.
 
-### Hierarchical Terms
+### Hierarchical terms
 
 Terms can be nested to create hierarchical structures:
 
@@ -71,7 +75,7 @@ Taxonomy names and term names support full multi-locale translation:
 | `fr`   | Categories    | Technologie  |
 | `de`   | Kategorien    | Technologie  |
 
-### Assigning Content to Terms
+### Assigning content to terms
 
 When editing content, select taxonomy terms from the available taxonomies. Content can belong to multiple terms across multiple taxonomies.
 
@@ -79,13 +83,15 @@ When editing content, select taxonomy terms from the available taxonomies. Conte
 
 Menus define navigation structures for your site's header, footer, sidebar, and other regions.
 
-### Creating a Menu
+### Creating a menu
 
 1. Navigate to **Admin > CMS > Menus** (`/admin/cms/menus`).
 2. Click **Create New Menu**.
 3. Fill in the fields:
-  - **Location**: Identifier for where the menu appears (e.g., `main`, `footer`, `sidebar`)
-  - **Name**: Translated display name per locale
+
+- **Location**: Identifier for where the menu appears (e.g., `main`, `footer`, `sidebar`)
+- **Name**: Translated display name per locale
+
 4. Save the menu.
 
 ### Via API
@@ -103,18 +109,20 @@ Content-Type: application/json
 }
 ```
 
-### Adding Menu Items
+### Adding menu items
 
 1. Open a menu at **Admin > CMS > Menus > {location}** (`/admin/cms/menus/{location}`).
 2. Add items with:
-  - **Label**: Translated display text per locale
-  - **URL or Content ID**: Link destination (absolute URL, relative path, or CMS content reference)
-  - **Link Target**: `_self` (same window) or `_blank` (new window)
-  - **Parent Item**: For nested navigation, select a parent
-  - **CSS Class**: Optional CSS class for styling
+
+- **Label**: Translated display text per locale
+- **URL or Content ID**: Link destination (absolute URL, relative path, or CMS content reference)
+- **Link Target**: `_self` (same window) or `_blank` (new window)
+- **Parent Item**: For nested navigation, select a parent
+- **CSS Class**: Optional CSS class for styling
+
 3. Drag and drop items to reorder.
 
-### Menu Item Types
+### Menu item types
 
 | Type          | Description                      | Example                        |
 | ------------- | -------------------------------- | ------------------------------ |
@@ -124,7 +132,7 @@ Content-Type: application/json
 
 Content links automatically update when the linked content's slug changes.
 
-### Nested Menus
+### Nested menus
 
 Menu items support nesting for dropdown/flyout navigation:
 
@@ -140,7 +148,7 @@ Products
 Blog
 ```
 
-### Menu Translations
+### Menu translations
 
 Each menu item's label is translatable per locale:
 
@@ -152,7 +160,7 @@ Each menu item's label is translatable per locale:
 
 The correct label is rendered based on the visitor's active locale.
 
-### Link Targets
+### Link targets
 
 | Target   | Behavior                                |
 | -------- | --------------------------------------- |
@@ -165,7 +173,7 @@ External links opened in `_blank` automatically receive `rel="noopener noreferre
 
 Breadcrumbs show the visitor's position in the site hierarchy.
 
-### How Breadcrumbs Work
+### How breadcrumbs work
 
 The `BreadcrumbGenerator` automatically builds breadcrumb trails based on:
 
@@ -173,7 +181,7 @@ The `BreadcrumbGenerator` automatically builds breadcrumb trails based on:
 2. **Locale awareness**: Breadcrumb labels use the correct locale translation
 3. **Configuration**: The home page label and separator are configurable
 
-### Example Breadcrumb
+### Example breadcrumb
 
 For a page at `/products/software/enterprise`:
 
@@ -181,7 +189,7 @@ For a page at `/products/software/enterprise`:
 Home > Products > Software > Enterprise Edition
 ```
 
-### Breadcrumb Configuration
+### Breadcrumb configuration
 
 Breadcrumbs are configured through the CMS config and work with the theme's template engine. The `BreadcrumbGeneratorInterface` can be injected into any controller or template to render breadcrumbs.
 
@@ -192,11 +200,11 @@ The generator:
 - Includes the current page as the final, non-linked item
 - Respects the configured `max_hierarchy_depth` to prevent infinite loops
 
-## Drag-and-Drop Reordering
+## Drag-and-drop reordering
 
 Both taxonomy terms and menu items support drag-and-drop reordering in the admin panel.
 
-### Reordering Taxonomy Terms
+### Reordering taxonomy terms
 
 <!-- Screenshot: Taxonomy term drag-and-drop interface -->
 
@@ -207,7 +215,7 @@ Both taxonomy terms and menu items support drag-and-drop reordering in the admin
 
 The `sort_order` values are automatically recalculated.
 
-### Reordering Menu Items
+### Reordering menu items
 
 <!-- Screenshot: Menu item drag-and-drop interface -->
 
@@ -216,7 +224,7 @@ The `sort_order` values are automatically recalculated.
 3. Drag to reorder among siblings or nest under a parent item.
 4. Release to save.
 
-### Keyboard Accessibility
+### Keyboard accessibility
 
 For users who cannot use a mouse, reordering is also available via:
 
@@ -234,7 +242,7 @@ For users who cannot use a mouse, reordering is also available via:
 | `cms.menus.view`      | Contributor+ | View menus and items                      |
 | `cms.menus.manage`    | Editor+      | Create, edit, delete menus and items      |
 
-## API Reference
+## API reference
 
 ### Taxonomies
 
@@ -256,7 +264,7 @@ For users who cannot use a mouse, reordering is also available via:
 | PUT    | `/admin/cms/menus/{location}` | Update a menu and its items |
 | DELETE | `/admin/cms/menus/{location}` | Delete a menu               |
 
-## Next Steps
+## Next steps
 
 - [Content Management Guide](content-management.md) - Assigning content to taxonomy terms
 - [Theme Management](theme-management.md) - Rendering menus and breadcrumbs in themes

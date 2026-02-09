@@ -18,7 +18,7 @@ Register in your `pulsar.json`:
 }
 ```
 
-## Quick Start
+## Quick start
 
 ### Configuration
 
@@ -35,7 +35,7 @@ return [
 ];
 ```
 
-### Registered Endpoints
+### Registered endpoints
 
 The extension automatically registers:
 
@@ -49,9 +49,9 @@ The extension automatically registers:
 | `/.well-known/jwks.json`            | GET    | JWKS endpoint                  |
 | `/oauth/userinfo`                   | GET    | OIDC UserInfo                  |
 
-## Supported Grant Types
+## Supported grant types
 
-### Authorization Code with PKCE (RFC 7636)
+### Authorization code with PKCE (RFC 7636)
 
 PKCE is **mandatory** - all authorization code requests must include a `code_challenge` with method `S256`. Plain method is rejected.
 
@@ -79,7 +79,7 @@ client_id=my-app&
 code_verifier=dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk
 ```
 
-### Client Credentials
+### Client credentials
 
 For machine-to-machine authentication:
 
@@ -93,7 +93,7 @@ client_secret=secret&
 scope=api.read+api.write
 ```
 
-### Refresh Token
+### Refresh token
 
 Refresh tokens use one-time rotation - each use issues a new refresh token and invalidates the old one:
 
@@ -108,7 +108,7 @@ client_id=my-app
 
 **Replay detection**: If a previously rotated-out refresh token is reused, the entire token family is revoked as a breach indicator.
 
-## Token Storage
+## Token storage
 
 | Token Type         | Storage            | Lifetime | Binding                               |
 | ------------------ | ------------------ | -------- | ------------------------------------- |
@@ -119,9 +119,9 @@ client_id=my-app
 
 All token values are hashed before storage. Token values are never stored in plaintext.
 
-## OpenID Connect
+## OpenID connect
 
-### ID Tokens
+### ID tokens
 
 ID tokens contain the required OIDC claims:
 
@@ -134,7 +134,7 @@ ID tokens contain the required OIDC claims:
 
 Plus scope-derived claims from the `UserClaimsProviderInterface`.
 
-### Scope-to-Claim Mapping
+### Scope-to-claim mapping
 
 | Scope     | Claims                                                                               |
 | --------- | ------------------------------------------------------------------------------------ |
@@ -150,19 +150,19 @@ The `/.well-known/openid-configuration` endpoint returns the OpenID Provider con
 
 ## Security
 
-### Redirect URI Validation
+### Redirect URI validation
 
 Strict exact match against registered URIs. No wildcards by default. Every redirect URI must be pre-registered with the client.
 
-### Dynamic Client Registration
+### Dynamic client registration
 
 Disabled by default. Enabling requires explicit admin policy configuration, audit events, and allowlisted client metadata schemas.
 
-### Keyring Integration
+### Keyring integration
 
 All token signing uses Keyring-managed keys (ADR-0006). The JOSE library receives key material from the Keyring - it never manages keys independently.
 
-### Audit Trail
+### Audit trail
 
 All OAuth2 events are logged via the tamper-evident audit chain:
 
@@ -173,7 +173,7 @@ All OAuth2 events are logged via the tamper-evident audit chain:
 
 ## Extending
 
-### Custom Token Storage
+### Custom token storage
 
 Replace the in-memory repositories with persistent implementations:
 
@@ -184,7 +184,7 @@ $container->bind(
 );
 ```
 
-### Custom Claims Provider
+### Custom claims provider
 
 Implement `UserClaimsProviderInterface` to provide user profile data:
 

@@ -1,4 +1,4 @@
-# Import/Export Guide
+# Import/Export guide
 
 This guide covers exporting content bundles, importing data, AI-compatible site definitions, backup and restore operations, and PII handling in Pulsar CMS.
 
@@ -6,9 +6,9 @@ This guide covers exporting content bundles, importing data, AI-compatible site 
 
 Pulsar CMS provides a comprehensive import/export system for migrating content between environments, creating backups, and bootstrapping new sites from structured definitions. All operations include PII controls and audit logging.
 
-## Exporting Content
+## Exporting content
 
-### Export Options
+### Export options
 
 Navigate to **Admin > CMS > Export** (`/admin/cms/export`) to configure an export.
 
@@ -24,14 +24,14 @@ Select which entity types to include:
 | `settings`   | CMS settings and configuration                      |
 | `media_refs` | Media asset metadata (references, not binary files) |
 
-#### Locale Filter
+#### Locale filter
 
 Optionally limit the export to specific locales:
 
 - **All locales**: Exports translations for every configured locale
 - **Specific locales**: Select one or more BCP 47 codes (e.g., `en`, `fr`)
 
-#### PII Control
+#### PII control
 
 The export system includes PII-aware controls:
 
@@ -45,7 +45,7 @@ When PII is excluded:
 - Comment author emails and IPs are stripped
 - User-identifiable fields are replaced with placeholders
 
-### Running an Export
+### Running an export
 
 1. Configure scope, locale, and PII settings.
 2. Click **Download Export**.
@@ -62,7 +62,7 @@ Content-Type: application/json
 }
 ```
 
-### Export Bundle Format
+### Export bundle format
 
 The `ExportBundleGenerator` produces a JSON file with this structure:
 
@@ -82,20 +82,22 @@ The `ExportBundleGenerator` produces a JSON file with this structure:
 }
 ```
 
-## Importing Content
+## Importing content
 
-### Import Process
+### Import process
 
 Navigate to **Admin > CMS > Import** (`/admin/cms/import`).
 
 1. Upload an export bundle JSON file.
 2. The system validates the file:
-  - Maximum import size: 50 MB (configurable via `import.max_import_size_bytes`)
-  - JSON structure validation
-  - Version compatibility check
+
+- Maximum import size: 50 MB (configurable via `import.max_import_size_bytes`)
+- JSON structure validation
+- Version compatibility check
+
 3. Choose import mode.
 
-### Dry Run
+### Dry run
 
 Before executing an import, run a dry run to preview changes:
 
@@ -115,7 +117,7 @@ The dry run reports:
 
 By default, imports start in dry-run mode (`import.dry_run_default: true`).
 
-### Executing the Import
+### Executing the import
 
 After reviewing the dry run results:
 
@@ -134,7 +136,7 @@ The `ImportExportService` processes the bundle:
 4. Download external media if enabled and referenced
 5. Generate an `ImportResult` report
 
-### Import Result
+### Import result
 
 The `ImportResult` includes:
 
@@ -147,15 +149,15 @@ The `ImportResult` includes:
 | Errors      | Number of items that failed to import |
 | Details     | Per-item status with error messages   |
 
-### External Media Download
+### External media download
 
 When `import.allow_external_media_download` is `true`, the importer downloads media files from URLs referenced in the bundle. All downloads use the `SafeHttpClient` with SSRF protection.
 
-## Site Definitions
+## Site definitions
 
 Site definitions provide a complete, AI-compatible format for bootstrapping an entire CMS site from a single JSON document.
 
-### Site Definition Format
+### Site definition format
 
 ```json
 {
@@ -218,14 +220,14 @@ Site definitions provide a complete, AI-compatible format for bootstrapping an e
 }
 ```
 
-### Required Keys
+### Required keys
 
 | Key       | Required | Description              |
 | --------- | -------- | ------------------------ |
 | `version` | Yes      | Must be `"1.0"`          |
 | `site`    | Yes      | Site-level configuration |
 
-### Optional Keys
+### Optional keys
 
 | Key          | Description                             |
 | ------------ | --------------------------------------- |
@@ -236,7 +238,7 @@ Site definitions provide a complete, AI-compatible format for bootstrapping an e
 | `redirects`  | URL redirect definitions                |
 | `seo`        | SEO configuration                       |
 
-### Importing a Site Definition
+### Importing a site definition
 
 1. Navigate to **Admin > CMS > Site Import** (`/admin/cms/site-import`).
 2. Upload or paste the JSON site definition.
@@ -263,7 +265,7 @@ The `SiteDefinitionParser` validates the document against the N.3 schema, and th
 
 ## Backups
 
-### Creating a Backup
+### Creating a backup
 
 1. Navigate to **Admin > CMS > Backups** (`/admin/cms/backups`).
 2. Click **Create Backup**.
@@ -288,7 +290,7 @@ Content-Type: application/json
 
 The `BackupService` generates a complete backup with a unique ID and timestamp.
 
-### Listing Backups
+### Listing backups
 
 ```
 GET /admin/cms/backups
@@ -304,7 +306,7 @@ Each backup shows:
 | Created At | When the backup was created |
 | Created By | The user who initiated it   |
 
-### Restoring from Backup
+### Restoring from backup
 
 1. Navigate to **Admin > CMS > Backups**.
 2. Click **Restore** on the desired backup.
@@ -322,15 +324,15 @@ The `RestoreResult` reports:
 
 Restoring a backup is a destructive operation that replaces current data. Always create a fresh backup before restoring.
 
-### Deleting Backups
+### Deleting backups
 
 ```
 DELETE /admin/cms/backups/{id}
 ```
 
-## PII Handling
+## PII handling
 
-### What Constitutes PII
+### What constitutes PII
 
 In the CMS context, PII includes:
 
@@ -341,7 +343,7 @@ In the CMS context, PII includes:
 | IP addresses    | Comments, audit logs               |
 | User names      | Comments, content attribution      |
 
-### Export PII Controls
+### Export PII controls
 
 When exporting without PII (`include_pii: false`):
 
@@ -350,7 +352,7 @@ When exporting without PII (`include_pii: false`):
 - IP addresses are removed
 - Display names are generalized
 
-### GDPR Data Export
+### GDPR data export
 
 For GDPR data subject access requests, use the dedicated GDPR export tool:
 
@@ -365,7 +367,7 @@ Content-Type: application/json
 
 This exports all data associated with a specific user.
 
-### GDPR Data Erasure
+### GDPR data erasure
 
 For GDPR right-to-erasure requests:
 
@@ -380,7 +382,7 @@ Content-Type: application/json
 
 This anonymizes or deletes all personally identifiable data for the specified user while preserving content structure for operational continuity.
 
-## Import Configuration
+## Import configuration
 
 | Key                                    | Type | Default    | Description                       |
 | -------------------------------------- | ---- | ---------- | --------------------------------- |
@@ -397,7 +399,7 @@ This anonymizes or deletes all personally identifiable data for the specified us
 | `cms.backup.create`  | Admin | Create backups       |
 | `cms.backup.restore` | Admin | Restore from backups |
 
-## Next Steps
+## Next steps
 
 - [Settings Reference](settings-reference.md) - Import/export configuration
 - [Compliance Guide](../security/compliance-guide.md) - GDPR and data handling

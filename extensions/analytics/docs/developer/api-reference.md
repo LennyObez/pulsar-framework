@@ -1,10 +1,10 @@
-# API Endpoint Reference
+# API endpoint reference
 
 All Analytics API endpoints are registered by `AnalyticsExtension::boot()`. API and dashboard endpoints require authentication and the `analytics.view` permission. Collection and tracker endpoints are public.
 
-## Public Endpoints
+## Public endpoints
 
-### Collection Endpoint
+### Collection endpoint
 
 | Method | Path              | Route Name          | Auth | Description                         |
 | ------ | ----------------- | ------------------- | ---- | ----------------------------------- |
@@ -39,7 +39,7 @@ All Analytics API endpoints are registered by `AnalyticsExtension::boot()`. API 
 
 **Origin validation**: The `Origin` or `Referer` header must match the registered site domain. Requests without both headers are rejected.
 
-### Tracker Script
+### Tracker script
 
 | Method   | Path                  | Route Name          | Auth | Description                  |
 | -------- | --------------------- | ------------------- | ---- | ---------------------------- |
@@ -56,7 +56,7 @@ All Analytics API endpoints are registered by `AnalyticsExtension::boot()`. API 
 
 Supports `If-None-Match` for `304 Not Modified` responses.
 
-## Authenticated API Endpoints
+## Authenticated API endpoints
 
 All endpoints below require authentication and the `analytics.view` permission. Prefix: `/plsr/api/v1`.
 
@@ -114,7 +114,7 @@ All endpoints below require authentication and the `analytics.view` permission. 
 | PUT      | `/plsr/api/v1/sites/{id}` | `analytics.api.sites.update` | Update site settings |
 | DELETE   | `/plsr/api/v1/sites/{id}` | `analytics.api.sites.delete` | Delete a site        |
 
-## Dashboard Endpoints
+## Dashboard endpoints
 
 All dashboard endpoints serve HTML pages and require authentication.
 
@@ -126,9 +126,9 @@ All dashboard endpoints serve HTML pages and require authentication.
 | GET/HEAD | `/analytics/settings`      | `analytics.dashboard.settings` | Yes  | Analytics settings            |
 | GET/HEAD | `/analytics/assets/{path}` | `analytics.assets`             | No   | Static assets (CSS/JS/images) |
 
-## Common Response Formats
+## Common response formats
 
-### Error Response
+### Error response
 
 ```json
 {
@@ -136,7 +136,7 @@ All dashboard endpoints serve HTML pages and require authentication.
 }
 ```
 
-### Common Status Codes
+### Common status codes
 
 | Code | Meaning                  |
 | ---- | ------------------------ |
@@ -148,7 +148,7 @@ All dashboard endpoints serve HTML pages and require authentication.
 | 403  | Insufficient permissions |
 | 404  | Resource not found       |
 
-## Related Documentation
+## Related documentation
 
 - [Architecture Overview](architecture.md) - Data flow and boot sequence
 - [Getting Started](../user/getting-started.md) - Installation and setup

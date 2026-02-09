@@ -1,10 +1,10 @@
-# CMS Threat Model
+# CMS threat model
 
 This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP Top 10 categories, and documents the mitigations implemented for each threat vector.
 
-## Attack Surface Overview
+## Attack surface overview
 
-### Entry Points
+### Entry points
 
 | Surface               | Description                               | Authentication Required |
 | --------------------- | ----------------------------------------- | ----------------------- |
@@ -18,7 +18,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 | Import/export         | `/admin/cms/import`, `/admin/cms/export`  | Yes (Admin)             |
 | Theme/plugin upload   | `/admin/cms/themes`, `/admin/cms/plugins` | Yes (Admin)             |
 
-### Data Assets
+### Data assets
 
 | Asset             | Classification | Impact if Compromised              |
 | ----------------- | -------------- | ---------------------------------- |
@@ -30,9 +30,9 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 | Configuration     | Internal       | Privilege escalation               |
 | Theme/plugin code | Internal       | Remote code execution              |
 
-## OWASP Top 10 Threat Analysis
+## OWASP top 10 threat analysis
 
-### A01: Broken Access Control
+### A01: broken access control
 
 **Threats:**
 
@@ -50,7 +50,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Step-up authentication for sensitive operations (2FA, settings)
 - Content edit restricted by `edit_own` vs `edit` permissions
 
-### A02: Cryptographic Failures
+### A02: cryptographic failures
 
 **Threats:**
 
@@ -67,7 +67,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Recovery codes: cryptographically random generation
 - All secrets transmitted over HTTPS only
 
-### A03: Injection
+### A03: injection
 
 **Threats:**
 
@@ -87,7 +87,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Content Security Policy prevents inline script execution
 - BiDi control character stripping prevents text manipulation attacks
 
-### A04: Insecure Design
+### A04: insecure design
 
 **Threats:**
 
@@ -105,7 +105,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Theme archive file count limits
 - Single-flight cache stampede protection
 
-### A05: Security Misconfiguration
+### A05: security misconfiguration
 
 **Threats:**
 
@@ -123,7 +123,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Auto-approve comments disabled by default
 - Admin routes not accessible without authentication
 
-### A06: Vulnerable and Outdated Components
+### A06: vulnerable and outdated components
 
 **Threats:**
 
@@ -139,7 +139,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Scoped container prevents unauthorized service access
 - Manifest validation with version constraint checking
 
-### A07: Identification and Authentication Failures
+### A07: identification and authentication failures
 
 **Threats:**
 
@@ -155,7 +155,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Failed 2FA attempts are audit-logged
 - Mandatory reason for 2FA disable (minimum 10 characters)
 
-### A08: Software and Data Integrity Failures
+### A08: software and data integrity failures
 
 **Threats:**
 
@@ -172,7 +172,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Import validation with dry-run preview before execution
 - Site definition schema validation
 
-### A09: Security Logging and Monitoring Failures
+### A09: security logging and monitoring failures
 
 **Threats:**
 
@@ -190,7 +190,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - 2FA lifecycle fully logged (enrollment, verification, disable)
 - Settings changes logged with before/after values
 
-### A10: Server-Side Request Forgery (SSRF)
+### A10: server-side request forgery (SSRF)
 
 **Threats:**
 
@@ -209,9 +209,9 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Response size limit (10 MB)
 - DNS rebinding prevention through IP validation after resolution
 
-## Upload Attack Vectors
+## Upload attack vectors
 
-### Image Decompression Bombs
+### Image decompression bombs
 
 **Threat:** Uploading a small compressed image that expands to consume all available memory.
 
@@ -222,7 +222,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - File size limit: 10 MB
 - Processing performed with bounded memory allocation
 
-### Polyglot Files
+### Polyglot files
 
 **Threat:** Files that are valid in multiple formats (e.g., a JPEG that is also valid HTML).
 
@@ -233,7 +233,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - X-Content-Type-Options: nosniff header
 - SVG served with image/svg+xml MIME type, not text/html
 
-### SVG Script Injection
+### SVG script injection
 
 **Threat:** SVG files containing `<script>` elements or event handlers.
 
@@ -254,9 +254,9 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - PDF structural validation
 - File header verification
 
-## Theme/Plugin Supply Chain Risks
+## Theme/plugin supply chain risks
 
-### Malicious Code in Themes
+### Malicious code in themes
 
 **Threat:** A theme containing backdoor code or data exfiltration.
 
@@ -268,7 +268,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Safe mode fallback if theme causes errors
 - Archive extraction with path traversal prevention
 
-### Malicious Code in Plugins
+### Malicious code in plugins
 
 **Threat:** A plugin with unauthorized capabilities or data access.
 
@@ -281,7 +281,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Boot-time integrity verification
 - Manifest validation including dependency checks
 
-### Compromised Update
+### Compromised update
 
 **Threat:** An attacker intercepting theme/plugin updates to inject malicious code.
 
@@ -291,9 +291,9 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - The trusted public key set is stored in server configuration (not modifiable via admin panel)
 - Integrity checks detect file modifications between installations
 
-## Commerce-Specific Threats
+## Commerce-specific threats
 
-### Payment Bypass
+### Payment bypass
 
 **Threat:** Completing a checkout without valid payment.
 
@@ -304,7 +304,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Cart validation before checkout processing
 - Webhook authentication through signature verification
 
-### Price Manipulation
+### Price manipulation
 
 **Threat:** Modifying prices or coupon values client-side.
 
@@ -315,7 +315,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Coupon validation against database records
 - Tax calculation on the server
 
-### Digital Asset Theft
+### Digital asset theft
 
 **Threat:** Unauthorized access to paid digital downloads.
 
@@ -326,7 +326,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 - Token validation on every download request
 - Tokens are non-guessable (UUIDv7)
 
-## Recommendations for Operators
+## Recommendations for operators
 
 1. **Enable signed themes and plugins** in production
 2. **Enable editorial workflow** for content governance
@@ -339,7 +339,7 @@ This document analyzes the attack surface of Pulsar CMS, maps threats to OWASP T
 9. **Keep Pulsar and PHP updated** for security patches
 10. **Review plugin capabilities** before enabling
 
-## Next Steps
+## Next steps
 
 - [Security Model](security-model.md) - Detailed security controls
 - [Audit Events Reference](audit-events.md) - Monitoring security events

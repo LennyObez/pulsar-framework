@@ -9,11 +9,11 @@
 
 ---
 
-## 1. PSD2 Strong Customer Authentication (SCA)
+## 1. PSD2 strong customer authentication (SCA)
 
 PSD2 (Directive 2015/2366/EU), supplemented by the EBA Regulatory Technical Standards on SCA (Commission Delegated Regulation 2018/389), requires payment service providers to apply strong customer authentication when the payer initiates an electronic payment transaction or carries out actions through a remote channel that may imply a risk of fraud.
 
-### 1.1 Multi-Factor Requirement (RTS Art. 4)
+### 1.1 Multi-factor requirement (RTS Art. 4)
 
 **Requirement:** SCA demands authentication using two or more elements from: (a) knowledge (password, PIN), (b) possession (device, token), (c) inherence (biometric).
 
@@ -39,7 +39,7 @@ The design does not include a first-class representation of the authentication f
 2. Add an `authenticationContext` or `acrValues` field to the `AuthenticationResult` and/or the OAuth2 token claims, so that relying parties can make factor-aware authorization decisions.
 3. Document the integration pattern for combining OAuth2 first-factor with WebAuthn second-factor in a single authorization flow.
 
-### 1.2 Dynamic Linking for Payment Transactions (RTS Art. 5)
+### 1.2 Dynamic linking for payment transactions (RTS Art. 5)
 
 **Requirement:** For remote electronic payment transactions, SCA must include elements that dynamically link the authentication to the specific transaction amount and payee.
 
@@ -58,7 +58,7 @@ The current contract surface does not provide a mechanism to bind authentication
 2. Add a `txn` claim to the ID token builder for transaction-bound authentication (see OpenID Financial-grade API, FAPI 2.0).
 3. Document that for PSD2 dynamic linking, deployers must ensure the signed challenge or assertion contains the transaction data, and that this data is displayed to the user before confirmation.
 
-### 1.3 SCA Exemptions (RTS Art. 10-18)
+### 1.3 SCA exemptions (RTS Art. 10-18)
 
 **Requirement:** PSD2 allows exemptions from SCA for low-value transactions (< EUR 30), contactless payments, recurring transactions to trusted beneficiaries, secure corporate payments, and transaction risk analysis (TRA) exemptions.
 
@@ -74,11 +74,11 @@ The OAuth2 and WebAuthn contracts do not include exemption logic. This is archit
 
 ---
 
-## 2. eIDAS Alignment
+## 2. eIDAS alignment
 
 eIDAS (Regulation 910/2014/EU) and eIDAS 2.0 (proposed revision) establish a framework for electronic identification and trust services across EU member states.
 
-### 2.1 Identity Assurance Levels (eIDAS Art. 8)
+### 2.1 Identity assurance levels (eIDAS Art. 8)
 
 **Requirement:** eIDAS defines three levels of assurance for electronic identification: low, substantial, and high (Commission Implementing Regulation 2015/1502).
 
@@ -97,7 +97,7 @@ The attestation trust level is not the same as the eIDAS identity assurance leve
 1. Consider adding an `IdentityAssuranceLevel` enum (`Low`, `Substantial`, `High`) to the contract surface, or at minimum document the mapping between `AttestationTrustLevel` + `userVerified` + authenticator metadata and eIDAS levels.
 2. Document that eIDAS identity assurance is a deployment-time configuration concern - the framework provides the building blocks (attestation verification, user verification signals), but the deploying organization must define the assurance level mapping based on their identity proofing process.
 
-### 2.2 Cross-Border Interoperability
+### 2.2 Cross-border interoperability
 
 **Requirement:** eIDAS mandates mutual recognition of electronic identification means notified by member states.
 
@@ -112,11 +112,11 @@ Cross-border eID interoperability (via the eIDAS node infrastructure) is an inte
 
 ---
 
-## 3. GDPR Compliance
+## 3. GDPR compliance
 
 GDPR (Regulation 2016/679/EU) imposes obligations on data controllers and processors regarding personal data processing, including consent management, data minimization, and data subject rights.
 
-### 3.1 Granular Per-Scope Consent (GDPR Art. 7, Recital 32)
+### 3.1 Granular per-scope consent (GDPR Art. 7, Recital 32)
 
 **Requirement:** Consent must be specific, informed, freely given, and distinguishable from other matters. Blanket consent is not valid.
 
@@ -130,7 +130,7 @@ Pulsar provides controls that support granular consent through the `ConsentRepos
 
 **Strength:** The scope-to-claim mapping is well-defined in `UserClaimsProviderInterface` (lines 15-21), ensuring that consent for `email` scope only exposes `email` and `email_verified` claims, not broader profile data.
 
-### 3.2 Consent Revocation (GDPR Art. 7(3))
+### 3.2 Consent revocation (GDPR Art. 7(3))
 
 **Requirement:** The data subject shall have the right to withdraw consent at any time. Withdrawal must be as easy as giving consent.
 
@@ -148,7 +148,7 @@ Pulsar provides controls that support granular consent through the `ConsentRepos
 
 1. Add a `revokeScope(string $subjectId, string $clientId, string $scope): void` method to `ConsentRepositoryInterface` that removes a single scope from an existing consent record without affecting other consented scopes.
 
-### 3.3 Data Minimization (GDPR Art. 5(1)(c))
+### 3.3 Data minimization (GDPR Art. 5(1)(c))
 
 **Requirement:** Personal data must be adequate, relevant, and limited to what is necessary.
 
@@ -158,7 +158,7 @@ Pulsar provides controls that support granular consent through the `ConsentRepos
 - OIDC standard scope-to-claim mappings enforce data minimization by design - requesting `openid` alone yields only the `sub` claim; additional claims require explicit scope grants.
 - Pairwise subject identifiers (via `getSubjectIdentifier(userId, clientId)`) prevent cross-client user tracking, which supports data minimization across relying parties.
 
-### 3.4 Consent Timestamping and Auditability (GDPR Art. 7(1))
+### 3.4 Consent timestamping and auditability (GDPR Art. 7(1))
 
 **Requirement:** The controller must be able to demonstrate that the data subject has consented.
 
@@ -176,7 +176,7 @@ The `ConsentRecord` does not capture the context in which consent was given (IP 
 1. Add optional `ipAddress`, `userAgent`, and `consentVersion` fields to `ConsentRecord` so that deployers can capture consent context.
 2. Alternatively, document that deployers should log consent context in their own audit systems alongside the Pulsar consent record.
 
-### 3.5 Right to Erasure (GDPR Art. 17)
+### 3.5 Right to erasure (GDPR Art. 17)
 
 **Requirement:** The data subject has the right to obtain erasure of personal data ("right to be forgotten").
 
@@ -205,9 +205,9 @@ The `AuthenticatorRepositoryInterface` has a `revoke(credentialId)` method (soft
 
 ---
 
-## 4. Token Storage Security
+## 4. Token storage security
 
-### 4.1 Token Hashing (OWASP, PCI DSS Req. 8.3.2)
+### 4.1 Token hashing (OWASP, PCI DSS Req. 8.3.2)
 
 **Requirement:** Sensitive authentication data must not be stored in cleartext.
 
@@ -229,7 +229,7 @@ The `InMemoryAccessTokenRepository` uses `hash('sha256', ...)` for token hashing
 1. Ensure that production `ClientRepositoryInterface` implementations use `password_hash()` with Argon2id for client secret storage, not SHA-256.
 2. Document that SHA-256 is acceptable for high-entropy tokens (access tokens, refresh tokens, authorization codes) but that client secrets must use a slow hash function.
 
-### 4.2 Token Value Exposure Prevention
+### 4.2 Token value exposure prevention
 
 **Requirement:** Token values must not be logged or exposed in debug output.
 
@@ -244,7 +244,7 @@ All domain objects containing sensitive values implement `__debugInfo()` with re
 
 **Strength:** The redaction pattern is consistent across all sensitive value objects.
 
-### 4.3 Refresh Token Rotation and Replay Detection
+### 4.3 Refresh token rotation and replay detection
 
 **Current status: Compliant**
 
@@ -257,9 +257,9 @@ This is a strong security control that supports PSD2 session integrity requireme
 
 ---
 
-## 5. Dynamic Client Registration
+## 5. Dynamic client registration
 
-### 5.1 Default-Off Policy
+### 5.1 Default-off policy
 
 **Requirement:** Dynamic client registration introduces supply chain risk and must be gated.
 
@@ -268,7 +268,7 @@ This is a strong security control that supports PSD2 session integrity requireme
 - `ClientRepositoryInterface` docblock states: "Dynamic registration is disabled by default and requires explicit admin policy configuration" (lines 14-15).
 - `OAuth2Exception::registrationDisabled()` provides a structured error for rejected registration attempts (line 65-68).
 
-### 5.2 Audit Logging
+### 5.2 Audit logging
 
 **Requirement:** Client registration events must be audit-logged.
 
@@ -276,7 +276,7 @@ This is a strong security control that supports PSD2 session integrity requireme
 
 ADR-0025 audit table lists "Client registration" as a `ConfigurationChange` audit event with "Admin-gated, audit-logged" protection.
 
-### 5.3 Admin Gating
+### 5.3 Admin gating
 
 **Requirement:** Only authorized administrators should be able to register clients.
 
@@ -291,9 +291,9 @@ The `ClientRepositoryInterface::register()` method does not include an authoriza
 
 ---
 
-## 6. Compliance Framing Review (Finding C)
+## 6. Compliance framing review (finding C)
 
-### 6.1 Documentation Language
+### 6.1 Documentation language
 
 **Requirement:** Framework documentation must not make compliance claims that could be interpreted as certification.
 
@@ -312,9 +312,9 @@ The following items were checked:
 
 ---
 
-## 7. Summary Assessment
+## 7. Summary assessment
 
-### Compliance Scorecard
+### Compliance scorecard
 
 | Area                        | Status                     | Priority                     |
 | --------------------------- | -------------------------- | ---------------------------- |
@@ -334,7 +334,7 @@ The following items were checked:
 | Dynamic client registration | Compliant                  | N/A                          |
 | Compliance framing          | Appropriate                | Low                          |
 
-### Recommended Contract Changes (Priority Order)
+### Recommended contract changes (priority order)
 
 1. **High:** Add `DynamicLinkingContext` DTO and optional transaction binding to `WebAuthnServerInterface::generateAuthenticationOptions()` for PSD2 dynamic linking.
 2. **Medium:** Add `AuthenticationAssuranceLevel` enum (AAL1/AAL2/AAL3) and `authenticationContext` to `AuthenticationResult`.
@@ -342,7 +342,7 @@ The following items were checked:
 4. **Medium:** Add optional consent context fields (`ipAddress`, `userAgent`, `consentVersion`) to `ConsentRecord`.
 5. **Low:** Add `revokeScope(string $subjectId, string $clientId, string $scope): void` to `ConsentRepositoryInterface`.
 
-### Recommended Documentation
+### Recommended documentation
 
 1. Integration guide for PSD2 SCA: combining OAuth2 first-factor with WebAuthn second-factor.
 2. Deployment guide for SCA exemption handling at the application layer.
@@ -350,7 +350,7 @@ The following items were checked:
 4. Client secret hashing guidance: Argon2id for secrets, SHA-256 for high-entropy tokens.
 5. Compliance disclaimer for extension documentation.
 
-### Overall Assessment
+### Overall assessment
 
 Pulsar's OAuth2/OIDC and WebAuthn extensions provide a strong foundation for deployment in regulated domains. The contract-first architecture, token hashing, debug redaction, granular consent, refresh token rotation, and audit-logging design are well-aligned with PSD2, GDPR, and eIDAS requirements.
 

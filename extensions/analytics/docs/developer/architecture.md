@@ -1,8 +1,8 @@
-# Analytics Extension Architecture
+# Analytics extension architecture
 
 The Pulsar Analytics extension provides privacy-focused, cookie-free web analytics. It is organized into clearly separated layers with strict module boundaries.
 
-## Module Map
+## Module map
 
 | Layer         | Namespace            | Responsibility                                                   |
 | ------------- | -------------------- | ---------------------------------------------------------------- |
@@ -13,7 +13,7 @@ The Pulsar Analytics extension provides privacy-focused, cookie-free web analyti
 | **Server**    | `Server\Controller\` | HTTP controllers for API, dashboard, and collection              |
 | **Migration** | `Migration\`         | Database migrations and multi-driver DDL adapter                 |
 
-## Extension Entry Point
+## Extension entry point
 
 The extension is registered via `AnalyticsExtension`, which implements three lifecycle interfaces:
 
@@ -25,9 +25,9 @@ PostBootExtensionInterface  -- postBoot()
 
 Source: `extensions/analytics/src/AnalyticsExtension.php`
 
-## Boot Sequence (4 Phases)
+## Boot sequence (4 phases)
 
-### Phase 1: Service Provider Registration
+### Phase 1: service provider registration
 
 `AnalyticsServiceProvider::register()` binds all dependencies:
 
@@ -39,11 +39,11 @@ Source: `extensions/analytics/src/AnalyticsExtension.php`
 6. **Middleware**: `CollectionRateLimitMiddleware`, `CollectionCorsMiddleware`, `BotFilterMiddleware`, `AnalyticsAuthMiddleware`
 7. **Controllers**: All 10 HTTP controllers
 
-### Phase 2: Pre-Boot
+### Phase 2: pre-boot
 
 Loads `config/analytics.php` into an `AnalyticsConfig` DTO. Falls back to defaults if no config file exists.
 
-### Phase 3: Boot (Route Registration)
+### Phase 3: boot (route registration)
 
 Registers three route groups:
 
@@ -51,7 +51,7 @@ Registers three route groups:
 - **API routes**: Authenticated JSON API under `/plsr/api/v1/` for stats, timeseries, breakdowns, realtime, export, goals CRUD, and sites CRUD
 - **Dashboard routes**: Authenticated HTML pages under `/analytics/`
 
-### Phase 4: Post-Boot
+### Phase 4: post-boot
 
 Registers scheduled jobs if the `JobRegistryInterface` is available:
 
@@ -61,7 +61,7 @@ Registers scheduled jobs if the `JobRegistryInterface` is available:
 | `RetentionCleanupJob`     | Daily    | Purge data beyond retention window       |
 | `PartitionMaintenanceJob` | Weekly   | Database partition maintenance           |
 
-## Configuration Architecture
+## Configuration architecture
 
 All configuration flows through `AnalyticsConfig`, a readonly DTO loaded from `config/analytics.php`:
 
@@ -88,7 +88,7 @@ AnalyticsConfig
 
 Every sub-config uses the same pattern: a `readonly` class with a `fromArray()` static factory. All values have sensible defaults.
 
-## Data Flow: Page View Pipeline
+## Data flow: page view pipeline
 
 ```
   Browser sends beacon to /plsr/api/event
@@ -122,12 +122,12 @@ Every sub-config uses the same pattern: a `readonly` class with a `fromArray()` 
    10. Persist PageView
 ```
 
-## Visitor Identification
+## Visitor identification
 
 Visitors are identified without cookies using a privacy-preserving HMAC:
 
 ```
-visitor_id = HMAC-BLAKE2b(
+visitor_id = keyed BLAKE2b(
     key: KDF(master_key, subkey_id=20, context="anal_vis"),
     data: ip + "|" + user_agent + "|" + utc_day_number
 )
@@ -137,11 +137,11 @@ visitor_id = HMAC-BLAKE2b(
 - **Single subkey**: Subkey ID 20 with 8-byte context `"anal_vis"`, derived via `sodium_crypto_kdf_derive_from_key()`
 - **No persistence**: Nothing is stored on the client (no cookies, no localStorage)
 
-### Midnight Grace Period
+### Midnight grace period
 
 When a page view arrives in the first 30 minutes of a new UTC day, the `SessionResolver` checks for active sessions using both today's and yesterday's visitor hash. This prevents artificial session breaks at midnight.
 
-## Session Management
+## Session management
 
 Sessions use a 30-minute inactivity window:
 
@@ -150,7 +150,7 @@ Sessions use a 30-minute inactivity window:
 3. If found, continue the session (update page count, exit page, duration)
 4. If not found, create a new session and persist immediately (TOCTOU prevention)
 
-## Aggregation Pipeline
+## Aggregation pipeline
 
 Raw data rolls up through two levels:
 
@@ -170,7 +170,7 @@ Daily aggregation queries raw data directly (not hourly stats) to produce mathem
 - **Bounce rate**: Total bounced sessions / total sessions (weighted, not averaged)
 - **Duration**: `AVG(duration_seconds)` over all sessions (weighted, not averaged)
 
-### Breakdown Tables
+### Breakdown tables
 
 Four daily breakdown tables provide drill-down analytics:
 
@@ -183,9 +183,9 @@ Four daily breakdown tables provide drill-down analytics:
 
 All use driver-specific upsert SQL (MySQL `ON DUPLICATE KEY`, PostgreSQL `ON CONFLICT ... EXCLUDED`, SQLite `ON CONFLICT ... excluded`).
 
-## Database Schema
+## Database schema
 
-### Core Tables
+### Core tables
 
 | Table                        | Purpose                     | Key Indexes                                                |
 | ---------------------------- | --------------------------- | ---------------------------------------------------------- |
@@ -202,9 +202,9 @@ All use driver-specific upsert SQL (MySQL `ON DUPLICATE KEY`, PostgreSQL `ON CON
 | `analytics_daily_devices`    | Daily device breakdown      | `(site_id, date, device_type, browser, os)`                |
 | `analytics_daily_locations`  | Daily location breakdown    | `(site_id, date, country_code, region)`                    |
 
-## Integration Map
+## Integration map
 
-### Pulsar Core Dependencies
+### Pulsar core dependencies
 
 | Pulsar Module | Analytics Usage                                           |
 | ------------- | --------------------------------------------------------- |
@@ -219,7 +219,7 @@ All use driver-specific upsert SQL (MySQL `ON DUPLICATE KEY`, PostgreSQL `ON CON
 | `Queue`       | Job dispatching for queue-based collection                |
 | `Http`        | PSR-7 request/response, middleware pipeline               |
 
-## GeoIP Resolution
+## GeoIP resolution
 
 Country-level geo resolution uses the DB-IP Lite database (CC-BY-4.0 license):
 

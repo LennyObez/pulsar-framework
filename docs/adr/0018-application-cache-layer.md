@@ -10,7 +10,7 @@ Regulated applications in banking, healthcare, and legal domains need caching in
 
 The cache layer must conform to PSR-6 (CacheItemPool) and PSR-16 (SimpleCache) for interoperability, while providing application-level features that neither PSR defines: tags, stampede guards, encryption, distributed locking, and driver capability negotiation.
 
-## Decision Drivers
+## Decision drivers
 
 1. **Dual PSR compliance**: Applications and libraries expect PSR-6 and PSR-16. Both must be first-class, not one wrapping the other with impedance mismatch.
 2. **Driver abstraction**: Deployment environments vary - local development uses filesystem or array, staging uses APCu, production uses Memcached or Redis. The application layer must be driver-agnostic.
@@ -27,7 +27,7 @@ Implement `src/Cache/Application/` as the application cache module with the foll
 - `CachePool` implements PSR-6 `CacheItemPoolInterface` with deferred save support, `remember()` convenience method, and critical mode (throw on driver failure vs. silent degradation)
 - `SimpleCache` implements PSR-16 `CacheInterface` by wrapping `CachePool`, providing the simpler API for common use cases
 
-### Driver Layer
+### Driver layer
 
 All drivers implement `CacheDriverInterface` - a raw string storage contract. Serialization happens in the pool layer, keeping drivers simple and testable.
 
@@ -42,7 +42,7 @@ All drivers implement `CacheDriverInterface` - a raw string storage contract. Se
 
 Drivers declare capabilities via `CacheDriverCapabilities` - a value object indicating support for atomic increment, distributed locking, and TTL precision. Upper layers query capabilities before attempting unsupported operations.
 
-### Tag-Based Invalidation
+### Tag-based invalidation
 
 `TaggedCache` stores tag version snapshots with each cached item. On read, current tag versions are compared against stored versions - stale items are treated as cache misses. Tag invalidation bumps the version rather than scanning and deleting individual keys, making invalidation O(1) per tag regardless of how many items share that tag.
 
@@ -51,7 +51,7 @@ Two tag strategies are provided:
 - `StrictTagStrategy` - atomic tag version reads/writes via the cache driver (consistent but slower)
 - `BestEffortTagStrategy` - eventual consistency with local version caching (faster but may serve briefly stale data)
 
-### Stampede Protection
+### Stampede protection
 
 `StampedeGuard` implements a lock-based get-or-compute pattern:
 
@@ -63,15 +63,15 @@ Two tag strategies are provided:
 
 On lock timeout, the guard retries the cache read (optimistic path) and falls back to direct callback invocation (degraded path).
 
-### Encryption at Rest
+### Encryption at rest
 
 `EncryptedCacheDecorator` wraps any `CacheDriverInterface` with transparent encryption using libsodium secretbox (XSalsa20-Poly1305, ADR-0006). Features:
 
-- BLAKE2b HMAC binds ciphertext to pool name, cache key, tenant ID, and purpose - preventing cross-pool ciphertext relocation attacks
+- keyed BLAKE2b binds ciphertext to pool name, cache key, tenant ID, and purpose - preventing cross-pool ciphertext relocation attacks
 - Transparent key rotation: values encrypted under the previous master key are decrypted and re-encrypted on read
 - Atomic increment/decrement is explicitly unsupported on encrypted pools (throws `UnsupportedCapabilityException`)
 
-### Distributed Locking
+### Distributed locking
 
 Lock implementations parallel the driver layer: `ApcuLock`, `MemcachedLock`, `RedisLock`, `FilesystemLock`, `DatabaseLock`, `ArrayLock`. All implement `LockInterface` with acquire/release semantics and configurable TTL. `FencedExecutor` provides fenced token support for safe lock extension in long-running operations.
 
@@ -83,7 +83,7 @@ Lock implementations parallel the driver layer: `ApcuLock`, `MemcachedLock`, `Re
 - Labels: pool name, driver name, cache key
 - Events: `CacheHitEvent`, `CacheMissEvent`, `CacheWriteEvent`, `CacheDeleteEvent`, `CacheClearEvent`, `CacheErrorEvent`
 
-### Key Validation
+### Key validation
 
 `CacheKeyValidator` enforces PSR-6 reserved character rules plus configurable maximum key length and allowed character sets. Validation runs on every public API entry point.
 
@@ -91,7 +91,7 @@ Lock implementations parallel the driver layer: `ApcuLock`, `MemcachedLock`, `Re
 
 `CacheConfig` follows the readonly DTO pattern (ADR-0011) with `fromArray()` factory. Configures default driver, TTL, pool definitions, encryption settings, and stampede guard parameters.
 
-## Alternatives Considered
+## Alternatives considered
 
 ### Third-party cache library
 
@@ -126,7 +126,7 @@ Rejected: not all deployment environments have Redis. Local development, CI, and
 - `SimpleCache` wraps `CachePool` - the PSR-16 API has slightly higher overhead than direct driver access (one extra method call layer)
 - Critical mode is opt-in per pool - non-critical pools silently degrade on driver failure, which may mask infrastructure issues if monitoring is not configured
 
-## Security Impact
+## Security impact
 
 - `EncryptedCacheDecorator` uses framework crypto (libsodium, ADR-0006) - no custom cryptographic implementations
 - AAD binding prevents ciphertext relocation between pools, keys, tenants, or purposes
@@ -134,14 +134,14 @@ Rejected: not all deployment environments have Redis. Local development, CI, and
 - `CacheKeyValidator` prevents injection via cache keys (reserved characters, length limits)
 - Critical mode ensures security-sensitive cache failures (e.g., encrypted session store) surface as exceptions rather than silent degradation
 
-## Performance Impact
+## Performance impact
 
 - Driver operations are I/O-bound. The application layer adds serialization (PHP serialize or JSON), key validation, and event emission - all sub-microsecond on modern hardware.
 - Tag validation adds one `getTagVersions()` call per tagged read. `BestEffortTagStrategy` caches versions locally to amortize this cost.
 - Stampede guard lock acquisition adds one round-trip to the lock backend on cache miss. The jittered TTL prevents synchronized expiration across distributed instances.
 - Encryption adds ~50μs per operation (libsodium secretbox). Acceptable for most use cases; benchmark-sensitive paths should use unencrypted pools.
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 Additive change - introduces `src/Cache/Application/` as a new core module. To roll back: remove the module and revert to direct PSR-6/PSR-16 library usage. Cache data is ephemeral by nature - no data migration required.
 

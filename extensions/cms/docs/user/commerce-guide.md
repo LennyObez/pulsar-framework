@@ -1,4 +1,4 @@
-# Commerce Guide
+# Commerce guide
 
 This guide covers the Pulsar CMS commerce subsystem, including product management, variants, promotions, order processing, refunds, invoices, tax configuration, and digital product delivery.
 
@@ -6,7 +6,7 @@ This guide covers the Pulsar CMS commerce subsystem, including product managemen
 
 The CMS commerce subsystem provides a complete e-commerce solution integrated with CMS content. Products can be linked to CMS content pages for rich product descriptions, and the checkout flow integrates with payment gateways via webhooks.
 
-## Enabling Commerce
+## Enabling commerce
 
 Commerce is disabled by default. Enable it by adding a `commerce` section to `config/cms.php`:
 
@@ -25,7 +25,7 @@ When the `commerce` key is present (non-null), the commerce subsystem is activat
 
 ## Products
 
-### Creating a Product
+### Creating a product
 
 <!-- Screenshot: Product creation form -->
 
@@ -62,7 +62,7 @@ Content-Type: application/json
 }
 ```
 
-### Product Statuses
+### Product statuses
 
 | Status         | Description                                           |
 | -------------- | ----------------------------------------------------- |
@@ -70,13 +70,13 @@ Content-Type: application/json
 | `Active`       | Product is live and available for purchase            |
 | `Discontinued` | Product is no longer available                        |
 
-### Editing Products
+### Editing products
 
 1. Navigate to **Admin > CMS > Products > {id} > Edit** (`/admin/cms/products/{id}/edit`).
 2. Modify the desired fields.
 3. Click **Save**.
 
-### Product Translations
+### Product translations
 
 Products support per-locale translations for name, description, and other display fields:
 
@@ -89,11 +89,11 @@ Products support per-locale translations for name, description, and other displa
 }
 ```
 
-## Product Variants
+## Product variants
 
 Products can have multiple variants (e.g., size, color combinations).
 
-### Creating Variants
+### Creating variants
 
 Each variant has:
 
@@ -104,7 +104,7 @@ Each variant has:
 | Price Override | Optional price different from the parent product      |
 | Stock Quantity | Variant-specific inventory count                      |
 
-### Product Attributes
+### Product attributes
 
 Attributes describe variant properties:
 
@@ -117,9 +117,9 @@ Attributes describe variant properties:
 }
 ```
 
-## Promotions and Coupons
+## Promotions and coupons
 
-### Creating a Promotion
+### Creating a promotion
 
 1. Navigate to **Admin > CMS > Promotions** (`/admin/cms/promotions`).
 2. Click **Create New Promotion** (`/admin/cms/promotions/create`).
@@ -139,7 +139,7 @@ Attributes describe variant properties:
 
 4. Click **Save**.
 
-### Promotion Types
+### Promotion types
 
 | Type            | Description                              | Example               |
 | --------------- | ---------------------------------------- | --------------------- |
@@ -147,20 +147,22 @@ Attributes describe variant properties:
 | `fixed_amount`  | Fixed amount off in minor currency units | 500 cents ($5.00) off |
 | `free_shipping` | Removes shipping charges                 | Free shipping         |
 
-### Coupon Codes
+### Coupon codes
 
 Coupons are a specific type of promotion with a customer-entered code:
 
 1. Create a promotion with a `code` field.
 2. Customers enter the code at checkout.
 3. The `PromotionEngine` validates the coupon:
-  - Code must match an active promotion
-  - Promotion must be within its date range
-  - Usage limits must not be exceeded
-  - Minimum order amount must be met
+
+- Code must match an active promotion
+- Promotion must be within its date range
+- Usage limits must not be exceeded
+- Minimum order amount must be met
+
 4. The discount is applied to the cart.
 
-### Promotion Validation
+### Promotion validation
 
 The `PromotionValidationResult` provides detailed feedback:
 
@@ -170,7 +172,7 @@ The `PromotionValidationResult` provides detailed feedback:
 
 ## Orders
 
-### Order Lifecycle
+### Order lifecycle
 
 ```
 Cart --> Pending Payment --> Confirmed --> Fulfilled
@@ -182,7 +184,7 @@ Cart --> Pending Payment --> Confirmed --> Fulfilled
                      Cancelled
 ```
 
-### Order Statuses
+### Order statuses
 
 | Status            | Description                              |
 | ----------------- | ---------------------------------------- |
@@ -196,18 +198,19 @@ Cart --> Pending Payment --> Confirmed --> Fulfilled
 
 Terminal statuses (no further transitions): `Refunded`, `Cancelled`.
 
-### Viewing Orders
+### Viewing orders
 
 1. Navigate to **Admin > CMS > Orders** (`/admin/cms/orders`).
 2. The order list shows all orders with status, total, customer, and date.
 3. Click an order to view details (`/admin/cms/orders/{id}`):
-  - Order items with quantities and prices
-  - Payment status and gateway reference
-  - Shipping information
-  - Tax breakdown
-  - Associated invoice
 
-### Exporting Orders
+- Order items with quantities and prices
+- Payment status and gateway reference
+- Shipping information
+- Tax breakdown
+- Associated invoice
+
+### Exporting orders
 
 Export orders to CSV for accounting or analytics:
 
@@ -219,7 +222,7 @@ The `OrderExportService` generates a CSV file with all order fields, suitable fo
 
 ## Refunds
 
-### Processing a Refund
+### Processing a refund
 
 1. Open an order at **Admin > CMS > Orders > {id}**.
 2. Click **Refund**.
@@ -241,22 +244,23 @@ The refund is processed through the original payment gateway. The `RefundProcess
 
 ## Invoices
 
-### Automatic Generation
+### Automatic generation
 
 Invoices are generated automatically when an order is confirmed. The `InvoiceService` creates invoices using the configured renderer.
 
-### Viewing Invoices
+### Viewing invoices
 
 1. Navigate to **Admin > CMS > Invoices > {id}** (`/admin/cms/invoices/{id}`).
 2. View the invoice details including:
-  - Invoice number
-  - Order reference
-  - Line items with prices and quantities
-  - Tax breakdown
-  - Total amount
-  - Payment status
 
-### Downloading Invoices
+- Invoice number
+- Order reference
+- Line items with prices and quantities
+- Tax breakdown
+- Total amount
+- Payment status
+
+### Downloading invoices
 
 ```
 GET /admin/cms/invoices/{id}/download
@@ -264,13 +268,13 @@ GET /admin/cms/invoices/{id}/download
 
 Invoices are rendered in the configured format (default: HTML). The `HtmlInvoiceRenderer` produces professional invoice documents.
 
-### Invoice Events
+### Invoice events
 
 The `InvoiceGenerated` event fires when a new invoice is created, enabling integrations with accounting systems.
 
-## Tax Configuration
+## Tax configuration
 
-### Tax Rates
+### Tax rates
 
 Configure tax rates in `config/cms.php`:
 
@@ -294,7 +298,7 @@ Configure tax rates in `config/cms.php`:
 ],
 ```
 
-### Tax Calculation
+### Tax calculation
 
 The `TaxCalculator` computes taxes per order:
 
@@ -303,7 +307,7 @@ The `TaxCalculator` computes taxes per order:
 3. Tax is calculated per line item
 4. The result includes individual `TaxLineItem` entries and the total tax
 
-### Tax Result
+### Tax result
 
 Each tax calculation produces a `TaxResult` containing:
 
@@ -311,7 +315,7 @@ Each tax calculation produces a `TaxResult` containing:
 - Total tax amount
 - Applied tax rates
 
-## Digital Products
+## Digital products
 
 ### Setup
 
@@ -319,7 +323,7 @@ Each tax calculation produces a `TaxResult` containing:
 2. Upload digital assets at **Admin > CMS > Digital Assets** (`/admin/cms/digital-assets`).
 3. Associate digital assets with the product.
 
-### Digital Asset Management
+### Digital asset management
 
 ```
 POST /admin/cms/digital-assets
@@ -332,7 +336,7 @@ product_id: "product-uuid"
 View assets: `GET /admin/cms/digital-assets`
 Delete assets: `DELETE /admin/cms/digital-assets/{id}`
 
-### Download Delivery
+### Download delivery
 
 After purchase, the `DigitalDeliveryService` generates secure download tokens:
 
@@ -341,7 +345,7 @@ After purchase, the `DigitalDeliveryService` generates secure download tokens:
 3. The `DigitalDownloadReady` event fires.
 4. The customer receives a download URL: `/download/{token}`.
 
-### Download Limits
+### Download limits
 
 | Setting                      | Default | Description                       |
 | ---------------------------- | ------- | --------------------------------- |
@@ -350,9 +354,9 @@ After purchase, the `DigitalDeliveryService` generates secure download tokens:
 
 After the limit is reached or the token expires, the download link returns a 403 response.
 
-## Checkout Flow
+## Checkout flow
 
-### Public Checkout Routes
+### Public checkout routes
 
 The checkout is locale-aware:
 
@@ -362,20 +366,22 @@ The checkout is locale-aware:
 | `POST /{locale}/checkout`        | Process checkout   |
 | `GET /{locale}/checkout/success` | Confirmation page  |
 
-### Checkout Process
+### Checkout process
 
 1. Customer navigates to `/{locale}/checkout`.
 2. The `CheckoutController` displays the cart summary and payment form.
 3. Customer submits payment details.
 4. The `CheckoutService` orchestrates:
-  - Cart validation (`CartValidationResult`)
-  - Tax calculation
-  - Promotion/coupon application
-  - Payment gateway interaction
+
+- Cart validation (`CartValidationResult`)
+- Tax calculation
+- Promotion/coupon application
+- Payment gateway interaction
+
 5. On success, the order transitions to `Confirmed`.
 6. Customer is redirected to the success page.
 
-### Payment Gateway
+### Payment gateway
 
 The `PaymentGateway` interface handles payment processing:
 
@@ -383,7 +389,7 @@ The `PaymentGateway` interface handles payment processing:
 - Webhook handling for asynchronous payment notifications
 - Refund processing
 
-### Payment Webhooks
+### Payment webhooks
 
 Payment gateways send asynchronous notifications to:
 
@@ -393,7 +399,7 @@ POST /webhooks/cms-payment
 
 The `WebhookHandler` processes these notifications, updating order and payment status.
 
-## Commerce Events
+## Commerce events
 
 | Event                  | When                                |
 | ---------------------- | ----------------------------------- |
@@ -422,7 +428,7 @@ The `WebhookHandler` processes these notifications, updating order and payment s
 | `cms.invoices.download`     | Shop Manager+ | Download invoice documents   |
 | `cms.digital_assets.manage` | Shop Manager+ | Manage digital assets        |
 
-## Configuration Reference
+## Configuration reference
 
 | Key                                   | Type   | Default  | Description                          |
 | ------------------------------------- | ------ | -------- | ------------------------------------ |
@@ -433,7 +439,7 @@ The `WebhookHandler` processes these notifications, updating order and payment s
 | `commerce.max_downloads`              | int    | `5`      | Max downloads per purchase           |
 | `commerce.taxRates`                   | array  | `[]`     | Tax rate configurations              |
 
-## Next Steps
+## Next steps
 
 - [Import/Export Guide](import-export-guide.md) - Exporting order data
 - [Settings Reference](settings-reference.md) - Commerce configuration details

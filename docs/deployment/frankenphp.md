@@ -8,11 +8,11 @@ This guide covers deploying a Pulsar application with FrankenPHP in worker mode.
 - FrankenPHP binary (includes Caddy and embedded PHP)
 - Pulsar application with `config/runtime.php` set to `driver => 'frankenphp'` or `'auto'`
 
-## Caddyfile Configuration
+## Caddyfile configuration
 
 FrankenPHP uses a Caddyfile to configure the web server. The `php_server` directive enables worker mode with `frankenphp_handle_request()`.
 
-### Basic Worker Mode
+### Basic worker mode
 
 ```caddyfile
 {
@@ -30,7 +30,7 @@ example.com {
 }
 ```
 
-### With HTTP/3 and Early Hints
+### With HTTP/3 and early hints
 
 Caddy enables HTTP/3 (QUIC) and automatic TLS by default when serving a domain name. Early Hints are sent via the `frankenphp_early_hints()` API in your route handlers.
 
@@ -56,7 +56,7 @@ example.com {
 }
 ```
 
-### Development (Local TLS)
+### Development (local TLS)
 
 ```caddyfile
 {
@@ -76,7 +76,7 @@ localhost {
 
 Caddy automatically generates a local CA and TLS certificate for `localhost`.
 
-## Docker Setup
+## Docker setup
 
 ### Dockerfile
 
@@ -118,12 +118,12 @@ services:
   app:
     build: .
     ports:
-     - '80:80'
-     - '443:443'
-     - '443:443/udp'
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
     volumes:
-     - caddy_data:/data
-     - caddy_config:/config
+      - caddy_data:/data
+      - caddy_config:/config
     environment:
       APP_ENV: production
       APP_DEBUG: 'false'
@@ -187,7 +187,7 @@ sudo systemctl enable pulsar-frankenphp
 sudo systemctl start pulsar-frankenphp
 ```
 
-## Early Hints
+## Early hints
 
 FrankenPHP supports 103 Early Hints natively. Use the `earlyHints()` method on the FrankenPHP runtime to preload critical resources before the response is ready:
 
@@ -204,7 +204,7 @@ $runtime->earlyHints([
 
 The browser receives the 103 response immediately and starts fetching the linked resources while the server computes the full response.
 
-## Worker Pool Sizing
+## Worker pool sizing
 
 The `num` directive in the Caddyfile controls the number of PHP worker threads:
 
@@ -216,7 +216,7 @@ The `num` directive in the Caddyfile controls the number of PHP worker threads:
 
 Monitor worker utilization via the `/_health` endpoint and Prometheus metrics to tune the pool size.
 
-## Graceful Reload
+## Graceful reload
 
 FrankenPHP supports graceful reload via Caddy's built-in mechanisms:
 
@@ -232,7 +232,7 @@ During reload, Pulsar workers enter the draining state, finish in-flight request
 
 ## Monitoring
 
-### Prometheus Metrics
+### Prometheus metrics
 
 Caddy exposes Prometheus metrics at `localhost:2019/metrics` by default. Combined with Pulsar's `/_health` endpoint and `MetricRegistry` metrics, you get full observability:
 
@@ -250,11 +250,11 @@ scrape_configs:
     scheme: https
 ```
 
-### Log Output
+### Log output
 
 FrankenPHP logs to stderr in JSON format by default. Configure log aggregation with your preferred tool (Loki, Fluentd, CloudWatch).
 
-## Environment Variables
+## Environment variables
 
 | Variable                        | Description                                     |
 | ------------------------------- | ----------------------------------------------- |

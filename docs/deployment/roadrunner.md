@@ -36,8 +36,8 @@ server:
 http:
   address: '0.0.0.0:8080'
   middleware:
-   - gzip
-   - headers
+    - gzip
+    - headers
   headers:
     response:
       X-Powered-By: 'Pulsar'
@@ -55,8 +55,8 @@ http:
   static:
     dir: 'public'
     forbid:
-     - '.php'
-     - '.env'
+      - '.php'
+      - '.env'
 
 logs:
   mode: production
@@ -70,7 +70,7 @@ metrics:
   address: '127.0.0.1:2112'
 ```
 
-### Configuration Reference
+### Configuration reference
 
 | Setting                                  | Description                      | Default        |
 | ---------------------------------------- | -------------------------------- | -------------- |
@@ -81,7 +81,7 @@ metrics:
 | `http.pool.allocate_timeout`             | Time to wait for a free worker   | 60s            |
 | `http.pool.destroy_timeout`              | Time to wait for worker shutdown | 60s            |
 
-### Aligning with Pulsar Config
+### Aligning with Pulsar config
 
 Set RoadRunner pool settings to match your `config/runtime.php` values:
 
@@ -96,7 +96,7 @@ http:
 
 Both Pulsar and RoadRunner enforce recycling limits. The first threshold reached triggers the recycle.
 
-## Docker Setup
+## Docker setup
 
 ### Dockerfile
 
@@ -136,7 +136,7 @@ services:
   app:
     build: .
     ports:
-     - '8080:8080'
+      - '8080:8080'
     environment:
       APP_ENV: production
       APP_DEBUG: 'false'
@@ -154,14 +154,14 @@ services:
   caddy:
     image: caddy:latest
     ports:
-     - '80:80'
-     - '443:443'
-     - '443:443/udp'
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
     volumes:
-     - ./Caddyfile:/etc/caddy/Caddyfile
-     - caddy_data:/data
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
     depends_on:
-     - app
+      - app
 
 volumes:
   caddy_data:
@@ -224,9 +224,9 @@ stderr_logfile=/var/log/pulsar/roadrunner-error.log
 environment=APP_ENV="production",RR_MODE="http"
 ```
 
-## Worker Pool Settings
+## Worker pool settings
 
-### Sizing Guidelines
+### Sizing guidelines
 
 | Workload             | `num_workers`     | Notes                    |
 | -------------------- | ----------------- | ------------------------ |
@@ -234,7 +234,7 @@ environment=APP_ENV="production",RR_MODE="http"
 | I/O-bound (DB, APIs) | 2x-4x CPU cores   | Workers block on I/O     |
 | Mixed                | 1.5x-2x CPU cores | Start here, benchmark up |
 
-### Supervisor Settings
+### Supervisor settings
 
 RoadRunner's built-in supervisor monitors worker health independently of Pulsar's recycling:
 
@@ -248,7 +248,7 @@ http:
       max_worker_memory: 256 # MB limit per worker
 ```
 
-## PSR-7 Bridge
+## PSR-7 bridge
 
 Pulsar's `RoadRunnerRuntime` converts between RoadRunner's PSR-7 request/response types and Pulsar's internal HTTP types via the `PsrBridge`. The bridge handles:
 
@@ -258,7 +258,7 @@ Pulsar's `RoadRunnerRuntime` converts between RoadRunner's PSR-7 request/respons
 
 No additional configuration is needed - the bridge is wired automatically when the RoadRunner runtime is detected.
 
-## Graceful Reload
+## Graceful reload
 
 ```bash
 # Reload workers (zero-downtime)
@@ -277,7 +277,7 @@ During reload:
 
 ## Monitoring
 
-### RoadRunner Status
+### RoadRunner status
 
 RoadRunner provides a built-in status endpoint:
 
@@ -291,7 +291,7 @@ status:
 curl http://localhost:2114/health?plugin=http
 ```
 
-### Prometheus Metrics
+### Prometheus metrics
 
 RoadRunner exposes Prometheus metrics natively:
 
@@ -313,7 +313,7 @@ scrape_configs:
      - targets: ['localhost:8080']
 ```
 
-### Pulsar Health Endpoint
+### Pulsar health endpoint
 
 The `/_health` endpoint provides per-worker health data. Behind a load balancer, each worker responds independently:
 
@@ -322,7 +322,7 @@ curl http://localhost:8080/_health
 # {"status":"healthy","requests":4521,"memory_mb":48,"uptime_s":3600}
 ```
 
-## Environment Variables
+## Environment variables
 
 | Variable                        | Description                                     |
 | ------------------------------- | ----------------------------------------------- |
@@ -332,7 +332,7 @@ curl http://localhost:8080/_health
 | `RUNTIME_MEMORY_THRESHOLD_MB`   | Pulsar-level memory limit (default: 256)        |
 | `RUNTIME_DRAIN_TIMEOUT_SECONDS` | Drain timeout during reload (default: 30)       |
 
-## Reverse Proxy
+## Reverse proxy
 
 RoadRunner does not terminate TLS. Place it behind a reverse proxy for production:
 

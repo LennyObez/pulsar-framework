@@ -1,8 +1,8 @@
-# Content Management Guide
+# Content management guide
 
 This guide covers creating and managing content in Pulsar CMS, including articles, pages, content blocks, translations, revisions, and the editorial workflow.
 
-## Content Types
+## Content types
 
 Pulsar CMS ships with two built-in content types:
 
@@ -13,9 +13,9 @@ Pulsar CMS ships with two built-in content types:
 
 CMS plugins can register additional custom content types through the `content_types` capability.
 
-## Creating Content
+## Creating content
 
-### Via Admin Panel
+### Via admin panel
 
 1. Navigate to **Admin > CMS > Content** (`/admin/cms/content`).
 2. Click **Create New** to open the content creation form.
@@ -52,7 +52,7 @@ Content-Type: application/json
 }
 ```
 
-## Content Body and HTML Sanitization
+## Content body and HTML sanitization
 
 All user-authored HTML is processed through the **SafeHtmlPolicy**, which implements a 7-step sanitization pipeline:
 
@@ -64,7 +64,7 @@ All user-authored HTML is processed through the **SafeHtmlPolicy**, which implem
 6. **Dangerous construct removal** -- Strips `on*` event handlers, `style`, `data-*` attributes
 7. **Final validation** -- Regex scan for remaining dangerous patterns
 
-### Allowed HTML Elements
+### Allowed HTML elements
 
 The following elements are permitted in content bodies:
 
@@ -80,11 +80,11 @@ The following elements are permitted in content bodies:
 
 Links to external URLs automatically receive `rel="noopener noreferrer"`. Image sources must use HTTPS, a relative `/media/` path, or a safe data URI under 32 KB.
 
-## Content Blocks
+## Content blocks
 
 Content blocks are reusable content fragments that can be embedded in multiple pages.
 
-### Managing Content Blocks
+### Managing content blocks
 
 1. Navigate to the content editor for any article or page.
 2. In the **Content Blocks** section, add blocks to compose your page layout.
@@ -96,7 +96,7 @@ Blocks allow you to create modular page layouts with reusable sections like hero
 
 Pulsar CMS supports full multi-locale content with per-locale translations.
 
-### Adding a Translation
+### Adding a translation
 
 1. Open a content item at **Admin > CMS > Content > {id}**.
 2. Click **Add Translation**.
@@ -127,9 +127,9 @@ Content-Type: application/json
 }
 ```
 
-## Publishing Workflow
+## Publishing workflow
 
-### Standard Mode
+### Standard mode
 
 In standard mode, content follows a simple lifecycle:
 
@@ -149,7 +149,7 @@ Archived --> Draft         (restore for editing)
 | Schedule | `POST /admin/cms/content/{id}/schedule` | `cms.content.publish` |
 | Archive  | `POST /admin/cms/content/{id}/archive`  | `cms.content.archive` |
 
-### Editorial Workflow Mode
+### Editorial workflow mode
 
 When `editorial_workflow` is enabled in `config/cms.php`, content must pass through review:
 
@@ -169,7 +169,7 @@ Approved --> Scheduled     (editor schedules)
 | Approve           | `POST /admin/cms/reviews/{id}/approve`       | `cms.content.approve`       |
 | Reject            | `POST /admin/cms/reviews/{id}/reject`        | `cms.content.approve`       |
 
-### Editorial Reviews
+### Editorial reviews
 
 View pending reviews at **Admin > CMS > Reviews** (`/admin/cms/reviews`).
 
@@ -184,12 +184,12 @@ Each review records:
 
 Every content edit creates a new revision, providing a complete change history.
 
-### Viewing Revisions
+### Viewing revisions
 
 1. Navigate to **Admin > CMS > Content > {id} > Revisions** (`/admin/cms/content/{contentId}/revisions`).
 2. Each revision shows the author, timestamp, and a diff from the previous version.
 
-### Restoring a Revision
+### Restoring a revision
 
 To roll back to a previous version:
 
@@ -199,11 +199,11 @@ POST /admin/cms/content/{contentId}/revisions/{revisionId}/restore
 
 This creates a new revision with the restored content, preserving the full history.
 
-## Content Locking
+## Content locking
 
 Content locking prevents concurrent editing conflicts.
 
-### Acquiring a Lock
+### Acquiring a lock
 
 When you begin editing content, a lock is automatically acquired:
 
@@ -213,7 +213,7 @@ POST /admin/cms/content/{id}/lock
 
 The lock is scoped to a specific locale and records the user and timestamp.
 
-### Releasing a Lock
+### Releasing a lock
 
 Locks are released when you finish editing:
 
@@ -221,15 +221,15 @@ Locks are released when you finish editing:
 DELETE /admin/cms/content/{id}/lock
 ```
 
-### Force Unlock
+### Force unlock
 
 Editors with the `cms.content.force_unlock` permission can release locks held by other users. This action is audit-logged.
 
-## Page Hierarchy
+## Page hierarchy
 
 Pages support hierarchical nesting up to the configured `max_hierarchy_depth` (default: 10 levels).
 
-### Setting a Parent Page
+### Setting a parent page
 
 1. Edit a page at **Admin > CMS > Content > {id}**.
 2. Select a **Parent Page** from the dropdown.
@@ -240,11 +240,11 @@ The URL path is computed from the hierarchy. For example, a page with slug `pric
 
 When a parent page's slug changes, all descendant paths are automatically recomputed, and redirects are created for the old URLs.
 
-## Custom Fields
+## Custom fields
 
 Custom content type fields extend the built-in content model.
 
-### Managing Custom Fields
+### Managing custom fields
 
 Navigate to **Admin > CMS > Fields > {contentType}** (`/admin/cms/fields/{contentType}`).
 
@@ -263,7 +263,7 @@ Available field types:
 
 Each field has a machine name, display label, field type, validation rules, and sort order.
 
-## Event Sourcing
+## Event sourcing
 
 When `event_sourcing` is enabled, every content mutation is recorded as an immutable event:
 
@@ -273,11 +273,11 @@ When `event_sourcing` is enabled, every content mutation is recorded as an immut
 
 Events include the actor ID, timestamp, and a serialized payload of the change.
 
-## Atomic Snapshots
+## Atomic snapshots
 
 When `atomic_snapshots` is enabled, publishing a content item creates an atomic snapshot of all its locale translations at that point in time. This ensures a consistent reference point for audit and compliance.
 
-## Data Classification
+## Data classification
 
 Each content item carries a `DataClassification` level:
 
@@ -289,7 +289,7 @@ Each content item carries a `DataClassification` level:
 
 The classification is set at creation time and can be updated by authorized users.
 
-## Next Steps
+## Next steps
 
 - [Media Library Guide](media-library.md) - Managing media assets
 - [Taxonomy & Navigation](taxonomy-navigation.md) - Categories, tags, and menus

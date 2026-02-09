@@ -10,7 +10,7 @@ Mission-critical applications in regulated domains - banking, healthcare, legal 
 
 The i18n subsystem must work without the `ext-intl` PHP extension (not available in all deployment environments) while providing full ICU message formatting when `ext-intl` is present.
 
-## Decision Drivers
+## Decision drivers
 
 1. **Compliance**: Regulated domains require that user-facing messages display in the user's locale. Missing translations in production can constitute a compliance violation.
 2. **Graceful degradation**: The `ext-intl` extension provides full ICU support but is optional. The subsystem must function without it using a regex-based fallback formatter.
@@ -41,7 +41,7 @@ $translator->translate('order.confirmation', [
 
 A global instance (`Translator::getGlobalInstance()`) is set during kernel boot for use in helper functions, keeping the convenience of `__()` without introducing a service locator.
 
-### Catalog Backends
+### Catalog backends
 
 All catalogs implement `CatalogInterface` with `get()`, `has()`, and `allKeys()` methods:
 
@@ -53,7 +53,7 @@ All catalogs implement `CatalogInterface` with `get()`, `has()`, and `allKeys()`
 
 `ChainCatalog` searches catalogs in priority order, enabling modules to provide default translations that applications can override.
 
-### Message Formatting
+### Message formatting
 
 Two formatter implementations behind `MessageFormatterInterface`:
 
@@ -62,7 +62,7 @@ Two formatter implementations behind `MessageFormatterInterface`:
 
 Specialized formatters for currency (`IntlCurrencyFormatter`), dates (`IntlDateFormatter`), and numbers (`IntlNumberFormatter`) provide locale-aware formatting for common regulated-domain data types.
 
-### Locale Negotiation
+### Locale negotiation
 
 `LocaleNegotiator` resolves the request locale from multiple sources in priority order:
 
@@ -75,7 +75,7 @@ The negotiator caps Accept-Language parsing at 20 tokens to prevent DoS via path
 
 `LocaleMiddleware` integrates the negotiator into the HTTP pipeline, setting the translator locale before the request reaches the controller.
 
-### Translation Linting
+### Translation linting
 
 `TranslationLinter` validates translation completeness across all configured locales and domains:
 
@@ -85,7 +85,7 @@ The negotiator caps Accept-Language parsing at 20 tokens to prevent DoS via path
 
 The linter integrates with the console command system for CI pipeline execution: `pulsar i18n:lint` returns a non-zero exit code on errors.
 
-### Translation Extraction
+### Translation extraction
 
 `TranslationExtractor` scans source files for translation key usage, producing `ExtractionResult` reports. This enables automated detection of keys used in code but not present in any catalog.
 
@@ -112,7 +112,7 @@ Key components:
 
 **Security**: The extractor validates locale segments (2–5 alphabetic characters), rejects path traversal patterns (`/../`, trailing `/..`, leading `../`), and collapses double slashes after prefix stripping to prevent protocol-relative open redirects.
 
-## Alternatives Considered
+## Alternatives considered
 
 ### Third-party translation library
 
@@ -147,14 +147,14 @@ Rejected: `ext-intl` is not available in all deployment environments (minimal Do
 - `Locale::parse()` produces a value object with `fallbackChain()` - the chain is computed on every `translate()` call (no caching), which is acceptable given typical call volumes
 - Translation extraction is source-file scanning (regex-based) - it may miss dynamically constructed keys, which is documented as a known limitation
 
-## Security Impact
+## Security impact
 
 - `LocaleNegotiator` caps Accept-Language parsing at 20 tokens - prevents request header DoS
 - Locale values are validated against the configured `supportedLocales` list - arbitrary locale injection is not possible
 - Translation keys are not evaluated as code - no template injection risk
 - `MissingTranslationException` in strict mode prevents accidental information disclosure through raw translation keys in production
 
-## Performance Impact
+## Performance impact
 
 - `Translator::translate()` performs a linear search through the fallback chain (typically 2-3 locales) and one catalog lookup per locale. Sub-millisecond for typical usage.
 - `PhpCatalog` loads translation arrays on first access and caches them in memory. `JsonCatalog` deserializes JSON files on first access.
@@ -162,7 +162,7 @@ Rejected: `ext-intl` is not available in all deployment environments (minimal Do
 - Locale negotiation adds one middleware layer per request - negligible compared to I/O-bound operations.
 - `LocalePrefixMiddleware` adds one regex-free string comparison per path segment - effectively zero overhead. Canonical redirect short-circuits before the router is reached.
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 Additive change - introduces `src/I18n/` as a new core module. To roll back: remove the module and replace `translate()` calls with raw strings. Translation files are application-owned and unaffected by framework rollback.
 

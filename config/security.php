@@ -14,6 +14,18 @@ declare(strict_types=1);
 return [
     /*
     |--------------------------------------------------------------------------
+    | Cipher Suite
+    |--------------------------------------------------------------------------
+    |
+    | Determines the cryptographic primitives used for encryption and HMAC.
+    | Supported: "sodium" (default, XSalsa20-Poly1305 / BLAKE2b),
+    |            "aes-gcm" (AES-256-GCM / HMAC-SHA256, FIPS 140-2 compliant).
+    |
+    */
+    'cipher_suite' => 'sodium',
+
+    /*
+    |--------------------------------------------------------------------------
     | Session Security
     |--------------------------------------------------------------------------
     */
@@ -101,6 +113,24 @@ return [
             'embedder_policy' => '',
             'resource_policy' => 'same-origin',
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Key Overrides (per-subsystem key provisioning)
+    |--------------------------------------------------------------------------
+    |
+    | Optional per-context key overrides for independent key rotation.
+    | Each entry maps a KDF context string to an environment variable containing
+    | hex-encoded raw key bytes. When set, the override key is used instead of
+    | deriving from PULSAR_MASTER_KEY for that context.
+    |
+    | This reduces blast radius: rotating one subsystem key does not affect others.
+    |
+    */
+    'key_overrides' => [
+        // 'encrypt_' => env('PULSAR_ENCRYPTION_KEY'),
+        // 'audit___' => env('PULSAR_AUDIT_KEY'),
     ],
 
     /*

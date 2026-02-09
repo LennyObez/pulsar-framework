@@ -1,12 +1,12 @@
-# Import Format Specification
+# Import format specification
 
 The Pulsar CMS supports a structured JSON format for full-site imports. This format is designed to be AI-compatible, enabling automated site generation from structured data.
 
-## Schema Overview
+## Schema overview
 
 A site definition is a JSON document conforming to version `1.0` of the import schema. It is parsed by `SiteDefinition::fromJson()` and processed by `SiteDefinitionParser`.
 
-### Top-Level Structure
+### Top-level structure
 
 ```json
 {
@@ -21,14 +21,14 @@ A site definition is a JSON document conforming to version `1.0` of the import s
 }
 ```
 
-### Required Keys
+### Required keys
 
 | Key       | Type   | Description                      |
 | --------- | ------ | -------------------------------- |
 | `version` | string | Schema version. Must be `"1.0"`. |
 | `site`    | object | Site-level configuration.        |
 
-### Optional Keys
+### Optional keys
 
 | Key          | Type   | Default | Description                                 |
 | ------------ | ------ | ------- | ------------------------------------------- |
@@ -121,7 +121,7 @@ Taxonomies are processed first (no dependencies) and produce a term map for cont
 }
 ```
 
-### Taxonomy Fields
+### Taxonomy fields
 
 | Field          | Type        | Required | Description                                                          |
 | -------------- | ----------- | -------- | -------------------------------------------------------------------- |
@@ -133,7 +133,7 @@ Taxonomies are processed first (no dependencies) and produce a term map for cont
 | `tenant_id`    | string/null | No       | Tenant scope                                                         |
 | `terms`        | array       | No       | List of term definitions                                             |
 
-### Taxonomy Term Fields
+### Taxonomy term fields
 
 | Field         | Type   | Required | Description                                     |
 | ------------- | ------ | -------- | ----------------------------------------------- |
@@ -143,7 +143,7 @@ Taxonomies are processed first (no dependencies) and produce a term map for cont
 | `locale`      | string | No       | Locale for translation (inherits from taxonomy) |
 | `sort_order`  | int    | No       | Display order (default: `0`)                    |
 
-### Term Map
+### Term map
 
 After processing, a term map is produced: `"taxonomy_slug:term_slug" => term_id`. This map is used to associate content items with taxonomy terms.
 
@@ -172,7 +172,7 @@ Media entries define assets to be imported. External sources can be downloaded a
 }
 ```
 
-### Media Fields
+### Media fields
 
 | Field         | Type        | Required | Description                                                          |
 | ------------- | ----------- | -------- | -------------------------------------------------------------------- |
@@ -183,7 +183,7 @@ Media entries define assets to be imported. External sources can be downloaded a
 | `uploader_id` | string      | No       | User ID for audit trail (default: `"system"`)                        |
 | `tenant_id`   | string/null | No       | Tenant scope                                                         |
 
-### Media Download Behavior
+### Media download behavior
 
 | `allowExternalMediaDownload` | `source` present | Behavior                                                    |
 | ---------------------------- | ---------------- | ----------------------------------------------------------- |
@@ -194,7 +194,7 @@ Media entries define assets to be imported. External sources can be downloaded a
 
 Downloaded media goes through the full validation pipeline (file type, size, SVG sanitization, PDF validation).
 
-### Media Reference Map
+### Media reference map
 
 After processing, a media reference map is produced: `"ref_key" => media_asset_id`. Content items reference media by the `ref` key.
 
@@ -255,7 +255,7 @@ Content items are processed after taxonomies and media (depends on both for refe
 }
 ```
 
-### Content Fields
+### Content fields
 
 | Field                 | Type        | Required | Description                                                               |
 | --------------------- | ----------- | -------- | ------------------------------------------------------------------------- |
@@ -270,7 +270,7 @@ Content items are processed after taxonomies and media (depends on both for refe
 | `taxonomy_terms`      | list        | No       | Term references in `"taxonomy_slug:term_slug"` format                     |
 | `featured_image`      | string      | No       | Media reference key for featured/OG image                                 |
 
-### Translation Fields
+### Translation fields
 
 | Field              | Type   | Required | Description                                                                                            |
 | ------------------ | ------ | -------- | ------------------------------------------------------------------------------------------------------ |
@@ -282,7 +282,7 @@ Content items are processed after taxonomies and media (depends on both for refe
 | `meta_description` | string | No       | SEO meta description (max 170 chars)                                                                   |
 | `robots`           | string | No       | Robots directive override                                                                              |
 
-### Content Reference Map
+### Content reference map
 
 After processing, a content reference map is produced: `"content_type:slug" => content_id`. Menu items reference content by this key.
 
@@ -345,7 +345,7 @@ Menus are processed after content (depends on content references for internal li
 }
 ```
 
-### Menu Fields
+### Menu fields
 
 | Field          | Type        | Required | Description                                                           |
 | -------------- | ----------- | -------- | --------------------------------------------------------------------- |
@@ -354,7 +354,7 @@ Menus are processed after content (depends on content references for internal li
 | `translations` | object      | No       | Locale-keyed menu labels                                              |
 | `items`        | array       | No       | Menu item definitions                                                 |
 
-### Menu Item Fields
+### Menu item fields
 
 | Field          | Type        | Required | Description                                                       |
 | -------------- | ----------- | -------- | ----------------------------------------------------------------- |
@@ -388,7 +388,7 @@ URL redirect definitions for SEO preservation.
 }
 ```
 
-### Redirect Fields
+### Redirect fields
 
 | Field         | Type   | Required | Description                                |
 | ------------- | ------ | -------- | ------------------------------------------ |
@@ -417,7 +417,7 @@ SEO configuration applied as site settings.
 }
 ```
 
-## Processing Order
+## Processing order
 
 The `SiteDefinitionParser` processes entities in strict dependency order:
 
@@ -433,7 +433,7 @@ The `SiteDefinitionParser` processes entities in strict dependency order:
 
 This ensures that references between entities are resolvable at each step.
 
-## Import Result
+## Import result
 
 The import operation returns an `ImportResult` with detailed metrics:
 
@@ -455,7 +455,7 @@ The import operation returns an `ImportResult` with detailed metrics:
 }
 ```
 
-## Dry-Run Mode
+## Dry-run mode
 
 All import operations support dry-run mode, which validates the entire definition and reports what would be created without persisting any data.
 
@@ -472,29 +472,29 @@ The `ImportConfig` controls default behavior:
 | `allowExternalMediaDownload` | `true`  | Whether to download media from external URLs |
 | `dryRunDefault`              | `true`  | Whether imports default to dry-run mode      |
 
-## Validation Rules
+## Validation rules
 
-### Schema Validation
+### Schema validation
 
 - `version` must be exactly `"1.0"`
 - `site` must be an object
 - All optional sections must be arrays (except `seo`, which is an object)
 
-### Entity Validation
+### Entity validation
 
 - Taxonomy slugs must be non-empty strings
 - Content translations must have valid `slug_segment` values (pattern: `^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$`, max 200 chars, no consecutive hyphens)
 - Media references must have a `ref` or `filename` key
 - Menu locations must be non-empty strings
 
-### Error Handling
+### Error handling
 
 - Invalid JSON throws `InvalidArgumentException` with the JSON error message
 - Missing required keys throw `InvalidArgumentException` listing the missing keys
 - Unsupported version throws `InvalidArgumentException`
 - Per-entity errors are collected in the `warnings` list rather than aborting the entire import
 
-## Complete Example
+## Complete example
 
 ```json
 {
@@ -566,7 +566,7 @@ The `ImportConfig` controls default behavior:
 }
 ```
 
-## Related Documentation
+## Related documentation
 
 - [API Endpoint Reference](api-reference.md) - Import/export endpoints
 - [Architecture Overview](architecture.md) - Tools module and processing pipeline

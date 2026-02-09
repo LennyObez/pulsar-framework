@@ -8,11 +8,7 @@
     "min_version": "1.0.0-rc.11"
   },
   "provides": {
-    "services": [
-      "StudioManager",
-      "EventStoreInterface",
-      "DashboardAggregator"
-    ],
+    "services": ["StudioManager", "EventStoreInterface", "DashboardAggregator"],
     "routes": true,
     "commands": []
   },
@@ -21,9 +17,7 @@
       {
         "id": "studio",
         "root": "frontend",
-        "entries": [
-          "src/main.ts"
-        ]
+        "entries": ["src/main.ts"]
       }
     ]
   }

@@ -2,7 +2,7 @@
 
 Pulsar's build pipeline compiles all production artifacts into immutable, content-addressed files. The same input always produces byte-identical output.
 
-## Quick Start
+## Quick start
 
 ```bash
 # Build all production artifacts
@@ -47,9 +47,9 @@ All artifacts are deterministic:
 
 This means running `pulsar build` twice with identical input produces byte-identical output.
 
-## Integrity Verification
+## Integrity verification
 
-### Hash Manifest
+### Hash manifest
 
 Every artifact's SHA-256 hash is recorded in `build-manifest.json`. Use `pulsar build --verify` to check all artifacts against their recorded hashes:
 
@@ -58,7 +58,7 @@ Every artifact's SHA-256 hash is recorded in `build-manifest.json`. Use `pulsar 
 php bin/pulsar build --verify
 ```
 
-### Runtime Verification
+### Runtime verification
 
 Enable runtime artifact verification by setting:
 
@@ -68,7 +68,7 @@ export PULSAR_VERIFY_ARTIFACTS=1
 
 When enabled, the Kernel verifies all artifact hashes before loading them at boot time. If any artifact has been modified or is missing, boot fails immediately with a clear error.
 
-### Manifest Signing
+### Manifest signing
 
 Optionally sign the build manifest with the application's signing key:
 
@@ -76,18 +76,18 @@ Optionally sign the build manifest with the application's signing key:
 php bin/pulsar build --sign
 ```
 
-When a signed manifest is loaded with verification enabled, the signature is also checked. This detects tampering with both the artifacts and the manifest itself. Signing uses the central Keyring with HMAC-BLAKE2b (subkey derivation with domain separation).
+When a signed manifest is loaded with verification enabled, the signature is also checked. This detects tampering with both the artifacts and the manifest itself. Signing uses the central Keyring with keyed BLAKE2b (subkey derivation with domain separation).
 
-## Production Deployment
+## Production deployment
 
-### Required Workflow
+### Required workflow
 
 1. **Build**: `php bin/pulsar build --strict --sign`
 2. **Verify**: `php bin/pulsar build --verify` (CI-friendly, non-mutating)
 3. **Deploy**: Ship the `var/cache/` directory with your application
 4. **Boot**: Kernel loads from compiled artifacts only (no scanning)
 
-### Production Enforcement
+### Production enforcement
 
 In production mode (`APP_ENV=production`), the Kernel:
 
@@ -96,11 +96,11 @@ In production mode (`APP_ENV=production`), the Kernel:
 - Performs **no filesystem scanning**, glob discovery, or class reflection in the hot path
 - Optionally **verifies integrity** against the hash manifest
 
-### Atomic Writes
+### Atomic writes
 
 Every artifact is written to a `*.tmp` file first, then atomically renamed to its final path. The build manifest is written last, after all artifacts are finalized. If `pulsar build` is interrupted mid-write, no partial state is left behind - the previous artifact set remains intact.
 
-## Development Mode
+## Development mode
 
 In development (`APP_ENV=local` or similar), the build pipeline behaves differently:
 
@@ -108,7 +108,7 @@ In development (`APP_ENV=local` or similar), the build pipeline behaves differen
 - Artifacts are rebuilt on demand
 - `pulsar build --verify` checks for stale artifacts and reports which files changed
 
-## Extension Graph Manifest
+## Extension graph manifest
 
 The extension graph manifest (`extensions.manifest.php`) captures:
 
@@ -120,7 +120,7 @@ The extension graph manifest (`extensions.manifest.php`) captures:
 
 Cycle detection and missing dependency errors are raised at build time, not at runtime.
 
-## Content Hashing
+## Content hashing
 
 The build manifest tracks content hashes for change detection:
 
@@ -132,7 +132,7 @@ The build manifest tracks content hashes for change detection:
 
 `pulsar build --verify` compares current source hashes against stored hashes to identify stale artifacts.
 
-## Preload Generation
+## Preload generation
 
 The preload file (`preload.php`) is optimized per runtime:
 

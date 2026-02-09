@@ -1,4 +1,4 @@
-# SEO Guide
+# SEO guide
 
 This guide covers search engine optimization features in Pulsar CMS, including meta tags, structured data, sitemaps, redirect management, link health checks, and robots.txt configuration.
 
@@ -6,9 +6,9 @@ This guide covers search engine optimization features in Pulsar CMS, including m
 
 Pulsar CMS includes a comprehensive SEO system that generates meta tags, structured data (JSON-LD), XML sitemaps, and manages URL redirects. The system is designed to work automatically with sensible defaults while providing full control for SEO professionals.
 
-## Meta Tags
+## Meta tags
 
-### Per-Content Meta Tags
+### Per-content meta tags
 
 Each content item and translation supports SEO meta fields:
 
@@ -20,7 +20,7 @@ Each content item and translation supports SEO meta fields:
 
 Set these fields when editing content at **Admin > CMS > Content > {id}**.
 
-### Title Suffix
+### Title suffix
 
 All page titles have a configurable suffix appended:
 
@@ -32,7 +32,7 @@ All page titles have a configurable suffix appended:
 
 This ensures consistent branding across all pages.
 
-### Default Robots Directive
+### Default robots directive
 
 The site-wide default robots directive is configurable:
 
@@ -44,7 +44,7 @@ The site-wide default robots directive is configurable:
 
 Individual content items can override this with their own robots value.
 
-### SEO Headers Middleware
+### SEO headers middleware
 
 The `CmsSeoHeadersMiddleware` automatically adds SEO-related HTTP headers to every response:
 
@@ -52,11 +52,11 @@ The `CmsSeoHeadersMiddleware` automatically adds SEO-related HTTP headers to eve
 - Canonical URL headers
 - `hreflang` link headers for multi-locale content
 
-## Structured Data (JSON-LD)
+## Structured data (JSON-LD)
 
 Pulsar CMS generates JSON-LD structured data for search engine rich results.
 
-### Article Structured Data
+### Article structured data
 
 For content type `article`, the `ArticleStructuredDataGenerator` produces:
 
@@ -74,7 +74,7 @@ For content type `article`, the `ArticleStructuredDataGenerator` produces:
 }
 ```
 
-### Web Page Structured Data
+### Web page structured data
 
 For content type `page`, the `WebPageStructuredDataGenerator` produces:
 
@@ -88,7 +88,7 @@ For content type `page`, the `WebPageStructuredDataGenerator` produces:
 }
 ```
 
-### Breadcrumb Structured Data
+### Breadcrumb structured data
 
 Breadcrumbs are included as a `BreadcrumbList` in the JSON-LD output, helping search engines understand your site structure.
 
@@ -104,7 +104,7 @@ Set to `false` to disable automatic structured data generation.
 
 ## Sitemaps
 
-### XML Sitemap Generation
+### XML sitemap generation
 
 The `SitemapGenerator` produces XML sitemaps for search engines at `/sitemap.xml`.
 
@@ -136,22 +136,22 @@ Features:
 
 Sitemaps are regenerated automatically when content is published or unpublished. The `SitemapRegenerated` event is dispatched after each regeneration.
 
-### Admin Panel
+### Admin panel
 
 Manage sitemaps at **Admin > CMS > SEO > Sitemap** routes registered under the SitemapController.
 
-## Redirect Manager
+## Redirect manager
 
 The redirect manager handles URL changes gracefully, preserving SEO value.
 
-### Automatic Redirects
+### Automatic redirects
 
 When a content item's slug changes, the CMS automatically creates a 301 redirect from the old URL to the new URL. This includes:
 
 - Direct slug changes on the content item
 - Path recomputation when a parent page's slug changes (all descendants get redirects)
 
-### Manual Redirects
+### Manual redirects
 
 Create custom redirects at the redirect management admin:
 
@@ -162,7 +162,7 @@ Create custom redirects at the redirect management admin:
 | Status Code | HTTP status (301 permanent, 302 temporary) |
 | Locale      | Optional locale scope                      |
 
-### Redirect Processing
+### Redirect processing
 
 The `CmsSlugRedirectMiddleware` processes redirects on every request:
 
@@ -178,11 +178,11 @@ The `CmsSlugRedirectMiddleware` processes redirects on every request:
 | POST   | `/admin/cms/redirects`                          | Create redirect |
 | DELETE | `/admin/cms/redirects/{id}`                     | Delete redirect |
 
-## Link Health Checks
+## Link health checks
 
 The link health system monitors internal and external links for broken URLs.
 
-### How It Works
+### How it works
 
 The `LinkHealthChecker` periodically scans all published content for links and verifies their status:
 
@@ -191,7 +191,7 @@ The `LinkHealthChecker` periodically scans all published content for links and v
 3. Verify internal URL paths against known content and redirects
 4. Record results in the `LinkHealthCheck` table
 
-### Check Schedule
+### Check schedule
 
 Link health checks run on a cron schedule:
 
@@ -201,7 +201,7 @@ Link health checks run on a cron schedule:
 ],
 ```
 
-### Check Results
+### Check results
 
 Each check records:
 
@@ -213,7 +213,7 @@ Each check records:
 | Last Checked | Timestamp of the most recent check       |
 | Status       | `healthy`, `broken`, `timeout`, `error`  |
 
-### Admin Panel
+### Admin panel
 
 View link health results at **Admin > CMS > SEO > Link Health** (`/admin/cms/link-health` via LinkHealthController).
 
@@ -234,7 +234,7 @@ The `LinkHealthCheckCompleted` event fires after each check run, reporting the n
 
 The `RobotsTxtGenerator` produces a `robots.txt` file served at `/robots.txt`.
 
-### Default Output
+### Default output
 
 ```
 User-agent: *
@@ -251,7 +251,7 @@ The robots.txt content is configurable through CMS settings. The generator:
 - References the sitemap URL
 - Supports per-user-agent rules
 
-## Hreflang Tags
+## Hreflang tags
 
 For multi-locale sites, the `HreflangGenerator` produces `hreflang` link tags:
 
@@ -263,7 +263,7 @@ For multi-locale sites, the `HreflangGenerator` produces `hreflang` link tags:
 
 These tags are automatically generated for every content item that has translations, helping search engines serve the correct language version.
 
-## RSS/Atom Feeds
+## RSS/Atom feeds
 
 The `FeedGenerator` produces syndication feeds:
 
@@ -272,7 +272,7 @@ The `FeedGenerator` produces syndication feeds:
 
 Feeds include the latest published articles with title, summary, author, publication date, and permalink.
 
-## Search Analytics
+## Search analytics
 
 The search analytics system tracks internal site search queries:
 
@@ -284,9 +284,9 @@ View analytics at **Admin > CMS > SEO > Search Analytics** (`/admin/cms/search-a
 
 This data helps you understand what visitors are looking for and identify content gaps.
 
-## SEO Best Practices
+## SEO best practices
 
-### Content Optimization
+### Content optimization
 
 1. **Write descriptive titles**: Every page should have a unique, descriptive title
 2. **Set meta descriptions**: Write compelling 150-160 character descriptions
@@ -315,7 +315,7 @@ This data helps you understand what visitors are looking for and identify conten
 | `cms.seo.view`   | SEO Manager+ | View SEO tools and reports                   |
 | `cms.seo.manage` | SEO Manager+ | Manage redirects, sitemaps, and SEO settings |
 
-## Next Steps
+## Next steps
 
 - [Content Management Guide](content-management.md) - Writing SEO-friendly content
 - [Media Library Guide](media-library.md) - Image alt text and media sitemaps

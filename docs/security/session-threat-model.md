@@ -4,7 +4,7 @@
 
 Session data: authentication state, user identity, CSRF tokens, flash messages, and application-specific session state. Session integrity is critical for maintaining authenticated user context across requests.
 
-## Threat Actors
+## Threat actors
 
 | Actor                    | Capability                                 | Motivation                             |
 | ------------------------ | ------------------------------------------ | -------------------------------------- |
@@ -13,9 +13,9 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 | Network attacker (MITM)  | Traffic interception on untrusted networks | Session hijacking, credential theft    |
 | Insider threat           | Application or infrastructure access       | Data exfiltration, unauthorized access |
 
-## Attack Vectors and Mitigations
+## Attack vectors and mitigations
 
-### 1. Session Hijacking (Network Sniffing)
+### 1. Session hijacking (network sniffing)
 
 **Attack**: Attacker intercepts session cookie over unencrypted connection.
 
@@ -28,7 +28,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Low. Requires HTTPS misconfiguration or TLS downgrade.
 
-### 2. Session Fixation
+### 2. Session fixation
 
 **Attack**: Attacker sets a known session ID on the victim's browser before login, then uses the same ID to access the authenticated session.
 
@@ -41,7 +41,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Negligible. All standard fixation vectors are blocked.
 
-### 3. Session Replay (Cookie Replay)
+### 3. Session replay (cookie replay)
 
 **Attack**: Attacker captures a valid encrypted session cookie and replays it later.
 
@@ -54,7 +54,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Medium for cookie handler (stateless, no server-side nonce tracking). Low for Redis/DB handlers (server-side session state).
 
-### 4. Cookie Theft via XSS
+### 4. Cookie theft via XSS
 
 **Attack**: Attacker injects JavaScript to read session cookies.
 
@@ -66,7 +66,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Low. Requires CSP bypass and HttpOnly bypass simultaneously.
 
-### 5. Brute Force Session ID Guessing
+### 5. Brute force session ID guessing
 
 **Attack**: Attacker attempts to guess valid session IDs.
 
@@ -78,7 +78,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Negligible. Computationally infeasible.
 
-### 6. Session Data Tampering
+### 6. Session data tampering
 
 **Attack**: Attacker modifies session data in transit or at rest.
 
@@ -90,7 +90,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Negligible with encryption enabled. Without encryption, file-based sessions are vulnerable to local file access.
 
-### 7. Concurrent Session Abuse
+### 7. Concurrent session abuse
 
 **Attack**: Attacker creates unlimited sessions to exhaust server resources or maintain persistent access from multiple locations.
 
@@ -103,7 +103,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Low for Redis/DB handlers. File/Cookie handlers cannot enforce limits.
 
-### 8. Key Rotation Window Exploitation
+### 8. Key rotation window exploitation
 
 **Attack**: Attacker exploits the window where both old and new keys are valid during key rotation.
 
@@ -115,7 +115,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Low. Window is bounded by session lifetime.
 
-### 9. Cookie Payload Overflow
+### 9. Cookie payload overflow
 
 **Attack**: Attacker crafts a request that causes the server to write oversized session data into a cookie, potentially causing data loss or undefined behavior.
 
@@ -127,7 +127,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Negligible. Oversized payloads are rejected deterministically.
 
-### 10. Session Metadata Privacy
+### 10. Session metadata privacy
 
 **Attack**: Session metadata (IP, user agent) could be used for tracking or leaked through logging.
 
@@ -140,45 +140,45 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Residual Risk**: Low. Metadata collection is minimal and purpose-limited.
 
-## Abuse Cases
+## Abuse cases
 
-### Abuse Case 1: Session Fixation via Pre-set Cookie
+### Abuse case 1: session fixation via pre-set cookie
 
 **Scenario**: Attacker sends victim a link with a pre-set session cookie.
 **Expected Behavior**: Server rejects the uninitialized session ID (strict mode). After login, session ID is regenerated.
 **Tested By**: Unit tests verifying regeneration on privilege change.
 
-### Abuse Case 2: Encrypted Cookie Replay
+### Abuse case 2: encrypted cookie replay
 
 **Scenario**: Attacker captures an encrypted session cookie and replays it after the user logs out.
 **Expected Behavior**: Cookie handler validates `issued_at` against replay window. Server-side handlers (Redis/DB) have no matching session after logout/destroy.
 **Tested By**: CookieHandler replay window tests.
 
-### Abuse Case 3: AAD Tampering
+### Abuse case 3: AAD tampering
 
 **Scenario**: Attacker copies encrypted session data from one session to another.
 **Expected Behavior**: AEAD decryption fails because AAD (session ID) doesn't match.
 **Tested By**: SessionEncryption AAD mismatch tests.
 
-### Abuse Case 4: Concurrent Session Flooding
+### Abuse case 4: concurrent session flooding
 
 **Scenario**: Attacker opens many concurrent sessions to maintain persistent access.
 **Expected Behavior**: Session limit enforced atomically (Lua/transactions). Excess sessions rejected.
 **Tested By**: Concurrent session limit tests with race condition simulation.
 
-### Abuse Case 5: Key Rotation Exploitation
+### Abuse case 5: key rotation exploitation
 
 **Scenario**: Attacker captures a session encrypted with the old key and replays it after rotation.
 **Expected Behavior**: Session decrypts successfully with previous key (by design - rotation window). After previous key removal, decryption fails.
 **Tested By**: Key rotation tests in SessionEncryptionTest.
 
-### Abuse Case 6: Oversized Cookie Payload
+### Abuse case 6: oversized cookie payload
 
 **Scenario**: Attacker or application logic writes excessive data to a cookie-based session.
 **Expected Behavior**: `SecurityException::sessionPayloadTooLarge()` thrown. No partial write or truncation.
 **Tested By**: CookieHandler size limit tests.
 
-## Security Controls Summary
+## Security controls summary
 
 | Control                   | Implementation                          | Status      |
 | ------------------------- | --------------------------------------- | ----------- |

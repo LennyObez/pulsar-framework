@@ -14,6 +14,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function is_string;
+use function max;
 
 /**
  * Admin controller for search analytics dashboard.
@@ -49,13 +50,36 @@ final readonly class SearchAnalyticsController
         $fromStr = is_string($params['from'] ?? null) ? $params['from'] : null;
         $toStr = is_string($params['to'] ?? null) ? $params['to'] : null;
 
-        $to = $toStr !== null
-            ? (DateTimeImmutable::createFromFormat('Y-m-d', $toStr) ?: new DateTimeImmutable())
-            : new DateTimeImmutable();
+        $now = new DateTimeImmutable();
 
-        $from = $fromStr !== null
-            ? (DateTimeImmutable::createFromFormat('Y-m-d', $fromStr) ?: $to->modify('-30 days'))
-            : $to->modify('-30 days');
+        $to = $now;
+        if ($toStr !== null) {
+            $parsed = DateTimeImmutable::createFromFormat('Y-m-d', $toStr);
+            if ($parsed === false) {
+                return Response::json(['error' => 'Invalid "to" date format. Expected Y-m-d.'], 400);
+            }
+            $to = $parsed;
+        }
+
+        $from = $to->modify('-30 days');
+        if ($fromStr !== null) {
+            $parsed = DateTimeImmutable::createFromFormat('Y-m-d', $fromStr);
+            if ($parsed === false) {
+                return Response::json(['error' => 'Invalid "from" date format. Expected Y-m-d.'], 400);
+            }
+            $from = $parsed;
+        }
+
+        // Validate date range: from must be before to
+        if ($from > $to) {
+            return Response::json(['error' => '"from" date must be before or equal to "to" date.'], 400);
+        }
+
+        // Reject unreasonably large ranges (> 366 days)
+        $daysDiff = max(1, (int) $from->diff($to)->days);
+        if ($daysDiff > 366) {
+            return Response::json(['error' => 'Date range must not exceed 366 days.'], 400);
+        }
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');

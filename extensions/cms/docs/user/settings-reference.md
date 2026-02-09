@@ -1,8 +1,8 @@
-# Settings Reference
+# Settings reference
 
 This document provides a complete reference for every Pulsar CMS setting, organized by group. Settings are configured in `config/cms.php` and can be managed at runtime through the admin panel at **Admin > CMS > Settings > {group}** (`/admin/cms/settings/{group}`).
 
-## Settings Admin
+## Settings admin
 
 | Method | Route                         | Description                 |
 | ------ | ----------------------------- | --------------------------- |
@@ -11,7 +11,7 @@ This document provides a complete reference for every Pulsar CMS setting, organi
 
 Settings changes are audit-logged with the event `cms.settings.updated`.
 
-## General Settings
+## General settings
 
 Top-level CMS configuration from the `CmsConfig` DTO.
 
@@ -25,7 +25,7 @@ Top-level CMS configuration from the `CmsConfig` DTO.
 | `atomic_snapshots`      | bool     | `false`  | Enable all-locale atomic content snapshots on publish                                                                            |
 | `max_hierarchy_depth`   | int      | `10`     | Maximum page nesting depth (prevents cycles)                                                                                     |
 
-## Cache Settings
+## Cache settings
 
 Full-page caching configuration from `CmsCacheConfig`.
 
@@ -37,7 +37,7 @@ Full-page caching configuration from `CmsCacheConfig`.
 | `cache.stale_grace_period_seconds` | int  | `300`   | Seconds expired entries are retained for stale serving                   |
 | `cache.lock_timeout_seconds`       | int  | `5`     | Maximum wait time for single-flight lock                                 |
 
-## Media Settings
+## Media settings
 
 Media upload and processing configuration from `MediaConfig`.
 
@@ -56,19 +56,19 @@ Media upload and processing configuration from `MediaConfig`.
 | `media.avif_enabled`       | bool     | `true`                | Whether AVIF derivative generation is enabled |
 | `media.storage_path`       | string   | `'storage/cms/media'` | Base storage path for media files             |
 
-### Default Allowed MIME Types
+### Default allowed MIME types
 
 ```
 image/jpeg, image/png, image/webp, image/avif, image/gif, image/svg+xml, application/pdf
 ```
 
-### Default Allowed Extensions
+### Default allowed extensions
 
 ```
 jpg, jpeg, png, webp, avif, gif, svg, pdf
 ```
 
-## Comment Settings
+## Comment settings
 
 Comments system configuration from `CommentsConfig`.
 
@@ -86,7 +86,7 @@ Comments system configuration from `CommentsConfig`.
 | `comments.max_links_per_comment`      | int    | `3`             | Maximum number of links allowed per comment        |
 | `comments.honeypot_field_name`        | string | `'website_url'` | Hidden field name for bot detection                |
 
-## SEO Settings
+## SEO settings
 
 SEO and link health configuration from `SeoConfig`.
 
@@ -100,7 +100,7 @@ SEO and link health configuration from `SeoConfig`.
 | `seo.enable_media_sitemap`       | bool   | `true`                             | Whether to include media in sitemaps        |
 | `seo.link_health_check_schedule` | string | `'0 3 * * 0'`                      | Cron expression for link health check runs  |
 
-## Theme Settings
+## Theme settings
 
 Theme system configuration from `ThemesConfig`.
 
@@ -114,7 +114,7 @@ Theme system configuration from `ThemesConfig`.
 | `themes.max_archive_size`        | int      | `52428800`             | Maximum theme archive size in bytes (50 MB)         |
 | `themes.max_file_count`          | int      | `10000`                | Maximum number of files allowed in a theme archive  |
 
-## Security Settings
+## Security settings
 
 CMS security configuration from `CmsSecurityConfig`.
 
@@ -139,7 +139,7 @@ CMS security configuration from `CmsSecurityConfig`.
 | `security.integrity_check_on_boot`  | bool     | `true`              | Verify plugin file integrity on application boot      |
 | `security.ipv6_subnet_mask`         | int      | `64`                | IPv6 subnet mask for fingerprinting                   |
 
-## Commerce Settings
+## Commerce settings
 
 Commerce subsystem configuration from `CommerceConfig`. Commerce is enabled when this section is present (non-null).
 
@@ -152,7 +152,7 @@ Commerce subsystem configuration from `CommerceConfig`. Commerce is enabled when
 | `commerce.max_downloads`              | int    | `5`      | Default maximum downloads per digital purchase |
 | `commerce.taxRates`                   | array  | `[]`     | Tax rate rule configurations                   |
 
-### Tax Rate Configuration
+### Tax rate configuration
 
 Each tax rate entry:
 
@@ -163,7 +163,7 @@ Each tax rate entry:
 | `country`  | string | ISO 3166-1 country code                    |
 | `category` | string | Tax category identifier                    |
 
-## Live CSS Settings
+## Live CSS settings
 
 Live CSS editor configuration from `LiveCssConfig`.
 
@@ -173,7 +173,7 @@ Live CSS editor configuration from `LiveCssConfig`.
 | `live_css.max_css_length`       | int  | `100000` | Maximum allowed CSS content length in characters   |
 | `live_css.allow_external_fonts` | bool | `false`  | Whether @font-face with external URLs is permitted |
 
-## Import/Export Settings
+## Import/Export settings
 
 Import configuration from `ImportConfig`.
 
@@ -183,7 +183,7 @@ Import configuration from `ImportConfig`.
 | `import.allow_external_media_download` | bool | `true`     | Whether to download media from external URLs |
 | `import.dry_run_default`               | bool | `true`     | Whether imports default to dry-run mode      |
 
-## Complete Configuration Example
+## Complete configuration example
 
 ```php
 <?php

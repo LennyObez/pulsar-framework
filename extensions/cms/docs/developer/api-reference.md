@@ -1,10 +1,10 @@
-# API Endpoint Reference
+# API endpoint reference
 
 All CMS API endpoints are registered by `CmsExtension::boot()`. Admin endpoints require authentication and appropriate CMS permissions.
 
-## Public Endpoints
+## Public endpoints
 
-### Content Rendering
+### Content rendering
 
 | Method | Path               | Route Name                  | Auth | Description                                                            |
 | ------ | ------------------ | --------------------------- | ---- | ---------------------------------------------------------------------- |
@@ -25,7 +25,7 @@ All CMS API endpoints are registered by `CmsExtension::boot()`. Admin endpoints 
 | 200  | Content found and rendered                        |
 | 404  | No published content at the given path and locale |
 
-### Commerce: Checkout
+### Commerce: checkout
 
 Enabled only when `commerce` is configured in `CmsConfig`.
 
@@ -35,7 +35,7 @@ Enabled only when `commerce` is configured in `CmsConfig`.
 | POST   | `/{locale}/checkout`         | `cms.checkout.process.{locale}` | No   | Process checkout      |
 | GET    | `/{locale}/checkout/success` | `cms.checkout.success.{locale}` | No   | Checkout success page |
 
-### Commerce: Digital Downloads
+### Commerce: digital downloads
 
 | Method | Path                | Route Name     | Auth | Description                                   |
 | ------ | ------------------- | -------------- | ---- | --------------------------------------------- |
@@ -53,13 +53,13 @@ Enabled only when `commerce` is configured in `CmsConfig`.
 | 403  | Invalid or expired token          |
 | 404  | Asset not found                   |
 
-### Commerce: Payment Webhooks
+### Commerce: payment webhooks
 
 | Method | Path                    | Route Name            | Auth      | Description                              |
 | ------ | ----------------------- | --------------------- | --------- | ---------------------------------------- |
 | POST   | `/webhooks/cms-payment` | `cms.webhook.payment` | Signature | Handle payment gateway webhook callbacks |
 
-## Admin Endpoints
+## Admin endpoints
 
 All admin endpoints use the prefix `/admin/cms` and require authentication.
 
@@ -102,13 +102,13 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 }
 ```
 
-### Content Translations
+### Content translations
 
 | Method | Path                                   | Route Name                          | Permission         | Description            |
 | ------ | -------------------------------------- | ----------------------------------- | ------------------ | ---------------------- |
 | POST   | `/admin/cms/content/{id}/translations` | `cms.admin.content.add_translation` | `cms.content.edit` | Add locale translation |
 
-### Content Workflow
+### Content workflow
 
 | Method | Path                                    | Route Name                        | Permission                  | Description                 |
 | ------ | --------------------------------------- | --------------------------------- | --------------------------- | --------------------------- |
@@ -125,7 +125,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 }
 ```
 
-### Content Locking
+### Content locking
 
 | Method | Path                           | Route Name                 | Permission         | Description       |
 | ------ | ------------------------------ | -------------------------- | ------------------ | ----------------- |
@@ -139,7 +139,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | GET    | `/admin/cms/content/{contentId}/revisions`                      | `cms.admin.revisions.index`   | `cms.content.view` | List content revisions |
 | POST   | `/admin/cms/content/{contentId}/revisions/{revisionId}/restore` | `cms.admin.revisions.restore` | `cms.content.edit` | Restore a revision     |
 
-### Editorial Reviews
+### Editorial reviews
 
 | Method | Path                                    | Route Name                  | Permission            | Description          |
 | ------ | --------------------------------------- | --------------------------- | --------------------- | -------------------- |
@@ -176,7 +176,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | PUT    | `/admin/cms/menus/{location}` | `cms.admin.menus.update` | `cms.menus.manage` | Update menu          |
 | DELETE | `/admin/cms/menus/{location}` | `cms.admin.menus.delete` | `cms.menus.manage` | Delete menu          |
 
-### Custom Fields
+### Custom fields
 
 | Method | Path                                        | Route Name                | Permission                  | Description                  |
 | ------ | ------------------------------------------- | ------------------------- | --------------------------- | ---------------------------- |
@@ -223,7 +223,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | PUT    | `/admin/cms/users/{id}`           | `cms.admin.users.update`    | `cms.users.manage` | Update user      |
 | POST   | `/admin/cms/users/{id}/reset-2fa` | `cms.admin.users.reset_2fa` | `cms.users.manage` | Reset user's 2FA |
 
-### Two-Factor Authentication
+### Two-factor authentication
 
 | Method | Path                            | Route Name                     | Permission    | Description               |
 | ------ | ------------------------------- | ------------------------------ | ------------- | ------------------------- |
@@ -233,14 +233,14 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | POST   | `/admin/cms/2fa/disable`        | `cms.admin.2fa.disable`        | Authenticated | Disable 2FA               |
 | POST   | `/admin/cms/2fa/recovery-codes` | `cms.admin.2fa.recovery_codes` | Authenticated | Regenerate recovery codes |
 
-### GDPR Tools
+### GDPR tools
 
 | Method | Path                           | Route Name                    | Permission  | Description                             |
 | ------ | ------------------------------ | ----------------------------- | ----------- | --------------------------------------- |
 | POST   | `/admin/cms/tools/gdpr/export` | `cms.admin.tools.gdpr_export` | `cms.admin` | Export user data (GDPR)                 |
 | POST   | `/admin/cms/tools/gdpr/erase`  | `cms.admin.tools.gdpr_erase`  | `cms.admin` | Erase user data (GDPR right to erasure) |
 
-### Commerce: Products
+### Commerce: products
 
 | Method | Path                            | Route Name                  | Permission            | Description           |
 | ------ | ------------------------------- | --------------------------- | --------------------- | --------------------- |
@@ -251,7 +251,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | PUT    | `/admin/cms/products/{id}`      | `cms.admin.products.update` | `cms.products.edit`   | Update product        |
 | DELETE | `/admin/cms/products/{id}`      | `cms.admin.products.delete` | `cms.products.delete` | Delete product        |
 
-### Commerce: Orders
+### Commerce: orders
 
 | Method | Path                            | Route Name                | Permission          | Description    |
 | ------ | ------------------------------- | ------------------------- | ------------------- | -------------- |
@@ -260,7 +260,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | POST   | `/admin/cms/orders/{id}/refund` | `cms.admin.orders.refund` | `cms.orders.refund` | Process refund |
 | GET    | `/admin/cms/orders/export`      | `cms.admin.orders.export` | `cms.orders.export` | Export orders  |
 
-### Commerce: Promotions
+### Commerce: promotions
 
 | Method | Path                              | Route Name                    | Permission              | Description             |
 | ------ | --------------------------------- | ----------------------------- | ----------------------- | ----------------------- |
@@ -271,7 +271,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | PUT    | `/admin/cms/promotions/{id}`      | `cms.admin.promotions.update` | `cms.promotions.manage` | Update promotion        |
 | DELETE | `/admin/cms/promotions/{id}`      | `cms.admin.promotions.delete` | `cms.promotions.manage` | Delete promotion        |
 
-### Commerce: Digital Assets
+### Commerce: digital assets
 
 | Method | Path                             | Route Name                        | Permission                  | Description          |
 | ------ | -------------------------------- | --------------------------------- | --------------------------- | -------------------- |
@@ -279,14 +279,14 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | POST   | `/admin/cms/digital-assets`      | `cms.admin.digital_assets.upload` | `cms.digital_assets.manage` | Upload digital asset |
 | DELETE | `/admin/cms/digital-assets/{id}` | `cms.admin.digital_assets.delete` | `cms.digital_assets.manage` | Delete digital asset |
 
-### Commerce: Invoices
+### Commerce: invoices
 
 | Method | Path                                | Route Name                    | Permission              | Description          |
 | ------ | ----------------------------------- | ----------------------------- | ----------------------- | -------------------- |
 | GET    | `/admin/cms/invoices/{id}`          | `cms.admin.invoices.show`     | `cms.invoices.view`     | View invoice         |
 | GET    | `/admin/cms/invoices/{id}/download` | `cms.admin.invoices.download` | `cms.invoices.download` | Download invoice PDF |
 
-### Live CSS Editor
+### Live CSS editor
 
 | Method | Path                                | Route Name                   | Permission             | Description                  |
 | ------ | ----------------------------------- | ---------------------------- | ---------------------- | ---------------------------- |
@@ -310,7 +310,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | POST   | `/admin/cms/import/dry-run` | `cms.admin.import.dry_run` | `cms.import` | Dry-run import (preview) |
 | POST   | `/admin/cms/import/execute` | `cms.admin.import.execute` | `cms.import` | Execute import           |
 
-### Site Definition Import
+### Site definition import
 
 | Method | Path                             | Route Name                      | Permission   | Description         |
 | ------ | -------------------------------- | ------------------------------- | ------------ | ------------------- |
@@ -327,9 +327,9 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | POST   | `/admin/cms/backups/{id}/restore` | `cms.admin.backups.restore` | `cms.backup.restore` | Restore from backup |
 | DELETE | `/admin/cms/backups/{id}`         | `cms.admin.backups.delete`  | `cms.backup.create`  | Delete backup       |
 
-## Common Response Formats
+## Common response formats
 
-### Success Response
+### Success response
 
 ```json
 {
@@ -342,7 +342,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 }
 ```
 
-### Error Response
+### Error response
 
 ```json
 {
@@ -357,7 +357,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 }
 ```
 
-### Common Status Codes
+### Common status codes
 
 | Code | Meaning                                         |
 | ---- | ----------------------------------------------- |
@@ -371,7 +371,7 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 | 409  | Conflict (e.g., content locked by another user) |
 | 422  | Unprocessable entity (business rule violation)  |
 
-## Related Documentation
+## Related documentation
 
 - [Import Format Specification](import-format.md) - JSON schema for site definition imports
 - [Architecture Overview](architecture.md) - Route registration and boot sequence
