@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Mission-critical applications in regulated domains — banking, healthcare, legal — operate across jurisdictions and languages. They require locale-aware message translation with ICU-compliant formatting (plurals, gender, number/currency/date formatting), locale negotiation from HTTP request data, fallback locale chains for graceful degradation, and CI-integrated linting to catch missing translations before deployment.
+Mission-critical applications in regulated domains - banking, healthcare, legal - operate across jurisdictions and languages. They require locale-aware message translation with ICU-compliant formatting (plurals, gender, number/currency/date formatting), locale negotiation from HTTP request data, fallback locale chains for graceful degradation, and CI-integrated linting to catch missing translations before deployment.
 
 The i18n subsystem must work without the `ext-intl` PHP extension (not available in all deployment environments) while providing full ICU message formatting when `ext-intl` is present.
 
@@ -15,7 +15,7 @@ The i18n subsystem must work without the `ext-intl` PHP extension (not available
 1. **Compliance**: Regulated domains require that user-facing messages display in the user's locale. Missing translations in production can constitute a compliance violation.
 2. **Graceful degradation**: The `ext-intl` extension provides full ICU support but is optional. The subsystem must function without it using a regex-based fallback formatter.
 3. **CI validation**: Missing translations must be caught at build time, not discovered in production. A linting tool must integrate with CI pipelines.
-4. **Catalog flexibility**: Translation sources vary — PHP arrays for simple projects, JSON files for external translation services, composite chains for module-contributed translations.
+4. **Catalog flexibility**: Translation sources vary - PHP arrays for simple projects, JSON files for external translation services, composite chains for module-contributed translations.
 5. **HTTP integration**: Locale selection must consider query parameters, route attributes, and Accept-Language headers per RFC 7231.
 
 ## Decision
@@ -57,8 +57,8 @@ All catalogs implement `CatalogInterface` with `get()`, `has()`, and `allKeys()`
 
 Two formatter implementations behind `MessageFormatterInterface`:
 
-- `IcuMessageFormatter` — wraps `ext-intl` `MessageFormatter` for full ICU syntax (plurals, select, number/date/currency patterns)
-- `FallbackMessageFormatter` — regex-based `{placeholder}` replacement when `ext-intl` is unavailable
+- `IcuMessageFormatter` - wraps `ext-intl` `MessageFormatter` for full ICU syntax (plurals, select, number/date/currency patterns)
+- `FallbackMessageFormatter` - regex-based `{placeholder}` replacement when `ext-intl` is unavailable
 
 Specialized formatters for currency (`IntlCurrencyFormatter`), dates (`IntlDateFormatter`), and numbers (`IntlNumberFormatter`) provide locale-aware formatting for common regulated-domain data types.
 
@@ -66,10 +66,10 @@ Specialized formatters for currency (`IntlCurrencyFormatter`), dates (`IntlDateF
 
 `LocaleNegotiator` resolves the request locale from multiple sources in priority order:
 
-1. Query parameter (`?locale=xx`) — explicit user selection
-2. Request attribute (`_locale`) — route parameter from URL pattern
-3. Accept-Language header — parsed per RFC 7231 with quality-sorted matching
-4. Configuration default — fallback when no signal is available
+1. Query parameter (`?locale=xx`) - explicit user selection
+2. Request attribute (`_locale`) - route parameter from URL pattern
+3. Accept-Language header - parsed per RFC 7231 with quality-sorted matching
+4. Configuration default - fallback when no signal is available
 
 The negotiator caps Accept-Language parsing at 20 tokens to prevent DoS via pathologically long headers. Language-prefix matching supports both directions: `fr_CA` request matches `fr` supported locale, and `fr` request matches `fr_CA` supported locale.
 
@@ -80,7 +80,7 @@ The negotiator caps Accept-Language parsing at 20 tokens to prevent DoS via path
 `TranslationLinter` validates translation completeness across all configured locales and domains:
 
 - Detects missing keys (present in reference locale, absent in target)
-- Detects extra keys (present in target, absent in reference — possibly stale)
+- Detects extra keys (present in target, absent in reference - possibly stale)
 - Reports results as `LintResult` with `LintSeverity` levels
 
 The linter integrates with the console command system for CI pipeline execution: `pulsar i18n:lint` returns a non-zero exit code on errors.
@@ -119,20 +119,20 @@ Rejected: `ext-intl` is not available in all deployment environments (minimal Do
 
 ### Negative
 
-- `FallbackMessageFormatter` supports only simple `{placeholder}` substitution — no ICU plurals, select, or number formatting without `ext-intl`
-- Global translator instance (`Translator::getGlobalInstance()`) introduces controlled global state — acceptable for helper function convenience but must be reset between tests
+- `FallbackMessageFormatter` supports only simple `{placeholder}` substitution - no ICU plurals, select, or number formatting without `ext-intl`
+- Global translator instance (`Translator::getGlobalInstance()`) introduces controlled global state - acceptable for helper function convenience but must be reset between tests
 - Three catalog backends and two formatters add test matrix surface
 
 ### Neutral
 
-- `Locale::parse()` produces a value object with `fallbackChain()` — the chain is computed on every `translate()` call (no caching), which is acceptable given typical call volumes
-- Translation extraction is source-file scanning (regex-based) — it may miss dynamically constructed keys, which is documented as a known limitation
+- `Locale::parse()` produces a value object with `fallbackChain()` - the chain is computed on every `translate()` call (no caching), which is acceptable given typical call volumes
+- Translation extraction is source-file scanning (regex-based) - it may miss dynamically constructed keys, which is documented as a known limitation
 
 ## Security Impact
 
-- `LocaleNegotiator` caps Accept-Language parsing at 20 tokens — prevents request header DoS
-- Locale values are validated against the configured `supportedLocales` list — arbitrary locale injection is not possible
-- Translation keys are not evaluated as code — no template injection risk
+- `LocaleNegotiator` caps Accept-Language parsing at 20 tokens - prevents request header DoS
+- Locale values are validated against the configured `supportedLocales` list - arbitrary locale injection is not possible
+- Translation keys are not evaluated as code - no template injection risk
 - `MissingTranslationException` in strict mode prevents accidental information disclosure through raw translation keys in production
 
 ## Performance Impact
@@ -140,11 +140,11 @@ Rejected: `ext-intl` is not available in all deployment environments (minimal Do
 - `Translator::translate()` performs a linear search through the fallback chain (typically 2-3 locales) and one catalog lookup per locale. Sub-millisecond for typical usage.
 - `PhpCatalog` loads translation arrays on first access and caches them in memory. `JsonCatalog` deserializes JSON files on first access.
 - `IcuMessageFormatter` compiles ICU patterns on each call. For hot-path messages, applications should cache formatted output.
-- Locale negotiation adds one middleware layer per request — negligible compared to I/O-bound operations.
+- Locale negotiation adds one middleware layer per request - negligible compared to I/O-bound operations.
 
 ## Migration / Rollback Plan
 
-Additive change — introduces `src/I18n/` as a new core module. To roll back: remove the module and replace `translate()` calls with raw strings. Translation files are application-owned and unaffected by framework rollback.
+Additive change - introduces `src/I18n/` as a new core module. To roll back: remove the module and replace `translate()` calls with raw strings. Translation files are application-owned and unaffected by framework rollback.
 
 ## Links
 

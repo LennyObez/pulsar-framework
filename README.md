@@ -13,8 +13,8 @@
 
 </div>
 
-> **Status:** Release Candidate (1.0.0-rc.10). The `#[Api]`-marked surface is SemVer-stable; non-`#[Api]` internals may change until 1.0.0.
-> Track milestones in [`ROADMAP.md`](ROADMAP.md) and requirements in [`PRD.md`](PRD.md).
+> **Status:** Release Candidate (1.0.0-rc.11). The `#[Api]`-marked surface is SemVer-stable; non-`#[Api]` internals may change until 1.0.0.
+> Track milestones in [`ROADMAP.md`](ROADMAP.md).
 
 ## Who this is for
 
@@ -75,7 +75,7 @@ Pulsar is designed for regulated domains such as:
 - Stable hooks: DI bindings, routes, console commands, migrations, assets
 - Compatibility validation and deprecation strategy
 
-### 3) Pulsar Studio — Studio Console
+### 3) Pulsar Studio - Studio Console
 
 No dependency on external monitoring vendors.
 
@@ -171,4 +171,4 @@ See [SECURITY.md](.github/SECURITY.md).
 
 ## License
 
-Apache 2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+Apache 2.0 - see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).

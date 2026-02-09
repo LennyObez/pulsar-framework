@@ -1,6 +1,6 @@
 # Database Layer
 
-Pulsar provides a thin, explicit database abstraction layer built on PDO. No query builder, no ORM — raw SQL with named bindings for maximum auditability in regulated domains.
+Pulsar provides a thin, explicit database abstraction layer built on PDO. No query builder, no ORM - raw SQL with named bindings for maximum auditability in regulated domains.
 
 ## Configuration
 
@@ -50,7 +50,7 @@ Environment variables override file values for the active connection:
 | ---------- | ---------- | ------------ |
 | MySQL      | `mysql`    | 3306         |
 | PostgreSQL | `pgsql`    | 5432         |
-| SQLite     | `sqlite`   | —            |
+| SQLite     | `sqlite`   | -            |
 
 ## Basic Usage
 
@@ -82,7 +82,7 @@ $dtos = $result->map(fn(Row $row) => new UserDto(
 ### Writing
 
 ```php
-// INSERT/UPDATE/DELETE — returns affected row count
+// INSERT/UPDATE/DELETE - returns affected row count
 $affected = $connection->execute(
     'INSERT INTO users (name, email) VALUES (:name, :email)',
     ['name' => 'Alice', 'email' => 'alice@example.com'],

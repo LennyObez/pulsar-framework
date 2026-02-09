@@ -1,15 +1,15 @@
 # HTTP Layer
 
-Pulsar provides immutable value objects for HTTP requests and responses. These are not PSR-7 implementations — they are purpose-built for Pulsar's architecture with a focus on simplicity, immutability, and type safety.
+Pulsar provides immutable value objects for HTTP requests and responses. These are not PSR-7 implementations - they are purpose-built for Pulsar's architecture with a focus on simplicity, immutability, and type safety.
 
 ## PSR-7 Non-Adoption Rationale
 
 Pulsar uses its own HTTP abstractions because:
 
-1. **Simpler API** — PSR-7's `StreamInterface` and message factories add complexity rarely needed in framework internals.
-2. **Readonly by design** — PHP 8.2 `readonly class` provides compile-time immutability guarantees that PSR-7 can only enforce at runtime.
-3. **Reduced dependency surface** — No external packages for HTTP message handling.
-4. **Enum-backed types** — `Method` and `ResponseStatus` are backed enums with domain methods, not string/int constants.
+1. **Simpler API** - PSR-7's `StreamInterface` and message factories add complexity rarely needed in framework internals.
+2. **Readonly by design** - PHP 8.2 `readonly class` provides compile-time immutability guarantees that PSR-7 can only enforce at runtime.
+3. **Reduced dependency surface** - No external packages for HTTP message handling.
+4. **Enum-backed types** - `Method` and `ResponseStatus` are backed enums with domain methods, not string/int constants.
 
 ## Request
 
@@ -194,7 +194,7 @@ $router->add(new Route(
     constraints: ['id' => '\d+'],
 ));
 
-// Matches /users/john (any string — fallback)
+// Matches /users/john (any string - fallback)
 $router->add(new Route(
     methods: [Method::GET],
     path: '/users/{slug}',
@@ -258,9 +258,9 @@ Individual routes within a group can override the group's host.
 `Pulsar\Http\Method` is a string-backed enum with domain methods:
 
 ```php
-Method::GET->isSafe();       // true — no side effects
-Method::POST->isIdempotent(); // false — not idempotent
-Method::PUT->mayHaveBody();   // true — can carry body
+Method::GET->isSafe();       // true - no side effects
+Method::POST->isIdempotent(); // false - not idempotent
+Method::PUT->mayHaveBody();   // true - can carry body
 Method::fromString('post');   // Case-insensitive creation
 ```
 

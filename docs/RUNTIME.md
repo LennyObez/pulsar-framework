@@ -171,9 +171,9 @@ Booting -> Ready -> Handling -> Draining -> Recycling -> Stopped
 
 Workers recycle automatically when any threshold is exceeded:
 
-- **Max requests** (`max_requests`, default: 10,000) -- prevents unbounded per-request allocation growth
-- **Memory threshold** (`memory_threshold_mb`, default: 256 MB) -- hard limit on RSS
-- **Time limit** (`time_limit_seconds`, default: 7,200s) -- guards against long-lived state drift
+- **Max requests** (`max_requests`, default: 10,000) - prevents unbounded per-request allocation growth
+- **Memory threshold** (`memory_threshold_mb`, default: 256 MB) - hard limit on RSS
+- **Time limit** (`time_limit_seconds`, default: 7,200s) - guards against long-lived state drift
 
 ### Fatal Error Containment
 
@@ -300,7 +300,7 @@ The built-in persistent runtime provides a full HTTP/1.1 origin server:
 
 - Route handler returns `UpgradeResponse` with an `UpgradeHandlerInterface`
 - Runtime sends 101 Switching Protocols, then transfers socket ownership
-- Upgrade handlers receive `UpgradeContext` (Logger, Metrics, Config only -- no container)
+- Upgrade handlers receive `UpgradeContext` (Logger, Metrics, Config only - no container)
 - Request sandbox cleanup runs before connection handoff
 
 ### Fiber Concurrency
@@ -312,7 +312,7 @@ When `fiber_concurrency > 0`, the runtime uses a cooperative Fiber scheduler:
 - Fibers suspend when I/O would block
 - Backpressure: stops accepting when at concurrency limit
 
-Fibers provide I/O concurrency only -- PHP remains single-threaded. Blocking DB calls without async drivers do not benefit from Fibers. The value is in concurrent socket I/O (accept + read + write overlap). Set `fiber_concurrency = 0` (default) for a synchronous accept loop, which is simpler and sufficient for most workloads behind a load balancer.
+Fibers provide I/O concurrency only - PHP remains single-threaded. Blocking DB calls without async drivers do not benefit from Fibers. The value is in concurrent socket I/O (accept + read + write overlap). Set `fiber_concurrency = 0` (default) for a synchronous accept loop, which is simpler and sufficient for most workloads behind a load balancer.
 
 ### The `--public` Flag
 

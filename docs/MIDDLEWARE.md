@@ -6,7 +6,7 @@ Pulsar uses a pipeline-based middleware system. Middleware wraps request handlin
 
 ### Pipeline (FIFO)
 
-Middleware is executed in the order it is added — **first in, first out**. Each middleware receives the request and a `$next` callable. It can:
+Middleware is executed in the order it is added - **first in, first out**. Each middleware receives the request and a `$next` callable. It can:
 
 1. Inspect or modify the request before calling `$next`
 2. Call `$next($request)` to pass control to the next middleware (or the handler)
@@ -116,9 +116,9 @@ $kernel->middlewareRegistry()->group('api', [
 
 When route middleware strings are processed, the registry resolves them in order:
 
-1. **Alias** — returns the single mapped middleware
-2. **Group** — returns the list of middleware in the group
-3. **Class-string** — returned as-is for direct resolution
+1. **Alias** - returns the single mapped middleware
+2. **Group** - returns the list of middleware in the group
+3. **Class-string** - returned as-is for direct resolution
 
 ```php
 // These are equivalent after registry setup:

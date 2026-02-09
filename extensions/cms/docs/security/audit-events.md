@@ -360,6 +360,6 @@ Content event store entries are immutable and should be retained for the lifetim
 
 ## Next Steps
 
-- [Security Model](security-model.md) -- Security controls that generate these events
-- [Threat Model](threat-model.md) -- Threats these events help detect
-- [Compliance Guide](compliance-guide.md) -- Regulatory audit requirements
+- [Security Model](security-model.md) - Security controls that generate these events
+- [Threat Model](threat-model.md) - Threats these events help detect
+- [Compliance Guide](compliance-guide.md) - Regulatory audit requirements

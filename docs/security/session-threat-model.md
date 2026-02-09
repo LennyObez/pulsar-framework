@@ -1,4 +1,4 @@
-# Session Management — Threat Model
+# Session Management - Threat Model
 
 ## Asset
 
@@ -21,8 +21,8 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Mitigations**:
 
-- `cookie_secure: true` — cookie only sent over HTTPS
-- `cookie_samesite: Strict` — prevents cross-origin cookie leakage
+- `cookie_secure: true` - cookie only sent over HTTPS
+- `cookie_samesite: Strict` - prevents cross-origin cookie leakage
 - HSTS headers enforce HTTPS for all subsequent requests
 - Session validators detect context changes (UA, IP)
 
@@ -34,9 +34,9 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Mitigations**:
 
-- `regenerate_on_privilege_change: true` — session ID regenerated on login/privilege change (non-configurable for regulated presets)
-- `use_strict_mode: true` (PHP setting) — rejects uninitialized session IDs
-- `use_only_cookies: true` — prevents session ID in URL parameters
+- `regenerate_on_privilege_change: true` - session ID regenerated on login/privilege change (non-configurable for regulated presets)
+- `use_strict_mode: true` (PHP setting) - rejects uninitialized session IDs
+- `use_only_cookies: true` - prevents session ID in URL parameters
 - Session ID generated with 256 bits of cryptographic randomness
 
 **Residual Risk**: Negligible. All standard fixation vectors are blocked.
@@ -60,7 +60,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Mitigations**:
 
-- `cookie_httponly: true` — prevents JavaScript access to session cookie
+- `cookie_httponly: true` - prevents JavaScript access to session cookie
 - Content Security Policy headers restrict script execution
 - Session data encrypted at rest (even if cookie is somehow extracted)
 
@@ -84,8 +84,8 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 **Mitigations**:
 
-- AEAD encryption (XChaCha20-Poly1305) provides authenticated encryption — any modification is detected
-- AAD binds ciphertext to session context (session ID, handler type, domain) — prevents payload transplant
+- AEAD encryption (XChaCha20-Poly1305) provides authenticated encryption - any modification is detected
+- AAD binds ciphertext to session context (session ID, handler type, domain) - prevents payload transplant
 - Key material zeroed from memory on destruction
 
 **Residual Risk**: Negligible with encryption enabled. Without encryption, file-based sessions are vulnerable to local file access.
@@ -111,7 +111,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 
 - Key rotation is time-bounded (remove previous key after all sessions expire)
 - `key_id` in ciphertext header explicitly identifies which key was used
-- KeyRing resolves keys by ID — no ambiguity or downgrade
+- KeyRing resolves keys by ID - no ambiguity or downgrade
 
 **Residual Risk**: Low. Window is bounded by session lifetime.
 
@@ -169,7 +169,7 @@ Session data: authentication state, user identity, CSRF tokens, flash messages, 
 ### Abuse Case 5: Key Rotation Exploitation
 
 **Scenario**: Attacker captures a session encrypted with the old key and replays it after rotation.
-**Expected Behavior**: Session decrypts successfully with previous key (by design — rotation window). After previous key removal, decryption fails.
+**Expected Behavior**: Session decrypts successfully with previous key (by design - rotation window). After previous key removal, decryption fails.
 **Tested By**: Key rotation tests in SessionEncryptionTest.
 
 ### Abuse Case 6: Oversized Cookie Payload

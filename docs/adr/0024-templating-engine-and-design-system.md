@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Pulsar targets regulated, mission-critical domains (banking, healthcare, legal) where both the Admin panel and Studio extension require server-rendered UIs. Without a framework-level template engine, these UIs depend on ad-hoc string concatenation or external templating libraries, creating inconsistency and security risk. Additionally, there is no unified visual language -- each UI module styles components independently, leading to drift and accessibility gaps.
+Pulsar targets regulated, mission-critical domains (banking, healthcare, legal) where both the Admin panel and Studio extension require server-rendered UIs. Without a framework-level template engine, these UIs depend on ad-hoc string concatenation or external templating libraries, creating inconsistency and security risk. Additionally, there is no unified visual language - each UI module styles components independently, leading to drift and accessibility gaps.
 
 Key constraints:
 
@@ -14,7 +14,7 @@ Key constraints:
 - The escaping model must be context-aware (HTML, URL, attribute, JS, CSS) to prevent XSS in all output contexts.
 - Regulated environments require audit trails for any inline PHP execution in templates.
 - All UI components must meet WCAG 2.1 AA accessibility standards.
-- Zero external CSS/JS dependencies -- the framework must not impose a third-party design framework on applications.
+- Zero external CSS/JS dependencies - the framework must not impose a third-party design framework on applications.
 
 ## Decision Drivers
 
@@ -59,7 +59,7 @@ Tokens and component CSS APIs are versioned following semver. All components ref
 
 ### Playground
 
-A local dev server (`pulsar playground:serve`) providing a component catalog with a built-in CSS editor, real-time preview, and theme file management. Dev-only (disabled in production). Custom-built with vanilla HTML/CSS/JS -- no external editor dependencies.
+A local dev server (`pulsar playground:serve`) providing a component catalog with a built-in CSS editor, real-time preview, and theme file management. Dev-only (disabled in production). Custom-built with vanilla HTML/CSS/JS - no external editor dependencies.
 
 ## Alternatives Considered
 

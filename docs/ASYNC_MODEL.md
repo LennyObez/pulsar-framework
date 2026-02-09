@@ -39,7 +39,7 @@ Fibers are used in exactly one place: **Studio context isolation**.
 1. **Key selection**: When a Fiber is active (`Fiber::getCurrent()` returns non-null), the Fiber instance is used as the WeakMap key. When no Fiber is active, a stable root `stdClass` instance is used instead.
 2. **Scope entry**: `enter()` pushes a new `CorrelationContext` onto the stack for the current key and returns a `ContextScope` guard.
 3. **Scope exit**: When the `ContextScope` guard is closed (via `close()` or RAII), it pops the context from the stack. The guard enforces that `close()` is called from the same Fiber that called `enter()`.
-4. **Garbage collection**: When a Fiber completes and is garbage-collected, its `WeakMap` entry is automatically reclaimed -- no manual cleanup required.
+4. **Garbage collection**: When a Fiber completes and is garbage-collected, its `WeakMap` entry is automatically reclaimed - no manual cleanup required.
 
 ### Why Fibers Here
 
@@ -47,7 +47,7 @@ Studio collectors (middleware interceptors, database query observers, etc.) may 
 
 ## Deterministic Fallback
 
-When no Fiber is active -- which is the normal case for standard PHP-FPM and CLI requests -- all context operations use the root `stdClass` key. This means:
+When no Fiber is active - which is the normal case for standard PHP-FPM and CLI requests - all context operations use the root `stdClass` key. This means:
 
 - Context stacks behave identically to a simple global stack.
 - No Fiber overhead is incurred (no `Fiber::getCurrent()` calls on the hot path beyond the null check).
@@ -65,10 +65,10 @@ The Fiber-aware code path activates only when Fibers are actually present, makin
 
 ### MAY
 
-- **Use scoped Fibers for context isolation**: Extensions may create Fibers for the same purpose Studio does -- isolating state per execution context -- as long as:
-  - The Fiber is created, suspended/resumed, and completed within a single well-defined scope.
-  - Proper RAII cleanup is used (close all `ContextScope` guards before the Fiber completes).
-  - The Fiber does not escape into user-space or persist beyond the request.
+- **Use scoped Fibers for context isolation**: Extensions may create Fibers for the same purpose Studio does - isolating state per execution context - as long as:
+ - The Fiber is created, suspended/resumed, and completed within a single well-defined scope.
+ - Proper RAII cleanup is used (close all `ContextScope` guards before the Fiber completes).
+ - The Fiber does not escape into user-space or persist beyond the request.
 
 ### SHOULD
 

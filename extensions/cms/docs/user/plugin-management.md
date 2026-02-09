@@ -82,10 +82,10 @@ Plugins cannot access functionality beyond their declared capabilities. The `Sco
 2. Click **Install New Plugin**.
 3. Upload a plugin archive (`.zip` file).
 4. The system validates:
-   - Manifest presence and required fields
-   - Version constraint compatibility
-   - Capability declarations
-   - Signature verification (if `security.require_signed_plugins` is enabled)
+  - Manifest presence and required fields
+  - Version constraint compatibility
+  - Capability declarations
+  - Signature verification (if `security.require_signed_plugins` is enabled)
 5. After validation, the plugin appears in the installed plugins list in **disabled** state.
 
 ### Via API
@@ -269,6 +269,6 @@ The CMS validates dependencies during installation:
 
 ## Next Steps
 
-- [Theme Management](theme-management.md) -- Managing themes alongside plugins
-- [Security Model](../security/security-model.md) -- Plugin security model
-- [Settings Reference](settings-reference.md) -- Plugin-related configuration
+- [Theme Management](theme-management.md) - Managing themes alongside plugins
+- [Security Model](../security/security-model.md) - Plugin security model
+- [Settings Reference](settings-reference.md) - Plugin-related configuration

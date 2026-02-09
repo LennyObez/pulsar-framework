@@ -291,7 +291,7 @@ The classification is set at creation time and can be updated by authorized user
 
 ## Next Steps
 
-- [Media Library Guide](media-library.md) -- Managing media assets
-- [Taxonomy & Navigation](taxonomy-navigation.md) -- Categories, tags, and menus
-- [Comment Moderation](comment-moderation.md) -- Managing user comments
-- [SEO Guide](seo-guide.md) -- Optimizing content for search engines
+- [Media Library Guide](media-library.md) - Managing media assets
+- [Taxonomy & Navigation](taxonomy-navigation.md) - Categories, tags, and menus
+- [Comment Moderation](comment-moderation.md) - Managing user comments
+- [SEO Guide](seo-guide.md) - Optimizing content for search engines

@@ -8,7 +8,7 @@ Pulsar provides a guard-based authentication system with lazy identity resolutio
 
 Authentication uses a two-tier approach to avoid paying the cost of full authentication on every request:
 
-1. **Global middleware** (`AuthenticationMiddleware`) runs on every request but only performs cheap work — creating a `SecurityContext` wrapper and setting a default `AnonymousIdentity`.
+1. **Global middleware** (`AuthenticationMiddleware`) runs on every request but only performs cheap work - creating a `SecurityContext` wrapper and setting a default `AnonymousIdentity`.
 2. **Route-level middleware** (`AuthorizationMiddleware`, `TwoFactorMiddleware`) triggers full identity resolution via `SecurityContext::identity()` only on protected routes.
 
 ```
@@ -170,16 +170,16 @@ Session-based authentication using `SessionInterface` from the security subsyste
 ```php
 $guard = new SessionGuard($session);
 
-// Login — stores identity and regenerates session ID (prevents fixation)
+// Login - stores identity and regenerates session ID (prevents fixation)
 $guard->login($identity);
 
-// Authenticate — reads identity from session
+// Authenticate - reads identity from session
 $resolved = $guard->authenticate($request); // ?IdentityInterface
 
 // Update identity without session regeneration (e.g., after 2FA verification)
 $guard->updateIdentity($verifiedIdentity);
 
-// Logout — removes identity and regenerates session ID
+// Logout - removes identity and regenerates session ID
 $guard->logout();
 ```
 
@@ -298,7 +298,7 @@ Pulsar includes TOTP (RFC 6238) generation and verification with recovery codes 
 ```php
 $manager = $container->get(TwoFactorManagerInterface::class);
 
-// 1. Begin setup — generates secret, provisioning URI, and recovery codes
+// 1. Begin setup - generates secret, provisioning URI, and recovery codes
 $setup = $manager->beginSetup($identity);
 // Returns:
 // [
@@ -310,7 +310,7 @@ $setup = $manager->beginSetup($identity);
 
 // 2. Display QR code from provisioning_uri, show recovery codes to user
 
-// 3. Confirm setup — user enters code from authenticator app
+// 3. Confirm setup - user enters code from authenticator app
 $confirmed = $manager->confirmSetup($setup['secret'], $userCode);
 ```
 
@@ -357,7 +357,7 @@ $sessionGuard->updateIdentity($verified);
 - Generated in `XXXX-XXXX` format (uppercase hex)
 - Default: 8 codes per setup
 - Verification is case-insensitive with constant-time comparison
-- Each code is single-use — applications should mark used codes
+- Each code is single-use - applications should mark used codes
 
 ## Middleware
 

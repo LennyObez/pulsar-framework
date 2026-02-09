@@ -22,7 +22,7 @@ final readonly class Api
 
 ### `#[Internal]` (Pulsar\Api\Internal)
 
-Explicitly marks a class as internal. This attribute is optional -- everything without `#[Api]` is internal by default. Use this for emphasis on classes that users might mistakenly depend on. Accepts an optional `reason` parameter.
+Explicitly marks a class as internal. This attribute is optional - everything without `#[Api]` is internal by default. Use this for emphasis on classes that users might mistakenly depend on. Accepts an optional `reason` parameter.
 
 ```php
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::TARGET_CLASS_CONSTANT)]
@@ -348,7 +348,7 @@ These classes are explicitly marked `#[Internal]` and are not covered by semver 
 
 ## Snapshot Workflow
 
-The public API surface is tracked by a committed JSON snapshot at `tools/api/public-api.snapshot.json`. A PHPUnit test (`PublicApiSnapshotTest`) regenerates the snapshot in-memory and compares it against the committed file — any drift fails the test suite.
+The public API surface is tracked by a committed JSON snapshot at `tools/api/public-api.snapshot.json`. A PHPUnit test (`PublicApiSnapshotTest`) regenerates the snapshot in-memory and compares it against the committed file - any drift fails the test suite.
 
 ### Adding new public API
 

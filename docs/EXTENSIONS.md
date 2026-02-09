@@ -1,6 +1,6 @@
 # Extension System Guide
 
-Pulsar's extension system provides modular, manifest-driven extensibility with a deterministic four-phase lifecycle. Extensions are the primary mechanism for adding functionality to a Pulsar application -- including routing, DI bindings, console commands, middleware, and migrations.
+Pulsar's extension system provides modular, manifest-driven extensibility with a deterministic four-phase lifecycle. Extensions are the primary mechanism for adding functionality to a Pulsar application - including routing, DI bindings, console commands, middleware, and migrations.
 
 This is an original design. It is not a clone of Laravel service providers or Symfony bundles. The system enforces explicit capability declaration, strong versioning, compatibility checks, and a "zero entropy" principle: there is one obvious way to wire an extension.
 
@@ -180,7 +180,7 @@ final class MyExtension implements ExtensionInterface, PreBootExtensionInterface
     public function preBoot(ContainerInterface $container): void
     {
         // Create core services, load config, build DTOs
-        // All extensions have registered — you can resolve any service
+        // All extensions have registered - you can resolve any service
     }
 }
 ```
@@ -197,7 +197,7 @@ final class MyExtension implements ExtensionInterface, PostBootExtensionInterfac
     public function postBoot(ContainerInterface $container): void
     {
         // Wire collectors, decorators, or observers into final service bindings
-        // All extensions have booted — you can safely wrap services
+        // All extensions have booted - you can safely wrap services
     }
 }
 ```

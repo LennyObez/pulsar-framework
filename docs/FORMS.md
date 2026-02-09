@@ -347,7 +347,7 @@ $token = $wizard->issueResumeToken($state);
 
 // Later: resume the wizard
 $state = $wizard->resume('registration-wizard', $token);
-// Token is consumed — cannot be reused
+// Token is consumed - cannot be reused
 ```
 
 ## Regulated Fields
@@ -385,7 +385,7 @@ if ($consent->isConsented()) {
     // - subject ('user-123')
     // - correlationId ('tx-abc-456')
     // - templateHash (SHA-256 of template)
-    // - policyTextHash (SHA-256 of policy text — detects legal text changes)
+    // - policyTextHash (SHA-256 of policy text - detects legal text changes)
 
     $store->persist($evidence);
 }

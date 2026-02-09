@@ -11,9 +11,9 @@ Taxonomies are classification systems for organizing content. Pulsar CMS support
 1. Navigate to **Admin > CMS > Taxonomies** (`/admin/cms/taxonomies`).
 2. Click **Create New Taxonomy**.
 3. Fill in the fields:
-   - **Slug**: URL-safe identifier (e.g., `categories`, `tags`, `topics`)
-   - **Name**: Human-readable name per locale
-   - **Description**: Optional description per locale
+  - **Slug**: URL-safe identifier (e.g., `categories`, `tags`, `topics`)
+  - **Name**: Human-readable name per locale
+  - **Description**: Optional description per locale
 4. Save the taxonomy.
 
 ### Via API
@@ -37,10 +37,10 @@ Each taxonomy contains terms (e.g., "Technology", "Business", "Health").
 
 1. Open a taxonomy at **Admin > CMS > Taxonomies > {slug}** (`/admin/cms/taxonomies/{slug}`).
 2. Add terms with:
-   - **Slug**: URL-safe identifier
-   - **Name**: Translated display name per locale
-   - **Description**: Optional translated description
-   - **Parent term**: For hierarchical taxonomies, select a parent
+  - **Slug**: URL-safe identifier
+  - **Name**: Translated display name per locale
+  - **Description**: Optional translated description
+  - **Parent term**: For hierarchical taxonomies, select a parent
 3. Drag and drop terms to reorder them within their hierarchy level.
 
 ### Hierarchical Terms
@@ -84,8 +84,8 @@ Menus define navigation structures for your site's header, footer, sidebar, and 
 1. Navigate to **Admin > CMS > Menus** (`/admin/cms/menus`).
 2. Click **Create New Menu**.
 3. Fill in the fields:
-   - **Location**: Identifier for where the menu appears (e.g., `main`, `footer`, `sidebar`)
-   - **Name**: Translated display name per locale
+  - **Location**: Identifier for where the menu appears (e.g., `main`, `footer`, `sidebar`)
+  - **Name**: Translated display name per locale
 4. Save the menu.
 
 ### Via API
@@ -107,11 +107,11 @@ Content-Type: application/json
 
 1. Open a menu at **Admin > CMS > Menus > {location}** (`/admin/cms/menus/{location}`).
 2. Add items with:
-   - **Label**: Translated display text per locale
-   - **URL or Content ID**: Link destination (absolute URL, relative path, or CMS content reference)
-   - **Link Target**: `_self` (same window) or `_blank` (new window)
-   - **Parent Item**: For nested navigation, select a parent
-   - **CSS Class**: Optional CSS class for styling
+  - **Label**: Translated display text per locale
+  - **URL or Content ID**: Link destination (absolute URL, relative path, or CMS content reference)
+  - **Link Target**: `_self` (same window) or `_blank` (new window)
+  - **Parent Item**: For nested navigation, select a parent
+  - **CSS Class**: Optional CSS class for styling
 3. Drag and drop items to reorder.
 
 ### Menu Item Types
@@ -258,6 +258,6 @@ For users who cannot use a mouse, reordering is also available via:
 
 ## Next Steps
 
-- [Content Management Guide](content-management.md) -- Assigning content to taxonomy terms
-- [Theme Management](theme-management.md) -- Rendering menus and breadcrumbs in themes
-- [SEO Guide](seo-guide.md) -- Structured data for breadcrumbs
+- [Content Management Guide](content-management.md) - Assigning content to taxonomy terms
+- [Theme Management](theme-management.md) - Rendering menus and breadcrumbs in themes
+- [SEO Guide](seo-guide.md) - Structured data for breadcrumbs

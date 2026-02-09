@@ -4,7 +4,7 @@ Pulsar uses a tiered benchmark system to enforce performance budgets across all 
 
 ## Tiered Benchmark System
 
-### Tier A — Hard Gate (Every PR)
+### Tier A - Hard Gate (Every PR)
 
 - **Runs on**: Every pull request as a required CI check
 - **Environment**: In-memory drivers only (no databases, caches, or message brokers)
@@ -12,7 +12,7 @@ Pulsar uses a tiered benchmark system to enforce performance budgets across all 
 - **Failure policy**: Budget violations **block merge**
 - **Covers**: Container, routing, middleware, request lifecycle, crypto (AEAD, HMAC), audit, session, validation, memory peak
 
-### Tier B — Nightly (Realistic Environment)
+### Tier B - Nightly (Realistic Environment)
 
 - **Runs on**: Scheduled nightly (3 AM UTC) or manual trigger
 - **Environment**: Real Redis, PostgreSQL, AMQP containers
@@ -20,7 +20,7 @@ Pulsar uses a tiered benchmark system to enforce performance budgets across all 
 - **Failure policy**: Regression alerts (notification), not hard gate
 - **Covers**: All Tier A benchmarks plus real-backend session, audit, and queue benchmarks
 
-### Tier C — RC Gate (Controlled Runner)
+### Tier C - RC Gate (Controlled Runner)
 
 - **Runs on**: Manually triggered before tagging an RC release
 - **Environment**: Real backends on controlled runner (self-hosted or pinned instance)
@@ -68,8 +68,8 @@ End-to-end request lifecycle benchmarks exercising realistic middleware stacks:
 
 Separate budget files for different PHP runtimes:
 
-- `tools/php/budgets.fpm.json` — PHP-FPM (cold bootstrap, per-request process)
-- `tools/php/budgets.persistent.json` — RoadRunner/FrankenPHP (warm container, amortized bootstrap)
+- `tools/php/budgets.fpm.json` - PHP-FPM (cold bootstrap, per-request process)
+- `tools/php/budgets.persistent.json` - RoadRunner/FrankenPHP (warm container, amortized bootstrap)
 
 Persistent runtimes have lower budgets for request classes since bootstrap cost is amortized.
 
@@ -107,7 +107,7 @@ All benchmark assertions use statistical methods to reduce flakiness:
 
 ## Pipeline Manifest Governance
 
-The file `tools/php/bench-pipeline.manifest.php` declares the exact middleware stacks and storage backends for each request-class benchmark. This manifest is content-hashed in CI — unauthorized changes fail the build.
+The file `tools/php/bench-pipeline.manifest.php` declares the exact middleware stacks and storage backends for each request-class benchmark. This manifest is content-hashed in CI - unauthorized changes fail the build.
 
 ### Changing the Manifest
 
@@ -132,7 +132,7 @@ The manifest validator checks these contracts before benchmark execution. Removi
 
 ## Memory Peak Measurement
 
-Memory peak budgets use `memory_get_peak_usage(true)` in isolated PHP processes. Each scenario runs in a fresh process to ensure accurate per-scenario peak measurement — the peak value cannot be reset within a running process.
+Memory peak budgets use `memory_get_peak_usage(true)` in isolated PHP processes. Each scenario runs in a fresh process to ensure accurate per-scenario peak measurement - the peak value cannot be reset within a running process.
 
 Implementation: Each `tests/Benchmark/Scenarios/memory_*.php` script autoloads, builds the relevant request pipeline, processes one request, and outputs the peak memory in bytes.
 

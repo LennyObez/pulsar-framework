@@ -79,11 +79,11 @@ interface SessionInterface
 
 `Pulsar\Security\Session\Session` wraps PHP's native session functions with security settings from `SessionConfig`:
 
-- **HttpOnly cookies** — prevents JavaScript access to session cookies
-- **Secure cookies** — cookies only sent over HTTPS
-- **SameSite** — mitigates cross-site request forgery via cookie policy
-- **Strict mode** — rejects uninitialized session IDs
-- **Cookies only** — prevents session ID leakage via URL parameters
+- **HttpOnly cookies** - prevents JavaScript access to session cookies
+- **Secure cookies** - cookies only sent over HTTPS
+- **SameSite** - mitigates cross-site request forgery via cookie policy
+- **Strict mode** - rejects uninitialized session IDs
+- **Cookies only** - prevents session ID leakage via URL parameters
 
 ```php
 $session = new Session($sessionConfig);

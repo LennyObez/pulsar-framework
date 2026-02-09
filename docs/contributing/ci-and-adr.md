@@ -73,7 +73,7 @@ pnpm test                # Vitest
 
 ### What is an ADR?
 
-An Architecture Decision Record (ADR) is a short document that captures a significant architectural decision, its context, and its consequences. ADRs are immutable records — once accepted, they are not deleted. If a decision is reversed, a new ADR supersedes the original.
+An Architecture Decision Record (ADR) is a short document that captures a significant architectural decision, its context, and its consequences. ADRs are immutable records - once accepted, they are not deleted. If a decision is reversed, a new ADR supersedes the original.
 
 ### When to write an ADR
 
@@ -89,7 +89,7 @@ An ADR is **required by CI** when a pull request modifies any of these core arch
 
 For trivial changes to core paths (typo fixes, import reordering, doc comment updates) that do not alter behavior, API, or architecture, you have two options:
 
-1. Update an existing ADR with a brief note — a new ADR is not always required.
+1. Update an existing ADR with a brief note - a new ADR is not always required.
 2. Label the PR `adr-exempt` to skip the check. This requires maintainer approval and is visible in the PR history.
 
 ADRs are also encouraged (but not CI-enforced) for significant changes to extensions, new subsystems, or changes to the CI/build pipeline itself.
@@ -103,7 +103,7 @@ ADRs are also encouraged (but not CI-enforced) for significant changes to extens
 
 ### ADR numbering
 
-Numbers are assigned sequentially. Check existing files in `docs/adr/` to find the next available number. There is no semantic meaning to the number — it only provides chronological ordering.
+Numbers are assigned sequentially. Check existing files in `docs/adr/` to find the next available number. There is no semantic meaning to the number - it only provides chronological ordering.
 
 ### ADR statuses
 
@@ -123,4 +123,4 @@ The `adr-check` job runs only on pull requests. It:
 3. If core paths are modified, checks whether the PR also includes a new or modified ADR file in `docs/adr/`
 4. Fails with a descriptive error message if core paths changed without an ADR
 
-The check is fork-safe — it uses the base SHA provided by GitHub Actions rather than relying on branch names.
+The check is fork-safe - it uses the base SHA provided by GitHub Actions rather than relying on branch names.

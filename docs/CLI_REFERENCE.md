@@ -21,7 +21,7 @@ These options are available on every command:
 
 Verbosity levels:
 
-- Default -- Normal output.
+- Default - Normal output.
 - `-v` / `--verbose` -- Verbose output with additional context.
 - `-vv` -- Very verbose output.
 - `-vvv` -- Debug-level output including stack traces on errors.
@@ -347,7 +347,7 @@ Runs a full cache round-trip: warm, verify `isWarm()`, verify `load()` returns a
 
 #### `cache:warmup`
 
-Warm config, route, and container caches. This is an alias for `optimize` — same behavior, discoverable under the `cache:` namespace.
+Warm config, route, and container caches. This is an alias for `optimize` - same behavior, discoverable under the `cache:` namespace.
 
 ```bash
 php bin/pulsar cache:warmup

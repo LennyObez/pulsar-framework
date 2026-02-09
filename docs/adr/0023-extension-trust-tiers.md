@@ -6,11 +6,11 @@ Accepted
 
 ## Context
 
-Pulsar targets regulated domains — banking, healthcare, legal — where the supply-chain security of extensions is a first-class concern. The current extension system (ADR-0004) treats all extensions equally: once loaded via `pulsar.json`, every extension receives full `ContainerInterface` and `RouterInterface` access. This is a deliberate design choice for simplicity and third-party parity, but it creates unacceptable risk profiles:
+Pulsar targets regulated domains - banking, healthcare, legal - where the supply-chain security of extensions is a first-class concern. The current extension system (ADR-0004) treats all extensions equally: once loaded via `pulsar.json`, every extension receives full `ContainerInterface` and `RouterInterface` access. This is a deliberate design choice for simplicity and third-party parity, but it creates unacceptable risk profiles:
 
 - A compromised community extension can resolve `MasterKey`, raw database connections, and `AuditSinkInterface` from the container.
 - Any extension can register routes at arbitrary paths, potentially shadowing `/login`, `/admin`, or `/_studio`.
-- Middleware registration is unrestricted — a malicious extension could strip security headers or intercept authentication tokens.
+- Middleware registration is unrestricted - a malicious extension could strip security headers or intercept authentication tokens.
 - Extensions can bind services into the container, potentially overwriting critical framework bindings.
 - Network egress, process execution, and environment variable access are unrestricted.
 
@@ -39,7 +39,7 @@ Introduce a four-tier trust model with capability-gated proxies for container an
 
 ### Requested vs. Effective Tier
 
-Extensions declare a `requested_trust_tier` in `pulsar.json` — this is **metadata only**, not a security boundary. The **effective tier** is resolved by the host application via `TrustedExtensionsConfig`:
+Extensions declare a `requested_trust_tier` in `pulsar.json` - this is **metadata only**, not a security boundary. The **effective tier** is resolved by the host application via `TrustedExtensionsConfig`:
 
 ```
 pulsar.json: requested_trust_tier = "verified"
@@ -77,27 +77,27 @@ The host can grant additional per-extension capabilities via `TrustedExtensionsC
 
 ### Enforcement Points
 
-**Container access** — `ScopedContainerProxy` wraps `ContainerInterface`:
+**Container access** - `ScopedContainerProxy` wraps `ContainerInterface`:
 
-- `has()` delegates truthfully to the real container (PSR-11 compliance — never lies).
+- `has()` delegates truthfully to the real container (PSR-11 compliance - never lies).
 - `get()` checks the service against `ServiceRestrictionMap` and the extension's effective capabilities. Throws `CapabilityDeniedException` on denial.
 - `bind()`/`instance()` require `ContainerWrite` capability.
 - Core tier skips the proxy entirely (zero overhead).
 
-**Service restriction** — `ServiceRestrictionMap` enforces deny-by-default:
+**Service restriction** - `ServiceRestrictionMap` enforces deny-by-default:
 
 - `restrictedServices`: maps service IDs to required capabilities (e.g., `MasterKey::class` requires `CryptoKeyAccess`).
 - `safeServices`: explicit allowlist of services any tier with `ContainerRead` can resolve (loggers, config DTOs, event dispatcher).
 - Unknown services (not in either list) are **denied** for non-Core tiers.
 
-**Router access** — `ScopedRouterProxy` wraps `RouterInterface`:
+**Router access** - `ScopedRouterProxy` wraps `RouterInterface`:
 
 - Community/Untrusted: routes must be registered under `/ext/{extension-name}/...` prefix (injected by proxy).
 - Verified: no prefix constraint, but wildcard routes (`/{any}`) are rejected.
 - Core: full access, no proxy.
 - Reserved paths (`/login`, `/admin`, `/_studio`, `/api`) cannot be shadowed by non-Core extensions.
 
-**Bootstrap integration** — `ExtensionBootstrap` resolves effective tiers and wraps container/router per extension during `register()` and `boot()` phases. When no policy is configured (null), the container and router are passed unwrapped for full backward compatibility.
+**Bootstrap integration** - `ExtensionBootstrap` resolves effective tiers and wraps container/router per extension during `register()` and `boot()` phases. When no policy is configured (null), the container and router are passed unwrapped for full backward compatibility.
 
 ### Error Model
 
@@ -105,7 +105,7 @@ The host can grant additional per-extension capabilities via `TrustedExtensionsC
 
 ```
 Extension "acme/analytics" (Community tier) cannot resolve service
-"Pulsar\Security\Crypto\MasterKey" — requires CryptoKeyAccess capability.
+"Pulsar\Security\Crypto\MasterKey" - requires CryptoKeyAccess capability.
 
 To grant this capability, add to config/extensions.php:
   'acme/analytics' => ['tier' => 'verified']
@@ -157,7 +157,7 @@ Rejected: poor DX, audit nightmare, does not scale.
 
 ## Field Report
 
-_Placeholder — to be filled after operational experience._
+_Placeholder - to be filled after operational experience._
 
 ## Security Impact
 
@@ -174,7 +174,7 @@ Significant reduction in attack surface for third-party extensions:
 
 Minimal. For Core-tier extensions: zero overhead (proxy bypassed). For other tiers: one `isset()` lookup in the restriction map + one `in_array()` check in the capability policy per `get()` call. Both are O(1) operations. The overhead is negligible compared to the service resolution and autoloading costs.
 
-No impact on hot-path performance — capability checks happen during bootstrap (`register`/`boot` phases), not during request handling.
+No impact on hot-path performance - capability checks happen during bootstrap (`register`/`boot` phases), not during request handling.
 
 ## Migration / Rollback Plan
 
@@ -183,7 +183,7 @@ No impact on hot-path performance — capability checks happen during bootstrap 
 1. All first-party extensions tagged `"trust_tier": "core"` in `pulsar.json`.
 2. Host creates `config/extensions.php` with trusted extensions allow-list.
 3. When `CapabilityPolicy` is set on `ExtensionBootstrap`, enforcement activates.
-4. Without a policy (default), extensions behave exactly as before — full access.
+4. Without a policy (default), extensions behave exactly as before - full access.
 
 **Rollback:**
 

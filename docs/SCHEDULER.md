@@ -4,7 +4,7 @@
 
 Pulsar ships a job scheduler for running recurring tasks on a cron-based schedule. The scheduler is designed for mission-critical environments: jobs are registered explicitly, schedules are evaluated deterministically, execution is logged and measured, and all results are inspectable.
 
-The scheduler operates via a "tick" model -- a single `scheduler:tick` console command evaluates which jobs are due and runs them synchronously. This command is invoked by your system cron (or equivalent) every minute, keeping the scheduling logic inside PHP and the timing mechanism in the operating system where it belongs.
+The scheduler operates via a "tick" model - a single `scheduler:tick` console command evaluates which jobs are due and runs them synchronously. This command is invoked by your system cron (or equivalent) every minute, keeping the scheduling logic inside PHP and the timing mechanism in the operating system where it belongs.
 
 ### Key Components
 
@@ -276,7 +276,7 @@ Pulsar uses standard 5-field cron expressions:
 // Check if the schedule is due at a specific time
 $schedule = Schedule::cron('*/5 * * * *');
 $isDue = $schedule->isDue(new DateTimeImmutable('2025-06-15 10:05:00'));
-// true -- minute 5 matches */5
+// true - minute 5 matches */5
 ```
 
 The `isDue()` method converts the provided time to the schedule's timezone before evaluating.

@@ -65,10 +65,10 @@ Log in with your admin credentials. You should see the CMS dashboard.
 1. Click **Content** in the admin sidebar, or go to `/admin/cms/content`.
 2. Click **Create New**.
 3. Fill in the form:
-   - **Content Type**: `article`
-   - **Title**: `Welcome to Our Site`
-   - **Slug**: `welcome-to-our-site` (auto-generated)
-   - **Body**:
+  - **Content Type**: `article`
+  - **Title**: `Welcome to Our Site`
+  - **Slug**: `welcome-to-our-site` (auto-generated)
+  - **Body**:
      ```html
      <h2>Hello, World!</h2>
      <p>This is our first article published with Pulsar CMS.</p>
@@ -111,6 +111,6 @@ Your article is now live and publicly accessible.
 
 ## Next Steps
 
-- [Content Management Guide](../user/content-management.md) -- Learn about translations, revisions, and workflows
-- [Media Library Guide](../user/media-library.md) -- Add images to your articles
-- [SEO Guide](../user/seo-guide.md) -- Optimize your content for search engines
+- [Content Management Guide](../user/content-management.md) - Learn about translations, revisions, and workflows
+- [Media Library Guide](../user/media-library.md) - Add images to your articles
+- [SEO Guide](../user/seo-guide.md) - Optimize your content for search engines

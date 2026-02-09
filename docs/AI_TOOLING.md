@@ -1,10 +1,10 @@
-# AI Tooling — MCP Server Extension
+# AI Tooling - MCP Server Extension
 
 ## Overview
 
 Pulsar ships an optional MCP (Model Context Protocol) server extension that exposes framework metadata and developer tools to AI assistants over the JSON-RPC 2.0 stdio transport.
 
-**Intended audience**: Developers using AI-assisted IDEs (Claude Code, Cursor, Windsurf) who want their AI agent to understand the Pulsar project structure — routes, bindings, config schemas, commands, and the public API surface — without manually copying context.
+**Intended audience**: Developers using AI-assisted IDEs (Claude Code, Cursor, Windsurf) who want their AI agent to understand the Pulsar project structure - routes, bindings, config schemas, commands, and the public API surface - without manually copying context.
 
 **Design philosophy**: Read-heavy, action-cautious. Read tools are always available (individually disablable). Action tools (run tests, run formatter, run static analysis) require explicit allowlisting. The server is disabled by default and intended for local development only.
 
@@ -17,9 +17,9 @@ Pulsar ships an optional MCP (Model Context Protocol) server extension that expo
 **Mitigations**:
 
 - All tool output passes through `McpRedactionPipeline` which scrubs sensitive patterns
-- Structured content (`structuredContent`) is preferred over free-text — AI clients consume typed fields rather than parsing prose
+- Structured content (`structuredContent`) is preferred over free-text - AI clients consume typed fields rather than parsing prose
 - Output size is capped per tool (`max_output_bytes`, default 1 MB) preventing context flooding
-- Route handlers are formatted as `Class::method` — no raw file paths or closure source
+- Route handlers are formatted as `Class::method` - no raw file paths or closure source
 
 ### 2. Secret Exfiltration
 
@@ -28,8 +28,8 @@ Pulsar ships an optional MCP (Model Context Protocol) server extension that expo
 **Mitigations**:
 
 - Three-layer sanitization: contributor limits → `SensitiveDataScrubber` at generation → `McpRedactionPipeline` at export
-- Container bindings filtered to FQCN-like keys only — service locator keys like `db.password` excluded
-- Config schema exposes property names and types only — never instantiated values
+- Container bindings filtered to FQCN-like keys only - service locator keys like `db.password` excluded
+- Config schema exposes property names and types only - never instantiated values
 - Subprocess output (tests, formatter, analysis) redacted in real-time with streaming pattern matching
 - Value-based redaction collects high-risk env var values (`*_KEY`, `*_TOKEN`, `*_SECRET`, `*_PASSWORD`, `*_DSN`) at boot and replaces exact matches in stdout/stderr
 - No absolute file paths in any output
@@ -40,7 +40,7 @@ Pulsar ships an optional MCP (Model Context Protocol) server extension that expo
 
 **Mitigations**:
 
-- Action tools are disabled by default — require explicit allowlisting in `tools.allowed_actions`
+- Action tools are disabled by default - require explicit allowlisting in `tools.allowed_actions`
 - All subprocess commands use `proc_open()` with array command (no shell invocation)
 - Parameters are strictly validated: `--filter` allows only `[A-Za-z0-9_:.\\\-]`, `--path` rejects `..` and validates with `realpath()` + root confinement
 - Binary paths resolved at boot via `realpath()` and verified against expected directories
@@ -167,14 +167,14 @@ The MCP server is designed for local development. Production and staging environ
 
 - Introspection exposes internal architecture details (bindings, routes, config schemas)
 - Action tools execute subprocesses on the host
-- The stdio transport has no authentication layer — security relies on process-level access control
+- The stdio transport has no authentication layer - security relies on process-level access control
 - In production, the framework should serve requests, not expose diagnostic tooling
 
 **Exception flow for staging/production**:
 
 1. Set `MCP_ENABLED=true` in config
 2. Set `MCP_STAGING_CONFIRM=true` or `MCP_PRODUCTION_CONFIRM=true`
-3. Both must be present — config alone is insufficient
+3. Both must be present - config alone is insufficient
 4. All MCP activity is audit-logged regardless of environment
 
 ## Audit and Monitoring
@@ -269,7 +269,7 @@ Returns the architecture map: registered extensions and container bindings.
 Returns config DTO schemas (property names, types, scrubbed defaults).
 
 - **Category**: Read
-- **Parameters**: `name` (string, optional — filter by config name)
+- **Parameters**: `name` (string, optional - filter by config name)
 - **Output**: `{ "schemas": [...] }`
 
 #### `pulsar.routes.list`
@@ -293,7 +293,7 @@ Returns all registered console commands with arguments and options.
 Returns container binding keys (FQCN-like patterns only).
 
 - **Category**: Read
-- **Parameters**: `filter` (string, optional — substring match), `cursor` (string, optional), `limit` (integer, optional, default 100)
+- **Parameters**: `filter` (string, optional - substring match), `cursor` (string, optional), `limit` (integer, optional, default 100)
 - **Output**: `{ "bindings": [...], "totalCount": N, "nextCursor": null }`
 
 ### Action Tools
@@ -303,7 +303,7 @@ Returns container binding keys (FQCN-like patterns only).
 Runs PHPUnit with the project configuration.
 
 - **Category**: Action
-- **Parameters**: `filter` (string, optional — test name filter), `path` (string, optional — test file/directory)
+- **Parameters**: `filter` (string, optional - test name filter), `path` (string, optional - test file/directory)
 - **Output**: `{ "exitCode": 0, "stdout": "...", "stderr": "...", "timedOut": false, "wasCancelled": false, "truncated": false }`
 
 #### `pulsar.formatter.run`
@@ -311,7 +311,7 @@ Runs PHPUnit with the project configuration.
 Runs code formatters.
 
 - **Category**: Action
-- **Parameters**: `type` (string, required — `php` or `js`), `path` (string, optional)
+- **Parameters**: `type` (string, required - `php` or `js`), `path` (string, optional)
 - **Output**: `{ "exitCode": 0, "stdout": "...", "stderr": "...", "timedOut": false, "wasCancelled": false, "truncated": false }`
 
 #### `pulsar.analysis.run`
@@ -319,5 +319,5 @@ Runs code formatters.
 Runs static analysis tools.
 
 - **Category**: Action
-- **Parameters**: `analyzer` (string, required — `phpstan` or `psalm`)
+- **Parameters**: `analyzer` (string, required - `phpstan` or `psalm`)
 - **Output**: `{ "exitCode": 0, "stdout": "...", "stderr": "...", "timedOut": false, "wasCancelled": false, "truncated": false }`

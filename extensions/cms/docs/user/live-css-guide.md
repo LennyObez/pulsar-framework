@@ -12,9 +12,9 @@ The Live CSS editor allows administrators to customize the site's appearance wit
 
 1. Navigate to **Admin > CMS > Live CSS** (`/admin/cms/live-css`).
 2. The editor opens with:
-   - The current active CSS override (if any)
-   - A list of available theme tokens
-   - A live preview panel
+  - The current active CSS override (if any)
+  - A list of available theme tokens
+  - A live preview panel
 
 ## Theme Tokens
 
@@ -245,6 +245,6 @@ The `LiveCssInjector` handles serving the active CSS to visitors:
 
 ## Next Steps
 
-- [Theme Management](theme-management.md) -- Understanding theme tokens and structure
-- [Settings Reference](settings-reference.md) -- Live CSS configuration
-- [Security Model](../security/security-model.md) -- CSP policy details
+- [Theme Management](theme-management.md) - Understanding theme tokens and structure
+- [Settings Reference](settings-reference.md) - Live CSS configuration
+- [Security Model](../security/security-model.md) - CSP policy details

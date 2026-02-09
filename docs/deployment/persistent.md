@@ -184,7 +184,7 @@ services:
   app:
     build: .
     ports:
-      - '8080:8080'
+     - '8080:8080'
     environment:
       APP_ENV: production
       APP_DEBUG: 'false'
@@ -310,7 +310,7 @@ curl http://localhost:8080/_health
 # {"status":"healthy","requests":4521,"memory_mb":48,"uptime_s":3600}
 ```
 
-Use this for load balancer health checks. A `503` response means the worker is draining or shutting down -- the load balancer should stop routing traffic to it.
+Use this for load balancer health checks. A `503` response means the worker is draining or shutting down - the load balancer should stop routing traffic to it.
 
 ### Prometheus Integration
 

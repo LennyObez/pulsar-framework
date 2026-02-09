@@ -6,11 +6,11 @@ Pulsar provides a typed configuration system that loads settings from PHP files,
 
 Configuration follows a strict precedence chain:
 
-1. **OS environment variables** — always present, highest priority
-2. **`.env` file** — optional, loaded only if a path is provided. File values never override existing OS vars.
-3. **Config PHP files** — `config/app.php`, `config/observability.php` — return raw arrays
-4. **Runtime overrides** — `ConfigOverrides` applied via `array_replace_recursive` on raw arrays
-5. **Typed DTO construction** — `AppConfig::fromArray()`, `ObservabilityConfig::fromArray()` — env vars override array values inside the factory methods
+1. **OS environment variables** - always present, highest priority
+2. **`.env` file** - optional, loaded only if a path is provided. File values never override existing OS vars.
+3. **Config PHP files** - `config/app.php`, `config/observability.php` - return raw arrays
+4. **Runtime overrides** - `ConfigOverrides` applied via `array_replace_recursive` on raw arrays
+5. **Typed DTO construction** - `AppConfig::fromArray()`, `ObservabilityConfig::fromArray()` - env vars override array values inside the factory methods
 
 ## Environment Class
 
@@ -58,8 +58,8 @@ Loaded from `config/app.php`. Fields:
 | `name`     | `string`          | `APP_NAME`   | `'Pulsar'`   |
 | `mode`     | `EnvironmentMode` | `APP_ENV`    | `Local`      |
 | `debug`    | `bool`            | `APP_DEBUG`  | Mode default |
-| `timezone` | `string`          | —            | `'UTC'`      |
-| `locale`   | `string`          | —            | `'en'`       |
+| `timezone` | `string`          | -            | `'UTC'`      |
+| `locale`   | `string`          | -            | `'en'`       |
 
 Debug resolution: `APP_DEBUG` env var > file `debug` key > `EnvironmentMode::isDebugByDefault()`.
 
@@ -71,7 +71,7 @@ Loaded from `config/observability.php` (logging section). Fields:
 | ----------------------- | ---------------------------- | ------------- | --------- |
 | `defaultLoggingChannel` | `string`                     | `LOG_CHANNEL` | `'file'`  |
 | `loggingLevel`          | `string`                     | `LOG_LEVEL`   | `'info'`  |
-| `loggingChannels`       | `list<LoggingChannelConfig>` | —             | From file |
+| `loggingChannels`       | `list<LoggingChannelConfig>` | -             | From file |
 
 ### LoggingChannelConfig
 

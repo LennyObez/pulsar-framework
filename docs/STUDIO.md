@@ -99,10 +99,10 @@ $scope = $provider->enter($ctx);
 
 try {
     // All collectors read from $provider->current()
-    // Database queries, log writes, exceptions — all carry req-abc
+    // Database queries, log writes, exceptions - all carry req-abc
     handleRequest();
 } finally {
-    $scope->close(); // RAII guard — must close in finally
+    $scope->close(); // RAII guard - must close in finally
 }
 ```
 

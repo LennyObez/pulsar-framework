@@ -496,6 +496,6 @@ Welcome to our site! <span class="greeting">Hello, Developer!</span>
 
 ## Related Documentation
 
-- [Hook Reference](hook-reference.md) -- All available hook points and callback signatures
-- [Content Type API](content-type-api.md) -- Defining custom content types programmatically
-- [Architecture Overview](architecture.md) -- Plugin module boundaries and security model
+- [Hook Reference](hook-reference.md) - All available hook points and callback signatures
+- [Content Type API](content-type-api.md) - Defining custom content types programmatically
+- [Architecture Overview](architecture.md) - Plugin module boundaries and security model

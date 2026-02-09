@@ -16,7 +16,7 @@ Three metric types are available via `MetricType` enum:
 
 ### MetricRegistry
 
-Central store for all metrics. Provides create-or-return semantics — requesting the same name and type returns the existing instance. Requesting the same name with a different type throws `MetricsException`.
+Central store for all metrics. Provides create-or-return semantics - requesting the same name and type returns the existing instance. Requesting the same name with a different type throws `MetricsException`.
 
 ```php
 $registry = new MetricRegistry();
@@ -97,10 +97,10 @@ Output includes `# HELP`, `# TYPE`, sample lines with labels, and histogram `_bu
 
 Distributed tracing follows the W3C Trace Context specification:
 
-- **TraceId** — 128-bit hex identifier (32 chars) for the entire trace
-- **SpanId** — 64-bit hex identifier (16 chars) for a single operation
-- **TraceContext** — Immutable value object holding traceId, spanId, and trace flags
-- **Span** — Mutable lifecycle object representing a timed operation
+- **TraceId** - 128-bit hex identifier (32 chars) for the entire trace
+- **SpanId** - 64-bit hex identifier (16 chars) for a single operation
+- **TraceContext** - Immutable value object holding traceId, spanId, and trace flags
+- **Span** - Mutable lifecycle object representing a timed operation
 
 ### Creating Spans
 
@@ -164,7 +164,7 @@ Errors are grouped by a deterministic SHA-256 fingerprint derived from:
 {exception class}|{message}|{file}|{line}
 ```
 
-This produces stable groups — the same error at the same location always maps to the same fingerprint.
+This produces stable groups - the same error at the same location always maps to the same fingerprint.
 
 ### ErrorEvent
 
@@ -230,9 +230,9 @@ Automatically instruments HTTP requests with distributed tracing:
 
 Automatically records HTTP metrics:
 
-- `pulsar_http_requests_total` — Counter with labels: method, path, status
-- `pulsar_http_request_duration_seconds` — Histogram of request durations
-- `pulsar_http_errors_total` — Counter for 5xx responses with labels: method, path
+- `pulsar_http_requests_total` - Counter with labels: method, path, status
+- `pulsar_http_request_duration_seconds` - Histogram of request durations
+- `pulsar_http_errors_total` - Counter for 5xx responses with labels: method, path
 
 ### Middleware Ordering
 
@@ -272,9 +272,9 @@ return [
 
 Each section maps to a typed readonly DTO:
 
-- `MetricsConfig` — `enabled`, `exporterEnabled`, `exporterEndpoint`
-- `TracingConfig` — `enabled`, `samplingRate`
-- `ErrorTrackingConfig` — `enabled`, `maxGroups`, `maxRecentEventsPerGroup`, `sensitiveFields`
+- `MetricsConfig` - `enabled`, `exporterEnabled`, `exporterEndpoint`
+- `TracingConfig` - `enabled`, `samplingRate`
+- `ErrorTrackingConfig` - `enabled`, `maxGroups`, `maxRecentEventsPerGroup`, `sensitiveFields`
 
 These are composed into `ObservabilityConfig` and built via `fromArray()` factories.
 

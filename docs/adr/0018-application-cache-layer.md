@@ -13,7 +13,7 @@ The cache layer must conform to PSR-6 (CacheItemPool) and PSR-16 (SimpleCache) f
 ## Decision Drivers
 
 1. **Dual PSR compliance**: Applications and libraries expect PSR-6 and PSR-16. Both must be first-class, not one wrapping the other with impedance mismatch.
-2. **Driver abstraction**: Deployment environments vary — local development uses filesystem or array, staging uses APCu, production uses Memcached or Redis. The application layer must be driver-agnostic.
+2. **Driver abstraction**: Deployment environments vary - local development uses filesystem or array, staging uses APCu, production uses Memcached or Redis. The application layer must be driver-agnostic.
 3. **Compliance**: Regulated domains may require encryption-at-rest for cached PII. The cache layer must support transparent encryption without application code changes.
 4. **Stampede protection**: High-traffic cache key expiration causes thundering herd. The framework must provide built-in protection, not leave it to application developers.
 5. **Observability**: Cache hit/miss ratios, error rates, and latency must feed into the framework's metric and logging infrastructure.
@@ -29,7 +29,7 @@ Implement `src/Cache/Application/` as the application cache module with the foll
 
 ### Driver Layer
 
-All drivers implement `CacheDriverInterface` — a raw string storage contract. Serialization happens in the pool layer, keeping drivers simple and testable.
+All drivers implement `CacheDriverInterface` - a raw string storage contract. Serialization happens in the pool layer, keeping drivers simple and testable.
 
 | Driver             | Use Case                         | Capabilities                    |
 | ------------------ | -------------------------------- | ------------------------------- |
@@ -40,16 +40,16 @@ All drivers implement `CacheDriverInterface` — a raw string storage contract. 
 | `RedisDriver`      | Distributed, feature-rich        | Distributed, atomic increment   |
 | `DatabaseDriver`   | Persistent, no external service  | SQL-backed, no atomic increment |
 
-Drivers declare capabilities via `CacheDriverCapabilities` — a value object indicating support for atomic increment, distributed locking, and TTL precision. Upper layers query capabilities before attempting unsupported operations.
+Drivers declare capabilities via `CacheDriverCapabilities` - a value object indicating support for atomic increment, distributed locking, and TTL precision. Upper layers query capabilities before attempting unsupported operations.
 
 ### Tag-Based Invalidation
 
-`TaggedCache` stores tag version snapshots with each cached item. On read, current tag versions are compared against stored versions — stale items are treated as cache misses. Tag invalidation bumps the version rather than scanning and deleting individual keys, making invalidation O(1) per tag regardless of how many items share that tag.
+`TaggedCache` stores tag version snapshots with each cached item. On read, current tag versions are compared against stored versions - stale items are treated as cache misses. Tag invalidation bumps the version rather than scanning and deleting individual keys, making invalidation O(1) per tag regardless of how many items share that tag.
 
 Two tag strategies are provided:
 
-- `StrictTagStrategy` — atomic tag version reads/writes via the cache driver (consistent but slower)
-- `BestEffortTagStrategy` — eventual consistency with local version caching (faster but may serve briefly stale data)
+- `StrictTagStrategy` - atomic tag version reads/writes via the cache driver (consistent but slower)
+- `BestEffortTagStrategy` - eventual consistency with local version caching (faster but may serve briefly stale data)
 
 ### Stampede Protection
 
@@ -67,7 +67,7 @@ On lock timeout, the guard retries the cache read (optimistic path) and falls ba
 
 `EncryptedCacheDecorator` wraps any `CacheDriverInterface` with transparent encryption using libsodium secretbox (XSalsa20-Poly1305, ADR-0006). Features:
 
-- BLAKE2b HMAC binds ciphertext to pool name, cache key, tenant ID, and purpose — preventing cross-pool ciphertext relocation attacks
+- BLAKE2b HMAC binds ciphertext to pool name, cache key, tenant ID, and purpose - preventing cross-pool ciphertext relocation attacks
 - Transparent key rotation: values encrypted under the previous master key are decrypted and re-encrypted on read
 - Atomic increment/decrement is explicitly unsupported on encrypted pools (throws `UnsupportedCapabilityException`)
 
@@ -119,31 +119,31 @@ Rejected: not all deployment environments have Redis. Local development, CI, and
 
 - Seven drivers and six lock implementations add maintenance surface (~20 classes in `Driver/` and `Lock/`)
 - Tag version storage adds overhead to every tagged cache read (one additional driver round-trip per unique tag set)
-- Encrypted pools cannot support atomic increment/decrement — a fundamental limitation of authenticated encryption
+- Encrypted pools cannot support atomic increment/decrement - a fundamental limitation of authenticated encryption
 
 ### Neutral
 
-- `SimpleCache` wraps `CachePool` — the PSR-16 API has slightly higher overhead than direct driver access (one extra method call layer)
-- Critical mode is opt-in per pool — non-critical pools silently degrade on driver failure, which may mask infrastructure issues if monitoring is not configured
+- `SimpleCache` wraps `CachePool` - the PSR-16 API has slightly higher overhead than direct driver access (one extra method call layer)
+- Critical mode is opt-in per pool - non-critical pools silently degrade on driver failure, which may mask infrastructure issues if monitoring is not configured
 
 ## Security Impact
 
-- `EncryptedCacheDecorator` uses framework crypto (libsodium, ADR-0006) — no custom cryptographic implementations
+- `EncryptedCacheDecorator` uses framework crypto (libsodium, ADR-0006) - no custom cryptographic implementations
 - AAD binding prevents ciphertext relocation between pools, keys, tenants, or purposes
-- Key rotation is transparent — old ciphertexts are re-encrypted on read without application intervention
+- Key rotation is transparent - old ciphertexts are re-encrypted on read without application intervention
 - `CacheKeyValidator` prevents injection via cache keys (reserved characters, length limits)
 - Critical mode ensures security-sensitive cache failures (e.g., encrypted session store) surface as exceptions rather than silent degradation
 
 ## Performance Impact
 
-- Driver operations are I/O-bound. The application layer adds serialization (PHP serialize or JSON), key validation, and event emission — all sub-microsecond on modern hardware.
+- Driver operations are I/O-bound. The application layer adds serialization (PHP serialize or JSON), key validation, and event emission - all sub-microsecond on modern hardware.
 - Tag validation adds one `getTagVersions()` call per tagged read. `BestEffortTagStrategy` caches versions locally to amortize this cost.
 - Stampede guard lock acquisition adds one round-trip to the lock backend on cache miss. The jittered TTL prevents synchronized expiration across distributed instances.
 - Encryption adds ~50μs per operation (libsodium secretbox). Acceptable for most use cases; benchmark-sensitive paths should use unencrypted pools.
 
 ## Migration / Rollback Plan
 
-Additive change — introduces `src/Cache/Application/` as a new core module. To roll back: remove the module and revert to direct PSR-6/PSR-16 library usage. Cache data is ephemeral by nature — no data migration required.
+Additive change - introduces `src/Cache/Application/` as a new core module. To roll back: remove the module and revert to direct PSR-6/PSR-16 library usage. Cache data is ephemeral by nature - no data migration required.
 
 ## Links
 

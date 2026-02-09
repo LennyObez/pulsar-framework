@@ -1,26 +1,34 @@
 {
   "name": "pulsar/admin",
-  "version": "1.0.0-rc.10",
+  "version": "1.0.0-rc.11",
   "description": "Admin panel extension with resource management, audit-logged CRUD, export, and dashboard widgets",
   "trust_tier": "core",
   "extension_class": "Pulsar\\Extension\\Admin\\AdminExtension",
   "pulsar": {
-    "min_version": "1.0.0-rc.10"
+    "min_version": "1.0.0-rc.11"
   },
   "requires": {
     "pulsar/studio": ">=1.0.0-rc.10"
   },
   "provides": {
-    "services": ["AdminGateway", "ResourceRegistryInterface", "AdminConfig"],
+    "services": [
+      "AdminGateway",
+      "ResourceRegistryInterface",
+      "AdminConfig"
+    ],
     "routes": true,
-    "commands": ["Pulsar\\Extension\\Admin\\Command\\AdminServeCommand"]
+    "commands": [
+      "Pulsar\\Extension\\Admin\\Command\\AdminServeCommand"
+    ]
   },
   "frontend": {
     "bundles": [
       {
         "id": "admin",
         "root": "frontend",
-        "entries": ["src/main.ts"]
+        "entries": [
+          "src/main.ts"
+        ]
       }
     ]
   }

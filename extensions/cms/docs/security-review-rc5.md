@@ -22,7 +22,7 @@ Scope: CSS validator, CSP hash computation, PII handling, digital download token
 - Null bytes (`\0`) were not stripped. Some parsers skip nulls, allowing `java\0script:` to become `javascript:` in the browser.
 - `vbscript:` protocol was not blocked (legacy IE vector).
 - `url()` did not check for `javascript:` or `vbscript:` inside the function call.
-- No input size limit -- a maliciously large input could cause pathological regex backtracking.
+- No input size limit - a maliciously large input could cause pathological regex backtracking.
 
 **Fixes applied:**
 
@@ -116,7 +116,7 @@ The SQL `WHERE downloads_remaining > 0` clause makes the decrement atomic, but o
 **File:** `extensions/cms/src/Internal/Commerce/WebhookHandler.php`
 
 - Signature verification is the first operation.
-- `handlePaymentSucceeded` checks `$order->status === OrderStatus::Confirmed || OrderStatus::Fulfilled` before processing -- correctly idempotent.
+- `handlePaymentSucceeded` checks `$order->status === OrderStatus::Confirmed || OrderStatus::Fulfilled` before processing - correctly idempotent.
 - `handlePaymentFailed` and `handleChargeRefunded` operate correctly.
 - Unrecognized webhook types are logged but not processed.
 

@@ -192,7 +192,7 @@ $result = $policy->execute(
         // This may throw on transient failure
         return $httpClient->get('https://api.external.com/data');
     },
-    logger: $logger,  // optional -- logs each retry attempt
+    logger: $logger,  // optional - logs each retry attempt
 );
 
 if ($result->succeeded) {
@@ -313,7 +313,7 @@ try {
     });
     // $result is the return value from the closure
 } catch (ResilienceException $e) {
-    // Circuit is open -- calls are being rejected
+    // Circuit is open - calls are being rejected
     // Handle gracefully: show cached data, queue for retry, etc.
 } catch (\Throwable $e) {
     // The operation itself failed (and the failure was recorded)
@@ -740,9 +740,9 @@ php bin/pulsar health:check
 **Output example:**
 
 ```
-  [OK] database -- Database responded in 2.3ms (2.3ms)
-  [WARN] redis -- Redis responded in 1203.5ms (slow) (1203.5ms)
-  [FAIL] external-api -- Connection refused (5001.2ms)
+  [OK] database - Database responded in 2.3ms (2.3ms)
+  [WARN] redis - Redis responded in 1203.5ms (slow) (1203.5ms)
+  [FAIL] external-api - Connection refused (5001.2ms)
 
 Overall status: unhealthy
 ```
@@ -769,12 +769,12 @@ php bin/pulsar health:repair
 **Output example:**
 
 ```
-  [OK] orphaned-temp-files -- No orphaned files found
-  [NEEDS REPAIR] stale-locks -- Found 3 stale lock(s)
+  [OK] orphaned-temp-files - No orphaned files found
+  [NEEDS REPAIR] stale-locks - Found 3 stale lock(s)
 
 Running 1 repair(s)...
 
-  [FIXED] stale-locks -- Released 3 stale lock(s)
+  [FIXED] stale-locks - Released 3 stale lock(s)
     -> Released lock "job_import_data"
     -> Released lock "job_sync_users"
     -> Released lock "job_generate_report"

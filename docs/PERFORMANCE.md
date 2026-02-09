@@ -20,7 +20,7 @@ php tools/bench/run.php --output=path/to/results.json
 
 | Metric    | Description                                                |
 | --------- | ---------------------------------------------------------- |
-| Boot (us) | Cold-boot time — kernel creation, route registration, boot |
+| Boot (us) | Cold-boot time - kernel creation, route registration, boot |
 | p50 (us)  | Median per-request latency over 1000 iterations            |
 | p95 (us)  | 95th percentile per-request latency                        |
 | RPS       | Estimated requests per second (from measured iterations)   |

@@ -36,8 +36,8 @@ server:
 http:
   address: '0.0.0.0:8080'
   middleware:
-    - gzip
-    - headers
+   - gzip
+   - headers
   headers:
     response:
       X-Powered-By: 'Pulsar'
@@ -55,8 +55,8 @@ http:
   static:
     dir: 'public'
     forbid:
-      - '.php'
-      - '.env'
+     - '.php'
+     - '.env'
 
 logs:
   mode: production
@@ -136,7 +136,7 @@ services:
   app:
     build: .
     ports:
-      - '8080:8080'
+     - '8080:8080'
     environment:
       APP_ENV: production
       APP_DEBUG: 'false'
@@ -154,14 +154,14 @@ services:
   caddy:
     image: caddy:latest
     ports:
-      - '80:80'
-      - '443:443'
-      - '443:443/udp'
+     - '80:80'
+     - '443:443'
+     - '443:443/udp'
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
+     - ./Caddyfile:/etc/caddy/Caddyfile
+     - caddy_data:/data
     depends_on:
-      - app
+     - app
 
 volumes:
   caddy_data:
@@ -256,7 +256,7 @@ Pulsar's `RoadRunnerRuntime` converts between RoadRunner's PSR-7 request/respons
 - Pulsar `Response` to `ResponseInterface` conversion
 - Header normalization and body stream handling
 
-No additional configuration is needed -- the bridge is wired automatically when the RoadRunner runtime is detected.
+No additional configuration is needed - the bridge is wired automatically when the RoadRunner runtime is detected.
 
 ## Graceful Reload
 
@@ -303,14 +303,14 @@ metrics:
 ```yaml
 # prometheus.yml scrape config
 scrape_configs:
-  - job_name: 'roadrunner'
+ - job_name: 'roadrunner'
     static_configs:
-      - targets: ['localhost:2112']
+     - targets: ['localhost:2112']
 
-  - job_name: 'pulsar-health'
+ - job_name: 'pulsar-health'
     metrics_path: '/_health'
     static_configs:
-      - targets: ['localhost:8080']
+     - targets: ['localhost:8080']
 ```
 
 ### Pulsar Health Endpoint

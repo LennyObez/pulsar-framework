@@ -13,7 +13,7 @@ php bin/pulsar optimize
 # With encryption at rest (requires PULSAR_MASTER_KEY)
 php bin/pulsar optimize --encrypt
 
-# Strict mode — fail on closure-based routes
+# Strict mode - fail on closure-based routes
 php bin/pulsar optimize --strict --encrypt
 ```
 
@@ -30,7 +30,7 @@ All sections are bundled into a single file with an HMAC integrity envelope. The
 
 ### Aliases
 
-`cache:warmup` is an alias for `optimize` — same behavior, discoverable under the `cache:` namespace:
+`cache:warmup` is an alias for `optimize` - same behavior, discoverable under the `cache:` namespace:
 
 ```bash
 php bin/pulsar cache:warmup --strict --encrypt
@@ -53,7 +53,7 @@ When a warm cache is present, the kernel boot pipeline changes:
 | Container setup    | Resolve bindings           | Apply pre-resolved hints    |
 | Strict mode        | N/A                        | Lock router (no new routes) |
 
-The boot pipeline detects cached data automatically — no code changes or flags are needed. When the manifest's `strict` flag is set, the router is locked after loading cached routes, preventing runtime route registration.
+The boot pipeline detects cached data automatically - no code changes or flags are needed. When the manifest's `strict` flag is set, the router is locked after loading cached routes, preventing runtime route registration.
 
 ## CI Validation
 
@@ -66,10 +66,10 @@ php bin/pulsar optimize:validate --strict --encrypt
 
 Steps performed:
 
-1. **Warm** — runs `optimize` to build the cache
-2. **Verify warm** — asserts `isWarm()` returns true
-3. **Verify loadable** — loads the cache and checks all four sections are present
-4. **Cleanup** — clears the validation cache
+1. **Warm** - runs `optimize` to build the cache
+2. **Verify warm** - asserts `isWarm()` returns true
+3. **Verify loadable** - loads the cache and checks all four sections are present
+4. **Cleanup** - clears the validation cache
 
 Exit code 0 on success, 1 on any failure. Example CI usage:
 
@@ -106,7 +106,7 @@ When a `MetricRegistry` is available in the container, the kernel emits a gauge 
 
 ## Route Match Timing
 
-On the dispatch hot path, route matching is timed when a `MetricRegistry` is present. When metrics are disabled, the timing code is completely bypassed — zero overhead.
+On the dispatch hot path, route matching is timed when a `MetricRegistry` is present. When metrics are disabled, the timing code is completely bypassed - zero overhead.
 
 | Metric                  | Type      | Unit         | Buckets                         |
 | ----------------------- | --------- | ------------ | ------------------------------- |
@@ -147,7 +147,7 @@ The variable naming convention is `DEPLOY_CHECK_{NAME}_SEVERITY` where `{NAME}` 
 
 ## See Also
 
-- [`DEPLOYMENT.md`](DEPLOYMENT.md) — Full deployment guide
-- [`PERFORMANCE.md`](PERFORMANCE.md) — Benchmark harness
-- [`PERFORMANCE_BUDGETS.md`](PERFORMANCE_BUDGETS.md) — Regression thresholds
-- [`CLI_REFERENCE.md`](CLI_REFERENCE.md) — Full command reference
+- [`DEPLOYMENT.md`](DEPLOYMENT.md) - Full deployment guide
+- [`PERFORMANCE.md`](PERFORMANCE.md) - Benchmark harness
+- [`PERFORMANCE_BUDGETS.md`](PERFORMANCE_BUDGETS.md) - Regression thresholds
+- [`CLI_REFERENCE.md`](CLI_REFERENCE.md) - Full command reference

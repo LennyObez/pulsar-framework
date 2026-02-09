@@ -317,6 +317,6 @@ This data helps you understand what visitors are looking for and identify conten
 
 ## Next Steps
 
-- [Content Management Guide](content-management.md) -- Writing SEO-friendly content
-- [Media Library Guide](media-library.md) -- Image alt text and media sitemaps
-- [Settings Reference](settings-reference.md) -- Complete SEO configuration reference
+- [Content Management Guide](content-management.md) - Writing SEO-friendly content
+- [Media Library Guide](media-library.md) - Image alt text and media sitemaps
+- [Settings Reference](settings-reference.md) - Complete SEO configuration reference

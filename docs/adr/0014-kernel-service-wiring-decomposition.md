@@ -8,16 +8,16 @@ Accepted
 
 The `Kernel` class grew to ~1,825 lines as new subsystems were added (security, auth, tenancy, feature flags, scheduler, queue, resilience, deploy, integrity, diagnostics). Each subsystem's service wiring (container registration, middleware attachment, route registration) was inlined as private methods in the Kernel. This made the Kernel difficult to navigate, test in isolation, and extend.
 
-The Kernel's responsibilities had expanded far beyond orchestrating boot and request handling — it had become a monolithic composition root with deep coupling to every subsystem's initialization details.
+The Kernel's responsibilities had expanded far beyond orchestrating boot and request handling - it had become a monolithic composition root with deep coupling to every subsystem's initialization details.
 
 Additionally, the post-audit review identified this as a maintainability and security concern: a single 1,800-line file increases the risk of merge conflicts, makes code review harder, and obscures the boot sequence.
 
 ## Decision Drivers
 
-1. **Maintainability** — Each subsystem's wiring logic should be self-contained and independently reviewable.
-2. **Testability** — Wiring classes can be unit-tested without booting the full Kernel.
-3. **Separation of concerns** — The Kernel should orchestrate the boot sequence, not implement every subsystem's initialization.
-4. **Consistency** — All wiring classes follow the same interface and pattern.
+1. **Maintainability** - Each subsystem's wiring logic should be self-contained and independently reviewable.
+2. **Testability** - Wiring classes can be unit-tested without booting the full Kernel.
+3. **Separation of concerns** - The Kernel should orchestrate the boot sequence, not implement every subsystem's initialization.
+4. **Consistency** - All wiring classes follow the same interface and pattern.
 
 ## Decision
 
@@ -82,13 +82,13 @@ private function wireServices(): void
 }
 ```
 
-The ordering is significant — it mirrors the original Kernel method call order to preserve boot-time dependency resolution.
+The ordering is significant - it mirrors the original Kernel method call order to preserve boot-time dependency resolution.
 
 ## Alternatives Considered
 
 ### Service providers with auto-discovery
 
-Laravel-style service providers with `register()` / `boot()` lifecycle. Rejected: adds indirection and an auto-discovery phase that conflicts with Pulsar's explicit-over-magic principle. The wiring classes are deliberately listed in a hardcoded array — the boot order is a design decision, not a discovery artifact.
+Laravel-style service providers with `register()` / `boot()` lifecycle. Rejected: adds indirection and an auto-discovery phase that conflicts with Pulsar's explicit-over-magic principle. The wiring classes are deliberately listed in a hardcoded array - the boot order is a design decision, not a discovery artifact.
 
 ### Keep the monolithic Kernel
 
@@ -100,18 +100,18 @@ Leave the Kernel as-is and rely on IDE folding/navigation. Rejected: 1,825 lines
 
 - Kernel reduced from ~1,825 to ~400 lines.
 - Each wiring class is focused, reviewable, and testable in isolation.
-- Adding a new subsystem requires adding one wiring class — no Kernel modification.
+- Adding a new subsystem requires adding one wiring class - no Kernel modification.
 - Boot order is explicit and documented in the Kernel's wiring array.
 
 ### Negative
 
 - Twenty new files in `src/Core/Wiring/`.
-- Developers must understand the wiring interface to add new subsystems (low barrier — the pattern is simple).
+- Developers must understand the wiring interface to add new subsystems (low barrier - the pattern is simple).
 
 ### Neutral
 
-- All wiring classes are `#[Internal]` — this is composition root infrastructure, not public API.
-- Existing tests pass unchanged — this is a pure structural refactoring with no behavioral change.
+- All wiring classes are `#[Internal]` - this is composition root infrastructure, not public API.
+- Existing tests pass unchanged - this is a pure structural refactoring with no behavioral change.
 
 ## Security Impact
 

@@ -13,8 +13,8 @@ All CMS API endpoints are registered by `CmsExtension::boot()`. Admin endpoints 
 
 **Parameters:**
 
-- `path` (string, required) -- Content URL path (e.g., `docs/getting-started`)
-- `locale` (string, required for non-default) -- BCP 47 locale code (e.g., `en`, `fr`)
+- `path` (string, required) - Content URL path (e.g., `docs/getting-started`)
+- `locale` (string, required for non-default) - BCP 47 locale code (e.g., `en`, `fr`)
 
 **Response:** Rendered HTML page using the active theme template.
 
@@ -43,7 +43,7 @@ Enabled only when `commerce` is configured in `CmsConfig`.
 
 **Parameters:**
 
-- `token` (string, required) -- Cryptographically signed download token
+- `token` (string, required) - Cryptographically signed download token
 
 **Status Codes:**
 
@@ -373,6 +373,6 @@ All admin endpoints use the prefix `/admin/cms` and require authentication.
 
 ## Related Documentation
 
-- [Import Format Specification](import-format.md) -- JSON schema for site definition imports
-- [Architecture Overview](architecture.md) -- Route registration and boot sequence
-- [Content Type API](content-type-api.md) -- Custom field definitions for content endpoints
+- [Import Format Specification](import-format.md) - JSON schema for site definition imports
+- [Architecture Overview](architecture.md) - Route registration and boot sequence
+- [Content Type API](content-type-api.md) - Custom field definitions for content endpoints

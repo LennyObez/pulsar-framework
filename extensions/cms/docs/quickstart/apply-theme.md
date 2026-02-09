@@ -66,7 +66,7 @@ POST /admin/cms/themes/{id}/preview
 ```
 
 3. A preview session starts. You see the site rendered with the new theme.
-4. Only your browser session shows the preview -- public visitors still see the current active theme.
+4. Only your browser session shows the preview - public visitors still see the current active theme.
 
 <!-- Screenshot: Site rendered with preview theme -->
 
@@ -113,5 +113,5 @@ Your site is now running with the new theme. Theme assets are deployed to the pu
 
 ## Next Steps
 
-- [Theme Management Guide](../user/theme-management.md) -- Inheritance, safe mode, and provenance
-- [Live CSS Guide](../user/live-css-guide.md) -- Customize theme styles without editing files
+- [Theme Management Guide](../user/theme-management.md) - Inheritance, safe mode, and provenance
+- [Live CSS Guide](../user/live-css-guide.md) - Customize theme styles without editing files

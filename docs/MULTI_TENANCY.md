@@ -389,9 +389,9 @@ This middleware bridges tenant resolution into the HTTP request pipeline. It sho
 1. Calls the configured `TenantResolverInterface` to attempt resolution from the request.
 2. If no tenant is resolved and a `defaultTenant` is configured, falls back to the default.
 3. If a tenant is resolved:
-   - Sets the tenant on `TenantContext` via `set()`.
-   - Attaches the tenant to the request as the `_tenant` attribute (accessible via `$request->attribute('_tenant')`).
-   - Logs the resolution event.
+  - Sets the tenant on `TenantContext` via `set()`.
+  - Attaches the tenant to the request as the `_tenant` attribute (accessible via `$request->attribute('_tenant')`).
+  - Logs the resolution event.
 4. If no tenant is resolved (and no default is configured), logs a notice and passes the request through without a tenant context.
 5. Calls the next middleware in the pipeline.
 

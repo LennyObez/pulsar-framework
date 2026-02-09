@@ -352,6 +352,6 @@ Cache tags enable targeted invalidation:
 
 ## Related Documentation
 
-- [Theme Development Guide](theme-development.md) -- Building themes that use these directives
-- [Architecture Overview](architecture.md) -- Cache invalidation flow
-- [API Endpoint Reference](api-reference.md) -- REST API for content and media
+- [Theme Development Guide](theme-development.md) - Building themes that use these directives
+- [Architecture Overview](architecture.md) - Cache invalidation flow
+- [API Endpoint Reference](api-reference.md) - REST API for content and media

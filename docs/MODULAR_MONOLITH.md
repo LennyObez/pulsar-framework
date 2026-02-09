@@ -17,20 +17,20 @@ extensions/<name>/src/
 ├── <Name>Extension.php            # Extension entry point
 ├── <Name>ServiceProvider.php      # Container bindings
 │
-├── Contracts/                     # PUBLIC API — interfaces marked #[Api]
+├── Contracts/                     # PUBLIC API - interfaces marked #[Api]
 │   ├── <Port>Interface.php        # Port definitions
 │   └── ...
 │
-├── Domain/                        # PUBLIC — value objects, entities, enums
+├── Domain/                        # PUBLIC - value objects, entities, enums
 │   └── ...
 │
-├── Config/                        # PUBLIC — configuration DTOs
+├── Config/                        # PUBLIC - configuration DTOs
 │   └── ...
 │
-├── Exception/                     # PUBLIC — exception classes
+├── Exception/                     # PUBLIC - exception classes
 │   └── ...
 │
-├── Features/                      # VERTICAL SLICES — internal by default
+├── Features/                      # VERTICAL SLICES - internal by default
 │   ├── <UseCaseName>/
 │   │   ├── <UseCaseName>Handler.php
 │   │   ├── <UseCaseName>Request.php
@@ -38,7 +38,7 @@ extensions/<name>/src/
 │   │   └── (optional controller)
 │   └── ...
 │
-├── Internal/                      # PRIVATE — implementation details
+├── Internal/                      # PRIVATE - implementation details
 │   ├── Infrastructure/            # Adapter implementations
 │   │   ├── Provider/
 │   │   ├── Clock/
@@ -202,13 +202,13 @@ $container->bind(PaymentGatewayInterface::class, PaymentGateway::class);
 
 To migrate an existing extension to this architecture:
 
-1. **Create `Contracts/`** — Move or create interfaces. Mark all with `#[Api]`.
-2. **Create `Internal/Infrastructure/`** — Move adapter implementations. Mark with `#[Internal]`.
-3. **Identify slices** — Find use cases with cross-cutting orchestration in gateways/processors.
-4. **Extract slices** — Create `Features/<UseCaseName>/` with Handler + Request + Result.
-5. **Update orchestrators** — Gateway/Processor delegates to handlers.
-6. **Update service provider** — Add bindings for new handlers, interfaces, and adapters.
-7. **Update tests** — Create handler-level tests, update imports.
+1. **Create `Contracts/`** - Move or create interfaces. Mark all with `#[Api]`.
+2. **Create `Internal/Infrastructure/`** - Move adapter implementations. Mark with `#[Internal]`.
+3. **Identify slices** - Find use cases with cross-cutting orchestration in gateways/processors.
+4. **Extract slices** - Create `Features/<UseCaseName>/` with Handler + Request + Result.
+5. **Update orchestrators** - Gateway/Processor delegates to handlers.
+6. **Update service provider** - Add bindings for new handlers, interfaces, and adapters.
+7. **Update tests** - Create handler-level tests, update imports.
 
 ## Exemplar
 

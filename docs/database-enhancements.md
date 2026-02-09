@@ -76,7 +76,7 @@ Multiple read replicas are selected via round-robin rotation.
 
 ## Failover
 
-Pulsar detects primary failures and switches to a new endpoint. It does **not** promote replicas -- that is the infrastructure's responsibility (RDS Multi-AZ, Patroni, ProxySQL, etc.).
+Pulsar detects primary failures and switches to a new endpoint. It does **not** promote replicas - that is the infrastructure's responsibility (RDS Multi-AZ, Patroni, ProxySQL, etc.).
 
 ### Configuration
 

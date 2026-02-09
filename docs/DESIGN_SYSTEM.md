@@ -840,7 +840,7 @@ Dark mode activates automatically via `prefers-color-scheme: dark`, or explicitl
 </html>
 ```
 
-All semantic color tokens and component tokens are remapped in dark mode. No markup changes are needed -- the same HTML works in both themes.
+All semantic color tokens and component tokens are remapped in dark mode. No markup changes are needed - the same HTML works in both themes.
 
 ### Custom Themes
 

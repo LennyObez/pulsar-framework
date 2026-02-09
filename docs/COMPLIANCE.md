@@ -215,7 +215,7 @@ Pulsar is designed for regulated, mission-critical domains. This document maps P
 - **CC7.3 (Incident detection and response)**: `IncidentReporterInterface`, severity classification.
 - **CC7.4 (Incident management and recovery)**: Incident records with structured metadata for investigation.
 - **CC8.1 (Change management)**: API stability tracking, boundary enforcement, deployment severity gates.
-- **A1.2 (Availability — recovery)**: Resilience module (circuit breaker, retry), queue/supervisor for job processing.
+- **A1.2 (Availability - recovery)**: Resilience module (circuit breaker, retry), queue/supervisor for job processing.
 
 ### ISO 27001 (Information Security Management Systems)
 

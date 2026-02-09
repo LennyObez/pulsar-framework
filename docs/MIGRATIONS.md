@@ -93,7 +93,7 @@ Output:
   ----------------------------------------------------------------------------------------------------
   20260101120000    create_users                              Applied     1        2026-01-01 12:00:00
   20260102120000    create_posts                              Applied     1        2026-01-01 12:00:01
-  20260201120000    add_user_avatar                           Pending     -        -
+  20260201120000    add_user_avatar                           Pending    -        -
 ```
 
 ## Migration Tracking Table

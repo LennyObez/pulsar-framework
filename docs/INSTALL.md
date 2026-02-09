@@ -1,6 +1,6 @@
 # Installation Guide
 
-Pulsar Framework 1.0.0-rc.8 -- Installation and setup for PHP 8.5 HMVC applications targeting regulated, mission-critical domains.
+Pulsar Framework 1.0.0-rc.11 -- Installation and setup for PHP 8.5 HMVC applications targeting regulated, mission-critical domains.
 
 ## System Requirements
 
@@ -131,7 +131,7 @@ Pulsar Framework Diagnostics
 ========================================
 
 [INFO] Framework
-  Version:      1.0.0-rc.8
+  Version:      1.0.0-rc.11
   Kernel:       Booted
   Extensions:   0 loaded
   Routes:       1 registered

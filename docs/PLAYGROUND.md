@@ -34,7 +34,7 @@ The playground is a split-pane interface:
 - **Left panel**: CSS editor with syntax highlighting and line numbers
 - **Right panel**: Live preview of the component catalog in an iframe
 
-CSS changes in the editor apply instantly to the preview. There is no page reload -- styles are injected directly into the iframe via DOM manipulation.
+CSS changes in the editor apply instantly to the preview. There is no page reload - styles are injected directly into the iframe via DOM manipulation.
 
 ## CSS Editor
 

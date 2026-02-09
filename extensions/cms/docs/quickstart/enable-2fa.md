@@ -83,5 +83,5 @@ Your account is now protected with two-factor authentication. On your next login
 
 ## Next Steps
 
-- [2FA Setup Guide](../user/2fa-setup.md) -- Managing 2FA, recovery codes, and disabling
-- [Security Model](../security/security-model.md) -- Understanding step-up authentication
+- [2FA Setup Guide](../user/2fa-setup.md) - Managing 2FA, recovery codes, and disabling
+- [Security Model](../security/security-model.md) - Understanding step-up authentication

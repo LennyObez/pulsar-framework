@@ -1,14 +1,18 @@
 {
   "name": "pulsar/observability-export",
-  "version": "1.0.0-rc.8",
+  "version": "1.0.0-rc.11",
   "description": "File-based observability data export (JSON Lines) for spans, metrics, and errors",
   "trust_tier": "core",
   "extension_class": "Pulsar\\Extension\\ObservabilityExport\\ObservabilityExportExtension",
   "pulsar": {
-    "min_version": "1.0.0-rc.8"
+    "min_version": "1.0.0-rc.11"
   },
   "provides": {
-    "services": ["SpanExporter", "MetricsExporter", "ErrorExporter"],
+    "services": [
+      "SpanExporter",
+      "MetricsExporter",
+      "ErrorExporter"
+    ],
     "routes": false,
     "commands": []
   }

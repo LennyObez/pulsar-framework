@@ -384,7 +384,7 @@ Trusted templates are shipped with the application and written by developers:
 ```php
 use Pulsar\View\Engine\TemplateEngineInterface;
 
-// Trusted rendering — compile-to-PHP
+// Trusted rendering - compile-to-PHP
 $html = $engine->render('dashboard.index', ['user' => $user]);
 ```
 
