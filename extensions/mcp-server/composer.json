@@ -1,0 +1,19 @@
+{
+  "name": "pulsar/mcp-server",
+  "description": "MCP server extension for Pulsar Framework",
+  "type": "pulsar-extension",
+  "license": "MIT",
+  "require": {
+    "php": ">=8.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "Pulsar\\Extension\\McpServer\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Pulsar\\Extension\\McpServer\\Tests\\": "tests/"
+    }
+  }
+}
