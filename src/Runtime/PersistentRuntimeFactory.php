@@ -22,7 +22,7 @@ use Pulsar\Runtime\Upgrade\UpgradeContext;
 final readonly class PersistentRuntimeFactory implements PersistentRuntimeFactoryInterface
 {
     public function __construct(
-        private readonly ContainerInterface $container,
+        private ContainerInterface $container,
     ) {}
 
     public function create(

@@ -37,7 +37,7 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface
      *
      * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
      */
-    public function pipe(MiddlewareInterface|string $middleware): self
+    public function pipe(MiddlewareInterface|string $middleware): static
     {
         $this->middleware[] = $middleware;
         return $this;

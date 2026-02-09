@@ -33,7 +33,7 @@ use SodiumException;
 final readonly class EvidenceVerifier
 {
     public function __construct(
-        private readonly ?HmacInterface $hmac = null,
+        private ?HmacInterface $hmac = null,
     ) {}
 
     /**
