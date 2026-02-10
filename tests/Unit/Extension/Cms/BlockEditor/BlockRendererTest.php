@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Extension\Cms\BlockEditor;
+namespace Pulsar\Tests\Unit\Extension\Cms\BlockEditor;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

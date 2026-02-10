@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Integration\Extension\Cms\VerificationMatrix;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,6 +31,7 @@ use function usort;
  * Validates path uniqueness, cycle detection, cascading recomputation,
  * revision creation, soft delete, tenant isolation, event store integrity.
  */
+#[CoversClass(Content::class)]
 #[Group('verification-matrix')]
 final class DataIntegrityVerificationTest extends TestCase
 {
@@ -37,7 +39,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D1: Path uniqueness — no two translations share the same (locale, path) pair.
      */
     #[Test]
-    public function test_d1_path_uniqueness(): void
+    public function d1PathUniqueness(): void
     {
         $store = new DataIntegrityTranslationStore();
 
@@ -66,7 +68,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D2: Cycle detection — a content item cannot be its own ancestor.
      */
     #[Test]
-    public function test_d2_cycle_detection(): void
+    public function d2CycleDetection(): void
     {
         $repo = new DataIntegrityContentRepository();
 
@@ -88,7 +90,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D3: Cascading path recomputation — moving a parent recomputes child paths.
      */
     #[Test]
-    public function test_d3_cascading_path_recomputation(): void
+    public function d3CascadingPathRecomputation(): void
     {
         $contentRepo = new DataIntegrityContentRepository();
 
@@ -117,7 +119,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D4: Revision creation — publishing creates a content revision record.
      */
     #[Test]
-    public function test_d4_revision_on_publish(): void
+    public function d4RevisionOnPublish(): void
     {
         $content = Content::create(id: 'rev-001', contentType: ContentType::Article, authorId: 'a');
         $published = $content->publish();
@@ -132,7 +134,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D5: Soft delete — deleted content is not returned by queries.
      */
     #[Test]
-    public function test_d5_soft_delete(): void
+    public function d5SoftDelete(): void
     {
         $repo = new DataIntegrityContentRepository();
 
@@ -157,7 +159,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D6: Tenant isolation — content from one tenant is invisible to another.
      */
     #[Test]
-    public function test_d6_tenant_isolation(): void
+    public function d6TenantIsolation(): void
     {
         $repo = new DataIntegrityContentRepository();
 
@@ -179,7 +181,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D7: Sentinel tenant key — null tenant_id returns only non-tenant content.
      */
     #[Test]
-    public function test_d7_sentinel_tenant_key(): void
+    public function d7SentinelTenantKey(): void
     {
         $repo = new DataIntegrityContentRepository();
 
@@ -199,7 +201,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D8: Search vector updates — translation changes update fulltext fields.
      */
     #[Test]
-    public function test_d8_search_vector_updates(): void
+    public function d8SearchVectorUpdates(): void
     {
         $t = ContentTranslation::create(
             id: 'sv-001',
@@ -221,7 +223,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D9: Event store monotonicity — event sequences are strictly increasing.
      */
     #[Test]
-    public function test_d9_event_store_monotonicity(): void
+    public function d9EventStoreMonotonicity(): void
     {
         if (!in_array('blake2b', hash_algos(), true)) {
             self::markTestSkipped('blake2b not available');
@@ -250,7 +252,7 @@ final class DataIntegrityVerificationTest extends TestCase
      * D10: Atomic snapshot — snapshots capture all event data consistently.
      */
     #[Test]
-    public function test_d10_atomic_snapshot(): void
+    public function d10AtomicSnapshot(): void
     {
         if (!in_array('blake2b', hash_algos(), true)) {
             self::markTestSkipped('blake2b not available');

@@ -18,7 +18,7 @@ final class CspHashComputerTest extends TestCase
     // ── SHA-256 computation against known vector ────────────────────
 
     #[Test]
-    public function test_sha256_computation_against_known_vector(): void
+    public function sha256ComputationAgainstKnownVector(): void
     {
         $computer = $this->createComputer();
         $input = 'body { color: red; }';
@@ -34,7 +34,7 @@ final class CspHashComputerTest extends TestCase
     // ── Base64 encoding ─────────────────────────────────────────────
 
     #[Test]
-    public function test_result_is_base64_encoded(): void
+    public function resultIsBase64Encoded(): void
     {
         $computer = $this->createComputer();
         $result = $computer->computeHash('.test { display: flex; }');
@@ -49,7 +49,7 @@ final class CspHashComputerTest extends TestCase
     // ── Output format ───────────────────────────────────────────────
 
     #[Test]
-    public function test_output_format_sha256_prefix(): void
+    public function outputFormatSha256Prefix(): void
     {
         $computer = $this->createComputer();
         $result = $computer->computeHash('div { margin: 0; }');
@@ -60,7 +60,7 @@ final class CspHashComputerTest extends TestCase
     // ── Empty string ────────────────────────────────────────────────
 
     #[Test]
-    public function test_empty_input_produces_valid_hash(): void
+    public function emptyInputProducesValidHash(): void
     {
         $computer = $this->createComputer();
         $result = $computer->computeHash('');
@@ -73,7 +73,7 @@ final class CspHashComputerTest extends TestCase
     // ── Different inputs produce different hashes ───────────────────
 
     #[Test]
-    public function test_different_inputs_produce_different_hashes(): void
+    public function differentInputsProduceDifferentHashes(): void
     {
         $computer = $this->createComputer();
 
@@ -86,7 +86,7 @@ final class CspHashComputerTest extends TestCase
     // ── Same input produces same hash ───────────────────────────────
 
     #[Test]
-    public function test_same_input_produces_same_hash(): void
+    public function sameInputProducesSameHash(): void
     {
         $computer = $this->createComputer();
 

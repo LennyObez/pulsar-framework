@@ -17,6 +17,7 @@ use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueDriverInterface;
 
 use function json_decode;
+use function str_repeat;
 use function time;
 
 use const JSON_THROW_ON_ERROR;
@@ -116,5 +117,110 @@ final class QueueFailedCommandTest extends TestCase
         self::assertSame('App\\Jobs\\ProcessPayment', $data[0]['job_class']);
         self::assertSame('Insufficient funds', $data[0]['exception']);
         self::assertSame(2, $data[0]['attempts']);
+    }
+
+    #[Test]
+    public function tableOutputTruncatesLongExceptionText(): void
+    {
+        $driver = $this->createStub(QueueDriverInterface::class);
+        $dlq = new DeadLetterQueue($driver);
+
+        $longException = str_repeat('X', 200);
+
+        $record = new JobRecord(
+            id: 'job-long',
+            queue: 'default',
+            jobClass: 'App\\Jobs\\LongError',
+            payload: '{}',
+            attempts: 1,
+            status: JobRecordStatus::Failed,
+            createdAt: time(),
+            availableAt: time(),
+        );
+        $dlq->store($record, $longException);
+
+        $command = new QueueFailedCommand($dlq);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('queue:failed'), $output);
+
+        self::assertSame(ExitCode::Success->value, $exit);
+        self::assertStringContainsString('...', $output->buffer);
+        self::assertStringNotContainsString($longException, $output->buffer);
+    }
+
+    #[Test]
+    public function tableOutputShowsShortExceptionWithoutTruncation(): void
+    {
+        $driver = $this->createStub(QueueDriverInterface::class);
+        $dlq = new DeadLetterQueue($driver);
+
+        $shortException = 'Short error message';
+
+        $record = new JobRecord(
+            id: 'job-short',
+            queue: 'default',
+            jobClass: 'App\\Jobs\\ShortError',
+            payload: '{}',
+            attempts: 1,
+            status: JobRecordStatus::Failed,
+            createdAt: time(),
+            availableAt: time(),
+        );
+        $dlq->store($record, $shortException);
+
+        $command = new QueueFailedCommand($dlq);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('queue:failed'), $output);
+
+        self::assertSame(ExitCode::Success->value, $exit);
+        self::assertStringContainsString('Short error message', $output->buffer);
+    }
+
+    #[Test]
+    public function multipleFailedJobsInTableOutput(): void
+    {
+        $driver = $this->createStub(QueueDriverInterface::class);
+        $dlq = new DeadLetterQueue($driver);
+
+        $dlq->store(
+            new JobRecord(
+                id: 'job-a',
+                queue: 'emails',
+                jobClass: 'App\\Jobs\\SendEmail',
+                payload: '{}',
+                attempts: 1,
+                status: JobRecordStatus::Failed,
+                createdAt: time(),
+                availableAt: time(),
+            ),
+            'SMTP error',
+        );
+        $dlq->store(
+            new JobRecord(
+                id: 'job-b',
+                queue: 'payments',
+                jobClass: 'App\\Jobs\\ProcessPayment',
+                payload: '{}',
+                attempts: 3,
+                status: JobRecordStatus::Failed,
+                createdAt: time(),
+                availableAt: time(),
+            ),
+            'Gateway timeout',
+        );
+
+        $command = new QueueFailedCommand($dlq);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('queue:failed'), $output);
+
+        self::assertSame(ExitCode::Success->value, $exit);
+        self::assertStringContainsString('Failed Jobs (2)', $output->buffer);
+        self::assertStringContainsString('job-a', $output->buffer);
+        self::assertStringContainsString('job-b', $output->buffer);
+        self::assertStringContainsString('SMTP error', $output->buffer);
+        self::assertStringContainsString('Gateway timeout', $output->buffer);
     }
 }

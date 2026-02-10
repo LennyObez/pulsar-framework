@@ -35,7 +35,7 @@ final class RemoteAddressValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_subnet_mode_ipv4_same_subnet_passes(): void
+    public function subnetModeIpv4SameSubnetPasses(): void
     {
         $validator = new RemoteAddressValidator(mode: 'subnet', ipv4Mask: 24);
 
@@ -46,7 +46,7 @@ final class RemoteAddressValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_subnet_mode_ipv4_different_subnet_fails(): void
+    public function subnetModeIpv4DifferentSubnetFails(): void
     {
         $validator = new RemoteAddressValidator(mode: 'subnet', ipv4Mask: 24);
 
@@ -57,7 +57,7 @@ final class RemoteAddressValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_strict_mode_exact_match_passes(): void
+    public function strictModeExactMatchPasses(): void
     {
         $validator = new RemoteAddressValidator(mode: 'strict');
 
@@ -68,7 +68,7 @@ final class RemoteAddressValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_strict_mode_different_ip_fails(): void
+    public function strictModeDifferentIpFails(): void
     {
         $validator = new RemoteAddressValidator(mode: 'strict');
 
@@ -79,7 +79,7 @@ final class RemoteAddressValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_get_name_returns_remote_address(): void
+    public function getNameReturnsRemoteAddress(): void
     {
         $validator = new RemoteAddressValidator();
 
@@ -87,7 +87,7 @@ final class RemoteAddressValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_subnet_mode_ipv4_wide_mask_passes(): void
+    public function subnetModeIpv4WideMaskPasses(): void
     {
         $validator = new RemoteAddressValidator(mode: 'subnet', ipv4Mask: 16);
 
@@ -98,7 +98,7 @@ final class RemoteAddressValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_invalid_ip_returns_false(): void
+    public function invalidIpReturnsFalse(): void
     {
         $validator = new RemoteAddressValidator(mode: 'subnet', ipv4Mask: 24);
 
@@ -109,7 +109,7 @@ final class RemoteAddressValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_ipv6_same_subnet_passes(): void
+    public function ipv6SameSubnetPasses(): void
     {
         $validator = new RemoteAddressValidator(mode: 'subnet', ipv6Mask: 48);
 
@@ -120,7 +120,7 @@ final class RemoteAddressValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_ipv6_different_subnet_fails(): void
+    public function ipv6DifferentSubnetFails(): void
     {
         $validator = new RemoteAddressValidator(mode: 'subnet', ipv6Mask: 48);
 

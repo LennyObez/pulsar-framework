@@ -55,7 +55,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     // -- Unsigned archives ----------------------------------------------------
 
     #[Test]
-    public function test_unsigned_archive_returns_unsigned_result(): void
+    public function unsignedArchiveReturnsUnsignedResult(): void
     {
         $archivePath = $this->createTempFile('archive content');
         $config = new ThemesConfig(trustedPublicKeys: []);
@@ -69,7 +69,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     }
 
     #[Test]
-    public function test_unsigned_archive_acceptable_when_not_required(): void
+    public function unsignedArchiveAcceptableWhenNotRequired(): void
     {
         $archivePath = $this->createTempFile('archive content');
         $config = new ThemesConfig(requireSignedThemes: false);
@@ -81,7 +81,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     }
 
     #[Test]
-    public function test_unsigned_archive_not_acceptable_when_required(): void
+    public function unsignedArchiveNotAcceptableWhenRequired(): void
     {
         $archivePath = $this->createTempFile('archive content');
         $config = new ThemesConfig(requireSignedThemes: true);
@@ -95,7 +95,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     // -- Valid Ed25519 signature -----------------------------------------------
 
     #[Test]
-    public function test_valid_ed25519_signature_verified(): void
+    public function validEd25519SignatureVerified(): void
     {
         $keypair = sodium_crypto_sign_keypair();
         $secretKey = sodium_crypto_sign_secretkey($keypair);
@@ -122,7 +122,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     // -- Invalid Ed25519 signature --------------------------------------------
 
     #[Test]
-    public function test_invalid_ed25519_signature_detected(): void
+    public function invalidEd25519SignatureDetected(): void
     {
         $keypair = sodium_crypto_sign_keypair();
         $publicKey = sodium_crypto_sign_publickey($keypair);
@@ -147,7 +147,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     // -- Tampered archive -----------------------------------------------------
 
     #[Test]
-    public function test_tampered_archive_signature_fails(): void
+    public function tamperedArchiveSignatureFails(): void
     {
         $keypair = sodium_crypto_sign_keypair();
         $secretKey = sodium_crypto_sign_secretkey($keypair);
@@ -173,7 +173,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     // -- Multiple trusted keys ------------------------------------------------
 
     #[Test]
-    public function test_multiple_trusted_keys_first_matches(): void
+    public function multipleTrustedKeysFirstMatches(): void
     {
         $keypair1 = sodium_crypto_sign_keypair();
         $secretKey1 = sodium_crypto_sign_secretkey($keypair1);
@@ -201,7 +201,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     }
 
     #[Test]
-    public function test_multiple_trusted_keys_second_matches(): void
+    public function multipleTrustedKeysSecondMatches(): void
     {
         $keypair1 = sodium_crypto_sign_keypair();
         $publicKey1 = sodium_crypto_sign_publickey($keypair1);
@@ -229,7 +229,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     }
 
     #[Test]
-    public function test_no_trusted_keys_match(): void
+    public function noTrustedKeysMatch(): void
     {
         $keypair = sodium_crypto_sign_keypair();
         $secretKey = sodium_crypto_sign_secretkey($keypair);
@@ -255,7 +255,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     // -- Non-existent archive -------------------------------------------------
 
     #[Test]
-    public function test_nonexistent_archive_returns_failed(): void
+    public function nonexistentArchiveReturnsFailed(): void
     {
         $config = new ThemesConfig();
         $verifier = new ThemeProvenanceVerifier($config, new NullLogger());
@@ -269,7 +269,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     // -- Invalid signature format ---------------------------------------------
 
     #[Test]
-    public function test_invalid_signature_format_returns_failed(): void
+    public function invalidSignatureFormatReturnsFailed(): void
     {
         $keypair = sodium_crypto_sign_keypair();
         $publicKey = sodium_crypto_sign_publickey($keypair);
@@ -293,7 +293,7 @@ final class ThemeProvenanceVerifierTest extends TestCase
     // -- Malformed public key skipped -----------------------------------------
 
     #[Test]
-    public function test_malformed_public_key_skipped_gracefully(): void
+    public function malformedPublicKeySkippedGracefully(): void
     {
         $keypair = sodium_crypto_sign_keypair();
         $secretKey = sodium_crypto_sign_secretkey($keypair);

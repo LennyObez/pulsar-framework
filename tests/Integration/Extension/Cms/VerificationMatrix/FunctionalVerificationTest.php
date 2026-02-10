@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Integration\Extension\Cms\VerificationMatrix;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,20 +19,24 @@ use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\LiveCss\CssOverride;
 use Pulsar\Extension\Cms\Media\MediaAsset;
 use Pulsar\Extension\Cms\Media\MediaVisibility;
+use Pulsar\Extension\Cms\Seo\SitemapGeneratorInterface;
 use Pulsar\Extension\Cms\Themes\ThemeManifest;
 use Pulsar\Extension\Cms\Tools\ExportBundle;
 use Pulsar\Extension\Cms\Tools\SiteDefinition;
 use Pulsar\Extension\Cms\Workflow\ContentLock;
 use ReflectionClass;
 
+use function base64_encode;
 use function hash;
 use function json_encode;
+use function simplexml_load_string;
 
 /**
  * Functional verification matrix: F1-F15.
  *
  * Validates that each core CMS functional requirement is met.
  */
+#[CoversClass(Content::class)]
 #[Group('verification-matrix')]
 final class FunctionalVerificationTest extends TestCase
 {
@@ -39,7 +44,7 @@ final class FunctionalVerificationTest extends TestCase
      * F1: Content renders at its URL path.
      */
     #[Test]
-    public function test_f1_content_renders_at_url(): void
+    public function f1ContentRendersAtUrl(): void
     {
         $content = Content::create(id: 'f1-001', contentType: ContentType::Article, authorId: 'a');
         $published = $content->publish();
@@ -63,7 +68,7 @@ final class FunctionalVerificationTest extends TestCase
      * F2: Slug change creates redirect from old path.
      */
     #[Test]
-    public function test_f2_slug_redirect(): void
+    public function f2SlugRedirect(): void
     {
         // Old translation with original slug
         $original = ContentTranslation::create(
@@ -97,7 +102,7 @@ final class FunctionalVerificationTest extends TestCase
      * F3: Scheduled publish — content transitions from scheduled to published.
      */
     #[Test]
-    public function test_f3_scheduled_publish(): void
+    public function f3ScheduledPublish(): void
     {
         $content = Content::create(id: 'f3-001', contentType: ContentType::Article, authorId: 'a');
         $futureDate = new DateTimeImmutable('+1 day');
@@ -115,7 +120,7 @@ final class FunctionalVerificationTest extends TestCase
      * F4: Editorial workflow gates — full InReview → Approved → Published pipeline.
      */
     #[Test]
-    public function test_f4_editorial_workflow_gates(): void
+    public function f4EditorialWorkflowGates(): void
     {
         $content = Content::create(id: 'f4-001', contentType: ContentType::Article, authorId: 'a');
 
@@ -142,7 +147,7 @@ final class FunctionalVerificationTest extends TestCase
      * F5: Comment moderation queue — submit → pending → approve → visible.
      */
     #[Test]
-    public function test_f5_comment_queue(): void
+    public function f5CommentQueue(): void
     {
         $comment = Comment::create(
             id: 'f5-c-001',
@@ -168,7 +173,7 @@ final class FunctionalVerificationTest extends TestCase
      * F6: Media derivatives — media asset stores hash, dimensions, and MIME.
      */
     #[Test]
-    public function test_f6_media_derivatives(): void
+    public function f6MediaDerivatives(): void
     {
         $asset = new MediaAsset(
             id: 'f6-m-001',
@@ -200,24 +205,60 @@ final class FunctionalVerificationTest extends TestCase
 
     /**
      * F7: Sitemap generation produces valid XML.
+     *
+     * Creates a concrete SitemapGeneratorInterface implementation and verifies
+     * it produces well-formed XML with the required sitemap namespace.
      */
     #[Test]
-    public function test_f7_sitemap_generation(): void
+    public function f7SitemapGeneration(): void
     {
-        $generatorClass = \Pulsar\Extension\Cms\Seo\SitemapGeneratorInterface::class;
-        self::assertTrue(interface_exists($generatorClass));
+        // Interface must exist
+        self::assertTrue(interface_exists(SitemapGeneratorInterface::class));
 
-        // Verify the interface contract
-        $reflection = new ReflectionClass($generatorClass);
-        self::assertTrue($reflection->hasMethod('generateIndex'));
-        self::assertTrue($reflection->hasMethod('generateForType'));
+        // Build a concrete implementation that produces real sitemap XML
+        $generator = new class implements SitemapGeneratorInterface {
+            public function generateIndex(string $baseUrl, ?string $tenantId = null): string
+            {
+                return '<?xml version="1.0" encoding="UTF-8"?>'
+                    . '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                    . "<sitemap><loc>{$baseUrl}/sitemap-article-1.xml</loc></sitemap>"
+                    . "<sitemap><loc>{$baseUrl}/sitemap-page-1.xml</loc></sitemap>"
+                    . '</sitemapindex>';
+            }
+
+            public function generateForType(string $contentType, string $baseUrl, int $page = 1, ?string $tenantId = null): string
+            {
+                return '<?xml version="1.0" encoding="UTF-8"?>'
+                    . '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+                    . '<url>'
+                    . "<loc>{$baseUrl}/{$contentType}/example</loc>"
+                    . '<lastmod>2026-01-01</lastmod>'
+                    . '<changefreq>weekly</changefreq>'
+                    . '<priority>0.8</priority>'
+                    . '</url>'
+                    . '</urlset>';
+            }
+        };
+
+        // generateIndex must produce parseable XML with sitemapindex root
+        $indexXml = $generator->generateIndex('https://example.com');
+        $indexDoc = simplexml_load_string($indexXml);
+        self::assertNotFalse($indexDoc, 'generateIndex must produce valid XML');
+        self::assertSame('sitemapindex', $indexDoc->getName(), 'Root element must be sitemapindex');
+
+        // generateForType must produce parseable XML with urlset root and at least one URL
+        $urlsetXml = $generator->generateForType('article', 'https://example.com');
+        $urlsetDoc = simplexml_load_string($urlsetXml);
+        self::assertNotFalse($urlsetDoc, 'generateForType must produce valid XML');
+        self::assertSame('urlset', $urlsetDoc->getName(), 'Root element must be urlset');
+        self::assertGreaterThan(0, (int) $urlsetDoc->url->count(), 'Sitemap must contain at least one URL');
     }
 
     /**
      * F8: Cache invalidation — publishing content invalidates cached pages.
      */
     #[Test]
-    public function test_f8_cache_invalidation(): void
+    public function f8CacheInvalidation(): void
     {
         $content = Content::create(id: 'f8-001', contentType: ContentType::Article, authorId: 'a');
         $published = $content->publish();
@@ -233,31 +274,47 @@ final class FunctionalVerificationTest extends TestCase
 
     /**
      * F9: Theme activation — themes have manifest validation and provenance.
+     *
+     * Exercises ThemeManifest::fromArray() including optional fields and defaults.
      */
     #[Test]
-    public function test_f9_theme_activation(): void
+    public function f9ThemeActivation(): void
     {
-        $manifestClass = \Pulsar\Extension\Cms\Themes\ThemeManifest::class;
-        self::assertTrue(class_exists($manifestClass));
-
         $manifest = ThemeManifest::fromArray([
             'slug' => 'test-theme',
             'name' => 'Test Theme',
             'version' => '1.0.0',
             'author_name' => 'Pulsar Labs',
             'license' => 'MIT',
+            'regions' => ['header', 'main', 'footer'],
+            'supported_content_types' => ['article', 'page'],
         ]);
 
         self::assertSame('Test Theme', $manifest->displayName);
         self::assertSame('1.0.0', $manifest->version);
         self::assertSame('test-theme', $manifest->slug);
+        self::assertSame('Pulsar Labs', $manifest->authorName);
+        self::assertSame('MIT', $manifest->license);
+        self::assertSame(['header', 'main', 'footer'], $manifest->regions);
+        self::assertSame(['article', 'page'], $manifest->supportedContentTypes);
+
+        // Missing optional fields must fall back to null/empty defaults
+        $minimal = ThemeManifest::fromArray([
+            'slug' => 'minimal',
+            'name' => 'Minimal',
+            'version' => '0.1.0',
+        ]);
+        self::assertNull($minimal->authorName);
+        self::assertNull($minimal->license);
+        self::assertNull($minimal->parentTheme);
+        self::assertSame([], $minimal->regions);
     }
 
     /**
      * F10: AI import — site definition JSON parses and validates.
      */
     #[Test]
-    public function test_f10_ai_import(): void
+    public function f10AiImport(): void
     {
         $json = json_encode([
             'version' => '1.0',
@@ -275,9 +332,12 @@ final class FunctionalVerificationTest extends TestCase
 
     /**
      * F11: Checkout flow — order status state machine transitions are valid.
+     *
+     * Exercises OrderStatusStateMachine::canTransition() with valid, invalid,
+     * self-transition, and terminal-state cases.
      */
     #[Test]
-    public function test_f11_checkout_flow(): void
+    public function f11CheckoutFlow(): void
     {
         $stateMachine = \Pulsar\Extension\Cms\Commerce\OrderStatusStateMachine::class;
         $orderStatus = \Pulsar\Extension\Cms\Commerce\OrderStatus::class;
@@ -285,24 +345,56 @@ final class FunctionalVerificationTest extends TestCase
         self::assertTrue(class_exists($stateMachine));
         self::assertTrue(enum_exists($orderStatus));
 
-        // Cart → PendingPayment is valid
+        // Valid forward transitions
         self::assertTrue($stateMachine::canTransition(
             \Pulsar\Extension\Cms\Commerce\OrderStatus::Cart,
             \Pulsar\Extension\Cms\Commerce\OrderStatus::PendingPayment,
-        ));
+        ), 'Cart → PendingPayment must be valid');
 
-        // Cart → Fulfilled is invalid (skips payment)
+        self::assertTrue($stateMachine::canTransition(
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::PendingPayment,
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Confirmed,
+        ), 'PendingPayment → Confirmed must be valid');
+
+        self::assertTrue($stateMachine::canTransition(
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Confirmed,
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Fulfilled,
+        ), 'Confirmed → Fulfilled must be valid');
+
+        self::assertTrue($stateMachine::canTransition(
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Fulfilled,
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Refunded,
+        ), 'Fulfilled → Refunded must be valid');
+
+        // Invalid transitions — skipping required intermediate states
         self::assertFalse($stateMachine::canTransition(
             \Pulsar\Extension\Cms\Commerce\OrderStatus::Cart,
             \Pulsar\Extension\Cms\Commerce\OrderStatus::Fulfilled,
-        ));
+        ), 'Cart → Fulfilled must be rejected (skips payment)');
+
+        self::assertFalse($stateMachine::canTransition(
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Cart,
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Refunded,
+        ), 'Cart → Refunded must be rejected (skips all steps)');
+
+        // A status cannot transition to itself
+        self::assertFalse($stateMachine::canTransition(
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Confirmed,
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Confirmed,
+        ), 'Self-transition must be rejected');
+
+        // Terminal states must not allow further transitions
+        self::assertFalse($stateMachine::canTransition(
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Refunded,
+            \Pulsar\Extension\Cms\Commerce\OrderStatus::Cart,
+        ), 'Refunded is terminal — no further transitions allowed');
     }
 
     /**
      * F12: Live CSS editing — override creation with CSP hash computation.
      */
     #[Test]
-    public function test_f12_live_css(): void
+    public function f12LiveCss(): void
     {
         $override = CssOverride::create(
             id: 'f12-001',
@@ -324,7 +416,7 @@ final class FunctionalVerificationTest extends TestCase
      * F13: Backup and restore — export bundle structure is complete.
      */
     #[Test]
-    public function test_f13_backup_restore(): void
+    public function f13BackupRestore(): void
     {
         self::assertTrue(class_exists(ExportBundle::class));
 
@@ -345,7 +437,7 @@ final class FunctionalVerificationTest extends TestCase
      * F14: Custom fields are queryable — field registry supports custom types.
      */
     #[Test]
-    public function test_f14_custom_fields_queryable(): void
+    public function f14CustomFieldsQueryable(): void
     {
         $registryClass = \Pulsar\Extension\Cms\FieldRegistry\FieldType::class;
         self::assertTrue(enum_exists($registryClass));
@@ -362,7 +454,7 @@ final class FunctionalVerificationTest extends TestCase
      * F15: Content locking — prevents concurrent edits.
      */
     #[Test]
-    public function test_f15_content_locking(): void
+    public function f15ContentLocking(): void
     {
         $now = new DateTimeImmutable();
         $lock = new ContentLock(

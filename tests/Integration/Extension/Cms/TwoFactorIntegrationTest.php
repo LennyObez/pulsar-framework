@@ -73,7 +73,7 @@ final class TwoFactorIntegrationTest extends TestCase
     // -- Full enrollment flow (component-level) -----------------------------
 
     #[Test]
-    public function test_full_enrollment_flow_generate_secret_verify_code(): void
+    public function fullEnrollmentFlowGenerateSecretVerifyCode(): void
     {
         // Step 1: Generate secret (simulating enrollment start)
         $secret = $this->generator->generateSecret();
@@ -96,7 +96,7 @@ final class TwoFactorIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_invalid_totp_code_is_rejected(): void
+    public function invalidTotpCodeIsRejected(): void
     {
         $secret = $this->generator->generateSecret();
 
@@ -108,7 +108,7 @@ final class TwoFactorIntegrationTest extends TestCase
     // -- Recovery code generation -------------------------------------------
 
     #[Test]
-    public function test_recovery_codes_are_unique(): void
+    public function recoveryCodesAreUnique(): void
     {
         $codes = $this->recoveryGenerator->generate(8);
 
@@ -117,7 +117,7 @@ final class TwoFactorIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_recovery_codes_have_correct_format(): void
+    public function recoveryCodesHaveCorrectFormat(): void
     {
         $codes = $this->recoveryGenerator->generate(8);
 
@@ -128,7 +128,7 @@ final class TwoFactorIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_recovery_code_single_use_via_canonicalize(): void
+    public function recoveryCodeSingleUseViaCanonicalize(): void
     {
         $codes = $this->recoveryGenerator->generate(8);
 
@@ -143,7 +143,7 @@ final class TwoFactorIntegrationTest extends TestCase
     // -- Controller endpoints (non-QR) --------------------------------------
 
     #[Test]
-    public function test_confirm_with_empty_code_returns_400(): void
+    public function confirmWithEmptyCodeReturns400(): void
     {
         $request = $this->createAuthenticatedRequest([
             'code' => '',
@@ -157,7 +157,7 @@ final class TwoFactorIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_confirm_with_empty_secret_returns_400(): void
+    public function confirmWithEmptySecretReturns400(): void
     {
         $request = $this->createAuthenticatedRequest([
             'code' => '123456',
@@ -171,7 +171,7 @@ final class TwoFactorIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_confirm_with_invalid_code_returns_422(): void
+    public function confirmWithInvalidCodeReturns422(): void
     {
         $secret = $this->generator->generateSecret();
         $base32Secret = $this->generator->encodeSecretBase32($secret);
@@ -190,7 +190,7 @@ final class TwoFactorIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_confirm_with_valid_code_succeeds(): void
+    public function confirmWithValidCodeSucceeds(): void
     {
         $secret = $this->generator->generateSecret();
         $base32Secret = $this->generator->encodeSecretBase32($secret);
@@ -210,7 +210,7 @@ final class TwoFactorIntegrationTest extends TestCase
     // -- Verify endpoint ----------------------------------------------------
 
     #[Test]
-    public function test_verify_valid_code(): void
+    public function verifyValidCode(): void
     {
         $secret = $this->generator->generateSecret();
         $base32Secret = $this->generator->encodeSecretBase32($secret);
@@ -228,7 +228,7 @@ final class TwoFactorIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_verify_invalid_code(): void
+    public function verifyInvalidCode(): void
     {
         $secret = $this->generator->generateSecret();
         $base32Secret = $this->generator->encodeSecretBase32($secret);
@@ -247,7 +247,7 @@ final class TwoFactorIntegrationTest extends TestCase
     // -- Disable endpoint ---------------------------------------------------
 
     #[Test]
-    public function test_disable_requires_reason(): void
+    public function disableRequiresReason(): void
     {
         $request = $this->createAuthenticatedRequest([
             'reason' => 'short',
@@ -262,7 +262,7 @@ final class TwoFactorIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_disable_with_valid_reason(): void
+    public function disableWithValidReason(): void
     {
         $request = $this->createAuthenticatedRequest([
             'reason' => 'Lost my authenticator device and need to reset',
@@ -277,7 +277,7 @@ final class TwoFactorIntegrationTest extends TestCase
     // -- Regenerate recovery codes ------------------------------------------
 
     #[Test]
-    public function test_regenerate_recovery_codes(): void
+    public function regenerateRecoveryCodes(): void
     {
         $request = $this->createAuthenticatedRequest([]);
 

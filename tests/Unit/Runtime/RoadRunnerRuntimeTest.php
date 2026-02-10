@@ -122,9 +122,10 @@ final class RoadRunnerRuntimeTest extends TestCase
         $psrRequest = $this->createPsrRequest('/');
         $psrResponse = $this->createPsrResponse(200, 'ok');
 
-        // Should not throw -- sandbox cleanup runs without issues
-        $this->expectNotToPerformAssertions();
         $runtime->afterRequest($psrRequest, $psrResponse);
+
+        // Sandbox cleanup must not alter runtime status
+        self::assertSame(RuntimeStatus::Stopped, $runtime->status());
     }
 
     #[Test]

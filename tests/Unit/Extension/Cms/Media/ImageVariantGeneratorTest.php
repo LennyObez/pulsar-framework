@@ -49,7 +49,7 @@ final class ImageVariantGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_generates_variants_for_each_config(): void
+    public function generatesVariantsForEachConfig(): void
     {
         $source = $this->createJpeg(2000, 1500);
         $configs = [
@@ -74,7 +74,7 @@ final class ImageVariantGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_skips_variants_when_original_is_smaller(): void
+    public function skipsVariantsWhenOriginalIsSmaller(): void
     {
         $source = $this->createJpeg(100, 80);
         $configs = [
@@ -93,7 +93,7 @@ final class ImageVariantGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_uses_default_variants_when_none_configured(): void
+    public function usesDefaultVariantsWhenNoneConfigured(): void
     {
         $source = $this->createJpeg(2000, 1500);
 
@@ -115,7 +115,7 @@ final class ImageVariantGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_variant_path_includes_variant_name_and_format(): void
+    public function variantPathIncludesVariantNameAndFormat(): void
     {
         $source = $this->createJpeg(2000, 1500);
         $configs = [
@@ -137,7 +137,7 @@ final class ImageVariantGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_format_conversion_passes_correct_format_to_processor(): void
+    public function formatConversionPassesCorrectFormatToProcessor(): void
     {
         $source = $this->createJpeg(2000, 1500);
         $configs = [
@@ -164,7 +164,7 @@ final class ImageVariantGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_original_format_preserved_when_format_is_original(): void
+    public function originalFormatPreservedWhenFormatIsOriginal(): void
     {
         $source = $this->createJpeg(2000, 1500);
         $configs = [
@@ -194,7 +194,7 @@ final class ImageVariantGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_returns_empty_for_invalid_source(): void
+    public function returnsEmptyForInvalidSource(): void
     {
         $invalidPath = $this->tmpDir . '/not_image.txt';
         file_put_contents($invalidPath, 'not an image');
@@ -213,7 +213,7 @@ final class ImageVariantGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_variant_records_correct_size_bytes(): void
+    public function variantRecordsCorrectSizeBytes(): void
     {
         $source = $this->createJpeg(2000, 1500);
         $resized = $this->createJpeg(150, 113);
@@ -236,7 +236,7 @@ final class ImageVariantGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_writes_variant_to_disk(): void
+    public function writesVariantToDisk(): void
     {
         $source = $this->createJpeg(2000, 1500);
         $resized = $this->createJpeg(150, 113);

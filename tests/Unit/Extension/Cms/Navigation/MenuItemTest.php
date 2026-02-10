@@ -17,7 +17,7 @@ final class MenuItemTest extends TestCase
     private const string MENU_ID = '01912345-6789-7abc-8def-0123456789ab';
 
     #[Test]
-    public function test_construction_with_content_link(): void
+    public function constructionWithContentLink(): void
     {
         $item = new MenuItem(
             id: 'mi-001',
@@ -42,7 +42,7 @@ final class MenuItemTest extends TestCase
     }
 
     #[Test]
-    public function test_construction_with_external_url(): void
+    public function constructionWithExternalUrl(): void
     {
         $item = new MenuItem(
             id: 'mi-002',
@@ -65,7 +65,7 @@ final class MenuItemTest extends TestCase
     }
 
     #[Test]
-    public function test_tree_construction_from_flat_items(): void
+    public function treeConstructionFromFlatItems(): void
     {
         $root = new MenuItem('mi-root', self::MENU_ID, null, 'c1', null, LinkTarget::Self, null, null, 0, true);
         $child1 = new MenuItem('mi-child1', self::MENU_ID, 'mi-root', 'c2', null, LinkTarget::Self, null, null, 0, true);
@@ -94,7 +94,7 @@ final class MenuItemTest extends TestCase
     }
 
     #[Test]
-    public function test_hidden_item(): void
+    public function hiddenItem(): void
     {
         $item = new MenuItem('mi-hidden', self::MENU_ID, null, 'c1', null, LinkTarget::Self, null, null, 0, false);
 
@@ -102,7 +102,7 @@ final class MenuItemTest extends TestCase
     }
 
     #[Test]
-    public function test_is_readonly_class(): void
+    public function isReadonlyClass(): void
     {
         $reflection = new ReflectionClass(MenuItem::class);
         self::assertTrue($reflection->isReadOnly());

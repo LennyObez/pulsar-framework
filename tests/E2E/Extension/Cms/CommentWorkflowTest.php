@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,11 +28,12 @@ use function count;
 /**
  * E2E: Comment workflow — guest submit -> pending -> approve -> visible + spam rate limiting.
  */
+#[CoversClass(CommentService::class)]
 #[Group('e2e-cms')]
 final class CommentWorkflowTest extends TestCase
 {
     #[Test]
-    public function test_guest_comment_submission_through_approval(): void
+    public function guestCommentSubmissionThroughApproval(): void
     {
         [$service, $commentRepo, $auditLogger] = $this->createCommentStack();
 
@@ -63,7 +65,7 @@ final class CommentWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_spam_comment_flagging(): void
+    public function spamCommentFlagging(): void
     {
         [$service, , ] = $this->createCommentStack();
 
@@ -86,7 +88,7 @@ final class CommentWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_comment_edit_within_window(): void
+    public function commentEditWithinWindow(): void
     {
         [$service, , ] = $this->createCommentStack();
 
@@ -108,7 +110,7 @@ final class CommentWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_double_approval_rejected(): void
+    public function doubleApprovalRejected(): void
     {
         [$service, , ] = $this->createCommentStack();
 

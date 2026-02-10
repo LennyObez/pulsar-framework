@@ -55,9 +55,10 @@ final class LegalBasisRegistryTest extends TestCase
         $registry->registerType(FakeNotificationA::class);
         $registry->register(FakeNotificationA::class, LegalBasis::Consent);
 
-        // Should not throw
         $registry->validate();
-        $this->addToAssertionCount(1);
+
+        // Validation passed — mapping is accessible
+        self::assertSame(LegalBasis::Consent, $registry->get(FakeNotificationA::class));
     }
 
     #[Test]
@@ -83,9 +84,11 @@ final class LegalBasisRegistryTest extends TestCase
         $registry->registerType(FakeNotificationA::class);
         $registry->register(FakeNotificationA::class, LegalBasis::Consent);
 
-        // Should not throw (not duplicated in the missing list)
+        // Duplicate registerType calls must not cause missing-mapping errors
         $registry->validate();
-        $this->addToAssertionCount(1);
+
+        // Deduplication preserved the single mapping
+        self::assertSame(LegalBasis::Consent, $registry->get(FakeNotificationA::class));
     }
 
     #[Test]

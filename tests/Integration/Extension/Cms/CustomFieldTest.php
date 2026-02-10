@@ -32,7 +32,7 @@ final class CustomFieldTest extends TestCase
     }
 
     #[Test]
-    public function test_register_content_type_with_fields(): void
+    public function registerContentTypeWithFields(): void
     {
         $definition = new ContentTypeBuilder('project')
             ->label('Project')
@@ -67,7 +67,7 @@ final class CustomFieldTest extends TestCase
     }
 
     #[Test]
-    public function test_save_and_retrieve_field_values(): void
+    public function saveAndRetrieveFieldValues(): void
     {
         // Register a field definition
         $field = new ContentTypeField(
@@ -110,7 +110,7 @@ final class CustomFieldTest extends TestCase
     }
 
     #[Test]
-    public function test_field_type_value_column_mapping(): void
+    public function fieldTypeValueColumnMapping(): void
     {
         // Verify each field type maps to the correct storage column
         self::assertSame('value_string', FieldType::String->valueColumn());

@@ -18,7 +18,7 @@ final class ContentLockTest extends TestCase
     private const string USER_ID = '01912345-6789-7abc-8def-0123456789cd';
 
     #[Test]
-    public function test_construction_with_all_fields(): void
+    public function constructionWithAllFields(): void
     {
         $lockedAt = new DateTimeImmutable();
         $expiresAt = $lockedAt->modify('+30 minutes');
@@ -39,7 +39,7 @@ final class ContentLockTest extends TestCase
     }
 
     #[Test]
-    public function test_construction_with_null_locale(): void
+    public function constructionWithNullLocale(): void
     {
         $lock = new ContentLock(
             contentId: self::CONTENT_ID,
@@ -53,7 +53,7 @@ final class ContentLockTest extends TestCase
     }
 
     #[Test]
-    public function test_is_expired_returns_true_for_past_expiry(): void
+    public function isExpiredReturnsTrueForPastExpiry(): void
     {
         $lock = new ContentLock(
             contentId: self::CONTENT_ID,
@@ -67,7 +67,7 @@ final class ContentLockTest extends TestCase
     }
 
     #[Test]
-    public function test_is_expired_returns_false_for_future_expiry(): void
+    public function isExpiredReturnsFalseForFutureExpiry(): void
     {
         $lock = new ContentLock(
             contentId: self::CONTENT_ID,
@@ -81,7 +81,7 @@ final class ContentLockTest extends TestCase
     }
 
     #[Test]
-    public function test_is_readonly_class(): void
+    public function isReadonlyClass(): void
     {
         $reflection = new ReflectionClass(ContentLock::class);
         self::assertTrue($reflection->isReadOnly());

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,11 +21,12 @@ use function sprintf;
 /**
  * E2E: Multi-locale content — 4 locales, unique paths, hreflang, language switcher.
  */
+#[CoversClass(Content::class)]
 #[Group('e2e-cms')]
 final class MultiLocaleContentTest extends TestCase
 {
     #[Test]
-    public function test_four_locale_article_with_unique_paths(): void
+    public function fourLocaleArticleWithUniquePaths(): void
     {
         $content = Content::create(
             id: 'ml-article-001',
@@ -108,7 +110,7 @@ final class MultiLocaleContentTest extends TestCase
     }
 
     #[Test]
-    public function test_hreflang_link_generation(): void
+    public function hreflangLinkGeneration(): void
     {
         $contentId = 'ml-hreflang-001';
         $baseUrl = 'https://example.com';
@@ -180,7 +182,7 @@ final class MultiLocaleContentTest extends TestCase
     }
 
     #[Test]
-    public function test_language_switcher_data(): void
+    public function languageSwitcherData(): void
     {
         $contentId = 'ml-switcher-001';
 
@@ -240,7 +242,7 @@ final class MultiLocaleContentTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_uniqueness_across_locales(): void
+    public function slugUniquenessAcrossLocales(): void
     {
         $contentId = 'ml-slug-unique-001';
 

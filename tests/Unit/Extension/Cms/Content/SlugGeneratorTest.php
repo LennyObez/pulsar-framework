@@ -33,7 +33,7 @@ final class SlugGeneratorTest extends TestCase
 
     #[Test]
     #[DataProvider('generateProvider')]
-    public function test_generate_produces_expected_slug(string $title, string $expected): void
+    public function generateProducesExpectedSlug(string $title, string $expected): void
     {
         self::assertSame($expected, $this->generator->generate($title));
     }
@@ -58,7 +58,7 @@ final class SlugGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_generate_truncates_at_200_chars(): void
+    public function generateTruncatesAt200Chars(): void
     {
         $longTitle = str_repeat('a', 300);
         $slug = $this->generator->generate($longTitle);
@@ -66,7 +66,7 @@ final class SlugGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_generate_truncation_does_not_end_with_hyphen(): void
+    public function generateTruncationDoesNotEndWithHyphen(): void
     {
         // Create a title that will produce a slug with a hyphen near the 200-char boundary
         $title = str_repeat('word ', 60); // ~300 chars, will become "word-word-word..."
@@ -76,7 +76,7 @@ final class SlugGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_generate_empty_title_returns_empty(): void
+    public function generateEmptyTitleReturnsEmpty(): void
     {
         self::assertSame('', $this->generator->generate(''));
     }
@@ -85,7 +85,7 @@ final class SlugGeneratorTest extends TestCase
 
     #[Test]
     #[DataProvider('validSlugProvider')]
-    public function test_validate_accepts_valid_slugs(string $slug): void
+    public function validateAcceptsValidSlugs(string $slug): void
     {
         self::assertTrue($this->generator->validate($slug));
     }
@@ -104,7 +104,7 @@ final class SlugGeneratorTest extends TestCase
 
     #[Test]
     #[DataProvider('invalidSlugProvider')]
-    public function test_validate_rejects_invalid_slugs(string $slug): void
+    public function validateRejectsInvalidSlugs(string $slug): void
     {
         self::assertFalse($this->generator->validate($slug));
     }
@@ -128,7 +128,7 @@ final class SlugGeneratorTest extends TestCase
     // ── ensureUnique() ───────────────────────────────────────────────
 
     #[Test]
-    public function test_ensure_unique_returns_slug_when_no_conflict(): void
+    public function ensureUniqueReturnsSlugWhenNoConflict(): void
     {
         $emptyResult = new Result([]);
 
@@ -139,7 +139,7 @@ final class SlugGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_ensure_unique_appends_suffix_on_conflict(): void
+    public function ensureUniqueAppendsSuffixOnConflict(): void
     {
         $existsResult = new Result([new Row(['exists' => 1])]);
         $emptyResult = new Result([]);
@@ -152,7 +152,7 @@ final class SlugGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_ensure_unique_increments_suffix_through_conflicts(): void
+    public function ensureUniqueIncrementsSuffixThroughConflicts(): void
     {
         $existsResult = new Result([new Row(['exists' => 1])]);
         $emptyResult = new Result([]);

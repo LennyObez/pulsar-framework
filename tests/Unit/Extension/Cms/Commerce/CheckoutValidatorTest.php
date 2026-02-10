@@ -15,7 +15,7 @@ final class CheckoutValidatorTest extends TestCase
     // ── Valid cart ───────────────────────────────────────────────────
 
     #[Test]
-    public function test_valid_cart_result(): void
+    public function validCartResult(): void
     {
         $result = new CartValidationResult(
             isValid: true,
@@ -34,7 +34,7 @@ final class CheckoutValidatorTest extends TestCase
     // ── Product not found ───────────────────────────────────────────
 
     #[Test]
-    public function test_product_not_found_error(): void
+    public function productNotFoundError(): void
     {
         $result = new CartValidationResult(
             isValid: false,
@@ -49,7 +49,7 @@ final class CheckoutValidatorTest extends TestCase
     // ── Product not active ──────────────────────────────────────────
 
     #[Test]
-    public function test_product_not_active_error(): void
+    public function productNotActiveError(): void
     {
         $result = new CartValidationResult(
             isValid: false,
@@ -64,7 +64,7 @@ final class CheckoutValidatorTest extends TestCase
     // ── Insufficient stock ──────────────────────────────────────────
 
     #[Test]
-    public function test_insufficient_stock_error(): void
+    public function insufficientStockError(): void
     {
         $result = new CartValidationResult(
             isValid: false,
@@ -80,7 +80,7 @@ final class CheckoutValidatorTest extends TestCase
     // ── Price changed ───────────────────────────────────────────────
 
     #[Test]
-    public function test_price_changed_error(): void
+    public function priceChangedError(): void
     {
         $result = new CartValidationResult(
             isValid: false,
@@ -95,7 +95,7 @@ final class CheckoutValidatorTest extends TestCase
     // ── Multiple validation errors ──────────────────────────────────
 
     #[Test]
-    public function test_multiple_errors(): void
+    public function multipleErrors(): void
     {
         $result = new CartValidationResult(
             isValid: false,
@@ -114,7 +114,7 @@ final class CheckoutValidatorTest extends TestCase
     // ── Validated items contain correct prices ──────────────────────
 
     #[Test]
-    public function test_validated_items_contain_current_prices(): void
+    public function validatedItemsContainCurrentPrices(): void
     {
         $result = new CartValidationResult(
             isValid: true,

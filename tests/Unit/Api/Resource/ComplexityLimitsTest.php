@@ -28,11 +28,11 @@ final class ComplexityLimitsTest extends TestCase
     {
         $limits = new ComplexityLimits(maxFields: 10);
 
-        // Should not throw
         $limits->validateFieldCount(10);
         $limits->validateFieldCount(5);
 
-        $this->addToAssertionCount(1); // no exception
+        // Both calls succeeded — maxFields is unchanged
+        self::assertSame(10, $limits->maxFields);
     }
 
     #[Test]
@@ -64,10 +64,10 @@ final class ComplexityLimitsTest extends TestCase
     {
         $limits = new ComplexityLimits(maxFields: 10);
 
-        // Override allows 100
+        // Override allows 100, so 50 fields must pass even though global max is 10
         $limits->validateFieldCount(50, perResourceOverride: 100);
 
-        $this->addToAssertionCount(1); // no exception
+        self::assertSame(10, $limits->maxFields, 'Global limit unchanged by per-resource override');
     }
 
     #[Test]
@@ -77,7 +77,8 @@ final class ComplexityLimitsTest extends TestCase
 
         $limits->validateNestingDepth(5);
 
-        $this->addToAssertionCount(1);
+        // Exactly at the limit — must succeed; maxNestingDepth unchanged
+        self::assertSame(5, $limits->maxNestingDepth);
     }
 
     #[Test]
@@ -99,7 +100,8 @@ final class ComplexityLimitsTest extends TestCase
 
         $limits->validateIncludes(['comments', 'author', 'tags']);
 
-        $this->addToAssertionCount(1);
+        // 3 includes within limit of 5 — maxIncludes unchanged
+        self::assertSame(5, $limits->maxIncludes);
     }
 
     #[Test]

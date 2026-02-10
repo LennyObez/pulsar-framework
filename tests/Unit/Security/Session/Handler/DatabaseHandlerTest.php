@@ -38,32 +38,32 @@ final class DatabaseHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_open_returns_true(): void
+    public function openReturnsTrue(): void
     {
         self::assertTrue($this->handler->open('', 'TEST_SESSION'));
     }
 
     #[Test]
-    public function test_close_returns_true(): void
+    public function closeReturnsTrue(): void
     {
         self::assertTrue($this->handler->close());
     }
 
     #[Test]
-    public function test_read_returns_empty_for_nonexistent(): void
+    public function readReturnsEmptyForNonexistent(): void
     {
         self::assertSame('', $this->handler->read('nonexistent'));
     }
 
     #[Test]
-    public function test_write_and_read_roundtrip(): void
+    public function writeAndReadRoundtrip(): void
     {
         self::assertTrue($this->handler->write('session-1', 'serialized-data'));
         self::assertSame('serialized-data', $this->handler->read('session-1'));
     }
 
     #[Test]
-    public function test_write_upserts_existing_session(): void
+    public function writeUpsertsExistingSession(): void
     {
         $this->handler->write('session-1', 'original');
         $this->handler->write('session-1', 'updated');
@@ -72,7 +72,7 @@ final class DatabaseHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_destroy_removes_session(): void
+    public function destroyRemovesSession(): void
     {
         $this->handler->write('session-1', 'data');
 
@@ -81,7 +81,7 @@ final class DatabaseHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_gc_removes_expired_sessions(): void
+    public function gcRemovesExpiredSessions(): void
     {
         // Insert an old session directly
         $oldTimestamp = time() - 10000;
@@ -102,25 +102,25 @@ final class DatabaseHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_supports_concurrency_control(): void
+    public function supportsConcurrencyControl(): void
     {
         self::assertTrue($this->handler->supportsConcurrencyControl());
     }
 
     #[Test]
-    public function test_supports_session_listing(): void
+    public function supportsSessionListing(): void
     {
         self::assertTrue($this->handler->supportsSessionListing());
     }
 
     #[Test]
-    public function test_supports_revocation(): void
+    public function supportsRevocation(): void
     {
         self::assertTrue($this->handler->supportsRevocation());
     }
 
     #[Test]
-    public function test_get_active_sessions_counts_user_sessions(): void
+    public function getActiveSessionsCountsUserSessions(): void
     {
         $this->handler->setSessionContext('s1', 'user-1', '10.0.0.1', 'Agent');
         $this->handler->write('s1', 'data1');
@@ -137,7 +137,7 @@ final class DatabaseHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_list_sessions_returns_user_sessions(): void
+    public function listSessionsReturnsUserSessions(): void
     {
         $this->handler->setSessionContext('s1', 'user-1', '10.0.0.1', 'Chrome');
         $this->handler->write('s1', 'data1');
@@ -163,7 +163,7 @@ final class DatabaseHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_list_sessions_excludes_expired(): void
+    public function listSessionsExcludesExpired(): void
     {
         // Insert an old session directly
         $oldTimestamp = time() - 10000;
@@ -183,7 +183,7 @@ final class DatabaseHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_revoke_session_removes_it(): void
+    public function revokeSessionRemovesIt(): void
     {
         $this->handler->write('s1', 'data');
 
@@ -192,13 +192,13 @@ final class DatabaseHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_revoke_nonexistent_session_returns_false(): void
+    public function revokeNonexistentSessionReturnsFalse(): void
     {
         self::assertFalse($this->handler->revokeSession('nonexistent'));
     }
 
     #[Test]
-    public function test_session_context_stored_with_write(): void
+    public function sessionContextStoredWithWrite(): void
     {
         $this->handler->setSessionContext('s1', 'user-42', '192.168.1.1', 'Mozilla/5.0');
         $this->handler->write('s1', 'session-data');

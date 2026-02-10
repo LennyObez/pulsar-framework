@@ -2,14 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Extension\Cms\Commerce;
+namespace Pulsar\Tests\Unit\Extension\Cms\Commerce;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Commerce\CommerceConfig;
 use Pulsar\Extension\Cms\Commerce\TaxRateConfig;
 use Pulsar\Extension\Cms\Internal\Commerce\TaxCalculator;
 
+#[CoversClass(TaxCalculator::class)]
 final class TaxCalculatorEuConfigTest extends TestCase
 {
     #[Test]

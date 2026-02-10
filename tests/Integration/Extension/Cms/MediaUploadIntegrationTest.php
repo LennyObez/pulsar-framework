@@ -87,7 +87,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_upload_valid_jpeg_stores_asset_and_creates_record(): void
+    public function uploadValidJpegStoresAssetAndCreatesRecord(): void
     {
         $jpegContent = $this->createMinimalJpeg();
         $file = new StubUploadedFile($jpegContent, 'photo.jpg', 'image/jpeg');
@@ -116,7 +116,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_upload_valid_jpeg_generates_derivatives(): void
+    public function uploadValidJpegGeneratesDerivatives(): void
     {
         $jpegContent = $this->createMinimalJpeg();
         $file = new StubUploadedFile($jpegContent, 'photo.jpg', 'image/jpeg');
@@ -136,7 +136,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_upload_large_jpeg_generates_all_derivative_variants(): void
+    public function uploadLargeJpegGeneratesAllDerivativeVariants(): void
     {
         // Create a JPEG that reports as 2000x2000 via StubImageProcessor
         $jpegContent = $this->createMinimalJpeg();
@@ -191,7 +191,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_upload_svg_with_scripts_sanitized(): void
+    public function uploadSvgWithScriptsSanitized(): void
     {
         $svgWithScript = '<svg xmlns="http://www.w3.org/2000/svg"><script>alert("xss")</script><rect width="100" height="100"/></svg>';
         $file = new StubUploadedFile($svgWithScript, 'icon.svg', 'image/svg+xml');
@@ -206,7 +206,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_upload_with_mismatched_mime_rejected(): void
+    public function uploadWithMismatchedMimeRejected(): void
     {
         // Send PNG magic bytes but declare JPEG MIME type
         $pngContent = $this->createMinimalPng();
@@ -219,7 +219,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_upload_oversized_file_rejected(): void
+    public function uploadOversizedFileRejected(): void
     {
         $config = new MediaConfig(
             maxUploadSize: 100,
@@ -249,7 +249,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_upload_decompression_bomb_rejected(): void
+    public function uploadDecompressionBombRejected(): void
     {
         $config = new MediaConfig(
             maxPixelCount: 100,
@@ -281,7 +281,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_exif_extracted_and_stored_when_preserve_enabled(): void
+    public function exifExtractedAndStoredWhenPreserveEnabled(): void
     {
         $this->imageProcessor->setExifData(['Make' => 'TestCam', 'Model' => 'X100']);
 
@@ -297,7 +297,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_exif_stripped_when_preserve_disabled(): void
+    public function exifStrippedWhenPreserveDisabled(): void
     {
         $config = new MediaConfig(
             preserveExif: false,
@@ -329,7 +329,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_media_soft_delete(): void
+    public function mediaSoftDelete(): void
     {
         $jpegContent = $this->createMinimalJpeg();
         $file = new StubUploadedFile($jpegContent, 'deleteme.jpg', 'image/jpeg');
@@ -354,7 +354,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_alt_text_per_locale_saved_and_retrieved(): void
+    public function altTextPerLocaleSavedAndRetrieved(): void
     {
         $jpegContent = $this->createMinimalJpeg();
         $file = new StubUploadedFile($jpegContent, 'localized.jpg', 'image/jpeg');
@@ -394,7 +394,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_duplicate_upload_returns_existing_asset(): void
+    public function duplicateUploadReturnsExistingAsset(): void
     {
         $jpegContent = $this->createMinimalJpeg();
         $file1 = new StubUploadedFile($jpegContent, 'first.jpg', 'image/jpeg');
@@ -409,7 +409,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_upload_png_stores_correct_mime_type(): void
+    public function uploadPngStoresCorrectMimeType(): void
     {
         $pngContent = $this->createMinimalPng();
         $file = new StubUploadedFile($pngContent, 'image.png', 'image/png');
@@ -422,7 +422,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_upload_disallowed_extension_rejected(): void
+    public function uploadDisallowedExtensionRejected(): void
     {
         $content = 'not really an executable';
         $file = new StubUploadedFile($content, 'malware.exe', 'application/octet-stream');
@@ -434,7 +434,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_media_listing_with_filters(): void
+    public function mediaListingWithFilters(): void
     {
         // Upload several assets
         $jpeg = $this->createMinimalJpeg();
@@ -469,7 +469,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_get_public_url_returns_original_and_derivative_urls(): void
+    public function getPublicUrlReturnsOriginalAndDerivativeUrls(): void
     {
         $jpegContent = $this->createMinimalJpeg();
         $file = new StubUploadedFile($jpegContent, 'urltest.jpg', 'image/jpeg');
@@ -505,7 +505,7 @@ final class MediaUploadIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_delete_nonexistent_asset_throws(): void
+    public function deleteNonexistentAssetThrows(): void
     {
         $this->expectException(CmsException::class);
         $this->expectExceptionMessage('Media asset not found');

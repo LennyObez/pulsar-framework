@@ -27,7 +27,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- Valid manifests ------------------------------------------------------
 
     #[Test]
-    public function test_valid_manifest_passes(): void
+    public function validManifestPasses(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -47,7 +47,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_manifest_with_all_capabilities(): void
+    public function validManifestWithAllCapabilities(): void
     {
         $manifest = new PluginManifest(
             slug: 'full-plugin',
@@ -62,7 +62,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_manifest_with_dependencies(): void
+    public function validManifestWithDependencies(): void
     {
         $manifest = new PluginManifest(
             slug: 'dep-plugin',
@@ -79,7 +79,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- Missing required fields ---------------------------------------------
 
     #[Test]
-    public function test_missing_slug_fails(): void
+    public function missingSlugFails(): void
     {
         $manifest = new PluginManifest(
             slug: '',
@@ -97,7 +97,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_missing_name_fails(): void
+    public function missingNameFails(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -114,7 +114,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_missing_version_fails(): void
+    public function missingVersionFails(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -131,7 +131,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_empty_version_fails(): void
+    public function emptyVersionFails(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -147,7 +147,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- Invalid version format ----------------------------------------------
 
     #[Test]
-    public function test_invalid_version_not_semver_fails(): void
+    public function invalidVersionNotSemverFails(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -164,7 +164,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_version_missing_patch_fails(): void
+    public function versionMissingPatchFails(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -180,7 +180,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- Invalid capability values -------------------------------------------
 
     #[Test]
-    public function test_invalid_capability_fails(): void
+    public function invalidCapabilityFails(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -198,7 +198,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_multiple_invalid_capabilities_accumulate_errors(): void
+    public function multipleInvalidCapabilitiesAccumulateErrors(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -216,7 +216,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- Invalid slug format -------------------------------------------------
 
     #[Test]
-    public function test_slug_with_uppercase_fails(): void
+    public function slugWithUppercaseFails(): void
     {
         $manifest = new PluginManifest(
             slug: 'My-Plugin',
@@ -230,7 +230,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_starting_with_hyphen_fails(): void
+    public function slugStartingWithHyphenFails(): void
     {
         $manifest = new PluginManifest(
             slug: '-my-plugin',
@@ -244,7 +244,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_exceeding_max_length_fails(): void
+    public function slugExceedingMaxLengthFails(): void
     {
         $manifest = new PluginManifest(
             slug: str_repeat('a', 201),
@@ -263,7 +263,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- Invalid dependency constraints --------------------------------------
 
     #[Test]
-    public function test_invalid_dependency_constraint_fails(): void
+    public function invalidDependencyConstraintFails(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -283,7 +283,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- Warnings for missing optional fields --------------------------------
 
     #[Test]
-    public function test_missing_description_produces_warning(): void
+    public function missingDescriptionProducesWarning(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -305,7 +305,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_missing_author_produces_warning(): void
+    public function missingAuthorProducesWarning(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -326,7 +326,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_missing_license_produces_warning(): void
+    public function missingLicenseProducesWarning(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -347,7 +347,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_missing_entry_point_produces_warning(): void
+    public function missingEntryPointProducesWarning(): void
     {
         $manifest = new PluginManifest(
             slug: 'my-plugin',
@@ -368,7 +368,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_fully_populated_manifest_no_warnings(): void
+    public function fullyPopulatedManifestNoWarnings(): void
     {
         $manifest = new PluginManifest(
             slug: 'complete-plugin',
@@ -389,7 +389,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- Multiple errors accumulated -----------------------------------------
 
     #[Test]
-    public function test_multiple_errors_accumulated(): void
+    public function multipleErrorsAccumulated(): void
     {
         $manifest = new PluginManifest(
             slug: '',
@@ -406,7 +406,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- fromArray factory ---------------------------------------------------
 
     #[Test]
-    public function test_manifest_from_array_valid(): void
+    public function manifestFromArrayValid(): void
     {
         $manifest = PluginManifest::fromArray([
             'slug' => 'json-plugin',
@@ -422,7 +422,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_manifest_from_array_missing_fields_fails(): void
+    public function manifestFromArrayMissingFieldsFails(): void
     {
         $manifest = PluginManifest::fromArray([]);
 
@@ -435,7 +435,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     // -- Valid prerelease version --------------------------------------------
 
     #[Test]
-    public function test_valid_prerelease_version(): void
+    public function validPrereleaseVersion(): void
     {
         $manifest = new PluginManifest(
             slug: 'beta-plugin',
@@ -449,7 +449,7 @@ final class CmsPluginManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_build_metadata_version(): void
+    public function validBuildMetadataVersion(): void
     {
         $manifest = new PluginManifest(
             slug: 'build-plugin',

@@ -30,7 +30,7 @@ final class ClientFingerprintTest extends TestCase
     // -- Direct connection (no proxy) ----------------------------------------
 
     #[Test]
-    public function test_direct_connection_uses_remote_addr(): void
+    public function directConnectionUsesRemoteAddr(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: []);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -43,7 +43,7 @@ final class ClientFingerprintTest extends TestCase
     }
 
     #[Test]
-    public function test_direct_connection_ignores_forwarded_headers(): void
+    public function directConnectionIgnoresForwardedHeaders(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: []);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -62,7 +62,7 @@ final class ClientFingerprintTest extends TestCase
     // -- Trusted proxy: X-Forwarded-For parsing (right-to-left) -------------
 
     #[Test]
-    public function test_trusted_proxy_uses_x_forwarded_for(): void
+    public function trustedProxyUsesXForwardedFor(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: ['10.0.0.1']);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -78,7 +78,7 @@ final class ClientFingerprintTest extends TestCase
     }
 
     #[Test]
-    public function test_trusted_proxy_xff_multiple_ips(): void
+    public function trustedProxyXffMultipleIps(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: ['10.0.0.1', '10.0.0.2']);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -96,7 +96,7 @@ final class ClientFingerprintTest extends TestCase
     // -- Untrusted REMOTE_ADDR ignores forwarded headers --------------------
 
     #[Test]
-    public function test_untrusted_remote_addr_ignores_forwarded_headers(): void
+    public function untrustedRemoteAddrIgnoresForwardedHeaders(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: ['10.0.0.1']);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -115,7 +115,7 @@ final class ClientFingerprintTest extends TestCase
     // -- X-Real-IP header ---------------------------------------------------
 
     #[Test]
-    public function test_trusted_proxy_uses_x_real_ip(): void
+    public function trustedProxyUsesXRealIp(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: ['10.0.0.1']);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -132,7 +132,7 @@ final class ClientFingerprintTest extends TestCase
     // -- Cloudflare mode: CF-Connecting-IP -----------------------------------
 
     #[Test]
-    public function test_cloudflare_mode_uses_cf_connecting_ip(): void
+    public function cloudflareModeUsesCfConnectingIp(): void
     {
         $config = new CmsSecurityConfig(
             trustedProxies: ['172.64.0.1'],
@@ -152,7 +152,7 @@ final class ClientFingerprintTest extends TestCase
     }
 
     #[Test]
-    public function test_cloudflare_mode_off_ignores_cf_header(): void
+    public function cloudflareModeOffIgnoresCfHeader(): void
     {
         $config = new CmsSecurityConfig(
             trustedProxies: ['172.64.0.1'],
@@ -174,7 +174,7 @@ final class ClientFingerprintTest extends TestCase
     // -- IPv6 normalization --------------------------------------------------
 
     #[Test]
-    public function test_ipv6_is_normalized_to_subnet(): void
+    public function ipv6IsNormalizedToSubnet(): void
     {
         $config = new CmsSecurityConfig(
             trustedProxies: [],
@@ -191,7 +191,7 @@ final class ClientFingerprintTest extends TestCase
     }
 
     #[Test]
-    public function test_ipv4_is_not_masked(): void
+    public function ipv4IsNotMasked(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: []);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -206,7 +206,7 @@ final class ClientFingerprintTest extends TestCase
     // -- Composite hash is HMAC of IP + user agent --------------------------
 
     #[Test]
-    public function test_composite_hash_is_hmac_of_ip_plus_user_agent(): void
+    public function compositeHashIsHmacOfIpPlusUserAgent(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: []);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -222,7 +222,7 @@ final class ClientFingerprintTest extends TestCase
     }
 
     #[Test]
-    public function test_ip_hash_is_hmac_of_ip(): void
+    public function ipHashIsHmacOfIp(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: []);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -236,7 +236,7 @@ final class ClientFingerprintTest extends TestCase
     }
 
     #[Test]
-    public function test_user_agent_hash_is_hmac_of_user_agent(): void
+    public function userAgentHashIsHmacOfUserAgent(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: []);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -253,7 +253,7 @@ final class ClientFingerprintTest extends TestCase
     // -- Header priority: CF > X-Real-IP > XFF > REMOTE_ADDR ---------------
 
     #[Test]
-    public function test_x_real_ip_takes_priority_over_xff(): void
+    public function xRealIpTakesPriorityOverXff(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: ['10.0.0.1']);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);
@@ -272,7 +272,7 @@ final class ClientFingerprintTest extends TestCase
     // -- Fingerprint with empty user agent -----------------------------------
 
     #[Test]
-    public function test_fingerprint_with_empty_user_agent(): void
+    public function fingerprintWithEmptyUserAgent(): void
     {
         $config = new CmsSecurityConfig(trustedProxies: []);
         $resolver = new ClientFingerprintResolver($config, $this->hmacKey);

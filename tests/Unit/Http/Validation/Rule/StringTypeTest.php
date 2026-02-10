@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Http\Validation\Rule;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Http\Validation\Rule\StringType;
@@ -19,43 +20,51 @@ final class StringTypeTest extends TestCase
         $this->rule = new StringType();
     }
 
-    #[Test]
-    public function stringPasses(): void
+    /**
+     * @return iterable<string, array{mixed}>
+     */
+    public static function validStringProvider(): iterable
     {
-        self::assertNull($this->rule->validate('field', 'hello', []));
+        yield 'non-empty string' => ['hello'];
+        yield 'empty string' => [''];
+        yield 'whitespace' => [' '];
+        yield 'numeric string' => ['42'];
+        yield 'unicode string' => ['こんにちは'];
+        yield 'multi-line string' => ["line1\nline2"];
     }
 
     #[Test]
-    public function emptyStringPasses(): void
+    #[DataProvider('validStringProvider')]
+    public function validStringPasses(mixed $value): void
     {
-        self::assertNull($this->rule->validate('field', '', []));
+        self::assertNull($this->rule->validate('field', $value, []));
+    }
+
+    /**
+     * @return iterable<string, array{mixed}>
+     */
+    public static function nonStringProvider(): iterable
+    {
+        yield 'integer' => [42];
+        yield 'float' => [3.14];
+        yield 'true bool' => [true];
+        yield 'false bool' => [false];
+        yield 'array' => [['a']];
+        yield 'empty array' => [[]];
+    }
+
+    #[Test]
+    #[DataProvider('nonStringProvider')]
+    public function nonStringFails(mixed $value): void
+    {
+        $violation = $this->rule->validate('field', $value, []);
+        self::assertNotNull($violation);
+        self::assertSame('string', $violation->rule);
     }
 
     #[Test]
     public function nullSkips(): void
     {
         self::assertNull($this->rule->validate('field', null, []));
-    }
-
-    #[Test]
-    public function intFails(): void
-    {
-        $violation = $this->rule->validate('field', 42, []);
-        self::assertNotNull($violation);
-        self::assertSame('string', $violation->rule);
-    }
-
-    #[Test]
-    public function boolFails(): void
-    {
-        $violation = $this->rule->validate('field', true, []);
-        self::assertNotNull($violation);
-    }
-
-    #[Test]
-    public function arrayFails(): void
-    {
-        $violation = $this->rule->validate('field', ['a'], []);
-        self::assertNotNull($violation);
     }
 }

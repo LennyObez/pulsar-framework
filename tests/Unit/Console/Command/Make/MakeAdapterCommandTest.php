@@ -49,6 +49,72 @@ final class MakeAdapterCommandTest extends TestCase
     }
 
     #[Test]
+    public function it_returns_invalid_when_module_is_missing(): void
+    {
+        $command = new MakeAdapterCommand();
+
+        $input = $this->createStub(InputInterface::class);
+        $input->method('getArgument')->willReturn('StripeProvider');
+        $input->method('getOption')->willReturnMap([
+            ['port', null, 'PaymentProvider'],
+            ['module', null, null],
+            ['path', 'app/Modules', 'app/Modules'],
+        ]);
+
+        $output = $this->createMock(OutputInterface::class);
+        $output->expects(self::atLeastOnce())->method('errorln');
+
+        self::assertSame(ExitCode::Invalid->value, $command->execute($input, $output));
+    }
+
+    #[Test]
+    public function it_returns_invalid_when_port_is_missing(): void
+    {
+        $command = new MakeAdapterCommand();
+
+        $input = $this->createStub(InputInterface::class);
+        $input->method('getArgument')->willReturn('StripeProvider');
+        $input->method('getOption')->willReturnMap([
+            ['port', null, null],
+            ['module', null, 'Billing'],
+            ['path', 'app/Modules', 'app/Modules'],
+        ]);
+
+        $output = $this->createMock(OutputInterface::class);
+        $output->expects(self::atLeastOnce())->method('errorln');
+
+        self::assertSame(ExitCode::Invalid->value, $command->execute($input, $output));
+    }
+
+    #[Test]
+    public function it_returns_error_when_module_does_not_exist(): void
+    {
+        $command = new MakeAdapterCommand();
+
+        $originalDir = getcwd();
+        chdir($this->tempDir);
+
+        $input = $this->createStub(InputInterface::class);
+        $input->method('getArgument')->willReturn('StripeProvider');
+        $input->method('getOption')->willReturnMap([
+            ['port', null, 'PaymentProvider'],
+            ['module', null, 'NonExistent'],
+            ['path', 'app/Modules', 'app/Modules'],
+        ]);
+
+        $output = new \Pulsar\Console\Output\BufferedOutput();
+
+        $result = $command->execute($input, $output);
+
+        if ($originalDir !== false) {
+            chdir($originalDir);
+        }
+
+        self::assertSame(ExitCode::Error->value, $result);
+        self::assertStringContainsString('does not exist', $output->errorBuffer);
+    }
+
+    #[Test]
     public function it_creates_adapter_implementing_port(): void
     {
         $command = new MakeAdapterCommand();

@@ -25,7 +25,7 @@ final class QrCodeEncoderTest extends TestCase
     // -- SVG output structure -------------------------------------------------
 
     #[Test]
-    public function test_encode_typical_otpauth_uri(): void
+    public function encodeTypicalOtpauthUri(): void
     {
         // Short URI to stay within version 10 capacity (~78 bytes max for byte mode EC-M)
         $uri = 'otpauth://totp/CMS:user?secret=JBSWY3DP&issuer=CMS';
@@ -37,7 +37,7 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function test_svg_output_is_well_formed_xml(): void
+    public function svgOutputIsWellFormedXml(): void
     {
         $svg = $this->encoder->encode('Hello, World!');
 
@@ -48,7 +48,7 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function test_svg_contains_path_element_for_dark_modules(): void
+    public function svgContainsPathElementForDarkModules(): void
     {
         $svg = $this->encoder->encode('test');
 
@@ -57,7 +57,7 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function test_svg_contains_white_background_rect(): void
+    public function svgContainsWhiteBackgroundRect(): void
     {
         $svg = $this->encoder->encode('test');
 
@@ -67,7 +67,7 @@ final class QrCodeEncoderTest extends TestCase
     // -- Various input lengths ------------------------------------------------
 
     #[Test]
-    public function test_short_input(): void
+    public function shortInput(): void
     {
         $svg = $this->encoder->encode('A');
 
@@ -76,7 +76,7 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function test_medium_input(): void
+    public function mediumInput(): void
     {
         $svg = $this->encoder->encode('The quick brown fox jumps over the lazy dog');
 
@@ -85,7 +85,7 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function test_longer_input_uses_higher_version(): void
+    public function longerInputUsesHigherVersion(): void
     {
         // ~60 bytes requires a higher version than a 1-byte input, but still within v10 capacity
         $data = str_repeat('X', 60);
@@ -99,7 +99,7 @@ final class QrCodeEncoderTest extends TestCase
     // -- Module size and quiet zone -------------------------------------------
 
     #[Test]
-    public function test_custom_module_size(): void
+    public function customModuleSize(): void
     {
         $svg = $this->encoder->encode('test', moduleSize: 8);
 
@@ -109,7 +109,7 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function test_custom_quiet_zone(): void
+    public function customQuietZone(): void
     {
         $svg = $this->encoder->encode('test', quietZone: 2);
 
@@ -119,7 +119,7 @@ final class QrCodeEncoderTest extends TestCase
     // -- Data too large -------------------------------------------------------
 
     #[Test]
-    public function test_data_too_large_throws_exception(): void
+    public function dataTooLargeThrowsException(): void
     {
         // Version 10 max capacity for byte mode at EC level M is limited
         $this->expectException(InvalidArgumentException::class);
@@ -131,7 +131,7 @@ final class QrCodeEncoderTest extends TestCase
     // -- Different character types --------------------------------------------
 
     #[Test]
-    public function test_numeric_input(): void
+    public function numericInput(): void
     {
         $svg = $this->encoder->encode('1234567890');
 
@@ -140,7 +140,7 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function test_alphanumeric_input(): void
+    public function alphanumericInput(): void
     {
         $svg = $this->encoder->encode('ABCDEF0123456789');
 
@@ -149,7 +149,7 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function test_utf8_input(): void
+    public function utf8Input(): void
     {
         $svg = $this->encoder->encode('Hallo Welt! Schöne Grüße');
 
@@ -158,7 +158,7 @@ final class QrCodeEncoderTest extends TestCase
     }
 
     #[Test]
-    public function test_special_characters_input(): void
+    public function specialCharactersInput(): void
     {
         $svg = $this->encoder->encode('!@#$%^&*()_+-=[]{}|;:\'",.<>?/`~');
 
@@ -169,7 +169,7 @@ final class QrCodeEncoderTest extends TestCase
     // -- Deterministic output ------------------------------------------------
 
     #[Test]
-    public function test_same_input_produces_same_output(): void
+    public function sameInputProducesSameOutput(): void
     {
         $data = 'deterministic test';
 
@@ -182,7 +182,7 @@ final class QrCodeEncoderTest extends TestCase
     // -- SVG viewBox and dimensions ------------------------------------------
 
     #[Test]
-    public function test_svg_has_viewbox(): void
+    public function svgHasViewbox(): void
     {
         $svg = $this->encoder->encode('viewbox test');
 
