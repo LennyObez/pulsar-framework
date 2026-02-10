@@ -120,7 +120,7 @@ final class QueuePipelineTest extends TestCase
         self::assertSame(1, $manager->size());
 
         // Worker processes it
-        $options = new WorkerOptions(maxJobs: 1, sleepMs: 1);
+        $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
         $worker = new Worker($driver, $options);
         $worker->run('default');
 
@@ -143,7 +143,7 @@ final class QueuePipelineTest extends TestCase
         $driver->push('default', PipelineOrderTrackerSecond::class, '{}');
         $driver->push('default', PipelineOrderTrackerThird::class, '{}');
 
-        $options = new WorkerOptions(maxJobs: 3, sleepMs: 1);
+        $options = new WorkerOptions(maxJobs: 3, sleepMs: 1, maxMemoryMb: 0);
         $worker = new Worker($driver, $options);
         $worker->run('default');
 
@@ -163,7 +163,7 @@ final class QueuePipelineTest extends TestCase
 
         self::assertSame(1, $driver->size('default'));
 
-        $options = new WorkerOptions(maxJobs: 1, sleepMs: 1);
+        $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
         $worker = new Worker($driver, $options);
         $worker->run('default');
 
@@ -179,7 +179,7 @@ final class QueuePipelineTest extends TestCase
         $driver = new InMemoryDriver();
         $id = $driver->push('default', PipelineFailingJob::class, '{}');
 
-        $options = new WorkerOptions(maxJobs: 1, sleepMs: 1);
+        $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
         $worker = new Worker($driver, $options);
         $worker->run('default');
 
@@ -373,7 +373,7 @@ final class QueuePipelineTest extends TestCase
             $driver->push('default', PipelineCountingJob::class, '{}');
         }
 
-        $options = new WorkerOptions(maxJobs: 3, sleepMs: 1);
+        $options = new WorkerOptions(maxJobs: 3, sleepMs: 1, maxMemoryMb: 0);
         $worker = new Worker($driver, $options);
         $worker->run('default');
 
@@ -394,7 +394,7 @@ final class QueuePipelineTest extends TestCase
 
         // maxJobs is higher than available jobs; worker will run idle loop once then stop due to time/signal
         // Use maxJobs to cap at 10 so test doesn't hang
-        $options = new WorkerOptions(maxJobs: 10, sleepMs: 1, timeLimitSeconds: 1);
+        $options = new WorkerOptions(maxJobs: 10, sleepMs: 1, timeLimitSeconds: 1, maxMemoryMb: 0);
         $worker = new Worker($driver, $options);
         $worker->run('default');
 
@@ -500,7 +500,7 @@ final class QueuePipelineTest extends TestCase
         self::assertSame(1, $manager->size());
 
         // Process
-        $options = new WorkerOptions(maxJobs: 1, sleepMs: 1);
+        $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
         $worker = new Worker($driver, $options);
         $worker->run('work');
 

@@ -24,7 +24,7 @@ final class MemoryPreflightCheck implements PreflightCheckInterface
     private const int BYTES_PER_MB = 1_048_576;
 
     public function __construct(
-        private readonly int $thresholdMb = 128,
+        private readonly int $thresholdMb = 256,
     ) {}
 
     #[Override]
