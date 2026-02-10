@@ -40,7 +40,7 @@ final readonly class SearchController
             ]);
         }
 
-        return Response::html($this->renderView('Search Results', 'search', [
+        return Response::html($this->renderView([
             'query' => $queryStr,
             'results' => $result->results,
             'totalMatches' => $result->totalMatches,
@@ -51,8 +51,10 @@ final readonly class SearchController
     /**
      * @param array<string, mixed> $templateData
      */
-    private function renderView(string $title, string $content, array $templateData): string
+    private function renderView(array $templateData): string
     {
+        $title = 'Search Results';
+        $content = 'search';
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

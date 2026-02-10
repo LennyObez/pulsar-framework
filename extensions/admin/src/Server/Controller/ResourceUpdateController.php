@@ -32,7 +32,7 @@ final readonly class ResourceUpdateController
     {
         $resourceDef = $this->registry->get($resource);
 
-        return Response::html($this->renderView("Edit {$resourceDef->label()} #$id", 'resource-form', [
+        return Response::html($this->renderView("Edit {$resourceDef->label()} #$id", [
             'resource' => $resourceDef,
             'data' => [],
             'mode' => 'edit',
@@ -72,8 +72,9 @@ final readonly class ResourceUpdateController
     /**
      * @param array<string, mixed> $templateData
      */
-    private function renderView(string $title, string $content, array $templateData): string
+    private function renderView(string $title, array $templateData): string
     {
+        $content = 'resource-form';
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

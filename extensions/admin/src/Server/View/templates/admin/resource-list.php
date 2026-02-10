@@ -3,10 +3,8 @@
 declare(strict_types=1);
 
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
+use Pulsar\Extension\Admin\Domain\ListResourceResult;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
-
-// ListResourceResult is a Features-internal DTO passed via $templateData — use FQN to
-// avoid cross-layer import that trips the boundary checker on template files.
 
 /**
  * @var array<string, mixed> $templateData
@@ -14,7 +12,7 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
 $e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 /** @var DataResourceInterface $resource */
 $resource = $templateData['resource'];
-/** @var \Pulsar\Extension\Admin\Features\ListResource\ListResourceResult $result */
+/** @var ListResourceResult $result */
 $result = $templateData['result'];
 $fields = $resource->fields();
 $listFields = array_filter($fields, static fn($f): bool => $f->visibleOnList);

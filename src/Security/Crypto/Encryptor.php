@@ -196,11 +196,11 @@ final class Encryptor implements EncryptorInterface
      * @throws SodiumException
      */
     #[NoDiscard]
-    public function withDerivedKey(KeyProviderInterface $masterKey, int $subKeyId, string $context): self
+    public function withDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self
     {
         $key = $masterKey->deriveSubKey($subKeyId, $context);
 
-        $previousKey = $masterKey instanceof MasterKey && $masterKey->hasPreviousKey()
+        $previousKey = $masterKey->hasPreviousKey()
             ? $masterKey->derivePreviousSubKey($subKeyId, $context)
             : null;
 

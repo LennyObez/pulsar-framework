@@ -33,5 +33,5 @@ interface EncryptorInterface
      *
      * @throws SodiumException
      */
-    public function withDerivedKey(KeyProviderInterface $masterKey, int $subKeyId, string $context): self;
+    public function withDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self;
 }

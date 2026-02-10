@@ -9,7 +9,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Config\EncryptionConfig;
 use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
 use Pulsar\Security\Crypto\EncryptorInterface;
-use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Security\Crypto\MasterKey;
 
 use function sodium_crypto_generichash;
 use function substr;
@@ -27,7 +27,7 @@ final readonly class AttributeColumnEncryptor implements ColumnEncryptorInterfac
 
     public function __construct(
         EncryptorInterface $encryptor,
-        KeyProviderInterface $keyProvider,
+        MasterKey $keyProvider,
         private EncryptionConfig $config,
     ) {
         $this->derivedEncryptor = $encryptor->withDerivedKey(

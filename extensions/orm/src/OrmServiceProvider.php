@@ -25,6 +25,7 @@ use Pulsar\Extension\Orm\Features\Schema\SchemaBuilder;
 use Pulsar\Extension\Orm\Gateway\EntityManager;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Security\Crypto\MasterKey;
 
 /**
  * Service provider for the ORM extension.
@@ -87,7 +88,7 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             /** @var EncryptorInterface $encryptor */
             $encryptor = $container->get(EncryptorInterface::class);
 
-            /** @var KeyProviderInterface $keyProvider */
+            /** @var MasterKey $keyProvider */
             $keyProvider = $container->get(KeyProviderInterface::class);
 
             return new AttributeColumnEncryptor($encryptor, $keyProvider, $config->encryption);

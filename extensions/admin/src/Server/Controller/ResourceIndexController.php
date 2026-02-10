@@ -41,7 +41,7 @@ final readonly class ResourceIndexController
             return Response::json(['resources' => $resources]);
         }
 
-        return Response::html($this->renderView('Resources', 'resources-index', [
+        return Response::html($this->renderView([
             'resources' => $resources,
             'schema_enabled' => $this->config->schema->enabled,
         ]));
@@ -50,8 +50,10 @@ final readonly class ResourceIndexController
     /**
      * @param array<string, mixed> $templateData
      */
-    private function renderView(string $title, string $content, array $templateData): string
+    private function renderView(array $templateData): string
     {
+        $title = 'Resources';
+        $content = 'resources-index';
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

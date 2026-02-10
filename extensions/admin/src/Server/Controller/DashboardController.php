@@ -33,7 +33,7 @@ final readonly class DashboardController
             ]);
         }
 
-        return Response::html($this->renderView('Dashboard', 'dashboard', [
+        return Response::html($this->renderView([
             'widgets' => $result->widgets,
             'resources' => $result->resources,
             'schema_enabled' => $this->config->schema->enabled,
@@ -43,8 +43,10 @@ final readonly class DashboardController
     /**
      * @param array<string, mixed> $templateData
      */
-    private function renderView(string $title, string $content, array $templateData): string
+    private function renderView(array $templateData): string
     {
+        $title = 'Dashboard';
+        $content = 'dashboard';
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\SocialSso\Internal\Session;
 
+use NoDiscard;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -141,6 +142,7 @@ final class SessionOAuthStateManagerTest extends TestCase
                 return true;
             }
 
+            #[NoDiscard]
             public function get(string $key, mixed $default = null): mixed
             {
                 return $this->data[$key] ?? $default;

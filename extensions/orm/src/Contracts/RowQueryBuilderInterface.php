@@ -27,86 +27,86 @@ interface RowQueryBuilderInterface
      *
      * @param list<string|RawExpression> $columns
      */
-    public function select(array $columns): static;
+    public function select(array $columns): RowQueryBuilderInterface;
 
     /**
      * Add a WHERE equality condition.
      */
-    public function where(string $column, mixed $value): static;
+    public function where(string $column, mixed $value): RowQueryBuilderInterface;
 
     /**
      * Add a WHERE condition with a comparison operator.
      */
-    public function whereOp(string $column, string $operator, mixed $value): static;
+    public function whereOp(string $column, string $operator, mixed $value): RowQueryBuilderInterface;
 
     /**
      * Add a WHERE column IS NULL condition.
      */
-    public function whereNull(string $column): static;
+    public function whereNull(string $column): RowQueryBuilderInterface;
 
     /**
      * Add a WHERE column IS NOT NULL condition.
      */
-    public function whereNotNull(string $column): static;
+    public function whereNotNull(string $column): RowQueryBuilderInterface;
 
     /**
      * Add a WHERE column IN (...) condition.
      *
      * @param list<mixed> $values
      */
-    public function whereIn(string $column, array $values): static;
+    public function whereIn(string $column, array $values): RowQueryBuilderInterface;
 
     /**
      * Add a WHERE column NOT IN (...) condition.
      *
      * @param list<mixed> $values
      */
-    public function whereNotIn(string $column, array $values): static;
+    public function whereNotIn(string $column, array $values): RowQueryBuilderInterface;
 
     /**
      * Add a WHERE column BETWEEN low AND high condition.
      */
-    public function whereBetween(string $column, mixed $low, mixed $high): static;
+    public function whereBetween(string $column, mixed $low, mixed $high): RowQueryBuilderInterface;
 
     /**
      * Add a WHERE LIKE condition.
      */
-    public function whereLike(string $column, LikePattern $pattern): static;
+    public function whereLike(string $column, LikePattern $pattern): RowQueryBuilderInterface;
 
     /**
      * Add a raw WHERE condition.
      */
-    public function whereRaw(RawExpression $expression): static;
+    public function whereRaw(RawExpression $expression): RowQueryBuilderInterface;
 
     /**
      * Add an ORDER BY clause.
      */
-    public function orderBy(string $column, SortDirection $direction = SortDirection::Asc): static;
+    public function orderBy(string $column, SortDirection $direction = SortDirection::Asc): RowQueryBuilderInterface;
 
     /**
      * Set the maximum number of rows to return.
      */
-    public function limit(int $limit): static;
+    public function limit(int $limit): RowQueryBuilderInterface;
 
     /**
      * Set the row offset.
      */
-    public function offset(int $offset): static;
+    public function offset(int $offset): RowQueryBuilderInterface;
 
     /**
      * Add a GROUP BY column.
      */
-    public function groupBy(string $column): static;
+    public function groupBy(string $column): RowQueryBuilderInterface;
 
     /**
      * Add a HAVING condition.
      */
-    public function having(RawExpression $expression): static;
+    public function having(RawExpression $expression): RowQueryBuilderInterface;
 
     /**
      * Set the lock mode.
      */
-    public function lock(LockMode $mode): static;
+    public function lock(LockMode $mode): RowQueryBuilderInterface;
 
     /**
      * Execute the query and return raw rows.

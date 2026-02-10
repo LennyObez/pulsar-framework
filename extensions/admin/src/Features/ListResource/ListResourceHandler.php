@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Admin\Features\ListResource;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
+use Pulsar\Extension\Admin\Domain\ListResourceResult;
 use Pulsar\Extension\Admin\Internal\Policy\FieldVisibilityFilter;
 
 use function max;

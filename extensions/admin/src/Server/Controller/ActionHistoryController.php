@@ -82,7 +82,7 @@ final readonly class ActionHistoryController
      */
     private function renderHtml(string $pageTitle, array $entries): string
     {
-        return $this->renderView($pageTitle, 'activity', [
+        return $this->renderView($pageTitle, [
             'entries' => $entries,
             'schema_enabled' => $this->config->schema->enabled,
         ]);
@@ -91,8 +91,9 @@ final readonly class ActionHistoryController
     /**
      * @param array<string, mixed> $templateData
      */
-    private function renderView(string $title, string $content, array $templateData): string
+    private function renderView(string $title, array $templateData): string
     {
+        $content = 'activity';
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

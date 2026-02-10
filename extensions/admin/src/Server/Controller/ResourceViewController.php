@@ -46,7 +46,7 @@ final readonly class ResourceViewController
 
         $resourceDef = $this->registry->get($resource);
 
-        return Response::html($this->renderView("{$resourceDef->label()} #$id", 'resource-view', [
+        return Response::html($this->renderView("{$resourceDef->label()} #$id", [
             'resource' => $resourceDef,
             'data' => $result->data,
             'id' => $id,
@@ -57,8 +57,9 @@ final readonly class ResourceViewController
     /**
      * @param array<string, mixed> $templateData
      */
-    private function renderView(string $title, string $content, array $templateData): string
+    private function renderView(string $title, array $templateData): string
     {
+        $content = 'resource-view';
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

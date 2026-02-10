@@ -11,8 +11,9 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Orm\Config\EncryptionConfig;
 use Pulsar\Extension\Orm\Features\Encryption\AttributeColumnEncryptor;
 use Pulsar\Security\Crypto\EncryptorInterface;
-use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Security\Crypto\MasterKey;
 
+use function sodium_bin2hex;
 use function strlen;
 
 #[CoversClass(AttributeColumnEncryptor::class)]
@@ -31,7 +32,7 @@ final class AttributeColumnEncryptorTest extends TestCase
         $baseEncryptor->method('withDerivedKey')
             ->willReturn($this->derivedEncryptor);
 
-        $keyProvider = $this->createStub(KeyProviderInterface::class);
+        $keyProvider = MasterKey::fromHex(sodium_bin2hex(str_repeat("\x01", SODIUM_CRYPTO_KDF_KEYBYTES)));
 
         $config = new EncryptionConfig(
             enabled: true,

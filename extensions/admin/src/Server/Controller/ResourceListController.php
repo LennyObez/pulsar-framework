@@ -29,7 +29,6 @@ final readonly class ResourceListController
     public function list(Request $request, string $resource): Response
     {
         $filters = [];
-        /** @var mixed $rawFilters */
         $rawFilters = $request->query('filters');
         if (is_string($rawFilters)) {
             /** @var array<string, mixed> $decoded */
@@ -67,7 +66,7 @@ final readonly class ResourceListController
 
         $resourceDef = $this->registry->get($resource);
 
-        return Response::html($this->renderView($resourceDef->pluralLabel(), 'resource-list', [
+        return Response::html($this->renderView($resourceDef->pluralLabel(), [
             'resource' => $resourceDef,
             'result' => $result,
             'filters' => $filters,
@@ -79,8 +78,9 @@ final readonly class ResourceListController
     /**
      * @param array<string, mixed> $templateData
      */
-    private function renderView(string $title, string $content, array $templateData): string
+    private function renderView(string $title, array $templateData): string
     {
+        $content = 'resource-list';
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

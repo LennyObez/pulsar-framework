@@ -166,7 +166,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function select(array $columns): static
+    public function select(array $columns): self
     {
         $this->columns = $columns;
 
@@ -174,7 +174,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function where(string $column, mixed $value): static
+    public function where(string $column, mixed $value): self
     {
         $expr = $this->exprCompiler->compare($this->qualifyColumn($column), '=', $value);
         $this->wheres[] = $expr;
@@ -184,7 +184,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereOp(string $column, string $operator, mixed $value): static
+    public function whereOp(string $column, string $operator, mixed $value): self
     {
         $expr = $this->exprCompiler->compare($this->qualifyColumn($column), $operator, $value);
         $this->wheres[] = $expr;
@@ -194,7 +194,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereNull(string $column): static
+    public function whereNull(string $column): self
     {
         $this->wheres[] = $this->exprCompiler->isNull($this->qualifyColumn($column));
 
@@ -202,7 +202,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereNotNull(string $column): static
+    public function whereNotNull(string $column): self
     {
         $this->wheres[] = $this->exprCompiler->isNull($this->qualifyColumn($column), true);
 
@@ -210,7 +210,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereIn(string $column, array $values): static
+    public function whereIn(string $column, array $values): self
     {
         $expr = $this->exprCompiler->in($this->qualifyColumn($column), $values);
         $this->wheres[] = $expr;
@@ -220,7 +220,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereNotIn(string $column, array $values): static
+    public function whereNotIn(string $column, array $values): self
     {
         $expr = $this->exprCompiler->in($this->qualifyColumn($column), $values, true);
         $this->wheres[] = $expr;
@@ -230,7 +230,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereBetween(string $column, mixed $low, mixed $high): static
+    public function whereBetween(string $column, mixed $low, mixed $high): self
     {
         $expr = $this->exprCompiler->between($this->qualifyColumn($column), $low, $high);
         $this->wheres[] = $expr;
@@ -240,7 +240,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereLike(string $column, LikePattern $pattern): static
+    public function whereLike(string $column, LikePattern $pattern): self
     {
         $expr = $this->exprCompiler->like($this->qualifyColumn($column), $pattern);
         $this->wheres[] = $expr;
@@ -250,7 +250,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereRaw(RawExpression $expression): static
+    public function whereRaw(RawExpression $expression): self
     {
         $expr = $this->exprCompiler->raw($expression);
         $this->wheres[] = $expr;
@@ -260,7 +260,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function orderBy(string $column, SortDirection $direction = SortDirection::Asc): static
+    public function orderBy(string $column, SortDirection $direction = SortDirection::Asc): self
     {
         $this->orderBys[] = sprintf('%s %s', $this->quoter->quote($this->qualifyColumn($column)), $direction->value);
 
@@ -268,7 +268,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function limit(int $limit): static
+    public function limit(int $limit): self
     {
         $this->limitValue = $limit;
 
@@ -276,7 +276,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function offset(int $offset): static
+    public function offset(int $offset): self
     {
         $this->offsetValue = $offset;
 
@@ -284,7 +284,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function groupBy(string $column): static
+    public function groupBy(string $column): self
     {
         $this->groupBys[] = $this->quoter->quote($this->qualifyColumn($column));
 
@@ -292,7 +292,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function having(RawExpression $expression): static
+    public function having(RawExpression $expression): self
     {
         $expr = $this->exprCompiler->raw($expression);
         $this->havings[] = $expr;
@@ -302,7 +302,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function lock(LockMode $mode): static
+    public function lock(LockMode $mode): self
     {
         $this->lockMode = $mode;
 
@@ -310,7 +310,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function withFetchPlan(FetchPlan $fetchPlan): static
+    public function withFetchPlan(FetchPlan $fetchPlan): self
     {
         $this->fetchPlan = $fetchPlan;
 
@@ -318,7 +318,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function withTrashed(): static
+    public function withTrashed(): self
     {
         $this->includeTrashed = true;
 
@@ -326,7 +326,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function onlyTrashed(): static
+    public function onlyTrashed(): self
     {
         $this->onlyTrashed = true;
 

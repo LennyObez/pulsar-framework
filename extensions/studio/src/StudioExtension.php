@@ -53,6 +53,7 @@ use Pulsar\Scheduler\Scheduler;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Tenancy\TenantContext;
 use Random\Randomizer;
 
@@ -152,7 +153,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         $archiveMacKey = null;
 
         if ($container->has(KeyProviderInterface::class) && $container->has(EncryptorInterface::class)) {
-            /** @var KeyProviderInterface $masterKey */
+            /** @var MasterKey $masterKey */
             $masterKey = $container->get(KeyProviderInterface::class);
             $hasDecryptionKey = true;
 

@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Admin\Features\ListResource;
+namespace Pulsar\Extension\Admin\Domain;
+
+use Pulsar\Api\Api;
 
 /**
  * Result DTO for listing resource records.
  */
+#[Api(since: '1.0.0')]
 final readonly class ListResourceResult
 {
     /**

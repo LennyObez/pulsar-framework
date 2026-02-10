@@ -18,7 +18,7 @@ interface EntityQueryBuilderInterface extends RowQueryBuilderInterface
     /**
      * Set the fetch plan for eager relation loading.
      */
-    public function withFetchPlan(FetchPlan $fetchPlan): static;
+    public function withFetchPlan(FetchPlan $fetchPlan): EntityQueryBuilderInterface;
 
     /**
      * Execute the query and return hydrated entities.
@@ -39,10 +39,10 @@ interface EntityQueryBuilderInterface extends RowQueryBuilderInterface
     /**
      * Include soft-deleted entities in the results.
      */
-    public function withTrashed(): static;
+    public function withTrashed(): EntityQueryBuilderInterface;
 
     /**
      * Return only soft-deleted entities.
      */
-    public function onlyTrashed(): static;
+    public function onlyTrashed(): EntityQueryBuilderInterface;
 }
