@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
  * Dashboard widget showing recent admin action history.
  */
 #[Internal]
-final class RecentActivityWidget implements WidgetInterface
+final readonly class RecentActivityWidget implements WidgetInterface
 {
     public function __construct(
         private readonly ActionHistoryStoreInterface $actionHistory,

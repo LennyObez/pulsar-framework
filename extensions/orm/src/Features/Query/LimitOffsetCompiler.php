@@ -11,7 +11,7 @@ use Pulsar\Extension\Orm\Internal\Compiler\DialectInterface;
  * Compiles LIMIT/OFFSET clauses via the dialect.
  */
 #[Internal]
-final class LimitOffsetCompiler
+final readonly class LimitOffsetCompiler
 {
     public function __construct(
         private readonly DialectInterface $dialect,

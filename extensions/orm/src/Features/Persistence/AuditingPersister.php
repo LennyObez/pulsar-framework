@@ -9,9 +9,9 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
+use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Exception\OptimisticLockException;
 use Pulsar\Extension\Orm\Features\Hydration\EntityDehydrator;
-use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Features\Query\DeleteBuilder;
 use Pulsar\Extension\Orm\Features\Query\InsertBuilder;
 use Pulsar\Extension\Orm\Features\Query\UpdateBuilder;
@@ -25,7 +25,7 @@ use function sprintf;
  * Persists entity changes to the database with audit trail logging.
  */
 #[Internal]
-final class AuditingPersister
+final readonly class AuditingPersister
 {
     public function __construct(
         private readonly ConnectionInterface $connection,
@@ -44,17 +44,14 @@ final class AuditingPersister
 
         // Add timestamps
         if ($metadata->hasTimestamps && $metadata->createdAtColumn !== null) {
-            $values[$metadata->createdAtColumn] = \date('Y-m-d H:i:s');
+            $values[$metadata->createdAtColumn] = date('Y-m-d H:i:s');
             if ($metadata->updatedAtColumn !== null) {
-                $values[$metadata->updatedAtColumn] = \date('Y-m-d H:i:s');
+                $values[$metadata->updatedAtColumn] = date('Y-m-d H:i:s');
             }
         }
 
-        // Add tenant column
-        if ($metadata->isTenantScoped && $metadata->tenantColumn !== null) {
-            // Tenant value should already be on the entity
-            // This is handled by TenantInsertEnricher if needed
-        }
+        // Tenant column: value should already be on the entity,
+        // handled by TenantInsertEnricher if needed.
 
         // Set initial version
         if ($metadata->versionProperty !== null) {
@@ -98,7 +95,7 @@ final class AuditingPersister
 
         // Update timestamp
         if ($metadata->hasTimestamps && $metadata->updatedAtColumn !== null) {
-            $values[$metadata->updatedAtColumn] = \date('Y-m-d H:i:s');
+            $values[$metadata->updatedAtColumn] = date('Y-m-d H:i:s');
         }
 
         $updateBuilder = new UpdateBuilder($this->connection, $metadata->tableName);
@@ -151,7 +148,7 @@ final class AuditingPersister
             // Soft delete: set the deleted_at column
             $updateBuilder = new UpdateBuilder($this->connection, $metadata->tableName);
             $updateBuilder
-                ->set([$metadata->softDeleteColumn => \date('Y-m-d H:i:s')])
+                ->set([$metadata->softDeleteColumn => date('Y-m-d H:i:s')])
                 ->where($metadata->primaryKey->columnName, $id)
                 ->execute();
         } else {
@@ -174,7 +171,7 @@ final class AuditingPersister
             AuditOutcome::Success,
             $context->actor,
             sprintf('orm.%s', $action),
-            sprintf('%s#%s', $metadata->entityClass, (string) $entityId),
+            sprintf('%s#%s', $metadata->entityClass, $entityId),
             [
                 'table' => $metadata->tableName,
                 'reason' => $context->reason,

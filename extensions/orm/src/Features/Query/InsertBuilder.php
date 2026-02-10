@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Query;
 
+use function array_keys;
+
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Orm\Internal\Compiler\SqlCompiler;
 use Pulsar\Extension\Orm\Internal\Support\BindingCounter;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
-
-use function array_keys;
-use function sprintf;
 
 /**
  * Internal INSERT builder — not exposed on the public API.
@@ -54,7 +53,7 @@ final class InsertBuilder
         $placeholders = [];
         $bindings = [];
 
-        foreach ($this->values as $column => $value) {
+        foreach ($this->values as $value) {
             $binding = $this->bindingCounter->next();
             $placeholders[] = ':' . $binding;
             $bindings[$binding] = $value;

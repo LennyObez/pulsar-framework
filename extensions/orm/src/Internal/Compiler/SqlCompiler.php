@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Internal\Compiler;
 
+use function array_map;
+use function implode;
+
 use Pulsar\Api\Internal;
 use Pulsar\Database\Driver;
 use Pulsar\Extension\Orm\Domain\LockMode;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 
-use function array_map;
-use function implode;
 use function sprintf;
 
 /**
  * Compiles SQL statements from query builder state.
  */
 #[Internal]
-final class SqlCompiler
+final readonly class SqlCompiler
 {
     private readonly IdentifierQuoter $quoter;
     private readonly DialectInterface $dialect;

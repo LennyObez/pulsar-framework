@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Domain;
 
+use function count;
+
 use NoDiscard;
 use Pulsar\Api\Api;
 
@@ -28,8 +30,8 @@ final readonly class QualifiedRef
     #[NoDiscard]
     public static function parse(string $ref): self
     {
-        $parts = \explode('.', $ref, 2);
-        if (\count($parts) !== 2) {
+        $parts = explode('.', $ref, 2);
+        if (count($parts) !== 2) {
             throw \Pulsar\Extension\Orm\Exception\QueryBuilderException::unqualifiedJoinRef($ref);
         }
 

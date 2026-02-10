@@ -4,23 +4,22 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Hydration;
 
+use function array_map;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
 use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
-use Pulsar\Extension\Orm\Domain\ColumnMetadata;
 use Pulsar\Extension\Orm\Internal\Support\TypeCaster;
 use ReflectionClass;
-
-use function array_map;
 
 /**
  * Hydrates entity objects from database rows using metadata.
  */
 #[Internal]
-final class EntityHydrator implements EntityHydratorInterface
+final readonly class EntityHydrator implements EntityHydratorInterface
 {
     private readonly TypeCaster $typeCaster;
 
@@ -47,7 +46,6 @@ final class EntityHydrator implements EntityHydratorInterface
 
             // Decrypt if encrypted
             if ($col->encrypted && $value !== null && $this->encryptor !== null) {
-                /** @var string $binaryValue */
                 $binaryValue = $row->getBinary($col->columnName);
                 $value = $this->encryptor->decrypt($binaryValue);
             }

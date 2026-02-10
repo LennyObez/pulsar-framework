@@ -127,7 +127,7 @@ final readonly class DatabaseIntrospector
      */
     private function sqliteColumns(string $table): array
     {
-        $result = $this->connection->query("PRAGMA table_info({$table})");
+        $result = $this->connection->query("PRAGMA table_info($table)");
 
         return array_map(
             static fn(Row $row): ColumnInfo => new ColumnInfo(
@@ -146,7 +146,7 @@ final readonly class DatabaseIntrospector
      */
     private function mysqlColumns(string $table): array
     {
-        $result = $this->connection->query("SHOW COLUMNS FROM {$table}");
+        $result = $this->connection->query("SHOW COLUMNS FROM $table");
 
         return array_map(
             static fn(Row $row): ColumnInfo => new ColumnInfo(

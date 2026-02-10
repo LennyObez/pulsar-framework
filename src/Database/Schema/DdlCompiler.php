@@ -236,8 +236,7 @@ final readonly class DdlCompiler
         if ($column->autoIncrement && !$column->primaryKey) {
             $sql .= match ($this->driver) {
                 Driver::MySQL => ' AUTO_INCREMENT',
-                Driver::SQLite => '',
-                Driver::PostgreSQL => '',
+                Driver::SQLite, Driver::PostgreSQL => '',
             };
         }
 
@@ -318,21 +317,16 @@ final readonly class DdlCompiler
             return sprintf('VARCHAR(%d)', $column->length ?? 50);
         }
 
-        if ($this->driver === Driver::MySQL) {
-            $escaped = array_map(
-                static fn(string $v): string => sprintf("'%s'", str_replace("'", "''", $v)),
-                $column->enumValues,
-            );
-
-            return sprintf('ENUM(%s)', implode(', ', $escaped));
-        }
-
-        // PostgreSQL + SQLite: CHECK constraint on VARCHAR
         $escaped = array_map(
             static fn(string $v): string => sprintf("'%s'", str_replace("'", "''", $v)),
             $column->enumValues,
         );
 
+        if ($this->driver === Driver::MySQL) {
+            return sprintf('ENUM(%s)', implode(', ', $escaped));
+        }
+
+        // PostgreSQL + SQLite: CHECK constraint on VARCHAR
         return sprintf(
             'VARCHAR(%d) CHECK (%s IN (%s))',
             $column->length ?? 50,

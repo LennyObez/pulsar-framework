@@ -12,7 +12,7 @@ use Pulsar\Extension\Orm\Domain\EntityMetadata;
  * Resolves the tenant column name for a given entity.
  */
 #[Internal]
-final class TenantColumnResolver
+final readonly class TenantColumnResolver
 {
     public function __construct(
         private readonly OrmConfig $config,

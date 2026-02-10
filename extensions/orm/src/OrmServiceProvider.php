@@ -8,7 +8,6 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
-use Pulsar\Extension\Orm\Config\EncryptionConfig;
 use Pulsar\Extension\Orm\Config\OrmConfig;
 use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
 use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
@@ -21,7 +20,6 @@ use Pulsar\Extension\Orm\Features\Hydration\EntityHydrator;
 use Pulsar\Extension\Orm\Features\Metadata\CachedMetadataRegistry;
 use Pulsar\Extension\Orm\Features\Metadata\MetadataCompiler;
 use Pulsar\Extension\Orm\Features\Persistence\AuditingPersister;
-use Pulsar\Extension\Orm\Features\Persistence\GenericRepository;
 use Pulsar\Extension\Orm\Features\Persistence\TransactionManager;
 use Pulsar\Extension\Orm\Features\Schema\SchemaBuilder;
 use Pulsar\Extension\Orm\Gateway\EntityManager;
@@ -33,7 +31,7 @@ use Pulsar\Security\Crypto\KeyProviderInterface;
  *
  * Binds all ORM services to the container based on configuration.
  */
-final class OrmServiceProvider implements ServiceProviderInterface
+final readonly class OrmServiceProvider implements ServiceProviderInterface
 {
     public function register(ContainerInterface $container): void
     {

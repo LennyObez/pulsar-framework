@@ -29,7 +29,7 @@ final readonly class EntityId
     #[NoDiscard]
     public function toString(): string
     {
-        return sprintf('%s#%s', $this->entityClass, (string) $this->value);
+        return sprintf('%s#%s', $this->entityClass, $this->value);
     }
 
     public function equals(self $other): bool

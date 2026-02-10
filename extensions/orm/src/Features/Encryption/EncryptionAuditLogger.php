@@ -15,7 +15,7 @@ use function sprintf;
  * Audit logger for encryption operations on ORM columns.
  */
 #[Internal]
-final class EncryptionAuditLogger
+final readonly class EncryptionAuditLogger
 {
     public function __construct(
         private readonly ?AuditLoggerInterface $auditLogger = null,

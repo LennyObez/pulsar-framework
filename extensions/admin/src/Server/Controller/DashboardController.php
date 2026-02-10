@@ -15,7 +15,7 @@ use Pulsar\Http\Response;
  * Admin dashboard controller.
  */
 #[Internal]
-final class DashboardController
+final readonly class DashboardController
 {
     public function __construct(
         private readonly DashboardHandler $handler,

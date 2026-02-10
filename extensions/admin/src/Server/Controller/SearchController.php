@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use function is_string;
+
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Features\GlobalSearch\GlobalSearchHandler;
@@ -15,7 +17,7 @@ use Pulsar\Http\Response;
  * Controller for global admin search.
  */
 #[Internal]
-final class SearchController
+final readonly class SearchController
 {
     public function __construct(
         private readonly GlobalSearchHandler $handler,

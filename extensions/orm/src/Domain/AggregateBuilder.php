@@ -15,7 +15,7 @@ use function sprintf;
  * Executes aggregate queries (COUNT, SUM, MIN, MAX, AVG) efficiently.
  */
 #[Api(since: '1.0.0')]
-final class AggregateBuilder
+final readonly class AggregateBuilder
 {
     /**
      * @param Closure(string): string $quoteIdentifier
@@ -76,11 +76,11 @@ final class AggregateBuilder
         $sql = 'SELECT ' . $selectExpr . ' FROM ' . $this->compiledFrom;
 
         if ($this->compiledJoins !== []) {
-            $sql .= ' ' . \implode(' ', $this->compiledJoins);
+            $sql .= ' ' . implode(' ', $this->compiledJoins);
         }
 
         if ($this->compiledWheres !== []) {
-            $sql .= ' WHERE ' . \implode(' AND ', $this->compiledWheres);
+            $sql .= ' WHERE ' . implode(' AND ', $this->compiledWheres);
         }
 
         $result = $this->connection->query($sql, $this->bindings);

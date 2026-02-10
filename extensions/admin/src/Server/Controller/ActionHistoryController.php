@@ -14,7 +14,7 @@ use Pulsar\Http\Response;
  * Controller for viewing action history.
  */
 #[Internal]
-final class ActionHistoryController
+final readonly class ActionHistoryController
 {
     public function __construct(
         private readonly ActionHistoryStoreInterface $store,

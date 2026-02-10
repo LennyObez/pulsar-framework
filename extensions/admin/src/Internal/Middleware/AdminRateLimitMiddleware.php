@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Admin\Internal\Middleware;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\RateLimit\RateLimiterInterface;
@@ -23,11 +22,10 @@ use function str_contains;
  * Applies different limits for read, write, and export operations.
  */
 #[Internal]
-final class AdminRateLimitMiddleware implements MiddlewareInterface
+final readonly class AdminRateLimitMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly RateLimiterInterface $rateLimiter,
-        private readonly AdminConfig $config,
     ) {}
 
     #[Override]
@@ -38,7 +36,7 @@ final class AdminRateLimitMiddleware implements MiddlewareInterface
         $actorId = $identity?->id() ?? 'anonymous';
 
         $category = $this->categorize($request);
-        $key = "admin:{$category}:{$actorId}";
+        $key = "admin:$category:$actorId";
 
         $result = $this->rateLimiter->hit($key);
 

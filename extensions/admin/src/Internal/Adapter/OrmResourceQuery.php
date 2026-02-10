@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Adapter;
 
+use function array_map;
+use function implode;
+use function in_array;
+use function max;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
@@ -11,15 +16,11 @@ use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
 use Pulsar\Extension\Admin\Domain\FieldDefinition;
 
-use function array_map;
-use function implode;
-use function max;
-
 /**
  * SQL-based query implementation for ORM-backed admin resources.
  */
 #[Internal]
-final class OrmResourceQuery implements ResourceQueryInterface
+final readonly class OrmResourceQuery implements ResourceQueryInterface
 {
     public function __construct(
         private readonly ConnectionInterface $connection,
@@ -45,18 +46,17 @@ final class OrmResourceQuery implements ResourceQueryInterface
 
         $orderBy = $this->buildOrderBy($resource, $sort);
 
-        $countSql = "SELECT COUNT(*) AS cnt FROM {$table}{$whereStr}";
+        $countSql = "SELECT COUNT(*) AS cnt FROM $table$whereStr";
         $countResult = $this->connection->query($countSql, $bindings);
-        $countRow = $countResult->rows()[0] ?? null;
-        /** @var int $total */
-        $total = $countRow !== null ? (int) $countRow->column('cnt') : 0;
+        $countRow = $countResult->first() ?? null;
+        $total = $countRow !== null ? (int) $countRow->get('cnt') : 0;
 
-        $dataSql = "SELECT * FROM {$table}{$whereStr}{$orderBy} LIMIT {$perPage} OFFSET {$offset}";
+        $dataSql = "SELECT * FROM $table$whereStr$orderBy LIMIT $perPage OFFSET $offset";
         $dataResult = $this->connection->query($dataSql, $bindings);
 
         $data = array_map(
             static fn($row): array => $row->toArray(),
-            $dataResult->rows(),
+            $dataResult->rows,
         );
 
         return [
@@ -73,15 +73,14 @@ final class OrmResourceQuery implements ResourceQueryInterface
         $table = $this->tableName($resource);
         $pk = $resource->primaryKey();
 
-        $sql = "SELECT * FROM {$table} WHERE {$pk} = :id LIMIT 1";
+        $sql = "SELECT * FROM $table WHERE $pk = :id LIMIT 1";
         $result = $this->connection->query($sql, ['id' => $id]);
 
-        $rows = $result->rows();
-        if ($rows === []) {
+        if ($result->rows === []) {
             return null;
         }
 
-        return $rows[0]->toArray();
+        return $result->rows[0]->toArray();
     }
 
     #[Override]
@@ -98,18 +97,18 @@ final class OrmResourceQuery implements ResourceQueryInterface
         }
 
         $conditions = array_map(
-            static fn(FieldDefinition $f): string => "{$f->name} LIKE :search",
+            static fn(FieldDefinition $f): string => "$f->name LIKE :search",
             array_values($searchableFields),
         );
 
         $whereStr = implode(' OR ', $conditions);
-        $sql = "SELECT * FROM {$table} WHERE {$whereStr} LIMIT {$limit}";
+        $sql = "SELECT * FROM $table WHERE $whereStr LIMIT $limit";
 
-        $result = $this->connection->query($sql, ['search' => "%{$query}%"]);
+        $result = $this->connection->query($sql, ['search' => "%$query%"]);
 
         return array_map(
             static fn($row): array => $row->toArray(),
-            $result->rows(),
+            $result->rows,
         );
     }
 
@@ -124,11 +123,11 @@ final class OrmResourceQuery implements ResourceQueryInterface
 
         $whereStr = $whereClauses !== [] ? ' WHERE ' . implode(' AND ', $whereClauses) : '';
 
-        $sql = "SELECT COUNT(*) AS cnt FROM {$table}{$whereStr}";
+        $sql = "SELECT COUNT(*) AS cnt FROM $table$whereStr";
         $result = $this->connection->query($sql, $bindings);
-        $row = $result->rows()[0] ?? null;
+        $row = $result->first();
 
-        return $row !== null ? (int) $row->column('cnt') : 0;
+        return $row !== null ? (int) $row->get('cnt') : 0;
     }
 
     private function tableName(DataResourceInterface $resource): string
@@ -162,8 +161,8 @@ final class OrmResourceQuery implements ResourceQueryInterface
             if (!in_array($field, $filterableFields, true)) {
                 continue;
             }
-            $paramName = "filter_{$field}";
-            $whereClauses[] = "{$field} = :{$paramName}";
+            $paramName = "filter_$field";
+            $whereClauses[] = "$field = :$paramName";
             $bindings[$paramName] = $value;
         }
     }
@@ -176,7 +175,7 @@ final class OrmResourceQuery implements ResourceQueryInterface
         if ($sort === []) {
             $field = $resource->defaultSortField();
             $dir = strtoupper($resource->defaultSortDirection()) === 'ASC' ? 'ASC' : 'DESC';
-            return " ORDER BY {$field} {$dir}";
+            return " ORDER BY $field $dir";
         }
 
         $sortableFields = array_map(
@@ -193,13 +192,13 @@ final class OrmResourceQuery implements ResourceQueryInterface
                 continue;
             }
             $dir = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
-            $clauses[] = "{$field} {$dir}";
+            $clauses[] = "$field $dir";
         }
 
         if ($clauses === []) {
             $field = $resource->defaultSortField();
             $dir = strtoupper($resource->defaultSortDirection()) === 'ASC' ? 'ASC' : 'DESC';
-            return " ORDER BY {$field} {$dir}";
+            return " ORDER BY $field $dir";
         }
 
         return ' ORDER BY ' . implode(', ', $clauses);

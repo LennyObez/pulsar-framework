@@ -6,9 +6,6 @@ namespace Pulsar\Extension\Orm\Features\Metadata;
 
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Attribute\BlindIndex;
-use Pulsar\Extension\Orm\Domain\ColumnMetadata;
-use Pulsar\Extension\Orm\Domain\EntityMetadata;
-use Pulsar\Extension\Orm\Domain\RelationMetadata;
 use Pulsar\Extension\Orm\Attribute\CastUsing;
 use Pulsar\Extension\Orm\Attribute\Column;
 use Pulsar\Extension\Orm\Attribute\Encrypted;
@@ -16,25 +13,27 @@ use Pulsar\Extension\Orm\Attribute\Id;
 use Pulsar\Extension\Orm\Attribute\Relation;
 use Pulsar\Extension\Orm\Attribute\SoftDelete;
 use Pulsar\Extension\Orm\Attribute\Table;
-use Pulsar\Extension\Orm\Attribute\Timestamps;
 use Pulsar\Extension\Orm\Attribute\TenantScoped;
 use Pulsar\Extension\Orm\Attribute\TenantShared;
+use Pulsar\Extension\Orm\Attribute\Timestamps;
 use Pulsar\Extension\Orm\Attribute\Version;
 use Pulsar\Extension\Orm\Config\OrmConfig;
+use Pulsar\Extension\Orm\Domain\ColumnMetadata;
 use Pulsar\Extension\Orm\Domain\ColumnType;
+use Pulsar\Extension\Orm\Domain\EntityMetadata;
+use Pulsar\Extension\Orm\Domain\RelationMetadata;
 use Pulsar\Extension\Orm\Exception\MappingException;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionProperty;
 
-use function array_keys;
 use function strtolower;
 
 /**
  * Compiles entity metadata from PHP attributes via reflection.
  */
 #[Internal]
-final class MetadataCompiler
+final readonly class MetadataCompiler
 {
     public function __construct(
         private readonly OrmConfig $config,
@@ -275,7 +274,7 @@ final class MetadataCompiler
         $shortName = strtolower($ref->getShortName());
 
         return match ($relation->type) {
-            \Pulsar\Extension\Orm\Domain\RelationType::BelongsTo => strtolower((new ReflectionClass($relation->target))->getShortName()) . '_id',
+            \Pulsar\Extension\Orm\Domain\RelationType::BelongsTo => strtolower(new ReflectionClass($relation->target)->getShortName()) . '_id',
             default => $shortName . '_id',
         };
     }

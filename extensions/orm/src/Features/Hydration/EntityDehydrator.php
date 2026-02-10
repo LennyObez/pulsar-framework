@@ -9,7 +9,6 @@ use Pulsar\Database\Param;
 use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Domain\ColumnMetadata;
-use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Internal\Support\TypeCaster;
 use ReflectionClass;
 
@@ -17,7 +16,7 @@ use ReflectionClass;
  * Dehydrates entity objects into database-ready column => value arrays.
  */
 #[Internal]
-final class EntityDehydrator
+final readonly class EntityDehydrator
 {
     private readonly TypeCaster $typeCaster;
 

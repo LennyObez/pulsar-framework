@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Command;
 
-use function is_dir;
 use function is_int;
 use function is_string;
 

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Adapter;
 
+use function array_keys;
+use function implode;
+use function in_array;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
@@ -17,16 +21,13 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 use Throwable;
 
-use function array_keys;
-use function implode;
-
 /**
  * SQL-based mutation implementation for ORM-backed admin resources.
  *
  * All writes require a MutationContext and are audit-logged.
  */
 #[Internal]
-final class OrmResourceMutator implements ResourceMutatorInterface
+final readonly class OrmResourceMutator implements ResourceMutatorInterface
 {
     public function __construct(
         private readonly ConnectionInterface $connection,
@@ -48,9 +49,9 @@ final class OrmResourceMutator implements ResourceMutatorInterface
         }
 
         $columns = array_keys($filtered);
-        $placeholders = array_map(static fn(string $col): string => ":{$col}", $columns);
+        $placeholders = array_map(static fn(string $col): string => ":$col", $columns);
 
-        $sql = "INSERT INTO {$table} (" . implode(', ', $columns) . ') VALUES (' . implode(', ', $placeholders) . ')';
+        $sql = "INSERT INTO $table (" . implode(', ', $columns) . ') VALUES (' . implode(', ', $placeholders) . ')';
 
         try {
             $this->connection->execute($sql, $filtered);
@@ -61,12 +62,12 @@ final class OrmResourceMutator implements ResourceMutatorInterface
                 outcome: AuditOutcome::Success,
                 actor: $context->actor,
                 action: "admin.create.{$resource->name()}",
-                resource: "{$resource->name()}:{$id}",
+                resource: "{$resource->name()}:$id",
                 metadata: ['reason' => $context->reason, 'correlation_id' => $context->correlationId],
             );
 
             return ActionResult::success(
-                "Created {$resource->label()} #{$id}",
+                "Created {$resource->label()} #$id",
                 ['id' => $id],
             );
         } catch (Throwable $e) {
@@ -100,18 +101,18 @@ final class OrmResourceMutator implements ResourceMutatorInterface
         }
 
         $setClauses = array_map(
-            static fn(string $col): string => "{$col} = :{$col}",
+            static fn(string $col): string => "$col = :$col",
             array_keys($filtered),
         );
 
-        $sql = "UPDATE {$table} SET " . implode(', ', $setClauses) . " WHERE {$pk} = :_pk_id";
+        $sql = "UPDATE $table SET " . implode(', ', $setClauses) . " WHERE $pk = :_pk_id";
         $bindings = [...$filtered, '_pk_id' => $id];
 
         try {
             $affected = $this->connection->execute($sql, $bindings);
 
             if ($affected === 0) {
-                return ActionResult::failure("{$resource->label()} #{$id} not found");
+                return ActionResult::failure("{$resource->label()} #$id not found");
             }
 
             $this->auditLogger->log(
@@ -119,7 +120,7 @@ final class OrmResourceMutator implements ResourceMutatorInterface
                 outcome: AuditOutcome::Success,
                 actor: $context->actor,
                 action: "admin.update.{$resource->name()}",
-                resource: "{$resource->name()}:{$id}",
+                resource: "{$resource->name()}:$id",
                 metadata: [
                     'reason' => $context->reason,
                     'fields' => array_keys($filtered),
@@ -127,14 +128,14 @@ final class OrmResourceMutator implements ResourceMutatorInterface
                 ],
             );
 
-            return ActionResult::success("Updated {$resource->label()} #{$id}");
+            return ActionResult::success("Updated {$resource->label()} #$id");
         } catch (Throwable $e) {
             $this->auditLogger->log(
                 event: AuditEvent::DataModification,
                 outcome: AuditOutcome::Error,
                 actor: $context->actor,
                 action: "admin.update.{$resource->name()}",
-                resource: "{$resource->name()}:{$id}",
+                resource: "{$resource->name()}:$id",
                 metadata: ['error' => $e->getMessage()],
             );
 
@@ -151,13 +152,13 @@ final class OrmResourceMutator implements ResourceMutatorInterface
         $table = $this->tableName($resource);
         $pk = $resource->primaryKey();
 
-        $sql = "DELETE FROM {$table} WHERE {$pk} = :id";
+        $sql = "DELETE FROM $table WHERE $pk = :id";
 
         try {
             $affected = $this->connection->execute($sql, ['id' => $id]);
 
             if ($affected === 0) {
-                return ActionResult::failure("{$resource->label()} #{$id} not found");
+                return ActionResult::failure("{$resource->label()} #$id not found");
             }
 
             $this->auditLogger->log(
@@ -165,18 +166,18 @@ final class OrmResourceMutator implements ResourceMutatorInterface
                 outcome: AuditOutcome::Success,
                 actor: $context->actor,
                 action: "admin.delete.{$resource->name()}",
-                resource: "{$resource->name()}:{$id}",
+                resource: "{$resource->name()}:$id",
                 metadata: ['reason' => $context->reason, 'correlation_id' => $context->correlationId],
             );
 
-            return ActionResult::success("Deleted {$resource->label()} #{$id}");
+            return ActionResult::success("Deleted {$resource->label()} #$id");
         } catch (Throwable $e) {
             $this->auditLogger->log(
                 event: AuditEvent::DataModification,
                 outcome: AuditOutcome::Error,
                 actor: $context->actor,
                 action: "admin.delete.{$resource->name()}",
-                resource: "{$resource->name()}:{$id}",
+                resource: "{$resource->name()}:$id",
                 metadata: ['error' => $e->getMessage()],
             );
 
@@ -205,7 +206,7 @@ final class OrmResourceMutator implements ResourceMutatorInterface
         );
 
         if (!in_array($action, $supportedActions, true)) {
-            return ActionResult::failure("Unsupported bulk action: {$action}");
+            return ActionResult::failure("Unsupported bulk action: $action");
         }
 
         try {
@@ -215,12 +216,12 @@ final class OrmResourceMutator implements ResourceMutatorInterface
                 $placeholders = [];
                 $bindings = [];
                 foreach ($ids as $i => $id) {
-                    $param = "id_{$i}";
-                    $placeholders[] = ":{$param}";
+                    $param = "id_$i";
+                    $placeholders[] = ":$param";
                     $bindings[$param] = $id;
                 }
 
-                $sql = "DELETE FROM {$table} WHERE {$pk} IN (" . implode(', ', $placeholders) . ')';
+                $sql = "DELETE FROM $table WHERE $pk IN (" . implode(', ', $placeholders) . ')';
                 $affected = $this->connection->execute($sql, $bindings);
             }
 
@@ -228,7 +229,7 @@ final class OrmResourceMutator implements ResourceMutatorInterface
                 event: AuditEvent::DataModification,
                 outcome: AuditOutcome::Success,
                 actor: $context->actor,
-                action: "admin.bulk.{$action}.{$resource->name()}",
+                action: "admin.bulk.$action.{$resource->name()}",
                 resource: $resource->name(),
                 metadata: [
                     'ids' => $ids,
@@ -239,7 +240,7 @@ final class OrmResourceMutator implements ResourceMutatorInterface
             );
 
             return ActionResult::success(
-                "Bulk {$action} completed: {$affected} record(s) affected",
+                "Bulk $action completed: $affected record(s) affected",
                 ['affected' => $affected],
             );
         } catch (Throwable $e) {
@@ -247,12 +248,12 @@ final class OrmResourceMutator implements ResourceMutatorInterface
                 event: AuditEvent::DataModification,
                 outcome: AuditOutcome::Error,
                 actor: $context->actor,
-                action: "admin.bulk.{$action}.{$resource->name()}",
+                action: "admin.bulk.$action.{$resource->name()}",
                 resource: $resource->name(),
                 metadata: ['error' => $e->getMessage(), 'ids' => $ids],
             );
 
-            return ActionResult::failure("Bulk {$action} failed: {$e->getMessage()}");
+            return ActionResult::failure("Bulk $action failed: {$e->getMessage()}");
         }
     }
 

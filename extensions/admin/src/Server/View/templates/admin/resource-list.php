@@ -56,8 +56,8 @@ $listFields = array_filter($fields, static fn($f): bool => $f->visibleOnList);
 
     <?php
     $page = $result->page;
-    $totalPages = $result->totalPages;
-    $baseUrl = '/admin/resources/' . $resource->name();
-    include __DIR__ . '/partials/pagination.php';
-    ?>
+$totalPages = $result->totalPages;
+$baseUrl = '/admin/resources/' . $resource->name();
+include __DIR__ . '/partials/pagination.php';
+?>
 </div>

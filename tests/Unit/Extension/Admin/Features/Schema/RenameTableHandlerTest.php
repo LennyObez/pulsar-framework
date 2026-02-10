@@ -47,8 +47,8 @@ final class RenameTableHandlerTest extends TestCase
         $this->handler = new RenameTableHandler(
             $this->manager,
             $this->introspector,
-            $this->createMock(AuditLoggerInterface::class),
-            $this->createMock(SchemaChangeLogStoreInterface::class),
+            $this->createStub(AuditLoggerInterface::class),
+            $this->createStub(SchemaChangeLogStoreInterface::class),
             new AdminSchemaConfig(enabled: true),
         );
     }

@@ -7,9 +7,10 @@ namespace Pulsar\Extension\Orm\Exception;
 use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
-use Throwable;
 
 use function sprintf;
+
+use Throwable;
 
 /**
  * Base exception for ORM operations.

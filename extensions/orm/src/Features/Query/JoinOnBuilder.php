@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Query;
 
+use function implode;
+
 use Pulsar\Api\Api;
 use Pulsar\Extension\Orm\Domain\QualifiedRef;
 use Pulsar\Extension\Orm\Internal\Support\BindingCounter;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 
-use function array_merge;
-use function implode;
 use function sprintf;
 
 /**

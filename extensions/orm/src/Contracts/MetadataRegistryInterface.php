@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Orm\Contracts;
 
 use Pulsar\Api\Api;
-use Pulsar\Extension\Orm\Exception\MappingException;
 use Pulsar\Extension\Orm\Domain\EntityMetadata;
+use Pulsar\Extension\Orm\Exception\MappingException;
 
 /**
  * Registry for entity metadata lookups.

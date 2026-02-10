@@ -4,14 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Export;
 
+use function fclose;
+use function fopen;
+use function fputcsv;
+use function is_bool;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Contracts\ExportDriverInterface;
 use Pulsar\Extension\Admin\Domain\ExportFormat;
 
-use function fclose;
-use function fopen;
-use function fputcsv;
 use function rewind;
 use function stream_get_contents;
 
@@ -19,7 +21,7 @@ use function stream_get_contents;
  * CSV export driver with scalar-only value enforcement.
  */
 #[Internal]
-final class CsvExportDriver implements ExportDriverInterface
+final readonly class CsvExportDriver implements ExportDriverInterface
 {
     #[Override]
     public function format(): ExportFormat
@@ -45,7 +47,7 @@ final class CsvExportDriver implements ExportDriverInterface
         /** @var resource $handle */
         $handle = fopen('php://temp', 'r+b');
 
-        fputcsv($handle, $columns);
+        fputcsv($handle, $columns, ',', '"', '');
 
         foreach ($rows as $row) {
             $values = [];
@@ -53,7 +55,7 @@ final class CsvExportDriver implements ExportDriverInterface
                 $value = $row[$col] ?? null;
                 $values[] = $this->formatValue($value);
             }
-            fputcsv($handle, $values);
+            fputcsv($handle, $values, ',', '"', '');
         }
 
         rewind($handle);

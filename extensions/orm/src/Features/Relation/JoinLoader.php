@@ -5,11 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Orm\Features\Relation;
 
 use Pulsar\Api\Internal;
-use Pulsar\Database\ConnectionInterface;
-use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
-use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Domain\RelationMetadata;
+use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 
 use function sprintf;
@@ -21,12 +19,10 @@ use function sprintf;
  * than a separate query.
  */
 #[Internal]
-final class JoinLoader
+final readonly class JoinLoader
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
         private readonly MetadataRegistryInterface $metadataRegistry,
-        private readonly EntityHydratorInterface $hydrator,
     ) {}
 
     /**

@@ -16,7 +16,7 @@ use Pulsar\Http\ResponseStatus;
  * Checks that the admin panel is enabled before allowing requests through.
  */
 #[Internal]
-final class AdminAccessMiddleware implements MiddlewareInterface
+final readonly class AdminAccessMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly AdminConfig $config,

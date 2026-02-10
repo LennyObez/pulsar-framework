@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\UpdateResource;
 
+use function array_key_exists;
+use function bin2hex;
+use function in_array;
+
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceMutatorInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
@@ -13,7 +17,6 @@ use Pulsar\Extension\Admin\Exception\ResourceValidationException;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 
-use function bin2hex;
 use function random_bytes;
 use function time;
 
@@ -35,7 +38,7 @@ final readonly class UpdateResourceHandler
         $ops = $resource->operations();
         if (!in_array(ResourceOperation::Update, $ops, true)) {
             throw new AdminException(
-                "Update operation not supported on resource \"{$request->resourceName}\"",
+                "Update operation not supported on resource \"$request->resourceName\"",
             );
         }
 
@@ -73,9 +76,6 @@ final readonly class UpdateResourceHandler
             }
             $value = $data[$field->name];
             foreach ($field->rules as $rule) {
-                if ($rule->rule === 'required' && !array_key_exists($field->name, $data)) {
-                    continue;
-                }
                 $error = $rule->validate($value, $field->label);
                 if ($error !== null) {
                     $violations[] = [

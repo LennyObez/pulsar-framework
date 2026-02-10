@@ -19,7 +19,7 @@ use Pulsar\Extension\Admin\Domain\AdminPermission;
  * and specific permission for the requested operation.
  */
 #[Internal]
-final class AdminResourcePolicy implements PolicyInterface
+final readonly class AdminResourcePolicy implements PolicyInterface
 {
     public function __construct(
         private readonly AdminConfig $config,
@@ -46,12 +46,17 @@ final class AdminResourcePolicy implements PolicyInterface
         }
 
         return match ($permission) {
-            AdminPermission::AccessPanel => true,
+            AdminPermission::AccessPanel,
             AdminPermission::ViewDashboard => true,
-            AdminPermission::ManageResources => $identity->hasRole('admin'),
-            AdminPermission::ExportData => $identity->hasRole('admin'),
+            AdminPermission::ManageResources,
+            AdminPermission::ExportData,
             AdminPermission::ViewAuditLog => $identity->hasRole('admin'),
             AdminPermission::ManageSettings => $identity->hasRole('super_admin'),
+            AdminPermission::SchemaView,
+            AdminPermission::SchemaCreate,
+            AdminPermission::SchemaAlter,
+            AdminPermission::SchemaDrop,
+            AdminPermission::SchemaRename => null,
         };
     }
 }

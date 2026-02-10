@@ -16,22 +16,22 @@ use function sprintf;
 final class TableBuilder
 {
     /** @var list<ColumnDefinition> */
-    private array $columns = [];
+    public private(set) array $columns = [];
 
     /** @var list<IndexDefinition> */
-    private array $indexes = [];
+    public private(set) array $indexes = [];
 
     /** @var list<ForeignKeyDefinition> */
-    private array $foreignKeys = [];
+    public private(set) array $foreignKeys = [];
 
     /** @var list<string> */
-    private array $primaryKeys = [];
+    public private(set) array $primaryKeys = [];
 
     /** @var list<string> */
-    private array $dropColumns = [];
+    public private(set) array $dropColumns = [];
 
     /** @var list<string> */
-    private array $dropIndexes = [];
+    public private(set) array $dropIndexes = [];
 
     public function __construct(
         public readonly string $tableName,
@@ -189,7 +189,7 @@ final class TableBuilder
      */
     public function index(array $columns, ?string $name = null): self
     {
-        $name ??= sprintf('idx_%s_%s', $this->tableName, \implode('_', $columns));
+        $name ??= sprintf('idx_%s_%s', $this->tableName, implode('_', $columns));
         $this->indexes[] = new IndexDefinition($name, $columns);
 
         return $this;
@@ -202,7 +202,7 @@ final class TableBuilder
      */
     public function unique(array $columns, ?string $name = null): self
     {
-        $name ??= sprintf('uniq_%s_%s', $this->tableName, \implode('_', $columns));
+        $name ??= sprintf('uniq_%s_%s', $this->tableName, implode('_', $columns));
         $this->indexes[] = new IndexDefinition($name, $columns, true);
 
         return $this;
@@ -222,7 +222,7 @@ final class TableBuilder
         string $onUpdate = 'RESTRICT',
         ?string $name = null,
     ): self {
-        $name ??= sprintf('fk_%s_%s', $this->tableName, \implode('_', $columns));
+        $name ??= sprintf('fk_%s_%s', $this->tableName, implode('_', $columns));
         $this->foreignKeys[] = new ForeignKeyDefinition(
             $name,
             $columns,
@@ -255,51 +255,4 @@ final class TableBuilder
         return $this;
     }
 
-    /**
-     * @return list<ColumnDefinition>
-     */
-    public function getColumns(): array
-    {
-        return $this->columns;
-    }
-
-    /**
-     * @return list<IndexDefinition>
-     */
-    public function getIndexes(): array
-    {
-        return $this->indexes;
-    }
-
-    /**
-     * @return list<ForeignKeyDefinition>
-     */
-    public function getForeignKeys(): array
-    {
-        return $this->foreignKeys;
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function getPrimaryKeys(): array
-    {
-        return $this->primaryKeys;
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function getDropColumns(): array
-    {
-        return $this->dropColumns;
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function getDropIndexes(): array
-    {
-        return $this->dropIndexes;
-    }
 }

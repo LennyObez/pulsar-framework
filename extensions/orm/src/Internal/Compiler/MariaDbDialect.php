@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Internal\Compiler;
 
+use function implode;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Domain\LockMode;
 
-use function implode;
 use function sprintf;
 
 /**
  * MariaDB SQL dialect (mostly MySQL-compatible with minor differences).
  */
 #[Internal]
-final class MariaDbDialect implements DialectInterface
+final readonly class MariaDbDialect implements DialectInterface
 {
     #[Override]
     public function quoteIdentifier(string $identifier): string

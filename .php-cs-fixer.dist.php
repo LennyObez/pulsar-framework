@@ -7,8 +7,12 @@ $finder = PhpCsFixer\Finder::create()
     ->in(__DIR__ . '/tests')
     ->in(__DIR__ . '/bootstrap')
     ->in(__DIR__ . '/config')
+    ->in(__DIR__ . '/extensions')
     ->exclude('cache')
-    ->exclude('Unit/Integrity/Fixture');
+    ->exclude('Unit/Integrity/Fixture')
+    ->exclude('dev')
+    ->exclude('frontend')
+    ->notPath('vendor');
 
 return (new PhpCsFixer\Config)
     ->setRiskyAllowed(true)

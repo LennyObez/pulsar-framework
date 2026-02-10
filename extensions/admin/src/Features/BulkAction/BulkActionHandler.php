@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\BulkAction;
 
+use function bin2hex;
+use function in_array;
+
 use Pulsar\Extension\Admin\Contracts\ResourceMutatorInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
@@ -11,7 +14,6 @@ use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 
-use function bin2hex;
 use function random_bytes;
 use function time;
 
@@ -33,7 +35,7 @@ final readonly class BulkActionHandler
         $ops = $resource->operations();
         if (!in_array(ResourceOperation::BulkAction, $ops, true)) {
             throw new AdminException(
-                "Bulk actions not supported on resource \"{$request->resourceName}\"",
+                "Bulk actions not supported on resource \"$request->resourceName\"",
             );
         }
 
@@ -47,7 +49,7 @@ final readonly class BulkActionHandler
 
         $this->actionHistory->record(new ActionHistoryEntry(
             id: bin2hex(random_bytes(16)),
-            action: "bulk.{$request->action}",
+            action: "bulk.$request->action",
             resourceName: $request->resourceName,
             recordId: null,
             actor: $request->context->actor,

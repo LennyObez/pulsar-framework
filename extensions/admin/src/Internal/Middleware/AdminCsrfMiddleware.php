@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
+use function bin2hex;
+use function hash_equals;
+use function is_string;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
@@ -13,8 +17,6 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
-use function bin2hex;
-use function hash_equals;
 use function random_bytes;
 
 /**
@@ -25,7 +27,7 @@ use function random_bytes;
  * X-CSRF-Token response header after each mutation.
  */
 #[Internal]
-final class AdminCsrfMiddleware implements MiddlewareInterface
+final readonly class AdminCsrfMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly AdminConfig $config,
@@ -38,7 +40,7 @@ final class AdminCsrfMiddleware implements MiddlewareInterface
             $token = $request->header('X-CSRF-Token');
             $sessionToken = $request->attribute('csrf_token');
 
-            if ($token === null || $sessionToken === null || !is_string($sessionToken)) {
+            if ($token === null || !is_string($sessionToken)) {
                 return Response::json(
                     ['error' => 'CSRF token missing'],
                     ResponseStatus::Forbidden,

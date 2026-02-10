@@ -4,26 +4,26 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Adapter;
 
-use function array_filter;
 use function array_map;
+use function count;
 use function explode;
 use function implode;
 use function in_array;
 use function preg_match;
-use function rtrim;
-use function str_contains;
-use function str_starts_with;
-use function strtolower;
-use function ucfirst;
 
 use Pulsar\Api\Internal;
 use Pulsar\Database\Introspection\ColumnInfo;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
-use Pulsar\Extension\Admin\Domain\BulkAction;
 use Pulsar\Extension\Admin\Domain\FieldDefinition;
 use Pulsar\Extension\Admin\Domain\FieldType;
-use Pulsar\Extension\Admin\Domain\ResourceOperation;
+
+use function rtrim;
+use function str_contains;
+use function str_starts_with;
+use function strlen;
+use function strtolower;
+use function ucfirst;
 
 /**
  * Creates DataResourceInterface instances from database introspection.
@@ -117,7 +117,6 @@ final readonly class IntrospectedResourceFactory
             'datetime', 'timestamp', 'timestamptz' => FieldType::DateTime,
             'json', 'jsonb' => FieldType::Json,
             'text', 'tinytext', 'mediumtext', 'longtext', 'clob' => FieldType::Text,
-            'blob', 'binary', 'varbinary', 'bytea', 'tinyblob', 'mediumblob', 'longblob' => FieldType::String,
             default => FieldType::String,
         };
     }
@@ -197,12 +196,9 @@ final readonly class IntrospectedResourceFactory
      */
     private function isExcluded(string $tableName, array $prefixes): bool
     {
-        foreach ($prefixes as $prefix) {
-            if (str_starts_with($tableName, $prefix)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $prefixes,
+            static fn(string $prefix): bool => str_starts_with($tableName, $prefix),
+        );
     }
 }

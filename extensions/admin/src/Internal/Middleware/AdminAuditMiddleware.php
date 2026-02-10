@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
+use function in_array;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
@@ -20,7 +22,7 @@ use Pulsar\Security\Audit\AuditOutcome;
  * Logs every admin request as either a DataAccess or DataModification event.
  */
 #[Internal]
-final class AdminAuditMiddleware implements MiddlewareInterface
+final readonly class AdminAuditMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly AuditLoggerInterface $auditLogger,
@@ -47,7 +49,7 @@ final class AdminAuditMiddleware implements MiddlewareInterface
             event: $event,
             outcome: $outcome,
             actor: $actor,
-            action: "admin.{$request->method->value}.{$request->path}",
+            action: "admin.{$request->method->value}.$request->path",
             resource: $request->path,
             metadata: [
                 'method' => $request->method->value,

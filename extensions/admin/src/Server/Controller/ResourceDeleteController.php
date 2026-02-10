@@ -17,7 +17,7 @@ use Pulsar\Http\ResponseStatus;
  * Controller for deleting resource records.
  */
 #[Internal]
-final class ResourceDeleteController
+final readonly class ResourceDeleteController
 {
     public function __construct(
         private readonly DeleteResourceHandler $handler,

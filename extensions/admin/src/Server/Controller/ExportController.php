@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use function is_string;
+
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Domain\ExportFormat;
 use Pulsar\Extension\Admin\Features\ExportResource\ExportResourceHandler;
@@ -17,7 +19,7 @@ use Pulsar\Http\ResponseStatus;
  * Controller for exporting resource data.
  */
 #[Internal]
-final class ExportController
+final readonly class ExportController
 {
     public function __construct(
         private readonly ExportResourceHandler $handler,
@@ -31,9 +33,7 @@ final class ExportController
             $format = ExportFormat::Csv;
         }
 
-        /** @var array<string, mixed> $filters */
         $filters = [];
-        /** @var mixed $rawFilters */
         $rawFilters = $request->query('filters');
         if (is_string($rawFilters)) {
             /** @var array<string, mixed> $decoded */
@@ -52,7 +52,7 @@ final class ExportController
             status: ResponseStatus::OK,
             headers: new HeaderBag([
                 'Content-Type' => $result->mimeType,
-                'Content-Disposition' => "attachment; filename=\"{$result->filename}\"",
+                'Content-Disposition' => "attachment; filename=\"$result->filename\"",
                 'X-Evidence-Hash' => $result->evidenceHash,
                 'X-Export-Row-Count' => (string) $result->rowCount,
             ]),

@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Relation;
 
+use function array_map;
+use function array_unique;
+use function array_values;
+
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Domain\FetchPlan;
-use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Domain\RelationMetadata;
+use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 use ReflectionClass;
-
-use function array_map;
-use function array_unique;
-use function array_values;
 
 /**
  * Loads entity relations based on a FetchPlan.
@@ -24,7 +24,7 @@ use function array_values;
  * No lazy loading — all relations must be declared upfront.
  */
 #[Internal]
-final class RelationLoader
+final readonly class RelationLoader
 {
     public function __construct(
         private readonly ConnectionInterface $connection,

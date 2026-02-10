@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\Schema;
 
+use function array_map;
+use function bin2hex;
+use function hash;
+use function in_array;
+
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
@@ -15,15 +20,13 @@ use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
-use Throwable;
 
-use function array_map;
-use function bin2hex;
-use function hash;
-use function in_array;
 use function random_bytes;
 use function str_starts_with;
 use function strtolower;
+
+use Throwable;
+
 use function time;
 
 /**
@@ -49,11 +52,11 @@ final readonly class RenameTableHandler
 
         foreach ($this->config->denyTablePrefixes as $prefix) {
             if (str_starts_with(strtolower($from), strtolower($prefix))) {
-                return ['success' => false, 'message' => "Table prefix \"{$prefix}\" is reserved"];
+                return ['success' => false, 'message' => "Table prefix \"$prefix\" is reserved"];
             }
 
             if (str_starts_with(strtolower($to), strtolower($prefix))) {
-                return ['success' => false, 'message' => "Cannot rename to a reserved prefix \"{$prefix}\""];
+                return ['success' => false, 'message' => "Cannot rename to a reserved prefix \"$prefix\""];
             }
         }
 
@@ -63,11 +66,11 @@ final readonly class RenameTableHandler
         );
 
         if (!in_array(strtolower($from), $existingTables, true)) {
-            return ['success' => false, 'message' => "Table \"{$from}\" does not exist"];
+            return ['success' => false, 'message' => "Table \"$from\" does not exist"];
         }
 
         if (in_array(strtolower($to), $existingTables, true)) {
-            return ['success' => false, 'message' => "Table \"{$to}\" already exists"];
+            return ['success' => false, 'message' => "Table \"$to\" already exists"];
         }
 
         $statements = $this->schemaManager->previewRenameTable($from, $to);
@@ -106,7 +109,7 @@ final readonly class RenameTableHandler
                 success: true,
             ));
 
-            return ['success' => true, 'message' => "Table \"{$from}\" renamed to \"{$to}\"", 'sql' => $statements];
+            return ['success' => true, 'message' => "Table \"$from\" renamed to \"$to\"", 'sql' => $statements];
         } catch (Throwable $e) {
             $this->auditLogger->log(
                 event: AuditEvent::SchemaModification,

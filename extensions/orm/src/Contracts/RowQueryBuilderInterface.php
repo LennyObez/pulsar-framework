@@ -7,11 +7,11 @@ namespace Pulsar\Extension\Orm\Contracts;
 use Pulsar\Api\Api;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
-use Pulsar\Extension\Orm\Domain\LockMode;
-use Pulsar\Extension\Orm\Domain\SortDirection;
 use Pulsar\Extension\Orm\Domain\AggregateBuilder;
 use Pulsar\Extension\Orm\Domain\LikePattern;
+use Pulsar\Extension\Orm\Domain\LockMode;
 use Pulsar\Extension\Orm\Domain\RawExpression;
+use Pulsar\Extension\Orm\Domain\SortDirection;
 
 /**
  * Read-only query builder for raw row results.

@@ -20,7 +20,7 @@ use function sprintf;
  * Adds a `{relation}_count` property value to each entity.
  */
 #[Internal]
-final class WithCountLoader
+final readonly class WithCountLoader
 {
     public function __construct(
         private readonly ConnectionInterface $connection,

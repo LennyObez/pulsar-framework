@@ -18,7 +18,7 @@ use Pulsar\Http\ResponseStatus;
  * Controller for viewing a single resource record.
  */
 #[Internal]
-final class ResourceViewController
+final readonly class ResourceViewController
 {
     public function __construct(
         private readonly ViewResourceHandler $handler,
@@ -46,7 +46,7 @@ final class ResourceViewController
 
         $resourceDef = $this->registry->get($resource);
         ob_start();
-        $title = "{$resourceDef->label()} #{$id}";
+        $title = "{$resourceDef->label()} #$id";
         $content = 'resource-view';
         $templateData = [
             'resource' => $resourceDef,

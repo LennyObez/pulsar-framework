@@ -22,7 +22,7 @@ use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
  * @implements RepositoryInterface<T>
  */
 #[Internal]
-final class GenericRepository implements RepositoryInterface
+final readonly class GenericRepository implements RepositoryInterface
 {
     public function __construct(
         private readonly ConnectionInterface $connection,

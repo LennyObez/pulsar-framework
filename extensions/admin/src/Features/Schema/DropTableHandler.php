@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\Schema;
 
+use function array_map;
+use function bin2hex;
+use function hash;
+use function in_array;
+
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
@@ -15,15 +20,13 @@ use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
-use Throwable;
 
-use function array_map;
-use function bin2hex;
-use function hash;
-use function in_array;
 use function random_bytes;
 use function str_starts_with;
 use function strtolower;
+
+use Throwable;
+
 use function time;
 
 /**
@@ -48,7 +51,7 @@ final readonly class DropTableHandler
 
         foreach ($this->config->denyTablePrefixes as $prefix) {
             if (str_starts_with(strtolower($table), strtolower($prefix))) {
-                return ['success' => false, 'message' => "Table prefix \"{$prefix}\" is reserved and cannot be dropped"];
+                return ['success' => false, 'message' => "Table prefix \"$prefix\" is reserved and cannot be dropped"];
             }
         }
 
@@ -58,7 +61,7 @@ final readonly class DropTableHandler
         );
 
         if (!in_array(strtolower($table), $existingTables, true)) {
-            return ['success' => false, 'message' => "Table \"{$table}\" does not exist"];
+            return ['success' => false, 'message' => "Table \"$table\" does not exist"];
         }
 
         $statements = $this->schemaManager->previewDropTable($table);
@@ -96,7 +99,7 @@ final readonly class DropTableHandler
                 success: true,
             ));
 
-            return ['success' => true, 'message' => "Table \"{$table}\" dropped successfully", 'sql' => $statements];
+            return ['success' => true, 'message' => "Table \"$table\" dropped successfully", 'sql' => $statements];
         } catch (Throwable $e) {
             $this->auditLogger->log(
                 event: AuditEvent::SchemaModification,

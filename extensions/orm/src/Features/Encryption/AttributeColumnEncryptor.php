@@ -10,7 +10,6 @@ use Pulsar\Extension\Orm\Config\EncryptionConfig;
 use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
-use SodiumException;
 
 use function sodium_crypto_generichash;
 use function substr;
@@ -22,7 +21,7 @@ use function substr;
  * ORM-specific encryption and blind index operations.
  */
 #[Internal]
-final class AttributeColumnEncryptor implements ColumnEncryptorInterface
+final readonly class AttributeColumnEncryptor implements ColumnEncryptorInterface
 {
     private readonly EncryptorInterface $derivedEncryptor;
 

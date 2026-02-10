@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use function is_string;
+
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
@@ -16,7 +18,7 @@ use Pulsar\Http\Response;
  * Controller for listing resource records.
  */
 #[Internal]
-final class ResourceListController
+final readonly class ResourceListController
 {
     public function __construct(
         private readonly ListResourceHandler $handler,
@@ -26,7 +28,6 @@ final class ResourceListController
 
     public function list(Request $request, string $resource): Response
     {
-        /** @var array<string, mixed> $filters */
         $filters = [];
         /** @var mixed $rawFilters */
         $rawFilters = $request->query('filters');

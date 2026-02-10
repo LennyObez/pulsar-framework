@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Orm\Features\Query;
 
 use Pulsar\Api\Internal;
 
+use function sprintf;
+
 /**
  * Compiled JOIN clause ready for SQL emission.
  */
@@ -27,6 +29,6 @@ final readonly class JoinClause
 
     public function toSql(): string
     {
-        return \sprintf('%s JOIN %s ON %s', $this->type, $this->table, $this->condition);
+        return sprintf('%s JOIN %s ON %s', $this->type, $this->table, $this->condition);
     }
 }

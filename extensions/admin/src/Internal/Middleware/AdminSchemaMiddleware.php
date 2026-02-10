@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
+use function in_array;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\PolicyContext;
@@ -16,8 +18,6 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
-use function in_array;
-
 /**
  * Guards all /schema routes.
  *
@@ -26,7 +26,7 @@ use function in_array;
  * - For destructive ops: enforces step-up auth requirement
  */
 #[Internal]
-final class AdminSchemaMiddleware implements MiddlewareInterface
+final readonly class AdminSchemaMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly AdminSchemaConfig $config,
@@ -80,7 +80,7 @@ final class AdminSchemaMiddleware implements MiddlewareInterface
 
                 if ($opResult !== true) {
                     return Response::json(
-                        ['error' => "Permission denied for schema operation: {$operation}"],
+                        ['error' => "Permission denied for schema operation: $operation"],
                         ResponseStatus::Forbidden,
                     );
                 }
@@ -104,8 +104,8 @@ final class AdminSchemaMiddleware implements MiddlewareInterface
 
     private function detectOperation(Request $request): ?string
     {
-        $method = $request->method();
-        $path = $request->path();
+        $method = $request->method->value;
+        $path = $request->path;
 
         // Preview routes are read-only
         if (str_contains($path, '/preview/')) {

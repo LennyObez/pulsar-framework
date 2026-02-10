@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Admin\Internal\Middleware;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Identity\IdentityInterface;
+use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Exception\AdminAccessDeniedException;
 use Pulsar\Extension\Admin\Internal\Security\AdminAccessGate;
@@ -19,7 +20,7 @@ use Pulsar\Http\ResponseStatus;
  * Enforces authentication and role requirements for admin routes.
  */
 #[Internal]
-final class AdminAuthMiddleware implements MiddlewareInterface
+final readonly class AdminAuthMiddleware implements MiddlewareInterface
 {
     public function __construct(
         private readonly AdminAccessGate $accessGate,
@@ -41,7 +42,7 @@ final class AdminAuthMiddleware implements MiddlewareInterface
 
         if ($this->config->security->require2fa) {
             $twoFaStatus = $identity->twoFactorStatus();
-            if (!$twoFaStatus->isVerified()) {
+            if ($twoFaStatus !== TwoFactorStatus::Verified) {
                 return Response::json(
                     ['error' => 'Two-factor authentication required for admin access'],
                     ResponseStatus::Forbidden,

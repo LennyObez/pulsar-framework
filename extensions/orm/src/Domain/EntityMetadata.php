@@ -62,13 +62,10 @@ final readonly class EntityMetadata
      */
     public function columnByName(string $columnName): ?ColumnMetadata
     {
-        foreach ($this->columns as $col) {
-            if ($col->columnName === $columnName) {
-                return $col;
-            }
-        }
-
-        return null;
+        return array_find(
+            $this->columns,
+            static fn(ColumnMetadata $col): bool => $col->columnName === $columnName,
+        );
     }
 
     /**
@@ -78,14 +75,10 @@ final readonly class EntityMetadata
      */
     public function insertableColumns(): array
     {
-        $result = [];
-        foreach ($this->columns as $name => $col) {
-            if ($col->insertable && !($col->isPrimaryKey && $col->autoIncrement)) {
-                $result[$name] = $col;
-            }
-        }
-
-        return $result;
+        return array_filter(
+            $this->columns,
+            static fn(ColumnMetadata $col): bool => $col->insertable && !($col->isPrimaryKey && $col->autoIncrement),
+        );
     }
 
     /**
@@ -95,14 +88,10 @@ final readonly class EntityMetadata
      */
     public function updatableColumns(): array
     {
-        $result = [];
-        foreach ($this->columns as $name => $col) {
-            if ($col->updatable && !$col->isPrimaryKey && !$col->isVersion) {
-                $result[$name] = $col;
-            }
-        }
-
-        return $result;
+        return array_filter(
+            $this->columns,
+            static fn(ColumnMetadata $col): bool => $col->updatable && !$col->isPrimaryKey && !$col->isVersion,
+        );
     }
 
     /**

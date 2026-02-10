@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use function is_array;
+
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -17,7 +19,7 @@ use Pulsar\Http\ResponseStatus;
  * Controller for bulk actions on resource records.
  */
 #[Internal]
-final class BulkActionController
+final readonly class BulkActionController
 {
     public function __construct(
         private readonly BulkActionHandler $handler,
@@ -45,7 +47,7 @@ final class BulkActionController
 
         $context = new MutationContext(
             actor: $actor,
-            reason: "Admin panel bulk action: {$action}",
+            reason: "Admin panel bulk action: $action",
         );
 
         $result = $this->handler->execute(new BulkActionRequest(

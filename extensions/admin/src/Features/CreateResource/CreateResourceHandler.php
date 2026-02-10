@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\CreateResource;
 
+use function bin2hex;
+use function in_array;
+
 use Pulsar\Extension\Admin\Contracts\ResourceMutatorInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
@@ -11,7 +14,6 @@ use Pulsar\Extension\Admin\Exception\ResourceValidationException;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 
-use function bin2hex;
 use function random_bytes;
 use function time;
 
@@ -33,7 +35,7 @@ final readonly class CreateResourceHandler
         $ops = $resource->operations();
         if (!in_array(ResourceOperation::Create, $ops, true)) {
             throw new \Pulsar\Extension\Admin\Exception\AdminException(
-                "Create operation not supported on resource \"{$request->resourceName}\"",
+                "Create operation not supported on resource \"$request->resourceName\"",
             );
         }
 

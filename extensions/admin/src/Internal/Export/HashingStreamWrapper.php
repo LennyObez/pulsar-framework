@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Export;
 
-use Override;
-use Pulsar\Api\Internal;
-use Pulsar\Extension\Admin\Contracts\WritableStreamInterface;
-
 use function hash_final;
 use function hash_init;
 use function hash_update;
+
+use HashContext;
+use Override;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Admin\Contracts\WritableStreamInterface;
 
 /**
  * Writable stream that computes a SHA-256 evidence hash of all written data.
@@ -20,10 +21,10 @@ use function hash_update;
 #[Internal]
 final class HashingStreamWrapper implements WritableStreamInterface
 {
-    private \HashContext $hashContext;
+    private HashContext $hashContext;
     private string $buffer = '';
-    private string $evidenceHash = '';
-    private bool $closed = false;
+    public private(set) string $evidenceHash = '';
+    public private(set) bool $closed = false;
 
     public function __construct()
     {
@@ -52,16 +53,4 @@ final class HashingStreamWrapper implements WritableStreamInterface
         }
     }
 
-    /**
-     * Get the SHA-256 evidence hash. Only available after close().
-     */
-    public function evidenceHash(): string
-    {
-        return $this->evidenceHash;
-    }
-
-    public function isClosed(): bool
-    {
-        return $this->closed;
-    }
 }

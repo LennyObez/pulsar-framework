@@ -111,4 +111,79 @@ final class SqliteSchemaChangeLogStoreTest extends TestCase
         self::assertCount(3, $this->store->recent(3));
         self::assertCount(5, $this->store->recent(10));
     }
+
+    #[Test]
+    public function recentOrdersByTimestampDescending(): void
+    {
+        $this->store->record(new SchemaChangeLogEntry('a', 'create_table', 'users', 'admin', 'r1', 100, ['SQL1'], 'h1', null, true));
+        $this->store->record(new SchemaChangeLogEntry('b', 'add_column', 'users', 'admin', 'r2', 300, ['SQL2'], 'h2', null, true));
+        $this->store->record(new SchemaChangeLogEntry('c', 'drop_column', 'users', 'admin', 'r3', 200, ['SQL3'], 'h3', null, true));
+
+        $recent = $this->store->recent(10);
+        self::assertSame('b', $recent[0]->id);
+        self::assertSame('c', $recent[1]->id);
+        self::assertSame('a', $recent[2]->id);
+    }
+
+    #[Test]
+    public function handlesNullCorrelationId(): void
+    {
+        $this->store->record(new SchemaChangeLogEntry(
+            'null-corr',
+            'create_table',
+            'products',
+            'admin',
+            'reason',
+            1700000000,
+            ['CREATE TABLE products (id INT)'],
+            'hash1',
+            null,
+            true,
+        ));
+
+        $recent = $this->store->recent(10);
+        self::assertCount(1, $recent);
+        self::assertNull($recent[0]->correlationId);
+    }
+
+    #[Test]
+    public function recordsFailedOperation(): void
+    {
+        $this->store->record(new SchemaChangeLogEntry(
+            'fail-001',
+            'drop_table',
+            'users',
+            'admin',
+            'cleanup',
+            1700000000,
+            ['DROP TABLE users'],
+            'hash1',
+            null,
+            false,
+        ));
+
+        $recent = $this->store->recent(10);
+        self::assertCount(1, $recent);
+        self::assertFalse($recent[0]->success);
+    }
+
+    #[Test]
+    public function exportSqlBundleMarksFailed(): void
+    {
+        $this->store->record(new SchemaChangeLogEntry(
+            'f1',
+            'drop_table',
+            'items',
+            'admin',
+            'oops',
+            1700000000,
+            ['DROP TABLE "items"'],
+            'hash1',
+            null,
+            false,
+        ));
+
+        $bundle = $this->store->exportSqlBundle();
+        self::assertStringContainsString('[FAILED]', $bundle);
+    }
 }

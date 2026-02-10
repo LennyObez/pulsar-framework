@@ -18,7 +18,7 @@ use Pulsar\Extension\Admin\Domain\ResourceOperation;
  * for use in the admin panel.
  */
 #[Internal]
-final class OrmResourceAdapter implements DataResourceInterface
+final readonly class OrmResourceAdapter implements DataResourceInterface
 {
     /**
      * @param list<FieldDefinition> $fields

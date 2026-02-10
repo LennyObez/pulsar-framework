@@ -7,9 +7,6 @@ namespace Pulsar\Extension\Orm\Features\Encryption;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Exception\EncryptedColumnQueryException;
-use Pulsar\Extension\Orm\Domain\EntityMetadata;
-
-use function in_array;
 
 /**
  * Guards against invalid use of encrypted columns in queries.
@@ -18,7 +15,7 @@ use function in_array;
  * unless they have a blind index configured.
  */
 #[Internal]
-final class EncryptedColumnGuard
+final readonly class EncryptedColumnGuard
 {
     public function __construct(
         private readonly MetadataRegistryInterface $metadataRegistry,

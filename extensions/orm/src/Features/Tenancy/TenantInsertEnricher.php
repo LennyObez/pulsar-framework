@@ -12,7 +12,7 @@ use Pulsar\Extension\Orm\Domain\EntityMetadata;
  * Enriches INSERT data with the current tenant ID.
  */
 #[Internal]
-final class TenantInsertEnricher
+final readonly class TenantInsertEnricher
 {
     public function __construct(
         private readonly TenantScopeInterface $tenantScope,

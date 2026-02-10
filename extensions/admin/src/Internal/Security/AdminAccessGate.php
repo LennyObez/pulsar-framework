@@ -19,7 +19,7 @@ use Pulsar\Extension\Admin\Exception\AdminAccessDeniedException;
  * with structured exceptions.
  */
 #[Internal]
-final class AdminAccessGate
+final readonly class AdminAccessGate
 {
     public function __construct(
         private readonly PolicyInterface $policy,
@@ -53,10 +53,13 @@ final class AdminAccessGate
         ResourceOperation $operation,
     ): void {
         $permission = match ($operation) {
-            ResourceOperation::List, ResourceOperation::View => AdminPermission::ManageResources,
-            ResourceOperation::Create, ResourceOperation::Update, ResourceOperation::Delete => AdminPermission::ManageResources,
-            ResourceOperation::Export => AdminPermission::ExportData,
+            ResourceOperation::List,
+            ResourceOperation::View,
+            ResourceOperation::Create,
+            ResourceOperation::Update,
+            ResourceOperation::Delete,
             ResourceOperation::BulkAction => AdminPermission::ManageResources,
+            ResourceOperation::Export => AdminPermission::ExportData,
         };
 
         $result = $this->policy->evaluate(

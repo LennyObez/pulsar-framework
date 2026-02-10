@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Relation;
 
+use function array_chunk;
+use function array_merge;
+
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 
-use function array_chunk;
-use function array_merge;
-
 /**
  * Loads related entities in batches to avoid excessive IN clause sizes.
  */
 #[Internal]
-final class BatchLoader
+final readonly class BatchLoader
 {
     private const int DEFAULT_BATCH_SIZE = 500;
 

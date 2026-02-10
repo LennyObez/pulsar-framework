@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Policy;
 
+use function in_array;
+use function is_scalar;
+
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Domain\FieldDefinition;
@@ -15,7 +18,7 @@ use Pulsar\Extension\Admin\Domain\FieldDefinition;
  * Non-visible fields are stripped from the output.
  */
 #[Internal]
-final class FieldVisibilityFilter
+final readonly class FieldVisibilityFilter
 {
     private const string REDACTED_PLACEHOLDER = '••••••';
 

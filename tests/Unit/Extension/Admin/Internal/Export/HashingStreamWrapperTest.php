@@ -31,13 +31,13 @@ final class HashingStreamWrapperTest extends TestCase
         $stream = new HashingStreamWrapper();
         $stream->write('test data');
 
-        self::assertFalse($stream->isClosed());
-        self::assertSame('', $stream->evidenceHash());
+        self::assertFalse($stream->closed);
+        self::assertSame('', $stream->evidenceHash);
 
         $stream->close();
 
-        self::assertTrue($stream->isClosed());
-        self::assertNotSame('', $stream->evidenceHash());
+        self::assertTrue($stream->closed);
+        self::assertNotSame('', $stream->evidenceHash);
     }
 
     #[Test]
@@ -47,7 +47,7 @@ final class HashingStreamWrapperTest extends TestCase
         $stream->write('test data');
         $stream->close();
 
-        $hash = $stream->evidenceHash();
+        $hash = $stream->evidenceHash;
 
         // SHA-256 produces a 64-character hex string
         self::assertSame(64, strlen($hash));
@@ -61,7 +61,7 @@ final class HashingStreamWrapperTest extends TestCase
         $stream->write('hello');
         $stream->close();
 
-        self::assertSame(hash('sha256', 'hello'), $stream->evidenceHash());
+        self::assertSame(hash('sha256', 'hello'), $stream->evidenceHash);
     }
 
     #[Test]
@@ -72,7 +72,7 @@ final class HashingStreamWrapperTest extends TestCase
         $stream->write(' world');
         $stream->close();
 
-        self::assertSame(hash('sha256', 'hello world'), $stream->evidenceHash());
+        self::assertSame(hash('sha256', 'hello world'), $stream->evidenceHash);
     }
 
     #[Test]
@@ -81,10 +81,10 @@ final class HashingStreamWrapperTest extends TestCase
         $stream = new HashingStreamWrapper();
         $stream->write('data');
         $stream->close();
-        $hash1 = $stream->evidenceHash();
+        $hash1 = $stream->evidenceHash;
 
         $stream->close();
-        $hash2 = $stream->evidenceHash();
+        $hash2 = $stream->evidenceHash;
 
         self::assertSame($hash1, $hash2);
     }
@@ -95,7 +95,7 @@ final class HashingStreamWrapperTest extends TestCase
         $stream = new HashingStreamWrapper();
         $stream->close();
 
-        self::assertSame(hash('sha256', ''), $stream->evidenceHash());
+        self::assertSame(hash('sha256', ''), $stream->evidenceHash);
         self::assertSame('', $stream->contents());
     }
 }

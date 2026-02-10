@@ -17,7 +17,7 @@ use function sprintf;
  * Schema management implementation that compiles and executes DDL statements.
  */
 #[Internal]
-final class SchemaBuilder implements SchemaBuilderInterface
+final readonly class SchemaBuilder implements SchemaBuilderInterface
 {
     private readonly SchemaDdlCompiler $ddlCompiler;
     private readonly IdentifierQuoter $quoter;
@@ -36,8 +36,8 @@ final class SchemaBuilder implements SchemaBuilderInterface
         $callback($builder);
 
         $sql = $this->ddlCompiler->compileCreate($builder);
-        foreach (\explode(";\n", $sql) as $statement) {
-            $statement = \trim($statement);
+        foreach (explode(";\n", $sql) as $statement) {
+            $statement = trim($statement);
             if ($statement !== '') {
                 $this->connection->execute($statement);
             }
@@ -83,7 +83,7 @@ final class SchemaBuilder implements SchemaBuilderInterface
     public function hasTable(string $table): bool
     {
         $sql = match ($this->connection->driver()) {
-            Driver::MySQL => "SELECT 1 FROM information_schema.tables WHERE table_name = :table AND table_schema = DATABASE() LIMIT 1",
+            Driver::MySQL => 'SELECT 1 FROM information_schema.tables WHERE table_name = :table AND table_schema = DATABASE() LIMIT 1',
             Driver::PostgreSQL => "SELECT 1 FROM information_schema.tables WHERE table_name = :table AND table_schema = 'public' LIMIT 1",
             Driver::SQLite => "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = :table LIMIT 1",
         };
@@ -97,20 +97,18 @@ final class SchemaBuilder implements SchemaBuilderInterface
     public function hasColumn(string $table, string $column): bool
     {
         $sql = match ($this->connection->driver()) {
-            Driver::MySQL => "SELECT 1 FROM information_schema.columns WHERE table_name = :table AND column_name = :column AND table_schema = DATABASE() LIMIT 1",
+            Driver::MySQL => 'SELECT 1 FROM information_schema.columns WHERE table_name = :table AND column_name = :column AND table_schema = DATABASE() LIMIT 1',
             Driver::PostgreSQL => "SELECT 1 FROM information_schema.columns WHERE table_name = :table AND column_name = :column AND table_schema = 'public' LIMIT 1",
-            Driver::SQLite => sprintf("PRAGMA table_info(%s)", $this->quoter->quote($table)),
+            Driver::SQLite => sprintf('PRAGMA table_info(%s)', $this->quoter->quote($table)),
         };
 
         if ($this->connection->driver() === Driver::SQLite) {
             $result = $this->connection->query($sql);
-            foreach ($result->rows as $row) {
-                if ($row->getString('name') === $column) {
-                    return true;
-                }
-            }
 
-            return false;
+            return array_any(
+                $result->rows,
+                static fn(\Pulsar\Database\Row $row): bool => $row->getString('name') === $column,
+            );
         }
 
         $result = $this->connection->query($sql, ['table' => $table, 'column' => $column]);

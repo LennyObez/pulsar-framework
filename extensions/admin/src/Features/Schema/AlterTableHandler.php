@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\Schema;
 
+use function bin2hex;
+use function hash;
+use function implode;
+
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Database\Schema\SchemaCapabilities;
@@ -18,14 +22,13 @@ use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
-use Throwable;
 
-use function bin2hex;
-use function hash;
-use function implode;
 use function random_bytes;
 use function str_starts_with;
 use function strtolower;
+
+use Throwable;
+
 use function time;
 
 /**
@@ -140,7 +143,7 @@ final readonly class AlterTableHandler
         foreach ($this->config->denyTablePrefixes as $prefix) {
             if (str_starts_with(strtolower($table), strtolower($prefix))) {
                 throw new AdminException(
-                    "Table prefix \"{$prefix}\" is reserved and cannot be modified",
+                    "Table prefix \"$prefix\" is reserved and cannot be modified",
                 );
             }
         }
@@ -196,7 +199,7 @@ final readonly class AlterTableHandler
                 success: true,
             ));
 
-            return ['success' => true, 'message' => "Operation \"{$operation}\" on \"{$table}\" completed", 'sql' => $statements];
+            return ['success' => true, 'message' => "Operation \"$operation\" on \"$table\" completed", 'sql' => $statements];
         } catch (Throwable $e) {
             $this->auditLogger->log(
                 event: AuditEvent::SchemaModification,

@@ -17,7 +17,7 @@ use Pulsar\Routing\RouterInterface;
  * providing navigation entries for dashboard, resources, and activity.
  */
 #[Internal]
-final class AdminStudioModule implements StudioModuleInterface
+final readonly class AdminStudioModule implements StudioModuleInterface
 {
     #[Override]
     public function moduleId(): string

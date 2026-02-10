@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Storage;
 
-use Override;
-use PDO;
-use Pulsar\Api\Internal;
-
 use function array_map;
 use function date;
-use function explode;
 use function hash;
 use function implode;
 use function json_decode;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
+
+use Override;
+use PDO;
+use Pulsar\Api\Internal;
 
 /**
  * SQLite-backed schema change log store.
@@ -126,9 +125,9 @@ final class SqliteSchemaChangeLogStore implements SchemaChangeLogStoreInterface
         foreach ($entries as $entry) {
             $time = date('Y-m-d H:i:s', $entry->timestamp);
             $status = $entry->success ? '' : ' [FAILED]';
-            $lines[] = "-- [{$time}]{$status} {$entry->operation} \"{$entry->table}\" by {$entry->actor}";
-            $lines[] = "-- Reason: {$entry->reason}";
-            $lines[] = "-- Evidence: sha256:{$entry->evidenceHash}";
+            $lines[] = "-- [$time]$status $entry->operation \"$entry->table\" by $entry->actor";
+            $lines[] = "-- Reason: $entry->reason";
+            $lines[] = "-- Evidence: sha256:$entry->evidenceHash";
 
             foreach ($entry->statements as $sql) {
                 $lines[] = $sql . ';';

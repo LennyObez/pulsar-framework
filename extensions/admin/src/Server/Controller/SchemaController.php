@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use function array_map;
+use function count;
+
 use Pulsar\Api\Internal;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
 use Pulsar\Database\Schema\SchemaCapabilities;
@@ -12,17 +15,11 @@ use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 
-use function array_map;
-use function count;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 /**
  * Admin schema builder HTML page controller.
  */
 #[Internal]
-final class SchemaController
+final readonly class SchemaController
 {
     public function __construct(
         private readonly DatabaseIntrospector $introspector,
@@ -100,7 +97,7 @@ final class SchemaController
             ]);
         }
 
-        return Response::html($this->renderHtml('schema/view', "Table: {$table}", [
+        return Response::html($this->renderHtml('schema/view', "Table: $table", [
             'table' => $table,
             'columns' => $columnData,
             'primaryKey' => $pk,
@@ -111,7 +108,7 @@ final class SchemaController
 
     public function changelog(Request $request): Response
     {
-        $entries = $this->changeLog->recent(100);
+        $entries = $this->changeLog->recent();
 
         $entryData = array_map(
             static fn($entry): array => [

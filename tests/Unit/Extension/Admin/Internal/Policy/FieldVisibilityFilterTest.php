@@ -188,7 +188,7 @@ final class FieldVisibilityFilterTest extends TestCase
         array $exportableFields = [],
         string $primaryKey = 'id',
     ): DataResourceInterface {
-        $resource = $this->createMock(DataResourceInterface::class);
+        $resource = $this->createStub(DataResourceInterface::class);
         $resource->method('fields')->willReturn($fields);
         $resource->method('exportableFields')->willReturn($exportableFields);
         $resource->method('primaryKey')->willReturn($primaryKey);

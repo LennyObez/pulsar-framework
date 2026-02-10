@@ -16,7 +16,7 @@ $id = $templateData['id'] ?? '';
 $formFields = array_filter($resource->fields(), static fn($f): bool => $f->visibleOnForm && $f->editable);
 $actionUrl = $mode === 'create'
     ? "/admin/resources/{$resource->name()}"
-    : "/admin/resources/{$resource->name()}/{$id}";
+    : "/admin/resources/{$resource->name()}/$id";
 $method = $mode === 'create' ? 'POST' : 'PUT';
 ?>
 <div class="admin-resource-form">
@@ -82,7 +82,8 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
 </div>
 <?php
 // Helper function for input type mapping
-function inputType(\Pulsar\Extension\Admin\Domain\FieldType $type): string {
+function inputType(\Pulsar\Extension\Admin\Domain\FieldType $type): string
+{
     return match ($type) {
         \Pulsar\Extension\Admin\Domain\FieldType::Integer, \Pulsar\Extension\Admin\Domain\FieldType::Float => 'number',
         \Pulsar\Extension\Admin\Domain\FieldType::Email => 'email',

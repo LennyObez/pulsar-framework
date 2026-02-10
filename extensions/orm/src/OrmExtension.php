@@ -15,7 +15,7 @@ use Pulsar\Routing\RouterInterface;
  * Provides entity mapping, query building, schema management,
  * encrypted columns, tenant scoping, and audit-trail persistence.
  */
-final class OrmExtension implements ExtensionInterface
+final readonly class OrmExtension implements ExtensionInterface
 {
     public function name(): string
     {

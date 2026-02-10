@@ -14,7 +14,7 @@ use Pulsar\Extension\Admin\Contracts\WidgetInterface;
  * Dashboard widget showing record counts per registered resource.
  */
 #[Internal]
-final class ResourceCountWidget implements WidgetInterface
+final readonly class ResourceCountWidget implements WidgetInterface
 {
     public function __construct(
         private readonly ResourceRegistryInterface $registry,

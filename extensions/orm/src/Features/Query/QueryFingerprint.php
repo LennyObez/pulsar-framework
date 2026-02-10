@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Query;
 
+use function hash;
+
 use NoDiscard;
 use Pulsar\Api\Internal;
-
-use function hash;
 
 /**
  * Generates a stable fingerprint for a query (SQL text without bindings).
@@ -15,7 +15,7 @@ use function hash;
  * Used for query analytics, caching, and deduplication.
  */
 #[Internal]
-final class QueryFingerprint
+final readonly class QueryFingerprint
 {
     #[NoDiscard]
     public static function of(string $sql): string

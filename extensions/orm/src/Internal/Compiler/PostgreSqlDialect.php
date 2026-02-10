@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Internal\Compiler;
 
+use function implode;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Domain\LockMode;
 
-use function implode;
 use function sprintf;
 
 /**
  * PostgreSQL SQL dialect.
  */
 #[Internal]
-final class PostgreSqlDialect implements DialectInterface
+final readonly class PostgreSqlDialect implements DialectInterface
 {
     #[Override]
     public function quoteIdentifier(string $identifier): string
@@ -72,7 +73,7 @@ final class PostgreSqlDialect implements DialectInterface
     #[Override]
     public function compileUpsert(string $insertSql, array $conflictColumns, array $updateColumns): string
     {
-        $conflict = implode(', ', \array_map([$this, 'quoteIdentifier'], $conflictColumns));
+        $conflict = implode(', ', array_map([$this, 'quoteIdentifier'], $conflictColumns));
         $updates = [];
         foreach ($updateColumns as $col) {
             $quoted = $this->quoteIdentifier($col);

@@ -13,7 +13,7 @@ use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
  * Applies tenant scoping filters to queries.
  */
 #[Internal]
-final class TenantScopeApplier
+final readonly class TenantScopeApplier
 {
     public function __construct(
         private readonly TenantScopeInterface $tenantScope,

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\GlobalSearch;
 
+use function count;
+
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Internal\Policy\FieldVisibilityFilter;

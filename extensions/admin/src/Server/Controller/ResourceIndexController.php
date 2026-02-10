@@ -14,7 +14,7 @@ use Pulsar\Http\Response;
  * Controller listing all registered admin resources.
  */
 #[Internal]
-final class ResourceIndexController
+final readonly class ResourceIndexController
 {
     public function __construct(
         private readonly ResourceRegistryInterface $registry,

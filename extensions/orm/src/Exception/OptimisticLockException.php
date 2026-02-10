@@ -24,7 +24,7 @@ final class OptimisticLockException extends OrmException
         return new self(sprintf(
             'Optimistic lock failure for %s#%s: expected version %d, found %d',
             $entityClass,
-            (string) $id,
+            $id,
             $expected,
             $actual,
         ));
@@ -39,7 +39,7 @@ final class OptimisticLockException extends OrmException
         return new self(sprintf(
             'Entity %s#%s has been modified by another process',
             $entityClass,
-            (string) $id,
+            $id,
         ));
     }
 }

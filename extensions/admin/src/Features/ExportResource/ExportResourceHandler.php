@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\ExportResource;
 
+use function count;
+use function date;
+use function in_array;
+
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Admin\Contracts\ExportDriverInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
@@ -17,8 +21,6 @@ use Pulsar\Extension\Admin\Internal\Export\JsonExportDriver;
 use Pulsar\Extension\Admin\Internal\Policy\FieldVisibilityFilter;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
-
-use function date;
 
 /**
  * Handles exporting resource data with evidence hashing and field filtering.
@@ -39,14 +41,14 @@ final readonly class ExportResourceHandler
         $ops = $resource->operations();
         if (!in_array(ResourceOperation::Export, $ops, true)) {
             throw new AdminException(
-                "Export not supported on resource \"{$request->resourceName}\"",
+                "Export not supported on resource \"$request->resourceName\"",
             );
         }
 
         $exportableFields = $resource->exportableFields();
         if ($exportableFields === []) {
             throw new AdminException(
-                "No exportable fields defined for resource \"{$request->resourceName}\"",
+                "No exportable fields defined for resource \"$request->resourceName\"",
             );
         }
 
@@ -76,12 +78,12 @@ final readonly class ExportResourceHandler
             event: AuditEvent::DataAccess,
             outcome: AuditOutcome::Success,
             actor: null,
-            action: "admin.export.{$request->resourceName}",
+            action: "admin.export.$request->resourceName",
             resource: $request->resourceName,
             metadata: [
                 'format' => $request->format->value,
                 'row_count' => count($rows),
-                'evidence_hash' => $stream->evidenceHash(),
+                'evidence_hash' => $stream->evidenceHash,
                 'filename' => $filename,
             ],
         );
@@ -90,7 +92,7 @@ final readonly class ExportResourceHandler
             content: $output,
             mimeType: $driver->mimeType(),
             filename: $filename,
-            evidenceHash: $stream->evidenceHash(),
+            evidenceHash: $stream->evidenceHash,
             rowCount: count($rows),
         );
     }

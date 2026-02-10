@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Domain;
 
+use function preg_match;
+
 use Pulsar\Api\Api;
 use Pulsar\Extension\Orm\Exception\QueryBuilderException;
-
-use function preg_match;
 
 /**
  * Validates SQL identifiers (table names, column names, aliases) at method-call time.
  */
 #[Api(since: '1.0.0')]
-final class IdentifierValidator
+final readonly class IdentifierValidator
 {
     private const string PATTERN = '/^[a-zA-Z_][a-zA-Z0-9_]*$/';
 
@@ -36,8 +36,8 @@ final class IdentifierValidator
      */
     public static function validateQualified(string $identifier): void
     {
-        if (\str_contains($identifier, '.')) {
-            $parts = \explode('.', $identifier, 2);
+        if (str_contains($identifier, '.')) {
+            $parts = explode('.', $identifier, 2);
             self::validate($parts[0]);
             self::validate($parts[1]);
 

@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Orm\Internal\Support;
 use Pulsar\Api\Internal;
 use Pulsar\Database\Driver;
 use Pulsar\Extension\Orm\Internal\Compiler\DialectInterface;
-use Pulsar\Extension\Orm\Internal\Compiler\MariaDbDialect;
 use Pulsar\Extension\Orm\Internal\Compiler\MySqlDialect;
 use Pulsar\Extension\Orm\Internal\Compiler\PostgreSqlDialect;
 use Pulsar\Extension\Orm\Internal\Compiler\SqliteDialect;
@@ -18,7 +17,7 @@ use function str_contains;
  * Quotes SQL identifiers using the appropriate dialect.
  */
 #[Internal]
-final class IdentifierQuoter
+final readonly class IdentifierQuoter
 {
     private readonly DialectInterface $dialect;
 
@@ -30,7 +29,7 @@ final class IdentifierQuoter
     public function quote(string $identifier): string
     {
         if (str_contains($identifier, '.')) {
-            $parts = \explode('.', $identifier, 2);
+            $parts = explode('.', $identifier, 2);
 
             return $this->dialect->quoteIdentifier($parts[0]) . '.' . $this->dialect->quoteIdentifier($parts[1]);
         }

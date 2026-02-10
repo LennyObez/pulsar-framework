@@ -58,7 +58,7 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     throw new Error((error as { error: string }).error || `HTTP ${response.status}`);
   }
 
-  return response.json() as Promise<T>;
+  return (await response.json()) as T;
 }
 
 export const api = {

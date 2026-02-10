@@ -15,7 +15,7 @@ use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
  * Param::binary() values ready for PDO binding.
  */
 #[Internal]
-final class BlindIndexer
+final readonly class BlindIndexer
 {
     public function __construct(
         private readonly ColumnEncryptorInterface $encryptor,

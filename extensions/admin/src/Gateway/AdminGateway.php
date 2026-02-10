@@ -44,7 +44,7 @@ use Pulsar\Extension\Admin\Features\ViewResource\ViewResourceResult;
  * entry point for programmatic admin interactions.
  */
 #[Api(since: '1.0.0')]
-final class AdminGateway
+final readonly class AdminGateway
 {
     public function __construct(
         private readonly ResourceRegistryInterface $registry,

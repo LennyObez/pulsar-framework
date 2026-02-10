@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\Schema;
 
+use function array_map;
+use function bin2hex;
+use function hash;
+use function implode;
+use function in_array;
+
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
@@ -12,19 +18,17 @@ use Pulsar\Database\Schema\SchemaManager;
 use Pulsar\Database\Schema\SchemaSqlCanonicalizer;
 use Pulsar\Database\Schema\TableDefinition;
 use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
-use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
-use function array_map;
-use function bin2hex;
-use function hash;
-use function implode;
 use function random_bytes;
 use function str_starts_with;
 use function strtolower;
+
+use Throwable;
+
 use function time;
 
 /**
@@ -38,7 +42,6 @@ final readonly class CreateTableHandler
         private AuditLoggerInterface $auditLogger,
         private SchemaChangeLogStoreInterface $changeLog,
         private AdminSchemaConfig $config,
-        private ?ResourceRegistryInterface $resourceRegistry = null,
     ) {}
 
     /**
@@ -52,7 +55,7 @@ final readonly class CreateTableHandler
         // Check deny prefixes
         foreach ($this->config->denyTablePrefixes as $prefix) {
             if (str_starts_with(strtolower($definition->name), strtolower($prefix))) {
-                return ['success' => false, 'message' => "Table prefix \"{$prefix}\" is reserved and cannot be used"];
+                return ['success' => false, 'message' => "Table prefix \"$prefix\" is reserved and cannot be used"];
             }
         }
 
@@ -81,7 +84,7 @@ final readonly class CreateTableHandler
         );
 
         if (in_array(strtolower($definition->name), $existingTables, true)) {
-            return ['success' => false, 'message' => "Table \"{$definition->name}\" already exists"];
+            return ['success' => false, 'message' => "Table \"$definition->name\" already exists"];
         }
 
         // Preview SQL for audit
@@ -125,8 +128,8 @@ final readonly class CreateTableHandler
                 success: true,
             ));
 
-            return ['success' => true, 'message' => "Table \"{$definition->name}\" created successfully", 'sql' => $statements];
-        } catch (\Throwable $e) {
+            return ['success' => true, 'message' => "Table \"$definition->name\" created successfully", 'sql' => $statements];
+        } catch (Throwable $e) {
             $this->auditLogger->log(
                 event: AuditEvent::SchemaModification,
                 outcome: AuditOutcome::Error,

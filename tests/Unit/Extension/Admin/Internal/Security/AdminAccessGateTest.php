@@ -6,6 +6,7 @@ namespace Pulsar\Tests\Unit\Extension\Admin\Internal\Security;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Authorization\PolicyContext;
 use Pulsar\Auth\Authorization\PolicyInterface;
@@ -20,9 +21,9 @@ final class AdminAccessGateTest extends TestCase
     #[Test]
     public function assertCanAccessAllowsWhenPolicyReturnsTrue(): void
     {
-        $policy = $this->createMock(PolicyInterface::class);
+        $policy = $this->createStub(PolicyInterface::class);
         $policy->method('evaluate')->willReturn(true);
-        $identity = $this->createMock(IdentityInterface::class);
+        $identity = $this->createStub(IdentityInterface::class);
 
         $gate = new AdminAccessGate($policy);
 
@@ -34,9 +35,9 @@ final class AdminAccessGateTest extends TestCase
     #[Test]
     public function assertCanAccessThrowsWhenPolicyReturnsFalse(): void
     {
-        $policy = $this->createMock(PolicyInterface::class);
+        $policy = $this->createStub(PolicyInterface::class);
         $policy->method('evaluate')->willReturn(false);
-        $identity = $this->createMock(IdentityInterface::class);
+        $identity = $this->createStub(IdentityInterface::class);
 
         $gate = new AdminAccessGate($policy);
 
@@ -49,9 +50,9 @@ final class AdminAccessGateTest extends TestCase
     #[Test]
     public function assertCanAccessThrowsWhenPolicyReturnsNull(): void
     {
-        $policy = $this->createMock(PolicyInterface::class);
+        $policy = $this->createStub(PolicyInterface::class);
         $policy->method('evaluate')->willReturn(null);
-        $identity = $this->createMock(IdentityInterface::class);
+        $identity = $this->createStub(IdentityInterface::class);
 
         $gate = new AdminAccessGate($policy);
 
@@ -63,9 +64,9 @@ final class AdminAccessGateTest extends TestCase
     #[Test]
     public function assertCanPerformAllowsWhenPolicyReturnsTrue(): void
     {
-        $policy = $this->createMock(PolicyInterface::class);
+        $policy = $this->createStub(PolicyInterface::class);
         $policy->method('evaluate')->willReturn(true);
-        $identity = $this->createMock(IdentityInterface::class);
+        $identity = $this->createStub(IdentityInterface::class);
 
         $gate = new AdminAccessGate($policy);
 
@@ -76,9 +77,9 @@ final class AdminAccessGateTest extends TestCase
     #[Test]
     public function assertCanPerformThrowsWhenPolicyReturnsFalse(): void
     {
-        $policy = $this->createMock(PolicyInterface::class);
+        $policy = $this->createStub(PolicyInterface::class);
         $policy->method('evaluate')->willReturn(false);
-        $identity = $this->createMock(IdentityInterface::class);
+        $identity = $this->createStub(IdentityInterface::class);
 
         $gate = new AdminAccessGate($policy);
 
@@ -91,6 +92,7 @@ final class AdminAccessGateTest extends TestCase
     #[Test]
     public function assertCanPerformPassesCorrectPermissionForExport(): void
     {
+        /** @var PolicyInterface&MockObject $policy */
         $policy = $this->createMock(PolicyInterface::class);
         $policy->expects(self::once())
             ->method('evaluate')
@@ -99,7 +101,7 @@ final class AdminAccessGateTest extends TestCase
                 self::callback(static fn(PolicyContext $ctx): bool => $ctx->permission === 'admin.export'),
             )
             ->willReturn(true);
-        $identity = $this->createMock(IdentityInterface::class);
+        $identity = $this->createStub(IdentityInterface::class);
 
         $gate = new AdminAccessGate($policy);
         $gate->assertCanPerform($identity, 'orders', ResourceOperation::Export);
@@ -108,6 +110,7 @@ final class AdminAccessGateTest extends TestCase
     #[Test]
     public function assertCanPerformPassesResourceNameInContext(): void
     {
+        /** @var PolicyInterface&MockObject $policy */
         $policy = $this->createMock(PolicyInterface::class);
         $policy->expects(self::once())
             ->method('evaluate')
@@ -116,7 +119,7 @@ final class AdminAccessGateTest extends TestCase
                 self::callback(static fn(PolicyContext $ctx): bool => $ctx->resource === 'users'),
             )
             ->willReturn(true);
-        $identity = $this->createMock(IdentityInterface::class);
+        $identity = $this->createStub(IdentityInterface::class);
 
         $gate = new AdminAccessGate($policy);
         $gate->assertCanPerform($identity, 'users', ResourceOperation::View);

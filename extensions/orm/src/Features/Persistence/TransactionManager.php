@@ -9,7 +9,6 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Transaction;
 use Pulsar\Extension\Orm\Contracts\TransactionManagerInterface;
-use Throwable;
 
 /**
  * Transaction management implementation wrapping the database connection.

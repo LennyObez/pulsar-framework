@@ -12,7 +12,7 @@ use Pulsar\Database\ConnectionInterface;
  * Database-backed action history store using ConnectionInterface.
  */
 #[Internal]
-final class DbActionHistoryStore implements ActionHistoryStoreInterface
+final readonly class DbActionHistoryStore implements ActionHistoryStoreInterface
 {
     public function __construct(
         private readonly ConnectionInterface $connection,
@@ -40,7 +40,7 @@ final class DbActionHistoryStore implements ActionHistoryStoreInterface
     public function recent(int $limit = 50): array
     {
         $result = $this->connection->query(
-            "SELECT * FROM admin_action_history ORDER BY timestamp DESC LIMIT {$limit}",
+            "SELECT * FROM admin_action_history ORDER BY timestamp DESC LIMIT $limit",
         );
 
         return $this->hydrateAll($result);
@@ -50,7 +50,7 @@ final class DbActionHistoryStore implements ActionHistoryStoreInterface
     public function forResource(string $resourceName, int $limit = 50): array
     {
         $result = $this->connection->query(
-            "SELECT * FROM admin_action_history WHERE resource_name = :resource ORDER BY timestamp DESC LIMIT {$limit}",
+            "SELECT * FROM admin_action_history WHERE resource_name = :resource ORDER BY timestamp DESC LIMIT $limit",
             ['resource' => $resourceName],
         );
 
@@ -63,7 +63,7 @@ final class DbActionHistoryStore implements ActionHistoryStoreInterface
     private function hydrateAll(\Pulsar\Database\Result $result): array
     {
         $entries = [];
-        foreach ($result->rows() as $row) {
+        foreach ($result->rows as $row) {
             $data = $row->toArray();
             $entries[] = new ActionHistoryEntry(
                 id: (string) $data['id'],

@@ -13,7 +13,7 @@ use Pulsar\Extension\Admin\Domain\SavedView;
  * Database-backed saved view store using ConnectionInterface.
  */
 #[Internal]
-final class DbSavedViewStore implements SavedViewStoreInterface
+final readonly class DbSavedViewStore implements SavedViewStoreInterface
 {
     public function __construct(
         private readonly ConnectionInterface $connection,
@@ -28,7 +28,7 @@ final class DbSavedViewStore implements SavedViewStoreInterface
         );
 
         $views = [];
-        foreach ($result->rows() as $row) {
+        foreach ($result->rows as $row) {
             $views[] = $this->hydrate($row->toArray());
         }
         return $views;
@@ -42,12 +42,11 @@ final class DbSavedViewStore implements SavedViewStoreInterface
             ['id' => $id],
         );
 
-        $rows = $result->rows();
-        if ($rows === []) {
+        if ($result->rows === []) {
             return null;
         }
 
-        return $this->hydrate($rows[0]->toArray());
+        return $this->hydrate($result->rows[0]->toArray());
     }
 
     #[Override]

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use function array_map;
+use function is_string;
+use function mb_strlen;
+
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -24,15 +28,11 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
-use function array_map;
-use function is_string;
-use function mb_strlen;
-
 /**
  * Admin schema builder JSON API controller.
  */
 #[Internal]
-final class SchemaApiController
+final readonly class SchemaApiController
 {
     public function __construct(
         private readonly CreateTableHandler $createHandler,
@@ -190,7 +190,6 @@ final class SchemaApiController
 
     public function changelog(Request $request): Response
     {
-        /** @var int $limit */
         $limit = (int) ($request->input('limit', '100') ?? '100');
         $entries = $this->changeLog->recent($limit);
 
@@ -219,10 +218,10 @@ final class SchemaApiController
         return new Response(
             body: $bundle,
             status: ResponseStatus::OK,
-            headers: [
+            headers: new \Pulsar\Http\HeaderBag([
                 'Content-Type' => 'text/plain; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="schema-changelog.sql"',
-            ],
+            ]),
         );
     }
 

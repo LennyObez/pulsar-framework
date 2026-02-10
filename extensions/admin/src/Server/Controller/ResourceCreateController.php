@@ -20,7 +20,7 @@ use Pulsar\Http\ResponseStatus;
  * Controller for creating resource records.
  */
 #[Internal]
-final class ResourceCreateController
+final readonly class ResourceCreateController
 {
     public function __construct(
         private readonly CreateResourceHandler $handler,

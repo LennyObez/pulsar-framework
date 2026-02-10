@@ -15,11 +15,11 @@ use Pulsar\Database\Schema\DdlCompiler;
 use Pulsar\Database\Schema\SchemaCapabilities;
 use Pulsar\Database\Schema\SchemaManager;
 use Pulsar\Extensibility\ServiceProviderInterface;
+use Pulsar\Extension\Admin\Command\AdminStartCommand;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceMutatorInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
-use Pulsar\Extension\Admin\Contracts\WidgetInterface;
 use Pulsar\Extension\Admin\Features\BulkAction\BulkActionHandler;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceHandler;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardHandler;
@@ -36,9 +36,9 @@ use Pulsar\Extension\Admin\Features\Schema\RenameTableHandler;
 use Pulsar\Extension\Admin\Features\UpdateResource\UpdateResourceHandler;
 use Pulsar\Extension\Admin\Features\ViewResource\ViewResourceHandler;
 use Pulsar\Extension\Admin\Gateway\AdminGateway;
-use Pulsar\Extension\Admin\Internal\AdminResourceRegistry;
 use Pulsar\Extension\Admin\Internal\Adapter\OrmResourceMutator;
 use Pulsar\Extension\Admin\Internal\Adapter\OrmResourceQuery;
+use Pulsar\Extension\Admin\Internal\AdminResourceRegistry;
 use Pulsar\Extension\Admin\Internal\Middleware\AdminAccessMiddleware;
 use Pulsar\Extension\Admin\Internal\Middleware\AdminAuditMiddleware;
 use Pulsar\Extension\Admin\Internal\Middleware\AdminAuthMiddleware;
@@ -52,15 +52,14 @@ use Pulsar\Extension\Admin\Internal\Security\AdminAccessGate;
 use Pulsar\Extension\Admin\Internal\Security\AdminSafetyMode;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 use Pulsar\Extension\Admin\Internal\Storage\DbActionHistoryStore;
-use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
-use Pulsar\Extension\Admin\Internal\Storage\SqliteSchemaChangeLogStore;
 use Pulsar\Extension\Admin\Internal\Storage\DbSavedViewStore;
 use Pulsar\Extension\Admin\Internal\Storage\SavedViewStoreInterface;
+use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Extension\Admin\Internal\Storage\SqliteActionHistoryStore;
 use Pulsar\Extension\Admin\Internal\Storage\SqliteSavedViewStore;
+use Pulsar\Extension\Admin\Internal\Storage\SqliteSchemaChangeLogStore;
 use Pulsar\Extension\Admin\Internal\Widget\RecentActivityWidget;
 use Pulsar\Extension\Admin\Internal\Widget\ResourceCountWidget;
-use Pulsar\Extension\Admin\Command\AdminStartCommand;
 use Pulsar\Extension\Admin\Server\Controller\ActionHistoryController;
 use Pulsar\Extension\Admin\Server\Controller\BulkActionController;
 use Pulsar\Extension\Admin\Server\Controller\DashboardController;
@@ -83,7 +82,7 @@ use Pulsar\Http\RateLimit\RateLimiterInterface;
  * Binds all admin services, handlers, controllers, and infrastructure
  * components to the DI container.
  */
-final class AdminServiceProvider implements ServiceProviderInterface
+final readonly class AdminServiceProvider implements ServiceProviderInterface
 {
     #[Override]
     public function register(ContainerInterface $container): void
@@ -152,7 +151,7 @@ final class AdminServiceProvider implements ServiceProviderInterface
                 return new DbSavedViewStore($connection);
             }
             $path = $config->storage->sqlitePath ?? sys_get_temp_dir() . '/pulsar_admin.sqlite';
-            $pdo = new PDO("sqlite:{$path}");
+            $pdo = new PDO("sqlite:$path");
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return new SqliteSavedViewStore($pdo);
         });
@@ -166,7 +165,7 @@ final class AdminServiceProvider implements ServiceProviderInterface
                 return new DbActionHistoryStore($connection);
             }
             $path = $config->storage->sqlitePath ?? sys_get_temp_dir() . '/pulsar_admin.sqlite';
-            $pdo = new PDO("sqlite:{$path}");
+            $pdo = new PDO("sqlite:$path");
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return new SqliteActionHistoryStore($pdo);
         });
@@ -359,7 +358,7 @@ final class AdminServiceProvider implements ServiceProviderInterface
             /** @var AdminConfig $config */
             $config = $container->get(AdminConfig::class);
             $path = $config->storage->sqlitePath ?? sys_get_temp_dir() . '/pulsar_admin.sqlite';
-            $pdo = new PDO("sqlite:{$path}");
+            $pdo = new PDO("sqlite:$path");
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             return new SqliteSchemaChangeLogStore($pdo);
         });

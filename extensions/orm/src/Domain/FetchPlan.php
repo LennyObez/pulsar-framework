@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Domain;
 
-use NoDiscard;
-use Pulsar\Api\Api;
-
+use function array_key_exists;
 use function array_keys;
 use function array_merge;
+
+use NoDiscard;
+use Pulsar\Api\Api;
 
 /**
  * Declarative fetch plan for eager relation loading.
@@ -63,7 +64,7 @@ final readonly class FetchPlan
 
     public function has(string $relation): bool
     {
-        return isset($this->relations[$relation]) || \array_key_exists($relation, $this->relations);
+        return isset($this->relations[$relation]) || array_key_exists($relation, $this->relations);
     }
 
     public function nested(string $relation): ?self

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use function bin2hex;
+use function is_array;
+
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Domain\SavedView;
@@ -13,7 +16,6 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
-use function bin2hex;
 use function random_bytes;
 use function time;
 
@@ -21,7 +23,7 @@ use function time;
  * Controller for saved view CRUD.
  */
 #[Internal]
-final class SavedViewsController
+final readonly class SavedViewsController
 {
     public function __construct(
         private readonly SavedViewsHandler $handler,
@@ -55,11 +57,8 @@ final class SavedViewsController
         $identity = $request->attribute('identity');
         $actor = $identity?->id() ?? 'anonymous';
 
-        /** @var string $label */
         $label = $request->input('label', '') ?? '';
-        /** @var array<string, mixed> $filters */
         $filters = $request->input('filters', []) ?? [];
-        /** @var array<string, string> $sort */
         $sort = $request->input('sort', []) ?? [];
         /** @var int $perPage */
         $perPage = (int) ($request->input('per_page', 25) ?? 25);

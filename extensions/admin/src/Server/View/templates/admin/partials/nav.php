@@ -34,7 +34,7 @@ $navItems = [
             $isActive = $item['exact']
                 ? $currentPath === $item['href']
                 : str_starts_with($currentPath, $item['href']);
-        ?>
+            ?>
         <li><a href="<?= $e($item['href']) ?>"<?= $isActive ? ' class="active"' : '' ?>><?= $e($item['label']) ?></a></li>
         <?php endforeach; ?>
     </ul>

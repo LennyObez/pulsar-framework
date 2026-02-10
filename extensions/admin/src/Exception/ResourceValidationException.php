@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Exception;
 
+use function count;
+
 use NoDiscard;
 
 /**
@@ -31,7 +33,7 @@ final class ResourceValidationException extends AdminException
     {
         $count = count($violations);
         return new self(
-            "Validation failed with {$count} error(s)",
+            "Validation failed with $count error(s)",
             $violations,
         );
     }

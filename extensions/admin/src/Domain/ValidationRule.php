@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Domain;
 
+use function is_string;
+
 use Pulsar\Api\Api;
 
 /**
@@ -36,7 +38,7 @@ final readonly class ValidationRule
     private function validateRequired(mixed $value, string $fieldName): ?string
     {
         if ($value === null || $value === '') {
-            return $this->message ?? "{$fieldName} is required";
+            return $this->message ?? "$fieldName is required";
         }
         return null;
     }
@@ -44,7 +46,7 @@ final readonly class ValidationRule
     private function validateMinLength(mixed $value, string $fieldName): ?string
     {
         if (is_string($value) && mb_strlen($value) < (int) $this->parameter) {
-            return $this->message ?? "{$fieldName} must be at least {$this->parameter} characters";
+            return $this->message ?? "$fieldName must be at least $this->parameter characters";
         }
         return null;
     }
@@ -52,7 +54,7 @@ final readonly class ValidationRule
     private function validateMaxLength(mixed $value, string $fieldName): ?string
     {
         if (is_string($value) && mb_strlen($value) > (int) $this->parameter) {
-            return $this->message ?? "{$fieldName} must not exceed {$this->parameter} characters";
+            return $this->message ?? "$fieldName must not exceed $this->parameter characters";
         }
         return null;
     }
@@ -60,7 +62,7 @@ final readonly class ValidationRule
     private function validateMin(mixed $value, string $fieldName): ?string
     {
         if (is_numeric($value) && (float) $value < (float) $this->parameter) {
-            return $this->message ?? "{$fieldName} must be at least {$this->parameter}";
+            return $this->message ?? "$fieldName must be at least $this->parameter";
         }
         return null;
     }
@@ -68,7 +70,7 @@ final readonly class ValidationRule
     private function validateMax(mixed $value, string $fieldName): ?string
     {
         if (is_numeric($value) && (float) $value > (float) $this->parameter) {
-            return $this->message ?? "{$fieldName} must not exceed {$this->parameter}";
+            return $this->message ?? "$fieldName must not exceed $this->parameter";
         }
         return null;
     }
@@ -76,7 +78,7 @@ final readonly class ValidationRule
     private function validatePattern(mixed $value, string $fieldName): ?string
     {
         if (is_string($value) && is_string($this->parameter) && preg_match($this->parameter, $value) !== 1) {
-            return $this->message ?? "{$fieldName} format is invalid";
+            return $this->message ?? "$fieldName format is invalid";
         }
         return null;
     }
@@ -84,7 +86,7 @@ final readonly class ValidationRule
     private function validateEmail(mixed $value, string $fieldName): ?string
     {
         if (is_string($value) && $value !== '' && filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
-            return $this->message ?? "{$fieldName} must be a valid email address";
+            return $this->message ?? "$fieldName must be a valid email address";
         }
         return null;
     }
@@ -92,7 +94,7 @@ final readonly class ValidationRule
     private function validateUrl(mixed $value, string $fieldName): ?string
     {
         if (is_string($value) && $value !== '' && filter_var($value, FILTER_VALIDATE_URL) === false) {
-            return $this->message ?? "{$fieldName} must be a valid URL";
+            return $this->message ?? "$fieldName must be a valid URL";
         }
         return null;
     }

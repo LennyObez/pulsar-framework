@@ -13,17 +13,17 @@ use Pulsar\Extension\Orm\Domain\ColumnType;
 #[Api(since: '1.0.0')]
 final class ColumnDefinition
 {
-    private bool $nullable = false;
-    private mixed $default = null;
-    private bool $hasDefault = false;
-    private bool $unsigned = false;
-    private bool $autoIncrement = false;
-    private bool $primaryKey = false;
-    private bool $unique = false;
-    private ?int $length = null;
-    private ?int $precision = null;
-    private ?int $scale = null;
-    private ?string $after = null;
+    public private(set) bool $nullable = false;
+    public private(set) mixed $default = null;
+    public private(set) bool $hasDefault = false;
+    public private(set) bool $unsigned = false;
+    public private(set) bool $autoIncrement = false;
+    public private(set) bool $primaryKey = false;
+    public private(set) bool $unique = false;
+    public private(set) ?int $length = null;
+    public private(set) ?int $precision = null;
+    public private(set) ?int $scale = null;
+    public private(set) ?string $after = null;
 
     public function __construct(
         public readonly string $name,
@@ -95,58 +95,4 @@ final class ColumnDefinition
         return $this;
     }
 
-    public function isNullable(): bool
-    {
-        return $this->nullable;
-    }
-
-    public function getDefault(): mixed
-    {
-        return $this->default;
-    }
-
-    public function hasDefaultValue(): bool
-    {
-        return $this->hasDefault;
-    }
-
-    public function isUnsigned(): bool
-    {
-        return $this->unsigned;
-    }
-
-    public function isAutoIncrement(): bool
-    {
-        return $this->autoIncrement;
-    }
-
-    public function isPrimaryKey(): bool
-    {
-        return $this->primaryKey;
-    }
-
-    public function isUnique(): bool
-    {
-        return $this->unique;
-    }
-
-    public function getLength(): ?int
-    {
-        return $this->length;
-    }
-
-    public function getPrecision(): ?int
-    {
-        return $this->precision;
-    }
-
-    public function getScale(): ?int
-    {
-        return $this->scale;
-    }
-
-    public function getAfter(): ?string
-    {
-        return $this->after;
-    }
 }

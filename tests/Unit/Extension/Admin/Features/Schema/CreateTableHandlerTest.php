@@ -28,8 +28,8 @@ final class CreateTableHandlerTest extends TestCase
 {
     private PdoConnection $connection;
     private CreateTableHandler $handler;
-    private AuditLoggerInterface&MockObject $auditLogger;
-    private SchemaChangeLogStoreInterface&MockObject $changeLog;
+    private SchemaManager $manager;
+    private DatabaseIntrospector $introspector;
 
     protected function setUp(): void
     {
@@ -43,17 +43,14 @@ final class CreateTableHandlerTest extends TestCase
 
         $capabilities = new SchemaCapabilities(Driver::SQLite, $this->connection);
         $compiler = new DdlCompiler(Driver::SQLite, $capabilities);
-        $manager = new SchemaManager($this->connection, $compiler, $capabilities);
-        $introspector = new DatabaseIntrospector($this->connection);
-
-        $this->auditLogger = $this->createMock(AuditLoggerInterface::class);
-        $this->changeLog = $this->createMock(SchemaChangeLogStoreInterface::class);
+        $this->manager = new SchemaManager($this->connection, $compiler, $capabilities);
+        $this->introspector = new DatabaseIntrospector($this->connection);
 
         $this->handler = new CreateTableHandler(
-            $manager,
-            $introspector,
-            $this->auditLogger,
-            $this->changeLog,
+            $this->manager,
+            $this->introspector,
+            $this->createStub(AuditLoggerInterface::class),
+            $this->createStub(SchemaChangeLogStoreInterface::class),
             new AdminSchemaConfig(enabled: true),
         );
     }
@@ -61,8 +58,26 @@ final class CreateTableHandlerTest extends TestCase
     #[Test]
     public function createsTableSuccessfully(): void
     {
-        $this->auditLogger->expects($this->once())->method('log');
-        $this->changeLog->expects($this->once())->method('record');
+        /** @var AuditLoggerInterface&MockObject $auditLogger */
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects($this->once())->method('log');
+
+        /** @var SchemaChangeLogStoreInterface&MockObject $changeLog */
+        $changeLog = $this->createMock(SchemaChangeLogStoreInterface::class);
+        $changeLog->expects($this->once())->method('record');
+
+        $capabilities = new SchemaCapabilities(Driver::SQLite, $this->connection);
+        $compiler = new DdlCompiler(Driver::SQLite, $capabilities);
+        $manager = new SchemaManager($this->connection, $compiler, $capabilities);
+        $introspector = new DatabaseIntrospector($this->connection);
+
+        $handler = new CreateTableHandler(
+            $manager,
+            $introspector,
+            $auditLogger,
+            $changeLog,
+            new AdminSchemaConfig(enabled: true),
+        );
 
         $def = new TableDefinition(
             name: 'products',
@@ -72,7 +87,7 @@ final class CreateTableHandlerTest extends TestCase
             ],
         );
 
-        $result = $this->handler->execute($def, new MutationContext('admin', 'Initial setup'));
+        $result = $handler->execute($def, new MutationContext('admin', 'Initial setup'));
 
         self::assertTrue($result['success']);
         self::assertStringContainsString('created', $result['message']);

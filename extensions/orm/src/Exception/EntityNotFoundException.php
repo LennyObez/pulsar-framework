@@ -24,7 +24,7 @@ final class EntityNotFoundException extends OrmException
         return new self(sprintf(
             'Entity %s with ID "%s" not found',
             $entityClass,
-            (string) $id,
+            $id,
         ));
     }
 

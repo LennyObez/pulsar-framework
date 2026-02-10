@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Export;
 
+use function count;
+
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Contracts\ExportDriverInterface;
@@ -13,7 +15,7 @@ use Pulsar\Extension\Admin\Domain\ExportFormat;
  * JSON export driver with scalar-only value enforcement.
  */
 #[Internal]
-final class JsonExportDriver implements ExportDriverInterface
+final readonly class JsonExportDriver implements ExportDriverInterface
 {
     #[Override]
     public function format(): ExportFormat

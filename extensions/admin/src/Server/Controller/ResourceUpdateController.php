@@ -20,7 +20,7 @@ use Pulsar\Http\ResponseStatus;
  * Controller for updating resource records.
  */
 #[Internal]
-final class ResourceUpdateController
+final readonly class ResourceUpdateController
 {
     public function __construct(
         private readonly UpdateResourceHandler $handler,
@@ -33,7 +33,7 @@ final class ResourceUpdateController
         $resourceDef = $this->registry->get($resource);
 
         ob_start();
-        $title = "Edit {$resourceDef->label()} #{$id}";
+        $title = "Edit {$resourceDef->label()} #$id";
         $content = 'resource-form';
         $templateData = [
             'resource' => $resourceDef,

@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Schema;
 
+use function implode;
+use function is_bool;
+use function is_float;
+use function is_int;
+
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Domain\ColumnType;
 use Pulsar\Extension\Orm\Internal\Compiler\DialectInterface;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 
-use function implode;
 use function sprintf;
 
 /**
  * Compiles DDL statements from TableBuilder definitions.
  */
 #[Internal]
-final class SchemaDdlCompiler
+final readonly class SchemaDdlCompiler
 {
     public function __construct(
         private readonly IdentifierQuoter $quoter,
@@ -30,18 +34,18 @@ final class SchemaDdlCompiler
     {
         $parts = [];
 
-        foreach ($builder->getColumns() as $col) {
+        foreach ($builder->columns as $col) {
             $parts[] = $this->compileColumnDef($col);
         }
 
-        if ($builder->getPrimaryKeys() !== []) {
-            $pks = \array_map(fn(string $c): string => $this->quoter->quote($c), $builder->getPrimaryKeys());
+        if ($builder->primaryKeys !== []) {
+            $pks = array_map(fn(string $c): string => $this->quoter->quote($c), $builder->primaryKeys);
             $parts[] = sprintf('PRIMARY KEY (%s)', implode(', ', $pks));
         }
 
-        foreach ($builder->getIndexes() as $index) {
+        foreach ($builder->indexes as $index) {
             if ($index->unique) {
-                $cols = \array_map(fn(string $c): string => $this->quoter->quote($c), $index->columns);
+                $cols = array_map(fn(string $c): string => $this->quoter->quote($c), $index->columns);
                 $parts[] = sprintf(
                     'CONSTRAINT %s UNIQUE (%s)',
                     $this->quoter->quote($index->name),
@@ -50,7 +54,7 @@ final class SchemaDdlCompiler
             }
         }
 
-        foreach ($builder->getForeignKeys() as $fk) {
+        foreach ($builder->foreignKeys as $fk) {
             $parts[] = $this->compileForeignKey($fk);
         }
 
@@ -62,9 +66,9 @@ final class SchemaDdlCompiler
 
         // Non-unique indexes as separate statements
         $statements = [$sql];
-        foreach ($builder->getIndexes() as $index) {
+        foreach ($builder->indexes as $index) {
             if (!$index->unique) {
-                $cols = \array_map(fn(string $c): string => $this->quoter->quote($c), $index->columns);
+                $cols = array_map(fn(string $c): string => $this->quoter->quote($c), $index->columns);
                 $statements[] = sprintf(
                     'CREATE INDEX %s ON %s (%s)',
                     $this->quoter->quote($index->name),
@@ -86,14 +90,14 @@ final class SchemaDdlCompiler
     {
         $statements = [];
 
-        foreach ($builder->getDropIndexes() as $index) {
+        foreach ($builder->dropIndexes as $index) {
             $statements[] = sprintf(
                 'DROP INDEX %s',
                 $this->quoter->quote($index),
             );
         }
 
-        foreach ($builder->getDropColumns() as $col) {
+        foreach ($builder->dropColumns as $col) {
             $statements[] = sprintf(
                 'ALTER TABLE %s DROP COLUMN %s',
                 $this->quoter->quote($builder->tableName),
@@ -101,7 +105,7 @@ final class SchemaDdlCompiler
             );
         }
 
-        foreach ($builder->getColumns() as $col) {
+        foreach ($builder->columns as $col) {
             $statements[] = sprintf(
                 'ALTER TABLE %s ADD COLUMN %s',
                 $this->quoter->quote($builder->tableName),
@@ -109,8 +113,8 @@ final class SchemaDdlCompiler
             );
         }
 
-        foreach ($builder->getIndexes() as $index) {
-            $cols = \array_map(fn(string $c): string => $this->quoter->quote($c), $index->columns);
+        foreach ($builder->indexes as $index) {
+            $cols = array_map(fn(string $c): string => $this->quoter->quote($c), $index->columns);
             $keyword = $index->unique ? 'UNIQUE INDEX' : 'INDEX';
             $statements[] = sprintf(
                 'CREATE %s %s ON %s (%s)',
@@ -121,7 +125,7 @@ final class SchemaDdlCompiler
             );
         }
 
-        foreach ($builder->getForeignKeys() as $fk) {
+        foreach ($builder->foreignKeys as $fk) {
             $statements[] = sprintf(
                 'ALTER TABLE %s ADD %s',
                 $this->quoter->quote($builder->tableName),
@@ -136,15 +140,15 @@ final class SchemaDdlCompiler
     {
         $sql = $this->quoter->quote($col->name) . ' ' . $this->mapType($col);
 
-        if ($col->isUnsigned()) {
+        if ($col->unsigned) {
             $sql .= ' UNSIGNED';
         }
 
-        if (!$col->isNullable()) {
+        if (!$col->nullable) {
             $sql .= ' NOT NULL';
         }
 
-        if ($col->isAutoIncrement()) {
+        if ($col->autoIncrement) {
             $sql .= match ($this->dialect->name()) {
                 'pgsql' => '', // BIGSERIAL handles this
                 'sqlite' => ' AUTOINCREMENT',
@@ -152,20 +156,20 @@ final class SchemaDdlCompiler
             };
         }
 
-        if ($col->hasDefaultValue()) {
-            $default = $col->getDefault();
+        if ($col->hasDefault) {
+            $default = $col->default;
             if ($default === null) {
                 $sql .= ' DEFAULT NULL';
-            } elseif (\is_bool($default)) {
+            } elseif (is_bool($default)) {
                 $sql .= ' DEFAULT ' . $this->dialect->compileBooleanLiteral($default);
-            } elseif (\is_int($default) || \is_float($default)) {
-                $sql .= sprintf(' DEFAULT %s', (string) $default);
+            } elseif (is_int($default) || is_float($default)) {
+                $sql .= sprintf(' DEFAULT %s', $default);
             } else {
-                $sql .= sprintf(" DEFAULT '%s'", (string) $default);
+                $sql .= sprintf(" DEFAULT '%s'", $default);
             }
         }
 
-        if ($col->isUnique() && !$col->isPrimaryKey()) {
+        if ($col->unique && !$col->primaryKey) {
             $sql .= ' UNIQUE';
         }
 
@@ -177,19 +181,19 @@ final class SchemaDdlCompiler
         $dialectName = $this->dialect->name();
 
         return match ($col->type) {
-            ColumnType::String => sprintf('VARCHAR(%d)', $col->getLength() ?? 255),
+            ColumnType::String => sprintf('VARCHAR(%d)', $col->length ?? 255),
             ColumnType::Text => 'TEXT',
             ColumnType::Integer => 'INTEGER',
             ColumnType::SmallInt => 'SMALLINT',
             ColumnType::BigInt => match ($dialectName) {
-                'pgsql' => $col->isAutoIncrement() ? 'BIGSERIAL' : 'BIGINT',
+                'pgsql' => $col->autoIncrement ? 'BIGSERIAL' : 'BIGINT',
                 default => 'BIGINT',
             },
             ColumnType::Float => match ($dialectName) {
                 'pgsql' => 'DOUBLE PRECISION',
                 default => 'FLOAT',
             },
-            ColumnType::Decimal => sprintf('DECIMAL(%d, %d)', $col->getPrecision() ?? 8, $col->getScale() ?? 2),
+            ColumnType::Decimal => sprintf('DECIMAL(%d, %d)', $col->precision ?? 8, $col->scale ?? 2),
             ColumnType::Boolean => match ($dialectName) {
                 'pgsql' => 'BOOLEAN',
                 default => 'TINYINT(1)',
@@ -207,20 +211,20 @@ final class SchemaDdlCompiler
             },
             ColumnType::Uuid => match ($dialectName) {
                 'pgsql' => 'UUID',
-                default => sprintf('VARCHAR(%d)', $col->getLength() ?? 36),
+                default => sprintf('VARCHAR(%d)', $col->length ?? 36),
             },
             ColumnType::Binary => match ($dialectName) {
                 'pgsql' => 'BYTEA',
                 default => 'BLOB',
             },
-            ColumnType::Enum => sprintf('VARCHAR(%d)', $col->getLength() ?? 50),
+            ColumnType::Enum => sprintf('VARCHAR(%d)', $col->length ?? 50),
         };
     }
 
     private function compileForeignKey(ForeignKeyDefinition $fk): string
     {
-        $localCols = \array_map(fn(string $c): string => $this->quoter->quote($c), $fk->columns);
-        $refCols = \array_map(fn(string $c): string => $this->quoter->quote($c), $fk->referencedColumns);
+        $localCols = array_map(fn(string $c): string => $this->quoter->quote($c), $fk->columns);
+        $refCols = array_map(fn(string $c): string => $this->quoter->quote($c), $fk->referencedColumns);
 
         return sprintf(
             'CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s (%s) ON DELETE %s ON UPDATE %s',

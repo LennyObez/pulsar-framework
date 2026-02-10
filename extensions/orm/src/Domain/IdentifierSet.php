@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Domain;
 
+use function count;
+use function in_array;
+
 use NoDiscard;
 use Pulsar\Api\Api;
-
-use function array_values;
-use function in_array;
 
 /**
  * Unique set of validated identifiers (for column lists, etc.).
@@ -66,6 +66,6 @@ final readonly class IdentifierSet
 
     public function count(): int
     {
-        return \count($this->items);
+        return count($this->items);
     }
 }

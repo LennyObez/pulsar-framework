@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Orm\Contracts;
 
 use Pulsar\Api\Api;
 use Pulsar\Audit\MutationContext;
-use Pulsar\Extension\Orm\Domain\EntityId;
 use Pulsar\Extension\Orm\Domain\FetchPlan;
 use Pulsar\Extension\Orm\Exception\EntityNotFoundException;
 use Pulsar\Extension\Orm\Exception\OptimisticLockException;

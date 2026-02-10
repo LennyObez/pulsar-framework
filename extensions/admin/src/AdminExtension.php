@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin;
 
-use Override;
+use const DIRECTORY_SEPARATOR;
 
 use function is_array;
 use function is_file;
 
+use Override;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
@@ -37,8 +38,6 @@ use Pulsar\Extension\Admin\Server\Controller\SearchController;
 use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
 use Pulsar\Routing\RouterInterface;
 
-use const DIRECTORY_SEPARATOR;
-
 /**
  * Admin panel extension.
  *
@@ -47,7 +46,7 @@ use const DIRECTORY_SEPARATOR;
  * Enabled by default in local/dev. In staging/production, requires
  * explicit environment variables.
  */
-final class AdminExtension implements ExtensionInterface, PreBootExtensionInterface
+final readonly class AdminExtension implements ExtensionInterface, PreBootExtensionInterface
 {
     #[Override]
     public function name(): string
@@ -111,62 +110,62 @@ final class AdminExtension implements ExtensionInterface, PreBootExtensionInterf
         $router->get($prefix, [DashboardController::class, 'index'], 'admin.dashboard');
 
         // Search
-        $router->get("{$prefix}/search", [SearchController::class, 'search'], 'admin.search');
+        $router->get("$prefix/search", [SearchController::class, 'search'], 'admin.search');
 
         // Resource index
-        $router->get("{$prefix}/resources", [ResourceIndexController::class, 'index'], 'admin.resources');
+        $router->get("$prefix/resources", [ResourceIndexController::class, 'index'], 'admin.resources');
 
         // Action history
-        $router->get("{$prefix}/activity", [ActionHistoryController::class, 'recent'], 'admin.activity');
-        $router->get("{$prefix}/activity/{resource}", [ActionHistoryController::class, 'forResource'], 'admin.activity.resource');
+        $router->get("$prefix/activity", [ActionHistoryController::class, 'recent'], 'admin.activity');
+        $router->get("$prefix/activity/{resource}", [ActionHistoryController::class, 'forResource'], 'admin.activity.resource');
 
         // Resource CRUD
-        $router->get("{$prefix}/resources/{resource}", [ResourceListController::class, 'list'], 'admin.resource.list');
-        $router->get("{$prefix}/resources/{resource}/create", [ResourceCreateController::class, 'form'], 'admin.resource.create.form');
-        $router->post("{$prefix}/resources/{resource}", [ResourceCreateController::class, 'store'], 'admin.resource.create');
-        $router->get("{$prefix}/resources/{resource}/export", [ExportController::class, 'export'], 'admin.resource.export');
-        $router->get("{$prefix}/resources/{resource}/{id}", [ResourceViewController::class, 'view'], 'admin.resource.view');
-        $router->get("{$prefix}/resources/{resource}/{id}/edit", [ResourceUpdateController::class, 'form'], 'admin.resource.edit.form');
-        $router->put("{$prefix}/resources/{resource}/{id}", [ResourceUpdateController::class, 'update'], 'admin.resource.update');
-        $router->delete("{$prefix}/resources/{resource}/{id}", [ResourceDeleteController::class, 'delete'], 'admin.resource.delete');
+        $router->get("$prefix/resources/{resource}", [ResourceListController::class, 'list'], 'admin.resource.list');
+        $router->get("$prefix/resources/{resource}/create", [ResourceCreateController::class, 'form'], 'admin.resource.create.form');
+        $router->post("$prefix/resources/{resource}", [ResourceCreateController::class, 'store'], 'admin.resource.create');
+        $router->get("$prefix/resources/{resource}/export", [ExportController::class, 'export'], 'admin.resource.export');
+        $router->get("$prefix/resources/{resource}/{id}", [ResourceViewController::class, 'view'], 'admin.resource.view');
+        $router->get("$prefix/resources/{resource}/{id}/edit", [ResourceUpdateController::class, 'form'], 'admin.resource.edit.form');
+        $router->put("$prefix/resources/{resource}/{id}", [ResourceUpdateController::class, 'update'], 'admin.resource.update');
+        $router->delete("$prefix/resources/{resource}/{id}", [ResourceDeleteController::class, 'delete'], 'admin.resource.delete');
 
         // Bulk actions
-        $router->post("{$prefix}/resources/{resource}/bulk", [BulkActionController::class, 'execute'], 'admin.resource.bulk');
+        $router->post("$prefix/resources/{resource}/bulk", [BulkActionController::class, 'execute'], 'admin.resource.bulk');
 
         // Saved views
-        $router->get("{$prefix}/resources/{resource}/views", [SavedViewsController::class, 'list'], 'admin.resource.views');
-        $router->post("{$prefix}/resources/{resource}/views", [SavedViewsController::class, 'store'], 'admin.resource.views.store');
-        $router->delete("{$prefix}/resources/{resource}/views/{viewId}", [SavedViewsController::class, 'delete'], 'admin.resource.views.delete');
+        $router->get("$prefix/resources/{resource}/views", [SavedViewsController::class, 'list'], 'admin.resource.views');
+        $router->post("$prefix/resources/{resource}/views", [SavedViewsController::class, 'store'], 'admin.resource.views.store');
+        $router->delete("$prefix/resources/{resource}/views/{viewId}", [SavedViewsController::class, 'delete'], 'admin.resource.views.delete');
 
         // Schema Builder routes (gated by config)
         if ($config->schema->enabled) {
             // HTML pages
-            $router->get("{$prefix}/schema", [SchemaController::class, 'list'], 'admin.schema');
-            $router->get("{$prefix}/schema/create", [SchemaController::class, 'createForm'], 'admin.schema.create.form');
-            $router->get("{$prefix}/schema/changelog", [SchemaController::class, 'changelog'], 'admin.schema.changelog');
-            $router->get("{$prefix}/schema/{table}", [SchemaController::class, 'view'], 'admin.schema.view');
+            $router->get("$prefix/schema", [SchemaController::class, 'list'], 'admin.schema');
+            $router->get("$prefix/schema/create", [SchemaController::class, 'createForm'], 'admin.schema.create.form');
+            $router->get("$prefix/schema/changelog", [SchemaController::class, 'changelog'], 'admin.schema.changelog');
+            $router->get("$prefix/schema/{table}", [SchemaController::class, 'view'], 'admin.schema.view');
 
             // JSON API — mutations
-            $router->post("{$prefix}/api/schema", [SchemaApiController::class, 'create'], 'admin.api.schema.create');
-            $router->delete("{$prefix}/api/schema/{table}", [SchemaApiController::class, 'dropTable'], 'admin.api.schema.drop');
-            $router->post("{$prefix}/api/schema/{table}/rename", [SchemaApiController::class, 'renameTable'], 'admin.api.schema.rename');
-            $router->post("{$prefix}/api/schema/{table}/columns", [SchemaApiController::class, 'addColumn'], 'admin.api.schema.add_column');
-            $router->delete("{$prefix}/api/schema/{table}/columns/{col}", [SchemaApiController::class, 'dropColumn'], 'admin.api.schema.drop_column');
-            $router->post("{$prefix}/api/schema/{table}/indexes", [SchemaApiController::class, 'addIndex'], 'admin.api.schema.add_index');
-            $router->delete("{$prefix}/api/schema/{table}/indexes/{name}", [SchemaApiController::class, 'dropIndex'], 'admin.api.schema.drop_index');
+            $router->post("$prefix/api/schema", [SchemaApiController::class, 'create'], 'admin.api.schema.create');
+            $router->delete("$prefix/api/schema/{table}", [SchemaApiController::class, 'dropTable'], 'admin.api.schema.drop');
+            $router->post("$prefix/api/schema/{table}/rename", [SchemaApiController::class, 'renameTable'], 'admin.api.schema.rename');
+            $router->post("$prefix/api/schema/{table}/columns", [SchemaApiController::class, 'addColumn'], 'admin.api.schema.add_column');
+            $router->delete("$prefix/api/schema/{table}/columns/{col}", [SchemaApiController::class, 'dropColumn'], 'admin.api.schema.drop_column');
+            $router->post("$prefix/api/schema/{table}/indexes", [SchemaApiController::class, 'addIndex'], 'admin.api.schema.add_index');
+            $router->delete("$prefix/api/schema/{table}/indexes/{name}", [SchemaApiController::class, 'dropIndex'], 'admin.api.schema.drop_index');
 
             // Preview routes (read-only)
-            $router->post("{$prefix}/api/schema/preview/create", [SchemaApiController::class, 'previewCreate'], 'admin.api.schema.preview.create');
-            $router->post("{$prefix}/api/schema/preview/{table}/add-column", [SchemaApiController::class, 'previewAddColumn'], 'admin.api.schema.preview.add_column');
-            $router->post("{$prefix}/api/schema/preview/{table}/drop-column", [SchemaApiController::class, 'previewDropColumn'], 'admin.api.schema.preview.drop_column');
-            $router->post("{$prefix}/api/schema/preview/{table}/add-index", [SchemaApiController::class, 'previewAddIndex'], 'admin.api.schema.preview.add_index');
-            $router->post("{$prefix}/api/schema/preview/{table}/drop-index", [SchemaApiController::class, 'previewDropIndex'], 'admin.api.schema.preview.drop_index');
-            $router->post("{$prefix}/api/schema/preview/{table}/drop", [SchemaApiController::class, 'previewDropTable'], 'admin.api.schema.preview.drop');
-            $router->post("{$prefix}/api/schema/preview/{table}/rename", [SchemaApiController::class, 'previewRenameTable'], 'admin.api.schema.preview.rename');
+            $router->post("$prefix/api/schema/preview/create", [SchemaApiController::class, 'previewCreate'], 'admin.api.schema.preview.create');
+            $router->post("$prefix/api/schema/preview/{table}/add-column", [SchemaApiController::class, 'previewAddColumn'], 'admin.api.schema.preview.add_column');
+            $router->post("$prefix/api/schema/preview/{table}/drop-column", [SchemaApiController::class, 'previewDropColumn'], 'admin.api.schema.preview.drop_column');
+            $router->post("$prefix/api/schema/preview/{table}/add-index", [SchemaApiController::class, 'previewAddIndex'], 'admin.api.schema.preview.add_index');
+            $router->post("$prefix/api/schema/preview/{table}/drop-index", [SchemaApiController::class, 'previewDropIndex'], 'admin.api.schema.preview.drop_index');
+            $router->post("$prefix/api/schema/preview/{table}/drop", [SchemaApiController::class, 'previewDropTable'], 'admin.api.schema.preview.drop');
+            $router->post("$prefix/api/schema/preview/{table}/rename", [SchemaApiController::class, 'previewRenameTable'], 'admin.api.schema.preview.rename');
 
             // Changelog API + export
-            $router->get("{$prefix}/api/schema/changelog", [SchemaApiController::class, 'changelog'], 'admin.api.schema.changelog');
-            $router->get("{$prefix}/api/schema/changelog/export", [SchemaApiController::class, 'exportBundle'], 'admin.api.schema.changelog.export');
+            $router->get("$prefix/api/schema/changelog", [SchemaApiController::class, 'changelog'], 'admin.api.schema.changelog');
+            $router->get("$prefix/api/schema/changelog/export", [SchemaApiController::class, 'exportBundle'], 'admin.api.schema.changelog.export');
         }
 
         // Auto-discover database tables when no resources are manually registered
