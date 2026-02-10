@@ -25,7 +25,7 @@ use function in_array;
 final readonly class AdminAuditMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly AuditLoggerInterface $auditLogger,
+        private AuditLoggerInterface $auditLogger,
     ) {}
 
     #[Override]

@@ -24,12 +24,12 @@ final readonly class AggregateBuilder
      * @param array<string, mixed> $bindings
      */
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly Closure $quoteIdentifier,
-        private readonly string $compiledFrom,
-        private readonly array $compiledJoins,
-        private readonly array $compiledWheres,
-        private readonly array $bindings,
+        private ConnectionInterface $connection,
+        private Closure $quoteIdentifier,
+        private string $compiledFrom,
+        private array $compiledJoins,
+        private array $compiledWheres,
+        private array $bindings,
     ) {}
 
     #[NoDiscard]

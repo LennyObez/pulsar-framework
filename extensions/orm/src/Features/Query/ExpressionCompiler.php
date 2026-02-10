@@ -21,8 +21,8 @@ use function sprintf;
 final readonly class ExpressionCompiler
 {
     public function __construct(
-        private readonly IdentifierQuoter $quoter,
-        private readonly BindingCounter $bindings,
+        private IdentifierQuoter $quoter,
+        private BindingCounter $bindings,
     ) {}
 
     /**

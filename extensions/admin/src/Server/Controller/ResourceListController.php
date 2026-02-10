@@ -21,9 +21,9 @@ use function is_string;
 final readonly class ResourceListController
 {
     public function __construct(
-        private readonly ListResourceHandler $handler,
-        private readonly ResourceRegistryInterface $registry,
-        private readonly AdminConfig $config,
+        private ListResourceHandler $handler,
+        private ResourceRegistryInterface $registry,
+        private AdminConfig $config,
     ) {}
 
     public function list(Request $request, string $resource): Response
@@ -37,13 +37,12 @@ final readonly class ResourceListController
             $filters = $decoded;
         }
 
-        /** @var array<string, string> $sort */
-        $sort = [];
         $sortField = $request->query('sort_field');
         $sortDir = $request->query('sort_dir');
-        if (is_string($sortField) && $sortField !== '') {
-            $sort[$sortField] = is_string($sortDir) ? $sortDir : 'asc';
-        }
+        /** @var array<string, string> $sort */
+        $sort = (is_string($sortField) && $sortField !== '')
+            ? [$sortField => is_string($sortDir) ? $sortDir : 'asc']
+            : [];
 
         $page = max(1, (int) ($request->query('page') ?? 1));
         $perPage = max(1, (int) ($request->query('per_page') ?? 25));
@@ -67,17 +66,24 @@ final readonly class ResourceListController
         }
 
         $resourceDef = $this->registry->get($resource);
-        ob_start();
-        $title = $resourceDef->pluralLabel();
-        $content = 'resource-list';
-        $templateData = [
+
+        return Response::html($this->renderView($resourceDef->pluralLabel(), 'resource-list', [
             'resource' => $resourceDef,
             'result' => $result,
             'filters' => $filters,
             'sort' => $sort,
             'schema_enabled' => $this->config->schema->enabled,
-        ];
+        ]));
+    }
+
+    /**
+     * @param array<string, mixed> $templateData
+     */
+    private function renderView(string $title, string $content, array $templateData): string
+    {
+        ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
-        return Response::html((string) ob_get_clean());
+
+        return (string) ob_get_clean();
     }
 }

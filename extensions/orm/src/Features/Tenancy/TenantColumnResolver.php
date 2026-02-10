@@ -15,7 +15,7 @@ use Pulsar\Extension\Orm\Domain\EntityMetadata;
 final readonly class TenantColumnResolver
 {
     public function __construct(
-        private readonly OrmConfig $config,
+        private OrmConfig $config,
     ) {}
 
     /**

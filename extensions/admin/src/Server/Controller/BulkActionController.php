@@ -22,7 +22,7 @@ use function is_array;
 final readonly class BulkActionController
 {
     public function __construct(
-        private readonly BulkActionHandler $handler,
+        private BulkActionHandler $handler,
     ) {}
 
     public function execute(Request $request, string $resource): Response

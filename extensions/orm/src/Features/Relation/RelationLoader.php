@@ -27,9 +27,9 @@ use function array_values;
 final readonly class RelationLoader
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly MetadataRegistryInterface $metadataRegistry,
-        private readonly EntityHydratorInterface $hydrator,
+        private ConnectionInterface $connection,
+        private MetadataRegistryInterface $metadataRegistry,
+        private EntityHydratorInterface $hydrator,
     ) {}
 
     /**

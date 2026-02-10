@@ -22,10 +22,10 @@ use function count;
 final readonly class SchemaController
 {
     public function __construct(
-        private readonly DatabaseIntrospector $introspector,
-        private readonly SchemaCapabilities $capabilities,
-        private readonly AdminSchemaConfig $config,
-        private readonly SchemaChangeLogStoreInterface $changeLog,
+        private DatabaseIntrospector $introspector,
+        private SchemaCapabilities $capabilities,
+        private AdminSchemaConfig $config,
+        private SchemaChangeLogStoreInterface $changeLog,
     ) {}
 
     public function list(Request $request): Response
@@ -57,6 +57,7 @@ final readonly class SchemaController
             'tables' => $tableData,
             'capabilities' => $this->capabilities->toArray(),
             'driver' => $this->capabilities->supportsNativeEnum() ? 'mysql' : ($this->capabilities->supportsTransactionalDdl() ? 'pgsql' : 'sqlite'),
+            'schema_enabled' => $this->config->enabled,
         ]));
     }
 
@@ -69,6 +70,7 @@ final readonly class SchemaController
             'tables' => $tableNames,
             'capabilities' => $this->capabilities->toArray(),
             'driver' => $this->capabilities->supportsNativeEnum() ? 'mysql' : ($this->capabilities->supportsTransactionalDdl() ? 'pgsql' : 'sqlite'),
+            'schema_enabled' => $this->config->enabled,
         ]));
     }
 
@@ -103,6 +105,7 @@ final readonly class SchemaController
             'primaryKey' => $pk,
             'capabilities' => $this->capabilities->toArray(),
             'driver' => $this->capabilities->supportsNativeEnum() ? 'mysql' : ($this->capabilities->supportsTransactionalDdl() ? 'pgsql' : 'sqlite'),
+            'schema_enabled' => $this->config->enabled,
         ]));
     }
 
@@ -130,6 +133,7 @@ final readonly class SchemaController
 
         return Response::html($this->renderHtml('schema/changelog', 'Schema Change Log', [
             'entries' => $entryData,
+            'schema_enabled' => $this->config->enabled,
         ]));
     }
 
@@ -138,7 +142,6 @@ final readonly class SchemaController
      */
     private function renderHtml(string $content, string $title, array $templateData): string
     {
-        $templateData['schema_enabled'] = $this->config->enabled;
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

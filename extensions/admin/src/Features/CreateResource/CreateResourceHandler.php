@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\CreateResource;
 
+use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceMutatorInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
+use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Exception\ResourceValidationException;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
@@ -33,7 +35,7 @@ final readonly class CreateResourceHandler
 
         $ops = $resource->operations();
         if (!in_array(ResourceOperation::Create, $ops, true)) {
-            throw new \Pulsar\Extension\Admin\Exception\AdminException(
+            throw new AdminException(
                 "Create operation not supported on resource \"$request->resourceName\"",
             );
         }
@@ -63,7 +65,7 @@ final readonly class CreateResourceHandler
      * @param array<string, mixed> $data
      * @return list<array{field: string, message: string, rule: string}>
      */
-    private function validate(\Pulsar\Extension\Admin\Contracts\DataResourceInterface $resource, array $data): array
+    private function validate(DataResourceInterface $resource, array $data): array
     {
         $violations = [];
         foreach ($resource->fields() as $field) {

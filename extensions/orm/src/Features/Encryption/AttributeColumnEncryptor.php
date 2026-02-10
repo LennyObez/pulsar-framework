@@ -23,12 +23,12 @@ use function substr;
 #[Internal]
 final readonly class AttributeColumnEncryptor implements ColumnEncryptorInterface
 {
-    private readonly EncryptorInterface $derivedEncryptor;
+    private EncryptorInterface $derivedEncryptor;
 
     public function __construct(
         EncryptorInterface $encryptor,
         KeyProviderInterface $keyProvider,
-        private readonly EncryptionConfig $config,
+        private EncryptionConfig $config,
     ) {
         $this->derivedEncryptor = $encryptor->withDerivedKey(
             $keyProvider,

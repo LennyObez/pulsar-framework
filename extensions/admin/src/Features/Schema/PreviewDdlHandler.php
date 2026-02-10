@@ -125,43 +125,23 @@ final readonly class PreviewDdlHandler
      */
     private function collectWarnings(): array
     {
-        $warnings = [];
-
-        if (!$this->capabilities->supportsDropColumn()) {
-            $warnings[] = [
-                'code' => 'SQLITE_NO_DROP_COLUMN',
-                'message' => 'This database does not support DROP COLUMN',
-            ];
-        }
-
-        if (!$this->capabilities->supportsAlterColumnType()) {
-            $warnings[] = [
-                'code' => 'NO_ALTER_COLUMN_TYPE',
-                'message' => 'This database does not support altering column types',
-            ];
-        }
-
-        if (!$this->capabilities->foreignKeysEnforcedByDefault()) {
-            $warnings[] = [
-                'code' => 'FK_PRAGMA_REQUIRED',
-                'message' => 'Foreign keys require PRAGMA foreign_keys = ON (enabled by Pulsar)',
-            ];
-        }
-
-        if (!$this->capabilities->supportsTransactionalDdl()) {
-            $warnings[] = [
-                'code' => 'NO_TRANSACTIONAL_DDL',
-                'message' => 'Schema changes are not atomic on this database driver',
-            ];
-        }
-
-        if (!$this->capabilities->supportsAddForeignKey()) {
-            $warnings[] = [
-                'code' => 'NO_ALTER_ADD_FK',
-                'message' => 'Foreign keys can only be defined at table creation time',
-            ];
-        }
-
-        return $warnings;
+        /** @var list<array{code: string, message: string}> */
+        return array_values(array_filter([
+            !$this->capabilities->supportsDropColumn()
+                ? ['code' => 'SQLITE_NO_DROP_COLUMN', 'message' => 'This database does not support DROP COLUMN']
+                : null,
+            !$this->capabilities->supportsAlterColumnType()
+                ? ['code' => 'NO_ALTER_COLUMN_TYPE', 'message' => 'This database does not support altering column types']
+                : null,
+            !$this->capabilities->foreignKeysEnforcedByDefault()
+                ? ['code' => 'FK_PRAGMA_REQUIRED', 'message' => 'Foreign keys require PRAGMA foreign_keys = ON (enabled by Pulsar)']
+                : null,
+            !$this->capabilities->supportsTransactionalDdl()
+                ? ['code' => 'NO_TRANSACTIONAL_DDL', 'message' => 'Schema changes are not atomic on this database driver']
+                : null,
+            !$this->capabilities->supportsAddForeignKey()
+                ? ['code' => 'NO_ALTER_ADD_FK', 'message' => 'Foreign keys can only be defined at table creation time']
+                : null,
+        ]));
     }
 }

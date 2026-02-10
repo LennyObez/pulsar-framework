@@ -25,7 +25,7 @@ use function str_contains;
 final readonly class AdminRateLimitMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly RateLimiterInterface $rateLimiter,
+        private RateLimiterInterface $rateLimiter,
     ) {}
 
     #[Override]

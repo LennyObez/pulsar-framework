@@ -23,7 +23,7 @@ use function max;
 final readonly class OrmResourceQuery implements ResourceQueryInterface
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
+        private ConnectionInterface $connection,
     ) {}
 
     #[Override]
@@ -48,8 +48,7 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
 
         $countSql = "SELECT COUNT(*) AS cnt FROM $table$whereStr";
         $countResult = $this->connection->query($countSql, $bindings);
-        $countRow = $countResult->first() ?? null;
-        $total = $countRow !== null ? (int) $countRow->get('cnt') : 0;
+        $total = (int) ($countResult->first()?->get('cnt') ?? 0);
 
         $dataSql = "SELECT * FROM $table$whereStr$orderBy LIMIT $perPage OFFSET $offset";
         $dataResult = $this->connection->query($dataSql, $bindings);
@@ -125,9 +124,7 @@ final readonly class OrmResourceQuery implements ResourceQueryInterface
 
         $sql = "SELECT COUNT(*) AS cnt FROM $table$whereStr";
         $result = $this->connection->query($sql, $bindings);
-        $row = $result->first();
-
-        return $row !== null ? (int) $row->get('cnt') : 0;
+        return (int) ($result->first()?->get('cnt') ?? 0);
     }
 
     private function tableName(DataResourceInterface $resource): string

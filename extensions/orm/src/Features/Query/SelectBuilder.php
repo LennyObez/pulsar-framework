@@ -68,7 +68,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     /** @var array<string, mixed> */
     private array $bindings = [];
 
-    private ?FetchPlan $fetchPlan = null;
+    public private(set) ?FetchPlan $fetchPlan = null;
     private bool $includeTrashed = false;
     private bool $onlyTrashed = false;
 
@@ -166,7 +166,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function select(array $columns): self
+    public function select(array $columns): static
     {
         $this->columns = $columns;
 
@@ -174,7 +174,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function where(string $column, mixed $value): self
+    public function where(string $column, mixed $value): static
     {
         $expr = $this->exprCompiler->compare($this->qualifyColumn($column), '=', $value);
         $this->wheres[] = $expr;
@@ -184,7 +184,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereOp(string $column, string $operator, mixed $value): self
+    public function whereOp(string $column, string $operator, mixed $value): static
     {
         $expr = $this->exprCompiler->compare($this->qualifyColumn($column), $operator, $value);
         $this->wheres[] = $expr;
@@ -194,7 +194,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereNull(string $column): self
+    public function whereNull(string $column): static
     {
         $this->wheres[] = $this->exprCompiler->isNull($this->qualifyColumn($column));
 
@@ -202,7 +202,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereNotNull(string $column): self
+    public function whereNotNull(string $column): static
     {
         $this->wheres[] = $this->exprCompiler->isNull($this->qualifyColumn($column), true);
 
@@ -210,7 +210,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereIn(string $column, array $values): self
+    public function whereIn(string $column, array $values): static
     {
         $expr = $this->exprCompiler->in($this->qualifyColumn($column), $values);
         $this->wheres[] = $expr;
@@ -220,7 +220,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereNotIn(string $column, array $values): self
+    public function whereNotIn(string $column, array $values): static
     {
         $expr = $this->exprCompiler->in($this->qualifyColumn($column), $values, true);
         $this->wheres[] = $expr;
@@ -230,7 +230,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereBetween(string $column, mixed $low, mixed $high): self
+    public function whereBetween(string $column, mixed $low, mixed $high): static
     {
         $expr = $this->exprCompiler->between($this->qualifyColumn($column), $low, $high);
         $this->wheres[] = $expr;
@@ -240,7 +240,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereLike(string $column, LikePattern $pattern): self
+    public function whereLike(string $column, LikePattern $pattern): static
     {
         $expr = $this->exprCompiler->like($this->qualifyColumn($column), $pattern);
         $this->wheres[] = $expr;
@@ -250,7 +250,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function whereRaw(RawExpression $expression): self
+    public function whereRaw(RawExpression $expression): static
     {
         $expr = $this->exprCompiler->raw($expression);
         $this->wheres[] = $expr;
@@ -260,7 +260,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function orderBy(string $column, SortDirection $direction = SortDirection::Asc): self
+    public function orderBy(string $column, SortDirection $direction = SortDirection::Asc): static
     {
         $this->orderBys[] = sprintf('%s %s', $this->quoter->quote($this->qualifyColumn($column)), $direction->value);
 
@@ -268,7 +268,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function limit(int $limit): self
+    public function limit(int $limit): static
     {
         $this->limitValue = $limit;
 
@@ -276,7 +276,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function offset(int $offset): self
+    public function offset(int $offset): static
     {
         $this->offsetValue = $offset;
 
@@ -284,7 +284,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function groupBy(string $column): self
+    public function groupBy(string $column): static
     {
         $this->groupBys[] = $this->quoter->quote($this->qualifyColumn($column));
 
@@ -292,7 +292,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function having(RawExpression $expression): self
+    public function having(RawExpression $expression): static
     {
         $expr = $this->exprCompiler->raw($expression);
         $this->havings[] = $expr;
@@ -302,7 +302,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function lock(LockMode $mode): self
+    public function lock(LockMode $mode): static
     {
         $this->lockMode = $mode;
 
@@ -310,7 +310,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function withFetchPlan(FetchPlan $fetchPlan): self
+    public function withFetchPlan(FetchPlan $fetchPlan): static
     {
         $this->fetchPlan = $fetchPlan;
 
@@ -318,7 +318,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function withTrashed(): self
+    public function withTrashed(): static
     {
         $this->includeTrashed = true;
 
@@ -326,7 +326,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     }
 
     #[Override]
-    public function onlyTrashed(): self
+    public function onlyTrashed(): static
     {
         $this->onlyTrashed = true;
 
@@ -350,14 +350,6 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         $this->limitValue = $prev;
 
         return $result->first();
-    }
-
-    /**
-     * Get the current fetch plan, if set.
-     */
-    public function getFetchPlan(): ?FetchPlan
-    {
-        return $this->fetchPlan;
     }
 
     #[Override]

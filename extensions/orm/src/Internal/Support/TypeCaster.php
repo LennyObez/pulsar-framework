@@ -26,8 +26,10 @@ final readonly class TypeCaster
 {
     /**
      * Cast a database value to a PHP type based on column metadata.
+     *
+     * @return null|string|int|float|bool|DateTimeImmutable|array<array-key, mixed>
      */
-    public function fromDatabase(mixed $value, ColumnType $type): mixed
+    public function fromDatabase(mixed $value, ColumnType $type): null|string|int|float|bool|DateTimeImmutable|array
     {
         if ($value === null) {
             return null;
@@ -59,7 +61,7 @@ final readonly class TypeCaster
     /**
      * Cast a PHP value to a database-compatible value.
      */
-    public function toDatabase(mixed $value, ColumnType $type): mixed
+    public function toDatabase(mixed $value, ColumnType $type): null|string|int|float
     {
         if ($value === null) {
             return null;

@@ -15,8 +15,8 @@ use Pulsar\Extension\Orm\Domain\EntityMetadata;
 final readonly class TenantInsertEnricher
 {
     public function __construct(
-        private readonly TenantScopeInterface $tenantScope,
-        private readonly TenantColumnResolver $columnResolver,
+        private TenantScopeInterface $tenantScope,
+        private TenantColumnResolver $columnResolver,
     ) {}
 
     /**

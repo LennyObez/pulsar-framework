@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Admin\Internal\Storage;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Result;
 
 /**
  * Database-backed action history store using ConnectionInterface.
@@ -15,7 +16,7 @@ use Pulsar\Database\ConnectionInterface;
 final readonly class DbActionHistoryStore implements ActionHistoryStoreInterface
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
+        private ConnectionInterface $connection,
     ) {}
 
     #[Override]
@@ -60,7 +61,7 @@ final readonly class DbActionHistoryStore implements ActionHistoryStoreInterface
     /**
      * @return list<ActionHistoryEntry>
      */
-    private function hydrateAll(\Pulsar\Database\Result $result): array
+    private function hydrateAll(Result $result): array
     {
         $entries = [];
         foreach ($result->rows as $row) {

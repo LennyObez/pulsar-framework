@@ -22,8 +22,8 @@ use function sprintf;
 final readonly class SchemaDdlCompiler
 {
     public function __construct(
-        private readonly IdentifierQuoter $quoter,
-        private readonly DialectInterface $dialect,
+        private IdentifierQuoter $quoter,
+        private DialectInterface $dialect,
     ) {}
 
     /**

@@ -23,7 +23,7 @@ use function random_bytes;
 final readonly class AdminCspMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly AdminConfig $config,
+        private AdminConfig $config,
     ) {}
 
     #[Override]

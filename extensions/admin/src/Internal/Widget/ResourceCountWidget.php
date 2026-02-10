@@ -17,8 +17,8 @@ use Pulsar\Extension\Admin\Contracts\WidgetInterface;
 final readonly class ResourceCountWidget implements WidgetInterface
 {
     public function __construct(
-        private readonly ResourceRegistryInterface $registry,
-        private readonly ResourceQueryInterface $query,
+        private ResourceRegistryInterface $registry,
+        private ResourceQueryInterface $query,
     ) {}
 
     #[Override]

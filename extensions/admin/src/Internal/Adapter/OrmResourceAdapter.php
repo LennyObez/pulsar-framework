@@ -27,13 +27,13 @@ final readonly class OrmResourceAdapter implements DataResourceInterface
      * @param list<string> $exportableFields
      */
     public function __construct(
-        private readonly string $resourceName,
-        private readonly string $resourceLabel,
-        private readonly string $resourcePluralLabel,
-        private readonly string $resourceIcon,
-        private readonly string $tableName,
-        private readonly array $fields,
-        private readonly array $operations = [
+        private string $resourceName,
+        private string $resourceLabel,
+        private string $resourcePluralLabel,
+        private string $resourceIcon,
+        private string $tableName,
+        private array $fields,
+        private array $operations = [
             ResourceOperation::List,
             ResourceOperation::View,
             ResourceOperation::Create,
@@ -41,12 +41,12 @@ final readonly class OrmResourceAdapter implements DataResourceInterface
             ResourceOperation::Delete,
             ResourceOperation::Export,
         ],
-        private readonly array $bulkActions = [],
-        private readonly array $exportableFields = [],
-        private readonly bool $auditReadsEnabled = false,
-        private readonly string $pk = 'id',
-        private readonly string $sortField = 'id',
-        private readonly string $sortDirection = 'desc',
+        private array $bulkActions = [],
+        private array $exportableFields = [],
+        private bool $auditReadsEnabled = false,
+        private string $pk = 'id',
+        private string $sortField = 'id',
+        private string $sortDirection = 'desc',
     ) {}
 
     #[Override]

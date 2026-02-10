@@ -25,7 +25,7 @@ use function time;
 final readonly class SavedViewsController
 {
     public function __construct(
-        private readonly SavedViewsHandler $handler,
+        private SavedViewsHandler $handler,
     ) {}
 
     public function list(Request $request, string $resource): Response
@@ -59,9 +59,7 @@ final readonly class SavedViewsController
         $label = $request->input('label', '') ?? '';
         $filters = $request->input('filters', []) ?? [];
         $sort = $request->input('sort', []) ?? [];
-        /** @var int $perPage */
         $perPage = (int) ($request->input('per_page', 25) ?? 25);
-        /** @var bool $isDefault */
         $isDefault = (bool) ($request->input('is_default', false) ?? false);
 
         if (!is_array($filters)) {

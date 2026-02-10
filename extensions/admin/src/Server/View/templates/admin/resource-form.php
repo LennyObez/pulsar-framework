@@ -2,11 +2,14 @@
 
 declare(strict_types=1);
 
+use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
+use Pulsar\Extension\Admin\Domain\FieldType;
+
 /**
  * @var array<string, mixed> $templateData
  */
 $e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-/** @var \Pulsar\Extension\Admin\Contracts\DataResourceInterface $resource */
+/** @var DataResourceInterface $resource */
 $resource = $templateData['resource'];
 /** @var array<string, mixed> $data */
 $data = $templateData['data'];
@@ -33,14 +36,14 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
                 <small class="admin-form__help"><?= $e($field->helpText) ?></small>
                 <?php endif; ?>
             </label>
-            <?php if ($field->type === \Pulsar\Extension\Admin\Domain\FieldType::Text): ?>
+            <?php if ($field->type === FieldType::Text): ?>
             <textarea
                 id="field-<?= $e($field->name) ?>"
                 name="<?= $e($field->name) ?>"
                 class="admin-form__textarea"
                 placeholder="<?= $e($field->placeholder ?? '') ?>"
             ><?= $e((string) ($data[$field->name] ?? '')) ?></textarea>
-            <?php elseif ($field->type === \Pulsar\Extension\Admin\Domain\FieldType::Boolean): ?>
+            <?php elseif ($field->type === FieldType::Boolean): ?>
             <input
                 type="checkbox"
                 id="field-<?= $e($field->name) ?>"
@@ -49,7 +52,7 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
                 value="1"
                 <?= !empty($data[$field->name]) ? 'checked' : '' ?>
             >
-            <?php elseif ($field->type === \Pulsar\Extension\Admin\Domain\FieldType::Enum && $field->enumValues !== []): ?>
+            <?php elseif ($field->type === FieldType::Enum && $field->enumValues !== []): ?>
             <select
                 id="field-<?= $e($field->name) ?>"
                 name="<?= $e($field->name) ?>"
@@ -82,14 +85,14 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
 </div>
 <?php
 // Helper function for input type mapping
-function inputType(\Pulsar\Extension\Admin\Domain\FieldType $type): string
+function inputType(FieldType $type): string
 {
     return match ($type) {
-        \Pulsar\Extension\Admin\Domain\FieldType::Integer, \Pulsar\Extension\Admin\Domain\FieldType::Float => 'number',
-        \Pulsar\Extension\Admin\Domain\FieldType::Email => 'email',
-        \Pulsar\Extension\Admin\Domain\FieldType::Url => 'url',
-        \Pulsar\Extension\Admin\Domain\FieldType::Date => 'date',
-        \Pulsar\Extension\Admin\Domain\FieldType::DateTime => 'datetime-local',
+        FieldType::Integer, FieldType::Float => 'number',
+        FieldType::Email => 'email',
+        FieldType::Url => 'url',
+        FieldType::Date => 'date',
+        FieldType::DateTime => 'datetime-local',
         default => 'text',
     };
 }

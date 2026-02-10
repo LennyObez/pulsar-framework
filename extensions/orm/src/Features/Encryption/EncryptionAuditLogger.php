@@ -18,7 +18,7 @@ use function sprintf;
 final readonly class EncryptionAuditLogger
 {
     public function __construct(
-        private readonly ?AuditLoggerInterface $auditLogger = null,
+        private ?AuditLoggerInterface $auditLogger = null,
     ) {}
 
     /**

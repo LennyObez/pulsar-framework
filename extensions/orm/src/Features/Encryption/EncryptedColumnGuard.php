@@ -18,7 +18,7 @@ use Pulsar\Extension\Orm\Exception\EncryptedColumnQueryException;
 final readonly class EncryptedColumnGuard
 {
     public function __construct(
-        private readonly MetadataRegistryInterface $metadataRegistry,
+        private MetadataRegistryInterface $metadataRegistry,
     ) {}
 
     /**

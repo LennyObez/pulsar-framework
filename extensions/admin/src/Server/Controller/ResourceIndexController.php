@@ -17,8 +17,8 @@ use Pulsar\Http\Response;
 final readonly class ResourceIndexController
 {
     public function __construct(
-        private readonly ResourceRegistryInterface $registry,
-        private readonly AdminConfig $config,
+        private ResourceRegistryInterface $registry,
+        private AdminConfig $config,
     ) {}
 
     public function index(Request $request): Response
@@ -41,18 +41,18 @@ final readonly class ResourceIndexController
             return Response::json(['resources' => $resources]);
         }
 
-        return Response::html($this->renderHtml($resources));
+        return Response::html($this->renderView('Resources', 'resources-index', [
+            'resources' => $resources,
+            'schema_enabled' => $this->config->schema->enabled,
+        ]));
     }
 
     /**
-     * @param list<array{name: string, label: string, plural_label: string, icon: string, operations: list<string>}> $resources
+     * @param array<string, mixed> $templateData
      */
-    private function renderHtml(array $resources): string
+    private function renderView(string $title, string $content, array $templateData): string
     {
         ob_start();
-        $title = 'Resources';
-        $content = 'resources-index';
-        $templateData = ['resources' => $resources, 'schema_enabled' => $this->config->schema->enabled];
         include __DIR__ . '/../View/templates/admin/layout.php';
 
         return (string) ob_get_clean();

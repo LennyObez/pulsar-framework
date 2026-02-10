@@ -20,7 +20,7 @@ use Pulsar\Http\ResponseStatus;
 final readonly class ResourceDeleteController
 {
     public function __construct(
-        private readonly DeleteResourceHandler $handler,
+        private DeleteResourceHandler $handler,
     ) {}
 
     public function delete(Request $request, string $resource, string $id): Response

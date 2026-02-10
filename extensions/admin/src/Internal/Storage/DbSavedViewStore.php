@@ -16,7 +16,7 @@ use Pulsar\Extension\Admin\Domain\SavedView;
 final readonly class DbSavedViewStore implements SavedViewStoreInterface
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
+        private ConnectionInterface $connection,
     ) {}
 
     #[Override]

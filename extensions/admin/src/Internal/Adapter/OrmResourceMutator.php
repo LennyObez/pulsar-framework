@@ -30,8 +30,8 @@ use function in_array;
 final readonly class OrmResourceMutator implements ResourceMutatorInterface
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly AuditLoggerInterface $auditLogger,
+        private ConnectionInterface $connection,
+        private AuditLoggerInterface $auditLogger,
     ) {}
 
     #[Override]

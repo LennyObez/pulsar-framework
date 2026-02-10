@@ -14,7 +14,7 @@ use Pulsar\Extension\Orm\Internal\Compiler\DialectInterface;
 final readonly class LimitOffsetCompiler
 {
     public function __construct(
-        private readonly DialectInterface $dialect,
+        private DialectInterface $dialect,
     ) {}
 
     public function compile(?int $limit, ?int $offset): string

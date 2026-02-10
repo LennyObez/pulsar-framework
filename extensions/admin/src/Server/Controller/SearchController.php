@@ -20,8 +20,8 @@ use function is_string;
 final readonly class SearchController
 {
     public function __construct(
-        private readonly GlobalSearchHandler $handler,
-        private readonly AdminConfig $config,
+        private GlobalSearchHandler $handler,
+        private AdminConfig $config,
     ) {}
 
     public function search(Request $request): Response
@@ -40,16 +40,22 @@ final readonly class SearchController
             ]);
         }
 
-        ob_start();
-        $title = 'Search Results';
-        $content = 'search';
-        $templateData = [
+        return Response::html($this->renderView('Search Results', 'search', [
             'query' => $queryStr,
             'results' => $result->results,
             'totalMatches' => $result->totalMatches,
             'schema_enabled' => $this->config->schema->enabled,
-        ];
+        ]));
+    }
+
+    /**
+     * @param array<string, mixed> $templateData
+     */
+    private function renderView(string $title, string $content, array $templateData): string
+    {
+        ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
-        return Response::html((string) ob_get_clean());
+
+        return (string) ob_get_clean();
     }
 }

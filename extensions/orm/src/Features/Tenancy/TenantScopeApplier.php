@@ -16,8 +16,8 @@ use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 final readonly class TenantScopeApplier
 {
     public function __construct(
-        private readonly TenantScopeInterface $tenantScope,
-        private readonly TenantColumnResolver $columnResolver,
+        private TenantScopeInterface $tenantScope,
+        private TenantColumnResolver $columnResolver,
     ) {}
 
     /**

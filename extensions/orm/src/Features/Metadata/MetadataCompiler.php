@@ -22,6 +22,7 @@ use Pulsar\Extension\Orm\Domain\ColumnMetadata;
 use Pulsar\Extension\Orm\Domain\ColumnType;
 use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Domain\RelationMetadata;
+use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Exception\MappingException;
 use ReflectionAttribute;
 use ReflectionClass;
@@ -36,7 +37,7 @@ use function strtolower;
 final readonly class MetadataCompiler
 {
     public function __construct(
-        private readonly OrmConfig $config,
+        private OrmConfig $config,
     ) {}
 
     /**
@@ -274,7 +275,7 @@ final readonly class MetadataCompiler
         $shortName = strtolower($ref->getShortName());
 
         return match ($relation->type) {
-            \Pulsar\Extension\Orm\Domain\RelationType::BelongsTo => strtolower(new ReflectionClass($relation->target)->getShortName()) . '_id',
+            RelationType::BelongsTo => strtolower(new ReflectionClass($relation->target)->getShortName()) . '_id',
             default => $shortName . '_id',
         };
     }

@@ -22,7 +22,7 @@ use Pulsar\Extension\Admin\Exception\AdminAccessDeniedException;
 final readonly class AdminAccessGate
 {
     public function __construct(
-        private readonly PolicyInterface $policy,
+        private PolicyInterface $policy,
     ) {}
 
     /**

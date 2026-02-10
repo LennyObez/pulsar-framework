@@ -2,11 +2,17 @@
 
 declare(strict_types=1);
 
+use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
+use Pulsar\Extension\Admin\Domain\ResourceOperation;
+
+// ListResourceResult is a Features-internal DTO passed via $templateData — use FQN to
+// avoid cross-layer import that trips the boundary checker on template files.
+
 /**
  * @var array<string, mixed> $templateData
  */
 $e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-/** @var \Pulsar\Extension\Admin\Contracts\DataResourceInterface $resource */
+/** @var DataResourceInterface $resource */
 $resource = $templateData['resource'];
 /** @var \Pulsar\Extension\Admin\Features\ListResource\ListResourceResult $result */
 $result = $templateData['result'];
@@ -16,10 +22,10 @@ $listFields = array_filter($fields, static fn($f): bool => $f->visibleOnList);
 <div class="admin-resource-list">
     <div class="admin-toolbar">
         <div class="admin-toolbar__actions">
-            <?php if (in_array(\Pulsar\Extension\Admin\Domain\ResourceOperation::Create, $resource->operations(), true)): ?>
+            <?php if (in_array(ResourceOperation::Create, $resource->operations(), true)): ?>
             <a href="/admin/resources/<?= $e($resource->name()) ?>/create" class="admin-btn admin-btn--primary">Create <?= $e($resource->label()) ?></a>
             <?php endif; ?>
-            <?php if (in_array(\Pulsar\Extension\Admin\Domain\ResourceOperation::Export, $resource->operations(), true)): ?>
+            <?php if (in_array(ResourceOperation::Export, $resource->operations(), true)): ?>
             <a href="/admin/resources/<?= $e($resource->name()) ?>/export?format=csv" class="admin-btn admin-btn--secondary">Export CSV</a>
             <?php endif; ?>
         </div>
@@ -45,7 +51,7 @@ $listFields = array_filter($fields, static fn($f): bool => $f->visibleOnList);
                 <?php endforeach; ?>
                 <td class="admin-table__actions">
                     <a href="/admin/resources/<?= $e($resource->name()) ?>/<?= $e((string) ($row[$resource->primaryKey()] ?? '')) ?>">View</a>
-                    <?php if (in_array(\Pulsar\Extension\Admin\Domain\ResourceOperation::Update, $resource->operations(), true)): ?>
+                    <?php if (in_array(ResourceOperation::Update, $resource->operations(), true)): ?>
                     <a href="/admin/resources/<?= $e($resource->name()) ?>/<?= $e((string) ($row[$resource->primaryKey()] ?? '')) ?>/edit">Edit</a>
                     <?php endif; ?>
                 </td>

@@ -23,27 +23,22 @@ use Pulsar\Http\ResponseStatus;
 final readonly class ResourceUpdateController
 {
     public function __construct(
-        private readonly UpdateResourceHandler $handler,
-        private readonly ResourceRegistryInterface $registry,
-        private readonly AdminConfig $config,
+        private UpdateResourceHandler $handler,
+        private ResourceRegistryInterface $registry,
+        private AdminConfig $config,
     ) {}
 
     public function form(Request $request, string $resource, string $id): Response
     {
         $resourceDef = $this->registry->get($resource);
 
-        ob_start();
-        $title = "Edit {$resourceDef->label()} #$id";
-        $content = 'resource-form';
-        $templateData = [
+        return Response::html($this->renderView("Edit {$resourceDef->label()} #$id", 'resource-form', [
             'resource' => $resourceDef,
             'data' => [],
             'mode' => 'edit',
             'id' => $id,
             'schema_enabled' => $this->config->schema->enabled,
-        ];
-        include __DIR__ . '/../View/templates/admin/layout.php';
-        return Response::html((string) ob_get_clean());
+        ]));
     }
 
     public function update(Request $request, string $resource, string $id): Response
@@ -72,5 +67,16 @@ final readonly class ResourceUpdateController
         } catch (ResourceValidationException $e) {
             return Response::validationError($e->violations);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $templateData
+     */
+    private function renderView(string $title, string $content, array $templateData): string
+    {
+        ob_start();
+        include __DIR__ . '/../View/templates/admin/layout.php';
+
+        return (string) ob_get_clean();
     }
 }

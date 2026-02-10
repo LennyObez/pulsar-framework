@@ -25,12 +25,12 @@ use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 final readonly class GenericRepository implements RepositoryInterface
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly MetadataRegistryInterface $metadataRegistry,
-        private readonly EntityHydratorInterface $hydrator,
-        private readonly AuditingPersister $persister,
+        private ConnectionInterface $connection,
+        private MetadataRegistryInterface $metadataRegistry,
+        private EntityHydratorInterface $hydrator,
+        private AuditingPersister $persister,
         /** @var class-string<T> */
-        private readonly string $entityClass,
+        private string $entityClass,
     ) {}
 
     #[Override]

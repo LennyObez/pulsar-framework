@@ -19,7 +19,7 @@ use Pulsar\Http\ResponseStatus;
 final readonly class AdminAccessMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly AdminConfig $config,
+        private AdminConfig $config,
     ) {}
 
     #[Override]

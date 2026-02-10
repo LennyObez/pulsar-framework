@@ -6,7 +6,6 @@ namespace Pulsar\Introspection\Internal;
 
 use Closure;
 use Pulsar\Api\Internal;
-use Pulsar\Console\Command;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Method;
 use Pulsar\Introspection\Data\ArchitectureMapData;

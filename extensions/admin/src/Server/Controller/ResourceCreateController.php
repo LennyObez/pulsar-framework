@@ -23,26 +23,21 @@ use Pulsar\Http\ResponseStatus;
 final readonly class ResourceCreateController
 {
     public function __construct(
-        private readonly CreateResourceHandler $handler,
-        private readonly ResourceRegistryInterface $registry,
-        private readonly AdminConfig $config,
+        private CreateResourceHandler $handler,
+        private ResourceRegistryInterface $registry,
+        private AdminConfig $config,
     ) {}
 
     public function form(Request $request, string $resource): Response
     {
         $resourceDef = $this->registry->get($resource);
 
-        ob_start();
-        $title = "Create {$resourceDef->label()}";
-        $content = 'resource-form';
-        $templateData = [
+        return Response::html($this->renderView("Create {$resourceDef->label()}", 'resource-form', [
             'resource' => $resourceDef,
             'data' => [],
             'mode' => 'create',
             'schema_enabled' => $this->config->schema->enabled,
-        ];
-        include __DIR__ . '/../View/templates/admin/layout.php';
-        return Response::html((string) ob_get_clean());
+        ]));
     }
 
     public function store(Request $request, string $resource): Response
@@ -70,5 +65,16 @@ final readonly class ResourceCreateController
         } catch (ResourceValidationException $e) {
             return Response::validationError($e->violations);
         }
+    }
+
+    /**
+     * @param array<string, mixed> $templateData
+     */
+    private function renderView(string $title, string $content, array $templateData): string
+    {
+        ob_start();
+        include __DIR__ . '/../View/templates/admin/layout.php';
+
+        return (string) ob_get_clean();
     }
 }

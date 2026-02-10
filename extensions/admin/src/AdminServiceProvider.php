@@ -310,7 +310,6 @@ final readonly class AdminServiceProvider implements ServiceProviderInterface
         $container->bind(AdminRateLimitMiddleware::class, static function () use ($container): AdminRateLimitMiddleware {
             return new AdminRateLimitMiddleware(
                 $container->get(RateLimiterInterface::class),
-                $container->get(AdminConfig::class),
             );
         });
         $container->bind(AdminAuditMiddleware::class, static function () use ($container): AdminAuditMiddleware {

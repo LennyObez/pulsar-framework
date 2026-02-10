@@ -19,8 +19,8 @@ use function sprintf;
 #[Internal]
 final readonly class SqlCompiler
 {
-    private readonly IdentifierQuoter $quoter;
-    private readonly DialectInterface $dialect;
+    private IdentifierQuoter $quoter;
+    private DialectInterface $dialect;
 
     public function __construct(Driver $driver)
     {

@@ -20,12 +20,8 @@ use Pulsar\Api\Api;
 #[Api(since: '1.0.0')]
 final readonly class Param
 {
-    /**
-     * @param int $pdoType PDO::PARAM_* constant
-     */
     private function __construct(
         private string $value,
-        private int $pdoType,
     ) {}
 
     /**
@@ -37,7 +33,7 @@ final readonly class Param
     #[NoDiscard]
     public static function binary(string $bytes): self
     {
-        return new self($bytes, PDO::PARAM_LOB);
+        return new self($bytes);
     }
 
     /**
@@ -53,6 +49,6 @@ final readonly class Param
      */
     public function pdoType(): int
     {
-        return $this->pdoType;
+        return PDO::PARAM_LOB;
     }
 }

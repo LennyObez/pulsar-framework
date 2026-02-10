@@ -18,11 +18,11 @@ use ReflectionClass;
 #[Internal]
 final readonly class EntityDehydrator
 {
-    private readonly TypeCaster $typeCaster;
+    private TypeCaster $typeCaster;
 
     public function __construct(
-        private readonly MetadataRegistryInterface $metadataRegistry,
-        private readonly ?ColumnEncryptorInterface $encryptor = null,
+        private MetadataRegistryInterface $metadataRegistry,
+        private ?ColumnEncryptorInterface $encryptor = null,
     ) {
         $this->typeCaster = new TypeCaster();
     }

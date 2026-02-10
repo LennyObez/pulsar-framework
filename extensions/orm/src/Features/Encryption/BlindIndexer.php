@@ -18,7 +18,7 @@ use Pulsar\Extension\Orm\Contracts\ColumnEncryptorInterface;
 final readonly class BlindIndexer
 {
     public function __construct(
-        private readonly ColumnEncryptorInterface $encryptor,
+        private ColumnEncryptorInterface $encryptor,
     ) {}
 
     /**

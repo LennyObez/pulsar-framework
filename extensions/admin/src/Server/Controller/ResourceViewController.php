@@ -21,9 +21,9 @@ use Pulsar\Http\ResponseStatus;
 final readonly class ResourceViewController
 {
     public function __construct(
-        private readonly ViewResourceHandler $handler,
-        private readonly ResourceRegistryInterface $registry,
-        private readonly AdminConfig $config,
+        private ViewResourceHandler $handler,
+        private ResourceRegistryInterface $registry,
+        private AdminConfig $config,
     ) {}
 
     public function view(Request $request, string $resource, string $id): Response
@@ -45,16 +45,23 @@ final readonly class ResourceViewController
         }
 
         $resourceDef = $this->registry->get($resource);
-        ob_start();
-        $title = "{$resourceDef->label()} #$id";
-        $content = 'resource-view';
-        $templateData = [
+
+        return Response::html($this->renderView("{$resourceDef->label()} #$id", 'resource-view', [
             'resource' => $resourceDef,
             'data' => $result->data,
             'id' => $id,
             'schema_enabled' => $this->config->schema->enabled,
-        ];
+        ]));
+    }
+
+    /**
+     * @param array<string, mixed> $templateData
+     */
+    private function renderView(string $title, string $content, array $templateData): string
+    {
+        ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
-        return Response::html((string) ob_get_clean());
+
+        return (string) ob_get_clean();
     }
 }

@@ -47,17 +47,17 @@ use Pulsar\Extension\Admin\Features\ViewResource\ViewResourceResult;
 final readonly class AdminGateway
 {
     public function __construct(
-        private readonly ResourceRegistryInterface $registry,
-        private readonly ListResourceHandler $listHandler,
-        private readonly ViewResourceHandler $viewHandler,
-        private readonly CreateResourceHandler $createHandler,
-        private readonly UpdateResourceHandler $updateHandler,
-        private readonly DeleteResourceHandler $deleteHandler,
-        private readonly BulkActionHandler $bulkActionHandler,
-        private readonly ExportResourceHandler $exportHandler,
-        private readonly GlobalSearchHandler $searchHandler,
-        private readonly DashboardHandler $dashboardHandler,
-        private readonly SavedViewsHandler $savedViewsHandler,
+        private ResourceRegistryInterface $registry,
+        private ListResourceHandler $listHandler,
+        private ViewResourceHandler $viewHandler,
+        private CreateResourceHandler $createHandler,
+        private UpdateResourceHandler $updateHandler,
+        private DeleteResourceHandler $deleteHandler,
+        private BulkActionHandler $bulkActionHandler,
+        private ExportResourceHandler $exportHandler,
+        private GlobalSearchHandler $searchHandler,
+        private DashboardHandler $dashboardHandler,
+        private SavedViewsHandler $savedViewsHandler,
     ) {}
 
     public function registerResource(DataResourceInterface $resource): void

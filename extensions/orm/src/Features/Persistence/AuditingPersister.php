@@ -9,6 +9,7 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
+use Pulsar\Extension\Orm\Domain\ColumnType;
 use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Exception\OptimisticLockException;
 use Pulsar\Extension\Orm\Features\Hydration\EntityDehydrator;
@@ -28,10 +29,10 @@ use function sprintf;
 final readonly class AuditingPersister
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly MetadataRegistryInterface $metadataRegistry,
-        private readonly EntityDehydrator $dehydrator,
-        private readonly ?AuditLoggerInterface $auditLogger = null,
+        private ConnectionInterface $connection,
+        private MetadataRegistryInterface $metadataRegistry,
+        private EntityDehydrator $dehydrator,
+        private ?AuditLoggerInterface $auditLogger = null,
     ) {}
 
     /**
@@ -66,8 +67,8 @@ final readonly class AuditingPersister
         if ($metadata->primaryKey->autoIncrement) {
             $reflection = new ReflectionClass($entity);
             $prop = $reflection->getProperty($metadata->primaryKey->propertyName);
-            $prop->setValue($entity, $metadata->primaryKey->type === \Pulsar\Extension\Orm\Domain\ColumnType::Integer
-                || $metadata->primaryKey->type === \Pulsar\Extension\Orm\Domain\ColumnType::BigInt
+            $prop->setValue($entity, $metadata->primaryKey->type === ColumnType::Integer
+                || $metadata->primaryKey->type === ColumnType::BigInt
                 ? (int) $lastInsertId
                 : $lastInsertId);
         }

@@ -23,8 +23,8 @@ use Pulsar\Http\ResponseStatus;
 final readonly class AdminAuthMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly AdminAccessGate $accessGate,
-        private readonly AdminConfig $config,
+        private AdminAccessGate $accessGate,
+        private AdminConfig $config,
     ) {}
 
     #[Override]

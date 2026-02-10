@@ -14,12 +14,14 @@ use Pulsar\Database\Schema\SchemaForeignKey;
 use Pulsar\Database\Schema\SchemaIndex;
 use Pulsar\Database\Schema\SchemaReferentialAction;
 use Pulsar\Database\Schema\TableDefinition;
+use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Features\Schema\AlterTableHandler;
 use Pulsar\Extension\Admin\Features\Schema\CreateTableHandler;
 use Pulsar\Extension\Admin\Features\Schema\DropTableHandler;
 use Pulsar\Extension\Admin\Features\Schema\PreviewDdlHandler;
 use Pulsar\Extension\Admin\Features\Schema\RenameTableHandler;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
+use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
@@ -35,12 +37,12 @@ use function mb_strlen;
 final readonly class SchemaApiController
 {
     public function __construct(
-        private readonly CreateTableHandler $createHandler,
-        private readonly AlterTableHandler $alterHandler,
-        private readonly DropTableHandler $dropHandler,
-        private readonly RenameTableHandler $renameHandler,
-        private readonly PreviewDdlHandler $previewHandler,
-        private readonly SchemaChangeLogStoreInterface $changeLog,
+        private CreateTableHandler $createHandler,
+        private AlterTableHandler $alterHandler,
+        private DropTableHandler $dropHandler,
+        private RenameTableHandler $renameHandler,
+        private PreviewDdlHandler $previewHandler,
+        private SchemaChangeLogStoreInterface $changeLog,
     ) {}
 
     public function create(Request $request): Response
@@ -218,7 +220,7 @@ final readonly class SchemaApiController
         return new Response(
             body: $bundle,
             status: ResponseStatus::OK,
-            headers: new \Pulsar\Http\HeaderBag([
+            headers: new HeaderBag([
                 'Content-Type' => 'text/plain; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="schema-changelog.sql"',
             ]),
@@ -235,7 +237,7 @@ final readonly class SchemaApiController
         $reason = $request->input('reason', '') ?? '';
 
         if (!is_string($reason) || mb_strlen($reason) < 5) {
-            throw new \Pulsar\Extension\Admin\Exception\AdminException(
+            throw new AdminException(
                 'A reason of at least 5 characters is required for schema operations',
             );
         }

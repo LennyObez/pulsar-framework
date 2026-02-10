@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Orm\Domain;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Extension\Orm\Exception\QueryBuilderException;
 
 use function count;
 use function sprintf;
@@ -31,7 +32,7 @@ final readonly class QualifiedRef
     {
         $parts = explode('.', $ref, 2);
         if (count($parts) !== 2) {
-            throw \Pulsar\Extension\Orm\Exception\QueryBuilderException::unqualifiedJoinRef($ref);
+            throw QueryBuilderException::unqualifiedJoinRef($ref);
         }
 
         IdentifierValidator::validate($parts[0]);

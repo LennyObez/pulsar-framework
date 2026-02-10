@@ -18,8 +18,8 @@ use Pulsar\Http\Response;
 final readonly class DashboardController
 {
     public function __construct(
-        private readonly DashboardHandler $handler,
-        private readonly AdminConfig $config,
+        private DashboardHandler $handler,
+        private AdminConfig $config,
     ) {}
 
     public function index(Request $request): Response
@@ -33,20 +33,21 @@ final readonly class DashboardController
             ]);
         }
 
-        return Response::html($this->renderHtml($result->widgets, $result->resources));
+        return Response::html($this->renderView('Dashboard', 'dashboard', [
+            'widgets' => $result->widgets,
+            'resources' => $result->resources,
+            'schema_enabled' => $this->config->schema->enabled,
+        ]));
     }
 
     /**
-     * @param list<array{id: string, label: string, size: string, data: array<string, mixed>}> $widgets
-     * @param list<array{name: string, label: string, icon: string}> $resources
+     * @param array<string, mixed> $templateData
      */
-    private function renderHtml(array $widgets, array $resources): string
+    private function renderView(string $title, string $content, array $templateData): string
     {
         ob_start();
-        $title = 'Dashboard';
-        $content = 'dashboard';
-        $templateData = ['widgets' => $widgets, 'resources' => $resources, 'schema_enabled' => $this->config->schema->enabled];
         include __DIR__ . '/../View/templates/admin/layout.php';
+
         return (string) ob_get_clean();
     }
 }

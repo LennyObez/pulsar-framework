@@ -29,8 +29,8 @@ use function in_array;
 final readonly class AdminSchemaMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly AdminSchemaConfig $config,
-        private readonly PolicyInterface $policy,
+        private AdminSchemaConfig $config,
+        private PolicyInterface $policy,
     ) {}
 
     #[Override]

@@ -22,7 +22,7 @@ use function is_string;
 final readonly class ExportController
 {
     public function __construct(
-        private readonly ExportResourceHandler $handler,
+        private ExportResourceHandler $handler,
     ) {}
 
     public function export(Request $request, string $resource): Response

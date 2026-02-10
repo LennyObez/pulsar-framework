@@ -22,10 +22,10 @@ final readonly class BatchLoader
     private const int DEFAULT_BATCH_SIZE = 500;
 
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly MetadataRegistryInterface $metadataRegistry,
-        private readonly EntityHydratorInterface $hydrator,
-        private readonly int $batchSize = self::DEFAULT_BATCH_SIZE,
+        private ConnectionInterface $connection,
+        private MetadataRegistryInterface $metadataRegistry,
+        private EntityHydratorInterface $hydrator,
+        private int $batchSize = self::DEFAULT_BATCH_SIZE,
     ) {}
 
     /**

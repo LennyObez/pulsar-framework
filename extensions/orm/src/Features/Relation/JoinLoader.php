@@ -8,6 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Domain\RelationMetadata;
 use Pulsar\Extension\Orm\Domain\RelationType;
+use Pulsar\Extension\Orm\Features\Query\JoinOnBuilder;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 
 use function sprintf;
@@ -22,7 +23,7 @@ use function sprintf;
 final readonly class JoinLoader
 {
     public function __construct(
-        private readonly MetadataRegistryInterface $metadataRegistry,
+        private MetadataRegistryInterface $metadataRegistry,
     ) {}
 
     /**
@@ -53,7 +54,7 @@ final readonly class JoinLoader
         $builder->leftJoin(
             $targetMetadata->tableName,
             $joinAlias,
-            static fn(\Pulsar\Extension\Orm\Features\Query\JoinOnBuilder $on) => $on->on($leftColumn, '=', $rightColumn),
+            static fn(JoinOnBuilder $on) => $on->on($leftColumn, '=', $rightColumn),
         );
     }
 }

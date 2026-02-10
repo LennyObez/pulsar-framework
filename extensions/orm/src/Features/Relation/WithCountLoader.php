@@ -23,8 +23,8 @@ use function sprintf;
 final readonly class WithCountLoader
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly MetadataRegistryInterface $metadataRegistry,
+        private ConnectionInterface $connection,
+        private MetadataRegistryInterface $metadataRegistry,
     ) {}
 
     /**

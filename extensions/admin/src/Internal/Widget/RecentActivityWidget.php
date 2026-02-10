@@ -17,7 +17,7 @@ use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 final readonly class RecentActivityWidget implements WidgetInterface
 {
     public function __construct(
-        private readonly ActionHistoryStoreInterface $actionHistory,
+        private ActionHistoryStoreInterface $actionHistory,
     ) {}
 
     #[Override]

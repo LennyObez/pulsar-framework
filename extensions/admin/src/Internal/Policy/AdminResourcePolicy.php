@@ -22,7 +22,7 @@ use Pulsar\Extension\Admin\Domain\AdminPermission;
 final readonly class AdminResourcePolicy implements PolicyInterface
 {
     public function __construct(
-        private readonly AdminConfig $config,
+        private AdminConfig $config,
     ) {}
 
     #[Override]

@@ -21,7 +21,7 @@ final readonly class AdminSafetyMode
     private const array INTERNAL_KEYS = ['trace', 'sql', 'bindings', 'file', 'line', 'class', 'function'];
 
     public function __construct(
-        private readonly bool $debug,
+        private bool $debug,
     ) {}
 
     /**

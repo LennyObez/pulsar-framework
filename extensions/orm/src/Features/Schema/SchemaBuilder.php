@@ -8,6 +8,7 @@ use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Database\Row;
 use Pulsar\Extension\Orm\Contracts\SchemaBuilderInterface;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 
@@ -19,11 +20,11 @@ use function sprintf;
 #[Internal]
 final readonly class SchemaBuilder implements SchemaBuilderInterface
 {
-    private readonly SchemaDdlCompiler $ddlCompiler;
-    private readonly IdentifierQuoter $quoter;
+    private SchemaDdlCompiler $ddlCompiler;
+    private IdentifierQuoter $quoter;
 
     public function __construct(
-        private readonly ConnectionInterface $connection,
+        private ConnectionInterface $connection,
     ) {
         $this->quoter = new IdentifierQuoter($connection->driver());
         $this->ddlCompiler = new SchemaDdlCompiler($this->quoter, $this->quoter->dialect());
@@ -107,7 +108,7 @@ final readonly class SchemaBuilder implements SchemaBuilderInterface
 
             return array_any(
                 $result->rows,
-                static fn(\Pulsar\Database\Row $row): bool => $row->getString('name') === $column,
+                static fn(Row $row): bool => $row->getString('name') === $column,
             );
         }
 

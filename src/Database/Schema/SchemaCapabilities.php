@@ -32,7 +32,7 @@ final readonly class SchemaCapabilities
     {
         return match ($this->driver) {
             Driver::MySQL, Driver::PostgreSQL => true,
-            Driver::SQLite => $this->sqliteVersionAtLeast('3.35.0'),
+            Driver::SQLite => $this->sqliteVersionAtLeast(),
         };
     }
 
@@ -142,7 +142,10 @@ final readonly class SchemaCapabilities
         ];
     }
 
-    private function sqliteVersionAtLeast(string $minVersion): bool
+    /**
+     * Whether the SQLite runtime version is >= 3.35.0 (DROP COLUMN support).
+     */
+    private function sqliteVersionAtLeast(): bool
     {
         if ($this->connection === null) {
             return false;
@@ -155,6 +158,6 @@ final readonly class SchemaCapabilities
 
         $version = $result->rows[0]->getString('version');
 
-        return version_compare($version, $minVersion, '>=');
+        return version_compare($version, '3.35.0', '>=');
     }
 }

@@ -21,11 +21,11 @@ use function array_map;
 #[Internal]
 final readonly class EntityHydrator implements EntityHydratorInterface
 {
-    private readonly TypeCaster $typeCaster;
+    private TypeCaster $typeCaster;
 
     public function __construct(
-        private readonly MetadataRegistryInterface $metadataRegistry,
-        private readonly ?ColumnEncryptorInterface $encryptor = null,
+        private MetadataRegistryInterface $metadataRegistry,
+        private ?ColumnEncryptorInterface $encryptor = null,
     ) {
         $this->typeCaster = new TypeCaster();
     }

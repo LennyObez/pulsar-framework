@@ -17,8 +17,8 @@ use Pulsar\Http\Response;
 final readonly class ActionHistoryController
 {
     public function __construct(
-        private readonly ActionHistoryStoreInterface $store,
-        private readonly AdminConfig $config,
+        private ActionHistoryStoreInterface $store,
+        private AdminConfig $config,
     ) {}
 
     public function recent(Request $request): Response
@@ -82,10 +82,18 @@ final readonly class ActionHistoryController
      */
     private function renderHtml(string $pageTitle, array $entries): string
     {
+        return $this->renderView($pageTitle, 'activity', [
+            'entries' => $entries,
+            'schema_enabled' => $this->config->schema->enabled,
+        ]);
+    }
+
+    /**
+     * @param array<string, mixed> $templateData
+     */
+    private function renderView(string $title, string $content, array $templateData): string
+    {
         ob_start();
-        $title = $pageTitle;
-        $content = 'activity';
-        $templateData = ['entries' => $entries, 'schema_enabled' => $this->config->schema->enabled];
         include __DIR__ . '/../View/templates/admin/layout.php';
 
         return (string) ob_get_clean();

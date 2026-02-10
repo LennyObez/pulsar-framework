@@ -19,7 +19,7 @@ use function str_contains;
 #[Internal]
 final readonly class IdentifierQuoter
 {
-    private readonly DialectInterface $dialect;
+    private DialectInterface $dialect;
 
     public function __construct(Driver $driver)
     {
