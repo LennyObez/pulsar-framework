@@ -80,7 +80,7 @@ final class QueueConfigTest extends TestCase
         self::assertSame(QueueDriverType::Sync, $config->driver);
         self::assertSame('default', $config->defaultQueue);
         self::assertSame(1000, $config->workerMaxJobs);
-        self::assertSame(128, $config->workerMaxMemoryMb);
+        self::assertSame(256, $config->workerMaxMemoryMb);
         self::assertSame(3600, $config->workerTimeLimitSeconds);
         self::assertSame(1000, $config->workerSleepMs);
         self::assertSame(3, $config->retryMaxAttempts);
@@ -149,7 +149,7 @@ final class QueueConfigTest extends TestCase
         self::assertSame(QueueDriverType::Sync, $config->driver);
         self::assertSame('default', $config->defaultQueue);
         self::assertSame(1000, $config->workerMaxJobs);
-        self::assertSame(128, $config->workerMaxMemoryMb);
+        self::assertSame(256, $config->workerMaxMemoryMb);
         self::assertSame(3600, $config->workerTimeLimitSeconds);
         self::assertSame(1000, $config->workerSleepMs);
         self::assertSame(3, $config->retryMaxAttempts);

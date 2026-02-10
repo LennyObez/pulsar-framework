@@ -30,6 +30,7 @@ use Pulsar\Core\Wiring\ErrorTrackingWiring;
 use Pulsar\Core\Wiring\ExceptionHandlerWiring;
 use Pulsar\Core\Wiring\FeatureFlagWiring;
 use Pulsar\Core\Wiring\IntegrityWiring;
+use Pulsar\Core\Wiring\IntrospectionWiring;
 use Pulsar\Core\Wiring\LoggingWiring;
 use Pulsar\Core\Wiring\MetricsWiring;
 use Pulsar\Core\Wiring\QueueWiring;
@@ -231,6 +232,7 @@ final class Kernel implements KernelInterface
                 new DeployWiring(),
                 new RuntimeWiring(),
                 new DiagnosticsWiring(),
+                new IntrospectionWiring(),
             ];
 
             foreach ($wirings as $wiring) {
