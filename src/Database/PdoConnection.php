@@ -215,6 +215,10 @@ final class PdoConnection implements ConnectionInterface
                 $this->password,
                 $mergedOptions,
             );
+
+            if ($this->driver === Driver::SQLite) {
+                $this->connection->exec('PRAGMA foreign_keys = ON');
+            }
         } catch (PDOException $e) {
             throw DatabaseException::connectionFailed($this->connectionName, $e);
         }
@@ -225,12 +229,21 @@ final class PdoConnection implements ConnectionInterface
     /**
      * Bind values to a PDO statement with appropriate types.
      *
+     * Detects Param value objects and uses their declared PDO type
+     * (e.g., PDO::PARAM_LOB for binary data) for portable binding.
+     *
      * @param PDOStatement $stmt
      * @param array<string, mixed> $bindings
      */
     private function bindValues(PDOStatement $stmt, array $bindings): void
     {
         foreach ($bindings as $key => $value) {
+            if ($value instanceof Param) {
+                $stmt->bindValue(':' . ltrim($key, ':'), $value->bytes(), $value->pdoType());
+
+                continue;
+            }
+
             $paramType = match (true) {
                 $value === null => PDO::PARAM_NULL,
                 is_int($value) => PDO::PARAM_INT,

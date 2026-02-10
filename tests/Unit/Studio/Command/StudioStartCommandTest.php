@@ -124,12 +124,12 @@ final class StudioStartCommandTest extends TestCase
     public function checkDocumentRootExistence(): void
     {
         // Test with an existing document root path - the command validates it
-        $documentRoot = $this->tmpDir . '/resources/studio/public';
+        $documentRoot = $this->tmpDir . '/extensions/studio/dev/public';
         mkdir($documentRoot, 0o777, true);
 
         $config = $this->createConfig(
             enabled: true,
-            documentRoot: 'resources/studio/public',
+            documentRoot: 'extensions/studio/dev/public',
         );
         $command = new StudioStartCommand($config, $this->tmpDir);
 
@@ -155,7 +155,7 @@ final class StudioStartCommandTest extends TestCase
         bool $enabled = true,
         string $host = '127.0.0.1',
         int $port = 8585,
-        string $documentRoot = 'resources/studio/public',
+        string $documentRoot = 'extensions/studio/dev/public',
         string $storagePath = 'storage/studio/studio.sqlite',
     ): StudioConfig {
         return new StudioConfig(

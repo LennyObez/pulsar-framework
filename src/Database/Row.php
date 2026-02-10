@@ -9,11 +9,14 @@ use function array_keys;
 use function is_bool;
 use function is_float;
 use function is_int;
+use function is_resource;
 use function is_string;
 
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Database\Exception\DatabaseException;
+
+use function stream_get_contents;
 
 /**
  * Readonly single-row value object with typed accessors.
@@ -165,6 +168,36 @@ readonly class Row
         }
 
         throw DatabaseException::typeCastFailed($column, 'int');
+    }
+
+    /**
+     * Get a column as raw binary bytes.
+     *
+     * Normalizes PostgreSQL bytea reads where PDO may return a resource (stream)
+     * instead of a plain string, depending on PDO driver version and fetch mode.
+     * All callers receive a plain string regardless of driver behavior.
+     *
+     * @throws DatabaseException If the column does not exist or cannot be read.
+     */
+    public function getBinary(string $column): string
+    {
+        $value = $this->get($column);
+
+        if (is_string($value)) {
+            return $value;
+        }
+
+        if (is_resource($value)) {
+            $contents = stream_get_contents($value);
+
+            if ($contents === false) {
+                throw DatabaseException::typeCastFailed($column, 'binary');
+            }
+
+            return $contents;
+        }
+
+        throw DatabaseException::typeCastFailed($column, 'binary');
     }
 
     /**

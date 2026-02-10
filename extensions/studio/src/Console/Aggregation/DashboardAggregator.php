@@ -138,7 +138,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
         $stmt = $this->pdo->prepare(
             "SELECT json_extract(payload_json, '$.duration_ms') as duration_ms
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)
              ORDER BY json_extract(payload_json, '$.duration_ms') ASC",
         );
         $stmt->execute(['type' => 'http.response', 'since' => $since]);
@@ -203,7 +203,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
             "SELECT json_extract(payload_json, '$.route_name') as route_name,
                     json_extract(payload_json, '$.duration_ms') as duration_ms
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)
                AND json_extract(payload_json, '$.route_name') IS NOT NULL",
         );
         $stmt->execute(['type' => 'http.response', 'since' => $since]);
@@ -246,7 +246,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
                     json_extract(payload_json, '$.sql') as sql,
                     json_extract(payload_json, '$.duration_ms') as duration_ms
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since",
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)",
         );
         $stmt->execute(['type' => 'db.query', 'since' => $since]);
         /** @var list<array{sql_fingerprint: string, sql: string, duration_ms: string}> $rows */
@@ -381,7 +381,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
         $stmt = $this->pdo->prepare(
             "SELECT json_extract(payload_json, '$.status_code') AS status_code, COUNT(*) AS cnt
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)
              GROUP BY status_code",
         );
         $stmt->execute(['type' => 'http.response', 'since' => $since]);
@@ -417,7 +417,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
                     COUNT(*) AS cnt,
                     MAX(timestamp_us) AS last_seen_us
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)
              GROUP BY exception_class
              ORDER BY cnt DESC
              LIMIT :limit",

@@ -66,7 +66,7 @@ final class StudioStartCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $routerScript = $this->basePath . '/resources/studio/router.php';
+        $routerScript = $this->basePath . '/extensions/studio/dev/router.php';
         if (!file_exists($routerScript)) {
             $routerScript = '';
         }

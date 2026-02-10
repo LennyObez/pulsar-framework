@@ -1,0 +1,160 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extension\Admin\Internal\Middleware;
+
+use Override;
+use Pulsar\Api\Internal;
+use Pulsar\Auth\Authorization\PolicyContext;
+use Pulsar\Auth\Authorization\PolicyInterface;
+use Pulsar\Auth\Identity\IdentityInterface;
+use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
+use Pulsar\Extension\Admin\Domain\AdminPermission;
+use Pulsar\Http\Middleware\MiddlewareInterface;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
+use Pulsar\Http\ResponseStatus;
+
+use function in_array;
+
+/**
+ * Guards all /schema routes.
+ *
+ * - Checks AdminSchemaConfig::enabled
+ * - Checks per-operation permission (admin.schema.*)
+ * - For destructive ops: enforces step-up auth requirement
+ */
+#[Internal]
+final class AdminSchemaMiddleware implements MiddlewareInterface
+{
+    public function __construct(
+        private readonly AdminSchemaConfig $config,
+        private readonly PolicyInterface $policy,
+    ) {}
+
+    #[Override]
+    public function process(Request $request, callable $next): Response
+    {
+        if (!$this->config->enabled) {
+            return Response::json(
+                ['error' => 'Schema management is disabled'],
+                ResponseStatus::Forbidden,
+            );
+        }
+
+        /** @var IdentityInterface|null $identity */
+        $identity = $request->attribute('identity');
+
+        if ($identity === null) {
+            return Response::json(
+                ['error' => 'Authentication required'],
+                ResponseStatus::Unauthorized,
+            );
+        }
+
+        // Check view permission for all schema routes
+        $result = $this->policy->evaluate(
+            $identity,
+            new PolicyContext(permission: AdminPermission::SchemaView->value),
+        );
+
+        if ($result !== true) {
+            return Response::json(
+                ['error' => 'Schema viewing not permitted'],
+                ResponseStatus::Forbidden,
+            );
+        }
+
+        // Determine operation from route/method
+        $operation = $this->detectOperation($request);
+
+        if ($operation !== null) {
+            $permission = $this->mapOperationToPermission($operation);
+
+            if ($permission !== null) {
+                $opResult = $this->policy->evaluate(
+                    $identity,
+                    new PolicyContext(permission: $permission->value),
+                );
+
+                if ($opResult !== true) {
+                    return Response::json(
+                        ['error' => "Permission denied for schema operation: {$operation}"],
+                        ResponseStatus::Forbidden,
+                    );
+                }
+
+                // Step-up auth check for destructive operations
+                if (in_array($operation, $this->config->requireStepUpFor, true)) {
+                    $stepUpVerified = $request->attribute('step_up_verified');
+
+                    if ($stepUpVerified !== true && $request->header('X-Step-Up-Token') === null) {
+                        return Response::json(
+                            ['error' => 'Step-up authentication required for this operation', 'step_up_required' => true],
+                            ResponseStatus::Forbidden,
+                        );
+                    }
+                }
+            }
+        }
+
+        return $next($request);
+    }
+
+    private function detectOperation(Request $request): ?string
+    {
+        $method = $request->method();
+        $path = $request->path();
+
+        // Preview routes are read-only
+        if (str_contains($path, '/preview/')) {
+            return null;
+        }
+
+        if ($method === 'GET') {
+            return null;
+        }
+
+        if ($method === 'DELETE') {
+            if (str_contains($path, '/columns/')) {
+                return 'drop_column';
+            }
+
+            if (str_contains($path, '/indexes/')) {
+                return 'drop_index';
+            }
+
+            return 'drop';
+        }
+
+        if ($method === 'POST') {
+            if (str_contains($path, '/rename')) {
+                return 'rename';
+            }
+
+            if (str_contains($path, '/columns')) {
+                return 'alter';
+            }
+
+            if (str_contains($path, '/indexes')) {
+                return 'alter';
+            }
+
+            return 'create';
+        }
+
+        return null;
+    }
+
+    private function mapOperationToPermission(string $operation): ?AdminPermission
+    {
+        return match ($operation) {
+            'create' => AdminPermission::SchemaCreate,
+            'alter', 'drop_column', 'drop_index' => AdminPermission::SchemaAlter,
+            'drop' => AdminPermission::SchemaDrop,
+            'rename' => AdminPermission::SchemaRename,
+            default => null,
+        };
+    }
+}

@@ -19,7 +19,7 @@ readonly class StudioServerConfig
     public function __construct(
         public string $host = '127.0.0.1',
         public int $port = 8585,
-        public string $documentRoot = 'resources/studio/public',
+        public string $documentRoot = 'extensions/studio/dev/public',
     ) {}
 
     /**
@@ -40,7 +40,7 @@ readonly class StudioServerConfig
         }
 
         /** @var string $documentRoot */
-        $documentRoot = $data['document_root'] ?? 'resources/studio/public';
+        $documentRoot = $data['document_root'] ?? 'extensions/studio/dev/public';
 
         return new self(
             host: $host,

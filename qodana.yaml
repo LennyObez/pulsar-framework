@@ -71,7 +71,8 @@ exclude:
   # Development-only router file and CI scripts reference vendor autoload unavailable during scan
   - name: PhpIncludeInspection
     paths:
-      - resources/studio/router.php
+      - extensions/studio/dev/router.php
+      - extensions/admin/dev/router.php
       - scripts/boundary_check.php
   - name: All
     paths:

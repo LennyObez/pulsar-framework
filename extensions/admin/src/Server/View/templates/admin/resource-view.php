@@ -1,0 +1,43 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @var array<string, mixed> $templateData
+ */
+$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+/** @var \Pulsar\Extension\Admin\Contracts\DataResourceInterface $resource */
+$resource = $templateData['resource'];
+/** @var array<string, mixed> $data */
+$data = $templateData['data'];
+/** @var string $id */
+$id = $templateData['id'];
+$detailFields = array_filter($resource->fields(), static fn($f): bool => $f->visibleOnDetail);
+?>
+<div class="admin-resource-view">
+    <div class="admin-toolbar">
+        <div class="admin-toolbar__actions">
+            <a href="/admin/resources/<?= $e($resource->name()) ?>" class="admin-btn admin-btn--secondary">Back to List</a>
+            <?php if (in_array(\Pulsar\Extension\Admin\Domain\ResourceOperation::Update, $resource->operations(), true)): ?>
+            <a href="/admin/resources/<?= $e($resource->name()) ?>/<?= $e($id) ?>/edit" class="admin-btn admin-btn--primary">Edit</a>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <div class="admin-detail">
+        <dl class="admin-detail__fields">
+            <?php foreach ($detailFields as $field): ?>
+            <div class="admin-detail__field">
+                <dt><?= $e($field->label) ?></dt>
+                <dd>
+                    <?php if ($field->redacted): ?>
+                    <span class="admin-redacted" title="Redacted field"><?= $e(str_repeat("\u{2022}", 6)) ?></span>
+                    <?php else: ?>
+                    <?= $e((string) ($data[$field->name] ?? '')) ?>
+                    <?php endif; ?>
+                </dd>
+            </div>
+            <?php endforeach; ?>
+        </dl>
+    </div>
+</div>

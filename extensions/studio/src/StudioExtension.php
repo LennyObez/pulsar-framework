@@ -12,8 +12,10 @@ use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
+use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Extension\Studio\Config\StudioConfig;
+use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
 use Pulsar\Extension\Studio\Console\Collector\ExceptionCollector;
@@ -26,6 +28,7 @@ use Pulsar\Extension\Studio\Console\Collector\InstrumentedScheduler;
 use Pulsar\Extension\Studio\Console\Collector\InstrumentedWorker;
 use Pulsar\Extension\Studio\Console\Collector\LogCollector;
 use Pulsar\Extension\Studio\Console\Event\EventFactory;
+use Pulsar\Extension\Studio\Internal\StudioModuleRegistry;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
 use Pulsar\Extension\Studio\Console\Redaction\RedactionPipeline;
@@ -234,6 +237,11 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         $accessGate = new StudioAccessGate($studioConfig->security, $appConfig->mode);
         $container->instance(StudioAccessGate::class, $accessGate);
 
+        // Module registry
+        $moduleRegistry = new StudioModuleRegistry();
+        $container->instance(StudioModuleRegistryInterface::class, $moduleRegistry);
+        $container->instance(StudioModuleRegistry::class, $moduleRegistry);
+
         // Evidence services
         /** @var HmacInterface $hmacForEvidence */
         $hmacForEvidence = $container->get(HmacInterface::class);
@@ -325,6 +333,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
                 environmentMode: $appConfig->mode,
             );
             $container->instance(InstrumentedConnection::class, $instrumentedConnection);
+            $container->instance(ConnectionInterface::class, $instrumentedConnection);
         }
 
         // 3. Log collector (via DeferredSink)

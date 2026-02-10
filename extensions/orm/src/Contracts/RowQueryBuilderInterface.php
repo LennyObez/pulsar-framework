@@ -1,0 +1,132 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extension\Orm\Contracts;
+
+use Pulsar\Api\Api;
+use Pulsar\Database\Result;
+use Pulsar\Database\Row;
+use Pulsar\Extension\Orm\Domain\LockMode;
+use Pulsar\Extension\Orm\Domain\SortDirection;
+use Pulsar\Extension\Orm\Domain\AggregateBuilder;
+use Pulsar\Extension\Orm\Domain\LikePattern;
+use Pulsar\Extension\Orm\Domain\RawExpression;
+
+/**
+ * Read-only query builder for raw row results.
+ *
+ * No insert/update/delete on the public interface — all writes
+ * go through repositories with MutationContext.
+ */
+#[Api(since: '1.0.0')]
+interface RowQueryBuilderInterface
+{
+    /**
+     * Set the columns to select.
+     *
+     * @param list<string|RawExpression> $columns
+     */
+    public function select(array $columns): static;
+
+    /**
+     * Add a WHERE equality condition.
+     */
+    public function where(string $column, mixed $value): static;
+
+    /**
+     * Add a WHERE condition with a comparison operator.
+     */
+    public function whereOp(string $column, string $operator, mixed $value): static;
+
+    /**
+     * Add a WHERE column IS NULL condition.
+     */
+    public function whereNull(string $column): static;
+
+    /**
+     * Add a WHERE column IS NOT NULL condition.
+     */
+    public function whereNotNull(string $column): static;
+
+    /**
+     * Add a WHERE column IN (...) condition.
+     *
+     * @param list<mixed> $values
+     */
+    public function whereIn(string $column, array $values): static;
+
+    /**
+     * Add a WHERE column NOT IN (...) condition.
+     *
+     * @param list<mixed> $values
+     */
+    public function whereNotIn(string $column, array $values): static;
+
+    /**
+     * Add a WHERE column BETWEEN low AND high condition.
+     */
+    public function whereBetween(string $column, mixed $low, mixed $high): static;
+
+    /**
+     * Add a WHERE LIKE condition.
+     */
+    public function whereLike(string $column, LikePattern $pattern): static;
+
+    /**
+     * Add a raw WHERE condition.
+     */
+    public function whereRaw(RawExpression $expression): static;
+
+    /**
+     * Add an ORDER BY clause.
+     */
+    public function orderBy(string $column, SortDirection $direction = SortDirection::Asc): static;
+
+    /**
+     * Set the maximum number of rows to return.
+     */
+    public function limit(int $limit): static;
+
+    /**
+     * Set the row offset.
+     */
+    public function offset(int $offset): static;
+
+    /**
+     * Add a GROUP BY column.
+     */
+    public function groupBy(string $column): static;
+
+    /**
+     * Add a HAVING condition.
+     */
+    public function having(RawExpression $expression): static;
+
+    /**
+     * Set the lock mode.
+     */
+    public function lock(LockMode $mode): static;
+
+    /**
+     * Execute the query and return raw rows.
+     */
+    public function get(): Result;
+
+    /**
+     * Execute the query and return the first row.
+     */
+    public function first(): ?Row;
+
+    /**
+     * Get an aggregate builder for this query.
+     */
+    public function aggregate(): AggregateBuilder;
+
+    /**
+     * Get the compiled SQL and bindings without executing.
+     *
+     * @return array{sql: string, bindings: array<string, mixed>}
+     */
+    public function toSql(): array;
+}

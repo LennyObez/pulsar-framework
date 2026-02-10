@@ -27,7 +27,9 @@ use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
+use function str_contains;
 use function strlen;
+use function substr;
 
 use Throwable;
 
@@ -104,6 +106,8 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         $remoteAddr = $request->server('REMOTE_ADDR');
         $routeName = $request->attribute('_route_name');
 
+        $bodyPreview = $request->body !== '' ? substr($request->body, 0, 2048) : null;
+
         $event = new HttpRequestPayload(
             method: $request->method->value,
             uri: $request->uri,
@@ -114,6 +118,8 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
             contentType: $request->header('Content-Type'),
             contentLength: $request->header('Content-Length') !== null ? (int) $request->header('Content-Length') : null,
             routeName: is_string($routeName) ? $routeName : null,
+            queryString: $request->queryString !== '' ? $request->queryString : null,
+            bodyPreview: $bodyPreview,
         );
 
         try {
@@ -136,14 +142,21 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         $body = $response !== null ? $response->body : '';
 
         $responseRouteName = $request->attribute('_route_name');
+        $contentType = $response?->headers->first('Content-Type');
+
+        $responseBodyPreview = null;
+        if ($body !== '' && $contentType !== null && $this->isTextualContentType($contentType)) {
+            $responseBodyPreview = substr($body, 0, 1024);
+        }
 
         $event = new HttpResponsePayload(
             statusCode: $statusCode,
             durationMs: $durationMs,
             headers: $headers,
             contentLength: $body !== '' ? strlen($body) : null,
-            contentType: $response?->headers->first('Content-Type'),
+            contentType: $contentType,
             routeName: is_string($responseRouteName) ? $responseRouteName : null,
+            bodyPreview: $responseBodyPreview,
         );
 
         try {
@@ -161,6 +174,15 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         }
 
         return null;
+    }
+
+    private function isTextualContentType(string $contentType): bool
+    {
+        return str_contains($contentType, 'text/')
+            || str_contains($contentType, 'application/json')
+            || str_contains($contentType, 'application/xml')
+            || str_contains($contentType, '+json')
+            || str_contains($contentType, '+xml');
     }
 
     private function extractSpanId(Request $request): ?string
