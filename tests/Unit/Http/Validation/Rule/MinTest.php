@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Http\Validation\Rule;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Http\Validation\Rule\Min;
@@ -12,50 +13,49 @@ use Pulsar\Http\Validation\Rule\Min;
 #[CoversClass(Min::class)]
 final class MinTest extends TestCase
 {
-    #[Test]
-    public function atMinimumPasses(): void
+    /**
+     * @return iterable<string, array{int|float, mixed}>
+     */
+    public static function atOrAboveMinProvider(): iterable
     {
-        $rule = new Min(5);
-        self::assertNull($rule->validate('field', 5, []));
+        yield 'exactly at minimum' => [5, 5];
+        yield 'above minimum' => [5, 10];
+        yield 'numeric string at min' => [5, '5'];
+        yield 'numeric string above min' => [5, '10'];
+        yield 'float minimum exact' => [2.5, 2.5];
+        yield 'float minimum above' => [2.5, 3.0];
+        yield 'zero minimum' => [0, 0];
     }
 
     #[Test]
-    public function aboveMinimumPasses(): void
+    #[DataProvider('atOrAboveMinProvider')]
+    public function atOrAboveMinPasses(int|float $min, mixed $value): void
     {
-        $rule = new Min(5);
-        self::assertNull($rule->validate('field', 10, []));
+        $rule = new Min($min);
+        self::assertNull($rule->validate('field', $value, []));
+    }
+
+    /**
+     * @return iterable<string, array{int|float, mixed}>
+     */
+    public static function belowMinProvider(): iterable
+    {
+        yield 'one below' => [5, 4];
+        yield 'far below' => [5, -100];
+        yield 'numeric string below' => [5, '3'];
+        yield 'float just below' => [2.5, 2.0];
+        yield 'non-numeric string' => [5, 'abc'];
+        yield 'empty string' => [5, ''];
     }
 
     #[Test]
-    public function belowMinimumFails(): void
+    #[DataProvider('belowMinProvider')]
+    public function belowMinFails(int|float $min, mixed $value): void
     {
-        $rule = new Min(5);
-        $violation = $rule->validate('field', 3, []);
+        $rule = new Min($min);
+        $violation = $rule->validate('field', $value, []);
         self::assertNotNull($violation);
         self::assertSame('min', $violation->rule);
-    }
-
-    #[Test]
-    public function numericStringPasses(): void
-    {
-        $rule = new Min(5);
-        self::assertNull($rule->validate('field', '10', []));
-    }
-
-    #[Test]
-    public function numericStringBelowFails(): void
-    {
-        $rule = new Min(5);
-        $violation = $rule->validate('field', '3', []);
-        self::assertNotNull($violation);
-    }
-
-    #[Test]
-    public function nonNumericFails(): void
-    {
-        $rule = new Min(5);
-        $violation = $rule->validate('field', 'abc', []);
-        self::assertNotNull($violation);
     }
 
     #[Test]
@@ -63,16 +63,5 @@ final class MinTest extends TestCase
     {
         $rule = new Min(5);
         self::assertNull($rule->validate('field', null, []));
-    }
-
-    #[Test]
-    public function floatMinimum(): void
-    {
-        $rule = new Min(2.5);
-        self::assertNull($rule->validate('field', 2.5, []));
-        self::assertNull($rule->validate('field', 3.0, []));
-
-        $violation = $rule->validate('field', 2.0, []);
-        self::assertNotNull($violation);
     }
 }

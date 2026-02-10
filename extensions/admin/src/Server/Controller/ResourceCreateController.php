@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -12,8 +13,7 @@ use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Exception\ResourceValidationException;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceHandler;
 use Pulsar\Extension\Admin\Features\CreateResource\CreateResourceRequest;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 /**
@@ -28,7 +28,7 @@ final readonly class ResourceCreateController
         private AdminConfig $config,
     ) {}
 
-    public function form(Request $request, string $resource): Response
+    public function form(ServerRequestInterface $request, string $resource): Response
     {
         $resourceDef = $this->registry->get($resource);
 
@@ -40,10 +40,10 @@ final readonly class ResourceCreateController
         ]));
     }
 
-    public function store(Request $request, string $resource): Response
+    public function store(ServerRequestInterface $request, string $resource): Response
     {
         /** @var IdentityInterface|null $identity */
-        $identity = $request->attribute('identity');
+        $identity = $request->getAttribute('identity');
         $actor = $identity?->id() ?? 'anonymous';
 
         $context = new MutationContext(
@@ -51,16 +51,19 @@ final readonly class ResourceCreateController
             reason: 'Admin panel create',
         );
 
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
         try {
             $result = $this->handler->execute(new CreateResourceRequest(
                 resourceName: $resource,
-                data: $request->all(),
+                data: $body,
                 context: $context,
             ));
 
             return Response::json(
                 ['success' => $result->result->success, 'message' => $result->result->message, 'data' => $result->result->metadata],
-                $result->result->success ? ResponseStatus::Created : ResponseStatus::UnprocessableEntity,
+                $result->result->success ? ResponseStatus::Created->value : ResponseStatus::UnprocessableEntity->value,
             );
         } catch (ResourceValidationException $e) {
             return Response::validationError($e->violations);

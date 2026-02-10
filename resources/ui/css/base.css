@@ -1,0 +1,372 @@
+/* Pulsar UI Base Styles v1.0.0
+ *
+ * Modern CSS reset and base typography.
+ * Uses design tokens from tokens.css — no raw values.
+ */
+
+/* ===========================================================================
+ * 1. CSS Reset (Modern, Minimal)
+ * =========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  tab-size: 4;
+  line-height: var(--leading-normal);
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: var(--leading-normal);
+  min-height: 100vh;
+}
+
+/* Remove default list styles */
+ol,
+ul,
+menu {
+  list-style: none;
+}
+
+/* Prevent text overflow */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+/* Reset form elements */
+button,
+input,
+optgroup,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 100%;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+  -webkit-appearance: button;
+  appearance: button;
+  cursor: pointer;
+}
+
+/* Reset fieldset */
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+/* Reset textarea resize */
+textarea {
+  resize: vertical;
+}
+
+/* Reset table */
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+  text-indent: 0;
+  border-color: inherit;
+}
+
+/* Embedded elements */
+img,
+svg,
+video,
+canvas,
+audio,
+iframe,
+embed,
+object {
+  display: block;
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+/* Hidden attribute */
+[hidden] {
+  display: none !important;
+}
+
+/* Remove default summary marker */
+summary {
+  display: list-item;
+  cursor: pointer;
+}
+
+/* ===========================================================================
+ * 2. Base Typography
+ * =========================================================================== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  color: var(--color-text);
+}
+
+h1 {
+  font-size: var(--text-4xl);
+  line-height: var(--text-4xl-leading);
+  letter-spacing: var(--tracking-tight);
+}
+
+h2 {
+  font-size: var(--text-3xl);
+  line-height: var(--text-3xl-leading);
+  letter-spacing: var(--tracking-tight);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+  line-height: var(--text-2xl-leading);
+}
+
+h4 {
+  font-size: var(--text-xl);
+  line-height: var(--text-xl-leading);
+}
+
+h5 {
+  font-size: var(--text-lg);
+  line-height: var(--text-lg-leading);
+}
+
+h6 {
+  font-size: var(--text-base);
+  line-height: var(--text-base-leading);
+}
+
+p {
+  line-height: var(--leading-relaxed);
+}
+
+/* Links */
+a {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-link-hover);
+}
+
+a:visited {
+  color: var(--color-link-visited);
+}
+
+/* Inline code */
+code,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+code {
+  background-color: var(--color-bg-tertiary);
+  padding: var(--space-0-5) var(--space-1-5);
+  border-radius: var(--radius);
+  font-weight: var(--font-medium);
+}
+
+/* Preformatted text */
+pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+  overflow-x: auto;
+  background-color: var(--color-bg-tertiary);
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+}
+
+pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-weight: inherit;
+}
+
+/* Keyboard input */
+kbd {
+  background-color: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-0-5) var(--space-1);
+  font-size: 0.8em;
+  box-shadow: inset 0 -1px 0 var(--color-border);
+}
+
+/* Mark / highlight */
+mark {
+  background-color: var(--color-warning-100);
+  color: var(--color-warning-900);
+  padding: var(--space-0-5) var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+/* Abbreviation */
+abbr[title] {
+  text-decoration: underline dotted;
+  cursor: help;
+}
+
+/* Small text */
+small {
+  font-size: var(--text-sm);
+}
+
+/* Sub/Sup */
+sub,
+sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}
+
+/* Strong / Bold */
+b,
+strong {
+  font-weight: var(--font-bold);
+}
+
+/* Emphasis */
+em,
+i {
+  font-style: italic;
+}
+
+/* Horizontal rule */
+hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin-block: var(--space-8);
+}
+
+/* Blockquote */
+blockquote {
+  border-inline-start: 4px solid var(--color-primary-300);
+  padding-inline-start: var(--space-4);
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+/* Definition list */
+dt {
+  font-weight: var(--font-semibold);
+}
+
+dd {
+  margin-inline-start: var(--space-4);
+}
+
+/* Details / Summary */
+details {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+details[open] > summary {
+  margin-bottom: var(--space-2);
+}
+
+summary {
+  font-weight: var(--font-medium);
+}
+
+/* ===========================================================================
+ * 3. Focus Visible Styles
+ * =========================================================================== */
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ===========================================================================
+ * 4. Selection Highlighting
+ * =========================================================================== */
+
+::selection {
+  background-color: var(--color-primary-200);
+  color: var(--color-primary-900);
+}
+
+[data-theme='dark'] ::selection,
+.dark ::selection {
+  background-color: var(--color-primary-800);
+  color: var(--color-primary-100);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) ::selection {
+    background-color: var(--color-primary-800);
+    color: var(--color-primary-100);
+  }
+}

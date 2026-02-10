@@ -53,4 +53,43 @@ final class CacheWarmupCommandTest extends TestCase
         self::assertSame(ExitCode::Error->value, $exit);
         self::assertStringContainsString('PULSAR_MASTER_KEY', $output->errorBuffer);
     }
+
+    #[Test]
+    public function delegatesToOptimizeCommandWithStrictOption(): void
+    {
+        $command = new CacheWarmupCommand(new Kernel());
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(
+            new ArrayInput('cache:warmup', [], ['strict' => true]),
+            $output,
+        );
+
+        // Without FrameworkCache, exits with error before strict check
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringContainsString('PULSAR_MASTER_KEY', $output->errorBuffer);
+    }
+
+    #[Test]
+    public function delegatesToOptimizeCommandWithEncryptOption(): void
+    {
+        $command = new CacheWarmupCommand(new Kernel());
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(
+            new ArrayInput('cache:warmup', [], ['encrypt' => true]),
+            $output,
+        );
+
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringContainsString('PULSAR_MASTER_KEY', $output->errorBuffer);
+    }
+
+    #[Test]
+    public function descriptionIsNotEmpty(): void
+    {
+        $command = new CacheWarmupCommand(new Kernel());
+
+        self::assertNotEmpty($command->description);
+    }
 }

@@ -5,7 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Auth\Authorization;
 
 use Override;
+use Pulsar\Auth\Authorization\Event\AuthorizationDenied;
+use Pulsar\Auth\Authorization\Event\AuthorizationGranted;
 use Pulsar\Auth\Identity\IdentityInterface;
+use Pulsar\Context\CausationId;
+use Pulsar\Context\CorrelationId;
+use Pulsar\Event\EventDispatcherInterface;
+use Pulsar\Event\EventEnvelope;
+use Pulsar\Event\EventMetadata;
 
 use function array_any;
 use function in_array;
@@ -19,6 +26,9 @@ use function in_array;
  * 3. RBAC — role→permission check via RoleRegistry
  * 4. ABAC policies — explicit allow can grant access without RBAC match
  * 5. Default: deny
+ *
+ * When an EventDispatcherInterface is provided, dispatches AuthorizationGranted
+ * and AuthorizationDenied events as envelopes for audit trail purposes.
  */
 final class Gate implements GateInterface
 {
@@ -31,6 +41,7 @@ final class Gate implements GateInterface
     public function __construct(
         private readonly RoleRegistryInterface $roleRegistry,
         private readonly array $superRoles = [],
+        private readonly ?EventDispatcherInterface $eventDispatcher = null,
     ) {}
 
     /**
@@ -46,6 +57,7 @@ final class Gate implements GateInterface
     {
         // 1. Super-role bypass
         if ($this->hasSuperRole($identity)) {
+            $this->dispatchGranted($identity, $permission, $context?->resource, 'super-role');
             return true;
         }
 
@@ -56,6 +68,7 @@ final class Gate implements GateInterface
             $result = $policy->evaluate($identity, $context);
 
             if ($result === false) {
+                $this->dispatchDenied($identity, $permission, $context->resource, 'ABAC-deny');
                 return false;
             }
         }
@@ -69,6 +82,7 @@ final class Gate implements GateInterface
         );
 
         if ($rbacAllowed) {
+            $this->dispatchGranted($identity, $permission, $context->resource, 'RBAC');
             return true;
         }
 
@@ -77,11 +91,13 @@ final class Gate implements GateInterface
             $result = $policy->evaluate($identity, $context);
 
             if ($result === true) {
+                $this->dispatchGranted($identity, $permission, $context->resource, 'ABAC');
                 return true;
             }
         }
 
         // 5. Default: deny
+        $this->dispatchDenied($identity, $permission, $context->resource, 'default-deny');
         return false;
     }
 
@@ -97,5 +113,73 @@ final class Gate implements GateInterface
             $identity->roles(),
             fn(string $role): bool => in_array($role, $this->superRoles, true),
         );
+    }
+
+    private function dispatchGranted(
+        IdentityInterface $identity,
+        string $permission,
+        ?string $resource,
+        string $grantReason,
+    ): void {
+        if ($this->eventDispatcher === null) {
+            return;
+        }
+
+        $correlationId = bin2hex(random_bytes(16));
+
+        $event = AuthorizationGranted::create(
+            identityId: $identity->id(),
+            permission: $permission,
+            resource: $resource,
+            grantReason: $grantReason,
+            correlationId: $correlationId,
+        );
+
+        $envelope = EventEnvelope::wrap(
+            eventType: AuthorizationGranted::class,
+            schemaVersion: AuthorizationGranted::SCHEMA_VERSION,
+            payload: $event->toArray(),
+            metadata: new EventMetadata(
+                correlationId: CorrelationId::fromString($correlationId),
+                causationId: CausationId::fromString($correlationId),
+                actor: $identity->id(),
+            ),
+        );
+
+        $this->eventDispatcher->dispatchEnvelope($envelope);
+    }
+
+    private function dispatchDenied(
+        IdentityInterface $identity,
+        string $permission,
+        ?string $resource,
+        string $denialReason,
+    ): void {
+        if ($this->eventDispatcher === null) {
+            return;
+        }
+
+        $correlationId = bin2hex(random_bytes(16));
+
+        $event = AuthorizationDenied::create(
+            identityId: $identity->id(),
+            permission: $permission,
+            resource: $resource,
+            denialReason: $denialReason,
+            correlationId: $correlationId,
+        );
+
+        $envelope = EventEnvelope::wrap(
+            eventType: AuthorizationDenied::class,
+            schemaVersion: AuthorizationDenied::SCHEMA_VERSION,
+            payload: $event->toArray(),
+            metadata: new EventMetadata(
+                correlationId: CorrelationId::fromString($correlationId),
+                causationId: CausationId::fromString($correlationId),
+                actor: $identity->id(),
+            ),
+        );
+
+        $this->eventDispatcher->dispatchEnvelope($envelope);
     }
 }

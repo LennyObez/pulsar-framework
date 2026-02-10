@@ -31,7 +31,7 @@ final readonly class McpRedactionPipeline implements McpRedactionPipelineInterfa
     ];
 
     private const string CONNECTION_STRING_PATTERN = '/:\/\/[^:]+:[^@]+@/';
-    private const string BEARER_PATTERN = '/Bearer\s+[A-Za-z0-9\-._~+\/]+=*/i';
+    private const string BEARER_PATTERN = '/Bearer\s+[A-Za-z0-9._~+\/-]+=*/i';
     private const string REDACTED = '[REDACTED]';
 
     /**

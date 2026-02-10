@@ -9,9 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Observability\Tracing\TraceContext;
@@ -91,7 +89,7 @@ final class ErrorTrackingIntegrationTest extends TestCase
         self::assertSame($traceContext->traceId->value, $event->traceId->value);
     }
 
-    private function createRequest(string $method, string $uri): Request
+    private function createRequest(string $method, string $uri): ServerRequest
     {
         /** @var array{path?: string, query?: string} $parts */
         $parts = parse_url($uri);
@@ -111,14 +109,10 @@ final class ErrorTrackingIntegrationTest extends TestCase
             $query[(string) $k] = $v;
         }
 
-        return new Request(
-            method: Method::from($method),
+        return new ServerRequest(
+            method: $method,
             uri: $uri,
-            path: $path,
-            queryString: $queryString,
-            headers: new HeaderBag([]),
-            body: '',
-            query: $query,
+            queryParams: $query,
         );
     }
 }

@@ -5,14 +5,15 @@ declare(strict_types=1);
 namespace Pulsar\Context\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Context\CausationId;
 use Pulsar\Context\CorrelationId;
 use Pulsar\Context\RequestContext;
 use Pulsar\Context\RequestContextHolder;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Random\Randomizer;
 
 use function ctype_xdigit;
@@ -39,14 +40,14 @@ final readonly class RequestContextMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $correlationId = $this->resolveCorrelationId($request);
         $causationId = CausationId::generate($this->randomizer);
 
         // Read parent causation ID from inbound header (for causal chain tracking)
         $parentCausationId = $this->readValidHex(
-            $request->header(self::HEADER_CAUSATION_ID),
+            $this->headerOrNull($request, self::HEADER_CAUSATION_ID),
         );
 
         $attributes = [];
@@ -58,7 +59,7 @@ final readonly class RequestContextMiddleware implements MiddlewareInterface
             correlationId: $correlationId,
             causationId: $causationId,
             ip: $this->resolveIp($request),
-            userAgent: $request->header('User-Agent'),
+            userAgent: $this->headerOrNull($request, 'User-Agent'),
             attributes: $attributes,
         );
 
@@ -67,8 +68,7 @@ final readonly class RequestContextMiddleware implements MiddlewareInterface
         $request = $request->withAttribute('_request_context', $context);
 
         try {
-            /** @var Response $response */
-            $response = $next($request);
+            $response = $handler->handle($request);
 
             return $response
                 ->withHeader(self::HEADER_CORRELATION_ID, $correlationId->value)
@@ -78,9 +78,9 @@ final readonly class RequestContextMiddleware implements MiddlewareInterface
         }
     }
 
-    private function resolveCorrelationId(Request $request): CorrelationId
+    private function resolveCorrelationId(ServerRequestInterface $request): CorrelationId
     {
-        $header = $request->header(self::HEADER_CORRELATION_ID);
+        $header = $this->headerOrNull($request, self::HEADER_CORRELATION_ID);
         $validHex = $this->readValidHex($header);
 
         if ($validHex !== null && strlen($validHex) === 32) {
@@ -88,6 +88,16 @@ final readonly class RequestContextMiddleware implements MiddlewareInterface
         }
 
         return CorrelationId::generate($this->randomizer);
+    }
+
+    /**
+     * Get a header value or null if not present.
+     */
+    private function headerOrNull(ServerRequestInterface $request, string $name): ?string
+    {
+        $value = $request->getHeaderLine($name);
+
+        return $value !== '' ? $value : null;
     }
 
     /**
@@ -112,10 +122,10 @@ final readonly class RequestContextMiddleware implements MiddlewareInterface
         return $value;
     }
 
-    private function resolveIp(Request $request): ?string
+    private function resolveIp(ServerRequestInterface $request): ?string
     {
         /** @var mixed $remoteAddr */
-        $remoteAddr = $request->server['REMOTE_ADDR'] ?? null;
+        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
 
         return is_string($remoteAddr) ? $remoteAddr : null;
     }

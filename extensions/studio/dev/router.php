@@ -26,9 +26,7 @@ require $dir . '/vendor/autoload.php';
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Extension\Studio\Config\StudioConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
@@ -91,11 +89,6 @@ if (str_starts_with($path, '/.well-known/') || $path === '/favicon.ico') {
     http_response_code(404);
 
     return;
-}
-
-// Let the built-in server handle files that exist in the document root
-if ($path !== '/' && file_exists(__DIR__ . '/public' . $path)) {
-    return false;
 }
 
 // Bootstrap Studio for dynamic routes
@@ -164,7 +157,7 @@ $exceptionExplorer = new ExceptionExplorerController($store, $safetyMode);
 $timeline = new TimelineController($timelineBuilder);
 $api = new ApiController($store);
 $benchmarkController = new BenchmarkController($aggregator);
-$benchmarkApi = new BenchmarkApiController($store, $dir);
+$benchmarkApi = new BenchmarkApiController($store, $aggregator, $dir);
 
 // Create router and dispatch
 $router = new StudioRouter(
@@ -181,13 +174,7 @@ $router = new StudioRouter(
     safetyMode: $safetyMode,
 );
 
-// Build Request from globals
-$method = Method::tryFrom($_SERVER['REQUEST_METHOD'] ?? 'GET') ?? Method::GET;
-$queryString = $_SERVER['QUERY_STRING'] ?? '';
-$headers = new HeaderBag(getallheaders() ?: []);
-$body = file_get_contents('php://input') ?: '';
-
-// Map query parameters to _query_ attributes (matching main application middleware behavior)
+// Build ServerRequest from globals with _query_ attributes
 /** @var array<string, mixed> $queryParams */
 $queryParams = $_GET;
 $queryAttributes = [];
@@ -197,30 +184,28 @@ foreach ($queryParams as $key => $value) {
     }
 }
 
-$request = new Request(
-    method: $method,
-    uri: $requestUri,
-    path: $path,
-    queryString: $queryString,
-    headers: $headers,
-    body: $body,
-    query: $queryParams,
-    attributes: $queryAttributes,
-);
+$request = ServerRequest::fromGlobals();
+foreach ($queryAttributes as $attrKey => $attrValue) {
+    $request = $request->withAttribute($attrKey, $attrValue);
+}
 
 try {
     $response = $router->dispatch($request);
-} catch (JsonException $e) {
+} catch (Throwable $e) {
+    error_log(sprintf('[Studio] %s %s - 500 Internal Server Error: %s', $_SERVER['REQUEST_METHOD'] ?? 'GET', $requestUri, $e->getMessage()));
     http_response_code(500);
     echo 'Internal Server Error: ' . $e->getMessage();
 
     return;
 }
 
-// Emit response
-http_response_code($response->status->value);
+// Log request like PHP's built-in server
+error_log(sprintf('[%d]: %s %s - %d', $_SERVER['REMOTE_PORT'] ?? 0, $_SERVER['REQUEST_METHOD'] ?? 'GET', $requestUri, $response->getStatusCode()));
 
-foreach ($response->headers as $name => $values) {
+// Emit response
+http_response_code($response->getStatusCode());
+
+foreach ($response->getHeaders() as $name => $values) {
     $first = true;
     foreach ($values as $value) {
         header($name . ': ' . $value, $first);
@@ -228,4 +213,4 @@ foreach ($response->headers as $name => $values) {
     }
 }
 
-echo $response->body;
+echo $response->getBody();

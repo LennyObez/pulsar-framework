@@ -7,15 +7,16 @@ namespace Pulsar\Tests\Integration\ErrorHandling;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Core\Kernel;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\HttpException;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\Validation\ValidationException;
 use Pulsar\Http\Validation\ValidationResult;
@@ -108,18 +109,18 @@ final class KernelErrorHandlingTest extends TestCase
         ];');
     }
 
+    /**
+     * @param array<string, string|list<string>> $headers
+     */
     private function createRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $path = '/',
-        ?HeaderBag $headers = null,
-    ): Request {
-        return new Request(
+        array $headers = [],
+    ): ServerRequest {
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: $headers ?? new HeaderBag(),
-            body: '',
+            headers: $headers,
         );
     }
 
@@ -139,7 +140,7 @@ final class KernelErrorHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest(path: '/error'));
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -150,7 +151,7 @@ final class KernelErrorHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest(path: '/nonexistent'));
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -159,10 +160,10 @@ final class KernelErrorHandlingTest extends TestCase
         $kernel = $this->createKernel();
         $kernel->router()->get('/test', fn() => Response::text('ok'));
 
-        $response = $kernel->handle($this->createRequest(Method::POST, '/test'));
+        $response = $kernel->handle($this->createRequest('POST', '/test'));
 
-        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
-        self::assertNotNull($response->headers->first('Allow'));
+        self::assertSame(ResponseStatus::MethodNotAllowed->value, $response->getStatusCode());
+        self::assertNotEmpty($response->getHeaderLine('Allow'));
     }
 
     #[Test]
@@ -173,8 +174,9 @@ final class KernelErrorHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest(path: '/error'));
 
-        self::assertStringContainsString('Debug visible', $response->body);
-        self::assertStringContainsString('RuntimeException', $response->body);
+        $body = (string) $response->getBody();
+        self::assertStringContainsString('Debug visible', $body);
+        self::assertStringContainsString('RuntimeException', $body);
     }
 
     #[Test]
@@ -185,8 +187,9 @@ final class KernelErrorHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest(path: '/error'));
 
-        self::assertStringNotContainsString('Secret error info', $response->body);
-        self::assertStringNotContainsString('RuntimeException', $response->body);
+        $body = (string) $response->getBody();
+        self::assertStringNotContainsString('Secret error info', $body);
+        self::assertStringNotContainsString('RuntimeException', $body);
     }
 
     #[Test]
@@ -198,7 +201,7 @@ final class KernelErrorHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest());
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -209,7 +212,7 @@ final class KernelErrorHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest(path: '/forbidden'));
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -244,11 +247,11 @@ final class KernelErrorHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest(path: '/validate'));
 
-        self::assertSame(ResponseStatus::UnprocessableEntity, $response->status);
-        self::assertStringContainsString('application/json', $response->headers->first('Content-Type') ?? '');
+        self::assertSame(ResponseStatus::UnprocessableEntity->value, $response->getStatusCode());
+        self::assertStringContainsString('application/json', $response->getHeaderLine('Content-Type'));
 
         /** @var array{error: string, status: int, violations: list<mixed>} $data */
-        $data = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('Validation Failed', $data['error']);
         self::assertSame(422, $data['status']);
         self::assertCount(1, $data['violations']);
@@ -260,14 +263,13 @@ final class KernelErrorHandlingTest extends TestCase
         $kernel = $this->createKernel();
         $kernel->router()->get('/error', fn() => throw new RuntimeException('Server error'));
 
-        $headers = new HeaderBag(['Accept' => 'application/json']);
-        $response = $kernel->handle($this->createRequest(path: '/error', headers: $headers));
+        $response = $kernel->handle($this->createRequest(path: '/error', headers: ['Accept' => 'application/json']));
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
-        self::assertStringContainsString('application/json', $response->headers->first('Content-Type') ?? '');
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
+        self::assertStringContainsString('application/json', $response->getHeaderLine('Content-Type'));
 
         /** @var array{error: string, status: int} $data */
-        $data = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('Internal Server Error', $data['error']);
         self::assertSame(500, $data['status']);
     }
@@ -278,13 +280,12 @@ final class KernelErrorHandlingTest extends TestCase
         $kernel = $this->createKernel();
         $kernel->router()->get('/', fn() => Response::text('home'));
 
-        $headers = new HeaderBag(['Accept' => 'application/json']);
-        $response = $kernel->handle($this->createRequest(path: '/nonexistent', headers: $headers));
+        $response = $kernel->handle($this->createRequest(path: '/nonexistent', headers: ['Accept' => 'application/json']));
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
 
         /** @var array{error: string, status: int} $data */
-        $data = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('Not Found', $data['error']);
         self::assertSame(404, $data['status']);
     }
@@ -295,7 +296,7 @@ final class KernelErrorHandlingTest extends TestCase
  */
 final class ThrowingMiddleware implements MiddlewareInterface
 {
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         throw new RuntimeException('Middleware failure');
     }

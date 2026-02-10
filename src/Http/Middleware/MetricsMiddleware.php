@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Http\Middleware;
 
 use Override;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -33,23 +34,22 @@ final readonly class MetricsMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $this->routeContext?->reset();
         $start = hrtime(true);
 
         try {
-            /** @var Response $response */
-            $response = $next($request);
+            $response = $handler->handle($request);
 
             return $response;
         } finally {
             try {
                 $durationSeconds = (hrtime(true) - $start) / 1_000_000_000;
 
-                $label = $this->routeContext?->label() ?? $request->path;
-                $method = $request->method->value;
-                $status = (string) (isset($response) ? $response->status->value : 500);
+                $label = $this->routeContext?->label() ?? $request->getUri()->getPath();
+                $method = $request->getMethod();
+                $status = (string) (isset($response) ? $response->getStatusCode() : 500);
 
                 // Record request counter
                 $requestLabels = new LabelSet([
@@ -71,7 +71,7 @@ final readonly class MetricsMiddleware implements MiddlewareInterface
                     ->observe($durationSeconds, $durationLabels);
 
                 // Record error counter on 5xx
-                if (isset($response) && $response->status->isServerError()) {
+                if (isset($response) && $response->getStatusCode() >= 500) {
                     $errorLabels = new LabelSet([
                         'method' => $method,
                         'route' => $label,

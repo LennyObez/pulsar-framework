@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Auth\Guard;
 
 use Override;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Http\Request;
 
 use function str_starts_with;
 use function substr;
@@ -25,11 +25,11 @@ final readonly class TokenGuard implements GuardInterface
     ) {}
 
     #[Override]
-    public function authenticate(Request $request): ?IdentityInterface
+    public function authenticate(ServerRequestInterface $request): ?IdentityInterface
     {
-        $authorization = $request->header('Authorization');
+        $authorization = $request->getHeaderLine('Authorization');
 
-        if ($authorization === null) {
+        if ($authorization === '') {
             return null;
         }
 

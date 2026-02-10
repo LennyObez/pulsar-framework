@@ -150,4 +150,55 @@ final class DatabaseException extends RuntimeException
     {
         return new self(sprintf('Migration file "%s" must return a MigrationInterface instance', $path));
     }
+
+    /**
+     * Connection pool has no available connections.
+     */
+    #[NoDiscard]
+    public static function poolExhausted(int $maxConnections): self
+    {
+        return new self(sprintf('Connection pool exhausted (max: %d)', $maxConnections));
+    }
+
+    /**
+     * Timed out waiting for a connection from the pool.
+     */
+    #[NoDiscard]
+    public static function poolTimeout(float $waitedMs): self
+    {
+        return new self(sprintf('Timed out waiting for pooled connection after %.1fms', $waitedMs));
+    }
+
+    /**
+     * Failover to a standby endpoint failed.
+     */
+    #[NoDiscard]
+    public static function failoverFailed(string $reason, ?Throwable $previous = null): self
+    {
+        return new self(
+            sprintf('Database failover failed: %s', $reason),
+            previous: $previous,
+        );
+    }
+
+    /**
+     * Read/write routing could not resolve a connection.
+     */
+    #[NoDiscard]
+    public static function routingError(string $reason): self
+    {
+        return new self(sprintf('Connection routing error: %s', $reason));
+    }
+
+    /**
+     * Query cache operation failed.
+     */
+    #[NoDiscard]
+    public static function cacheError(string $reason, ?Throwable $previous = null): self
+    {
+        return new self(
+            sprintf('Query cache error: %s', $reason),
+            previous: $previous,
+        );
+    }
 }

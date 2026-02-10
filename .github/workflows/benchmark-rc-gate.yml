@@ -1,0 +1,90 @@
+name: 'Tier C: RC Performance Gate'
+
+on:
+  workflow_dispatch:
+    inputs:
+      rc_version:
+        description: 'RC version being validated (e.g. 1.0.0-rc.11)'
+        required: true
+        type: string
+
+concurrency:
+  group: benchmark-rc-gate
+  cancel-in-progress: false
+
+jobs:
+  tier-c-benchmarks:
+    name: 'Tier C: RC Gate (${{ inputs.rc_version }})'
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 3
+
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: pulsar_bench
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+
+    env:
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      DB_HOST: 127.0.0.1
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      DB_DATABASE: pulsar_bench
+      PULSAR_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: sodium, redis, pdo_pgsql, pdo_sqlite
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      - name: 'Tier C: Run all benchmarks including KDF'
+        run: composer bench:ci 2>&1 | tee benchmark-tier-c.txt
+
+      - name: 'Tier C: Run memory peak benchmarks'
+        run: |
+          echo "Running memory peak benchmarks..."
+          php tests/Benchmark/Scenarios/memory_anonymous.php
+          php tests/Benchmark/Scenarios/memory_authenticated.php
+          php tests/Benchmark/Scenarios/memory_compliance.php
+
+      - name: Upload Tier C results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-tier-c-${{ inputs.rc_version }}
+          path: |
+            benchmark-tier-c.txt
+            var/bench/results.json
+          retention-days: 90
+
+      - name: Add results to job summary
+        if: always()
+        run: |
+          echo '## Tier C: RC Gate Results (${{ inputs.rc_version }})' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat benchmark-tier-c.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

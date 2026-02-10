@@ -1,34 +1,34 @@
-# Security Policy
+# Security policy
 
-## Our Commitment
+## Our commitment
 
 Security is a core design goal of Pulsar. We prioritize secure defaults, auditability, and minimizing foot-guns.
 
 > Note: "Compliance" depends on system implementation and operations.
 > Pulsar provides features and documentation that map capabilities to common compliance controls, but does not certify a system by itself.
 
-## Supported Versions
+## Supported versions
 
-Pulsar is currently in release candidate (1.0.0-rc.x).
+| Version       | Supported |
+| ------------- | --------- |
+| 1.0.0-rc.11   | Yes       |
+| < 1.0.0-rc.11 | No        |
 
-Security fixes are provided for:
+Security fixes are applied to the `main` branch and the latest release candidate tag. Older RC tags do not receive backports.
 
-- `main` branch (latest commit)
-- Latest tagged `1.0.0-rc.*` release
+After 1.0.0 GA, this table will be expanded with an explicit support matrix and end-of-life timelines.
 
-After 1.0.0 GA, this policy will be expanded with an explicit support matrix and end-of-life timelines.
-
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
 Prefer **GitHub Private Vulnerability Reporting** (Security Advisories) if enabled on this repository. Otherwise, report privately via email.
 
-- Email: pulsar+security@lennyobez.com
+- Email: security@pulsar-framework.com
 - Subject: `[SECURITY] <short summary>`
 - Include:
-  - affected version/commit
-  - impact and attack scenario
-  - reproduction steps or PoC (safe and minimal)
-  - any mitigations you're aware of
+- affected version/commit
+- impact and attack scenario
+- reproduction steps or PoC (safe and minimal)
+- any mitigations you're aware of
 
 **Do not include real secrets, PII, PHI, or PCI data in reports.** Use synthetic/redacted values only.
 
@@ -59,6 +59,6 @@ Please do not publish details until a fix is available, unless we explicitly agr
 - Never commit secrets, private keys, or real customer data.
 - Avoid adding new cryptography unless explicitly approved (prefer vetted primitives and well-reviewed designs).
 - Security-relevant changes require:
-  - tests
-  - documentation updates
-  - clear threat model notes when applicable
+- tests
+- documentation updates
+- clear threat model notes when applicable

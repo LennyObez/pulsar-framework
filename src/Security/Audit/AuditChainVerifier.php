@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Security\Audit;
 
 use JsonException;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\KeyRingInterface;
 use SodiumException;
@@ -17,7 +17,7 @@ use SodiumException;
  * without kid (tries all keys in the ring). Chain verification checks that
  * each entry's previousHmac matches the preceding entry's hmac.
  */
-#[Internal]
+#[Api(since: '1.0.0')]
 final readonly class AuditChainVerifier
 {
     public function __construct(

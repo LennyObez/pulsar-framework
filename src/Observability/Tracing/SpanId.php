@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Observability\Tracing;
 
 use NoDiscard;
+use Pulsar\Api\Api;
 use Pulsar\Observability\Tracing\Exception\TracingException;
 use Random\Engine\Secure;
 use Random\RandomException;
@@ -18,6 +19,7 @@ use function strtolower;
 /**
  * 64-bit span identifier represented as 16 lowercase hex characters.
  */
+#[Api(since: '1.0.0')]
 final readonly class SpanId
 {
     public string $value;

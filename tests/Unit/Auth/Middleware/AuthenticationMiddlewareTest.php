@@ -7,14 +7,15 @@ namespace Pulsar\Tests\Unit\Auth\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Middleware\AuthenticationMiddleware;
 use Pulsar\Auth\SecurityContext;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(AuthenticationMiddleware::class)]
@@ -26,25 +27,24 @@ final class AuthenticationMiddlewareTest extends TestCase
         $authManager = $this->createStub(AuthManagerInterface::class);
         $middleware = new AuthenticationMiddleware($authManager);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
         $capturedRequest = null;
-        $handler = function (Request $req) use (&$capturedRequest): Response {
-            $capturedRequest = $req;
-            return new Response(body: 'OK', status: ResponseStatus::OK);
-        };
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$capturedRequest): ResponseInterface {
+                $capturedRequest = $req;
+                return new Response(statusCode: ResponseStatus::OK->value, body: 'OK');
+            },
+        );
 
         $middleware->process($request, $handler);
 
         self::assertNotNull($capturedRequest);
-        $securityContext = $capturedRequest->attribute('_security_context');
+        $securityContext = $capturedRequest->getAttribute('_security_context');
         self::assertInstanceOf(SecurityContext::class, $securityContext);
     }
 
@@ -54,25 +54,24 @@ final class AuthenticationMiddlewareTest extends TestCase
         $authManager = $this->createStub(AuthManagerInterface::class);
         $middleware = new AuthenticationMiddleware($authManager);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
         $capturedRequest = null;
-        $handler = function (Request $req) use (&$capturedRequest): Response {
-            $capturedRequest = $req;
-            return new Response(body: 'OK', status: ResponseStatus::OK);
-        };
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$capturedRequest): ResponseInterface {
+                $capturedRequest = $req;
+                return new Response(statusCode: ResponseStatus::OK->value, body: 'OK');
+            },
+        );
 
         $middleware->process($request, $handler);
 
         self::assertNotNull($capturedRequest);
-        $identity = $capturedRequest->attribute('_identity');
+        $identity = $capturedRequest->getAttribute('_identity');
         self::assertInstanceOf(AnonymousIdentity::class, $identity);
     }
 
@@ -82,25 +81,24 @@ final class AuthenticationMiddlewareTest extends TestCase
         $authManager = $this->createStub(AuthManagerInterface::class);
         $middleware = new AuthenticationMiddleware($authManager);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
         $handlerCalled = false;
-        $handler = function (Request $req) use (&$handlerCalled): Response {
-            $handlerCalled = true;
-            return new Response(body: 'OK', status: ResponseStatus::OK);
-        };
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$handlerCalled): ResponseInterface {
+                $handlerCalled = true;
+                return new Response(statusCode: ResponseStatus::OK->value, body: 'OK');
+            },
+        );
 
         $response = $middleware->process($request, $handler);
 
         self::assertTrue($handlerCalled);
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -111,16 +109,13 @@ final class AuthenticationMiddlewareTest extends TestCase
 
         $middleware = new AuthenticationMiddleware($authManager);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: ResponseStatus::OK->value, body: 'OK'));
 
         $middleware->process($request, $handler);
     }

@@ -9,27 +9,21 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Container\Container;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 
 #[CoversClass(MiddlewarePipeline::class)]
 final class MiddlewarePipelineTest extends TestCase
 {
-    private function createRequest(): Request
+    private function createRequest(): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
-            uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
-        );
+        return new ServerRequest(method: 'GET', uri: '/');
     }
 
     #[Test]
@@ -38,9 +32,9 @@ final class MiddlewarePipelineTest extends TestCase
         $pipeline = new MiddlewarePipeline();
         $request = $this->createRequest();
 
-        $response = $pipeline->handle($request, fn() => Response::text('handled'));
+        $response = $pipeline->dispatch($request, fn() => Response::text('handled'));
 
-        self::assertSame('handled', $response->body);
+        self::assertSame('handled', (string) $response->getBody());
     }
 
     #[Test]
@@ -54,10 +48,10 @@ final class MiddlewarePipelineTest extends TestCase
             /** @param ArrayObject<int, string> $order */
             public function __construct(private readonly ArrayObject $order) {}
 
-            public function process(Request $request, callable $next): Response
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
                 $this->order->append('before1');
-                $response = $next($request);
+                $response = $handler->handle($request);
                 $this->order->append('after1');
                 return $response;
             }
@@ -67,10 +61,10 @@ final class MiddlewarePipelineTest extends TestCase
             /** @param ArrayObject<int, string> $order */
             public function __construct(private readonly ArrayObject $order) {}
 
-            public function process(Request $request, callable $next): Response
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
                 $this->order->append('before2');
-                $response = $next($request);
+                $response = $handler->handle($request);
                 $this->order->append('after2');
                 return $response;
             }
@@ -78,7 +72,7 @@ final class MiddlewarePipelineTest extends TestCase
 
         $pipeline->pipe($middleware1)->pipe($middleware2);
 
-        $pipeline->handle($this->createRequest(), function () use ($order) {
+        $pipeline->dispatch($this->createRequest(), function () use ($order) {
             $order->append('handler');
             return Response::text('ok');
         });
@@ -92,17 +86,17 @@ final class MiddlewarePipelineTest extends TestCase
         $pipeline = new MiddlewarePipeline();
 
         $middleware = new class implements MiddlewareInterface {
-            public function process(Request $request, callable $next): Response
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
-                return $next($request->withAttribute('modified', true));
+                return $handler->handle($request->withAttribute('modified', true));
             }
         };
 
         $pipeline->pipe($middleware);
         $receivedAttribute = null;
 
-        $pipeline->handle($this->createRequest(), function (Request $request) use (&$receivedAttribute) {
-            $receivedAttribute = $request->attribute('modified');
+        $pipeline->dispatch($this->createRequest(), function (ServerRequestInterface $request) use (&$receivedAttribute) {
+            $receivedAttribute = $request->getAttribute('modified');
             return Response::text('ok');
         });
 
@@ -115,18 +109,18 @@ final class MiddlewarePipelineTest extends TestCase
         $pipeline = new MiddlewarePipeline();
 
         $middleware = new class implements MiddlewareInterface {
-            public function process(Request $request, callable $next): Response
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
-                $response = $next($request);
+                $response = $handler->handle($request);
                 return $response->withHeader('X-Modified', 'true');
             }
         };
 
         $pipeline->pipe($middleware);
 
-        $response = $pipeline->handle($this->createRequest(), fn() => Response::text('ok'));
+        $response = $pipeline->dispatch($this->createRequest(), fn() => Response::text('ok'));
 
-        self::assertSame('true', $response->headers->first('X-Modified'));
+        self::assertSame(['true'], $response->getHeader('X-Modified'));
     }
 
     #[Test]
@@ -136,7 +130,7 @@ final class MiddlewarePipelineTest extends TestCase
         $handlerCalled = false;
 
         $middleware = new class implements MiddlewareInterface {
-            public function process(Request $request, callable $next): Response
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
                 return Response::text('short-circuited');
             }
@@ -144,13 +138,13 @@ final class MiddlewarePipelineTest extends TestCase
 
         $pipeline->pipe($middleware);
 
-        $response = $pipeline->handle($this->createRequest(), function () use (&$handlerCalled) {
+        $response = $pipeline->dispatch($this->createRequest(), function () use (&$handlerCalled) {
             $handlerCalled = true;
             return Response::text('handler');
         });
 
         self::assertFalse($handlerCalled);
-        self::assertSame('short-circuited', $response->body);
+        self::assertSame('short-circuited', (string) $response->getBody());
     }
 
     #[Test]
@@ -160,9 +154,9 @@ final class MiddlewarePipelineTest extends TestCase
 
         $pipeline->pipe(AddHeaderMiddleware::class);
 
-        $response = $pipeline->handle($this->createRequest(), fn() => Response::text('ok'));
+        $response = $pipeline->dispatch($this->createRequest(), fn() => Response::text('ok'));
 
-        self::assertSame('added', $response->headers->first('X-Test'));
+        self::assertSame(['added'], $response->getHeader('X-Test'));
     }
 
     #[Test]
@@ -175,9 +169,9 @@ final class MiddlewarePipelineTest extends TestCase
         $pipeline = new MiddlewarePipeline($container);
         $pipeline->pipe(AddHeaderMiddleware::class);
 
-        $response = $pipeline->handle($this->createRequest(), fn() => Response::text('ok'));
+        $response = $pipeline->dispatch($this->createRequest(), fn() => Response::text('ok'));
 
-        self::assertSame('added', $response->headers->first('X-Test'));
+        self::assertSame(['added'], $response->getHeader('X-Test'));
     }
 
     #[Test]
@@ -191,7 +185,7 @@ final class MiddlewarePipelineTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('could not be resolved');
 
-        $pipeline->handle($this->createRequest(), fn() => Response::text('ok'));
+        $pipeline->dispatch($this->createRequest(), fn() => Response::text('ok'));
     }
 
     #[Test]
@@ -233,10 +227,10 @@ final class MiddlewarePipelineTest extends TestCase
                 /** @param ArrayObject<int, string> $order */
                 public function __construct(private readonly ArrayObject $order, private readonly int $n) {}
 
-                public function process(Request $request, callable $next): Response
+                public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
                 {
                     $this->order->append("before{$this->n}");
-                    $response = $next($request);
+                    $response = $handler->handle($request);
                     $this->order->append("after{$this->n}");
                     return $response;
                 }
@@ -244,7 +238,7 @@ final class MiddlewarePipelineTest extends TestCase
             $pipeline->pipe($middleware);
         }
 
-        $pipeline->handle($this->createRequest(), function () use ($order) {
+        $pipeline->dispatch($this->createRequest(), function () use ($order) {
             $order->append('handler');
             return Response::text('ok');
         });
@@ -267,10 +261,10 @@ final class MiddlewarePipelineTest extends TestCase
             /** @param ArrayObject<int, string> $order */
             public function __construct(private readonly ArrayObject $order) {}
 
-            public function process(Request $request, callable $next): Response
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
                 $this->order->append('first');
-                return $next($request);
+                return $handler->handle($request);
             }
         });
 
@@ -279,7 +273,7 @@ final class MiddlewarePipelineTest extends TestCase
             /** @param ArrayObject<int, string> $order */
             public function __construct(private readonly ArrayObject $order) {}
 
-            public function process(Request $request, callable $next): Response
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
                 $this->order->append('blocker');
                 return Response::text('blocked');
@@ -291,28 +285,28 @@ final class MiddlewarePipelineTest extends TestCase
             /** @param ArrayObject<int, string> $order */
             public function __construct(private readonly ArrayObject $order) {}
 
-            public function process(Request $request, callable $next): Response
+            public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
                 $this->order->append('third');
-                return $next($request);
+                return $handler->handle($request);
             }
         });
 
-        $response = $pipeline->handle($this->createRequest(), function () use ($order) {
+        $response = $pipeline->dispatch($this->createRequest(), function () use ($order) {
             $order->append('handler');
             return Response::text('ok');
         });
 
         self::assertSame(['first', 'blocker'], $order->getArrayCopy());
-        self::assertSame('blocked', $response->body);
+        self::assertSame('blocked', (string) $response->getBody());
     }
 }
 
 class AddHeaderMiddleware implements MiddlewareInterface
 {
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $response = $next($request);
+        $response = $handler->handle($request);
         return $response->withHeader('X-Test', 'added');
     }
 }

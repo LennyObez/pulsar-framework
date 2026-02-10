@@ -9,9 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Server\Controller\ApiController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(ApiController::class)]
@@ -20,17 +18,18 @@ final class ApiControllerTest extends TestCase
     /**
      * @param array<string, mixed> $attributes
      */
-    private function createRequest(array $attributes = []): Request
+    private function createRequest(array $attributes = []): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/studio/api/events',
-            path: '/studio/api/events',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
-            attributes: $attributes,
         );
+
+        foreach ($attributes as $name => $value) {
+            $request = $request->withAttribute($name, $value);
+        }
+
+        return $request;
     }
 
     #[Test]
@@ -44,8 +43,8 @@ final class ApiControllerTest extends TestCase
 
         $response = $controller->events($this->createRequest());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('application/json; charset=utf-8', $response->contentType());
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('application/json; charset=utf-8', $response->getHeaderLine('Content-Type'));
     }
 
     #[Test]
@@ -69,7 +68,7 @@ final class ApiControllerTest extends TestCase
         $response = $controller->events($this->createRequest());
 
         /** @var array{events: list<array{event_id: string}>} $data */
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertArrayHasKey('events', $data);
         self::assertCount(1, $data['events']);
@@ -88,7 +87,7 @@ final class ApiControllerTest extends TestCase
         $response = $controller->events($this->createRequest());
 
         /** @var array{total: int} $data */
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertSame(42, $data['total']);
     }
 
@@ -104,7 +103,7 @@ final class ApiControllerTest extends TestCase
         $response = $controller->events($this->createRequest());
 
         /** @var array{limit: int, offset: int} $data */
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertSame(50, $data['limit']);
         self::assertSame(0, $data['offset']);
     }
@@ -125,7 +124,7 @@ final class ApiControllerTest extends TestCase
         $response = $controller->events($request);
 
         /** @var array{limit: int} $data */
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertSame(25, $data['limit']);
     }
 
@@ -145,7 +144,7 @@ final class ApiControllerTest extends TestCase
         $response = $controller->events($request);
 
         /** @var array{offset: int} $data */
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertSame(10, $data['offset']);
     }
 
@@ -325,7 +324,7 @@ final class ApiControllerTest extends TestCase
         $response = $controller->events($request);
 
         /** @var array{total: int} $data */
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertSame(10, $data['total']);
     }
 
@@ -341,7 +340,7 @@ final class ApiControllerTest extends TestCase
         $response = $controller->events($this->createRequest());
 
         /** @var array{events: list<mixed>, total: int} $data */
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertSame([], $data['events']);
         self::assertSame(0, $data['total']);
     }
