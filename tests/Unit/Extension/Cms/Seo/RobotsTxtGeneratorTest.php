@@ -15,7 +15,7 @@ final class RobotsTxtGeneratorTest extends TestCase
     // -- Structure ------------------------------------------------------------
 
     #[Test]
-    public function test_output_starts_with_user_agent_wildcard(): void
+    public function outputStartsWithUserAgentWildcard(): void
     {
         $generator = new RobotsTxtGenerator();
 
@@ -25,7 +25,7 @@ final class RobotsTxtGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_contains_sitemap_directive_with_url(): void
+    public function containsSitemapDirectiveWithUrl(): void
     {
         $generator = new RobotsTxtGenerator();
 
@@ -35,7 +35,7 @@ final class RobotsTxtGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_contains_allow_rule(): void
+    public function containsAllowRule(): void
     {
         $generator = new RobotsTxtGenerator();
 
@@ -45,7 +45,7 @@ final class RobotsTxtGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_contains_disallow_admin_and_api(): void
+    public function containsDisallowAdminAndApi(): void
     {
         $generator = new RobotsTxtGenerator();
 
@@ -56,7 +56,7 @@ final class RobotsTxtGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_output_ends_with_newline(): void
+    public function outputEndsWithNewline(): void
     {
         $generator = new RobotsTxtGenerator();
 
@@ -66,7 +66,7 @@ final class RobotsTxtGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_trailing_slash_stripped_from_base_url(): void
+    public function trailingSlashStrippedFromBaseUrl(): void
     {
         $generator = new RobotsTxtGenerator();
 
@@ -77,7 +77,7 @@ final class RobotsTxtGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_output_has_no_syntax_errors(): void
+    public function outputHasNoSyntaxErrors(): void
     {
         $generator = new RobotsTxtGenerator();
         $output = $generator->generate('https://example.com');

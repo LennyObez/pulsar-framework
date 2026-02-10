@@ -52,7 +52,7 @@ final class CommentRateLimiterTest extends TestCase
     // -- Under limit: allowed ---------------------------------------------
 
     #[Test]
-    public function test_first_request_is_allowed(): void
+    public function firstRequestIsAllowed(): void
     {
         $middleware = new CommentRateLimitMiddleware($this->cache);
         $request = $this->createRequest('192.168.1.1');
@@ -63,7 +63,7 @@ final class CommentRateLimiterTest extends TestCase
     }
 
     #[Test]
-    public function test_under_per_minute_limit_is_allowed(): void
+    public function underPerMinuteLimitIsAllowed(): void
     {
         $middleware = new CommentRateLimitMiddleware($this->cache, rateLimitPerMinute: 5);
         $request = $this->createRequest('10.0.0.1');
@@ -78,7 +78,7 @@ final class CommentRateLimiterTest extends TestCase
     // -- At per-minute limit: blocked -------------------------------------
 
     #[Test]
-    public function test_exceeding_per_minute_limit_returns_429(): void
+    public function exceedingPerMinuteLimitReturns429(): void
     {
         $middleware = new CommentRateLimitMiddleware($this->cache, rateLimitPerMinute: 3);
         $request = $this->createRequest('10.0.0.2');
@@ -98,7 +98,7 @@ final class CommentRateLimiterTest extends TestCase
     // -- At per-hour limit: blocked ---------------------------------------
 
     #[Test]
-    public function test_exceeding_per_hour_limit_returns_429(): void
+    public function exceedingPerHourLimitReturns429(): void
     {
         // High per-minute, low per-hour to test hour logic
         $middleware = new CommentRateLimitMiddleware($this->cache, rateLimitPerMinute: 100, rateLimitPerHour: 5);
@@ -116,7 +116,7 @@ final class CommentRateLimiterTest extends TestCase
     // -- Different IPs have separate limits -------------------------------
 
     #[Test]
-    public function test_different_ips_have_separate_limits(): void
+    public function differentIpsHaveSeparateLimits(): void
     {
         $middleware = new CommentRateLimitMiddleware($this->cache, rateLimitPerMinute: 2);
 
@@ -139,7 +139,7 @@ final class CommentRateLimiterTest extends TestCase
     // -- Rate limit headers on success ------------------------------------
 
     #[Test]
-    public function test_successful_response_includes_rate_limit_headers(): void
+    public function successfulResponseIncludesRateLimitHeaders(): void
     {
         $middleware = new CommentRateLimitMiddleware($this->cache, rateLimitPerMinute: 10);
         $request = $this->createRequest('10.0.0.50');
@@ -154,7 +154,7 @@ final class CommentRateLimiterTest extends TestCase
     // -- Missing IP defaults gracefully -----------------------------------
 
     #[Test]
-    public function test_missing_remote_addr_defaults_gracefully(): void
+    public function missingRemoteAddrDefaultsGracefully(): void
     {
         $middleware = new CommentRateLimitMiddleware($this->cache);
 

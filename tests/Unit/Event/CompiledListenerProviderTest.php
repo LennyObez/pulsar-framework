@@ -18,7 +18,7 @@ use stdClass;
 final class CompiledListenerProviderTest extends TestCase
 {
     #[Test]
-    public function test_getListenersForEvent_returns_empty_for_unregistered_event(): void
+    public function getListenersForEventReturnsEmptyForUnregisteredEvent(): void
     {
         $container = $this->createStub(ContainerInterface::class);
         $provider = new CompiledListenerProvider([], $container);
@@ -29,7 +29,7 @@ final class CompiledListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_getListenersForEvent_resolves_from_container(): void
+    public function getListenersForEventResolvesFromContainer(): void
     {
         $listener = new class {
             public bool $called = false;
@@ -66,7 +66,7 @@ final class CompiledListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_addListener_throws(): void
+    public function addListenerThrows(): void
     {
         $container = $this->createStub(ContainerInterface::class);
         $provider = new CompiledListenerProvider([], $container);
@@ -78,7 +78,7 @@ final class CompiledListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_addSubscriber_throws(): void
+    public function addSubscriberThrows(): void
     {
         $container = $this->createStub(ContainerInterface::class);
         $provider = new CompiledListenerProvider([], $container);
@@ -96,7 +96,7 @@ final class CompiledListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_listenerModuleIdsFor(): void
+    public function listenerModuleIdsFor(): void
     {
         $container = $this->createStub(ContainerInterface::class);
         $compiledMap = [
@@ -114,7 +114,7 @@ final class CompiledListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_listenerModuleIdsFor_unknown_event(): void
+    public function listenerModuleIdsForUnknownEvent(): void
     {
         $container = $this->createStub(ContainerInterface::class);
         $provider = new CompiledListenerProvider([], $container);
@@ -123,7 +123,7 @@ final class CompiledListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_stormOverrideFor(): void
+    public function stormOverrideFor(): void
     {
         $container = $this->createStub(ContainerInterface::class);
         $compiledMap = [
@@ -141,7 +141,7 @@ final class CompiledListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_requiresEnvelopeFor(): void
+    public function requiresEnvelopeFor(): void
     {
         $container = $this->createStub(ContainerInterface::class);
         $compiledMap = [
@@ -160,7 +160,7 @@ final class CompiledListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_compiledEventClasses(): void
+    public function compiledEventClasses(): void
     {
         $container = $this->createStub(ContainerInterface::class);
         $compiledMap = [
@@ -178,7 +178,7 @@ final class CompiledListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_polymorphic_matching_with_parent_class(): void
+    public function polymorphicMatchingWithParentClass(): void
     {
         $listener = new class {
             public bool $called = false;

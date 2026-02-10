@@ -122,8 +122,8 @@ final class TemplateCacheTest extends TestCase
     {
         $this->cache->forget('nonexistent', 'somehash');
 
-        // No exception thrown — operation is safe for nonexistent entries
-        $this->addToAssertionCount(1);
+        // Forgetting a non-existent entry is a safe no-op — the cache reports it still absent
+        self::assertFalse($this->cache->has('nonexistent', 'somehash'));
     }
 
     #[Test]
@@ -145,8 +145,8 @@ final class TemplateCacheTest extends TestCase
 
         $cache->flush();
 
-        // No exception thrown — operation is safe for nonexistent directory
-        $this->addToAssertionCount(1);
+        // Flushing a cache pointing at a nonexistent directory is a safe no-op
+        self::assertFalse($cache->has('any', 'hash'));
     }
 
     #[Test]

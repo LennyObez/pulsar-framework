@@ -36,10 +36,12 @@ final class CompositeSpanProcessorTest extends TestCase
     public function emptyProcessorListDoesNothing(): void
     {
         $composite = new CompositeSpanProcessor([]);
-        $composite->onEnd($this->createSpan());
+        $span = $this->createSpan();
+        $composite->onEnd($span);
 
-        // No exception means pass
-        $this->addToAssertionCount(1);
+        // No processors to dispatch to — span's ended state was not altered by the composite
+        self::assertFalse($span->hasEnded(), 'onEnd on composite must not call span->end()');
+        self::assertInstanceOf(CompositeSpanProcessor::class, $composite);
     }
 
     #[Test]

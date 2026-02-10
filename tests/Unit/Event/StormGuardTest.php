@@ -15,7 +15,7 @@ use Pulsar\Event\Internal\StormGuard;
 final class StormGuardTest extends TestCase
 {
     #[Test]
-    public function test_enter_and_leave_track_depth(): void
+    public function enterAndLeaveTrackDepth(): void
     {
         $guard = new StormGuard(new StormProtectionConfig());
 
@@ -35,7 +35,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_enter_tracks_dispatch_chain(): void
+    public function enterTracksDispatchChain(): void
     {
         $guard = new StormGuard(new StormProtectionConfig());
 
@@ -46,7 +46,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_throws_when_maxDepth_exceeded(): void
+    public function throwsWhenMaxDepthExceeded(): void
     {
         $guard = new StormGuard(new StormProtectionConfig(maxDepth: 2));
 
@@ -60,7 +60,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_override_maxDepth_allows_deeper_dispatch(): void
+    public function overrideMaxDepthAllowsDeeperDispatch(): void
     {
         $guard = new StormGuard(new StormProtectionConfig(maxDepth: 2));
 
@@ -76,7 +76,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_loop_detection_throws_when_max_repeats_reached(): void
+    public function loopDetectionThrowsWhenMaxRepeatsReached(): void
     {
         $guard = new StormGuard(new StormProtectionConfig(maxDepth: 32, maxRepeatsPerEvent: 3));
 
@@ -91,7 +91,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_loop_detection_allows_under_threshold(): void
+    public function loopDetectionAllowsUnderThreshold(): void
     {
         $guard = new StormGuard(new StormProtectionConfig(maxDepth: 32, maxRepeatsPerEvent: 3));
 
@@ -108,7 +108,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_loop_detection_disabled(): void
+    public function loopDetectionDisabled(): void
     {
         $guard = new StormGuard(new StormProtectionConfig(maxDepth: 32, loopDetection: false, maxRepeatsPerEvent: 2));
 
@@ -125,7 +125,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_leave_does_not_underflow(): void
+    public function leaveDoesNotUnderflow(): void
     {
         $guard = new StormGuard(new StormProtectionConfig());
 
@@ -137,7 +137,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_reset_clears_state(): void
+    public function resetClearsState(): void
     {
         $guard = new StormGuard(new StormProtectionConfig());
 
@@ -151,7 +151,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_enter_does_not_corrupt_state_on_depth_exceeded(): void
+    public function enterDoesNotCorruptStateOnDepthExceeded(): void
     {
         $guard = new StormGuard(new StormProtectionConfig(maxDepth: 1));
 
@@ -168,7 +168,7 @@ final class StormGuardTest extends TestCase
     }
 
     #[Test]
-    public function test_enter_does_not_corrupt_state_on_loop_detected(): void
+    public function enterDoesNotCorruptStateOnLoopDetected(): void
     {
         $guard = new StormGuard(new StormProtectionConfig(maxDepth: 32, maxRepeatsPerEvent: 2));
 

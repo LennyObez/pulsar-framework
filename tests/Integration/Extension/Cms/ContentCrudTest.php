@@ -35,7 +35,7 @@ final class ContentCrudTest extends TestCase
     }
 
     #[Test]
-    public function test_create_content_persists_all_fields(): void
+    public function createContentPersistsAllFields(): void
     {
         $content = Content::create(
             id: '019461a0-0000-7000-8000-000000000001',
@@ -69,7 +69,7 @@ final class ContentCrudTest extends TestCase
     }
 
     #[Test]
-    public function test_find_content_by_id_returns_full_aggregate(): void
+    public function findContentByIdReturnsFullAggregate(): void
     {
         $content = Content::create(
             id: '019461a0-0000-7000-8000-000000000002',
@@ -87,7 +87,7 @@ final class ContentCrudTest extends TestCase
     }
 
     #[Test]
-    public function test_find_content_by_path_resolves_correctly(): void
+    public function findContentByPathResolvesCorrectly(): void
     {
         $content = Content::create(
             id: '019461a0-0000-7000-8000-000000000003',
@@ -115,7 +115,7 @@ final class ContentCrudTest extends TestCase
     }
 
     #[Test]
-    public function test_find_published_content_returns_only_published(): void
+    public function findPublishedContentReturnsOnlyPublished(): void
     {
         // Create a draft and a published content item
         $draft = Content::create(
@@ -146,7 +146,7 @@ final class ContentCrudTest extends TestCase
     }
 
     #[Test]
-    public function test_update_content_preserves_existing_translations(): void
+    public function updateContentPreservesExistingTranslations(): void
     {
         $content = Content::create(
             id: '019461a0-0000-7000-8000-000000000006',
@@ -179,7 +179,7 @@ final class ContentCrudTest extends TestCase
     }
 
     #[Test]
-    public function test_soft_delete_content_marks_deleted_at(): void
+    public function softDeleteContentMarksDeletedAt(): void
     {
         $content = Content::create(
             id: '019461a0-0000-7000-8000-000000000007',
@@ -196,7 +196,7 @@ final class ContentCrudTest extends TestCase
     }
 
     #[Test]
-    public function test_soft_deleted_content_not_returned_in_queries(): void
+    public function softDeletedContentNotReturnedInQueries(): void
     {
         $content = Content::create(
             id: '019461a0-0000-7000-8000-000000000008',
@@ -221,7 +221,7 @@ final class ContentCrudTest extends TestCase
     }
 
     #[Test]
-    public function test_create_content_with_translation_in_multiple_locales(): void
+    public function createContentWithTranslationInMultipleLocales(): void
     {
         $content = Content::create(
             id: '019461a0-0000-7000-8000-000000000009',
@@ -269,7 +269,7 @@ final class ContentCrudTest extends TestCase
     }
 
     #[Test]
-    public function test_content_hierarchy_parent_child_relationship(): void
+    public function contentHierarchyParentChildRelationship(): void
     {
         $parent = Content::create(
             id: '019461a0-0000-7000-8000-00000000000a',

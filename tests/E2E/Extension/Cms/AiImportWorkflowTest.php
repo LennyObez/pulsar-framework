@@ -6,6 +6,7 @@ namespace Pulsar\Tests\E2E\Extension\Cms;
 
 use DateTimeImmutable;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,11 +22,12 @@ use function json_encode;
 /**
  * E2E: AI-driven site import — JSON definition -> dry-run -> execute -> verify entities.
  */
+#[CoversClass(SiteDefinition::class)]
 #[Group('e2e-cms')]
 final class AiImportWorkflowTest extends TestCase
 {
     #[Test]
-    public function test_full_site_import_dry_run_then_execute(): void
+    public function fullSiteImportDryRunThenExecute(): void
     {
         $siteDefinitionData = [
             'version' => '1.0',
@@ -178,7 +180,7 @@ final class AiImportWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_invalid_definition_missing_version(): void
+    public function invalidDefinitionMissingVersion(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -186,7 +188,7 @@ final class AiImportWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_content_with_parent_references_preserved(): void
+    public function contentWithParentReferencesPreserved(): void
     {
         $json = json_encode([
             'version' => '1.0',
@@ -206,7 +208,7 @@ final class AiImportWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_empty_content_import_produces_zero_counts(): void
+    public function emptyContentImportProducesZeroCounts(): void
     {
         $json = json_encode([
             'version' => '1.0',

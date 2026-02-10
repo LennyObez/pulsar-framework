@@ -22,7 +22,7 @@ final class DigitalDeliveryTest extends TestCase
     // ── Token generation produces non-empty string ──────────────────
 
     #[Test]
-    public function test_download_token_is_non_empty(): void
+    public function downloadTokenIsNonEmpty(): void
     {
         $download = new DigitalDownload(
             id: 'dl-001',
@@ -40,7 +40,7 @@ final class DigitalDeliveryTest extends TestCase
     // ── Expiry check: future = valid ────────────────────────────────
 
     #[Test]
-    public function test_future_expiry_is_valid(): void
+    public function futureExpiryIsValid(): void
     {
         $download = new DigitalDownload(
             id: 'dl-002',
@@ -57,7 +57,7 @@ final class DigitalDeliveryTest extends TestCase
     // ── Expiry check: past = invalid ────────────────────────────────
 
     #[Test]
-    public function test_past_expiry_is_invalid(): void
+    public function pastExpiryIsInvalid(): void
     {
         $download = new DigitalDownload(
             id: 'dl-003',
@@ -74,7 +74,7 @@ final class DigitalDeliveryTest extends TestCase
     // ── Download count enforcement: 0 remaining = rejected ──────────
 
     #[Test]
-    public function test_zero_remaining_downloads_is_invalid(): void
+    public function zeroRemainingDownloadsIsInvalid(): void
     {
         $download = new DigitalDownload(
             id: 'dl-004',
@@ -89,7 +89,7 @@ final class DigitalDeliveryTest extends TestCase
     }
 
     #[Test]
-    public function test_one_remaining_download_is_valid(): void
+    public function oneRemainingDownloadIsValid(): void
     {
         $download = new DigitalDownload(
             id: 'dl-005',
@@ -106,7 +106,7 @@ final class DigitalDeliveryTest extends TestCase
     // ── Explicit now parameter ──────────────────────────────────────
 
     #[Test]
-    public function test_is_valid_with_explicit_now(): void
+    public function isValidWithExplicitNow(): void
     {
         $expiry = new DateTimeImmutable('2025-06-01');
 
@@ -129,7 +129,7 @@ final class DigitalDeliveryTest extends TestCase
     // ── DownloadResult DTO ──────────────────────────────────────────
 
     #[Test]
-    public function test_download_result_success(): void
+    public function downloadResultSuccess(): void
     {
         $result = new DownloadResult(
             success: true,
@@ -145,7 +145,7 @@ final class DigitalDeliveryTest extends TestCase
     }
 
     #[Test]
-    public function test_download_result_failure(): void
+    public function downloadResultFailure(): void
     {
         $result = new DownloadResult(
             success: false,
@@ -163,7 +163,7 @@ final class DigitalDeliveryTest extends TestCase
     // ── DigitalAsset entity ─────────────────────────────────────────
 
     #[Test]
-    public function test_digital_asset_creation(): void
+    public function digitalAssetCreation(): void
     {
         $asset = new DigitalAsset(
             id: 'asset-001',

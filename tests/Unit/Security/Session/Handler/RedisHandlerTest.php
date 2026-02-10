@@ -37,32 +37,32 @@ final class RedisHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_open_returns_true(): void
+    public function openReturnsTrue(): void
     {
         self::assertTrue($this->handler->open('', 'TEST'));
     }
 
     #[Test]
-    public function test_close_returns_true(): void
+    public function closeReturnsTrue(): void
     {
         self::assertTrue($this->handler->close());
     }
 
     #[Test]
-    public function test_read_returns_empty_for_nonexistent(): void
+    public function readReturnsEmptyForNonexistent(): void
     {
         self::assertSame('', $this->handler->read('nonexistent'));
     }
 
     #[Test]
-    public function test_write_and_read_roundtrip(): void
+    public function writeAndReadRoundtrip(): void
     {
         self::assertTrue($this->handler->write('s1', 'session-data'));
         self::assertSame('session-data', $this->handler->read('s1'));
     }
 
     #[Test]
-    public function test_destroy_removes_session(): void
+    public function destroyRemovesSession(): void
     {
         $this->handler->write('s1', 'data');
 
@@ -71,31 +71,31 @@ final class RedisHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_gc_returns_zero(): void
+    public function gcReturnsZero(): void
     {
         self::assertSame(0, $this->handler->gc(7200));
     }
 
     #[Test]
-    public function test_supports_concurrency_control(): void
+    public function supportsConcurrencyControl(): void
     {
         self::assertTrue($this->handler->supportsConcurrencyControl());
     }
 
     #[Test]
-    public function test_supports_session_listing(): void
+    public function supportsSessionListing(): void
     {
         self::assertTrue($this->handler->supportsSessionListing());
     }
 
     #[Test]
-    public function test_supports_revocation(): void
+    public function supportsRevocation(): void
     {
         self::assertTrue($this->handler->supportsRevocation());
     }
 
     #[Test]
-    public function test_session_context_stored_with_write(): void
+    public function sessionContextStoredWithWrite(): void
     {
         $this->handler->setSessionContext('user-1', '10.0.0.1', 'Chrome');
         $this->handler->write('s1', 'data');
@@ -112,7 +112,7 @@ final class RedisHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_write_with_user_adds_to_user_set(): void
+    public function writeWithUserAddsToUserSet(): void
     {
         $this->handler->setSessionContext('user-1', '10.0.0.1', 'Chrome');
         $this->handler->write('s1', 'data');
@@ -121,7 +121,7 @@ final class RedisHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_destroy_removes_from_user_set(): void
+    public function destroyRemovesFromUserSet(): void
     {
         $this->handler->setSessionContext('user-1', '10.0.0.1', 'Chrome');
         $this->handler->write('s1', 'data');
@@ -132,7 +132,7 @@ final class RedisHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_get_active_sessions_counts_existing(): void
+    public function getActiveSessionsCountsExisting(): void
     {
         $this->handler->setSessionContext('user-1', '10.0.0.1', 'Chrome');
         $this->handler->write('s1', 'data1');
@@ -142,7 +142,7 @@ final class RedisHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_list_sessions_returns_session_data(): void
+    public function listSessionsReturnsSessionData(): void
     {
         $this->handler->setSessionContext('user-1', '10.0.0.1', 'Chrome');
         $this->handler->write('s1', 'data1');
@@ -156,7 +156,7 @@ final class RedisHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_revoke_session_destroys_it(): void
+    public function revokeSessionDestroysIt(): void
     {
         $this->handler->write('s1', 'data');
 
@@ -165,7 +165,7 @@ final class RedisHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_list_sessions_cleans_expired(): void
+    public function listSessionsCleansExpired(): void
     {
         $this->handler->setSessionContext('user-1', '10.0.0.1', 'Chrome');
         $this->handler->write('s1', 'data');

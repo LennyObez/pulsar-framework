@@ -67,7 +67,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- checkContent extracts URLs and creates records -----------------------
 
     #[Test]
-    public function test_check_content_creates_records_for_each_url(): void
+    public function checkContentCreatesRecordsForEachUrl(): void
     {
         $content = $this->createPublishedContent('c-001');
         $this->contentRepo->add($content);
@@ -95,7 +95,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- checkContent skips relative URLs and non-HTTP schemes ----------------
 
     #[Test]
-    public function test_check_content_only_extracts_http_urls(): void
+    public function checkContentOnlyExtractsHttpUrls(): void
     {
         $content = $this->createPublishedContent('c-002');
         $this->contentRepo->add($content);
@@ -123,7 +123,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- checkContent deduplicates URLs ---------------------------------------
 
     #[Test]
-    public function test_check_content_deduplicates_same_url(): void
+    public function checkContentDeduplicatesSameUrl(): void
     {
         $content = $this->createPublishedContent('c-003');
         $this->contentRepo->add($content);
@@ -146,7 +146,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- checkContent returns empty for missing translation -------------------
 
     #[Test]
-    public function test_check_content_returns_empty_for_missing_translation(): void
+    public function checkContentReturnsEmptyForMissingTranslation(): void
     {
         $content = $this->createPublishedContent('c-004');
         $this->contentRepo->add($content);
@@ -161,7 +161,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- checkContent clears previous results before re-checking --------------
 
     #[Test]
-    public function test_check_content_clears_previous_results(): void
+    public function checkContentClearsPreviousResults(): void
     {
         $content = $this->createPublishedContent('c-005');
         $this->contentRepo->add($content);
@@ -186,7 +186,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- checkAll dispatches event with totals --------------------------------
 
     #[Test]
-    public function test_check_all_dispatches_completion_event(): void
+    public function checkAllDispatchesCompletionEvent(): void
     {
         $content = $this->createPublishedContent('c-006');
         $this->contentRepo->add($content);
@@ -211,7 +211,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- checkAll processes multiple content items ----------------------------
 
     #[Test]
-    public function test_check_all_processes_all_published_content(): void
+    public function checkAllProcessesAllPublishedContent(): void
     {
         $contentA = $this->createPublishedContent('c-007a');
         $contentB = $this->createPublishedContent('c-007b');
@@ -243,7 +243,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- getBrokenLinks delegates to repository -------------------------------
 
     #[Test]
-    public function test_get_broken_links_delegates_to_repository(): void
+    public function getBrokenLinksDelegatesToRepository(): void
     {
         $now = new DateTimeImmutable();
 
@@ -288,7 +288,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- getOrphanContent finds content with no inbound links -----------------
 
     #[Test]
-    public function test_orphan_detection_finds_unlinked_content(): void
+    public function orphanDetectionFindsUnlinkedContent(): void
     {
         $now = new DateTimeImmutable();
 
@@ -325,7 +325,7 @@ final class LinkHealthIntegrationTest extends TestCase
     // -- Content with no URLs produces empty results --------------------------
 
     #[Test]
-    public function test_content_with_no_urls_produces_empty_results(): void
+    public function contentWithNoUrlsProducesEmptyResults(): void
     {
         $content = $this->createPublishedContent('c-nolinks');
         $this->contentRepo->add($content);

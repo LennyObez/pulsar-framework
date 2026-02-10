@@ -17,7 +17,7 @@ final class PublishingStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('validStandardTransitionsProvider')]
-    public function test_can_transition_to_valid_standard_pair(PublishingStatus $from, PublishingStatus $to): void
+    public function canTransitionToValidStandardPair(PublishingStatus $from, PublishingStatus $to): void
     {
         self::assertTrue($from->canTransitionTo($to, editorialWorkflow: false));
     }
@@ -36,7 +36,7 @@ final class PublishingStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('invalidStandardTransitionsProvider')]
-    public function test_cannot_transition_to_invalid_standard_pair(PublishingStatus $from, PublishingStatus $to): void
+    public function cannotTransitionToInvalidStandardPair(PublishingStatus $from, PublishingStatus $to): void
     {
         self::assertFalse($from->canTransitionTo($to, editorialWorkflow: false));
     }
@@ -72,7 +72,7 @@ final class PublishingStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('validEditorialTransitionsProvider')]
-    public function test_can_transition_to_valid_editorial_pair(PublishingStatus $from, PublishingStatus $to): void
+    public function canTransitionToValidEditorialPair(PublishingStatus $from, PublishingStatus $to): void
     {
         self::assertTrue($from->canTransitionTo($to, editorialWorkflow: true));
     }
@@ -100,7 +100,7 @@ final class PublishingStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('invalidEditorialTransitionsProvider')]
-    public function test_cannot_transition_to_invalid_editorial_pair(PublishingStatus $from, PublishingStatus $to): void
+    public function cannotTransitionToInvalidEditorialPair(PublishingStatus $from, PublishingStatus $to): void
     {
         self::assertFalse($from->canTransitionTo($to, editorialWorkflow: true));
     }
@@ -122,7 +122,7 @@ final class PublishingStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('allStatusesProvider')]
-    public function test_cannot_transition_to_self(PublishingStatus $status): void
+    public function cannotTransitionToSelf(PublishingStatus $status): void
     {
         self::assertFalse($status->canTransitionTo($status));
         self::assertFalse($status->canTransitionTo($status, editorialWorkflow: true));
@@ -141,7 +141,7 @@ final class PublishingStatusTest extends TestCase
     // ── isPubliclyVisible ────────────────────────────────────────────
 
     #[Test]
-    public function test_is_publicly_visible_only_for_published(): void
+    public function isPubliclyVisibleOnlyForPublished(): void
     {
         self::assertTrue(PublishingStatus::Published->isPubliclyVisible());
         self::assertFalse(PublishingStatus::Draft->isPubliclyVisible());
@@ -155,7 +155,7 @@ final class PublishingStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('labelProvider')]
-    public function test_label_returns_human_readable_string(PublishingStatus $status, string $expectedLabel): void
+    public function labelReturnsHumanReadableString(PublishingStatus $status, string $expectedLabel): void
     {
         self::assertSame($expectedLabel, $status->label());
     }
@@ -176,7 +176,7 @@ final class PublishingStatusTest extends TestCase
     // ── Backed enum values ───────────────────────────────────────────
 
     #[Test]
-    public function test_all_statuses_have_expected_string_values(): void
+    public function allStatusesHaveExpectedStringValues(): void
     {
         self::assertSame('draft', PublishingStatus::Draft->value);
         self::assertSame('in_review', PublishingStatus::InReview->value);
@@ -187,14 +187,14 @@ final class PublishingStatusTest extends TestCase
     }
 
     #[Test]
-    public function test_from_valid_value_returns_correct_case(): void
+    public function fromValidValueReturnsCorrectCase(): void
     {
         self::assertSame(PublishingStatus::Draft, PublishingStatus::from('draft'));
         self::assertSame(PublishingStatus::Published, PublishingStatus::from('published'));
     }
 
     #[Test]
-    public function test_try_from_invalid_value_returns_null(): void
+    public function tryFromInvalidValueReturnsNull(): void
     {
         self::assertNull(PublishingStatus::tryFrom('nonexistent'));
     }

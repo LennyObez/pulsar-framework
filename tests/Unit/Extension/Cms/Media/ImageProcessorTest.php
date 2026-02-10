@@ -54,7 +54,7 @@ final class ImageProcessorTest extends TestCase
     // ── Resize: aspect ratio preservation ────────────────────────────────
 
     #[Test]
-    public function test_resize_preserves_aspect_ratio_when_height_is_null(): void
+    public function resizePreservesAspectRatioWhenHeightIsNull(): void
     {
         $source = $this->createJpeg(200, 100);
 
@@ -68,7 +68,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_resize_with_explicit_dimensions(): void
+    public function resizeWithExplicitDimensions(): void
     {
         $source = $this->createJpeg(200, 200);
 
@@ -82,7 +82,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_resize_does_not_upscale(): void
+    public function resizeDoesNotUpscale(): void
     {
         $source = $this->createJpeg(100, 80);
 
@@ -97,7 +97,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_resize_tall_image_preserves_ratio(): void
+    public function resizeTallImagePreservesRatio(): void
     {
         $source = $this->createJpeg(100, 400);
 
@@ -113,7 +113,7 @@ final class ImageProcessorTest extends TestCase
     // ── Format detection / output ────────────────────────────────────────
 
     #[Test]
-    public function test_resize_outputs_jpeg_format(): void
+    public function resizeOutputsJpegFormat(): void
     {
         $source = $this->createJpeg(100, 100);
 
@@ -126,7 +126,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_resize_outputs_png_format(): void
+    public function resizeOutputsPngFormat(): void
     {
         $source = $this->createPng(100, 100);
 
@@ -139,7 +139,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_resize_outputs_webp_format(): void
+    public function resizeOutputsWebpFormat(): void
     {
         $source = $this->createJpeg(100, 100);
 
@@ -152,7 +152,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_resize_outputs_gif_format(): void
+    public function resizeOutputsGifFormat(): void
     {
         $source = $this->createGif(100, 100);
 
@@ -165,7 +165,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_resize_from_png_to_jpeg_format_conversion(): void
+    public function resizeFromPngToJpegFormatConversion(): void
     {
         $source = $this->createPng(100, 100);
 
@@ -178,7 +178,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_resize_unsupported_format_throws(): void
+    public function resizeUnsupportedFormatThrows(): void
     {
         $source = $this->createJpeg(100, 100);
 
@@ -190,7 +190,7 @@ final class ImageProcessorTest extends TestCase
     // ── EXIF extraction ──────────────────────────────────────────────────
 
     #[Test]
-    public function test_extract_exif_returns_array_for_jpeg(): void
+    public function extractExifReturnsArrayForJpeg(): void
     {
         $source = $this->createJpeg(100, 100);
 
@@ -202,7 +202,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_extract_exif_returns_empty_for_png(): void
+    public function extractExifReturnsEmptyForPng(): void
     {
         $source = $this->createPng(100, 100);
 
@@ -213,7 +213,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_extract_exif_returns_empty_for_invalid_file(): void
+    public function extractExifReturnsEmptyForInvalidFile(): void
     {
         $path = $this->tmpDir . '/not_an_image.txt';
         file_put_contents($path, 'not an image');
@@ -226,7 +226,7 @@ final class ImageProcessorTest extends TestCase
     // ── EXIF stripping ───────────────────────────────────────────────────
 
     #[Test]
-    public function test_strip_exif_returns_valid_jpeg(): void
+    public function stripExifReturnsValidJpeg(): void
     {
         $source = $this->createJpeg(100, 100);
 
@@ -243,7 +243,7 @@ final class ImageProcessorTest extends TestCase
     // ── Blur placeholder generation ──────────────────────────────────────
 
     #[Test]
-    public function test_blur_placeholder_returns_base64_data_uri(): void
+    public function blurPlaceholderReturnsBase64DataUri(): void
     {
         $source = $this->createJpeg(200, 100);
 
@@ -253,7 +253,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_blur_placeholder_is_valid_base64(): void
+    public function blurPlaceholderIsValidBase64(): void
     {
         $source = $this->createJpeg(200, 100);
 
@@ -266,7 +266,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_blur_placeholder_is_small(): void
+    public function blurPlaceholderIsSmall(): void
     {
         $source = $this->createJpeg(1000, 600);
 
@@ -280,7 +280,7 @@ final class ImageProcessorTest extends TestCase
     // ── Invalid source throws ────────────────────────────────────────────
 
     #[Test]
-    public function test_resize_invalid_source_throws(): void
+    public function resizeInvalidSourceThrows(): void
     {
         $path = $this->tmpDir . '/bad.jpg';
         file_put_contents($path, 'not an image');
@@ -290,7 +290,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_blur_placeholder_invalid_source_throws(): void
+    public function blurPlaceholderInvalidSourceThrows(): void
     {
         $path = $this->tmpDir . '/bad.jpg';
         file_put_contents($path, 'not an image');
@@ -300,7 +300,7 @@ final class ImageProcessorTest extends TestCase
     }
 
     #[Test]
-    public function test_resize_nonexistent_source_throws(): void
+    public function resizeNonexistentSourceThrows(): void
     {
         $this->expectException(CmsException::class);
         $this->processor->resize($this->tmpDir . '/nonexistent.jpg', 50, 50, 'jpeg');
@@ -309,7 +309,7 @@ final class ImageProcessorTest extends TestCase
     // ── WebP quality configuration ───────────────────────────────────────
 
     #[Test]
-    public function test_resize_respects_webp_quality_config(): void
+    public function resizeRespectsWebpQualityConfig(): void
     {
         $highQuality = new MediaConfig(webpQuality: 100);
         $lowQuality = new MediaConfig(webpQuality: 1);

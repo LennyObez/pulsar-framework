@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Extension\Cms\Content;
+namespace Pulsar\Tests\Unit\Extension\Cms\Content;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;

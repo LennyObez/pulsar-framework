@@ -18,7 +18,7 @@ final class PromotionTest extends TestCase
     // ── Promotion types ─────────────────────────────────────────────
 
     #[Test]
-    public function test_percentage_off_type(): void
+    public function percentageOffType(): void
     {
         $promo = $this->createPromotion(type: PromotionType::PercentageOff, value: 15);
 
@@ -28,7 +28,7 @@ final class PromotionTest extends TestCase
     }
 
     #[Test]
-    public function test_fixed_amount_off_type(): void
+    public function fixedAmountOffType(): void
     {
         $promo = $this->createPromotion(type: PromotionType::FixedAmountOff, value: 500);
 
@@ -38,7 +38,7 @@ final class PromotionTest extends TestCase
     }
 
     #[Test]
-    public function test_free_shipping_type(): void
+    public function freeShippingType(): void
     {
         $promo = $this->createPromotion(type: PromotionType::FreeShipping, value: 0);
 
@@ -47,7 +47,7 @@ final class PromotionTest extends TestCase
     }
 
     #[Test]
-    public function test_buy_x_get_y_type(): void
+    public function buyXGetYType(): void
     {
         $promo = $this->createPromotion(type: PromotionType::BuyXGetY, value: 1);
 
@@ -58,7 +58,7 @@ final class PromotionTest extends TestCase
     // ── Validation: expired promotion ───────────────────────────────
 
     #[Test]
-    public function test_expired_promotion_is_out_of_date_range(): void
+    public function expiredPromotionIsOutOfDateRange(): void
     {
         $promo = new Promotion(
             id: 'promo-001',
@@ -83,7 +83,7 @@ final class PromotionTest extends TestCase
     // ── Validation: not yet started ─────────────────────────────────
 
     #[Test]
-    public function test_not_yet_started_promotion(): void
+    public function notYetStartedPromotion(): void
     {
         $promo = new Promotion(
             id: 'promo-002',
@@ -108,7 +108,7 @@ final class PromotionTest extends TestCase
     // ── Validation: within date range ───────────────────────────────
 
     #[Test]
-    public function test_active_promotion_within_date_range(): void
+    public function activePromotionWithinDateRange(): void
     {
         $promo = new Promotion(
             id: 'promo-003',
@@ -133,7 +133,7 @@ final class PromotionTest extends TestCase
     // ── Validation: max uses exceeded ───────────────────────────────
 
     #[Test]
-    public function test_max_uses_exceeded(): void
+    public function maxUsesExceeded(): void
     {
         $promo = new Promotion(
             id: 'promo-004',
@@ -156,7 +156,7 @@ final class PromotionTest extends TestCase
     }
 
     #[Test]
-    public function test_has_remaining_uses(): void
+    public function hasRemainingUses(): void
     {
         $promo = new Promotion(
             id: 'promo-005',
@@ -179,7 +179,7 @@ final class PromotionTest extends TestCase
     }
 
     #[Test]
-    public function test_unlimited_uses_always_has_remaining(): void
+    public function unlimitedUsesAlwaysHasRemaining(): void
     {
         $promo = new Promotion(
             id: 'promo-006',
@@ -204,7 +204,7 @@ final class PromotionTest extends TestCase
     // ── Min order amount ────────────────────────────────────────────
 
     #[Test]
-    public function test_min_order_amount_field(): void
+    public function minOrderAmountField(): void
     {
         $promo = $this->createPromotion(minOrderAmount: 5000);
 
@@ -214,7 +214,7 @@ final class PromotionTest extends TestCase
     // ── Applicable products ─────────────────────────────────────────
 
     #[Test]
-    public function test_applicable_product_ids(): void
+    public function applicableProductIds(): void
     {
         $promo = new Promotion(
             id: 'promo-007',
@@ -239,7 +239,7 @@ final class PromotionTest extends TestCase
     // ── No date constraints means always valid ──────────────────────
 
     #[Test]
-    public function test_null_dates_always_within_range(): void
+    public function nullDatesAlwaysWithinRange(): void
     {
         $promo = $this->createPromotion();
 
@@ -249,7 +249,7 @@ final class PromotionTest extends TestCase
     // ── Promotion type enum values ──────────────────────────────────
 
     #[Test]
-    public function test_promotion_type_string_values(): void
+    public function promotionTypeStringValues(): void
     {
         self::assertSame('percentage_off', PromotionType::PercentageOff->value);
         self::assertSame('fixed_amount_off', PromotionType::FixedAmountOff->value);

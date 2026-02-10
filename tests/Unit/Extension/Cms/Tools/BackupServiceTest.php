@@ -24,7 +24,7 @@ final class BackupServiceTest extends TestCase
     // ── Create produces Backup with hash ────────────────────────────
 
     #[Test]
-    public function test_create_backup_produces_hash(): void
+    public function createBackupProducesHash(): void
     {
         $service = $this->createBackupService();
 
@@ -43,7 +43,7 @@ final class BackupServiceTest extends TestCase
     // ── Restore verifies hash ───────────────────────────────────────
 
     #[Test]
-    public function test_restore_verifies_hash_success(): void
+    public function restoreVerifiesHashSuccess(): void
     {
         $service = $this->createBackupService();
 
@@ -59,7 +59,7 @@ final class BackupServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_restore_nonexistent_backup_throws(): void
+    public function restoreNonexistentBackupThrows(): void
     {
         $service = $this->createBackupService();
 
@@ -71,7 +71,7 @@ final class BackupServiceTest extends TestCase
     // ── BackupScope fromArray ───────────────────────────────────────
 
     #[Test]
-    public function test_backup_scope_from_array(): void
+    public function backupScopeFromArray(): void
     {
         $scope = BackupScope::fromArray([
             'include_content' => true,
@@ -93,7 +93,7 @@ final class BackupServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_backup_scope_to_array(): void
+    public function backupScopeToArray(): void
     {
         $scope = new BackupScope(
             includeContent: true,
@@ -112,7 +112,7 @@ final class BackupServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_backup_scope_defaults(): void
+    public function backupScopeDefaults(): void
     {
         $scope = new BackupScope();
 
@@ -127,7 +127,7 @@ final class BackupServiceTest extends TestCase
     // ── List backups ────────────────────────────────────────────────
 
     #[Test]
-    public function test_list_backups(): void
+    public function listBackups(): void
     {
         $service = $this->createBackupService();
 

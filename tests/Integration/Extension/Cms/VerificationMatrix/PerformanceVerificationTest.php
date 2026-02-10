@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Integration\Extension\Cms\VerificationMatrix;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -29,6 +30,7 @@ use function memory_get_usage;
  *
  * Validates performance budgets for critical CMS operations.
  */
+#[CoversClass(Content::class)]
 #[Group('verification-matrix')]
 final class PerformanceVerificationTest extends TestCase
 {
@@ -38,7 +40,7 @@ final class PerformanceVerificationTest extends TestCase
      * Simulates cached page lookup. In-memory repository acts as cache.
      */
     #[Test]
-    public function test_p1_cached_ttfb(): void
+    public function p1CachedTtfb(): void
     {
         $repo = $this->seedRepository(100);
 
@@ -65,7 +67,7 @@ final class PerformanceVerificationTest extends TestCase
      * Simulates uncached lookup with full object hydration.
      */
     #[Test]
-    public function test_p2_cache_miss_ttfb(): void
+    public function p2CacheMissTtfb(): void
     {
         $repo = $this->seedRepository(500);
 
@@ -84,7 +86,7 @@ final class PerformanceVerificationTest extends TestCase
      * P3: Search latency < 100ms for keyword lookup.
      */
     #[Test]
-    public function test_p3_search_latency(): void
+    public function p3SearchLatency(): void
     {
         $translations = [];
         for ($i = 0; $i < 200; $i++) {
@@ -119,7 +121,7 @@ final class PerformanceVerificationTest extends TestCase
      * P4: Media upload processing — object creation < 50ms.
      */
     #[Test]
-    public function test_p4_media_upload(): void
+    public function p4MediaUpload(): void
     {
         $start = hrtime(true);
 
@@ -156,7 +158,7 @@ final class PerformanceVerificationTest extends TestCase
      * P5: Sitemap generation — 1000 URLs < 500ms.
      */
     #[Test]
-    public function test_p5_sitemap_generation(): void
+    public function p5SitemapGeneration(): void
     {
         $urls = [];
         for ($i = 0; $i < 1000; $i++) {
@@ -192,7 +194,7 @@ final class PerformanceVerificationTest extends TestCase
      * P6: Large import — 500 content items < 5s.
      */
     #[Test]
-    public function test_p6_large_import(): void
+    public function p6LargeImport(): void
     {
         $contentItems = [];
         for ($i = 0; $i < 500; $i++) {
@@ -225,7 +227,7 @@ final class PerformanceVerificationTest extends TestCase
      * P7: Memory budget — creating 1000 content objects stays under 50MB.
      */
     #[Test]
-    public function test_p7_memory_budget(): void
+    public function p7MemoryBudget(): void
     {
         $baseMemory = memory_get_usage(true);
 
@@ -252,7 +254,7 @@ final class PerformanceVerificationTest extends TestCase
      * should compute; the rest should wait for the result.
      */
     #[Test]
-    public function test_p8_stampede_protection(): void
+    public function p8StampedeProtection(): void
     {
         $computeCount = 0;
         $cache = [];

@@ -21,7 +21,7 @@ use Pulsar\Extension\Cms\Workflow\ReviewStatus;
 final class EditorialWorkflowTest extends TestCase
 {
     #[Test]
-    public function test_contributor_submits_reviewer_approves_editor_publishes(): void
+    public function contributorSubmitsReviewerApprovesEditorPublishes(): void
     {
         // Step 1: Contributor creates draft
         $content = Content::create(
@@ -47,7 +47,7 @@ final class EditorialWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_contributor_cannot_publish_directly_in_editorial_mode(): void
+    public function contributorCannotPublishDirectlyInEditorialMode(): void
     {
         $content = Content::create(
             id: 'content-editorial-002',
@@ -78,7 +78,7 @@ final class EditorialWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_reviewer_rejects_content_returns_to_draft_with_comment(): void
+    public function reviewerRejectsContentReturnsToDraftWithComment(): void
     {
         $content = Content::create(
             id: 'content-editorial-003',
@@ -115,7 +115,7 @@ final class EditorialWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_review_cancellation(): void
+    public function reviewCancellation(): void
     {
         $content = Content::create(
             id: 'content-editorial-004',
@@ -151,7 +151,7 @@ final class EditorialWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_editorial_workflow_invalid_transitions(): void
+    public function editorialWorkflowInvalidTransitions(): void
     {
         // Published content cannot go to InReview
         self::assertFalse(PublishingStatus::Published->canTransitionTo(PublishingStatus::InReview, editorialWorkflow: true));
@@ -171,7 +171,7 @@ final class EditorialWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_review_status_values(): void
+    public function reviewStatusValues(): void
     {
         self::assertSame('pending', ReviewStatus::Pending->value);
         self::assertSame('in_review', ReviewStatus::InReview->value);
@@ -181,7 +181,7 @@ final class EditorialWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_editorial_review_tracks_all_metadata(): void
+    public function editorialReviewTracksAllMetadata(): void
     {
         $createdAt = new DateTimeImmutable('2026-01-15 10:00:00');
         $decidedAt = new DateTimeImmutable('2026-01-15 14:30:00');

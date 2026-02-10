@@ -22,7 +22,7 @@ final class TaxCalculatorTest extends TestCase
     // ── Rate lookup by country + category ────────────────────────────
 
     #[Test]
-    public function test_rate_lookup_by_country_and_category(): void
+    public function rateLookupByCountryAndCategory(): void
     {
         $calculator = $this->createCalculator([
             new TaxRateConfig('standard', 0.21, 'Belgian VAT', ['BE']),
@@ -44,7 +44,7 @@ final class TaxCalculatorTest extends TestCase
     // ── Zero-rate fallback when no matching rate ────────────────────
 
     #[Test]
-    public function test_zero_rate_fallback_when_no_matching_rate(): void
+    public function zeroRateFallbackWhenNoMatchingRate(): void
     {
         $calculator = $this->createCalculator([
             new TaxRateConfig('standard', 0.21, 'Belgian VAT', ['BE']),
@@ -64,7 +64,7 @@ final class TaxCalculatorTest extends TestCase
     // ── VAT reverse charge ──────────────────────────────────────────
 
     #[Test]
-    public function test_vat_reverse_charge_zeroes_tax(): void
+    public function vatReverseChargeZeroesTax(): void
     {
         $calculator = $this->createCalculator([
             new TaxRateConfig('standard', 0.21, 'Belgian VAT', ['BE']),
@@ -85,7 +85,7 @@ final class TaxCalculatorTest extends TestCase
     // ── Multiple items with different categories ────────────────────
 
     #[Test]
-    public function test_multiple_items_with_different_categories(): void
+    public function multipleItemsWithDifferentCategories(): void
     {
         $calculator = $this->createCalculator([
             new TaxRateConfig('standard', 0.21, 'Standard', ['BE']),
@@ -115,7 +115,7 @@ final class TaxCalculatorTest extends TestCase
     // ── Rounding — all in minor units ───────────────────────────────
 
     #[Test]
-    public function test_rounding_in_minor_units(): void
+    public function roundingInMinorUnits(): void
     {
         $calculator = $this->createCalculator([
             new TaxRateConfig('standard', 0.21, 'VAT 21%', ['NL']),
@@ -134,7 +134,7 @@ final class TaxCalculatorTest extends TestCase
     // ── Null tax category falls back to zero ────────────────────────
 
     #[Test]
-    public function test_null_tax_category_falls_back_to_zero(): void
+    public function nullTaxCategoryFallsBackToZero(): void
     {
         $calculator = $this->createCalculator([
             new TaxRateConfig('standard', 0.21, 'Standard', ['BE']),

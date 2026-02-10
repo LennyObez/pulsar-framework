@@ -24,7 +24,7 @@ use function json_encode;
 final class ImportExportIntegrationTest extends TestCase
 {
     #[Test]
-    public function test_export_then_import_dry_run(): void
+    public function exportThenImportDryRun(): void
     {
         $service = $this->createImportExportService();
 
@@ -64,7 +64,7 @@ final class ImportExportIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_export_with_pii_redaction(): void
+    public function exportWithPiiRedaction(): void
     {
         $service = $this->createImportExportService();
 
@@ -93,7 +93,7 @@ final class ImportExportIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_import_execute_mode(): void
+    public function importExecuteMode(): void
     {
         $service = $this->createImportExportService();
 

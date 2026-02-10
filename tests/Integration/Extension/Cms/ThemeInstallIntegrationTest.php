@@ -67,7 +67,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     // -- Install creates DB record and extracts files -------------------------
 
     #[Test]
-    public function test_install_creates_db_record_and_extracts_files(): void
+    public function installCreatesDbRecordAndExtractsFiles(): void
     {
         $archivePath = $this->createValidThemeArchive('test-theme', '1.0.0');
         $manager = $this->createManager(requireSigned: false);
@@ -94,7 +94,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     // -- Activate sets is_active and deploys assets ---------------------------
 
     #[Test]
-    public function test_activate_sets_is_active(): void
+    public function activateSetsIsActive(): void
     {
         $archivePath = $this->createValidThemeArchive('active-theme', '1.0.0');
         $manager = $this->createManager(requireSigned: false);
@@ -113,7 +113,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_activate_deactivates_previous_active_theme(): void
+    public function activateDeactivatesPreviousActiveTheme(): void
     {
         $manager = $this->createManager(requireSigned: false);
 
@@ -138,7 +138,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     // -- Delete soft-deletes and removes files --------------------------------
 
     #[Test]
-    public function test_delete_removes_from_repository(): void
+    public function deleteRemovesFromRepository(): void
     {
         $archivePath = $this->createValidThemeArchive('deletable', '1.0.0');
         $manager = $this->createManager(requireSigned: false);
@@ -159,7 +159,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_cannot_delete_active_theme(): void
+    public function cannotDeleteActiveTheme(): void
     {
         $archivePath = $this->createValidThemeArchive('active-del', '1.0.0');
         $manager = $this->createManager(requireSigned: false);
@@ -175,7 +175,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     // -- Unsigned theme rejected when requireSignedThemes=true ----------------
 
     #[Test]
-    public function test_unsigned_theme_rejected_when_signed_required(): void
+    public function unsignedThemeRejectedWhenSignedRequired(): void
     {
         $archivePath = $this->createValidThemeArchive('unsigned-theme', '1.0.0');
         $manager = $this->createManager(requireSigned: true, trustedKeys: []);
@@ -188,7 +188,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     // -- Signed theme accepted ------------------------------------------------
 
     #[Test]
-    public function test_signed_theme_accepted(): void
+    public function signedThemeAccepted(): void
     {
         $keypair = sodium_crypto_sign_keypair();
         $secretKey = sodium_crypto_sign_secretkey($keypair);
@@ -217,7 +217,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     // -- Tampered archive rejected --------------------------------------------
 
     #[Test]
-    public function test_tampered_archive_rejected(): void
+    public function tamperedArchiveRejected(): void
     {
         $keypair = sodium_crypto_sign_keypair();
         $secretKey = sodium_crypto_sign_secretkey($keypair);
@@ -245,7 +245,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     // -- Invalid manifest rejected --------------------------------------------
 
     #[Test]
-    public function test_archive_without_manifest_rejected(): void
+    public function archiveWithoutManifestRejected(): void
     {
         // Create a zip without theme.json
         $zipPath = $this->tmpDir . '/no-manifest.zip';
@@ -264,7 +264,7 @@ final class ThemeInstallIntegrationTest extends TestCase
     // -- Rollback to previous theme -------------------------------------------
 
     #[Test]
-    public function test_rollback_activates_previously_deactivated_theme(): void
+    public function rollbackActivatesPreviouslyDeactivatedTheme(): void
     {
         $manager = $this->createManager(requireSigned: false);
 

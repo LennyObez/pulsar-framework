@@ -144,10 +144,13 @@ final class SuperglobalResetterTest extends TestCase
     #[Test]
     public function it_does_not_touch_session_when_inactive(): void
     {
-        // session_status() will return PHP_SESSION_NONE in CLI
-        // This should NOT cause errors or warnings
-        $this->expectNotToPerformAssertions();
+        // session_status() returns PHP_SESSION_NONE in CLI — reset() must handle it safely
         $this->resetter->reset();
+
+        // All request superglobals cleared; resetter did not crash
+        self::assertSame([], $_GET);
+        self::assertSame([], $_POST);
+        self::assertSame([], $_COOKIE);
     }
 
     #[Test]

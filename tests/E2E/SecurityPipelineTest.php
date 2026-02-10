@@ -295,6 +295,85 @@ final class SecurityPipelineTest extends TestCase
     }
 
     #[Test]
+    public function securityHeadersAreAppliedEvenOnCsrfRejection(): void
+    {
+        $session = $this->createInMemorySession();
+        $csrfConfig = $this->createCsrfConfig();
+        $tokenManager = new CsrfTokenManager($session, $csrfConfig);
+        $csrfMiddleware = new CsrfMiddleware($tokenManager, $csrfConfig);
+
+        $headersConfig = new SecurityHeadersConfig(headers: [
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'DENY',
+        ]);
+        $headersMiddleware = new SecurityHeadersMiddleware($headersConfig);
+
+        // POST without token — CSRF will reject with 403
+        $request = $this->createRequest('POST', '/submit');
+
+        $csrfHandler = new class ($csrfMiddleware, $this->createHandler(fn(ServerRequestInterface $r): ResponseInterface => Response::text('ok'))) implements RequestHandlerInterface {
+            public function __construct(
+                private readonly CsrfMiddleware $middleware,
+                private readonly RequestHandlerInterface $inner,
+            ) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->middleware->process($request, $this->inner);
+            }
+        };
+
+        $response = $headersMiddleware->process($request, $csrfHandler);
+
+        // CSRF blocked the request
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+
+        // Security headers must still be present on the 403 response
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
+    }
+
+    #[Test]
+    public function csrfSafeMethodsStillReceiveSecurityHeaders(): void
+    {
+        $session = $this->createInMemorySession();
+        $csrfConfig = $this->createCsrfConfig();
+        $tokenManager = new CsrfTokenManager($session, $csrfConfig);
+        $csrfMiddleware = new CsrfMiddleware($tokenManager, $csrfConfig);
+
+        $headersConfig = new SecurityHeadersConfig(headers: [
+            'X-Content-Type-Options' => 'nosniff',
+            'Referrer-Policy' => 'strict-origin-when-cross-origin',
+        ]);
+        $headersMiddleware = new SecurityHeadersMiddleware($headersConfig);
+
+        // GET request bypasses CSRF check entirely
+        $request = $this->createRequest('GET', '/page');
+
+        $innerHandler = $this->createHandler(fn(ServerRequestInterface $r): ResponseInterface => Response::text('page content'));
+
+        $csrfHandler = new class ($csrfMiddleware, $innerHandler) implements RequestHandlerInterface {
+            public function __construct(
+                private readonly CsrfMiddleware $middleware,
+                private readonly RequestHandlerInterface $inner,
+            ) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->middleware->process($request, $this->inner);
+            }
+        };
+
+        $response = $headersMiddleware->process($request, $csrfHandler);
+
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('page content', (string) $response->getBody());
+        // Security headers applied despite CSRF being bypassed for safe methods
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame('strict-origin-when-cross-origin', $response->getHeaderLine('Referrer-Policy'));
+    }
+
+    #[Test]
     public function securityHeadersAndCsrfMiddlewareWorkTogetherInPipeline(): void
     {
         $session = $this->createInMemorySession();

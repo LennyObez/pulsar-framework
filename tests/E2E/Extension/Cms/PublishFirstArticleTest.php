@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -22,11 +23,12 @@ use function hash;
  * E2E: Publish a first article with multi-locale content, taxonomy, hero image,
  * SEO metadata, and sitemap verification.
  */
+#[CoversClass(Content::class)]
 #[Group('e2e-cms')]
 final class PublishFirstArticleTest extends TestCase
 {
     #[Test]
-    public function test_publish_article_with_full_metadata(): void
+    public function publishArticleWithFullMetadata(): void
     {
         // 1. Create content
         $content = Content::create(

@@ -59,7 +59,7 @@ final class SitemapIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_sitemap_includes_published_content_with_hreflang(): void
+    public function sitemapIncludesPublishedContentWithHreflang(): void
     {
         $now = new DateTimeImmutable();
         $content = $this->createContent('c-001', ContentType::Article, PublishingStatus::Published, $now);
@@ -90,7 +90,7 @@ final class SitemapIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_unpublished_content_excluded_from_sitemap(): void
+    public function unpublishedContentExcludedFromSitemap(): void
     {
         $now = new DateTimeImmutable();
 
@@ -111,7 +111,7 @@ final class SitemapIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_deleted_content_excluded_from_sitemap(): void
+    public function deletedContentExcludedFromSitemap(): void
     {
         $now = new DateTimeImmutable();
 
@@ -150,7 +150,7 @@ final class SitemapIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_sitemap_index_references_all_content_types(): void
+    public function sitemapIndexReferencesAllContentTypes(): void
     {
         $now = new DateTimeImmutable();
         $article = $this->createContent('c-art', ContentType::Article, PublishingStatus::Published, $now);
@@ -168,7 +168,7 @@ final class SitemapIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_multiple_published_articles_all_appear_in_sitemap(): void
+    public function multiplePublishedArticlesAllAppearInSitemap(): void
     {
         $now = new DateTimeImmutable();
 

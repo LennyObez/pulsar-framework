@@ -25,7 +25,7 @@ final class ThemeManifestValidatorTest extends TestCase
     // -- Valid manifests -------------------------------------------------------
 
     #[Test]
-    public function test_valid_manifest_passes(): void
+    public function validManifestPasses(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -44,7 +44,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_manifest_with_prerelease_version(): void
+    public function validManifestWithPrereleaseVersion(): void
     {
         $manifest = new ThemeManifest(
             slug: 'alpha-theme',
@@ -58,7 +58,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_manifest_with_build_metadata(): void
+    public function validManifestWithBuildMetadata(): void
     {
         $manifest = new ThemeManifest(
             slug: 'meta-theme',
@@ -74,7 +74,7 @@ final class ThemeManifestValidatorTest extends TestCase
     // -- Missing required fields ----------------------------------------------
 
     #[Test]
-    public function test_empty_slug_fails(): void
+    public function emptySlugFails(): void
     {
         $manifest = new ThemeManifest(
             slug: '',
@@ -89,7 +89,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_empty_display_name_fails(): void
+    public function emptyDisplayNameFails(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -103,7 +103,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_empty_version_fails(): void
+    public function emptyVersionFails(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -117,7 +117,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_default_version_0_0_0_fails(): void
+    public function defaultVersion000Fails(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -133,7 +133,7 @@ final class ThemeManifestValidatorTest extends TestCase
     // -- Invalid slug format --------------------------------------------------
 
     #[Test]
-    public function test_slug_with_uppercase_fails(): void
+    public function slugWithUppercaseFails(): void
     {
         $manifest = new ThemeManifest(
             slug: 'My-Theme',
@@ -147,7 +147,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_with_spaces_fails(): void
+    public function slugWithSpacesFails(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my theme',
@@ -161,7 +161,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_starting_with_hyphen_fails(): void
+    public function slugStartingWithHyphenFails(): void
     {
         $manifest = new ThemeManifest(
             slug: '-my-theme',
@@ -175,7 +175,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_ending_with_hyphen_fails(): void
+    public function slugEndingWithHyphenFails(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme-',
@@ -189,7 +189,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_exceeding_max_length_fails(): void
+    public function slugExceedingMaxLengthFails(): void
     {
         $manifest = new ThemeManifest(
             slug: str_repeat('a', 201),
@@ -203,7 +203,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_at_max_length_passes(): void
+    public function slugAtMaxLengthPasses(): void
     {
         $manifest = new ThemeManifest(
             slug: str_repeat('a', 200),
@@ -219,7 +219,7 @@ final class ThemeManifestValidatorTest extends TestCase
     // -- Invalid version format -----------------------------------------------
 
     #[Test]
-    public function test_version_not_semver_fails(): void
+    public function versionNotSemverFails(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -233,7 +233,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_version_missing_patch_fails(): void
+    public function versionMissingPatchFails(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -249,7 +249,7 @@ final class ThemeManifestValidatorTest extends TestCase
     // -- Warnings for missing optional fields ---------------------------------
 
     #[Test]
-    public function test_missing_description_produces_warning(): void
+    public function missingDescriptionProducesWarning(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -271,7 +271,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_missing_author_produces_warning(): void
+    public function missingAuthorProducesWarning(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -292,7 +292,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_missing_license_produces_warning(): void
+    public function missingLicenseProducesWarning(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -313,7 +313,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_no_regions_declared_produces_warning(): void
+    public function noRegionsDeclaredProducesWarning(): void
     {
         $manifest = new ThemeManifest(
             slug: 'my-theme',
@@ -334,7 +334,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_fully_populated_manifest_no_warnings(): void
+    public function fullyPopulatedManifestNoWarnings(): void
     {
         $manifest = new ThemeManifest(
             slug: 'complete-theme',
@@ -355,7 +355,7 @@ final class ThemeManifestValidatorTest extends TestCase
     // -- fromArray factory -----------------------------------------------------
 
     #[Test]
-    public function test_manifest_from_array_valid(): void
+    public function manifestFromArrayValid(): void
     {
         $manifest = ThemeManifest::fromArray([
             'slug' => 'json-theme',
@@ -372,7 +372,7 @@ final class ThemeManifestValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_manifest_from_array_missing_fields_fails(): void
+    public function manifestFromArrayMissingFieldsFails(): void
     {
         $manifest = ThemeManifest::fromArray([]);
 
@@ -385,7 +385,7 @@ final class ThemeManifestValidatorTest extends TestCase
     // -- Multiple errors accumulated ------------------------------------------
 
     #[Test]
-    public function test_multiple_errors_accumulated(): void
+    public function multipleErrorsAccumulated(): void
     {
         $manifest = new ThemeManifest(
             slug: '',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Database\Routing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
@@ -44,7 +45,8 @@ final class RoutingConnectionManagerTest extends TestCase
         );
     }
 
-    public function test_select_uses_read_replica(): void
+    #[Test]
+    public function selectUsesReadReplica(): void
     {
         $this->inner->method('connection')
             ->willReturnMap([
@@ -65,7 +67,8 @@ final class RoutingConnectionManagerTest extends TestCase
         self::assertSame($this->replicaConnection, $connection);
     }
 
-    public function test_insert_uses_primary(): void
+    #[Test]
+    public function insertUsesPrimary(): void
     {
         $this->inner->method('connection')
             ->willReturn($this->primaryConnection);
@@ -82,7 +85,8 @@ final class RoutingConnectionManagerTest extends TestCase
         self::assertSame($this->primaryConnection, $connection);
     }
 
-    public function test_after_write_reads_pinned_to_primary(): void
+    #[Test]
+    public function afterWriteReadsPinnedToPrimary(): void
     {
         $this->inner->method('connection')
             ->willReturn($this->primaryConnection);
@@ -103,7 +107,8 @@ final class RoutingConnectionManagerTest extends TestCase
         self::assertSame($this->primaryConnection, $connection);
     }
 
-    public function test_transaction_always_uses_primary(): void
+    #[Test]
+    public function transactionAlwaysUsesPrimary(): void
     {
         $this->inner->method('connection')
             ->willReturn($this->primaryConnection);
@@ -123,7 +128,8 @@ final class RoutingConnectionManagerTest extends TestCase
         self::assertSame($this->primaryConnection, $connection);
     }
 
-    public function test_use_primary_override_single_query(): void
+    #[Test]
+    public function usePrimaryOverrideSingleQuery(): void
     {
         $this->inner->method('connection')
             ->willReturnMap([
@@ -148,7 +154,8 @@ final class RoutingConnectionManagerTest extends TestCase
         self::assertSame($this->replicaConnection, $second);
     }
 
-    public function test_use_replica_override_single_query(): void
+    #[Test]
+    public function useReplicaOverrideSingleQuery(): void
     {
         $this->inner->method('connection')
             ->willReturnMap([
@@ -174,7 +181,8 @@ final class RoutingConnectionManagerTest extends TestCase
         self::assertSame($this->replicaConnection, $connection);
     }
 
-    public function test_replica_override_emits_audit_event(): void
+    #[Test]
+    public function replicaOverrideEmitsAuditEvent(): void
     {
         $auditLogger = $this->createMock(AuditLoggerInterface::class);
         $auditLogger->expects(self::once())
@@ -199,7 +207,8 @@ final class RoutingConnectionManagerTest extends TestCase
         $manager->useReplica();
     }
 
-    public function test_multiple_replicas_load_balanced(): void
+    #[Test]
+    public function multipleReplicasLoadBalanced(): void
     {
         $replica1 = $this->createStub(ConnectionInterface::class);
         $replica2 = $this->createStub(ConnectionInterface::class);
@@ -227,7 +236,8 @@ final class RoutingConnectionManagerTest extends TestCase
         self::assertSame($replica2, $second);
     }
 
-    public function test_get_default_connection_name_delegates_to_inner(): void
+    #[Test]
+    public function getDefaultConnectionNameDelegatesToInner(): void
     {
         $this->inner->method('getDefaultConnectionName')
             ->willReturn('primary');
@@ -242,7 +252,8 @@ final class RoutingConnectionManagerTest extends TestCase
         self::assertSame('primary', $manager->getDefaultConnectionName());
     }
 
-    public function test_disconnect_delegates_to_inner(): void
+    #[Test]
+    public function disconnectDelegatesToInner(): void
     {
         $inner = $this->createMock(ConnectionManagerInterface::class);
         $inner->expects(self::once())
@@ -259,7 +270,8 @@ final class RoutingConnectionManagerTest extends TestCase
         $manager->disconnect('primary');
     }
 
-    public function test_reset_routing_clears_all_state(): void
+    #[Test]
+    public function resetRoutingClearsAllState(): void
     {
         $this->inner->method('connection')
             ->willReturnMap([
@@ -286,7 +298,8 @@ final class RoutingConnectionManagerTest extends TestCase
         self::assertSame($this->replicaConnection, $connection);
     }
 
-    public function test_no_read_hosts_always_uses_primary(): void
+    #[Test]
+    public function noReadHostsAlwaysUsesPrimary(): void
     {
         $config = new ReadWriteConfig(
             readHosts: [],

@@ -19,7 +19,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 final class ContentCacheInspectorPanelTest extends TestCase
 {
     #[Test]
-    public function test_inspect_returns_hit_for_cached_content(): void
+    public function inspectReturnsHitForCachedContent(): void
     {
         $taggedCache = $this->createStub(TaggedCacheInterface::class);
         $taggedCache->method('get')
@@ -36,7 +36,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_inspect_returns_miss_for_uncached_content(): void
+    public function inspectReturnsMissForUncachedContent(): void
     {
         $taggedCache = $this->createStub(TaggedCacheInterface::class);
         $taggedCache->method('get')->willReturn(null);
@@ -50,7 +50,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_inspect_calculates_hit_rate_correctly(): void
+    public function inspectCalculatesHitRateCorrectly(): void
     {
         $taggedCache = $this->createStub(TaggedCacheInterface::class);
         $taggedCache->method('get')
@@ -69,7 +69,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_inspect_empty_content_ids_returns_zero_rate(): void
+    public function inspectEmptyContentIdsReturnsZeroRate(): void
     {
         $taggedCache = $this->createStub(TaggedCacheInterface::class);
         $panel = new ContentCacheInspectorPanel($taggedCache, new MetricRegistry());
@@ -83,7 +83,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_get_metrics_hit_rate_with_no_metrics(): void
+    public function getMetricsHitRateWithNoMetrics(): void
     {
         $taggedCache = $this->createStub(TaggedCacheInterface::class);
         $panel = new ContentCacheInspectorPanel($taggedCache, new MetricRegistry());
@@ -92,7 +92,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_get_metrics_hit_rate_from_counters(): void
+    public function getMetricsHitRateFromCounters(): void
     {
         $registry = new MetricRegistry();
         $registry->counter('cms_page_cache_hits_total')->increment(value: 80.0);
@@ -105,7 +105,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_invalidate_by_content_id(): void
+    public function invalidateByContentId(): void
     {
         $taggedCache = $this->createMock(TaggedCacheInterface::class);
         $taggedCache->expects(self::once())
@@ -117,7 +117,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_invalidate_by_tag(): void
+    public function invalidateByTag(): void
     {
         $taggedCache = $this->createMock(TaggedCacheInterface::class);
         $taggedCache->expects(self::once())
@@ -129,7 +129,7 @@ final class ContentCacheInspectorPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_flush_all(): void
+    public function flushAll(): void
     {
         $taggedCache = $this->createMock(TaggedCacheInterface::class);
         $taggedCache->expects(self::once())

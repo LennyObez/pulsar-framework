@@ -89,7 +89,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     // -- PluginManifest autoload field ----------------------------------------
 
     #[Test]
-    public function test_plugin_manifest_parses_autoload_field(): void
+    public function pluginManifestParsesAutoloadField(): void
     {
         $manifest = PluginManifest::fromArray([
             'slug' => 'test-plugin',
@@ -109,7 +109,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     }
 
     #[Test]
-    public function test_plugin_manifest_autoload_defaults_to_null(): void
+    public function pluginManifestAutoloadDefaultsToNull(): void
     {
         $manifest = PluginManifest::fromArray([
             'slug' => 'test-plugin',
@@ -123,7 +123,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     // -- PSR-4 autoloader registration ----------------------------------------
 
     #[Test]
-    public function test_register_psr4_autoloader_resolves_class_from_namespace(): void
+    public function registerPsr4AutoloaderResolvesClassFromNamespace(): void
     {
         // Create a plugin directory with PSR-4 structure
         $pluginDir = $this->tempDir . '/my-plugin';
@@ -154,7 +154,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     }
 
     #[Test]
-    public function test_register_psr4_autoloader_ignores_non_matching_prefix(): void
+    public function registerPsr4AutoloaderIgnoresNonMatchingPrefix(): void
     {
         $pluginDir = $this->tempDir . '/other-plugin';
         mkdir($pluginDir . '/src', 0o755, true);
@@ -172,7 +172,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     }
 
     #[Test]
-    public function test_register_psr4_autoloader_handles_nested_namespaces(): void
+    public function registerPsr4AutoloaderHandlesNestedNamespaces(): void
     {
         $pluginDir = $this->tempDir . '/nested-plugin';
         $subDir = $pluginDir . '/src/Sub/Deep';
@@ -201,7 +201,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     // -- loadPluginInstance priority -----------------------------------------
 
     #[Test]
-    public function test_load_plugin_instance_returns_null_when_manifest_missing(): void
+    public function loadPluginInstanceReturnsNullWhenManifestMissing(): void
     {
         $plugin = $this->createInstalledPlugin($this->tempDir . '/nonexistent');
 
@@ -212,7 +212,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     }
 
     #[Test]
-    public function test_load_plugin_instance_returns_null_when_entry_point_missing(): void
+    public function loadPluginInstanceReturnsNullWhenEntryPointMissing(): void
     {
         $pluginDir = $this->tempDir . '/no-entry';
         mkdir($pluginDir, 0o755, true);
@@ -232,7 +232,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     }
 
     #[Test]
-    public function test_load_plugin_instance_uses_psr4_autoload_from_manifest(): void
+    public function loadPluginInstanceUsesPsr4AutoloadFromManifest(): void
     {
         $pluginDir = $this->tempDir . '/psr4-plugin';
         $srcDir = $pluginDir . '/src';
@@ -283,7 +283,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     }
 
     #[Test]
-    public function test_load_plugin_instance_falls_back_to_direct_file_require(): void
+    public function loadPluginInstanceFallsBackToDirectFileRequire(): void
     {
         $pluginDir = $this->tempDir . '/fallback-plugin';
         $srcDir = $pluginDir . '/src';
@@ -323,7 +323,7 @@ final class CmsPluginManagerPsr4Test extends TestCase
     }
 
     #[Test]
-    public function test_load_plugin_instance_returns_null_for_unresolvable_class(): void
+    public function loadPluginInstanceReturnsNullForUnresolvableClass(): void
     {
         $pluginDir = $this->tempDir . '/unresolvable-plugin';
         mkdir($pluginDir, 0o755, true);

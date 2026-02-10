@@ -22,7 +22,7 @@ final class ContentLockingTest extends TestCase
     }
 
     #[Test]
-    public function test_acquire_lock_succeeds_when_unlocked(): void
+    public function acquireLockSucceedsWhenUnlocked(): void
     {
         $lock = $this->lockService->acquire('content-001', 'user-001');
 
@@ -33,7 +33,7 @@ final class ContentLockingTest extends TestCase
     }
 
     #[Test]
-    public function test_acquire_lock_fails_when_locked_by_another(): void
+    public function acquireLockFailsWhenLockedByAnother(): void
     {
         $this->lockService->acquire('content-001', 'user-001');
 
@@ -43,7 +43,7 @@ final class ContentLockingTest extends TestCase
     }
 
     #[Test]
-    public function test_release_lock_succeeds_for_owner(): void
+    public function releaseLockSucceedsForOwner(): void
     {
         $this->lockService->acquire('content-001', 'user-001');
 
@@ -54,7 +54,7 @@ final class ContentLockingTest extends TestCase
     }
 
     #[Test]
-    public function test_heartbeat_extends_lock_expiry(): void
+    public function heartbeatExtendsLockExpiry(): void
     {
         $lock = $this->lockService->acquire('content-001', 'user-001');
         self::assertNotNull($lock);
@@ -72,7 +72,7 @@ final class ContentLockingTest extends TestCase
     }
 
     #[Test]
-    public function test_expired_lock_allows_new_acquisition(): void
+    public function expiredLockAllowsNewAcquisition(): void
     {
         // Create a lock that is already expired
         $expiredLock = new ContentLock(
@@ -92,7 +92,7 @@ final class ContentLockingTest extends TestCase
     }
 
     #[Test]
-    public function test_force_unlock_removes_any_lock(): void
+    public function forceUnlockRemovesAnyLock(): void
     {
         $this->lockService->acquire('content-001', 'user-001');
 
@@ -103,7 +103,7 @@ final class ContentLockingTest extends TestCase
     }
 
     #[Test]
-    public function test_cleanup_expired_removes_stale_locks(): void
+    public function cleanupExpiredRemovesStaleLocks(): void
     {
         // Inject an expired lock
         $expired = new ContentLock(

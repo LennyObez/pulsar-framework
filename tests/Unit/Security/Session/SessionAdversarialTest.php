@@ -31,7 +31,7 @@ use function str_repeat;
 final class SessionAdversarialTest extends TestCase
 {
     #[Test]
-    public function test_session_fixation_old_id_destroyed_after_regenerate(): void
+    public function sessionFixationOldIdDestroyedAfterRegenerate(): void
     {
         $handler = new ArrayHandler();
         $config = new SessionConfig(
@@ -65,7 +65,7 @@ final class SessionAdversarialTest extends TestCase
     }
 
     #[Test]
-    public function test_fixation_attacker_cannot_use_old_session_id(): void
+    public function fixationAttackerCannotUseOldSessionId(): void
     {
         $handler = new ArrayHandler();
         $config = new SessionConfig(
@@ -102,7 +102,7 @@ final class SessionAdversarialTest extends TestCase
     }
 
     #[Test]
-    public function test_cookie_handler_rejects_oversized_payload(): void
+    public function cookieHandlerRejectsOversizedPayload(): void
     {
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $encryption = SessionEncryption::fromMasterKey($masterKey);
@@ -128,7 +128,7 @@ final class SessionAdversarialTest extends TestCase
     }
 
     #[Test]
-    public function test_tampered_session_data_rejected(): void
+    public function tamperedSessionDataRejected(): void
     {
         $handler = new ArrayHandler();
         $config = new SessionConfig(
@@ -164,7 +164,7 @@ final class SessionAdversarialTest extends TestCase
     }
 
     #[Test]
-    public function test_validator_bypass_different_ip_rejected(): void
+    public function validatorBypassDifferentIpRejected(): void
     {
         $validator = new \Pulsar\Security\Session\Validator\RemoteAddressValidator(mode: 'strict');
         $handler = new ArrayHandler();
@@ -209,7 +209,7 @@ final class SessionAdversarialTest extends TestCase
     }
 
     #[Test]
-    public function test_validator_bypass_different_ua_rejected(): void
+    public function validatorBypassDifferentUaRejected(): void
     {
         $validator = new UserAgentValidator('strict');
         $handler = new ArrayHandler();
@@ -252,7 +252,7 @@ final class SessionAdversarialTest extends TestCase
     }
 
     #[Test]
-    public function test_concurrent_session_limit_race_simulation(): void
+    public function concurrentSessionLimitRaceSimulation(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -298,7 +298,7 @@ final class SessionAdversarialTest extends TestCase
     }
 
     #[Test]
-    public function test_encrypted_session_tampered_ciphertext_fails(): void
+    public function encryptedSessionTamperedCiphertextFails(): void
     {
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $encryption = SessionEncryption::fromMasterKey($masterKey);
@@ -315,7 +315,7 @@ final class SessionAdversarialTest extends TestCase
     }
 
     #[Test]
-    public function test_destroy_prevents_subsequent_operations(): void
+    public function destroyPreventsSubsequentOperations(): void
     {
         $handler = new ArrayHandler();
         $config = new SessionConfig(

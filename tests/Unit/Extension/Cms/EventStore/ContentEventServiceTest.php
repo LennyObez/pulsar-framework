@@ -33,7 +33,7 @@ final class ContentEventServiceTest extends TestCase
     // ── Evidence hash computation ────────────────────────────────────
 
     #[Test]
-    public function test_compute_evidence_hash_returns_blake2b_hex(): void
+    public function computeEvidenceHashReturnsBlake2bHex(): void
     {
         $hash = ContentEventService::computeEvidenceHash(
             self::CONTENT_ID,
@@ -49,7 +49,7 @@ final class ContentEventServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_evidence_hash_deterministic(): void
+    public function computeEvidenceHashDeterministic(): void
     {
         $hash1 = ContentEventService::computeEvidenceHash(self::CONTENT_ID, 1, 'Created', ['k' => 'v']);
         $hash2 = ContentEventService::computeEvidenceHash(self::CONTENT_ID, 1, 'Created', ['k' => 'v']);
@@ -58,7 +58,7 @@ final class ContentEventServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_evidence_hash_changes_with_different_sequence(): void
+    public function computeEvidenceHashChangesWithDifferentSequence(): void
     {
         $hash1 = ContentEventService::computeEvidenceHash(self::CONTENT_ID, 1, 'Created', ['k' => 'v']);
         $hash2 = ContentEventService::computeEvidenceHash(self::CONTENT_ID, 2, 'Created', ['k' => 'v']);
@@ -67,7 +67,7 @@ final class ContentEventServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_evidence_hash_changes_with_different_event_type(): void
+    public function computeEvidenceHashChangesWithDifferentEventType(): void
     {
         $hash1 = ContentEventService::computeEvidenceHash(self::CONTENT_ID, 1, 'Created', ['k' => 'v']);
         $hash2 = ContentEventService::computeEvidenceHash(self::CONTENT_ID, 1, 'Updated', ['k' => 'v']);
@@ -76,7 +76,7 @@ final class ContentEventServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_evidence_hash_changes_with_different_payload(): void
+    public function computeEvidenceHashChangesWithDifferentPayload(): void
     {
         $hash1 = ContentEventService::computeEvidenceHash(self::CONTENT_ID, 1, 'Created', ['title' => 'A']);
         $hash2 = ContentEventService::computeEvidenceHash(self::CONTENT_ID, 1, 'Created', ['title' => 'B']);
@@ -85,7 +85,7 @@ final class ContentEventServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_evidence_hash_changes_with_different_content_id(): void
+    public function computeEvidenceHashChangesWithDifferentContentId(): void
     {
         $otherId = '01912345-6789-7abc-8def-000000000001';
         $hash1 = ContentEventService::computeEvidenceHash(self::CONTENT_ID, 1, 'Created', []);
@@ -97,7 +97,7 @@ final class ContentEventServiceTest extends TestCase
     // ── ContentEvent entity ──────────────────────────────────────────
 
     #[Test]
-    public function test_content_event_construction(): void
+    public function contentEventConstruction(): void
     {
         $now = new DateTimeImmutable();
         $event = new ContentEvent(
@@ -124,7 +124,7 @@ final class ContentEventServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_content_event_nullable_reason(): void
+    public function contentEventNullableReason(): void
     {
         $event = new ContentEvent(
             id: 'evt-002',
@@ -142,7 +142,7 @@ final class ContentEventServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_content_event_is_readonly(): void
+    public function contentEventIsReadonly(): void
     {
         $reflection = new ReflectionClass(ContentEvent::class);
         self::assertTrue($reflection->isReadOnly());
@@ -151,7 +151,7 @@ final class ContentEventServiceTest extends TestCase
     // ── Sequence monotonicity (value object verification) ────────────
 
     #[Test]
-    public function test_sequential_events_have_increasing_sequence_numbers(): void
+    public function sequentialEventsHaveIncreasingSequenceNumbers(): void
     {
         $events = [];
 

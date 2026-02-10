@@ -36,7 +36,9 @@ final class IntlCurrencyFormatterTest extends TestCase
 
         $result = $formatter->format(1234.56, 'EUR');
 
-        self::assertNotEmpty($result);
+        // de_DE uses a period as thousands separator and comma as decimal: "1.234,56 €"
+        self::assertStringContainsString('1.234,56', $result);
+        self::assertStringContainsString('€', $result);
     }
 
     #[Test]
@@ -48,7 +50,9 @@ final class IntlCurrencyFormatterTest extends TestCase
 
         $result = $formatter->format(1234.56, 'EUR', 'fr_FR');
 
-        self::assertNotEmpty($result);
+        // fr_FR uses a comma as decimal separator: "1 234,56 €" (space varies by ICU version)
+        self::assertStringContainsString('234,56', $result);
+        self::assertStringContainsString('€', $result);
     }
 
     /**

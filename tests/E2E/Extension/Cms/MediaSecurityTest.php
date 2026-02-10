@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,11 +26,12 @@ use function unlink;
 /**
  * E2E: Media security — JPEG derivatives, SVG sanitization, MIME mismatch rejection, PDF JS stripping.
  */
+#[CoversClass(MediaAsset::class)]
 #[Group('e2e-cms')]
 final class MediaSecurityTest extends TestCase
 {
     #[Test]
-    public function test_jpeg_derivatives_created_for_image(): void
+    public function jpegDerivativesCreatedForImage(): void
     {
         $asset = MediaAsset::create(
             id: 'media-sec-jpeg-001',
@@ -85,7 +87,7 @@ final class MediaSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_svg_sanitizer_strips_script_tags(): void
+    public function svgSanitizerStripsScriptTags(): void
     {
         $sanitizer = new SvgSanitizer();
 
@@ -102,7 +104,7 @@ final class MediaSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_svg_sanitizer_strips_event_handlers(): void
+    public function svgSanitizerStripsEventHandlers(): void
     {
         $sanitizer = new SvgSanitizer();
 
@@ -118,7 +120,7 @@ final class MediaSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_svg_sanitizer_removes_foreignobject(): void
+    public function svgSanitizerRemovesForeignobject(): void
     {
         $sanitizer = new SvgSanitizer();
 
@@ -137,7 +139,7 @@ final class MediaSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_svg_sanitizer_blocks_javascript_href(): void
+    public function svgSanitizerBlocksJavascriptHref(): void
     {
         $sanitizer = new SvgSanitizer();
 
@@ -153,7 +155,7 @@ final class MediaSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_pdf_validator_rejects_javascript(): void
+    public function pdfValidatorRejectsJavascript(): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_pdf_test_');
         self::assertNotFalse($tempFile);
@@ -175,7 +177,7 @@ final class MediaSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_pdf_validator_rejects_launch_actions(): void
+    public function pdfValidatorRejectsLaunchActions(): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_pdf_test_');
         self::assertNotFalse($tempFile);
@@ -196,7 +198,7 @@ final class MediaSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_pdf_validator_accepts_safe_pdf(): void
+    public function pdfValidatorAcceptsSafePdf(): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_pdf_test_');
         self::assertNotFalse($tempFile);
@@ -219,7 +221,7 @@ final class MediaSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_pdf_validator_rejects_non_pdf_file(): void
+    public function pdfValidatorRejectsNonPdfFile(): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_pdf_test_');
         self::assertNotFalse($tempFile);
@@ -239,7 +241,7 @@ final class MediaSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_media_asset_data_classification(): void
+    public function mediaAssetDataClassification(): void
     {
         $publicAsset = MediaAsset::create(
             id: 'media-sec-pub',

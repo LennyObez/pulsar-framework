@@ -41,7 +41,7 @@ final class FingerprintValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_validate_passes_when_fingerprint_is_null(): void
+    public function validatePassesWhenFingerprintIsNull(): void
     {
         $validator = new FingerprintValidator($this->hmac, $this->hmacKey);
 
@@ -62,7 +62,7 @@ final class FingerprintValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_validate_passes_when_fingerprint_matches(): void
+    public function validatePassesWhenFingerprintMatches(): void
     {
         $validator = new FingerprintValidator($this->hmac, $this->hmacKey);
 
@@ -86,7 +86,7 @@ final class FingerprintValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_validate_fails_when_fingerprint_differs(): void
+    public function validateFailsWhenFingerprintDiffers(): void
     {
         $validator = new FingerprintValidator($this->hmac, $this->hmacKey);
 
@@ -107,7 +107,7 @@ final class FingerprintValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_get_name_returns_fingerprint(): void
+    public function getNameReturnsFingerprint(): void
     {
         $validator = new FingerprintValidator($this->hmac, $this->hmacKey);
 
@@ -115,7 +115,7 @@ final class FingerprintValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_fingerprint_is_deterministic(): void
+    public function computeFingerprintIsDeterministic(): void
     {
         $validator = new FingerprintValidator($this->hmac, $this->hmacKey);
 
@@ -131,7 +131,7 @@ final class FingerprintValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_different_headers_produce_different_fingerprints(): void
+    public function differentHeadersProduceDifferentFingerprints(): void
     {
         $validator = new FingerprintValidator($this->hmac, $this->hmacKey);
 
@@ -152,7 +152,7 @@ final class FingerprintValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_different_keys_produce_different_fingerprints(): void
+    public function differentKeysProduceDifferentFingerprints(): void
     {
         $key1 = random_bytes(32);
         $key2 = random_bytes(32);
@@ -172,7 +172,7 @@ final class FingerprintValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_custom_attributes_used_in_fingerprint(): void
+    public function customAttributesUsedInFingerprint(): void
     {
         $validator = new FingerprintValidator(
             $this->hmac,
@@ -198,7 +198,7 @@ final class FingerprintValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_stability_across_normal_browsing(): void
+    public function stabilityAcrossNormalBrowsing(): void
     {
         $validator = new FingerprintValidator($this->hmac, $this->hmacKey);
 

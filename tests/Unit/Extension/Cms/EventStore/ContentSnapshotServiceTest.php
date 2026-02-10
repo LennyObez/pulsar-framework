@@ -31,7 +31,7 @@ final class ContentSnapshotServiceTest extends TestCase
     // ── Snapshot entity ──────────────────────────────────────────────
 
     #[Test]
-    public function test_content_snapshot_construction(): void
+    public function contentSnapshotConstruction(): void
     {
         $now = new DateTimeImmutable();
         $translationsJson = [
@@ -94,7 +94,7 @@ final class ContentSnapshotServiceTest extends TestCase
     // ── All-locale capture verification ──────────────────────────────
 
     #[Test]
-    public function test_snapshot_captures_multiple_locales(): void
+    public function snapshotCapturesMultipleLocales(): void
     {
         $translations = [
             ['id' => 'tr-en', 'locale' => 'en', 'title' => 'Hello', 'slug_segment' => 'hello', 'path' => 'hello', 'body' => '<p>Hi</p>', 'excerpt' => null, 'meta_title' => null, 'meta_description' => null, 'og_image_id' => null, 'robots' => null, 'structured_data_overrides' => null, 'reading_time_minutes' => 1],
@@ -127,7 +127,7 @@ final class ContentSnapshotServiceTest extends TestCase
     // ── Evidence hash computation ────────────────────────────────────
 
     #[Test]
-    public function test_compute_snapshot_hash_returns_blake2b_hex(): void
+    public function computeSnapshotHashReturnsBlake2bHex(): void
     {
         $hash = ContentSnapshotService::computeSnapshotHash(
             [['title' => 'Test']],
@@ -141,7 +141,7 @@ final class ContentSnapshotServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_snapshot_hash_deterministic(): void
+    public function computeSnapshotHashDeterministic(): void
     {
         $translations = [['title' => 'A']];
         $blocks = [['type' => 'text']];
@@ -154,7 +154,7 @@ final class ContentSnapshotServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_snapshot_hash_changes_with_different_translations(): void
+    public function computeSnapshotHashChangesWithDifferentTranslations(): void
     {
         $hash1 = ContentSnapshotService::computeSnapshotHash([['title' => 'A']], [], []);
         $hash2 = ContentSnapshotService::computeSnapshotHash([['title' => 'B']], [], []);
@@ -163,7 +163,7 @@ final class ContentSnapshotServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_snapshot_hash_changes_with_different_blocks(): void
+    public function computeSnapshotHashChangesWithDifferentBlocks(): void
     {
         $hash1 = ContentSnapshotService::computeSnapshotHash([], [['type' => 'text']], []);
         $hash2 = ContentSnapshotService::computeSnapshotHash([], [['type' => 'image']], []);
@@ -172,7 +172,7 @@ final class ContentSnapshotServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_snapshot_hash_changes_with_different_terms(): void
+    public function computeSnapshotHashChangesWithDifferentTerms(): void
     {
         $hash1 = ContentSnapshotService::computeSnapshotHash([], [], ['term-1']);
         $hash2 = ContentSnapshotService::computeSnapshotHash([], [], ['term-2']);
@@ -181,7 +181,7 @@ final class ContentSnapshotServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_snapshot_hash_empty_inputs(): void
+    public function computeSnapshotHashEmptyInputs(): void
     {
         $hash = ContentSnapshotService::computeSnapshotHash([], [], []);
         self::assertNotEmpty($hash);
@@ -189,7 +189,7 @@ final class ContentSnapshotServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_content_snapshot_is_readonly(): void
+    public function contentSnapshotIsReadonly(): void
     {
         $reflection = new ReflectionClass(ContentSnapshot::class);
         self::assertTrue($reflection->isReadOnly());

@@ -304,6 +304,153 @@ final class CacheIntegrityTest extends TestCase
         self::assertNull($result);
     }
 
+    #[Test]
+    public function readEnvelopeReturnsNullForNonExistentFile(): void
+    {
+        $result = $this->integrity->readEnvelope(
+            $this->tempDir . DIRECTORY_SEPARATOR . 'does_not_exist.cache.bin',
+            [],
+        );
+
+        self::assertNull($result);
+    }
+
+    #[Test]
+    public function readEnvelopeReturnsNullWhenEnvelopeFieldsAreNonStrings(): void
+    {
+        $path = $this->tempDir . DIRECTORY_SEPARATOR . 'bad_types.cache.bin';
+
+        // Write an envelope with non-string payload
+        $envelope = serialize([
+            'schema' => 1,
+            'payload' => 12345,
+            'sha256' => 'abc',
+            'hmac' => 'def',
+            'encrypted' => false,
+        ]);
+        file_put_contents($path, $envelope);
+
+        $result = $this->integrity->readEnvelope($path, []);
+
+        self::assertNull($result);
+    }
+
+    #[Test]
+    public function readEnvelopeReturnsNullForTamperedPayload(): void
+    {
+        $path = $this->tempDir . DIRECTORY_SEPARATOR . 'tampered.cache.bin';
+        $this->integrity->writeEnvelope($path, serialize(['data' => true]), false);
+
+        // Read the file, tamper the payload inside the envelope
+        $raw = file_get_contents($path);
+        self::assertNotFalse($raw);
+
+        $envelope = unserialize($raw, ['allowed_classes' => false]);
+        self::assertIsArray($envelope);
+
+        $envelope['payload'] = serialize(['data' => 'tampered']);
+        file_put_contents($path, serialize($envelope));
+
+        $result = $this->integrity->readEnvelope($path, []);
+
+        self::assertNull($result);
+    }
+
+    #[Test]
+    public function signProducesDifferentHmacsForDifferentPayloads(): void
+    {
+        $sig1 = $this->integrity->sign('payload one');
+        $sig2 = $this->integrity->sign('payload two');
+
+        self::assertNotSame($sig1['sha256'], $sig2['sha256']);
+        self::assertNotSame($sig1['hmac'], $sig2['hmac']);
+    }
+
+    #[Test]
+    public function writeEnvelopeOverwritesExistingFile(): void
+    {
+        $path = $this->tempDir . DIRECTORY_SEPARATOR . 'overwrite.cache.bin';
+        $this->integrity->writeEnvelope($path, serialize(['version' => 1]), false);
+        $this->integrity->writeEnvelope($path, serialize(['version' => 2]), false);
+
+        $result = $this->integrity->readEnvelope($path, []);
+
+        self::assertSame(['version' => 2], $result);
+    }
+
+    #[Test]
+    public function writeEnvelopeWithEncryptionFlagButNoEncryptorWritesPlaintext(): void
+    {
+        // Integrity without encryptor
+        $path = $this->tempDir . DIRECTORY_SEPARATOR . 'no_enc.cache.bin';
+        $this->integrity->writeEnvelope($path, serialize(['data' => 'plain']), true);
+
+        // Should still be readable because encrypt flag is true but no encryptor available
+        $result = $this->integrity->readEnvelope($path, []);
+
+        self::assertSame(['data' => 'plain'], $result);
+    }
+
+    #[Test]
+    public function readEnvelopeReturnsNullForEmptyFileContents(): void
+    {
+        $path = $this->tempDir . DIRECTORY_SEPARATOR . 'empty.cache.bin';
+        file_put_contents($path, '');
+
+        $result = $this->integrity->readEnvelope($path, []);
+
+        self::assertNull($result);
+    }
+
+    #[Test]
+    public function validateDirectoryAcceptsValidDirectory(): void
+    {
+        // Should not throw for our temp directory
+        $this->integrity->validateDirectory($this->tempDir);
+
+        // If we get here, no exception was thrown
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function validateDirectoryRejectsNonExistentDirectory(): void
+    {
+        $this->expectException(CacheException::class);
+        $this->expectExceptionMessage('not a directory');
+
+        $this->integrity->validateDirectory($this->tempDir . DIRECTORY_SEPARATOR . 'nonexistent');
+    }
+
+    #[Test]
+    public function validateFileAcceptsValidFile(): void
+    {
+        $path = $this->tempDir . DIRECTORY_SEPARATOR . 'valid.bin';
+        file_put_contents($path, 'data');
+
+        // Should not throw
+        $this->integrity->validateFile($path);
+
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function signEmptyPayload(): void
+    {
+        $result = $this->integrity->sign('');
+
+        self::assertSame(64, strlen($result['sha256']));
+        self::assertSame(64, strlen($result['hmac']));
+        self::assertSame(hash('sha256', ''), $result['sha256']);
+    }
+
+    #[Test]
+    public function verifyReturnsTrueForEmptyPayload(): void
+    {
+        $sig = $this->integrity->sign('');
+
+        self::assertTrue($this->integrity->verify('', $sig['sha256'], $sig['hmac']));
+    }
+
     private function removeDirectory(string $dir): void
     {
         if (!is_dir($dir)) {

@@ -70,7 +70,7 @@ final class MediaServiceVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_get_variants_returns_image_variants_from_derivatives(): void
+    public function getVariantsReturnsImageVariantsFromDerivatives(): void
     {
         $asset = $this->createAsset('asset-1', 'image/jpeg');
 
@@ -117,7 +117,7 @@ final class MediaServiceVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_get_variants_returns_empty_when_no_derivatives(): void
+    public function getVariantsReturnsEmptyWhenNoDerivatives(): void
     {
         $asset = $this->createAsset('asset-2', 'image/jpeg');
 
@@ -130,7 +130,7 @@ final class MediaServiceVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_get_variants_throws_for_nonexistent_asset(): void
+    public function getVariantsThrowsForNonexistentAsset(): void
     {
         $this->repository->method('findById')->willReturn(null);
 
@@ -139,7 +139,7 @@ final class MediaServiceVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_get_variants_maps_derivative_fields_correctly(): void
+    public function getVariantsMapsDerivativeFieldsCorrectly(): void
     {
         $asset = $this->createAsset('asset-3', 'image/png');
 

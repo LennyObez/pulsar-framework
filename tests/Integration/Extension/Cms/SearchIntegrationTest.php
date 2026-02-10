@@ -50,7 +50,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_search_returns_matching_content_ranked_by_relevance(): void
+    public function searchReturnsMatchingContentRankedByRelevance(): void
     {
         $this->connection->addContent(
             id: 'content-001',
@@ -89,7 +89,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_search_with_french_locale_uses_french_stemming(): void
+    public function searchWithFrenchLocaleUsesFrenchStemming(): void
     {
         self::assertSame('french', LocaleRegconfigMap::resolve('fr'));
         self::assertSame('french', LocaleRegconfigMap::resolve('fr-FR'));
@@ -109,7 +109,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_search_with_empty_query_returns_empty_result(): void
+    public function searchWithEmptyQueryReturnsEmptyResult(): void
     {
         $result = $this->searchService->search('', 'en');
 
@@ -120,7 +120,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_search_with_whitespace_only_query_returns_empty_result(): void
+    public function searchWithWhitespaceOnlyQueryReturnsEmptyResult(): void
     {
         $result = $this->searchService->search('   ', 'en');
 
@@ -129,7 +129,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_zero_results_recorded_in_analytics(): void
+    public function zeroResultsRecordedInAnalytics(): void
     {
         $result = $this->searchService->search('xyznonexistent', 'en');
 
@@ -144,7 +144,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_successful_search_recorded_in_analytics(): void
+    public function successfulSearchRecordedInAnalytics(): void
     {
         $this->connection->addContent(
             id: 'content-010',
@@ -163,7 +163,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_click_through_recording_updates_analytics(): void
+    public function clickThroughRecordingUpdatesAnalytics(): void
     {
         $queryHash = 'abc123hash';
         $contentId = 'content-clicked';
@@ -177,7 +177,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_suggestions_return_matching_titles(): void
+    public function suggestionsReturnMatchingTitles(): void
     {
         $this->connection->addContent(
             id: 'content-020',
@@ -211,14 +211,14 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_suggestions_with_empty_query_returns_empty(): void
+    public function suggestionsWithEmptyQueryReturnsEmpty(): void
     {
         $suggestions = $this->searchService->suggest('', 'en');
         self::assertSame([], $suggestions);
     }
 
     #[Test]
-    public function test_recency_boost_newer_content_ranks_higher(): void
+    public function recencyBoostNewerContentRanksHigher(): void
     {
         $this->connection->addContent(
             id: 'content-old',
@@ -247,7 +247,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_taxonomy_boost_content_with_matching_terms_ranks_higher(): void
+    public function taxonomyBoostContentWithMatchingTermsRanksHigher(): void
     {
         $this->connection->addContent(
             id: 'content-no-tax',
@@ -278,7 +278,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_content_type_filter_restricts_results(): void
+    public function contentTypeFilterRestrictsResults(): void
     {
         $this->connection->addContent(
             id: 'content-article',
@@ -305,7 +305,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_search_result_includes_timing(): void
+    public function searchResultIncludesTiming(): void
     {
         $this->connection->addContent(
             id: 'content-timing',
@@ -321,7 +321,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_locale_regconfig_map_resolves_supported_locales(): void
+    public function localeRegconfigMapResolvesSupportedLocales(): void
     {
         self::assertSame('english', LocaleRegconfigMap::resolve('en'));
         self::assertSame('french', LocaleRegconfigMap::resolve('fr'));
@@ -342,7 +342,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_locale_regconfig_map_falls_back_to_simple(): void
+    public function localeRegconfigMapFallsBackToSimple(): void
     {
         self::assertSame('simple', LocaleRegconfigMap::resolve('zh'));
         self::assertSame('simple', LocaleRegconfigMap::resolve('ja'));
@@ -350,7 +350,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_locale_regconfig_map_handles_subtags(): void
+    public function localeRegconfigMapHandlesSubtags(): void
     {
         self::assertSame('english', LocaleRegconfigMap::resolve('en-US'));
         self::assertSame('french', LocaleRegconfigMap::resolve('fr-CA'));
@@ -358,7 +358,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_analytics_aggregation_returns_complete_report(): void
+    public function analyticsAggregationReturnsCompleteReport(): void
     {
         $range = new DateRange(
             new DateTimeImmutable('-30 days'),
@@ -376,7 +376,7 @@ final class SearchIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_pagination_respects_page_and_per_page(): void
+    public function paginationRespectsPageAndPerPage(): void
     {
         for ($i = 1; $i <= 5; $i++) {
             $this->connection->addContent(

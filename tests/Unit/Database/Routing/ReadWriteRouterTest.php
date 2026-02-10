@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Routing\ConnectionRole;
 use Pulsar\Database\Routing\ReadWriteRouter;
+use PHPUnit\Framework\Attributes\Test;
 
 #[CoversClass(ReadWriteRouter::class)]
 final class ReadWriteRouterTest extends TestCase
@@ -19,27 +20,32 @@ final class ReadWriteRouterTest extends TestCase
         $this->router = new ReadWriteRouter();
     }
 
-    public function test_select_routes_to_read(): void
+    #[Test]
+    public function selectRoutesToRead(): void
     {
         self::assertSame(ConnectionRole::Read, $this->router->route('SELECT * FROM users'));
     }
 
-    public function test_insert_routes_to_write(): void
+    #[Test]
+    public function insertRoutesToWrite(): void
     {
         self::assertSame(ConnectionRole::Write, $this->router->route('INSERT INTO users (name) VALUES ("test")'));
     }
 
-    public function test_update_routes_to_write(): void
+    #[Test]
+    public function updateRoutesToWrite(): void
     {
         self::assertSame(ConnectionRole::Write, $this->router->route('UPDATE users SET name = "test"'));
     }
 
-    public function test_delete_routes_to_write(): void
+    #[Test]
+    public function deleteRoutesToWrite(): void
     {
         self::assertSame(ConnectionRole::Write, $this->router->route('DELETE FROM users WHERE id = 1'));
     }
 
-    public function test_ddl_routes_to_write(): void
+    #[Test]
+    public function ddlRoutesToWrite(): void
     {
         self::assertSame(ConnectionRole::Write, $this->router->route('CREATE TABLE users (id INT)'));
         self::assertSame(ConnectionRole::Write, $this->router->route('ALTER TABLE users ADD COLUMN name VARCHAR(255)'));
@@ -47,29 +53,34 @@ final class ReadWriteRouterTest extends TestCase
         self::assertSame(ConnectionRole::Write, $this->router->route('TRUNCATE TABLE users'));
     }
 
-    public function test_show_routes_to_read(): void
+    #[Test]
+    public function showRoutesToRead(): void
     {
         self::assertSame(ConnectionRole::Read, $this->router->route('SHOW TABLES'));
     }
 
-    public function test_describe_routes_to_read(): void
+    #[Test]
+    public function describeRoutesToRead(): void
     {
         self::assertSame(ConnectionRole::Read, $this->router->route('DESCRIBE users'));
     }
 
-    public function test_explain_routes_to_read(): void
+    #[Test]
+    public function explainRoutesToRead(): void
     {
         self::assertSame(ConnectionRole::Read, $this->router->route('EXPLAIN SELECT * FROM users'));
     }
 
-    public function test_pin_to_primary_overrides_read_routing(): void
+    #[Test]
+    public function pinToPrimaryOverridesReadRouting(): void
     {
         $this->router->pinToPrimary();
 
         self::assertSame(ConnectionRole::Write, $this->router->route('SELECT * FROM users'));
     }
 
-    public function test_pin_expires_after_duration(): void
+    #[Test]
+    public function pinExpiresAfterDuration(): void
     {
         // Pin for 1ms
         $this->router->pinToPrimary(1);
@@ -83,7 +94,8 @@ final class ReadWriteRouterTest extends TestCase
         self::assertSame(ConnectionRole::Read, $this->router->route('SELECT * FROM users'));
     }
 
-    public function test_reset_clears_pin(): void
+    #[Test]
+    public function resetClearsPin(): void
     {
         $this->router->pinToPrimary();
 
@@ -95,7 +107,8 @@ final class ReadWriteRouterTest extends TestCase
         self::assertSame(ConnectionRole::Read, $this->router->route('SELECT * FROM users'));
     }
 
-    public function test_case_insensitive_sql_classification(): void
+    #[Test]
+    public function caseInsensitiveSqlClassification(): void
     {
         self::assertSame(ConnectionRole::Read, $this->router->route('select * from users'));
         self::assertSame(ConnectionRole::Read, $this->router->route('Select * From users'));
@@ -104,13 +117,15 @@ final class ReadWriteRouterTest extends TestCase
         self::assertSame(ConnectionRole::Write, $this->router->route('delete from users where id = 1'));
     }
 
-    public function test_leading_whitespace_is_trimmed(): void
+    #[Test]
+    public function leadingWhitespaceIsTrimmed(): void
     {
         self::assertSame(ConnectionRole::Read, $this->router->route('  SELECT * FROM users'));
         self::assertSame(ConnectionRole::Write, $this->router->route('  INSERT INTO users (name) VALUES ("test")'));
     }
 
-    public function test_request_scoped_pin_persists_until_reset(): void
+    #[Test]
+    public function requestScopedPinPersistsUntilReset(): void
     {
         $this->router->pinToPrimary();
 

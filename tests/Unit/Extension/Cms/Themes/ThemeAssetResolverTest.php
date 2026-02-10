@@ -44,7 +44,7 @@ final class ThemeAssetResolverTest extends TestCase
     // -- Path traversal protection --------------------------------------------
 
     #[Test]
-    public function test_path_traversal_in_template_name_rejected(): void
+    public function pathTraversalInTemplateNameRejected(): void
     {
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
@@ -55,7 +55,7 @@ final class ThemeAssetResolverTest extends TestCase
     }
 
     #[Test]
-    public function test_path_traversal_with_double_dots_in_asset_rejected(): void
+    public function pathTraversalWithDoubleDotsInAssetRejected(): void
     {
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
@@ -66,7 +66,7 @@ final class ThemeAssetResolverTest extends TestCase
     }
 
     #[Test]
-    public function test_absolute_path_in_template_rejected(): void
+    public function absolutePathInTemplateRejected(): void
     {
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
@@ -77,7 +77,7 @@ final class ThemeAssetResolverTest extends TestCase
     }
 
     #[Test]
-    public function test_null_byte_in_template_name_rejected(): void
+    public function nullByteInTemplateNameRejected(): void
     {
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
@@ -90,7 +90,7 @@ final class ThemeAssetResolverTest extends TestCase
     // -- Template resolution --------------------------------------------------
 
     #[Test]
-    public function test_resolve_template_within_theme_directory(): void
+    public function resolveTemplateWithinThemeDirectory(): void
     {
         $templatesDir = $this->tmpDir . '/templates';
         mkdir($templatesDir, 0o777, true);
@@ -106,7 +106,7 @@ final class ThemeAssetResolverTest extends TestCase
     }
 
     #[Test]
-    public function test_missing_template_throws(): void
+    public function missingTemplateThrows(): void
     {
         $templatesDir = $this->tmpDir . '/templates';
         mkdir($templatesDir, 0o777, true);
@@ -122,7 +122,7 @@ final class ThemeAssetResolverTest extends TestCase
     // -- Theme resolution fallback --------------------------------------------
 
     #[Test]
-    public function test_resolve_uses_active_theme_when_no_id_provided(): void
+    public function resolveUsesActiveThemeWhenNoIdProvided(): void
     {
         $templatesDir = $this->tmpDir . '/templates';
         mkdir($templatesDir, 0o777, true);
@@ -138,7 +138,7 @@ final class ThemeAssetResolverTest extends TestCase
     }
 
     #[Test]
-    public function test_throws_when_no_active_theme_and_no_id(): void
+    public function throwsWhenNoActiveThemeAndNoId(): void
     {
         $repo = $this->createRepository(byId: null, active: null);
         $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
@@ -148,7 +148,7 @@ final class ThemeAssetResolverTest extends TestCase
     }
 
     #[Test]
-    public function test_throws_when_theme_id_not_found(): void
+    public function throwsWhenThemeIdNotFound(): void
     {
         $repo = $this->createRepository(byId: null, active: null);
         $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
@@ -160,7 +160,7 @@ final class ThemeAssetResolverTest extends TestCase
     // -- Integrity verification -----------------------------------------------
 
     #[Test]
-    public function test_integrity_check_passes_when_hash_matches(): void
+    public function integrityCheckPassesWhenHashMatches(): void
     {
         // Create a theme.json file in the storage path
         $manifestPath = $this->tmpDir . '/theme.json';
@@ -182,7 +182,7 @@ final class ThemeAssetResolverTest extends TestCase
     }
 
     #[Test]
-    public function test_integrity_check_fails_when_hash_mismatch(): void
+    public function integrityCheckFailsWhenHashMismatch(): void
     {
         $manifestPath = $this->tmpDir . '/theme.json';
         file_put_contents($manifestPath, '{"slug":"test","version":"1.0.0"}');
@@ -201,7 +201,7 @@ final class ThemeAssetResolverTest extends TestCase
     }
 
     #[Test]
-    public function test_integrity_check_fails_when_manifest_missing(): void
+    public function integrityCheckFailsWhenManifestMissing(): void
     {
         $theme = $this->createInstalledTheme(
             storagePath: $this->tmpDir . '/empty',
@@ -216,7 +216,7 @@ final class ThemeAssetResolverTest extends TestCase
     }
 
     #[Test]
-    public function test_integrity_check_fails_when_theme_not_found(): void
+    public function integrityCheckFailsWhenThemeNotFound(): void
     {
         $repo = $this->createRepository(byId: null);
         $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());

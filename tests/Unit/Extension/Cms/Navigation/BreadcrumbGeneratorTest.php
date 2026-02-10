@@ -28,7 +28,7 @@ final class BreadcrumbGeneratorTest extends TestCase
     // -- Root content (no ancestors) -----------------------------------------
 
     #[Test]
-    public function test_root_content_returns_single_breadcrumb(): void
+    public function rootContentReturnsSingleBreadcrumb(): void
     {
         $content = $this->createContent('root-1', parentId: null);
         $translation = $this->createTranslation('root-1', 'en', 'Home', 'home');
@@ -49,7 +49,7 @@ final class BreadcrumbGeneratorTest extends TestCase
     // -- Nested content (with ancestors) --------------------------------------
 
     #[Test]
-    public function test_nested_content_returns_root_first_trail(): void
+    public function nestedContentReturnsRootFirstTrail(): void
     {
         $root = $this->createContent('root-1', parentId: null);
         $child = $this->createContent('child-1', parentId: 'root-1');
@@ -75,7 +75,7 @@ final class BreadcrumbGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_three_level_hierarchy(): void
+    public function threeLevelHierarchy(): void
     {
         $root = $this->createContent('root-1', parentId: null);
         $docs = $this->createContent('docs-1', parentId: 'root-1');
@@ -103,7 +103,7 @@ final class BreadcrumbGeneratorTest extends TestCase
     // -- Missing translations -------------------------------------------------
 
     #[Test]
-    public function test_skips_ancestor_without_translation(): void
+    public function skipsAncestorWithoutTranslation(): void
     {
         $root = $this->createContent('root-1', parentId: null);
         $child = $this->createContent('child-1', parentId: 'root-1');
@@ -127,7 +127,7 @@ final class BreadcrumbGeneratorTest extends TestCase
     // -- Non-default locale with prefix ---------------------------------------
 
     #[Test]
-    public function test_non_default_locale_includes_locale_prefix(): void
+    public function nonDefaultLocaleIncludesLocalePrefix(): void
     {
         $content = $this->createContent('page-1', parentId: null);
         $translation = $this->createTranslation('page-1', 'fr', 'Accueil', 'accueil');
@@ -147,7 +147,7 @@ final class BreadcrumbGeneratorTest extends TestCase
     // -- No ancestors (orphan) ------------------------------------------------
 
     #[Test]
-    public function test_content_with_no_translation_returns_empty(): void
+    public function contentWithNoTranslationReturnsEmpty(): void
     {
         $content = $this->createContent('orphan-1', parentId: null);
 
@@ -164,7 +164,7 @@ final class BreadcrumbGeneratorTest extends TestCase
     // -- Uses batch loading (no N+1) ------------------------------------------
 
     #[Test]
-    public function test_uses_batch_query_for_ancestors_and_translations(): void
+    public function usesBatchQueryForAncestorsAndTranslations(): void
     {
         $root = $this->createContent('root-1', parentId: null);
         $child = $this->createContent('child-1', parentId: 'root-1');

@@ -27,7 +27,7 @@ final class LiveCssServiceTest extends TestCase
     // ── saveOverrides increments version ─────────────────────────────
 
     #[Test]
-    public function test_save_overrides_increments_version(): void
+    public function saveOverridesIncrementsVersion(): void
     {
         $service = $this->createService();
 
@@ -57,7 +57,7 @@ final class LiveCssServiceTest extends TestCase
     // ── rollback creates NEW version with old content ───────────────
 
     #[Test]
-    public function test_rollback_creates_new_version_with_old_content(): void
+    public function rollbackCreatesNewVersionWithOldContent(): void
     {
         $service = $this->createService();
 
@@ -87,7 +87,7 @@ final class LiveCssServiceTest extends TestCase
     // ── getVersionHistory returns ordered list ───────────────────────
 
     #[Test]
-    public function test_get_version_history_returns_ordered_list(): void
+    public function getVersionHistoryReturnsOrderedList(): void
     {
         $service = $this->createService();
 
@@ -106,7 +106,7 @@ final class LiveCssServiceTest extends TestCase
     // ── Rollback of non-existent override throws ────────────────────
 
     #[Test]
-    public function test_rollback_nonexistent_throws(): void
+    public function rollbackNonexistentThrows(): void
     {
         $service = $this->createService();
 

@@ -19,7 +19,7 @@ final class ProductVariantTest extends TestCase
     // ── SKU composition ─────────────────────────────────────────────
 
     #[Test]
-    public function test_sku_composition(): void
+    public function skuComposition(): void
     {
         $product = Product::create(
             id: self::PRODUCT_ID,
@@ -48,7 +48,7 @@ final class ProductVariantTest extends TestCase
     // ── Price computation (base + modifier) ─────────────────────────
 
     #[Test]
-    public function test_price_with_positive_modifier(): void
+    public function priceWithPositiveModifier(): void
     {
         $product = Product::create(
             id: self::PRODUCT_ID,
@@ -75,7 +75,7 @@ final class ProductVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_price_with_negative_modifier(): void
+    public function priceWithNegativeModifier(): void
     {
         $product = Product::create(
             id: self::PRODUCT_ID,
@@ -102,7 +102,7 @@ final class ProductVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_price_with_zero_modifier(): void
+    public function priceWithZeroModifier(): void
     {
         $product = Product::create(
             id: self::PRODUCT_ID,
@@ -131,7 +131,7 @@ final class ProductVariantTest extends TestCase
     // ── Entity creation ─────────────────────────────────────────────
 
     #[Test]
-    public function test_variant_entity_creation(): void
+    public function variantEntityCreation(): void
     {
         $variant = new ProductVariant(
             id: self::VARIANT_ID,
@@ -157,7 +157,7 @@ final class ProductVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_inactive_variant(): void
+    public function inactiveVariant(): void
     {
         $variant = new ProductVariant(
             id: self::VARIANT_ID,

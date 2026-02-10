@@ -42,7 +42,7 @@ final class PdfValidatorTest extends TestCase
     // -- Valid PDF ---------------------------------------------------------
 
     #[Test]
-    public function test_valid_pdf_passes(): void
+    public function validPdfPasses(): void
     {
         $path = $this->createPdf('%PDF-1.4 this is clean content without any dangerous patterns');
 
@@ -51,7 +51,7 @@ final class PdfValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_pdf_with_standard_objects_passes(): void
+    public function validPdfWithStandardObjectsPasses(): void
     {
         $content = '%PDF-1.7' . "\n" .
             '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj' . "\n" .
@@ -66,7 +66,7 @@ final class PdfValidatorTest extends TestCase
     // -- Wrong magic bytes ------------------------------------------------
 
     #[Test]
-    public function test_wrong_magic_bytes_rejected(): void
+    public function wrongMagicBytesRejected(): void
     {
         $path = $this->createPdf('NOT-A-PDF content here');
 
@@ -75,7 +75,7 @@ final class PdfValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_empty_file_rejected(): void
+    public function emptyFileRejected(): void
     {
         $path = $this->createPdf('');
 
@@ -87,7 +87,7 @@ final class PdfValidatorTest extends TestCase
 
     #[Test]
     #[DataProvider('dangerousPatternsProvider')]
-    public function test_pdf_with_dangerous_pattern_rejected(string $pattern, string $content): void
+    public function pdfWithDangerousPatternRejected(string $pattern, string $content): void
     {
         $path = $this->createPdf('%PDF-1.4 ' . $content);
 
@@ -110,7 +110,7 @@ final class PdfValidatorTest extends TestCase
     // -- Clean PDF with no JS patterns passes -----------------------------
 
     #[Test]
-    public function test_pdf_with_no_js_patterns_passes(): void
+    public function pdfWithNoJsPatternsPasses(): void
     {
         $content = '%PDF-1.4' . "\n" .
             '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj' . "\n" .
@@ -128,7 +128,7 @@ final class PdfValidatorTest extends TestCase
     // -- Non-existent file ------------------------------------------------
 
     #[Test]
-    public function test_non_existent_file_throws(): void
+    public function nonExistentFileThrows(): void
     {
         $this->expectException(CmsException::class);
         $this->validator->validate($this->tmpDir . '/does-not-exist.pdf');

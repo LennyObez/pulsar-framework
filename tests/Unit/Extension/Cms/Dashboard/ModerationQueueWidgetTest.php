@@ -19,7 +19,7 @@ use Pulsar\Extension\Cms\Dashboard\ModerationQueueWidget;
 final class ModerationQueueWidgetTest extends TestCase
 {
     #[Test]
-    public function test_get_name_returns_moderation_queue(): void
+    public function getNameReturnsModerationQueue(): void
     {
         $repo = $this->createStub(CommentRepositoryInterface::class);
         $widget = new ModerationQueueWidget($repo);
@@ -28,7 +28,7 @@ final class ModerationQueueWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_template_returns_expected_path(): void
+    public function getTemplateReturnsExpectedPath(): void
     {
         $repo = $this->createStub(CommentRepositoryInterface::class);
         $widget = new ModerationQueueWidget($repo);
@@ -37,7 +37,7 @@ final class ModerationQueueWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_with_no_pending_comments(): void
+    public function getDataWithNoPendingComments(): void
     {
         $repo = $this->createStub(CommentRepositoryInterface::class);
         $repo->method('findPendingModeration')->willReturn(
@@ -54,7 +54,7 @@ final class ModerationQueueWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_counts_urgent_comments_older_than_24h(): void
+    public function getDataCountsUrgentCommentsOlderThan24h(): void
     {
         $recentComment = $this->createComment(new DateTimeImmutable('-1 hour'));
         $urgentComment = $this->createComment(new DateTimeImmutable('-48 hours'));
@@ -78,7 +78,7 @@ final class ModerationQueueWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_uses_total_from_pagination(): void
+    public function getDataUsesTotalFromPagination(): void
     {
         $comment = $this->createComment(new DateTimeImmutable());
 
@@ -99,7 +99,7 @@ final class ModerationQueueWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_falls_back_to_item_count_when_total_null(): void
+    public function getDataFallsBackToItemCountWhenTotalNull(): void
     {
         $comment = $this->createComment(new DateTimeImmutable());
 
@@ -120,7 +120,7 @@ final class ModerationQueueWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_passes_tenant_id(): void
+    public function getDataPassesTenantId(): void
     {
         $tenantId = '01912345-6789-7abc-8def-000000000001';
 

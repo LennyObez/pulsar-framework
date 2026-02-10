@@ -42,7 +42,7 @@ final class StructuredDataGeneratorTest extends TestCase
     // -- ArticleStructuredDataGenerator ---------------------------------------
 
     #[Test]
-    public function test_article_generator_supports_article_type(): void
+    public function articleGeneratorSupportsArticleType(): void
     {
         $generator = new ArticleStructuredDataGenerator();
 
@@ -51,7 +51,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_generates_correct_type(): void
+    public function articleGeneratesCorrectType(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -63,7 +63,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_has_schema_context(): void
+    public function articleHasSchemaContext(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -75,7 +75,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_headline_from_title(): void
+    public function articleHeadlineFromTitle(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -87,7 +87,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_headline_prefers_meta_title(): void
+    public function articleHeadlinePrefersMetaTitle(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -99,7 +99,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_date_published_iso_8601(): void
+    public function articleDatePublishedIso8601(): void
     {
         $publishedAt = new DateTimeImmutable('2025-03-15T14:30:00+00:00');
         $generator = new ArticleStructuredDataGenerator();
@@ -112,7 +112,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_date_modified_iso_8601(): void
+    public function articleDateModifiedIso8601(): void
     {
         $updatedAt = new DateTimeImmutable('2025-04-20T09:00:00+00:00');
         $generator = new ArticleStructuredDataGenerator();
@@ -125,7 +125,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_in_language(): void
+    public function articleInLanguage(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -137,7 +137,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_url_built_correctly(): void
+    public function articleUrlBuiltCorrectly(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -149,7 +149,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_date_published_absent_when_not_published(): void
+    public function articleDatePublishedAbsentWhenNotPublished(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article, publishedAt: null);
@@ -161,7 +161,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_description_from_meta_description(): void
+    public function articleDescriptionFromMetaDescription(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -173,7 +173,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_description_omitted_when_absent(): void
+    public function articleDescriptionOmittedWhenAbsent(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -185,7 +185,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_time_required_from_reading_time(): void
+    public function articleTimeRequiredFromReadingTime(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -197,7 +197,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_article_time_required_omitted_when_null(): void
+    public function articleTimeRequiredOmittedWhenNull(): void
     {
         $generator = new ArticleStructuredDataGenerator();
         $content = $this->createContent(ContentType::Article);
@@ -211,7 +211,7 @@ final class StructuredDataGeneratorTest extends TestCase
     // -- WebPageStructuredDataGenerator ---------------------------------------
 
     #[Test]
-    public function test_webpage_generator_supports_page_type(): void
+    public function webpageGeneratorSupportsPageType(): void
     {
         $generator = new WebPageStructuredDataGenerator();
 
@@ -220,7 +220,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_webpage_generates_correct_type(): void
+    public function webpageGeneratesCorrectType(): void
     {
         $generator = new WebPageStructuredDataGenerator();
         $content = $this->createContent(ContentType::Page);
@@ -232,7 +232,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_webpage_has_schema_context(): void
+    public function webpageHasSchemaContext(): void
     {
         $generator = new WebPageStructuredDataGenerator();
         $content = $this->createContent(ContentType::Page);
@@ -244,7 +244,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_webpage_name_from_title(): void
+    public function webpageNameFromTitle(): void
     {
         $generator = new WebPageStructuredDataGenerator();
         $content = $this->createContent(ContentType::Page);
@@ -256,7 +256,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_webpage_name_prefers_meta_title(): void
+    public function webpageNamePrefersMetaTitle(): void
     {
         $generator = new WebPageStructuredDataGenerator();
         $content = $this->createContent(ContentType::Page);
@@ -268,7 +268,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_webpage_url_built_correctly(): void
+    public function webpageUrlBuiltCorrectly(): void
     {
         $generator = new WebPageStructuredDataGenerator();
         $content = $this->createContent(ContentType::Page);
@@ -280,7 +280,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_webpage_in_language(): void
+    public function webpageInLanguage(): void
     {
         $generator = new WebPageStructuredDataGenerator();
         $content = $this->createContent(ContentType::Page);
@@ -292,7 +292,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_webpage_date_modified_present(): void
+    public function webpageDateModifiedPresent(): void
     {
         $updatedAt = new DateTimeImmutable('2025-05-01T12:00:00+00:00');
         $generator = new WebPageStructuredDataGenerator();
@@ -307,7 +307,7 @@ final class StructuredDataGeneratorTest extends TestCase
     // -- SeoService::generateBreadcrumbJsonLd() -------------------------------
 
     #[Test]
-    public function test_breadcrumb_generates_breadcrumb_list_type(): void
+    public function breadcrumbGeneratesBreadcrumbListType(): void
     {
         $service = $this->createSeoService();
         $breadcrumbs = [
@@ -324,7 +324,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_breadcrumb_item_list_elements_with_position_name_item(): void
+    public function breadcrumbItemListElementsWithPositionNameItem(): void
     {
         $service = $this->createSeoService();
         $breadcrumbs = [
@@ -354,7 +354,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_breadcrumb_empty_input_returns_empty_collection(): void
+    public function breadcrumbEmptyInputReturnsEmptyCollection(): void
     {
         $service = $this->createSeoService();
 
@@ -366,7 +366,7 @@ final class StructuredDataGeneratorTest extends TestCase
     // -- SeoService::generateStructuredData() ---------------------------------
 
     #[Test]
-    public function test_generate_structured_data_uses_matching_generators(): void
+    public function generateStructuredDataUsesMatchingGenerators(): void
     {
         $articleGenerator = new ArticleStructuredDataGenerator();
         $webpageGenerator = new WebPageStructuredDataGenerator();
@@ -382,7 +382,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_generate_structured_data_returns_empty_when_disabled(): void
+    public function generateStructuredDataReturnsEmptyWhenDisabled(): void
     {
         $service = $this->createSeoService(
             seo: new SeoConfig(enableStructuredData: false),
@@ -398,7 +398,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_generate_structured_data_includes_page_overrides(): void
+    public function generateStructuredDataIncludesPageOverrides(): void
     {
         $service = $this->createSeoService(generators: []);
         $content = $this->createContent(ContentType::Article);
@@ -416,7 +416,7 @@ final class StructuredDataGeneratorTest extends TestCase
     // -- JsonLdCollection::toScript() -----------------------------------------
 
     #[Test]
-    public function test_to_script_produces_valid_script_tag(): void
+    public function toScriptProducesValidScriptTag(): void
     {
         $collection = new JsonLdCollection([
             ['@context' => 'https://schema.org', '@type' => 'WebPage', 'name' => 'Test'],
@@ -431,7 +431,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_to_script_empty_collection_returns_empty_string(): void
+    public function toScriptEmptyCollectionReturnsEmptyString(): void
     {
         $collection = new JsonLdCollection();
 
@@ -439,7 +439,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_to_script_multiple_items_uses_graph(): void
+    public function toScriptMultipleItemsUsesGraph(): void
     {
         $collection = new JsonLdCollection([
             ['@type' => 'WebPage', 'name' => 'Page'],
@@ -452,7 +452,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_to_script_single_item_no_graph_wrapper(): void
+    public function toScriptSingleItemNoGraphWrapper(): void
     {
         $collection = new JsonLdCollection([
             ['@type' => 'WebPage', 'name' => 'Page'],
@@ -466,7 +466,7 @@ final class StructuredDataGeneratorTest extends TestCase
     // -- ProductStructuredDataGenerator ----------------------------------------
 
     #[Test]
-    public function test_product_generator_supports_content_with_linked_product(): void
+    public function productGeneratorSupportsContentWithLinkedProduct(): void
     {
         $product = $this->createProduct();
         $productRepo = $this->createProductRepository($product);
@@ -476,7 +476,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_generator_not_supports_content_without_linked_product(): void
+    public function productGeneratorNotSupportsContentWithoutLinkedProduct(): void
     {
         $productRepo = $this->createProductRepository(null);
         $generator = new ProductStructuredDataGenerator($productRepo);
@@ -485,7 +485,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_generates_correct_type(): void
+    public function productGeneratesCorrectType(): void
     {
         $product = $this->createProduct();
         $productRepo = $this->createProductRepository($product);
@@ -500,7 +500,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_has_sku(): void
+    public function productHasSku(): void
     {
         $product = $this->createProduct(sku: 'WIDGET-001');
         $productRepo = $this->createProductRepository($product);
@@ -514,7 +514,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_has_offers_with_price(): void
+    public function productHasOffersWithPrice(): void
     {
         $product = $this->createProduct(priceAmount: 2999, priceCurrency: 'USD');
         $productRepo = $this->createProductRepository($product);
@@ -531,7 +531,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_in_stock_availability(): void
+    public function productInStockAvailability(): void
     {
         $product = $this->createProduct(stockQuantity: 10);
         $productRepo = $this->createProductRepository($product);
@@ -546,7 +546,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_out_of_stock_availability(): void
+    public function productOutOfStockAvailability(): void
     {
         $product = $this->createProduct(stockQuantity: 0);
         $productRepo = $this->createProductRepository($product);
@@ -561,7 +561,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_name_from_title(): void
+    public function productNameFromTitle(): void
     {
         $product = $this->createProduct();
         $productRepo = $this->createProductRepository($product);
@@ -575,7 +575,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_name_prefers_meta_title(): void
+    public function productNamePrefersMetaTitle(): void
     {
         $product = $this->createProduct();
         $productRepo = $this->createProductRepository($product);
@@ -589,7 +589,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_description_from_meta_description(): void
+    public function productDescriptionFromMetaDescription(): void
     {
         $product = $this->createProduct();
         $productRepo = $this->createProductRepository($product);
@@ -603,7 +603,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_description_omitted_when_absent(): void
+    public function productDescriptionOmittedWhenAbsent(): void
     {
         $product = $this->createProduct();
         $productRepo = $this->createProductRepository($product);
@@ -617,7 +617,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_url_built_correctly(): void
+    public function productUrlBuiltCorrectly(): void
     {
         $product = $this->createProduct();
         $productRepo = $this->createProductRepository($product);
@@ -631,7 +631,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_product_returns_empty_when_no_linked_product(): void
+    public function productReturnsEmptyWhenNoLinkedProduct(): void
     {
         $productRepo = $this->createProductRepository(null);
         $generator = new ProductStructuredDataGenerator($productRepo);
@@ -646,7 +646,7 @@ final class StructuredDataGeneratorTest extends TestCase
     // -- OrganizationStructuredDataGenerator -----------------------------------
 
     #[Test]
-    public function test_organization_generates_correct_type(): void
+    public function organizationGeneratesCorrectType(): void
     {
         $generator = new OrganizationStructuredDataGenerator(new CmsConfig());
         $content = $this->createContent(ContentType::Page);
@@ -659,7 +659,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_organization_uses_title_suffix_as_name(): void
+    public function organizationUsesTitleSuffixAsName(): void
     {
         $config = new CmsConfig(seo: new SeoConfig(titleSuffix: '| Acme Corp'));
         $generator = new OrganizationStructuredDataGenerator($config);
@@ -672,7 +672,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_organization_falls_back_to_page_title_when_no_suffix(): void
+    public function organizationFallsBackToPageTitleWhenNoSuffix(): void
     {
         $config = new CmsConfig(seo: new SeoConfig(titleSuffix: ''));
         $generator = new OrganizationStructuredDataGenerator($config);
@@ -685,7 +685,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_organization_uses_base_url_as_url(): void
+    public function organizationUsesBaseUrlAsUrl(): void
     {
         $generator = new OrganizationStructuredDataGenerator(new CmsConfig());
         $content = $this->createContent(ContentType::Page);
@@ -697,7 +697,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_organization_description_from_meta_description(): void
+    public function organizationDescriptionFromMetaDescription(): void
     {
         $generator = new OrganizationStructuredDataGenerator(new CmsConfig());
         $content = $this->createContent(ContentType::Page);
@@ -709,7 +709,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_organization_description_omitted_when_absent(): void
+    public function organizationDescriptionOmittedWhenAbsent(): void
     {
         $generator = new OrganizationStructuredDataGenerator(new CmsConfig());
         $content = $this->createContent(ContentType::Page);
@@ -721,7 +721,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_organization_supports_root_page(): void
+    public function organizationSupportsRootPage(): void
     {
         $generator = new OrganizationStructuredDataGenerator(new CmsConfig());
         $content = $this->createContent(ContentType::Page);
@@ -730,7 +730,7 @@ final class StructuredDataGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_organization_not_supports_child_page(): void
+    public function organizationNotSupportsChildPage(): void
     {
         $generator = new OrganizationStructuredDataGenerator(new CmsConfig());
         $now = new DateTimeImmutable('2025-06-15T10:00:00+00:00');

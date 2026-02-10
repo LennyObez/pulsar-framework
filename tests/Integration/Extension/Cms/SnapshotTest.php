@@ -26,7 +26,7 @@ final class SnapshotTest extends TestCase
     }
 
     #[Test]
-    public function test_capture_snapshot_includes_all_locales(): void
+    public function captureSnapshotIncludesAllLocales(): void
     {
         $translationsJson = [
             [
@@ -97,7 +97,7 @@ final class SnapshotTest extends TestCase
     }
 
     #[Test]
-    public function test_snapshot_evidence_hash_verification(): void
+    public function snapshotEvidenceHashVerification(): void
     {
         $translationsJson = [
             [

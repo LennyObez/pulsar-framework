@@ -23,7 +23,7 @@ final class InvoiceRendererTest extends TestCase
     // ── HTML rendering with required fields ──────────────────────────
 
     #[Test]
-    public function test_html_renderer_produces_required_fields(): void
+    public function htmlRendererProducesRequiredFields(): void
     {
         $renderer = $this->createHtmlRenderer();
         $invoice = $this->createInvoice('INV-2026-0001');
@@ -41,7 +41,7 @@ final class InvoiceRendererTest extends TestCase
     // ── Print CSS is included ───────────────────────────────────────
 
     #[Test]
-    public function test_html_renderer_includes_print_css(): void
+    public function htmlRendererIncludesPrintCss(): void
     {
         $renderer = $this->createHtmlRenderer();
         $invoice = $this->createInvoice('INV-2026-0002');
@@ -56,7 +56,7 @@ final class InvoiceRendererTest extends TestCase
     // ── Contains total ──────────────────────────────────────────────
 
     #[Test]
-    public function test_html_renderer_includes_total(): void
+    public function htmlRendererIncludesTotal(): void
     {
         $renderer = $this->createHtmlRenderer();
         $invoice = $this->createInvoice('INV-2026-0003');

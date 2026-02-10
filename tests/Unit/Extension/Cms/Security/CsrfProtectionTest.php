@@ -58,7 +58,7 @@ final class CsrfProtectionTest extends TestCase
     // -- POST without step-up → rejected -----------------------------------
 
     #[Test]
-    public function test_post_without_step_up_throws_exception(): void
+    public function postWithoutStepUpThrowsException(): void
     {
         $identity = $this->createStub(IdentityInterface::class);
         $identity->method('id')->willReturn('user-1');
@@ -80,7 +80,7 @@ final class CsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_confirm_without_step_up_throws_exception(): void
+    public function confirmWithoutStepUpThrowsException(): void
     {
         $identity = $this->createStub(IdentityInterface::class);
         $identity->method('id')->willReturn('user-1');
@@ -102,7 +102,7 @@ final class CsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_disable_without_step_up_throws_exception(): void
+    public function disableWithoutStepUpThrowsException(): void
     {
         $identity = $this->createStub(IdentityInterface::class);
         $identity->method('id')->willReturn('user-1');
@@ -126,7 +126,7 @@ final class CsrfProtectionTest extends TestCase
     // -- Unauthenticated requests → rejected --------------------------------
 
     #[Test]
-    public function test_unauthenticated_request_throws_exception(): void
+    public function unauthenticatedRequestThrowsException(): void
     {
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getParsedBody')->willReturn([]);
@@ -142,7 +142,7 @@ final class CsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_non_authenticated_identity_throws_exception(): void
+    public function nonAuthenticatedIdentityThrowsException(): void
     {
         $identity = $this->createStub(IdentityInterface::class);
         $identity->method('id')->willReturn('anon');

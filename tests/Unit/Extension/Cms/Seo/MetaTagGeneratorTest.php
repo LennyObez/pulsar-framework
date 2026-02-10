@@ -31,7 +31,7 @@ final class MetaTagGeneratorTest extends TestCase
     // -- Title ----------------------------------------------------------------
 
     #[Test]
-    public function test_title_with_suffix_appended_correctly(): void
+    public function titleWithSuffixAppendedCorrectly(): void
     {
         $service = $this->createService(seo: new SeoConfig(titleSuffix: '| My Site'));
         $content = $this->createArticle();
@@ -43,7 +43,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_custom_meta_title_overrides_title_and_suffix(): void
+    public function customMetaTitleOverridesTitleAndSuffix(): void
     {
         $service = $this->createService(seo: new SeoConfig(titleSuffix: '| My Site'));
         $content = $this->createArticle();
@@ -55,7 +55,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_title_without_suffix_when_suffix_is_empty(): void
+    public function titleWithoutSuffixWhenSuffixIsEmpty(): void
     {
         $service = $this->createService(seo: new SeoConfig(titleSuffix: ''));
         $content = $this->createArticle();
@@ -69,7 +69,7 @@ final class MetaTagGeneratorTest extends TestCase
     // -- Description ----------------------------------------------------------
 
     #[Test]
-    public function test_description_from_meta_description(): void
+    public function descriptionFromMetaDescription(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -81,7 +81,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_description_null_when_meta_description_absent(): void
+    public function descriptionNullWhenMetaDescriptionAbsent(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -95,7 +95,7 @@ final class MetaTagGeneratorTest extends TestCase
     // -- Canonical URL --------------------------------------------------------
 
     #[Test]
-    public function test_canonical_url_built_from_base_url_and_path(): void
+    public function canonicalUrlBuiltFromBaseUrlAndPath(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -107,7 +107,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_canonical_url_strips_trailing_slash_from_base(): void
+    public function canonicalUrlStripsTrailingSlashFromBase(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -121,7 +121,7 @@ final class MetaTagGeneratorTest extends TestCase
     // -- Robots ---------------------------------------------------------------
 
     #[Test]
-    public function test_robots_from_per_page_override(): void
+    public function robotsFromPerPageOverride(): void
     {
         $service = $this->createService(seo: new SeoConfig(defaultRobots: 'index, follow'));
         $content = $this->createArticle();
@@ -133,7 +133,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_robots_falls_back_to_config_default(): void
+    public function robotsFallsBackToConfigDefault(): void
     {
         $service = $this->createService(seo: new SeoConfig(defaultRobots: 'index, follow'));
         $content = $this->createArticle();
@@ -147,7 +147,7 @@ final class MetaTagGeneratorTest extends TestCase
     // -- OG tags --------------------------------------------------------------
 
     #[Test]
-    public function test_og_type_article_for_articles(): void
+    public function ogTypeArticleForArticles(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -159,7 +159,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_og_type_website_for_pages(): void
+    public function ogTypeWebsiteForPages(): void
     {
         $service = $this->createService();
         $content = $this->createPage();
@@ -171,7 +171,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_og_title_matches_computed_title(): void
+    public function ogTitleMatchesComputedTitle(): void
     {
         $service = $this->createService(seo: new SeoConfig(titleSuffix: '| Blog'));
         $content = $this->createArticle();
@@ -183,7 +183,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_og_url_matches_canonical(): void
+    public function ogUrlMatchesCanonical(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -195,7 +195,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_og_description_present_when_meta_description_set(): void
+    public function ogDescriptionPresentWhenMetaDescriptionSet(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -207,7 +207,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_og_description_omitted_when_meta_description_absent(): void
+    public function ogDescriptionOmittedWhenMetaDescriptionAbsent(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -221,7 +221,7 @@ final class MetaTagGeneratorTest extends TestCase
     // -- Twitter Cards --------------------------------------------------------
 
     #[Test]
-    public function test_twitter_card_fields_present(): void
+    public function twitterCardFieldsPresent(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -235,7 +235,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_twitter_description_omitted_when_description_absent(): void
+    public function twitterDescriptionOmittedWhenDescriptionAbsent(): void
     {
         $service = $this->createService();
         $content = $this->createArticle();
@@ -249,7 +249,7 @@ final class MetaTagGeneratorTest extends TestCase
     // -- Hreflang links -------------------------------------------------------
 
     #[Test]
-    public function test_hreflang_links_one_per_locale_variant(): void
+    public function hreflangLinksOnePerLocaleVariant(): void
     {
         $enTranslation = $this->createTranslation(locale: 'en', path: 'en/article');
         $frTranslation = $this->createTranslation(locale: 'fr', path: 'fr/article');
@@ -268,7 +268,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_hreflang_includes_x_default(): void
+    public function hreflangIncludesXDefault(): void
     {
         $enTranslation = $this->createTranslation(locale: 'en', path: 'en/article');
         $frTranslation = $this->createTranslation(locale: 'fr', path: 'fr/article');
@@ -288,7 +288,7 @@ final class MetaTagGeneratorTest extends TestCase
     // -- MetaTagCollection::toHtml() ------------------------------------------
 
     #[Test]
-    public function test_to_html_produces_valid_meta_tags(): void
+    public function toHtmlProducesValidMetaTags(): void
     {
         $collection = new MetaTagCollection(
             title: 'Test Page',
@@ -314,7 +314,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_to_html_escapes_special_characters(): void
+    public function toHtmlEscapesSpecialCharacters(): void
     {
         $collection = new MetaTagCollection(
             title: 'Title with "quotes" & <entities>',
@@ -328,7 +328,7 @@ final class MetaTagGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_to_html_empty_collection_produces_empty_string(): void
+    public function toHtmlEmptyCollectionProducesEmptyString(): void
     {
         $collection = new MetaTagCollection();
 

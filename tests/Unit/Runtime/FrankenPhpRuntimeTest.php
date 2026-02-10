@@ -117,8 +117,10 @@ final class FrankenPhpRuntimeTest extends TestCase
         $request = $this->createStub(ServerRequestInterface::class);
         $response = $this->createStub(ResponseInterface::class);
 
-        $this->expectNotToPerformAssertions();
         $this->runtime->afterRequest($request, $response);
+
+        // afterRequest() performs sandbox cleanup; runtime status must remain unchanged
+        self::assertSame(RuntimeStatus::Stopped, $this->runtime->status());
     }
 
     #[Test]

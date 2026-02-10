@@ -18,7 +18,7 @@ final class SiteDefinitionParserTest extends TestCase
     // ── Full schema parsing ─────────────────────────────────────────
 
     #[Test]
-    public function test_full_schema_parsing(): void
+    public function fullSchemaParsing(): void
     {
         $json = json_encode([
             'version' => '1.0',
@@ -45,7 +45,7 @@ final class SiteDefinitionParserTest extends TestCase
     // ── media:// ref resolution mapping ─────────────────────────────
 
     #[Test]
-    public function test_media_ref_resolution(): void
+    public function mediaRefResolution(): void
     {
         $json = json_encode([
             'version' => '1.0',
@@ -66,7 +66,7 @@ final class SiteDefinitionParserTest extends TestCase
     // ── content_ref resolution mapping ──────────────────────────────
 
     #[Test]
-    public function test_content_ref_resolution(): void
+    public function contentRefResolution(): void
     {
         $json = json_encode([
             'version' => '1.0',
@@ -86,7 +86,7 @@ final class SiteDefinitionParserTest extends TestCase
     // ── Creation order (taxonomies before content, content before menus)
 
     #[Test]
-    public function test_creation_order_fields_present(): void
+    public function creationOrderFieldsPresent(): void
     {
         $json = json_encode([
             'version' => '1.0',
@@ -107,7 +107,7 @@ final class SiteDefinitionParserTest extends TestCase
     // ── Invalid JSON rejected ───────────────────────────────────────
 
     #[Test]
-    public function test_invalid_json_throws(): void
+    public function invalidJsonThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Invalid JSON');
@@ -118,7 +118,7 @@ final class SiteDefinitionParserTest extends TestCase
     // ── Missing required keys ───────────────────────────────────────
 
     #[Test]
-    public function test_missing_version_throws(): void
+    public function missingVersionThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Missing required keys');
@@ -127,7 +127,7 @@ final class SiteDefinitionParserTest extends TestCase
     }
 
     #[Test]
-    public function test_missing_site_throws(): void
+    public function missingSiteThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Missing required keys');
@@ -138,7 +138,7 @@ final class SiteDefinitionParserTest extends TestCase
     // ── Unsupported version ─────────────────────────────────────────
 
     #[Test]
-    public function test_unsupported_version_throws(): void
+    public function unsupportedVersionThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Unsupported site definition version');
@@ -152,7 +152,7 @@ final class SiteDefinitionParserTest extends TestCase
     // ── site must be an object ──────────────────────────────────────
 
     #[Test]
-    public function test_site_must_be_object(): void
+    public function siteMustBeObject(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('"site" key must be an object');
@@ -166,7 +166,7 @@ final class SiteDefinitionParserTest extends TestCase
     // ── Optional keys default to empty ──────────────────────────────
 
     #[Test]
-    public function test_optional_keys_default_to_empty(): void
+    public function optionalKeysDefaultToEmpty(): void
     {
         $json = json_encode([
             'version' => '1.0',

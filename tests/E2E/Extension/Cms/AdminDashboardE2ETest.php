@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -22,6 +23,7 @@ use const JSON_THROW_ON_ERROR;
  * Validates the full request/response cycle including HTML structure,
  * accessibility landmarks, and asset serving.
  */
+#[CoversClass(DashboardController::class)]
 #[Group('e2e-cms')]
 final class AdminDashboardE2ETest extends TestCase
 {

@@ -45,7 +45,7 @@ final class FileValidatorTest extends TestCase
     // -- Valid images pass -------------------------------------------------
 
     #[Test]
-    public function test_valid_jpeg_passes(): void
+    public function validJpegPasses(): void
     {
         $path = $this->createTempFile("\xFF\xD8\xFF\xE0" . str_repeat("\x00", 100));
         $this->createMinimalJpeg($path);
@@ -55,7 +55,7 @@ final class FileValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_png_passes(): void
+    public function validPngPasses(): void
     {
         $path = $this->createMinimalPng();
 
@@ -64,7 +64,7 @@ final class FileValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_webp_passes(): void
+    public function validWebpPasses(): void
     {
         $path = $this->createTempFileWithContent("RIFF\x00\x00\x00\x00WEBP" . str_repeat("\x00", 100));
 
@@ -87,7 +87,7 @@ final class FileValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_gif_passes(): void
+    public function validGifPasses(): void
     {
         $img = imagecreatetruecolor(10, 10);
         $path = $this->tmpDir . '/valid.gif';
@@ -99,7 +99,7 @@ final class FileValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_pdf_passes(): void
+    public function validPdfPasses(): void
     {
         $path = $this->createTempFileWithContent('%PDF-1.4 clean content here');
 
@@ -108,7 +108,7 @@ final class FileValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_svg_passes(): void
+    public function validSvgPasses(): void
     {
         $content = '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40"/></svg>';
         $path = $this->createTempFileWithContent($content);
@@ -120,7 +120,7 @@ final class FileValidatorTest extends TestCase
     // -- MIME mismatch: JPEG bytes but PNG Content-Type --------------------
 
     #[Test]
-    public function test_mime_mismatch_jpeg_bytes_png_content_type_rejected(): void
+    public function mimeMismatchJpegBytesPngContentTypeRejected(): void
     {
         $path = $this->createMinimalJpeg();
 
@@ -131,7 +131,7 @@ final class FileValidatorTest extends TestCase
     // -- Extension mismatch: .jpg but PNG bytes ----------------------------
 
     #[Test]
-    public function test_extension_mismatch_jpg_extension_png_bytes_rejected(): void
+    public function extensionMismatchJpgExtensionPngBytesRejected(): void
     {
         $path = $this->createMinimalPng();
 
@@ -142,7 +142,7 @@ final class FileValidatorTest extends TestCase
     // -- Oversized file ---------------------------------------------------
 
     #[Test]
-    public function test_oversized_file_rejected(): void
+    public function oversizedFileRejected(): void
     {
         $path = $this->createMinimalJpeg();
 
@@ -155,7 +155,7 @@ final class FileValidatorTest extends TestCase
     // -- Oversized dimensions ---------------------------------------------
 
     #[Test]
-    public function test_oversized_dimensions_rejected(): void
+    public function oversizedDimensionsRejected(): void
     {
         $config = new MediaConfig(maxImageWidth: 100, maxImageHeight: 100);
         $validator = new FileValidator($config);
@@ -173,7 +173,7 @@ final class FileValidatorTest extends TestCase
     // -- Decompression bomb (100MP+) --------------------------------------
 
     #[Test]
-    public function test_pixel_count_exceeded_rejected(): void
+    public function pixelCountExceededRejected(): void
     {
         $config = new MediaConfig(maxPixelCount: 100);
         $validator = new FileValidator($config);
@@ -191,7 +191,7 @@ final class FileValidatorTest extends TestCase
     // -- JPEG with embedded PHP -------------------------------------------
 
     #[Test]
-    public function test_jpeg_with_embedded_php_rejected(): void
+    public function jpegWithEmbeddedPhpRejected(): void
     {
         $img = imagecreatetruecolor(10, 10);
         $path = $this->tmpDir . '/evil.jpg';
@@ -209,7 +209,7 @@ final class FileValidatorTest extends TestCase
     // -- Unknown extension ------------------------------------------------
 
     #[Test]
-    public function test_unknown_extension_rejected(): void
+    public function unknownExtensionRejected(): void
     {
         $path = $this->createTempFileWithContent('some content');
 
@@ -220,7 +220,7 @@ final class FileValidatorTest extends TestCase
     // -- Empty file -------------------------------------------------------
 
     #[Test]
-    public function test_empty_file_rejected(): void
+    public function emptyFileRejected(): void
     {
         $path = $this->createTempFileWithContent('');
 
@@ -231,7 +231,7 @@ final class FileValidatorTest extends TestCase
     // -- Random bytes -----------------------------------------------------
 
     #[Test]
-    public function test_random_bytes_rejected(): void
+    public function randomBytesRejected(): void
     {
         $path = $this->createTempFileWithContent(random_bytes(512));
 

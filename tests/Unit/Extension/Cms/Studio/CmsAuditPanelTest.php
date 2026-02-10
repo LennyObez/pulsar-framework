@@ -29,7 +29,7 @@ final class CmsAuditPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_filters_only_cms_actions(): void
+    public function filtersOnlyCmsActions(): void
     {
         $entries = [
             $this->makeEntry('1', 'cms.content.create', AuditEvent::DataModification),
@@ -45,7 +45,7 @@ final class CmsAuditPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_filters_by_event_type(): void
+    public function filtersByEventType(): void
     {
         $entries = [
             $this->makeEntry('1', 'cms.content.create', AuditEvent::DataModification),
@@ -60,7 +60,7 @@ final class CmsAuditPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_filters_by_date_range(): void
+    public function filtersByDateRange(): void
     {
         $entries = [
             $this->makeEntry('1', 'cms.content.create', AuditEvent::DataModification, '2026-01-01'),
@@ -78,7 +78,7 @@ final class CmsAuditPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_returns_empty_list_when_no_cms_entries(): void
+    public function returnsEmptyListWhenNoCmsEntries(): void
     {
         $entries = [
             $this->makeEntry('1', 'auth.login', AuditEvent::Authentication),
@@ -91,7 +91,7 @@ final class CmsAuditPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_entry_dto_contains_evidence_hash(): void
+    public function entryDtoContainsEvidenceHash(): void
     {
         $entries = [
             $this->makeEntry('1', 'cms.content.create', AuditEvent::DataModification),
@@ -104,7 +104,7 @@ final class CmsAuditPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_count_cms_entries(): void
+    public function countCmsEntries(): void
     {
         $entries = [
             $this->makeEntry('1', 'cms.content.create', AuditEvent::DataModification),
@@ -117,7 +117,7 @@ final class CmsAuditPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_combined_event_type_and_date_filter(): void
+    public function combinedEventTypeAndDateFilter(): void
     {
         $entries = [
             $this->makeEntry('1', 'cms.content.create', AuditEvent::DataModification, '2026-01-01'),
@@ -140,7 +140,7 @@ final class CmsAuditPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_entry_dto_maps_all_fields_correctly(): void
+    public function entryDtoMapsAllFieldsCorrectly(): void
     {
         $entry = $this->makeEntry(
             id: 'entry-42',

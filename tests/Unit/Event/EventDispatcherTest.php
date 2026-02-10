@@ -39,7 +39,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_calls_listeners(): void
+    public function dispatchCallsListeners(): void
     {
         $called = false;
         $this->provider->addListener(stdClass::class, static function (stdClass $e) use (&$called): void {
@@ -52,7 +52,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_returns_same_event(): void
+    public function dispatchReturnsSameEvent(): void
     {
         $event = new stdClass();
         $returned = $this->dispatcher->dispatch($event);
@@ -61,7 +61,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_stops_on_stoppable_event(): void
+    public function dispatchStopsOnStoppableEvent(): void
     {
         $order = [];
 
@@ -81,7 +81,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_with_metrics(): void
+    public function dispatchWithMetrics(): void
     {
         $metrics = new MetricRegistry();
         $dispatcher = new EventDispatcher($this->provider, $this->provider, $this->stormGuard, $metrics);
@@ -93,7 +93,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_throws_on_storm(): void
+    public function dispatchThrowsOnStorm(): void
     {
         $guard = new StormGuard(new StormProtectionConfig(maxDepth: 1));
         $dispatcher = new EventDispatcher($this->provider, $this->provider, $guard);
@@ -105,7 +105,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_envelope_required_throws_for_plain_event(): void
+    public function envelopeRequiredThrowsForPlainEvent(): void
     {
         $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('requiresEnvelopeFor')->willReturn(true);
@@ -120,7 +120,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_envelope_required_does_not_throw_for_envelope(): void
+    public function envelopeRequiredDoesNotThrowForEnvelope(): void
     {
         $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('requiresEnvelopeFor')->willReturn(true);
@@ -135,7 +135,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatchEnvelope_computes_scope_internal(): void
+    public function dispatchEnvelopeComputesScopeInternal(): void
     {
         $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('listenerModuleIdsFor')->willReturn(['billing']);
@@ -151,7 +151,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatchEnvelope_computes_scope_crossModule(): void
+    public function dispatchEnvelopeComputesScopeCrossModule(): void
     {
         $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('listenerModuleIdsFor')->willReturn(['billing', 'shipping']);
@@ -167,7 +167,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatchEnvelope_without_originModule_skips_scope_computation(): void
+    public function dispatchEnvelopeWithoutOriginModuleSkipsScopeComputation(): void
     {
         $dispatcher = new EventDispatcher($this->provider, $this->provider, $this->stormGuard);
 
@@ -178,7 +178,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_storm_prevented_metric_incremented(): void
+    public function stormPreventedMetricIncremented(): void
     {
         $metrics = new MetricRegistry();
         $guard = new StormGuard(new StormProtectionConfig(maxDepth: 1));
@@ -196,7 +196,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_with_envelope_computes_scope(): void
+    public function dispatchWithEnvelopeComputesScope(): void
     {
         $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('listenerModuleIdsFor')->willReturn(['billing']);
@@ -215,7 +215,7 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_uses_eventType_for_metrics(): void
+    public function dispatchUsesEventTypeForMetrics(): void
     {
         $metrics = new MetricRegistry();
         $dispatcher = new EventDispatcher($this->provider, $this->provider, $this->stormGuard, $metrics);

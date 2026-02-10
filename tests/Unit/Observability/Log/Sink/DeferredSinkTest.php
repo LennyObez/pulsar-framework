@@ -21,10 +21,24 @@ final class DeferredSinkTest extends TestCase
         $sink = new DeferredSink();
         $entry = LogEntry::create(LogLevel::Info, 'test message');
 
-        // Should not throw or buffer — pure no-op
+        // Write before any sink is attached — entry is silently dropped (not buffered)
         $sink->write($entry);
 
-        $this->addToAssertionCount(1);
+        // Attach a spy AFTER the write; it should receive zero entries (write was not buffered)
+        $received = [];
+        $spy = new class ($received) implements LogSinkInterface {
+            /** @param list<LogEntry> $received */
+            public function __construct(private array &$received) {} // @phpstan-ignore property.onlyWritten
+
+            public function write(LogEntry $entry): void
+            {
+                $this->received[] = $entry;
+            }
+        };
+
+        $sink->addSink($spy);
+
+        self::assertCount(0, $received, 'Pre-attach writes must not be replayed to late-attached sinks');
     }
 
     #[Test]

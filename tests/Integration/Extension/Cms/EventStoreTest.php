@@ -27,7 +27,7 @@ final class EventStoreTest extends TestCase
     }
 
     #[Test]
-    public function test_append_event_with_evidence_hash(): void
+    public function appendEventWithEvidenceHash(): void
     {
         $contentId = 'content-001';
         $eventType = 'ContentCreated';
@@ -69,7 +69,7 @@ final class EventStoreTest extends TestCase
     }
 
     #[Test]
-    public function test_events_ordered_by_sequence(): void
+    public function eventsOrderedBySequence(): void
     {
         $store = new InMemoryEventStore();
 
@@ -95,7 +95,7 @@ final class EventStoreTest extends TestCase
     }
 
     #[Test]
-    public function test_event_store_only_active_when_config_enabled(): void
+    public function eventStoreOnlyActiveWhenConfigEnabled(): void
     {
         $enabledConfig = new CmsConfig(eventSourcing: true);
         $disabledConfig = new CmsConfig(eventSourcing: false);

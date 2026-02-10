@@ -26,7 +26,7 @@ use Pulsar\Extension\Cms\Content\DataClassification;
 final class CheckoutIntegrationTest extends TestCase
 {
     #[Test]
-    public function test_full_checkout_flow(): void
+    public function fullCheckoutFlow(): void
     {
         // Step 1: Create products
         $product1 = Product::create(

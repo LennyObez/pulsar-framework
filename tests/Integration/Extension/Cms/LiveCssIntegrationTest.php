@@ -26,7 +26,7 @@ use function usort;
 final class LiveCssIntegrationTest extends TestCase
 {
     #[Test]
-    public function test_save_rollback_version_history_flow(): void
+    public function saveRollbackVersionHistoryFlow(): void
     {
         $service = $this->createLiveCssService();
 
@@ -82,7 +82,7 @@ final class LiveCssIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_multi_tenant_isolation(): void
+    public function multiTenantIsolation(): void
     {
         $service = $this->createLiveCssService();
 

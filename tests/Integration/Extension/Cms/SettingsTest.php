@@ -23,7 +23,7 @@ final class SettingsTest extends TestCase
     }
 
     #[Test]
-    public function test_get_and_set_setting(): void
+    public function getAndSetSetting(): void
     {
         $this->settingsService->set('general', 'site_name', 'Pulsar CMS');
         $value = $this->settingsService->get('general', 'site_name');
@@ -32,7 +32,7 @@ final class SettingsTest extends TestCase
     }
 
     #[Test]
-    public function test_locale_specific_setting_overrides_default(): void
+    public function localeSpecificSettingOverridesDefault(): void
     {
         // Set global default
         $this->settingsService->set('general', 'site_name', 'Pulsar CMS');
@@ -54,7 +54,7 @@ final class SettingsTest extends TestCase
     }
 
     #[Test]
-    public function test_get_group_returns_all_settings_in_group(): void
+    public function getGroupReturnsAllSettingsInGroup(): void
     {
         $this->settingsService->set('seo', 'default_title_suffix', ' | Pulsar CMS');
         $this->settingsService->set('seo', 'robots_default', 'index, follow');

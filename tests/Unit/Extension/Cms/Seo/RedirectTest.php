@@ -21,7 +21,7 @@ final class RedirectTest extends TestCase
     // -- Chain collapse -------------------------------------------------------
 
     #[Test]
-    public function test_chain_collapse_a_to_b_to_c_resolves_to_c(): void
+    public function chainCollapseAToBToCResolvesToC(): void
     {
         $now = new DateTimeImmutable();
         $redirectAB = $this->createRedirect('r1', '/old', '/middle', createdAt: $now);
@@ -41,7 +41,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_resolve_returns_null_when_no_redirect_exists(): void
+    public function resolveReturnsNullWhenNoRedirectExists(): void
     {
         $repo = $this->createRepository([]);
         $manager = new RedirectManager($repo, new NullLogger());
@@ -50,7 +50,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_resolve_returns_direct_redirect_when_no_chain(): void
+    public function resolveReturnsDirectRedirectWhenNoChain(): void
     {
         $now = new DateTimeImmutable();
         $redirect = $this->createRedirect('r1', '/old', '/new', createdAt: $now);
@@ -66,7 +66,7 @@ final class RedirectTest extends TestCase
     // -- Create from slug change ----------------------------------------------
 
     #[Test]
-    public function test_create_redirect_from_slug_change(): void
+    public function createRedirectFromSlugChange(): void
     {
         $repo = $this->createSavingRepository();
         $manager = new RedirectManager($repo, new NullLogger());
@@ -88,7 +88,7 @@ final class RedirectTest extends TestCase
     // -- Open redirect protection: REJECTS ------------------------------------
 
     #[Test]
-    public function test_rejects_javascript_scheme(): void
+    public function rejectsJavascriptScheme(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -97,7 +97,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_rejects_data_scheme(): void
+    public function rejectsDataScheme(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -106,7 +106,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_rejects_vbscript_scheme(): void
+    public function rejectsVbscriptScheme(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -115,7 +115,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_rejects_protocol_relative_url(): void
+    public function rejectsProtocolRelativeUrl(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -124,7 +124,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_rejects_javascript_case_insensitive(): void
+    public function rejectsJavascriptCaseInsensitive(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -133,7 +133,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_rejects_url_encoded_javascript(): void
+    public function rejectsUrlEncodedJavascript(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -144,7 +144,7 @@ final class RedirectTest extends TestCase
     // -- Open redirect protection: ALLOWS -------------------------------------
 
     #[Test]
-    public function test_allows_internal_path(): void
+    public function allowsInternalPath(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -154,7 +154,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_allows_https_url(): void
+    public function allowsHttpsUrl(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -164,7 +164,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_allows_http_url(): void
+    public function allowsHttpUrl(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -176,7 +176,7 @@ final class RedirectTest extends TestCase
     // -- Status code validation -----------------------------------------------
 
     #[Test]
-    public function test_status_code_301_accepted(): void
+    public function statusCode301Accepted(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -186,7 +186,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_status_code_308_accepted(): void
+    public function statusCode308Accepted(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -196,7 +196,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_invalid_status_code_defaults_to_301(): void
+    public function invalidStatusCodeDefaultsTo301(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -208,7 +208,7 @@ final class RedirectTest extends TestCase
     // -- CSV import -----------------------------------------------------------
 
     #[Test]
-    public function test_csv_import_parses_valid_csv(): void
+    public function csvImportParsesValidCsv(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -221,7 +221,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_csv_import_skips_header_row(): void
+    public function csvImportSkipsHeaderRow(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -232,7 +232,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_csv_import_skips_empty_lines_and_comments(): void
+    public function csvImportSkipsEmptyLinesAndComments(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -243,7 +243,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_csv_import_reports_errors_for_insufficient_columns(): void
+    public function csvImportReportsErrorsForInsufficientColumns(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -256,7 +256,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_csv_import_reports_errors_for_unsafe_urls(): void
+    public function csvImportReportsErrorsForUnsafeUrls(): void
     {
         $manager = new RedirectManager($this->createSavingRepository(), new NullLogger());
 
@@ -269,7 +269,7 @@ final class RedirectTest extends TestCase
     }
 
     #[Test]
-    public function test_csv_import_defaults_status_code_to_301(): void
+    public function csvImportDefaultsStatusCodeTo301(): void
     {
         $repo = $this->createSavingRepository();
         $manager = new RedirectManager($repo, new NullLogger());
@@ -285,7 +285,7 @@ final class RedirectTest extends TestCase
     // -- Cycle detection ------------------------------------------------------
 
     #[Test]
-    public function test_redirect_cycle_does_not_infinite_loop(): void
+    public function redirectCycleDoesNotInfiniteLoop(): void
     {
         $now = new DateTimeImmutable();
         $redirectAB = $this->createRedirect('r1', '/a', '/b', createdAt: $now);

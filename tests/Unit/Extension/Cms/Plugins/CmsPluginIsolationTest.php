@@ -37,7 +37,7 @@ final class CmsPluginIsolationTest extends TestCase
     // -- Allowed services -----------------------------------------------------
 
     #[Test]
-    public function test_allows_logger_interface_resolution(): void
+    public function allowsLoggerInterfaceResolution(): void
     {
         $logger = $this->createStub(LoggerInterface::class);
         $this->stubContainerService(LoggerInterface::class, $logger);
@@ -48,7 +48,7 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_allows_tagged_cache_interface_resolution(): void
+    public function allowsTaggedCacheInterfaceResolution(): void
     {
         $cache = $this->createStub(TaggedCacheInterface::class);
         $this->stubContainerService(TaggedCacheInterface::class, $cache);
@@ -59,7 +59,7 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_allows_content_repository_interface_resolution(): void
+    public function allowsContentRepositoryInterfaceResolution(): void
     {
         $repo = $this->createStub(ContentRepositoryInterface::class);
         $this->stubContainerService(ContentRepositoryInterface::class, $repo);
@@ -70,7 +70,7 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_allows_event_dispatcher_resolution(): void
+    public function allowsEventDispatcherResolution(): void
     {
         $dispatcher = $this->createStub(EventDispatcherInterface::class);
         $this->stubContainerService(EventDispatcherInterface::class, $dispatcher);
@@ -81,7 +81,7 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_allows_media_repository_resolution(): void
+    public function allowsMediaRepositoryResolution(): void
     {
         $media = $this->createStub(MediaRepositoryInterface::class);
         $this->stubContainerService(MediaRepositoryInterface::class, $media);
@@ -92,7 +92,7 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_allows_settings_service_resolution(): void
+    public function allowsSettingsServiceResolution(): void
     {
         $settings = $this->createStub(SettingsServiceInterface::class);
         $this->stubContainerService(SettingsServiceInterface::class, $settings);
@@ -105,7 +105,7 @@ final class CmsPluginIsolationTest extends TestCase
     // -- Denied services: security-sensitive ----------------------------------
 
     #[Test]
-    public function test_denies_master_key_resolution(): void
+    public function deniesMasterKeyResolution(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('not allowed');
@@ -114,7 +114,7 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_denies_audit_logger_interface_resolution(): void
+    public function deniesAuditLoggerInterfaceResolution(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('not allowed');
@@ -123,7 +123,7 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_denies_role_registry_interface_resolution(): void
+    public function deniesRoleRegistryInterfaceResolution(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('not allowed');
@@ -132,7 +132,7 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_denies_container_interface_resolution(): void
+    public function deniesContainerInterfaceResolution(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('not allowed');
@@ -141,7 +141,7 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_denies_arbitrary_class_resolution(): void
+    public function deniesArbitraryClassResolution(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('not allowed');
@@ -152,7 +152,7 @@ final class CmsPluginIsolationTest extends TestCase
     // -- Error message includes plugin slug -----------------------------------
 
     #[Test]
-    public function test_denial_error_includes_plugin_slug(): void
+    public function denialErrorIncludesPluginSlug(): void
     {
         try {
             $this->proxy->get(AuditLoggerInterface::class);
@@ -165,7 +165,7 @@ final class CmsPluginIsolationTest extends TestCase
     // -- has() method ---------------------------------------------------------
 
     #[Test]
-    public function test_has_returns_true_for_allowed_and_registered(): void
+    public function hasReturnsTrueForAllowedAndRegistered(): void
     {
         $this->container->method('has')
             ->willReturnCallback(static fn(string $id): bool => $id === LoggerInterface::class);
@@ -174,13 +174,13 @@ final class CmsPluginIsolationTest extends TestCase
     }
 
     #[Test]
-    public function test_has_returns_false_for_denied_service(): void
+    public function hasReturnsFalseForDeniedService(): void
     {
         self::assertFalse($this->proxy->has(AuditLoggerInterface::class));
     }
 
     #[Test]
-    public function test_has_returns_false_for_allowed_but_not_registered(): void
+    public function hasReturnsFalseForAllowedButNotRegistered(): void
     {
         $this->container->method('has')
             ->willReturn(false);
@@ -191,7 +191,7 @@ final class CmsPluginIsolationTest extends TestCase
     // -- Service not in container throws -------------------------------------
 
     #[Test]
-    public function test_allowed_service_not_in_container_throws(): void
+    public function allowedServiceNotInContainerThrows(): void
     {
         $this->container->method('has')
             ->willReturn(false);

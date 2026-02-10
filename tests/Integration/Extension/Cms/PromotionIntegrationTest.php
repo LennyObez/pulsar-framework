@@ -21,7 +21,7 @@ use Pulsar\Extension\Cms\Commerce\PromotionValidationResult;
 final class PromotionIntegrationTest extends TestCase
 {
     #[Test]
-    public function test_full_promotion_flow(): void
+    public function fullPromotionFlow(): void
     {
         // Step 1: Create promotion with coupon
         $promotion = new Promotion(
@@ -112,7 +112,7 @@ final class PromotionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_single_use_coupon_becomes_unavailable(): void
+    public function singleUseCouponBecomesUnavailable(): void
     {
         $coupon = new Coupon(
             id: 'coupon-002',
@@ -139,7 +139,7 @@ final class PromotionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_coupon_code_case_insensitive_comparison(): void
+    public function couponCodeCaseInsensitiveComparison(): void
     {
         $coupon = new Coupon(
             id: 'coupon-003',
@@ -158,7 +158,7 @@ final class PromotionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_expired_promotion_validation_fails(): void
+    public function expiredPromotionValidationFails(): void
     {
         $expiredPromotion = new Promotion(
             id: 'promo-expired',
@@ -190,7 +190,7 @@ final class PromotionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_max_uses_exceeded_validation_fails(): void
+    public function maxUsesExceededValidationFails(): void
     {
         $exhaustedPromotion = new Promotion(
             id: 'promo-exhausted',

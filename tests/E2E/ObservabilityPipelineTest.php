@@ -382,6 +382,66 @@ final class ObservabilityPipelineTest extends TestCase
     // ---- Combined observability ----
 
     #[Test]
+    public function loggingAndTracingShareNoStateAcrossIndependentRequests(): void
+    {
+        $collector1 = new InMemorySpanCollector();
+        $middleware1 = new TracingMiddleware($collector1, new W3CTraceContextParser(), 1.0);
+
+        $collector2 = new InMemorySpanCollector();
+        $middleware2 = new TracingMiddleware($collector2, new W3CTraceContextParser(), 1.0);
+
+        // Process through two independent middleware instances
+        $middleware1->process(
+            $this->createRequest('GET', '/req-one'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('one')),
+        );
+
+        $middleware2->process(
+            $this->createRequest('GET', '/req-two'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('two')),
+        );
+
+        // Each collector must hold exactly its own span, not the other's
+        self::assertSame(1, $collector1->count());
+        self::assertSame(1, $collector2->count());
+        self::assertSame('HTTP GET /req-one', $collector1->spans()[0]->name);
+        self::assertSame('HTTP GET /req-two', $collector2->spans()[0]->name);
+    }
+
+    #[Test]
+    public function tracingSpanHasUniqueIdsAcrossMultipleRequests(): void
+    {
+        $collector = new InMemorySpanCollector();
+        $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), 1.0);
+
+        $middleware->process(
+            $this->createRequest('GET', '/first'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('first')),
+        );
+
+        $middleware->process(
+            $this->createRequest('GET', '/second'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('second')),
+        );
+
+        self::assertSame(2, $collector->count());
+        $spans = $collector->spans();
+
+        // Each request generates a distinct trace ID and span ID
+        self::assertNotSame(
+            $spans[0]->context->traceId->value,
+            $spans[1]->context->traceId->value,
+            'Independent requests must have different trace IDs',
+        );
+
+        self::assertNotSame(
+            $spans[0]->context->spanId->value,
+            $spans[1]->context->spanId->value,
+            'Independent requests must have different span IDs',
+        );
+    }
+
+    #[Test]
     public function metricsAndTracingWorkTogetherThroughMiddlewarePipeline(): void
     {
         $registry = new MetricRegistry();

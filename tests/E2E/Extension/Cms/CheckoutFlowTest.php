@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -37,11 +38,12 @@ use function round;
 /**
  * E2E: Full checkout workflow — Cart -> validate -> coupon -> payment -> invoice -> digital download -> refund.
  */
+#[CoversClass(Order::class)]
 #[Group('e2e-cms')]
 final class CheckoutFlowTest extends TestCase
 {
     #[Test]
-    public function test_full_checkout_with_coupon_and_digital_download(): void
+    public function fullCheckoutWithCouponAndDigitalDownload(): void
     {
         // Step 1: Create products
         $physicalProduct = new Product(
@@ -258,14 +260,14 @@ final class CheckoutFlowTest extends TestCase
     }
 
     #[Test]
-    public function test_invalid_status_transition_rejected(): void
+    public function invalidStatusTransitionRejected(): void
     {
         self::assertFalse(OrderStatusStateMachine::canTransition(OrderStatus::Cart, OrderStatus::Fulfilled));
         self::assertFalse(OrderStatusStateMachine::canTransition(OrderStatus::Cancelled, OrderStatus::Confirmed));
     }
 
     #[Test]
-    public function test_expired_download_token_rejected(): void
+    public function expiredDownloadTokenRejected(): void
     {
         $download = new DigitalDownload(
             id: 'dl-expired',
@@ -280,7 +282,7 @@ final class CheckoutFlowTest extends TestCase
     }
 
     #[Test]
-    public function test_zero_downloads_remaining_invalid(): void
+    public function zeroDownloadsRemainingInvalid(): void
     {
         $download = new DigitalDownload(
             id: 'dl-exhausted',

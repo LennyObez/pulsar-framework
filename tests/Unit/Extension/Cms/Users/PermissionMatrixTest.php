@@ -60,7 +60,7 @@ final class PermissionMatrixTest extends TestCase
     // -- Viewer role --------------------------------------------------------
 
     #[Test]
-    public function test_viewer_has_no_permissions(): void
+    public function viewerHasNoPermissions(): void
     {
         $viewer = $this->roles['cms.viewer'];
 
@@ -70,7 +70,7 @@ final class PermissionMatrixTest extends TestCase
     // -- Contributor role ---------------------------------------------------
 
     #[Test]
-    public function test_contributor_can_create_and_edit_own_content(): void
+    public function contributorCanCreateAndEditOwnContent(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -80,7 +80,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_contributor_cannot_publish(): void
+    public function contributorCannotPublish(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -88,7 +88,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_contributor_cannot_approve(): void
+    public function contributorCannotApprove(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -96,7 +96,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_contributor_cannot_install_themes(): void
+    public function contributorCannotInstallThemes(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -104,7 +104,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_contributor_cannot_manage_plugins(): void
+    public function contributorCannotManagePlugins(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -115,7 +115,7 @@ final class PermissionMatrixTest extends TestCase
     // -- Reviewer role ------------------------------------------------------
 
     #[Test]
-    public function test_reviewer_inherits_contributor_permissions(): void
+    public function reviewerInheritsContributorPermissions(): void
     {
         $reviewer = $this->roles['cms.reviewer'];
 
@@ -126,7 +126,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_reviewer_can_approve(): void
+    public function reviewerCanApprove(): void
     {
         $reviewer = $this->roles['cms.reviewer'];
 
@@ -134,7 +134,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_reviewer_cannot_publish(): void
+    public function reviewerCannotPublish(): void
     {
         $reviewer = $this->roles['cms.reviewer'];
 
@@ -144,7 +144,7 @@ final class PermissionMatrixTest extends TestCase
     // -- Editor role --------------------------------------------------------
 
     #[Test]
-    public function test_editor_inherits_reviewer_permissions(): void
+    public function editorInheritsReviewerPermissions(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -157,7 +157,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_can_publish_and_archive(): void
+    public function editorCanPublishAndArchive(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -167,7 +167,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_cannot_install_themes(): void
+    public function editorCannotInstallThemes(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -175,7 +175,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_cannot_manage_plugins(): void
+    public function editorCannotManagePlugins(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -183,7 +183,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_cannot_manage_settings(): void
+    public function editorCannotManageSettings(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -193,7 +193,7 @@ final class PermissionMatrixTest extends TestCase
     // -- Role inheritance chain: contributor subset reviewer subset editor subset admin
 
     #[Test]
-    public function test_contributor_is_subset_of_reviewer(): void
+    public function contributorIsSubsetOfReviewer(): void
     {
         $contributor = $this->roles['cms.contributor'];
         $reviewer = $this->roles['cms.reviewer'];
@@ -217,7 +217,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_reviewer_is_subset_of_editor(): void
+    public function reviewerIsSubsetOfEditor(): void
     {
         $reviewer = $this->roles['cms.reviewer'];
         $editor = $this->roles['cms.editor'];
@@ -240,7 +240,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_is_subset_of_admin(): void
+    public function editorIsSubsetOfAdmin(): void
     {
         $editor = $this->roles['cms.editor'];
         $admin = $this->roles['cms.admin'];
@@ -265,7 +265,7 @@ final class PermissionMatrixTest extends TestCase
     // -- Admin role ---------------------------------------------------------
 
     #[Test]
-    public function test_admin_has_all_permissions(): void
+    public function adminHasAllPermissions(): void
     {
         $admin = $this->roles['cms.admin'];
 
@@ -293,7 +293,7 @@ final class PermissionMatrixTest extends TestCase
     // -- Specialized roles: no leakage between non-inheriting roles ---------
 
     #[Test]
-    public function test_media_manager_has_no_content_publish(): void
+    public function mediaManagerHasNoContentPublish(): void
     {
         $mediaManager = $this->roles['cms.media_manager'];
 
@@ -305,7 +305,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_seo_manager_has_no_content_permissions(): void
+    public function seoManagerHasNoContentPermissions(): void
     {
         $seoManager = $this->roles['cms.seo_manager'];
 
@@ -316,7 +316,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_shop_manager_has_no_content_permissions(): void
+    public function shopManagerHasNoContentPermissions(): void
     {
         $shopManager = $this->roles['cms.shop_manager'];
 
@@ -328,7 +328,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_analytics_viewer_has_only_analytics_permissions(): void
+    public function analyticsViewerHasOnlyAnalyticsPermissions(): void
     {
         $analytics = $this->roles['cms.analytics_viewer'];
 
@@ -339,7 +339,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_media_manager_has_no_seo_permissions(): void
+    public function mediaManagerHasNoSeoPermissions(): void
     {
         $mediaManager = $this->roles['cms.media_manager'];
 
@@ -348,7 +348,7 @@ final class PermissionMatrixTest extends TestCase
     }
 
     #[Test]
-    public function test_seo_manager_has_no_media_permissions(): void
+    public function seoManagerHasNoMediaPermissions(): void
     {
         $seoManager = $this->roles['cms.seo_manager'];
 
@@ -359,7 +359,7 @@ final class PermissionMatrixTest extends TestCase
     // -- All expected roles are registered -----------------------------------
 
     #[Test]
-    public function test_all_expected_roles_registered(): void
+    public function allExpectedRolesRegistered(): void
     {
         $expectedRoles = [
             'cms.viewer',

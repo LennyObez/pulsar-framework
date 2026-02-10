@@ -27,7 +27,7 @@ final class PiiRedactionTest extends TestCase
     // -- ExportOptions defaults -----------------------------------------------
 
     #[Test]
-    public function test_export_options_default_include_pii_is_false(): void
+    public function exportOptionsDefaultIncludePiiIsFalse(): void
     {
         $options = ExportOptions::fromArray([
             'scope' => ['content'],
@@ -37,7 +37,7 @@ final class PiiRedactionTest extends TestCase
     }
 
     #[Test]
-    public function test_export_options_explicit_include_pii(): void
+    public function exportOptionsExplicitIncludePii(): void
     {
         $options = ExportOptions::fromArray([
             'scope' => ['content'],
@@ -48,7 +48,7 @@ final class PiiRedactionTest extends TestCase
     }
 
     #[Test]
-    public function test_export_options_rejects_invalid_scope(): void
+    public function exportOptionsRejectsInvalidScope(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -58,7 +58,7 @@ final class PiiRedactionTest extends TestCase
     }
 
     #[Test]
-    public function test_export_options_rejects_empty_scope(): void
+    public function exportOptionsRejectsEmptyScope(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -71,7 +71,7 @@ final class PiiRedactionTest extends TestCase
 
     #[Test]
     #[DataProvider('piiFieldProvider')]
-    public function test_pii_field_is_known(string $fieldName): void
+    public function piiFieldIsKnown(string $fieldName): void
     {
         // ExportBundleGenerator::PII_FIELDS is private, so we verify through
         // the redaction behavior by building the expected list
@@ -116,7 +116,7 @@ final class PiiRedactionTest extends TestCase
     // -- Scope validation -----------------------------------------------------
 
     #[Test]
-    public function test_valid_scopes_accepted(): void
+    public function validScopesAccepted(): void
     {
         $validScopes = ['content', 'taxonomies', 'menus', 'settings', 'media_refs'];
 
@@ -130,7 +130,7 @@ final class PiiRedactionTest extends TestCase
     }
 
     #[Test]
-    public function test_mixed_valid_and_invalid_scope_rejected(): void
+    public function mixedValidAndInvalidScopeRejected(): void
     {
         $this->expectException(InvalidArgumentException::class);
 
@@ -142,7 +142,7 @@ final class PiiRedactionTest extends TestCase
     // -- Tenant scoping -------------------------------------------------------
 
     #[Test]
-    public function test_export_options_tenant_scoping(): void
+    public function exportOptionsTenantScoping(): void
     {
         $options = ExportOptions::fromArray([
             'scope' => ['content'],
@@ -153,7 +153,7 @@ final class PiiRedactionTest extends TestCase
     }
 
     #[Test]
-    public function test_export_options_null_tenant_exports_all(): void
+    public function exportOptionsNullTenantExportsAll(): void
     {
         $options = ExportOptions::fromArray([
             'scope' => ['content'],

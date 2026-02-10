@@ -14,7 +14,7 @@ use Pulsar\Config\SessionConfig;
 final class SessionConfigTest extends TestCase
 {
     #[Test]
-    public function test_constructor_with_all_fields(): void
+    public function constructorWithAllFields(): void
     {
         $config = new SessionConfig(
             cookieName: 'MY_SESSION',
@@ -57,7 +57,7 @@ final class SessionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_default_values(): void
+    public function defaultValues(): void
     {
         $config = new SessionConfig(
             cookieName: 'TEST',
@@ -82,7 +82,7 @@ final class SessionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_from_array_with_all_fields(): void
+    public function fromArrayWithAllFields(): void
     {
         $env = Environment::load();
 
@@ -123,7 +123,7 @@ final class SessionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_from_array_defaults(): void
+    public function fromArrayDefaults(): void
     {
         $env = Environment::load();
 
@@ -143,7 +143,7 @@ final class SessionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_readonly_properties(): void
+    public function readonlyProperties(): void
     {
         $config = new SessionConfig(
             cookieName: 'READONLY',

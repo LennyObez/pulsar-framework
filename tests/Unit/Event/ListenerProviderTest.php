@@ -25,7 +25,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_getListenersForEvent_returns_empty_for_no_listeners(): void
+    public function getListenersForEventReturnsEmptyForNoListeners(): void
     {
         $provider = new ListenerProvider();
         $event = new stdClass();
@@ -36,7 +36,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_addListener_and_getListenersForEvent(): void
+    public function addListenerAndGetListenersForEvent(): void
     {
         $provider = new ListenerProvider();
         $called = false;
@@ -56,7 +56,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_priority_ordering_higher_first(): void
+    public function priorityOrderingHigherFirst(): void
     {
         $provider = new ListenerProvider();
         $order = [];
@@ -82,7 +82,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_same_priority_preserves_registration_order(): void
+    public function samePriorityPreservesRegistrationOrder(): void
     {
         $provider = new ListenerProvider();
         $order = [];
@@ -104,7 +104,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_addSubscriber_registers_all_events(): void
+    public function addSubscriberRegistersAllEvents(): void
     {
         $provider = new ListenerProvider();
 
@@ -120,7 +120,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_listenerModuleIdsFor_returns_unique_module_ids(): void
+    public function listenerModuleIdsForReturnsUniqueModuleIds(): void
     {
         $provider = new ListenerProvider();
 
@@ -134,7 +134,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_listenerModuleIdsFor_excludes_empty_moduleIds(): void
+    public function listenerModuleIdsForExcludesEmptyModuleIds(): void
     {
         $provider = new ListenerProvider();
 
@@ -147,7 +147,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_registeredEventClasses(): void
+    public function registeredEventClasses(): void
     {
         $provider = new ListenerProvider();
 
@@ -159,7 +159,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_rawListenersFor(): void
+    public function rawListenersFor(): void
     {
         $provider = new ListenerProvider();
         $cb = static function (): void {};
@@ -174,7 +174,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_resolves_listeners_for_parent_class(): void
+    public function resolvesListenersForParentClass(): void
     {
         $provider = new ListenerProvider();
         $called = false;
@@ -193,7 +193,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_cache_invalidated_on_addListener(): void
+    public function cacheInvalidatedOnAddListener(): void
     {
         $provider = new ListenerProvider();
 
@@ -218,7 +218,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_stormOverrideFor_returns_null_for_no_attribute(): void
+    public function stormOverrideForReturnsNullForNoAttribute(): void
     {
         $provider = new ListenerProvider();
         $provider->addListener(stdClass::class, static function (): void {});
@@ -227,7 +227,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_stormOverrideFor_returns_maxDepth_for_attributed_class(): void
+    public function stormOverrideForReturnsMaxDepthForAttributedClass(): void
     {
         $provider = new ListenerProvider();
 
@@ -235,7 +235,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_requiresEnvelopeFor_returns_false_for_plain_class(): void
+    public function requiresEnvelopeForReturnsFalseForPlainClass(): void
     {
         $provider = new ListenerProvider();
 
@@ -243,7 +243,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_requiresEnvelopeFor_returns_true_for_attributed_class(): void
+    public function requiresEnvelopeForReturnsTrueForAttributedClass(): void
     {
         $provider = new ListenerProvider();
 
@@ -251,7 +251,7 @@ final class ListenerProviderTest extends TestCase
     }
 
     #[Test]
-    public function test_requiresEnvelopeFor_returns_true_for_interface_class(): void
+    public function requiresEnvelopeForReturnsTrueForInterfaceClass(): void
     {
         $provider = new ListenerProvider();
 

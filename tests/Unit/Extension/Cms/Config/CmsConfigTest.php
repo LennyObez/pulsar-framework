@@ -15,7 +15,7 @@ use ReflectionClass;
 final class CmsConfigTest extends TestCase
 {
     #[Test]
-    public function test_default_values(): void
+    public function defaultValues(): void
     {
         $config = new CmsConfig();
 
@@ -30,7 +30,7 @@ final class CmsConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_from_array_with_all_values(): void
+    public function fromArrayWithAllValues(): void
     {
         $config = CmsConfig::fromArray([
             'default_locale' => 'fr',
@@ -53,7 +53,7 @@ final class CmsConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_from_array_with_empty_array_uses_defaults(): void
+    public function fromArrayWithEmptyArrayUsesDefaults(): void
     {
         $config = CmsConfig::fromArray([]);
 
@@ -63,7 +63,7 @@ final class CmsConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_from_array_partial_values(): void
+    public function fromArrayPartialValues(): void
     {
         $config = CmsConfig::fromArray([
             'editorial_workflow' => true,
@@ -75,7 +75,7 @@ final class CmsConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_is_readonly_class(): void
+    public function isReadonlyClass(): void
     {
         $reflection = new ReflectionClass(CmsConfig::class);
         self::assertTrue($reflection->isReadOnly());

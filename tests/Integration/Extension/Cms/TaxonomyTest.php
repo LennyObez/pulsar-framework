@@ -31,7 +31,7 @@ final class TaxonomyTest extends TestCase
     }
 
     #[Test]
-    public function test_create_taxonomy_with_terms(): void
+    public function createTaxonomyWithTerms(): void
     {
         $taxonomy = new Taxonomy(
             id: 'tax-001',
@@ -86,7 +86,7 @@ final class TaxonomyTest extends TestCase
     }
 
     #[Test]
-    public function test_attach_terms_to_content(): void
+    public function attachTermsToContent(): void
     {
         $this->taxonomyService->attachTerms('content-001', ['term-001', 'term-002']);
 
@@ -97,7 +97,7 @@ final class TaxonomyTest extends TestCase
     }
 
     #[Test]
-    public function test_detach_terms_from_content(): void
+    public function detachTermsFromContent(): void
     {
         $this->taxonomyService->attachTerms('content-001', ['term-001', 'term-002', 'term-003']);
         $this->taxonomyService->detachTerms('content-001', ['term-002']);
@@ -110,7 +110,7 @@ final class TaxonomyTest extends TestCase
     }
 
     #[Test]
-    public function test_hierarchical_taxonomy_parent_child(): void
+    public function hierarchicalTaxonomyParentChild(): void
     {
         $taxonomy = new Taxonomy(
             id: 'tax-002',

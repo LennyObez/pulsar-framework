@@ -61,7 +61,7 @@ final class SessionMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function test_session_started_before_next(): void
+    public function sessionStartedBeforeNext(): void
     {
         $request = $this->createRequest();
         $capture = new stdClass();
@@ -80,7 +80,7 @@ final class SessionMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function test_flash_messages_aged(): void
+    public function flashMessagesAged(): void
     {
         // Start session, set flash data, and save (simulates previous request)
         $this->sessionManager->start();
@@ -125,7 +125,7 @@ final class SessionMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function test_session_saved_after_response(): void
+    public function sessionSavedAfterResponse(): void
     {
         $request = $this->createRequest();
         $sessionManager = $this->sessionManager;
@@ -149,7 +149,7 @@ final class SessionMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function test_middleware_returns_response_from_next(): void
+    public function middlewareReturnsResponseFromNext(): void
     {
         $request = $this->createRequest();
         $expectedResponse = new Response(statusCode: 200, body: 'Custom body');

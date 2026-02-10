@@ -27,7 +27,7 @@ final class ModuleEventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_stamps_originModule_on_envelope_with_null_origin(): void
+    public function dispatchStampsOriginModuleOnEnvelopeWithNullOrigin(): void
     {
         $provider = new ListenerProvider();
         $guard = new StormGuard(new StormProtectionConfig());
@@ -45,7 +45,7 @@ final class ModuleEventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_overrides_existing_originModule(): void
+    public function dispatchOverridesExistingOriginModule(): void
     {
         $provider = new ListenerProvider();
         $guard = new StormGuard(new StormProtectionConfig());
@@ -63,7 +63,7 @@ final class ModuleEventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatch_passes_through_non_envelope_events(): void
+    public function dispatchPassesThroughNonEnvelopeEvents(): void
     {
         $provider = new ListenerProvider();
         $guard = new StormGuard(new StormProtectionConfig());
@@ -78,7 +78,7 @@ final class ModuleEventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatchEnvelope_stamps_originModule(): void
+    public function dispatchEnvelopeStampsOriginModule(): void
     {
         $provider = new ListenerProvider();
         $guard = new StormGuard(new StormProtectionConfig());
@@ -93,7 +93,7 @@ final class ModuleEventDispatcherTest extends TestCase
     }
 
     #[Test]
-    public function test_dispatchEnvelope_overrides_existing_originModule(): void
+    public function dispatchEnvelopeOverridesExistingOriginModule(): void
     {
         $provider = new ListenerProvider();
         $guard = new StormGuard(new StormProtectionConfig());

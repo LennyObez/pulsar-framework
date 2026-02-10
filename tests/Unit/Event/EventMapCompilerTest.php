@@ -21,7 +21,7 @@ final class EventMapCompilerTest extends TestCase
     }
 
     #[Test]
-    public function test_compile_empty_provider(): void
+    public function compileEmptyProvider(): void
     {
         $provider = new ListenerProvider();
         $compiler = new EventMapCompiler();
@@ -32,7 +32,7 @@ final class EventMapCompilerTest extends TestCase
     }
 
     #[Test]
-    public function test_compile_with_listeners(): void
+    public function compileWithListeners(): void
     {
         $provider = new ListenerProvider();
         $listener = new CompilableTestListener();
@@ -51,7 +51,7 @@ final class EventMapCompilerTest extends TestCase
     }
 
     #[Test]
-    public function test_export_generates_valid_php(): void
+    public function exportGeneratesValidPhp(): void
     {
         $provider = new ListenerProvider();
         $listener = new CompilableTestListener();
@@ -68,7 +68,7 @@ final class EventMapCompilerTest extends TestCase
     }
 
     #[Test]
-    public function test_rejects_class_name_exceeding_max_length(): void
+    public function rejectsClassNameExceedingMaxLength(): void
     {
         $provider = new ListenerProvider();
         $longName = str_repeat('A', 256);
@@ -83,7 +83,7 @@ final class EventMapCompilerTest extends TestCase
     }
 
     #[Test]
-    public function test_rejects_class_name_with_disallowed_characters(): void
+    public function rejectsClassNameWithDisallowedCharacters(): void
     {
         $provider = new ListenerProvider();
         $provider->addListener('App\\Event\\My-Event', static function (): void {}); // @phpstan-ignore argument.type
@@ -97,7 +97,7 @@ final class EventMapCompilerTest extends TestCase
     }
 
     #[Test]
-    public function test_rejects_class_name_with_digit_run_exceeding_8(): void
+    public function rejectsClassNameWithDigitRunExceeding8(): void
     {
         $provider = new ListenerProvider();
         $provider->addListener('App\\Event\\Event123456789', static function (): void {}); // @phpstan-ignore argument.type
@@ -111,7 +111,7 @@ final class EventMapCompilerTest extends TestCase
     }
 
     #[Test]
-    public function test_accepts_valid_class_name(): void
+    public function acceptsValidClassName(): void
     {
         $provider = new ListenerProvider();
         $listener = new CompilableTestListener();
@@ -124,7 +124,7 @@ final class EventMapCompilerTest extends TestCase
     }
 
     #[Test]
-    public function test_rejects_class_name_with_uuid_pattern(): void
+    public function rejectsClassNameWithUuidPattern(): void
     {
         $provider = new ListenerProvider();
         $provider->addListener('App\\Event\\a1b2c3d4\\e5f6\\7890\\abcd\\ef1234567890', static function (): void {}); // @phpstan-ignore argument.type
@@ -138,7 +138,7 @@ final class EventMapCompilerTest extends TestCase
     }
 
     #[Test]
-    public function test_compile_throws_on_closure_listener(): void
+    public function compileThrowsOnClosureListener(): void
     {
         $provider = new ListenerProvider();
         $provider->addListener(stdClass::class, static function (): void {});

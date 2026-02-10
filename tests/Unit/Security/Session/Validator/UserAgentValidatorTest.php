@@ -36,7 +36,7 @@ final class UserAgentValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_normalized_mode_passes_when_major_version_matches(): void
+    public function normalizedModePassesWhenMajorVersionMatches(): void
     {
         $validator = new UserAgentValidator('normalized');
 
@@ -51,7 +51,7 @@ final class UserAgentValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_normalized_mode_fails_when_browser_differs(): void
+    public function normalizedModeFailsWhenBrowserDiffers(): void
     {
         $validator = new UserAgentValidator('normalized');
 
@@ -65,7 +65,7 @@ final class UserAgentValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_strict_mode_passes_exact_match(): void
+    public function strictModePassesExactMatch(): void
     {
         $validator = new UserAgentValidator('strict');
 
@@ -78,7 +78,7 @@ final class UserAgentValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_strict_mode_fails_minor_difference(): void
+    public function strictModeFailsMinorDifference(): void
     {
         $validator = new UserAgentValidator('strict');
 
@@ -92,7 +92,7 @@ final class UserAgentValidatorTest extends TestCase
     }
 
     #[Test]
-    public function test_get_name_returns_user_agent(): void
+    public function getNameReturnsUserAgent(): void
     {
         $validator = new UserAgentValidator();
 
@@ -130,7 +130,7 @@ final class UserAgentValidatorTest extends TestCase
 
     #[Test]
     #[DataProvider('normalizedModeDataProvider')]
-    public function test_normalized_mode_with_data_provider(string $stored, string $current, bool $expected): void
+    public function normalizedModeWithDataProvider(string $stored, string $current, bool $expected): void
     {
         $validator = new UserAgentValidator('normalized');
         $metadata = $this->createMetadataWithUserAgent($stored);

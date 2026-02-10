@@ -25,13 +25,13 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Empty / whitespace input ──────────────────────────────────────
 
     #[Test]
-    public function test_sanitize_empty_input_returns_empty(): void
+    public function sanitizeEmptyInputReturnsEmpty(): void
     {
         self::assertSame('', $this->policy->sanitize(''));
     }
 
     #[Test]
-    public function test_sanitize_whitespace_only_input_returns_trimmed(): void
+    public function sanitizeWhitespaceOnlyInputReturnsTrimmed(): void
     {
         $result = $this->policy->sanitize('   ');
         // Whitespace-only should be preserved or trimmed gracefully
@@ -42,7 +42,7 @@ final class SafeHtmlPolicyTest extends TestCase
 
     #[Test]
     #[DataProvider('allowedElementsProvider')]
-    public function test_sanitize_allowed_element_passes_through(string $input, string $expectedTag): void
+    public function sanitizeAllowedElementPassesThrough(string $input, string $expectedTag): void
     {
         $result = $this->policy->sanitize($input);
         self::assertStringContainsString($expectedTag, $result);
@@ -95,7 +95,7 @@ final class SafeHtmlPolicyTest extends TestCase
 
     #[Test]
     #[DataProvider('disallowedElementsProvider')]
-    public function test_sanitize_disallowed_element_is_unwrapped(string $input, string $expectedText, string $forbiddenTag): void
+    public function sanitizeDisallowedElementIsUnwrapped(string $input, string $expectedText, string $forbiddenTag): void
     {
         $result = $this->policy->sanitize($input);
         self::assertStringContainsString($expectedText, $result);
@@ -128,7 +128,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Attribute filtering ──────────────────────────────────────────
 
     #[Test]
-    public function test_sanitize_keeps_allowed_attributes(): void
+    public function sanitizeKeepsAllowedAttributes(): void
     {
         $result = $this->policy->sanitize('<a href="https://example.com" title="Example">Link</a>');
         self::assertStringContainsString('href="https://example.com"', $result);
@@ -136,7 +136,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_strips_non_allowlisted_attributes(): void
+    public function sanitizeStripsNonAllowlistedAttributes(): void
     {
         $result = $this->policy->sanitize('<p class="foo" role="banner">Text</p>');
         self::assertStringNotContainsString('class=', $result);
@@ -145,28 +145,28 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_code_valid_class_preserved(): void
+    public function sanitizeCodeValidClassPreserved(): void
     {
         $result = $this->policy->sanitize('<code class="language-php">code</code>');
         self::assertStringContainsString('class="language-php"', $result);
     }
 
     #[Test]
-    public function test_sanitize_code_invalid_class_stripped(): void
+    public function sanitizeCodeInvalidClassStripped(): void
     {
         $result = $this->policy->sanitize('<code class="malicious-class">code</code>');
         self::assertStringNotContainsString('class=', $result);
     }
 
     #[Test]
-    public function test_sanitize_th_scope_attribute_preserved(): void
+    public function sanitizeThScopeAttributePreserved(): void
     {
         $result = $this->policy->sanitize('<table><tr><th scope="col">H</th></tr></table>');
         self::assertStringContainsString('scope="col"', $result);
     }
 
     #[Test]
-    public function test_sanitize_td_colspan_rowspan_preserved(): void
+    public function sanitizeTdColspanRowspanPreserved(): void
     {
         $result = $this->policy->sanitize('<table><tr><td colspan="2" rowspan="3">Cell</td></tr></table>');
         self::assertStringContainsString('colspan="2"', $result);
@@ -174,21 +174,21 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_img_loading_attribute_preserved(): void
+    public function sanitizeImgLoadingAttributePreserved(): void
     {
         $result = $this->policy->sanitize('<img src="/media/photo.jpg" alt="Photo" loading="lazy">');
         self::assertStringContainsString('loading="lazy"', $result);
     }
 
     #[Test]
-    public function test_sanitize_details_open_attribute_preserved(): void
+    public function sanitizeDetailsOpenAttributePreserved(): void
     {
         $result = $this->policy->sanitize('<details open><summary>S</summary>Content</details>');
         self::assertStringContainsString('open', $result);
     }
 
     #[Test]
-    public function test_sanitize_time_datetime_attribute_preserved(): void
+    public function sanitizeTimeDatetimeAttributePreserved(): void
     {
         $result = $this->policy->sanitize('<time datetime="2024-01-01">Jan 1</time>');
         self::assertStringContainsString('datetime="2024-01-01"', $result);
@@ -197,7 +197,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: script injection ────────────────────────────────
 
     #[Test]
-    public function test_sanitize_script_tag_removed(): void
+    public function sanitizeScriptTagRemoved(): void
     {
         $result = $this->policy->sanitize('<script>alert(1)</script>');
         self::assertStringNotContainsString('<script', $result);
@@ -205,7 +205,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_script_with_src_removed(): void
+    public function sanitizeScriptWithSrcRemoved(): void
     {
         $result = $this->policy->sanitize('<script src="https://evil.com/xss.js"></script>');
         self::assertStringNotContainsString('<script', $result);
@@ -215,7 +215,7 @@ final class SafeHtmlPolicyTest extends TestCase
 
     #[Test]
     #[DataProvider('eventHandlerXssProvider')]
-    public function test_sanitize_event_handler_stripped(string $input): void
+    public function sanitizeEventHandlerStripped(string $input): void
     {
         $result = $this->policy->sanitize($input);
         self::assertDoesNotMatchRegularExpression('/\bon[a-z]+\s*=/i', $result);
@@ -239,7 +239,7 @@ final class SafeHtmlPolicyTest extends TestCase
 
     #[Test]
     #[DataProvider('javascriptUriXssProvider')]
-    public function test_sanitize_javascript_uri_blocked(string $input): void
+    public function sanitizeJavascriptUriBlocked(string $input): void
     {
         $result = $this->policy->sanitize($input);
         self::assertStringNotContainsString('javascript:', strtolower($result));
@@ -267,7 +267,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: vbscript ────────────────────────────────────────
 
     #[Test]
-    public function test_sanitize_vbscript_uri_blocked(): void
+    public function sanitizeVbscriptUriBlocked(): void
     {
         $result = $this->policy->sanitize('<a href="vbscript:MsgBox(1)">text</a>');
         self::assertStringNotContainsString('vbscript:', strtolower($result));
@@ -276,7 +276,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: data URI on <a> ─────────────────────────────────
 
     #[Test]
-    public function test_sanitize_data_uri_on_a_href_blocked(): void
+    public function sanitizeDataUriOnAHrefBlocked(): void
     {
         $result = $this->policy->sanitize('<a href="data:text/html,<script>alert(1)</script>">text</a>');
         self::assertStringNotContainsString('<a ', $result);
@@ -285,7 +285,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── data URI on <img>: safe images allowed, unsafe blocked ───────
 
     #[Test]
-    public function test_sanitize_valid_data_uri_image_allowed(): void
+    public function sanitizeValidDataUriImageAllowed(): void
     {
         // Small valid base64 PNG data URI
         $validDataUri = 'data:image/png;base64,iVBORw0KGgo=';
@@ -294,14 +294,14 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_data_uri_non_image_blocked(): void
+    public function sanitizeDataUriNonImageBlocked(): void
     {
         $result = $this->policy->sanitize('<img src="data:text/html,<script>alert(1)</script>" alt="xss">');
         self::assertStringNotContainsString('<img', $result);
     }
 
     #[Test]
-    public function test_sanitize_data_uri_svg_image_blocked(): void
+    public function sanitizeDataUriSvgImageBlocked(): void
     {
         // SVG is not in the safe image MIME types
         $result = $this->policy->sanitize('<img src="data:image/svg+xml;base64,PHN2Zz4=" alt="svg">');
@@ -311,7 +311,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: SVG/MathML namespace injection ──────────────────
 
     #[Test]
-    public function test_sanitize_svg_element_removed(): void
+    public function sanitizeSvgElementRemoved(): void
     {
         $result = $this->policy->sanitize('<svg onload="alert(1)"><circle r="10"></circle></svg>');
         self::assertStringNotContainsString('<svg', $result);
@@ -319,7 +319,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_math_element_removed(): void
+    public function sanitizeMathElementRemoved(): void
     {
         $result = $this->policy->sanitize('<math><mi>x</mi></math>');
         self::assertStringNotContainsString('<math', $result);
@@ -328,7 +328,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: CDATA sections ──────────────────────────────────
 
     #[Test]
-    public function test_sanitize_cdata_sections_removed(): void
+    public function sanitizeCdataSectionsRemoved(): void
     {
         $result = $this->policy->sanitize('<p><![CDATA[<script>alert(1)</script>]]></p>');
         self::assertStringNotContainsString('CDATA', $result);
@@ -338,7 +338,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: style attributes and elements ───────────────────
 
     #[Test]
-    public function test_sanitize_style_attribute_stripped(): void
+    public function sanitizeStyleAttributeStripped(): void
     {
         $result = $this->policy->sanitize('<p style="background:url(javascript:alert(1))">text</p>');
         self::assertStringNotContainsString('style=', $result);
@@ -346,7 +346,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_style_element_removed(): void
+    public function sanitizeStyleElementRemoved(): void
     {
         $result = $this->policy->sanitize('<style>body{background:red}</style>');
         self::assertStringNotContainsString('<style', $result);
@@ -355,7 +355,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: data-* attributes ───────────────────────────────
 
     #[Test]
-    public function test_sanitize_data_attributes_stripped(): void
+    public function sanitizeDataAttributesStripped(): void
     {
         $result = $this->policy->sanitize('<p data-value="123" data-custom="xss">text</p>');
         self::assertStringNotContainsString('data-value', $result);
@@ -365,7 +365,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: id attributes ───────────────────────────────────
 
     #[Test]
-    public function test_sanitize_id_attribute_stripped(): void
+    public function sanitizeIdAttributeStripped(): void
     {
         $result = $this->policy->sanitize('<p id="my-id">text</p>');
         self::assertStringNotContainsString('id=', $result);
@@ -374,7 +374,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: BiDi characters ─────────────────────────────────
 
     #[Test]
-    public function test_sanitize_bidi_characters_removed(): void
+    public function sanitizeBidiCharactersRemoved(): void
     {
         $result = $this->policy->sanitize("<p>\u{202A}text\u{202C}</p>");
         self::assertStringNotContainsString("\u{202A}", $result);
@@ -382,7 +382,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_bidi_isolate_characters_removed(): void
+    public function sanitizeBidiIsolateCharactersRemoved(): void
     {
         $result = $this->policy->sanitize("<p>\u{2066}text\u{2069}</p>");
         self::assertStringNotContainsString("\u{2066}", $result);
@@ -392,7 +392,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── XSS vectors: null bytes ──────────────────────────────────────
 
     #[Test]
-    public function test_sanitize_null_bytes_removed(): void
+    public function sanitizeNullBytesRemoved(): void
     {
         $result = $this->policy->sanitize("<p>te\x00xt</p>");
         self::assertStringNotContainsString("\x00", $result);
@@ -402,7 +402,7 @@ final class SafeHtmlPolicyTest extends TestCase
 
     #[Test]
     #[DataProvider('dangerousAttributesProvider')]
-    public function test_sanitize_dangerous_attribute_stripped(string $input, string $forbiddenAttr): void
+    public function sanitizeDangerousAttributeStripped(string $input, string $forbiddenAttr): void
     {
         $result = $this->policy->sanitize($input);
         self::assertStringNotContainsString($forbiddenAttr, $result);
@@ -420,14 +420,14 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Malformed HTML graceful handling ──────────────────────────────
 
     #[Test]
-    public function test_sanitize_unclosed_tags_handled(): void
+    public function sanitizeUnclosedTagsHandled(): void
     {
         $result = $this->policy->sanitize('<p>Unclosed paragraph');
         self::assertStringContainsString('Unclosed paragraph', $result);
     }
 
     #[Test]
-    public function test_sanitize_deeply_nested_tags(): void
+    public function sanitizeDeeplyNestedTags(): void
     {
         $input = str_repeat('<p>', 50) . 'text' . str_repeat('</p>', 50);
         $result = $this->policy->sanitize($input);
@@ -437,21 +437,21 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── External links get rel="noopener noreferrer" ─────────────────
 
     #[Test]
-    public function test_sanitize_external_link_gets_noopener_noreferrer(): void
+    public function sanitizeExternalLinkGetsNoopenerNoreferrer(): void
     {
         $result = $this->policy->sanitize('<a href="https://example.com">Link</a>');
         self::assertStringContainsString('rel="noopener noreferrer"', $result);
     }
 
     #[Test]
-    public function test_sanitize_relative_link_no_rel_added(): void
+    public function sanitizeRelativeLinkNoRelAdded(): void
     {
         $result = $this->policy->sanitize('<a href="/about">About</a>');
         self::assertStringNotContainsString('noopener', $result);
     }
 
     #[Test]
-    public function test_sanitize_mailto_link_no_rel_added(): void
+    public function sanitizeMailtoLinkNoRelAdded(): void
     {
         $result = $this->policy->sanitize('<a href="mailto:user@example.com">Email</a>');
         // mailto: has a scheme, so it does get rel added
@@ -461,28 +461,28 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Image src validation ─────────────────────────────────────────
 
     #[Test]
-    public function test_sanitize_img_with_https_src_allowed(): void
+    public function sanitizeImgWithHttpsSrcAllowed(): void
     {
         $result = $this->policy->sanitize('<img src="https://cdn.example.com/photo.jpg" alt="Photo">');
         self::assertStringContainsString('src="https://cdn.example.com/photo.jpg"', $result);
     }
 
     #[Test]
-    public function test_sanitize_img_with_http_src_blocked(): void
+    public function sanitizeImgWithHttpSrcBlocked(): void
     {
         $result = $this->policy->sanitize('<img src="http://cdn.example.com/photo.jpg" alt="Photo">');
         self::assertStringNotContainsString('<img', $result);
     }
 
     #[Test]
-    public function test_sanitize_img_with_relative_media_src_allowed(): void
+    public function sanitizeImgWithRelativeMediaSrcAllowed(): void
     {
         $result = $this->policy->sanitize('<img src="/media/uploads/photo.jpg" alt="Photo">');
         self::assertStringContainsString('src="/media/uploads/photo.jpg"', $result);
     }
 
     #[Test]
-    public function test_sanitize_img_with_relative_non_media_src_blocked(): void
+    public function sanitizeImgWithRelativeNonMediaSrcBlocked(): void
     {
         $result = $this->policy->sanitize('<img src="/uploads/photo.jpg" alt="Photo">');
         self::assertStringNotContainsString('<img', $result);
@@ -491,7 +491,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── HTML comment removal ─────────────────────────────────────────
 
     #[Test]
-    public function test_sanitize_html_comments_removed(): void
+    public function sanitizeHtmlCommentsRemoved(): void
     {
         $result = $this->policy->sanitize('<p>Before<!-- comment -->After</p>');
         self::assertStringNotContainsString('<!--', $result);
@@ -501,7 +501,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Processing instruction removal ───────────────────────────────
 
     #[Test]
-    public function test_sanitize_processing_instructions_removed(): void
+    public function sanitizeProcessingInstructionsRemoved(): void
     {
         $result = $this->policy->sanitize('<p>Text<?php echo "xss"; ?>More</p>');
         self::assertStringNotContainsString('<?php', $result);
@@ -510,7 +510,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Comment sanitization (subset) ────────────────────────────────
 
     #[Test]
-    public function test_sanitize_comment_allows_subset_elements(): void
+    public function sanitizeCommentAllowsSubsetElements(): void
     {
         $input = '<p>Paragraph</p><strong>Bold</strong><em>Italic</em><a href="https://example.com">Link</a>';
         $result = $this->policy->sanitizeComment($input);
@@ -521,7 +521,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_comment_blocks_non_comment_elements(): void
+    public function sanitizeCommentBlocksNonCommentElements(): void
     {
         $input = '<h2>Heading</h2><img src="/media/x.jpg" alt="x"><table><tr><td>Cell</td></tr></table>';
         $result = $this->policy->sanitizeComment($input);
@@ -531,7 +531,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_comment_allows_code_and_blockquote(): void
+    public function sanitizeCommentAllowsCodeAndBlockquote(): void
     {
         $input = '<code>code</code><blockquote>quote</blockquote><pre>preformatted</pre>';
         $result = $this->policy->sanitizeComment($input);
@@ -541,7 +541,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_comment_strips_xss(): void
+    public function sanitizeCommentStripsXss(): void
     {
         $result = $this->policy->sanitizeComment('<script>alert(1)</script>');
         self::assertStringNotContainsString('<script', $result);
@@ -550,7 +550,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Complex multi-vector attacks ─────────────────────────────────
 
     #[Test]
-    public function test_sanitize_nested_script_in_allowed_element(): void
+    public function sanitizeNestedScriptInAllowedElement(): void
     {
         $result = $this->policy->sanitize('<p>Safe<script>alert(1)</script>Content</p>');
         self::assertStringNotContainsString('<script', $result);
@@ -559,7 +559,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_event_handler_on_allowed_element(): void
+    public function sanitizeEventHandlerOnAllowedElement(): void
     {
         $result = $this->policy->sanitize('<p onmouseover="alert(1)">text</p>');
         self::assertStringNotContainsString('onmouseover', $result);
@@ -567,7 +567,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_multiple_attacks_combined(): void
+    public function sanitizeMultipleAttacksCombined(): void
     {
         $input = '<p style="color:red" onclick="alert(1)" data-x="y" id="z">Text</p>';
         $result = $this->policy->sanitize($input);
@@ -581,7 +581,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── UTF-8 BOM handling ───────────────────────────────────────────
 
     #[Test]
-    public function test_sanitize_strips_utf8_bom(): void
+    public function sanitizeStripsUtf8Bom(): void
     {
         $result = $this->policy->sanitize("\xEF\xBB\xBF<p>Text</p>");
         self::assertStringNotContainsString("\xEF\xBB\xBF", $result);
@@ -591,7 +591,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Expression-based attacks ─────────────────────────────────────
 
     #[Test]
-    public function test_sanitize_expression_in_style_blocked(): void
+    public function sanitizeExpressionInStyleBlocked(): void
     {
         $result = $this->policy->sanitize('<p style="width:expression(alert(1))">text</p>');
         self::assertStringNotContainsString('expression', $result);
@@ -601,7 +601,7 @@ final class SafeHtmlPolicyTest extends TestCase
 
     #[Test]
     #[DataProvider('owaspXssVectorsProvider')]
-    public function test_sanitize_owasp_xss_vector(string $input, string $mustNotContain): void
+    public function sanitizeOwaspXssVector(string $input, string $mustNotContain): void
     {
         $result = $this->policy->sanitize($input);
         self::assertStringNotContainsString($mustNotContain, strtolower($result));
@@ -655,7 +655,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Additional edge cases ────────────────────────────────────────
 
     #[Test]
-    public function test_sanitize_preserves_text_content_of_mixed_html(): void
+    public function sanitizePreservesTextContentOfMixedHtml(): void
     {
         $input = '<p>First</p><div>Middle</div><p>Last</p>';
         $result = $this->policy->sanitize($input);
@@ -665,21 +665,21 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_plain_text_passthrough(): void
+    public function sanitizePlainTextPassthrough(): void
     {
         $result = $this->policy->sanitize('Just plain text with no HTML');
         self::assertStringContainsString('Just plain text with no HTML', $result);
     }
 
     #[Test]
-    public function test_sanitize_html_entities_in_text_preserved(): void
+    public function sanitizeHtmlEntitiesInTextPreserved(): void
     {
         $result = $this->policy->sanitize('<p>&amp; &lt; &gt;</p>');
         self::assertStringContainsString('<p>', $result);
     }
 
     #[Test]
-    public function test_sanitize_empty_href_link_unwrapped(): void
+    public function sanitizeEmptyHrefLinkUnwrapped(): void
     {
         $result = $this->policy->sanitize('<a href="">text</a>');
         // Empty href should be invalid
@@ -687,21 +687,21 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_empty_img_src_removed(): void
+    public function sanitizeEmptyImgSrcRemoved(): void
     {
         $result = $this->policy->sanitize('<img src="" alt="empty">');
         self::assertStringNotContainsString('<img', $result);
     }
 
     #[Test]
-    public function test_sanitize_img_alt_attribute_preserved(): void
+    public function sanitizeImgAltAttributePreserved(): void
     {
         $result = $this->policy->sanitize('<img src="/media/photo.jpg" alt="A beautiful sunset">');
         self::assertStringContainsString('alt="A beautiful sunset"', $result);
     }
 
     #[Test]
-    public function test_sanitize_img_width_height_preserved(): void
+    public function sanitizeImgWidthHeightPreserved(): void
     {
         $result = $this->policy->sanitize('<img src="/media/photo.jpg" alt="x" width="100" height="200">');
         self::assertStringContainsString('width="100"', $result);
@@ -709,7 +709,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_a_rel_preserved_on_external(): void
+    public function sanitizeARelPreservedOnExternal(): void
     {
         $result = $this->policy->sanitize('<a href="https://example.com" rel="nofollow">Link</a>');
         // rel should be overwritten to noopener noreferrer
@@ -717,14 +717,14 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_invalid_mailto_blocked(): void
+    public function sanitizeInvalidMailtoBlocked(): void
     {
         $result = $this->policy->sanitize('<a href="mailto:not-an-email">Link</a>');
         self::assertStringNotContainsString('<a ', $result);
     }
 
     #[Test]
-    public function test_sanitize_valid_mailto_allowed(): void
+    public function sanitizeValidMailtoAllowed(): void
     {
         $result = $this->policy->sanitize('<a href="mailto:user@example.com">Email</a>');
         self::assertStringContainsString('mailto:user@example.com', $result);
@@ -733,7 +733,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Defense-in-depth: final regex scan ───────────────────────────
 
     #[Test]
-    public function test_sanitize_bypassed_javascript_caught_by_final_scan(): void
+    public function sanitizeBypassedJavascriptCaughtByFinalScan(): void
     {
         // If somehow javascript: makes it through the DOM filtering,
         // the final containsDangerousPatterns() should catch it
@@ -748,7 +748,7 @@ final class SafeHtmlPolicyTest extends TestCase
     // ── Self-closing tag normalization ────────────────────────────────
 
     #[Test]
-    public function test_sanitize_br_normalized_to_html5(): void
+    public function sanitizeBrNormalizedToHtml5(): void
     {
         $result = $this->policy->sanitize('<p>Line<br />break</p>');
         // Should contain <br> not <br />
@@ -756,7 +756,7 @@ final class SafeHtmlPolicyTest extends TestCase
     }
 
     #[Test]
-    public function test_sanitize_hr_normalized_to_html5(): void
+    public function sanitizeHrNormalizedToHtml5(): void
     {
         $result = $this->policy->sanitize('<hr />');
         self::assertStringContainsString('<hr>', $result);

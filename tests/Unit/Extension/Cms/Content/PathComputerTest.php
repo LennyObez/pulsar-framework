@@ -15,7 +15,7 @@ final class PathComputerTest extends TestCase
     // ── computePath (pure logic, no DB) ──────────────────────────────
 
     #[Test]
-    public function test_compute_path_root_content_returns_slug_segment(): void
+    public function computePathRootContentReturnsSlugSegment(): void
     {
         $computer = new PathComputer();
 
@@ -25,7 +25,7 @@ final class PathComputerTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_path_nested_content_returns_parent_path_plus_slug(): void
+    public function computePathNestedContentReturnsParentPathPlusSlug(): void
     {
         $computer = new PathComputer();
 
@@ -35,7 +35,7 @@ final class PathComputerTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_path_deeply_nested(): void
+    public function computePathDeeplyNested(): void
     {
         $computer = new PathComputer();
 
@@ -45,7 +45,7 @@ final class PathComputerTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_path_empty_parent_returns_slug(): void
+    public function computePathEmptyParentReturnsSlug(): void
     {
         $computer = new PathComputer();
 

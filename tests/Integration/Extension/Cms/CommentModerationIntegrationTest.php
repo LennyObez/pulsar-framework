@@ -81,7 +81,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_guest_submits_comment_pending_status(): void
+    public function guestSubmitsCommentPendingStatus(): void
     {
         $comment = $this->commentService->submit(
             contentId: 'content-for-comments',
@@ -107,7 +107,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_authenticated_user_submits_comment(): void
+    public function authenticatedUserSubmitsComment(): void
     {
         $comment = $this->commentService->submit(
             contentId: 'content-for-comments',
@@ -125,7 +125,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_moderator_approves_comment_with_audit_event(): void
+    public function moderatorApprovesCommentWithAuditEvent(): void
     {
         $comment = $this->commentService->submit(
             contentId: 'content-for-comments',
@@ -149,7 +149,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_moderator_rejects_comment_with_reason_and_audit(): void
+    public function moderatorRejectsCommentWithReasonAndAudit(): void
     {
         $comment = $this->commentService->submit(
             contentId: 'content-for-comments',
@@ -177,7 +177,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_moderator_marks_comment_as_spam(): void
+    public function moderatorMarksCommentAsSpam(): void
     {
         $comment = $this->commentService->submit(
             contentId: 'content-for-comments',
@@ -195,7 +195,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_rate_limiting_exceeds_threshold_returns_429(): void
+    public function rateLimitingExceedsThresholdReturns429(): void
     {
         $cache = new CommentTestTaggedCache();
         $middleware = new CommentRateLimitMiddleware($cache, rateLimitPerMinute: 2);
@@ -218,7 +218,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_honeypot_filled_returns_fake_success(): void
+    public function honeypotFilledReturnsFakeSuccess(): void
     {
         $middleware = new CommentHoneypotMiddleware($this->auditLogger);
 
@@ -239,7 +239,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_honeypot_empty_passes_through(): void
+    public function honeypotEmptyPassesThrough(): void
     {
         $middleware = new CommentHoneypotMiddleware($this->auditLogger);
 
@@ -256,7 +256,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_anti_abuse_duplicate_body_rejected(): void
+    public function antiAbuseDuplicateBodyRejected(): void
     {
         $cache = new CommentTestTaggedCache();
         $heuristics = new AntiAbuseHeuristics($cache);
@@ -279,7 +279,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_anti_abuse_too_many_links_rejected(): void
+    public function antiAbuseTooManyLinksRejected(): void
     {
         $cache = new CommentTestTaggedCache();
         $heuristics = new AntiAbuseHeuristics($cache);
@@ -299,7 +299,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_edit_within_window_succeeds(): void
+    public function editWithinWindowSucceeds(): void
     {
         $comment = $this->commentService->submit(
             contentId: 'content-for-comments',
@@ -319,7 +319,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_edit_after_window_rejected(): void
+    public function editAfterWindowRejected(): void
     {
         // Create a comment with an expired edit window
         $now = new DateTimeImmutable();
@@ -350,7 +350,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_comment_body_sanitized_scripts_removed(): void
+    public function commentBodySanitizedScriptsRemoved(): void
     {
         $comment = $this->commentService->submit(
             contentId: 'content-for-comments',
@@ -369,7 +369,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_submit_to_nonexistent_content_throws(): void
+    public function submitToNonexistentContentThrows(): void
     {
         $this->expectException(CmsException::class);
         $this->expectExceptionMessage('Content not found');
@@ -386,7 +386,7 @@ final class CommentModerationIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_approve_already_approved_comment_throws(): void
+    public function approveAlreadyApprovedCommentThrows(): void
     {
         $comment = $this->commentService->submit(
             contentId: 'content-for-comments',

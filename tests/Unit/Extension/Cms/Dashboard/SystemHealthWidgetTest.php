@@ -17,7 +17,7 @@ use Pulsar\Storage\StorageObject;
 final class SystemHealthWidgetTest extends TestCase
 {
     #[Test]
-    public function test_get_name_returns_system_health(): void
+    public function getNameReturnsSystemHealth(): void
     {
         $widget = $this->createWidget();
 
@@ -25,7 +25,7 @@ final class SystemHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_template_returns_expected_path(): void
+    public function getTemplateReturnsExpectedPath(): void
     {
         $widget = $this->createWidget();
 
@@ -33,7 +33,7 @@ final class SystemHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_healthy_with_good_metrics(): void
+    public function getDataHealthyWithGoodMetrics(): void
     {
         $widget = $this->createWidget(
             cacheHitRate: 0.95,
@@ -52,7 +52,7 @@ final class SystemHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_unhealthy_when_failed_jobs(): void
+    public function getDataUnhealthyWhenFailedJobs(): void
     {
         $widget = $this->createWidget(
             cacheHitRate: 0.95,
@@ -65,7 +65,7 @@ final class SystemHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_unhealthy_when_cache_hit_rate_very_low(): void
+    public function getDataUnhealthyWhenCacheHitRateVeryLow(): void
     {
         $widget = $this->createWidget(
             cacheHitRate: 0.3,
@@ -78,7 +78,7 @@ final class SystemHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_degraded_when_cache_hit_rate_moderate(): void
+    public function getDataDegradedWhenCacheHitRateModerate(): void
     {
         $widget = $this->createWidget(
             cacheHitRate: 0.7,

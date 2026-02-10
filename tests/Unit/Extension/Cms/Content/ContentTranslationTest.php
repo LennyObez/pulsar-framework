@@ -18,7 +18,7 @@ final class ContentTranslationTest extends TestCase
     private const string CONTENT_ID = '01912345-6789-7abc-8def-0123456789ab';
 
     #[Test]
-    public function test_create_with_valid_slug(): void
+    public function createWithValidSlug(): void
     {
         $translation = ContentTranslation::create(
             id: 'tr-001',
@@ -40,7 +40,7 @@ final class ContentTranslationTest extends TestCase
     }
 
     #[Test]
-    public function test_create_with_all_optional_fields(): void
+    public function createWithAllOptionalFields(): void
     {
         $translation = ContentTranslation::create(
             id: 'tr-002',
@@ -77,7 +77,7 @@ final class ContentTranslationTest extends TestCase
     }
 
     #[Test]
-    public function test_create_with_invalid_slug_throws_cms_exception(): void
+    public function createWithInvalidSlugThrowsCmsException(): void
     {
         $this->expectException(CmsException::class);
         $this->expectExceptionMessage('Invalid slug');
@@ -97,7 +97,7 @@ final class ContentTranslationTest extends TestCase
 
     #[Test]
     #[DataProvider('validSlugProvider')]
-    public function test_is_valid_slug_accepts_valid(string $slug): void
+    public function isValidSlugAcceptsValid(string $slug): void
     {
         self::assertTrue(ContentTranslation::isValidSlug($slug));
     }
@@ -117,7 +117,7 @@ final class ContentTranslationTest extends TestCase
 
     #[Test]
     #[DataProvider('invalidSlugProvider')]
-    public function test_is_valid_slug_rejects_invalid(string $slug): void
+    public function isValidSlugRejectsInvalid(string $slug): void
     {
         self::assertFalse(ContentTranslation::isValidSlug($slug));
     }
@@ -141,7 +141,7 @@ final class ContentTranslationTest extends TestCase
     }
 
     #[Test]
-    public function test_is_readonly_class(): void
+    public function isReadonlyClass(): void
     {
         $reflection = new ReflectionClass(ContentTranslation::class);
         self::assertTrue($reflection->isReadOnly());

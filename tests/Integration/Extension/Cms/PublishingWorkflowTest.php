@@ -18,7 +18,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
 final class PublishingWorkflowTest extends TestCase
 {
     #[Test]
-    public function test_standard_workflow_draft_to_published(): void
+    public function standardWorkflowDraftToPublished(): void
     {
         $content = Content::create(
             id: '019461b0-0000-7000-8000-000000000001',
@@ -37,7 +37,7 @@ final class PublishingWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_editorial_workflow_full_pipeline(): void
+    public function editorialWorkflowFullPipeline(): void
     {
         $content = Content::create(
             id: '019461b0-0000-7000-8000-000000000002',
@@ -60,7 +60,7 @@ final class PublishingWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_invalid_transition_throws_exception(): void
+    public function invalidTransitionThrowsException(): void
     {
         $content = Content::create(
             id: '019461b0-0000-7000-8000-000000000003',
@@ -78,7 +78,7 @@ final class PublishingWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_schedule_content_with_future_date(): void
+    public function scheduleContentWithFutureDate(): void
     {
         $content = Content::create(
             id: '019461b0-0000-7000-8000-000000000004',
@@ -95,7 +95,7 @@ final class PublishingWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_archive_published_content(): void
+    public function archivePublishedContent(): void
     {
         $content = Content::create(
             id: '019461b0-0000-7000-8000-000000000005',
@@ -111,7 +111,7 @@ final class PublishingWorkflowTest extends TestCase
     }
 
     #[Test]
-    public function test_restore_archived_content_to_draft(): void
+    public function restoreArchivedContentToDraft(): void
     {
         $content = Content::create(
             id: '019461b0-0000-7000-8000-000000000006',

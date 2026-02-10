@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,11 +27,12 @@ use function usort;
 /**
  * E2E: Live CSS editing — modify token -> preview -> save -> rollback -> version history.
  */
+#[CoversClass(CssOverride::class)]
 #[Group('e2e-cms')]
 final class LiveCssEditingTest extends TestCase
 {
     #[Test]
-    public function test_full_css_editing_lifecycle(): void
+    public function fullCssEditingLifecycle(): void
     {
         $service = $this->createService();
 
@@ -98,7 +100,7 @@ final class LiveCssEditingTest extends TestCase
     }
 
     #[Test]
-    public function test_css_validation_blocks_import_directive(): void
+    public function cssValidationBlocksImportDirective(): void
     {
         $service = $this->createService(strictValidation: true);
 
@@ -114,7 +116,7 @@ final class LiveCssEditingTest extends TestCase
     }
 
     #[Test]
-    public function test_css_validation_blocks_external_urls(): void
+    public function cssValidationBlocksExternalUrls(): void
     {
         $service = $this->createService(strictValidation: true);
 
@@ -130,7 +132,7 @@ final class LiveCssEditingTest extends TestCase
     }
 
     #[Test]
-    public function test_rollback_nonexistent_override_throws(): void
+    public function rollbackNonexistentOverrideThrows(): void
     {
         $service = $this->createService();
 
@@ -140,7 +142,7 @@ final class LiveCssEditingTest extends TestCase
     }
 
     #[Test]
-    public function test_no_current_override_returns_null(): void
+    public function noCurrentOverrideReturnsNull(): void
     {
         $service = $this->createService();
 
@@ -149,7 +151,7 @@ final class LiveCssEditingTest extends TestCase
     }
 
     #[Test]
-    public function test_csp_hash_format(): void
+    public function cspHashFormat(): void
     {
         $service = $this->createService();
 

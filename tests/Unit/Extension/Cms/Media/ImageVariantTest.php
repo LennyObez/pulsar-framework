@@ -13,7 +13,7 @@ use Pulsar\Extension\Cms\Media\ImageVariant;
 final class ImageVariantTest extends TestCase
 {
     #[Test]
-    public function test_constructor_sets_all_properties(): void
+    public function constructorSetsAllProperties(): void
     {
         $variant = new ImageVariant(
             path: 'media/image-thumbnail.webp',
@@ -31,7 +31,7 @@ final class ImageVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_from_array_creates_instance_from_valid_data(): void
+    public function fromArrayCreatesInstanceFromValidData(): void
     {
         $variant = ImageVariant::fromArray([
             'path' => 'uploads/photo-medium.avif',
@@ -49,7 +49,7 @@ final class ImageVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_from_array_uses_defaults_for_missing_keys(): void
+    public function fromArrayUsesDefaultsForMissingKeys(): void
     {
         $variant = ImageVariant::fromArray([]);
 
@@ -61,7 +61,7 @@ final class ImageVariantTest extends TestCase
     }
 
     #[Test]
-    public function test_from_array_casts_types(): void
+    public function fromArrayCastsTypes(): void
     {
         $variant = ImageVariant::fromArray([
             'path' => 123,

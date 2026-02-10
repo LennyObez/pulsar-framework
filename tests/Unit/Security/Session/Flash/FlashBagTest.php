@@ -40,7 +40,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_set_and_get_after_age(): void
+    public function setAndGetAfterAge(): void
     {
         $this->flash->set('message', 'Hello World');
 
@@ -51,7 +51,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_get_consumes_value(): void
+    public function getConsumesValue(): void
     {
         $this->flash->set('message', 'Consumed');
         $this->flash->age();
@@ -62,7 +62,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_has_returns_true_for_existing_flash(): void
+    public function hasReturnsTrueForExistingFlash(): void
     {
         $this->flash->set('notice', 'Important');
         $this->flash->age();
@@ -71,7 +71,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_has_returns_false_after_consumption(): void
+    public function hasReturnsFalseAfterConsumption(): void
     {
         $this->flash->set('notice', 'Temporary');
         $this->flash->age();
@@ -83,7 +83,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_peek_does_not_consume(): void
+    public function peekDoesNotConsume(): void
     {
         $this->flash->set('message', 'Peeked');
         $this->flash->age();
@@ -94,7 +94,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_keep_reflashes_value(): void
+    public function keepReflashesValue(): void
     {
         $this->flash->set('message', 'Kept');
         $this->flash->age();
@@ -109,7 +109,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_all_returns_and_clears(): void
+    public function allReturnsAndClears(): void
     {
         $this->flash->set('key1', 'value1');
         $this->flash->set('key2', 'value2');
@@ -128,7 +128,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_clear_removes_everything(): void
+    public function clearRemovesEverything(): void
     {
         $this->flash->set('new_key', 'new_value');
         $this->flash->age();
@@ -143,7 +143,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_flash_persists_for_exactly_one_read(): void
+    public function flashPersistsForExactlyOneRead(): void
     {
         // Set a flash message
         $this->flash->set('ephemeral', 'one-time');
@@ -159,7 +159,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_get_returns_default_when_key_missing(): void
+    public function getReturnsDefaultWhenKeyMissing(): void
     {
         $this->flash->age();
 
@@ -168,7 +168,7 @@ final class FlashBagTest extends TestCase
     }
 
     #[Test]
-    public function test_flash_not_available_before_age(): void
+    public function flashNotAvailableBeforeAge(): void
     {
         $this->flash->set('message', 'Not yet');
 

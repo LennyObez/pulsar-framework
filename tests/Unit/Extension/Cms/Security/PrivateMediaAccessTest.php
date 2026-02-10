@@ -43,7 +43,7 @@ final class PrivateMediaAccessTest extends TestCase
     // -- serveOriginal: private media ----------------------------------------
 
     #[Test]
-    public function test_private_original_denied_without_identity(): void
+    public function privateOriginalDeniedWithoutIdentity(): void
     {
         $asset = $this->createAsset(MediaVisibility::Private);
         $this->repository->method('findByHash')->willReturn($asset);
@@ -55,7 +55,7 @@ final class PrivateMediaAccessTest extends TestCase
     }
 
     #[Test]
-    public function test_private_original_denied_for_unauthenticated_identity(): void
+    public function privateOriginalDeniedForUnauthenticatedIdentity(): void
     {
         $asset = $this->createAsset(MediaVisibility::Private);
         $this->repository->method('findByHash')->willReturn($asset);
@@ -68,7 +68,7 @@ final class PrivateMediaAccessTest extends TestCase
     }
 
     #[Test]
-    public function test_private_original_served_for_authenticated_identity(): void
+    public function privateOriginalServedForAuthenticatedIdentity(): void
     {
         $asset = $this->createAsset(MediaVisibility::Private);
         $this->repository->method('findByHash')->willReturn($asset);
@@ -83,7 +83,7 @@ final class PrivateMediaAccessTest extends TestCase
     }
 
     #[Test]
-    public function test_public_original_served_without_identity(): void
+    public function publicOriginalServedWithoutIdentity(): void
     {
         $asset = $this->createAsset(MediaVisibility::Public);
         $this->repository->method('findByHash')->willReturn($asset);
@@ -98,7 +98,7 @@ final class PrivateMediaAccessTest extends TestCase
     // -- serve (derivatives): private media -----------------------------------
 
     #[Test]
-    public function test_private_derivative_denied_without_identity(): void
+    public function privateDerivativeDeniedWithoutIdentity(): void
     {
         $asset = $this->createAsset(MediaVisibility::Private);
         $this->repository->method('findByHash')->willReturn($asset);
@@ -110,7 +110,7 @@ final class PrivateMediaAccessTest extends TestCase
     }
 
     #[Test]
-    public function test_private_derivative_served_for_authenticated_identity(): void
+    public function privateDerivativeServedForAuthenticatedIdentity(): void
     {
         $asset = $this->createAsset(MediaVisibility::Private);
         $derivative = new MediaDerivative(
@@ -139,7 +139,7 @@ final class PrivateMediaAccessTest extends TestCase
     }
 
     #[Test]
-    public function test_public_derivative_has_public_cache_headers(): void
+    public function publicDerivativeHasPublicCacheHeaders(): void
     {
         $asset = $this->createAsset(MediaVisibility::Public);
         $derivative = new MediaDerivative(
@@ -169,7 +169,7 @@ final class PrivateMediaAccessTest extends TestCase
     // -- Deleted assets always return 404 ------------------------------------
 
     #[Test]
-    public function test_deleted_private_asset_returns_404_not_403(): void
+    public function deletedPrivateAssetReturns404Not403(): void
     {
         $asset = $this->createAsset(MediaVisibility::Private, deleted: true);
         $this->repository->method('findByHash')->willReturn($asset);
@@ -181,7 +181,7 @@ final class PrivateMediaAccessTest extends TestCase
     }
 
     #[Test]
-    public function test_nonexistent_asset_returns_404(): void
+    public function nonexistentAssetReturns404(): void
     {
         $this->repository->method('findByHash')->willReturn(null);
 

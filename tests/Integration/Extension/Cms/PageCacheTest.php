@@ -36,7 +36,7 @@ final class PageCacheTest extends TestCase
     }
 
     #[Test]
-    public function test_request_published_page_is_cached(): void
+    public function requestPublishedPageIsCached(): void
     {
         $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world', headers: []);
 
@@ -59,7 +59,7 @@ final class PageCacheTest extends TestCase
     }
 
     #[Test]
-    public function test_cache_invalidated_on_content_update(): void
+    public function cacheInvalidatedOnContentUpdate(): void
     {
         $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world', headers: []);
         $request = $request->withAttribute('cms_content_id', 'content-001');
@@ -89,7 +89,7 @@ final class PageCacheTest extends TestCase
     }
 
     #[Test]
-    public function test_fresh_content_served_after_invalidation(): void
+    public function freshContentServedAfterInvalidation(): void
     {
         $request = new ServerRequest(method: 'GET', uri: '/blog/article', headers: []);
         $request = $request->withAttribute('cms_content_id', 'content-002');
@@ -120,7 +120,7 @@ final class PageCacheTest extends TestCase
     }
 
     #[Test]
-    public function test_admin_users_bypass_cache(): void
+    public function adminUsersBypassCache(): void
     {
         $identity = new TestIdentity(
             id: 'admin-001',
@@ -145,7 +145,7 @@ final class PageCacheTest extends TestCase
     }
 
     #[Test]
-    public function test_tag_based_invalidation_on_menu_change(): void
+    public function tagBasedInvalidationOnMenuChange(): void
     {
         $request = new ServerRequest(method: 'GET', uri: '/about', headers: []);
         $request = $request->withAttribute('cms_menu_ids', ['menu-primary']);
@@ -176,7 +176,7 @@ final class PageCacheTest extends TestCase
     }
 
     #[Test]
-    public function test_non_get_requests_bypass_cache(): void
+    public function nonGetRequestsBypassCache(): void
     {
         $request = new ServerRequest(method: 'POST', uri: '/blog/hello-world', headers: []);
 
@@ -188,7 +188,7 @@ final class PageCacheTest extends TestCase
     }
 
     #[Test]
-    public function test_nocache_query_param_bypasses_cache(): void
+    public function nocacheQueryParamBypassesCache(): void
     {
         $request = new ServerRequest(method: 'GET', uri: '/blog/hello-world?_nocache=1', headers: [], queryParams: ['_nocache' => '1']);
 

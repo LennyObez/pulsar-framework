@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -24,11 +25,12 @@ use function in_array;
 /**
  * E2E: Admin 2FA workflow — enable -> confirm setup -> login with TOTP -> step-up -> recovery code.
  */
+#[CoversClass(TwoFactorManager::class)]
 #[Group('e2e-cms')]
 final class AdminTwoFactorTest extends TestCase
 {
     #[Test]
-    public function test_full_2fa_lifecycle(): void
+    public function full2faLifecycle(): void
     {
         $generator = new TotpGenerator(codeDigits: 6, period: 30);
         $verifier = new TotpVerifier($generator, window: 1);
@@ -138,7 +140,7 @@ final class AdminTwoFactorTest extends TestCase
     }
 
     #[Test]
-    public function test_invalid_totp_code_rejected_during_setup(): void
+    public function invalidTotpCodeRejectedDuringSetup(): void
     {
         $generator = new TotpGenerator();
         $verifier = new TotpVerifier($generator);
@@ -169,7 +171,7 @@ final class AdminTwoFactorTest extends TestCase
     }
 
     #[Test]
-    public function test_verify_code_for_non_enrolled_user(): void
+    public function verifyCodeForNonEnrolledUser(): void
     {
         $generator = new TotpGenerator();
         $verifier = new TotpVerifier($generator);
@@ -192,7 +194,7 @@ final class AdminTwoFactorTest extends TestCase
     }
 
     #[Test]
-    public function test_recovery_code_format(): void
+    public function recoveryCodeFormat(): void
     {
         $generator = new RecoveryCodeGenerator();
         $codes = $generator->generate(8);

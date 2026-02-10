@@ -43,7 +43,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_write_and_read_via_cookie_flow(): void
+    public function writeAndReadViaCookieFlow(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -62,7 +62,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_payload_size_limit_enforced(): void
+    public function payloadSizeLimitEnforced(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -76,7 +76,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_cookie_accepted_within_replay_window(): void
+    public function validCookieAcceptedWithinReplayWindow(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -93,7 +93,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_supports_concurrency_control_returns_false(): void
+    public function supportsConcurrencyControlReturnsFalse(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -101,7 +101,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_supports_session_listing_returns_false(): void
+    public function supportsSessionListingReturnsFalse(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -109,7 +109,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_supports_revocation_returns_false(): void
+    public function supportsRevocationReturnsFalse(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -117,7 +117,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_list_sessions_throws_not_supported(): void
+    public function listSessionsThrowsNotSupported(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -128,7 +128,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_revoke_session_throws_not_supported(): void
+    public function revokeSessionThrowsNotSupported(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -139,7 +139,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_get_active_sessions_throws_not_supported(): void
+    public function getActiveSessionsThrowsNotSupported(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -150,7 +150,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_open_returns_true(): void
+    public function openReturnsTrue(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -158,7 +158,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_close_returns_true(): void
+    public function closeReturnsTrue(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -166,7 +166,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_gc_returns_zero(): void
+    public function gcReturnsZero(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -174,7 +174,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_destroy_clears_buffers(): void
+    public function destroyClearsBuffers(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -188,7 +188,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_read_returns_empty_for_nonexistent_session(): void
+    public function readReturnsEmptyForNonexistentSession(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 
@@ -196,7 +196,7 @@ final class CookieHandlerTest extends TestCase
     }
 
     #[Test]
-    public function test_tampered_cookie_is_rejected(): void
+    public function tamperedCookieIsRejected(): void
     {
         $handler = new CookieHandler($this->encryption, $this->config);
 

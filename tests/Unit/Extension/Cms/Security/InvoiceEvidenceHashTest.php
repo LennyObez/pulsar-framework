@@ -29,7 +29,7 @@ use const JSON_THROW_ON_ERROR;
 final class InvoiceEvidenceHashTest extends TestCase
 {
     #[Test]
-    public function test_invoice_evidence_hash_is_deterministic(): void
+    public function invoiceEvidenceHashIsDeterministic(): void
     {
         $now = new DateTimeImmutable('2026-01-15T10:00:00+00:00');
 
@@ -63,7 +63,7 @@ final class InvoiceEvidenceHashTest extends TestCase
     }
 
     #[Test]
-    public function test_changing_total_changes_evidence_hash(): void
+    public function changingTotalChangesEvidenceHash(): void
     {
         $now = new DateTimeImmutable('2026-01-15T10:00:00+00:00');
 
@@ -97,7 +97,7 @@ final class InvoiceEvidenceHashTest extends TestCase
     }
 
     #[Test]
-    public function test_changing_order_id_changes_evidence_hash(): void
+    public function changingOrderIdChangesEvidenceHash(): void
     {
         $now = new DateTimeImmutable('2026-01-15T10:00:00+00:00');
 
@@ -131,7 +131,7 @@ final class InvoiceEvidenceHashTest extends TestCase
     }
 
     #[Test]
-    public function test_changing_item_count_changes_evidence_hash(): void
+    public function changingItemCountChangesEvidenceHash(): void
     {
         $now = new DateTimeImmutable('2026-01-15T10:00:00+00:00');
 
@@ -165,7 +165,7 @@ final class InvoiceEvidenceHashTest extends TestCase
     }
 
     #[Test]
-    public function test_changing_currency_changes_evidence_hash(): void
+    public function changingCurrencyChangesEvidenceHash(): void
     {
         $now = new DateTimeImmutable('2026-01-15T10:00:00+00:00');
 
@@ -199,7 +199,7 @@ final class InvoiceEvidenceHashTest extends TestCase
     }
 
     #[Test]
-    public function test_evidence_hash_uses_sha256(): void
+    public function evidenceHashUsesSha256(): void
     {
         $now = new DateTimeImmutable('2026-01-15T10:00:00+00:00');
 
@@ -222,7 +222,7 @@ final class InvoiceEvidenceHashTest extends TestCase
     }
 
     #[Test]
-    public function test_invoice_data_classification_is_pii(): void
+    public function invoiceDataClassificationIsPii(): void
     {
         // Invoices contain customer information and must be classified as PII
         $invoice = new Invoice(

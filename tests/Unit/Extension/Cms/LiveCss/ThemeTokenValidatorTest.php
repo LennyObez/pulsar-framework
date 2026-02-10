@@ -22,7 +22,7 @@ final class ThemeTokenValidatorTest extends TestCase
 
     #[Test]
     #[DataProvider('validColorProvider')]
-    public function test_valid_color_values(string $value): void
+    public function validColorValues(string $value): void
     {
         $resolver = $this->createResolver();
         $token = new ThemeToken('--color-primary', 'color', '#007bff', 'Primary Color', 'Colors');
@@ -49,7 +49,7 @@ final class ThemeTokenValidatorTest extends TestCase
 
     #[Test]
     #[DataProvider('invalidColorProvider')]
-    public function test_invalid_color_values(string $value): void
+    public function invalidColorValues(string $value): void
     {
         $resolver = $this->createResolver();
         $token = new ThemeToken('--color-primary', 'color', '#007bff', 'Primary Color', 'Colors');
@@ -70,7 +70,7 @@ final class ThemeTokenValidatorTest extends TestCase
     // ── Font validation with allowed_values ─────────────────────────
 
     #[Test]
-    public function test_font_validation_with_allowed_values(): void
+    public function fontValidationWithAllowedValues(): void
     {
         $resolver = $this->createResolver();
         $token = new ThemeToken(
@@ -90,7 +90,7 @@ final class ThemeTokenValidatorTest extends TestCase
     // ── Size validation with min/max range ──────────────────────────
 
     #[Test]
-    public function test_size_validation_within_range(): void
+    public function sizeValidationWithinRange(): void
     {
         $resolver = $this->createResolver();
         $token = new ThemeToken(
@@ -112,7 +112,7 @@ final class ThemeTokenValidatorTest extends TestCase
     // ── Invalid unit rejection ──────────────────────────────────────
 
     #[Test]
-    public function test_invalid_unit_rejected(): void
+    public function invalidUnitRejected(): void
     {
         $resolver = $this->createResolver();
         $token = new ThemeToken(
@@ -131,7 +131,7 @@ final class ThemeTokenValidatorTest extends TestCase
     // ── String type accepts any value ───────────────────────────────
 
     #[Test]
-    public function test_string_type_accepts_safe_values(): void
+    public function stringTypeAcceptsSafeValues(): void
     {
         $resolver = $this->createResolver();
         $token = new ThemeToken('--brand-name', 'string', 'Pulsar', 'Brand Name', 'General');

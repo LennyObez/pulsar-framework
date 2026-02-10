@@ -25,7 +25,7 @@ final class SessionEncryptionTest extends TestCase
     }
 
     #[Test]
-    public function test_encrypt_decrypt_roundtrip(): void
+    public function encryptDecryptRoundtrip(): void
     {
         $encryption = $this->createEncryption();
 
@@ -44,7 +44,7 @@ final class SessionEncryptionTest extends TestCase
     }
 
     #[Test]
-    public function test_aad_mismatch_fails_decryption(): void
+    public function aadMismatchFailsDecryption(): void
     {
         $encryption = $this->createEncryption();
 
@@ -58,7 +58,7 @@ final class SessionEncryptionTest extends TestCase
     }
 
     #[Test]
-    public function test_different_handler_type_aad_fails(): void
+    public function differentHandlerTypeAadFails(): void
     {
         $encryption = $this->createEncryption();
 
@@ -72,7 +72,7 @@ final class SessionEncryptionTest extends TestCase
     }
 
     #[Test]
-    public function test_corrupted_ciphertext_fails(): void
+    public function corruptedCiphertextFails(): void
     {
         $encryption = $this->createEncryption();
 
@@ -88,7 +88,7 @@ final class SessionEncryptionTest extends TestCase
     }
 
     #[Test]
-    public function test_serialization_is_forbidden(): void
+    public function serializationIsForbidden(): void
     {
         $encryption = $this->createEncryption();
 
@@ -99,7 +99,7 @@ final class SessionEncryptionTest extends TestCase
     }
 
     #[Test]
-    public function test_key_rotation_support(): void
+    public function keyRotationSupport(): void
     {
         // Create a master key with a previous key for rotation
         $currentKeyHex = sodium_bin2hex(random_bytes(32));
@@ -122,7 +122,7 @@ final class SessionEncryptionTest extends TestCase
     }
 
     #[Test]
-    public function test_empty_plaintext_roundtrip(): void
+    public function emptyPlaintextRoundtrip(): void
     {
         $encryption = $this->createEncryption();
 
@@ -133,7 +133,7 @@ final class SessionEncryptionTest extends TestCase
     }
 
     #[Test]
-    public function test_different_domain_aad_fails(): void
+    public function differentDomainAadFails(): void
     {
         $encryption = $this->createEncryption();
 
@@ -142,5 +142,100 @@ final class SessionEncryptionTest extends TestCase
         $this->expectException(SecurityException::class);
 
         $encryption->decrypt($encrypted, 'session-1', 'file', 'evil.com');
+    }
+
+    #[Test]
+    public function decryptRejectsInvalidBase64(): void
+    {
+        $encryption = $this->createEncryption();
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('invalid base64 encoding');
+
+        $encryption->decrypt('not!valid!base64!!!', 'session-1', 'file', 'example.com');
+    }
+
+    #[Test]
+    public function decryptRejectsTooShortCiphertext(): void
+    {
+        $encryption = $this->createEncryption();
+
+        // Valid base64 but too short to contain kid + nonce + tag
+        $tooShort = base64_encode('short');
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('ciphertext too short');
+
+        $encryption->decrypt($tooShort, 'session-1', 'file', 'example.com');
+    }
+
+    #[Test]
+    public function decryptRejectsUnknownKeyId(): void
+    {
+        $encryption = $this->createEncryption();
+
+        // Create a valid-length payload with a bogus key ID
+        $fakeKid = str_repeat("\x00", 8);
+        $fakeNonce = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES);
+        $fakeCiphertext = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_ABYTES + 10);
+
+        $encoded = base64_encode($fakeKid . $fakeNonce . $fakeCiphertext);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('unknown key identifier');
+
+        $encryption->decrypt($encoded, 'session-1', 'file', 'example.com');
+    }
+
+    #[Test]
+    public function debugInfoRedactsKey(): void
+    {
+        $encryption = $this->createEncryption();
+
+        $debugInfo = $encryption->__debugInfo();
+
+        self::assertArrayHasKey('currentKid', $debugInfo);
+        self::assertArrayHasKey('currentKey', $debugInfo);
+        self::assertSame('[REDACTED]', $debugInfo['currentKey']);
+        self::assertNotEmpty($debugInfo['currentKid']);
+    }
+
+    #[Test]
+    public function unserializeIsForbidden(): void
+    {
+        $encryption = $this->createEncryption();
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('Serialization of SessionEncryption is forbidden');
+
+        $encryption->__unserialize([]);
+    }
+
+    #[Test]
+    public function encryptProducesDifferentCiphertextsForSameInput(): void
+    {
+        $encryption = $this->createEncryption();
+
+        $encrypted1 = $encryption->encrypt('same data', 'session-1', 'file', 'example.com');
+        $encrypted2 = $encryption->encrypt('same data', 'session-1', 'file', 'example.com');
+
+        // Different nonces should produce different ciphertexts
+        self::assertNotSame($encrypted1, $encrypted2);
+
+        // But both decrypt to the same value
+        self::assertSame('same data', $encryption->decrypt($encrypted1, 'session-1', 'file', 'example.com'));
+        self::assertSame('same data', $encryption->decrypt($encrypted2, 'session-1', 'file', 'example.com'));
+    }
+
+    #[Test]
+    public function largePayloadRoundTrip(): void
+    {
+        $encryption = $this->createEncryption();
+
+        $largeData = str_repeat('large session data block ', 1000);
+        $encrypted = $encryption->encrypt($largeData, 'session-1', 'file', 'example.com');
+        $decrypted = $encryption->decrypt($encrypted, 'session-1', 'file', 'example.com');
+
+        self::assertSame($largeData, $decrypted);
     }
 }

@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Database\Routing;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Routing\StickinessContext;
+use PHPUnit\Framework\Attributes\Test;
 
 #[CoversClass(StickinessContext::class)]
 final class StickinessContextTest extends TestCase
@@ -18,19 +19,22 @@ final class StickinessContextTest extends TestCase
         $this->context = new StickinessContext();
     }
 
-    public function test_initially_not_sticky(): void
+    #[Test]
+    public function initiallyNotSticky(): void
     {
         self::assertFalse($this->context->shouldUsePrimary());
     }
 
-    public function test_mark_write_activates_stickiness(): void
+    #[Test]
+    public function markWriteActivatesStickiness(): void
     {
         $this->context->markWrite();
 
         self::assertTrue($this->context->shouldUsePrimary());
     }
 
-    public function test_request_scoped_stickiness_persists_until_reset(): void
+    #[Test]
+    public function requestScopedStickinessPersistsUntilReset(): void
     {
         $this->context->markWrite('request');
 
@@ -41,7 +45,8 @@ final class StickinessContextTest extends TestCase
         self::assertTrue($this->context->shouldUsePrimary());
     }
 
-    public function test_timed_stickiness_expires(): void
+    #[Test]
+    public function timedStickinessExpires(): void
     {
         // Pin for 1ms
         $this->context->markWrite(1);
@@ -54,7 +59,8 @@ final class StickinessContextTest extends TestCase
         self::assertFalse($this->context->shouldUsePrimary());
     }
 
-    public function test_reset_clears_state(): void
+    #[Test]
+    public function resetClearsState(): void
     {
         $this->context->markWrite();
 
@@ -65,7 +71,8 @@ final class StickinessContextTest extends TestCase
         self::assertFalse($this->context->shouldUsePrimary());
     }
 
-    public function test_timed_stickiness_with_large_duration_persists(): void
+    #[Test]
+    public function timedStickinessWithLargeDurationPersists(): void
     {
         // Pin for 10 seconds
         $this->context->markWrite(10_000);
@@ -77,7 +84,8 @@ final class StickinessContextTest extends TestCase
         self::assertTrue($this->context->shouldUsePrimary());
     }
 
-    public function test_reset_clears_timed_stickiness(): void
+    #[Test]
+    public function resetClearsTimedStickiness(): void
     {
         $this->context->markWrite(10_000);
 

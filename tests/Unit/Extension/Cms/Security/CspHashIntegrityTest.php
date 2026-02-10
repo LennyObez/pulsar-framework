@@ -33,7 +33,7 @@ final class CspHashIntegrityTest extends TestCase
     }
 
     #[Test]
-    public function test_csp_directive_uses_sha256_hash_not_unsafe_inline(): void
+    public function cspDirectiveUsesSha256HashNotUnsafeInline(): void
     {
         $css = ':root { --color-primary: #ff0000; }';
         $directive = $this->injector->generateCspDirective($css);
@@ -44,7 +44,7 @@ final class CspHashIntegrityTest extends TestCase
     }
 
     #[Test]
-    public function test_csp_hash_matches_content(): void
+    public function cspHashMatchesContent(): void
     {
         $css = ':root { --color-primary: #ff0000; }';
         $computedHash = $this->hashComputer->computeHash($css);
@@ -55,7 +55,7 @@ final class CspHashIntegrityTest extends TestCase
     }
 
     #[Test]
-    public function test_different_content_produces_different_hash(): void
+    public function differentContentProducesDifferentHash(): void
     {
         $hash1 = $this->hashComputer->computeHash('body { color: red; }');
         $hash2 = $this->hashComputer->computeHash('body { color: blue; }');
@@ -64,7 +64,7 @@ final class CspHashIntegrityTest extends TestCase
     }
 
     #[Test]
-    public function test_identical_content_produces_identical_hash(): void
+    public function identicalContentProducesIdenticalHash(): void
     {
         $css = 'body { background: #000; }';
         $hash1 = $this->hashComputer->computeHash($css);
@@ -74,7 +74,7 @@ final class CspHashIntegrityTest extends TestCase
     }
 
     #[Test]
-    public function test_csp_directive_contains_self(): void
+    public function cspDirectiveContainsSelf(): void
     {
         $css = 'body { color: green; }';
         $directive = $this->injector->generateCspDirective($css);
@@ -83,7 +83,7 @@ final class CspHashIntegrityTest extends TestCase
     }
 
     #[Test]
-    public function test_csp_hash_prefix_format(): void
+    public function cspHashPrefixFormat(): void
     {
         $hash = $this->hashComputer->computeHash('p { margin: 0; }');
 
@@ -95,7 +95,7 @@ final class CspHashIntegrityTest extends TestCase
     }
 
     #[Test]
-    public function test_empty_css_still_produces_valid_hash(): void
+    public function emptyCssStillProducesValidHash(): void
     {
         $hash = $this->hashComputer->computeHash('');
 
@@ -104,7 +104,7 @@ final class CspHashIntegrityTest extends TestCase
     }
 
     #[Test]
-    public function test_xss_payload_in_css_still_hashed_not_inline(): void
+    public function xssPayloadInCssStillHashedNotInline(): void
     {
         // Even if CSS contains suspicious content, the CSP approach is hash-based
         $maliciousCss = '</style><script>alert(1)</script><style>';

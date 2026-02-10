@@ -60,7 +60,8 @@ final class ValidateLifetimesPassTest extends TestCase
         $pass = new ValidateLifetimesPass();
         $pass->process($builder); // Should not throw
 
-        $this->addToAssertionCount(1);
+        // Same-scope dependency is valid; both definitions remain registered
+        self::assertTrue($builder->hasDefinition(RequestScopedService::class));
     }
 
     #[Test]
@@ -81,7 +82,8 @@ final class ValidateLifetimesPassTest extends TestCase
         $pass = new ValidateLifetimesPass();
         $pass->process($builder);
 
-        $this->addToAssertionCount(1);
+        // Singleton-depends-on-singleton is valid; both definitions remain registered
+        self::assertTrue($builder->hasDefinition(SingletonWithSingletonDep::class));
     }
 }
 

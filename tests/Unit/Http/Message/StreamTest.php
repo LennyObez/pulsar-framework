@@ -11,6 +11,8 @@ use Pulsar\Http\Message\Stream;
 use RuntimeException;
 
 use function file_put_contents;
+use InvalidArgumentException;
+
 use function fopen;
 use function fwrite;
 use function rewind;
@@ -326,5 +328,139 @@ final class StreamTest extends TestCase
         $stream = new Stream($resource);
 
         self::assertSame('test data', (string) $stream);
+    }
+
+    #[Test]
+    public function constructorRejectsNonResource(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Stream requires a valid PHP resource');
+
+        new Stream('not a resource');
+    }
+
+    #[Test]
+    public function seekThrowsOnNonSeekableStream(): void
+    {
+        // php://output is not seekable
+        $resource = fopen('php://output', 'wb');
+        self::assertNotFalse($resource);
+
+        $stream = new Stream($resource);
+
+        self::assertFalse($stream->isSeekable());
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Stream is not seekable');
+
+        $stream->seek(0);
+    }
+
+    #[Test]
+    public function getContentsThrowsOnNonReadableStream(): void
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'pulsar_test_');
+        self::assertNotFalse($tmpFile);
+
+        try {
+            $stream = Stream::fromFile($tmpFile, 'w');
+
+            $this->expectException(RuntimeException::class);
+            $this->expectExceptionMessage('Stream is not readable');
+
+            (void) $stream->getContents();
+        } finally {
+            @unlink($tmpFile);
+        }
+    }
+
+    #[Test]
+    public function getSizeReturnsNullAfterDetach(): void
+    {
+        $stream = Stream::create('content');
+        $stream->detach();
+
+        self::assertNull($stream->getSize());
+    }
+
+    #[Test]
+    public function closeOnAlreadyClosedStreamDoesNotThrow(): void
+    {
+        $stream = Stream::create('content');
+        $stream->close();
+        $stream->close();
+
+        self::assertNull($stream->getSize());
+    }
+
+    #[Test]
+    public function fromFileWithWriteMode(): void
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'pulsar_test_');
+        self::assertNotFalse($tmpFile);
+
+        try {
+            $stream = Stream::fromFile($tmpFile, 'w');
+
+            self::assertTrue($stream->isWritable());
+            self::assertFalse($stream->isReadable());
+
+            $stream->write('hello');
+            $stream->close();
+
+            self::assertSame('hello', file_get_contents($tmpFile));
+        } finally {
+            @unlink($tmpFile);
+        }
+    }
+
+    #[Test]
+    public function fromFileWithAppendMode(): void
+    {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'pulsar_test_');
+        self::assertNotFalse($tmpFile);
+        file_put_contents($tmpFile, 'existing');
+
+        try {
+            $stream = Stream::fromFile($tmpFile, 'a');
+
+            self::assertTrue($stream->isWritable());
+
+            $stream->write(' appended');
+            $stream->close();
+
+            self::assertSame('existing appended', file_get_contents($tmpFile));
+        } finally {
+            @unlink($tmpFile);
+        }
+    }
+
+    #[Test]
+    public function createWithLargeContent(): void
+    {
+        $content = str_repeat('x', 100_000);
+        $stream = Stream::create($content);
+
+        self::assertSame(100_000, $stream->getSize());
+        self::assertSame($content, (string) $stream);
+    }
+
+    #[Test]
+    public function seekWithWhenceEnd(): void
+    {
+        $stream = Stream::create('hello');
+
+        $stream->seek(-3, SEEK_END);
+        self::assertSame('llo', $stream->getContents());
+    }
+
+    #[Test]
+    public function seekWithWhenceCurrent(): void
+    {
+        $stream = Stream::create('hello world');
+
+        $stream->seek(5);
+        $stream->seek(1, SEEK_CUR);
+        self::assertSame('world', $stream->getContents());
     }
 }

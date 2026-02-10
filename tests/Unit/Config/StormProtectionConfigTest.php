@@ -14,7 +14,7 @@ use Pulsar\Config\StormProtectionConfig;
 final class StormProtectionConfigTest extends TestCase
 {
     #[Test]
-    public function test_defaults(): void
+    public function defaults(): void
     {
         $config = new StormProtectionConfig();
 
@@ -24,7 +24,7 @@ final class StormProtectionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_with_all_values(): void
+    public function fromArrayWithAllValues(): void
     {
         $config = StormProtectionConfig::fromArray([
             'max_depth' => 64,
@@ -38,7 +38,7 @@ final class StormProtectionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_with_empty_array_uses_defaults(): void
+    public function fromArrayWithEmptyArrayUsesDefaults(): void
     {
         $config = StormProtectionConfig::fromArray([]);
 
@@ -48,7 +48,7 @@ final class StormProtectionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_with_invalid_types_uses_defaults(): void
+    public function fromArrayWithInvalidTypesUsesDefaults(): void
     {
         $config = StormProtectionConfig::fromArray([
             'max_depth' => 'not_an_int',
@@ -62,7 +62,7 @@ final class StormProtectionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_clamps_negative_values(): void
+    public function fromArrayClampsNegativeValues(): void
     {
         $config = StormProtectionConfig::fromArray([
             'max_depth' => -5,
@@ -74,7 +74,7 @@ final class StormProtectionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_clamps_excessive_values(): void
+    public function fromArrayClampsExcessiveValues(): void
     {
         $config = StormProtectionConfig::fromArray([
             'max_depth' => 999_999,
@@ -86,7 +86,7 @@ final class StormProtectionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_accepts_boundary_values(): void
+    public function fromArrayAcceptsBoundaryValues(): void
     {
         $config = StormProtectionConfig::fromArray([
             'max_depth' => 1,
@@ -106,7 +106,7 @@ final class StormProtectionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_env_override_max_depth(): void
+    public function envOverrideMaxDepth(): void
     {
         putenv('EVENT_STORM_MAX_DEPTH=64');
 
@@ -116,7 +116,7 @@ final class StormProtectionConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_env_override_loop_detection(): void
+    public function envOverrideLoopDetection(): void
     {
         putenv('EVENT_STORM_LOOP_DETECTION=false');
 

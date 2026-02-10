@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -15,11 +16,12 @@ use Pulsar\Extension\Cms\Content\PublishingStatus;
 /**
  * E2E: Full content lifecycle — Draft -> Schedule -> Publish -> Archive -> Restore.
  */
+#[CoversClass(Content::class)]
 #[Group('e2e-cms')]
 final class ContentLifecycleTest extends TestCase
 {
     #[Test]
-    public function test_full_content_lifecycle(): void
+    public function fullContentLifecycle(): void
     {
         // Step 1: Create draft
         $content = Content::create(
@@ -62,7 +64,7 @@ final class ContentLifecycleTest extends TestCase
     }
 
     #[Test]
-    public function test_editorial_workflow_full_lifecycle(): void
+    public function editorialWorkflowFullLifecycle(): void
     {
         $content = Content::create(
             id: '019e2e02-0000-7000-8000-000000000002',

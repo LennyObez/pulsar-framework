@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Extension\Cms\AI;
+namespace Pulsar\Tests\Unit\Extension\Cms\AI;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\AI\LlmOptions;
@@ -78,5 +79,66 @@ final class LlmOptionsTest extends TestCase
         self::assertSame(0.3, $options->temperature);
         self::assertSame(256, $options->maxTokens);
         self::assertSame('You are a summarization expert.', $options->systemPrompt);
+    }
+
+    /**
+     * Temperature boundary values in the valid range (0.0–2.0).
+     *
+     * LlmOptions is a readonly DTO that accepts values as-is — range enforcement
+     * is the provider wrapper's responsibility. These tests document the boundary values.
+     */
+    #[Test]
+    #[DataProvider('temperatureBoundaryProvider')]
+    public function temperatureBoundaryValuesAreAccepted(float $temperature): void
+    {
+        $options = new LlmOptions(temperature: $temperature);
+
+        self::assertSame($temperature, $options->temperature);
+    }
+
+    /**
+     * @return iterable<string, array{float}>
+     */
+    public static function temperatureBoundaryProvider(): iterable
+    {
+        yield 'minimum (0.0)' => [0.0];
+        yield 'maximum (2.0)' => [2.0];
+        yield 'default (0.7)' => [0.7];
+        yield 'creative (1.5)' => [1.5];
+    }
+
+    #[Test]
+    public function maxTokensPositiveValueIsAccepted(): void
+    {
+        self::assertSame(1, (new LlmOptions(maxTokens: 1))->maxTokens);
+    }
+
+    #[Test]
+    public function maxTokensLargeValueIsAccepted(): void
+    {
+        self::assertSame(200_000, (new LlmOptions(maxTokens: 200_000))->maxTokens);
+    }
+
+    #[Test]
+    public function auditLogDefaultsToTrueForRegulatedSystems(): void
+    {
+        self::assertTrue((new LlmOptions())->auditLog, 'audit logging must be on by default');
+        self::assertFalse((new LlmOptions(auditLog: false))->auditLog, 'audit logging can be disabled');
+    }
+
+    #[Test]
+    public function maxCostCentsLimitsSpend(): void
+    {
+        // 100 cents = $1.00 per-request budget cap
+        self::assertSame(100, (new LlmOptions(maxCostCents: 100))->maxCostCents);
+        self::assertNull((new LlmOptions())->maxCostCents, 'uncapped by default');
+    }
+
+    #[Test]
+    public function usageCategoryTagsRequestForBilling(): void
+    {
+        $options = new LlmOptions(usageCategory: 'seo-meta-generation');
+
+        self::assertSame('seo-meta-generation', $options->usageCategory);
     }
 }

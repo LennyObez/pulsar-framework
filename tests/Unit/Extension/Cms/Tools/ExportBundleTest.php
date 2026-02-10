@@ -19,7 +19,7 @@ final class ExportBundleTest extends TestCase
     // ── Scope filtering ─────────────────────────────────────────────
 
     #[Test]
-    public function test_scope_filtering_only_requested_types(): void
+    public function scopeFilteringOnlyRequestedTypes(): void
     {
         $bundle = new ExportBundle(
             data: [
@@ -38,7 +38,7 @@ final class ExportBundleTest extends TestCase
     }
 
     #[Test]
-    public function test_multiple_scopes(): void
+    public function multipleScopes(): void
     {
         $bundle = new ExportBundle(
             data: [
@@ -61,7 +61,7 @@ final class ExportBundleTest extends TestCase
     // ── PII redaction ───────────────────────────────────────────────
 
     #[Test]
-    public function test_pii_redaction_flag(): void
+    public function piiRedactionFlag(): void
     {
         $bundleWithPii = new ExportBundle(
             data: ['content' => [['email' => 'user@example.com']]],
@@ -89,7 +89,7 @@ final class ExportBundleTest extends TestCase
     // ── Evidence hash ───────────────────────────────────────────────
 
     #[Test]
-    public function test_evidence_hash_is_non_empty(): void
+    public function evidenceHashIsNonEmpty(): void
     {
         $bundle = new ExportBundle(
             data: ['content' => []],
@@ -105,7 +105,7 @@ final class ExportBundleTest extends TestCase
     // ── JSON structure ──────────────────────────────────────────────
 
     #[Test]
-    public function test_export_bundle_json_structure(): void
+    public function exportBundleJsonStructure(): void
     {
         $now = new DateTimeImmutable();
 
@@ -130,7 +130,7 @@ final class ExportBundleTest extends TestCase
     // ── ExportOptions validation ────────────────────────────────────
 
     #[Test]
-    public function test_export_options_from_array_valid(): void
+    public function exportOptionsFromArrayValid(): void
     {
         $options = ExportOptions::fromArray([
             'scope' => ['content', 'taxonomies'],
@@ -146,7 +146,7 @@ final class ExportBundleTest extends TestCase
     }
 
     #[Test]
-    public function test_export_options_from_array_invalid_scope_throws(): void
+    public function exportOptionsFromArrayInvalidScopeThrows(): void
     {
         $this->expectException(InvalidArgumentException::class);
 

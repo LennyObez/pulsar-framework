@@ -36,7 +36,7 @@ final class AuditChainTest extends TestCase
     // -- Basic entry creation and verification --------------------------------
 
     #[Test]
-    public function test_audit_entry_has_correct_hmac(): void
+    public function auditEntryHasCorrectHmac(): void
     {
         $entry = AuditEntry::create(
             id: 'entry-001',
@@ -56,7 +56,7 @@ final class AuditChainTest extends TestCase
     }
 
     #[Test]
-    public function test_audit_entry_fails_verification_with_wrong_key(): void
+    public function auditEntryFailsVerificationWithWrongKey(): void
     {
         $entry = AuditEntry::create(
             id: 'entry-001',
@@ -79,7 +79,7 @@ final class AuditChainTest extends TestCase
     // -- Chain integrity verification ----------------------------------------
 
     #[Test]
-    public function test_chain_integrity_with_multiple_entries(): void
+    public function chainIntegrityWithMultipleEntries(): void
     {
         $now = new DateTimeImmutable('2026-01-15T10:00:00+00:00');
 
@@ -137,7 +137,7 @@ final class AuditChainTest extends TestCase
     }
 
     #[Test]
-    public function test_tampered_entry_fails_verification(): void
+    public function tamperedEntryFailsVerification(): void
     {
         $entry = AuditEntry::create(
             id: 'tampered-001',
@@ -171,7 +171,7 @@ final class AuditChainTest extends TestCase
     }
 
     #[Test]
-    public function test_tampered_actor_fails_verification(): void
+    public function tamperedActorFailsVerification(): void
     {
         $entry = AuditEntry::create(
             id: 'actor-001',
@@ -207,7 +207,7 @@ final class AuditChainTest extends TestCase
     // -- Key ID (kid) is derived from the key --------------------------------
 
     #[Test]
-    public function test_entry_has_key_id(): void
+    public function entryHasKeyId(): void
     {
         $entry = AuditEntry::create(
             id: 'kid-001',
@@ -227,7 +227,7 @@ final class AuditChainTest extends TestCase
     }
 
     #[Test]
-    public function test_same_key_produces_same_kid(): void
+    public function sameKeyProducesSameKid(): void
     {
         $entry1 = AuditEntry::create(
             id: 'kid-a',
@@ -259,7 +259,7 @@ final class AuditChainTest extends TestCase
     }
 
     #[Test]
-    public function test_different_key_produces_different_kid(): void
+    public function differentKeyProducesDifferentKid(): void
     {
         $key2 = random_bytes(32);
 
@@ -295,7 +295,7 @@ final class AuditChainTest extends TestCase
     // -- toArray serialization -----------------------------------------------
 
     #[Test]
-    public function test_to_array_contains_all_fields(): void
+    public function toArrayContainsAllFields(): void
     {
         $entry = AuditEntry::create(
             id: 'arr-001',
@@ -327,7 +327,7 @@ final class AuditChainTest extends TestCase
     // -- Chain with metadata ------------------------------------------------
 
     #[Test]
-    public function test_metadata_changes_produce_different_hmacs(): void
+    public function metadataChangesProduceDifferentHmacs(): void
     {
         $ts = new DateTimeImmutable('2026-01-15T10:00:00+00:00');
 
