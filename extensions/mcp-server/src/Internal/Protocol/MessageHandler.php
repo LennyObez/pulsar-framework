@@ -7,7 +7,6 @@ namespace Pulsar\Extension\McpServer\Internal\Protocol;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\McpServer\Config\McpConfig;
-use Pulsar\Extension\McpServer\Contracts\McpAccessGateInterface;
 use Pulsar\Extension\McpServer\Contracts\McpRedactionPipelineInterface;
 use Pulsar\Extension\McpServer\Contracts\McpToolRegistryInterface;
 use Pulsar\Extension\McpServer\Contracts\ToolPermissionCheckerInterface;
@@ -40,7 +39,6 @@ final readonly class MessageHandler
     private const string SERVER_VERSION = '1.0.0-rc.9';
     private const int METHOD_NOT_FOUND = -32601;
     private const int INVALID_PARAMS = -32602;
-    private const int INTERNAL_ERROR = -32603;
 
     /** @var list<string> Known MCP protocol versions in descending preference order */
     private const array KNOWN_PROTOCOL_VERSIONS = [
@@ -54,7 +52,6 @@ final readonly class MessageHandler
     public function __construct(
         private McpToolRegistryInterface $registry,
         private ToolPermissionCheckerInterface $permissionChecker,
-        private McpAccessGateInterface $accessGate,
         private McpRedactionPipelineInterface $redactionPipeline,
         private ?AuditLoggerInterface $auditLogger,
         private ?RateLimiterInterface $rateLimiter,
@@ -93,12 +90,11 @@ final readonly class MessageHandler
 
     private function handleNotification(JsonRpcRequest $request): ?string
     {
-        match ($request->method) {
-            'notifications/initialized' => null,
-            'notifications/cancelled' => $this->handleCancelled($request->params),
-            default => null,
-        };
+        if ($request->method === 'notifications/cancelled') {
+            $this->handleCancelled($request->params);
+        }
 
+        // All notifications (including notifications/initialized) return null per spec
         return null;
     }
 
@@ -110,8 +106,8 @@ final readonly class MessageHandler
         // Best-effort cancel tracking. The requestId identifies which in-flight
         // request the client wants cancelled. Since tool execution is synchronous
         // in the current implementation, this is a no-op acknowledgment.
-        // Future async execution can check a cancellation registry keyed by requestId.
-        $_ = $params['requestId'] ?? null;
+        // Future async execution can check a cancellation registry keyed by
+        // $params['requestId'].
     }
 
     /**

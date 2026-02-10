@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\McpServer\Internal\Protocol;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\McpServer\Exception\McpException;
 
@@ -38,7 +39,7 @@ final readonly class JsonRpcCodec
     {
         try {
             $data = json_decode($line, true, 64, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
+        } catch (JsonException $e) {
             throw McpException::protocolError('Parse error: ' . $e->getMessage(), self::PARSE_ERROR);
         }
 

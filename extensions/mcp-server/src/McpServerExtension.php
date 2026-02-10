@@ -7,11 +7,12 @@ namespace Pulsar\Extension\McpServer;
 use function is_array;
 use function is_file;
 
+use function dirname;
+use function getcwd;
+
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManagerInterface;
-use Pulsar\Config\Environment;
-use Pulsar\Config\EnvironmentMode;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extension\McpServer\Config\McpConfig;
 use Pulsar\Extension\McpServer\Contracts\McpAccessGateInterface;
@@ -90,7 +91,7 @@ final class McpServerExtension implements ExtensionInterface, PreBootExtensionIn
         // Environment gating
         $projectRoot = $config->projectRoot !== ''
             ? $config->projectRoot
-            : ($configPath !== null ? \dirname($configPath) : (\getcwd() ?: '.'));
+            : ($configPath !== null ? dirname($configPath) : (getcwd() ?: '.'));
 
         // Build security infrastructure
         $scrubber = $container->has(SensitiveDataScrubber::class)
@@ -164,7 +165,6 @@ final class McpServerExtension implements ExtensionInterface, PreBootExtensionIn
         $messageHandler = new MessageHandler(
             registry: $registry,
             permissionChecker: $permissionChecker,
-            accessGate: $accessGate,
             redactionPipeline: $redactionPipeline,
             auditLogger: $auditLogger,
             rateLimiter: $rateLimiter,

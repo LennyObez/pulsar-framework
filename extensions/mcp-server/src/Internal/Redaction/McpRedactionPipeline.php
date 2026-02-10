@@ -30,7 +30,7 @@ final readonly class McpRedactionPipeline implements McpRedactionPipelineInterfa
         '/(?:PULSAR_MASTER_KEY|DB_PASSWORD|DB_USERNAME|API_KEY|API_SECRET|APP_KEY|AUTH_TOKEN|JWT_SECRET|REDIS_PASSWORD|MAIL_PASSWORD|AWS_SECRET_ACCESS_KEY)=\S+/i',
     ];
 
-    private const string CONNECTION_STRING_PATTERN = '/\:\/\/[^:]+:[^@]+@/';
+    private const string CONNECTION_STRING_PATTERN = '/:\/\/[^:]+:[^@]+@/';
     private const string BEARER_PATTERN = '/Bearer\s+[A-Za-z0-9\-._~+\/]+=*/i';
     private const string REDACTED = '[REDACTED]';
 

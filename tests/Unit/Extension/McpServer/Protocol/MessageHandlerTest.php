@@ -11,7 +11,6 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\McpServer\Config\McpConfig;
 use Pulsar\Extension\McpServer\Config\McpSecurityConfig;
 use Pulsar\Extension\McpServer\Config\McpToolsConfig;
-use Pulsar\Extension\McpServer\Contracts\McpAccessGateInterface;
 use Pulsar\Extension\McpServer\Contracts\McpRedactionPipelineInterface;
 use Pulsar\Extension\McpServer\Contracts\McpToolRegistryInterface;
 use Pulsar\Extension\McpServer\Contracts\ToolPermissionCheckerInterface;
@@ -50,7 +49,6 @@ final class MessageHandlerTest extends TestCase
     private function createHandler(
         ?McpToolRegistryInterface $registry = null,
         ?ToolPermissionCheckerInterface $permissionChecker = null,
-        ?McpAccessGateInterface $accessGate = null,
         ?McpRedactionPipelineInterface $redactionPipeline = null,
         ?AuditLoggerInterface $auditLogger = null,
         ?RateLimiterInterface $rateLimiter = null,
@@ -58,7 +56,6 @@ final class MessageHandlerTest extends TestCase
         return new MessageHandler(
             registry: $registry ?? self::createStub(McpToolRegistryInterface::class),
             permissionChecker: $permissionChecker ?? self::createStub(ToolPermissionCheckerInterface::class),
-            accessGate: $accessGate ?? self::createStub(McpAccessGateInterface::class),
             redactionPipeline: $redactionPipeline ?? self::createStub(McpRedactionPipelineInterface::class),
             auditLogger: $auditLogger ?? self::createStub(AuditLoggerInterface::class),
             rateLimiter: $rateLimiter ?? self::createStub(RateLimiterInterface::class),

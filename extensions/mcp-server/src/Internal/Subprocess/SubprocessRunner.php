@@ -13,7 +13,6 @@ use function fclose;
 use function fread;
 use function getenv;
 use function hrtime;
-use function is_resource;
 use function max;
 use function proc_close;
 use function proc_get_status;
@@ -33,8 +32,7 @@ use function usleep;
 #[Internal]
 final class SubprocessRunner
 {
-    /** @var resource|null Track active process for cancellation */
-    private mixed $activeProcess = null;
+    private bool $cancelled = false;
 
     /**
      * @param string $projectRoot Working directory for subprocess execution
@@ -73,7 +71,7 @@ final class SubprocessRunner
             return ToolResult::error('Failed to start subprocess');
         }
 
-        $this->activeProcess = $process;
+        $this->cancelled = false;
 
         fclose($pipes[0]);
 
@@ -90,9 +88,15 @@ final class SubprocessRunner
             $status = proc_get_status($process);
             $nowNs = hrtime(true);
 
+            if ($this->cancelled) {
+                proc_terminate($process);
+
+                break;
+            }
+
             if ($nowNs >= $deadline) {
                 $timedOut = true;
-                proc_terminate($process, 15);
+                proc_terminate($process);
 
                 break;
             }
@@ -123,7 +127,6 @@ final class SubprocessRunner
         fclose($pipes[2]);
 
         $exitCode = proc_close($process);
-        $this->activeProcess = null;
 
         $totalBytes = strlen($stdout) + strlen($stderr);
         $truncated = false;
@@ -142,7 +145,7 @@ final class SubprocessRunner
             'stdout' => $stdout,
             'stderr' => $stderr,
             'timedOut' => $timedOut,
-            'wasCancelled' => false,
+            'wasCancelled' => $this->cancelled,
             'truncated' => $truncated,
         ];
 
@@ -171,8 +174,6 @@ final class SubprocessRunner
      */
     public function cancel(): void
     {
-        if ($this->activeProcess !== null && is_resource($this->activeProcess)) {
-            proc_terminate($this->activeProcess, 15);
-        }
+        $this->cancelled = true;
     }
 }

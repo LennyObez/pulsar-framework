@@ -10,10 +10,5 @@
     "psr-4": {
       "Pulsar\\Extension\\McpServer\\": "src/"
     }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Pulsar\\Extension\\McpServer\\Tests\\": "tests/"
-    }
   }
 }

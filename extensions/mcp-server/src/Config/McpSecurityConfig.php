@@ -35,13 +35,11 @@ final readonly class McpSecurityConfig
         /** @var list<string> $pathAllowlist */
         $pathAllowlist = (array) ($data['path_allowlist'] ?? []);
 
-        /** @var int $rateLimitPerMinute */
         $rateLimitPerMinute = (int) ($data['rate_limit_per_minute'] ?? 60);
 
         /** @var array<string, int> $toolRateLimits */
         $toolRateLimits = (array) ($data['tool_rate_limits'] ?? []);
 
-        /** @var int $maxConcurrentActions */
         $maxConcurrentActions = (int) ($data['max_concurrent_actions'] ?? 1);
 
         return new self(

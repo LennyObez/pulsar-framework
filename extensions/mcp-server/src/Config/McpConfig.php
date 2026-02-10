@@ -34,7 +34,6 @@ final readonly class McpConfig
     #[NoDiscard]
     public static function fromArray(array $data, Environment $environment): self
     {
-        /** @var bool $enabled */
         $enabled = (bool) ($data['enabled'] ?? false);
 
         $envEnabled = $environment->get('MCP_ENABLED');
@@ -42,7 +41,6 @@ final readonly class McpConfig
             $enabled = $envEnabled === '1' || $envEnabled === 'true';
         }
 
-        /** @var string $clientId */
         $clientId = (string) ($data['client_id'] ?? 'default');
 
         $envClientId = $environment->get('MCP_CLIENT_ID');
@@ -50,7 +48,6 @@ final readonly class McpConfig
             $clientId = $envClientId;
         }
 
-        /** @var string $projectRoot */
         $projectRoot = (string) ($data['project_root'] ?? '');
 
         /** @var array<string, mixed> $toolsData */

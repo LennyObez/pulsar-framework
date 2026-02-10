@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Extension\McpServer\Internal\Tools;
 
 use function array_slice;
-use function array_values;
 use function count;
 use function is_string;
 use function json_encode;

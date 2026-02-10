@@ -40,10 +40,8 @@ final readonly class McpToolsConfig
         /** @var list<string> $allowedActions */
         $allowedActions = (array) ($data['allowed_actions'] ?? []);
 
-        /** @var int $maxOutputBytes */
         $maxOutputBytes = (int) ($data['max_output_bytes'] ?? 1_048_576);
 
-        /** @var int $actionTimeout */
         $actionTimeout = (int) ($data['action_timeout'] ?? 120);
 
         /** @var array<string, mixed> $commandsRaw */

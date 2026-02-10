@@ -7,6 +7,8 @@ namespace Pulsar\Extension\McpServer\Internal\Tools;
 use function json_encode;
 
 use Pulsar\Api\Internal;
+
+use stdClass;
 use Pulsar\Extension\McpServer\Contracts\McpToolInterface;
 use Pulsar\Extension\McpServer\Domain\ToolCategory;
 use Pulsar\Extension\McpServer\Domain\ToolResult;
@@ -35,7 +37,7 @@ final readonly class ReadArchitectureMapTool implements McpToolInterface
     {
         return [
             'type' => 'object',
-            'properties' => new \stdClass(),
+            'properties' => new stdClass(),
         ];
     }
 
