@@ -50,7 +50,6 @@
             <directory>../../extensions/cms/src</directory>
             <directory>../../extensions/graphql/src</directory>
             <directory>../../extensions/forum/src</directory>
-            <directory>../../extensions/analytics/src</directory>
         </include>
     </source>
 </phpunit>
