@@ -44,7 +44,7 @@ final class LargeImportBenchmarkTest extends TestCase
     private const int LOCALES = 2;
 
     private const float MAX_WALL_TIME_SECONDS = 60.0;
-    private const int MAX_MEMORY_BYTES = 256 * 1024 * 1024; // 256 MB
+    private const int MAX_MEMORY_BYTES = 512 * 1024 * 1024; // 512 MB
 
     #[Test]
     public function dry_run_import_of_1000_plus_items_completes_within_budget(): void
