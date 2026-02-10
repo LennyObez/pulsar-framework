@@ -120,4 +120,33 @@ final class MySqlDialectTest extends TestCase
         self::assertStringContainsString('`status` = VALUES(`status`)', $sql);
         self::assertStringNotContainsString(', `status`', explode('ON DUPLICATE KEY UPDATE', $sql)[1] ?? '');
     }
+
+    #[Test]
+    public function compileUpsertWithMultipleUpdateColumns(): void
+    {
+        $sql = $this->dialect->compileUpsert(
+            'INSERT INTO `users` (`id`, `name`, `email`, `status`) VALUES (:p0, :p1, :p2, :p3)',
+            ['id'],
+            ['name', 'email', 'status'],
+        );
+
+        self::assertStringContainsString('`name` = VALUES(`name`)', $sql);
+        self::assertStringContainsString('`email` = VALUES(`email`)', $sql);
+        self::assertStringContainsString('`status` = VALUES(`status`)', $sql);
+    }
+
+    #[Test]
+    public function compileLimitOffsetWithOffsetOnly(): void
+    {
+        // When only offset is set (no limit), it still produces OFFSET
+        $result = $this->dialect->compileLimitOffset(null, 10);
+        self::assertSame(' OFFSET 10', $result);
+    }
+
+    #[Test]
+    public function compileLimitOffsetWithLargeValues(): void
+    {
+        $result = $this->dialect->compileLimitOffset(1000000, 5000000);
+        self::assertSame(' LIMIT 1000000 OFFSET 5000000', $result);
+    }
 }

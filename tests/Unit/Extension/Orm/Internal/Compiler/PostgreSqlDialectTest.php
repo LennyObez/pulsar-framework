@@ -120,4 +120,32 @@ final class PostgreSqlDialectTest extends TestCase
         self::assertStringContainsString('ON CONFLICT ("type", "slug") DO UPDATE SET', $sql);
         self::assertStringContainsString('"label" = EXCLUDED."label"', $sql);
     }
+
+    #[Test]
+    public function compileUpsertWithMultipleUpdateColumns(): void
+    {
+        $sql = $this->dialect->compileUpsert(
+            'INSERT INTO "users" ("id", "name", "email", "status") VALUES (:p0, :p1, :p2, :p3)',
+            ['id'],
+            ['name', 'email', 'status'],
+        );
+
+        self::assertStringContainsString('"name" = EXCLUDED."name"', $sql);
+        self::assertStringContainsString('"email" = EXCLUDED."email"', $sql);
+        self::assertStringContainsString('"status" = EXCLUDED."status"', $sql);
+    }
+
+    #[Test]
+    public function compileLimitOffsetWithOffsetOnly(): void
+    {
+        $result = $this->dialect->compileLimitOffset(null, 10);
+        self::assertSame(' OFFSET 10', $result);
+    }
+
+    #[Test]
+    public function compileLimitOffsetWithLargeValues(): void
+    {
+        $result = $this->dialect->compileLimitOffset(1000000, 5000000);
+        self::assertSame(' LIMIT 1000000 OFFSET 5000000', $result);
+    }
 }

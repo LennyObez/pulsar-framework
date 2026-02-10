@@ -126,4 +126,71 @@ final class DatabaseIntrospectorTest extends TestCase
 
         self::assertSame([], $introspector->tables());
     }
+
+    #[Test]
+    public function columnTypeIsLowercased(): void
+    {
+        $columns = $this->introspector->columns('users');
+
+        foreach ($columns as $column) {
+            self::assertSame(strtolower($column->type), $column->type);
+        }
+    }
+
+    #[Test]
+    public function columnsForPostsTable(): void
+    {
+        $columns = $this->introspector->columns('posts');
+
+        self::assertCount(5, $columns);
+
+        $names = array_map(static fn(ColumnInfo $c): string => $c->name, $columns);
+        self::assertSame(['id', 'user_id', 'title', 'body', 'created_at'], $names);
+
+        // id is primary key
+        self::assertTrue($columns[0]->isPrimaryKey);
+
+        // user_id is NOT NULL
+        self::assertFalse($columns[1]->nullable);
+
+        // body is nullable
+        self::assertTrue($columns[3]->nullable);
+    }
+
+    #[Test]
+    public function primaryKeyReturnsNullForNoPrimaryKey(): void
+    {
+        $this->connection->execute('CREATE TABLE no_pk (a TEXT, b TEXT)');
+
+        self::assertNull($this->introspector->primaryKey('no_pk'));
+    }
+
+    #[Test]
+    public function tablesReturnsCorrectCount(): void
+    {
+        $this->connection->execute('CREATE TABLE extra_table (id INTEGER PRIMARY KEY)');
+
+        $tables = $this->introspector->tables();
+        self::assertCount(3, $tables);
+    }
+
+    #[Test]
+    public function columnsReturnsDefaultValues(): void
+    {
+        $columns = $this->introspector->columns('users');
+
+        $activeCol = $columns[3];
+        self::assertSame('is_active', $activeCol->name);
+        self::assertSame('1', $activeCol->default);
+    }
+
+    #[Test]
+    public function columnsReturnsNullDefaultForNullableWithoutDefault(): void
+    {
+        $columns = $this->introspector->columns('users');
+
+        $emailCol = $columns[2];
+        self::assertSame('email', $emailCol->name);
+        self::assertNull($emailCol->default);
+    }
 }

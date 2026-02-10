@@ -338,7 +338,7 @@ final class SelectBuilderTest extends TestCase
         $plan = FetchPlan::with(['orders']);
         $builder = $this->builder()->withFetchPlan($plan);
 
-        self::assertSame($plan, $builder->getFetchPlan());
+        self::assertSame($plan, $builder->fetchPlan);
     }
 
     #[Test]

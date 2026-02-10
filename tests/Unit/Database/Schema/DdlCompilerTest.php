@@ -319,6 +319,434 @@ final class DdlCompilerTest extends TestCase
         self::assertSame('ALTER TABLE "old_name" RENAME TO "new_name"', $stmts[0]);
     }
 
+    #[Test]
+    public function dropTableReturnsDropStatement(): void
+    {
+        $stmts = $this->compiler(Driver::SQLite)->compileDropTable('old_table');
+        self::assertCount(1, $stmts);
+        self::assertSame('DROP TABLE IF EXISTS "old_table"', $stmts[0]);
+    }
+
+    #[Test]
+    public function addIndexNonUniqueReturnsCreateIndex(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $index = new SchemaIndex('idx_name', ['name']);
+        $stmts = $compiler->compileAddIndex('users', $index);
+
+        self::assertCount(1, $stmts);
+        self::assertStringContainsString('CREATE INDEX', $stmts[0]);
+        self::assertStringContainsString('"idx_name"', $stmts[0]);
+    }
+
+    #[Test]
+    public function addIndexUniqueReturnsUniqueIndex(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $index = new SchemaIndex('idx_email', ['email'], unique: true);
+        $stmts = $compiler->compileAddIndex('users', $index);
+
+        self::assertCount(1, $stmts);
+        self::assertStringContainsString('UNIQUE INDEX', $stmts[0]);
+    }
+
+    #[Test]
+    public function dropIndexSqliteReturnsCorrectSyntax(): void
+    {
+        $stmts = $this->compiler(Driver::SQLite)->compileDropIndex('users', 'idx_email');
+        self::assertSame('DROP INDEX IF EXISTS "idx_email"', $stmts[0]);
+    }
+
+    #[Test]
+    public function renameTableSqliteUsesAlterSyntax(): void
+    {
+        $stmts = $this->compiler(Driver::SQLite)->compileRenameTable('old', 'new');
+        self::assertSame('ALTER TABLE "old" RENAME TO "new"', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapSmallInt(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::SmallInt),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('SMALLINT', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapBigIntMysql(): void
+    {
+        $compiler = $this->compiler(Driver::MySQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::BigInt),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('BIGINT', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapFloatPgsql(): void
+    {
+        $compiler = $this->compiler(Driver::PostgreSQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Float),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('DOUBLE PRECISION', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapFloatMysql(): void
+    {
+        $compiler = $this->compiler(Driver::MySQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Float),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('FLOAT', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapDecimal(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Decimal, precision: 10, scale: 4),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('DECIMAL(10, 4)', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapDate(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Date),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('DATE', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapTime(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Time),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('TIME', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapUuidPgsql(): void
+    {
+        $compiler = $this->compiler(Driver::PostgreSQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Uuid),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('UUID', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapUuidMysql(): void
+    {
+        $compiler = $this->compiler(Driver::MySQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Uuid),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('VARCHAR(36)', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapBinaryPgsql(): void
+    {
+        $compiler = $this->compiler(Driver::PostgreSQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Binary),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('BYTEA', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapBinaryMysql(): void
+    {
+        $compiler = $this->compiler(Driver::MySQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Binary),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('BLOB', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapJsonMysql(): void
+    {
+        $compiler = $this->compiler(Driver::MySQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Json),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('JSON', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapJsonSqlite(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::Json),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('TEXT', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapDateTimePgsql(): void
+    {
+        $compiler = $this->compiler(Driver::PostgreSQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::DateTime),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('TIMESTAMP', $stmts[0]);
+    }
+
+    #[Test]
+    public function typeMapDateTimeMysql(): void
+    {
+        $compiler = $this->compiler(Driver::MySQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('val', SchemaColumnType::DateTime),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('DATETIME', $stmts[0]);
+    }
+
+    #[Test]
+    public function booleanDefaultPgsqlFormat(): void
+    {
+        $compiler = $this->compiler(Driver::PostgreSQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('active', SchemaColumnType::Boolean, hasDefault: true, default: true),
+                new SchemaColumn('deleted', SchemaColumnType::Boolean, hasDefault: true, default: false),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('DEFAULT TRUE', $stmts[0]);
+        self::assertStringContainsString('DEFAULT FALSE', $stmts[0]);
+    }
+
+    #[Test]
+    public function booleanDefaultMysqlFormat(): void
+    {
+        $compiler = $this->compiler(Driver::MySQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('active', SchemaColumnType::Boolean, hasDefault: true, default: true),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('DEFAULT 1', $stmts[0]);
+    }
+
+    #[Test]
+    public function enumWithEmptyValuesFallsBackToVarchar(): void
+    {
+        $compiler = $this->compiler(Driver::MySQL);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('status', SchemaColumnType::Enum, enumValues: [], length: 100),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('VARCHAR(100)', $stmts[0]);
+    }
+
+    #[Test]
+    public function uniqueIndexInCreateTable(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'users',
+            columns: [
+                new SchemaColumn('id', SchemaColumnType::Integer, primaryKey: true, autoIncrement: true),
+                new SchemaColumn('email', SchemaColumnType::String),
+            ],
+            indexes: [
+                new SchemaIndex('idx_email', ['email'], unique: true),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertCount(1, $stmts); // Unique indexes are inline, not separate
+        self::assertStringContainsString('CONSTRAINT "idx_email" UNIQUE', $stmts[0]);
+    }
+
+    #[Test]
+    public function pgsqlIndexPrefixing(): void
+    {
+        $compiler = $this->compiler(Driver::PostgreSQL);
+        $index = new SchemaIndex('idx_name', ['name']);
+        $stmts = $compiler->compileAddIndex('users', $index);
+
+        self::assertStringContainsString('"users_idx_name"', $stmts[0]);
+    }
+
+    #[Test]
+    public function pgsqlIndexPrefixingSkipsAlreadyPrefixed(): void
+    {
+        $compiler = $this->compiler(Driver::PostgreSQL);
+        $index = new SchemaIndex('users_idx_name', ['name']);
+        $stmts = $compiler->compileAddIndex('users', $index);
+
+        // Should not double-prefix
+        self::assertStringNotContainsString('"users_users_idx_name"', $stmts[0]);
+        self::assertStringContainsString('"users_idx_name"', $stmts[0]);
+    }
+
+    #[Test]
+    public function dropColumnPgsql(): void
+    {
+        $stmts = $this->compiler(Driver::PostgreSQL)->compileAlterDropColumn('users', 'email');
+        self::assertSame('ALTER TABLE "users" DROP COLUMN "email"', $stmts[0]);
+    }
+
+    #[Test]
+    public function singlePrimaryKeyNotAutoIncrement(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('id', SchemaColumnType::Integer, primaryKey: true),
+                new SchemaColumn('name', SchemaColumnType::String),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('PRIMARY KEY ("id")', $stmts[0]);
+        self::assertStringNotContainsString('AUTOINCREMENT', $stmts[0]);
+    }
+
+    #[Test]
+    public function stringWithEscapedQuoteInDefault(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('label', SchemaColumnType::String, hasDefault: true, default: "it's"),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString("DEFAULT 'it''s'", $stmts[0]);
+    }
+
+    #[Test]
+    public function nullableColumnOmitsNotNull(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('description', SchemaColumnType::Text, nullable: true),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringNotContainsString('NOT NULL', $stmts[0]);
+    }
+
+    #[Test]
+    public function nonNullableColumnIncludesNotNull(): void
+    {
+        $compiler = $this->compiler(Driver::SQLite);
+        $def = new TableDefinition(
+            name: 'test',
+            columns: [
+                new SchemaColumn('name', SchemaColumnType::String),
+            ],
+        );
+
+        $stmts = $compiler->compileCreate($def);
+        self::assertStringContainsString('NOT NULL', $stmts[0]);
+    }
+
     private function compiler(Driver $driver): DdlCompiler
     {
         return new DdlCompiler($driver, new SchemaCapabilities($driver));
