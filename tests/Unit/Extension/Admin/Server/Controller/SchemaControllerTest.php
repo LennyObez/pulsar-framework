@@ -259,7 +259,7 @@ final class SchemaControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
-        self::assertStringContainsString('Create Table', (string) $response->getBody());
+        self::assertStringContainsString('Create table', (string) $response->getBody());
     }
 
     #[Test]
@@ -320,7 +320,7 @@ final class SchemaControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
-        self::assertStringContainsString('Schema Change Log', (string) $response->getBody());
+        self::assertStringContainsString('Schema change log', (string) $response->getBody());
     }
 
     #[Test]
@@ -480,7 +480,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->createForm($this->makeHtmlRequest());
 
         self::assertSame(200, $response->getStatusCode());
-        self::assertStringContainsString('Create Table', (string) $response->getBody());
+        self::assertStringContainsString('Create table', (string) $response->getBody());
     }
 
     #[Test]

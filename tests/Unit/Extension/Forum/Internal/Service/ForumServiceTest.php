@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Forum\Internal\Service;
 
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Event\EventDispatcherInterface;

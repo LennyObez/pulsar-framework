@@ -110,28 +110,28 @@ final class LlmOptionsTest extends TestCase
     #[Test]
     public function maxTokensPositiveValueIsAccepted(): void
     {
-        self::assertSame(1, (new LlmOptions(maxTokens: 1))->maxTokens);
+        self::assertSame(1, new LlmOptions(maxTokens: 1)->maxTokens);
     }
 
     #[Test]
     public function maxTokensLargeValueIsAccepted(): void
     {
-        self::assertSame(200_000, (new LlmOptions(maxTokens: 200_000))->maxTokens);
+        self::assertSame(200_000, new LlmOptions(maxTokens: 200_000)->maxTokens);
     }
 
     #[Test]
     public function auditLogDefaultsToTrueForRegulatedSystems(): void
     {
-        self::assertTrue((new LlmOptions())->auditLog, 'audit logging must be on by default');
-        self::assertFalse((new LlmOptions(auditLog: false))->auditLog, 'audit logging can be disabled');
+        self::assertTrue(new LlmOptions()->auditLog, 'audit logging must be on by default');
+        self::assertFalse(new LlmOptions(auditLog: false)->auditLog, 'audit logging can be disabled');
     }
 
     #[Test]
     public function maxCostCentsLimitsSpend(): void
     {
         // 100 cents = $1.00 per-request budget cap
-        self::assertSame(100, (new LlmOptions(maxCostCents: 100))->maxCostCents);
-        self::assertNull((new LlmOptions())->maxCostCents, 'uncapped by default');
+        self::assertSame(100, new LlmOptions(maxCostCents: 100)->maxCostCents);
+        self::assertNull(new LlmOptions()->maxCostCents, 'uncapped by default');
     }
 
     #[Test]

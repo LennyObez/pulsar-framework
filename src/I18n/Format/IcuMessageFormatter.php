@@ -7,6 +7,9 @@ namespace Pulsar\I18n\Format;
 use MessageFormatter;
 use Pulsar\Api\Internal;
 
+use function array_shift;
+use function count;
+
 /**
  * ICU MessageFormat implementation using ext-intl.
  *
@@ -42,8 +45,8 @@ final class IcuMessageFormatter implements MessageFormatterInterface
             }
 
             // Evict oldest entries when cache is full
-            if (\count($this->cache) >= self::MAX_CACHE_SIZE) {
-                \array_shift($this->cache);
+            if (count($this->cache) >= self::MAX_CACHE_SIZE) {
+                array_shift($this->cache);
             }
 
             $this->cache[$cacheKey] = $formatter;

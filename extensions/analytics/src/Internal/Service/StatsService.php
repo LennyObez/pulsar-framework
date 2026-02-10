@@ -9,10 +9,10 @@ use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Analytics\Contracts\DailyStatsRepositoryInterface;
-use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\StatsServiceInterface;
 use Pulsar\Extension\Analytics\Domain\BreakdownDimension;
-use Pulsar\Extension\Analytics\Internal\Repository\DbHourlyStatsRepository;
+
+use function round;
 
 /**
  * Query layer for aggregated analytics statistics.
@@ -88,8 +88,6 @@ final readonly class StatsService implements StatsServiceInterface
 
     public function __construct(
         private DailyStatsRepositoryInterface $dailyStatsRepository,
-        private DbHourlyStatsRepository $hourlyStatsRepository,
-        private PageViewRepositoryInterface $pageViewRepository,
         private ConnectionInterface $connection,
     ) {}
 
@@ -134,7 +132,6 @@ final readonly class StatsService implements StatsServiceInterface
 
         foreach ($stats as $day) {
             $value = match ($metric) {
-                'visitors' => $day->visitors,
                 'pageviews' => $day->pageviews,
                 'sessions' => $day->sessions,
                 'bounce_rate' => $day->bounceRate,
@@ -156,13 +153,13 @@ final readonly class StatsService implements StatsServiceInterface
     public function getBreakdown(string $siteId, DateTimeImmutable $from, DateTimeImmutable $to, BreakdownDimension $dimension, int $limit = 10): array
     {
         $sql = match ($dimension) {
-            BreakdownDimension::Page => self::SQL_BREAKDOWN_PAGE,
             BreakdownDimension::Referrer => self::SQL_BREAKDOWN_REFERRER,
             BreakdownDimension::Country => self::SQL_BREAKDOWN_COUNTRY,
             BreakdownDimension::Browser => self::SQL_BREAKDOWN_BROWSER,
             BreakdownDimension::Os => self::SQL_BREAKDOWN_OS,
             BreakdownDimension::Device => self::SQL_BREAKDOWN_DEVICE,
-            default => self::SQL_BREAKDOWN_PAGE,
+            BreakdownDimension::Page, BreakdownDimension::UtmSource,
+            BreakdownDimension::UtmMedium, BreakdownDimension::UtmCampaign => self::SQL_BREAKDOWN_PAGE,
         };
 
         $result = $this->connection->query($sql, [
@@ -174,11 +171,11 @@ final readonly class StatsService implements StatsServiceInterface
 
         $data = [];
 
-        foreach ($result->all() as $row) {
+        foreach ($result->rows as $row) {
             $data[] = [
-                'name' => $row->string('name'),
-                'visitors' => $row->int('visitors'),
-                'pageviews' => $row->int('pageviews'),
+                'name' => $row->getString('name'),
+                'visitors' => $row->getInt('visitors'),
+                'pageviews' => $row->getInt('pageviews'),
             ];
         }
 
@@ -196,7 +193,7 @@ final readonly class StatsService implements StatsServiceInterface
         ]);
 
         $visitorsRow = $visitorsResult->first();
-        $currentVisitors = $visitorsRow !== null ? $visitorsRow->int('current_visitors') : 0;
+        $currentVisitors = $visitorsRow !== null ? $visitorsRow->getInt('current_visitors') : 0;
 
         $pagesResult = $this->connection->query(self::SQL_REALTIME_PAGES, [
             'site_id' => $siteId,
@@ -206,10 +203,10 @@ final readonly class StatsService implements StatsServiceInterface
 
         $activePages = [];
 
-        foreach ($pagesResult->all() as $row) {
+        foreach ($pagesResult->rows as $row) {
             $activePages[] = [
-                'pathname' => $row->string('pathname'),
-                'visitors' => $row->int('visitors'),
+                'pathname' => $row->getString('pathname'),
+                'visitors' => $row->getInt('visitors'),
             ];
         }
 

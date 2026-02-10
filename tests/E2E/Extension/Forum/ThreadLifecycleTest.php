@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\E2E\Extension\Forum;
 
-use DateTimeImmutable;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Extension\Forum\Badge\BadgeServiceInterface;
 use Pulsar\Extension\Forum\Badge\UserBadge;
@@ -27,13 +27,11 @@ use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
 use Pulsar\Extension\Forum\Service\ReputationServiceInterface;
 use Pulsar\Extension\Forum\Thread\Thread;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
-use Psr\EventDispatcher\EventDispatcherInterface;
 
 use function array_filter;
 use function array_slice;
 use function array_values;
 use function count;
-use function max;
 
 /**
  * E2E: Full thread lifecycle — create -> edit -> pin -> lock -> close, plus invalid transitions.

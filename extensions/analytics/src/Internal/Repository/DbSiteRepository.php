@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Analytics\Internal\Repository;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
 use Pulsar\Extension\Analytics\Domain\Site;
@@ -95,7 +96,7 @@ final readonly class DbSiteRepository implements SiteRepositoryInterface
 
     public function save(Site $site): void
     {
-        $sql = $this->connection->driver() === \Pulsar\Database\Driver::MySQL
+        $sql = $this->connection->driver() === Driver::MySQL
             ? self::SQL_UPSERT_MYSQL
             : self::SQL_UPSERT;
 

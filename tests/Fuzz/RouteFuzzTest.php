@@ -13,6 +13,9 @@ use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RoutingException;
+use stdClass;
+
+use function count;
 
 #[CoversClass(Router::class)]
 #[CoversClass(Route::class)]
@@ -24,8 +27,8 @@ final class RouteFuzzTest extends TestCase
     public function pathTraversalAttemptsDoNotMatchWrongRoutes(): void
     {
         $router = new Router();
-        $router->get('/admin/dashboard', 'AdminController', 'admin.dashboard');
-        $router->get('/public/page', 'PageController', 'public.page');
+        $router->get('/admin/dashboard', stdClass::class, 'admin.dashboard');
+        $router->get('/public/page', stdClass::class, 'public.page');
 
         $traversalPaths = [
             '/public/../admin/dashboard',
@@ -59,7 +62,7 @@ final class RouteFuzzTest extends TestCase
     public function urlEncodedSpecialCharactersAreHandledInRouting(): void
     {
         $router = new Router();
-        $router->get('/users/{id}', 'UserController', 'user.show');
+        $router->get('/users/{id}', stdClass::class, 'user.show');
 
         $encodedInputs = [
             '%2F',           // /
@@ -85,7 +88,7 @@ final class RouteFuzzTest extends TestCase
     public function doubleEncodedPathsAreHandled(): void
     {
         $router = new Router();
-        $router->get('/files/{path}', 'FileController', 'files.show');
+        $router->get('/files/{path}', stdClass::class, 'files.show');
 
         $doubleEncoded = [
             '/files/%252e%252e%252f',
@@ -107,7 +110,7 @@ final class RouteFuzzTest extends TestCase
     public function extremelyLongPathsDoNotCauseErrors(): void
     {
         $router = new Router();
-        $router->get('/api/resource', 'ApiController', 'api.resource');
+        $router->get('/api/resource', stdClass::class, 'api.resource');
 
         $longPaths = [
             '/' . str_repeat('a', 2000),
@@ -123,7 +126,7 @@ final class RouteFuzzTest extends TestCase
             }
 
             // Just verifying no crash, timeout, or memory issue
-            self::assertTrue(true);
+            self::addToAssertionCount(1);
         }
     }
 
@@ -131,8 +134,8 @@ final class RouteFuzzTest extends TestCase
     public function pathsWithNullBytesDoNotMatchUnexpectedRoutes(): void
     {
         $router = new Router();
-        $router->get('/admin', 'AdminController', 'admin');
-        $router->get('/public', 'PublicController', 'public');
+        $router->get('/admin', stdClass::class, 'admin');
+        $router->get('/public', stdClass::class, 'public');
 
         $nullPaths = [
             "/admin\x00",
@@ -146,7 +149,7 @@ final class RouteFuzzTest extends TestCase
             try {
                 $matched = $router->match(Method::GET, $path);
                 // If it matches, ensure it matched the correct route
-                self::assertIsString($matched->getName());
+                self::assertNotNull($matched->getName());
             } catch (RoutingException) {
                 // Not found is fine — null bytes rejected
             }
@@ -163,7 +166,7 @@ final class RouteFuzzTest extends TestCase
         $router->add(new Route(
             methods: [Method::GET],
             path: '/users/{id}',
-            handler: 'UserController',
+            handler: stdClass::class,
             name: 'user.show',
             constraints: ['id' => '\d+'],
         ));
@@ -199,7 +202,9 @@ final class RouteFuzzTest extends TestCase
         $router = new Router();
 
         for ($i = 0; $i < 500; $i++) {
-            $router->get("/route-{$i}/{id}", "Controller{$i}", "route.{$i}");
+            /** @var class-string $handler */
+            $handler = "Controller{$i}";
+            $router->get("/route-{$i}/{id}", $handler, "route.{$i}");
         }
 
         // Match the last route to exercise worst-case scan
@@ -212,7 +217,7 @@ final class RouteFuzzTest extends TestCase
     public function specialRegexCharactersInPathsAreHandled(): void
     {
         $router = new Router();
-        $router->get('/api/resource', 'ApiController', 'api');
+        $router->get('/api/resource', stdClass::class, 'api');
 
         $regexPaths = [
             '/api/resource(.*)/',
@@ -230,7 +235,7 @@ final class RouteFuzzTest extends TestCase
                 // Not found is expected
             }
 
-            self::assertTrue(true);
+            self::addToAssertionCount(1);
         }
     }
 }

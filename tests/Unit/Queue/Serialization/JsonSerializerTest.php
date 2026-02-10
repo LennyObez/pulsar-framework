@@ -35,6 +35,7 @@ final class JsonSerializerTest extends TestCase
         $result = $serializer->serialize(['name' => 'test', 'count' => 42]);
 
         self::assertJson($result);
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($result, true);
         self::assertSame('test', $decoded['name']);
         self::assertSame(42, $decoded['count']);
@@ -47,6 +48,7 @@ final class JsonSerializerTest extends TestCase
 
         $result = $serializer->serialize('hello');
 
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($result, true);
         self::assertSame('hello', $decoded['_value']);
     }

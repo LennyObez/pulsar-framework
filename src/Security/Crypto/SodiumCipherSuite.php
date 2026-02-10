@@ -11,7 +11,9 @@ use Random\Engine\Secure;
 use Random\Randomizer;
 use SodiumException;
 
+use function chr;
 use function hash_equals;
+use function ord;
 use function sodium_bin2hex;
 use function sodium_crypto_aead_xchacha20poly1305_ietf_decrypt;
 use function sodium_crypto_aead_xchacha20poly1305_ietf_encrypt;
@@ -60,7 +62,7 @@ final readonly class SodiumCipherSuite implements CipherSuiteInterface
 
     public function decrypt(string $ciphertext, string $key, string $aad = ''): string
     {
-        if (strlen($ciphertext) < 1) {
+        if ($ciphertext === '') {
             throw SecurityException::decryptionFailed();
         }
 

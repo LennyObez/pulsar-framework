@@ -42,7 +42,7 @@ final readonly class PluginController
     public function __construct(
         private CmsPluginManagerInterface $pluginManager,
         private SettingsServiceInterface $settingsService,
-        private CmsRateLimiter $rateLimiter,
+        private ?CmsRateLimiter $rateLimiter,
         private GateInterface $gate,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
@@ -60,7 +60,7 @@ final readonly class PluginController
         $plugins = $this->pluginManager->getInstalled($tenantId);
 
         $data = [
-            'data' => array_map(static fn(InstalledCmsPlugin $p) => [
+            'plugins' => array_map(static fn(InstalledCmsPlugin $p) => [
                 'id' => $p->id,
                 'slug' => $p->slug,
                 'display_name' => $p->displayName,
@@ -93,7 +93,7 @@ final readonly class PluginController
         $this->authorize($identity, 'cms.plugins.install');
         $this->requireStepUp($request);
 
-        if (!$this->rateLimiter->attempt('plugin_install:' . $identity->id(), self::INSTALL_RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('plugin_install:' . $identity->id(), self::INSTALL_RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 

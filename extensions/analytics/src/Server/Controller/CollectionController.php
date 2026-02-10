@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Analytics\Server\Controller;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\TrackingServiceInterface;
 use Pulsar\Extension\Analytics\Domain\Site;
@@ -15,6 +14,13 @@ use Throwable;
 
 use function is_array;
 use function is_string;
+use function json_decode;
+use function parse_url;
+use function str_ends_with;
+use function strtolower;
+
+use const JSON_THROW_ON_ERROR;
+use const PHP_URL_HOST;
 
 /**
  * Handles incoming analytics events from the tracker script.
@@ -30,7 +36,6 @@ final readonly class CollectionController
     public function __construct(
         private TrackingServiceInterface $trackingService,
         private SiteRepositoryInterface $siteRepository,
-        private AnalyticsConfig $config,
     ) {}
 
     public function collect(ServerRequestInterface $request): Response

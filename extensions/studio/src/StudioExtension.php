@@ -142,7 +142,6 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             : null;
         /** @var MetricRegistry|null $metricRegistryForStore */
 
-        /** @var EventStoreInterface $baseStore */
         $baseStore = match ($studioConfig->storeBackend) {
             'database' => $this->createDatabaseStore($container, $hmacForStore),
             'buffered' => $this->createBufferedStore($container, $hmacForStore),
@@ -215,15 +214,14 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         );
         $container->instance(RetentionPolicy::class, $retentionPolicy);
 
-        $retentionEnforcer = new RetentionEnforcer(
-            $sqliteStore,
-            $retentionPolicy,
-            $container->has(MetricRegistry::class)
-                ? $container->get(MetricRegistry::class)
-                : null,
-        );
-        /** @var MetricRegistry|null $_ */
-        $container->instance(RetentionEnforcer::class, $retentionEnforcer);
+        if ($baseStore instanceof SqliteEventStore) {
+            $retentionEnforcer = new RetentionEnforcer(
+                $baseStore,
+                $retentionPolicy,
+                $metricRegistryForStore,
+            );
+            $container->instance(RetentionEnforcer::class, $retentionEnforcer);
+        }
 
         // Context provider (fiber-safe)
         $contextProvider = new FiberScopedContextProvider();

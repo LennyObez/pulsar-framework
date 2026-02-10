@@ -38,15 +38,13 @@ final readonly class SensitivityMetadata
      */
     public function isAuthorizationShaped(string $sql, array $bindings): bool
     {
-        foreach ($this->config->authorizationColumns as $column) {
-            $pattern = '/\bWHERE\b.*\b' . preg_quote($column, '/') . '\b\s*[=<>!]/i';
-
-            if (preg_match($pattern, $sql) === 1) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $this->config->authorizationColumns,
+            static fn(string $column): bool => preg_match(
+                '/\bWHERE\b.*\b' . preg_quote($column, '/') . '\b\s*[=<>!]/i',
+                $sql,
+            ) === 1,
+        );
     }
 
     /**

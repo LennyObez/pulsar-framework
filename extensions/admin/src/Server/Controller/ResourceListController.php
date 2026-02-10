@@ -6,8 +6,10 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
+use Pulsar\Extension\Admin\Domain\ListResourceResult;
 use Pulsar\Extension\Admin\Features\ListResource\ListResourceHandler;
 use Pulsar\Extension\Admin\Features\ListResource\ListResourceRequest;
 use Pulsar\Http\Message\Response;
@@ -49,13 +51,33 @@ final readonly class ResourceListController
         $page = max(1, (int) ($queryParams['page'] ?? 1));
         $perPage = max(1, (int) ($queryParams['per_page'] ?? 25));
 
-        $result = $this->handler->execute(new ListResourceRequest(
-            resourceName: $resource,
-            filters: $filters,
-            sort: $sort,
-            page: $page,
-            perPage: $perPage,
-        ));
+        try {
+            $result = $this->handler->execute(new ListResourceRequest(
+                resourceName: $resource,
+                filters: $filters,
+                sort: $sort,
+                page: $page,
+                perPage: $perPage,
+            ));
+        } catch (DatabaseException $e) {
+            if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
+                return Response::json([
+                    'error' => 'Query failed for this resource.',
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            $resourceDef = $this->registry->get($resource);
+
+            return Response::html($this->renderView($resourceDef->pluralLabel(), [
+                'resource' => $resourceDef,
+                'result' => new ListResourceResult(data: [], total: 0, page: 1, perPage: $perPage, totalPages: 1),
+                'filters' => $filters,
+                'sort' => $sort,
+                'schema_enabled' => $this->config->schema->enabled,
+                'error' => 'Unable to query this resource: ' . $e->getMessage(),
+            ]));
+        }
 
         if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json([

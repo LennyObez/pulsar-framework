@@ -7,37 +7,30 @@ import { renderTimeseriesChart } from './components/TimeseriesChart';
 import type { DateRange } from './types';
 
 let currentSiteId = '';
-let currentRange: DateRange = { from: '', to: '' };
 
 async function loadDashboard(siteId: string, range: DateRange): Promise<void> {
-  try {
-    const [aggregate, timeseries] = await Promise.all([
-      fetchAggregate(siteId, range),
-      fetchTimeseries(siteId, range, 'visitors', 'day'),
-    ]);
+  const [aggregate, timeseries] = await Promise.all([
+    fetchAggregate(siteId, range),
+    fetchTimeseries(siteId, range, 'visitors', 'day'),
+  ]);
 
-    const cardsEl = document.getElementById('metric-cards');
-    if (cardsEl) renderMetricCards(cardsEl, aggregate);
+  const cardsEl = document.getElementById('metric-cards');
+  if (cardsEl) renderMetricCards(cardsEl, aggregate);
 
-    const chartEl = document.getElementById('timeseries-chart');
-    if (chartEl) renderTimeseriesChart(chartEl, timeseries.data);
+  const chartEl = document.getElementById('timeseries-chart');
+  if (chartEl) renderTimeseriesChart(chartEl, timeseries.data);
 
-    const dimensions = ['page', 'referrer', 'country', 'device', 'browser', 'os'] as const;
-    const breakdownEls = dimensions.map((d) => ({
-      dimension: d,
-      el: document.querySelector<HTMLElement>(`[data-dimension="${d}"]`),
-    }));
+  const dimensions = ['page', 'referrer', 'country', 'device', 'browser', 'os'] as const;
+  const breakdownEls = dimensions.map((d) => ({
+    dimension: d,
+    el: document.querySelector<HTMLElement>(`[data-dimension="${d}"]`),
+  }));
 
-    const breakdowns = await Promise.all(
-      dimensions.map((d) => fetchBreakdown(siteId, range, d, 10)),
-    );
+  const breakdowns = await Promise.all(dimensions.map((d) => fetchBreakdown(siteId, range, d, 10)));
 
-    breakdownEls.forEach((b, i) => {
-      if (b.el) renderBreakdownTable(b.el, breakdowns[i].data);
-    });
-  } catch (err) {
-    console.error('Analytics dashboard error:', err);
-  }
+  breakdownEls.forEach((b, i) => {
+    if (b.el) renderBreakdownTable(b.el, breakdowns[i].data);
+  });
 }
 
 function init(): void {
@@ -48,7 +41,6 @@ function init(): void {
   const datePickerEl = document.getElementById('date-picker');
   if (datePickerEl) {
     renderDatePicker(datePickerEl, (range) => {
-      currentRange = range;
       if (currentSiteId) {
         void loadDashboard(currentSiteId, range);
       }

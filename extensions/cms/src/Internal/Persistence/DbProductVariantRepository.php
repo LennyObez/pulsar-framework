@@ -137,9 +137,6 @@ final readonly class DbProductVariantRepository implements ProductVariantReposit
         );
     }
 
-    /**
-     * @param Row $row
-     */
     private static function hydrate(Row $row): ProductVariant
     {
         /** @var array<string, string> $attributeValues */

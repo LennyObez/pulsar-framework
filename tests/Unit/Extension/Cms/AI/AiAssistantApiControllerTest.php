@@ -484,7 +484,7 @@ final class AiAssistantApiControllerTest extends TestCase
         $assistant = new ContentAssistant($provider);
         $parser = new AiRequestParser($config);
 
-        return new AiAssistantApiController($assistant, $config, $parser);
+        return new AiAssistantApiController($assistant, $parser);
     }
 
     /**

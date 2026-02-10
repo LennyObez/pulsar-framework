@@ -12,7 +12,8 @@ use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Exception\SecurityException;
-use SodiumException;
+
+use function strlen;
 
 #[CoversClass(MasterKey::class)]
 #[CoversClass(Encryptor::class)]

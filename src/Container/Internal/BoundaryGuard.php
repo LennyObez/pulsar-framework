@@ -9,12 +9,15 @@ use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Container\BindingType;
 use Pulsar\Container\ContainerInterface;
+use RuntimeException;
 
 use function array_any;
+use function debug_backtrace;
+use function preg_match;
 use function str_contains;
 use function str_starts_with;
-use function substr;
-use function strrpos;
+
+use const DEBUG_BACKTRACE_IGNORE_ARGS;
 
 /**
  * Development-only decorator that checks module boundary rules at container resolution time.
@@ -207,7 +210,7 @@ final readonly class BoundaryGuard implements ContainerInterface
         ]);
 
         if ($this->throwOnViolation) {
-            throw new \RuntimeException($logMessage);
+            throw new RuntimeException($logMessage);
         }
     }
 }

@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Message\Uri;
 use Pulsar\Http\Method;
@@ -50,7 +49,7 @@ final class HttpRequestFuzzTest extends TestCase
     {
         $paths = [
             "/path\x00/segment",
-            "/path%00/segment",
+            '/path%00/segment',
             "\x00/",
             "/\x00",
             "/path/\x00file.php",
@@ -59,7 +58,7 @@ final class HttpRequestFuzzTest extends TestCase
         foreach ($paths as $path) {
             $request = new ServerRequest(method: 'GET', uri: $path);
             $target = $request->getRequestTarget();
-            self::assertIsString($target);
+            self::assertNotSame('', $target, "Request target should not be empty for path: {$path}");
         }
     }
 
@@ -87,7 +86,8 @@ final class HttpRequestFuzzTest extends TestCase
             );
 
             $json = $request->json();
-            self::assertIsArray($json);
+            // json() returns array — verify it completed without throwing
+            self::addToAssertionCount(1);
         }
     }
 
@@ -107,7 +107,7 @@ final class HttpRequestFuzzTest extends TestCase
         foreach ($paths as $path) {
             $request = new ServerRequest(method: 'GET', uri: $path);
             $target = $request->getRequestTarget();
-            self::assertIsString($target);
+            self::assertNotSame('', $target, 'Request target should not be empty for unicode path');
         }
     }
 
@@ -134,7 +134,7 @@ final class HttpRequestFuzzTest extends TestCase
             );
 
             $target = $request->getRequestTarget();
-            self::assertIsString($target);
+            self::assertNotSame('', $target, "Request target should not be empty for query: {$query}");
         }
     }
 
@@ -157,7 +157,7 @@ final class HttpRequestFuzzTest extends TestCase
 
         foreach ($inputs as $input) {
             $request = new ServerRequest(method: 'GET', uri: $input === '' ? '/' : $input);
-            self::assertIsString($request->getMethod());
+            self::assertSame('GET', $request->getMethod());
         }
     }
 
@@ -215,7 +215,8 @@ final class HttpRequestFuzzTest extends TestCase
             );
 
             $json = $request->json();
-            self::assertIsArray($json);
+            // json() returns array — verify it completed without throwing
+            self::addToAssertionCount(1);
         }
     }
 }

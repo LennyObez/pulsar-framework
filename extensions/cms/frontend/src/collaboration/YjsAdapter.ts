@@ -55,7 +55,7 @@ export class YjsAdapter {
   private lastVersion = 0;
   private onUpdateCallbacks: UpdateCallback[] = [];
   private onSessionsCallbacks: SessionsCallback[] = [];
-  private baseUrl: string;
+  private readonly baseUrl: string;
 
   constructor(baseUrl = '/api/v1/collaboration') {
     this.baseUrl = baseUrl;

@@ -94,7 +94,6 @@ final readonly class ExportController
         $json = json_encode($bundle->data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => 'application/json; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="cms-export.json"',
@@ -150,7 +149,6 @@ final readonly class ExportController
         $markdown = $exporter->exportAll($items);
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => 'text/markdown; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="cms-export.md"',
@@ -199,7 +197,6 @@ final readonly class ExportController
         $csv = $exporter->export($items);
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => 'text/csv; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="cms-export.csv"',

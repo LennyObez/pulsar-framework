@@ -550,18 +550,30 @@ $application->add(new PlaygroundServeCommand($basePath));
 // Register extension commands
 if ($extensionBootstrap !== null) {
   foreach ($extensionBootstrap->getCommands() as $commandClass) {
-    if (class_exists($commandClass)) {
-      try {
-        $command = $kernel->container()->has($commandClass)
-          ? $kernel->container()->get($commandClass)
-          : new $commandClass();
+    if (!class_exists($commandClass)) {
+      continue;
+    }
 
-        if ($command instanceof CommandInterface) {
-          $application->add($command);
+    try {
+      if ($kernel->container()->has($commandClass)) {
+        $command = $kernel->container()->get($commandClass);
+      } else {
+        $ref = new ReflectionClass($commandClass);
+        $ctor = $ref->getConstructor();
+
+        // Only attempt direct instantiation for commands with no required constructor params
+        if ($ctor !== null && $ctor->getNumberOfRequiredParameters() > 0) {
+          continue;
         }
-      } catch (Throwable $e) {
-        fwrite(STDERR, "Warning: Failed to register command $commandClass: {$e->getMessage()}\n");
+
+        $command = $ref->newInstance();
       }
+
+      if ($command instanceof CommandInterface) {
+        $application->add($command);
+      }
+    } catch (Throwable $e) {
+      fwrite(STDERR, "Warning: Failed to register command $commandClass: {$e->getMessage()}\n");
     }
   }
 }

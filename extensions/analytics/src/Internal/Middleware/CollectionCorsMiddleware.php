@@ -9,11 +9,15 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
 use Pulsar\Http\Message\Response;
 
 use function is_string;
+use function parse_url;
+use function str_starts_with;
+use function substr;
+
+use const PHP_URL_HOST;
 
 /**
  * Validates Origin header against registered site domains and sets CORS headers.
@@ -22,7 +26,6 @@ use function is_string;
 final readonly class CollectionCorsMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private AnalyticsConfig $config,
         private SiteRepositoryInterface $siteRepository,
     ) {}
 

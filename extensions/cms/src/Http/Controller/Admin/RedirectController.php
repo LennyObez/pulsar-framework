@@ -57,7 +57,7 @@ final readonly class RedirectController
         $redirects = $this->redirectManager->listAll($page, $perPage, $tenantId);
 
         $data = [
-            'data' => array_map(static fn(Redirect $r) => [
+            'redirects' => array_map(static fn(Redirect $r) => [
                 'id' => $r->id,
                 'from_path' => $r->fromPath,
                 'to_path' => $r->toPath,
@@ -239,7 +239,7 @@ final readonly class RedirectController
         }
 
         return new Response(
-            status: 200,
+            statusCode: 200,
             headers: [
                 'Content-Type' => 'text/csv; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="redirects.csv"',

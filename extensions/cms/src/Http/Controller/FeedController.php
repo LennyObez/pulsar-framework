@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Cms\Http\Controller;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Seo\FeedGeneratorInterface;
 use Pulsar\Http\Message\Response;
 
@@ -21,7 +20,6 @@ final readonly class FeedController
 {
     public function __construct(
         private FeedGeneratorInterface $feedGenerator,
-        private CmsConfig $config,
     ) {}
 
     public function rss(ServerRequestInterface $request, string $locale): Response
@@ -31,7 +29,6 @@ final readonly class FeedController
         $xml = $this->feedGenerator->generateRss($locale, $baseUrl, $limit);
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => 'application/rss+xml; charset=utf-8',
                 'Cache-Control' => 'public, max-age=1800',
@@ -47,7 +44,6 @@ final readonly class FeedController
         $xml = $this->feedGenerator->generateAtom($locale, $baseUrl, $limit);
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => 'application/atom+xml; charset=utf-8',
                 'Cache-Control' => 'public, max-age=1800',

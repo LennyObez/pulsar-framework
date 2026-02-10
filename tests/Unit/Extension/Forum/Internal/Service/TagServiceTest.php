@@ -6,7 +6,6 @@ namespace Pulsar\Tests\Unit\Extension\Forum\Internal\Service;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Forum\Exception\ForumException;
@@ -66,7 +65,7 @@ final class TagServiceTest extends TestCase
 
         $tags = $this->createMock(TagRepositoryInterface::class);
         $tags->method('findById')
-            ->willReturnCallback(fn (string $id) => match ($id) {
+            ->willReturnCallback(fn(string $id) => match ($id) {
                 'tag-1' => $tag1,
                 'tag-2' => $tag2,
                 default => null,

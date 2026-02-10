@@ -58,6 +58,7 @@ final class VoteApiControllerTest extends TestCase
 
         self::assertSame(422, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['details']);
         self::assertArrayHasKey('direction', $data['details']);
     }
 
@@ -100,6 +101,7 @@ final class VoteApiControllerTest extends TestCase
 
         self::assertSame(201, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('vote-001', $data['data']['id']);
         self::assertSame('thread-001', $data['data']['thread_id']);
         self::assertSame(1, $data['data']['direction']);
@@ -129,6 +131,7 @@ final class VoteApiControllerTest extends TestCase
 
         self::assertSame(201, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame(-1, $data['data']['direction']);
     }
 
@@ -156,6 +159,7 @@ final class VoteApiControllerTest extends TestCase
 
         self::assertSame(201, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('pv-001', $data['data']['id']);
         self::assertSame('post-001', $data['data']['post_id']);
     }
@@ -188,6 +192,7 @@ final class VoteApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('removed', $data['data']['status']);
         self::assertSame('thread-001', $data['data']['thread_id']);
     }
@@ -205,6 +210,7 @@ final class VoteApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('removed', $data['data']['status']);
         self::assertSame('post-001', $data['data']['post_id']);
     }

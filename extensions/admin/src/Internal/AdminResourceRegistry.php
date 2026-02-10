@@ -10,6 +10,7 @@ use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Exception\ResourceNotFoundException;
+use Pulsar\Extension\Admin\Internal\Adapter\IntrospectedResource;
 
 /**
  * In-memory resource registry.
@@ -25,6 +26,16 @@ final class AdminResourceRegistry implements ResourceRegistryInterface
     {
         $name = $resource->name();
         if (isset($this->resources[$name])) {
+            // Allow explicit typed resources to replace auto-introspected ones.
+            // Extensions register richer resources (custom labels, operations,
+            // field definitions) that should take precedence over generic
+            // table-derived resources created by ORM introspection.
+            if ($this->resources[$name] instanceof IntrospectedResource && !$resource instanceof IntrospectedResource) {
+                $this->resources[$name] = $resource;
+
+                return;
+            }
+
             throw AdminException::resourceAlreadyRegistered($name);
         }
         $this->resources[$name] = $resource;

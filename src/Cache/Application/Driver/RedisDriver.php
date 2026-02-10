@@ -106,13 +106,7 @@ final class RedisDriver extends AbstractCacheDriver
             return false;
         }
 
-        foreach ($results as $result) {
-            if ($result === false) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($results, static fn(mixed $result): bool => $result !== false);
     }
 
     public function delete(string $key): bool

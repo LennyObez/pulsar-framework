@@ -8,12 +8,19 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Config\MediaConfig;
 use Pulsar\Extension\Cms\Exception\CmsException;
 
+use function fclose;
+use function file_get_contents;
+use function fopen;
+use function fread;
+use function getimagesize;
 use function in_array;
+use function ltrim;
 use function pathinfo;
 use function str_contains;
 use function str_starts_with;
 use function strtolower;
 use function substr;
+use function trim;
 
 use const PATHINFO_EXTENSION;
 
@@ -35,7 +42,7 @@ final readonly class FileValidator
      *
      * @var array<string, string>
      */
-    private const EXTENSION_MIME_MAP = [
+    private const array EXTENSION_MIME_MAP = [
         'jpg' => 'image/jpeg',
         'jpeg' => 'image/jpeg',
         'png' => 'image/png',

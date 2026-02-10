@@ -37,7 +37,7 @@ final class TypeRegistryTest extends TestCase
         $registry->register('App\\Jobs\\Valid');
 
         $registry->assertAllowed('App\\Jobs\\Valid');
-        self::assertTrue(true); // No exception thrown
+        $this->addToAssertionCount(1); // No exception thrown
     }
 
     #[Test]

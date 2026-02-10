@@ -28,8 +28,6 @@ final readonly class SiteDefinition
 {
     private const array REQUIRED_KEYS = ['version', 'site'];
 
-    private const array OPTIONAL_KEYS = ['taxonomies', 'content', 'menus', 'media', 'redirects', 'seo'];
-
     /**
      * @param array<string, mixed> $site Site-level configuration (name, locales, settings)
      * @param list<array<string, mixed>> $taxonomies Taxonomy definitions with terms

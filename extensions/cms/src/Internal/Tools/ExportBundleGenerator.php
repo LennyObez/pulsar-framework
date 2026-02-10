@@ -119,8 +119,8 @@ final readonly class ExportBundleGenerator
     {
         $result = $this->contentRepository->findPublished(
             locale: $options->locales[0] ?? 'en',
-            tenantId: $options->tenantId,
             perPage: 10000,
+            tenantId: $options->tenantId,
         );
 
         return array_map(

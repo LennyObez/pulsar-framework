@@ -1,4 +1,4 @@
-window.plsr.ext((send, site) => {
+window.plsr.ext((send: PlsrSendFn, site: string) => {
   let prev = location.href;
   let timer: ReturnType<typeof setTimeout> | null = null;
 

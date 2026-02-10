@@ -27,6 +27,11 @@ exclude:
   # Redundant visibility modifier - CS Fixer (PER-CS2.0) enforces explicit `public` on
   # `private(set)` properties; Qodana flags it as redundant. CS Fixer is authoritative.
   - name: PhpPublicPropertyModifierCanBeOmittedInspection
+  # Unnecessary curly braces in string interpolation — CS Fixer (PER-CS2.0) includes
+  # `simple_to_complex_string_variable` which enforces "{$var}" over "$var" in interpolated
+  # strings. Qodana's inspection directly contradicts this rule. CS Fixer is authoritative
+  # as the project's code style standard; PHPStan max + Psalm level 1 are unaffected.
+  - name: PhpUnnecessaryCurlyBracesInStringInterpolationInspection
   # @throws inspection trio — these three contradict each other in a framework context:
   # interface contracts declare @throws but concrete analysis sees no throw path (e.g.,
   # has()-guarded get() calls), causing RedundantThrows. Adding @throws to satisfy
@@ -156,6 +161,151 @@ exclude:
       - resources/ui/css/tokens.css
       # Studio dashboard aggregator shares metric-collection patterns across sections
       - extensions/studio/src/Console/Aggregation/DashboardAggregator.php
+      # CMS search services (MySQL/PostgreSQL/SQLite) share search(), suggest(),
+      # getAnalytics(), recordSearch(), hydrateContent(), toDateTime() logic but differ
+      # in SQL dialect (MATCH AGAINST vs tsvector/plainto_tsquery vs FTS5/bm25),
+      # parameter binding (IN() vs ANY()), and rank column names. Extracting a template-method
+      # base class would obscure the dialect-specific SQL and make each implementation
+      # harder to reason about independently.
+      - extensions/cms/src/Internal/Search/MysqlSearchService.php
+      - extensions/cms/src/Internal/Search/PostgresSearchService.php
+      - extensions/cms/src/Internal/Search/SqliteSearchService.php
+      # CMS admin controllers share request parsing (requireIdentity, authorize,
+      # getParsedBody, getQueryParams, pagination clamping) and response formatting
+      # (respondWithView, Response::json) via the RendersAdminView trait. The remaining
+      # duplication is thin controller boilerplate that is subtly different per action
+      # (different entities, different validation rules, different permissions).
+      # Extracting further would create an abstract controller that couples unrelated
+      # domain operations behind a shared interface.
+      - extensions/cms/src/Http/Controller/Admin/ContentController.php
+      - extensions/cms/src/Http/Controller/Admin/MediaController.php
+      - extensions/cms/src/Http/Controller/Admin/CommentController.php
+      - extensions/cms/src/Http/Controller/Admin/OrderController.php
+      - extensions/cms/src/Http/Controller/Admin/ProductController.php
+      - extensions/cms/src/Http/Controller/Admin/PromotionController.php
+      - extensions/cms/src/Http/Controller/Admin/TaxonomyController.php
+      - extensions/cms/src/Http/Controller/Admin/MenuController.php
+      - extensions/cms/src/Http/Controller/Admin/ThemeController.php
+      - extensions/cms/src/Http/Controller/Admin/PluginController.php
+      - extensions/cms/src/Http/Controller/Admin/SettingsController.php
+      - extensions/cms/src/Http/Controller/Admin/UserController.php
+      - extensions/cms/src/Http/Controller/Admin/RedirectController.php
+      - extensions/cms/src/Http/Controller/Admin/BackupController.php
+      - extensions/cms/src/Http/Controller/Admin/ImportController.php
+      - extensions/cms/src/Http/Controller/Admin/ExportController.php
+      - extensions/cms/src/Http/Controller/Admin/SitemapController.php
+      - extensions/cms/src/Http/Controller/Admin/LinkHealthController.php
+      - extensions/cms/src/Http/Controller/Admin/RobotsController.php
+      - extensions/cms/src/Http/Controller/Admin/SearchAnalyticsController.php
+      - extensions/cms/src/Http/Controller/Admin/ReviewController.php
+      - extensions/cms/src/Http/Controller/Admin/RevisionController.php
+      - extensions/cms/src/Http/Controller/Admin/DashboardController.php
+      - extensions/cms/src/Http/Controller/Admin/LiveCssController.php
+      - extensions/cms/src/Http/Controller/Admin/TwoFactorController.php
+      - extensions/cms/src/Http/Controller/Admin/FieldController.php
+      - extensions/cms/src/Http/Controller/Admin/SiteDefinitionController.php
+      - extensions/cms/src/Http/Controller/Admin/ToolsController.php
+      - extensions/cms/src/Http/Controller/Admin/DigitalAssetController.php
+      - extensions/cms/src/Http/Controller/Admin/ExperimentController.php
+      - extensions/cms/src/Http/Controller/Admin/InvoiceController.php
+      - extensions/cms/src/Http/Controller/Admin/BulkOperationsController.php
+      - extensions/cms/src/Http/Controller/Admin/AssetController.php
+      # CMS RendersAdminView trait shares content negotiation pattern with Forum variant
+      # but includes CMS-specific helpers (validateTenantAccess, requireStepUp,
+      # property_exists gate guard). Merging would couple independent extensions.
+      - extensions/cms/src/Http/Controller/Admin/RendersAdminView.php
+      # CMS API controllers share request/response patterns with admin controllers
+      - extensions/cms/src/Http/Controller/Api/ContentApiController.php
+      - extensions/cms/src/Http/Controller/Api/MediaApiController.php
+      - extensions/cms/src/Http/Controller/Api/TaxonomyApiController.php
+      - extensions/cms/src/Http/Controller/Api/CommerceApiController.php
+      - extensions/cms/src/Http/Controller/Api/AiAssistantApiController.php
+      - extensions/cms/src/Http/Controller/Api/CollaborationApiController.php
+      # CMS public controllers share the same request parsing patterns
+      - extensions/cms/src/Http/Controller/ContentController.php
+      - extensions/cms/src/Http/Controller/SearchController.php
+      - extensions/cms/src/Http/Controller/CommentController.php
+      - extensions/cms/src/Http/Controller/CheckoutController.php
+      - extensions/cms/src/Http/Controller/MediaController.php
+      - extensions/cms/src/Http/Controller/DigitalDownloadController.php
+      - extensions/cms/src/Http/Controller/FeedController.php
+      - extensions/cms/src/Http/Controller/SeoController.php
+      - extensions/cms/src/Http/Controller/SitemapController.php
+      - extensions/cms/src/Http/Controller/WebhookController.php
+      # Forum admin controllers share request parsing, authorization, and response
+      # formatting via RendersAdminView trait. Remaining duplication is thin controller
+      # boilerplate (different entities, permissions, and domain operations per action).
+      - extensions/forum/src/Http/Controller/Admin/ThreadController.php
+      - extensions/forum/src/Http/Controller/Admin/PostController.php
+      - extensions/forum/src/Http/Controller/Admin/CategoryController.php
+      - extensions/forum/src/Http/Controller/Admin/ModerationController.php
+      - extensions/forum/src/Http/Controller/Admin/BadgeController.php
+      - extensions/forum/src/Http/Controller/Admin/TagController.php
+      - extensions/forum/src/Http/Controller/Admin/SettingsController.php
+      - extensions/forum/src/Http/Controller/Admin/UserController.php
+      - extensions/forum/src/Http/Controller/Admin/DashboardController.php
+      # Forum RendersAdminView shares pattern with CMS variant but uses direct gate
+      # access (not property_exists guard) and has no tenant/step-up helpers.
+      - extensions/forum/src/Http/Controller/Admin/RendersAdminView.php
+      # Forum API controllers share serialization and request patterns across admin/API
+      # boundaries. serializeThread()/serializePost() are duplicated between admin and
+      # API controllers but live in different bounded contexts that may diverge.
+      - extensions/forum/src/Http/Controller/Api/ThreadApiController.php
+      - extensions/forum/src/Http/Controller/Api/PostApiController.php
+      - extensions/forum/src/Http/Controller/Api/CategoryApiController.php
+      - extensions/forum/src/Http/Controller/Api/ModerationApiController.php
+      - extensions/forum/src/Http/Controller/Api/ProfileApiController.php
+      - extensions/forum/src/Http/Controller/Api/ReportApiController.php
+      - extensions/forum/src/Http/Controller/Api/SearchApiController.php
+      - extensions/forum/src/Http/Controller/Api/TagApiController.php
+      - extensions/forum/src/Http/Controller/Api/VoteApiController.php
+      # Analytics extension controllers/services share HTTP parsing and response patterns
+      - extensions/analytics/src/Internal/Middleware/AnalyticsAuthMiddleware.php
+      - extensions/analytics/src/Internal/Middleware/CollectionCorsMiddleware.php
+      - extensions/analytics/src/Internal/Service/AggregationService.php
+      - extensions/analytics/src/Internal/Service/StatsService.php
+      # Analytics BotFilterMiddleware shares PSR-15 middleware pattern with rate limit/CORS
+      - extensions/analytics/src/Internal/Middleware/BotFilterMiddleware.php
+      # Analytics API controllers share site_id validation, date range param parsing,
+      # and Response::json() formatting — thin controller boilerplate over different
+      # service methods (aggregate, breakdown, timeseries, realtime, CRUD).
+      - extensions/analytics/src/Server/Controller/StatsController.php
+      - extensions/analytics/src/Server/Controller/BreakdownController.php
+      - extensions/analytics/src/Server/Controller/TimeseriesController.php
+      - extensions/analytics/src/Server/Controller/RealtimeController.php
+      - extensions/analytics/src/Server/Controller/GoalController.php
+      - extensions/analytics/src/Server/Controller/SiteController.php
+      - extensions/analytics/src/Server/Controller/ExportController.php
+      - extensions/analytics/src/Server/Controller/CollectionController.php
+      - extensions/analytics/src/Server/Controller/DashboardController.php
+      - extensions/analytics/src/Server/Controller/TrackerController.php
+      # Analytics DB repositories share SQL constant declarations, ConnectionInterface
+      # injection, hydrate-from-Row pattern, and deleteOlderThan() — standard
+      # repository boilerplate operating on different tables/entities.
+      - extensions/analytics/src/Internal/Repository/DbPageViewRepository.php
+      - extensions/analytics/src/Internal/Repository/DbSessionRepository.php
+      - extensions/analytics/src/Internal/Repository/DbEventRepository.php
+      - extensions/analytics/src/Internal/Repository/DbGoalRepository.php
+      - extensions/analytics/src/Internal/Repository/DbGoalConversionRepository.php
+      - extensions/analytics/src/Internal/Repository/DbSiteRepository.php
+      - extensions/analytics/src/Internal/Repository/DbHourlyStatsRepository.php
+      - extensions/analytics/src/Internal/Repository/DbDailyStatsRepository.php
+      # Analytics scheduler jobs share invocation pattern with site iteration
+      - extensions/analytics/src/Internal/Scheduler/AggregationJob.php
+      - extensions/analytics/src/Internal/Scheduler/RetentionCleanupJob.php
+      - extensions/analytics/src/Internal/Scheduler/PartitionMaintenanceJob.php
+      # WebAuthn ceremony classes share verifyClientData(), verifyAuthenticatorData(),
+      # base64UrlEncode/Decode(), challenge generation, and audit logging patterns
+      # but differ in ceremony type (attestation vs assertion), signature verification,
+      # and credential extraction logic. Merging would obscure the distinct security
+      # flows mandated by the WebAuthn specification.
+      - extensions/webauthn/src/Ceremony/RegistrationCeremony.php
+      - extensions/webauthn/src/Ceremony/AuthenticationCeremony.php
+      # GraphQL resolvers share find-by-ID-and-serialize pattern but each operates
+      # on different entities with different field sets — standard resolver boilerplate
+      - extensions/graphql/src/Resolver/ContentResolver.php
+      - extensions/graphql/src/Resolver/MediaResolver.php
+      - extensions/graphql/src/Resolver/TaxonomyResolver.php
   # #[Override] validation — without vendor/ in CI, PSR-7/15/17 interfaces can't be
   # resolved, causing false positives on implementing methods. PHPStan max + Psalm
   # level 1 validate #[Override] correctness authoritatively.
@@ -193,8 +343,12 @@ exclude:
       - src/Auth/Middleware/
       - src/Http/Middleware/
       - extensions/admin/src/Internal/Middleware/
+      - extensions/cms/src/Http/Middleware/
+      - extensions/analytics/src/Internal/Middleware/
+      - extensions/forum/src/Http/Middleware/
       - extensions/studio/src/Server/Middleware/
       - src/Security/Csrf/CsrfMiddleware.php
+      - src/I18n/Locale/LocalePrefixMiddleware.php
   # PHP 8.5 false positive — Qodana 2025.3 misidentifies reachable code as unreachable
   # in notification channels (statements after method calls on readonly constructor-promoted
   # properties). All four channels are structurally identical; PHPStan + Psalm see no issue.

@@ -66,7 +66,7 @@ final readonly class UserController
         );
 
         $data = [
-            'data' => array_map(static fn(CmsUser $u) => [
+            'users' => array_map(static fn(CmsUser $u) => [
                 'id' => $u->id,
                 'display_name' => $u->displayName,
                 'email' => $u->email,

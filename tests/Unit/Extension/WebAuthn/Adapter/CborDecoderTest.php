@@ -11,6 +11,9 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\WebAuthn\Adapter\CborDecoder;
 use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
 
+use function assert;
+use function is_array;
+
 #[CoversClass(CborDecoder::class)]
 final class CborDecoderTest extends TestCase
 {
@@ -307,6 +310,7 @@ final class CborDecoderTest extends TestCase
             . "\xA0";         // value: {}
 
         $result = CborDecoder::decode($cbor);
+        assert(is_array($result));
 
         self::assertSame('none', $result['fmt']);
         self::assertSame([], $result['attStmt']);
@@ -332,6 +336,7 @@ final class CborDecoderTest extends TestCase
             . "\x61\x63\xF6";  // "c": null
 
         $result = CborDecoder::decode($cbor);
+        assert(is_array($result));
 
         self::assertTrue($result['a']);
         self::assertFalse($result['b']);
@@ -344,6 +349,7 @@ final class CborDecoderTest extends TestCase
         // Array of 10 zeros
         $cbor = "\x8A" . str_repeat("\x00", 10);
         $result = CborDecoder::decode($cbor);
+        assert(is_array($result));
 
         self::assertCount(10, $result);
         self::assertSame(array_fill(0, 10, 0), $result);

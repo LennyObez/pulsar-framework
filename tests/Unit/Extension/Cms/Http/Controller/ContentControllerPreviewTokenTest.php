@@ -24,10 +24,10 @@ use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
 use Pulsar\Extension\Cms\Http\Controller\ContentController;
 use Pulsar\Extension\Cms\I18n\HreflangGenerator;
-use Pulsar\Extension\Cms\I18n\LocaleResolver;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function hash_hmac;
@@ -112,7 +112,7 @@ final class ContentControllerPreviewTokenTest extends TestCase
 
         $hreflangTranslationRepo = $this->createStub(ContentTranslationRepositoryInterface::class);
         $hreflangTranslationRepo->method('findByContentId')->willReturn([]);
-        $hreflangGenerator = new HreflangGenerator($hreflangTranslationRepo, new LocaleResolver());
+        $hreflangGenerator = new HreflangGenerator($hreflangTranslationRepo, new UrlPrefixExtractor());
 
         $config = new CmsConfig(
             defaultLocale: 'en',

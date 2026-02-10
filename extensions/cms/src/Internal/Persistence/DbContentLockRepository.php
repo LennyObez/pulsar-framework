@@ -49,7 +49,6 @@ final readonly class DbContentLockRepository
 
     public function __construct(
         private ConnectionInterface $connection,
-        private ?string $tenantId,
     ) {}
 
     public function findByContent(string $contentId): ?ContentLock

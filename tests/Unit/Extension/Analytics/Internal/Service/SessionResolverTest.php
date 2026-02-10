@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Extension\Analytics\Contracts\SessionRepositoryInterface;
 use Pulsar\Extension\Analytics\Domain\Session;
 use Pulsar\Extension\Analytics\Domain\VisitorId;
@@ -27,7 +26,6 @@ final class SessionResolverTest extends TestCase
     {
         $this->sessionRepo = $this->createStub(SessionRepositoryInterface::class);
         $this->resolver = new SessionResolver(
-            new AnalyticsConfig(),
             $this->sessionRepo,
         );
 

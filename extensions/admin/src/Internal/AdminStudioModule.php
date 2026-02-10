@@ -54,7 +54,7 @@ final readonly class AdminStudioModule implements StudioModuleInterface
                 order: 1,
             ),
             new StudioNavEntry(
-                label: 'Activity Log',
+                label: 'Activity log',
                 href: '/admin/history',
                 icon: 'activity',
                 order: 2,

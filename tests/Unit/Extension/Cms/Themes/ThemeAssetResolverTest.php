@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
-use Pulsar\Extension\Cms\Config\ThemesConfig;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Internal\Themes\ThemeAssetResolver;
 use Pulsar\Extension\Cms\Themes\InstalledTheme;
@@ -48,7 +47,7 @@ final class ThemeAssetResolverTest extends TestCase
     {
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $this->expectException(CmsException::class);
         $resolver->resolveTemplate('../../../etc/passwd', $theme->id);
@@ -59,7 +58,7 @@ final class ThemeAssetResolverTest extends TestCase
     {
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $this->expectException(CmsException::class);
         $resolver->resolve('../../secret.txt', $theme->id);
@@ -70,7 +69,7 @@ final class ThemeAssetResolverTest extends TestCase
     {
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $this->expectException(CmsException::class);
         $resolver->resolveTemplate('/etc/passwd', $theme->id);
@@ -81,7 +80,7 @@ final class ThemeAssetResolverTest extends TestCase
     {
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $this->expectException(CmsException::class);
         $resolver->resolveTemplate("template\0.php", $theme->id);
@@ -98,7 +97,7 @@ final class ThemeAssetResolverTest extends TestCase
 
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $result = $resolver->resolveTemplate('article', $theme->id);
 
@@ -113,7 +112,7 @@ final class ThemeAssetResolverTest extends TestCase
 
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: $theme, active: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $this->expectException(CmsException::class);
         $resolver->resolveTemplate('nonexistent', $theme->id);
@@ -130,7 +129,7 @@ final class ThemeAssetResolverTest extends TestCase
 
         $theme = $this->createInstalledTheme(storagePath: $this->tmpDir);
         $repo = $this->createRepository(byId: null, active: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $result = $resolver->resolveTemplate('page');
 
@@ -141,7 +140,7 @@ final class ThemeAssetResolverTest extends TestCase
     public function throwsWhenNoActiveThemeAndNoId(): void
     {
         $repo = $this->createRepository(byId: null, active: null);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $this->expectException(CmsException::class);
         $resolver->resolveTemplate('page');
@@ -151,7 +150,7 @@ final class ThemeAssetResolverTest extends TestCase
     public function throwsWhenThemeIdNotFound(): void
     {
         $repo = $this->createRepository(byId: null, active: null);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $this->expectException(CmsException::class);
         $resolver->resolveTemplate('page', 'nonexistent-id');
@@ -173,7 +172,7 @@ final class ThemeAssetResolverTest extends TestCase
             manifestHash: $hash,
         );
         $repo = $this->createRepository(byId: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $result = $resolver->verifyIntegrity($theme->id);
 
@@ -192,7 +191,7 @@ final class ThemeAssetResolverTest extends TestCase
             manifestHash: 'deadbeef_wrong_hash_value',
         );
         $repo = $this->createRepository(byId: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $result = $resolver->verifyIntegrity($theme->id);
 
@@ -208,7 +207,7 @@ final class ThemeAssetResolverTest extends TestCase
             manifestHash: 'some-hash',
         );
         $repo = $this->createRepository(byId: $theme);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $result = $resolver->verifyIntegrity($theme->id);
 
@@ -219,7 +218,7 @@ final class ThemeAssetResolverTest extends TestCase
     public function integrityCheckFailsWhenThemeNotFound(): void
     {
         $repo = $this->createRepository(byId: null);
-        $resolver = new ThemeAssetResolver($repo, new ThemesConfig(), new NullLogger());
+        $resolver = new ThemeAssetResolver($repo, new NullLogger());
 
         $result = $resolver->verifyIntegrity('nonexistent-id');
 

@@ -65,8 +65,7 @@ final readonly class MediaController
                 $contents = $this->disk->read($derivative->storagePath);
                 $mimeType = self::formatToMime($format);
 
-                return (new Response(
-                    statusCode: 200,
+                return new Response(
                     headers: [
                         'Content-Type' => $mimeType,
                         'Content-Length' => (string) $derivative->fileSize,
@@ -74,7 +73,7 @@ final readonly class MediaController
                         'ETag' => '"' . $derivative->fileHash . '"',
                     ],
                     body: $contents,
-                ));
+                );
             }
         }
 
@@ -107,8 +106,7 @@ final readonly class MediaController
 
         $contents = $this->disk->read($asset->storagePath);
 
-        return (new Response(
-            statusCode: 200,
+        return new Response(
             headers: [
                 'Content-Type' => $asset->mimeType,
                 'Content-Length' => (string) $asset->fileSize,
@@ -116,7 +114,7 @@ final readonly class MediaController
                 'ETag' => '"' . $asset->fileHash . '"',
             ],
             body: $contents,
-        ));
+        );
     }
 
     /**

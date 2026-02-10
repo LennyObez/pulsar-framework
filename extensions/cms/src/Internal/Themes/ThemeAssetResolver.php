@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Cms\Internal\Themes;
 
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Cms\Config\ThemesConfig;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Themes\InstalledTheme;
 use Pulsar\Extension\Cms\Themes\ProvenanceResult;
@@ -30,7 +29,6 @@ final readonly class ThemeAssetResolver implements ThemeAssetResolverInterface
 {
     public function __construct(
         private ThemeRepositoryInterface $repository,
-        private ThemesConfig $config,
         private LoggerInterface $logger,
     ) {}
 

@@ -12,6 +12,9 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Mail\Webhook\ComplaintHandler;
 use Pulsar\Mail\Webhook\WebhookRequest;
 
+use function assert;
+use function is_string;
+
 #[CoversClass(ComplaintHandler::class)]
 final class ComplaintHandlerTest extends TestCase
 {
@@ -33,7 +36,9 @@ final class ComplaintHandlerTest extends TestCase
     public function shouldUnsubscribeLogicIsCorrect(string $type, bool $expected): void
     {
         $handler = new ComplaintHandler();
-        $request = $this->createRequest(json_encode(['complaint_type' => $type]));
+        $payload = json_encode(['complaint_type' => $type]);
+        assert(is_string($payload));
+        $request = $this->createRequest($payload);
 
         $result = $handler->process($request);
 

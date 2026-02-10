@@ -52,7 +52,7 @@ final readonly class LinkHealthController
         $brokenLinks = $this->linkHealthService->getBrokenLinks($tenantId, $page, $perPage);
 
         $data = [
-            'data' => array_map(static fn(LinkHealthCheck $check) => [
+            'links' => array_map(static fn(LinkHealthCheck $check) => [
                 'id' => $check->id,
                 'source_content_id' => $check->sourceContentId,
                 'source_locale' => $check->sourceLocale,

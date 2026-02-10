@@ -32,7 +32,7 @@ final readonly class BackupController
 
     public function __construct(
         private BackupServiceInterface $backupService,
-        private CmsRateLimiter $rateLimiter,
+        private ?CmsRateLimiter $rateLimiter,
         private GateInterface $gate,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
@@ -63,7 +63,7 @@ final readonly class BackupController
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.tools.backup');
 
-        if (!$this->rateLimiter->attempt('backup_create:' . $identity->id(), self::CREATE_RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('backup_create:' . $identity->id(), self::CREATE_RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 

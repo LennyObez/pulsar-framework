@@ -32,6 +32,8 @@ use Pulsar\Extension\Cms\Content\RevisionService;
 use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
 use Pulsar\Extension\Cms\Http\Controller\Api\CollaborationApiController;
+use Pulsar\Extension\Cms\I18n\HreflangGenerator;
+use Pulsar\Extension\Cms\I18n\LocaleResolver;
 use Pulsar\Extension\Cms\Internal\ABTest\ExperimentService;
 use Pulsar\Extension\Cms\Internal\ABTest\TrafficSplitter;
 use Pulsar\Extension\Cms\Internal\AI\AnthropicProvider;
@@ -69,6 +71,7 @@ use Pulsar\Extension\Cms\Internal\Tools\SiteDefinitionParser;
 use Pulsar\Extension\Cms\Internal\Tools\ToolsService;
 use Pulsar\Extension\Cms\Media\ImageProcessor;
 use Pulsar\Extension\Cms\Media\ImageProcessorInterface;
+use Pulsar\Extension\Cms\Media\ImageVariantGenerator;
 use Pulsar\Extension\Cms\Media\LocalDisk;
 use Pulsar\Extension\Cms\Media\MediaDiskInterface;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
@@ -78,6 +81,7 @@ use Pulsar\Extension\Cms\Media\Security\FilenameSanitizer;
 use Pulsar\Extension\Cms\Media\Security\FileValidator;
 use Pulsar\Extension\Cms\Media\Security\PdfValidator;
 use Pulsar\Extension\Cms\Media\Security\SvgSanitizer;
+use Pulsar\Extension\Cms\Navigation\BreadcrumbGenerator;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 use Pulsar\Extension\Cms\Publishing\ChannelRegistry;
@@ -90,6 +94,7 @@ use Pulsar\Extension\Cms\Seo\RedirectManagerInterface;
 use Pulsar\Extension\Cms\Seo\RobotsTxtGeneratorInterface;
 use Pulsar\Extension\Cms\Seo\SeoServiceInterface;
 use Pulsar\Extension\Cms\Seo\SitemapGeneratorInterface;
+use Pulsar\Extension\Cms\Settings\SettingsService;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyService;
@@ -99,7 +104,9 @@ use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
 use Pulsar\Extension\Cms\Tools\ToolsServiceInterface;
 use Pulsar\Extension\Cms\Workflow\ContentLockService;
 use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
+use Pulsar\Extension\Cms\Workflow\EditorialWorkflowService;
 use Pulsar\Extension\Cms\Workflow\EditorialWorkflowServiceInterface;
+use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Security\Crypto\MasterKey;
 
@@ -139,7 +146,7 @@ final readonly class CmsCoreServiceProvider
         if ($auditLogger !== null) {
             $container->instance(
                 SettingsServiceInterface::class,
-                new \Pulsar\Extension\Cms\Settings\SettingsService($connection, $auditLogger),
+                new SettingsService($connection, $auditLogger),
             );
         }
 
@@ -169,6 +176,9 @@ final readonly class CmsCoreServiceProvider
         /** @var MediaRepositoryInterface $mediaRepository */
         $mediaRepository = $container->get(MediaRepositoryInterface::class);
 
+        $variantGenerator = new ImageVariantGenerator($imageProcessor, $disk);
+        $container->instance(ImageVariantGenerator::class, $variantGenerator);
+
         $container->instance(
             MediaServiceInterface::class,
             new MediaService(
@@ -182,6 +192,7 @@ final readonly class CmsCoreServiceProvider
                 $filenameSanitizer,
                 $pdfValidator,
                 $logger,
+                $variantGenerator,
             ),
         );
 
@@ -328,7 +339,7 @@ final readonly class CmsCoreServiceProvider
 
         // Editorial workflow service
         if ($auditLogger !== null) {
-            $workflowService = new \Pulsar\Extension\Cms\Workflow\EditorialWorkflowService(
+            $workflowService = new EditorialWorkflowService(
                 $connection,
                 $contentRepository,
                 $auditLogger,
@@ -394,7 +405,7 @@ final readonly class CmsCoreServiceProvider
         );
 
         // Navigation stack
-        $breadcrumbGenerator = new \Pulsar\Extension\Cms\Navigation\BreadcrumbGenerator(
+        $breadcrumbGenerator = new BreadcrumbGenerator(
             $contentRepository,
             $translationRepository,
             $config,
@@ -402,12 +413,14 @@ final readonly class CmsCoreServiceProvider
         $container->instance(BreadcrumbGeneratorInterface::class, $breadcrumbGenerator);
 
         // I18n stack
-        $localeResolver = new \Pulsar\Extension\Cms\I18n\LocaleResolver();
-        $hreflangGenerator = new \Pulsar\Extension\Cms\I18n\HreflangGenerator(
+        $urlPrefixExtractor = new UrlPrefixExtractor();
+        $localeResolver = new LocaleResolver($urlPrefixExtractor);
+        $container->instance(LocaleResolver::class, $localeResolver);
+        $hreflangGenerator = new HreflangGenerator(
             $translationRepository,
-            $localeResolver,
+            $urlPrefixExtractor,
         );
-        $container->instance(\Pulsar\Extension\Cms\I18n\HreflangGenerator::class, $hreflangGenerator);
+        $container->instance(HreflangGenerator::class, $hreflangGenerator);
 
         // Content controller (front-office)
         /** @var ContentBlockRepositoryInterface $blockRepository */
@@ -596,7 +609,7 @@ final readonly class CmsCoreServiceProvider
 
         $container->instance(
             Http\Controller\Api\AiAssistantApiController::class,
-            new Http\Controller\Api\AiAssistantApiController($assistant, $config, $parser),
+            new Http\Controller\Api\AiAssistantApiController($assistant, $parser),
         );
     }
 

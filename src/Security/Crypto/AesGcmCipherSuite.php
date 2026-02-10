@@ -11,10 +11,12 @@ use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\Randomizer;
 
+use function chr;
 use function hash_equals;
 use function hash_hmac;
 use function openssl_decrypt;
 use function openssl_encrypt;
+use function ord;
 use function sprintf;
 use function strlen;
 use function substr;
@@ -111,7 +113,7 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
     #[NoDiscard]
     public function hmacHex(string $data, string $key): string
     {
-        return hash_hmac('sha256', $data, $key, false);
+        return hash_hmac('sha256', $data, $key);
     }
 
     #[NoDiscard]

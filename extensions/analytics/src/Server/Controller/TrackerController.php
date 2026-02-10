@@ -6,8 +6,11 @@ namespace Pulsar\Extension\Analytics\Server\Controller;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Http\Message\Response;
+
+use function file_get_contents;
+use function hash;
+use function is_file;
 
 /**
  * Serves the compiled tracker JavaScript with aggressive caching.
@@ -28,9 +31,7 @@ final readonly class TrackerController
 
     private const string DIST_PATH = __DIR__ . '/../../frontend/dist/plsr.js';
 
-    public function __construct(
-        private AnalyticsConfig $config,
-    ) {}
+    public function __construct() {}
 
     public function script(ServerRequestInterface $request): Response
     {
@@ -52,7 +53,6 @@ final readonly class TrackerController
         }
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => 'application/javascript; charset=utf-8',
                 'Cache-Control' => 'public, max-age=86400',

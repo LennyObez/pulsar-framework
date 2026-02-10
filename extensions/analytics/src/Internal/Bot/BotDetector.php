@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Analytics\Internal\Bot;
 
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
+
+use function implode;
+use function preg_match;
 
 /**
  * Multi-tier bot detection using user-agent patterns and header heuristics.
@@ -18,9 +20,8 @@ final readonly class BotDetector
 {
     private string $combinedPattern;
 
-    public function __construct(
-        private AnalyticsConfig $config,
-    ) {
+    public function __construct()
+    {
         $this->combinedPattern = '/(' . implode('|', BotPatterns::PATTERNS) . ')/i';
     }
 

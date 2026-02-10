@@ -10,6 +10,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\CacheKeyValidator;
 
+use function strlen;
+
 #[CoversClass(CacheKeyValidator::class)]
 final class CacheKeyValidatorTest extends TestCase
 {

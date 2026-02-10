@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
 use SodiumException;
 
+use function count;
 use function sodium_bin2hex;
 use function sodium_memzero;
 use function sprintf;
@@ -118,14 +119,9 @@ final class CompositeKeyProvider implements KeyProviderInterface
      */
     public function __debugInfo(): array
     {
-        $overrideContexts = [];
-        foreach ($this->overrides as $context => $_) {
-            $overrideContexts[] = $context;
-        }
-
         return [
             'primary' => '[REDACTED]',
-            'overrides' => sprintf('[%d override(s): %s]', count($this->overrides), implode(', ', $overrideContexts)),
+            'overrides' => sprintf('[%d override(s): %s]', count($this->overrides), implode(', ', array_keys($this->overrides))),
         ];
     }
 

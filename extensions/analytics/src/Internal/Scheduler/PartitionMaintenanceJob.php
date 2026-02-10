@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Analytics\Internal\Scheduler;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Throwable;
 
 use function sprintf;
@@ -30,9 +31,7 @@ final readonly class PartitionMaintenanceJob
 
     public function __invoke(): void
     {
-        $driver = $this->connection->driver()->name();
-
-        if ($driver !== 'mysql') {
+        if ($this->connection->driver() !== Driver::MySQL) {
             return;
         }
 

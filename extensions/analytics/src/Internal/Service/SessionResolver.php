@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Analytics\Internal\Service;
 
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Extension\Analytics\Contracts\SessionRepositoryInterface;
 use Pulsar\Extension\Analytics\Domain\Session;
 use Pulsar\Extension\Analytics\Domain\SessionId;
@@ -31,7 +30,6 @@ final readonly class SessionResolver
     private const int INACTIVITY_MINUTES = 30;
 
     public function __construct(
-        private AnalyticsConfig $config,
         private SessionRepositoryInterface $sessionRepository,
     ) {}
 

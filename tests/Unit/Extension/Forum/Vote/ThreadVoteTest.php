@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Forum\Domain\VoteDirection;
 use Pulsar\Extension\Forum\Vote\ThreadVote;
 
+use function time;
+
 #[CoversClass(ThreadVote::class)]
 final class ThreadVoteTest extends TestCase
 {
@@ -22,7 +24,7 @@ final class ThreadVoteTest extends TestCase
         self::assertSame('user-001', $vote->userId);
         self::assertSame('thread-001', $vote->threadId);
         self::assertSame(VoteDirection::Up, $vote->value);
-        self::assertNotNull($vote->createdAt);
+        self::assertEqualsWithDelta(time(), $vote->createdAt->getTimestamp(), 5);
     }
 
     #[Test]

@@ -13,6 +13,7 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Pool\ConnectionPool;
 use Pulsar\Database\Result;
 use RuntimeException;
+use Throwable;
 
 #[CoversClass(ConnectionPool::class)]
 #[Group('chaos')]
@@ -115,7 +116,7 @@ final class DatabaseFailureTest extends TestCase
                     $result = $callback($connection);
                     $committed = true;
                     return $result;
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     $rolledBack = true;
                     return null;
                 }

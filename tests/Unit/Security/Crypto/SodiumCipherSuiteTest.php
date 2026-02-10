@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Crypto\SodiumCipherSuite;
 use Pulsar\Security\Exception\SecurityException;
 
+use function chr;
+use function ord;
 use function random_bytes;
 use function strlen;
 

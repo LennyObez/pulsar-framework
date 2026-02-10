@@ -12,9 +12,10 @@ use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
 use Pulsar\Http\Request;
-use Pulsar\Routing\MatchedRoute;
-use Pulsar\Routing\Route;
 use Pulsar\Routing\Router;
+use stdClass;
+
+use function strlen;
 
 #[CoversClass(Router::class)]
 #[CoversClass(ServerRequest::class)]
@@ -26,9 +27,9 @@ final class HighLoadTest extends TestCase
     public function rapidSequentialRequestProcessingDoesNotLeak(): void
     {
         $router = new Router();
-        $router->get('/api/users/{id}', 'UserController', 'user.show');
-        $router->post('/api/users', 'UserController', 'user.create');
-        $router->get('/api/products/{id}', 'ProductController', 'product.show');
+        $router->get('/api/users/{id}', stdClass::class, 'user.show');
+        $router->post('/api/users', stdClass::class, 'user.create');
+        $router->get('/api/products/{id}', stdClass::class, 'product.show');
 
         $memoryBefore = memory_get_usage(true);
 
@@ -97,7 +98,9 @@ final class HighLoadTest extends TestCase
 
         // Register 1000 routes
         for ($i = 0; $i < 1000; $i++) {
-            $router->get("/api/v1/resource-{$i}/{id}", "Controller{$i}", "resource.{$i}");
+            /** @var class-string $handler */
+            $handler = "Controller{$i}";
+            $router->get("/api/v1/resource-{$i}/{id}", $handler, "resource.{$i}");
         }
 
         // Match first, middle, and last routes

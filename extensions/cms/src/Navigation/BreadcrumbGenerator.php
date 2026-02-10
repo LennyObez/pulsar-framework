@@ -89,13 +89,7 @@ final readonly class BreadcrumbGenerator implements BreadcrumbGeneratorInterface
     {
         $translations = $translationsByContentId[$contentId] ?? [];
 
-        foreach ($translations as $t) {
-            if ($t->locale === $locale) {
-                return $t;
-            }
-        }
-
-        return null;
+        return array_find($translations, static fn(ContentTranslation $t): bool => $t->locale === $locale);
     }
 
     private function buildUrl(string $path, string $locale): string

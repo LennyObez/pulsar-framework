@@ -12,7 +12,7 @@ $entries = $templateData['entries'] ?? [];
 <div class="admin-schema-changelog">
     <div class="admin-schema-changelog__header">
         <a href="/admin/schema" class="admin-btn admin-btn--secondary">&larr; Database</a>
-        <a href="/admin/api/schema/changelog/export" class="admin-btn admin-btn--primary" download>Export SQL Bundle</a>
+        <a href="/admin/api/schema/changelog/export" class="admin-btn admin-btn--primary" download>Export SQL bundle</a>
     </div>
 
     <?php if ($entries === []): ?>

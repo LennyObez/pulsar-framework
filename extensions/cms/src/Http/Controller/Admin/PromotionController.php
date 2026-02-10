@@ -49,7 +49,7 @@ final readonly class PromotionController
         $promotions = $this->promotions->findActive($tenantId);
 
         return $this->respondWithView($request, 'admin.promotions.index', [
-            'data' => array_map(static fn(Promotion $p) => [
+            'promotions' => array_map(static fn(Promotion $p) => [
                 'id' => $p->id,
                 'name' => $p->name,
                 'type' => $p->type->value,

@@ -7,7 +7,9 @@ namespace Pulsar\Extension\Cms\Internal\Security;
 use InvalidArgumentException;
 use Pulsar\Api\Internal;
 
+use function abs;
 use function array_fill;
+use function array_map;
 use function array_merge;
 use function array_pad;
 use function array_slice;
@@ -16,8 +18,11 @@ use function intdiv;
 use function max;
 use function min;
 use function ord;
+use function range;
 use function sprintf;
 use function strlen;
+
+use const PHP_INT_MAX;
 
 /**
  * QR Code encoder producing SVG output.
@@ -33,9 +38,6 @@ use function strlen;
 #[Internal(reason: 'CMS security internals — use via service binding')]
 final readonly class QrCodeEncoder
 {
-    /** Error correction level M (15% recovery). */
-    private const int EC_LEVEL_M = 0;
-
     /**
      * Total data codewords per version for EC level M (versions 1-10).
      * @var list<int>

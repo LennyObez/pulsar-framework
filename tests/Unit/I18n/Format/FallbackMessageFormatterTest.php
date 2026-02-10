@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Pulsar\I18n\Format\FallbackMessageFormatter;
+use Stringable;
 
 #[CoversClass(FallbackMessageFormatter::class)]
 final class FallbackMessageFormatterTest extends TestCase
@@ -104,7 +105,7 @@ final class FallbackMessageFormatterTest extends TestCase
     {
         $formatter = new FallbackMessageFormatter();
 
-        $stringable = new class implements \Stringable {
+        $stringable = new class implements Stringable {
             public function __toString(): string
             {
                 return 'stringable-value';

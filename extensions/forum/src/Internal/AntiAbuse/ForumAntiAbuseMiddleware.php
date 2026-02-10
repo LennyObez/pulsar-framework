@@ -7,9 +7,12 @@ namespace Pulsar\Extension\Forum\Internal\AntiAbuse;
 use Pulsar\Api\Internal;
 
 use function mb_strlen;
+use function mb_strtolower;
 use function mb_substr;
 use function preg_match_all;
+use function preg_replace;
 use function similar_text;
+use function trim;
 
 /**
  * Forum anti-abuse checks for post submission.
@@ -54,7 +57,7 @@ final readonly class ForumAntiAbuseMiddleware
         $urlCharCount = 0;
 
         // Match raw URLs
-        if (preg_match_all('#https?://[^\s\)>\]]+#i', $body, $matches)) {
+        if (preg_match_all('#https?://[^\s)>\]]+#i', $body, $matches)) {
             foreach ($matches[0] as $url) {
                 $urlCharCount += mb_strlen($url);
             }

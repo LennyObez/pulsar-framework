@@ -87,15 +87,15 @@ final readonly class LandingController
                         <h3>Explorers</h3>
                         <div class="landing-nav-grid">
                             <a href="/studio/console" class="landing-nav-card">
-                                <span class="card-title">Console Overview</span>
+                                <span class="card-title">Console overview</span>
                                 <span class="card-desc">Throughput, latency percentiles, error rates, and slow routes at a glance.</span>
                             </a>
                             <a href="/studio/console/requests" class="landing-nav-card">
-                                <span class="card-title">HTTP Requests</span>
+                                <span class="card-title">HTTP requests</span>
                                 <span class="card-desc">Inspect individual requests with method, path, status, and timing.</span>
                             </a>
                             <a href="/studio/console/database" class="landing-nav-card">
-                                <span class="card-title">Database Queries</span>
+                                <span class="card-title">Database queries</span>
                                 <span class="card-desc">Analyze SQL queries, execution times, and query patterns.</span>
                             </a>
                             <a href="/studio/console/logs" class="landing-nav-card">

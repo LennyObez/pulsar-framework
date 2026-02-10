@@ -220,11 +220,11 @@ final class WireDepOnA
 /** @internal */
 final class WireCircularA
 {
-    public function __construct(WireCircularB $_b) {}
+    public function __construct(public readonly WireCircularB $b) {}
 }
 
 /** @internal */
 final class WireCircularB
 {
-    public function __construct(WireCircularA $_a) {}
+    public function __construct(public readonly WireCircularA $a) {}
 }

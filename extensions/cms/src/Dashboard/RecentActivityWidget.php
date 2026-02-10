@@ -30,7 +30,6 @@ final readonly class RecentActivityWidget implements DashboardWidgetInterface
     public function getData(): array
     {
         $entries = $this->auditQuery->getRecent(
-            limit: 10,
             actionPrefix: self::CMS_ACTION_PREFIX,
         );
 

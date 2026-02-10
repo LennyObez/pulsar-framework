@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\EventStore\ContentSnapshot;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotServiceInterface;
 use Pulsar\Extension\Cms\Support\UuidGenerator;
 
+use function hash;
 use function json_decode;
 use function json_encode;
 
@@ -48,7 +49,6 @@ final readonly class DbContentSnapshotRepository implements ContentSnapshotServi
 
     public function __construct(
         private ConnectionInterface $connection,
-        private ?string $tenantId,
     ) {}
 
     public function capture(string $contentId, string $reason, string $createdBy): ContentSnapshot

@@ -68,7 +68,10 @@ final readonly class CmsCommerceProvider
         /** @var CouponRepositoryInterface $couponRepository */
         $couponRepository = $container->get(CouponRepositoryInterface::class);
 
-        $promotionEngine = new PromotionEngine($promotionRepository, $couponRepository);
+        /** @var ConnectionInterface $db */
+        $db = $container->get(ConnectionInterface::class);
+
+        $promotionEngine = new PromotionEngine($promotionRepository, $couponRepository, $db);
         $container->instance(PromotionServiceInterface::class, $promotionEngine);
 
         // Invoice renderer

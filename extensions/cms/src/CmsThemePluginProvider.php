@@ -97,7 +97,7 @@ final readonly class CmsThemePluginProvider
 
         $container->instance(
             ThemeAssetResolverInterface::class,
-            new ThemeAssetResolver($themeRepository, $themesConfig, $logger),
+            new ThemeAssetResolver($themeRepository, $logger),
         );
 
         // Preview session repository (cache-backed when TaggedCacheInterface is available)

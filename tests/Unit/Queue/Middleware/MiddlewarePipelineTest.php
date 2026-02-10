@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Queue\Middleware;
 
+use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -47,7 +48,7 @@ final class MiddlewarePipelineTest extends TestCase
     {
         $order = [];
 
-        $middleware1 = $this->createMiddleware(function (JobEnvelope $e, \Closure $next) use (&$order): mixed {
+        $middleware1 = $this->createMiddleware(function (JobEnvelope $e, Closure $next) use (&$order): mixed {
             $order[] = 'before-1';
             $result = $next($e);
             $order[] = 'after-1';
@@ -55,7 +56,7 @@ final class MiddlewarePipelineTest extends TestCase
             return $result;
         });
 
-        $middleware2 = $this->createMiddleware(function (JobEnvelope $e, \Closure $next) use (&$order): mixed {
+        $middleware2 = $this->createMiddleware(function (JobEnvelope $e, Closure $next) use (&$order): mixed {
             $order[] = 'before-2';
             $result = $next($e);
             $order[] = 'after-2';
@@ -81,7 +82,7 @@ final class MiddlewarePipelineTest extends TestCase
         $destinationCalled = false;
 
         $middleware = $this->createMiddleware(
-            static fn(JobEnvelope $e, \Closure $next): string => 'short-circuited',
+            static fn(JobEnvelope $e, Closure $next): string => 'short-circuited',
         );
 
         $pipeline = new MiddlewarePipeline([$middleware]);
@@ -101,7 +102,7 @@ final class MiddlewarePipelineTest extends TestCase
     public function middlewareCanModifyEnvelope(): void
     {
         $middleware = $this->createMiddleware(
-            static fn(JobEnvelope $e, \Closure $next): mixed => $next($e->withMetadata(['injected' => true])),
+            static fn(JobEnvelope $e, Closure $next): mixed => $next($e->withMetadata(['injected' => true])),
         );
 
         $pipeline = new MiddlewarePipeline([$middleware]);
@@ -118,12 +119,12 @@ final class MiddlewarePipelineTest extends TestCase
         self::assertTrue($receivedEnvelope->metadata['injected']);
     }
 
-    private function createMiddleware(\Closure $handler): JobMiddlewareInterface
+    private function createMiddleware(Closure $handler): JobMiddlewareInterface
     {
         return new class ($handler) implements JobMiddlewareInterface {
-            public function __construct(private readonly \Closure $handler) {}
+            public function __construct(private readonly Closure $handler) {}
 
-            public function handle(JobEnvelope $envelope, \Closure $next): mixed
+            public function handle(JobEnvelope $envelope, Closure $next): mixed
             {
                 return ($this->handler)($envelope, $next);
             }

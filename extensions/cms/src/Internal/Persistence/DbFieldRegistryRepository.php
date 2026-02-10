@@ -71,7 +71,6 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
 
     public function __construct(
         private ConnectionInterface $connection,
-        private ?string $tenantId,
     ) {}
 
     public function findFieldsByContentType(string $contentType): array

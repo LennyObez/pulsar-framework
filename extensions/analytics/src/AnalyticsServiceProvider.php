@@ -76,19 +76,19 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
 
         // Security
         if ($container->has(MasterKey::class)) {
-            $container->singleton(AnalyticsKeyManager::class, static fn() => new AnalyticsKeyManager(
+            $container->bind(AnalyticsKeyManager::class, static fn() => new AnalyticsKeyManager(
                 $container->get(MasterKey::class),
             ));
         }
 
         // Pure services (no DB dependency)
-        $container->singleton(BotDetector::class, static fn() => new BotDetector($config));
-        $container->singleton(ReferrerParser::class, static fn() => new ReferrerParser());
-        $container->singleton(UserAgentParser::class, static fn() => new UserAgentParser());
+        $container->bind(BotDetector::class, static fn() => new BotDetector());
+        $container->bind(ReferrerParser::class, static fn() => new ReferrerParser());
+        $container->bind(UserAgentParser::class, static fn() => new UserAgentParser());
 
         // Geo resolver
         if (!$container->has(GeoLocationResolverInterface::class)) {
-            $container->singleton(GeoLocationResolverInterface::class, static fn() => new DbIpLiteResolver($config));
+            $container->bind(GeoLocationResolverInterface::class, static fn() => new DbIpLiteResolver());
         }
 
         // Database-dependent bindings
@@ -118,51 +118,50 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
 
     private function registerRepositories(ContainerInterface $container): void
     {
-        $container->singleton(SiteRepositoryInterface::class, static fn() => new DbSiteRepository(
+        $container->bind(SiteRepositoryInterface::class, static fn() => new DbSiteRepository(
             $container->get(ConnectionInterface::class),
         ));
 
-        $container->singleton(PageViewRepositoryInterface::class, static fn() => new DbPageViewRepository(
+        $container->bind(PageViewRepositoryInterface::class, static fn() => new DbPageViewRepository(
             $container->get(ConnectionInterface::class),
         ));
 
-        $container->singleton(SessionRepositoryInterface::class, static fn() => new DbSessionRepository(
+        $container->bind(SessionRepositoryInterface::class, static fn() => new DbSessionRepository(
             $container->get(ConnectionInterface::class),
         ));
 
-        $container->singleton(EventRepositoryInterface::class, static fn() => new DbEventRepository(
+        $container->bind(EventRepositoryInterface::class, static fn() => new DbEventRepository(
             $container->get(ConnectionInterface::class),
         ));
 
-        $container->singleton(DbGoalRepository::class, static fn() => new DbGoalRepository(
+        $container->bind(DbGoalRepository::class, static fn() => new DbGoalRepository(
             $container->get(ConnectionInterface::class),
         ));
 
-        $container->singleton(DbGoalConversionRepository::class, static fn() => new DbGoalConversionRepository(
+        $container->bind(DbGoalConversionRepository::class, static fn() => new DbGoalConversionRepository(
             $container->get(ConnectionInterface::class),
         ));
 
-        $container->singleton(DailyStatsRepositoryInterface::class, static fn() => new DbDailyStatsRepository(
+        $container->bind(DailyStatsRepositoryInterface::class, static fn() => new DbDailyStatsRepository(
             $container->get(ConnectionInterface::class),
         ));
 
-        $container->singleton(DbHourlyStatsRepository::class, static fn() => new DbHourlyStatsRepository(
+        $container->bind(DbHourlyStatsRepository::class, static fn() => new DbHourlyStatsRepository(
             $container->get(ConnectionInterface::class),
         ));
     }
 
     private function registerServices(ContainerInterface $container, AnalyticsConfig $config): void
     {
-        $container->singleton(SessionResolver::class, static fn() => new SessionResolver(
-            $config,
+        $container->bind(SessionResolver::class, static fn() => new SessionResolver(
             $container->get(SessionRepositoryInterface::class),
         ));
 
-        $container->singleton(SiteServiceInterface::class, static fn() => new SiteService(
+        $container->bind(SiteServiceInterface::class, static fn() => new SiteService(
             $container->get(SiteRepositoryInterface::class),
         ));
 
-        $container->singleton(TrackingServiceInterface::class, static fn() => new TrackingService(
+        $container->bind(TrackingServiceInterface::class, static fn() => new TrackingService(
             keyManager: $container->get(AnalyticsKeyManager::class),
             botDetector: $container->get(BotDetector::class),
             referrerParser: $container->get(ReferrerParser::class),
@@ -175,23 +174,18 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
             config: $config,
         ));
 
-        $container->singleton(AggregationService::class, static fn() => new AggregationService(
-            pageViewRepository: $container->get(PageViewRepositoryInterface::class),
-            sessionRepository: $container->get(SessionRepositoryInterface::class),
-            eventRepository: $container->get(EventRepositoryInterface::class),
+        $container->bind(AggregationService::class, static fn() => new AggregationService(
             dailyStatsRepository: $container->get(DailyStatsRepositoryInterface::class),
             hourlyStatsRepository: $container->get(DbHourlyStatsRepository::class),
             connection: $container->get(ConnectionInterface::class),
         ));
 
-        $container->singleton(StatsServiceInterface::class, static fn() => new StatsService(
+        $container->bind(StatsServiceInterface::class, static fn() => new StatsService(
             dailyStatsRepository: $container->get(DailyStatsRepositoryInterface::class),
-            hourlyStatsRepository: $container->get(DbHourlyStatsRepository::class),
-            pageViewRepository: $container->get(PageViewRepositoryInterface::class),
             connection: $container->get(ConnectionInterface::class),
         ));
 
-        $container->singleton(GoalServiceInterface::class, static fn() => new GoalService(
+        $container->bind(GoalServiceInterface::class, static fn() => new GoalService(
             goalRepository: $container->get(DbGoalRepository::class),
             conversionRepository: $container->get(DbGoalConversionRepository::class),
         ));
@@ -199,65 +193,61 @@ final class AnalyticsServiceProvider implements ServiceProviderInterface
 
     private function registerMiddleware(ContainerInterface $container, AnalyticsConfig $config): void
     {
-        $container->singleton(CollectionRateLimitMiddleware::class, static fn() => new CollectionRateLimitMiddleware(
+        $container->bind(CollectionRateLimitMiddleware::class, static fn() => new CollectionRateLimitMiddleware(
             $config,
             $container->has(CacheDriverInterface::class) ? $container->get(CacheDriverInterface::class) : null,
         ));
 
-        $container->singleton(CollectionCorsMiddleware::class, static fn() => new CollectionCorsMiddleware(
-            $config,
+        $container->bind(CollectionCorsMiddleware::class, static fn() => new CollectionCorsMiddleware(
             $container->get(SiteRepositoryInterface::class),
         ));
 
-        $container->singleton(BotFilterMiddleware::class, static fn() => new BotFilterMiddleware(
+        $container->bind(BotFilterMiddleware::class, static fn() => new BotFilterMiddleware(
             $container->get(BotDetector::class),
         ));
 
-        $container->singleton(AnalyticsAuthMiddleware::class, static fn() => new AnalyticsAuthMiddleware(
-            $config,
+        $container->bind(AnalyticsAuthMiddleware::class, static fn() => new AnalyticsAuthMiddleware(
             $container->has(GateInterface::class) ? $container->get(GateInterface::class) : null,
         ));
     }
 
     private function registerControllers(ContainerInterface $container, AnalyticsConfig $config): void
     {
-        $container->singleton(CollectionController::class, static fn() => new CollectionController(
+        $container->bind(CollectionController::class, static fn() => new CollectionController(
             $container->get(TrackingServiceInterface::class),
             $container->get(SiteRepositoryInterface::class),
-            $config,
         ));
 
-        $container->singleton(TrackerController::class, static fn() => new TrackerController($config));
+        $container->bind(TrackerController::class, static fn() => new TrackerController());
 
-        $container->singleton(StatsController::class, static fn() => new StatsController(
+        $container->bind(StatsController::class, static fn() => new StatsController(
             $container->get(StatsServiceInterface::class),
         ));
 
-        $container->singleton(TimeseriesController::class, static fn() => new TimeseriesController(
+        $container->bind(TimeseriesController::class, static fn() => new TimeseriesController(
             $container->get(StatsServiceInterface::class),
         ));
 
-        $container->singleton(BreakdownController::class, static fn() => new BreakdownController(
+        $container->bind(BreakdownController::class, static fn() => new BreakdownController(
             $container->get(StatsServiceInterface::class),
         ));
 
-        $container->singleton(RealtimeController::class, static fn() => new RealtimeController(
+        $container->bind(RealtimeController::class, static fn() => new RealtimeController(
             $container->get(StatsServiceInterface::class),
         ));
 
-        $container->singleton(GoalController::class, static fn() => new GoalController(
+        $container->bind(GoalController::class, static fn() => new GoalController(
             $container->get(GoalServiceInterface::class),
         ));
 
-        $container->singleton(SiteController::class, static fn() => new SiteController(
+        $container->bind(SiteController::class, static fn() => new SiteController(
             $container->get(SiteServiceInterface::class),
         ));
 
-        $container->singleton(ExportController::class, static fn() => new ExportController(
-            $container->get(StatsServiceInterface::class),
+        $container->bind(ExportController::class, static fn() => new ExportController(
             $container->get(PageViewRepositoryInterface::class),
         ));
 
-        $container->singleton(DashboardController::class, static fn() => new DashboardController($config));
+        $container->bind(DashboardController::class, static fn() => new DashboardController($config));
     }
 }

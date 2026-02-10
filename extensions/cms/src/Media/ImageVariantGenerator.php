@@ -7,13 +7,19 @@ namespace Pulsar\Extension\Cms\Media;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Config\ImageVariantConfig;
 
+use function array_map;
 use function file_exists;
 use function file_get_contents;
 use function getimagesize;
+use function min;
 use function pathinfo;
+use function round;
 use function sprintf;
 use function strlen;
+use function strtolower;
 use function unlink;
+
+use const PATHINFO_EXTENSION;
 
 /**
  * Generates image variants (responsive sizes with optional format conversion)
@@ -23,7 +29,7 @@ use function unlink;
 final readonly class ImageVariantGenerator
 {
     /** @var list<ImageVariantConfig> */
-    private const DEFAULT_VARIANTS = [
+    private const array DEFAULT_VARIANTS = [
         ['name' => 'thumbnail', 'max_width' => 150, 'max_height' => 150, 'format' => 'original', 'quality' => 80],
         ['name' => 'medium', 'max_width' => 600, 'max_height' => 600, 'format' => 'original', 'quality' => 80],
         ['name' => 'large', 'max_width' => 1200, 'max_height' => 1200, 'format' => 'original', 'quality' => 80],
@@ -160,7 +166,6 @@ final readonly class ImageVariantGenerator
         $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
         return match ($ext) {
-            'jpg', 'jpeg' => 'jpeg',
             'png' => 'png',
             'gif' => 'gif',
             'webp' => 'webp',

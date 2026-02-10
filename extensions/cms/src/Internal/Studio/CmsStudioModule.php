@@ -49,25 +49,25 @@ final readonly class CmsStudioModule implements StudioModuleInterface
     {
         return [
             new StudioNavEntry(
-                label: 'Audit Trail',
+                label: 'Audit trail',
                 href: '/studio/cms/audit',
                 icon: 'shield',
                 order: 0,
             ),
             new StudioNavEntry(
-                label: 'Content Cache',
+                label: 'Content cache',
                 href: '/studio/cms/cache',
                 icon: 'database',
                 order: 1,
             ),
             new StudioNavEntry(
-                label: 'Media Queue',
+                label: 'Media queue',
                 href: '/studio/cms/media-queue',
                 icon: 'image',
                 order: 2,
             ),
             new StudioNavEntry(
-                label: 'SEO Health',
+                label: 'SEO health',
                 href: '/studio/cms/seo',
                 icon: 'search',
                 order: 3,

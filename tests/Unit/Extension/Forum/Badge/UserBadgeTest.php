@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Forum\Badge\UserBadge;
 use Pulsar\Extension\Forum\Domain\Badge;
 
+use function time;
+
 #[CoversClass(UserBadge::class)]
 final class UserBadgeTest extends TestCase
 {
@@ -21,7 +23,7 @@ final class UserBadgeTest extends TestCase
         self::assertSame('tenant-001', $badge->tenantId);
         self::assertSame('user-001', $badge->userId);
         self::assertSame(Badge::FirstPost, $badge->badge);
-        self::assertNotNull($badge->awardedAt);
+        self::assertEqualsWithDelta(time(), $badge->awardedAt->getTimestamp(), 5);
     }
 
     #[Test]

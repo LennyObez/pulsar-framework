@@ -101,12 +101,12 @@ final readonly class CmsRepositoryProvider
 
         $container->instance(
             ContentRevisionRepositoryInterface::class,
-            new DbContentRevisionRepository($connection, $tenantId),
+            new DbContentRevisionRepository($connection),
         );
 
         $container->instance(
             ContentBlockRepositoryInterface::class,
-            new DbContentBlockRepository($connection, $tenantId),
+            new DbContentBlockRepository($connection),
         );
 
         $container->instance(
@@ -126,17 +126,17 @@ final readonly class CmsRepositoryProvider
 
         $container->instance(
             FieldRegistryRepositoryInterface::class,
-            new DbFieldRegistryRepository($connection, $tenantId),
+            new DbFieldRegistryRepository($connection),
         );
 
         $container->instance(
             ContentEventStoreInterface::class,
-            new DbContentEventRepository($connection, $tenantId),
+            new DbContentEventRepository($connection),
         );
 
         $container->instance(
             ContentSnapshotServiceInterface::class,
-            new DbContentSnapshotRepository($connection, $tenantId),
+            new DbContentSnapshotRepository($connection),
         );
 
         $container->instance(
@@ -146,12 +146,12 @@ final readonly class CmsRepositoryProvider
 
         $container->instance(
             DbEditorialReviewRepository::class,
-            new DbEditorialReviewRepository($connection, $tenantId),
+            new DbEditorialReviewRepository($connection),
         );
 
         $container->instance(
             DbContentLockRepository::class,
-            new DbContentLockRepository($connection, $tenantId),
+            new DbContentLockRepository($connection),
         );
 
         $container->instance(

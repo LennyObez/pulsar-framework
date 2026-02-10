@@ -7,6 +7,15 @@ namespace Pulsar\Extension\Cms\Media\Security;
 use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Exception\CmsException;
 
+use function fclose;
+use function file_get_contents;
+use function fopen;
+use function fread;
+use function is_file;
+use function is_readable;
+use function preg_match;
+use function str_starts_with;
+
 /**
  * Validates PDF files by checking magic bytes and scanning for
  * dangerous JavaScript, launch actions, and form submission patterns.
@@ -19,7 +28,7 @@ final readonly class PdfValidator
      *
      * @var list<string>
      */
-    private const DANGEROUS_PATTERNS = [
+    private const array DANGEROUS_PATTERNS = [
         '/\/JS\b/',
         '/\/JavaScript\b/',
         '/\/Launch\b/',

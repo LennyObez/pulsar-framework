@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Extension\Analytics\Internal\Bot\BotDetector;
 
 #[CoversClass(BotDetector::class)]
@@ -18,7 +17,7 @@ final class BotDetectorTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->detector = new BotDetector(new AnalyticsConfig());
+        $this->detector = new BotDetector();
     }
 
     #[Test]

@@ -40,7 +40,7 @@ final readonly class TwoFactorController
         private TotpVerifier $totpVerifier,
         private RecoveryCodeGenerator $recoveryCodeGenerator,
         private QrCodeEncoder $qrCodeEncoder,
-        private CmsRateLimiter $rateLimiter,
+        private ?CmsRateLimiter $rateLimiter,
         private GateInterface $gate,
         private ?AuditLoggerInterface $auditLogger,
         private ?TemplateEngineInterface $templateEngine = null,
@@ -74,7 +74,7 @@ final readonly class TwoFactorController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        if (!$this->rateLimiter->attempt('2fa_enroll:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_enroll:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
@@ -94,7 +94,7 @@ final readonly class TwoFactorController
         $qrSvg = $this->qrCodeEncoder->encode($provisioningUri);
 
         // Generate recovery codes
-        $recoveryCodes = $this->recoveryCodeGenerator->generate(8);
+        $recoveryCodes = $this->recoveryCodeGenerator->generate();
 
         $this->auditLogger?->log(
             AuditEvent::SecurityEvent,
@@ -128,7 +128,7 @@ final readonly class TwoFactorController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        if (!$this->rateLimiter->attempt('2fa_confirm:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_confirm:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
@@ -186,7 +186,7 @@ final readonly class TwoFactorController
     {
         $identity = $this->requireIdentity($request);
 
-        if (!$this->rateLimiter->attempt('2fa_verify:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_verify:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
@@ -243,7 +243,7 @@ final readonly class TwoFactorController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        if (!$this->rateLimiter->attempt('2fa_disable:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('2fa_disable:' . $identity->id(), self::RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 
@@ -283,7 +283,7 @@ final readonly class TwoFactorController
         $this->authorize($identity, 'cms.users.manage');
         $this->requireStepUp($request);
 
-        $recoveryCodes = $this->recoveryCodeGenerator->generate(8);
+        $recoveryCodes = $this->recoveryCodeGenerator->generate();
 
         $this->auditLogger?->log(
             AuditEvent::SecurityEvent,

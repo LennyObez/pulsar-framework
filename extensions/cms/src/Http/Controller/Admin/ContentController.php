@@ -65,7 +65,6 @@ final readonly class ContentController
 
         $locale = $this->resolveLocale($request);
         $contentType = $request->getQueryParams()['type'] ?? null;
-        $status = $request->getQueryParams()['status'] ?? null;
         $page = max(1, (int) ($request->getQueryParams()['page'] ?? 1));
         $perPage = min(100, max(1, (int) ($request->getQueryParams()['per_page'] ?? 20)));
 
@@ -80,7 +79,7 @@ final readonly class ContentController
         );
 
         $data = [
-            'data' => array_map(static fn(Content $c) => [
+            'items' => array_map(static fn(Content $c) => [
                 'id' => $c->id,
                 'type' => $c->contentType->value,
                 'status' => $c->status->value,

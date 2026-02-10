@@ -34,7 +34,7 @@ final readonly class SafeHtmlPolicy
      *
      * @var array<string, list<string>>
      */
-    private const ELEMENT_ATTRIBUTES = [
+    private const array ELEMENT_ATTRIBUTES = [
         'p' => [],
         'br' => [],
         'h2' => [],
@@ -78,7 +78,7 @@ final readonly class SafeHtmlPolicy
      *
      * @var array<string, list<string>>
      */
-    private const COMMENT_ATTRIBUTES = [
+    private const array COMMENT_ATTRIBUTES = [
         'p' => [],
         'br' => [],
         'strong' => [],
@@ -94,7 +94,7 @@ final readonly class SafeHtmlPolicy
      *
      * @var list<string>
      */
-    private const DANGEROUS_ATTRIBUTES = [
+    private const array DANGEROUS_ATTRIBUTES = [
         'style',
         'id',
         'srcset',
@@ -105,7 +105,7 @@ final readonly class SafeHtmlPolicy
     ];
 
     /** Maximum data URI size in bytes (32 KB). */
-    private const MAX_DATA_URI_BYTES = 32768;
+    private const int MAX_DATA_URI_BYTES = 32768;
 
     public function __construct(
         private AuditLoggerInterface $auditLogger,
@@ -704,13 +704,7 @@ final readonly class SafeHtmlPolicy
             '/<\s*\/?\s*math[\s>]/i',
         ];
 
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $html)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($patterns, static fn(string $pattern): bool => preg_match($pattern, $html) === 1);
     }
 
     /**

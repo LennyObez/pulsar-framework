@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Internal\Commerce;
 
+use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Database\ConnectionInterface;
@@ -49,6 +50,7 @@ final readonly class WebhookHandler
      * @param string $payload Raw request body
      * @param string $signature Signature header for verification
      * @throws CmsException If the signature is invalid
+     * @throws JsonException If the payload is not valid JSON
      */
     public function handle(string $payload, string $signature): void
     {

@@ -6,6 +6,7 @@ namespace Pulsar\Auth\Password;
 
 use InvalidArgumentException;
 use Override;
+use SensitiveParameter;
 
 use function password_hash;
 use function password_needs_rehash;
@@ -82,13 +83,13 @@ final readonly class PasswordHasher implements PasswordHasherInterface
     }
 
     #[Override]
-    public function hash(#[\SensitiveParameter] string $password): string
+    public function hash(#[SensitiveParameter] string $password): string
     {
         return password_hash($password, PASSWORD_ARGON2ID, $this->options);
     }
 
     #[Override]
-    public function verify(#[\SensitiveParameter] string $password, string $hash): bool
+    public function verify(#[SensitiveParameter] string $password, string $hash): bool
     {
         return password_verify($password, $hash);
     }

@@ -55,7 +55,6 @@ final readonly class DbEditorialReviewRepository
 
     public function __construct(
         private ConnectionInterface $connection,
-        private ?string $tenantId,
     ) {}
 
     public function findById(string $id): ?EditorialReview

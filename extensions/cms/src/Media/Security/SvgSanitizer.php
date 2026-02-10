@@ -13,7 +13,12 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Exception\CmsException;
 
 use function in_array;
+use function iterator_to_array;
+use function preg_match;
+use function preg_replace;
+use function str_starts_with;
 use function strtolower;
+use function trim;
 
 /**
  * DOMDocument-based SVG sanitizer using a strict element/attribute allowlist.
@@ -30,7 +35,7 @@ final readonly class SvgSanitizer
      *
      * @var list<string>
      */
-    private const ALLOWED_ELEMENTS = [
+    private const array ALLOWED_ELEMENTS = [
         'svg',
         'g',
         'path',
@@ -72,7 +77,7 @@ final readonly class SvgSanitizer
      *
      * @var list<string>
      */
-    private const ALLOWED_ATTRIBUTES = [
+    private const array ALLOWED_ATTRIBUTES = [
         'd',
         'x',
         'y',
@@ -179,7 +184,7 @@ final readonly class SvgSanitizer
      *
      * @var list<string>
      */
-    private const BLOCKED_ELEMENTS = [
+    private const array BLOCKED_ELEMENTS = [
         'script',
         'foreignobject',
         'iframe',

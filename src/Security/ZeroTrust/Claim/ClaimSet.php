@@ -56,13 +56,7 @@ readonly class ClaimSet implements Countable, IteratorAggregate
     #[NoDiscard]
     public function first(string $name): ?Claim
     {
-        foreach ($this->claims as $claim) {
-            if ($claim->name === $name) {
-                return $claim;
-            }
-        }
-
-        return null;
+        return array_find($this->claims, static fn(Claim $claim): bool => $claim->name === $name);
     }
 
     /**
@@ -95,13 +89,7 @@ readonly class ClaimSet implements Countable, IteratorAggregate
     #[NoDiscard]
     public function has(string $name): bool
     {
-        foreach ($this->claims as $claim) {
-            if ($claim->name === $name) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->claims, static fn(Claim $claim): bool => $claim->name === $name);
     }
 
     /**

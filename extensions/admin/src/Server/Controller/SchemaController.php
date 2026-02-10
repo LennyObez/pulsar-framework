@@ -67,7 +67,7 @@ final readonly class SchemaController
         $tables = $this->introspector->tables();
         $tableNames = array_map(static fn($t): string => $t->name, $tables);
 
-        return Response::html($this->renderHtml('schema/create', 'Create Table', [
+        return Response::html($this->renderHtml('schema/create', 'Create table', [
             'tables' => $tableNames,
             'capabilities' => $this->capabilities->toArray(),
             'driver' => $this->capabilities->supportsNativeEnum() ? 'mysql' : ($this->capabilities->supportsTransactionalDdl() ? 'pgsql' : 'sqlite'),
@@ -132,7 +132,7 @@ final readonly class SchemaController
             return Response::json(['entries' => $entryData]);
         }
 
-        return Response::html($this->renderHtml('schema/changelog', 'Schema Change Log', [
+        return Response::html($this->renderHtml('schema/changelog', 'Schema change log', [
             'entries' => $entryData,
             'schema_enabled' => $this->config->enabled,
         ]));

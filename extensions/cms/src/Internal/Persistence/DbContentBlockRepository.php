@@ -55,7 +55,6 @@ final readonly class DbContentBlockRepository implements ContentBlockRepositoryI
 
     public function __construct(
         private ConnectionInterface $connection,
-        private ?string $tenantId,
     ) {}
 
     public function findById(string $id): ?ContentBlock

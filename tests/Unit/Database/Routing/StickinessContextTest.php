@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Database\Routing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Routing\StickinessContext;
-use PHPUnit\Framework\Attributes\Test;
 
 #[CoversClass(StickinessContext::class)]
 final class StickinessContextTest extends TestCase

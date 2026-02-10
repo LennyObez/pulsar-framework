@@ -33,7 +33,6 @@ final readonly class SeoHealthWidget implements DashboardWidgetInterface
     {
         $brokenLinks = $this->linkHealthService->getBrokenLinks(
             tenantId: $this->tenantId,
-            page: 1,
             perPage: 100,
         );
 

@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Content\CommentPolicy;
 use Pulsar\Extension\Cms\Content\Content;
-use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentType;
 use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
@@ -43,9 +42,7 @@ final class SeoHealthReportPanelTest extends TestCase
         $linkHealth->method('getBrokenLinks')->willReturn([$brokenLink]);
         $linkHealth->method('getOrphanContent')->willReturn([]);
 
-        $contentRepo = $this->createStub(ContentRepositoryInterface::class);
-
-        $panel = new SeoHealthReportPanel($linkHealth, $contentRepo);
+        $panel = new SeoHealthReportPanel($linkHealth);
 
         $report = $panel->generateReport();
 
@@ -82,9 +79,7 @@ final class SeoHealthReportPanelTest extends TestCase
         $linkHealth->method('getBrokenLinks')->willReturn([]);
         $linkHealth->method('getOrphanContent')->willReturn([$orphan]);
 
-        $contentRepo = $this->createStub(ContentRepositoryInterface::class);
-
-        $panel = new SeoHealthReportPanel($linkHealth, $contentRepo);
+        $panel = new SeoHealthReportPanel($linkHealth);
 
         $report = $panel->generateReport();
 
@@ -100,9 +95,7 @@ final class SeoHealthReportPanelTest extends TestCase
         $linkHealth->method('getBrokenLinks')->willReturn([]);
         $linkHealth->method('getOrphanContent')->willReturn([]);
 
-        $contentRepo = $this->createStub(ContentRepositoryInterface::class);
-
-        $panel = new SeoHealthReportPanel($linkHealth, $contentRepo);
+        $panel = new SeoHealthReportPanel($linkHealth);
 
         $lastGenerated = new DateTimeImmutable('2026-02-15T10:00:00+00:00');
 
@@ -130,9 +123,7 @@ final class SeoHealthReportPanelTest extends TestCase
             ->with('tenant-1', 1, 100)
             ->willReturn([]);
 
-        $contentRepo = $this->createStub(ContentRepositoryInterface::class);
-
-        $panel = new SeoHealthReportPanel($linkHealth, $contentRepo);
+        $panel = new SeoHealthReportPanel($linkHealth);
 
         $report = $panel->generateReport(tenantId: 'tenant-1');
 
@@ -151,9 +142,7 @@ final class SeoHealthReportPanelTest extends TestCase
         $linkHealth = $this->createStub(LinkHealthServiceInterface::class);
         $linkHealth->method('getBrokenLinks')->willReturn($brokenLinks);
 
-        $contentRepo = $this->createStub(ContentRepositoryInterface::class);
-
-        $panel = new SeoHealthReportPanel($linkHealth, $contentRepo);
+        $panel = new SeoHealthReportPanel($linkHealth);
 
         self::assertSame(2, $panel->brokenLinkCount());
     }
@@ -184,9 +173,7 @@ final class SeoHealthReportPanelTest extends TestCase
         $linkHealth = $this->createStub(LinkHealthServiceInterface::class);
         $linkHealth->method('getOrphanContent')->willReturn([$orphan]);
 
-        $contentRepo = $this->createStub(ContentRepositoryInterface::class);
-
-        $panel = new SeoHealthReportPanel($linkHealth, $contentRepo);
+        $panel = new SeoHealthReportPanel($linkHealth);
 
         self::assertSame(1, $panel->orphanContentCount());
     }
@@ -198,9 +185,7 @@ final class SeoHealthReportPanelTest extends TestCase
         $linkHealth->method('getBrokenLinks')->willReturn([]);
         $linkHealth->method('getOrphanContent')->willReturn([]);
 
-        $contentRepo = $this->createStub(ContentRepositoryInterface::class);
-
-        $panel = new SeoHealthReportPanel($linkHealth, $contentRepo);
+        $panel = new SeoHealthReportPanel($linkHealth);
 
         $report = $panel->generateReport();
 

@@ -31,9 +31,6 @@ use const PREG_SET_ORDER;
 #[Internal(reason: 'Use LinkHealthServiceInterface for public API')]
 final readonly class LinkHealthChecker implements LinkHealthServiceInterface
 {
-    /** Connection timeout for link checks (seconds). */
-    private const int CONNECT_TIMEOUT = 10;
-
     /** Total timeout for link checks (seconds). */
     private const int REQUEST_TIMEOUT = 30;
 

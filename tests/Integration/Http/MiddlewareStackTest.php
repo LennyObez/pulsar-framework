@@ -10,10 +10,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use RuntimeException;
@@ -22,6 +22,15 @@ use RuntimeException;
 #[CoversClass(MiddlewareRegistry::class)]
 final class MiddlewareStackTest extends TestCase
 {
+    /**
+     * @return class-string<MiddlewareInterface>
+     */
+    private static function mwClass(string $name): string
+    {
+        /** @var class-string<MiddlewareInterface> */
+        return $name;
+    }
+
     // -------------------------------------------------------------------------
     // MiddlewarePipeline tests
     // -------------------------------------------------------------------------
@@ -143,7 +152,7 @@ final class MiddlewareStackTest extends TestCase
             function ($req) use (&$capturedRequest) {
                 $capturedRequest = $req;
                 return Response::json([]);
-            }
+            },
         );
 
         self::assertNotNull($capturedRequest);
@@ -158,7 +167,7 @@ final class MiddlewareStackTest extends TestCase
     public function middlewareRegistryResolvesAlias(): void
     {
         $registry = new MiddlewareRegistry();
-        $registry->alias('auth', MwsAddHeaderMiddleware::class);
+        $registry->alias('auth', self::mwClass(MwsAddHeaderMiddleware::class));
 
         $resolved = $registry->resolve('auth');
 
@@ -171,8 +180,8 @@ final class MiddlewareStackTest extends TestCase
     {
         $registry = new MiddlewareRegistry();
         $registry->group('api', [
-            MwsAddHeaderMiddleware::class,
-            MwsShortCircuitMiddleware::class,
+            self::mwClass(MwsAddHeaderMiddleware::class),
+            self::mwClass(MwsShortCircuitMiddleware::class),
         ]);
 
         $resolved = $registry->resolve('api');
@@ -186,8 +195,11 @@ final class MiddlewareStackTest extends TestCase
     public function middlewareRegistryResolvesGroupWithAlias(): void
     {
         $registry = new MiddlewareRegistry();
-        $registry->alias('ratelimit', MwsShortCircuitMiddleware::class);
-        $registry->group('web', ['ratelimit', MwsAddHeaderMiddleware::class]);
+        $registry->alias('ratelimit', self::mwClass(MwsShortCircuitMiddleware::class));
+        $registry->group('web', [
+            self::mwClass('ratelimit'),
+            self::mwClass(MwsAddHeaderMiddleware::class),
+        ]);
 
         $resolved = $registry->resolve('web');
 
@@ -198,8 +210,8 @@ final class MiddlewareStackTest extends TestCase
     public function middlewareRegistryThrowsOnCircularReference(): void
     {
         $registry = new MiddlewareRegistry();
-        $registry->alias('a', 'b');
-        $registry->alias('b', 'a');
+        $registry->alias('a', self::mwClass('b'));
+        $registry->alias('b', self::mwClass('a'));
 
         $this->expectException(RuntimeException::class);
         $registry->resolve('a');
@@ -209,8 +221,8 @@ final class MiddlewareStackTest extends TestCase
     public function middlewareRegistryHasAliasAndHasGroup(): void
     {
         $registry = new MiddlewareRegistry();
-        $registry->alias('my-alias', MwsAddHeaderMiddleware::class);
-        $registry->group('my-group', [MwsAddHeaderMiddleware::class]);
+        $registry->alias('my-alias', self::mwClass(MwsAddHeaderMiddleware::class));
+        $registry->group('my-group', [self::mwClass(MwsAddHeaderMiddleware::class)]);
 
         self::assertTrue($registry->hasAlias('my-alias'));
         self::assertFalse($registry->hasAlias('my-group'));
@@ -279,7 +291,7 @@ final class MwsOrderRecorder implements MiddlewareInterface
     /** @param list<string> $order */
     public function __construct(
         private readonly string $label,
-        private array &$order,
+        public array &$order,
     ) {}
 
     #[Override]

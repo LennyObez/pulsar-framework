@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\Driver\ArrayDriver;
-use Pulsar\Cache\Application\Driver\CacheDriverCapabilities;
 use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use RuntimeException;
 
@@ -28,9 +27,11 @@ final class CacheFailureTest extends TestCase
         $cached = $driver->get('non_existent_key');
         self::assertNull($cached);
 
-        // Application should fall back to source
+        // Application should fall back to source when cache returns null
         $fromSource = 'fetched_from_database';
-        $value = $cached ?? $fromSource;
+        /** @var mixed $maybeCached */
+        $maybeCached = $cached;
+        $value = $maybeCached ?? $fromSource;
         self::assertSame('fetched_from_database', $value);
     }
 
@@ -90,7 +91,9 @@ final class CacheFailureTest extends TestCase
 
         self::assertSame(1, $fetchCount, 'Only one request should fetch from source during stampede');
         self::assertCount($simulatedRequests, $results);
-        self::assertTrue(array_all($results, static fn(string $v): bool => $v === 'computed_value'));
+        foreach ($results as $result) {
+            self::assertSame('computed_value', $result);
+        }
     }
 
     #[Test]

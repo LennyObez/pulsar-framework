@@ -18,7 +18,7 @@ window.plsr.ext(() => {
           location.href = href;
         }, 150);
       }
-    } catch (_) {
+    } catch {
       // invalid URL, skip
     }
   });

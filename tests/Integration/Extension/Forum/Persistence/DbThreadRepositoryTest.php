@@ -379,13 +379,14 @@ final class DbThreadRepositoryTest extends TestCase
             'SELECT deleted_at FROM forum_threads WHERE id = :id',
             ['id' => 'thread-sd'],
         );
-        self::assertNotNull($rawResult->first());
-        self::assertNotNull($rawResult->first()?->getNullableString('deleted_at'));
+        $row = $rawResult->first();
+        self::assertNotNull($row);
+        self::assertNotNull($row->getNullableString('deleted_at'));
     }
 
     private function insertCategory(string $id, string $slug): void
     {
-        $now = (new DateTimeImmutable())->format('c');
+        $now = new DateTimeImmutable()->format('c');
         $this->connection->execute(
             'INSERT INTO forum_categories (id, slug, created_at, updated_at) VALUES (:id, :slug, :now, :now)',
             ['id' => $id, 'slug' => $slug, 'now' => $now],

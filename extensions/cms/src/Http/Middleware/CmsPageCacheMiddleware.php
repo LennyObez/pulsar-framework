@@ -61,7 +61,7 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 
         $cached = $this->cache->get($cacheKey);
 
-        if ($cached !== null && is_string($cached)) {
+        if (is_string($cached)) {
             /** @var array{body: string, status: int, headers: array<string, string>} $decoded */
             $decoded = json_decode($cached, true);
 
@@ -105,13 +105,7 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
         $identity = $request->getAttribute('identity');
 
         if ($identity !== null && $identity->isAuthenticated()) {
-            $roles = $identity->roles();
-
-            foreach ($roles as $role) {
-                if (str_starts_with($role, 'cms.')) {
-                    return true;
-                }
-            }
+            return array_any($identity->roles(), static fn(string $role): bool => str_starts_with($role, 'cms.'));
         }
 
         return false;

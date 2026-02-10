@@ -12,6 +12,7 @@ use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function count;
 use function random_bytes;
 use function sodium_bin2hex;
 use function strlen;
@@ -43,7 +44,7 @@ final class CryptoRoundtripTest extends TestCase
             random_bytes(4096),
             str_repeat("\x00", 100),
             str_repeat("\xFF", 100),
-            "Unicode: 日本語 العربية 中文",
+            'Unicode: 日本語 العربية 中文',
             str_repeat('A', 65536),
         ];
 

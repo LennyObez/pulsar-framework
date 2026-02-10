@@ -158,12 +158,10 @@ final readonly class DbSettingsRepository
     public function decodeValue(SiteSetting $setting): mixed
     {
         return match ($setting->valueType) {
-            'string' => $setting->value,
             'int' => (int) $setting->value,
             'float' => (float) $setting->value,
             'bool' => $setting->value === 'true' || $setting->value === '1',
             'json' => json_decode($setting->value, true, 512, JSON_THROW_ON_ERROR),
-            'encrypted' => $setting->value,
             default => $setting->value,
         };
     }
@@ -171,12 +169,10 @@ final readonly class DbSettingsRepository
     public static function encodeValue(mixed $value, string $valueType): string
     {
         return match ($valueType) {
-            'string' => (string) $value,
             'int' => (string) (int) $value,
             'float' => (string) (float) $value,
             'bool' => $value ? 'true' : 'false',
             'json' => json_encode($value, JSON_THROW_ON_ERROR),
-            'encrypted' => (string) $value,
             default => (string) $value,
         };
     }

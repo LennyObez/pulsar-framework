@@ -6,11 +6,23 @@ namespace Pulsar\Extension\Analytics\Internal\Geo;
 
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Security\ZeroTrust\Signal\GeoLocation;
 use Pulsar\Security\ZeroTrust\Signal\GeoLocationResolverInterface;
 
 use function count;
+use function fclose;
+use function fgets;
+use function fopen;
+use function fseek;
+use function fstat;
+use function ftell;
+use function intdiv;
+use function ip2long;
+use function is_file;
+use function realpath;
+use function str_getcsv;
+use function strtoupper;
+use function trim;
 
 /**
  * Country-level geo resolution using DB-IP Lite database (CC-BY-4.0).
@@ -34,9 +46,7 @@ final class DbIpLiteResolver implements GeoLocationResolverInterface
 
     private int $fileSize = 0;
 
-    public function __construct(
-        private readonly AnalyticsConfig $config,
-    ) {}
+    public function __construct() {}
 
     public function __destruct()
     {

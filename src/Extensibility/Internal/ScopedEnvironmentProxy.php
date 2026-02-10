@@ -104,13 +104,7 @@ final readonly class ScopedEnvironmentProxy implements EnvironmentInterface
     {
         $upper = strtoupper($key);
 
-        foreach (self::SENSITIVE_PREFIXES as $prefix) {
-            if ($upper === $prefix || str_starts_with($upper, $prefix . '_')) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(self::SENSITIVE_PREFIXES, static fn(string $prefix): bool => $upper === $prefix || str_starts_with($upper, $prefix . '_'));
     }
 
     private function hasCapability(ExtensionCapability $capability): bool

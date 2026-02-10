@@ -7,10 +7,8 @@ namespace Pulsar\Tests\Integration\Extension\Forum\Http;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -165,6 +163,7 @@ final class ForumAuthMiddlewareTest extends TestCase
 
         self::assertSame(403, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsString($data['error']);
         self::assertStringContainsString('banned', $data['error']);
     }
 

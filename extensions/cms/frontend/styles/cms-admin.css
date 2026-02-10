@@ -62,12 +62,14 @@ a:hover {
 .cms-admin-shell {
   display: grid;
   grid-template-columns: 260px 1fr;
+  grid-template-rows: auto 1fr;
   min-height: 100vh;
 }
 
 @media (max-width: 768px) {
   .cms-admin-shell {
     grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
   }
 }
 

@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Database\Routing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Routing\ConnectionRole;
 use Pulsar\Database\Routing\ReadWriteRouter;
-use PHPUnit\Framework\Attributes\Test;
 
 #[CoversClass(ReadWriteRouter::class)]
 final class ReadWriteRouterTest extends TestCase

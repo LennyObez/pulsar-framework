@@ -391,7 +391,7 @@ final readonly class SiteDefinitionParser
             }
 
             $translationId = UuidGenerator::v7();
-            $translation = ContentTranslation::create(
+            ContentTranslation::create(
                 id: $translationId,
                 contentId: $contentId,
                 locale: $locale,
@@ -412,9 +412,7 @@ final readonly class SiteDefinitionParser
             $blocks = $itemData['blocks'] ?? [];
 
             if (is_array($blocks)) {
-                foreach ($blocks as $sortOrder => $blockData) {
-                    $blockId = UuidGenerator::v7();
-                    $blockType = $blockData['type'] ?? 'text';
+                foreach ($blocks as $blockData) {
                     $blockContent = $blockData['data'] ?? $blockData['content'] ?? [];
 
                     if (is_array($blockContent)) {
@@ -578,7 +576,7 @@ final readonly class SiteDefinitionParser
                 $created++;
 
                 if (!$dryRun) {
-                    $this->settingsService->set('seo', (string) $key, $value, null, 'Site definition import');
+                    $this->settingsService->set('seo', $key, $value, null, 'Site definition import');
                 }
             }
         }

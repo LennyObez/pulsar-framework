@@ -7,9 +7,11 @@ namespace Pulsar\Extension\Cms\Media\Security;
 use Pulsar\Api\Api;
 
 use function basename;
+use function mb_strlen;
 use function preg_replace;
 use function strtolower;
 use function substr;
+use function trim;
 
 /**
  * Sanitizes uploaded filenames to prevent path traversal, special character
@@ -20,7 +22,7 @@ use function substr;
 final readonly class FilenameSanitizer
 {
     /** Maximum length of the sanitized filename (excluding hash prefix). */
-    private const MAX_FILENAME_LENGTH = 200;
+    private const int MAX_FILENAME_LENGTH = 200;
 
     /**
      * Sanitize a filename for safe storage.

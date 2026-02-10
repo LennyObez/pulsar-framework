@@ -377,7 +377,7 @@ final class DbPostRepositoryTest extends TestCase
 
     private function insertCategory(string $id, string $slug): void
     {
-        $now = (new DateTimeImmutable())->format('c');
+        $now = new DateTimeImmutable()->format('c');
         $this->connection->execute(
             'INSERT INTO forum_categories (id, slug, created_at, updated_at) VALUES (:id, :slug, :now, :now)',
             ['id' => $id, 'slug' => $slug, 'now' => $now],
@@ -386,7 +386,7 @@ final class DbPostRepositoryTest extends TestCase
 
     private function insertThread(string $id, string $categoryId): void
     {
-        $now = (new DateTimeImmutable())->format('c');
+        $now = new DateTimeImmutable()->format('c');
         $this->connection->execute(
             'INSERT INTO forum_threads (id, category_id, author_id, title, slug, ip_hash, user_agent_hash, created_at, updated_at) VALUES (:id, :cat, :author, :title, :slug, :ip, :ua, :now, :now)',
             [

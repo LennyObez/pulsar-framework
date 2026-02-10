@@ -15,7 +15,6 @@ use Pulsar\Security\Exception\SecurityException;
 use function random_bytes;
 use function sodium_bin2hex;
 use function strlen;
-use function substr;
 
 #[CoversClass(CompositeKeyProvider::class)]
 final class CompositeKeyProviderTest extends TestCase

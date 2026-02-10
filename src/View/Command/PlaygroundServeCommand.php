@@ -40,7 +40,7 @@ final class PlaygroundServeCommand extends Command
         $this->name = 'playground:serve';
         $this->description = 'Start the Playground development server';
         $this->addOption('port', 'Port to serve on', '-p', '8942');
-        $this->addOption('host', 'Host to bind to', '-H', 'localhost');
+        $this->addOption('host', 'Host to bind to', '-H', '127.0.0.1');
     }
 
     #[Override]
@@ -55,7 +55,7 @@ final class PlaygroundServeCommand extends Command
         /** @var string $port */
         $port = $input->getOption('port', '8942');
         /** @var string $host */
-        $host = $input->getOption('host', 'localhost');
+        $host = $input->getOption('host', '127.0.0.1');
 
         $docRoot = $this->projectRoot . '/resources/playground';
 

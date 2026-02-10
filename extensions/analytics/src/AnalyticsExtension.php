@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Analytics;
 
 use Override;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Container\ContainerInterface;
@@ -37,6 +38,9 @@ use Pulsar\Scheduler\JobRegistryInterface;
 use Pulsar\Scheduler\Schedule;
 
 use function is_array;
+use function is_file;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Privacy-focused, self-hosted web analytics extension.
@@ -128,7 +132,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::POST],
             path: $config->tracking->trackerEndpoint,
             handler: static fn() => $container->get(CollectionController::class)->collect(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.collect',
             middleware: [
@@ -142,7 +146,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: $config->tracking->scriptEndpoint,
             handler: static fn() => $container->get(TrackerController::class)->script(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.tracker',
         ));
@@ -158,7 +162,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: "{$prefix}/stats/aggregate",
             handler: static fn() => $container->get(StatsController::class)->aggregate(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.api.stats',
             middleware: $authMiddleware,
@@ -168,7 +172,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: "{$prefix}/stats/timeseries",
             handler: static fn() => $container->get(TimeseriesController::class)->timeseries(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.api.timeseries',
             middleware: $authMiddleware,
@@ -178,7 +182,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: "{$prefix}/stats/breakdown",
             handler: static fn() => $container->get(BreakdownController::class)->breakdown(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.api.breakdown',
             middleware: $authMiddleware,
@@ -188,7 +192,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: "{$prefix}/stats/realtime",
             handler: static fn() => $container->get(RealtimeController::class)->realtime(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.api.realtime',
             middleware: $authMiddleware,
@@ -198,7 +202,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: "{$prefix}/export",
             handler: static fn() => $container->get(ExportController::class)->export(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.api.export',
             middleware: $authMiddleware,
@@ -209,7 +213,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: "{$prefix}/goals",
             handler: static fn() => $container->get(GoalController::class)->index(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.api.goals.index',
             middleware: $authMiddleware,
@@ -219,7 +223,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::POST],
             path: "{$prefix}/goals",
             handler: static fn() => $container->get(GoalController::class)->create(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.api.goals.create',
             middleware: $authMiddleware,
@@ -229,7 +233,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: "{$prefix}/goals/{id}",
             handler: static fn(string $id) => $container->get(GoalController::class)->show(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
                 $id,
             ),
             name: 'analytics.api.goals.show',
@@ -240,7 +244,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::PUT],
             path: "{$prefix}/goals/{id}",
             handler: static fn(string $id) => $container->get(GoalController::class)->update(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
                 $id,
             ),
             name: 'analytics.api.goals.update',
@@ -251,7 +255,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::DELETE],
             path: "{$prefix}/goals/{id}",
             handler: static fn(string $id) => $container->get(GoalController::class)->delete(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
                 $id,
             ),
             name: 'analytics.api.goals.delete',
@@ -263,7 +267,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: "{$prefix}/sites",
             handler: static fn() => $container->get(SiteController::class)->index(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.api.sites.index',
             middleware: $authMiddleware,
@@ -273,7 +277,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::POST],
             path: "{$prefix}/sites",
             handler: static fn() => $container->get(SiteController::class)->create(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.api.sites.create',
             middleware: $authMiddleware,
@@ -283,7 +287,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: "{$prefix}/sites/{id}",
             handler: static fn(string $id) => $container->get(SiteController::class)->show(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
                 $id,
             ),
             name: 'analytics.api.sites.show',
@@ -294,7 +298,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::PUT],
             path: "{$prefix}/sites/{id}",
             handler: static fn(string $id) => $container->get(SiteController::class)->update(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
                 $id,
             ),
             name: 'analytics.api.sites.update',
@@ -305,7 +309,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::DELETE],
             path: "{$prefix}/sites/{id}",
             handler: static fn(string $id) => $container->get(SiteController::class)->delete(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
                 $id,
             ),
             name: 'analytics.api.sites.delete',
@@ -321,7 +325,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: '/analytics',
             handler: static fn() => $container->get(DashboardController::class)->index(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.dashboard',
             middleware: $authMiddleware,
@@ -331,7 +335,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: '/analytics/sites',
             handler: static fn() => $container->get(DashboardController::class)->sites(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.dashboard.sites',
             middleware: $authMiddleware,
@@ -341,7 +345,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: '/analytics/goals',
             handler: static fn() => $container->get(DashboardController::class)->goals(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.dashboard.goals',
             middleware: $authMiddleware,
@@ -351,7 +355,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: '/analytics/settings',
             handler: static fn() => $container->get(DashboardController::class)->settings(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
             ),
             name: 'analytics.dashboard.settings',
             middleware: $authMiddleware,
@@ -362,7 +366,7 @@ final readonly class AnalyticsExtension implements
             methods: [Method::GET, Method::HEAD],
             path: '/analytics/assets/{path}',
             handler: static fn(string $path) => $container->get(DashboardController::class)->asset(
-                $container->get(\Psr\Http\Message\ServerRequestInterface::class),
+                $container->get(ServerRequestInterface::class),
                 $path,
             ),
             name: 'analytics.assets',

@@ -10,6 +10,7 @@ use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
+use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
@@ -66,6 +67,7 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\TwoFactorController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\UserController;
 use Pulsar\Extension\Cms\Internal\ABTest\ExperimentService;
 use Pulsar\Extension\Cms\Internal\Commerce\OrderService;
+use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
 use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
 use Pulsar\Extension\Cms\LiveCss\CssValidatorInterface;
 use Pulsar\Extension\Cms\LiveCss\LiveCssServiceInterface;
@@ -113,6 +115,12 @@ final readonly class CmsAdminControllerProvider
         /** @var TemplateEngineInterface|null $templateEngine */
         $templateEngine = $container->has(TemplateEngineInterface::class)
             ? $container->get(TemplateEngineInterface::class)
+            : null;
+
+        // Rate limiter (optional — only when cache is available)
+        /** @var CmsRateLimiter|null $rateLimiter */
+        $rateLimiter = $container->has(TaggedCacheInterface::class)
+            ? new CmsRateLimiter($container->get(TaggedCacheInterface::class))
             : null;
 
         // DashboardService (always available)
@@ -174,7 +182,6 @@ final readonly class CmsAdminControllerProvider
             AdminTaxonomyController::class,
             new AdminTaxonomyController(
                 $container->get(TaxonomyRepositoryInterface::class),
-                $container->get(TaxonomyServiceInterface::class),
                 $gate,
                 $config,
                 $templateEngine,
@@ -272,6 +279,7 @@ final readonly class CmsAdminControllerProvider
             BackupController::class,
             new BackupController(
                 $container->get(BackupServiceInterface::class),
+                $rateLimiter,
                 $gate,
                 $templateEngine,
             ),
@@ -294,6 +302,7 @@ final readonly class CmsAdminControllerProvider
                 $totpVerifier,
                 $recoveryCodeGenerator,
                 $container->get(QrCodeEncoder::class),
+                $rateLimiter,
                 $gate,
                 $auditLogger,
                 $templateEngine,
@@ -332,7 +341,7 @@ final readonly class CmsAdminControllerProvider
 
             $container->instance(
                 ThemeController::class,
-                new ThemeController($themeManager, $gate, $templateEngine),
+                new ThemeController($themeManager, $rateLimiter, $gate, $templateEngine),
             );
 
             $container->instance(
@@ -354,6 +363,7 @@ final readonly class CmsAdminControllerProvider
                 new PluginController(
                     $container->get(CmsPluginManagerInterface::class),
                     $settingsService,
+                    $rateLimiter,
                     $gate,
                     $templateEngine,
                 ),
@@ -375,8 +385,27 @@ final readonly class CmsAdminControllerProvider
             /** @var ImportExportServiceInterface $importExport */
             $importExport = $container->get(ImportExportServiceInterface::class);
 
-            $container->instance(ExportController::class, new ExportController($importExport, $gate, $templateEngine));
-            $container->instance(ImportController::class, new ImportController($importExport, $gate, $templateEngine));
+            $container->instance(
+                ExportController::class,
+                new ExportController(
+                    $importExport,
+                    $gate,
+                    $container->get(ContentRepositoryInterface::class),
+                    $container->get(ContentTranslationRepositoryInterface::class),
+                    $container->get(ContentBlockRepositoryInterface::class),
+                    $templateEngine,
+                ),
+            );
+            $container->instance(
+                ImportController::class,
+                new ImportController(
+                    $importExport,
+                    $gate,
+                    $container->get(ContentRepositoryInterface::class),
+                    $container->get(ContentTranslationRepositoryInterface::class),
+                    $templateEngine,
+                ),
+            );
             $container->instance(SiteDefinitionController::class, new SiteDefinitionController($importExport, $gate, $templateEngine));
         }
 

@@ -14,6 +14,9 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Customer;
 use Pulsar\Extension\Cms\Internal\Persistence\DbCustomerRepository;
 
+use function assert;
+use function is_string;
+
 #[CoversClass(DbCustomerRepository::class)]
 final class DbCustomerRepositoryTest extends TestCase
 {
@@ -215,12 +218,14 @@ final class DbCustomerRepositoryTest extends TestCase
             ->with(
                 self::stringContains('INSERT INTO cms_customers'),
                 self::callback(static function (array $bindings) use ($now): bool {
+                    $billingAddress = $bindings['billing_address'];
+                    assert(is_string($billingAddress));
                     return $bindings['id'] === 'cust-save'
                         && $bindings['tenant_id'] === 'tenant-1'
                         && $bindings['user_id'] === 'user-1'
                         && $bindings['email'] === 'save@example.com'
                         && $bindings['display_name'] === 'Save Test'
-                        && str_contains($bindings['billing_address'], '456 Oak Ave')
+                        && str_contains($billingAddress, '456 Oak Ave')
                         && $bindings['shipping_address'] === null
                         && $bindings['created_at'] === $now->format('c')
                         && $bindings['updated_at'] === $now->format('c');
@@ -253,10 +258,13 @@ final class DbCustomerRepositoryTest extends TestCase
             ->with(
                 self::anything(),
                 self::callback(static function (array $bindings): bool {
-                    return $bindings['billing_address'] !== null
-                        && $bindings['shipping_address'] !== null
-                        && str_contains($bindings['billing_address'], 'NYC')
-                        && str_contains($bindings['shipping_address'], 'LA');
+                    $billingAddress = $bindings['billing_address'];
+                    $shippingAddress = $bindings['shipping_address'];
+                    if (!is_string($billingAddress) || !is_string($shippingAddress)) {
+                        return false;
+                    }
+                    return str_contains($billingAddress, 'NYC')
+                        && str_contains($shippingAddress, 'LA');
                 }),
             );
 

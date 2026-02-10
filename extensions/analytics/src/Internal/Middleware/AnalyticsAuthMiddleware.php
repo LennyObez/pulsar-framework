@@ -12,7 +12,6 @@ use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 
@@ -29,7 +28,6 @@ final readonly class AnalyticsAuthMiddleware implements MiddlewareInterface
     private const string DEFAULT_PERMISSION = 'analytics.view';
 
     public function __construct(
-        private AnalyticsConfig $config,
         private ?GateInterface $gate = null,
     ) {}
 
