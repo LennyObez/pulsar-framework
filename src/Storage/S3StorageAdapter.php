@@ -15,6 +15,7 @@ use function curl_init;
 use function curl_setopt_array;
 use function hash;
 use function is_string;
+use function libxml_use_internal_errors;
 use function ltrim;
 use function simplexml_load_string;
 use function sprintf;
@@ -262,7 +263,9 @@ final class S3StorageAdapter implements StorageAdapterInterface
      */
     private function parseListResponse(string $xml): array
     {
-        $doc = @simplexml_load_string($xml);
+        $prevErrors = libxml_use_internal_errors(true);
+        $doc = @simplexml_load_string($xml, 'SimpleXMLElement', LIBXML_NONET);
+        libxml_use_internal_errors($prevErrors);
 
         if ($doc === false) {
             return [];

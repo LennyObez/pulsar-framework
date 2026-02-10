@@ -9,11 +9,11 @@ use Pulsar\Api\Internal;
 use Pulsar\View\ViewException;
 
 use function dirname;
-use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function hash;
 use function is_dir;
+use function is_file;
 use function mkdir;
 use function sprintf;
 use function str_replace;
@@ -51,32 +51,29 @@ final readonly class TemplateCache
         $sourceHash = self::hash($sourceContent);
         $compiledPath = $this->compiledPath($templateName, $sourceHash);
 
-        if (!file_exists($compiledPath)) {
-            return null;
-        }
-
-        $metaPath = $compiledPath . '.meta';
-
-        if (!file_exists($metaPath)) {
-            return null;
-        }
-
-        $meta = file_get_contents($metaPath);
+        // Read meta file directly — avoids two separate file_exists syscalls.
+        // file_get_contents returns false when the file is missing.
+        $meta = @file_get_contents($compiledPath . '.meta');
 
         if ($meta === false) {
             return null;
         }
 
-        $storedHash = trim($meta);
+        if (trim($meta) !== $sourceHash) {
+            return null;
+        }
 
-        if ($storedHash !== $sourceHash) {
+        // filemtime returns false for missing files — doubles as existence check.
+        $mtime = @filemtime($compiledPath);
+
+        if ($mtime === false) {
             return null;
         }
 
         return new CompiledTemplate(
             compiledPath: $compiledPath,
             sourceHash: $sourceHash,
-            compiledAt: (int) filemtime($compiledPath),
+            compiledAt: $mtime,
         );
     }
 
@@ -138,13 +135,13 @@ final readonly class TemplateCache
     {
         $compiledPath = $this->compiledPath($templateName, $sourceHash);
 
-        if (file_exists($compiledPath)) {
+        if (is_file($compiledPath)) {
             unlink($compiledPath);
         }
 
         $metaPath = $compiledPath . '.meta';
 
-        if (file_exists($metaPath)) {
+        if (is_file($metaPath)) {
             unlink($metaPath);
         }
     }

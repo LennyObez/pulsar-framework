@@ -21,13 +21,9 @@ use function hash_file;
 use function implode;
 use function is_dir;
 use function is_file;
-use function ltrim;
 use function sort;
 use function str_contains;
 use function str_replace;
-use function str_starts_with;
-use function strlen;
-use function substr;
 use function time;
 use function usort;
 
@@ -43,6 +39,8 @@ use const FNM_PATHNAME;
 #[Internal]
 final class ManifestBuilder implements ManifestBuilderInterface
 {
+    use BasePathResolveTrait;
+
     private const string ALGORITHM = 'sha256';
     private const int MANIFEST_VERSION = 1;
     public function __construct(
@@ -193,23 +191,6 @@ final class ManifestBuilder implements ManifestBuilderInterface
         }
 
         return $base !== [] ? implode(DIRECTORY_SEPARATOR, $base) : '.';
-    }
-
-    /**
-     * Convert an absolute path to a path relative to the base directory.
-     *
-     * Always uses forward slashes for consistent cross-platform manifest entries.
-     */
-    private function toRelativePath(string $absolutePath): string
-    {
-        $normalized = str_replace('\\', '/', $absolutePath);
-        $normalizedBase = str_replace('\\', '/', $this->basePath);
-
-        if (str_starts_with($normalized, $normalizedBase . '/')) {
-            return ltrim(substr($normalized, strlen($normalizedBase)), '/');
-        }
-
-        return $normalized;
     }
 
     /**

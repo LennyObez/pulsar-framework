@@ -11,7 +11,6 @@ use Pulsar\Http\Validation\Violation;
 
 use function array_any;
 use function array_key_exists;
-use function file_exists;
 use function getimagesize;
 use function is_array;
 use function is_file;
@@ -54,7 +53,7 @@ readonly class Dimensions implements RuleInterface
             return $this->fail($field);
         }
 
-        if (!is_string($value['tmp_name']) || !file_exists($value['tmp_name']) || !is_file($value['tmp_name'])) {
+        if (!is_string($value['tmp_name']) || !is_file($value['tmp_name'])) {
             return $this->fail($field);
         }
 

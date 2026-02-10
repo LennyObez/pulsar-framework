@@ -6,9 +6,7 @@ namespace Pulsar\Database\Cache;
 
 use Pulsar\Api\Api;
 
-use function array_merge;
-use function array_unique;
-use function array_values;
+use function array_keys;
 use function explode;
 use function preg_match_all;
 use function preg_replace;
@@ -25,6 +23,15 @@ use function trim;
 final readonly class TableTagExtractor
 {
     /**
+     * Combined pattern matching all SQL clause types in a single pass.
+     *
+     * Matches: FROM, JOIN, INTO, UPDATE, DELETE FROM — each followed by a
+     * quoted/unquoted table identifier. The FROM clause also handles
+     * comma-separated table lists.
+     */
+    private const string TABLE_PATTERN = '/\b(?:DELETE\s+FROM|FROM|JOIN|INTO|UPDATE)\s+([`"\[]?\w+[`"\]]?(?:\s*,\s*[`"\[]?\w+[`"\]]?)*)/i';
+
+    /**
      * Extract table names from a SQL query string.
      *
      * Parses FROM, JOIN, INTO, UPDATE, and DELETE FROM clauses to identify
@@ -35,97 +42,20 @@ final readonly class TableTagExtractor
      */
     public function extractTags(string $sql, ?array $queryBuilderContext = null): array
     {
+        if (preg_match_all(self::TABLE_PATTERN, $sql, $matches) === 0) {
+            return [];
+        }
+
         $tables = [];
 
-        $tables = array_merge($tables, $this->extractFromClauses($sql));
-        $tables = array_merge($tables, $this->extractJoinClauses($sql));
-        $tables = array_merge($tables, $this->extractInsertInto($sql));
-        $tables = array_merge($tables, $this->extractUpdate($sql));
-        $tables = array_merge($tables, $this->extractDeleteFrom($sql));
-
-        return array_values(array_unique($tables));
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function extractFromClauses(string $sql): array
-    {
-        $tables = [];
-
-        if (preg_match_all('/\bFROM\s+([`"\[]?\w+[`"\]]?(?:\s*,\s*[`"\[]?\w+[`"\]]?)*)/i', $sql, $matches)) {
-            foreach ($matches[1] as $match) {
-                foreach (explode(',', $match) as $table) {
-                    $tables[] = $this->cleanTableName(trim($table));
-                }
+        foreach ($matches[1] as $match) {
+            foreach (explode(',', $match) as $table) {
+                $name = $this->cleanTableName(trim($table));
+                $tables[$name] = true;
             }
         }
 
-        return $tables;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function extractJoinClauses(string $sql): array
-    {
-        $tables = [];
-
-        if (preg_match_all('/\bJOIN\s+([`"\[]?\w+[`"\]]?)/i', $sql, $matches)) {
-            foreach ($matches[1] as $table) {
-                $tables[] = $this->cleanTableName($table);
-            }
-        }
-
-        return $tables;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function extractInsertInto(string $sql): array
-    {
-        $tables = [];
-
-        if (preg_match_all('/\bINTO\s+([`"\[]?\w+[`"\]]?)/i', $sql, $matches)) {
-            foreach ($matches[1] as $table) {
-                $tables[] = $this->cleanTableName($table);
-            }
-        }
-
-        return $tables;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function extractUpdate(string $sql): array
-    {
-        $tables = [];
-
-        if (preg_match_all('/\bUPDATE\s+([`"\[]?\w+[`"\]]?)/i', $sql, $matches)) {
-            foreach ($matches[1] as $table) {
-                $tables[] = $this->cleanTableName($table);
-            }
-        }
-
-        return $tables;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function extractDeleteFrom(string $sql): array
-    {
-        $tables = [];
-
-        if (preg_match_all('/\bDELETE\s+FROM\s+([`"\[]?\w+[`"\]]?)/i', $sql, $matches)) {
-            foreach ($matches[1] as $table) {
-                $tables[] = $this->cleanTableName($table);
-            }
-        }
-
-        return $tables;
+        return array_keys($tables);
     }
 
     private function cleanTableName(string $name): string

@@ -18,7 +18,6 @@ use function file_put_contents;
 use function is_array;
 use function json_decode;
 use function json_encode;
-use function json_validate;
 use function sprintf;
 
 use const JSON_PRETTY_PRINT;
@@ -103,10 +102,6 @@ final class FileFlagStorage implements FlagStorageInterface
 
         $content = file_get_contents($this->filePath)
             ?: throw FeatureFlagException::storageError(sprintf('Cannot read file: %s', $this->filePath));
-
-        if (!json_validate($content)) {
-            throw FeatureFlagException::storageError(sprintf('Invalid JSON in %s', $this->filePath));
-        }
 
         try {
             $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);

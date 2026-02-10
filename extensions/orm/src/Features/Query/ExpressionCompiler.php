@@ -10,7 +10,6 @@ use Pulsar\Extension\Orm\Domain\RawExpression;
 use Pulsar\Extension\Orm\Internal\Support\BindingCounter;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 
-use function array_merge;
 use function implode;
 use function sprintf;
 
@@ -120,7 +119,9 @@ final readonly class ExpressionCompiler
         $bindings = [];
         foreach ($expressions as $expr) {
             $sqls[] = $expr->sql;
-            $bindings = array_merge($bindings, $expr->bindings);
+            foreach ($expr->bindings as $param => $value) {
+                $bindings[$param] = $value;
+            }
         }
 
         return new Expression(
@@ -140,7 +141,9 @@ final readonly class ExpressionCompiler
         $bindings = [];
         foreach ($expressions as $expr) {
             $sqls[] = $expr->sql;
-            $bindings = array_merge($bindings, $expr->bindings);
+            foreach ($expr->bindings as $param => $value) {
+                $bindings[$param] = $value;
+            }
         }
 
         return new Expression(
