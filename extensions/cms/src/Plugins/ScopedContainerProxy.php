@@ -19,9 +19,7 @@ use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use RuntimeException;
 
 use function array_key_exists;
-use function array_merge;
-use function array_unique;
-use function array_values;
+use function array_keys;
 use function in_array;
 
 /**
@@ -128,21 +126,28 @@ final readonly class ScopedContainerProxy
      */
     private static function resolveAllowedServices(array $capabilities): array
     {
-        $services = self::BASE_SERVICES;
+        $seen = [];
+        foreach (self::BASE_SERVICES as $service) {
+            $seen[$service] = true;
+        }
 
         foreach ($capabilities as $capability) {
             if (array_key_exists($capability, self::CAPABILITY_SERVICES)) {
-                $services = array_merge($services, self::CAPABILITY_SERVICES[$capability]);
+                foreach (self::CAPABILITY_SERVICES[$capability] as $service) {
+                    $seen[$service] = true;
+                }
             }
         }
 
         // When no capabilities are declared, grant all capability services for backwards compatibility
         if ($capabilities === []) {
             foreach (self::CAPABILITY_SERVICES as $capabilityServices) {
-                $services = array_merge($services, $capabilityServices);
+                foreach ($capabilityServices as $service) {
+                    $seen[$service] = true;
+                }
             }
         }
 
-        return array_values(array_unique($services));
+        return array_keys($seen);
     }
 }

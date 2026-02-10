@@ -7,7 +7,7 @@ namespace Pulsar\Auth\Authorization;
 use Override;
 
 use function array_key_exists;
-use function array_merge;
+use function array_push;
 
 /**
  * In-memory role registry, typically populated from configuration.
@@ -30,7 +30,7 @@ final class InMemoryRoleRegistry implements RoleRegistryInterface
 
         foreach ($roleNames as $roleName) {
             if (array_key_exists($roleName, $this->roles)) {
-                $permissions = array_merge($permissions, $this->roles[$roleName]->permissions);
+                array_push($permissions, ...$this->roles[$roleName]->permissions);
             }
         }
 

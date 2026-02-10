@@ -99,7 +99,7 @@ final class PreloadGenerator
         $classes = [];
 
         // Core classes always preloaded
-        $corePatterns = [
+        $this->collectExistingFiles($classes, $basePath, [
             'src/Core/Kernel.php',
             'src/Core/Version.php',
             'src/Container/Container.php',
@@ -109,51 +109,27 @@ final class PreloadGenerator
             'src/Routing/MatchedRoute.php',
             'src/Http/Middleware/MiddlewarePipeline.php',
             'src/Config/ConfigRepository.php',
-        ];
-
-        foreach ($corePatterns as $pattern) {
-            $filePath = $basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $pattern);
-
-            if (is_file($filePath)) {
-                $classes[] = $filePath;
-            }
-        }
+        ]);
 
         // For FPM: add more classes since every request is cold
         if ($runtime === RuntimeType::Fpm) {
-            $fpmPatterns = [
+            $this->collectExistingFiles($classes, $basePath, [
                 'src/Http/Message/ServerRequest.php',
                 'src/Http/Message/Response.php',
                 'src/Http/ResponseEmitter.php',
                 'src/Console/Command.php',
                 'src/Config/ConfigManager.php',
                 'src/ErrorHandling/ExceptionHandler.php',
-            ];
-
-            foreach ($fpmPatterns as $pattern) {
-                $filePath = $basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $pattern);
-
-                if (is_file($filePath)) {
-                    $classes[] = $filePath;
-                }
-            }
+            ]);
         }
 
         // For persistent runtimes: focus on container/routing (warm container reuse)
         if ($runtime !== RuntimeType::Fpm) {
-            $persistentPatterns = [
+            $this->collectExistingFiles($classes, $basePath, [
                 'src/Runtime/PersistentRuntime.php',
                 'src/Runtime/Hygiene/PersistentRuntimeHygiene.php',
                 'src/Container/Compiled/CompiledContainer.php',
-            ];
-
-            foreach ($persistentPatterns as $pattern) {
-                $filePath = $basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $pattern);
-
-                if (is_file($filePath)) {
-                    $classes[] = $filePath;
-                }
-            }
+            ]);
         }
 
         // Also preload any classes referenced in the compiled container
@@ -194,6 +170,23 @@ final class PreloadGenerator
         }
 
         return $files;
+    }
+
+    /**
+     * Collect existing files from a list of relative patterns into the target array.
+     *
+     * @param list<string> $target Collected file paths (modified in-place)
+     * @param list<string> $patterns Relative file paths (forward-slash separated)
+     */
+    private function collectExistingFiles(array &$target, string $basePath, array $patterns): void
+    {
+        foreach ($patterns as $pattern) {
+            $filePath = $basePath . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $pattern);
+
+            if (is_file($filePath)) {
+                $target[] = $filePath;
+            }
+        }
     }
 
     /**

@@ -16,11 +16,7 @@ use function dirname;
 use function hash_file;
 use function is_dir;
 use function is_file;
-use function ltrim;
 use function str_replace;
-use function str_starts_with;
-use function strlen;
-use function substr;
 
 use const DIRECTORY_SEPARATOR;
 
@@ -33,6 +29,8 @@ use const DIRECTORY_SEPARATOR;
 #[Internal]
 final readonly class ManifestVerifier implements ManifestVerifierInterface
 {
+    use BasePathResolveTrait;
+
     public function __construct(
         private string $basePath,
     ) {}
@@ -187,20 +185,4 @@ final readonly class ManifestVerifier implements ManifestVerifierInterface
         return $currentFiles;
     }
 
-    /**
-     * Convert an absolute path to a path relative to the base directory.
-     *
-     * Uses forward slashes for consistent cross-platform paths.
-     */
-    private function toRelativePath(string $absolutePath): string
-    {
-        $normalized = str_replace('\\', '/', $absolutePath);
-        $normalizedBase = str_replace('\\', '/', $this->basePath);
-
-        if (str_starts_with($normalized, $normalizedBase . '/')) {
-            return ltrim(substr($normalized, strlen($normalizedBase)), '/');
-        }
-
-        return $normalized;
-    }
 }

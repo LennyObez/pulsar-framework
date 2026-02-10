@@ -16,16 +16,24 @@ use function array_reverse;
  * Middleware is applied in FIFO order: the first middleware added is the
  * outermost layer. The pipeline builds a nested closure chain and invokes
  * it with the given envelope.
+ *
+ * The middleware list is reversed once at construction so that process()
+ * can iterate without allocating a reversed copy on every call.
  */
 #[Internal(reason: 'Pipeline orchestration is an implementation detail of the queue system')]
 final readonly class MiddlewarePipeline
 {
+    /** @var list<JobMiddlewareInterface> Middleware in reversed (nesting) order. */
+    private array $reversed;
+
     /**
      * @param list<JobMiddlewareInterface> $middleware Middleware in execution order.
      */
     public function __construct(
         private array $middleware = [],
-    ) {}
+    ) {
+        $this->reversed = array_reverse($this->middleware);
+    }
 
     /**
      * Send the envelope through the middleware chain, terminating with the given handler.
@@ -34,12 +42,10 @@ final readonly class MiddlewarePipeline
      */
     public function process(JobEnvelope $envelope, Closure $destination): mixed
     {
-        $pipeline = array_reverse($this->middleware);
-
         /** @var Closure(JobEnvelope): mixed $next */
         $next = $destination;
 
-        foreach ($pipeline as $layer) {
+        foreach ($this->reversed as $layer) {
             $next = static fn(JobEnvelope $e): mixed => $layer->handle($e, $next);
         }
 

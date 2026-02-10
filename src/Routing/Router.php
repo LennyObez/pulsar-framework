@@ -9,8 +9,8 @@ use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Binding\ExplicitBinding;
 
+use function array_values;
 use function count;
-use function in_array;
 use function sprintf;
 
 /**
@@ -268,16 +268,15 @@ final class Router implements RouterInterface
         }
 
         if ($pathMatches !== []) {
-            $allowedMethods = [];
+            $allowedMethodsMap = [];
+
             foreach ($pathMatches as $route) {
                 foreach ($route->methods as $m) {
-                    if (!in_array($m, $allowedMethods, true)) {
-                        $allowedMethods[] = $m;
-                    }
+                    $allowedMethodsMap[$m->value] = $m;
                 }
             }
 
-            throw RoutingException::methodNotAllowed($path, $method, $allowedMethods);
+            throw RoutingException::methodNotAllowed($path, $method, array_values($allowedMethodsMap));
         }
 
         throw RoutingException::notFound($path);
@@ -333,9 +332,18 @@ final class Router implements RouterInterface
 
         $path = $route->path;
 
-        foreach ($parameters as $key => $value) {
-            $path = str_replace('{' . $key . '}', $value, $path);
-            $path = str_replace('{' . $key . '?}', $value, $path);
+        if ($parameters !== []) {
+            $search = [];
+            $replace = [];
+
+            foreach ($parameters as $key => $value) {
+                $search[] = '{' . $key . '}';
+                $search[] = '{' . $key . '?}';
+                $replace[] = $value;
+                $replace[] = $value;
+            }
+
+            $path = str_replace($search, $replace, $path);
         }
 
         // Remove unfilled optional parameters

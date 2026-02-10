@@ -11,11 +11,10 @@ use function dirname;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
-use function filemtime;
-use function filesize;
 use function is_dir;
 use function is_file;
 use function mkdir;
+use function stat;
 use function str_contains;
 use function str_starts_with;
 use function strlen;
@@ -168,10 +167,16 @@ final readonly class LocalStorageAdapter implements StorageAdapterInterface
             $relativeKey = substr($fullPath, strlen($basePath) + 1);
             $relativeKey = str_replace('\\', '/', $relativeKey);
 
+            $fileStat = @stat($fullPath);
+
+            if ($fileStat === false) {
+                continue;
+            }
+
             $objects[] = new StorageObject(
                 key: $relativeKey,
-                size: (int) filesize($fullPath),
-                lastModified: (int) filemtime($fullPath),
+                size: $fileStat['size'],
+                lastModified: $fileStat['mtime'],
             );
         }
     }

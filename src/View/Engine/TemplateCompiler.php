@@ -12,7 +12,6 @@ use Pulsar\View\ViewException;
 use function array_key_exists;
 use function ctype_alpha;
 use function explode;
-use function file_exists;
 use function file_get_contents;
 use function implode;
 use function is_file;
@@ -128,18 +127,12 @@ final class TemplateCompiler
     #[NoDiscard]
     public function resolve(string $templateName): string
     {
-        // Strip namespace prefix (e.g., 'cms::admin.layout' → 'admin.layout')
-        if (str_contains($templateName, '::')) {
-            $parts = explode('::', $templateName, 2);
-            $templateName = $parts[1] ?? $templateName;
-        }
-
-        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $templateName) . '.pulsar.php';
+        $relativePath = $this->toRelativePath($templateName);
 
         foreach ($this->config->templatePaths as $basePath) {
             $fullPath = $basePath . DIRECTORY_SEPARATOR . $relativePath;
 
-            if (is_file($fullPath) && file_exists($fullPath)) {
+            if (is_file($fullPath)) {
                 return $fullPath;
             }
         }
@@ -155,13 +148,7 @@ final class TemplateCompiler
     #[NoDiscard]
     public function exists(string $templateName): bool
     {
-        // Strip namespace prefix (e.g., 'cms::admin.layout' → 'admin.layout')
-        if (str_contains($templateName, '::')) {
-            $parts = explode('::', $templateName, 2);
-            $templateName = $parts[1] ?? $templateName;
-        }
-
-        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $templateName) . '.pulsar.php';
+        $relativePath = $this->toRelativePath($templateName);
 
         foreach ($this->config->templatePaths as $basePath) {
             $fullPath = $basePath . DIRECTORY_SEPARATOR . $relativePath;
@@ -172,6 +159,21 @@ final class TemplateCompiler
         }
 
         return false;
+    }
+
+    /**
+     * Convert a dot-notation template name to a relative filesystem path.
+     *
+     * Strips namespace prefixes (e.g., 'cms::admin.layout' → 'admin/layout.pulsar.php').
+     */
+    private function toRelativePath(string $templateName): string
+    {
+        if (str_contains($templateName, '::')) {
+            $parts = explode('::', $templateName, 2);
+            $templateName = $parts[1] ?? $templateName;
+        }
+
+        return str_replace('.', DIRECTORY_SEPARATOR, $templateName) . '.pulsar.php';
     }
 
     /**

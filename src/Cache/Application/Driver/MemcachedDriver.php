@@ -8,9 +8,8 @@ use Memcached;
 use Pulsar\Api\Internal;
 use Throwable;
 
-use function array_combine;
+use function array_fill_keys;
 use function array_keys;
-use function array_map;
 use function is_string;
 use function time;
 
@@ -51,7 +50,7 @@ final class MemcachedDriver extends AbstractCacheDriver
         $values = $this->memcached->getMulti($keys);
 
         if ($values === false) {
-            return array_combine($keys, array_map(static fn(string $_): null => null, $keys));
+            return array_fill_keys($keys, null);
         }
 
         $result = [];

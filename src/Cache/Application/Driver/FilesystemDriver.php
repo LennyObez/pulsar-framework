@@ -119,18 +119,10 @@ final class FilesystemDriver extends AbstractCacheDriver
         }
 
         foreach ($shardDirs as $shardDir) {
-            if (!is_dir($shardDir)) {
-                continue;
-            }
+            $files = @glob($shardDir . DIRECTORY_SEPARATOR . '*', GLOB_NOSORT);
 
-            $files = glob($shardDir . DIRECTORY_SEPARATOR . '*', GLOB_NOSORT);
-
-            if ($files === false) {
-                continue;
-            }
-
-            foreach ($files as $file) {
-                if (is_file($file)) {
+            if ($files !== false) {
+                foreach ($files as $file) {
                     @unlink($file);
                 }
             }

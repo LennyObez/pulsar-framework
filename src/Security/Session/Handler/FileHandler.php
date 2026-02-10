@@ -108,8 +108,10 @@ final class FileHandler implements SessionHandlerInterface
         $deleted = 0;
 
         foreach ($files as $file) {
-            if (is_file($file) && filemtime($file) < $threshold) {
-                if (unlink($file)) {
+            $mtime = @filemtime($file);
+
+            if ($mtime !== false && $mtime < $threshold) {
+                if (@unlink($file)) {
                     $deleted++;
                 }
             }
