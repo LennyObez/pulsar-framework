@@ -17,10 +17,13 @@ use Pulsar\Extensibility\ExtensionLifecycle;
 use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\ExtensionRegistry;
 use Pulsar\Http\Method;
+use Pulsar\Introspection\Data\CommandEntry;
+use Pulsar\Introspection\Data\ExtensionEntry;
 use Pulsar\Introspection\Internal\CoreRuntimeProbe;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 use ReflectionClass;
+use Throwable;
 
 #[CoversClass(CoreRuntimeProbe::class)]
 final class CoreRuntimeProbeTest extends TestCase
@@ -49,11 +52,46 @@ final class CoreRuntimeProbeTest extends TestCase
         $registry = new ExtensionRegistry();
         $registry->add($extension, $manifest, ExtensionLifecycle::Booted);
 
+        $extensionProber = static function () use ($registry): array {
+            $extensions = $registry->all();
+            $manifests = $registry->allManifests();
+            $entries = [];
+
+            foreach ($extensions as $name => $_extension) {
+                $manifest = $manifests[$name] ?? null;
+                $state = 'unknown';
+
+                try {
+                    $state = $registry->getState($name)->value;
+                } catch (Throwable) {
+                    // Swallow
+                }
+
+                $provides = [];
+                $dependencies = [];
+
+                if ($manifest !== null) {
+                    $provides = $manifest->provides->services;
+                    $dependencies = $manifest->getDependencies();
+                }
+
+                $entries[] = new ExtensionEntry(
+                    name: $name,
+                    version: $manifest->version ?? 'unknown',
+                    state: $state,
+                    provides: $provides,
+                    dependencies: $dependencies,
+                );
+            }
+
+            return $entries;
+        };
+
         $probe = new CoreRuntimeProbe(
             container: $container,
-            extensionRegistry: $registry,
+            extensionProber: $extensionProber,
             router: null,
-            consoleApplication: null,
+            commandProber: null,
         );
 
         $warnings = [];
@@ -84,9 +122,9 @@ final class CoreRuntimeProbeTest extends TestCase
 
         $probe = new CoreRuntimeProbe(
             container: $container,
-            extensionRegistry: null,
+            extensionProber: null,
             router: null,
-            consoleApplication: null,
+            commandProber: null,
         );
 
         $warnings = [];
@@ -120,9 +158,9 @@ final class CoreRuntimeProbeTest extends TestCase
 
         $probe = new CoreRuntimeProbe(
             container: $container,
-            extensionRegistry: null,
+            extensionProber: null,
             router: $router,
-            consoleApplication: null,
+            commandProber: null,
         );
 
         $warnings = [];
@@ -157,19 +195,43 @@ final class CoreRuntimeProbeTest extends TestCase
             }
         };
 
-        // Application and Kernel are both final — use Reflection to bypass constructor
+        // Application is #[Internal] — build a closure as the composition root does
         $reflection = new ReflectionClass(Application::class);
         $app = $reflection->newInstanceWithoutConstructor();
         $app->add($command);
+
+        $commandProber = static function () use ($app): array {
+            $commands = $app->all();
+            $entries = [];
+
+            foreach ($commands as $cmd) {
+                $arguments = [];
+                $options = [];
+
+                if ($cmd instanceof Command) {
+                    $arguments = $cmd->arguments;
+                    $options = $cmd->options;
+                }
+
+                $entries[] = new CommandEntry(
+                    name: $cmd->name,
+                    description: $cmd->description,
+                    arguments: $arguments,
+                    options: $options,
+                );
+            }
+
+            return $entries;
+        };
 
         $container = self::createStub(ContainerInterface::class);
         $container->method('getBindings')->willReturn([]);
 
         $probe = new CoreRuntimeProbe(
             container: $container,
-            extensionRegistry: null,
+            extensionProber: null,
             router: null,
-            consoleApplication: $app,
+            commandProber: $commandProber,
         );
 
         $warnings = [];
@@ -195,9 +257,9 @@ final class CoreRuntimeProbeTest extends TestCase
 
         $probe = new CoreRuntimeProbe(
             container: $container,
-            extensionRegistry: null,
+            extensionProber: null,
             router: null,
-            consoleApplication: null,
+            commandProber: null,
         );
 
         $warnings = [];

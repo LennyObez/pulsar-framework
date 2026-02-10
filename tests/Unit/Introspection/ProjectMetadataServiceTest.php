@@ -41,9 +41,9 @@ final class ProjectMetadataServiceTest extends TestCase
 
         return new CoreRuntimeProbe(
             container: $container,
-            extensionRegistry: null,
+            extensionProber: null,
             router: null,
-            consoleApplication: null,
+            commandProber: null,
         );
     }
 

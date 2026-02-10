@@ -14,10 +14,8 @@ use function is_string;
 use function preg_match;
 
 use Pulsar\Api\Internal;
-use Pulsar\Console\Application;
 use Pulsar\Console\Command;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Extensibility\ExtensionRegistry;
 use Pulsar\Http\Method;
 use Pulsar\Introspection\Data\ArchitectureMapData;
 use Pulsar\Introspection\Data\CommandEntry;
@@ -36,6 +34,11 @@ use Throwable;
  * Only exposes FQCN-like binding keys, route handler class::method
  * references, and extension names/versions — never config values,
  * secrets, or absolute file paths.
+ *
+ * ExtensionRegistry and Console\Application are #[Internal] in their
+ * modules. To avoid cross-module boundary violations, this probe accepts
+ * closures that extract the data, created in the composition root
+ * (IntrospectionWiring) where cross-module internal access is permitted.
  */
 #[Internal]
 final readonly class CoreRuntimeProbe
@@ -43,11 +46,17 @@ final readonly class CoreRuntimeProbe
     /** Matches FQCN-like binding keys only (no service locator keys like db.password). */
     private const string FQCN_PATTERN = '~^\\\\?[A-Za-z_][A-Za-z0-9_]*(?:\\\\[A-Za-z_][A-Za-z0-9_]*)*$~';
 
+    /**
+     * @param ContainerInterface $container
+     * @param (Closure(): list<ExtensionEntry>)|null $extensionProber Closure that extracts extension entries from the registry
+     * @param RouterInterface|null $router
+     * @param (Closure(): list<CommandEntry>)|null $commandProber Closure that extracts command entries from the console application
+     */
     public function __construct(
         private ContainerInterface $container,
-        private ?ExtensionRegistry $extensionRegistry,
+        private ?Closure $extensionProber,
         private ?RouterInterface $router,
-        private ?Application $consoleApplication,
+        private ?Closure $commandProber,
     ) {}
 
     /**
@@ -111,37 +120,18 @@ final readonly class CoreRuntimeProbe
      */
     public function probeCommands(array &$warnings): CommandReferenceData
     {
-        if ($this->consoleApplication === null) {
+        if ($this->commandProber === null) {
             $warnings[] = 'Console Application not available — command reference is empty.';
 
             return new CommandReferenceData();
         }
 
         try {
-            $commands = $this->consoleApplication->all();
+            $entries = ($this->commandProber)();
         } catch (Throwable $e) {
             $warnings[] = 'Failed to probe commands: ' . $e->getMessage();
 
             return new CommandReferenceData();
-        }
-
-        $entries = [];
-
-        foreach ($commands as $command) {
-            $arguments = [];
-            $options = [];
-
-            if ($command instanceof Command) {
-                $arguments = $command->arguments;
-                $options = $command->options;
-            }
-
-            $entries[] = new CommandEntry(
-                name: $command->name,
-                description: $command->description,
-                arguments: $arguments,
-                options: $options,
-            );
         }
 
         return new CommandReferenceData(commands: $entries);
@@ -154,51 +144,19 @@ final readonly class CoreRuntimeProbe
      */
     private function probeExtensions(array &$warnings): array
     {
-        if ($this->extensionRegistry === null) {
+        if ($this->extensionProber === null) {
             $warnings[] = 'ExtensionRegistry not available — extension list is empty.';
 
             return [];
         }
 
         try {
-            $extensions = $this->extensionRegistry->all();
-            $manifests = $this->extensionRegistry->allManifests();
+            return ($this->extensionProber)();
         } catch (Throwable $e) {
             $warnings[] = 'Failed to probe extensions: ' . $e->getMessage();
 
             return [];
         }
-
-        $entries = [];
-
-        foreach ($extensions as $name => $extension) {
-            $manifest = $manifests[$name] ?? null;
-            $state = 'unknown';
-
-            try {
-                $state = $this->extensionRegistry->getState($name)->value;
-            } catch (Throwable) {
-                // Swallow — state unavailable
-            }
-
-            $provides = [];
-            $dependencies = [];
-
-            if ($manifest !== null) {
-                $provides = $manifest->provides->services;
-                $dependencies = $manifest->getDependencies();
-            }
-
-            $entries[] = new ExtensionEntry(
-                name: $name,
-                version: $manifest->version ?? 'unknown',
-                state: $state,
-                provides: $provides,
-                dependencies: $dependencies,
-            );
-        }
-
-        return $entries;
     }
 
     /**
