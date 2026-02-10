@@ -690,6 +690,16 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Concurrency\\FanOut": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Concurrency\\FanOutResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\ApiConfig": {
       "since": "1.0.0",
       "methods": [],
@@ -1675,6 +1685,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Extensibility\\EnvironmentInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException": {
       "since": "1.0.0",
       "methods": [],
@@ -2566,6 +2581,36 @@
       "constants": []
     },
     "Pulsar\\I18n\\LocaleNegotiatorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\HreflangLink": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\LocaleUrlGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\LocaleUrlResolverInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\LocaleUrlStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\RouteBasedLocaleUrlResolver": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\I18n\\Locale\\UrlPrefixExtractor": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -3980,6 +4025,21 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Security\\Crypto\\AesGcmCipherSuite": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\CipherSuiteInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\CompositeKeyProvider": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Security\\Crypto\\Encryptor": {
       "since": "1.0.0",
       "methods": [],
@@ -4011,6 +4071,11 @@
       "constants": []
     },
     "Pulsar\\Security\\Crypto\\MasterKey": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\SodiumCipherSuite": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -4395,6 +4460,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\View\\Engine\\TemplateLocaleHelper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\View\\Escaping\\AttributeEscaper": {
       "since": "1.0.0",
       "methods": [],
@@ -4668,6 +4738,7 @@
     "Pulsar\\I18n\\Linter\\LintSeverity",
     "Pulsar\\I18n\\Locale\\LocaleMiddleware",
     "Pulsar\\I18n\\Locale\\LocaleNegotiator",
+    "Pulsar\\I18n\\Locale\\LocalePrefixMiddleware",
     "Pulsar\\I18n\\Translator",
     "Pulsar\\Integrity\\ManifestBuilder",
     "Pulsar\\Integrity\\ManifestSigner",

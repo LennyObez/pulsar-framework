@@ -21,32 +21,32 @@ $typedSitemapErrors = $sitemapErrors ?? [];
 ?>
 <div class="explorer">
     <div class="explorer-header">
-        <h2>SEO Health Report</h2>
+        <h2>SEO health report</h2>
     </div>
 
     <div class="metrics-row">
         <div class="metric-card" <?= $typedBrokenLinkCount > 0 ? 'style="border-color:var(--studio-red)"' : 'style="border-color:var(--studio-green)"' ?>>
-            <div class="metric-label">Broken Links</div>
+            <div class="metric-label">Broken links</div>
             <div class="metric-value" style="color:<?= $typedBrokenLinkCount > 0 ? 'var(--studio-red)' : 'var(--studio-green)' ?>"
                 aria-label="<?= $typedBrokenLinkCount ?> broken links"><?= $typedBrokenLinkCount ?></div>
         </div>
         <div class="metric-card" <?= $typedOrphanContentCount > 0 ? 'style="border-color:var(--studio-yellow)"' : 'style="border-color:var(--studio-green)"' ?>>
-            <div class="metric-label">Orphan Content</div>
+            <div class="metric-label">Orphan content</div>
             <div class="metric-value" style="color:<?= $typedOrphanContentCount > 0 ? 'var(--studio-yellow)' : 'var(--studio-green)' ?>"
                 aria-label="<?= $typedOrphanContentCount ?> orphan pages"><?= $typedOrphanContentCount ?></div>
         </div>
         <div class="metric-card">
-            <div class="metric-label">Sitemap Entries</div>
+            <div class="metric-label">Sitemap entries</div>
             <div class="metric-value" aria-label="<?= $typedSitemapEntryCount ?> sitemap entries"><?= $typedSitemapEntryCount ?></div>
         </div>
     </div>
 
     <?php /* Sitemap Status */ ?>
     <div class="card">
-        <h3>Sitemap Status</h3>
+        <h3>Sitemap status</h3>
         <dl style="margin:0">
             <div style="display:flex;justify-content:space-between;padding:var(--studio-space-sm) 0;border-bottom:1px solid var(--studio-border)">
-                <dt style="color:var(--studio-text-muted)">Last Generated</dt>
+                <dt style="color:var(--studio-text-muted)">Last generated</dt>
                 <dd style="margin:0;font-weight:500">
                     <?php if ($typedSitemapLastGenerated !== null): ?>
                         <time datetime="<?= htmlspecialchars($typedSitemapLastGenerated, ENT_QUOTES, 'UTF-8') ?>">
@@ -78,7 +78,7 @@ $typedSitemapErrors = $sitemapErrors ?? [];
 
     <?php /* Broken Links */ ?>
     <div class="card">
-        <h3>Broken Links
+        <h3>Broken links
             <?php if ($typedBrokenLinkCount > 0): ?>
                 <span class="badge" style="background:var(--studio-red)" aria-label="<?= $typedBrokenLinkCount ?> broken links"><?= $typedBrokenLinkCount ?></span>
             <?php endif; ?>
@@ -133,7 +133,7 @@ $typedSitemapErrors = $sitemapErrors ?? [];
 
     <?php /* Orphan Content */ ?>
     <div class="card">
-        <h3>Orphan Content
+        <h3>Orphan content
             <?php if ($typedOrphanContentCount > 0): ?>
                 <span class="badge" style="background:var(--studio-yellow)" aria-label="<?= $typedOrphanContentCount ?> orphan pages"><?= $typedOrphanContentCount ?></span>
             <?php endif; ?>

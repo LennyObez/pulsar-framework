@@ -87,14 +87,14 @@ final readonly class EnvelopeSerializer
      */
     public function deserialize(string $json): JobEnvelope
     {
-        $data = json_decode($json, true, 64, JSON_THROW_ON_ERROR);
+        $raw = json_decode($json, true, 64, JSON_THROW_ON_ERROR);
 
-        if (!is_array($data)) {
+        if (!is_array($raw)) {
             throw QueueException::invalidEnvelope('decoded value is not an object');
         }
 
-        /** @var array<string, mixed> $data — PHPStan type narrowing (is_array only narrows to array) */
-        $data = $data;
+        /** @var array<string, mixed> $data */
+        $data = $raw;
 
         foreach (self::REQUIRED_FIELDS as $field) {
             if (!array_key_exists($field, $data)) {

@@ -23,15 +23,6 @@ final readonly class DbMenuRepository implements MenuRepositoryInterface
             AND COALESCE(m.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
-    private const string SQL_FIND_ITEMS = <<<'SQL'
-        SELECT mi.*, mit.label, mit.title_attr
-        FROM cms_menu_items mi
-        LEFT JOIN cms_menu_item_translations mit
-            ON mit.menu_item_id = mi.id AND mit.locale = :locale
-        WHERE mi.menu_id = :menu_id
-        ORDER BY mi.parent_id NULLS FIRST, mi.sort_order ASC
-        SQL;
-
     private const string SQL_UPSERT_MENU = <<<'SQL'
         INSERT INTO cms_menus (id, tenant_id, location, created_at)
         VALUES (:id, :tenant_id, :location, :created_at)

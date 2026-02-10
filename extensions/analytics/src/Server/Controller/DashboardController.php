@@ -81,7 +81,6 @@ final readonly class DashboardController
         };
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => $contentType,
                 'Cache-Control' => 'public, max-age=86400',

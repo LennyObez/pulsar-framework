@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http\Message;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -11,8 +12,6 @@ use Pulsar\Http\Message\Stream;
 use RuntimeException;
 
 use function file_put_contents;
-use InvalidArgumentException;
-
 use function fopen;
 use function fwrite;
 use function rewind;

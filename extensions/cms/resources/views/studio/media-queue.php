@@ -25,7 +25,7 @@ $activeEntries = $tabs[$typedActiveTab]['entries'] ?? $typedPending;
 ?>
 <div class="explorer">
     <div class="explorer-header">
-        <h2>Media Processing Queue
+        <h2>Media processing queue
             <?php if ($typedPendingCount > 0): ?>
                 <span class="badge" aria-label="<?= $typedPendingCount ?> pending jobs"><?= $typedPendingCount ?></span>
             <?php endif; ?>
@@ -59,7 +59,7 @@ $activeEntries = $tabs[$typedActiveTab]['entries'] ?? $typedPending;
                     <thead>
                         <tr>
                             <th scope="col">Asset</th>
-                            <th scope="col">Derivative Type</th>
+                            <th scope="col">Derivative type</th>
                             <th scope="col">Status</th>
                             <th scope="col">Created</th>
                             <?php if ($typedActiveTab === 'completed'): ?>

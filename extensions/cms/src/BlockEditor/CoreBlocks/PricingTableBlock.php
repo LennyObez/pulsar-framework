@@ -90,7 +90,7 @@ final readonly class PricingTableBlock implements BlockTypeInterface
 
             if (is_array($features)) {
                 foreach ($features as $feature) {
-                    $html .= '<li>' . htmlspecialchars((string) $feature, ENT_QUOTES, 'UTF-8') . '</li>';
+                    $html .= '<li>' . htmlspecialchars($feature, ENT_QUOTES, 'UTF-8') . '</li>';
                 }
             }
 

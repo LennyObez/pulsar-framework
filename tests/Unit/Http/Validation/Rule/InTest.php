@@ -14,7 +14,7 @@ use Pulsar\Http\Validation\Rule\In;
 final class InTest extends TestCase
 {
     /**
-     * @return iterable<string, array{list<mixed>, mixed}>
+     * @return iterable<string, array{list<string|int|float>, mixed}>
      */
     public static function allowedValueProvider(): iterable
     {
@@ -26,7 +26,7 @@ final class InTest extends TestCase
     }
 
     /**
-     * @param list<mixed> $allowed
+     * @param list<string|int|float> $allowed
      */
     #[Test]
     #[DataProvider('allowedValueProvider')]
@@ -37,7 +37,7 @@ final class InTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{list<mixed>, mixed}>
+     * @return iterable<string, array{list<string|int|float>, mixed}>
      */
     public static function disallowedValueProvider(): iterable
     {
@@ -49,7 +49,7 @@ final class InTest extends TestCase
     }
 
     /**
-     * @param list<mixed> $allowed
+     * @param list<string|int|float> $allowed
      */
     #[Test]
     #[DataProvider('disallowedValueProvider')]

@@ -67,7 +67,7 @@ final readonly class MediaController
         );
 
         $data = [
-            'data' => array_map(static fn(MediaAsset $a) => [
+            'items' => array_map(static fn(MediaAsset $a) => [
                 'id' => $a->id,
                 'filename' => $a->filename,
                 'mime_type' => $a->mimeType,

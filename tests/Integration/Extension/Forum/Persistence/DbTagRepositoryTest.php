@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Integration\Extension\Forum\Persistence;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -263,7 +264,7 @@ final class DbTagRepositoryTest extends TestCase
 
     private function insertCategory(string $id, string $slug): void
     {
-        $now = (new \DateTimeImmutable())->format('c');
+        $now = new DateTimeImmutable()->format('c');
         $this->connection->execute(
             'INSERT INTO forum_categories (id, slug, created_at, updated_at) VALUES (:id, :slug, :now, :now)',
             ['id' => $id, 'slug' => $slug, 'now' => $now],
@@ -272,7 +273,7 @@ final class DbTagRepositoryTest extends TestCase
 
     private function insertThread(string $id, string $categoryId): void
     {
-        $now = (new \DateTimeImmutable())->format('c');
+        $now = new DateTimeImmutable()->format('c');
         $this->connection->execute(
             'INSERT INTO forum_threads (id, category_id, author_id, title, slug, ip_hash, user_agent_hash, created_at, updated_at) VALUES (:id, :cat, :author, :title, :slug, :ip, :ua, :now, :now)',
             [

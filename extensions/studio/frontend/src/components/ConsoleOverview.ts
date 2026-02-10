@@ -22,7 +22,7 @@ export function renderConsoleOverview(container: HTMLElement, payload: unknown):
     ${renderStudioNav('overview')}
     <div class="dashboard">
       <div class="dashboard-header">
-        <h1>Console Overview</h1>
+        <h1>Console overview</h1>
         <p>See your observability data in one place</p>
       </div>
       <div class="metrics-row">
@@ -74,7 +74,7 @@ function renderStatusBreakdown(byStatus: Record<string, number> | undefined): st
 
   return `
     <div class="card">
-      <h3>Status Breakdown</h3>
+      <h3>Status breakdown</h3>
       <div class="status-bar-container">
         <div class="status-bar-row">
           ${sortedEntries
@@ -108,7 +108,7 @@ function renderSlowRoutes(routes: DashboardData['slow_routes'] | undefined): str
 
   return `
     <div class="card">
-      <h3>Slow Routes (P95)</h3>
+      <h3>Slow routes (P95)</h3>
       <table class="data-table">
         <thead>
           <tr><th>Route</th><th>P95</th><th>Avg</th><th>Count</th></tr>
@@ -144,7 +144,7 @@ function renderSlowQueries(queries: DashboardData['slow_queries'] | undefined): 
 
   return `
     <div class="card">
-      <h3>Slow Queries (P95)</h3>
+      <h3>Slow queries (P95)</h3>
       <table class="data-table">
         <thead>
           <tr><th>SQL</th><th>P95</th><th>Avg</th><th>Count</th></tr>
@@ -183,7 +183,7 @@ function renderEventCounts(counts: Record<string, number> | undefined): string {
 
   return `
     <div class="card">
-      <h3>Event Counts</h3>
+      <h3>Event counts</h3>
       <div class="event-bar-chart">
         ${entries
           .map(([type, count]) => {
@@ -209,7 +209,7 @@ function renderTopExceptions(
 
   return `
     <div class="card">
-      <h3>Top Exceptions</h3>
+      <h3>Top exceptions</h3>
       <table class="data-table">
         <thead>
           <tr><th>Class</th><th>Count</th><th>Last Seen</th></tr>

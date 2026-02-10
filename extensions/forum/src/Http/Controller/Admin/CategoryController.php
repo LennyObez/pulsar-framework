@@ -154,7 +154,7 @@ final readonly class CategoryController
         }
 
         if (isset($body['is_locked'])) {
-            $category = ((bool) $body['is_locked']) ? $category->lock() : $category->unlock();
+            $category = $body['is_locked'] ? $category->lock() : $category->unlock();
         }
 
         $this->categoryRepository->save($category);

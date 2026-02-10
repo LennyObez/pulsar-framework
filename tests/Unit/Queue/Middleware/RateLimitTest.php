@@ -14,6 +14,7 @@ use Pulsar\Queue\Envelope\BackoffStrategy;
 use Pulsar\Queue\Envelope\JobEnvelope;
 use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\Middleware\RateLimit;
+use RuntimeException;
 
 #[CoversClass(RateLimit::class)]
 final class RateLimitTest extends TestCase
@@ -68,9 +69,9 @@ final class RateLimitTest extends TestCase
 
         try {
             $middleware->handle($envelope, static function (JobEnvelope $e): never {
-                throw new \RuntimeException('job failed');
+                throw new RuntimeException('job failed');
             });
-        } catch (\RuntimeException) {
+        } catch (RuntimeException) {
             // Expected
         }
     }

@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\StatsServiceInterface;
+use Pulsar\Extension\Analytics\Domain\BreakdownDimension;
 
 use function count;
 
@@ -45,7 +46,7 @@ final readonly class AnalyticsAdminWidget
                 $site->id,
                 $today,
                 $now,
-                \Pulsar\Extension\Analytics\Domain\BreakdownDimension::Page,
+                BreakdownDimension::Page,
                 1,
             );
 

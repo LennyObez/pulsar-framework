@@ -12,17 +12,16 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Forum\Category\Category;
 use Pulsar\Extension\Forum\Category\CategoryRepositoryInterface;
 use Pulsar\Extension\Forum\Config\ForumConfig;
-use Pulsar\Extension\Forum\Domain\ThreadStatus;
 use Pulsar\Extension\Forum\Domain\ThreadType;
 use Pulsar\Extension\Forum\Internal\Service\ForumService;
 use Pulsar\Extension\Forum\Internal\Service\TagService;
 use Pulsar\Extension\Forum\Tag\Tag;
 use Pulsar\Extension\Forum\Tag\TagRepositoryInterface;
-use Pulsar\Extension\Forum\Thread\Thread;
 
 use function array_filter;
+use function array_slice;
 use function array_values;
-use function count;
+use function in_array;
 use function usort;
 
 /**

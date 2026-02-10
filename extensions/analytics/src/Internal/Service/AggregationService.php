@@ -9,9 +9,6 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Extension\Analytics\Contracts\DailyStatsRepositoryInterface;
-use Pulsar\Extension\Analytics\Contracts\EventRepositoryInterface;
-use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
-use Pulsar\Extension\Analytics\Contracts\SessionRepositoryInterface;
 use Pulsar\Extension\Analytics\Domain\DailyStats;
 use Pulsar\Extension\Analytics\Domain\HourlyStats;
 use Pulsar\Extension\Analytics\Internal\Repository\DbHourlyStatsRepository;
@@ -324,9 +321,6 @@ final readonly class AggregationService
         SQL;
 
     public function __construct(
-        private PageViewRepositoryInterface $pageViewRepository,
-        private SessionRepositoryInterface $sessionRepository,
-        private EventRepositoryInterface $eventRepository,
         private DailyStatsRepositoryInterface $dailyStatsRepository,
         private DbHourlyStatsRepository $hourlyStatsRepository,
         private ConnectionInterface $connection,
@@ -334,7 +328,7 @@ final readonly class AggregationService
 
     public function aggregateHourly(DateTimeImmutable $hour, string $siteId): void
     {
-        $from = $hour->setTime((int) $hour->format('G'), 0, 0);
+        $from = $hour->setTime((int) $hour->format('G'), 0);
         $to = $from->modify('+1 hour');
 
         $result = $this->connection->query(self::SQL_HOURLY_AGGREGATE, [
@@ -352,7 +346,7 @@ final readonly class AggregationService
         ]);
 
         $eventsRow = $eventsResult->first();
-        $eventsCount = $eventsRow !== null ? $eventsRow->int('cnt') : 0;
+        $eventsCount = $eventsRow !== null ? $eventsRow->getInt('cnt') : 0;
 
         $bounceResult = $this->connection->query(self::SQL_HOURLY_BOUNCE_RATE, [
             'from' => $from->format('Y-m-d H:i:s'),
@@ -366,11 +360,11 @@ final readonly class AggregationService
             siteId: $siteId,
             date: $from,
             hour: (int) $from->format('G'),
-            visitors: $row !== null ? $row->int('visitors') : 0,
-            pageviews: $row !== null ? $row->int('pageviews') : 0,
-            sessions: $row !== null ? $row->int('sessions') : 0,
-            bounceRate: $bounceRow !== null ? $bounceRow->float('bounce_rate') : 0.0,
-            avgDuration: $bounceRow !== null ? $bounceRow->float('avg_duration') : 0.0,
+            visitors: $row !== null ? $row->getInt('visitors') : 0,
+            pageviews: $row !== null ? $row->getInt('pageviews') : 0,
+            sessions: $row !== null ? $row->getInt('sessions') : 0,
+            bounceRate: $bounceRow !== null ? $bounceRow->getFloat('bounce_rate') : 0.0,
+            avgDuration: $bounceRow !== null ? $bounceRow->getFloat('avg_duration') : 0.0,
             eventsCount: $eventsCount,
         );
 
@@ -379,7 +373,7 @@ final readonly class AggregationService
 
     public function aggregateDaily(DateTimeImmutable $date, string $siteId): void
     {
-        $from = $date->setTime(0, 0, 0);
+        $from = $date->setTime(0, 0);
         $to = $from->modify('+1 day');
 
         $params = [
@@ -403,12 +397,12 @@ final readonly class AggregationService
         $daily = new DailyStats(
             siteId: $siteId,
             date: $from,
-            visitors: $pvRow !== null ? $pvRow->int('visitors') : 0,
-            pageviews: $pvRow !== null ? $pvRow->int('pageviews') : 0,
-            sessions: $pvRow !== null ? $pvRow->int('sessions') : 0,
-            bounceRate: $sessRow !== null ? $sessRow->float('bounce_rate') : 0.0,
-            avgDuration: $sessRow !== null ? $sessRow->float('avg_duration') : 0.0,
-            eventsCount: $eventsRow !== null ? $eventsRow->int('cnt') : 0,
+            visitors: $pvRow !== null ? $pvRow->getInt('visitors') : 0,
+            pageviews: $pvRow !== null ? $pvRow->getInt('pageviews') : 0,
+            sessions: $pvRow !== null ? $pvRow->getInt('sessions') : 0,
+            bounceRate: $sessRow !== null ? $sessRow->getFloat('bounce_rate') : 0.0,
+            avgDuration: $sessRow !== null ? $sessRow->getFloat('avg_duration') : 0.0,
+            eventsCount: $eventsRow !== null ? $eventsRow->getInt('cnt') : 0,
         );
 
         $this->dailyStatsRepository->upsert($daily);

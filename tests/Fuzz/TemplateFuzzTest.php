@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Fuzz;
 
+use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
@@ -98,7 +99,7 @@ final class TemplateFuzzTest extends TestCase
         }
 
         $escaped = $this->htmlEscaper->escape($value);
-        self::assertIsString($escaped);
+        self::assertNotSame('', $escaped);
         self::assertStringContainsString('leaf', $escaped);
     }
 
@@ -129,7 +130,6 @@ final class TemplateFuzzTest extends TestCase
 
         foreach ($payloads as $payload) {
             $escaped = $this->jsEscaper->escape($payload);
-            self::assertIsString($escaped);
             // The escaped output should not contain unescaped script tags
             self::assertStringNotContainsString('</script>', $escaped);
         }
@@ -143,12 +143,12 @@ final class TemplateFuzzTest extends TestCase
             'url(javascript:alert(1))',
             '; background: url(evil.com)',
             '} body { background: red } .x {',
-            "\\0000061lert(1)",
+            '\\0000061lert(1)',
         ];
 
         foreach ($payloads as $payload) {
             $escaped = $this->cssEscaper->escape($payload);
-            self::assertIsString($escaped);
+            self::assertNotSame($payload, $escaped, 'CSS escaper should modify injection payload');
         }
     }
 
@@ -166,7 +166,7 @@ final class TemplateFuzzTest extends TestCase
 
         foreach ($payloads as $payload) {
             $escaped = $this->urlEscaper->escape($payload);
-            self::assertIsString($escaped);
+            self::assertNotSame($payload, $escaped, 'URL escaper should modify injection payload');
         }
     }
 
@@ -177,7 +177,7 @@ final class TemplateFuzzTest extends TestCase
             '" onmouseover="alert(1)',
             "' onmouseover='alert(1)",
             '" onfocus="alert(1)" autofocus="',
-            "` onmouseover=`alert(1)`",
+            '` onmouseover=`alert(1)`',
             '{{7*7}}',
         ];
 
@@ -207,7 +207,8 @@ final class TemplateFuzzTest extends TestCase
         foreach ($escapers as $escaper) {
             foreach ($safeInputs as $input) {
                 $escaped = $escaper->escape($input);
-                self::assertIsString($escaped);
+                // escape() returns string — verify it completed without throwing
+                self::addToAssertionCount(1);
             }
         }
 
@@ -216,11 +217,12 @@ final class TemplateFuzzTest extends TestCase
             foreach ($escapers as $escaper) {
                 try {
                     $escaped = $escaper->escape($input);
-                    self::assertIsString($escaped);
-                } catch (\JsonException) {
+                    // escape() returns string — verify it completed without throwing
+                    self::addToAssertionCount(1);
+                } catch (JsonException) {
                     // JsEscaper uses json_encode internally which rejects malformed UTF-8
                     // This is correct security behavior — rejecting invalid input
-                    self::assertInstanceOf(\Pulsar\View\Escaping\JsEscaper::class, $escaper);
+                    self::assertInstanceOf(JsEscaper::class, $escaper);
                 }
             }
         }

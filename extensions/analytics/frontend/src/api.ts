@@ -17,7 +17,7 @@ async function get<T>(path: string, params: Record<string, string> = {}): Promis
   }
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`API error: ${res.status}`);
-  return res.json() as Promise<T>;
+  return (await res.json()) as T;
 }
 
 async function post<T>(path: string, body: Record<string, unknown>): Promise<T> {
@@ -27,7 +27,7 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<T> 
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
-  return res.json() as Promise<T>;
+  return (await res.json()) as T;
 }
 
 async function put<T>(path: string, body: Record<string, unknown>): Promise<T> {
@@ -37,7 +37,7 @@ async function put<T>(path: string, body: Record<string, unknown>): Promise<T> {
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
-  return res.json() as Promise<T>;
+  return (await res.json()) as T;
 }
 
 async function del(path: string): Promise<void> {

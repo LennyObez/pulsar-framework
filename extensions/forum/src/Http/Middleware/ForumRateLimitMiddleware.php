@@ -127,7 +127,7 @@ final readonly class ForumRateLimitMiddleware implements MiddlewareInterface
     private function incrementCounter(string $key): int
     {
         $current = $this->cache->get($key);
-        $count = ($current !== null && is_numeric($current)) ? ((int) $current + 1) : 1;
+        $count = is_numeric($current) ? ((int) $current + 1) : 1;
 
         $this->cache->set($key, (string) $count, ['forum_rate'], self::WINDOW_SECONDS);
 

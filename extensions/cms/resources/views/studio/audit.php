@@ -19,7 +19,7 @@ $typedChainValid = $chainValid;
 ?>
 <div class="explorer">
     <div class="explorer-header">
-        <h2>CMS Audit Trail</h2>
+        <h2>CMS audit trail</h2>
         <div class="live-controls">
             <form method="POST" action="/studio/cms/audit/verify" style="display:inline">
                 <button type="submit" class="btn">Verify Chain</button>
@@ -66,7 +66,7 @@ $typedChainValid = $chainValid;
 
     <?php if ($typedEntries === []): ?>
         <div class="empty-state" role="status">
-            <h2>No Audit Entries</h2>
+            <h2>No audit entries</h2>
             <p>No audit entries found for the selected filters.</p>
         </div>
     <?php else: ?>

@@ -63,7 +63,7 @@ final readonly class TableBlock implements BlockTypeInterface
             $html .= '<thead><tr>';
 
             foreach ($headers as $header) {
-                $html .= '<th>' . htmlspecialchars((string) $header, ENT_QUOTES, 'UTF-8') . '</th>';
+                $html .= '<th>' . htmlspecialchars($header, ENT_QUOTES, 'UTF-8') . '</th>';
             }
 
             $html .= '</tr></thead>';
@@ -79,7 +79,7 @@ final readonly class TableBlock implements BlockTypeInterface
             $html .= '<tr>';
 
             foreach ($row as $cell) {
-                $html .= '<td>' . htmlspecialchars((string) $cell, ENT_QUOTES, 'UTF-8') . '</td>';
+                $html .= '<td>' . htmlspecialchars($cell, ENT_QUOTES, 'UTF-8') . '</td>';
             }
 
             $html .= '</tr>';

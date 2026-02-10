@@ -19,18 +19,18 @@ $metricsPercent = round($typedMetricsHitRate * 100);
 ?>
 <div class="explorer">
     <div class="explorer-header">
-        <h2>Content Cache Inspector</h2>
+        <h2>Content cache inspector</h2>
     </div>
 
     <div class="metrics-row">
         <div class="metric-card">
-            <div class="metric-label">Inspection Hit Rate</div>
+            <div class="metric-label">Inspection hit rate</div>
             <div class="metric-value" role="meter"
                 aria-valuenow="<?= $hitRatePercent ?>" aria-valuemin="0" aria-valuemax="100"
                 aria-label="Cache inspection hit rate: <?= $hitRatePercent ?>%"><?= $hitRatePercent ?>%</div>
         </div>
         <div class="metric-card">
-            <div class="metric-label">Metrics Hit Rate (Overall)</div>
+            <div class="metric-label">Metrics hit rate (overall)</div>
             <div class="metric-value" role="meter"
                 aria-valuenow="<?= $metricsPercent ?>" aria-valuemin="0" aria-valuemax="100"
                 aria-label="Overall metrics hit rate: <?= $metricsPercent ?>%"><?= $metricsPercent ?>%</div>
@@ -75,7 +75,7 @@ $metricsPercent = round($typedMetricsHitRate * 100);
 
     <?php if ($typedEntries === []): ?>
         <div class="empty-state" role="status">
-            <h2>No Cached Pages Inspected</h2>
+            <h2>No cached pages inspected</h2>
             <p>Provide content IDs to inspect their cache status.</p>
         </div>
     <?php else: ?>

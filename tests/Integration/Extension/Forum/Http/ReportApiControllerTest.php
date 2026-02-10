@@ -58,6 +58,7 @@ final class ReportApiControllerTest extends TestCase
 
         self::assertSame(422, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['details']);
         self::assertArrayHasKey('reason', $data['details']);
     }
 
@@ -104,6 +105,7 @@ final class ReportApiControllerTest extends TestCase
 
         self::assertSame(201, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('tr-001', $data['data']['id']);
         self::assertSame('thread-001', $data['data']['thread_id']);
         self::assertSame('pending', $data['data']['status']);
@@ -165,6 +167,7 @@ final class ReportApiControllerTest extends TestCase
 
         self::assertSame(201, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('pr-001', $data['data']['id']);
         self::assertSame('post-001', $data['data']['post_id']);
         self::assertSame('pending', $data['data']['status']);

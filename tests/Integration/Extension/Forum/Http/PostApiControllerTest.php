@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Integration\Extension\Forum\Http;
 
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\Identity\TwoFactorStatus;
@@ -20,7 +20,6 @@ use Pulsar\Extension\Forum\Post\Post;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Service\ForumServiceInterface;
 use Pulsar\Http\Message\ServerRequest;
-use Pulsar\Api\Pagination\PaginationResult;
 
 #[CoversClass(PostApiController::class)]
 final class PostApiControllerTest extends TestCase
@@ -66,6 +65,7 @@ final class PostApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertCount(2, $data['data']);
         self::assertSame('2', $response->getHeaderLine('X-Total-Count'));
     }
@@ -81,6 +81,7 @@ final class PostApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('post-show', $data['data']['id']);
     }
 
@@ -122,6 +123,7 @@ final class PostApiControllerTest extends TestCase
 
         self::assertSame(422, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['details']);
         self::assertArrayHasKey('body', $data['details']);
     }
 
@@ -159,6 +161,7 @@ final class PostApiControllerTest extends TestCase
 
         self::assertSame(201, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('post-new', $data['data']['id']);
     }
 
@@ -206,6 +209,7 @@ final class PostApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('deleted', $data['data']['status']);
     }
 
@@ -237,6 +241,7 @@ final class PostApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('accepted', $data['data']['status']);
     }
 

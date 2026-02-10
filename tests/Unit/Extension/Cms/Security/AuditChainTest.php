@@ -11,7 +11,6 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
-use Pulsar\Security\Crypto\Hmac;
 
 use function random_bytes;
 use function strlen;

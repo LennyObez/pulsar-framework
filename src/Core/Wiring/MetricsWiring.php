@@ -58,7 +58,6 @@ final readonly class MetricsWiring implements ServiceWiringInterface
                 $exporter = new OpenMetricsExporter($registry);
 
                 return new Response(
-                    statusCode: 200,
                     headers: ['Content-Type' => 'text/plain; version=0.0.4; charset=utf-8'],
                     body: $exporter->export(),
                 );

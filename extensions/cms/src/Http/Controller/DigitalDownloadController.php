@@ -64,7 +64,6 @@ final readonly class DigitalDownloadController
         $contentType = self::MIME_TYPES[$extension] ?? 'application/octet-stream';
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => $contentType,
                 'Content-Disposition' => "attachment; filename=\"{$fileName}\"",

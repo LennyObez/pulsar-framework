@@ -15,6 +15,9 @@ use Pulsar\Introspection\Data\ContributedMetadata;
 use Pulsar\Introspection\Data\RouteMapData;
 use Pulsar\Introspection\ProjectMetadataSnapshot;
 
+use function assert;
+use function is_array;
+
 #[CoversClass(ProjectMetadataSnapshot::class)]
 final class ProjectMetadataSnapshotTest extends TestCase
 {
@@ -76,8 +79,12 @@ final class ProjectMetadataSnapshotTest extends TestCase
         self::assertArrayHasKey('route_map', $array);
         self::assertArrayHasKey('contributions', $array);
         self::assertArrayHasKey('warnings', $array);
-        self::assertArrayHasKey('test', $array['contributions']);
-        self::assertSame('test', $array['contributions']['test']['contributor_id']);
+        $contributions = $array['contributions'];
+        assert(is_array($contributions));
+        self::assertArrayHasKey('test', $contributions);
+        $testContribution = $contributions['test'];
+        assert(is_array($testContribution));
+        self::assertSame('test', $testContribution['contributor_id']);
     }
 
     #[Test]

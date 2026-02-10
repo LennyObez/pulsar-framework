@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Internal\Tools;
 
+use JsonException;
 use Pulsar\Api\Internal;
 
 use function array_map;
@@ -33,6 +34,7 @@ final readonly class MarkdownImporter
      * Parse a single Markdown document with YAML frontmatter.
      *
      * @return array{content: array<string, mixed>, translation: array<string, mixed>, blocks: list<array<string, mixed>>}
+     * @throws JsonException If block data JSON is malformed.
      */
     public function parse(string $markdown): array
     {
@@ -94,6 +96,7 @@ final readonly class MarkdownImporter
      * Parse a multi-document Markdown file separated by `---` markers.
      *
      * @return list<array{content: array<string, mixed>, translation: array<string, mixed>, blocks: list<array<string, mixed>>}>
+     * @throws JsonException If block data JSON is malformed.
      */
     public function parseAll(string $markdown): array
     {

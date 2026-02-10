@@ -16,6 +16,8 @@ use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\Internal\Tools\CsvContentExporter;
 
+use function assert;
+
 #[CoversClass(CsvContentExporter::class)]
 final class CsvContentExporterTest extends TestCase
 {
@@ -281,7 +283,6 @@ final class CsvContentExporterTest extends TestCase
     {
         $csv = $this->exporter->export([]);
 
-        self::assertIsString($csv);
         self::assertNotEmpty($csv);
     }
 
@@ -291,12 +292,13 @@ final class CsvContentExporterTest extends TestCase
     private function parseCsvLines(string $csv): array
     {
         $stream = fopen('php://memory', 'r+');
+        assert($stream !== false);
         fwrite($stream, $csv);
         rewind($stream);
 
         $lines = [];
         while (($row = fgetcsv($stream, escape: '\\')) !== false) {
-            $lines[] = $row;
+            $lines[] = array_map(static fn(?string $v): string => $v ?? '', $row);
         }
 
         fclose($stream);

@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Forum\Domain\VoteDirection;
 use Pulsar\Extension\Forum\Vote\PostVote;
 
+use function time;
+
 #[CoversClass(PostVote::class)]
 final class PostVoteTest extends TestCase
 {
@@ -22,7 +24,7 @@ final class PostVoteTest extends TestCase
         self::assertSame('user-001', $vote->userId);
         self::assertSame('post-001', $vote->postId);
         self::assertSame(VoteDirection::Up, $vote->value);
-        self::assertNotNull($vote->createdAt);
+        self::assertEqualsWithDelta(time(), $vote->createdAt->getTimestamp(), 5);
     }
 
     #[Test]

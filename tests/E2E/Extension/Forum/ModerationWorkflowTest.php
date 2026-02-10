@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\E2E\Extension\Forum;
 
-use DateTimeImmutable;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -15,7 +14,6 @@ use Pulsar\Extension\Forum\Config\ForumConfig;
 use Pulsar\Extension\Forum\Domain\Badge;
 use Pulsar\Extension\Forum\Domain\ReportStatus;
 use Pulsar\Extension\Forum\Domain\ThreadType;
-use Pulsar\Extension\Forum\Event\ReportResolved;
 use Pulsar\Extension\Forum\Event\ReportSubmitted;
 use Pulsar\Extension\Forum\Event\UserBanned;
 use Pulsar\Extension\Forum\Event\UserUnbanned;

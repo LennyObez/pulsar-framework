@@ -15,6 +15,9 @@ use Pulsar\Observability\ErrorTracking\ErrorFingerprint;
 use Pulsar\Observability\Tracing\TraceId;
 use RuntimeException;
 
+use function assert;
+use function is_string;
+
 #[CoversClass(ErrorSchema::class)]
 final class ErrorSchemaTest extends TestCase
 {
@@ -46,7 +49,9 @@ final class ErrorSchemaTest extends TestCase
         self::assertIsArray($data['stack_trace']);
         self::assertCount(1, $data['stack_trace']);
         self::assertSame(['request_id' => 'req-001'], $data['context']);
-        self::assertStringContainsString('2025-01-15', (string) $data['occurred_at']);
+        $occurredAt = $data['occurred_at'];
+        assert(is_string($occurredAt));
+        self::assertStringContainsString('2025-01-15', $occurredAt);
         self::assertSame('0af7651916cd43dd8448eb211c80319c', $data['trace_id']);
     }
 

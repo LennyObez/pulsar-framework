@@ -62,7 +62,7 @@ final readonly class ConsoleOverviewController
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Console Overview - Pulsar Studio</title>
+                <title>Console overview - Pulsar Studio</title>
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>

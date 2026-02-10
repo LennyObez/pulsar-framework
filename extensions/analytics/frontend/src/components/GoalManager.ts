@@ -1,5 +1,4 @@
-import { createGoal, deleteGoal, fetchGoals, updateGoal } from '../api';
-import type { Goal } from '../types';
+import { deleteGoal, fetchGoals } from '../api';
 
 export async function renderGoalManager(container: HTMLElement, siteId: string): Promise<void> {
   const { data: goals } = await fetchGoals(siteId);

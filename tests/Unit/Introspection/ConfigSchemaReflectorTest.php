@@ -13,6 +13,13 @@ use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 #[CoversClass(ConfigSchemaReflector::class)]
 final class ConfigSchemaReflectorTest extends TestCase
 {
+    /** @return class-string */
+    private static function classString(string $name): string
+    {
+        /** @var class-string */
+        return $name;
+    }
+
     private ConfigSchemaReflector $reflector;
 
     protected function setUp(): void
@@ -34,7 +41,7 @@ final class ConfigSchemaReflectorTest extends TestCase
     public function reflectSkipsNonexistentClasses(): void
     {
         $warnings = [];
-        $result = $this->reflector->reflect(['NonExistent\\Class\\That\\Does\\Not\\Exist'], $warnings);
+        $result = $this->reflector->reflect([self::classString('NonExistent\\Class\\That\\Does\\Not\\Exist')], $warnings);
 
         self::assertSame([], $result->schemas);
         self::assertSame([], $warnings);
@@ -87,7 +94,7 @@ final class ConfigSchemaReflectorTest extends TestCase
         $this->reflector->reflect([ConfigSchemaReflectorTestConfig::class], $warnings);
 
         // Should complete without errors — testing graceful handling
-        self::assertIsArray($warnings);
+        self::assertEmpty($warnings);
     }
 }
 

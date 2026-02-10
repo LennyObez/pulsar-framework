@@ -12,7 +12,6 @@ use function array_map;
 use function fclose;
 use function fopen;
 use function fputcsv;
-use function is_string;
 use function rewind;
 use function str_contains;
 use function stream_get_contents;
@@ -57,7 +56,7 @@ final readonly class CsvContentExporter
             return '';
         }
 
-        fputcsv($stream, self::COLUMNS, escape: '\\');
+        fputcsv($stream, self::COLUMNS);
 
         foreach ($items as $item) {
             $content = $item['content'];
@@ -81,7 +80,7 @@ final readonly class CsvContentExporter
                     $content->createdAt->format('c'),
                     $content->publishedAt?->format('c') ?? '',
                 ],
-            ), escape: '\\');
+            ));
         }
 
         rewind($stream);
@@ -96,7 +95,7 @@ final readonly class CsvContentExporter
      */
     private function sanitizeFormulaInjection(string $value): string
     {
-        if ($value !== '' && is_string($value) && str_contains("=+-@\t\r", $value[0])) {
+        if ($value !== '' && str_contains("=+-@\t\r", $value[0])) {
             return "\t" . $value;
         }
 

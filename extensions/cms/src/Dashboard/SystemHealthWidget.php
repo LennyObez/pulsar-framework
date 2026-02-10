@@ -34,7 +34,7 @@ final readonly class SystemHealthWidget implements DashboardWidgetInterface
         $pendingJobs = $this->queueStats->getPendingCount(self::MEDIA_QUEUE);
         $failedJobs = $this->queueStats->getFailedCount(self::MEDIA_QUEUE);
         $cacheHitRate = $this->cacheStats->getHitRate();
-        $storageObjects = $this->mediaStorage->list('');
+        $storageObjects = $this->mediaStorage->list();
 
         return [
             'cache_hit_rate' => $cacheHitRate,

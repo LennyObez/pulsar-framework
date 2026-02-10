@@ -157,7 +157,7 @@ final class RequestExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('<title>HTTP Requests - Pulsar Studio</title>', (string) $response->getBody());
+        self::assertStringContainsString('<title>HTTP requests - Pulsar Studio</title>', (string) $response->getBody());
     }
 
     #[Test]

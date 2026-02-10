@@ -13,8 +13,10 @@ use Pulsar\Extension\Cms\Search\SearchServiceInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
+use function count;
 use function is_string;
 use function max;
+use function round;
 
 /**
  * Admin controller for search analytics dashboard.
@@ -89,16 +91,26 @@ final readonly class SearchAnalyticsController
             $tenantId,
         );
 
+        $totalSearches = $analytics->totalSearches;
+        $uniqueQueries = $analytics->uniqueQueries;
+        $zeroResultRate = $totalSearches > 0
+            ? round(count($analytics->zeroResultQueries) / $totalSearches * 100, 1)
+            : 0;
+
         $data = [
-            'date_range' => [
-                'from' => $from->format('Y-m-d'),
-                'to' => $to->format('Y-m-d'),
+            'filters' => [
+                'date_from' => $from->format('Y-m-d'),
+                'date_to' => $to->format('Y-m-d'),
             ],
-            'total_searches' => $analytics->totalSearches,
-            'unique_queries' => $analytics->uniqueQueries,
-            'top_queries' => $analytics->topQueries,
-            'zero_result_queries' => $analytics->zeroResultQueries,
-            'click_through_rates' => $analytics->clickThroughRates,
+            'stats' => [
+                'total_searches' => $totalSearches,
+                'unique_queries' => $uniqueQueries,
+                'zero_result_rate' => $zeroResultRate,
+                'avg_ctr' => $analytics->clickThroughRates['average'] ?? '0.0',
+            ],
+            'topQueries' => $analytics->topQueries,
+            'zeroResultQueries' => $analytics->zeroResultQueries,
+            'clickThroughRates' => $analytics->clickThroughRates,
         ];
 
         return $this->respondWithView($request, 'admin.search-analytics.index', $data);

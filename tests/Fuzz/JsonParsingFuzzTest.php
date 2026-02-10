@@ -32,7 +32,7 @@ final class JsonParsingFuzzTest extends TestCase
         );
 
         $result = $request->json();
-        self::assertIsArray($result);
+        self::assertNotEmpty($result, 'Deeply nested JSON should parse to a non-empty array');
     }
 
     #[Test]
@@ -50,7 +50,8 @@ final class JsonParsingFuzzTest extends TestCase
 
         // json_decode with depth=512 should fail gracefully for >512 levels
         $result = $request->json();
-        self::assertIsArray($result);
+        // Result is an empty array on parse failure, or a parsed structure — either is acceptable
+        self::addToAssertionCount(1);
     }
 
     #[Test]
@@ -75,7 +76,8 @@ final class JsonParsingFuzzTest extends TestCase
             );
 
             $result = $request->json();
-            self::assertIsArray($result);
+            // json() returns array — verify it completed without throwing
+            self::addToAssertionCount(1);
         }
     }
 
@@ -101,7 +103,8 @@ final class JsonParsingFuzzTest extends TestCase
             );
 
             $result = $request->json();
-            self::assertIsArray($result);
+            // json() returns array — verify it completed without throwing
+            self::addToAssertionCount(1);
         }
     }
 
@@ -143,7 +146,8 @@ final class JsonParsingFuzzTest extends TestCase
             );
 
             $result = $request->json();
-            self::assertIsArray($result);
+            // json() returns array — verify it completed without throwing
+            self::addToAssertionCount(1);
         }
     }
 
@@ -168,7 +172,8 @@ final class JsonParsingFuzzTest extends TestCase
             );
 
             $result = $request->json();
-            self::assertIsArray($result);
+            // json() returns array — verify it completed without throwing
+            self::addToAssertionCount(1);
         }
     }
 
@@ -190,7 +195,6 @@ final class JsonParsingFuzzTest extends TestCase
         );
 
         $result = $request->json();
-        self::assertIsArray($result);
         self::assertArrayHasKey('key0', $result);
     }
 
@@ -207,7 +211,6 @@ final class JsonParsingFuzzTest extends TestCase
         );
 
         $result = $request->json();
-        self::assertIsArray($result);
         // PHP's json_decode takes the last value for duplicate keys
         self::assertSame('third', $result['key']);
     }
@@ -235,7 +238,8 @@ final class JsonParsingFuzzTest extends TestCase
             );
 
             $result = $request->json();
-            self::assertIsArray($result);
+            // json() returns array — verify it completed without throwing
+            self::addToAssertionCount(1);
         }
     }
 
@@ -257,7 +261,8 @@ final class JsonParsingFuzzTest extends TestCase
             );
 
             $result = $request->json();
-            self::assertIsArray($result);
+            // json() returns array — verify it completed without throwing
+            self::addToAssertionCount(1);
         }
     }
 }

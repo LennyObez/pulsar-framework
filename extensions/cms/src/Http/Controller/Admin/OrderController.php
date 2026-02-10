@@ -73,7 +73,7 @@ final readonly class OrderController
         $orders = $this->orders->listOrders($filters, $page, $perPage);
 
         return $this->respondWithView($request, 'admin.orders.index', [
-            'data' => array_map(static fn(Order $o) => [
+            'orders' => array_map(static fn(Order $o) => [
                 'id' => $o->id,
                 'order_number' => $o->orderNumber,
                 'customer_email' => $o->customerEmail,
@@ -225,7 +225,6 @@ final readonly class OrderController
             $content = $this->exportService->exportCsv($filters);
 
             return new Response(
-                statusCode: 200,
                 headers: [
                     'Content-Type' => 'text/csv; charset=utf-8',
                     'Content-Disposition' => 'attachment; filename="orders-export.csv"',
@@ -238,7 +237,6 @@ final readonly class OrderController
             $content = $this->exportService->exportJson($filters, $includePii);
 
             return new Response(
-                statusCode: 200,
                 headers: [
                     'Content-Type' => 'application/json; charset=utf-8',
                     'Content-Disposition' => 'attachment; filename="orders-export.json"',

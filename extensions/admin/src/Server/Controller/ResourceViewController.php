@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Exception\ResourceNotFoundException;
@@ -39,6 +40,11 @@ final readonly class ResourceViewController
             return Response::json(
                 ['error' => $e->getMessage()],
                 ResponseStatus::NotFound->value,
+            );
+        } catch (DatabaseException $e) {
+            return Response::json(
+                ['error' => 'Query failed for this resource.', 'message' => $e->getMessage()],
+                422,
             );
         }
 

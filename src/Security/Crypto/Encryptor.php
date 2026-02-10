@@ -48,7 +48,7 @@ final class Encryptor implements EncryptorInterface
     private function __construct(
         private string $key,
         private ?string $previousKey = null,
-        private ?CipherSuiteInterface $cipherSuite = null,
+        private readonly ?CipherSuiteInterface $cipherSuite = null,
     ) {
         $this->randomizer = new Randomizer(new Secure());
     }
