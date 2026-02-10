@@ -35,6 +35,8 @@ deptrac:
           value: ^Pulsar\\Core\\Kernel$
         - type: classLike
           value: ^Pulsar\\Console\\Application$
+        - type: classLike
+          value: ^Pulsar\\Core\\Wiring\\
 
     # =================================================================
     # Foundation Tier
@@ -552,6 +554,22 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Webhook\\Internal\\
 
+    # --- Introspection ---
+    - name: Introspection
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Introspection\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Introspection\\Internal\\
+
+    - name: Introspection_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Introspection\\Internal\\
+
     # =================================================================
     # Extension Layers
     # =================================================================
@@ -637,6 +655,37 @@ deptrac:
               value: SocialSsoContracts
             - type: layer
               value: SocialSsoDomain
+
+    # --- MCP Server Extension (Pulsar\\Extension\\Mcp-server → McpServer) ---
+
+    # --- MCP Server: public contracts ---
+    - name: McpServerContracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\McpServer\\Contracts\\
+
+    # --- MCP Server: domain types (value objects, enums, exceptions, config) ---
+    - name: McpServerDomain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\McpServer\\Domain\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\McpServer\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\McpServer\\Config\\
+
+    # --- MCP Server: internal implementation ---
+    - name: McpServerInternal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\McpServer\\
+          must_not:
+            - type: layer
+              value: McpServerContracts
+            - type: layer
+              value: McpServerDomain
 
     # --- Example Extension ---
     - name: ExampleExtension
@@ -729,6 +778,8 @@ deptrac:
       - Tenancy_Internal
       - Webhook
       - Webhook_Internal
+      - Introspection
+      - Introspection_Internal
 
     # -----------------------------------------------------------------
     # Public Layers — all public layers may depend on all other public
@@ -758,6 +809,7 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Introspection
       - Observability
       - Queue
       - Resilience
@@ -798,6 +850,42 @@ deptrac:
     Supervisor: *public_deps
     Tenancy: *public_deps
     Webhook: *public_deps
+    # Introspection public layer depends on its own internal (service facades inject internal implementations)
+    Introspection:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Introspection
+      - Introspection_Internal
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
 
     # -----------------------------------------------------------------
     # Internal Layers — own public + Foundation + CoreTier only
@@ -837,6 +925,23 @@ deptrac:
     Supervisor_Internal: [Supervisor, Api, Support, Container, Config, Core, ErrorHandling]
     Tenancy_Internal: [Tenancy, Api, Support, Container, Config, Core, ErrorHandling]
     Webhook_Internal: [Webhook, Api, Support, Container, Config, Core, ErrorHandling]
+    # CoreRuntimeProbe introspects Container, ExtensionRegistry, Router (+ Http\Method), and Console Application (CompositionRoot)
+    Introspection_Internal:
+      [
+        Introspection,
+        Api,
+        Support,
+        Container,
+        Config,
+        Core,
+        ErrorHandling,
+        Extensibility,
+        Console,
+        Routing,
+        Http,
+        Observability,
+        CompositionRoot,
+      ]
 
     # -----------------------------------------------------------------
     # Extension Layers — depend on all core public + CompositionRoot +
@@ -987,6 +1092,81 @@ deptrac:
       - Webhook
       - SocialSsoContracts
       - SocialSsoDomain
+
+    McpServerContracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Introspection
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - McpServerDomain
+
+    McpServerDomain: *public_deps
+
+    McpServerInternal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Introspection
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - McpServerContracts
+      - McpServerDomain
 
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps

@@ -61,6 +61,8 @@ exclude:
       - extensions/payments/src/Internal/Infrastructure/Webhook/HmacWebhookVerifier.php
       # DTO fromArray() factories share structural deserialization pattern across Context/Event
       - src/Context/RequestContext.php
+      # MCP read tools share pagination logic intentionally — each tool filters differently
+      - extensions/mcp-server/src/Internal/Tools/ReadCommandsTool.php
   # Same parameter value — auditPayment() is designed for reuse across payment
   # operations; currently only cancel_intent calls it, but capture/refund will follow.
   - name: PhpSameParameterValueInspection
@@ -76,3 +78,5 @@ exclude:
       - composer.json
       - extensions/example/composer.json
       - extensions/payments/composer.json
+      - extensions/mcp-server/composer.json
+      - extensions/social-sso/composer.json
