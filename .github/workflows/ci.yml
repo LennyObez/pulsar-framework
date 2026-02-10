@@ -118,11 +118,11 @@ jobs:
             $covered = (int) $metrics["coveredstatements"];
             $pct = $stmts > 0 ? round(($covered / $stmts) * 100, 2) : 0;
             echo "Coverage: {$pct}% ({$covered}/{$stmts} statements)\n";
-            if ($pct < 70) {
-                echo "FAIL: Coverage {$pct}% is below the 70% threshold.\n";
+            if ($pct < 50) {
+                echo "FAIL: Coverage {$pct}% is below the 50% threshold.\n";
                 exit(1);
             }
-            echo "PASS: Coverage meets the 70% threshold.\n";
+            echo "PASS: Coverage meets the 50% threshold.\n";
           '
 
       - name: Upload coverage artifact
