@@ -7,11 +7,10 @@ namespace Pulsar\Tests\Integration\Observability;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\TracingMiddleware;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\SpanStatus;
@@ -27,7 +26,10 @@ final class TracingMiddlewareTest extends TestCase
         $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 1.0);
 
         $request = $this->createRequest('GET', '/test');
-        $response = $middleware->process($request, static fn() => Response::html('ok'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::html('ok'));
+
+        $response = $middleware->process($request, $handler);
 
         self::assertSame(1, $collector->count());
 
@@ -44,10 +46,13 @@ final class TracingMiddlewareTest extends TestCase
         $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 1.0);
 
         $request = $this->createRequest('GET', '/test');
-        $response = $middleware->process($request, static fn() => Response::html('ok'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::html('ok'));
 
-        $traceparent = $response->headers->first('traceparent');
-        self::assertNotNull($traceparent);
+        $response = $middleware->process($request, $handler);
+
+        $traceparent = $response->getHeaderLine('traceparent');
+        self::assertNotSame('', $traceparent);
 
         $parsed = new W3CTraceContextParser()->parse($traceparent);
         self::assertNotNull($parsed);
@@ -61,9 +66,12 @@ final class TracingMiddlewareTest extends TestCase
         $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 1.0);
 
         $incomingTraceparent = '00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01';
-        $request = $this->createRequest('GET', '/test', ['traceparent' => [$incomingTraceparent]]);
+        $request = $this->createRequest('GET', '/test', ['traceparent' => $incomingTraceparent]);
 
-        $response = $middleware->process($request, static fn() => Response::html('ok'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::html('ok'));
+
+        $response = $middleware->process($request, $handler);
 
         $span = $collector->spans()[0];
         // Should preserve the parent trace ID
@@ -79,10 +87,12 @@ final class TracingMiddlewareTest extends TestCase
         $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 1.0);
 
         $request = $this->createRequest('POST', '/fail');
-        $response = $middleware->process(
-            $request,
-            static fn() => Response::json(['error' => 'fail'], ResponseStatus::InternalServerError),
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(
+            Response::json(['error' => 'fail'], ResponseStatus::InternalServerError->value),
         );
+
+        $response = $middleware->process($request, $handler);
 
         $span = $collector->spans()[0];
         self::assertSame(SpanStatus::Error, $span->status);
@@ -96,24 +106,24 @@ final class TracingMiddlewareTest extends TestCase
         $middleware = new TracingMiddleware($collector, new W3CTraceContextParser(), samplingRate: 0.0);
 
         $request = $this->createRequest('GET', '/test');
-        $response = $middleware->process($request, static fn() => Response::html('ok'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::html('ok'));
+
+        $response = $middleware->process($request, $handler);
 
         // With 0% sampling, no spans should be collected
         self::assertSame(0, $collector->count());
     }
 
     /**
-     * @param array<string, list<string>> $headers
+     * @param array<string, string> $headers
      */
-    private function createRequest(string $method, string $path, array $headers = []): Request
+    private function createRequest(string $method, string $path, array $headers = []): ServerRequest
     {
-        return new Request(
-            method: Method::from($method),
+        return new ServerRequest(
+            method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag($headers),
-            body: '',
+            headers: $headers,
         );
     }
 }

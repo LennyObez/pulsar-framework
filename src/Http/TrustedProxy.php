@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 
 use function array_any;
@@ -42,17 +43,17 @@ final readonly class TrustedProxy
      * If REMOTE_ADDR is a trusted proxy, walks X-Forwarded-For right-to-left
      * and returns the first untrusted IP. Otherwise returns REMOTE_ADDR.
      */
-    public function resolveClientIp(Request $request): string
+    public function resolveClientIp(ServerRequestInterface $request): string
     {
-        $remoteAddr = $request->server('REMOTE_ADDR');
+        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
         $remoteAddr = is_string($remoteAddr) ? $remoteAddr : '127.0.0.1';
 
         if (!$this->isTrusted($remoteAddr)) {
             return $remoteAddr;
         }
 
-        $forwarded = $request->header('X-Forwarded-For');
-        if ($forwarded === null) {
+        $forwarded = $request->getHeaderLine('X-Forwarded-For');
+        if ($forwarded === '') {
             return $remoteAddr;
         }
 

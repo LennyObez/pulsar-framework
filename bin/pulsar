@@ -11,30 +11,37 @@ declare(strict_types=1);
 
 // Find autoloader (supports both development and installed scenarios)
 $autoloadPaths = [
-    __DIR__ . '/../vendor/autoload.php',     // Development (in framework repo)
-    __DIR__ . '/../../../autoload.php',       // Installed as dependency
+  __DIR__ . '/../vendor/autoload.php',     // Development (in framework repo)
+  __DIR__ . '/../../../autoload.php',       // Installed as dependency
 ];
 
 $autoloader = null;
 foreach ($autoloadPaths as $path) {
-    if (file_exists($path)) {
-        $autoloader = $path;
-        break;
-    }
+  if (file_exists($path)) {
+    $autoloader = $path;
+    break;
+  }
 }
 
 if ($autoloader === null) {
-    fwrite(STDERR, "Error: Could not find autoloader. Run 'composer install' first.\n");
-    exit(1);
+  fwrite(STDERR, "Error: Could not find autoloader. Run 'composer install' first.\n");
+  exit(1);
 }
 
 require $autoloader;
 
 use Pulsar\Cache\FrameworkCache;
+use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DatabaseConfig;
+use Pulsar\Config\Environment;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\QueueConfig;
+use Pulsar\Config\ReplConfig;
+use Pulsar\Console\Repl\EnvironmentGuard;
+use Pulsar\Console\Repl\ReplAuditLogger;
+use Pulsar\Console\Repl\SecretRedactor;
+use Pulsar\Console\Repl\ShellCommand;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\Application;
@@ -133,7 +140,7 @@ use Pulsar\Extension\Studio\Command\StudioDoctorCommand;
 use Pulsar\Extension\Studio\Command\StudioDisableCommand;
 use Pulsar\Extension\Studio\Command\StudioEnableCommand;
 use Pulsar\Extension\Studio\Command\StudioOpenCommand;
-use Pulsar\Extension\Studio\Command\StudioStartCommand;
+use Pulsar\Extension\Studio\Command\StudioServeCommand;
 use Pulsar\Extension\Studio\Command\StudioStatusCommand;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
@@ -144,368 +151,431 @@ use Pulsar\Extension\Studio\Console\Retention\RetentionEnforcer;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\StudioManager;
 use Pulsar\Supervisor\Supervisor;
+use Pulsar\View\Command\PlaygroundServeCommand;
+use Pulsar\View\Command\ViewCompileCommand;
 
 // Create kernel with optional extension support
 $extensionBootstrap = null;
 
 // Check for extensions directory
 $extensionPaths = [
-    getcwd() . '/extensions',
-    __DIR__ . '/../extensions',
+  getcwd() . '/extensions',
+  __DIR__ . '/../extensions',
 ];
 
 foreach ($extensionPaths as $path) {
-    if (is_dir($path)) {
-        $extensionBootstrap = ExtensionBootstrap::create();
-        try {
-            $extensionBootstrap->loadFromPaths([$path]);
-        } catch (Throwable $e) {
-            // Extension loading errors are non-fatal for CLI
-            fwrite(STDERR, "Warning: Failed to load extensions: {$e->getMessage()}\n");
-        }
-        break;
+  if (is_dir($path)) {
+    $extensionBootstrap = ExtensionBootstrap::create();
+    try {
+      $extensionBootstrap->loadFromPaths([$path]);
+    } catch (Throwable $e) {
+      // Extension loading errors are non-fatal for CLI
+      fwrite(STDERR, "Warning: Failed to load extensions: {$e->getMessage()}\n");
     }
+    break;
+  }
 }
 
 // Resolve config directory
 $configPath = getcwd() . '/config';
 if (!is_dir($configPath)) {
-    $configPath = __DIR__ . '/../config';
+  $configPath = __DIR__ . '/../config';
 }
 
 $configManager = null;
 $basePath = $configPath !== null ? dirname($configPath) : getcwd();
 
 if (is_dir($configPath)) {
-    $envFile = $basePath . DIRECTORY_SEPARATOR . '.env';
-    $configManager = new ConfigManager(
-        configPath: $configPath,
-        envFilePath: is_file($envFile) ? $envFile : null,
-    );
+  $envFile = $basePath . DIRECTORY_SEPARATOR . '.env';
+  $configManager = new ConfigManager(
+    configPath: $configPath,
+    envFilePath: is_file($envFile) ? $envFile : null,
+  );
 }
 
 $kernel = new Kernel(
-    extensionBootstrap: $extensionBootstrap,
-    configManager: $configManager,
+  extensionBootstrap: $extensionBootstrap,
+  configManager: $configManager,
 );
 
 // Pre-boot FrameworkCache registration so cache-aware boot path works
 $masterKeyHex = getenv('PULSAR_MASTER_KEY');
 if ($masterKeyHex !== false && $masterKeyHex !== '' && $configManager !== null) {
-    try {
-        $earlyMasterKey = MasterKey::fromHex($masterKeyHex);
-        $encrypt = getenv('CACHE_ENCRYPT') === 'true' || getenv('CACHE_ENCRYPT') === '1';
-        $earlyCache = new FrameworkCache($basePath, $earlyMasterKey, new HmacService(), $encrypt);
-        $kernel->container()->instance(FrameworkCache::class, $earlyCache);
-    } catch (Throwable) {
-        // Invalid key or sodium failure — skip pre-boot cache
-    }
+  try {
+    $earlyMasterKey = MasterKey::fromHex($masterKeyHex);
+    $encrypt = getenv('CACHE_ENCRYPT') === 'true' || getenv('CACHE_ENCRYPT') === '1';
+    $earlyCache = new FrameworkCache($basePath, $earlyMasterKey, new HmacService(), $encrypt);
+    $kernel->container()->instance(FrameworkCache::class, $earlyCache);
+  } catch (Throwable) {
+    // Invalid key or sodium failure — skip pre-boot cache
+  }
 }
 
 try {
-    $kernel->boot();
+  $kernel->boot();
 } catch (Throwable $e) {
-    fwrite(STDERR, "Error: Kernel boot failed: {$e->getMessage()}\n");
-    exit(1);
+  fwrite(STDERR, "Error: Kernel boot failed: {$e->getMessage()}\n");
+  exit(1);
 }
 
 $application = new Application($kernel);
 
 // Register built-in commands
 $application->addCommands([
-    new HelpCommand($application),
-    new ListCommand($application),
-    new ShowRoutesCommand($kernel),
-    new ShowContainerCommand($kernel),
-    new DiagnosticsCommand($kernel),
-    new InitCommand(),
-    new NewCommand(),
-    new PreloadDumpCommand(),
-    new MakeModuleCommand(),
-    new MakeFeatureCommand(),
-    new MakePortCommand(),
-    new MakeAdapterCommand(),
-    new MakeWebhookHandlerCommand(),
-    new MakePaymentFlowCommand(),
-    new MakeEventIngestionCommand(),
-    new MakeExtensionCommand(),
-    new RemoveModuleCommand(),
-    new RemoveFeatureCommand(),
-    new RemovePortCommand(),
-    new RemoveAdapterCommand(),
-    new RemoveWebhookHandlerCommand(),
-    new RemovePaymentFlowCommand(),
-    new RemoveEventIngestionCommand(),
-    new RemoveExtensionCommand(),
+  new HelpCommand($application),
+  new ListCommand($application),
+  new ShowRoutesCommand($kernel),
+  new ShowContainerCommand($kernel),
+  new DiagnosticsCommand($kernel),
+  new InitCommand(),
+  new NewCommand(),
+  new PreloadDumpCommand(),
+  new MakeModuleCommand(),
+  new MakeFeatureCommand(),
+  new MakePortCommand(),
+  new MakeAdapterCommand(),
+  new MakeWebhookHandlerCommand(),
+  new MakePaymentFlowCommand(),
+  new MakeEventIngestionCommand(),
+  new MakeExtensionCommand(),
+  new RemoveModuleCommand(),
+  new RemoveFeatureCommand(),
+  new RemovePortCommand(),
+  new RemoveAdapterCommand(),
+  new RemoveWebhookHandlerCommand(),
+  new RemovePaymentFlowCommand(),
+  new RemoveEventIngestionCommand(),
+  new RemoveExtensionCommand(),
 ]);
 
 // Register optimize + key commands (always visible)
 $frameworkCache = $kernel->container()->has(FrameworkCache::class)
-    ? $kernel->container()->get(FrameworkCache::class)
-    : null;
+  ? $kernel->container()->get(FrameworkCache::class)
+  : null;
 /** @var FrameworkCache|null $frameworkCache */
 
 $application->addCommands([
-    new OptimizeCommand($kernel, $frameworkCache),
-    new OptimizeClearCommand($frameworkCache),
-    new OptimizeValidateCommand($kernel, $frameworkCache),
-    new CacheWarmupCommand($kernel, $frameworkCache),
-    new KeyGenerateCommand($basePath),
-    new KeyRotateCommand($basePath),
+  new OptimizeCommand($kernel, $frameworkCache),
+  new OptimizeClearCommand($frameworkCache),
+  new OptimizeValidateCommand($kernel, $frameworkCache),
+  new CacheWarmupCommand($kernel, $frameworkCache),
+  new KeyGenerateCommand($basePath),
+  new KeyRotateCommand($basePath),
 ]);
 
 // Register metadata export command (if introspection is enabled)
 if ($kernel->container()->has(ProjectMetadataService::class)) {
-    /** @var ProjectMetadataService $metadataService */
-    $metadataService = $kernel->container()->get(ProjectMetadataService::class);
-    $scrubber = $kernel->container()->has(SensitiveDataScrubber::class)
-        ? $kernel->container()->get(SensitiveDataScrubber::class)
-        : new SensitiveDataScrubber();
-    /** @var SensitiveDataScrubber $scrubber */
-    $application->add(new MetadataExportCommand($metadataService, $scrubber));
+  /** @var ProjectMetadataService $metadataService */
+  $metadataService = $kernel->container()->get(ProjectMetadataService::class);
+  $scrubber = $kernel->container()->has(SensitiveDataScrubber::class)
+    ? $kernel->container()->get(SensitiveDataScrubber::class)
+    : new SensitiveDataScrubber();
+  /** @var SensitiveDataScrubber $scrubber */
+  $application->add(new MetadataExportCommand($metadataService, $scrubber));
 }
 
 // Register queue commands (only if queue is configured)
 if ($kernel->container()->has(QueueConfig::class)) {
-    if ($kernel->container()->has(QueueDriverInterface::class)) {
-        /** @var QueueDriverInterface $queueDriver */
-        $queueDriver = $kernel->container()->get(QueueDriverInterface::class);
-        $application->add(new QueueWorkCommand($queueDriver));
-        $application->add(new QueueFlushCommand($queueDriver));
-    }
+  if ($kernel->container()->has(QueueDriverInterface::class)) {
+    /** @var QueueDriverInterface $queueDriver */
+    $queueDriver = $kernel->container()->get(QueueDriverInterface::class);
+    $application->add(new QueueWorkCommand($queueDriver));
+    $application->add(new QueueFlushCommand($queueDriver));
+  }
 
-    if ($kernel->container()->has(QueueManager::class) && $kernel->container()->has(DeadLetterQueue::class)) {
-        /** @var QueueManager $queueManager */
-        $queueManager = $kernel->container()->get(QueueManager::class);
-        /** @var DeadLetterQueue $deadLetterQueue */
-        $deadLetterQueue = $kernel->container()->get(DeadLetterQueue::class);
-        $application->add(new QueueStatusCommand($queueManager, $deadLetterQueue));
-        $application->add(new QueueRetryCommand($deadLetterQueue));
-        $application->add(new QueueFailedCommand($deadLetterQueue));
-    }
+  if ($kernel->container()->has(QueueManager::class) && $kernel->container()->has(DeadLetterQueue::class)) {
+    /** @var QueueManager $queueManager */
+    $queueManager = $kernel->container()->get(QueueManager::class);
+    /** @var DeadLetterQueue $deadLetterQueue */
+    $deadLetterQueue = $kernel->container()->get(DeadLetterQueue::class);
+    $application->add(new QueueStatusCommand($queueManager, $deadLetterQueue));
+    $application->add(new QueueRetryCommand($deadLetterQueue));
+    $application->add(new QueueFailedCommand($deadLetterQueue));
+  }
 }
 
 // Register supervisor commands (only if supervisor is configured)
 if ($kernel->container()->has(SupervisorConfig::class)) {
-    /** @var SupervisorConfig $supervisorConfig */
-    $supervisorConfig = $kernel->container()->get(SupervisorConfig::class);
-    $application->add(new SupervisorStatusCommand($supervisorConfig));
-    if ($kernel->container()->has(PreflightRunnerInterface::class)) {
-        /** @var PreflightRunnerInterface $preflightRunner */
-        $preflightRunner = $kernel->container()->get(PreflightRunnerInterface::class);
-        $application->add(new SupervisorCheckCommand($preflightRunner));
-    }
+  /** @var SupervisorConfig $supervisorConfig */
+  $supervisorConfig = $kernel->container()->get(SupervisorConfig::class);
+  $application->add(new SupervisorStatusCommand($supervisorConfig));
+  if ($kernel->container()->has(PreflightRunnerInterface::class)) {
+    /** @var PreflightRunnerInterface $preflightRunner */
+    $preflightRunner = $kernel->container()->get(PreflightRunnerInterface::class);
+    $application->add(new SupervisorCheckCommand($preflightRunner));
+  }
 }
 
 // Register integrity commands (only if integrity is configured and enabled)
 if ($kernel->container()->has(ManifestBuilderInterface::class)) {
-    /** @var IntegrityConfig $integrityConfig */
-    $integrityConfig = $kernel->container()->get(IntegrityConfig::class);
+  /** @var IntegrityConfig $integrityConfig */
+  $integrityConfig = $kernel->container()->get(IntegrityConfig::class);
 
-    /** @var ManifestBuilderInterface $manifestBuilder */
-    $manifestBuilder = $kernel->container()->get(ManifestBuilderInterface::class);
+  /** @var ManifestBuilderInterface $manifestBuilder */
+  $manifestBuilder = $kernel->container()->get(ManifestBuilderInterface::class);
 
-    /** @var ManifestVerifierInterface $manifestVerifier */
-    $manifestVerifier = $kernel->container()->get(ManifestVerifierInterface::class);
+  /** @var ManifestVerifierInterface $manifestVerifier */
+  $manifestVerifier = $kernel->container()->get(ManifestVerifierInterface::class);
 
-    /** @var ManifestSignerInterface|null $manifestSigner */
-    $manifestSigner = $kernel->container()->has(ManifestSignerInterface::class)
-        ? $kernel->container()->get(ManifestSignerInterface::class)
-        : null;
+  /** @var ManifestSignerInterface|null $manifestSigner */
+  $manifestSigner = $kernel->container()->has(ManifestSignerInterface::class)
+    ? $kernel->container()->get(ManifestSignerInterface::class)
+    : null;
 
-    $application->addCommands([
-        new IntegrityBuildCommand($integrityConfig, $manifestBuilder, $basePath, $manifestSigner),
-        new IntegrityVerifyCommand($integrityConfig, $manifestVerifier, $basePath),
-    ]);
+  $application->addCommands([
+    new IntegrityBuildCommand($integrityConfig, $manifestBuilder, $basePath, $manifestSigner),
+    new IntegrityVerifyCommand($integrityConfig, $manifestVerifier, $basePath),
+  ]);
 
-    if ($kernel->container()->has(AuditLogger::class)) {
-        /** @var AuditLogger $auditLogger */
-        $auditLogger = $kernel->container()->get(AuditLogger::class);
-        $application->add(new IntegrityRepairCommand($integrityConfig, $manifestBuilder, $auditLogger, $basePath));
-    }
+  if ($kernel->container()->has(AuditLogger::class)) {
+    /** @var AuditLogger $auditLogger */
+    $auditLogger = $kernel->container()->get(AuditLogger::class);
+    $application->add(new IntegrityRepairCommand($integrityConfig, $manifestBuilder, $auditLogger, $basePath));
+  }
 }
 
 // Register deploy check command (only if deploy is configured)
 if ($kernel->container()->has(DeployCheck::class)) {
-    /** @var DeployCheck $deployCheck */
-    $deployCheck = $kernel->container()->get(DeployCheck::class);
-    $application->add(new DeployCheckCommand($deployCheck));
+  /** @var DeployCheck $deployCheck */
+  $deployCheck = $kernel->container()->get(DeployCheck::class);
+  $application->add(new DeployCheckCommand($deployCheck));
 }
 
 // Register migration commands (only if database is configured)
 if ($kernel->container()->has(ConnectionManager::class)) {
-    /** @var DatabaseConfig $dbConfig */
-    $dbConfig = $kernel->container()->get(DatabaseConfig::class);
+  /** @var DatabaseConfig $dbConfig */
+  $dbConfig = $kernel->container()->get(DatabaseConfig::class);
 
-    /** @var ConnectionManager $connectionManager */
-    $connectionManager = $kernel->container()->get(ConnectionManager::class);
+  /** @var ConnectionManager $connectionManager */
+  $connectionManager = $kernel->container()->get(ConnectionManager::class);
 
-    $migrationRepo = new MigrationRepository($dbConfig->migrationsPath);
-    $migrationRunner = new MigrationRunner(
-        $connectionManager->connection(),
-        $migrationRepo,
-        $dbConfig->migrationsTable,
-    );
+  $migrationRepo = new MigrationRepository($dbConfig->migrationsPath);
+  $migrationRunner = new MigrationRunner(
+    $connectionManager->connection(),
+    $migrationRepo,
+    $dbConfig->migrationsTable,
+  );
 
-    $application->addCommands([
-        new MigrateRunCommand($migrationRunner),
-        new MigrateRollbackCommand($migrationRunner),
-        new MigrateStatusCommand($migrationRunner, $migrationRepo),
-        new MigrateCreateCommand($dbConfig->migrationsPath),
-    ]);
+  $application->addCommands([
+    new MigrateRunCommand($migrationRunner),
+    new MigrateRollbackCommand($migrationRunner),
+    new MigrateStatusCommand($migrationRunner, $migrationRepo),
+    new MigrateCreateCommand($dbConfig->migrationsPath),
+  ]);
 }
 
 // Register Studio commands (only if Studio is configured)
 if ($kernel->container()->has(StudioConfig::class)) {
-    /** @var StudioConfig $studioConfig */
-    $studioConfig = $kernel->container()->get(StudioConfig::class);
+  /** @var StudioConfig $studioConfig */
+  $studioConfig = $kernel->container()->get(StudioConfig::class);
 
-    // Umbrella commands (always available when config exists)
-    $studioStore = $kernel->container()->has(EventStoreInterface::class)
-        ? $kernel->container()->get(EventStoreInterface::class)
-        : null;
-    /** @var EventStoreInterface|null $studioStore */
+  // Umbrella commands (always available when config exists)
+  $studioStore = $kernel->container()->has(EventStoreInterface::class)
+    ? $kernel->container()->get(EventStoreInterface::class)
+    : null;
+  /** @var EventStoreInterface|null $studioStore */
 
+  $application->addCommands([
+    new StudioStatusCommand($studioConfig, $studioStore),
+    new StudioServeCommand($studioConfig, $basePath),
+    new StudioOpenCommand($studioConfig),
+    new StudioDoctorCommand($studioConfig, $basePath),
+    new StudioEnableCommand($basePath),
+    new StudioDisableCommand($basePath),
+  ]);
+
+  // Console sub-commands (only when Studio manager is active)
+  if ($kernel->container()->has(StudioManager::class) && $studioStore !== null) {
     $application->addCommands([
-        new StudioStatusCommand($studioConfig, $studioStore),
-        new StudioStartCommand($studioConfig, $basePath),
-        new StudioOpenCommand($studioConfig),
-        new StudioDoctorCommand($studioConfig, $basePath),
-        new StudioEnableCommand($basePath),
-        new StudioDisableCommand($basePath),
+      new ConsoleStatusCommand($studioStore),
+      new ConsoleTailCommand($studioStore),
+      new ConsoleQueryCommand($studioStore),
     ]);
 
-    // Console sub-commands (only when Studio manager is active)
-    if ($kernel->container()->has(StudioManager::class) && $studioStore !== null) {
-        $application->addCommands([
-            new ConsoleStatusCommand($studioStore),
-            new ConsoleTailCommand($studioStore),
-            new ConsoleQueryCommand($studioStore),
-        ]);
+    // Observability commands
+    if ($kernel->container()->has(DashboardAggregator::class)) {
+      /** @var DashboardAggregator $aggregator */
+      $aggregator = $kernel->container()->get(DashboardAggregator::class);
 
-        // Observability commands
-        if ($kernel->container()->has(DashboardAggregator::class)) {
-            /** @var DashboardAggregator $aggregator */
-            $aggregator = $kernel->container()->get(DashboardAggregator::class);
-
-            $application->addCommands([
-                new ConsoleMetricsCommand($aggregator),
-                new ConsoleRoutesCommand($aggregator),
-                new ConsoleExceptionsCommand($aggregator),
-            ]);
-        }
-
-        if ($kernel->container()->has(TimelineBuilder::class)) {
-            /** @var TimelineBuilder $timelineBuilder */
-            $timelineBuilder = $kernel->container()->get(TimelineBuilder::class);
-            $application->add(new ConsoleTimelineCommand($studioStore, $timelineBuilder));
-        }
-
-        $application->add(new ConsoleJobsCommand($studioStore));
-
-        // Evidence commands
-        if ($kernel->container()->has(EvidenceExporter::class)) {
-            /** @var EvidenceExporter $exporter */
-            $exporter = $kernel->container()->get(EvidenceExporter::class);
-            $application->add(new EvidenceExportCommand($exporter));
-        }
-
-        if ($kernel->container()->has(EvidenceVerifier::class)) {
-            /** @var EvidenceVerifier $verifier */
-            $verifier = $kernel->container()->get(EvidenceVerifier::class);
-            $application->add(new EvidenceVerifyCommand($verifier));
-        }
-
-        $application->add(new EvidenceStatusCommand($studioStore));
-        $application->add(new EvidencePurgeCommand($studioStore));
-
-        if ($kernel->container()->has(RetentionEnforcer::class)) {
-            /** @var RetentionEnforcer $retentionEnforcer */
-            $retentionEnforcer = $kernel->container()->get(RetentionEnforcer::class);
-            $application->add(new RetentionApplyCommand($retentionEnforcer));
-        }
-
-        if ($kernel->container()->has(RedactionPipeline::class)) {
-            /** @var RedactionPipeline $redactionPipeline */
-            $redactionPipeline = $kernel->container()->get(RedactionPipeline::class);
-            $application->add(new RedactionTestCommand($redactionPipeline));
-        }
-
-        // Guardian commands
-        $application->add(new GuardianStatusCommand($studioStore));
-
-        if ($kernel->container()->has(Supervisor::class)) {
-            /** @var Supervisor $supervisor */
-            $supervisor = $kernel->container()->get(Supervisor::class);
-            $application->add(new GuardianCheckCommand($supervisor));
-            $application->add(new GuardianSupervisorRunOnceCommand($supervisor));
-        }
-
-        if ($kernel->container()->has(SupervisorConfig::class)) {
-            /** @var SupervisorConfig $supervisorConfig */
-            $supervisorConfig = $kernel->container()->get(SupervisorConfig::class);
-            $application->add(new GuardianSupervisorStatusCommand($supervisorConfig));
-        }
-
-        if ($kernel->container()->has(DeployCheck::class)) {
-            /** @var DeployCheck $deployCheck */
-            $deployCheck = $kernel->container()->get(DeployCheck::class);
-            $application->add(new GuardianDeployCheckCommand($deployCheck));
-        }
-
-        if ($kernel->container()->has(IntegrityConfig::class)) {
-            /** @var IntegrityConfig $integrityConfig */
-            $integrityConfig = $kernel->container()->get(IntegrityConfig::class);
-            $manifestBuilder = new ManifestBuilder($basePath);
-            $manifestVerifier = new ManifestVerifier($basePath);
-
-            try {
-                $manifestSigner = $kernel->container()->has(MasterKey::class)
-                    ? new ManifestSigner(
-                        $kernel->container()->has(HmacInterface::class)
-                            ? $kernel->container()->get(HmacInterface::class)
-                            : new HmacService(),
-                        $kernel->container()->get(MasterKey::class),
-                    )
-                    : null;
-            } catch (Throwable $e) {
-                fwrite(STDERR, "Warning: Failed to initialize manifest signer: {$e->getMessage()}\n");
-                $manifestSigner = null;
-            }
-
-            $application->add(new GuardianIntegrityBuildCommand($manifestBuilder, $integrityConfig, $manifestSigner));
-            $application->add(new GuardianIntegrityVerifyCommand($manifestVerifier, $integrityConfig, $manifestSigner));
-        }
-
-        // Benchmark command
-        if ($kernel->container()->has(StudioManager::class)) {
-            /** @var StudioManager $studioManager */
-            $studioManager = $kernel->container()->get(StudioManager::class);
-            $application->add(new ConsoleBenchmarkCommand(
-                $studioManager->emitCallback(),
-                $basePath,
-            ));
-        }
+      $application->addCommands([
+        new ConsoleMetricsCommand($aggregator),
+        new ConsoleRoutesCommand($aggregator),
+        new ConsoleExceptionsCommand($aggregator),
+      ]);
     }
+
+    if ($kernel->container()->has(TimelineBuilder::class)) {
+      /** @var TimelineBuilder $timelineBuilder */
+      $timelineBuilder = $kernel->container()->get(TimelineBuilder::class);
+      $application->add(new ConsoleTimelineCommand($studioStore, $timelineBuilder));
+    }
+
+    $application->add(new ConsoleJobsCommand($studioStore));
+
+    // Evidence commands
+    if ($kernel->container()->has(EvidenceExporter::class)) {
+      /** @var EvidenceExporter $exporter */
+      $exporter = $kernel->container()->get(EvidenceExporter::class);
+      $application->add(new EvidenceExportCommand($exporter));
+    }
+
+    if ($kernel->container()->has(EvidenceVerifier::class)) {
+      /** @var EvidenceVerifier $verifier */
+      $verifier = $kernel->container()->get(EvidenceVerifier::class);
+      $application->add(new EvidenceVerifyCommand($verifier));
+    }
+
+    $application->add(new EvidenceStatusCommand($studioStore));
+    $application->add(new EvidencePurgeCommand($studioStore));
+
+    if ($kernel->container()->has(RetentionEnforcer::class)) {
+      /** @var RetentionEnforcer $retentionEnforcer */
+      $retentionEnforcer = $kernel->container()->get(RetentionEnforcer::class);
+      $application->add(new RetentionApplyCommand($retentionEnforcer));
+    }
+
+    if ($kernel->container()->has(RedactionPipeline::class)) {
+      /** @var RedactionPipeline $redactionPipeline */
+      $redactionPipeline = $kernel->container()->get(RedactionPipeline::class);
+      $application->add(new RedactionTestCommand($redactionPipeline));
+    }
+
+    // Guardian commands
+    $application->add(new GuardianStatusCommand($studioStore));
+
+    if ($kernel->container()->has(Supervisor::class)) {
+      /** @var Supervisor $supervisor */
+      $supervisor = $kernel->container()->get(Supervisor::class);
+      $application->add(new GuardianCheckCommand($supervisor));
+      $application->add(new GuardianSupervisorRunOnceCommand($supervisor));
+    }
+
+    if ($kernel->container()->has(SupervisorConfig::class)) {
+      /** @var SupervisorConfig $supervisorConfig */
+      $supervisorConfig = $kernel->container()->get(SupervisorConfig::class);
+      $application->add(new GuardianSupervisorStatusCommand($supervisorConfig));
+    }
+
+    if ($kernel->container()->has(DeployCheck::class)) {
+      /** @var DeployCheck $deployCheck */
+      $deployCheck = $kernel->container()->get(DeployCheck::class);
+      $application->add(new GuardianDeployCheckCommand($deployCheck));
+    }
+
+    if ($kernel->container()->has(IntegrityConfig::class)) {
+      /** @var IntegrityConfig $integrityConfig */
+      $integrityConfig = $kernel->container()->get(IntegrityConfig::class);
+      $manifestBuilder = new ManifestBuilder($basePath);
+      $manifestVerifier = new ManifestVerifier($basePath);
+
+      try {
+        $manifestSigner = $kernel->container()->has(MasterKey::class)
+          ? new ManifestSigner(
+            $kernel->container()->has(HmacInterface::class)
+              ? $kernel->container()->get(HmacInterface::class)
+              : new HmacService(),
+            $kernel->container()->get(MasterKey::class),
+          )
+          : null;
+      } catch (Throwable $e) {
+        fwrite(STDERR, "Warning: Failed to initialize manifest signer: {$e->getMessage()}\n");
+        $manifestSigner = null;
+      }
+
+      $application->add(new GuardianIntegrityBuildCommand($manifestBuilder, $integrityConfig, $manifestSigner));
+      $application->add(new GuardianIntegrityVerifyCommand($manifestVerifier, $integrityConfig, $manifestSigner));
+    }
+
+    // Benchmark command
+    if ($kernel->container()->has(StudioManager::class)) {
+      /** @var StudioManager $studioManager */
+      $studioManager = $kernel->container()->get(StudioManager::class);
+      $application->add(
+        new ConsoleBenchmarkCommand(
+          $studioManager->emitCallback(),
+          $basePath,
+        )
+      );
+    }
+  }
+}
+
+// Register View commands
+if ($kernel->container()->has(ViewCompileCommand::class)) {
+  /** @var ViewCompileCommand $viewCompileCmd */
+  $viewCompileCmd = $kernel->container()->get(ViewCompileCommand::class);
+  $application->add($viewCompileCmd);
+}
+
+$application->add(new PlaygroundServeCommand($basePath));
+
+// Register REPL shell command
+{
+  $replConfigFile = $configPath . '/repl.php';
+
+  /** @var array<string, mixed> $replData */
+  $replData = is_file($replConfigFile) ? (require $replConfigFile) : [];
+
+  $replEnvironment = $configManager?->environment() ?? Environment::load();
+  $replMode = $replEnvironment->resolveMode();
+  $replConfig = is_array($replData) ? ReplConfig::fromArray($replData, $replEnvironment) : new ReplConfig();
+  $replGuard = new EnvironmentGuard($replMode, $replEnvironment, $replConfig->enabled);
+
+  $replAuditLogger = null;
+  if ($replConfig->audit && $kernel->container()->has(AuditLoggerInterface::class)) {
+    /** @var AuditLoggerInterface $auditLoggerInstance */
+    $auditLoggerInstance = $kernel->container()->get(AuditLoggerInterface::class);
+    $replAuditLogger = new ReplAuditLogger($auditLoggerInstance, bin2hex(random_bytes(16)));
+  }
+
+  $replRedactor = null;
+  if ($kernel->container()->has(SensitiveDataScrubber::class)) {
+    /** @var SensitiveDataScrubber $replScrubber */
+    $replScrubber = $kernel->container()->get(SensitiveDataScrubber::class);
+    $replRedactor = new SecretRedactor($replScrubber);
+  }
+
+  $application->add(
+    new ShellCommand(
+      $kernel->container(),
+      $replMode,
+      $replGuard,
+      $replConfig,
+      $replAuditLogger,
+      $replRedactor,
+    )
+  );
 }
 
 // Register extension commands
 if ($extensionBootstrap !== null) {
-    foreach ($extensionBootstrap->getCommands() as $commandClass) {
-        if (class_exists($commandClass)) {
-            try {
-                $command = $kernel->container()->has($commandClass)
-                    ? $kernel->container()->get($commandClass)
-                    : new $commandClass();
-
-                if ($command instanceof CommandInterface) {
-                    $application->add($command);
-                }
-            } catch (Throwable $e) {
-                fwrite(STDERR, "Warning: Failed to register command $commandClass: {$e->getMessage()}\n");
-            }
-        }
+  foreach ($extensionBootstrap->getCommands() as $commandClass) {
+    if (!class_exists($commandClass)) {
+      continue;
     }
+
+    try {
+      if ($kernel->container()->has($commandClass)) {
+        $command = $kernel->container()->get($commandClass);
+      } else {
+        $ref = new ReflectionClass($commandClass);
+        $ctor = $ref->getConstructor();
+
+        // Only attempt direct instantiation for commands with no required constructor params
+        if ($ctor !== null && $ctor->getNumberOfRequiredParameters() > 0) {
+          continue;
+        }
+
+        $command = $ref->newInstance();
+      }
+
+      if ($command instanceof CommandInterface) {
+        $application->add($command);
+      }
+    } catch (Throwable $e) {
+      fwrite(STDERR, "Warning: Failed to register command $commandClass: {$e->getMessage()}\n");
+    }
+  }
 }
 
 // Run the application

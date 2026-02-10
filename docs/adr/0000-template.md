@@ -8,7 +8,7 @@ Proposed | Accepted | Deprecated | Superseded by ADR-NNNN
 
 [Problem, constraints, forces at play.]
 
-## Decision Drivers
+## Decision drivers
 
 1. [Top reason]
 2. [Second reason]
@@ -18,7 +18,7 @@ Proposed | Accepted | Deprecated | Superseded by ADR-NNNN
 
 [What was decided and why.]
 
-## Alternatives Considered
+## Alternatives considered
 
 ### [Alternative A]
 
@@ -42,15 +42,21 @@ Proposed | Accepted | Deprecated | Superseded by ADR-NNNN
 
 - ...
 
-## Security Impact
+## Field report
+
+_Optional. Document operational experience that validates or challenges this decision. Add entries as they accumulate._
+
+- **[Date range]** | [Incident link / ticket]: [What happened, what was learned, measurable impact (perf, reliability, security).]
+
+## Security impact
 
 [Explicit "None" if none. Otherwise describe changes to attack surface, crypto, auth, or data handling.]
 
-## Performance Impact
+## Performance impact
 
 [Explicit "None" if none. Otherwise describe hot-path changes, budget implications, or benchmark results.]
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 [How to adopt this decision. How to revert if it fails.]
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Event;
 
+use DateMalformedStringException;
 use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
@@ -87,8 +88,17 @@ final readonly class EventMetadata
             causationId: CausationId::fromString(is_string($causationId) ? $causationId : ''),
             actor: is_string($actor) ? $actor : null,
             tenantId: is_string($tenantId) ? $tenantId : null,
-            occurredAt: is_string($occurredAtRaw) ? new DateTimeImmutable($occurredAtRaw) : null,
+            occurredAt: is_string($occurredAtRaw) ? self::parseOccurredAt($occurredAtRaw) : null,
             attributes: $attributes,
         );
+    }
+
+    private static function parseOccurredAt(string $value): ?DateTimeImmutable
+    {
+        try {
+            return new DateTimeImmutable($value);
+        } catch (DateMalformedStringException) {
+            return null;
+        }
     }
 }

@@ -73,7 +73,7 @@ final class ValidationExceptionTest extends TestCase
         $exception = new ValidationException($result);
 
         self::assertSame([
-            ['field' => 'email', 'message' => 'Required.', 'rule' => 'required'],
+            ['field' => 'email', 'message' => 'Required.', 'rule' => 'required', 'code' => 'VALIDATION_REQUIRED'],
         ], $exception->violations());
     }
 }

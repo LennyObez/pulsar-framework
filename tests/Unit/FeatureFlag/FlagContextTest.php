@@ -8,9 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\FeatureFlag\FlagContext;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 
 #[CoversClass(FlagContext::class)]
 final class FlagContextTest extends TestCase
@@ -45,13 +43,9 @@ final class FlagContextTest extends TestCase
     #[Test]
     public function fromRequestExtractsTenantAndUserId(): void
     {
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
             attributes: ['_tenant_id' => 'acme', '_user_id' => 'user-42'],
         );
 
@@ -66,13 +60,9 @@ final class FlagContextTest extends TestCase
     #[Test]
     public function fromRequestHandlesMissingAttributes(): void
     {
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
         $context = FlagContext::fromRequest($request);

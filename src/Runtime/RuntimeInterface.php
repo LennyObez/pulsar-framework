@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 
 /**
  * Contract for HTTP runtime implementations.
@@ -29,10 +29,10 @@ interface RuntimeInterface
     /**
      * Prepare the request sandbox before handling.
      */
-    public function beforeRequest(Request $request): Request;
+    public function beforeRequest(ServerRequestInterface $request): ServerRequestInterface;
 
     /**
      * Clean up the request sandbox after handling.
      */
-    public function afterRequest(Request $request, Response $response): void;
+    public function afterRequest(ServerRequestInterface $request, ResponseInterface $response): void;
 }

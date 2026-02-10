@@ -11,9 +11,7 @@ use Pulsar\Auth\Guard\TokenGuard;
 use Pulsar\Auth\Guard\TokenResolverInterface;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 
 #[CoversClass(TokenGuard::class)]
 final class TokenGuardTest extends TestCase
@@ -36,13 +34,9 @@ final class TokenGuardTest extends TestCase
     #[Test]
     public function authenticateReturnsNullWhenNoAuthorizationHeader(): void
     {
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
         self::assertNull($this->guard->authenticate($request));
@@ -51,13 +45,10 @@ final class TokenGuardTest extends TestCase
     #[Test]
     public function authenticateReturnsNullWhenAuthorizationHeaderIsNotBearer(): void
     {
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag(['Authorization' => 'Basic dXNlcjpwYXNz']),
-            body: '',
+            headers: ['Authorization' => 'Basic dXNlcjpwYXNz'],
         );
 
         self::assertNull($this->guard->authenticate($request));
@@ -66,13 +57,10 @@ final class TokenGuardTest extends TestCase
     #[Test]
     public function authenticateReturnsNullWhenBearerTokenIsEmpty(): void
     {
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag(['Authorization' => 'Bearer ']),
-            body: '',
+            headers: ['Authorization' => 'Bearer '],
         );
 
         self::assertNull($this->guard->authenticate($request));
@@ -97,13 +85,10 @@ final class TokenGuardTest extends TestCase
 
         $guard = new TokenGuard($resolver);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag(['Authorization' => 'Bearer test-token']),
-            body: '',
+            headers: ['Authorization' => 'Bearer test-token'],
         );
 
         $result = $guard->authenticate($request);
@@ -122,13 +107,10 @@ final class TokenGuardTest extends TestCase
 
         $guard = new TokenGuard($resolver);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag(['Authorization' => 'Bearer invalid-token']),
-            body: '',
+            headers: ['Authorization' => 'Bearer invalid-token'],
         );
 
         self::assertNull($guard->authenticate($request));

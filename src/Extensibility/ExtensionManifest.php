@@ -32,6 +32,7 @@ readonly class ExtensionManifest
         public PulsarVersionConfig $pulsar = new PulsarVersionConfig('0.0.0'),
         public ProvidesConfig $provides = new ProvidesConfig(),
         public RequiresConfig $requires = new RequiresConfig(),
+        public TrustTier $requestedTrustTier = TrustTier::Community,
     ) {}
 
     /**
@@ -103,6 +104,12 @@ readonly class ExtensionManifest
         $requiresData = $data['requires'] ?? [];
         $requires = RequiresConfig::fromArray($requiresData);
 
+        // Parse trust tier — metadata only, effective tier resolved by host policy
+        $trustTierValue = isset($data['trust_tier']) && is_string($data['trust_tier'])
+            ? $data['trust_tier']
+            : '';
+        $requestedTrustTier = TrustTier::tryFrom($trustTierValue) ?? TrustTier::Community;
+
         return new self(
             name: $data['name'],
             version: $data['version'],
@@ -112,6 +119,7 @@ readonly class ExtensionManifest
             pulsar: $pulsar,
             provides: $provides,
             requires: $requires,
+            requestedTrustTier: $requestedTrustTier,
         );
     }
 

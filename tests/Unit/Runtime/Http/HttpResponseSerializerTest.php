@@ -7,9 +7,7 @@ namespace Pulsar\Tests\Unit\Runtime\Http;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Http\HttpResponseSerializer;
 
@@ -27,9 +25,9 @@ final class HttpResponseSerializerTest extends TestCase
     public function it_serializes_a_basic_response(): void
     {
         $response = new Response(
+            statusCode: ResponseStatus::OK->value,
+            headers: ['Content-Type' => 'text/plain'],
             body: 'Hello World',
-            status: ResponseStatus::OK,
-            headers: new HeaderBag(['Content-Type' => 'text/plain']),
         );
 
         $raw = $this->serializer->serialize($response, addDateHeader: false);
@@ -44,7 +42,7 @@ final class HttpResponseSerializerTest extends TestCase
     public function it_sets_content_length_from_body(): void
     {
         $body = str_repeat('x', 42);
-        $response = new Response(body: $body, status: ResponseStatus::OK);
+        $response = new Response(statusCode: ResponseStatus::OK->value, body: $body);
 
         $raw = $this->serializer->serialize($response, addDateHeader: false);
 
@@ -54,7 +52,7 @@ final class HttpResponseSerializerTest extends TestCase
     #[Test]
     public function it_injects_connection_close(): void
     {
-        $response = new Response(body: '', status: ResponseStatus::OK);
+        $response = new Response(statusCode: ResponseStatus::OK->value);
 
         $raw = $this->serializer->serialize($response, closeConnection: true, addDateHeader: false);
 
@@ -65,9 +63,9 @@ final class HttpResponseSerializerTest extends TestCase
     public function it_strips_transfer_encoding(): void
     {
         $response = new Response(
+            statusCode: ResponseStatus::OK->value,
+            headers: ['Transfer-Encoding' => 'chunked'],
             body: 'data',
-            status: ResponseStatus::OK,
-            headers: new HeaderBag(['Transfer-Encoding' => 'chunked']),
         );
 
         $raw = $this->serializer->serialize($response, addDateHeader: false);
@@ -78,11 +76,11 @@ final class HttpResponseSerializerTest extends TestCase
     #[Test]
     public function it_omits_body_for_head_requests(): void
     {
-        $response = new Response(body: 'body content', status: ResponseStatus::OK);
+        $response = new Response(statusCode: ResponseStatus::OK->value, body: 'body content');
 
         $raw = $this->serializer->serialize(
             $response,
-            requestMethod: Method::HEAD,
+            requestMethod: 'HEAD',
             addDateHeader: false,
         );
 
@@ -94,7 +92,7 @@ final class HttpResponseSerializerTest extends TestCase
     #[Test]
     public function it_serializes_empty_body(): void
     {
-        $response = new Response(body: '', status: ResponseStatus::NoContent);
+        $response = new Response(statusCode: ResponseStatus::NoContent->value);
 
         $raw = $this->serializer->serialize($response, addDateHeader: false);
 
@@ -105,7 +103,7 @@ final class HttpResponseSerializerTest extends TestCase
     #[Test]
     public function it_adds_date_header_when_enabled(): void
     {
-        $response = new Response(body: '', status: ResponseStatus::OK);
+        $response = new Response(statusCode: ResponseStatus::OK->value);
 
         $raw = $this->serializer->serialize($response, addDateHeader: true);
 
@@ -115,7 +113,7 @@ final class HttpResponseSerializerTest extends TestCase
     #[Test]
     public function it_does_not_add_date_header_when_disabled(): void
     {
-        $response = new Response(body: '', status: ResponseStatus::OK);
+        $response = new Response(statusCode: ResponseStatus::OK->value);
 
         $raw = $this->serializer->serialize($response, addDateHeader: false);
 
@@ -126,9 +124,8 @@ final class HttpResponseSerializerTest extends TestCase
     public function it_preserves_existing_date_header(): void
     {
         $response = new Response(
-            body: '',
-            status: ResponseStatus::OK,
-            headers: new HeaderBag(['Date' => 'Thu, 01 Jan 2026 00:00:00 GMT']),
+            statusCode: ResponseStatus::OK->value,
+            headers: ['Date' => 'Thu, 01 Jan 2026 00:00:00 GMT'],
         );
 
         $raw = $this->serializer->serialize($response, addDateHeader: true);
@@ -155,7 +152,7 @@ final class HttpResponseSerializerTest extends TestCase
     #[Test]
     public function it_serializes_404_response(): void
     {
-        $response = new Response(body: 'Not Found', status: ResponseStatus::NotFound);
+        $response = new Response(statusCode: ResponseStatus::NotFound->value, body: 'Not Found');
 
         $raw = $this->serializer->serialize($response, addDateHeader: false);
 

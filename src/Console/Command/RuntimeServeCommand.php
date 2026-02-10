@@ -13,8 +13,10 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Core\KernelInterface;
 use Pulsar\Observability\Metrics\MetricRegistry;
-use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
 use Pulsar\Runtime\RuntimeCollectorInterface;
+use Pulsar\Runtime\RuntimeFactory;
+use Pulsar\Runtime\RuntimeResolver;
+use Pulsar\Runtime\RuntimeType;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
 
 use function extension_loaded;
@@ -25,13 +27,14 @@ use function sprintf;
 use const FILTER_VALIDATE_IP;
 
 /**
- * Start the persistent HTTP runtime server.
+ * Start the HTTP runtime server.
  */
 final class RuntimeServeCommand extends Command
 {
     public function __construct(
         private readonly KernelInterface $kernel,
-        private readonly PersistentRuntimeFactoryInterface $runtimeFactory,
+        private readonly RuntimeFactory $runtimeFactory,
+        private readonly RuntimeResolver $resolver,
         private readonly ?RuntimeConfig $runtimeConfig = null,
         private readonly ?LoggerInterface $logger = null,
         private readonly ?MetricRegistry $metricRegistry = null,
@@ -44,7 +47,7 @@ final class RuntimeServeCommand extends Command
     protected function configure(): void
     {
         $this->name = 'runtime:serve';
-        $this->description = 'Start the persistent HTTP runtime server';
+        $this->description = 'Start the HTTP runtime server';
 
         $this->addOption('host', 'Address to bind');
         $this->addOption('port', 'Port to listen on');
@@ -53,13 +56,23 @@ final class RuntimeServeCommand extends Command
         $this->addOption('timeout', 'Time limit in seconds');
         $this->addOption('concurrency', 'Fiber concurrency (0 = synchronous)');
         $this->addOption('public', 'Allow binding to non-loopback address');
+        $this->addOption('runtime', 'Runtime type (fpm, persistent, frankenphp, roadrunner)');
     }
 
     #[Override]
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        // Early check: ext-sockets must be loaded
-        if (!extension_loaded('sockets')) {
+        $config = $this->resolveConfig($input);
+
+        // Resolve runtime type from --runtime option or auto-detect
+        $runtimeOption = $input->getOption('runtime');
+        /** @var string|null $runtimeOption */
+        $runtimeType = $runtimeOption !== null
+            ? RuntimeType::from($runtimeOption)
+            : $this->resolver->resolve();
+
+        // ext-sockets check only applies to the persistent runtime
+        if ($runtimeType === RuntimeType::Persistent && !extension_loaded('sockets')) {
             $output->error(
                 'The "sockets" PHP extension is required for the persistent runtime. '
                 . 'Install or enable it in php.ini.',
@@ -68,7 +81,6 @@ final class RuntimeServeCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $config = $this->resolveConfig($input);
         $isPublic = $input->getOption('public') !== null;
 
         // Validate host binding
@@ -84,7 +96,8 @@ final class RuntimeServeCommand extends Command
         }
 
         $output->info(sprintf(
-            'Starting persistent runtime on %s:%d (concurrency: %s, max-requests: %d, memory: %dMB)',
+            'Starting %s runtime on %s:%d (concurrency: %s, max-requests: %d, memory: %dMB)',
+            $runtimeType->value,
             $config->host,
             $config->port,
             $config->fiberConcurrency > 0 ? (string) $config->fiberConcurrency : 'sync',
@@ -99,7 +112,8 @@ final class RuntimeServeCommand extends Command
             config: $config,
         );
 
-        $runtime = $this->runtimeFactory->create(
+        $runtime = $this->runtimeFactory->createForType(
+            type: $runtimeType,
             kernel: $this->kernel,
             config: $config,
             logger: $this->logger,

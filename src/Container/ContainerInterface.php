@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Container;
 
 use NoDiscard;
+use Override;
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 use Pulsar\Api\Api;
 
@@ -16,6 +17,9 @@ interface ContainerInterface extends PsrContainerInterface
 {
     /**
      * Register a binding in the container.
+     *
+     * For request-scoped or tenant-scoped lifetimes, use
+     * {@see AdvancedContainerInterface::bindWithLifetime()} instead.
      *
      * @param string $id The binding identifier (typically an interface or class name)
      * @param callable|class-string $concrete The factory callable or class name
@@ -38,6 +42,7 @@ interface ContainerInterface extends PsrContainerInterface
      *
      * @param string $id The binding identifier
      */
+    #[Override]
     public function has(string $id): bool;
 
     /**
@@ -47,6 +52,7 @@ interface ContainerInterface extends PsrContainerInterface
      * @param string|class-string<T> $id The binding identifier
      * @return ($id is class-string<T> ? T : mixed)
      */
+    #[Override]
     #[NoDiscard]
     public function get(string $id): mixed;
 

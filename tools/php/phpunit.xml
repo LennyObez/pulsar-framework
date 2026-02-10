@@ -11,6 +11,7 @@
     <testsuites>
         <testsuite name="Unit">
             <directory>../../tests/Unit</directory>
+            <directory>../../extensions/opentelemetry/tests/Unit</directory>
         </testsuite>
         <testsuite name="Integration">
             <directory>../../tests/Integration</directory>
@@ -18,7 +19,19 @@
         <testsuite name="E2E">
             <directory>../../tests/E2E</directory>
         </testsuite>
+        <testsuite name="Fuzz">
+            <directory>../../tests/Fuzz</directory>
+        </testsuite>
+        <testsuite name="Chaos">
+            <directory>../../tests/Chaos</directory>
+        </testsuite>
+        <testsuite name="Property">
+            <directory>../../tests/Property</directory>
+        </testsuite>
     </testsuites>
+    <php>
+        <ini name="memory_limit" value="512M"/>
+    </php>
     <source>
         <include>
             <directory>../../src</directory>
@@ -30,6 +43,14 @@
             <directory>../../extensions/mcp-server/src</directory>
             <directory>../../extensions/orm/src</directory>
             <directory>../../extensions/admin/src</directory>
+            <directory>../../extensions/opentelemetry/src</directory>
+            <directory>../../extensions/oauth2/src</directory>
+            <directory>../../extensions/form/src</directory>
+            <directory>../../extensions/webauthn/src</directory>
+            <directory>../../extensions/cms/src</directory>
+            <directory>../../extensions/graphql/src</directory>
+            <directory>../../extensions/forum/src</directory>
+            <directory>../../extensions/analytics/src</directory>
         </include>
     </source>
 </phpunit>

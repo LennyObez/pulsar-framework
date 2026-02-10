@@ -69,7 +69,7 @@ readonly class ValidationResult
     }
 
     /**
-     * @return list<array{field: string, message: string, rule: string}>
+     * @return list<array{field: string, message: string, rule: string, code: string}>
      */
     public function toArray(): array
     {

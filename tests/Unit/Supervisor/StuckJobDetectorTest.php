@@ -35,7 +35,6 @@ final class StuckJobDetectorTest extends TestCase
 
         $driver = $this->createStub(QueueDriverInterface::class);
         $driver->method('findByStatus')
-            ->with(JobRecordStatus::Processing)
             ->willReturn([$stuckJob]);
 
         $policy = new StuckJobPolicy(
@@ -68,7 +67,6 @@ final class StuckJobDetectorTest extends TestCase
 
         $driver = $this->createStub(QueueDriverInterface::class);
         $driver->method('findByStatus')
-            ->with(JobRecordStatus::Processing)
             ->willReturn([$recentJob]);
 
         $policy = new StuckJobPolicy(
@@ -88,7 +86,6 @@ final class StuckJobDetectorTest extends TestCase
     {
         $driver = $this->createStub(QueueDriverInterface::class);
         $driver->method('findByStatus')
-            ->with(JobRecordStatus::Processing)
             ->willReturn([]);
 
         $policy = new StuckJobPolicy(
@@ -132,7 +129,6 @@ final class StuckJobDetectorTest extends TestCase
 
         $driver = $this->createStub(QueueDriverInterface::class);
         $driver->method('findByStatus')
-            ->with(JobRecordStatus::Processing)
             ->willReturn([$stuckJob, $healthyJob]);
 
         $policy = new StuckJobPolicy(
@@ -165,7 +161,6 @@ final class StuckJobDetectorTest extends TestCase
 
         $driver = $this->createStub(QueueDriverInterface::class);
         $driver->method('findByStatus')
-            ->with(JobRecordStatus::Processing)
             ->willReturn([$boundaryJob]);
 
         $policy = new StuckJobPolicy(
@@ -202,7 +197,6 @@ final class StuckJobDetectorTest extends TestCase
 
         $driver = $this->createStub(QueueDriverInterface::class);
         $driver->method('findByStatus')
-            ->with(JobRecordStatus::Processing)
             ->willReturn($jobs);
 
         $policy = new StuckJobPolicy(

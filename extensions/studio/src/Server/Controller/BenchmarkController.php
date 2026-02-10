@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server\Controller;
 
 use JsonException;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 use function htmlspecialchars;
 use function json_encode;
@@ -30,7 +30,7 @@ final readonly class BenchmarkController
     /**
      * @throws JsonException
      */
-    public function handle(Request $_request): Response
+    public function handle(ServerRequestInterface $_request): Response
     {
         $runs = $this->aggregator->benchmarkRuns(50);
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server;
 
 use JsonException;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Security\ProductionSafetyMode;
 use Pulsar\Extension\Studio\Server\Controller\ApiController;
@@ -17,10 +18,7 @@ use Pulsar\Extension\Studio\Server\Controller\LandingController;
 use Pulsar\Extension\Studio\Server\Controller\LogExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\RequestExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\TimelineController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function preg_match;
@@ -29,7 +27,7 @@ use function preg_match;
  * Standalone router for the Studio server.
  *
  * Matches incoming requests to Studio controllers.
- * Used by the `studio:start` command's built-in server.
+ * Used by the `studio:serve` command's built-in server.
  */
 #[Internal]
 final readonly class StudioRouter
@@ -53,30 +51,30 @@ final readonly class StudioRouter
      *
      * @throws JsonException
      */
-    public function dispatch(Request $request): Response
+    public function dispatch(ServerRequestInterface $request): Response
     {
-        $path = '/' . trim($request->path, '/');
-        $method = $request->method;
+        $path = '/' . trim($request->getUri()->getPath(), '/');
+        $method = $request->getMethod();
 
         // POST routes — mutable API actions
-        if ($method === Method::POST) {
+        if ($method === 'POST') {
             return match (true) {
                 $path === '/studio/api/benchmark/run' => $this->guardMutableApi($request, fn() => $this->benchmarkApi->run($request)),
                 $path === '/studio/api/benchmark/delete' => $this->guardMutableApi($request, fn() => $this->benchmarkApi->deleteRuns($request)),
                 $path === '/studio/api/benchmark/clear' => $this->guardMutableApi($request, fn() => $this->benchmarkApi->clearHistory($request)),
                 default => new Response(
+                    statusCode: ResponseStatus::MethodNotAllowed->value,
+                    headers: ['Allow' => 'GET, HEAD'],
                     body: 'Method Not Allowed',
-                    status: ResponseStatus::MethodNotAllowed,
-                    headers: new HeaderBag(['Allow' => 'GET, HEAD']),
                 ),
             };
         }
 
-        if ($method !== Method::GET && $method !== Method::HEAD) {
+        if ($method !== 'GET' && $method !== 'HEAD') {
             return new Response(
+                statusCode: ResponseStatus::MethodNotAllowed->value,
+                headers: ['Allow' => 'GET, HEAD'],
                 body: 'Method Not Allowed',
-                status: ResponseStatus::MethodNotAllowed,
-                headers: new HeaderBag(['Allow' => 'GET, HEAD']),
             );
         }
 
@@ -90,9 +88,10 @@ final readonly class StudioRouter
             $path === '/studio/console/benchmarks' => $this->guardDrillDown($request, fn() => $this->benchmark->handle($request)),
             $this->matchesTimeline($path) => $this->guardDrillDown($request, fn() => $this->timeline->handle($request, $this->extractTimelineId($path))),
             $path === '/studio/api/benchmark/status' => $this->guardApi($request, fn() => $this->benchmarkApi->status($request)),
+            $path === '/studio/api/benchmark/profiles' => $this->guardApi($request, fn() => $this->benchmarkApi->profiles($request)),
             $path === '/studio/api/events' => $this->guardApi($request, fn() => $this->api->events($request)),
             $path === '/studio/api/live' => $this->guardSse($request, fn() => $this->api->live($request)),
-            default => new Response(body: 'Not Found', status: ResponseStatus::NotFound),
+            default => new Response(statusCode: ResponseStatus::NotFound->value, body: 'Not Found'),
         };
     }
 
@@ -111,12 +110,12 @@ final readonly class StudioRouter
     /**
      * @param callable(): Response $handler
      */
-    private function guardDrillDown(Request $_request, callable $handler): Response
+    private function guardDrillDown(ServerRequestInterface $_request, callable $handler): Response
     {
         if (!$this->safetyMode->allowDrillDown()) {
             return Response::json(
                 ['error' => 'Drill-down views are disabled in production mode'],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 
@@ -126,12 +125,12 @@ final readonly class StudioRouter
     /**
      * @param callable(): Response $handler
      */
-    private function guardApi(Request $_request, callable $handler): Response
+    private function guardApi(ServerRequestInterface $_request, callable $handler): Response
     {
         if (!$this->safetyMode->allowApi()) {
             return Response::json(
                 ['error' => 'API access is disabled in production mode'],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 
@@ -141,12 +140,12 @@ final readonly class StudioRouter
     /**
      * @param callable(): Response $handler
      */
-    private function guardMutableApi(Request $_request, callable $handler): Response
+    private function guardMutableApi(ServerRequestInterface $_request, callable $handler): Response
     {
         if (!$this->safetyMode->allowMutableApi()) {
             return Response::json(
                 ['error' => 'Mutable API actions are restricted to local development mode'],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 
@@ -156,12 +155,12 @@ final readonly class StudioRouter
     /**
      * @param callable(): Response $handler
      */
-    private function guardSse(Request $_request, callable $handler): Response
+    private function guardSse(ServerRequestInterface $_request, callable $handler): Response
     {
         if (!$this->safetyMode->allowSse()) {
             return Response::json(
                 ['error' => 'SSE live stream is disabled in production mode'],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 

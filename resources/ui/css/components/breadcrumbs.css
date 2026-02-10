@@ -1,0 +1,44 @@
+/* Pulsar UI — Breadcrumbs Component v1.0.0
+ * ARIA: nav[aria-label="Breadcrumb"], ol, aria-current="page" on last item
+ */
+
+.pui-breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  list-style: none;
+}
+
+.pui-breadcrumbs__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pui-breadcrumbs__item + .pui-breadcrumbs__item::before {
+  content: '/';
+  color: var(--color-text-disabled);
+  margin-inline-end: var(--space-1);
+}
+
+.pui-breadcrumbs__link {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.pui-breadcrumbs__link:hover {
+  color: var(--color-link);
+  text-decoration: underline;
+}
+
+.pui-breadcrumbs__link:visited {
+  color: var(--color-text-muted);
+}
+
+.pui-breadcrumbs__current {
+  color: var(--color-text);
+  font-weight: var(--font-medium);
+}

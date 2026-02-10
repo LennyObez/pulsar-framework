@@ -7,7 +7,8 @@ namespace Pulsar\Tests\Integration\Runtime;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Http\ConnectionContext;
 use Pulsar\Runtime\Http\HttpRequestParser;
@@ -47,7 +48,7 @@ final class RequestLimitsTest extends TestCase
         $result = $this->parser->parse($ctx, maxHeaderSize: 4096);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge, $result->status);
+        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -59,7 +60,7 @@ final class RequestLimitsTest extends TestCase
         $result = $this->parser->parse($ctx, maxBodySize: 1024);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::PayloadTooLarge, $result->status);
+        self::assertSame(ResponseStatus::PayloadTooLarge->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -71,7 +72,7 @@ final class RequestLimitsTest extends TestCase
         $result = $this->parser->parse($ctx);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::BadRequest, $result->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -83,7 +84,7 @@ final class RequestLimitsTest extends TestCase
         $result = $this->parser->parse($ctx);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::BadRequest, $result->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -96,7 +97,7 @@ final class RequestLimitsTest extends TestCase
         $result = $this->parser->parse($ctx, maxHeaderSize: 8192);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge, $result->status);
+        self::assertSame(ResponseStatus::RequestHeaderFieldsTooLarge->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -114,7 +115,7 @@ final class RequestLimitsTest extends TestCase
         $result = $this->parser->parse($ctx, maxBodySize: 1024);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::PayloadTooLarge, $result->status);
+        self::assertSame(ResponseStatus::PayloadTooLarge->value, $result->getStatusCode());
     }
 
     #[Test]
@@ -126,8 +127,8 @@ final class RequestLimitsTest extends TestCase
 
         $result = $this->parser->parse($ctx, maxHeaderSize: 8192, maxBodySize: 1024);
 
-        self::assertInstanceOf(\Pulsar\Http\Request::class, $result);
-        self::assertSame('small body', $result->body);
+        self::assertInstanceOf(ServerRequest::class, $result);
+        self::assertSame('small body', (string) $result->getBody());
     }
 
     #[Test]
@@ -139,6 +140,6 @@ final class RequestLimitsTest extends TestCase
         $result = $this->parser->parse($ctx);
 
         self::assertInstanceOf(Response::class, $result);
-        self::assertSame(ResponseStatus::BadRequest, $result->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $result->getStatusCode());
     }
 }

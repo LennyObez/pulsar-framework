@@ -1,42 +1,65 @@
 {
   "name": "pulsar/framework",
-  "version": "1.0.0-rc.10",
+  "version": "1.0.0-rc.11",
   "description": "Pulsar HMVC Framework (PHP 8.5)",
   "type": "library",
   "license": "Apache-2.0",
   "require": {
+    "php": "^8.5",
     "ext-ctype": "*",
     "ext-curl": "*",
+    "ext-dom": "*",
+    "ext-exif": "*",
+    "ext-fileinfo": "*",
+    "ext-gd": "*",
+    "ext-libxml": "*",
     "ext-mbstring": "*",
+    "ext-openssl": "*",
     "ext-pdo": "*",
     "ext-simplexml": "*",
     "ext-sodium": "*",
-    "php": "^8.5",
+    "ext-zip": "*",
+    "league/commonmark": "^2.6",
+    "psr/cache": "^3.0",
     "psr/container": "^2.0",
-    "psr/log": "^3.0"
-  },
-  "require-dev": {
-    "deptrac/deptrac": "^4.6",
-    "friendsofphp/php-cs-fixer": "^3.0",
-    "nyholm/psr7": "^1.8",
-    "phpbench/phpbench": "^1.3",
-    "phpstan/phpstan": "^2.0",
-    "phpunit/phpunit": "^12.0",
+    "psr/event-dispatcher": "^1.0",
     "psr/http-factory": "^1.0",
     "psr/http-message": "^2.0",
     "psr/http-server-handler": "^1.0",
     "psr/http-server-middleware": "^1.0",
+    "psr/log": "^3.0",
+    "psr/simple-cache": "^3.0"
+  },
+  "require-dev": {
+    "deptrac/deptrac": "^4.6",
+    "friendsofphp/php-cs-fixer": "^3.0",
+    "infection/infection": "^0.32.5",
+    "nyholm/psr7": "^1.8",
+    "phpbench/phpbench": "^1.3",
+    "phpstan/phpstan": "^2.0",
+    "phpunit/phpunit": "^13",
     "rector/rector": "^2.0",
     "roave/security-advisories": "dev-latest",
     "vimeo/psalm": "^6.15"
   },
   "suggest": {
+    "ext-apcu": "Required for APCu cache driver",
+    "ext-iconv": "Required for optimized slug generation",
+    "ext-intl": "Required for ICU MessageFormat, number/date/currency formatting",
+    "ext-memcached": "Required for Memcached cache driver",
     "ext-pcntl": "Required for queue worker signal handling (Unix only)",
+    "ext-amqp": "Required for AMQP queue driver (RabbitMQ)",
+    "ext-redis": "Required for Redis cache and queue drivers",
     "ext-sockets": "Required for persistent HTTP runtime (optional, guarded by runtime check)",
-    "psr/http-message": "Required for PSR-7 bridge extension (bidirectional request/response conversion)",
-    "nyholm/psr7": "Required for PSR-7 bridge extension (PSR-7/PSR-17 implementation)"
+    "aws/aws-sdk-php": "Required for Amazon SQS queue driver",
+    "google/cloud-pubsub": "Required for Google Cloud Pub/Sub queue driver",
+    "nyholm/psr7": "Required for differential testing against PSR-7 reference implementation",
+    "psy/psysh": "Required for the interactive REPL (pulsar shell)"
   },
   "autoload": {
+    "files": [
+      "src/I18n/helpers.php"
+    ],
     "psr-4": {
       "Pulsar\\": "src/",
       "Pulsar\\Extension\\Example\\": "extensions/example/src/",
@@ -47,12 +70,21 @@
       "Pulsar\\Extension\\Studio\\": "extensions/studio/src/",
       "Pulsar\\Extension\\McpServer\\": "extensions/mcp-server/src/",
       "Pulsar\\Extension\\Orm\\": "extensions/orm/src/",
-      "Pulsar\\Extension\\Admin\\": "extensions/admin/src/"
+      "Pulsar\\Extension\\Admin\\": "extensions/admin/src/",
+      "Pulsar\\Extension\\OpenTelemetry\\": "extensions/opentelemetry/src/",
+      "Pulsar\\Extension\\OAuth2\\": "extensions/oauth2/src/",
+      "Pulsar\\Extension\\Form\\": "extensions/form/src/",
+      "Pulsar\\Extension\\WebAuthn\\": "extensions/webauthn/src/",
+      "Pulsar\\Extension\\Analytics\\": "extensions/analytics/src/",
+      "Pulsar\\Extension\\Cms\\": "extensions/cms/src/",
+      "Pulsar\\Extension\\Graphql\\": "extensions/graphql/src/",
+      "Pulsar\\Extension\\Forum\\": "extensions/forum/src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Pulsar\\Tests\\": "tests/"
+      "Pulsar\\Tests\\": "tests/",
+      "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/"
     }
   },
   "bin": [
@@ -61,7 +93,7 @@
   "scripts": {
     "test": "phpunit -c tools/php/phpunit.xml",
     "test:coverage": "phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml --coverage-html coverage/html",
-    "phpstan": "php -d memory_limit=512M vendor/bin/phpstan analyse -c tools/php/phpstan.neon",
+    "phpstan": "php -d memory_limit=1G vendor/bin/phpstan analyse -c tools/php/phpstan.neon",
     "psalm": "psalm -c tools/php/psalm.xml",
     "cs:check": "php-cs-fixer fix --dry-run --diff",
     "cs:fix": "php-cs-fixer fix",
@@ -77,6 +109,11 @@
       "@boundary:deptrac",
       "@boundary:custom"
     ],
+    "wiring:check": "php scripts/wiring_check.php",
+    "mutation": "infection --threads=4 --min-msi=80 --min-covered-msi=90",
+    "fuzz": "phpunit -c tools/php/phpunit.xml --group fuzz",
+    "chaos": "phpunit -c tools/php/phpunit.xml --group chaos",
+    "property": "phpunit -c tools/php/phpunit.xml --group property",
     "qa": [
       "@cs:check",
       "@phpstan",
@@ -86,6 +123,9 @@
     ]
   },
   "config": {
-    "sort-packages": true
+    "sort-packages": true,
+    "allow-plugins": {
+      "infection/extension-installer": true
+    }
   }
 }

@@ -233,7 +233,6 @@ final class SupervisorTest extends TestCase
 
         $driver = $this->createStub(QueueDriverInterface::class);
         $driver->method('findByStatus')
-            ->with(JobRecordStatus::Processing)
             ->willReturn([$stuckJob]);
 
         $config = new SupervisorConfig(

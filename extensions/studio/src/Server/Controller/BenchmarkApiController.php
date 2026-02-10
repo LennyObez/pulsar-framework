@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function array_filter;
@@ -47,6 +48,7 @@ final readonly class BenchmarkApiController
 
     public function __construct(
         private EventStoreInterface $store,
+        private DashboardAggregator $aggregator,
         private string $basePath,
     ) {
         $this->runDir = $this->basePath . '/storage/studio/bench';
@@ -59,7 +61,7 @@ final readonly class BenchmarkApiController
      * captures output to a file, and writes the exit code to another file.
      * The runner is launched detached so the HTTP response returns immediately.
      */
-    public function run(Request $_request): Response
+    public function run(ServerRequestInterface $_request): Response
     {
         $pidFile = $this->runDir . '/bench.pid';
         $outputFile = $this->runDir . '/bench.out';
@@ -70,7 +72,7 @@ final readonly class BenchmarkApiController
         if (file_exists($pidFile) && $this->isProcessRunning($pidFile)) {
             return Response::json(
                 ['error' => 'A benchmark is already running'],
-                ResponseStatus::Conflict,
+                ResponseStatus::Conflict->value,
             );
         }
 
@@ -126,7 +128,7 @@ final readonly class BenchmarkApiController
     /**
      * GET /studio/api/benchmark/status — poll benchmark completion.
      */
-    public function status(Request $_request): Response
+    public function status(ServerRequestInterface $_request): Response
     {
         $pidFile = $this->runDir . '/bench.pid';
         $outputFile = $this->runDir . '/bench.out';
@@ -174,14 +176,15 @@ final readonly class BenchmarkApiController
     /**
      * POST /studio/api/benchmark/delete — delete specific benchmark runs.
      */
-    public function deleteRuns(Request $request): Response
+    public function deleteRuns(ServerRequestInterface $request): Response
     {
-        $data = $request->json();
+        /** @var array<string, mixed> $data */
+        $data = (array) $request->getParsedBody();
 
         if (!isset($data['run_ids']) || !is_array($data['run_ids'])) {
             return Response::json(
                 ['error' => 'Missing or invalid run_ids array'],
-                ResponseStatus::BadRequest,
+                ResponseStatus::BadRequest->value,
             );
         }
 
@@ -194,7 +197,7 @@ final readonly class BenchmarkApiController
         if ($runIds === []) {
             return Response::json(
                 ['error' => 'No valid run_ids provided (expected lowercase hex, 1-64 chars)'],
-                ResponseStatus::BadRequest,
+                ResponseStatus::BadRequest->value,
             );
         }
 
@@ -210,11 +213,30 @@ final readonly class BenchmarkApiController
     /**
      * POST /studio/api/benchmark/clear — delete all benchmark events.
      */
-    public function clearHistory(Request $_request): Response
+    public function clearHistory(ServerRequestInterface $_request): Response
     {
         $deleted = $this->store->deleteByEventTypes(['benchmark.run', 'benchmark.profile']);
 
         return Response::json(['deleted' => $deleted]);
+    }
+
+    /**
+     * GET /studio/api/benchmark/profiles — fetch profiles for a specific run.
+     */
+    public function profiles(ServerRequestInterface $request): Response
+    {
+        $runId = $request->getQueryParams()['run_id'] ?? '';
+
+        if (!is_string($runId) || $runId === '' || preg_match('/^[a-f0-9]{1,64}$/', $runId) !== 1) {
+            return Response::json(
+                ['error' => 'Missing or invalid run_id (expected lowercase hex, 1-64 chars)'],
+                ResponseStatus::BadRequest->value,
+            );
+        }
+
+        $profiles = $this->aggregator->benchmarkProfiles($runId);
+
+        return Response::json(['profiles' => $profiles]);
     }
 
     private function isProcessRunning(string $pidFile): bool

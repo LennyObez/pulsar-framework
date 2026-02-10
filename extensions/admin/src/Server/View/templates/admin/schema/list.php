@@ -16,8 +16,8 @@ $driver = $templateData['driver'] ?? 'sqlite';
 <div class="admin-schema">
     <div class="admin-schema__header">
         <div class="admin-schema__actions">
-            <a href="/admin/schema/create" class="admin-btn admin-btn--primary">Create Table</a>
-            <a href="/admin/schema/changelog" class="admin-btn admin-btn--secondary">Change Log</a>
+            <a href="/admin/schema/create" class="admin-btn admin-btn--primary">Create table</a>
+            <a href="/admin/schema/changelog" class="admin-btn admin-btn--secondary">Change log</a>
         </div>
         <?php if (!($capabilities['supportsDropColumn'] ?? true)): ?>
         <div class="admin-alert admin-alert--warning">

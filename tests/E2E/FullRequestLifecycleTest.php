@@ -7,12 +7,11 @@ namespace Pulsar\Tests\E2E;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Container\Container;
 use Pulsar\Core\Kernel;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RoutingException;
@@ -29,23 +28,22 @@ use Pulsar\Routing\RoutingException;
 final class FullRequestLifecycleTest extends TestCase
 {
     /**
-     * @param array<string, mixed> $post
+     * @param array<string, string|list<string>> $headers
+     * @param array<string, mixed> $parsedBody
      */
     private function createRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $path = '/',
         string $body = '',
-        HeaderBag $headers = new HeaderBag(),
-        array $post = [],
-    ): Request {
-        return new Request(
+        array $headers = [],
+        array $parsedBody = [],
+    ): ServerRequest {
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
             headers: $headers,
             body: $body,
-            post: $post,
+            parsedBody: $parsedBody !== [] ? $parsedBody : null,
         );
     }
 
@@ -58,9 +56,9 @@ final class FullRequestLifecycleTest extends TestCase
         $request = $this->createRequest();
         $response = $kernel->handle($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('Welcome to Pulsar', $response->body);
-        self::assertSame('text/plain; charset=utf-8', $response->headers->first('Content-Type'));
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('Welcome to Pulsar', (string) $response->getBody());
+        self::assertSame('text/plain; charset=utf-8', $response->getHeaderLine('Content-Type'));
     }
 
     #[Test]
@@ -79,24 +77,25 @@ final class FullRequestLifecycleTest extends TestCase
     public function postRequestIsHandledCorrectly(): void
     {
         $kernel = new Kernel();
-        $kernel->router()->post('/submit', function (Request $request): Response {
-            return Response::json(['status' => 'received', 'method' => $request->method->value]);
+        $kernel->router()->post('/submit', function (ServerRequestInterface $request): Response {
+            return Response::json(['status' => 'received', 'method' => $request->getMethod()]);
         });
 
-        $request = $this->createRequest(method: Method::POST, path: '/submit');
+        $request = $this->createRequest(method: 'POST', path: '/submit');
         $response = $kernel->handle($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('"status":"received"', $response->body);
-        self::assertStringContainsString('"method":"POST"', $response->body);
-        self::assertSame('application/json; charset=utf-8', $response->headers->first('Content-Type'));
+        $body = (string) $response->getBody();
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('"status":"received"', $body);
+        self::assertStringContainsString('"method":"POST"', $body);
+        self::assertSame('application/json; charset=utf-8', $response->getHeaderLine('Content-Type'));
     }
 
     #[Test]
     public function routeWithParametersExtractsAndPassesThem(): void
     {
         $kernel = new Kernel();
-        $kernel->router()->get('/users/{id}/posts/{postId}', function (Request $request, array $params): Response {
+        $kernel->router()->get('/users/{id}/posts/{postId}', function (ServerRequestInterface $request, array $params): Response {
             return Response::json([
                 'user_id' => $params['id'],
                 'post_id' => $params['postId'],
@@ -106,9 +105,10 @@ final class FullRequestLifecycleTest extends TestCase
         $request = $this->createRequest(path: '/users/42/posts/7');
         $response = $kernel->handle($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('"user_id":"42"', $response->body);
-        self::assertStringContainsString('"post_id":"7"', $response->body);
+        $body = (string) $response->getBody();
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('"user_id":"42"', $body);
+        self::assertStringContainsString('"post_id":"7"', $body);
     }
 
     #[Test]
@@ -117,8 +117,8 @@ final class FullRequestLifecycleTest extends TestCase
         $kernel = new Kernel();
         $capturedUserId = null;
 
-        $kernel->router()->get('/accounts/{accountId}', function (Request $request) use (&$capturedUserId): Response {
-            $capturedUserId = $request->attribute('accountId');
+        $kernel->router()->get('/accounts/{accountId}', function (ServerRequestInterface $request) use (&$capturedUserId): Response {
+            $capturedUserId = $request->getAttribute('accountId');
             return Response::text('ok');
         });
 
@@ -138,10 +138,11 @@ final class FullRequestLifecycleTest extends TestCase
 
         $response = $kernel->handle($this->createRequest(path: '/api/data'));
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('application/json; charset=utf-8', $response->headers->first('Content-Type'));
+        $body = (string) $response->getBody();
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('application/json; charset=utf-8', $response->getHeaderLine('Content-Type'));
 
-        $decoded = json_decode($response->body, true);
+        $decoded = json_decode($body, true);
         self::assertIsArray($decoded);
         self::assertSame([1, 2, 3], $decoded['items']);
         self::assertSame(3, $decoded['total']);
@@ -155,9 +156,9 @@ final class FullRequestLifecycleTest extends TestCase
 
         $response = $kernel->handle($this->createRequest(path: '/page'));
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('<h1>Hello Pulsar</h1>', $response->body);
-        self::assertSame('text/html; charset=utf-8', $response->headers->first('Content-Type'));
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('<h1>Hello Pulsar</h1>', (string) $response->getBody());
+        self::assertSame('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
     }
 
     #[Test]
@@ -169,7 +170,7 @@ final class FullRequestLifecycleTest extends TestCase
         $this->expectException(RoutingException::class);
         $this->expectExceptionCode(405);
 
-        $kernel->handle($this->createRequest(method: Method::DELETE, path: '/resource'));
+        $kernel->handle($this->createRequest(method: 'DELETE', path: '/resource'));
     }
 
     #[Test]
@@ -182,11 +183,11 @@ final class FullRequestLifecycleTest extends TestCase
 
         $responseAlpha = $kernel->handle($this->createRequest(path: '/alpha'));
         $responseBeta = $kernel->handle($this->createRequest(path: '/beta'));
-        $responseGamma = $kernel->handle($this->createRequest(method: Method::POST, path: '/gamma'));
+        $responseGamma = $kernel->handle($this->createRequest(method: 'POST', path: '/gamma'));
 
-        self::assertSame('route-alpha', $responseAlpha->body);
-        self::assertSame('route-beta', $responseBeta->body);
-        self::assertSame('route-gamma', $responseGamma->body);
+        self::assertSame('route-alpha', (string) $responseAlpha->getBody());
+        self::assertSame('route-beta', (string) $responseBeta->getBody());
+        self::assertSame('route-gamma', (string) $responseGamma->getBody());
     }
 
     #[Test]
@@ -197,13 +198,13 @@ final class FullRequestLifecycleTest extends TestCase
         $kernel->router()->patch('/items/{id}', fn() => Response::text('patched'));
         $kernel->router()->delete('/items/{id}', fn() => Response::text('deleted'));
 
-        $putResponse = $kernel->handle($this->createRequest(method: Method::PUT, path: '/items/1'));
-        $patchResponse = $kernel->handle($this->createRequest(method: Method::PATCH, path: '/items/1'));
-        $deleteResponse = $kernel->handle($this->createRequest(method: Method::DELETE, path: '/items/1'));
+        $putResponse = $kernel->handle($this->createRequest(method: 'PUT', path: '/items/1'));
+        $patchResponse = $kernel->handle($this->createRequest(method: 'PATCH', path: '/items/1'));
+        $deleteResponse = $kernel->handle($this->createRequest(method: 'DELETE', path: '/items/1'));
 
-        self::assertSame('updated', $putResponse->body);
-        self::assertSame('patched', $patchResponse->body);
-        self::assertSame('deleted', $deleteResponse->body);
+        self::assertSame('updated', (string) $putResponse->getBody());
+        self::assertSame('patched', (string) $patchResponse->getBody());
+        self::assertSame('deleted', (string) $deleteResponse->getBody());
     }
 
     #[Test]
@@ -215,8 +216,8 @@ final class FullRequestLifecycleTest extends TestCase
 
         $response = $kernel->handle($this->createRequest(path: '/ctrl'));
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('controller handled', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('controller handled', (string) $response->getBody());
     }
 }
 
@@ -228,7 +229,7 @@ class LifecycleTestController
     /**
      * @param array<string, string> $params
      */
-    public function handle(Request $request, array $params): Response
+    public function handle(ServerRequestInterface $request, array $params): Response
     {
         return Response::text('controller handled');
     }

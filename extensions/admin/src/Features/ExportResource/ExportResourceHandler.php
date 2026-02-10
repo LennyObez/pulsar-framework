@@ -21,6 +21,7 @@ use Pulsar\Security\Audit\AuditOutcome;
 use function count;
 use function date;
 use function in_array;
+use function preg_replace;
 
 /**
  * Handles exporting resource data with evidence hashing and field filtering.
@@ -72,7 +73,8 @@ final readonly class ExportResourceHandler
         $stream->write($output);
         $stream->close();
 
-        $filename = "{$request->resourceName}_export_" . date('Ymd_His') . ".{$driver->fileExtension()}";
+        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '', $request->resourceName);
+        $filename = "{$safeName}_export_" . date('Ymd_His') . ".{$driver->fileExtension()}";
 
         $this->auditLogger->log(
             event: AuditEvent::DataAccess,

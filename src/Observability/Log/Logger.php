@@ -6,6 +6,7 @@ namespace Pulsar\Observability\Log;
 
 use NoDiscard;
 use Psr\Log\LoggerInterface;
+use Pulsar\Api\Api;
 use Pulsar\Config\LoggingChannelConfig;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Observability\Log\Sink\FileSink;
@@ -24,6 +25,7 @@ use function sprintf;
  * via the configured threshold. Sink failures are silently swallowed —
  * logging must never crash a request.
  */
+#[Api(since: '1.0.0')]
 final readonly class Logger implements LoggerInterface
 {
     /**

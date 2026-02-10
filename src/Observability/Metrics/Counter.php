@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Metrics;
 
+use Pulsar\Api\Api;
 use Pulsar\Observability\Metrics\Exception\MetricsException;
 
 /**
@@ -11,6 +12,7 @@ use Pulsar\Observability\Metrics\Exception\MetricsException;
  *
  * Counters only go up. Use {@see increment()} to add a non-negative value.
  */
+#[Api(since: '1.0.0')]
 final class Counter
 {
     /** @var array<string, float> label-key => value */

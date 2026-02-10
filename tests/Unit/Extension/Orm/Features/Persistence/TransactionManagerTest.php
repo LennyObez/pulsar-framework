@@ -92,23 +92,26 @@ final class TransactionManagerTest extends TestCase
     #[Test]
     public function commitWithoutBeginIsNoOp(): void
     {
+        $this->connection->method('inTransaction')->willReturn(false);
         $manager = new TransactionManager($this->connection);
 
         // Should not throw -- gracefully handles no active transaction
         $manager->commit();
 
-        $this->addToAssertionCount(1);
+        // No transaction was started, so the connection reports not-in-transaction
+        self::assertFalse($manager->inTransaction());
     }
 
     #[Test]
     public function rollbackWithoutBeginIsNoOp(): void
     {
+        $this->connection->method('inTransaction')->willReturn(false);
         $manager = new TransactionManager($this->connection);
 
         // Should not throw -- gracefully handles no active transaction
         $manager->rollback();
 
-        $this->addToAssertionCount(1);
+        self::assertFalse($manager->inTransaction());
     }
 
     #[Test]

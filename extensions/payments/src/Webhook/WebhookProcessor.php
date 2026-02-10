@@ -11,7 +11,7 @@ use Pulsar\Extension\Payments\Contracts\WebhookHandlerInterface;
 use Pulsar\Extension\Payments\Contracts\WebhookProcessorInterface;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookRequest;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Webhook\WebhookEventLogInterface;
 use Pulsar\Webhook\WebhookVerifierInterface;

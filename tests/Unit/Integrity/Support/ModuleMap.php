@@ -31,6 +31,7 @@ final class ModuleMap
         'Pulsar\Core\Wiring\ExceptionHandlerWiring',
         'Pulsar\Core\Wiring\FeatureFlagWiring',
         'Pulsar\Core\Wiring\IntegrityWiring',
+        'Pulsar\Core\Wiring\I18nWiring',
         'Pulsar\Core\Wiring\IntrospectionWiring',
         'Pulsar\Core\Wiring\LoggingWiring',
         'Pulsar\Core\Wiring\MetricsWiring',
@@ -43,7 +44,11 @@ final class ModuleMap
         'Pulsar\Core\Wiring\SupervisorWiring',
         'Pulsar\Core\Wiring\TenancyWiring',
         'Pulsar\Core\Wiring\TracingWiring',
+        'Pulsar\Core\Wiring\MailWiring',
+        'Pulsar\Core\Wiring\NotificationWiring',
+        'Pulsar\Core\Wiring\ViewWiring',
         'Pulsar\Console\Application',
+        'Pulsar\Console\Command\BuildCommand',
     ];
 
     /**
@@ -96,9 +101,17 @@ final class ModuleMap
 
     /**
      * Check if a class is in a View namespace segment.
+     *
+     * Excludes the top-level Pulsar\View module (template engine),
+     * which is a standalone module, not an MVC view within another module.
      */
     public static function isView(string $fqcn): bool
     {
+        // The Pulsar\View module is the template engine — not an MVC view
+        if (str_starts_with($fqcn, 'Pulsar\\View\\')) {
+            return false;
+        }
+
         return str_contains($fqcn, '\\View\\')
             || str_contains($fqcn, '\\View');
     }

@@ -7,8 +7,11 @@ namespace Pulsar\Tests\Unit\Config;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\CrossOriginConfig;
+use Pulsar\Config\CspConfig;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Config\Environment;
+use Pulsar\Config\HstsConfig;
 use Pulsar\Config\RateLimitConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
@@ -19,6 +22,9 @@ use Pulsar\Config\SessionConfig;
 #[CoversClass(CsrfConfig::class)]
 #[CoversClass(SecurityHeadersConfig::class)]
 #[CoversClass(RateLimitConfig::class)]
+#[CoversClass(CspConfig::class)]
+#[CoversClass(HstsConfig::class)]
+#[CoversClass(CrossOriginConfig::class)]
 final class SecurityConfigTest extends TestCase
 {
     private Environment $environment;
@@ -136,5 +142,142 @@ final class SecurityConfigTest extends TestCase
 
         self::assertCount(2, $config->headers);
         self::assertSame('max-age=31536000; includeSubDomains', $config->headers['Strict-Transport-Security']);
+    }
+
+    #[Test]
+    public function securityHeadersConfigHasSubConfigProperties(): void
+    {
+        $config = new SecurityHeadersConfig(headers: []);
+
+        self::assertInstanceOf(CspConfig::class, $config->csp);
+        self::assertInstanceOf(HstsConfig::class, $config->hsts);
+        self::assertInstanceOf(CrossOriginConfig::class, $config->crossOrigin);
+    }
+
+    #[Test]
+    public function securityHeadersConfigFromArrayWithNestedSubConfigs(): void
+    {
+        $config = SecurityHeadersConfig::fromArray([
+            'X-Content-Type-Options' => 'nosniff',
+            'csp' => [
+                'enabled' => true,
+                'report_only' => true,
+                'default_src' => "'none'",
+            ],
+            'hsts' => [
+                'max_age' => 63072000,
+                'preload' => true,
+            ],
+            'cross_origin' => [
+                'opener_policy' => 'same-origin-allow-popups',
+                'embedder_policy' => 'require-corp',
+            ],
+        ]);
+
+        // Flat headers still parsed
+        self::assertSame('nosniff', $config->headers['X-Content-Type-Options']);
+        // Sub-config arrays are NOT included in flat headers
+        self::assertArrayNotHasKey('csp', $config->headers);
+        self::assertArrayNotHasKey('hsts', $config->headers);
+        self::assertArrayNotHasKey('cross_origin', $config->headers);
+
+        // CSP sub-config
+        self::assertTrue($config->csp->enabled);
+        self::assertTrue($config->csp->reportOnly);
+        self::assertSame("'none'", $config->csp->defaultSrc);
+
+        // HSTS sub-config
+        self::assertSame(63072000, $config->hsts->maxAge);
+        self::assertTrue($config->hsts->preload);
+
+        // Cross-Origin sub-config
+        self::assertSame('same-origin-allow-popups', $config->crossOrigin->openerPolicy);
+        self::assertSame('require-corp', $config->crossOrigin->embedderPolicy);
+    }
+
+    #[Test]
+    public function securityHeadersConfigFromArrayWithFlatOnlyData(): void
+    {
+        $config = SecurityHeadersConfig::fromArray([
+            'X-Content-Type-Options' => 'nosniff',
+            'X-Frame-Options' => 'DENY',
+        ]);
+
+        // Flat headers still work
+        self::assertSame('nosniff', $config->headers['X-Content-Type-Options']);
+        self::assertSame('DENY', $config->headers['X-Frame-Options']);
+
+        // Sub-configs get defaults
+        self::assertTrue($config->csp->enabled);
+        self::assertSame("'self'", $config->csp->defaultSrc);
+        self::assertTrue($config->hsts->enabled);
+        self::assertSame(31536000, $config->hsts->maxAge);
+        self::assertSame('same-origin', $config->crossOrigin->openerPolicy);
+    }
+
+    #[Test]
+    public function effectiveHeadersIncludesCspWhenEnabled(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            csp: new CspConfig(enabled: true, defaultSrc: "'self'"),
+        );
+
+        $effective = $config->effectiveHeaders();
+
+        self::assertArrayHasKey('Content-Security-Policy', $effective);
+        self::assertStringContainsString("default-src 'self'", $effective['Content-Security-Policy']);
+    }
+
+    #[Test]
+    public function effectiveHeadersExcludesCspWhenDisabled(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            csp: new CspConfig(enabled: false),
+        );
+
+        $effective = $config->effectiveHeaders();
+
+        self::assertArrayNotHasKey('Content-Security-Policy', $effective);
+        self::assertArrayNotHasKey('Content-Security-Policy-Report-Only', $effective);
+    }
+
+    #[Test]
+    public function effectiveHeadersIncludesCrossOriginWhenSet(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            crossOrigin: new CrossOriginConfig(
+                openerPolicy: 'same-origin',
+                embedderPolicy: 'require-corp',
+                resourcePolicy: 'same-origin',
+            ),
+        );
+
+        $effective = $config->effectiveHeaders();
+
+        self::assertSame('same-origin', $effective['Cross-Origin-Opener-Policy']);
+        self::assertSame('require-corp', $effective['Cross-Origin-Embedder-Policy']);
+        self::assertSame('same-origin', $effective['Cross-Origin-Resource-Policy']);
+    }
+
+    #[Test]
+    public function effectiveHeadersExcludesEmptyCrossOriginValues(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            crossOrigin: new CrossOriginConfig(
+                openerPolicy: '',
+                embedderPolicy: '',
+                resourcePolicy: '',
+            ),
+        );
+
+        $effective = $config->effectiveHeaders();
+
+        self::assertArrayNotHasKey('Cross-Origin-Opener-Policy', $effective);
+        self::assertArrayNotHasKey('Cross-Origin-Embedder-Policy', $effective);
+        self::assertArrayNotHasKey('Cross-Origin-Resource-Policy', $effective);
     }
 }

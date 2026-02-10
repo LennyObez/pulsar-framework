@@ -10,11 +10,12 @@ use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Subject;
 use PhpBench\Attributes\Warmup;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Tests\Benchmark\Support\PassThroughMiddleware;
 
 #[BeforeMethods('setUp')]
@@ -26,23 +27,22 @@ final class MiddlewareBench
     private MiddlewarePipeline $pipeline1;
     private MiddlewarePipeline $pipeline5;
     private MiddlewarePipeline $pipeline10;
-    private Request $request;
-
-    /** @var callable(Request): Response */
-    private $handler;
+    private ServerRequestInterface $request;
+    private RequestHandlerInterface $handler;
 
     public function setUp(): void
     {
-        $this->request = new Request(
-            method: Method::GET,
+        $this->request = new ServerRequest(
+            method: 'GET',
             uri: '/benchmark',
-            path: '/benchmark',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
-        $this->handler = static fn(Request $request): Response => new Response(body: 'OK');
+        $this->handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(body: 'OK');
+            }
+        };
 
         $this->pipeline1 = $this->createPipeline(1);
         $this->pipeline5 = $this->createPipeline(5);
@@ -67,7 +67,7 @@ final class MiddlewareBench
     #[Assert('mode(variant.time.avg) < 10 microseconds')]
     public function benchPipelineWith1Middleware(): void
     {
-        $this->pipeline1->handle($this->request, $this->handler);
+        $this->pipeline1->process($this->request, $this->handler);
     }
 
     /**
@@ -77,7 +77,7 @@ final class MiddlewareBench
     #[Assert('mode(variant.time.avg) < 10 microseconds')]
     public function benchPipelineWith5Middleware(): void
     {
-        $this->pipeline5->handle($this->request, $this->handler);
+        $this->pipeline5->process($this->request, $this->handler);
     }
 
     /**
@@ -87,7 +87,7 @@ final class MiddlewareBench
     #[Assert('mode(variant.time.avg) < 50 microseconds')]
     public function benchPipelineWith10Middleware(): void
     {
-        $this->pipeline10->handle($this->request, $this->handler);
+        $this->pipeline10->process($this->request, $this->handler);
     }
 
     /**
@@ -98,6 +98,6 @@ final class MiddlewareBench
     public function benchEmptyPipeline(): void
     {
         $pipeline = new MiddlewarePipeline();
-        $pipeline->handle($this->request, $this->handler);
+        $pipeline->process($this->request, $this->handler);
     }
 }

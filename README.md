@@ -13,8 +13,8 @@
 
 </div>
 
-> **Status:** Release Candidate (1.0.0-rc.10). The `#[Api]`-marked surface is SemVer-stable; non-`#[Api]` internals may change until 1.0.0.
-> Track milestones in [`ROADMAP.md`](ROADMAP.md) and requirements in [`PRD.md`](PRD.md).
+> **Status:** Release Candidate (1.0.0-rc.11). The `#[Api]`-marked surface is SemVer-stable; non-`#[Api]` internals may change until 1.0.0.
+> Track milestones in [`ROADMAP.md`](ROADMAP.md).
 
 ## Who this is for
 
@@ -62,20 +62,20 @@ Pulsar is designed for regulated domains such as:
 
 ## Features (roadmap-driven)
 
-### 1) Deterministic HMVC Modules
+### 1) Deterministic HMVC modules
 
 - Canonical module layout and discovery
 - Explicit module boundaries and contracts
 - Versioned module lifecycle
 
-### 2) Extension System
+### 2) Extension system
 
 - `pulsar.json` manifest
 - Discover → validate → register → boot
 - Stable hooks: DI bindings, routes, console commands, migrations, assets
 - Compatibility validation and deprecation strategy
 
-### 3) Pulsar Studio — Studio Console
+### 3) Pulsar Studio
 
 No dependency on external monitoring vendors.
 
@@ -84,13 +84,13 @@ No dependency on external monitoring vendors.
 - Tracing: spans, context propagation, sampling rules
 - Error reporting: grouping, fingerprints, local viewer UI
 
-### 4) Security Baseline (default-on)
+### 4) Security baseline (default-on)
 
 - Session hardening, CSRF protection, security headers, rate limiting
 - Secrets strategy and key rotation foundations
 - Auditable security-relevant events
 
-### 5) Performance Budget Enforcement
+### 5) Performance budget enforcement
 
 - PHPBench benchmark suite covering critical hot paths (bootstrap, routing, container, middleware)
 - Performance budgets defined in `tools/php/performance-budgets.json`
@@ -98,13 +98,13 @@ No dependency on external monitoring vendors.
 
 ## Documentation
 
-- [Installation Guide](docs/INSTALL.md)
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [Public API Reference](docs/PUBLIC_API.md)
-- [Extension Development Guide](docs/EXTENSIONS.md)
-- [CLI Reference](docs/CLI_REFERENCE.md)
-- [Repository Structure](docs/REPOSITORY_STRUCTURE.md)
-- [PHP Feature Matrix](docs/PHP_FEATURE_MATRIX.md)
+- [Installation Guide](docs/install.md)
+- [Architecture Overview](docs/architecture.md)
+- [Public API Reference](docs/public-api.md)
+- [Extension Development Guide](docs/extensions.md)
+- [CLI Reference](docs/cli-reference.md)
+- [Repository Structure](docs/repository-structure.md)
+- [PHP Feature Matrix](docs/php-feature-matrix.md)
 
 ## Non-goals for v1.0
 
@@ -134,7 +134,7 @@ Run the full quality gate:
 composer qa            # cs:fix + phpstan + psalm + test
 ```
 
-See the [Installation Guide](docs/INSTALL.md) for environment details and the [CLI Reference](docs/CLI_REFERENCE.md) for available commands.
+See the [Installation Guide](docs/install.md) for environment details and the [CLI Reference](docs/cli-reference.md) for available commands.
 
 ## Stability and compatibility
 
@@ -161,7 +161,7 @@ Exact toolchain is pinned in-repo to avoid "foundation rewrites".
 
 See [CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
-## Code of Conduct
+## Code of conduct
 
 See [CODE_OF_CONDUCT.md](.github/CODE_OF_CONDUCT.md).
 
@@ -171,4 +171,4 @@ See [SECURITY.md](.github/SECURITY.md).
 
 ## License
 
-Apache 2.0 — see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+Apache 2.0 - see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).

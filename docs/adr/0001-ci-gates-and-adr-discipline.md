@@ -41,7 +41,7 @@ For trivial core changes (typo fixes, import reordering, doc comment updates) th
 
 ### 3. ADR Template and Process
 
-A standardized template (`docs/adr/0000-template.md`) with sections for decision drivers, alternatives considered, security/performance impact, and migration/rollback plans. Sequential numbering convention (`NNNN-slug.md`). ADRs are immutable records — superseded decisions reference their replacement rather than being deleted.
+A standardized template (`docs/adr/0000-template.md`) with sections for decision drivers, alternatives considered, security/performance impact, and migration/rollback plans. Sequential numbering convention (`NNNN-slug.md`). ADRs are immutable records - superseded decisions reference their replacement rather than being deleted.
 
 ## Consequences
 

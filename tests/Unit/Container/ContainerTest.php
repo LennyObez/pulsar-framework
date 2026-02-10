@@ -12,6 +12,8 @@ use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use Pulsar\Container\Provider\DeferredProviderRegistry;
+use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use stdClass;
 
 #[CoversClass(Container::class)]
@@ -372,6 +374,35 @@ final class ContainerTest extends TestCase
         $this->expectExceptionMessage('not instantiable');
 
         $_ = $container->get(AbstractStub::class);
+    }
+
+    #[Test]
+    public function hasReturnsTrueForDeferredProviderService(): void
+    {
+        $container = new Container();
+        $registry = new DeferredProviderRegistry();
+
+        $provider = new class implements DeferredServiceProviderInterface {
+            public function register(ContainerInterface $container): void
+            {
+                $container->instance('deferred.service', new stdClass());
+            }
+
+            public function provides(): array
+            {
+                return ['deferred.service'];
+            }
+
+            public function isDeferred(): bool
+            {
+                return true;
+            }
+        };
+
+        $registry->register($provider);
+        $container->setDeferredProviderRegistry($registry);
+
+        self::assertTrue($container->has('deferred.service'));
     }
 }
 

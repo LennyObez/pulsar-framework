@@ -73,7 +73,7 @@ final readonly class EvidenceExporter
             'chain_links' => $chainLinks,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-        // MAC over the exact bytes: HMAC-BLAKE2b(SHA-256-hex(bytes), key)
+        // MAC over the exact bytes: keyed BLAKE2b(SHA-256-hex(bytes), key)
         $mac = null;
         if ($this->archiveMacKey !== null) {
             $archiveDigest = hash('sha256', $archiveContent);

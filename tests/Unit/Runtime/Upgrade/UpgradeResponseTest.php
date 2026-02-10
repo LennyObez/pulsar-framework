@@ -7,7 +7,6 @@ namespace Pulsar\Tests\Unit\Runtime\Upgrade;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\HeaderBag;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Upgrade\UpgradeHandlerInterface;
 use Pulsar\Runtime\Upgrade\UpgradeResponse;
@@ -21,7 +20,7 @@ final class UpgradeResponseTest extends TestCase
         $handler = $this->createStub(UpgradeHandlerInterface::class);
         $response = new UpgradeResponse($handler);
 
-        self::assertSame(ResponseStatus::SwitchingProtocols, $response->status);
+        self::assertSame(ResponseStatus::SwitchingProtocols->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -39,24 +38,24 @@ final class UpgradeResponseTest extends TestCase
         $handler = $this->createStub(UpgradeHandlerInterface::class);
         $response = new UpgradeResponse($handler);
 
-        self::assertSame('', $response->body);
+        self::assertSame('', (string) $response->getBody());
     }
 
     #[Test]
     public function it_accepts_custom_headers(): void
     {
         $handler = $this->createStub(UpgradeHandlerInterface::class);
-        $headers = new HeaderBag([
+        $headers = [
             'Upgrade' => 'websocket',
             'Connection' => 'Upgrade',
             'Sec-WebSocket-Accept' => 'test-accept-key',
-        ]);
+        ];
 
         $response = new UpgradeResponse($handler, $headers);
 
-        self::assertSame('websocket', $response->headers->first('Upgrade'));
-        self::assertSame('Upgrade', $response->headers->first('Connection'));
-        self::assertSame('test-accept-key', $response->headers->first('Sec-WebSocket-Accept'));
+        self::assertSame('websocket', $response->getHeaderLine('Upgrade'));
+        self::assertSame('Upgrade', $response->getHeaderLine('Connection'));
+        self::assertSame('test-accept-key', $response->getHeaderLine('Sec-WebSocket-Accept'));
     }
 
     #[Test]
@@ -65,6 +64,6 @@ final class UpgradeResponseTest extends TestCase
         $handler = $this->createStub(UpgradeHandlerInterface::class);
         $response = new UpgradeResponse($handler);
 
-        self::assertTrue($response->headers->isEmpty());
+        self::assertSame([], $response->getHeaders());
     }
 }

@@ -1,0 +1,87 @@
+/* Pulsar UI — Checkbox Component v1.0.0
+ * Custom styled checkbox.
+ * Usage: <label class="pui-checkbox"><input type="checkbox"><span class="pui-checkbox__mark"></span><span>Label</span></label>
+ */
+
+.pui-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.pui-checkbox input[type='checkbox'] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.pui-checkbox__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  border: 2px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background-color: var(--color-bg);
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.pui-checkbox__mark::after {
+  content: '';
+  display: none;
+  width: 0.35rem;
+  height: 0.6rem;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-block-start: -1px;
+}
+
+.pui-checkbox input:checked + .pui-checkbox__mark {
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+}
+
+.pui-checkbox input:checked + .pui-checkbox__mark::after {
+  display: block;
+}
+
+.pui-checkbox input:focus-visible + .pui-checkbox__mark {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.pui-checkbox input:disabled + .pui-checkbox__mark {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pui-checkbox:has(input:disabled) {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Indeterminate state */
+.pui-checkbox input:indeterminate + .pui-checkbox__mark {
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+}
+
+.pui-checkbox input:indeterminate + .pui-checkbox__mark::after {
+  display: block;
+  width: 0.5rem;
+  height: 0;
+  border-width: 0 0 2px 0;
+  transform: none;
+  margin-block-start: 0;
+}

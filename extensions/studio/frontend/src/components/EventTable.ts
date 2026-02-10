@@ -8,8 +8,8 @@ interface ExplorerPayload {
 }
 
 const PAGE_TITLES: Record<string, string> = {
-  'request-explorer': 'HTTP Requests',
-  'database-explorer': 'Database Queries',
+  'request-explorer': 'HTTP requests',
+  'database-explorer': 'Database queries',
   'log-explorer': 'Logs',
   'exception-explorer': 'Exceptions',
 };

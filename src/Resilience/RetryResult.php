@@ -29,6 +29,7 @@ readonly class RetryResult
     /**
      * Create a successful result.
      *
+     * @param mixed $result The return value of the successful attempt
      * @param list<int> $attemptDelays
      */
     #[NoDiscard]

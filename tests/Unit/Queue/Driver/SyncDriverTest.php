@@ -64,8 +64,8 @@ final class SyncDriverTest extends TestCase
     {
         $this->driver->acknowledge('any-id');
 
-        // No exception thrown = success
-        $this->addToAssertionCount(1);
+        // SyncDriver never queues jobs, so size remains 0 after ack
+        self::assertSame(0, $this->driver->size('default'));
     }
 
     #[Test]
@@ -73,8 +73,8 @@ final class SyncDriverTest extends TestCase
     {
         $this->driver->reject('any-id', 'some reason');
 
-        // No exception thrown = success
-        $this->addToAssertionCount(1);
+        // SyncDriver never queues jobs, so size remains 0 after reject
+        self::assertSame(0, $this->driver->size('default'));
     }
 
     #[Test]

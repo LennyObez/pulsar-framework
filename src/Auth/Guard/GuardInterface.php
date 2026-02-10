@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Guard;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Http\Request;
 
 /**
  * Contract for authentication guards.
@@ -21,7 +21,7 @@ interface GuardInterface
      *
      * Returns the resolved identity, or null if this guard cannot authenticate the request.
      */
-    public function authenticate(Request $request): ?IdentityInterface;
+    public function authenticate(ServerRequestInterface $request): ?IdentityInterface;
 
     /**
      * Get the unique name of this guard.

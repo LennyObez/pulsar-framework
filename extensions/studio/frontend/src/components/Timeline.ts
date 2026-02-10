@@ -9,7 +9,7 @@ export function renderTimeline(container: HTMLElement, payload: unknown): void {
     container.innerHTML = `
       ${renderStudioNav('requests')}
       <div class="empty-state">
-        <h2>No Timeline Data</h2>
+        <h2>No timeline data</h2>
         <p>No events found for this correlation ID.</p>
         <a href="/studio/console" class="btn">Back to Console</a>
       </div>

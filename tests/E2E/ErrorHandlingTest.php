@@ -11,9 +11,7 @@ use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\HttpException;
 use Pulsar\ErrorHandling\ProductionRenderer;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use RuntimeException;
 
@@ -30,18 +28,18 @@ use RuntimeException;
 #[CoversClass(DevelopmentRenderer::class)]
 final class ErrorHandlingTest extends TestCase
 {
+    /**
+     * @param array<string, string|list<string>> $headers
+     */
     private function createRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $path = '/',
-        HeaderBag $headers = new HeaderBag(),
-    ): Request {
-        return new Request(
+        array $headers = [],
+    ): ServerRequest {
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
             headers: $headers,
-            body: '',
         );
     }
 
@@ -55,7 +53,7 @@ final class ErrorHandlingTest extends TestCase
 
         $response = $handler->handle(HttpException::notFound(), $request);
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -66,7 +64,7 @@ final class ErrorHandlingTest extends TestCase
 
         $response = $handler->handle(HttpException::forbidden(), $request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -77,7 +75,7 @@ final class ErrorHandlingTest extends TestCase
 
         $response = $handler->handle(HttpException::badRequest('Invalid input'), $request);
 
-        self::assertSame(ResponseStatus::BadRequest, $response->status);
+        self::assertSame(ResponseStatus::BadRequest->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -88,7 +86,7 @@ final class ErrorHandlingTest extends TestCase
 
         $response = $handler->handle(HttpException::serviceUnavailable(), $request);
 
-        self::assertSame(ResponseStatus::ServiceUnavailable, $response->status);
+        self::assertSame(ResponseStatus::ServiceUnavailable->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -105,8 +103,8 @@ final class ErrorHandlingTest extends TestCase
 
         $response = $handler->handle($exception, $request);
 
-        self::assertSame(ResponseStatus::Unauthorized, $response->status);
-        self::assertSame('Bearer realm="api"', $response->headers->first('WWW-Authenticate'));
+        self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
+        self::assertSame('Bearer realm="api"', $response->getHeaderLine('WWW-Authenticate'));
     }
 
     // ---- RuntimeException -> 500 with safe body ----
@@ -122,7 +120,7 @@ final class ErrorHandlingTest extends TestCase
             $request,
         );
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -136,13 +134,14 @@ final class ErrorHandlingTest extends TestCase
             $request,
         );
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        $body = (string) $response->getBody();
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
         // Production body should NOT contain the exception message, file paths, or stack trace
-        self::assertStringNotContainsString('Database connection failed', $response->body);
-        self::assertStringNotContainsString('/var/app/src/Db.php', $response->body);
-        self::assertStringNotContainsString('RuntimeException', $response->body);
+        self::assertStringNotContainsString('Database connection failed', $body);
+        self::assertStringNotContainsString('/var/app/src/Db.php', $body);
+        self::assertStringNotContainsString('RuntimeException', $body);
         // Should contain a generic error message
-        self::assertStringContainsString('An internal error occurred', $response->body);
+        self::assertStringContainsString('An internal error occurred', $body);
     }
 
     // ---- JSON Accept header -> JSON error response ----
@@ -153,7 +152,7 @@ final class ErrorHandlingTest extends TestCase
         $handler = new ExceptionHandler(new ProductionRenderer());
         $request = $this->createRequest(
             path: '/api/resource',
-            headers: new HeaderBag(['Accept' => 'application/json']),
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $handler->handle(
@@ -161,13 +160,13 @@ final class ErrorHandlingTest extends TestCase
             $request,
         );
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
         self::assertSame(
             'application/json; charset=utf-8',
-            $response->headers->first('Content-Type'),
+            $response->getHeaderLine('Content-Type'),
         );
 
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertSame(404, $data['status']);
         self::assertSame('Not Found', $data['error']);
@@ -179,7 +178,7 @@ final class ErrorHandlingTest extends TestCase
         $handler = new ExceptionHandler(new ProductionRenderer());
         $request = $this->createRequest(
             path: '/api/action',
-            headers: new HeaderBag(['Accept' => 'application/json']),
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $handler->handle(
@@ -187,13 +186,13 @@ final class ErrorHandlingTest extends TestCase
             $request,
         );
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
         self::assertSame(
             'application/json; charset=utf-8',
-            $response->headers->first('Content-Type'),
+            $response->getHeaderLine('Content-Type'),
         );
 
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertSame(500, $data['status']);
         self::assertSame('Internal Server Error', $data['error']);
@@ -209,7 +208,7 @@ final class ErrorHandlingTest extends TestCase
         $handler = new ExceptionHandler(new ProductionRenderer());
         $request = $this->createRequest(
             path: '/page',
-            headers: new HeaderBag(['Accept' => 'text/html']),
+            headers: ['Accept' => 'text/html'],
         );
 
         $response = $handler->handle(
@@ -217,12 +216,13 @@ final class ErrorHandlingTest extends TestCase
             $request,
         );
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        $body = (string) $response->getBody();
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
         self::assertSame(
             'text/html; charset=utf-8',
-            $response->headers->first('Content-Type'),
+            $response->getHeaderLine('Content-Type'),
         );
-        self::assertStringContainsString('404', $response->body);
+        self::assertStringContainsString('404', $body);
     }
 
     #[Test]
@@ -235,12 +235,13 @@ final class ErrorHandlingTest extends TestCase
 
         $response = $handler->handle($exception, $request);
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        $body = (string) $response->getBody();
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
         // Production should never show stack trace or sensitive paths
-        self::assertStringNotContainsString('Stack Trace', $response->body);
-        self::assertStringNotContainsString('#0', $response->body);
-        self::assertStringNotContainsString('/etc/secrets/key.pem', $response->body);
-        self::assertStringNotContainsString('Secret error details', $response->body);
+        self::assertStringNotContainsString('Stack Trace', $body);
+        self::assertStringNotContainsString('#0', $body);
+        self::assertStringNotContainsString('/etc/secrets/key.pem', $body);
+        self::assertStringNotContainsString('Secret error details', $body);
     }
 
     #[Test]
@@ -253,11 +254,12 @@ final class ErrorHandlingTest extends TestCase
 
         $response = $handler->handle($exception, $request);
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        $body = (string) $response->getBody();
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
         // Development renderer should include class name, message, and stack trace
-        self::assertStringContainsString('RuntimeException', $response->body);
-        self::assertStringContainsString('Debug error message', $response->body);
-        self::assertStringContainsString('Stack Trace', $response->body);
+        self::assertStringContainsString('RuntimeException', $body);
+        self::assertStringContainsString('Debug error message', $body);
+        self::assertStringContainsString('Stack Trace', $body);
     }
 
     #[Test]
@@ -266,7 +268,7 @@ final class ErrorHandlingTest extends TestCase
         $handler = new ExceptionHandler(new DevelopmentRenderer());
         $request = $this->createRequest(
             path: '/api/debug',
-            headers: new HeaderBag(['Accept' => 'application/json']),
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $handler->handle(
@@ -274,9 +276,9 @@ final class ErrorHandlingTest extends TestCase
             $request,
         );
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
 
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         // JSON error response always uses generic error name, not raw exception message
         self::assertSame('Internal Server Error', $data['error']);

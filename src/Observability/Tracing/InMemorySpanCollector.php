@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Observability\Tracing;
 
 use Override;
+use Pulsar\Api\Api;
 
 use function array_filter;
 use function array_slice;
@@ -17,6 +18,7 @@ use function count;
  * Stores completed spans up to a configurable maximum. When full,
  * the oldest spans are evicted.
  */
+#[Api(since: '1.0.0')]
 final class InMemorySpanCollector implements SpanProcessorInterface
 {
     /** @var list<Span> */

@@ -16,10 +16,8 @@ require __DIR__ . '/../../vendor/autoload.php';
 
 use Pulsar\Container\Container;
 use Pulsar\Core\Kernel;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Runtime\LeakDetector;
 use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
@@ -41,13 +39,9 @@ $container = $kernel->container();
 $sandbox = new RequestSandbox($container, $registry, $detector);
 $bootUs = (int) ((hrtime(true) - $bootStart) / 1_000);
 
-$request = new Request(
-    method: Method::GET,
+$request = new ServerRequest(
+    method: 'GET',
     uri: '/bench',
-    path: '/bench',
-    queryString: '',
-    headers: new HeaderBag(),
-    body: '',
 );
 
 // Warmup (not measured) — sandbox beforeRequest + handle + afterRequest

@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Http\Middleware;
 
 use Override;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Validator;
+
+use function is_array;
 
 /**
  * Abstract middleware that validates request data before passing to the next handler.
@@ -30,13 +33,30 @@ abstract class ValidationMiddleware implements MiddlewareInterface
      *
      * @return array<string, list<RuleInterface>>
      */
-    abstract protected function rules(Request $request): array;
+    abstract protected function rules(ServerRequestInterface $request): array;
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $this->validator->validateOrFail($request->all(), $this->rules($request));
+        $data = $this->extractInputData($request);
+        $this->validator->validateOrFail($data, $this->rules($request));
 
-        return $next($request);
+        return $handler->handle($request);
+    }
+
+    /**
+     * Extract all input data from the request (query + parsed body).
+     *
+     * @return array<string, mixed>
+     */
+    private function extractInputData(ServerRequestInterface $request): array
+    {
+        $query = $request->getQueryParams();
+        $parsedBody = $request->getParsedBody();
+        /** @var array<string, mixed> $post */
+        $post = is_array($parsedBody) ? $parsedBody : [];
+
+        /** @var array<string, mixed> */
+        return [...$query, ...$post];
     }
 }
