@@ -710,27 +710,24 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
             return;
         }
 
-        /** @var CmsNotificationDispatcher $notificationDispatcher */
-        $notificationDispatcher = $container->get(CmsNotificationDispatcher::class);
-
         /** @var ListenerProviderInterface $listenerProvider */
         $listenerProvider = $container->get(ListenerProviderInterface::class);
 
         $listenerProvider->addListener(
             ContentPublished::class,
-            $notificationDispatcher->onContentPublished(...),
+            [CmsNotificationDispatcher::class, 'onContentPublished'],
             moduleId: 'pulsar/cms',
         );
 
         $listenerProvider->addListener(
             ReviewRequested::class,
-            $notificationDispatcher->onReviewRequested(...),
+            [CmsNotificationDispatcher::class, 'onReviewRequested'],
             moduleId: 'pulsar/cms',
         );
 
         $listenerProvider->addListener(
             CommentReceived::class,
-            $notificationDispatcher->onCommentReceived(...),
+            [CmsNotificationDispatcher::class, 'onCommentReceived'],
             moduleId: 'pulsar/cms',
         );
     }

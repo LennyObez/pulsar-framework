@@ -286,33 +286,30 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
             return;
         }
 
-        /** @var ForumNotificationDispatcher $notificationDispatcher */
-        $notificationDispatcher = $container->get(ForumNotificationDispatcher::class);
-
         /** @var ListenerProviderInterface $listenerProvider */
         $listenerProvider = $container->get(ListenerProviderInterface::class);
 
         $listenerProvider->addListener(
             PostCreated::class,
-            $notificationDispatcher->onPostCreated(...),
+            [ForumNotificationDispatcher::class, 'onPostCreated'],
             moduleId: 'pulsar/forum',
         );
 
         $listenerProvider->addListener(
             PostAcceptedAsSolution::class,
-            $notificationDispatcher->onPostAcceptedAsSolution(...),
+            [ForumNotificationDispatcher::class, 'onPostAcceptedAsSolution'],
             moduleId: 'pulsar/forum',
         );
 
         $listenerProvider->addListener(
             VoteCast::class,
-            $notificationDispatcher->onVoteCast(...),
+            [ForumNotificationDispatcher::class, 'onVoteCast'],
             moduleId: 'pulsar/forum',
         );
 
         $listenerProvider->addListener(
             ReportSubmitted::class,
-            $notificationDispatcher->onReportSubmitted(...),
+            [ForumNotificationDispatcher::class, 'onReportSubmitted'],
             moduleId: 'pulsar/forum',
         );
     }
