@@ -7,12 +7,13 @@ namespace Pulsar\Tests\Unit\Extension\Cms\LiveCss;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Cms\Internal\LiveCss\CspHashComputer;
 use Pulsar\Extension\Cms\LiveCss\CspHashComputerInterface;
 
 use function base64_encode;
 use function hash;
 
-#[CoversClass(CspHashComputerInterface::class)]
+#[CoversClass(CspHashComputer::class)]
 final class CspHashComputerTest extends TestCase
 {
     // ── SHA-256 computation against known vector ────────────────────
