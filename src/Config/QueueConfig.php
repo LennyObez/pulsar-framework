@@ -22,7 +22,7 @@ readonly class QueueConfig
         public QueueDriverType $driver = QueueDriverType::Sync,
         public string $defaultQueue = 'default',
         public int $workerMaxJobs = 1000,
-        public int $workerMaxMemoryMb = 128,
+        public int $workerMaxMemoryMb = 256,
         public int $workerTimeLimitSeconds = 3600,
         public int $workerSleepMs = 1000,
         public int $retryMaxAttempts = 3,
@@ -59,7 +59,7 @@ readonly class QueueConfig
         $dlData = $data['dead_letter'] ?? [];
 
         $rawMaxJobs = $workerData['max_jobs'] ?? 1000;
-        $rawMaxMemory = $workerData['max_memory_mb'] ?? 128;
+        $rawMaxMemory = $workerData['max_memory_mb'] ?? 256;
         $rawTimeLimit = $workerData['time_limit_seconds'] ?? 3600;
         $rawSleep = $workerData['sleep_ms'] ?? 1000;
         $rawMaxAttempts = $retryData['max_attempts'] ?? 3;
@@ -73,7 +73,7 @@ readonly class QueueConfig
             driver: $driver,
             defaultQueue: $defaultQueue,
             workerMaxJobs: is_int($rawMaxJobs) ? $rawMaxJobs : 1000,
-            workerMaxMemoryMb: is_int($rawMaxMemory) ? $rawMaxMemory : 128,
+            workerMaxMemoryMb: is_int($rawMaxMemory) ? $rawMaxMemory : 256,
             workerTimeLimitSeconds: is_int($rawTimeLimit) ? $rawTimeLimit : 3600,
             workerSleepMs: is_int($rawSleep) ? $rawSleep : 1000,
             retryMaxAttempts: is_int($rawMaxAttempts) ? $rawMaxAttempts : 3,
