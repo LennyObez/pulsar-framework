@@ -1068,6 +1068,25 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Forum\\Internal\\
 
+    # --- gRPC Extension (Pulsar\\Extension\\Grpc) ---
+
+    # --- gRPC: public surface (excludes \Internal\ namespace) ---
+    - name: GrpcExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Grpc\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Grpc\\Internal\\
+
+    # --- gRPC: internal implementation (\Internal\ only) ---
+    - name: GrpcExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Grpc\\Internal\\
+
     # --- Analytics Extension (Pulsar\\Extension\\Analytics) ---
 
     # --- Analytics: public surface (excludes \Internal\ namespace) ---
@@ -1203,6 +1222,8 @@ deptrac:
       - OpenTelemetryExtension_Internal
       - CmsExtension
       - CmsExtension_Internal
+      - GrpcExtension
+      - GrpcExtension_Internal
 
     # -----------------------------------------------------------------
     # Public Layers — all public layers may depend on all other public
@@ -1960,6 +1981,41 @@ deptrac:
     Psr7BridgeExtension: *public_deps
     StudioExtension: *public_deps
     ExampleExtension: *public_deps
+
+    GrpcExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Context
+      - Event
+      - Observability
+      - Resilience
+      - Runtime
+      - Security
+      - GrpcExtension_Internal
+
+    GrpcExtension_Internal:
+      - GrpcExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Observability
+      - Runtime
+      - Security
 
     AnalyticsExtension:
       - CompositionRoot

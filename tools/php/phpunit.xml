@@ -12,6 +12,7 @@
         <testsuite name="Unit">
             <directory>../../tests/Unit</directory>
             <directory>../../extensions/opentelemetry/tests/Unit</directory>
+            <directory>../../extensions/grpc/tests/Unit</directory>
         </testsuite>
         <testsuite name="Integration">
             <directory>../../tests/Integration</directory>
@@ -51,6 +52,7 @@
             <directory>../../extensions/graphql/src</directory>
             <directory>../../extensions/forum/src</directory>
             <directory>../../extensions/analytics/src</directory>
+            <directory>../../extensions/grpc/src</directory>
         </include>
     </source>
 </phpunit>

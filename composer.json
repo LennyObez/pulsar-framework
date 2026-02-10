@@ -78,13 +78,15 @@
       "Pulsar\\Extension\\Analytics\\": "extensions/analytics/src/",
       "Pulsar\\Extension\\Cms\\": "extensions/cms/src/",
       "Pulsar\\Extension\\Graphql\\": "extensions/graphql/src/",
-      "Pulsar\\Extension\\Forum\\": "extensions/forum/src/"
+      "Pulsar\\Extension\\Forum\\": "extensions/forum/src/",
+      "Pulsar\\Extension\\Grpc\\": "extensions/grpc/src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
       "Pulsar\\Tests\\": "tests/",
-      "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/"
+      "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/",
+      "Pulsar\\Extension\\Grpc\\Tests\\": "extensions/grpc/tests/"
     }
   },
   "bin": [
