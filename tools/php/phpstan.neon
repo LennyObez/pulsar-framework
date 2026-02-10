@@ -1,6 +1,12 @@
 includes:
     - phpstan-baseline.neon
 
+services:
+    -
+        class: Pulsar\PHPStan\Rules\ForbidIntegrationEventBusInSagaStepRule
+        tags:
+            - phpstan.rules.rule
+
 parameters:
     level: max
     paths:

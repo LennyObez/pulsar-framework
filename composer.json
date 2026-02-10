@@ -85,6 +85,7 @@
   "autoload-dev": {
     "psr-4": {
       "Pulsar\\Tests\\": "tests/",
+      "Pulsar\\PHPStan\\": "tools/php/phpstan/",
       "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/",
       "Pulsar\\Extension\\Grpc\\Tests\\": "extensions/grpc/tests/"
     }

@@ -71,6 +71,9 @@
                 <file name="../../src/Http/Message/Response.php"/>
                 <file name="../../src/Http/Message/ServerRequest.php"/>
                 <file name="../../src/Api/Filter/Filter.php"/>
+                <file name="../../src/Workflow/Storage/ClassifiedContext.php"/>
+                <file name="../../src/Workflow/Storage/WorkflowInstance.php"/>
+                <file name="../../src/Saga/SagaState.php"/>
             </errorLevel>
         </MoreSpecificReturnType>
         <LessSpecificReturnStatement>
@@ -78,6 +81,9 @@
                 <file name="../../src/Http/Message/Response.php"/>
                 <file name="../../src/Http/Message/ServerRequest.php"/>
                 <file name="../../src/Api/Filter/Filter.php"/>
+                <file name="../../src/Workflow/Storage/ClassifiedContext.php"/>
+                <file name="../../src/Workflow/Storage/WorkflowInstance.php"/>
+                <file name="../../src/Saga/SagaState.php"/>
             </errorLevel>
         </LessSpecificReturnStatement>
 
