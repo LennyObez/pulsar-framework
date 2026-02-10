@@ -114,7 +114,7 @@ final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
         $standardKeys = ['sub', 'iss', 'aud', 'exp', 'iat', 'nonce', 'azp'];
         $extraClaims = array_filter(
             $claims,
-            static fn (mixed $v, string $k): bool => !in_array($k, $standardKeys, true),
+            static fn(mixed $v, string $k): bool => !in_array($k, $standardKeys, true),
             ARRAY_FILTER_USE_BOTH,
         );
 

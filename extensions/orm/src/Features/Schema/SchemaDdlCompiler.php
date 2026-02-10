@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Schema;
 
-use function implode;
-use function is_bool;
-use function is_float;
-use function is_int;
-
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Domain\ColumnType;
 use Pulsar\Extension\Orm\Internal\Compiler\DialectInterface;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 
+use function implode;
+use function is_bool;
+use function is_float;
+use function is_int;
 use function sprintf;
 
 /**

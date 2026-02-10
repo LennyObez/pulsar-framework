@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\UpdateResource;
 
-use function array_key_exists;
-use function bin2hex;
-use function in_array;
-
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceMutatorInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
@@ -17,6 +13,9 @@ use Pulsar\Extension\Admin\Exception\ResourceValidationException;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 
+use function array_key_exists;
+use function bin2hex;
+use function in_array;
 use function random_bytes;
 use function time;
 

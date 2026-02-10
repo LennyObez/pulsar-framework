@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Exception;
 
-use function count;
-
 use NoDiscard;
+
+use function count;
 
 /**
  * Thrown when resource data fails validation.

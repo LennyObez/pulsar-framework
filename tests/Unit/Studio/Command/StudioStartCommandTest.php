@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Command;
 
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +16,7 @@ use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
 use Pulsar\Extension\Studio\Config\StudioServerConfig;
 
+use function mkdir;
 use function sys_get_temp_dir;
 use function uniqid;
 

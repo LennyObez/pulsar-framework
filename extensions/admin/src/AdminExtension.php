@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin;
 
-use const DIRECTORY_SEPARATOR;
-
-use function is_array;
-use function is_file;
-
 use Override;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Container\ContainerInterface;
@@ -37,6 +32,11 @@ use Pulsar\Extension\Admin\Server\Controller\SchemaController;
 use Pulsar\Extension\Admin\Server\Controller\SearchController;
 use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
 use Pulsar\Routing\RouterInterface;
+
+use function is_array;
+use function is_file;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Admin panel extension.

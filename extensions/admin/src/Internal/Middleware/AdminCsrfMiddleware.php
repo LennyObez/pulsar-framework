@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
-use function bin2hex;
-use function hash_equals;
-use function is_string;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
@@ -17,6 +13,9 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
+use function bin2hex;
+use function hash_equals;
+use function is_string;
 use function random_bytes;
 
 /**

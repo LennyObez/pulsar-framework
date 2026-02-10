@@ -4,31 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Cache;
 
-use function array_is_list;
-use function class_exists;
-
-use const DIRECTORY_SEPARATOR;
-
-use function enum_exists;
-use function file_get_contents;
-use function file_put_contents;
-
 use FilesystemIterator;
-
-use function in_array;
-use function is_array;
-use function is_file;
-use function json_decode;
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
-
-use const LOCK_EX;
-
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigRepository;
@@ -38,12 +15,26 @@ use ReflectionClass;
 use ReflectionEnum;
 use ReflectionException;
 use Serializable;
-
-use function sort;
-
 use SplFileInfo;
 
+use function array_is_list;
+use function class_exists;
+use function enum_exists;
+use function file_get_contents;
+use function file_put_contents;
+use function in_array;
+use function is_array;
+use function is_file;
+use function json_decode;
+use function json_encode;
+use function sort;
 use function str_starts_with;
+
+use const DIRECTORY_SEPARATOR;
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const LOCK_EX;
 
 /**
  * Composer classmap/PSR-4 scanner for safe unserialize() allowlist.

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Policy;
 
-use function in_array;
-use function is_scalar;
-
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Domain\FieldDefinition;
+
+use function in_array;
+use function is_scalar;
 
 /**
  * Filters field data based on visibility and redaction rules.

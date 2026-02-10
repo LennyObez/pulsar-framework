@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Adapter;
 
-use function array_map;
-use function implode;
-use function in_array;
-use function max;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
 use Pulsar\Extension\Admin\Domain\FieldDefinition;
+
+use function array_map;
+use function implode;
+use function in_array;
+use function max;
 
 /**
  * SQL-based query implementation for ORM-backed admin resources.

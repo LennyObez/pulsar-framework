@@ -4,23 +4,21 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use Pulsar\Api\Api;
+
 use function array_any;
 use function array_map;
 use function count;
 use function explode;
-
-use const FILTER_VALIDATE_IP;
-
 use function filter_var;
 use function inet_pton;
 use function ip2long;
 use function is_string;
-
-use Pulsar\Api\Api;
-
 use function str_contains;
 use function substr;
 use function unpack;
+
+use const FILTER_VALIDATE_IP;
 
 /**
  * Resolves the real client IP address behind trusted reverse proxies.

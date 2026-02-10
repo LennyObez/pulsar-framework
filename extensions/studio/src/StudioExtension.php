@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio;
 
-use function is_array;
-use function is_file;
-
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Config\EnvironmentMode;
@@ -14,8 +11,10 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Extensibility\ExtensionInterface;
+use Pulsar\Extensibility\PostBootExtensionInterface;
+use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Extension\Studio\Config\StudioConfig;
-use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
 use Pulsar\Extension\Studio\Console\Collector\ExceptionCollector;
@@ -28,7 +27,6 @@ use Pulsar\Extension\Studio\Console\Collector\InstrumentedScheduler;
 use Pulsar\Extension\Studio\Console\Collector\InstrumentedWorker;
 use Pulsar\Extension\Studio\Console\Collector\LogCollector;
 use Pulsar\Extension\Studio\Console\Event\EventFactory;
-use Pulsar\Extension\Studio\Internal\StudioModuleRegistry;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
 use Pulsar\Extension\Studio\Console\Redaction\RedactionPipeline;
@@ -37,10 +35,9 @@ use Pulsar\Extension\Studio\Console\Retention\RetentionPolicy;
 use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
+use Pulsar\Extension\Studio\Internal\StudioModuleRegistry;
 use Pulsar\Extension\Studio\Security\StudioAccessGate;
-use Pulsar\Extensibility\ExtensionInterface;
-use Pulsar\Extensibility\PostBootExtensionInterface;
-use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\FeatureFlag\FlagEvaluationLogInterface;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Observability\Context\CorrelationContextProviderInterface;
@@ -58,6 +55,9 @@ use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Tenancy\TenantContext;
 use Random\Randomizer;
+
+use function is_array;
+use function is_file;
 
 use const DIRECTORY_SEPARATOR;
 

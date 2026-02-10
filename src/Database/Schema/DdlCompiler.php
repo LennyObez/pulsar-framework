@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Schema;
 
+use Pulsar\Api\Api;
+use Pulsar\Database\Driver;
+
 use function array_map;
 use function count;
 use function implode;
@@ -11,10 +14,6 @@ use function in_array;
 use function is_bool;
 use function is_float;
 use function is_int;
-
-use Pulsar\Api\Api;
-use Pulsar\Database\Driver;
-
 use function sprintf;
 use function str_starts_with;
 

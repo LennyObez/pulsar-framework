@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Orm\Features\Query;
 
-use function count;
-use function in_array;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -14,6 +11,9 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Extension\Orm\Features\Query\DeleteBuilder;
+
+use function count;
+use function in_array;
 
 #[CoversClass(DeleteBuilder::class)]
 final class DeleteBuilderTest extends TestCase

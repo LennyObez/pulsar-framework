@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
-use function array_map;
-use function is_string;
-use function mb_strlen;
-
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -27,6 +23,10 @@ use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+
+use function array_map;
+use function is_string;
+use function mb_strlen;
 
 /**
  * Admin schema builder JSON API controller.

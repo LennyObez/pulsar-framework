@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Admin\Features\UpdateResource;
 
-use function assert;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -26,6 +24,8 @@ use Pulsar\Extension\Admin\Features\UpdateResource\UpdateResourceHandler;
 use Pulsar\Extension\Admin\Features\UpdateResource\UpdateResourceRequest;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
+
+use function assert;
 
 #[CoversClass(UpdateResourceHandler::class)]
 final class UpdateResourceHandlerTest extends TestCase

@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Export;
 
-use function fclose;
-use function fopen;
-use function fputcsv;
-use function is_bool;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Contracts\ExportDriverInterface;
 use Pulsar\Extension\Admin\Domain\ExportFormat;
 
+use function fclose;
+use function fopen;
+use function fputcsv;
+use function is_bool;
 use function rewind;
 use function stream_get_contents;
 

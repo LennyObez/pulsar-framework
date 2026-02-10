@@ -9,6 +9,8 @@ use function count;
 use function implode;
 use function in_array;
 use function is_array;
+use function token_get_all;
+use function trim;
 
 use const T_COMMENT;
 use const T_DOC_COMMENT;
@@ -16,9 +18,6 @@ use const T_FUNCTION;
 use const T_STRING;
 use const T_VARIABLE;
 use const T_WHITESPACE;
-
-use function token_get_all;
-use function trim;
 
 /**
  * Parses PHP interface files to extract method signatures.

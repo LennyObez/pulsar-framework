@@ -4,27 +4,26 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command;
 
+use JsonException;
+use Override;
+use Pulsar\Api\Internal;
+use Pulsar\Console\Command;
+use Pulsar\Console\ExitCode;
+use Pulsar\Console\InputInterface;
+use Pulsar\Console\OutputInterface;
+use Pulsar\Extension\Studio\Config\StudioConfig;
+
 use function dirname;
 use function extension_loaded;
 use function file_exists;
 use function is_dir;
 use function is_writable;
 use function json_encode;
+use function sprintf;
 
 use const JSON_PRETTY_PRINT;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
-
-use JsonException;
-use Override;
-use Pulsar\Api\Internal;
-use Pulsar\Extension\Studio\Config\StudioConfig;
-use Pulsar\Console\Command;
-use Pulsar\Console\ExitCode;
-use Pulsar\Console\InputInterface;
-use Pulsar\Console\OutputInterface;
-
-use function sprintf;
 
 /**
  * Runs diagnostic checks for Studio.

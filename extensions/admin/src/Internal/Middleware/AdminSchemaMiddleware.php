@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
-use function in_array;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\PolicyContext;
@@ -17,6 +15,8 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+
+use function in_array;
 
 /**
  * Guards all /schema routes.

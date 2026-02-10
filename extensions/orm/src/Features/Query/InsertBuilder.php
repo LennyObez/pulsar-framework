@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Query;
 
-use function array_keys;
-
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Orm\Internal\Compiler\SqlCompiler;
 use Pulsar\Extension\Orm\Internal\Support\BindingCounter;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
+
+use function array_keys;
 
 /**
  * Internal INSERT builder — not exposed on the public API.

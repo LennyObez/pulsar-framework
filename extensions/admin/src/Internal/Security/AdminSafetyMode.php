@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Security;
 
+use Pulsar\Api\Internal;
+
 use function array_diff_key;
 use function array_flip;
-
-use Pulsar\Api\Internal;
 
 /**
  * Production safety mode for admin error responses.

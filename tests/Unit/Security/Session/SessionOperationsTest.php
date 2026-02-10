@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\Session;
 
-use function array_key_exists;
-
 use NoDiscard;
 use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -13,6 +11,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
+
+use function array_key_exists;
 
 /**
  * Unit tests for session happy-path operations.

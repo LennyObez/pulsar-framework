@@ -5,11 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Core;
 
 use Error;
-
-use function is_array;
-use function is_callable;
-use function is_string;
-
 use JsonException;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\CachedRoute;
@@ -65,6 +60,10 @@ use Random\Randomizer;
 use ReflectionException;
 use SodiumException;
 use Throwable;
+
+use function is_array;
+use function is_callable;
+use function is_string;
 
 /**
  * Pulsar Kernel

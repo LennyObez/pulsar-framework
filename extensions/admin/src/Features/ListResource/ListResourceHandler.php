@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\ListResource;
 
-use function max;
-use function min;
-
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Internal\Policy\FieldVisibilityFilter;
+
+use function max;
+use function min;
 
 /**
  * Handles listing resource records with pagination, filtering, and field visibility.

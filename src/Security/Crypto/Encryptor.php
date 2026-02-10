@@ -9,13 +9,11 @@ use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+use SodiumException;
 
 use function sodium_crypto_secretbox;
 use function sodium_crypto_secretbox_open;
 use function sodium_memzero;
-
-use SodiumException;
-
 use function strlen;
 
 /**

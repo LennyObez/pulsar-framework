@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
-use function is_string;
-
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Domain\ExportFormat;
 use Pulsar\Extension\Admin\Features\ExportResource\ExportResourceHandler;
@@ -14,6 +12,8 @@ use Pulsar\Http\HeaderBag;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+
+use function is_string;
 
 /**
  * Controller for exporting resource data.

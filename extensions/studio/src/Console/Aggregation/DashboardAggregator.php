@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Aggregation;
 
+use JsonException;
+use Override;
+use PDO;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+
 use function array_fill;
 use function array_filter;
 use function array_map;
@@ -17,25 +25,14 @@ use function date;
 use function in_array;
 use function intdiv;
 use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
-use JsonException;
-
 use function max;
 use function microtime;
 use function min;
-
-use Override;
-use PDO;
-use Pulsar\Api\Internal;
-use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
-use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
-
 use function round;
 use function sort;
 use function usort;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Aggregates dashboard metrics from the Studio event store using SQL queries.

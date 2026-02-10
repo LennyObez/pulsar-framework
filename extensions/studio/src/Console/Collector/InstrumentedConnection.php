@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Console\Collector;
 
 use Closure;
-
-use function microtime;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\EnvironmentMode;
@@ -21,6 +18,8 @@ use Pulsar\Extension\Studio\Console\Event\Payload\DatabaseQueryPayload;
 use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Context\CorrelationContextProviderInterface;
 use Throwable;
+
+use function microtime;
 
 /**
  * ConnectionInterface decorator that captures query events for Studio.

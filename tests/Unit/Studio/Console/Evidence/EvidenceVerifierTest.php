@@ -4,14 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Console\Evidence;
 
-use function count;
-use function hash;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-use const JSON_UNESCAPED_UNICODE;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +13,14 @@ use Pulsar\Extension\Studio\Console\Evidence\HashChain;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\HmacService;
 
+use function count;
+use function hash;
+use function json_encode;
 use function random_bytes;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 #[CoversClass(EvidenceVerifier::class)]
 final class EvidenceVerifierTest extends TestCase

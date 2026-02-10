@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Supervisor\PreflightCheck;
 
-use function disk_free_space;
-
 use Override;
 use Pulsar\Api\Internal;
 
+use function disk_free_space;
 use function sprintf;
 
 /**

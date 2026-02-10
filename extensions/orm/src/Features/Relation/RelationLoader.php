@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Relation;
 
-use function array_map;
-use function array_unique;
-use function array_values;
-
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
@@ -17,6 +13,10 @@ use Pulsar\Extension\Orm\Domain\RelationMetadata;
 use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 use ReflectionClass;
+
+use function array_map;
+use function array_unique;
+use function array_values;
 
 /**
  * Loads entity relations based on a FetchPlan.

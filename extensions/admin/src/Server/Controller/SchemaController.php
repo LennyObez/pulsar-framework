@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
-use function array_map;
-use function count;
-
 use Pulsar\Api\Internal;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
 use Pulsar\Database\Schema\SchemaCapabilities;
@@ -14,6 +11,9 @@ use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
+
+use function array_map;
+use function count;
 
 /**
  * Admin schema builder HTML page controller.

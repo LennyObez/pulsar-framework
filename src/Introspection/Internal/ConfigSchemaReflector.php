@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Introspection\Internal;
 
-use function is_object;
-
 use Pulsar\Api\Internal;
 use Pulsar\Introspection\Data\ConfigPropertySchema;
 use Pulsar\Introspection\Data\ConfigSchemaData;
@@ -15,6 +13,8 @@ use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionProperty;
 use Throwable;
+
+use function is_object;
 
 /**
  * Reflects on config DTO classes to extract property schemas.

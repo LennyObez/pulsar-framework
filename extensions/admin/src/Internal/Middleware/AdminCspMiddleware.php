@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
-use function bin2hex;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
@@ -13,6 +11,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 
+use function bin2hex;
 use function random_bytes;
 
 /**

@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Schema;
 
+use Pulsar\Api\Api;
+
 use function array_filter;
 use function array_map;
 use function implode;
-
-use Pulsar\Api\Api;
-
 use function rtrim;
 use function trim;
 

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log;
 
+use Throwable;
+
 use function is_object;
 use function is_string;
-
-use Throwable;
 
 /**
  * Formats LogEntry instances as JSON lines.

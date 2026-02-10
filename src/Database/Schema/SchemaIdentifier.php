@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Schema;
 
+use Pulsar\Api\Api;
+
 use function in_array;
 use function mb_strlen;
 use function preg_match;
-
-use Pulsar\Api\Api;
-
 use function strtolower;
 
 /**

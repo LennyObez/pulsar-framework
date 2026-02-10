@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
-use function in_array;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
@@ -15,6 +13,8 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
+
+use function in_array;
 
 /**
  * Audit logging middleware for admin operations.

@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console;
 
-use function explode;
-use function is_string;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -19,8 +12,14 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
+use function explode;
+use function is_string;
+use function json_encode;
 use function sprintf;
 use function usleep;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Streams Studio events in real-time from the command line.

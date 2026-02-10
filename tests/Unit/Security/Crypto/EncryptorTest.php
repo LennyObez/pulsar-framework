@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\Crypto;
 
-use function chr;
-use function ord;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -14,6 +11,8 @@ use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Exception\SecurityException;
 
+use function chr;
+use function ord;
 use function strlen;
 
 #[CoversClass(Encryptor::class)]

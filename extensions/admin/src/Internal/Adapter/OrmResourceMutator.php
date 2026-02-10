@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Adapter;
 
-use function array_keys;
-use function implode;
-use function in_array;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
@@ -20,6 +16,10 @@ use Pulsar\Extension\Admin\Domain\FieldDefinition;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 use Throwable;
+
+use function array_keys;
+use function implode;
+use function in_array;
 
 /**
  * SQL-based mutation implementation for ORM-backed admin resources.

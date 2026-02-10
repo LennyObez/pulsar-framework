@@ -7,10 +7,9 @@ namespace Pulsar\Resilience\Exception;
 use NoDiscard;
 use Pulsar\Api\Api;
 use RuntimeException;
+use Throwable;
 
 use function sprintf;
-
-use Throwable;
 
 /**
  * Exception for resilience/self-healing errors.

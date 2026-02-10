@@ -5,15 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Core\Wiring;
 
 use Closure;
-
-use const DIRECTORY_SEPARATOR;
-
-use function dirname;
-use function is_array;
-use function is_file;
-use function is_object;
-use function is_string;
-
 use Pulsar\Api\Internal;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
@@ -34,6 +25,14 @@ use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
 use Throwable;
+
+use function dirname;
+use function is_array;
+use function is_file;
+use function is_object;
+use function is_string;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Wires the Introspection module into the kernel boot pipeline.

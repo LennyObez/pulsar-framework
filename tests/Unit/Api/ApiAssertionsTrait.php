@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Api;
 
-use function count;
-
 use NoDiscard;
 use Override;
 use Pulsar\Api\Api;
@@ -13,10 +11,10 @@ use Pulsar\Api\Internal;
 use ReflectionClass;
 use ReflectionEnum;
 use ReflectionEnumUnitCase;
-
-use function sprintf;
-
 use UnitEnum;
+
+use function count;
+use function sprintf;
 
 /**
  * Helpers for API compatibility tests.

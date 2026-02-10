@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
-use function is_string;
-
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Features\GlobalSearch\GlobalSearchHandler;
 use Pulsar\Extension\Admin\Features\GlobalSearch\GlobalSearchRequest;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
+
+use function is_string;
 
 /**
  * Controller for global admin search.

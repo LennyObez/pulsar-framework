@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Domain;
 
-use function preg_match;
-
 use Pulsar\Api\Api;
 use Pulsar\Extension\Orm\Exception\QueryBuilderException;
+
+use function preg_match;
 
 /**
  * Validates SQL identifiers (table names, column names, aliases) at method-call time.

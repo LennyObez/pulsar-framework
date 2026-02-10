@@ -4,40 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console;
 
-use function array_keys;
-use function array_map;
-use function bin2hex;
-
 use Closure;
-
-use function count;
-use function dirname;
-use function escapeshellarg;
-use function exec;
-use function file_exists;
-use function file_get_contents;
-use function hrtime;
-use function implode;
-use function is_dir;
-use function json_decode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
-
-use function ksort;
-use function mkdir;
-use function number_format;
-
 use Override;
-
-use const PHP_BINARY;
-use const PHP_OS_FAMILY;
-use const PHP_SAPI;
-use const PHP_VERSION;
-
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -48,15 +17,37 @@ use Pulsar\Extension\Studio\Console\Event\Payload\BenchmarkProfilePayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\BenchmarkRunPayload;
 use Pulsar\Support\AtomicFileWriter;
 use Random\RandomException;
+use Throwable;
 
+use function array_keys;
+use function array_map;
+use function bin2hex;
+use function count;
+use function dirname;
+use function escapeshellarg;
+use function exec;
+use function file_exists;
+use function file_get_contents;
+use function hrtime;
+use function implode;
+use function is_dir;
+use function json_decode;
+use function ksort;
+use function mkdir;
+use function number_format;
 use function random_bytes;
 use function sprintf;
 use function str_repeat;
 use function sys_get_temp_dir;
-
-use Throwable;
-
 use function unlink;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const PHP_BINARY;
+use const PHP_OS_FAMILY;
+use const PHP_SAPI;
+use const PHP_VERSION;
 
 /**
  * Studio benchmark command — runs the profile matrix and emits events.

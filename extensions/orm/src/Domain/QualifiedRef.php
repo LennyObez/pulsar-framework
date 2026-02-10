@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Domain;
 
-use function count;
-
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function count;
 use function sprintf;
 
 /**

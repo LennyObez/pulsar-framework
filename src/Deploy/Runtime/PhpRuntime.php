@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Runtime;
 
+use Override;
+use Pulsar\Api\Internal;
+
 use function extension_loaded;
 use function function_exists;
 use function ini_get;
-
-use Override;
-use Pulsar\Api\Internal;
 
 /**
  * Default implementation delegating to real PHP runtime functions.

@@ -23,7 +23,7 @@ return (new PhpCsFixer\Config)
         'declare_strict_types' => true,
         'strict_param' => true,
         'array_syntax' => ['syntax' => 'short'],
-        'ordered_imports' => ['sort_algorithm' => 'alpha'],
+        'ordered_imports' => ['sort_algorithm' => 'alpha', 'imports_order' => ['class', 'function', 'const']],
         'no_unused_imports' => true,
         'single_quote' => true,
         'trailing_comma_in_multiline' => ['elements' => ['arrays', 'arguments', 'parameters']],

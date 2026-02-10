@@ -7,15 +7,13 @@ namespace Pulsar\Security\Crypto;
 use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Security\Exception\SecurityException;
+use SodiumException;
 
 use function sodium_bin2hex;
 use function sodium_crypto_generichash;
 use function sodium_crypto_kdf_derive_from_key;
 use function sodium_hex2bin;
 use function sodium_memzero;
-
-use SodiumException;
-
 use function sprintf;
 use function strlen;
 use function substr;

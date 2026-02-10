@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\ObservabilityExport\Internal;
 
+use Pulsar\Api\Internal;
+use RuntimeException;
+
 use function fclose;
 use function fflush;
 use function flock;
 use function fopen;
 use function fwrite;
-
-use Pulsar\Api\Internal;
-use RuntimeException;
 
 use const LOCK_EX;
 use const LOCK_UN;

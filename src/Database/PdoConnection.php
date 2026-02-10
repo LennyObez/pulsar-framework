@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
-use function is_bool;
-use function is_int;
-
 use NoDiscard;
 use Override;
 use PDO;
@@ -14,10 +11,11 @@ use PDOException;
 use PDOStatement;
 use Pulsar\Config\ConnectionConfig;
 use Pulsar\Database\Exception\DatabaseException;
-
-use function sprintf;
-
 use Throwable;
+
+use function is_bool;
+use function is_int;
+use function sprintf;
 
 /**
  * PDO-based database connection with lazy initialization.

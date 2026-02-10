@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Hydration;
 
-use function array_map;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\Row;
@@ -14,6 +12,8 @@ use Pulsar\Extension\Orm\Contracts\EntityHydratorInterface;
 use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Internal\Support\TypeCaster;
 use ReflectionClass;
+
+use function array_map;
 
 /**
  * Hydrates entity objects from database rows using metadata.

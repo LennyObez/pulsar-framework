@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function basename;
-use function is_string;
-
 use JsonException;
 use Override;
 use Pulsar\Console\Command;
@@ -19,6 +16,8 @@ use Pulsar\Console\OutputInterface;
 use Random\RandomException;
 use RuntimeException;
 
+use function basename;
+use function is_string;
 use function sprintf;
 
 /**

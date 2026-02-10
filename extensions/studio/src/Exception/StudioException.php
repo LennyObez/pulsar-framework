@@ -7,10 +7,9 @@ namespace Pulsar\Extension\Studio\Exception;
 use NoDiscard;
 use Pulsar\Api\Internal;
 use RuntimeException;
+use Throwable;
 
 use function sprintf;
-
-use Throwable;
 
 /**
  * Base exception for all Studio-related errors.

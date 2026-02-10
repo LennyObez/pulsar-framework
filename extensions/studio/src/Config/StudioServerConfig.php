@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Config;
 
-use function is_int;
-
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
+
+use function is_int;
 
 /**
  * Server configuration for the Studio development server.

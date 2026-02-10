@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Command\Console;
 
-use function in_array;
-use function is_array;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -15,6 +12,9 @@ use Pulsar\Console\Input\ArrayInput;
 use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Extension\Studio\Command\Console\ConsoleJobsCommand;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+
+use function in_array;
+use function is_array;
 
 #[CoversClass(ConsoleJobsCommand::class)]
 final class ConsoleJobsCommandTest extends TestCase

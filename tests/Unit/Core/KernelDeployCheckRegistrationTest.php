@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Core;
 
-use function bin2hex;
-use function count;
-use function file_put_contents;
-use function is_dir;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -17,6 +11,11 @@ use Pulsar\Config\ConfigManager;
 use Pulsar\Core\Kernel;
 use Pulsar\Deploy\DeployCheck;
 
+use function bin2hex;
+use function count;
+use function file_put_contents;
+use function is_dir;
+use function mkdir;
 use function random_bytes;
 use function scandir;
 

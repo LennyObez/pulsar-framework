@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Storage;
 
+use Override;
+use PDO;
+use Pulsar\Api\Internal;
+
 use function array_map;
 use function date;
 use function hash;
@@ -12,10 +16,6 @@ use function json_decode;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
-
-use Override;
-use PDO;
-use Pulsar\Api\Internal;
 
 /**
  * SQLite-backed schema change log store.

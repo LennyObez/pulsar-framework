@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Internal\Compiler;
 
-use function implode;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Domain\LockMode;
 
+use function implode;
 use function sprintf;
 
 /**

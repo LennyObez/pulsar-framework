@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Orm\Internal\Support;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Orm\Domain\ColumnType;
 
 use function is_bool;
 use function is_float;
@@ -15,9 +17,6 @@ use function json_decode;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
-
-use Pulsar\Api\Internal;
-use Pulsar\Extension\Orm\Domain\ColumnType;
 
 /**
  * Casts values between PHP types and database column types.

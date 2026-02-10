@@ -13,6 +13,7 @@ use function fclose;
 use function fread;
 use function getenv;
 use function hrtime;
+use function is_resource;
 use function max;
 use function proc_close;
 use function proc_get_status;

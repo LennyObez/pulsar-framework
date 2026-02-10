@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Adapter;
 
-use function array_filter;
-use function array_map;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Domain\BulkAction;
 use Pulsar\Extension\Admin\Domain\FieldDefinition;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
+
+use function array_filter;
+use function array_map;
 
 /**
  * A DataResourceInterface backed by database introspection.

@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Orm\Features\Query;
 
-use function array_merge;
-use function implode;
-
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Orm\Domain\LikePattern;
 use Pulsar\Extension\Orm\Domain\RawExpression;
 use Pulsar\Extension\Orm\Internal\Support\BindingCounter;
 use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 
+use function array_merge;
+use function implode;
 use function sprintf;
 
 /**

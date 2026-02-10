@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Export;
 
-use function hash_final;
-use function hash_init;
-use function hash_update;
-
 use HashContext;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Contracts\WritableStreamInterface;
+
+use function hash_final;
+use function hash_init;
+use function hash_update;
 
 /**
  * Writable stream that computes a SHA-256 evidence hash of all written data.

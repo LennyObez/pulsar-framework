@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Admin\Features\DeleteResource;
 
-use function assert;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -22,6 +20,8 @@ use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceHandler;
 use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceRequest;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
+
+use function assert;
 
 #[CoversClass(DeleteResourceHandler::class)]
 final class DeleteResourceHandlerTest extends TestCase

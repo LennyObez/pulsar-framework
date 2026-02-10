@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Log\Sink;
 
-use function dirname;
-use function is_dir;
-
 use Override;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogFormatter;
 use Pulsar\Observability\Log\LogSinkInterface;
+
+use function dirname;
+use function is_dir;
 
 /**
  * Log sink that appends JSON lines to a file.

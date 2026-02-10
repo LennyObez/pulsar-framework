@@ -4,16 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Console\Aggregation;
 
-use function array_fill;
-use function array_sum;
-use function bin2hex;
-use function hash;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-use const JSON_UNESCAPED_UNICODE;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,8 +13,17 @@ use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Event\EventVersion;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 
+use function array_fill;
+use function array_sum;
+use function bin2hex;
+use function hash;
+use function json_encode;
 use function random_bytes;
 use function usleep;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 #[CoversClass(DashboardAggregator::class)]
 final class DashboardAggregatorTest extends TestCase

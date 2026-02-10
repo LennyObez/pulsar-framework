@@ -5,15 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Studio\Console\Evidence;
 
 use InvalidArgumentException;
-
-use function json_decode;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
 use ReflectionClass;
 
+use function json_decode;
 use function time;
 
 #[CoversClass(EvidenceArchive::class)]

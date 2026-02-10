@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
-use function is_array;
-
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -14,6 +12,8 @@ use Pulsar\Extension\Admin\Features\BulkAction\BulkActionRequest;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+
+use function is_array;
 
 /**
  * Controller for bulk actions on resource records.

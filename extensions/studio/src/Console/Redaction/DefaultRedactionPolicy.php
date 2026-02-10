@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Redaction;
 
-use function is_array;
-use function is_string;
-
 use Override;
-
-use function preg_replace;
-
 use Pulsar\Api\Internal;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
+
+use function is_array;
+use function is_string;
+use function preg_replace;
 
 /**
  * Default redaction policy extending the base sensitive data scrubber.

@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command;
 
-use function file_exists;
-use function is_dir;
-use function is_int;
-use function is_string;
-
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Extension\Studio\Config\StudioConfig;
 
+use function file_exists;
+use function is_dir;
+use function is_int;
+use function is_string;
 use function sprintf;
 
 /**

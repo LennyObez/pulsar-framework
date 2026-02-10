@@ -4,34 +4,30 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Collector;
 
-use function bin2hex;
-
 use Closure;
-
-use function is_int;
-use function is_string;
-use function microtime;
-
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Observability\Tracing\TraceId;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\HttpRequestPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\HttpResponsePayload;
-use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Http\Middleware\MiddlewareInterface;
+use Pulsar\Http\Request;
+use Pulsar\Http\Response;
+use Pulsar\Observability\Context\CorrelationContext;
+use Pulsar\Observability\Tracing\TraceId;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+use Throwable;
 
+use function bin2hex;
+use function is_int;
+use function is_string;
+use function microtime;
 use function str_contains;
 use function strlen;
 use function substr;
-
-use Throwable;
 
 /**
  * HTTP middleware collector for Studio.

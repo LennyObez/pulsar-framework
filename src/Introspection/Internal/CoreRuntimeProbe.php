@@ -4,15 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Introspection\Internal;
 
-use function array_map;
-use function array_values;
-
 use Closure;
-
-use function is_array;
-use function is_string;
-use function preg_match;
-
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Container\ContainerInterface;
@@ -26,6 +18,12 @@ use Pulsar\Introspection\Data\RouteMapData;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 use Throwable;
+
+use function array_map;
+use function array_values;
+use function is_array;
+use function is_string;
+use function preg_match;
 
 /**
  * Crawls Container, ExtensionRegistry, Router, and Console Application

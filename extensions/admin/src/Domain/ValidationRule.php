@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Domain;
 
-use function is_string;
-
 use Pulsar\Api\Api;
+
+use function is_string;
 
 /**
  * Validation rule for an admin resource field.

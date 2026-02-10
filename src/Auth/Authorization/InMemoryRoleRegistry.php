@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\Authorization;
 
+use Override;
+
 use function array_key_exists;
 use function array_merge;
-
-use Override;
 
 /**
  * In-memory role registry, typically populated from configuration.

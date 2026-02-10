@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
-use function bin2hex;
-use function is_array;
-
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Domain\SavedView;
@@ -16,6 +13,8 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
+use function bin2hex;
+use function is_array;
 use function random_bytes;
 use function time;
 

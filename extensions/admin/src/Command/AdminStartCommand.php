@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Command;
 
-use function is_int;
-use function is_string;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
@@ -15,6 +12,8 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 
+use function is_int;
+use function is_string;
 use function sprintf;
 
 /**

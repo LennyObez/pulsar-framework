@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
+use NoDiscard;
+use Pulsar\Api\Api;
+use Pulsar\Database\Exception\DatabaseException;
+
 use function array_key_exists;
 use function array_keys;
 use function is_bool;
@@ -11,11 +15,6 @@ use function is_float;
 use function is_int;
 use function is_resource;
 use function is_string;
-
-use NoDiscard;
-use Pulsar\Api\Api;
-use Pulsar\Database\Exception\DatabaseException;
-
 use function stream_get_contents;
 
 /**

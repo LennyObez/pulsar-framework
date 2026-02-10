@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Adapter;
 
-use function array_map;
-use function count;
-use function explode;
-use function implode;
-use function in_array;
-use function preg_match;
-
 use Pulsar\Api\Internal;
 use Pulsar\Database\Introspection\ColumnInfo;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
@@ -18,6 +11,12 @@ use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Domain\FieldDefinition;
 use Pulsar\Extension\Admin\Domain\FieldType;
 
+use function array_map;
+use function count;
+use function explode;
+use function implode;
+use function in_array;
+use function preg_match;
 use function rtrim;
 use function str_contains;
 use function str_starts_with;

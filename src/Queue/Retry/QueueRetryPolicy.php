@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Queue\Retry;
 
-use function min;
-
 use NoDiscard;
-
-use function pow;
-
 use Pulsar\Api\Api;
 use Pulsar\Config\QueueConfig;
 use Throwable;
+
+use function min;
+use function pow;
 
 /**
  * Exponential backoff retry policy for failed queue jobs.

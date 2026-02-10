@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Introspection;
 
-use function array_map;
-use function in_array;
-
 use Pulsar\Api\Api;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
 
+use function array_map;
+use function in_array;
 use function strtolower;
 
 /**

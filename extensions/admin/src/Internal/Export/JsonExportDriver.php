@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Internal\Export;
 
-use function count;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Contracts\ExportDriverInterface;
 use Pulsar\Extension\Admin\Domain\ExportFormat;
+
+use function count;
 
 /**
  * JSON export driver with scalar-only value enforcement.

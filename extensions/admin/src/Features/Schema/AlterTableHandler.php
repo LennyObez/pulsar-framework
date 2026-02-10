@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Features\Schema;
 
-use function bin2hex;
-use function hash;
-use function implode;
-
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Database\Schema\SchemaCapabilities;
@@ -22,13 +18,14 @@ use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
+use Throwable;
 
+use function bin2hex;
+use function hash;
+use function implode;
 use function random_bytes;
 use function str_starts_with;
 use function strtolower;
-
-use Throwable;
-
 use function time;
 
 /**
