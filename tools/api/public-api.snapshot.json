@@ -1,1967 +1,1967 @@
 {
-    "api_classes": {
-        "Pulsar\\Api\\Api": {
-            "since": "",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Api\\Internal": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Audit\\AuditLoggerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Audit\\MutationContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\AuthManagerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Authorization\\GateInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Authorization\\Permission": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Authorization\\PolicyContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Authorization\\PolicyInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Authorization\\Role": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Authorization\\RoleRegistryInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Exception\\AuthenticationException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Exception\\AuthorizationException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Guard\\GuardInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Guard\\TokenResolverInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Identity\\AnonymousIdentity": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Identity\\Identity": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Identity\\IdentityInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Identity\\TwoFactorStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\Password\\PasswordHasherInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\AuthEventCollectorInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\Confirm2faSetupResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\ConsumeReason": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\ConsumeResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\RecoveryCodeRotationResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\RecoveryCodeSet": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\RecoveryCodeStoreInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\TotpReplayGuardInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\TotpSecretStoreInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\TwoFactorManagerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\TwoFactorPurpose": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\TwoFactorRateLimiterInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\Verify2faResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Auth\\TwoFactor\\VerifyReason": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Cache\\CacheException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Cache\\FrameworkCacheInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\AppConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\AuditConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\AuthConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\AuthGuardConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\AuthorizationConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\CircuitBreakerConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\ConfigLoaderInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\ConfigManagerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\ConfigRepository": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\ConnectionConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\CsrfConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\DatabaseConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\DeployConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\DiskConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\Environment": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\EnvironmentMode": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\ErrorTrackingConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\Exception\\ConfigException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\FeatureFlagConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\HealthCheckConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\IntegrityConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\IntegrityPolicyMode": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\LoggingChannelConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\MetricsConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\ObservabilityConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\QueueConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\QueueDriverType": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\RateLimitConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\ResilienceConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\RetryConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\RuntimeConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\SchedulerConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\SecurityConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\SecurityHeadersConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\SessionConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\StorageConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\StorageDriver": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\SupervisorConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\TenancyConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\TenantDatabaseConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\TracingConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Config\\TwoFactorConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\Command": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\CommandInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\Command\\NewProject\\EnvironmentPreset": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\Command\\NewProject\\ProjectPreset": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\Exception\\CommandNotFoundException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\Exception\\ConsoleException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\ExitCode": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\InputInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\OutputInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Console\\Verbosity": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Container\\BindingType": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Container\\ContainerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Container\\Exception\\ContainerException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Container\\Exception\\NotFoundException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Context\\CausationId": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Context\\ContextPropagator": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Context\\CorrelationId": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Context\\Exception\\ContextException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Context\\Middleware\\RequestContextMiddleware": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Context\\RequestContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Context\\RequestContextHolder": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Core\\KernelInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Core\\Version": {
-            "since": "1.0.0-rc.1",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\DataProtection\\ConsentManagerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\DataProtection\\ConsentRecordInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\DataProtection\\DataPurgeInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\DataProtection\\RetentionPolicyInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\ConnectionInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\ConnectionManagerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Driver": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Exception\\DatabaseException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\FetchMode": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Introspection\\ColumnInfo": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Introspection\\DatabaseIntrospector": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Introspection\\TableInfo": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Migration\\MigrationDirection": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Migration\\MigrationFile": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Migration\\MigrationInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Migration\\MigrationRecord": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Migration\\MigrationRepository": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Migration\\MigrationRunner": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Param": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Result": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Row": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\DdlCompiler": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaCapabilities": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaColumn": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaColumnType": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaDefaultExpression": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaForeignKey": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaIdentifier": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaIndex": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaManager": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaReferentialAction": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\SchemaSqlCanonicalizer": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Schema\\TableDefinition": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Statement": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Database\\Transaction": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Deploy\\CheckResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Deploy\\CheckSeverity": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Deploy\\DeployCheckInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Deploy\\DeployCheckRunnerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Deploy\\DeployReport": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Deploy\\Exception\\DeployException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Deploy\\Runtime\\PhpRuntimeInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\ErrorHandling\\ExceptionRendererInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\ErrorHandling\\Exception\\ErrorHandlingException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\ErrorHandling\\HttpException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\ErrorHandling\\HttpExceptionInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Event\\EventEnvelope": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Event\\EventMetadata": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\Exception\\DependencyException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\Exception\\ExtensionException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\Exception\\ManifestException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\ExtensionBootstrap": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\ExtensionInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\ExtensionLifecycle": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\ExtensionManifest": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\Manifest\\ProvidesConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\Manifest\\PulsarVersionConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\Manifest\\RequiresConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\PostBootExtensionInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\PreBootExtensionInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Extensibility\\ServiceProviderInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\Exception\\FeatureFlagException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\FeatureFlagManagerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\FlagContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\FlagDefinition": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\FlagEvaluation": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\FlagEvaluationLogInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\FlagEvaluationReason": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\FlagStorageDriver": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\FlagStorageInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\FeatureFlag\\FlagType": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\HeaderBag": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Method": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Middleware\\MiddlewareInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Middleware\\MiddlewarePipelineInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\RateLimit\\RateLimitResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\RateLimit\\RateLimiterInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Request": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Response": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\ResponseEmitter": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\ResponseStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\TrustedProxy": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\RuleInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\Between": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\Email": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\In": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\IntegerType": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\Max": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\MaxLength": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\Min": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\MinLength": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\Regex": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\Required": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Rule\\StringType": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\ValidationException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\ValidationResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Validator": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Http\\Validation\\Violation": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Idempotency\\Exception\\IdempotencyException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Idempotency\\IdempotencyClaim": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Idempotency\\IdempotencyClaimStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Idempotency\\IdempotencyKey": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Idempotency\\IdempotencyRecord": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Idempotency\\IdempotencyStoreInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Idempotency\\InMemoryIdempotencyStore": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\Exception\\IntegrityException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\FileVerificationResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\FileVerificationStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\IntegrityManifest": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\IntegrityPolicy": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\ManifestBuilderInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\ManifestEntry": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\ManifestFormat": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\ManifestSignerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\ManifestVerifierInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Integrity\\VerificationResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\ApiSnapshotData": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\ArchitectureMapData": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\CommandEntry": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\CommandReferenceData": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\ConfigPropertySchema": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\ConfigSchemaData": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\ConfigSchemaEntry": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\ContributedMetadata": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\ExtensionEntry": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\RouteEntry": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\Data\\RouteMapData": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\IntrospectionConfig": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\MetadataContributorInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\ProjectMetadataBuilder": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\ProjectMetadataService": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Introspection\\ProjectMetadataSnapshot": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Context\\CorrelationContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Context\\CorrelationContextProviderInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\ErrorTracking\\ErrorAggregatorInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\ErrorTracking\\ErrorEvent": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\ErrorTracking\\ErrorFingerprint": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\ErrorTracking\\Exception\\ErrorTrackingException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\ErrorTracking\\SensitiveDataScrubber": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Log\\Exception\\LogException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Log\\LogEntry": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Log\\LogLevel": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Log\\LogSinkInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Log\\Sink\\DeferredSinkInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Metrics\\LabelSet": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Metrics\\MetricRegistry": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Metrics\\MetricSnapshot": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Metrics\\MetricType": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Tracing\\Exception\\TracingException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Tracing\\Span": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Tracing\\SpanProcessorInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Tracing\\SpanStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Tracing\\TraceContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Tracing\\TraceContextParserInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Observability\\Tracing\\TraceId": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\DeadLetterQueue": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\Exception\\QueueException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\FailedJob": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\JobContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\JobRecord": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\JobRecordStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\QueueDriverInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\QueueManager": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\QueueableInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\Retry\\QueueRetryPolicy": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\Retry\\RetryDecision": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\Worker": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\WorkerOptions": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Queue\\WorkerStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\CircuitBreakerState": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\Exception\\ResilienceException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\HealthCheck\\HealthCheckInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\HealthCheck\\HealthCheckResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\HealthCheck\\HealthCheckRunnerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\HealthCheck\\HealthReport": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\HealthCheck\\HealthStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\Repair\\RepairDiagnosis": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\Repair\\RepairJobInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\Repair\\RepairResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\Repair\\RepairRunnerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\RetryPolicy": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Resilience\\RetryResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Routing\\MatchedRoute": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Routing\\Route": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Routing\\RouteGroup": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Routing\\Router": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Routing\\RouterInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Routing\\RoutingException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\Exception\\RuntimeException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\FpmRuntime": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\PersistentRuntimeFactoryInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\ResettableInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\RuntimeCollectorInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\RuntimeInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\RuntimeStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\Upgrade\\UpgradeContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\Upgrade\\UpgradeHandlerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Runtime\\Upgrade\\UpgradeResponse": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\CronFields": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\Exception\\SchedulerException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\JobContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\JobEvent": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\JobInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\JobRegistry": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\JobResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\JobStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\Schedule": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\Scheduler": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Scheduler\\SchedulerTickResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Audit\\AuditChainResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Audit\\AuditEntry": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Audit\\AuditEvent": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Audit\\AuditLogger": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Audit\\AuditOutcome": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Audit\\AuditSinkInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Audit\\ChainableAuditSinkInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Crypto\\EncryptorInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Crypto\\Hmac": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Crypto\\HmacInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Crypto\\KeyProviderInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Crypto\\KeyRingInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Crypto\\MasterKey": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Csrf\\CsrfTokenManagerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Exception\\SecurityException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Incident\\IncidentInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Incident\\IncidentReporterInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Incident\\IncidentSeverity": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Security\\Session\\SessionInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Storage\\StorageAdapterInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Storage\\StorageException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Storage\\StorageManager": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Storage\\StorageMetadata": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Storage\\StorageObject": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\CachePurgeHookInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\ConnectionResetHookInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\Exception\\SupervisorException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\HealingAction": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\HealingActionType": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\InvariantCheck\\InvariantCheckInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\InvariantCheck\\InvariantCheckResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\PreflightCheck\\PreflightCheckInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\PreflightCheck\\PreflightCheckResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunnerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\RecycleAction": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\RecycleReason": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\RecycleRecord": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\StuckJobPolicy": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\SupervisorInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Supervisor\\WorkerRecyclePolicy": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Support\\AtomicFileWriter": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Support\\SqliteWalFactory": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Tenancy\\Exception\\TenancyException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Tenancy\\Tenant": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Tenancy\\TenantContext": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Tenancy\\TenantDatabaseStrategy": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Tenancy\\TenantResolverInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Tenancy\\TenantResolverStrategy": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\Exception\\WebhookException": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\InMemoryWebhookEventLog": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\WebhookClaim": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\WebhookClaimStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\WebhookEventLogInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\WebhookHandlerInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\WebhookProcessingResult": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\WebhookProcessingStatus": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\WebhookProcessor": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        },
-        "Pulsar\\Webhook\\WebhookVerifierInterface": {
-            "since": "1.0.0",
-            "methods": [],
-            "constants": []
-        }
+  "api_classes": {
+    "Pulsar\\Api\\Api": {
+      "since": "",
+      "methods": [],
+      "constants": []
     },
-    "internal_classes": [
-        "Pulsar\\Auth\\TwoFactor\\InMemoryRecoveryCodeStore",
-        "Pulsar\\Auth\\TwoFactor\\InMemoryTotpReplayGuard",
-        "Pulsar\\Auth\\TwoFactor\\InMemoryTotpSecretStore",
-        "Pulsar\\Auth\\TwoFactor\\RecoveryCodeHasher",
-        "Pulsar\\Auth\\TwoFactor\\SqliteTotpReplayGuard",
-        "Pulsar\\Cache\\CacheAllowedClasses",
-        "Pulsar\\Cache\\CacheIntegrity",
-        "Pulsar\\Cache\\CacheLock",
-        "Pulsar\\Cache\\CacheManifest",
-        "Pulsar\\Cache\\CachedRoute",
-        "Pulsar\\Cache\\ConfigCache",
-        "Pulsar\\Cache\\ContainerCache",
-        "Pulsar\\Cache\\FrameworkCache",
-        "Pulsar\\Cache\\RouteCache",
-        "Pulsar\\Cache\\RouteHandler",
-        "Pulsar\\Cache\\RouteHandlerType",
-        "Pulsar\\Config\\ConfigManager",
-        "Pulsar\\Config\\ConfigOverrides",
-        "Pulsar\\Console\\Application",
-        "Pulsar\\Console\\Command\\CacheWarmupCommand",
-        "Pulsar\\Console\\Command\\DeployCheckCommand",
-        "Pulsar\\Console\\Command\\KeyGenerateCommand",
-        "Pulsar\\Console\\Command\\KeyRotateCommand",
-        "Pulsar\\Console\\Command\\NewProject\\ComposerJsonGenerator",
-        "Pulsar\\Console\\Command\\NewProject\\DirectoryLayout",
-        "Pulsar\\Console\\Command\\NewProject\\ProjectGenerator",
-        "Pulsar\\Console\\Command\\NewProject\\SecureEnvGenerator",
-        "Pulsar\\Console\\Command\\NewProject\\TemplateRegistry",
-        "Pulsar\\Console\\Command\\OptimizeClearCommand",
-        "Pulsar\\Console\\Command\\OptimizeCommand",
-        "Pulsar\\Console\\Command\\OptimizeValidateCommand",
-        "Pulsar\\Console\\Command\\PreloadDumpCommand",
-        "Pulsar\\Core\\BootProfile",
-        "Pulsar\\Core\\Kernel",
-        "Pulsar\\Core\\Wiring\\AuthWiring",
-        "Pulsar\\Core\\Wiring\\ConfigWiring",
-        "Pulsar\\Core\\Wiring\\DatabaseWiring",
-        "Pulsar\\Core\\Wiring\\DeployWiring",
-        "Pulsar\\Core\\Wiring\\DiagnosticsWiring",
-        "Pulsar\\Core\\Wiring\\ErrorTrackingWiring",
-        "Pulsar\\Core\\Wiring\\ExceptionHandlerWiring",
-        "Pulsar\\Core\\Wiring\\FeatureFlagWiring",
-        "Pulsar\\Core\\Wiring\\IntegrityWiring",
-        "Pulsar\\Core\\Wiring\\IntrospectionWiring",
-        "Pulsar\\Core\\Wiring\\LoggingWiring",
-        "Pulsar\\Core\\Wiring\\MetricsWiring",
-        "Pulsar\\Core\\Wiring\\QueueWiring",
-        "Pulsar\\Core\\Wiring\\RequestContextWiring",
-        "Pulsar\\Core\\Wiring\\ResilienceWiring",
-        "Pulsar\\Core\\Wiring\\RuntimeWiring",
-        "Pulsar\\Core\\Wiring\\SchedulerWiring",
-        "Pulsar\\Core\\Wiring\\SecurityWiring",
-        "Pulsar\\Core\\Wiring\\ServiceWiringInterface",
-        "Pulsar\\Core\\Wiring\\SupervisorWiring",
-        "Pulsar\\Core\\Wiring\\TenancyWiring",
-        "Pulsar\\Core\\Wiring\\TracingWiring",
-        "Pulsar\\DataProtection\\DefaultRetentionPolicy",
-        "Pulsar\\Deploy\\Check\\CacheSettingsCheck",
-        "Pulsar\\Deploy\\Check\\DebugModeCheck",
-        "Pulsar\\Deploy\\Check\\FilesystemScanCheck",
-        "Pulsar\\Deploy\\Check\\HealthEndpointCheck",
-        "Pulsar\\Deploy\\Check\\Http3ReadinessCheck",
-        "Pulsar\\Deploy\\Check\\HttpsReadinessCheck",
-        "Pulsar\\Deploy\\Check\\IntegrityCheck",
-        "Pulsar\\Deploy\\Check\\JitCheck",
-        "Pulsar\\Deploy\\Check\\OpcacheCheck",
-        "Pulsar\\Deploy\\Check\\RateLimitCheck",
-        "Pulsar\\Deploy\\Check\\RequestSizeCheck",
-        "Pulsar\\Deploy\\Check\\SecurityHeadersReadinessCheck",
-        "Pulsar\\Deploy\\Check\\SeverityOverrideCheck",
-        "Pulsar\\Deploy\\Check\\SkippedCheck",
-        "Pulsar\\Deploy\\Check\\TrustedProxyCheck",
-        "Pulsar\\Deploy\\DeployCheck",
-        "Pulsar\\Deploy\\DeploySeverity",
-        "Pulsar\\Deploy\\Runtime\\FilesystemReader",
-        "Pulsar\\Deploy\\Runtime\\FilesystemReaderInterface",
-        "Pulsar\\Deploy\\Runtime\\PhpRuntime",
-        "Pulsar\\Deploy\\Snippet\\ProxySnippetGenerator",
-        "Pulsar\\Deploy\\Snippet\\TlsSnippetGenerator",
-        "Pulsar\\Extensibility\\ExtensionLoader",
-        "Pulsar\\Extensibility\\ExtensionRegistry",
-        "Pulsar\\Http\\Middleware\\MiddlewarePipeline",
-        "Pulsar\\Http\\Middleware\\MiddlewareRegistry",
-        "Pulsar\\Http\\RateLimit\\RateLimiter",
-        "Pulsar\\Http\\RateLimit\\SqliteRateLimiter",
-        "Pulsar\\Http\\RouteContext",
-        "Pulsar\\Integrity\\ManifestBuilder",
-        "Pulsar\\Integrity\\ManifestSigner",
-        "Pulsar\\Integrity\\ManifestVerifier",
-        "Pulsar\\Introspection\\Internal\\ConfigSchemaReflector",
-        "Pulsar\\Introspection\\Internal\\CoreRuntimeProbe",
-        "Pulsar\\Introspection\\Internal\\SnapshotFileReader",
-        "Pulsar\\Observability\\Log\\Sink\\DeferredSink",
-        "Pulsar\\Queue\\Driver\\DatabaseDriver",
-        "Pulsar\\Queue\\Driver\\InMemoryDriver",
-        "Pulsar\\Queue\\Driver\\SyncDriver",
-        "Pulsar\\Runtime\\Fiber\\FiberScheduler",
-        "Pulsar\\Runtime\\Http\\ConnectionContext",
-        "Pulsar\\Runtime\\Http\\HttpRequestParser",
-        "Pulsar\\Runtime\\Http\\HttpResponseSerializer",
-        "Pulsar\\Runtime\\LeakDetector",
-        "Pulsar\\Runtime\\PersistentRuntime",
-        "Pulsar\\Runtime\\PersistentRuntimeFactory",
-        "Pulsar\\Runtime\\RequestResetRegistry",
-        "Pulsar\\Runtime\\RequestSandbox",
-        "Pulsar\\Runtime\\ResourceEntry",
-        "Pulsar\\Security\\Audit\\AuditChainVerifier",
-        "Pulsar\\Security\\Crypto\\EnvKeyRing",
-        "Pulsar\\Security\\Crypto\\HmacService",
-        "Pulsar\\Supervisor\\InvariantCheck\\InvariantRunner",
-        "Pulsar\\Supervisor\\PreflightCheck\\DiskSpacePreflightCheck",
-        "Pulsar\\Supervisor\\PreflightCheck\\MemoryPreflightCheck",
-        "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunner",
-        "Pulsar\\Supervisor\\StuckJobDetector",
-        "Pulsar\\Supervisor\\StuckJobRecovery",
-        "Pulsar\\Supervisor\\Supervisor"
-    ]
+    "Pulsar\\Api\\Internal": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Audit\\AuditLoggerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Audit\\MutationContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\AuthManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\GateInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Permission": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\PolicyContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\PolicyInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Role": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\RoleRegistryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Exception\\AuthenticationException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Exception\\AuthorizationException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Guard\\GuardInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Guard\\TokenResolverInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Identity\\AnonymousIdentity": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Identity\\Identity": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Identity\\IdentityInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Identity\\TwoFactorStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Password\\PasswordHasherInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\AuthEventCollectorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\Confirm2faSetupResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\ConsumeReason": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\ConsumeResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\RecoveryCodeRotationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\RecoveryCodeSet": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\RecoveryCodeStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\TotpReplayGuardInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\TotpSecretStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\TwoFactorManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\TwoFactorPurpose": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\TwoFactorRateLimiterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\Verify2faResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\TwoFactor\\VerifyReason": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\CacheException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Cache\\FrameworkCacheInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\AppConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\AuditConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\AuthConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\AuthGuardConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\AuthorizationConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\CircuitBreakerConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ConfigLoaderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ConfigManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ConfigRepository": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ConnectionConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\CsrfConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\DatabaseConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\DeployConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\DiskConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\Environment": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\EnvironmentMode": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ErrorTrackingConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\Exception\\ConfigException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\FeatureFlagConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\HealthCheckConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\IntegrityConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\IntegrityPolicyMode": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\LoggingChannelConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\MetricsConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ObservabilityConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\QueueConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\QueueDriverType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\RateLimitConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ResilienceConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\RetryConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\RuntimeConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\SchedulerConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\SecurityConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\SecurityHeadersConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\SessionConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\StorageConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\StorageDriver": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\SupervisorConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\TenancyConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\TenantDatabaseConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\TracingConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\TwoFactorConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Command": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\CommandInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Command\\NewProject\\EnvironmentPreset": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Command\\NewProject\\ProjectPreset": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Exception\\CommandNotFoundException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Exception\\ConsoleException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\ExitCode": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\InputInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\OutputInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Verbosity": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\BindingType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\ContainerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\Exception\\ContainerException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Container\\Exception\\NotFoundException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\CausationId": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\ContextPropagator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\CorrelationId": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\Exception\\ContextException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\Middleware\\RequestContextMiddleware": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\RequestContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Context\\RequestContextHolder": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Core\\KernelInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Core\\Version": {
+      "since": "1.0.0-rc.1",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\DataProtection\\ConsentManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\DataProtection\\ConsentRecordInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\DataProtection\\DataPurgeInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\DataProtection\\RetentionPolicyInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\ConnectionInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\ConnectionManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Driver": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Exception\\DatabaseException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\FetchMode": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Introspection\\ColumnInfo": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Introspection\\DatabaseIntrospector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Introspection\\TableInfo": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Migration\\MigrationDirection": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Migration\\MigrationFile": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Migration\\MigrationInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Migration\\MigrationRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Migration\\MigrationRepository": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Migration\\MigrationRunner": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Param": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Result": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Row": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\DdlCompiler": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaCapabilities": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaColumn": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaColumnType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaDefaultExpression": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaForeignKey": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaIdentifier": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaIndex": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaReferentialAction": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\SchemaSqlCanonicalizer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Schema\\TableDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Statement": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Transaction": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\CheckResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\CheckSeverity": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\DeployCheckInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\DeployCheckRunnerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\DeployReport": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\Exception\\DeployException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Deploy\\Runtime\\PhpRuntimeInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ErrorHandling\\ExceptionRendererInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ErrorHandling\\Exception\\ErrorHandlingException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ErrorHandling\\HttpException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ErrorHandling\\HttpExceptionInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\EventEnvelope": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Event\\EventMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\Exception\\DependencyException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\Exception\\ExtensionException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\Exception\\ManifestException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\ExtensionBootstrap": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\ExtensionInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\ExtensionLifecycle": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\ExtensionManifest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\Manifest\\ProvidesConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\Manifest\\PulsarVersionConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\Manifest\\RequiresConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\PostBootExtensionInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\PreBootExtensionInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\ServiceProviderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\Exception\\FeatureFlagException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FeatureFlagManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FlagContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FlagDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FlagEvaluation": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FlagEvaluationLogInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FlagEvaluationReason": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FlagStorageDriver": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FlagStorageInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\FeatureFlag\\FlagType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\HeaderBag": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Method": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Middleware\\MiddlewareInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Middleware\\MiddlewarePipelineInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\RateLimit\\RateLimitResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\RateLimit\\RateLimiterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Request": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Response": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\ResponseEmitter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\ResponseStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\TrustedProxy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\RuleInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Between": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Email": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\In": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\IntegerType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Max": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\MaxLength": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Min": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\MinLength": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Regex": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\Required": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Rule\\StringType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\ValidationException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\ValidationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Validator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\Validation\\Violation": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\Exception\\IdempotencyException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyClaim": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyClaimStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyKey": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\IdempotencyStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Idempotency\\InMemoryIdempotencyStore": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\Exception\\IntegrityException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\FileVerificationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\FileVerificationStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\IntegrityManifest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\IntegrityPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\ManifestBuilderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\ManifestEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\ManifestFormat": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\ManifestSignerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\ManifestVerifierInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Integrity\\VerificationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ApiSnapshotData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ArchitectureMapData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\CommandEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\CommandReferenceData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ConfigPropertySchema": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ConfigSchemaData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ConfigSchemaEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ContributedMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\ExtensionEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\RouteEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\Data\\RouteMapData": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\IntrospectionConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\MetadataContributorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\ProjectMetadataBuilder": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\ProjectMetadataService": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Introspection\\ProjectMetadataSnapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Context\\CorrelationContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Context\\CorrelationContextProviderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\ErrorTracking\\ErrorAggregatorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\ErrorTracking\\ErrorEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\ErrorTracking\\ErrorFingerprint": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\ErrorTracking\\Exception\\ErrorTrackingException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\ErrorTracking\\SensitiveDataScrubber": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Log\\Exception\\LogException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Log\\LogEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Log\\LogLevel": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Log\\LogSinkInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Log\\Sink\\DeferredSinkInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\LabelSet": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\MetricRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\MetricSnapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\MetricType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\Exception\\TracingException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\Span": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\SpanProcessorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\SpanStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\TraceContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\TraceContextParserInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\TraceId": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\DeadLetterQueue": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Exception\\QueueException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\FailedJob": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\JobContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\JobRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\JobRecordStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\QueueDriverInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\QueueManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\QueueableInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Retry\\QueueRetryPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Retry\\RetryDecision": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Worker": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\WorkerOptions": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\WorkerStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\CircuitBreakerState": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\Exception\\ResilienceException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\HealthCheck\\HealthCheckInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\HealthCheck\\HealthCheckResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\HealthCheck\\HealthCheckRunnerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\HealthCheck\\HealthReport": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\HealthCheck\\HealthStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\Repair\\RepairDiagnosis": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\Repair\\RepairJobInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\Repair\\RepairResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\Repair\\RepairRunnerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\RetryPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Resilience\\RetryResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\MatchedRoute": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Route": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\RouteGroup": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Router": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\RouterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\RoutingException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Exception\\RuntimeException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\FpmRuntime": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\PersistentRuntimeFactoryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\ResettableInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\RuntimeCollectorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\RuntimeInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\RuntimeStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Upgrade\\UpgradeContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Upgrade\\UpgradeHandlerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Runtime\\Upgrade\\UpgradeResponse": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\CronFields": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\Exception\\SchedulerException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\JobContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\JobEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\JobInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\JobRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\JobResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\JobStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\Schedule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\Scheduler": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\SchedulerTickResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Audit\\AuditChainResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Audit\\AuditEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Audit\\AuditEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Audit\\AuditLogger": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Audit\\AuditOutcome": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Audit\\AuditSinkInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Audit\\ChainableAuditSinkInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\EncryptorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\Hmac": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\HmacInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\KeyProviderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\KeyRingInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Crypto\\MasterKey": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Csrf\\CsrfTokenManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Exception\\SecurityException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Incident\\IncidentInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Incident\\IncidentReporterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Incident\\IncidentSeverity": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Session\\SessionInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Storage\\StorageAdapterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Storage\\StorageException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Storage\\StorageManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Storage\\StorageMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Storage\\StorageObject": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\CachePurgeHookInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\ConnectionResetHookInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\Exception\\SupervisorException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\HealingAction": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\HealingActionType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\InvariantCheck\\InvariantCheckInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\InvariantCheck\\InvariantCheckResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\PreflightCheck\\PreflightCheckInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\PreflightCheck\\PreflightCheckResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunnerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\RecycleAction": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\RecycleReason": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\RecycleRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\StuckJobPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\SupervisorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Supervisor\\WorkerRecyclePolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Support\\AtomicFileWriter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Support\\SqliteWalFactory": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\Exception\\TenancyException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\Tenant": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\TenantContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\TenantDatabaseStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\TenantResolverInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\TenantResolverStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\Exception\\WebhookException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\InMemoryWebhookEventLog": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookClaim": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookClaimStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookEventLogInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookHandlerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookProcessingResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookProcessingStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookProcessor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Webhook\\WebhookVerifierInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    }
+  },
+  "internal_classes": [
+    "Pulsar\\Auth\\TwoFactor\\InMemoryRecoveryCodeStore",
+    "Pulsar\\Auth\\TwoFactor\\InMemoryTotpReplayGuard",
+    "Pulsar\\Auth\\TwoFactor\\InMemoryTotpSecretStore",
+    "Pulsar\\Auth\\TwoFactor\\RecoveryCodeHasher",
+    "Pulsar\\Auth\\TwoFactor\\SqliteTotpReplayGuard",
+    "Pulsar\\Cache\\CacheAllowedClasses",
+    "Pulsar\\Cache\\CacheIntegrity",
+    "Pulsar\\Cache\\CacheLock",
+    "Pulsar\\Cache\\CacheManifest",
+    "Pulsar\\Cache\\CachedRoute",
+    "Pulsar\\Cache\\ConfigCache",
+    "Pulsar\\Cache\\ContainerCache",
+    "Pulsar\\Cache\\FrameworkCache",
+    "Pulsar\\Cache\\RouteCache",
+    "Pulsar\\Cache\\RouteHandler",
+    "Pulsar\\Cache\\RouteHandlerType",
+    "Pulsar\\Config\\ConfigManager",
+    "Pulsar\\Config\\ConfigOverrides",
+    "Pulsar\\Console\\Application",
+    "Pulsar\\Console\\Command\\CacheWarmupCommand",
+    "Pulsar\\Console\\Command\\DeployCheckCommand",
+    "Pulsar\\Console\\Command\\KeyGenerateCommand",
+    "Pulsar\\Console\\Command\\KeyRotateCommand",
+    "Pulsar\\Console\\Command\\NewProject\\ComposerJsonGenerator",
+    "Pulsar\\Console\\Command\\NewProject\\DirectoryLayout",
+    "Pulsar\\Console\\Command\\NewProject\\ProjectGenerator",
+    "Pulsar\\Console\\Command\\NewProject\\SecureEnvGenerator",
+    "Pulsar\\Console\\Command\\NewProject\\TemplateRegistry",
+    "Pulsar\\Console\\Command\\OptimizeClearCommand",
+    "Pulsar\\Console\\Command\\OptimizeCommand",
+    "Pulsar\\Console\\Command\\OptimizeValidateCommand",
+    "Pulsar\\Console\\Command\\PreloadDumpCommand",
+    "Pulsar\\Core\\BootProfile",
+    "Pulsar\\Core\\Kernel",
+    "Pulsar\\Core\\Wiring\\AuthWiring",
+    "Pulsar\\Core\\Wiring\\ConfigWiring",
+    "Pulsar\\Core\\Wiring\\DatabaseWiring",
+    "Pulsar\\Core\\Wiring\\DeployWiring",
+    "Pulsar\\Core\\Wiring\\DiagnosticsWiring",
+    "Pulsar\\Core\\Wiring\\ErrorTrackingWiring",
+    "Pulsar\\Core\\Wiring\\ExceptionHandlerWiring",
+    "Pulsar\\Core\\Wiring\\FeatureFlagWiring",
+    "Pulsar\\Core\\Wiring\\IntegrityWiring",
+    "Pulsar\\Core\\Wiring\\IntrospectionWiring",
+    "Pulsar\\Core\\Wiring\\LoggingWiring",
+    "Pulsar\\Core\\Wiring\\MetricsWiring",
+    "Pulsar\\Core\\Wiring\\QueueWiring",
+    "Pulsar\\Core\\Wiring\\RequestContextWiring",
+    "Pulsar\\Core\\Wiring\\ResilienceWiring",
+    "Pulsar\\Core\\Wiring\\RuntimeWiring",
+    "Pulsar\\Core\\Wiring\\SchedulerWiring",
+    "Pulsar\\Core\\Wiring\\SecurityWiring",
+    "Pulsar\\Core\\Wiring\\ServiceWiringInterface",
+    "Pulsar\\Core\\Wiring\\SupervisorWiring",
+    "Pulsar\\Core\\Wiring\\TenancyWiring",
+    "Pulsar\\Core\\Wiring\\TracingWiring",
+    "Pulsar\\DataProtection\\DefaultRetentionPolicy",
+    "Pulsar\\Deploy\\Check\\CacheSettingsCheck",
+    "Pulsar\\Deploy\\Check\\DebugModeCheck",
+    "Pulsar\\Deploy\\Check\\FilesystemScanCheck",
+    "Pulsar\\Deploy\\Check\\HealthEndpointCheck",
+    "Pulsar\\Deploy\\Check\\Http3ReadinessCheck",
+    "Pulsar\\Deploy\\Check\\HttpsReadinessCheck",
+    "Pulsar\\Deploy\\Check\\IntegrityCheck",
+    "Pulsar\\Deploy\\Check\\JitCheck",
+    "Pulsar\\Deploy\\Check\\OpcacheCheck",
+    "Pulsar\\Deploy\\Check\\RateLimitCheck",
+    "Pulsar\\Deploy\\Check\\RequestSizeCheck",
+    "Pulsar\\Deploy\\Check\\SecurityHeadersReadinessCheck",
+    "Pulsar\\Deploy\\Check\\SeverityOverrideCheck",
+    "Pulsar\\Deploy\\Check\\SkippedCheck",
+    "Pulsar\\Deploy\\Check\\TrustedProxyCheck",
+    "Pulsar\\Deploy\\DeployCheck",
+    "Pulsar\\Deploy\\DeploySeverity",
+    "Pulsar\\Deploy\\Runtime\\FilesystemReader",
+    "Pulsar\\Deploy\\Runtime\\FilesystemReaderInterface",
+    "Pulsar\\Deploy\\Runtime\\PhpRuntime",
+    "Pulsar\\Deploy\\Snippet\\ProxySnippetGenerator",
+    "Pulsar\\Deploy\\Snippet\\TlsSnippetGenerator",
+    "Pulsar\\Extensibility\\ExtensionLoader",
+    "Pulsar\\Extensibility\\ExtensionRegistry",
+    "Pulsar\\Http\\Middleware\\MiddlewarePipeline",
+    "Pulsar\\Http\\Middleware\\MiddlewareRegistry",
+    "Pulsar\\Http\\RateLimit\\RateLimiter",
+    "Pulsar\\Http\\RateLimit\\SqliteRateLimiter",
+    "Pulsar\\Http\\RouteContext",
+    "Pulsar\\Integrity\\ManifestBuilder",
+    "Pulsar\\Integrity\\ManifestSigner",
+    "Pulsar\\Integrity\\ManifestVerifier",
+    "Pulsar\\Introspection\\Internal\\ConfigSchemaReflector",
+    "Pulsar\\Introspection\\Internal\\CoreRuntimeProbe",
+    "Pulsar\\Introspection\\Internal\\SnapshotFileReader",
+    "Pulsar\\Observability\\Log\\Sink\\DeferredSink",
+    "Pulsar\\Queue\\Driver\\DatabaseDriver",
+    "Pulsar\\Queue\\Driver\\InMemoryDriver",
+    "Pulsar\\Queue\\Driver\\SyncDriver",
+    "Pulsar\\Runtime\\Fiber\\FiberScheduler",
+    "Pulsar\\Runtime\\Http\\ConnectionContext",
+    "Pulsar\\Runtime\\Http\\HttpRequestParser",
+    "Pulsar\\Runtime\\Http\\HttpResponseSerializer",
+    "Pulsar\\Runtime\\LeakDetector",
+    "Pulsar\\Runtime\\PersistentRuntime",
+    "Pulsar\\Runtime\\PersistentRuntimeFactory",
+    "Pulsar\\Runtime\\RequestResetRegistry",
+    "Pulsar\\Runtime\\RequestSandbox",
+    "Pulsar\\Runtime\\ResourceEntry",
+    "Pulsar\\Security\\Audit\\AuditChainVerifier",
+    "Pulsar\\Security\\Crypto\\EnvKeyRing",
+    "Pulsar\\Security\\Crypto\\HmacService",
+    "Pulsar\\Supervisor\\InvariantCheck\\InvariantRunner",
+    "Pulsar\\Supervisor\\PreflightCheck\\DiskSpacePreflightCheck",
+    "Pulsar\\Supervisor\\PreflightCheck\\MemoryPreflightCheck",
+    "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunner",
+    "Pulsar\\Supervisor\\StuckJobDetector",
+    "Pulsar\\Supervisor\\StuckJobRecovery",
+    "Pulsar\\Supervisor\\Supervisor"
+  ]
 }
