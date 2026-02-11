@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Routing;
 
-use function count;
-use function in_array;
-
 use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
+use function count;
+use function in_array;
 use function sprintf;
 
 /**

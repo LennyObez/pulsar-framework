@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Cache;
 
 use Closure;
-
-use function count;
-use function is_array;
-use function is_string;
-
 use Pulsar\Api\Internal;
 use Pulsar\Routing\Route;
 use Random\RandomException;
 use SodiumException;
+
+use function count;
+use function is_array;
+use function is_string;
 
 /**
  * Serializes routes via CachedRoute DTOs; skips closures.

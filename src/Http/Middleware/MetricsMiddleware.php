@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
-use function hrtime;
-
 use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
@@ -13,6 +11,8 @@ use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Throwable;
+
+use function hrtime;
 
 /**
  * Middleware that records HTTP request metrics.

@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
-use function bin2hex;
-use function ord;
-
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
+use function bin2hex;
+use function ord;
 use function sprintf;
 use function str_replace;
 use function strlen;

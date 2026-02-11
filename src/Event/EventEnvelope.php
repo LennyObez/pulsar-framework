@@ -4,17 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Event;
 
-use function bin2hex;
-use function hash;
-use function is_array;
-use function is_int;
-use function is_string;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-use const JSON_UNESCAPED_UNICODE;
-
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
@@ -22,7 +11,17 @@ use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
+use function bin2hex;
+use function hash;
+use function is_array;
+use function is_int;
+use function is_string;
+use function json_encode;
 use function sprintf;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 /**
  * Envelope wrapping a domain/integration event with metadata and integrity hash.

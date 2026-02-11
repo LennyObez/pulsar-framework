@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Input;
 
+use Override;
+use Pulsar\Console\InputInterface;
+
 use function array_key_exists;
 use function is_int;
 use function is_scalar;
-
-use Override;
-use Pulsar\Console\InputInterface;
 
 /**
  * Input from an array (useful for testing).

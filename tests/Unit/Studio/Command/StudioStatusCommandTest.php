@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Command;
 
-use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,6 +17,10 @@ use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
 use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
 use Pulsar\Extension\Studio\Config\StudioServerConfig;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+
+use function json_decode;
+
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(StudioStatusCommand::class)]
 final class StudioStatusCommandTest extends TestCase

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Psr7Bridge;
 
-use function assert;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +17,8 @@ use Pulsar\Http\Method;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
+
+use function assert;
 
 #[CoversClass(Psr15MiddlewareAdapter::class)]
 final class Psr15MiddlewareAdapterTest extends TestCase

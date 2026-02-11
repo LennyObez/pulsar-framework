@@ -9,13 +9,11 @@ use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+use SodiumException;
 
 use function sodium_crypto_secretbox;
 use function sodium_crypto_secretbox_open;
 use function sodium_memzero;
-
-use SodiumException;
-
 use function strlen;
 
 /**
@@ -198,11 +196,11 @@ final class Encryptor implements EncryptorInterface
      * @throws SodiumException
      */
     #[NoDiscard]
-    public function withDerivedKey(KeyProviderInterface $masterKey, int $subKeyId, string $context): self
+    public function withDerivedKey(MasterKey $masterKey, int $subKeyId, string $context): self
     {
         $key = $masterKey->deriveSubKey($subKeyId, $context);
 
-        $previousKey = ($masterKey instanceof MasterKey && $masterKey->hasPreviousKey())
+        $previousKey = $masterKey->hasPreviousKey()
             ? $masterKey->derivePreviousSubKey($subKeyId, $context)
             : null;
 

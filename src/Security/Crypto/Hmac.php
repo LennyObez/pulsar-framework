@@ -4,17 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Crypto;
 
-use function hash_equals;
-
 use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
-
-use function sodium_bin2hex;
-use function sodium_crypto_generichash;
-
 use SodiumException;
 
+use function hash_equals;
+use function sodium_bin2hex;
+use function sodium_crypto_generichash;
 use function sprintf;
 use function strlen;
 

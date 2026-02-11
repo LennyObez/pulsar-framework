@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Rule;
 
-use const FILTER_VALIDATE_INT;
-
-use function filter_var;
-use function is_bool;
-use function is_int;
-
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
+use function filter_var;
+use function is_bool;
+use function is_int;
 use function sprintf;
+
+use const FILTER_VALIDATE_INT;
 
 /**
  * Value must be an integer or a numeric string that passes FILTER_VALIDATE_INT.

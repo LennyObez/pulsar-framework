@@ -4,30 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Integrity;
 
-use function array_keys;
-use function count;
-
-use const DIRECTORY_SEPARATOR;
-
-use function dirname;
-use function file_get_contents;
-use function glob;
-
-use const GLOB_ONLYDIR;
-
-use function implode;
-use function in_array;
-use function is_array;
-use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-
-use function preg_match;
-
 use Pulsar\Tests\Unit\Integrity\Support\ImportAnalyzer;
 use Pulsar\Tests\Unit\Integrity\Support\ModuleMap;
 use Pulsar\Tests\Unit\Integrity\Support\VisibilityClassifier;
@@ -35,7 +14,21 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
+use function array_keys;
+use function count;
+use function dirname;
+use function file_get_contents;
+use function glob;
+use function implode;
+use function in_array;
+use function is_array;
+use function json_decode;
+use function preg_match;
 use function sprintf;
+
+use const DIRECTORY_SEPARATOR;
+use const GLOB_ONLYDIR;
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Architecture boundary enforcement tests.

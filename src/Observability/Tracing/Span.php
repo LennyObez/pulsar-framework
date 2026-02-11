@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Tracing;
 
-use function hrtime;
-
 use Pulsar\Api\Api;
+
+use function hrtime;
 
 /**
  * Mutable lifecycle object representing a unit of work in a trace.

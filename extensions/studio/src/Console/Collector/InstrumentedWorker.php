@@ -4,23 +4,21 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Collector;
 
-use function bin2hex;
-
 use Closure;
-
-use function hrtime;
-
 use Pulsar\Api\Internal;
-use Pulsar\Queue\Worker;
-use Pulsar\Queue\WorkerStatus;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\JobPayload;
-use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Observability\Context\CorrelationContext;
+use Pulsar\Queue\Worker;
+use Pulsar\Queue\WorkerStatus;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 use Throwable;
+
+use function bin2hex;
+use function hrtime;
 
 /**
  * Worker decorator that instruments job processing for Studio.

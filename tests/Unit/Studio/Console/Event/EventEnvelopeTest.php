@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Console\Event;
 
-use function hash;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-use const JSON_UNESCAPED_UNICODE;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +13,13 @@ use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Event\EventVersion;
 use Pulsar\Observability\Context\CorrelationContext;
 
+use function hash;
+use function json_encode;
 use function strlen;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 #[CoversClass(EventEnvelope::class)]
 final class EventEnvelopeTest extends TestCase

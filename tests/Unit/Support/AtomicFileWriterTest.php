@@ -4,19 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Support;
 
-use function file_get_contents;
-use function is_dir;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Support\AtomicFileWriter;
-
-use function rmdir;
-
 use RuntimeException;
 
+use function file_get_contents;
+use function is_dir;
+use function mkdir;
+use function rmdir;
 use function sys_get_temp_dir;
 use function unlink;
 

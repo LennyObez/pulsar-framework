@@ -10,7 +10,7 @@ export default tseslint.config(
       'vendor/**',
       'bootstrap/cache/**',
       '**/dist/**',
-      'resources/studio/dist/**',
+      'extensions/studio/frontend/dist/**',
       'coverage/**',
       'node_modules/**',
       '*.config.js',

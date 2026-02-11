@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Session;
 
-use function array_key_exists;
-use function ini_get;
-
 use NoDiscard;
 use Override;
 use Pulsar\Config\SessionConfig;
 use Pulsar\Security\Exception\SecurityException;
 
+use function array_key_exists;
+use function ini_get;
 use function session_destroy;
 use function session_get_cookie_params;
 use function session_id;

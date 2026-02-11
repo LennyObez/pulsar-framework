@@ -4,12 +4,24 @@ declare(strict_types=1);
 
 namespace Pulsar\Storage;
 
+use NoDiscard;
+use Override;
+
 use function curl_errno;
 use function curl_error;
 use function curl_exec;
 use function curl_getinfo;
 use function curl_init;
 use function curl_setopt_array;
+use function hash;
+use function is_string;
+use function ltrim;
+use function simplexml_load_string;
+use function sprintf;
+use function str_starts_with;
+use function strlen;
+use function substr;
+use function trim;
 
 use const CURLINFO_HTTP_CODE;
 use const CURLOPT_CUSTOMREQUEST;
@@ -18,20 +30,6 @@ use const CURLOPT_NOBODY;
 use const CURLOPT_POSTFIELDS;
 use const CURLOPT_RETURNTRANSFER;
 use const CURLOPT_URL;
-
-use function hash;
-use function is_string;
-use function ltrim;
-
-use NoDiscard;
-use Override;
-
-use function simplexml_load_string;
-use function sprintf;
-use function str_starts_with;
-use function strlen;
-use function substr;
-use function trim;
 
 /**
  * S3-compatible storage adapter using raw cURL and AWS SigV4.

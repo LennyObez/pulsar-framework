@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Idempotency;
 
-use function hash;
-use function implode;
-
 use NoDiscard;
 use Pulsar\Api\Api;
+
+use function hash;
+use function implode;
 
 /**
  * Value object representing an idempotency key.

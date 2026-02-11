@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extensibility\Manifest;
 
-use function array_is_list;
-use function is_array;
-use function is_bool;
-
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Extensibility\Exception\ManifestException;
+
+use function array_is_list;
+use function is_array;
+use function is_bool;
 
 /**
  * Configuration for what an extension provides.

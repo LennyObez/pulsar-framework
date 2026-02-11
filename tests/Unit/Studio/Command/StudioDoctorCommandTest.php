@@ -4,14 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Command;
 
-use function extension_loaded;
-use function file_put_contents;
-use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,8 +17,14 @@ use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
 use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
 use Pulsar\Extension\Studio\Config\StudioServerConfig;
 
+use function extension_loaded;
+use function file_put_contents;
+use function json_decode;
+use function mkdir;
 use function sys_get_temp_dir;
 use function uniqid;
+
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(StudioDoctorCommand::class)]
 final class StudioDoctorCommandTest extends TestCase

@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
 use Override;
 use Pulsar\Config\SupervisorConfig;
@@ -20,7 +14,12 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Supervisor\StuckJobPolicy;
 use Pulsar\Supervisor\WorkerRecyclePolicy;
 
+use function json_encode;
 use function sprintf;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Display the current supervisor configuration and policy state.

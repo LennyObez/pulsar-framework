@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console\Guardian;
 
-use function is_string;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -17,6 +15,7 @@ use Pulsar\Deploy\CheckSeverity;
 use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 
+use function is_string;
 use function sprintf;
 
 /**

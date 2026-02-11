@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Metrics;
 
+use Pulsar\Api\Api;
+
 use function implode;
 use function ksort;
-
-use Pulsar\Api\Api;
 
 /**
  * Immutable label key-value set for metric dimensions.

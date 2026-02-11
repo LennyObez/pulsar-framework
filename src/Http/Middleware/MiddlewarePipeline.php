@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
-use function array_reverse;
-use function assert;
-use function count;
-
 use InvalidArgumentException;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 
+use function array_reverse;
+use function assert;
+use function count;
 use function sprintf;
 
 /**
@@ -50,7 +49,7 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface
      *
      * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
      */
-    public function pipe(MiddlewareInterface|string $middleware): static
+    public function pipe(MiddlewareInterface|string $middleware): self
     {
         $this->middleware[] = $middleware;
         $this->resolvedMiddleware = null; // Invalidate cache

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database\Migration;
 
-use function file_put_contents;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -14,6 +11,8 @@ use Pulsar\Database\Exception\DatabaseException;
 use Pulsar\Database\Migration\MigrationInterface;
 use Pulsar\Database\Migration\MigrationRepository;
 
+use function file_put_contents;
+use function mkdir;
 use function sys_get_temp_dir;
 use function unlink;
 

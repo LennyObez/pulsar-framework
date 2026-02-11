@@ -6,10 +6,9 @@ namespace Pulsar\Resilience\HealthCheck;
 
 use Override;
 use Pulsar\Database\ConnectionManagerInterface;
+use Throwable;
 
 use function sprintf;
-
-use Throwable;
 
 /**
  * Health check that verifies database connectivity.

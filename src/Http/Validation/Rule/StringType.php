@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Rule;
 
-use function is_string;
-
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
+use function is_string;
 use function sprintf;
 
 /**

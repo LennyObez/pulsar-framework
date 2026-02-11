@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
-use function dirname;
-
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Cache\FrameworkCache;
@@ -39,6 +37,8 @@ use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionInterface;
 use Random\Randomizer;
 use SodiumException;
+
+use function dirname;
 
 #[Internal]
 final readonly class SecurityWiring implements ServiceWiringInterface

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Console\Command;
 
-use function file_put_contents;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +15,8 @@ use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function file_put_contents;
+use function mkdir;
 use function random_bytes;
 use function sodium_bin2hex;
 

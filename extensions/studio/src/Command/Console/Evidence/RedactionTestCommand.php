@@ -4,12 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console\Evidence;
 
-use function is_array;
-use function is_string;
-use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -21,7 +15,12 @@ use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Redaction\RedactionPipelineInterface;
 
+use function is_array;
+use function is_string;
+use function json_decode;
 use function sprintf;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Tests redaction policies against sample payloads.
