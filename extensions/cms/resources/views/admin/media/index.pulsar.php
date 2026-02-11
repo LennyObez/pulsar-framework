@@ -106,6 +106,50 @@
 
         {{-- Grid view --}}
         <div class="cms-media-grid" data-cms-media-grid>
+            {{-- Skeleton loading placeholders --}}
+            <div class="cms-media-grid__card cms-media-grid__skeleton" data-cms-skeleton aria-hidden="true" hidden>
+                <div class="cms-skeleton cms-skeleton--image"></div>
+                <div style="padding:0.5rem;display:flex;flex-direction:column;gap:0.375rem">
+                    <div class="cms-skeleton cms-skeleton--text" style="width:80%"></div>
+                    <div class="cms-skeleton cms-skeleton--text" style="width:40%;height:0.75rem"></div>
+                </div>
+            </div>
+            <div class="cms-media-grid__card cms-media-grid__skeleton" data-cms-skeleton aria-hidden="true" hidden>
+                <div class="cms-skeleton cms-skeleton--image"></div>
+                <div style="padding:0.5rem;display:flex;flex-direction:column;gap:0.375rem">
+                    <div class="cms-skeleton cms-skeleton--text" style="width:70%"></div>
+                    <div class="cms-skeleton cms-skeleton--text" style="width:50%;height:0.75rem"></div>
+                </div>
+            </div>
+            <div class="cms-media-grid__card cms-media-grid__skeleton" data-cms-skeleton aria-hidden="true" hidden>
+                <div class="cms-skeleton cms-skeleton--image"></div>
+                <div style="padding:0.5rem;display:flex;flex-direction:column;gap:0.375rem">
+                    <div class="cms-skeleton cms-skeleton--text" style="width:60%"></div>
+                    <div class="cms-skeleton cms-skeleton--text" style="width:45%;height:0.75rem"></div>
+                </div>
+            </div>
+            <div class="cms-media-grid__card cms-media-grid__skeleton" data-cms-skeleton aria-hidden="true" hidden>
+                <div class="cms-skeleton cms-skeleton--image"></div>
+                <div style="padding:0.5rem;display:flex;flex-direction:column;gap:0.375rem">
+                    <div class="cms-skeleton cms-skeleton--text" style="width:75%"></div>
+                    <div class="cms-skeleton cms-skeleton--text" style="width:35%;height:0.75rem"></div>
+                </div>
+            </div>
+            <div class="cms-media-grid__card cms-media-grid__skeleton" data-cms-skeleton aria-hidden="true" hidden>
+                <div class="cms-skeleton cms-skeleton--image"></div>
+                <div style="padding:0.5rem;display:flex;flex-direction:column;gap:0.375rem">
+                    <div class="cms-skeleton cms-skeleton--text" style="width:65%"></div>
+                    <div class="cms-skeleton cms-skeleton--text" style="width:40%;height:0.75rem"></div>
+                </div>
+            </div>
+            <div class="cms-media-grid__card cms-media-grid__skeleton" data-cms-skeleton aria-hidden="true" hidden>
+                <div class="cms-skeleton cms-skeleton--image"></div>
+                <div style="padding:0.5rem;display:flex;flex-direction:column;gap:0.375rem">
+                    <div class="cms-skeleton cms-skeleton--text" style="width:55%"></div>
+                    <div class="cms-skeleton cms-skeleton--text" style="width:50%;height:0.75rem"></div>
+                </div>
+            </div>
+
             @if (empty($items))
                 <p class="cms-media-grid__empty">No media assets found. Upload your first file to get started.</p>
             @endif

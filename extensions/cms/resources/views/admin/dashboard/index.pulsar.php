@@ -28,7 +28,17 @@
         {{-- Content Status Widget --}}
         <section class="cms-widget" aria-labelledby="widget-content-status">
             <h2 class="cms-widget__title" id="widget-content-status">Content Status</h2>
-            <div class="cms-widget__body">
+            <div class="cms-widget__body" data-cms-widget-content="content-status">
+                {{-- Skeleton loading state --}}
+                <div class="cms-widget__skeleton" data-cms-skeleton aria-hidden="true" hidden>
+                    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem">
+                        <div class="cms-skeleton cms-skeleton--card" style="height:60px"></div>
+                        <div class="cms-skeleton cms-skeleton--card" style="height:60px"></div>
+                        <div class="cms-skeleton cms-skeleton--card" style="height:60px"></div>
+                        <div class="cms-skeleton cms-skeleton--card" style="height:60px"></div>
+                    </div>
+                    <div class="cms-skeleton cms-skeleton--text" style="width:80%;margin-top:1rem"></div>
+                </div>
                 @php
                     $contentData = $widgets['content_status']['data'] ?? [];
                     $counts = $contentData['counts'] ?? [];
@@ -92,6 +102,10 @@
         <section class="cms-widget" aria-labelledby="widget-moderation">
             <h2 class="cms-widget__title" id="widget-moderation">
                 Moderation Queue
+                {{-- Skeleton loading state --}}
+                <div class="cms-widget__skeleton" data-cms-skeleton aria-hidden="true" hidden style="display:flex;gap:0.5rem;margin-left:auto">
+                    <div class="cms-skeleton cms-skeleton--button" style="width:2rem;height:1.5rem"></div>
+                </div>
                 @php
                     $modData = $widgets['moderation_queue']['data'] ?? [];
                     $pendingCount = $modData['pending_count'] ?? 0;
@@ -130,7 +144,31 @@
         {{-- Recent Activity Widget --}}
         <section class="cms-widget" aria-labelledby="widget-activity">
             <h2 class="cms-widget__title" id="widget-activity">Recent Activity</h2>
-            <div class="cms-widget__body">
+            <div class="cms-widget__body" data-cms-widget-content="activity">
+                {{-- Skeleton loading state --}}
+                <div class="cms-widget__skeleton" data-cms-skeleton aria-hidden="true" hidden style="display:flex;flex-direction:column;gap:0.75rem">
+                    <div style="display:flex;gap:0.75rem;align-items:center">
+                        <div class="cms-skeleton cms-skeleton--avatar" style="width:0.5rem;height:0.5rem"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;gap:0.25rem">
+                            <div class="cms-skeleton cms-skeleton--text" style="width:70%"></div>
+                            <div class="cms-skeleton cms-skeleton--text" style="width:40%;height:0.75rem"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:0.75rem;align-items:center">
+                        <div class="cms-skeleton cms-skeleton--avatar" style="width:0.5rem;height:0.5rem"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;gap:0.25rem">
+                            <div class="cms-skeleton cms-skeleton--text" style="width:55%"></div>
+                            <div class="cms-skeleton cms-skeleton--text" style="width:30%;height:0.75rem"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:0.75rem;align-items:center">
+                        <div class="cms-skeleton cms-skeleton--avatar" style="width:0.5rem;height:0.5rem"></div>
+                        <div style="flex:1;display:flex;flex-direction:column;gap:0.25rem">
+                            <div class="cms-skeleton cms-skeleton--text" style="width:65%"></div>
+                            <div class="cms-skeleton cms-skeleton--text" style="width:35%;height:0.75rem"></div>
+                        </div>
+                    </div>
+                </div>
                 @php
                     $activityData = $widgets['recent_activity']['data'] ?? [];
                     $entries = $activityData['entries'] ?? [];

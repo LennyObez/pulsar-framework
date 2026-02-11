@@ -1,0 +1,179 @@
+/*
+ * Toast Notification Styles
+ *
+ * Positioned fixed top-right with slide-in/fade-out animations,
+ * progress bar, and reduced-motion support.
+ */
+
+.cms-toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+.cms-toast {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.875rem 2.5rem 0.875rem 1rem;
+  max-width: 400px;
+  min-width: 280px;
+  border-radius: 0.5rem;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+/* Type variants */
+.cms-toast--success {
+  background: var(--cms-toast-success-bg, #ecfdf5);
+  border-left: 4px solid var(--cms-green, #10b981);
+  color: var(--cms-toast-success-color, #065f46);
+}
+
+.cms-toast--error {
+  background: var(--cms-toast-error-bg, #fef2f2);
+  border-left: 4px solid var(--cms-red, #ef4444);
+  color: var(--cms-toast-error-color, #991b1b);
+}
+
+.cms-toast--info {
+  background: var(--cms-toast-info-bg, #eff6ff);
+  border-left: 4px solid var(--cms-accent, #2563eb);
+  color: var(--cms-toast-info-color, #1e40af);
+}
+
+.cms-toast--warning {
+  background: var(--cms-toast-warning-bg, #fffbeb);
+  border-left: 4px solid var(--cms-amber, #f59e0b);
+  color: var(--cms-toast-warning-color, #92400e);
+}
+
+/* Content */
+.cms-toast__content {
+  flex: 1;
+  min-width: 0;
+  word-wrap: break-word;
+}
+
+/* Close button */
+.cms-toast__close {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 1.125rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.cms-toast__close:hover {
+  opacity: 1;
+}
+
+.cms-toast__close:focus-visible {
+  outline: 2px solid var(--cms-focus-color, #2563eb);
+  outline-offset: 1px;
+}
+
+/* Progress bar */
+.cms-toast__progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.cms-toast__progress-bar {
+  height: 100%;
+  transform-origin: left center;
+}
+
+.cms-toast--success .cms-toast__progress-bar {
+  background: var(--cms-green, #10b981);
+}
+
+.cms-toast--error .cms-toast__progress-bar {
+  background: var(--cms-red, #ef4444);
+}
+
+.cms-toast--info .cms-toast__progress-bar {
+  background: var(--cms-accent, #2563eb);
+}
+
+.cms-toast--warning .cms-toast__progress-bar {
+  background: var(--cms-amber, #f59e0b);
+}
+
+/* Enter animation */
+@keyframes cms-toast-enter {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.cms-toast--entering {
+  animation: cms-toast-enter 300ms ease-out forwards;
+}
+
+/* Exit animation */
+@keyframes cms-toast-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(50%);
+  }
+}
+
+.cms-toast--exiting {
+  animation: cms-toast-exit 200ms ease-in forwards;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .cms-toast--entering {
+    animation: none;
+  }
+
+  .cms-toast--exiting {
+    animation: none;
+    opacity: 0;
+  }
+
+  .cms-toast__progress-bar {
+    animation: none !important;
+  }
+}

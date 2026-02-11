@@ -100,6 +100,23 @@
                 </tr>
             </thead>
             <tbody class="cms-table__body">
+                {{-- Skeleton loading rows --}}
+                <tr class="cms-table__skeleton-row" data-cms-skeleton aria-hidden="true" hidden>
+                    <td colspan="8"><div class="cms-skeleton cms-skeleton--table-row"></div></td>
+                </tr>
+                <tr class="cms-table__skeleton-row" data-cms-skeleton aria-hidden="true" hidden>
+                    <td colspan="8"><div class="cms-skeleton cms-skeleton--table-row"></div></td>
+                </tr>
+                <tr class="cms-table__skeleton-row" data-cms-skeleton aria-hidden="true" hidden>
+                    <td colspan="8"><div class="cms-skeleton cms-skeleton--table-row"></div></td>
+                </tr>
+                <tr class="cms-table__skeleton-row" data-cms-skeleton aria-hidden="true" hidden>
+                    <td colspan="8"><div class="cms-skeleton cms-skeleton--table-row"></div></td>
+                </tr>
+                <tr class="cms-table__skeleton-row" data-cms-skeleton aria-hidden="true" hidden>
+                    <td colspan="8"><div class="cms-skeleton cms-skeleton--table-row"></div></td>
+                </tr>
+
                 @if (empty($items))
                     <tr>
                         <td colspan="8" class="cms-table__empty">No content found. Create your first content item to get started.</td>
