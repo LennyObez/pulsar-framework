@@ -229,4 +229,43 @@ final class StepUpManagerTest extends TestCase
 
         self::assertSame(StepUpAction::Deny, $action);
     }
+
+    #[Test]
+    public function markSuccessWithNoExistingStateDoesNotDispatchEvent(): void
+    {
+        /** @var list<object> $dispatched */
+        $dispatched = [];
+        $dispatcher = $this->createStub(EventDispatcherInterface::class);
+        $dispatcher->method('dispatch')->willReturnCallback(function (object $event) use (&$dispatched): object {
+            $dispatched[] = $event;
+
+            return $event;
+        });
+
+        $manager = new StepUpManager($dispatcher);
+        $manager->markSuccess('nonexistent-user', 'nonexistent-rule');
+
+        $successEvents = array_filter(
+            $dispatched,
+            static fn(object $e): bool => $e instanceof StepUpAttemptedEvent && $e->success,
+        );
+
+        self::assertCount(0, $successEvents);
+    }
+
+    #[Test]
+    public function markSuccessResetsStateForSpecificIdentityAndRule(): void
+    {
+        $config = new StepUpConfig(maxAttempts: 3);
+        $now = new DateTimeImmutable('2025-01-15 10:00:00');
+
+        $this->manager->handleStepUp('user-1', 'rule-1', $config, $now);
+        self::assertNotNull($this->manager->getState('user-1', 'rule-1'));
+
+        $this->manager->markSuccess('user-1', 'rule-1');
+
+        $state = $this->manager->getState('user-1', 'rule-1');
+        self::assertNotNull($state);
+        self::assertSame(0, $state->attemptCount);
+    }
 }

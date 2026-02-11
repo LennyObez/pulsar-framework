@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Auth\TwoFactor;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,6 +26,7 @@ use Pulsar\Auth\TwoFactor\TwoFactorPurpose;
 use Pulsar\Auth\TwoFactor\TwoFactorRateLimiterInterface;
 use Pulsar\Auth\TwoFactor\Verify2faResult;
 use Pulsar\Auth\TwoFactor\VerifyReason;
+use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Crypto\MasterKey;
@@ -543,5 +545,339 @@ final class TwoFactorManagerTest extends TestCase
 
         $result = $manager->rotateRecoveryCodes('user-1');
         $manager->verifyRecoveryCode('user-1', $result->plaintextCodes[0]);
+    }
+
+    #[Test]
+    public function verifyCodeWithStoreRateLimited(): void
+    {
+        $rateLimiter = $this->createStub(TwoFactorRateLimiterInterface::class);
+        $rateLimiter->method('attempt')->willReturn(false);
+
+        $secretStore = new InMemoryTotpSecretStore();
+        $secretStore->store('user-1', $this->generator->generateSecret());
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            rateLimiter: $rateLimiter,
+            secretStore: $secretStore,
+        );
+
+        $result = $manager->verifyCode('user-1', '123456');
+
+        self::assertFalse($result->verified);
+        self::assertSame(VerifyReason::RateLimited, $result->reason);
+    }
+
+    #[Test]
+    public function verifyCodeWithStoreRateLimitedAuditsEvent(): void
+    {
+        $rateLimiter = $this->createStub(TwoFactorRateLimiterInterface::class);
+        $rateLimiter->method('attempt')->willReturn(false);
+
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
+            ->method('log')
+            ->with(
+                AuditEvent::Authentication,
+                AuditOutcome::Denied,
+                'user-1',
+                '2fa_code_verification_failed',
+            );
+
+        $secretStore = new InMemoryTotpSecretStore();
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            rateLimiter: $rateLimiter,
+            secretStore: $secretStore,
+            auditLogger: $auditLogger,
+        );
+
+        $manager->verifyCode('user-1', '123456');
+    }
+
+    #[Test]
+    public function verifyCodeWithSecretRateLimitedAuditsEvent(): void
+    {
+        $rateLimiter = $this->createStub(TwoFactorRateLimiterInterface::class);
+        $rateLimiter->method('attempt')->willReturn(false);
+
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
+            ->method('log')
+            ->with(
+                AuditEvent::Authentication,
+                AuditOutcome::Denied,
+                'user-1',
+                '2fa_code_verification_failed',
+            );
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            rateLimiter: $rateLimiter,
+            auditLogger: $auditLogger,
+        );
+
+        $manager->verifyCodeWithSecret('user-1', 'any-secret', '123456');
+    }
+
+    #[Test]
+    public function recoveryCodeStoreBackedReplayAuditsReplayedAction(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $hasherKey = $masterKey->deriveSubKey(3, 'rcvrycod');
+        $hasher = new RecoveryCodeHasher($hasherKey);
+        $store = new InMemoryRecoveryCodeStore();
+
+        /** @var list<array{AuditEvent, AuditOutcome, string, string}> $auditCalls */
+        $auditCalls = [];
+        $auditLogger = $this->createStub(AuditLoggerInterface::class);
+        $auditLogger->method('log')->willReturnCallback(
+            function (AuditEvent $event, AuditOutcome $outcome, ?string $actor, string $action) use (&$auditCalls): AuditEntry {
+                $auditCalls[] = [$event, $outcome, $actor ?? 'unknown', $action];
+
+                return new AuditEntry(
+                    id: 'test',
+                    event: $event,
+                    outcome: $outcome,
+                    actor: $actor ?? 'unknown',
+                    action: $action,
+                    resource: '',
+                    timestamp: new DateTimeImmutable(),
+                    metadata: [],
+                    previousHmac: '',
+                    hmac: '',
+                    kid: '',
+                );
+            },
+        );
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            recoveryCodeHasher: $hasher,
+            recoveryCodeStore: $store,
+            auditLogger: $auditLogger,
+        );
+
+        $result = $manager->rotateRecoveryCodes('user-1');
+        $firstCode = $result->plaintextCodes[0];
+
+        // First use: success
+        $manager->verifyRecoveryCode('user-1', $firstCode);
+
+        // Second use: replay (already consumed)
+        $index = $manager->verifyRecoveryCode('user-1', $firstCode);
+        self::assertSame(-1, $index);
+
+        // Find the replay audit event
+        $replayEvents = array_filter(
+            $auditCalls,
+            static fn(array $call): bool => $call[3] === '2fa_recovery_code_replayed',
+        );
+
+        self::assertNotEmpty($replayEvents, 'Expected a replay audit event');
+        $replayEvent = array_values($replayEvents)[0];
+        self::assertSame(AuditOutcome::Denied, $replayEvent[1]);
+    }
+
+    #[Test]
+    public function recoveryCodeStoreBackedFailureAuditsFailedAction(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $hasherKey = $masterKey->deriveSubKey(3, 'rcvrycod');
+        $hasher = new RecoveryCodeHasher($hasherKey);
+        $store = new InMemoryRecoveryCodeStore();
+
+        /** @var list<array{AuditEvent, AuditOutcome, string, string}> $auditCalls */
+        $auditCalls = [];
+        $auditLogger = $this->createStub(AuditLoggerInterface::class);
+        $auditLogger->method('log')->willReturnCallback(
+            function (AuditEvent $event, AuditOutcome $outcome, ?string $actor, string $action) use (&$auditCalls): AuditEntry {
+                $auditCalls[] = [$event, $outcome, $actor ?? 'unknown', $action];
+
+                return new AuditEntry(
+                    id: 'test',
+                    event: $event,
+                    outcome: $outcome,
+                    actor: $actor ?? 'unknown',
+                    action: $action,
+                    resource: '',
+                    timestamp: new DateTimeImmutable(),
+                    metadata: [],
+                    previousHmac: '',
+                    hmac: '',
+                    kid: '',
+                );
+            },
+        );
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            recoveryCodeHasher: $hasher,
+            recoveryCodeStore: $store,
+            auditLogger: $auditLogger,
+        );
+
+        $manager->rotateRecoveryCodes('user-1');
+
+        // Try a completely wrong code
+        $index = $manager->verifyRecoveryCode('user-1', 'ZZZZ-ZZZZ-ZZZZ-ZZZZ');
+        self::assertSame(-1, $index);
+
+        $failedEvents = array_filter(
+            $auditCalls,
+            static fn(array $call): bool => $call[3] === '2fa_recovery_code_failed',
+        );
+
+        self::assertNotEmpty($failedEvents, 'Expected a failed recovery code audit event');
+        $failedEvent = array_values($failedEvents)[0];
+        self::assertSame(AuditOutcome::Failure, $failedEvent[1]);
+    }
+
+    #[Test]
+    public function recoveryCodeSuccessAuditsAndDispatchesCollectorEvent(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $hasherKey = $masterKey->deriveSubKey(3, 'rcvrycod');
+        $hasher = new RecoveryCodeHasher($hasherKey);
+        $store = new InMemoryRecoveryCodeStore();
+
+        $collector = $this->createMock(AuthEventCollectorInterface::class);
+        $collector->expects(self::atLeastOnce())
+            ->method('recordTwoFactorEvent')
+            ->with(
+                self::anything(),
+                self::anything(),
+                'user-1',
+                self::anything(),
+            );
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            recoveryCodeHasher: $hasher,
+            recoveryCodeStore: $store,
+            eventCollector: $collector,
+        );
+
+        $result = $manager->rotateRecoveryCodes('user-1');
+        $manager->verifyRecoveryCode('user-1', $result->plaintextCodes[0]);
+    }
+
+    #[Test]
+    public function rotateRecoveryCodesWithoutHasherProducesEmptyHashes(): void
+    {
+        $store = new InMemoryRecoveryCodeStore();
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            recoveryCodeStore: $store,
+        );
+
+        $result = $manager->rotateRecoveryCodes('user-1');
+
+        self::assertCount(8, $result->plaintextCodes);
+        self::assertSame([], $result->set->codeHashes);
+    }
+
+    #[Test]
+    public function rotateRecoveryCodesAuditsEvent(): void
+    {
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
+            ->method('log')
+            ->with(
+                AuditEvent::SecurityEvent,
+                AuditOutcome::Success,
+                'user-1',
+                '2fa_recovery_codes_rotated',
+            );
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            auditLogger: $auditLogger,
+        );
+
+        $manager->rotateRecoveryCodes('user-1');
+    }
+
+    #[Test]
+    public function verifyCodeWithStoreAndInvalidCodeAuditsFailure(): void
+    {
+        $secretStore = new InMemoryTotpSecretStore();
+        $secret = $this->generator->generateSecret();
+        $secretStore->store('user-1', $secret);
+
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
+            ->method('log')
+            ->with(
+                AuditEvent::Authentication,
+                AuditOutcome::Failure,
+                'user-1',
+                '2fa_code_verification_failed',
+            );
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            secretStore: $secretStore,
+            auditLogger: $auditLogger,
+        );
+
+        $result = $manager->verifyCode('user-1', '000000');
+
+        self::assertFalse($result->verified);
+        self::assertSame(VerifyReason::InvalidCode, $result->reason);
+    }
+
+    #[Test]
+    public function verifyCodeWithDifferentPurpose(): void
+    {
+        $secretStore = new InMemoryTotpSecretStore();
+        $secret = $this->generator->generateSecret();
+        $secretStore->store('user-1', $secret);
+        $code = $this->generator->computeCode($secret);
+
+        $replayGuard = new InMemoryTotpReplayGuard();
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            replayGuard: $replayGuard,
+            secretStore: $secretStore,
+        );
+
+        $result = $manager->verifyCode('user-1', $code, TwoFactorPurpose::StepUp);
+
+        self::assertTrue($result->verified);
+        self::assertSame(TwoFactorPurpose::StepUp, $result->purpose);
     }
 }

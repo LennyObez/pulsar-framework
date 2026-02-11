@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Guard\SessionGuard;
+use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Http\Message\ServerRequest;
@@ -143,5 +144,32 @@ final class SessionGuardTest extends TestCase
 
         $guard = new SessionGuard($session);
         $guard->updateIdentity($identity);
+    }
+
+    #[Test]
+    public function authenticateReturnsNullWhenSessionDataIsNull(): void
+    {
+        /** @var SessionInterface&Stub $session */
+        $session = $this->createStub(SessionInterface::class);
+        $session->method('isStarted')->willReturn(true);
+        $session->method('has')->willReturn(true);
+        $session->method('get')->willReturn(null);
+
+        $guard = new SessionGuard($session);
+        $request = new ServerRequest(method: 'GET', uri: '/account');
+
+        self::assertNull($guard->authenticate($request));
+    }
+
+    #[Test]
+    public function storeIdentityIgnoresNonIdentityImplementation(): void
+    {
+        $session = $this->createMock(SessionInterface::class);
+        $session->expects(self::never())->method('set');
+
+        $guard = new SessionGuard($session);
+
+        // AnonymousIdentity is not an instance of Identity (the concrete class)
+        $guard->updateIdentity(new AnonymousIdentity());
     }
 }

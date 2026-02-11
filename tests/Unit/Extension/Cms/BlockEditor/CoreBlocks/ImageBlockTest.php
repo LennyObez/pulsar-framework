@@ -31,7 +31,7 @@ final class ImageBlockTest extends TestCase
         $html = $this->block->render(['src' => '/photo.jpg', 'alt' => 'A photo']);
 
         self::assertStringContainsString('<figure>', $html);
-        self::assertStringContainsString('<img src="/photo.jpg" alt="A photo">', $html);
+        self::assertStringContainsString('<img src="/photo.jpg" alt="A photo" loading="lazy">', $html);
         self::assertStringContainsString('</figure>', $html);
     }
 

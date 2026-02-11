@@ -15,21 +15,24 @@ use Pulsar\Auth\Identity\TwoFactorStatus;
 final class IdentityTest extends TestCase
 {
     #[Test]
-    public function constructorSetsAllPropertiesCorrectly(): void
+    public function defaultsApplyWhenOptionalParametersOmitted(): void
     {
-        $identity = new Identity(
-            id: 'user-42',
-            displayName: 'Jane Doe',
-            roles: ['admin', 'editor'],
-            twoFactorStatus: TwoFactorStatus::Verified,
-            attributes: ['email' => 'jane@example.com', 'locale' => 'en'],
-        );
+        $identity = new Identity(id: 'user-1', displayName: 'Test');
 
-        self::assertSame('user-42', $identity->id());
-        self::assertSame('Jane Doe', $identity->displayName());
-        self::assertSame(['admin', 'editor'], $identity->roles());
-        self::assertSame(TwoFactorStatus::Verified, $identity->twoFactorStatus());
-        self::assertSame(['email' => 'jane@example.com', 'locale' => 'en'], $identity->attributes());
+        self::assertSame([], $identity->roles());
+        self::assertSame(TwoFactorStatus::Disabled, $identity->twoFactorStatus());
+        self::assertSame([], $identity->attributes());
+    }
+
+    #[Test]
+    public function fromArrayDefaultsTwoFactorStatusToDisabled(): void
+    {
+        $identity = Identity::fromArray([
+            'id' => 'user-1',
+            'display_name' => 'Test',
+        ]);
+
+        self::assertSame(TwoFactorStatus::Disabled, $identity->twoFactorStatus());
     }
 
     #[Test]

@@ -232,6 +232,14 @@ final class InMemoryTaxonomyRepository implements TaxonomyRepositoryInterface
         $this->terms[$term->id] = $term;
         $this->termTranslations[$term->id] = $translations;
     }
+
+    public function updateTermParent(string $termId, string $parentId): void
+    {
+        if (isset($this->terms[$termId])) {
+            $old = $this->terms[$termId];
+            $this->terms[$termId] = clone($old, ['parentId' => $parentId]);
+        }
+    }
 }
 
 final class InMemoryTaxonomyService implements TaxonomyServiceInterface

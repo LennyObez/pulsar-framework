@@ -11,9 +11,11 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentRepository;
+use TypeError;
 
 #[CoversClass(DbContentRepository::class)]
 final class DbContentRepositoryFindByIdsTest extends TestCase
@@ -24,6 +26,7 @@ final class DbContentRepositoryFindByIdsTest extends TestCase
     protected function setUp(): void
     {
         $this->connection = $this->createMock(ConnectionInterface::class);
+        $this->connection->method('driver')->willReturn(Driver::MySQL);
         $this->repository = new DbContentRepository($this->connection, null);
     }
 
@@ -48,7 +51,14 @@ final class DbContentRepositoryFindByIdsTest extends TestCase
             ->with(
                 self::anything(),
                 self::callback(static function (array $bindings) use ($uuid1, $uuid2): bool {
-                    return $bindings['ids'] === '{' . $uuid1 . ',' . $uuid2 . '}';
+                    // MySQL/SQLite uses positional params (ids_0, ids_1)
+                    // PostgreSQL uses array literal ({uuid1,uuid2})
+                    if (isset($bindings['ids'])) {
+                        return $bindings['ids'] === '{' . $uuid1 . ',' . $uuid2 . '}';
+                    }
+
+                    return ($bindings['ids_0'] ?? null) === $uuid1
+                        && ($bindings['ids_1'] ?? null) === $uuid2;
                 }),
             )
             ->willReturn(new Result([
@@ -64,21 +74,20 @@ final class DbContentRepositoryFindByIdsTest extends TestCase
     }
 
     #[Test]
-    #[DataProvider('maliciousIdProvider')]
-    public function rejects_malicious_id(mixed $maliciousId): void
+    #[DataProvider('maliciousStringIdProvider')]
+    public function rejects_malicious_string_id(string $maliciousId): void
     {
         $this->connection->expects(self::never())->method('query');
 
         $this->expectException(InvalidArgumentException::class);
 
-        /** @phpstan-ignore argument.type (testing runtime validation of non-string inputs) */
         $this->repository->findByIds([$maliciousId]);
     }
 
     /**
-     * @return iterable<string, array{mixed}>
+     * @return iterable<string, array{string}>
      */
-    public static function maliciousIdProvider(): iterable
+    public static function maliciousStringIdProvider(): iterable
     {
         yield 'SQL injection via closing brace' => ["'}; DROP TABLE cms_contents;--"];
         yield 'SQL injection via union' => ["00000000-0000-0000-0000-000000000000' UNION SELECT * FROM users--"];
@@ -86,6 +95,25 @@ final class DbContentRepositoryFindByIdsTest extends TestCase
         yield 'too short' => ['not-a-uuid'];
         yield 'uuid without hyphens' => ['0123456789abcdef0123456789abcdef'];
         yield 'uuid with extra chars' => ['01234567-89ab-cdef-0123-456789abcdef-extra'];
+    }
+
+    #[Test]
+    #[DataProvider('nonStringIdProvider')]
+    public function rejects_non_string_id(mixed $nonStringId): void
+    {
+        $this->connection->expects(self::never())->method('query');
+
+        $this->expectException(TypeError::class);
+
+        /** @phpstan-ignore argument.type (testing runtime validation of non-string inputs) */
+        $this->repository->findByIds([$nonStringId]);
+    }
+
+    /**
+     * @return iterable<string, array{mixed}>
+     */
+    public static function nonStringIdProvider(): iterable
+    {
         yield 'integer value' => [42];
         yield 'null value' => [null];
         yield 'boolean value' => [true];
@@ -107,12 +135,11 @@ final class DbContentRepositoryFindByIdsTest extends TestCase
     }
 
     #[Test]
-    public function exception_message_includes_type_for_non_string(): void
+    public function non_string_id_throws_type_error(): void
     {
         $this->connection->expects(self::never())->method('query');
 
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid UUID in findByIds: int');
+        $this->expectException(TypeError::class);
 
         /** @phpstan-ignore argument.type (testing runtime validation of non-string inputs) */
         $this->repository->findByIds([123]);

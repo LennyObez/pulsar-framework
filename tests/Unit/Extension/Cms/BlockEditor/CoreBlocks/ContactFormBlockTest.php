@@ -38,7 +38,8 @@ final class ContactFormBlockTest extends TestCase
             ],
         ]);
 
-        self::assertStringContainsString('<form class="contact-form" method="post" action="">', $html);
+        self::assertStringContainsString('data-pow-challenge="', $html);
+        self::assertStringContainsString('<form class="contact-form" method="post" action=""', $html);
         self::assertStringContainsString('<input type="hidden" name="_csrf_token" value="test-csrf-token-abc123">', $html);
         self::assertStringContainsString('<label for="field-email">Your Email</label>', $html);
         self::assertStringContainsString('<input type="email" id="field-email" name="email">', $html);

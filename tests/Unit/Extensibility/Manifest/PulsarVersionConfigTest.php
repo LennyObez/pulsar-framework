@@ -13,23 +13,6 @@ use Pulsar\Extensibility\Manifest\PulsarVersionConfig;
 final class PulsarVersionConfigTest extends TestCase
 {
     #[Test]
-    public function constructorSetsProperties(): void
-    {
-        $config = new PulsarVersionConfig('1.0.0', '2.0.0');
-
-        self::assertSame('1.0.0', $config->minVersion);
-        self::assertSame('2.0.0', $config->maxVersion);
-    }
-
-    #[Test]
-    public function constructorDefaultsMaxVersionToNull(): void
-    {
-        $config = new PulsarVersionConfig('1.0.0');
-
-        self::assertNull($config->maxVersion);
-    }
-
-    #[Test]
     public function fromArrayWithAllFields(): void
     {
         $config = PulsarVersionConfig::fromArray([

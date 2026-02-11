@@ -63,20 +63,21 @@ final class EncryptedColumnGuardTest extends TestCase
     #[Test]
     public function guardWhereAllowsNonEncryptedColumn(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $metadata = $this->buildMetadata(
             new ColumnMetadata('name', 'name', ColumnType::String),
         );
         $this->registry->method('get')->willReturn($metadata);
 
         $this->guard->guardWhere(stdClass::class, 'name');
-
-        // No exception means pass
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function guardWhereAllowsEncryptedColumnWithBlindIndex(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $metadata = $this->buildMetadata(
             new ColumnMetadata(
                 'ssn',
@@ -90,8 +91,6 @@ final class EncryptedColumnGuardTest extends TestCase
         $this->registry->method('get')->willReturn($metadata);
 
         $this->guard->guardWhere(stdClass::class, 'ssn');
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -116,12 +115,12 @@ final class EncryptedColumnGuardTest extends TestCase
     #[Test]
     public function guardWhereAllowsUnknownColumn(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $metadata = $this->buildMetadata();
         $this->registry->method('get')->willReturn($metadata);
 
         $this->guard->guardWhere(stdClass::class, 'nonexistent');
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -163,14 +162,14 @@ final class EncryptedColumnGuardTest extends TestCase
     #[Test]
     public function guardOrderByAllowsNonEncryptedColumn(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $metadata = $this->buildMetadata(
             new ColumnMetadata('name', 'name', ColumnType::String),
         );
         $this->registry->method('get')->willReturn($metadata);
 
         $this->guard->guardOrderBy(stdClass::class, 'name');
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -217,11 +216,11 @@ final class EncryptedColumnGuardTest extends TestCase
     #[Test]
     public function guardOrderByAllowsUnknownColumn(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $metadata = $this->buildMetadata();
         $this->registry->method('get')->willReturn($metadata);
 
         $this->guard->guardOrderBy(stdClass::class, 'nonexistent');
-
-        $this->addToAssertionCount(1);
     }
 }

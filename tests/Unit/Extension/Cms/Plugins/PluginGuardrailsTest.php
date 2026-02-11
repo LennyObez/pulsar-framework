@@ -232,11 +232,9 @@ final class PluginGuardrailsTest extends TestCase
     #[Test]
     public function executeWithNoRegisteredHooks(): void
     {
-        // Should not throw or produce errors
-        $this->engine->execute('nonexistent_hook');
+        $this->expectNotToPerformAssertions();
 
-        // Reached here without exception — pass
-        $this->addToAssertionCount(1);
+        $this->engine->execute('nonexistent_hook');
     }
 
     // -- Memory tracking logging ---------------------------------------------

@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Customer;
@@ -24,6 +25,7 @@ final class DbCustomerRepositoryTest extends TestCase
     public function findByIdReturnsNullWhenNotFound(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([]));
 
         $repo = new DbCustomerRepository($db);
@@ -47,6 +49,7 @@ final class DbCustomerRepositoryTest extends TestCase
         ]);
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbCustomerRepository($db);
@@ -67,6 +70,7 @@ final class DbCustomerRepositoryTest extends TestCase
     public function findByEmailReturnsNullWhenNotFound(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([]));
 
         $repo = new DbCustomerRepository($db);
@@ -90,6 +94,7 @@ final class DbCustomerRepositoryTest extends TestCase
         ]);
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbCustomerRepository($db);
@@ -106,6 +111,7 @@ final class DbCustomerRepositoryTest extends TestCase
     public function findByEmailWithTenantScopeUsesRepoTenant(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -125,6 +131,7 @@ final class DbCustomerRepositoryTest extends TestCase
     public function findByEmailWithExplicitTenantOverridesDefault(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -144,6 +151,7 @@ final class DbCustomerRepositoryTest extends TestCase
     public function findByEmailWithoutTenantDoesNotFilterByTenant(): void
     {
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('query')
             ->with(
@@ -162,6 +170,7 @@ final class DbCustomerRepositoryTest extends TestCase
     public function findByUserIdReturnsNullWhenNotFound(): void
     {
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([]));
 
         $repo = new DbCustomerRepository($db);
@@ -185,6 +194,7 @@ final class DbCustomerRepositoryTest extends TestCase
         ]);
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbCustomerRepository($db);
@@ -213,10 +223,11 @@ final class DbCustomerRepositoryTest extends TestCase
         );
 
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
-                self::stringContains('INSERT INTO cms_customers'),
+                self::stringContains('INSERT INTO `cms_customers`'),
                 self::callback(static function (array $bindings) use ($now): bool {
                     $billingAddress = $bindings['billing_address'];
                     assert(is_string($billingAddress));
@@ -230,6 +241,74 @@ final class DbCustomerRepositoryTest extends TestCase
                         && $bindings['created_at'] === $now->format('c')
                         && $bindings['updated_at'] === $now->format('c');
                 }),
+            );
+
+        $repo = new DbCustomerRepository($db);
+        $repo->save($customer);
+    }
+
+    #[Test]
+    public function saveGeneratesPostgresqlSyntax(): void
+    {
+        $now = new DateTimeImmutable('2024-06-15T10:00:00+00:00');
+        $customer = new Customer(
+            id: 'cust-pg',
+            tenantId: null,
+            userId: null,
+            email: 'pg@example.com',
+            displayName: null,
+            billingAddress: null,
+            shippingAddress: null,
+            createdAt: $now,
+            updatedAt: $now,
+        );
+
+        $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::PostgreSQL);
+        $db->expects(self::once())
+            ->method('execute')
+            ->with(
+                self::logicalAnd(
+                    self::stringContains('INSERT INTO "cms_customers"'),
+                    self::stringContains('ON CONFLICT'),
+                    self::stringContains('DO UPDATE SET'),
+                    self::stringContains('EXCLUDED.'),
+                ),
+                self::callback(static fn(array $b): bool => $b['id'] === 'cust-pg'
+                    && $b['email'] === 'pg@example.com'),
+            );
+
+        $repo = new DbCustomerRepository($db);
+        $repo->save($customer);
+    }
+
+    #[Test]
+    public function saveGeneratesSqliteSyntax(): void
+    {
+        $now = new DateTimeImmutable('2024-06-15T10:00:00+00:00');
+        $customer = new Customer(
+            id: 'cust-sl',
+            tenantId: null,
+            userId: null,
+            email: 'sqlite@example.com',
+            displayName: null,
+            billingAddress: null,
+            shippingAddress: null,
+            createdAt: $now,
+            updatedAt: $now,
+        );
+
+        $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::SQLite);
+        $db->expects(self::once())
+            ->method('execute')
+            ->with(
+                self::logicalAnd(
+                    self::stringContains('INSERT INTO "cms_customers"'),
+                    self::stringContains('ON CONFLICT'),
+                    self::stringContains('DO UPDATE SET'),
+                ),
+                self::anything(),
             );
 
         $repo = new DbCustomerRepository($db);
@@ -253,6 +332,7 @@ final class DbCustomerRepositoryTest extends TestCase
         );
 
         $db = $this->createMock(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->expects(self::once())
             ->method('execute')
             ->with(
@@ -288,6 +368,7 @@ final class DbCustomerRepositoryTest extends TestCase
         ]);
 
         $db = $this->createStub(ConnectionInterface::class);
+        $db->method('driver')->willReturn(Driver::MySQL);
         $db->method('query')->willReturn(new Result([$row]));
 
         $repo = new DbCustomerRepository($db);

@@ -476,4 +476,180 @@ final class SessionManagerTest extends TestCase
 
         self::assertSame($this->config, $manager->getConfig());
     }
+
+    #[Test]
+    public function saveWhenNotStartedIsNoOp(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        // Should not throw — just returns early
+        $manager->save();
+
+        self::assertFalse($manager->isStarted());
+    }
+
+    #[Test]
+    public function closeWhenNotStartedIsNoOp(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        // Should not throw
+        $manager->close();
+
+        self::assertFalse($manager->isStarted());
+    }
+
+    #[Test]
+    public function startWithRequestWithInvalidCookieIdGeneratesNew(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+            cookieParams: ['TEST_SESSION' => 'invalid-not-64-hex-chars'],
+        );
+
+        $manager->startWithRequest($request);
+
+        // Should have generated a new valid session ID (64 hex chars)
+        self::assertTrue($manager->isStarted());
+        self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $manager->id());
+    }
+
+    #[Test]
+    public function startWithRequestWithEmptyCookieGeneratesNew(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
+
+        $manager->startWithRequest($request);
+
+        self::assertTrue($manager->isStarted());
+        self::assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $manager->id());
+    }
+
+    #[Test]
+    public function startWithRequestIsIdempotent(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: ['REMOTE_ADDR' => '127.0.0.1'],
+        );
+
+        $manager->startWithRequest($request);
+        $id = $manager->id();
+
+        // Second call should be a no-op
+        $manager->startWithRequest($request);
+
+        self::assertSame($id, $manager->id());
+    }
+
+    #[Test]
+    public function enforceConcurrencyLimitSkipsNonSupportingHandler(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        // ArrayHandler does not support concurrency control
+        // Should return without throwing
+        $manager->enforceConcurrencyLimit('user-1');
+
+        self::assertFalse($this->handler->supportsConcurrencyControl());
+    }
+
+    #[Test]
+    public function regenerateWithoutDeletingOldSession(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+        $manager->start();
+
+        $manager->set('data', 'preserved');
+        $manager->save();
+        $oldId = $manager->id();
+
+        $manager->regenerate(deleteOldSession: false);
+
+        $newId = $manager->id();
+
+        self::assertNotSame($oldId, $newId);
+        self::assertSame('preserved', $manager->get('data'));
+
+        // Old session data should still exist in the handler
+        $oldData = $this->handler->read($oldId);
+        self::assertNotEmpty($oldData);
+    }
+
+    #[Test]
+    public function startWithRequestMetadataCapture(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'Mozilla/5.0'],
+            serverParams: ['REMOTE_ADDR' => '192.168.1.100'],
+        );
+
+        $manager->startWithRequest($request);
+
+        $metadata = $manager->metadata;
+        self::assertNotNull($metadata);
+        self::assertSame('192.168.1.100', $metadata->ipAddress);
+        self::assertSame('Mozilla/5.0', $metadata->userAgent);
+    }
+
+    #[Test]
+    public function setUserIdWhenNotStartedThrows(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('not been started');
+
+        $manager->setUserId('user-1');
+    }
+
+    #[Test]
+    public function destroyWithEmptySessionIdIsNoOp(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        // Destroy without ever starting — sessionId is empty
+        $manager->destroy();
+
+        self::assertFalse($manager->isStarted());
+    }
+
+    #[Test]
+    public function startWithRequestNonStringRemoteAddr(): void
+    {
+        $manager = new SessionManager($this->handler, $this->config);
+
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/',
+            headers: ['User-Agent' => 'TestAgent'],
+            serverParams: [],
+        );
+
+        $manager->startWithRequest($request);
+
+        $metadata = $manager->metadata;
+        self::assertNotNull($metadata);
+        self::assertSame('', $metadata->ipAddress);
+    }
 }

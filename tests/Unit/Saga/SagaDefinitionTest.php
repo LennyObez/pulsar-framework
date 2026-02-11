@@ -134,14 +134,14 @@ final class SagaDefinitionTest extends TestCase
     #[Test]
     public function test_validate_passes_with_steps(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $definition = new SagaDefinition(
             name: 'test',
             steps: ['s' => new SagaStep(name: 's', forwardAction: stdClass::class)],
         );
 
         $definition->validate();
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]

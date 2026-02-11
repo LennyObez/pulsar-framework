@@ -214,4 +214,15 @@ final class CompositeKeyProviderTest extends TestCase
 
         $provider->deriveSubKey(1, 'encrypt_', 24);
     }
+
+    #[Test]
+    public function unserializationIsForbidden(): void
+    {
+        $provider = new CompositeKeyProvider($this->masterKey);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('Serialization of CompositeKeyProvider is forbidden');
+
+        $provider->__unserialize([]);
+    }
 }

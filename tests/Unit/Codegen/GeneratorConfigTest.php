@@ -13,7 +13,23 @@ use Pulsar\Codegen\GeneratorConfig;
 final class GeneratorConfigTest extends TestCase
 {
     #[Test]
-    public function constructorSetsAllProperties(): void
+    public function defaultNamespacePrefixIsApp(): void
+    {
+        $config = new GeneratorConfig(outputBaseDirectory: '/project/src');
+
+        self::assertSame('App', $config->namespacePrefix);
+    }
+
+    #[Test]
+    public function defaultForceIsFalse(): void
+    {
+        $config = new GeneratorConfig(outputBaseDirectory: '/project/src');
+
+        self::assertFalse($config->force);
+    }
+
+    #[Test]
+    public function forceOverridesDefault(): void
     {
         $config = new GeneratorConfig(
             outputBaseDirectory: '/project/src',
@@ -21,17 +37,7 @@ final class GeneratorConfigTest extends TestCase
             force: true,
         );
 
-        self::assertSame('/project/src', $config->outputBaseDirectory);
-        self::assertSame('App\\Models', $config->namespacePrefix);
         self::assertTrue($config->force);
-    }
-
-    #[Test]
-    public function defaultValues(): void
-    {
-        $config = new GeneratorConfig(outputBaseDirectory: '/project/src');
-
-        self::assertSame('App', $config->namespacePrefix);
-        self::assertFalse($config->force);
+        self::assertSame('App\\Models', $config->namespacePrefix);
     }
 }

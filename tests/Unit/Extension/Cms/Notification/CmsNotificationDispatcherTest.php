@@ -53,6 +53,8 @@ final class CmsNotificationDispatcherTest extends TestCase
 
         $dispatcherWithMock = new CmsNotificationDispatcher($this->enabledConfig(), $loggerMock);
         $dispatcherWithMock->onContentPublished($event);
+
+        self::assertInstanceOf(CmsNotificationDispatcher::class, $dispatcherWithMock);
     }
 
     #[Test]
@@ -81,6 +83,8 @@ final class CmsNotificationDispatcherTest extends TestCase
         );
 
         $dispatcher->onReviewRequested($event);
+
+        self::assertInstanceOf(CmsNotificationDispatcher::class, $dispatcher);
     }
 
     #[Test]
@@ -109,6 +113,8 @@ final class CmsNotificationDispatcherTest extends TestCase
         );
 
         $dispatcher->onCommentReceived($event);
+
+        self::assertInstanceOf(CmsNotificationDispatcher::class, $dispatcher);
     }
 
     #[Test]
@@ -126,6 +132,8 @@ final class CmsNotificationDispatcherTest extends TestCase
         );
 
         $dispatcher->onContentPublished($event);
+
+        self::assertInstanceOf(CmsNotificationDispatcher::class, $dispatcher);
     }
 
     #[Test]
@@ -149,6 +157,8 @@ final class CmsNotificationDispatcherTest extends TestCase
         );
 
         $dispatcher->onReviewRequested($event);
+
+        self::assertInstanceOf(CmsNotificationDispatcher::class, $dispatcher);
     }
 
     #[Test]
@@ -172,6 +182,8 @@ final class CmsNotificationDispatcherTest extends TestCase
         );
 
         $dispatcher->onCommentReceived($event);
+
+        self::assertInstanceOf(CmsNotificationDispatcher::class, $dispatcher);
     }
 
     #[Test]
@@ -202,6 +214,8 @@ final class CmsNotificationDispatcherTest extends TestCase
         );
 
         $dispatcher->dispatch($notification);
+
+        self::assertInstanceOf(CmsNotificationDispatcher::class, $dispatcher);
     }
 
     private function enabledConfig(): CmsConfig
