@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Saga;
 
 use DateTimeImmutable;
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Saga\Step\StepResult;
 
@@ -62,6 +63,7 @@ final readonly class SagaState
     /**
      * Advance to the next step with the given result.
      */
+    #[NoDiscard]
     public function withStepCompleted(StepResult $result): self
     {
         return clone($this, [
@@ -75,6 +77,7 @@ final readonly class SagaState
      *
      * @param array<string, mixed> $additionalContext
      */
+    #[NoDiscard]
     public function withContext(array $additionalContext): self
     {
         return clone($this, [
@@ -85,6 +88,7 @@ final readonly class SagaState
     /**
      * Transition to compensating status.
      */
+    #[NoDiscard]
     public function withCompensating(): self
     {
         return clone($this, [
@@ -95,6 +99,7 @@ final readonly class SagaState
     /**
      * Mark as completed.
      */
+    #[NoDiscard]
     public function withCompleted(): self
     {
         return clone($this, [
@@ -106,6 +111,7 @@ final readonly class SagaState
     /**
      * Mark as failed.
      */
+    #[NoDiscard]
     public function withFailed(): self
     {
         return clone($this, [
