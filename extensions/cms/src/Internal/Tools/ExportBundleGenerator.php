@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Cms\Internal\Tools;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
+use Pulsar\Extension\Cms\Comments\ModerationStatus;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
@@ -14,6 +16,7 @@ use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Tools\ExportBundle;
 use Pulsar\Extension\Cms\Tools\ExportOptions;
+use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
@@ -54,6 +57,8 @@ final readonly class ExportBundleGenerator
         private MenuRepositoryInterface $menuRepository,
         private SettingsServiceInterface $settingsService,
         private MediaRepositoryInterface $mediaRepository,
+        private ?CommentRepositoryInterface $commentRepository,
+        private ?CmsUserRepositoryInterface $userRepository,
         private ?AuditLoggerInterface $auditLogger,
     ) {}
 
@@ -79,6 +84,14 @@ final readonly class ExportBundleGenerator
 
         if (in_array('media_refs', $options->scope, true)) {
             $data['media_refs'] = $this->exportMediaRefs($options);
+        }
+
+        if (in_array('comments', $options->scope, true)) {
+            $data['comments'] = $this->exportComments($options);
+        }
+
+        if (in_array('users', $options->scope, true)) {
+            $data['users'] = $this->exportUsers($options);
         }
 
         if (!$options->includePii) {
@@ -124,6 +137,7 @@ final readonly class ExportBundleGenerator
         );
 
         return array_map(
+            /** @return array<string, mixed> */
             static fn(object $content): array => (array) $content,
             $result->items,
         );
@@ -218,6 +232,57 @@ final readonly class ExportBundleGenerator
     }
 
     /**
+     * @return list<array<string, mixed>>
+     */
+    private function exportComments(ExportOptions $options): array
+    {
+        if ($this->commentRepository === null) {
+            return [];
+        }
+
+        $comments = [];
+        $page = 1;
+
+        do {
+            $result = $this->commentRepository->findByContent(
+                contentId: '',
+                status: ModerationStatus::Approved,
+                page: $page,
+                perPage: 500,
+            );
+
+            foreach ($result->items as $comment) {
+                $comments[] = (array) $comment;
+            }
+
+            $page++;
+        } while ($result->hasMore);
+
+        return $comments;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function exportUsers(ExportOptions $options): array
+    {
+        if ($this->userRepository === null) {
+            return [];
+        }
+
+        $result = $this->userRepository->listUsers(
+            tenantId: $options->tenantId,
+            page: 1,
+            perPage: 10000,
+        );
+
+        return array_map(
+            static fn(object $user): array => (array) $user,
+            $result->items,
+        );
+    }
+
+    /**
      * Recursively redact PII fields from exported data.
      *
      * @param array<string, mixed> $data
@@ -230,6 +295,7 @@ final readonly class ExportBundleGenerator
 
         foreach ($data as $key => $value) {
             if (is_array($value)) {
+                /** @var array<string, mixed> $value */
                 $redacted[$key] = $this->redactPii($value);
             } elseif (in_array($key, self::PII_FIELDS, true) && $value !== null) {
                 $redacted[$key] = '[redacted]';

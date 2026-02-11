@@ -12,6 +12,7 @@ use function fclose;
 use function fgetcsv;
 use function fopen;
 use function fwrite;
+use function is_array;
 use function rewind;
 
 /**
@@ -39,18 +40,19 @@ final readonly class CsvContentImporter
         fwrite($stream, $csv);
         rewind($stream);
 
-        $headers = fgetcsv($stream);
+        $headers = fgetcsv($stream, escape: '\\');
 
-        if ($headers === false || $headers === [null]) {
+        if (!is_array($headers) || $headers === [null]) {
             fclose($stream);
 
             return [];
         }
 
+        /** @var list<string> $headers */
         $results = [];
 
-        while (($row = fgetcsv($stream)) !== false) {
-            if (count($row) !== count($headers)) {
+        while (($row = fgetcsv($stream, escape: '\\')) !== false) {
+            if ($row === null || count($row) !== count($headers)) {
                 continue;
             }
 

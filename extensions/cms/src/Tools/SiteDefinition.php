@@ -80,14 +80,20 @@ final readonly class SiteDefinition
             );
         }
 
+        /** @var array<string, mixed> $siteData */
+        $siteData = $data['site'];
+        $seoValue = $data['seo'] ?? [];
+        /** @var array<string, mixed> $seoData */
+        $seoData = is_array($seoValue) ? $seoValue : [];
+
         return new self(
-            site: $data['site'],
+            site: $siteData,
             taxonomies: self::ensureList($data, 'taxonomies'),
             content: self::ensureList($data, 'content'),
             menus: self::ensureList($data, 'menus'),
             media: self::ensureList($data, 'media'),
             redirects: self::ensureList($data, 'redirects'),
-            seo: is_array($data['seo'] ?? null) ? $data['seo'] : [],
+            seo: $seoData,
         );
     }
 
