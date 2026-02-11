@@ -622,6 +622,22 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Tenancy\\Internal\\
 
+    # --- Testing ---
+    - name: Testing
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Testing\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Testing\\Internal\\
+
+    - name: Testing_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Testing\\Internal\\
+
     # --- View ---
     - name: View
       collectors:
@@ -1241,6 +1257,8 @@ deptrac:
       - Supervisor_Internal
       - Tenancy
       - Tenancy_Internal
+      - Testing
+      - Testing_Internal
       - Mail
       - Mail_Internal
       - Notification
@@ -1311,6 +1329,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - Testing
       - View
       - Webhook
       - Workflow
@@ -1362,6 +1381,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - Testing
       - View
       - Webhook
     Attribute: *public_deps
@@ -1426,6 +1446,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - Testing
       - View
       - Webhook
       - Workflow
@@ -1434,6 +1455,7 @@ deptrac:
     Storage: *public_deps
     Supervisor: *public_deps
     Tenancy: *public_deps
+    Testing: *public_deps
     View: *public_deps
     Webhook: *public_deps
     Workflow: *public_deps
@@ -1477,6 +1499,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - Testing
       - View
       - Webhook
 
@@ -1526,6 +1549,7 @@ deptrac:
     Storage_Internal: [Storage, Api, Support, Container, Config, Core, ErrorHandling]
     Supervisor_Internal: [Supervisor, Api, Support, Container, Config, Core, ErrorHandling]
     Tenancy_Internal: [Tenancy, Api, Support, Container, Config, Core, ErrorHandling]
+    Testing_Internal: [Testing, Api, Support, Container, Config, Core, ErrorHandling]
     View_Internal: [View, Api, Support, Container, Config, Core, ErrorHandling]
     Webhook_Internal: [Webhook, Api, Support, Container, Config, Core, ErrorHandling]
     Workflow_Internal:

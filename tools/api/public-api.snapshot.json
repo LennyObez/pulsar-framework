@@ -4565,6 +4565,81 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Testing\\Browser\\BrowserTestCase": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Clock\\ClockInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Clock\\TestClock": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Factory\\Factory": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Factory\\FactoryMap": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Factory\\Sequence": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Fake\\CacheFake": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Fake\\EventFake": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Fake\\MailFake": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Fake\\NotificationFake": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Fake\\QueueFake": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Fake\\StorageFake": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Http\\TestRequestBuilder": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\Http\\TestResponse": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Testing\\TestCase": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\View\\Directive\\DirectiveInterface": {
       "since": "1.0.0",
       "methods": [],
