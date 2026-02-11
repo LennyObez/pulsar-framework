@@ -75,7 +75,7 @@
                               name="body"
                               class="cms-form-group__textarea cms-editor"
                               rows="20"
-                              data-cms-rich-editor>{!! $translation['body'] ?? '' !!}</textarea>
+                              data-cms-rich-editor>{{ $translation['body'] ?? '' }}</textarea>
                 </div>
 
                 {{-- Excerpt --}}
@@ -88,26 +88,12 @@
                               maxlength="500">{{ $translation['excerpt'] ?? '' }}</textarea>
                 </div>
 
-                {{-- Content Blocks --}}
+                {{-- Content Blocks — Visual Page Builder --}}
                 <fieldset class="cms-fieldset">
                     <legend class="cms-fieldset__legend">Content Blocks</legend>
-                    <div class="cms-blocks" data-cms-blocks>
-                        @if (isset($blocks))
-                            @foreach ($blocks as $blockIndex => $block)
-                                <div class="cms-blocks__item" data-cms-block data-cms-block-index="{{ $blockIndex }}" draggable="true">
-                                    <div class="cms-blocks__handle" aria-label="Drag to reorder" role="button" tabindex="0">&#9776;</div>
-                                    <div class="cms-blocks__content">
-                                        <input type="hidden" name="blocks[{{ $blockIndex }}][type]" value="{{ $block['type'] ?? 'text' }}">
-                                        <input type="hidden" name="blocks[{{ $blockIndex }}][sort_order]" value="{{ $block['sort_order'] ?? $blockIndex }}">
-                                        <label for="block-data-{{ $blockIndex }}" class="cms-form-group__label">{{ ucfirst($block['type'] ?? 'text') }} Block</label>
-                                        <textarea id="block-data-{{ $blockIndex }}" name="blocks[{{ $blockIndex }}][data]" class="cms-form-group__textarea" rows="4">{{ is_array($block['data'] ?? null) ? json_encode($block['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : ($block['data'] ?? '') }}</textarea>
-                                    </div>
-                                    <button type="button" class="cms-btn cms-btn--sm cms-btn--danger cms-blocks__remove" data-cms-remove-block aria-label="Remove block">Remove</button>
-                                </div>
-                            @endforeach
-                        @endif
-                    </div>
-                    <button type="button" class="cms-btn cms-btn--outline cms-blocks__add" data-cms-add-block>Add Block</button>
+                    <cms-page-builder content-id="{{ $content['id'] ?? '' }}" locale="{{ $activeLocale ?? 'en' }}">
+                        <textarea name="blocks_json" hidden>{{ isset($blocks) ? json_encode($blocks, JSON_UNESCAPED_UNICODE) : '[]' }}</textarea>
+                    </cms-page-builder>
                 </fieldset>
 
                 {{-- Custom Fields --}}
