@@ -5,6 +5,7 @@
   "packageManager": "pnpm@10.0.0",
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "esbuild": "^0.27.3",
     "eslint": "^9.0.0",
     "globals": "^17.3.0",
     "prettier": "^3.0.0",
@@ -30,6 +31,9 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p extensions/analytics/frontend/tsconfig.json && tsc --noEmit -p extensions/analytics/frontend/tracker/tsconfig.json && tsc --noEmit -p extensions/cms/frontend/tsconfig.json && tsc --noEmit -p extensions/admin/frontend/tsconfig.json && tsc --noEmit -p extensions/studio/frontend/tsconfig.json",
     "build:studio": "tsc -p extensions/studio/frontend/tsconfig.json",
     "build:admin": "tsc -p extensions/admin/frontend/tsconfig.json",
-    "build": "pnpm build:studio && pnpm build:admin"
+    "build:cms": "node extensions/cms/frontend/build.mjs --prod",
+    "build:cms:dev": "node extensions/cms/frontend/build.mjs",
+    "build:cms:watch": "node extensions/cms/frontend/build.mjs --watch",
+    "build": "pnpm build:studio && pnpm build:admin && pnpm build:cms"
   }
 }

@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use RuntimeException;
 
 use function sprintf;
+use function str_replace;
 
 /**
  * Emits an HTTP response to the client.
@@ -20,6 +21,8 @@ final class ResponseEmitter
      * Emit the response to the client.
      *
      * This sends headers and outputs the body. Should only be called once.
+     *
+     * @codeCoverageIgnore Emits HTTP headers/body via PHP built-ins — requires live SAPI
      */
     public function emit(ResponseInterface $response): void
     {
@@ -32,31 +35,31 @@ final class ResponseEmitter
 
     /**
      * Emit the HTTP status line.
+     *
+     * @codeCoverageIgnore Emits HTTP headers via PHP built-ins — requires live SAPI
      */
     private function emitStatusLine(ResponseInterface $response): void
     {
-        $statusLine = sprintf(
-            'HTTP/%s %d %s',
-            $response->getProtocolVersion(),
-            $response->getStatusCode(),
-            $response->getReasonPhrase(),
-        );
+        $statusCode = $response->getStatusCode();
 
-        header($statusLine, true, $response->getStatusCode());
+        header(
+            'HTTP/' . $response->getProtocolVersion() . ' ' . $statusCode . ' ' . $this->sanitizeHeaderValue($response->getReasonPhrase()),
+            true,
+            $statusCode,
+        );
     }
 
     /**
      * Emit all response headers.
+     *
+     * @codeCoverageIgnore Emits HTTP headers via PHP built-ins — requires live SAPI
      */
     private function emitHeaders(ResponseInterface $response): void
     {
         foreach ($response->getHeaders() as $name => $values) {
             $first = true;
             foreach ($values as $value) {
-                header(
-                    sprintf('%s: %s', $name, $value),
-                    $first,
-                );
+                header($name . ': ' . $this->sanitizeHeaderValue($value), $first);
                 $first = false;
             }
         }
@@ -64,6 +67,8 @@ final class ResponseEmitter
 
     /**
      * Emit the response body.
+     *
+     * @codeCoverageIgnore Emits HTTP body via echo — requires live SAPI
      */
     private function emitBody(ResponseInterface $response): void
     {
@@ -77,9 +82,17 @@ final class ResponseEmitter
     }
 
     /**
-     * Assert that headers have not already been sent.
-     *
+     * Strip CRLF sequences to prevent header injection.
+     */
+    private function sanitizeHeaderValue(string $value): string
+    {
+        return str_replace(["\r\n", "\r", "\n"], '', $value);
+    }
+
+    /**
      * @throws RuntimeException If headers were already sent
+     *
+     * @codeCoverageIgnore Checks headers_sent() — requires live SAPI
      */
     private function assertHeadersNotSent(): void
     {

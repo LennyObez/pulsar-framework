@@ -205,6 +205,22 @@ final readonly class DdlCompiler
         };
     }
 
+    /**
+     * Get a driver-appropriate default expression for UUID generation.
+     *
+     * PostgreSQL: gen_random_uuid()
+     * MySQL 8.0+: (UUID())
+     * SQLite: no native UUID — returns null (application must provide UUIDs)
+     */
+    public function uuidDefaultExpression(): ?SchemaDefaultExpression
+    {
+        return match ($this->driver) {
+            Driver::PostgreSQL => SchemaDefaultExpression::PostgresUuid,
+            Driver::MySQL => SchemaDefaultExpression::MysqlUuid,
+            Driver::SQLite => null,
+        };
+    }
+
     private function compileColumnDef(SchemaColumn $column, bool $singlePkAutoIncrement): string
     {
         $type = $this->mapType($column);
@@ -289,7 +305,8 @@ final readonly class DdlCompiler
             },
             SchemaColumnType::DateTime => match ($this->driver) {
                 Driver::PostgreSQL => 'TIMESTAMP',
-                default => 'DATETIME',
+                Driver::MySQL => 'DATETIME(6)',
+                Driver::SQLite => 'DATETIME',
             },
             SchemaColumnType::Date => 'DATE',
             SchemaColumnType::Time => 'TIME',

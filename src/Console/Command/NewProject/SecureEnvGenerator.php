@@ -53,6 +53,13 @@ final readonly class SecureEnvGenerator
 
                 APP_KEY=%s
                 PULSAR_MASTER_KEY=%s
+
+                DB_DRIVER=pgsql
+                DB_HOST=127.0.0.1
+                DB_PORT=5432
+                DB_DATABASE=pulsar
+                DB_USERNAME=pulsar
+                DB_PASSWORD=
                 ENV,
             $appName,
             $env->value,

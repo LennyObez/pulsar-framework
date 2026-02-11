@@ -850,6 +850,76 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Compliance\\ComplianceFramework": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\ComplianceReport": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\ComplianceStatusProvider": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\Control": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\ControlCatalog": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\ControlMapping": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\ControlStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\ControlVerifier": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\Evidence\\EvidenceCollector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\Evidence\\EvidenceRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\Evidence\\EvidenceStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\Evidence\\EvidenceType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\Evidence\\InMemoryEvidenceStore": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Compliance\\VerificationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Concurrency\\FanOut": {
       "since": "1.0.0",
       "methods": [],
@@ -926,6 +996,11 @@
       "constants": []
     },
     "Pulsar\\Config\\ConnectionConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\CorsConfig": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -1440,6 +1515,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Database\\DriverVariant": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\Exception\\DatabaseException": {
       "since": "1.0.0",
       "methods": [],
@@ -1645,6 +1725,16 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Database\\Portable\\InListBuilder": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Portable\\UpsertBuilder": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Database\\Result": {
       "since": "1.0.0",
       "methods": [],
@@ -1746,6 +1836,11 @@
       "constants": []
     },
     "Pulsar\\Database\\Schema\\TableDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\SqlIdentifier": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -2080,6 +2175,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Http\\Message\\StringStream": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Message\\UploadedFile": {
       "since": "1.0.0-rc.11",
       "methods": [],
@@ -2142,6 +2242,11 @@
     },
     "Pulsar\\Http\\ResponseStatus": {
       "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Http\\SafeRedirect": {
+      "since": "1.0.0-rc.11",
       "methods": [],
       "constants": []
     },
@@ -3001,6 +3106,31 @@
       "constants": []
     },
     "Pulsar\\Mail\\Content": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Encryption\\EncryptionType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Encryption\\MailEncryptorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Encryption\\MailKeyStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Encryption\\PgpEncryptor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Encryption\\SmimeEncryptor": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -4050,6 +4180,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Scheduler\\JobRegistryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Scheduler\\JobResult": {
       "since": "1.0.0",
       "methods": [],
@@ -4646,6 +4781,81 @@
       "constants": []
     },
     "Pulsar\\Security\\ZeroTrust\\TrustScore\\TrustScoreResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\ConfigCenterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\Event\\ServiceDeregistered": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\Event\\ServiceHealthChanged": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\Event\\ServiceRegistered": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\Exception\\ServiceDiscoveryException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\HealthCheckInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\HealthCheckResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\HttpHealthCheck": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\InMemoryServiceRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\ServiceDiscoveryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\ServiceHealthStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\ServiceInstance": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\ServiceRegistryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\StaticConfigCenter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\ServiceDiscovery\\StaticServiceDiscovery": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -5271,6 +5481,10 @@
     "Pulsar\\Cache\\RouteCache",
     "Pulsar\\Cache\\RouteHandler",
     "Pulsar\\Cache\\RouteHandlerType",
+    "Pulsar\\Compliance\\Frameworks\\GdprMapping",
+    "Pulsar\\Compliance\\Frameworks\\HipaaMapping",
+    "Pulsar\\Compliance\\Frameworks\\PciDssMapping",
+    "Pulsar\\Compliance\\Frameworks\\Soc2Mapping",
     "Pulsar\\Config\\ConfigManager",
     "Pulsar\\Config\\ConfigOverrides",
     "Pulsar\\Console\\Application",
@@ -5343,7 +5557,9 @@
     "Pulsar\\Core\\Wiring\\RuntimeWiring",
     "Pulsar\\Core\\Wiring\\SchedulerWiring",
     "Pulsar\\Core\\Wiring\\SecurityWiring",
+    "Pulsar\\Core\\Wiring\\ServiceDiscoveryWiring",
     "Pulsar\\Core\\Wiring\\ServiceWiringInterface",
+    "Pulsar\\Core\\Wiring\\StorageWiring",
     "Pulsar\\Core\\Wiring\\SupervisorWiring",
     "Pulsar\\Core\\Wiring\\TenancyWiring",
     "Pulsar\\Core\\Wiring\\TracingWiring",
@@ -5551,6 +5767,7 @@
     "Pulsar\\Security\\ZeroTrust\\Signal\\Internal\\TimeSignalProvider",
     "Pulsar\\Security\\ZeroTrust\\StepUp\\Internal\\StepUpManager",
     "Pulsar\\Security\\ZeroTrust\\TrustScore\\Internal\\TrustScoreCalculator",
+    "Pulsar\\ServiceDiscovery\\ServiceTtlEntry",
     "Pulsar\\Supervisor\\InvariantCheck\\InvariantRunner",
     "Pulsar\\Supervisor\\PreflightCheck\\DiskSpacePreflightCheck",
     "Pulsar\\Supervisor\\PreflightCheck\\MemoryPreflightCheck",

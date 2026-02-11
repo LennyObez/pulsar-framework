@@ -33,6 +33,7 @@ tmp/
 # Node / tooling
 node_modules/
 dist/
+extensions/cms/frontend/dist/
 /build/
 coverage/
 .eslintcache

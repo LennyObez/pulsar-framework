@@ -10,6 +10,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Api\OpenApi\OpenApiWiring;
 use Pulsar\Build\BuildArtifactLoader;
 use Pulsar\Build\BuildException;
 use Pulsar\Build\VerificationStatus;
@@ -51,6 +52,8 @@ use Pulsar\Core\Wiring\ResilienceWiring;
 use Pulsar\Core\Wiring\RuntimeWiring;
 use Pulsar\Core\Wiring\SchedulerWiring;
 use Pulsar\Core\Wiring\SecurityWiring;
+use Pulsar\Core\Wiring\ServiceDiscoveryWiring;
+use Pulsar\Core\Wiring\StorageWiring;
 use Pulsar\Core\Wiring\SupervisorWiring;
 use Pulsar\Core\Wiring\TenancyWiring;
 use Pulsar\Core\Wiring\TracingWiring;
@@ -62,6 +65,7 @@ use Pulsar\FeatureFlag\Exception\FeatureFlagException;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
+use Pulsar\Http\Middleware\CallableRequestHandler;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -95,10 +99,11 @@ use function is_string;
  * managing the lifecycle, and orchestrating the request/response cycle.
  *
  * Boot pipeline order:
- * Config -> Logger -> Tracer -> Metrics -> RequestContext -> ErrorTracker
- * -> ExceptionHandler -> Security -> Auth -> Database -> Tenancy -> FeatureFlags
- * -> Scheduler -> Resilience -> Queue -> Supervisor -> Integrity -> Deploy
- * -> DiagnosticsRoute -> Extensions (register -> preBoot -> boot -> postBoot)
+ * Config -> Logger -> Tracer -> Security -> Metrics -> RequestContext -> ErrorTracker
+ * -> ExceptionHandler -> I18n -> Auth -> Database -> Tenancy -> FeatureFlags
+ * -> Scheduler -> Resilience -> Queue -> Supervisor -> ServiceDiscovery
+ * -> Integrity -> Deploy -> DiagnosticsRoute
+ * -> Extensions (register -> preBoot -> boot -> postBoot)
  */
 #[Internal]
 final class Kernel implements KernelInterface
@@ -114,6 +119,7 @@ final class Kernel implements KernelInterface
     private ?RouteContext $routeContext = null;
     private ?BootProfile $bootProfile = null;
     private ?MetricRegistry $metricsRegistry = null;
+    private bool $dispatchHandlerSet = false;
 
     /** @var array<string, bool> */
     private array $handlerUsesArrayParams = [];
@@ -157,11 +163,12 @@ final class Kernel implements KernelInterface
      * 1. Config loading (if ConfigManager provided)
      * 2. Logger creation
      * 3. Tracer creation (TracingMiddleware as outermost global middleware)
-     * 4. Metrics creation (MetricsMiddleware as inner global middleware)
-     * 4b. RequestContext creation (RequestContextMiddleware after metrics)
-     * 5. Error tracker creation
-     * 6. Exception handler creation
-     * 7. Security services creation
+     * 4. Security services creation (SecurityHeaders + CORS middleware)
+     * 5. Metrics creation (MetricsMiddleware as inner global middleware)
+     * 5b. RequestContext creation (RequestContextMiddleware after metrics)
+     * 6. Error tracker creation
+     * 7. Exception handler creation
+     * 7b. I18n services creation (LocaleMiddleware)
      * 8. Auth services creation
      * 9. Database services creation (if config/database.php exists)
      * 10. Tenancy services creation (if config/tenancy.php exists)
@@ -244,15 +251,15 @@ final class Kernel implements KernelInterface
 
             $wirings = [
                 new ConfigWiring(),
-                new I18nWiring(),
                 new LoggingWiring(),
                 new TracingWiring(),
+                new SecurityWiring(),
                 new MetricsWiring(),
                 new RequestContextWiring(),
                 new EventWiring(),
                 new ErrorTrackingWiring(),
                 new ExceptionHandlerWiring(),
-                new SecurityWiring(),
+                new I18nWiring(),
                 new AuthWiring(),
                 new DatabaseWiring(),
                 new TenancyWiring(),
@@ -263,7 +270,10 @@ final class Kernel implements KernelInterface
                 new CacheWiring(),
                 new MailWiring(),
                 new NotificationWiring(),
+                new StorageWiring(),
+                new ServiceDiscoveryWiring(),
                 new ApiWiring(),
+                new OpenApiWiring(),
                 new SupervisorWiring(),
                 new IntegrityWiring(),
                 new DeployWiring(),
@@ -414,14 +424,24 @@ final class Kernel implements KernelInterface
     {
         $this->boot();
 
+        // Set the dispatch handler once (cached by the pipeline for subsequent requests)
+        if ($this->middleware->count() > 0 && !$this->dispatchHandlerSet) {
+            $this->middleware->setHandler(new CallableRequestHandler(
+                fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchRoute($req),
+            ));
+            $this->dispatchHandlerSet = true;
+        }
+
         // Reset route context for this request (worker reuse safety)
         $this->routeContext?->reset();
 
         try {
-            return $this->middleware->dispatch(
-                $request,
-                fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchRoute($req),
-            );
+            if ($this->dispatchHandlerSet) {
+                return $this->middleware->handle($request);
+            }
+
+            // No global middleware — dispatch directly
+            return $this->dispatchRoute($request);
         } catch (Throwable $e) {
             if ($this->exceptionHandler !== null) {
                 return $this->exceptionHandler->handle($e, $request);
@@ -441,8 +461,7 @@ final class Kernel implements KernelInterface
         $request = ServerRequest::fromGlobals();
         $response = $this->handle($request);
 
-        $emitter = new ResponseEmitter();
-        $emitter->emit($response);
+        new ResponseEmitter()->emit($response);
     }
 
     /**
@@ -490,8 +509,8 @@ final class Kernel implements KernelInterface
             foreach ($matched->getMiddleware() as $middleware) {
                 if (is_string($middleware)) {
                     $resolved = $this->middlewareRegistry->resolve($middleware);
-                    foreach ($resolved as $m) {
-                        $pipeline->pipe($m);
+                    foreach ($resolved as $resolvedMiddleware) {
+                        $pipeline->pipe($resolvedMiddleware);
                     }
                 } else {
                     /** @var PsrMiddlewareInterface $middleware */
@@ -509,15 +528,26 @@ final class Kernel implements KernelInterface
 
     /**
      * Add matched route information to the request.
+     *
+     * Uses bulk withAttributes() to avoid multiple clone operations
+     * when route parameters are present.
      */
     private function addRouteAttributesToRequest(
         ServerRequestInterface $request,
         MatchedRoute $matched,
     ): ServerRequestInterface {
-        $request = $request->withAttribute('_route', $matched);
-        $request = $request->withAttribute('_route_name', $matched->getName());
+        $attrs = [
+            '_route' => $matched,
+            '_route_name' => $matched->getName(),
+            ...$matched->parameters,
+        ];
 
-        foreach ($matched->parameters as $key => $value) {
+        if ($request instanceof ServerRequest) {
+            return $request->withAttributes($attrs);
+        }
+
+        // PSR-7 fallback: individual withAttribute calls
+        foreach ($attrs as $key => $value) {
             $request = $request->withAttribute($key, $value);
         }
 

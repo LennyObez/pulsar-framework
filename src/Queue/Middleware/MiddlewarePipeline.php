@@ -29,10 +29,9 @@ final readonly class MiddlewarePipeline
     /**
      * @param list<JobMiddlewareInterface> $middleware Middleware in execution order.
      */
-    public function __construct(
-        private array $middleware = [],
-    ) {
-        $this->reversed = array_reverse($this->middleware);
+    public function __construct(array $middleware = [])
+    {
+        $this->reversed = array_reverse($middleware);
     }
 
     /**

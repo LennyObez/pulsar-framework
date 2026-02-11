@@ -39,10 +39,10 @@ final readonly class ScopedRouterProxy implements RouterInterface
     public function __construct(
         private RouterInterface $inner,
         private TrustTier $tier,
-        private string $extensionName,
+        string $extensionName,
         private CapabilityPolicy $policy,
     ) {
-        $this->prefix = '/ext/' . $this->extensionName;
+        $this->prefix = '/ext/' . $extensionName;
     }
 
     #[Override]

@@ -12,6 +12,7 @@ use function array_diff;
 use function array_keys;
 use function implode;
 use function is_array;
+use function is_int;
 use function is_string;
 use function sprintf;
 
@@ -102,9 +103,14 @@ final readonly class PackManifest
         /** @var list<string> $compliancePresets */
         /** @var list<string> $postInstallCommands */
 
+        /** @var array<string, string> $typedFiles */
         $typedFiles = [];
         foreach ($files as $key => $value) {
-            $typedFiles[(string) $key] = (string) $value;
+            $stringKey = is_string($key) ? $key : (string) $key;
+            if (!is_string($value) && !is_int($value)) {
+                throw new InvalidArgumentException(sprintf('Pack manifest "files" value for key "%s" must be a string.', $stringKey));
+            }
+            $typedFiles[$stringKey] = (string) $value;
         }
 
         return new self(
