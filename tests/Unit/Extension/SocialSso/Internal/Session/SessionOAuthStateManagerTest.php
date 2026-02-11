@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\SocialSso\Internal\Session;
 
-use function array_key_exists;
-
+use NoDiscard;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\SocialSso\Internal\Session\SessionOAuthStateManager;
 use Pulsar\Security\Session\SessionInterface;
 
+use function array_key_exists;
 use function strlen;
 
 #[CoversClass(SessionOAuthStateManager::class)]
@@ -142,6 +142,7 @@ final class SessionOAuthStateManagerTest extends TestCase
                 return true;
             }
 
+            #[NoDiscard]
             public function get(string $key, mixed $default = null): mixed
             {
                 return $this->data[$key] ?? $default;

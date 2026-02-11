@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Command\Console;
 
-use function file_put_contents;
-use function hash;
-use function is_file;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -19,6 +15,9 @@ use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
 use Pulsar\Extension\Studio\Console\Evidence\HashChain;
 
+use function file_put_contents;
+use function hash;
+use function is_file;
 use function sys_get_temp_dir;
 use function unlink;
 

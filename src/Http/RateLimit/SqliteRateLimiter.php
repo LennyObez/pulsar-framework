@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\RateLimit;
 
-use function max;
-
 use PDO;
 use PDOException;
 use Pulsar\Api\Internal;
 use Pulsar\Support\SqliteWalFactory;
 
+use function max;
 use function random_int;
 use function time;
 

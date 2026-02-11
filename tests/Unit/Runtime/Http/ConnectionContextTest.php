@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Runtime\Http;
 
-use const AF_INET;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RequiresPhpExtension;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Runtime\Http\ConnectionContext;
-
-use const SOCK_STREAM;
-
 use Socket;
 
 use function socket_close;
 use function socket_create;
 
+use const AF_INET;
+use const SOCK_STREAM;
 use const SOL_TCP;
 
 #[CoversClass(ConnectionContext::class)]

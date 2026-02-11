@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
-use function count;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Config\DeployConfig;
 use Pulsar\Deploy\CheckResult;
 use Pulsar\Deploy\DeployCheckInterface;
 
+use function count;
 use function sprintf;
 
 /**

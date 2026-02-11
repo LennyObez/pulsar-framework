@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Aggregation;
 
-use function is_int;
-use function is_string;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
+use function is_int;
+use function is_string;
 use function usort;
 
 /**

@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Collector;
 
-use function hash;
-use function mb_strtolower;
-
 use NoDiscard;
-
-use function preg_replace;
-
 use Pulsar\Api\Internal;
 
+use function hash;
+use function mb_strtolower;
+use function preg_replace;
 use function strtoupper;
 use function trim;
 

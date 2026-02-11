@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Routing;
 
-use function array_filter;
-
-use const ARRAY_FILTER_USE_KEY;
-
-use function in_array;
-use function is_string;
-
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 
+use function array_filter;
+use function in_array;
+use function is_string;
 use function str_contains;
 use function trim;
+
+use const ARRAY_FILTER_USE_KEY;
 
 /**
  * Represents a single route definition.

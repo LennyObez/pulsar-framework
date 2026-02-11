@@ -4,16 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use const DIRECTORY_SEPARATOR;
-
-use function file_exists;
-use function file_get_contents;
-
 use Override;
-
-use function preg_match;
-use function preg_replace;
-
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -21,17 +12,19 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Support\AtomicFileWriter;
 use Random\RandomException;
-
-use function random_bytes;
-
 use RuntimeException;
-
-use function sodium_bin2hex;
-
 use SodiumException;
 
+use function file_exists;
+use function file_get_contents;
+use function preg_match;
+use function preg_replace;
+use function random_bytes;
+use function sodium_bin2hex;
 use function sprintf;
 use function str_contains;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Rotates the application master key.

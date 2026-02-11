@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Queue\Driver;
 
-use function bin2hex;
-use function class_exists;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Queue\Exception\QueueException;
@@ -18,6 +15,9 @@ use Pulsar\Queue\QueueDriverInterface;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+
+use function bin2hex;
+use function class_exists;
 
 /**
  * Synchronous queue driver that executes jobs immediately in-process.

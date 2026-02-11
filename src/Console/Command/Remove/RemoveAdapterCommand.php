@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\Remove;
 
-use function is_file;
-use function is_int;
-
 use Override;
 use Pulsar\Console\Command;
 use Pulsar\Console\Command\ScaffoldTrait;
@@ -14,6 +11,8 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 
+use function is_file;
+use function is_int;
 use function sprintf;
 
 /**

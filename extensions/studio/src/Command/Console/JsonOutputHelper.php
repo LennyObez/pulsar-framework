@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console;
 
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Console\OutputInterface;
 
+use function json_encode;
 use function sprintf;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Shared helper for consistent JSON output in Studio CLI commands.

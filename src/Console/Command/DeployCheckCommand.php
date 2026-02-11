@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function is_string;
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -24,7 +17,13 @@ use Pulsar\Deploy\DeployCheckRunnerInterface;
 use Pulsar\Deploy\DeployReport;
 use Pulsar\Deploy\Exception\DeployException;
 
+use function is_string;
+use function json_encode;
 use function sprintf;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * CLI command that runs all deploy readiness checks.

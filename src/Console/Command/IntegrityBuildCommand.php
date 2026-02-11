@@ -4,19 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function count;
-
-use const DIRECTORY_SEPARATOR;
-
-use function dirname;
-use function file_put_contents;
-use function implode;
-use function is_dir;
-
 use JsonException;
-
-use function mkdir;
-
 use Override;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Console\Command;
@@ -29,7 +17,15 @@ use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Integrity\ManifestSignerInterface;
 use SodiumException;
 
+use function count;
+use function dirname;
+use function file_put_contents;
+use function implode;
+use function is_dir;
+use function mkdir;
 use function sprintf;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Build an integrity manifest from configured file paths.

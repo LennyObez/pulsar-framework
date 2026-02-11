@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\ErrorHandling;
 
-use function htmlspecialchars;
-use function is_array;
-use function is_scalar;
-use function is_string;
-
 use Override;
 use Pulsar\Http\Request;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
-
-use function sprintf;
-
 use Throwable;
+
+use function htmlspecialchars;
+use function is_array;
+use function is_scalar;
+use function is_string;
+use function sprintf;
 
 /**
  * Detailed HTML error page for development.

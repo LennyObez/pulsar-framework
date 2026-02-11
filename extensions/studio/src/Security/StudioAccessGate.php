@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Security;
 
-use function base64_decode;
-use function count;
-use function explode;
-use function hash_equals;
-use function is_string;
-
 use Pulsar\Api\Internal;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
 use Pulsar\Http\Request;
 
+use function base64_decode;
+use function count;
+use function explode;
+use function hash_equals;
+use function is_string;
 use function str_starts_with;
 use function substr;
 

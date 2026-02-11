@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Deploy\Runtime;
 
-use function in_array;
-
 use Override;
 use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
+
+use function in_array;
 
 /**
  * Test double for PHP runtime introspection.

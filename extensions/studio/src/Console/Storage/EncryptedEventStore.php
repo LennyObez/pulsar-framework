@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Storage;
 
-use function array_map;
-use function hash;
-use function is_string;
-
 use JsonException;
 use Override;
 use PDOException;
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\EncryptorInterface;
-use Pulsar\Security\Exception\SecurityException;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use Pulsar\Extension\Studio\Exception\StudioException;
+use Pulsar\Security\Crypto\EncryptorInterface;
+use Pulsar\Security\Exception\SecurityException;
 use Random\RandomException;
 use RuntimeException;
 use SodiumException;
+
+use function array_map;
+use function hash;
+use function is_string;
 
 /**
  * Decorator that encrypts event payloads before storage.

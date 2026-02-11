@@ -7,10 +7,9 @@ namespace Pulsar\Extension\Studio\Exception;
 use NoDiscard;
 use Pulsar\Api\Internal;
 use RuntimeException;
+use Throwable;
 
 use function sprintf;
-
-use Throwable;
 
 /**
  * Base exception for all Studio-related errors.
@@ -120,5 +119,46 @@ final class StudioException extends RuntimeException
     public static function invalidArchive(string $reason): self
     {
         return new self(sprintf('Invalid Studio archive: %s', $reason));
+    }
+
+    /**
+     * Studio module ID contains invalid characters.
+     */
+    #[NoDiscard]
+    public static function invalidModuleId(string $moduleId): self
+    {
+        return new self(sprintf(
+            'Invalid Studio module ID "%s": must match [a-z0-9_-]+',
+            $moduleId,
+        ));
+    }
+
+    /**
+     * A module with the same ID is already registered.
+     */
+    #[NoDiscard]
+    public static function duplicateModuleId(string $moduleId): self
+    {
+        return new self(sprintf(
+            'Duplicate Studio module ID "%s": a module with this ID is already registered',
+            $moduleId,
+        ));
+    }
+
+    /**
+     * Two modules declared the same route prefix.
+     */
+    #[NoDiscard]
+    public static function routePrefixCollision(
+        string $moduleId,
+        string $routePrefix,
+        string $existingModuleId,
+    ): self {
+        return new self(sprintf(
+            'Studio module "%s" route prefix "%s" collides with existing module "%s"',
+            $moduleId,
+            $routePrefix,
+            $existingModuleId,
+        ));
     }
 }

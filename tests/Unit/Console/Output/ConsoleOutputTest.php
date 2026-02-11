@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Console\Output;
 
-use function is_resource;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Output\ConsoleOutput;
 use Pulsar\Console\Verbosity;
+
+use function is_resource;
 
 #[CoversClass(ConsoleOutput::class)]
 final class ConsoleOutputTest extends TestCase

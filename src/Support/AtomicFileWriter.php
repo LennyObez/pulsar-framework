@@ -4,24 +4,20 @@ declare(strict_types=1);
 
 namespace Pulsar\Support;
 
+use Pulsar\Api\Api;
+use Random\RandomException;
+use RuntimeException;
+
 use function bin2hex;
-
-use const DIRECTORY_SEPARATOR;
-
 use function dirname;
 use function file_exists;
 use function file_put_contents;
-
-use Pulsar\Api\Api;
-use Random\RandomException;
-
 use function random_bytes;
 use function rename;
-
-use RuntimeException;
-
 use function sprintf;
 use function unlink;
+
+use const DIRECTORY_SEPARATOR;
 
 /**
  * Atomic file writer using write-to-temp-then-rename.

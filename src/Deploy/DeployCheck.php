@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy;
 
-use function in_array;
-
 use Pulsar\Api\Internal;
 use Pulsar\Deploy\Exception\DeployException;
-
-use function sprintf;
-
 use Throwable;
+
+use function in_array;
+use function sprintf;
 
 /**
  * Orchestrates deploy readiness checks.

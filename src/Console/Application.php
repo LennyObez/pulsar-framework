@@ -11,10 +11,9 @@ use Pulsar\Console\Input\ArgvInput;
 use Pulsar\Console\Output\ConsoleOutput;
 use Pulsar\Core\Kernel;
 use Pulsar\Core\Version;
+use Throwable;
 
 use function sprintf;
-
-use Throwable;
 
 /**
  * Console application orchestrator.

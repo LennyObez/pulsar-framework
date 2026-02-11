@@ -5,6 +5,20 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio;
 
 use Closure;
+use JsonException;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
+use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
+use Pulsar\Extension\Studio\Console\Event\EventFactory;
+use Pulsar\Extension\Studio\Console\Redaction\RedactionPipeline;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Observability\Context\CorrelationContext;
+use Pulsar\Tenancy\TenantContext;
+use Random\Engine\Secure;
+use Random\RandomException;
+use Random\Randomizer;
+use Throwable;
 
 use function hash;
 use function json_encode;
@@ -12,21 +26,6 @@ use function json_encode;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
-
-use JsonException;
-use Pulsar\Api\Internal;
-use Pulsar\Observability\Context\CorrelationContext;
-use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
-use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
-use Pulsar\Extension\Studio\Console\Event\EventFactory;
-use Pulsar\Extension\Studio\Console\Redaction\RedactionPipeline;
-use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
-use Pulsar\Tenancy\TenantContext;
-use Random\Engine\Secure;
-use Random\RandomException;
-use Random\Randomizer;
-use Throwable;
 
 /**
  * Central orchestrator for Studio event ingestion.

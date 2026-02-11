@@ -4,21 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Scheduler;
 
-use function array_map;
-use function count;
-
 use DateTimeImmutable;
-
-use function explode;
-use function in_array;
-
 use NoDiscard;
-
-use function preg_match;
-
 use Pulsar\Api\Api;
 use Pulsar\Scheduler\Exception\SchedulerException;
 
+use function array_map;
+use function count;
+use function explode;
+use function in_array;
+use function preg_match;
 use function sprintf;
 use function str_contains;
 

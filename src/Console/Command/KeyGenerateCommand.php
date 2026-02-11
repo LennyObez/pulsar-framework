@@ -4,17 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use const DIRECTORY_SEPARATOR;
-
-use function fgets;
-use function file_exists;
-use function file_get_contents;
-
 use Override;
-
-use function preg_match;
-use function preg_replace;
-
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
@@ -22,22 +12,23 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Support\AtomicFileWriter;
 use Random\RandomException;
-
-use function random_bytes;
-
 use RuntimeException;
-
-use function sodium_bin2hex;
-
 use SodiumException;
 
+use function fgets;
+use function file_exists;
+use function file_get_contents;
+use function preg_match;
+use function preg_replace;
+use function random_bytes;
+use function sodium_bin2hex;
 use function sprintf;
-
-use const STDIN;
-
 use function str_contains;
 use function strtolower;
 use function trim;
+
+use const DIRECTORY_SEPARATOR;
+use const STDIN;
 
 /**
  * Generates a cryptographically secure master key for FrameworkCache integrity.

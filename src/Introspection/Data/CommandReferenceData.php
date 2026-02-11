@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Introspection\Data;
 
-use function array_map;
-
 use Pulsar\Api\Api;
+
+use function array_map;
 
 /**
  * Complete CLI command reference for the application.

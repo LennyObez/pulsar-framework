@@ -10,11 +10,9 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\TwoFactor\InMemoryTotpSecretStore;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
-
-use function random_bytes;
-
 use ReflectionClass;
 
+use function random_bytes;
 use function sodium_bin2hex;
 
 #[CoversClass(InMemoryTotpSecretStore::class)]

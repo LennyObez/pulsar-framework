@@ -4,25 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use function array_any;
-use function count;
-
-use const DIRECTORY_SEPARATOR;
-
-use function dirname;
-use function file_exists;
-use function implode;
-use function is_array;
-use function is_string;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
-
-use function ksort;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
@@ -31,14 +13,25 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Support\AtomicFileWriter;
 use Random\RandomException;
-
-use function realpath;
-
 use RuntimeException;
 
+use function array_any;
+use function count;
+use function dirname;
+use function file_exists;
+use function implode;
+use function is_array;
+use function is_string;
+use function ksort;
+use function realpath;
 use function sort;
 use function sprintf;
 use function str_starts_with;
+
+use const DIRECTORY_SEPARATOR;
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Generates a deterministic OPcache preload script.

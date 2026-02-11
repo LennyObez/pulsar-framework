@@ -6,9 +6,9 @@ namespace Pulsar\Extension\Studio\Console\Collector;
 
 use Closure;
 use Pulsar\Api\Internal;
-use Pulsar\FeatureFlag\FlagEvaluation;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\FeatureFlagPayload;
+use Pulsar\FeatureFlag\FlagEvaluation;
 use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Context\CorrelationContextProviderInterface;
 use Throwable;

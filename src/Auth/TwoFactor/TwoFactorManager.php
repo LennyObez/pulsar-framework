@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
-use function assert;
-use function bin2hex;
-
 use Override;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
@@ -14,10 +11,11 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Session\SessionInterface;
 use Random\RandomException;
-
-use function random_bytes;
-
 use SensitiveParameter;
+
+use function assert;
+use function bin2hex;
+use function random_bytes;
 
 /**
  * Orchestrates TOTP and recovery code operations for two-factor authentication.

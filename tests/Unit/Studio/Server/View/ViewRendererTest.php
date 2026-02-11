@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Server\View;
 
-use function dirname;
-use function file_put_contents;
-use function is_dir;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -18,6 +13,10 @@ use RecursiveIteratorIterator;
 use RuntimeException;
 use SplFileInfo;
 
+use function dirname;
+use function file_put_contents;
+use function is_dir;
+use function mkdir;
 use function sys_get_temp_dir;
 use function uniqid;
 use function unlink;

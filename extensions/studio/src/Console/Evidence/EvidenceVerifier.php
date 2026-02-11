@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Evidence;
 
+use JsonException;
+use Pulsar\Api\Internal;
+use Pulsar\Security\Crypto\HmacInterface;
+use SodiumException;
+
 use function count;
 use function hash;
 use function hash_equals;
@@ -13,11 +18,6 @@ use function json_encode;
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
-
-use JsonException;
-use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\HmacInterface;
-use SodiumException;
 
 /**
  * Verifies the integrity of an evidence chain.

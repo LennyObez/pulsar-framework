@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Webhook;
 
-use function abs;
-
 use DateTimeImmutable;
 use Override;
 use Pulsar\Webhook\Exception\WebhookException;
 
+use function abs;
 use function str_starts_with;
 use function substr;
 

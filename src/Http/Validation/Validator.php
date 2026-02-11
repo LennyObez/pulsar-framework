@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation;
 
-use function array_is_list;
-
 use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\Rule\Required;
 
+use function array_is_list;
 use function sprintf;
 
 /**

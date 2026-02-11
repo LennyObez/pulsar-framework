@@ -4,17 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Integrity;
 
-use function bin2hex;
-
-use const DIRECTORY_SEPARATOR;
-
-use function dirname;
-use function file_put_contents;
-use function hash_file;
-use function is_dir;
-use function is_link;
-use function mkdir;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -23,12 +12,21 @@ use Pulsar\Integrity\IntegrityManifest;
 use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestEntry;
 
+use function bin2hex;
+use function dirname;
+use function file_put_contents;
+use function hash_file;
+use function is_dir;
+use function is_link;
+use function mkdir;
 use function random_bytes;
 use function rmdir;
 use function scandir;
 use function strlen;
 use function sys_get_temp_dir;
 use function unlink;
+
+use const DIRECTORY_SEPARATOR;
 
 #[CoversClass(ManifestBuilder::class)]
 final class ManifestBuilderTest extends TestCase

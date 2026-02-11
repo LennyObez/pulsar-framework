@@ -8,6 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DatabaseConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManager;
 use Pulsar\Database\ConnectionManagerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
@@ -37,5 +38,8 @@ final readonly class DatabaseWiring implements ServiceWiringInterface
         $connectionManager = ConnectionManager::fromConfig($dbConfig);
         $container->instance(ConnectionManager::class, $connectionManager);
         $container->instance(ConnectionManagerInterface::class, $connectionManager);
+
+        // Convenience binding: default connection available as ConnectionInterface
+        $container->bind(ConnectionInterface::class, static fn(): ConnectionInterface => $connectionManager->connection());
     }
 }

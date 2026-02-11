@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use JsonException;
+use NoDiscard;
+use Pulsar\Api\Api;
+use WeakMap;
+
 use function array_diff_key;
 use function array_flip;
 use function array_intersect_key;
@@ -11,18 +16,10 @@ use function array_key_exists;
 use function is_array;
 use function is_string;
 use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
 use function json_validate;
-
-use JsonException;
-use NoDiscard;
-use Pulsar\Api\Api;
-
 use function str_contains;
 
-use WeakMap;
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Immutable HTTP request value object.

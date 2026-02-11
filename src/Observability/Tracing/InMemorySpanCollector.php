@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Tracing;
 
+use Override;
+
 use function array_filter;
 use function array_slice;
 use function array_values;
 use function count;
-
-use Override;
 
 /**
  * In-memory span collector with ring-buffer eviction.

@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Check;
 
-use function in_array;
-use function is_numeric;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Deploy\CheckResult;
 use Pulsar\Deploy\DeployCheckInterface;
 use Pulsar\Deploy\Runtime\PhpRuntimeInterface;
 
+use function in_array;
+use function is_numeric;
 use function sprintf;
 use function strtolower;
 

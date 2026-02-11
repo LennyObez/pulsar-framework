@@ -6,11 +6,11 @@ namespace Pulsar\Extension\Studio\Console\Collector;
 
 use Closure;
 use Pulsar\Api\Internal;
-use Pulsar\Queue\QueueManager;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\JobPayload;
-use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Extension\Studio\FiberScopedContextProvider;
+use Pulsar\Observability\Context\CorrelationContext;
+use Pulsar\Queue\QueueManager;
 use Throwable;
 
 /**

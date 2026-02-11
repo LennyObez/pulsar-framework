@@ -6,14 +6,13 @@ namespace Pulsar\DataProtection;
 
 use DateInterval;
 use DateTimeImmutable;
+use NoDiscard;
+use Pulsar\Api\Internal;
 
 use function is_int;
 use function is_numeric;
 use function is_string;
 use function max;
-
-use NoDiscard;
-use Pulsar\Api\Internal;
 
 /**
  * Default retention policy that reads configuration from the data_protection

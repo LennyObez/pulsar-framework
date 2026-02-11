@@ -4,15 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio;
 
-use function is_array;
-use function is_file;
-
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManagerInterface;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
+use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManagerInterface;
+use Pulsar\Extensibility\ExtensionInterface;
+use Pulsar\Extensibility\PostBootExtensionInterface;
+use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
@@ -34,10 +35,9 @@ use Pulsar\Extension\Studio\Console\Retention\RetentionPolicy;
 use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
+use Pulsar\Extension\Studio\Internal\StudioModuleRegistry;
 use Pulsar\Extension\Studio\Security\StudioAccessGate;
-use Pulsar\Extensibility\ExtensionInterface;
-use Pulsar\Extensibility\PostBootExtensionInterface;
-use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\FeatureFlag\FlagEvaluationLogInterface;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Observability\Context\CorrelationContextProviderInterface;
@@ -53,8 +53,12 @@ use Pulsar\Scheduler\Scheduler;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
+use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Tenancy\TenantContext;
 use Random\Randomizer;
+
+use function is_array;
+use function is_file;
 
 use const DIRECTORY_SEPARATOR;
 
@@ -149,7 +153,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         $archiveMacKey = null;
 
         if ($container->has(KeyProviderInterface::class) && $container->has(EncryptorInterface::class)) {
-            /** @var KeyProviderInterface $masterKey */
+            /** @var MasterKey $masterKey */
             $masterKey = $container->get(KeyProviderInterface::class);
             $hasDecryptionKey = true;
 
@@ -233,6 +237,11 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
         // Security gate
         $accessGate = new StudioAccessGate($studioConfig->security, $appConfig->mode);
         $container->instance(StudioAccessGate::class, $accessGate);
+
+        // Module registry
+        $moduleRegistry = new StudioModuleRegistry();
+        $container->instance(StudioModuleRegistryInterface::class, $moduleRegistry);
+        $container->instance(StudioModuleRegistry::class, $moduleRegistry);
 
         // Evidence services
         /** @var HmacInterface $hmacForEvidence */
@@ -325,6 +334,7 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
                 environmentMode: $appConfig->mode,
             );
             $container->instance(InstrumentedConnection::class, $instrumentedConnection);
+            $container->instance(ConnectionInterface::class, $instrumentedConnection);
         }
 
         // 3. Log collector (via DeferredSink)

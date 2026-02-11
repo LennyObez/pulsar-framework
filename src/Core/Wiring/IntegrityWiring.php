@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Core\Wiring;
 
-use function dirname;
-
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\IntegrityConfig;
@@ -23,6 +21,8 @@ use Pulsar\Routing\Router;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use SodiumException;
+
+use function dirname;
 
 #[Internal]
 final readonly class IntegrityWiring implements ServiceWiringInterface

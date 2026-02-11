@@ -362,4 +362,143 @@ final class RowTest extends TestCase
 
         $row->getInt('value');
     }
+
+    #[Test]
+    public function getBinaryReturnsStringValue(): void
+    {
+        $row = new Row(['data' => 'binary-string']);
+
+        self::assertSame('binary-string', $row->getBinary('data'));
+    }
+
+    #[Test]
+    public function getBinaryReadsFromStream(): void
+    {
+        $stream = fopen('php://memory', 'r+');
+        self::assertIsResource($stream);
+        fwrite($stream, 'stream-content');
+        rewind($stream);
+
+        $row = new Row(['data' => $stream]);
+
+        self::assertSame('stream-content', $row->getBinary('data'));
+
+        fclose($stream);
+    }
+
+    #[Test]
+    public function getBinaryThrowsOnNonStringNonResource(): void
+    {
+        $row = new Row(['data' => 42]);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "data" to binary');
+
+        $row->getBinary('data');
+    }
+
+    #[Test]
+    public function getBinaryThrowsOnMissingColumn(): void
+    {
+        $row = new Row([]);
+
+        $this->expectException(DatabaseException::class);
+
+        $row->getBinary('missing');
+    }
+
+    #[Test]
+    public function getIntThrowsOnFloatValue(): void
+    {
+        $row = new Row(['value' => 3.14]);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "value" to int');
+
+        $row->getInt('value');
+    }
+
+    #[Test]
+    public function getStringThrowsOnArrayValue(): void
+    {
+        $row = new Row(['value' => ['nested']]);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "value" to string');
+
+        $row->getString('value');
+    }
+
+    #[Test]
+    public function getBoolThrowsOnNullValue(): void
+    {
+        $row = new Row(['value' => null]);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "value" to bool');
+
+        $row->getBool('value');
+    }
+
+    #[Test]
+    public function getFloatThrowsOnBoolValue(): void
+    {
+        $row = new Row(['value' => true]);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "value" to float');
+
+        $row->getFloat('value');
+    }
+
+    #[Test]
+    public function getNullableIntHandlesZeroString(): void
+    {
+        $row = new Row(['count' => '0']);
+
+        self::assertSame(0, $row->getNullableInt('count'));
+    }
+
+    #[Test]
+    public function getNullableIntHandlesNegativeString(): void
+    {
+        $row = new Row(['count' => '-5']);
+
+        self::assertSame(-5, $row->getNullableInt('count'));
+    }
+
+    #[Test]
+    public function getNullableStringThrowsOnBoolValue(): void
+    {
+        $row = new Row(['value' => true]);
+
+        $this->expectException(DatabaseException::class);
+        $this->expectExceptionMessage('Cannot cast column "value" to string');
+
+        $row->getNullableString('value');
+    }
+
+    #[Test]
+    public function columnsReturnsEmptyForEmptyRow(): void
+    {
+        $row = new Row([]);
+
+        self::assertSame([], $row->columns());
+    }
+
+    #[Test]
+    public function toArrayReturnsEmptyForEmptyRow(): void
+    {
+        $row = new Row([]);
+
+        self::assertSame([], $row->toArray());
+    }
+
+    #[Test]
+    public function getOrDefaultReturnsNullValueWhenPresent(): void
+    {
+        $row = new Row(['name' => null]);
+
+        self::assertNull($row->getOrDefault('name', 'fallback'));
+    }
 }

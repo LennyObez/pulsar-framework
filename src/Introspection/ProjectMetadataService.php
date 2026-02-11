@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Introspection;
 
-use function array_slice;
-use function count;
-use function mb_substr;
-
 use Pulsar\Api\Api;
 use Pulsar\Core\Version;
 use Pulsar\Introspection\Internal\ConfigSchemaReflector;
 use Pulsar\Introspection\Internal\CoreRuntimeProbe;
 use Pulsar\Introspection\Internal\SnapshotFileReader;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
+
+use function array_slice;
+use function count;
+use function mb_substr;
 
 /**
  * Orchestrates project metadata collection from all sources.
