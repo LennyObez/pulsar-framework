@@ -203,6 +203,11 @@ final readonly class SiteDefinitionParser
 
             if (is_array($terms)) {
                 foreach ($terms as $termData) {
+                    if (!is_array($termData)) {
+                        continue;
+                    }
+
+                    /** @var array<string, mixed> $termData */
                     $termSlug = $termData['slug'] ?? null;
 
                     if ($termSlug === null) {
@@ -215,9 +220,9 @@ final readonly class SiteDefinitionParser
                         $term = new TaxonomyTerm(
                             id: $termId,
                             taxonomyId: $taxonomyId,
-                            tenantId: $taxData['tenant_id'] ?? null,
+                            tenantId: isset($taxData['tenant_id']) ? (string) $taxData['tenant_id'] : null,
                             parentId: null,
-                            sortOrder: $termData['sort_order'] ?? 0,
+                            sortOrder: (int) ($termData['sort_order'] ?? 0),
                             createdAt: new DateTimeImmutable(),
                         );
                         $termTranslations = [];
@@ -225,10 +230,10 @@ final readonly class SiteDefinitionParser
                         if (isset($termData['name'])) {
                             $termTranslations[] = new TaxonomyTermTranslation(
                                 termId: $termId,
-                                locale: $termData['locale'] ?? $taxData['locale'] ?? 'en',
-                                name: $termData['name'],
-                                slug: $termSlug,
-                                description: $termData['description'] ?? null,
+                                locale: (string) ($termData['locale'] ?? $taxData['locale'] ?? 'en'),
+                                name: (string) $termData['name'],
+                                slug: (string) $termSlug,
+                                description: isset($termData['description']) ? (string) $termData['description'] : null,
                             );
                         }
 
@@ -256,8 +261,8 @@ final readonly class SiteDefinitionParser
         $refMap = [];
 
         foreach ($mediaEntries as $mediaData) {
-            $ref = $mediaData['ref'] ?? $mediaData['filename'] ?? null;
-            $source = $mediaData['source'] ?? null;
+            $ref = isset($mediaData['ref']) ? (string) $mediaData['ref'] : (isset($mediaData['filename']) ? (string) $mediaData['filename'] : null);
+            $source = isset($mediaData['source']) ? (string) $mediaData['source'] : null;
 
             if ($ref === null) {
                 $warnings[] = 'Media entry missing ref/filename, skipped';
@@ -283,14 +288,14 @@ final readonly class SiteDefinitionParser
                         $tmpFile,
                         strlen($response->body),
                         0,
-                        $mediaData['filename'] ?? basename($source),
-                        $mediaData['mime_type'] ?? $response->headers['content-type'][0] ?? 'application/octet-stream',
+                        (string) ($mediaData['filename'] ?? basename($source)),
+                        (string) ($mediaData['mime_type'] ?? $response->headers['content-type'][0] ?? 'application/octet-stream'),
                     );
 
                     $asset = $this->mediaService->upload(
                         $uploadedFile,
-                        $mediaData['uploader_id'] ?? 'system',
-                        $mediaData['tenant_id'] ?? null,
+                        (string) ($mediaData['uploader_id'] ?? 'system'),
+                        isset($mediaData['tenant_id']) ? (string) $mediaData['tenant_id'] : null,
                         MediaVisibility::Public,
                     );
 
@@ -340,7 +345,7 @@ final readonly class SiteDefinitionParser
                 continue;
             }
 
-            $contentType = $itemData['content_type'] ?? $itemData['type'] ?? 'page';
+            $contentType = (string) ($itemData['content_type'] ?? $itemData['type'] ?? 'page');
             $contentId = UuidGenerator::v7();
             $contentIds[] = ['id' => $contentId, 'data' => $itemData];
             $contentRefMap["{$contentType}:{$slug}"] = $contentId;
@@ -353,41 +358,43 @@ final readonly class SiteDefinitionParser
 
         // Second pass: persist with resolved references
         foreach ($contentIds as $entry) {
+            /** @var array{id: string, data: array<string, mixed>} $entry */
             $contentId = $entry['id'];
             $itemData = $entry['data'];
 
-            $contentType = ContentType::tryFrom($itemData['content_type'] ?? $itemData['type'] ?? 'page') ?? ContentType::Page;
-            $locale = $itemData['locale'] ?? 'en';
-            $slug = $itemData['slug'];
+            $contentType = ContentType::tryFrom((string) ($itemData['content_type'] ?? $itemData['type'] ?? 'page')) ?? ContentType::Page;
+            $locale = (string) ($itemData['locale'] ?? 'en');
+            $slug = (string) $itemData['slug'];
 
             // Resolve parent_slug
             $parentId = null;
 
             if (isset($itemData['parent_slug'])) {
-                $parentRef = ($itemData['content_type'] ?? 'page') . ':' . $itemData['parent_slug'];
+                $parentRef = (string) ($itemData['content_type'] ?? 'page') . ':' . (string) $itemData['parent_slug'];
                 $parentId = $contentRefMap[$parentRef] ?? null;
             }
 
             $content = Content::create(
                 id: $contentId,
                 contentType: $contentType,
-                authorId: $itemData['author_id'] ?? 'system',
-                tenantId: $itemData['tenant_id'] ?? null,
-                template: $itemData['template'] ?? null,
+                authorId: (string) ($itemData['author_id'] ?? 'system'),
+                tenantId: isset($itemData['tenant_id']) ? (string) $itemData['tenant_id'] : null,
+                template: isset($itemData['template']) ? (string) $itemData['template'] : null,
                 parentId: $parentId,
             );
 
             $this->contentRepository->save($content);
 
             // Resolve media references in body
-            $body = $itemData['body'] ?? '';
+            $body = (string) ($itemData['body'] ?? '');
             $body = $this->resolveMediaRefs($body, $mediaRefMap);
 
             // Resolve og_image media reference
             $ogImageId = null;
 
             if (isset($itemData['og_image'])) {
-                $ogImageId = $mediaRefMap[$itemData['og_image']] ?? null;
+                $ogImageRef = (string) $itemData['og_image'];
+                $ogImageId = $mediaRefMap[$ogImageRef] ?? null;
             }
 
             $translationId = UuidGenerator::v7();
@@ -395,13 +402,13 @@ final readonly class SiteDefinitionParser
                 id: $translationId,
                 contentId: $contentId,
                 locale: $locale,
-                title: $itemData['title'] ?? $slug,
+                title: (string) ($itemData['title'] ?? $slug),
                 slugSegment: $slug,
-                path: $itemData['path'] ?? $slug,
+                path: (string) ($itemData['path'] ?? $slug),
                 body: $body,
-                excerpt: $itemData['excerpt'] ?? null,
-                metaTitle: $itemData['meta_title'] ?? null,
-                metaDescription: $itemData['meta_description'] ?? null,
+                excerpt: isset($itemData['excerpt']) ? (string) $itemData['excerpt'] : null,
+                metaTitle: isset($itemData['meta_title']) ? (string) $itemData['meta_title'] : null,
+                metaDescription: isset($itemData['meta_description']) ? (string) $itemData['meta_description'] : null,
                 ogImageId: $ogImageId,
             );
 
@@ -413,6 +420,11 @@ final readonly class SiteDefinitionParser
 
             if (is_array($blocks)) {
                 foreach ($blocks as $blockData) {
+                    if (!is_array($blockData)) {
+                        continue;
+                    }
+
+                    /** @var array<string, mixed> $blockData */
                     $blockContent = $blockData['data'] ?? $blockData['content'] ?? [];
 
                     if (is_array($blockContent)) {
@@ -481,12 +493,12 @@ final readonly class SiteDefinitionParser
             }
 
             $menuId = UuidGenerator::v7();
-            $locale = $menuData['locale'] ?? 'en';
+            $locale = (string) ($menuData['locale'] ?? 'en');
 
             $menu = new Menu(
                 id: $menuId,
-                tenantId: $menuData['tenant_id'] ?? null,
-                location: $location,
+                tenantId: isset($menuData['tenant_id']) ? (string) $menuData['tenant_id'] : null,
+                location: (string) $location,
                 createdAt: new DateTimeImmutable(),
             );
             $translations = [];
@@ -495,7 +507,7 @@ final readonly class SiteDefinitionParser
                 $translations[] = new MenuTranslation(
                     menuId: $menuId,
                     locale: $locale,
-                    name: $menuData['name'],
+                    name: (string) $menuData['name'],
                 );
             }
 
@@ -505,13 +517,22 @@ final readonly class SiteDefinitionParser
 
             if (is_array($items)) {
                 foreach ($items as $sortOrder => $itemData) {
+                    if (!is_array($itemData)) {
+                        continue;
+                    }
+
+                    /** @var array<string, mixed> $itemData */
                     $itemId = UuidGenerator::v7();
 
                     // Resolve content_ref to content ID
                     $contentId = null;
 
-                    if (isset($itemData['content_ref']) && isset($contentRefMap[$itemData['content_ref']])) {
-                        $contentId = $contentRefMap[$itemData['content_ref']];
+                    if (isset($itemData['content_ref'])) {
+                        $contentRef = (string) $itemData['content_ref'];
+
+                        if (isset($contentRefMap[$contentRef])) {
+                            $contentId = $contentRefMap[$contentRef];
+                        }
                     }
 
                     $item = new MenuItem(
@@ -519,12 +540,12 @@ final readonly class SiteDefinitionParser
                         menuId: $menuId,
                         parentId: null,
                         contentId: $contentId,
-                        url: $itemData['url'] ?? null,
-                        target: LinkTarget::tryFrom($itemData['target'] ?? '_self') ?? LinkTarget::Self,
-                        cssClass: $itemData['css_class'] ?? null,
-                        icon: $itemData['icon'] ?? null,
-                        sortOrder: $itemData['sort_order'] ?? $sortOrder,
-                        visible: $itemData['visible'] ?? true,
+                        url: isset($itemData['url']) ? (string) $itemData['url'] : null,
+                        target: LinkTarget::tryFrom((string) ($itemData['target'] ?? '_self')) ?? LinkTarget::Self,
+                        cssClass: isset($itemData['css_class']) ? (string) $itemData['css_class'] : null,
+                        icon: isset($itemData['icon']) ? (string) $itemData['icon'] : null,
+                        sortOrder: (int) ($itemData['sort_order'] ?? $sortOrder),
+                        visible: (bool) ($itemData['visible'] ?? true),
                     );
                     $itemTranslations = [];
 
@@ -532,8 +553,8 @@ final readonly class SiteDefinitionParser
                         $itemTranslations[] = new MenuItemTranslation(
                             menuItemId: $itemId,
                             locale: $locale,
-                            label: $itemData['label'],
-                            titleAttr: $itemData['title_attr'] ?? null,
+                            label: (string) $itemData['label'],
+                            titleAttr: isset($itemData['title_attr']) ? (string) $itemData['title_attr'] : null,
                         );
                     }
 
