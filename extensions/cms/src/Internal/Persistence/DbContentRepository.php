@@ -9,6 +9,8 @@ use InvalidArgumentException;
 use Pulsar\Api\Internal;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\InListBuilder;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Content\CommentPolicy;
 use Pulsar\Extension\Cms\Content\Content;
@@ -21,9 +23,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
 use function array_map;
 use function ceil;
 use function count;
-use function get_debug_type;
 use function implode;
-use function is_string;
 use function max;
 use function preg_match;
 use function range;
@@ -35,7 +35,9 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
     private const string SQL_FIND_BY_ID = <<<'SQL'
         SELECT c.*
         FROM cms_contents c
-        WHERE c.id = :id AND c.deleted_at IS NULL
+        WHERE c.id = :id
+            AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
+            AND c.deleted_at IS NULL
         SQL;
 
     private const string SQL_FIND_BY_PATH = <<<'SQL'
@@ -68,45 +70,27 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
             AND c.deleted_at IS NULL
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_contents (
-            id, tenant_id, content_type, author_id, status,
-            scheduled_publish_at, scheduled_unpublish_at, published_at,
-            created_at, updated_at, deleted_at, template,
-            parent_id, sort_order, comment_policy, data_classification, version
-        ) VALUES (
-            :id, :tenant_id, :content_type, :author_id, :status,
-            :scheduled_publish_at, :scheduled_unpublish_at, :published_at,
-            :created_at, :updated_at, :deleted_at, :template,
-            :parent_id, :sort_order, :comment_policy, :data_classification, :version
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            status = EXCLUDED.status,
-            scheduled_publish_at = EXCLUDED.scheduled_publish_at,
-            scheduled_unpublish_at = EXCLUDED.scheduled_unpublish_at,
-            published_at = EXCLUDED.published_at,
-            updated_at = EXCLUDED.updated_at,
-            deleted_at = EXCLUDED.deleted_at,
-            template = EXCLUDED.template,
-            parent_id = EXCLUDED.parent_id,
-            sort_order = EXCLUDED.sort_order,
-            comment_policy = EXCLUDED.comment_policy,
-            data_classification = EXCLUDED.data_classification,
-            version = cms_contents.version + 1
-        WHERE cms_contents.version = :expected_version
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'content_type', 'author_id', 'status',
+        'scheduled_publish_at', 'scheduled_unpublish_at', 'published_at',
+        'created_at', 'updated_at', 'deleted_at', 'template',
+        'parent_id', 'sort_order', 'comment_policy', 'data_classification', 'version',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'status', 'scheduled_publish_at', 'scheduled_unpublish_at', 'published_at',
+        'updated_at', 'deleted_at', 'template', 'parent_id', 'sort_order',
+        'comment_policy', 'data_classification',
+    ];
 
     private const string SQL_SOFT_DELETE = <<<'SQL'
         UPDATE cms_contents
         SET deleted_at = :deleted_at, updated_at = :updated_at
         WHERE id = :id
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
-    private const string SQL_FIND_BY_IDS = <<<'SQL'
-        SELECT c.*
-        FROM cms_contents c
-        WHERE c.id = ANY(:ids) AND c.deleted_at IS NULL
-        SQL;
+    // SQL_FIND_BY_IDS built dynamically via InListBuilder for portability
 
     private const string SQL_FIND_ANCESTORS = <<<'SQL'
         WITH RECURSIVE ancestors AS (
@@ -115,6 +99,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
             WHERE c.id = (
                 SELECT parent_id FROM cms_contents WHERE id = :content_id AND deleted_at IS NULL
             ) AND c.deleted_at IS NULL
+              AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             UNION ALL
             SELECT c.*, a.depth + 1
             FROM cms_contents c
@@ -128,6 +113,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         WITH RECURSIVE descendants AS (
             SELECT c.* FROM cms_contents c
             WHERE c.parent_id = :parent_id AND c.deleted_at IS NULL
+                AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             UNION ALL
             SELECT c.* FROM cms_contents c
             INNER JOIN descendants d ON c.parent_id = d.id
@@ -142,6 +128,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         WHERE c.status = 'scheduled'
             AND c.scheduled_publish_at IS NOT NULL
             AND c.scheduled_publish_at <= :now
+            AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND c.deleted_at IS NULL
         SQL;
 
@@ -151,6 +138,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         WHERE c.status = 'published'
             AND c.scheduled_unpublish_at IS NOT NULL
             AND c.scheduled_unpublish_at <= :now
+            AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND c.deleted_at IS NULL
         SQL;
 
@@ -161,7 +149,10 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
 
     public function findById(string $id): ?Content
     {
-        $result = $this->connection->query(self::SQL_FIND_BY_ID, ['id' => $id]);
+        $result = $this->connection->query(self::SQL_FIND_BY_ID, [
+            'id' => $id,
+            'tenant_key' => $this->tenantId ?? '00000000-0000-0000-0000-000000000000',
+        ]);
         $row = $result->first();
 
         if ($row === null) {
@@ -238,16 +229,17 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         }
 
         foreach ($ids as $id) {
-            if (!is_string($id) || preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id) !== 1) {
-                throw new InvalidArgumentException(sprintf('Invalid UUID in findByIds: %s', is_string($id) ? $id : get_debug_type($id)));
+            if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id) !== 1) {
+                throw new InvalidArgumentException(sprintf('Invalid UUID in findByIds: %s', $id));
             }
         }
 
-        $pgArray = '{' . implode(',', $ids) . '}';
+        $inClause = InListBuilder::compile($this->connection->driver(), 'c.id', 'ids', count($ids));
+        $sql = "SELECT c.* FROM cms_contents c WHERE {$inClause} AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key AND c.deleted_at IS NULL";
+        $bindings = InListBuilder::expandParams($this->connection->driver(), 'ids', $ids);
+        $bindings['tenant_key'] = $this->tenantId ?? '00000000-0000-0000-0000-000000000000';
 
-        $result = $this->connection->query(self::SQL_FIND_BY_IDS, [
-            'ids' => $pgArray,
-        ]);
+        $result = $this->connection->query($sql, $bindings);
 
         $indexed = [];
 
@@ -264,6 +256,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         $result = $this->connection->query(self::SQL_FIND_ANCESTORS, [
             'content_id' => $contentId,
             'max_depth' => $maxDepth,
+            'tenant_key' => $this->tenantId ?? '00000000-0000-0000-0000-000000000000',
         ]);
 
         return $result->map(self::hydrate(...));
@@ -271,7 +264,17 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
 
     public function save(Content $content): void
     {
-        $affected = $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_contents',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+            extraWhere: 'cms_contents.version = :expected_version',
+            extraSet: 'version = cms_contents.version + 1',
+        );
+
+        $affected = $this->connection->execute($sql, [
             'id' => $content->id,
             'tenant_id' => $content->tenantId,
             'content_type' => $content->contentType->value,
@@ -305,6 +308,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
             'id' => $content->id,
             'deleted_at' => $now->format('c'),
             'updated_at' => $now->format('c'),
+            'tenant_key' => $this->tenantId ?? '00000000-0000-0000-0000-000000000000',
         ]);
     }
 
@@ -312,6 +316,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
     {
         $result = $this->connection->query(self::SQL_FIND_DESCENDANTS, [
             'parent_id' => $contentId,
+            'tenant_key' => $this->tenantId ?? '00000000-0000-0000-0000-000000000000',
         ]);
 
         return $result->map(self::hydrate(...));
@@ -321,6 +326,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
     {
         $result = $this->connection->query(self::SQL_FIND_SCHEDULED_FOR_PUBLISHING, [
             'now' => $now->format('c'),
+            'tenant_key' => $this->tenantId ?? '00000000-0000-0000-0000-000000000000',
         ]);
 
         return $result->map(self::hydrate(...));
@@ -330,6 +336,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
     {
         $result = $this->connection->query(self::SQL_FIND_SCHEDULED_FOR_UNPUBLISHING, [
             'now' => $now->format('c'),
+            'tenant_key' => $this->tenantId ?? '00000000-0000-0000-0000-000000000000',
         ]);
 
         return $result->map(self::hydrate(...));
@@ -400,8 +407,8 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
     private static function validateIds(array $ids): void
     {
         foreach ($ids as $id) {
-            if (!is_string($id) || preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id) !== 1) {
-                throw new InvalidArgumentException(sprintf('Invalid UUID: %s', is_string($id) ? $id : get_debug_type($id)));
+            if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id) !== 1) {
+                throw new InvalidArgumentException(sprintf('Invalid UUID: %s', $id));
             }
         }
     }

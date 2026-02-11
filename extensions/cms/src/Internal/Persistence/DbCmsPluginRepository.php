@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Plugins\CmsPluginRepositoryInterface;
 use Pulsar\Extension\Cms\Plugins\InstalledCmsPlugin;
@@ -40,40 +41,24 @@ final readonly class DbCmsPluginRepository implements CmsPluginRepositoryInterfa
         ORDER BY boot_order ASC
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_installed_plugins (
-            id, tenant_id, slug, display_name, version, description,
-            author_name, author_url, license, manifest_hash, package_hash,
-            provenance_verified, signature_verified, capabilities, boot_order,
-            is_enabled, storage_path, installed_at, installed_by,
-            enabled_at, enabled_by, disabled_at, deleted_at
-        ) VALUES (
-            :id, :tenant_id, :slug, :display_name, :version, :description,
-            :author_name, :author_url, :license, :manifest_hash, :package_hash,
-            :provenance_verified, :signature_verified, :capabilities, :boot_order,
-            :is_enabled, :storage_path, :installed_at, :installed_by,
-            :enabled_at, :enabled_by, :disabled_at, :deleted_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            display_name = EXCLUDED.display_name,
-            version = EXCLUDED.version,
-            description = EXCLUDED.description,
-            author_name = EXCLUDED.author_name,
-            author_url = EXCLUDED.author_url,
-            license = EXCLUDED.license,
-            manifest_hash = EXCLUDED.manifest_hash,
-            package_hash = EXCLUDED.package_hash,
-            provenance_verified = EXCLUDED.provenance_verified,
-            signature_verified = EXCLUDED.signature_verified,
-            capabilities = EXCLUDED.capabilities,
-            boot_order = EXCLUDED.boot_order,
-            is_enabled = EXCLUDED.is_enabled,
-            storage_path = EXCLUDED.storage_path,
-            enabled_at = EXCLUDED.enabled_at,
-            enabled_by = EXCLUDED.enabled_by,
-            disabled_at = EXCLUDED.disabled_at,
-            deleted_at = EXCLUDED.deleted_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'slug', 'display_name', 'version', 'description',
+        'author_name', 'author_url', 'license', 'manifest_hash', 'package_hash',
+        'provenance_verified', 'signature_verified', 'capabilities', 'boot_order',
+        'is_enabled', 'storage_path', 'installed_at', 'installed_by',
+        'enabled_at', 'enabled_by', 'disabled_at', 'deleted_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'display_name', 'version', 'description',
+        'author_name', 'author_url', 'license',
+        'manifest_hash', 'package_hash',
+        'provenance_verified', 'signature_verified',
+        'capabilities', 'boot_order',
+        'is_enabled', 'storage_path',
+        'enabled_at', 'enabled_by',
+        'disabled_at', 'deleted_at',
+    ];
 
     private const string SQL_DELETE = <<<'SQL'
         UPDATE cms_installed_plugins SET deleted_at = :deleted_at WHERE id = :id
@@ -151,7 +136,15 @@ final readonly class DbCmsPluginRepository implements CmsPluginRepositoryInterfa
 
     public function save(InstalledCmsPlugin $plugin): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_installed_plugins',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $plugin->id,
             'tenant_id' => $plugin->tenantId,
             'slug' => $plugin->slug,

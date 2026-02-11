@@ -7,11 +7,15 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Settings\SiteSetting;
 
+use function array_map;
+use function implode;
 use function json_decode;
 use function json_encode;
+use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -33,7 +37,7 @@ final readonly class DbSettingsRepository
           AND "group" = :group
           AND key = :key
           AND (locale = :locale OR locale IS NULL)
-        ORDER BY locale DESC NULLS LAST
+        ORDER BY CASE WHEN locale IS NULL THEN 1 ELSE 0 END, locale DESC
         LIMIT 1
         SQL;
 
@@ -48,21 +52,9 @@ final readonly class DbSettingsRepository
         WHERE COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_site_settings (
-            id, tenant_id, "group", key, locale, value, value_type, updated_at, updated_by
-        ) VALUES (
-            :id, :tenant_id, :group, :key, :locale, :value, :value_type, :updated_at, :updated_by
-        )
-        ON CONFLICT (
-            COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000'),
-            "group", key, COALESCE(locale, '')
-        ) DO UPDATE SET
-            value = EXCLUDED.value,
-            value_type = EXCLUDED.value_type,
-            updated_at = EXCLUDED.updated_at,
-            updated_by = EXCLUDED.updated_by
-        SQL;
+    private const array UPSERT_UPDATE = [
+        'value', 'value_type', 'updated_at', 'updated_by',
+    ];
 
     public function __construct(
         private ConnectionInterface $connection,
@@ -142,7 +134,9 @@ final readonly class DbSettingsRepository
 
     public function save(SiteSetting $setting): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = self::compileUpsert($this->connection->driver());
+
+        $this->connection->execute($sql, [
             'id' => $setting->id,
             'tenant_id' => $setting->tenantId,
             'group' => $setting->group,
@@ -153,6 +147,35 @@ final readonly class DbSettingsRepository
             'updated_at' => $setting->updatedAt->format('c'),
             'updated_by' => $setting->updatedBy,
         ]);
+    }
+
+    private static function compileUpsert(Driver $driver): string
+    {
+        $setClauses = implode(', ', array_map(
+            static fn(string $col): string => match ($driver) {
+                Driver::MySQL => sprintf('%s = VALUES(%s)', $col, $col),
+                Driver::PostgreSQL, Driver::SQLite => sprintf('%s = EXCLUDED.%s', $col, $col),
+            },
+            self::UPSERT_UPDATE,
+        ));
+
+        $q = match ($driver) {
+            Driver::MySQL => '`',
+            Driver::PostgreSQL, Driver::SQLite => '"',
+        };
+
+        $insert = 'INSERT INTO cms_site_settings'
+            . ' (id, tenant_id, ' . $q . 'group' . $q . ', ' . $q . 'key' . $q
+            . ', locale, value, value_type, updated_at, updated_by)'
+            . ' VALUES (:id, :tenant_id, :group, :key, :locale, :value, :value_type, :updated_at, :updated_by)';
+
+        return match ($driver) {
+            Driver::PostgreSQL, Driver::SQLite => $insert
+                . ' ON CONFLICT (COALESCE(tenant_id, \'00000000-0000-0000-0000-000000000000\'), '
+                . $q . 'group' . $q . ', ' . $q . 'key' . $q
+                . ', COALESCE(locale, \'\')) DO UPDATE SET ' . $setClauses,
+            Driver::MySQL => $insert . ' ON DUPLICATE KEY UPDATE ' . $setClauses,
+        };
     }
 
     public function decodeValue(SiteSetting $setting): mixed

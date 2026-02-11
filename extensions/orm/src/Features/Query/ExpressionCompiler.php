@@ -152,6 +152,9 @@ final readonly class ExpressionCompiler
         );
     }
 
+    /**
+     * @param array<string, mixed> $bindings
+     */
     public function exists(string $subquerySql, array $bindings = []): Expression
     {
         return new Expression(

@@ -6,11 +6,13 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\InListBuilder;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 
-use function implode;
+use function count;
 use function json_decode;
 use function json_encode;
 
@@ -41,41 +43,21 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
             AND tenant_key = COALESCE(:tenant_id, '00000000-0000-0000-0000-000000000000')
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_content_translations (
-            id, content_id, locale, tenant_id, title, slug_segment, path,
-            body, excerpt, meta_title, meta_description, og_image_id,
-            robots, structured_data_overrides, reading_time_minutes,
-            body_plaintext, headings_text, custom_fields_text, taxonomy_terms_text
-        ) VALUES (
-            :id, :content_id, :locale, :tenant_id, :title, :slug_segment, :path,
-            :body, :excerpt, :meta_title, :meta_description, :og_image_id,
-            :robots, :structured_data_overrides, :reading_time_minutes,
-            :body_plaintext, :headings_text, :custom_fields_text, :taxonomy_terms_text
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            title = EXCLUDED.title,
-            slug_segment = EXCLUDED.slug_segment,
-            path = EXCLUDED.path,
-            body = EXCLUDED.body,
-            excerpt = EXCLUDED.excerpt,
-            meta_title = EXCLUDED.meta_title,
-            meta_description = EXCLUDED.meta_description,
-            og_image_id = EXCLUDED.og_image_id,
-            robots = EXCLUDED.robots,
-            structured_data_overrides = EXCLUDED.structured_data_overrides,
-            reading_time_minutes = EXCLUDED.reading_time_minutes,
-            body_plaintext = EXCLUDED.body_plaintext,
-            headings_text = EXCLUDED.headings_text,
-            custom_fields_text = EXCLUDED.custom_fields_text,
-            taxonomy_terms_text = EXCLUDED.taxonomy_terms_text
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'content_id', 'locale', 'tenant_id', 'title', 'slug_segment', 'path',
+        'body', 'excerpt', 'meta_title', 'meta_description', 'og_image_id',
+        'robots', 'structured_data_overrides', 'reading_time_minutes',
+        'body_plaintext', 'headings_text', 'custom_fields_text', 'taxonomy_terms_text',
+    ];
 
-    private const string SQL_FIND_BY_CONTENT_IDS = <<<'SQL'
-        SELECT * FROM cms_content_translations
-        WHERE content_id = ANY(:content_ids)
-        ORDER BY content_id, locale
-        SQL;
+    private const array UPSERT_UPDATE = [
+        'title', 'slug_segment', 'path', 'body', 'excerpt', 'meta_title',
+        'meta_description', 'og_image_id', 'robots', 'structured_data_overrides',
+        'reading_time_minutes', 'body_plaintext', 'headings_text',
+        'custom_fields_text', 'taxonomy_terms_text',
+    ];
+
+    // SQL_FIND_BY_CONTENT_IDS built dynamically via InListBuilder for portability
 
     private const string SQL_DELETE = <<<'SQL'
         DELETE FROM cms_content_translations WHERE id = :id
@@ -113,11 +95,11 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
             return [];
         }
 
-        $pgArray = '{' . implode(',', $contentIds) . '}';
+        $inClause = InListBuilder::compile($this->connection->driver(), 'content_id', 'content_ids', count($contentIds));
+        $sql = "SELECT * FROM cms_content_translations WHERE {$inClause} ORDER BY content_id, locale";
+        $bindings = InListBuilder::expandParams($this->connection->driver(), 'content_ids', $contentIds);
 
-        $result = $this->connection->query(self::SQL_FIND_BY_CONTENT_IDS, [
-            'content_ids' => $pgArray,
-        ]);
+        $result = $this->connection->query($sql, $bindings);
 
         $grouped = [];
 
@@ -162,7 +144,15 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
 
     public function save(ContentTranslation $translation): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_content_translations',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $translation->id,
             'content_id' => $translation->contentId,
             'locale' => $translation->locale,

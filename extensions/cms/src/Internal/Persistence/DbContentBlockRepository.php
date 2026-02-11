@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Content\ContentBlock;
 use Pulsar\Extension\Cms\Content\ContentBlockRepositoryInterface;
@@ -29,20 +30,12 @@ final readonly class DbContentBlockRepository implements ContentBlockRepositoryI
         ORDER BY sort_order ASC
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_content_blocks (
-            id, content_id, locale, block_type, sort_order, data,
-            created_at, updated_at
-        ) VALUES (
-            :id, :content_id, :locale, :block_type, :sort_order, :data,
-            :created_at, :updated_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            block_type = EXCLUDED.block_type,
-            sort_order = EXCLUDED.sort_order,
-            data = EXCLUDED.data,
-            updated_at = EXCLUDED.updated_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'content_id', 'locale', 'block_type', 'sort_order', 'data',
+        'created_at', 'updated_at',
+    ];
+
+    private const array UPSERT_UPDATE = ['block_type', 'sort_order', 'data', 'updated_at'];
 
     private const string SQL_DELETE = <<<'SQL'
         DELETE FROM cms_content_blocks WHERE id = :id
@@ -81,7 +74,15 @@ final readonly class DbContentBlockRepository implements ContentBlockRepositoryI
 
     public function save(ContentBlock $block): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_content_blocks',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $block->id,
             'content_id' => $block->contentId,
             'locale' => $block->locale,

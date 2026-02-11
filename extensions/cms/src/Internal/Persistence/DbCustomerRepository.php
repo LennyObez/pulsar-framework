@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Customer;
 use Pulsar\Extension\Cms\Commerce\CustomerRepositoryInterface;
@@ -34,22 +35,14 @@ final readonly class DbCustomerRepository implements CustomerRepositoryInterface
         SELECT * FROM cms_customers WHERE user_id = :user_id
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_customers (
-            id, tenant_id, user_id, email, display_name,
-            billing_address, shipping_address, created_at, updated_at
-        ) VALUES (
-            :id, :tenant_id, :user_id, :email, :display_name,
-            :billing_address, :shipping_address, :created_at, :updated_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            user_id = EXCLUDED.user_id,
-            email = EXCLUDED.email,
-            display_name = EXCLUDED.display_name,
-            billing_address = EXCLUDED.billing_address,
-            shipping_address = EXCLUDED.shipping_address,
-            updated_at = EXCLUDED.updated_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'user_id', 'email', 'display_name',
+        'billing_address', 'shipping_address', 'created_at', 'updated_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'user_id', 'email', 'display_name', 'billing_address', 'shipping_address', 'updated_at',
+    ];
 
     public function __construct(
         private ConnectionInterface $db,
@@ -88,7 +81,15 @@ final readonly class DbCustomerRepository implements CustomerRepositoryInterface
 
     public function save(Customer $customer): void
     {
-        $this->db->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_customers',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $customer->id,
             'tenant_id' => $customer->tenantId,
             'user_id' => $customer->userId,

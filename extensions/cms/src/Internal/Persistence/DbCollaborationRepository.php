@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Collaboration\CollaborationRepositoryInterface;
 use Pulsar\Extension\Cms\Collaboration\CollaborationSession;
@@ -22,14 +23,8 @@ final readonly class DbCollaborationRepository implements CollaborationRepositor
         WHERE content_id = :content_id
         SQL;
 
-    private const string SQL_UPSERT_DOCUMENT = <<<'SQL'
-        INSERT INTO cms_collaboration_states (content_id, state_vector, version, updated_at)
-        VALUES (:content_id, :state_vector, :version, :updated_at)
-        ON CONFLICT (content_id) DO UPDATE SET
-            state_vector = EXCLUDED.state_vector,
-            version = EXCLUDED.version,
-            updated_at = EXCLUDED.updated_at
-        SQL;
+    private const array UPSERT_DOC_COLUMNS = ['content_id', 'state_vector', 'version', 'updated_at'];
+    private const array UPSERT_DOC_UPDATE = ['state_vector', 'version', 'updated_at'];
 
     private const string SQL_GET_ACTIVE_SESSIONS = <<<'SQL'
         SELECT id, content_id, user_id, user_name, cursor_position,
@@ -39,18 +34,11 @@ final readonly class DbCollaborationRepository implements CollaborationRepositor
         ORDER BY connected_at ASC
         SQL;
 
-    private const string SQL_UPSERT_SESSION = <<<'SQL'
-        INSERT INTO cms_collaboration_sessions
-            (id, content_id, user_id, user_name, cursor_position,
-             selection_range, connected_at, last_seen_at)
-        VALUES
-            (:id, :content_id, :user_id, :user_name, :cursor_position,
-             :selection_range, :connected_at, :last_seen_at)
-        ON CONFLICT (id) DO UPDATE SET
-            cursor_position = EXCLUDED.cursor_position,
-            selection_range = EXCLUDED.selection_range,
-            last_seen_at = EXCLUDED.last_seen_at
-        SQL;
+    private const array UPSERT_SESSION_COLUMNS = [
+        'id', 'content_id', 'user_id', 'user_name', 'cursor_position',
+        'selection_range', 'connected_at', 'last_seen_at',
+    ];
+    private const array UPSERT_SESSION_UPDATE = ['cursor_position', 'selection_range', 'last_seen_at'];
 
     private const string SQL_REMOVE_SESSION = <<<'SQL'
         DELETE FROM cms_collaboration_sessions WHERE id = :id
@@ -83,7 +71,15 @@ final readonly class DbCollaborationRepository implements CollaborationRepositor
     #[Override]
     public function saveDocument(CrdtDocument $document): void
     {
-        $this->connection->execute(self::SQL_UPSERT_DOCUMENT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_collaboration_states',
+            self::UPSERT_DOC_COLUMNS,
+            ['content_id'],
+            self::UPSERT_DOC_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'content_id' => $document->contentId,
             'state_vector' => $document->stateVector,
             'version' => $document->version,
@@ -104,7 +100,15 @@ final readonly class DbCollaborationRepository implements CollaborationRepositor
     #[Override]
     public function saveSession(CollaborationSession $session): void
     {
-        $this->connection->execute(self::SQL_UPSERT_SESSION, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_collaboration_sessions',
+            self::UPSERT_SESSION_COLUMNS,
+            ['id'],
+            self::UPSERT_SESSION_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $session->id,
             'content_id' => $session->contentId,
             'user_id' => $session->userId,

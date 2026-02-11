@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Invoice;
 use Pulsar\Extension\Cms\Commerce\InvoiceRepositoryInterface;
@@ -28,19 +29,12 @@ final readonly class DbInvoiceRepository implements InvoiceRepositoryInterface
         SELECT * FROM cms_invoices WHERE order_id = :order_id LIMIT 1
         SQL;
 
-    private const string SQL_INSERT = <<<'SQL'
-        INSERT INTO cms_invoices (
-            id, order_id, invoice_number, issued_at, due_at,
-            pdf_storage_path, pdf_hash, evidence_hash, data_classification
-        ) VALUES (
-            :id, :order_id, :invoice_number, :issued_at, :due_at,
-            :pdf_storage_path, :pdf_hash, :evidence_hash, :data_classification
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            pdf_storage_path = EXCLUDED.pdf_storage_path,
-            pdf_hash = EXCLUDED.pdf_hash,
-            evidence_hash = EXCLUDED.evidence_hash
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'order_id', 'invoice_number', 'issued_at', 'due_at',
+        'pdf_storage_path', 'pdf_hash', 'evidence_hash', 'data_classification',
+    ];
+
+    private const array UPSERT_UPDATE = ['pdf_storage_path', 'pdf_hash', 'evidence_hash'];
 
     private const string SQL_COUNT = <<<'SQL'
         SELECT COUNT(*) AS cnt FROM cms_invoices
@@ -67,7 +61,15 @@ final readonly class DbInvoiceRepository implements InvoiceRepositoryInterface
 
     public function save(Invoice $invoice): void
     {
-        $this->db->execute(self::SQL_INSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_invoices',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $invoice->id,
             'order_id' => $invoice->orderId,
             'invoice_number' => $invoice->invoiceNumber,

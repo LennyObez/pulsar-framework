@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Media\MediaAsset;
@@ -42,29 +43,18 @@ final readonly class DbMediaRepository implements MediaRepositoryInterface
         SELECT * FROM cms_media_assets WHERE deleted_at IS NULL
         SQL;
 
-    private const string SQL_UPSERT_ASSET = <<<'SQL'
-        INSERT INTO cms_media_assets (
-            id, tenant_id, uploader_id, filename, storage_path, disk,
-            mime_type, file_size, file_hash, width, height, exif_data,
-            alt_text_default, visibility, data_classification,
-            created_at, updated_at, deleted_at
-        ) VALUES (
-            :id, :tenant_id, :uploader_id, :filename, :storage_path, :disk,
-            :mime_type, :file_size, :file_hash, :width, :height, :exif_data,
-            :alt_text_default, :visibility, :data_classification,
-            :created_at, :updated_at, :deleted_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            filename = EXCLUDED.filename,
-            storage_path = EXCLUDED.storage_path,
-            mime_type = EXCLUDED.mime_type,
-            file_size = EXCLUDED.file_size,
-            alt_text_default = EXCLUDED.alt_text_default,
-            visibility = EXCLUDED.visibility,
-            data_classification = EXCLUDED.data_classification,
-            updated_at = EXCLUDED.updated_at,
-            deleted_at = EXCLUDED.deleted_at
-        SQL;
+    private const array UPSERT_ASSET_COLUMNS = [
+        'id', 'tenant_id', 'uploader_id', 'filename', 'storage_path', 'disk',
+        'mime_type', 'file_size', 'file_hash', 'width', 'height', 'exif_data',
+        'alt_text_default', 'visibility', 'data_classification',
+        'created_at', 'updated_at', 'deleted_at',
+    ];
+
+    private const array UPSERT_ASSET_UPDATE = [
+        'filename', 'storage_path', 'mime_type', 'file_size',
+        'alt_text_default', 'visibility', 'data_classification',
+        'updated_at', 'deleted_at',
+    ];
 
     private const string SQL_SOFT_DELETE_ASSET = <<<'SQL'
         UPDATE cms_media_assets
@@ -76,34 +66,17 @@ final readonly class DbMediaRepository implements MediaRepositoryInterface
         SELECT * FROM cms_media_derivatives WHERE media_asset_id = :asset_id ORDER BY variant, format
         SQL;
 
-    private const string SQL_UPSERT_DERIVATIVE = <<<'SQL'
-        INSERT INTO cms_media_derivatives (
-            id, media_asset_id, variant, format, storage_path,
-            file_size, width, height, file_hash, created_at
-        ) VALUES (
-            :id, :media_asset_id, :variant, :format, :storage_path,
-            :file_size, :width, :height, :file_hash, :created_at
-        )
-        ON CONFLICT (media_asset_id, variant, format) DO UPDATE SET
-            storage_path = EXCLUDED.storage_path,
-            file_size = EXCLUDED.file_size,
-            width = EXCLUDED.width,
-            height = EXCLUDED.height,
-            file_hash = EXCLUDED.file_hash,
-            created_at = EXCLUDED.created_at
-        SQL;
+    private const array UPSERT_DERIVATIVE_COLUMNS = [
+        'id', 'media_asset_id', 'variant', 'format', 'storage_path',
+        'file_size', 'width', 'height', 'file_hash', 'created_at',
+    ];
 
-    private const string SQL_UPSERT_TRANSLATION = <<<'SQL'
-        INSERT INTO cms_media_asset_translations (
-            media_asset_id, locale, alt_text, caption, title
-        ) VALUES (
-            :media_asset_id, :locale, :alt_text, :caption, :title
-        )
-        ON CONFLICT (media_asset_id, locale) DO UPDATE SET
-            alt_text = EXCLUDED.alt_text,
-            caption = EXCLUDED.caption,
-            title = EXCLUDED.title
-        SQL;
+    private const array UPSERT_DERIVATIVE_UPDATE = [
+        'storage_path', 'file_size', 'width', 'height', 'file_hash', 'created_at',
+    ];
+
+    private const array UPSERT_TRANSLATION_COLUMNS = ['media_asset_id', 'locale', 'alt_text', 'caption', 'title'];
+    private const array UPSERT_TRANSLATION_UPDATE = ['alt_text', 'caption', 'title'];
 
     private const string SQL_FIND_TRANSLATIONS = <<<'SQL'
         SELECT * FROM cms_media_asset_translations WHERE media_asset_id = :asset_id ORDER BY locale
@@ -195,7 +168,15 @@ final readonly class DbMediaRepository implements MediaRepositoryInterface
 
     public function save(MediaAsset $asset): void
     {
-        $this->connection->execute(self::SQL_UPSERT_ASSET, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_media_assets',
+            self::UPSERT_ASSET_COLUMNS,
+            ['id'],
+            self::UPSERT_ASSET_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $asset->id,
             'tenant_id' => $asset->tenantId,
             'uploader_id' => $asset->uploaderId,
@@ -237,7 +218,15 @@ final readonly class DbMediaRepository implements MediaRepositoryInterface
 
     public function saveDerivative(MediaDerivative $derivative): void
     {
-        $this->connection->execute(self::SQL_UPSERT_DERIVATIVE, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_media_derivatives',
+            self::UPSERT_DERIVATIVE_COLUMNS,
+            ['media_asset_id', 'variant', 'format'],
+            self::UPSERT_DERIVATIVE_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $derivative->id,
             'media_asset_id' => $derivative->mediaAssetId,
             'variant' => $derivative->variant,
@@ -253,7 +242,15 @@ final readonly class DbMediaRepository implements MediaRepositoryInterface
 
     public function saveTranslation(MediaAssetTranslation $translation): void
     {
-        $this->connection->execute(self::SQL_UPSERT_TRANSLATION, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_media_asset_translations',
+            self::UPSERT_TRANSLATION_COLUMNS,
+            ['media_asset_id', 'locale'],
+            self::UPSERT_TRANSLATION_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'media_asset_id' => $translation->mediaAssetId,
             'locale' => $translation->locale,
             'alt_text' => $translation->altText,

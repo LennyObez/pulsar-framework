@@ -91,7 +91,7 @@ final readonly class DbCmsUserRepository implements CmsUserRepositoryInterface
             $bindings['role_pattern'] = '%' . self::escapeLikePattern($role) . '%';
         }
 
-        $whereClause = $where !== [] ? ' WHERE ' . implode(' AND ', $where) : '';
+        $whereClause = ' WHERE ' . implode(' AND ', $where);
 
         // Count
         $countResult = $this->connection->query(
