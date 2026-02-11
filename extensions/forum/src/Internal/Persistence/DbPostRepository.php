@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Exception\ForumException;
 use Pulsar\Extension\Forum\Post\Post;
@@ -20,25 +21,27 @@ use function min;
 #[Internal(reason: 'Raw-DB repository — use PostRepositoryInterface for public API')]
 final readonly class DbPostRepository implements PostRepositoryInterface
 {
+    private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
+
     private const string SQL_FIND_BY_ID = <<<'SQL'
         SELECT p.*
         FROM forum_posts p
         WHERE p.id = :id AND p.deleted_at IS NULL
-            AND p.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(p.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const string SQL_COUNT_BY_THREAD = <<<'SQL'
         SELECT COUNT(*) AS total
         FROM forum_posts p
         WHERE p.thread_id = :thread_id AND p.deleted_at IS NULL
-            AND p.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(p.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const string SQL_FIND_BY_THREAD = <<<'SQL'
         SELECT p.*
         FROM forum_posts p
         WHERE p.thread_id = :thread_id AND p.deleted_at IS NULL
-            AND p.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(p.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         ORDER BY p.created_at ASC
         LIMIT :limit OFFSET :offset
         SQL;
@@ -47,46 +50,31 @@ final readonly class DbPostRepository implements PostRepositoryInterface
         SELECT COUNT(*) AS total
         FROM forum_posts p
         WHERE p.author_id = :author_id AND p.deleted_at IS NULL
-            AND p.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(p.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const string SQL_FIND_BY_AUTHOR = <<<'SQL'
         SELECT p.*
         FROM forum_posts p
         WHERE p.author_id = :author_id AND p.deleted_at IS NULL
-            AND p.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(p.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         ORDER BY p.created_at DESC
         LIMIT :limit OFFSET :offset
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO forum_posts (
-            id, tenant_id, thread_id, parent_id, author_id,
-            body, body_html, is_solution, vote_score,
-            edit_count, edited_by, ip_hash, user_agent_hash,
-            edited_at, edit_window_expires_at,
-            created_at, updated_at, deleted_at, version
-        ) VALUES (
-            :id, :tenant_id, :thread_id, :parent_id, :author_id,
-            :body, :body_html, :is_solution, :vote_score,
-            :edit_count, :edited_by, :ip_hash, :user_agent_hash,
-            :edited_at, :edit_window_expires_at,
-            :created_at, :updated_at, :deleted_at, :version
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            body = EXCLUDED.body,
-            body_html = EXCLUDED.body_html,
-            is_solution = EXCLUDED.is_solution,
-            vote_score = EXCLUDED.vote_score,
-            edit_count = EXCLUDED.edit_count,
-            edited_by = EXCLUDED.edited_by,
-            edited_at = EXCLUDED.edited_at,
-            edit_window_expires_at = EXCLUDED.edit_window_expires_at,
-            updated_at = EXCLUDED.updated_at,
-            deleted_at = EXCLUDED.deleted_at,
-            version = forum_posts.version + 1
-        WHERE forum_posts.version = :expected_version
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'thread_id', 'parent_id', 'author_id',
+        'body', 'body_html', 'is_solution', 'vote_score',
+        'edit_count', 'edited_by', 'ip_hash', 'user_agent_hash',
+        'edited_at', 'edit_window_expires_at',
+        'created_at', 'updated_at', 'deleted_at', 'version',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'body', 'body_html', 'is_solution', 'vote_score',
+        'edit_count', 'edited_by', 'edited_at', 'edit_window_expires_at',
+        'updated_at', 'deleted_at',
+    ];
 
     private const string SQL_INCREMENT_VOTE_SCORE = <<<'SQL'
         UPDATE forum_posts
@@ -108,7 +96,7 @@ final readonly class DbPostRepository implements PostRepositoryInterface
 
     public function findById(string $id): ?Post
     {
-        $result = $this->connection->query(self::SQL_FIND_BY_ID, ['id' => $id, 'tenant_id' => $this->tenantId]);
+        $result = $this->connection->query(self::SQL_FIND_BY_ID, ['id' => $id, 'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT]);
         $row = $result->first();
 
         if ($row === null) {
@@ -129,13 +117,13 @@ final readonly class DbPostRepository implements PostRepositoryInterface
 
         $countResult = $this->connection->query(self::SQL_COUNT_BY_THREAD, [
             'thread_id' => $threadId,
-            'tenant_id' => $this->tenantId,
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
         $dataResult = $this->connection->query(self::SQL_FIND_BY_THREAD, [
             'thread_id' => $threadId,
-            'tenant_id' => $this->tenantId,
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
             'limit' => $perPage,
             'offset' => $offset,
         ]);
@@ -163,13 +151,13 @@ final readonly class DbPostRepository implements PostRepositoryInterface
 
         $countResult = $this->connection->query(self::SQL_COUNT_BY_AUTHOR, [
             'author_id' => $authorId,
-            'tenant_id' => $this->tenantId,
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
         $dataResult = $this->connection->query(self::SQL_FIND_BY_AUTHOR, [
             'author_id' => $authorId,
-            'tenant_id' => $this->tenantId,
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
             'limit' => $perPage,
             'offset' => $offset,
         ]);
@@ -190,7 +178,7 @@ final readonly class DbPostRepository implements PostRepositoryInterface
     {
         $result = $this->connection->query(self::SQL_COUNT_BY_THREAD, [
             'thread_id' => $threadId,
-            'tenant_id' => $this->tenantId,
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
 
         return $result->first()?->getInt('total') ?? 0;
@@ -198,7 +186,17 @@ final readonly class DbPostRepository implements PostRepositoryInterface
 
     public function save(Post $post): void
     {
-        $affected = $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'forum_posts',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+            extraWhere: 'forum_posts.version = :expected_version',
+            extraSet: 'version = forum_posts.version + 1',
+        );
+
+        $affected = $this->connection->execute($sql, [
             'id' => $post->id,
             'tenant_id' => $post->tenantId,
             'thread_id' => $post->threadId,

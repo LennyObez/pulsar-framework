@@ -31,7 +31,7 @@ final readonly class IdentifierQuoter
         if (str_contains($identifier, '.')) {
             $parts = explode('.', $identifier, 2);
 
-            return $this->dialect->quoteIdentifier($parts[0]) . '.' . $this->dialect->quoteIdentifier($parts[1]);
+            return $this->dialect->quoteIdentifier($parts[0]) . '.' . $this->dialect->quoteIdentifier($parts[1] ?? '');
         }
 
         return $this->dialect->quoteIdentifier($identifier);

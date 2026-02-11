@@ -43,8 +43,8 @@ final class SelectBuilder implements EntityQueryBuilderInterface
     /** @var list<string|RawExpression> */
     private array $columns = ['*'];
 
-    private string $baseTable;
-    private string $baseAlias;
+    private string $baseTable = '';
+    private string $baseAlias = '';
 
     /** @var list<JoinClause> */
     private array $joins = [];
@@ -352,6 +352,10 @@ final class SelectBuilder implements EntityQueryBuilderInterface
         return $result->first();
     }
 
+    /**
+     * @template T of object
+     * @return list<T>
+     */
     #[Override]
     public function getEntities(): array
     {
@@ -361,9 +365,14 @@ final class SelectBuilder implements EntityQueryBuilderInterface
 
         $result = $this->get();
 
+        /** @var list<T> */
         return $this->hydrator->hydrateAll($this->entityClass, $result->rows);
     }
 
+    /**
+     * @template T of object
+     * @return T|null
+     */
     #[Override]
     public function firstEntity(): ?object
     {
@@ -376,6 +385,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
             return null;
         }
 
+        /** @var T|null */
         return $this->hydrator->hydrate($this->entityClass, $row);
     }
 
@@ -481,7 +491,7 @@ final class SelectBuilder implements EntityQueryBuilderInterface
             return [];
         }
 
-        if ($this->includeTrashed) {
+        if ($this->includeTrashed || $this->metadata->softDeleteColumn === null) {
             return [];
         }
 

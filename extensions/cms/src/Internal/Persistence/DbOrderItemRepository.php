@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\OrderItem;
 use Pulsar\Extension\Cms\Commerce\OrderItemRepositoryInterface;
@@ -25,22 +26,14 @@ final readonly class DbOrderItemRepository implements OrderItemRepositoryInterfa
         SELECT * FROM cms_order_items WHERE order_id = :order_id ORDER BY id ASC
         SQL;
 
-    private const string SQL_INSERT = <<<'SQL'
-        INSERT INTO cms_order_items (
-            id, order_id, product_id, variant_id, quantity,
-            unit_price, total_price, tax_amount, discount_amount, product_snapshot
-        ) VALUES (
-            :id, :order_id, :product_id, :variant_id, :quantity,
-            :unit_price, :total_price, :tax_amount, :discount_amount, :product_snapshot
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            quantity = EXCLUDED.quantity,
-            unit_price = EXCLUDED.unit_price,
-            total_price = EXCLUDED.total_price,
-            tax_amount = EXCLUDED.tax_amount,
-            discount_amount = EXCLUDED.discount_amount,
-            product_snapshot = EXCLUDED.product_snapshot
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'order_id', 'product_id', 'variant_id', 'quantity',
+        'unit_price', 'total_price', 'tax_amount', 'discount_amount', 'product_snapshot',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'quantity', 'unit_price', 'total_price', 'tax_amount', 'discount_amount', 'product_snapshot',
+    ];
 
     public function __construct(
         private ConnectionInterface $db,
@@ -54,7 +47,15 @@ final readonly class DbOrderItemRepository implements OrderItemRepositoryInterfa
 
     public function save(OrderItem $item): void
     {
-        $this->db->execute(self::SQL_INSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_order_items',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $item->id,
             'order_id' => $item->orderId,
             'product_id' => $item->productId,

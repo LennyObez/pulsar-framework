@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Comments\Comment;
 use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
@@ -54,26 +55,15 @@ final readonly class DbCommentRepository implements CommentRepositoryInterface
             AND c.deleted_at IS NULL
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_comments (
-            id, tenant_id, content_id, parent_id, author_id,
-            guest_name, guest_email, body, status,
-            ip_hash, user_agent_hash, edited_at,
-            edit_window_expires_at, data_classification,
-            created_at, deleted_at
-        ) VALUES (
-            :id, :tenant_id, :content_id, :parent_id, :author_id,
-            :guest_name, :guest_email, :body, :status,
-            :ip_hash, :user_agent_hash, :edited_at,
-            :edit_window_expires_at, :data_classification,
-            :created_at, :deleted_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            body = EXCLUDED.body,
-            status = EXCLUDED.status,
-            edited_at = EXCLUDED.edited_at,
-            deleted_at = EXCLUDED.deleted_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'content_id', 'parent_id', 'author_id',
+        'guest_name', 'guest_email', 'body', 'status',
+        'ip_hash', 'user_agent_hash', 'edited_at',
+        'edit_window_expires_at', 'data_classification',
+        'created_at', 'deleted_at',
+    ];
+
+    private const array UPSERT_UPDATE = ['body', 'status', 'edited_at', 'deleted_at'];
 
     private const string SQL_SOFT_DELETE = <<<'SQL'
         UPDATE cms_comments
@@ -182,7 +172,15 @@ final readonly class DbCommentRepository implements CommentRepositoryInterface
 
     public function save(Comment $comment): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_comments',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $comment->id,
             'tenant_id' => $comment->tenantId,
             'content_id' => $comment->contentId,

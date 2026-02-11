@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Workflow\ContentLock;
 
@@ -18,16 +19,8 @@ final readonly class DbContentLockRepository
         WHERE content_id = :content_id AND expires_at > NOW()
         SQL;
 
-    private const string SQL_ACQUIRE = <<<'SQL'
-        INSERT INTO cms_content_locks (content_id, locked_by, locked_at, expires_at, locale)
-        VALUES (:content_id, :locked_by, :locked_at, :expires_at, :locale)
-        ON CONFLICT (content_id) DO UPDATE
-            SET locked_by = EXCLUDED.locked_by,
-                locked_at = EXCLUDED.locked_at,
-                expires_at = EXCLUDED.expires_at,
-                locale = EXCLUDED.locale
-            WHERE cms_content_locks.expires_at < :now
-        SQL;
+    private const array ACQUIRE_COLUMNS = ['content_id', 'locked_by', 'locked_at', 'expires_at', 'locale'];
+    private const array ACQUIRE_UPDATE = ['locked_by', 'locked_at', 'expires_at', 'locale'];
 
     private const string SQL_RELEASE = <<<'SQL'
         DELETE FROM cms_content_locks
@@ -67,7 +60,16 @@ final readonly class DbContentLockRepository
 
     public function acquire(ContentLock $lock): bool
     {
-        $affected = $this->connection->execute(self::SQL_ACQUIRE, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_content_locks',
+            self::ACQUIRE_COLUMNS,
+            ['content_id'],
+            self::ACQUIRE_UPDATE,
+            extraWhere: 'cms_content_locks.expires_at < :now',
+        );
+
+        $affected = $this->connection->execute($sql, [
             'content_id' => $lock->contentId,
             'locked_by' => $lock->lockedBy,
             'locked_at' => $lock->lockedAt->format('c'),

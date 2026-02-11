@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Domain\ThreadStatus;
 use Pulsar\Extension\Forum\Domain\ThreadType;
@@ -22,17 +23,21 @@ use function min;
 #[Internal(reason: 'Raw-DB repository — use ThreadRepositoryInterface for public API')]
 final readonly class DbThreadRepository implements ThreadRepositoryInterface
 {
+    private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
+
     private const string SQL_FIND_BY_ID = <<<'SQL'
         SELECT t.*
         FROM forum_threads t
-        WHERE t.id = :id AND t.deleted_at IS NULL
+        WHERE t.id = :id
+            AND COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
+            AND t.deleted_at IS NULL
         SQL;
 
     private const string SQL_FIND_BY_SLUG = <<<'SQL'
         SELECT t.*
         FROM forum_threads t
         WHERE t.slug = :slug
-            AND t.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND t.deleted_at IS NULL
         SQL;
 
@@ -40,6 +45,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         SELECT COUNT(*) AS total
         FROM forum_threads t
         WHERE t.category_id = :category_id
+            AND COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND t.deleted_at IS NULL
         SQL;
 
@@ -47,6 +53,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         SELECT t.*
         FROM forum_threads t
         WHERE t.category_id = :category_id
+            AND COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND t.deleted_at IS NULL
         SQL;
 
@@ -54,6 +61,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         SELECT COUNT(*) AS total
         FROM forum_threads t
         WHERE t.author_id = :author_id
+            AND COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND t.deleted_at IS NULL
         SQL;
 
@@ -61,6 +69,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         SELECT t.*
         FROM forum_threads t
         WHERE t.author_id = :author_id
+            AND COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND t.deleted_at IS NULL
         ORDER BY t.created_at DESC
         LIMIT :limit OFFSET :offset
@@ -71,6 +80,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         FROM forum_threads t
         INNER JOIN forum_thread_tags tt ON tt.thread_id = t.id
         WHERE tt.tag_id = :tag_id
+            AND COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND t.deleted_at IS NULL
         SQL;
 
@@ -79,6 +89,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         FROM forum_threads t
         INNER JOIN forum_thread_tags tt ON tt.thread_id = t.id
         WHERE tt.tag_id = :tag_id
+            AND COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND t.deleted_at IS NULL
         ORDER BY t.created_at DESC
         LIMIT :limit OFFSET :offset
@@ -87,57 +98,41 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
     private const string SQL_COUNT_RECENT = <<<'SQL'
         SELECT COUNT(*) AS total
         FROM forum_threads t
-        WHERE t.tenant_id IS NOT DISTINCT FROM :tenant_id
+        WHERE COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND t.deleted_at IS NULL
         SQL;
 
     private const string SQL_FIND_RECENT = <<<'SQL'
         SELECT t.*
         FROM forum_threads t
-        WHERE t.tenant_id IS NOT DISTINCT FROM :tenant_id
+        WHERE COALESCE(t.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
             AND t.deleted_at IS NULL
-        ORDER BY t.is_pinned DESC, t.last_activity_at DESC NULLS LAST
+        ORDER BY t.is_pinned DESC, CASE WHEN t.last_activity_at IS NULL THEN 1 ELSE 0 END, t.last_activity_at DESC
         LIMIT :limit OFFSET :offset
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO forum_threads (
-            id, tenant_id, category_id, author_id, title, slug,
-            type, status, is_pinned, is_locked, solved_post_id,
-            reply_count, view_count, vote_score, last_activity_at,
-            ip_hash, user_agent_hash,
-            created_at, updated_at, deleted_at, version
-        ) VALUES (
-            :id, :tenant_id, :category_id, :author_id, :title, :slug,
-            :type, :status, :is_pinned, :is_locked, :solved_post_id,
-            :reply_count, :view_count, :vote_score, :last_activity_at,
-            :ip_hash, :user_agent_hash,
-            :created_at, :updated_at, :deleted_at, :version
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            category_id = EXCLUDED.category_id,
-            title = EXCLUDED.title,
-            slug = EXCLUDED.slug,
-            type = EXCLUDED.type,
-            status = EXCLUDED.status,
-            is_pinned = EXCLUDED.is_pinned,
-            is_locked = EXCLUDED.is_locked,
-            solved_post_id = EXCLUDED.solved_post_id,
-            reply_count = EXCLUDED.reply_count,
-            view_count = EXCLUDED.view_count,
-            vote_score = EXCLUDED.vote_score,
-            last_activity_at = EXCLUDED.last_activity_at,
-            updated_at = EXCLUDED.updated_at,
-            deleted_at = EXCLUDED.deleted_at,
-            version = forum_threads.version + 1
-        WHERE forum_threads.version = :expected_version
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'category_id', 'author_id', 'title', 'slug',
+        'type', 'status', 'is_pinned', 'is_locked', 'solved_post_id',
+        'reply_count', 'view_count', 'vote_score', 'last_activity_at',
+        'ip_hash', 'user_agent_hash',
+        'created_at', 'updated_at', 'deleted_at', 'version',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'category_id', 'title', 'slug', 'type', 'status',
+        'is_pinned', 'is_locked', 'solved_post_id',
+        'reply_count', 'view_count', 'vote_score', 'last_activity_at',
+        'updated_at', 'deleted_at',
+    ];
 
     private const string SQL_INCREMENT_VOTE_SCORE = <<<'SQL'
         UPDATE forum_threads
         SET vote_score = vote_score + :delta,
             updated_at = :updated_at
-        WHERE id = :id AND deleted_at IS NULL
+        WHERE id = :id
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
+            AND deleted_at IS NULL
         SQL;
 
     private const string SQL_INCREMENT_REPLY_COUNT = <<<'SQL'
@@ -145,13 +140,16 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         SET reply_count = GREATEST(0, reply_count + :delta),
             last_activity_at = :updated_at,
             updated_at = :updated_at
-        WHERE id = :id AND deleted_at IS NULL
+        WHERE id = :id
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
+            AND deleted_at IS NULL
         SQL;
 
     private const string SQL_SOFT_DELETE = <<<'SQL'
         UPDATE forum_threads
         SET deleted_at = :deleted_at, updated_at = :updated_at
         WHERE id = :id
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     public function __construct(
@@ -161,7 +159,10 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
 
     public function findById(string $id): ?Thread
     {
-        $result = $this->connection->query(self::SQL_FIND_BY_ID, ['id' => $id]);
+        $result = $this->connection->query(self::SQL_FIND_BY_ID, [
+            'id' => $id,
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
+        ]);
         $row = $result->first();
 
         if ($row === null) {
@@ -175,7 +176,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
     {
         $result = $this->connection->query(self::SQL_FIND_BY_SLUG, [
             'slug' => $slug,
-            'tenant_id' => $tenantId ?? $this->tenantId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
         $row = $result->first();
 
@@ -197,7 +198,10 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         $perPage = max(1, min(100, $perPage));
         $offset = ($page - 1) * $perPage;
 
-        $bindings = ['category_id' => $categoryId];
+        $bindings = [
+            'category_id' => $categoryId,
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
+        ];
 
         $countSql = self::SQL_COUNT_BY_CATEGORY;
         $selectSql = self::SQL_FIND_BY_CATEGORY;
@@ -219,7 +223,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         $countResult = $this->connection->query($countSql, $bindings);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
-        $selectSql .= ' ORDER BY t.is_pinned DESC, t.last_activity_at DESC NULLS LAST LIMIT :limit OFFSET :offset';
+        $selectSql .= ' ORDER BY t.is_pinned DESC, CASE WHEN t.last_activity_at IS NULL THEN 1 ELSE 0 END, t.last_activity_at DESC LIMIT :limit OFFSET :offset';
         $bindings['limit'] = $perPage;
         $bindings['offset'] = $offset;
 
@@ -246,13 +250,17 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         $perPage = max(1, min(100, $perPage));
         $offset = ($page - 1) * $perPage;
 
+        $tenantKey = $this->tenantId ?? self::SENTINEL_TENANT;
+
         $countResult = $this->connection->query(self::SQL_COUNT_BY_AUTHOR, [
             'author_id' => $authorId,
+            'tenant_key' => $tenantKey,
         ]);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
         $dataResult = $this->connection->query(self::SQL_FIND_BY_AUTHOR, [
             'author_id' => $authorId,
+            'tenant_key' => $tenantKey,
             'limit' => $perPage,
             'offset' => $offset,
         ]);
@@ -278,13 +286,17 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         $perPage = max(1, min(100, $perPage));
         $offset = ($page - 1) * $perPage;
 
+        $tenantKey = $this->tenantId ?? self::SENTINEL_TENANT;
+
         $countResult = $this->connection->query(self::SQL_COUNT_BY_TAG, [
             'tag_id' => $tagId,
+            'tenant_key' => $tenantKey,
         ]);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
         $dataResult = $this->connection->query(self::SQL_FIND_BY_TAG, [
             'tag_id' => $tagId,
+            'tenant_key' => $tenantKey,
             'limit' => $perPage,
             'offset' => $offset,
         ]);
@@ -309,15 +321,15 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
         $page = max(1, $page);
         $perPage = max(1, min(100, $perPage));
         $offset = ($page - 1) * $perPage;
-        $effectiveTenantId = $tenantId ?? $this->tenantId;
+        $tenantKey = $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT;
 
         $countResult = $this->connection->query(self::SQL_COUNT_RECENT, [
-            'tenant_id' => $effectiveTenantId,
+            'tenant_key' => $tenantKey,
         ]);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
         $dataResult = $this->connection->query(self::SQL_FIND_RECENT, [
-            'tenant_id' => $effectiveTenantId,
+            'tenant_key' => $tenantKey,
             'limit' => $perPage,
             'offset' => $offset,
         ]);
@@ -336,7 +348,17 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
 
     public function save(Thread $thread): void
     {
-        $affected = $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'forum_threads',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+            extraWhere: 'forum_threads.version = :expected_version',
+            extraSet: 'version = forum_threads.version + 1',
+        );
+
+        $affected = $this->connection->execute($sql, [
             'id' => $thread->id,
             'tenant_id' => $thread->tenantId,
             'category_id' => $thread->categoryId,
@@ -374,6 +396,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
             'id' => $thread->id,
             'deleted_at' => $now->format('c'),
             'updated_at' => $now->format('c'),
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
     }
 
@@ -385,6 +408,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
             'id' => $id,
             'delta' => $delta,
             'updated_at' => $now->format('c'),
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
     }
 
@@ -396,6 +420,7 @@ final readonly class DbThreadRepository implements ThreadRepositoryInterface
             'id' => $id,
             'delta' => $delta,
             'updated_at' => $now->format('c'),
+            'tenant_key' => $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
     }
 

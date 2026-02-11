@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\FieldRegistry\ContentFieldValue;
 use Pulsar\Extension\Cms\FieldRegistry\ContentTypeField;
@@ -27,47 +28,29 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
         ORDER BY sort_order ASC
         SQL;
 
-    private const string SQL_UPSERT_FIELD = <<<'SQL'
-        INSERT INTO cms_content_type_fields (
-            id, content_type, field_key, field_type, required, translatable,
-            searchable, filterable, sortable, validation_rules, default_value, sort_order
-        ) VALUES (
-            :id, :content_type, :field_key, :field_type, :required, :translatable,
-            :searchable, :filterable, :sortable, :validation_rules, :default_value, :sort_order
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            field_type = EXCLUDED.field_type,
-            required = EXCLUDED.required,
-            translatable = EXCLUDED.translatable,
-            searchable = EXCLUDED.searchable,
-            filterable = EXCLUDED.filterable,
-            sortable = EXCLUDED.sortable,
-            validation_rules = EXCLUDED.validation_rules,
-            default_value = EXCLUDED.default_value,
-            sort_order = EXCLUDED.sort_order
-        SQL;
+    private const array UPSERT_FIELD_COLUMNS = [
+        'id', 'content_type', 'field_key', 'field_type', 'required', 'translatable',
+        'searchable', 'filterable', 'sortable', 'validation_rules', 'default_value', 'sort_order',
+    ];
+
+    private const array UPSERT_FIELD_UPDATE = [
+        'field_type', 'required', 'translatable', 'searchable', 'filterable',
+        'sortable', 'validation_rules', 'default_value', 'sort_order',
+    ];
 
     private const string SQL_FIND_VALUES = <<<'SQL'
         SELECT * FROM cms_content_field_values
         WHERE content_id = :content_id
         SQL;
 
-    private const string SQL_UPSERT_VALUE = <<<'SQL'
-        INSERT INTO cms_content_field_values (
-            id, content_id, field_id, locale,
-            value_string, value_int, value_float, value_bool, value_datetime, value_json
-        ) VALUES (
-            :id, :content_id, :field_id, :locale,
-            :value_string, :value_int, :value_float, :value_bool, :value_datetime, :value_json
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            value_string = EXCLUDED.value_string,
-            value_int = EXCLUDED.value_int,
-            value_float = EXCLUDED.value_float,
-            value_bool = EXCLUDED.value_bool,
-            value_datetime = EXCLUDED.value_datetime,
-            value_json = EXCLUDED.value_json
-        SQL;
+    private const array UPSERT_VALUE_COLUMNS = [
+        'id', 'content_id', 'field_id', 'locale',
+        'value_string', 'value_int', 'value_float', 'value_bool', 'value_datetime', 'value_json',
+    ];
+
+    private const array UPSERT_VALUE_UPDATE = [
+        'value_string', 'value_int', 'value_float', 'value_bool', 'value_datetime', 'value_json',
+    ];
 
     public function __construct(
         private ConnectionInterface $connection,
@@ -84,7 +67,15 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
 
     public function saveField(ContentTypeField $field): void
     {
-        $this->connection->execute(self::SQL_UPSERT_FIELD, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_content_type_fields',
+            self::UPSERT_FIELD_COLUMNS,
+            ['id'],
+            self::UPSERT_FIELD_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $field->id,
             'content_type' => $field->contentType,
             'field_key' => $field->fieldKey,
@@ -106,7 +97,15 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
 
     public function saveValue(ContentFieldValue $value): void
     {
-        $this->connection->execute(self::SQL_UPSERT_VALUE, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_content_field_values',
+            self::UPSERT_VALUE_COLUMNS,
+            ['id'],
+            self::UPSERT_VALUE_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $value->id,
             'content_id' => $value->contentId,
             'field_id' => $value->fieldId,
