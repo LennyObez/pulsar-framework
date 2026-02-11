@@ -187,8 +187,6 @@ final class MailFake implements MailManagerInterface
      */
     public function assertNothingSent(): void
     {
-        $total = count($this->sentMailables) + count($this->sentMessages);
-
         Assert::assertSame(
             count($this->sentMailables),
             0,

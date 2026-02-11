@@ -114,6 +114,22 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Config\\Internal\\
 
+    # --- Compliance ---
+    - name: Compliance
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Compliance\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Compliance\\Internal\\
+
+    - name: Compliance_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Compliance\\Internal\\
+
     # --- Core (excludes Kernel → CompositionRoot) ---
     - name: Core
       collectors:
@@ -589,6 +605,22 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\Security\\Internal\\
+
+    # --- ServiceDiscovery ---
+    - name: ServiceDiscovery
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\ServiceDiscovery\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\ServiceDiscovery\\Internal\\
+
+    - name: ServiceDiscovery_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\ServiceDiscovery\\Internal\\
 
     # --- Storage ---
     - name: Storage
@@ -1211,6 +1243,8 @@ deptrac:
       - Support_Internal
       - Container
       - Container_Internal
+      - Compliance
+      - Compliance_Internal
       - Config
       - Config_Internal
       - Core
@@ -1269,6 +1303,8 @@ deptrac:
       - Scheduler_Internal
       - Security
       - Security_Internal
+      - ServiceDiscovery
+      - ServiceDiscovery_Internal
       - Storage
       - Storage_Internal
       - Supervisor
@@ -1313,6 +1349,7 @@ deptrac:
       - Api
       - Support
       - Container
+      - Compliance
       - Config
       - Core
       - ErrorHandling
@@ -1345,6 +1382,7 @@ deptrac:
       - Saga
       - Scheduler
       - Security
+      - ServiceDiscovery
       - Storage
       - Supervisor
       - Tenancy
@@ -1354,6 +1392,7 @@ deptrac:
       - Workflow
     Support: *public_deps
     Container: *public_deps
+    Compliance: *public_deps
     Config: *public_deps
     Core: *public_deps
     ErrorHandling: *public_deps
@@ -1472,6 +1511,7 @@ deptrac:
       - Workflow
     Scheduler: *public_deps
     Security: *public_deps
+    ServiceDiscovery: *public_deps
     Storage: *public_deps
     Supervisor: *public_deps
     Tenancy: *public_deps
@@ -1533,8 +1573,9 @@ deptrac:
     Api_Internal: [Api]
     Support_Internal: [Support, Api]
     Container_Internal: [Container, Api, Support, Config, Core, ErrorHandling]
+    Compliance_Internal: [Compliance, Api, Support, Container, Config, Core, ErrorHandling]
     Config_Internal: [Config, Api, Support, Container, Core, ErrorHandling]
-    Core_Internal: [Core, Api, Support, Container, Config, ErrorHandling]
+    Core_Internal: [Core, Api, Support, Container, Config, ErrorHandling, ServiceDiscovery]
     ErrorHandling_Internal: [ErrorHandling, Api, Support, Container, Config, Core]
     Http_Internal: [Http, Api, Support, Container, Config, Core, ErrorHandling]
     Routing_Internal: [Routing, Api, Support, Container, Config, Core, ErrorHandling]
@@ -1568,6 +1609,8 @@ deptrac:
     Saga_Internal: [Saga, Api, Support, Container, Config, Core, ErrorHandling, Event, Workflow]
     Scheduler_Internal: [Scheduler, Api, Support, Container, Config, Core, ErrorHandling]
     Security_Internal: [Security, Api, Support, Container, Config, Core, ErrorHandling]
+    ServiceDiscovery_Internal:
+      [ServiceDiscovery, Api, Support, Container, Config, Core, ErrorHandling]
     Storage_Internal: [Storage, Api, Support, Container, Config, Core, ErrorHandling]
     Supervisor_Internal: [Supervisor, Api, Support, Container, Config, Core, ErrorHandling]
     Tenancy_Internal: [Tenancy, Api, Support, Container, Config, Core, ErrorHandling]

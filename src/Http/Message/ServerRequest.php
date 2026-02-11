@@ -29,7 +29,6 @@ use function is_array;
 use function is_string;
 use function json_decode;
 use function json_validate;
-use function ksort;
 use function str_contains;
 use function strlen;
 use function strpos;
@@ -90,6 +89,9 @@ class ServerRequest implements ServerRequestInterface
     /** @var array<string, mixed> */
     private array $attributes;
 
+    /** @var array<string, list<string>>|null */
+    private ?array $headersCache = null;
+
     /**
      * @param array<string, string|list<string>> $headers
      * @param array<string, mixed> $serverParams
@@ -114,7 +116,7 @@ class ServerRequest implements ServerRequestInterface
     ) {
         $this->method = $method;
         $this->uri = is_string($uri) ? Uri::fromString($uri) : $uri;
-        $this->body = is_string($body) ? Stream::create($body) : $body;
+        $this->body = is_string($body) ? new StringStream($body) : $body;
         $this->protocolVersion = $protocolVersion;
         $this->serverParams = $serverParams;
         $this->cookieParams = $cookieParams;
@@ -146,8 +148,6 @@ class ServerRequest implements ServerRequestInterface
             $this->headerNames['host'] = 'Host';
             $this->headers['host'] = [$host];
         }
-
-        ksort($this->headers);
     }
 
     /**
@@ -275,13 +275,17 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function getHeaders(): array
     {
+        if ($this->headersCache !== null) {
+            return $this->headersCache;
+        }
+
         $result = [];
 
         foreach ($this->headers as $lowered => $values) {
             $result[$this->headerNames[$lowered]] = $values;
         }
 
-        return $result;
+        return $this->headersCache = $result;
     }
 
     #[Override]
@@ -318,7 +322,7 @@ class ServerRequest implements ServerRequestInterface
         $new = clone $this;
         $new->headerNames[$lowered] = $name;
         $new->headers[$lowered] = $values;
-        ksort($new->headers);
+        $new->headersCache = null;
 
         return $new;
     }
@@ -332,6 +336,7 @@ class ServerRequest implements ServerRequestInterface
         $lowered = strtolower($name);
 
         $new = clone $this;
+        $new->headersCache = null;
 
         if (isset($new->headers[$lowered])) {
             /** @var list<string> $merged */
@@ -340,7 +345,6 @@ class ServerRequest implements ServerRequestInterface
         } else {
             $new->headerNames[$lowered] = $name;
             $new->headers[$lowered] = $values;
-            ksort($new->headers);
         }
 
         return $new;
@@ -358,6 +362,7 @@ class ServerRequest implements ServerRequestInterface
 
         $new = clone $this;
         unset($new->headers[$lowered], $new->headerNames[$lowered]);
+        $new->headersCache = null;
 
         return $new;
     }
@@ -444,7 +449,7 @@ class ServerRequest implements ServerRequestInterface
 
                 $new->headerNames['host'] = 'Host';
                 $new->headers['host'] = [$host];
-                ksort($new->headers);
+                $new->headersCache = null;
             }
         }
 

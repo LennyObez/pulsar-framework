@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Database\Pool;
 
 use Override;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 use Pulsar\Config\ConnectionConfig;
 use Pulsar\Database\ConnectionInterface;
@@ -36,6 +37,7 @@ final class ConnectionPool implements ConnectionPoolInterface
     public function __construct(
         private readonly PoolConfig $config,
         private readonly ConnectionConfig $connectionConfig,
+        private readonly ?LoggerInterface $logger = null,
     ) {}
 
     #[Override]
@@ -72,6 +74,8 @@ final class ConnectionPool implements ConnectionPoolInterface
         }
 
         if ($this->activeCount >= $this->config->maxConnections) {
+            $this->waitCount++;
+
             throw DatabaseException::poolExhausted($this->config->maxConnections);
         }
 
@@ -114,6 +118,31 @@ final class ConnectionPool implements ConnectionPoolInterface
         }
 
         $this->idle[] = $entry;
+    }
+
+    /**
+     * Pre-create connections up to the configured minimum pool size.
+     *
+     * Call during application bootstrap to avoid cold-start latency
+     * on the first batch of requests.
+     */
+    public function warmUp(): void
+    {
+        $needed = $this->config->minConnections - count($this->idle) - $this->activeCount;
+
+        for ($i = 0; $i < $needed; $i++) {
+            try {
+                $connection = $this->createConnection();
+
+                $this->idle[] = new PooledEntry(
+                    connection: $connection,
+                    createdAt: time(),
+                    lastUsedAt: time(),
+                );
+            } catch (DatabaseException $e) {
+                $this->logger?->warning('Connection pool warmup failed for connection ' . $i, ['exception' => $e]);
+            }
+        }
     }
 
     #[Override]
