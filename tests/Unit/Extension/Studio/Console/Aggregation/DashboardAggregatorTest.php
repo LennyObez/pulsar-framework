@@ -11,7 +11,11 @@ use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Event\EventVersion;
+use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+use Pulsar\Security\Crypto\Encryptor;
+use Pulsar\Security\Crypto\MasterKey;
 
 use function json_encode;
 use function microtime;
@@ -353,5 +357,216 @@ final class DashboardAggregatorTest extends TestCase
 
         self::assertCount(6, $series);
         self::assertSame([0, 0, 0, 0, 0, 0], $series);
+    }
+
+    // ── Encrypted store tests ────────────────────────────────────────────
+
+    /**
+     * @return array{store: EncryptedEventStore, aggregator: DashboardAggregator}
+     */
+    private function createEncryptedSetup(): array
+    {
+        $inner = SqliteEventStore::inMemory();
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $encryptor = Encryptor::fromMasterKey($masterKey);
+        $store = new EncryptedEventStore($inner, $encryptor);
+        $aggregator = new DashboardAggregator($store);
+
+        return ['store' => $store, 'aggregator' => $aggregator];
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function insertEventTo(
+        EventStoreInterface $store,
+        string $eventType,
+        array $payload,
+        ?int $timestampUs = null,
+    ): void {
+        $timestampUs ??= $this->nowUs();
+        $payloadJson = json_encode($payload, JSON_THROW_ON_ERROR);
+        $eventId = bin2hex(random_bytes(16));
+
+        $envelope = new EventEnvelope(
+            eventId: $eventId,
+            eventType: EventType::from($eventType),
+            schemaVersion: EventVersion::V1,
+            timestampUs: $timestampUs,
+            requestId: null,
+            traceId: null,
+            spanId: null,
+            jobId: null,
+            appEnv: 'test',
+            hostname: 'localhost',
+            payload: $payload,
+            payloadHash: hash('sha256', $payloadJson),
+        );
+
+        $store->store($envelope, $payloadJson);
+    }
+
+    #[Test]
+    public function encryptedStoreThroughputReturnsStatusBreakdown(): void
+    {
+        ['store' => $store, 'aggregator' => $aggregator] = $this->createEncryptedSetup();
+
+        $this->insertEventTo($store, 'http.response', ['status_code' => 200, 'duration_ms' => 10.0]);
+        $this->insertEventTo($store, 'http.response', ['status_code' => 200, 'duration_ms' => 20.0]);
+        $this->insertEventTo($store, 'http.response', ['status_code' => 404, 'duration_ms' => 5.0]);
+
+        $windowUs = 5 * 60 * 1_000_000;
+        $result = $aggregator->throughput($windowUs);
+
+        self::assertSame(3, $result['total']);
+        self::assertGreaterThan(0.0, $result['per_minute']);
+        self::assertArrayHasKey('2xx', $result['by_status']);
+        self::assertSame(2, $result['by_status']['2xx']);
+        self::assertArrayHasKey('4xx', $result['by_status']);
+        self::assertSame(1, $result['by_status']['4xx']);
+    }
+
+    #[Test]
+    public function encryptedStoreLatencyPercentilesReturnsCorrectValues(): void
+    {
+        ['store' => $store, 'aggregator' => $aggregator] = $this->createEncryptedSetup();
+
+        for ($i = 1; $i <= 100; $i++) {
+            $this->insertEventTo($store, 'http.response', ['status_code' => 200, 'duration_ms' => (float) $i]);
+        }
+
+        $windowUs = 5 * 60 * 1_000_000;
+        $result = $aggregator->latencyPercentiles($windowUs);
+
+        self::assertArrayHasKey('p50', $result);
+        self::assertArrayHasKey('p95', $result);
+        self::assertArrayHasKey('p99', $result);
+        self::assertGreaterThan(0.0, $result['p50']);
+        self::assertGreaterThan($result['p50'], $result['p95']);
+        self::assertGreaterThanOrEqual($result['p95'], $result['p99']);
+    }
+
+    #[Test]
+    public function encryptedStoreLatencyPercentilesReturnsZerosWhenEmpty(): void
+    {
+        ['aggregator' => $aggregator] = $this->createEncryptedSetup();
+
+        $windowUs = 5 * 60 * 1_000_000;
+        $result = $aggregator->latencyPercentiles($windowUs);
+
+        self::assertSame(['p50' => 0.0, 'p95' => 0.0, 'p99' => 0.0], $result);
+    }
+
+    #[Test]
+    public function encryptedStoreErrorRateReturnsTopExceptions(): void
+    {
+        ['store' => $store, 'aggregator' => $aggregator] = $this->createEncryptedSetup();
+
+        $this->insertEventTo($store, 'exception', ['exception_class' => 'RuntimeException', 'message' => 'e1']);
+        $this->insertEventTo($store, 'exception', ['exception_class' => 'RuntimeException', 'message' => 'e2']);
+        $this->insertEventTo($store, 'exception', ['exception_class' => 'LogicException', 'message' => 'e3']);
+
+        $windowUs = 5 * 60 * 1_000_000;
+        $result = $aggregator->errorRate($windowUs);
+
+        self::assertSame(3, $result['total']);
+        self::assertGreaterThan(0.0, $result['per_minute']);
+        self::assertNotEmpty($result['top_exceptions']);
+        self::assertSame('RuntimeException', $result['top_exceptions'][0]['class']);
+        self::assertSame(2, $result['top_exceptions'][0]['count']);
+    }
+
+    #[Test]
+    public function encryptedStoreSlowRoutesGroupsByRouteAndSortsByP95(): void
+    {
+        ['store' => $store, 'aggregator' => $aggregator] = $this->createEncryptedSetup();
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->insertEventTo($store, 'http.response', [
+                'status_code' => 200,
+                'duration_ms' => 10.0 + (float) $i,
+                'route_name' => 'api.fast',
+            ]);
+        }
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->insertEventTo($store, 'http.response', [
+                'status_code' => 200,
+                'duration_ms' => 100.0 + (float) $i,
+                'route_name' => 'api.slow',
+            ]);
+        }
+
+        $windowUs = 5 * 60 * 1_000_000;
+        $result = $aggregator->slowRoutes($windowUs);
+
+        self::assertCount(2, $result);
+        self::assertSame('api.slow', $result[0]['route']);
+        self::assertSame('api.fast', $result[1]['route']);
+        self::assertSame(5, $result[0]['count']);
+        self::assertGreaterThan($result[1]['p95_ms'], $result[0]['p95_ms']);
+    }
+
+    #[Test]
+    public function encryptedStoreSlowQueriesGroupsByFingerprintAndSortsByP95(): void
+    {
+        ['store' => $store, 'aggregator' => $aggregator] = $this->createEncryptedSetup();
+
+        for ($i = 0; $i < 3; $i++) {
+            $this->insertEventTo($store, 'db.query', [
+                'sql' => 'SELECT * FROM users WHERE id = ?',
+                'sql_fingerprint' => 'fp_users',
+                'duration_ms' => 5.0 + (float) $i,
+            ]);
+        }
+
+        for ($i = 0; $i < 3; $i++) {
+            $this->insertEventTo($store, 'db.query', [
+                'sql' => 'SELECT * FROM orders WHERE user_id = ?',
+                'sql_fingerprint' => 'fp_orders',
+                'duration_ms' => 50.0 + (float) $i,
+            ]);
+        }
+
+        $windowUs = 5 * 60 * 1_000_000;
+        $result = $aggregator->slowQueries($windowUs);
+
+        self::assertCount(2, $result);
+        self::assertSame('fp_orders', $result[0]['sql_fingerprint']);
+        self::assertSame(3, $result[0]['count']);
+    }
+
+    #[Test]
+    public function encryptedStoreAggregateReturnsCombinedMetrics(): void
+    {
+        ['store' => $store, 'aggregator' => $aggregator] = $this->createEncryptedSetup();
+
+        $this->insertEventTo($store, 'http.response', [
+            'status_code' => 200,
+            'duration_ms' => 10.0,
+            'route_name' => 'api.test',
+        ]);
+        $this->insertEventTo($store, 'exception', ['exception_class' => 'RuntimeException']);
+        $this->insertEventTo($store, 'db.query', [
+            'sql' => 'SELECT 1',
+            'sql_fingerprint' => 'fp1',
+            'duration_ms' => 1.0,
+        ]);
+
+        $result = $aggregator->aggregate();
+
+        self::assertArrayHasKey('total_events', $result);
+        self::assertArrayHasKey('total_requests', $result);
+        self::assertArrayHasKey('avg_response_ms', $result);
+        self::assertArrayHasKey('total_exceptions', $result);
+        self::assertArrayHasKey('total_queries', $result);
+        self::assertArrayHasKey('routes', $result);
+        self::assertArrayHasKey('exceptions', $result);
+        self::assertArrayHasKey('slow_queries', $result);
+
+        self::assertSame(1, $result['total_requests']);
+        self::assertSame(1, $result['total_exceptions']);
+        self::assertSame(1, $result['total_queries']);
+        self::assertGreaterThan(0.0, $result['avg_response_ms']);
+        self::assertNotEmpty($result['exceptions']);
+        self::assertNotEmpty($result['routes']);
     }
 }

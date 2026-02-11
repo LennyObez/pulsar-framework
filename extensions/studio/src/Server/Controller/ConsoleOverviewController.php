@@ -81,8 +81,8 @@ final readonly class ConsoleOverviewController
 
         return match ($window) {
             '5m' => 5 * 60 * 1_000_000,
-            '24h' => 24 * 60 * 60 * 1_000_000,
-            default => 60 * 60 * 1_000_000,
+            '1h' => 60 * 60 * 1_000_000,
+            default => 24 * 60 * 60 * 1_000_000,
         };
     }
 }

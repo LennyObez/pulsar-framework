@@ -187,6 +187,16 @@ $queryString = $_SERVER['QUERY_STRING'] ?? '';
 $headers = new HeaderBag(getallheaders() ?: []);
 $body = file_get_contents('php://input') ?: '';
 
+// Map query parameters to _query_ attributes (matching main application middleware behavior)
+/** @var array<string, mixed> $queryParams */
+$queryParams = $_GET;
+$queryAttributes = [];
+foreach ($queryParams as $key => $value) {
+    if (is_string($value)) {
+        $queryAttributes['_query_' . $key] = $value;
+    }
+}
+
 $request = new Request(
     method: $method,
     uri: $requestUri,
@@ -194,6 +204,8 @@ $request = new Request(
     queryString: $queryString,
     headers: $headers,
     body: $body,
+    query: $queryParams,
+    attributes: $queryAttributes,
 );
 
 try {
