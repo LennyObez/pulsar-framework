@@ -252,7 +252,7 @@ final readonly class SvgSanitizer
 
         foreach ($children as $child) {
             if ($child instanceof DOMElement) {
-                $tagName = strtolower($child->localName);
+                $tagName = strtolower($child->localName ?? $child->nodeName);
 
                 // Remove blocked elements entirely
                 if (in_array($tagName, self::BLOCKED_ELEMENTS, true)) {
@@ -288,7 +288,14 @@ final readonly class SvgSanitizer
         $toRemove = [];
 
         /** @var DOMAttr $attr */
-        foreach (iterator_to_array($element->attributes) as $attr) {
+        $attributes = $element->attributes;
+
+        if ($attributes === null) {
+            return;
+        }
+
+        /** @var DOMAttr $attr */
+        foreach (iterator_to_array($attributes) as $attr) {
             $attrNameLower = strtolower($attr->name);
 
             // Remove all on* event handlers
@@ -324,7 +331,7 @@ final readonly class SvgSanitizer
      */
     private function validateHrefAttributes(DOMElement $element, DOMNode $parent): void
     {
-        $tagName = strtolower($element->localName);
+        $tagName = strtolower($element->localName ?? $element->nodeName);
         $hrefAttrs = ['href', 'xlink:href'];
 
         foreach ($hrefAttrs as $attrName) {

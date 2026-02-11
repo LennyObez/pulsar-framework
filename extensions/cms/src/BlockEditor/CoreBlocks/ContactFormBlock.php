@@ -9,10 +9,12 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 
+use function bin2hex;
 use function htmlspecialchars;
 use function in_array;
 use function is_array;
 use function is_string;
+use function random_bytes;
 
 use const ENT_QUOTES;
 
@@ -59,16 +61,32 @@ final readonly class ContactFormBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{name: string, type: string, label: string}> $fields */
+        /** @var list<mixed> $fields */
         $fields = $data['fields'] ?? [];
         $submitText = htmlspecialchars((string) ($data['submitText'] ?? 'Submit'), ENT_QUOTES, 'UTF-8');
         $action = htmlspecialchars((string) ($data['action'] ?? ''), ENT_QUOTES, 'UTF-8');
 
-        $html = "<form class=\"contact-form\" method=\"post\" action=\"{$action}\">";
+        // Generate a unique proof-of-work challenge per form render
+        $powChallenge = bin2hex(random_bytes(16));
+        $escapedChallenge = htmlspecialchars($powChallenge, ENT_QUOTES, 'UTF-8');
+
+        $html = "<form class=\"contact-form\" method=\"post\" action=\"{$action}\" data-pow-challenge=\"{$escapedChallenge}\">";
 
         // CSRF protection
         $csrfToken = htmlspecialchars($this->csrfTokenManager->getToken(), ENT_QUOTES, 'UTF-8');
         $html .= "<input type=\"hidden\" name=\"_csrf_token\" value=\"{$csrfToken}\">";
+
+        // Timing token — spam detector rejects submissions under 3 seconds
+        $html .= '<input type="hidden" name="_form_rendered_at" value="' . htmlspecialchars((string) time(), ENT_QUOTES, 'UTF-8') . '">';
+
+        // Honeypot — hidden field that bots fill; legitimate users never see it
+        $html .= '<div style="position:absolute;left:-9999px;top:-9999px" aria-hidden="true">';
+        $html .= '<input type="text" name="_hp_field" tabindex="-1" autocomplete="off">';
+        $html .= '</div>';
+
+        // Proof-of-work fields — challenge is set server-side, nonce computed by ProofOfWork.ts
+        $html .= "<input type=\"hidden\" name=\"_pow_challenge\" value=\"{$escapedChallenge}\">";
+        $html .= '<input type="hidden" name="_pow_nonce" value="">';
 
         foreach ($fields as $field) {
             if (!is_array($field)) {

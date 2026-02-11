@@ -52,4 +52,26 @@ final class BlockTypeRegistry
     {
         return $this->blocks;
     }
+
+    /**
+     * Return all registered block types with their JSON Schemas.
+     *
+     * Produces a map of `{ type: { type, schema } }` for the frontend
+     * BlockRegistry/BlockInspector to consume.
+     *
+     * @return array<string, array{type: string, schema: array<string, mixed>}>
+     */
+    public function toJsonSchema(): array
+    {
+        $result = [];
+
+        foreach ($this->blocks as $type => $blockType) {
+            $result[$type] = [
+                'type' => $type,
+                'schema' => $blockType->schema(),
+            ];
+        }
+
+        return $result;
+    }
 }

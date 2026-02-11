@@ -28,7 +28,7 @@ use const PATHINFO_EXTENSION;
 #[Api(since: '1.0.0')]
 final readonly class ImageVariantGenerator
 {
-    /** @var list<ImageVariantConfig> */
+    /** @var list<array{name: string, max_width: int, max_height: int, format: string, quality: int}> */
     private const array DEFAULT_VARIANTS = [
         ['name' => 'thumbnail', 'max_width' => 150, 'max_height' => 150, 'format' => 'original', 'quality' => 80],
         ['name' => 'medium', 'max_width' => 600, 'max_height' => 600, 'format' => 'original', 'quality' => 80],
@@ -136,13 +136,13 @@ final readonly class ImageVariantGenerator
         int $maxWidth,
         int $maxHeight,
     ): array {
-        $ratioW = $maxWidth / $sourceWidth;
-        $ratioH = $maxHeight / $sourceHeight;
+        $ratioW = (float) $maxWidth / (float) $sourceWidth;
+        $ratioH = (float) $maxHeight / (float) $sourceHeight;
         $ratio = min($ratioW, $ratioH);
 
         return [
-            (int) round($sourceWidth * $ratio),
-            (int) round($sourceHeight * $ratio),
+            (int) round((float) $sourceWidth * $ratio),
+            (int) round((float) $sourceHeight * $ratio),
         ];
     }
 

@@ -62,6 +62,7 @@ final readonly class MediaConfig
         $rawVariants = $data['image_variants'] ?? [];
         $imageVariants = is_array($rawVariants)
             ? array_map(
+                /** @param array<string, mixed> $v */
                 static fn(array $v): ImageVariantConfig => ImageVariantConfig::fromArray($v),
                 $rawVariants,
             )
