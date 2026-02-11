@@ -4,16 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command;
 
-use const DIRECTORY_SEPARATOR;
-
-use function file_exists;
-use function file_get_contents;
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
 use Override;
 use Pulsar\Config\IntegrityConfig;
@@ -26,7 +16,15 @@ use Pulsar\Integrity\FileVerificationStatus;
 use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Integrity\ManifestVerifierInterface;
 
+use function file_exists;
+use function file_get_contents;
+use function json_encode;
 use function sprintf;
+
+use const DIRECTORY_SEPARATOR;
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Verify filesystem integrity against a stored manifest.

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Audit;
 
-use function bin2hex;
-
 use DateTimeImmutable;
 use JsonException;
 use Override;
@@ -17,6 +15,8 @@ use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 use SodiumException;
+
+use function bin2hex;
 
 /**
  * Orchestrates tamper-evident audit logging with HMAC chain.

@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Security;
 
-use function explode;
-use function inet_pton;
-
 use Pulsar\Api\Internal;
 
+use function explode;
+use function inet_pton;
 use function str_contains;
 use function strlen;
 use function unpack;

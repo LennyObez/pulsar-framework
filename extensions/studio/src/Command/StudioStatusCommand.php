@@ -4,23 +4,22 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command;
 
-use function json_encode;
-
-use const JSON_PRETTY_PRINT;
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 
+use function json_encode;
 use function sprintf;
+
+use const JSON_PRETTY_PRINT;
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
 
 /**
  * Displays the current Studio status and configuration.

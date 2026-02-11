@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Resilience;
 
 use Closure;
-
-use function min;
-
 use NoDiscard;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
@@ -15,11 +12,10 @@ use Pulsar\Config\RetryConfig;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
-
-use function sprintf;
-
 use Throwable;
 
+use function min;
+use function sprintf;
 use function usleep;
 
 /**

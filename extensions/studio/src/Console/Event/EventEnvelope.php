@@ -4,14 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Event;
 
-use function bin2hex;
-use function hash;
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-use const JSON_UNESCAPED_SLASHES;
-use const JSON_UNESCAPED_UNICODE;
-
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Internal;
@@ -19,6 +11,14 @@ use Pulsar\Observability\Context\CorrelationContext;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+
+use function bin2hex;
+use function hash;
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 /**
  * Wraps a ConsoleEvent with common metadata and computed fields.

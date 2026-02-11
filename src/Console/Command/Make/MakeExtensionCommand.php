@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Command\Make;
 
-use function is_string;
-
 use JsonException;
 use Override;
 use Pulsar\Console\Command;
@@ -15,6 +13,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Core\Version;
 
+use function is_string;
 use function sprintf;
 
 /**

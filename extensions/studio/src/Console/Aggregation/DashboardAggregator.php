@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Console\Aggregation;
 
+use JsonException;
+use Override;
+use PDO;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
+use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
+
 use function array_fill;
 use function array_filter;
 use function array_map;
@@ -17,25 +25,14 @@ use function date;
 use function in_array;
 use function intdiv;
 use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
-use JsonException;
-
 use function max;
 use function microtime;
 use function min;
-
-use Override;
-use PDO;
-use Pulsar\Api\Internal;
-use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
-use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
-
 use function round;
 use function sort;
 use function usort;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Aggregates dashboard metrics from the Studio event store using SQL queries.
@@ -48,16 +45,20 @@ use function usort;
 final readonly class DashboardAggregator implements DashboardAggregatorInterface
 {
     private const int TOP_EXCEPTIONS_LIMIT = 10;
+    private const int AGGREGATION_QUERY_LIMIT = 10_000;
 
     private PDO $pdo;
 
     private EventStoreInterface $store;
+
+    private bool $encrypted;
 
     public function __construct(
         EventStoreInterface $store,
     ) {
         $this->store = $store;
         $this->pdo = $this->resolvePdo($store);
+        $this->encrypted = $store instanceof EncryptedEventStore;
     }
 
     /**
@@ -135,10 +136,14 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
     {
         $since = $this->nowUs() - $windowUs;
 
+        if ($this->encrypted) {
+            return $this->latencyPercentilesFromStore($since);
+        }
+
         $stmt = $this->pdo->prepare(
             "SELECT json_extract(payload_json, '$.duration_ms') as duration_ms
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)
              ORDER BY json_extract(payload_json, '$.duration_ms') ASC",
         );
         $stmt->execute(['type' => 'http.response', 'since' => $since]);
@@ -199,11 +204,15 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
     {
         $since = $this->nowUs() - $windowUs;
 
+        if ($this->encrypted) {
+            return $this->slowRoutesFromStore($since, $limit);
+        }
+
         $stmt = $this->pdo->prepare(
             "SELECT json_extract(payload_json, '$.route_name') as route_name,
                     json_extract(payload_json, '$.duration_ms') as duration_ms
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)
                AND json_extract(payload_json, '$.route_name') IS NOT NULL",
         );
         $stmt->execute(['type' => 'http.response', 'since' => $since]);
@@ -241,12 +250,16 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
     {
         $since = $this->nowUs() - $windowUs;
 
+        if ($this->encrypted) {
+            return $this->slowQueriesFromStore($since, $limit);
+        }
+
         $stmt = $this->pdo->prepare(
             "SELECT json_extract(payload_json, '$.sql_fingerprint') as sql_fingerprint,
                     json_extract(payload_json, '$.sql') as sql,
                     json_extract(payload_json, '$.duration_ms') as duration_ms
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since",
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)",
         );
         $stmt->execute(['type' => 'db.query', 'since' => $since]);
         /** @var list<array{sql_fingerprint: string, sql: string, duration_ms: string}> $rows */
@@ -378,10 +391,14 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
     {
         $since = $this->nowUs() - $windowUs;
 
+        if ($this->encrypted) {
+            return $this->statusBreakdownFromStore($since);
+        }
+
         $stmt = $this->pdo->prepare(
             "SELECT json_extract(payload_json, '$.status_code') AS status_code, COUNT(*) AS cnt
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)
              GROUP BY status_code",
         );
         $stmt->execute(['type' => 'http.response', 'since' => $since]);
@@ -412,12 +429,16 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
     {
         $since = $this->nowUs() - $windowUs;
 
+        if ($this->encrypted) {
+            return $this->topExceptionsFromStore($since);
+        }
+
         $stmt = $this->pdo->prepare(
             "SELECT json_extract(payload_json, '$.exception_class') AS exception_class,
                     COUNT(*) AS cnt,
                     MAX(timestamp_us) AS last_seen_us
              FROM studio_events
-             WHERE event_type = :type AND timestamp_us > :since
+             WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)
              GROUP BY exception_class
              ORDER BY cnt DESC
              LIMIT :limit",
@@ -439,6 +460,222 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
         }
 
         return $result;
+    }
+
+    /**
+     * Encrypted-store fallback: status code breakdown via PHP decoding.
+     *
+     * @return array<string, int>
+     *
+     * @throws JsonException If payload JSON cannot be decoded
+     */
+    private function statusBreakdownFromStore(int $sinceUs): array
+    {
+        /** @var list<array{payload_json: string}> $rows */
+        $rows = $this->store->query(
+            ['event_type' => 'http.response', 'since_us' => $sinceUs],
+            limit: self::AGGREGATION_QUERY_LIMIT,
+        );
+
+        /** @var array<string, int> $byClass */
+        $byClass = [];
+
+        foreach ($rows as $row) {
+            /** @var array{status_code?: int} $payload */
+            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $code = $payload['status_code'] ?? 0;
+
+            if ($code <= 0) {
+                continue;
+            }
+
+            $class = intdiv($code, 100) . 'xx';
+            $byClass[$class] = ($byClass[$class] ?? 0) + 1;
+        }
+
+        return $byClass;
+    }
+
+    /**
+     * Encrypted-store fallback: latency percentiles via PHP decoding.
+     *
+     * @return array{p50: float, p95: float, p99: float}
+     *
+     * @throws JsonException If payload JSON cannot be decoded
+     */
+    private function latencyPercentilesFromStore(int $sinceUs): array
+    {
+        /** @var list<array{payload_json: string}> $rows */
+        $rows = $this->store->query(
+            ['event_type' => 'http.response', 'since_us' => $sinceUs],
+            limit: self::AGGREGATION_QUERY_LIMIT,
+        );
+
+        $durations = [];
+
+        foreach ($rows as $row) {
+            /** @var array{duration_ms?: float} $payload */
+            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $d = (float) ($payload['duration_ms'] ?? 0);
+
+            if ($d > 0) {
+                $durations[] = $d;
+            }
+        }
+
+        if ($durations === []) {
+            return ['p50' => 0.0, 'p95' => 0.0, 'p99' => 0.0];
+        }
+
+        sort($durations);
+
+        return [
+            'p50' => $this->percentile($durations, 50),
+            'p95' => $this->percentile($durations, 95),
+            'p99' => $this->percentile($durations, 99),
+        ];
+    }
+
+    /**
+     * Encrypted-store fallback: slow routes via PHP decoding.
+     *
+     * @return list<array{route: string, p95_ms: float, count: int, avg_ms: float}>
+     *
+     * @throws JsonException If payload JSON cannot be decoded
+     */
+    private function slowRoutesFromStore(int $sinceUs, int $limit): array
+    {
+        /** @var list<array{payload_json: string}> $rows */
+        $rows = $this->store->query(
+            ['event_type' => 'http.response', 'since_us' => $sinceUs],
+            limit: self::AGGREGATION_QUERY_LIMIT,
+        );
+
+        /** @var array<string, list<float>> $grouped */
+        $grouped = [];
+
+        foreach ($rows as $row) {
+            /** @var array{route_name?: string, duration_ms?: float} $payload */
+            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $routeName = $payload['route_name'] ?? null;
+
+            if ($routeName === null) {
+                continue;
+            }
+
+            $grouped[$routeName][] = (float) ($payload['duration_ms'] ?? 0);
+        }
+
+        $result = [];
+
+        foreach ($grouped as $routeName => $durations) {
+            sort($durations);
+            $result[] = [
+                'route' => $routeName,
+                'p95_ms' => $this->percentile($durations, 95),
+                'count' => count($durations),
+                'avg_ms' => round(array_sum($durations) / (float) count($durations), 2),
+            ];
+        }
+
+        usort($result, static fn(array $a, array $b): int => $b['p95_ms'] <=> $a['p95_ms']);
+
+        return array_slice($result, 0, $limit);
+    }
+
+    /**
+     * Encrypted-store fallback: slow queries via PHP decoding.
+     *
+     * @return list<array{sql_fingerprint: string, sql: string, p95_ms: float, count: int, avg_ms: float}>
+     *
+     * @throws JsonException If payload JSON cannot be decoded
+     */
+    private function slowQueriesFromStore(int $sinceUs, int $limit): array
+    {
+        /** @var list<array{payload_json: string}> $rows */
+        $rows = $this->store->query(
+            ['event_type' => 'db.query', 'since_us' => $sinceUs],
+            limit: self::AGGREGATION_QUERY_LIMIT,
+        );
+
+        /** @var array<string, array{sql: string, durations: list<float>}> $grouped */
+        $grouped = [];
+
+        foreach ($rows as $row) {
+            /** @var array{sql_fingerprint: string, sql: string, duration_ms: float} $payload */
+            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $fp = $payload['sql_fingerprint'];
+
+            if (!isset($grouped[$fp])) {
+                $grouped[$fp] = ['sql' => $payload['sql'], 'durations' => []];
+            }
+
+            $grouped[$fp]['durations'][] = $payload['duration_ms'];
+        }
+
+        $result = [];
+
+        foreach ($grouped as $fp => $data) {
+            $durations = $data['durations'];
+            sort($durations);
+            $result[] = [
+                'sql_fingerprint' => $fp,
+                'sql' => $data['sql'],
+                'p95_ms' => $this->percentile($durations, 95),
+                'count' => count($durations),
+                'avg_ms' => round(array_sum($durations) / (float) count($durations), 2),
+            ];
+        }
+
+        usort($result, static fn(array $a, array $b): int => $b['p95_ms'] <=> $a['p95_ms']);
+
+        return array_slice($result, 0, $limit);
+    }
+
+    /**
+     * Encrypted-store fallback: top exceptions via PHP decoding.
+     *
+     * @return list<array{class: string, count: int, last_seen_us: int}>
+     *
+     * @throws JsonException If payload JSON cannot be decoded
+     */
+    private function topExceptionsFromStore(int $sinceUs): array
+    {
+        /** @var list<array{payload_json: string, timestamp_us: int}> $rows */
+        $rows = $this->store->query(
+            ['event_type' => 'exception', 'since_us' => $sinceUs],
+            limit: self::AGGREGATION_QUERY_LIMIT,
+        );
+
+        /** @var array<string, array{count: int, last_seen_us: int}> $grouped */
+        $grouped = [];
+
+        foreach ($rows as $row) {
+            /** @var array{exception_class?: string} $payload */
+            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $class = $payload['exception_class'] ?? 'Unknown';
+
+            if (!isset($grouped[$class])) {
+                $grouped[$class] = ['count' => 0, 'last_seen_us' => 0];
+            }
+
+            $grouped[$class]['count']++;
+            $grouped[$class]['last_seen_us'] = max($grouped[$class]['last_seen_us'], $row['timestamp_us']);
+        }
+
+        $result = [];
+
+        foreach ($grouped as $class => $data) {
+            $result[] = [
+                'class' => $class,
+                'count' => $data['count'],
+                'last_seen_us' => $data['last_seen_us'],
+            ];
+        }
+
+        usort($result, static fn(array $a, array $b): int => $b['count'] <=> $a['count']);
+
+        return array_slice($result, 0, self::TOP_EXCEPTIONS_LIMIT);
     }
 
     /**

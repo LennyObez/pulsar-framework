@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Scheduler;
 
-use function count;
-
 use DateInvalidTimeZoneException;
 use DateTimeImmutable;
 use Psr\Log\LoggerInterface;
@@ -18,6 +16,7 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Scheduler\Exception\SchedulerException;
 use Random\Randomizer;
 
+use function count;
 use function sprintf;
 
 /**

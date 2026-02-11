@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Queue;
 
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 use Pulsar\Api\Api;
 use Pulsar\Config\QueueConfig;
 use Pulsar\Config\QueueDriverType;
@@ -16,6 +12,10 @@ use Pulsar\Context\RequestContextHolder;
 use Pulsar\Queue\Driver\InMemoryDriver;
 use Pulsar\Queue\Driver\SyncDriver;
 use Pulsar\Queue\Exception\QueueException;
+
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Central orchestrator for dispatching jobs and querying queue state.

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\ObservabilityExport\Error;
 
-use function count;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\ObservabilityExport\Internal\JsonLinesFileWriter;
 use Pulsar\Extension\ObservabilityExport\Schema\ErrorSchema;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;
+
+use function count;
 
 use const PHP_EOL;
 

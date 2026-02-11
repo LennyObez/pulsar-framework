@@ -6,11 +6,11 @@ namespace Pulsar\Auth\Password;
 
 use Override;
 
-use const PASSWORD_ARGON2ID;
-
 use function password_hash;
 use function password_needs_rehash;
 use function password_verify;
+
+use const PASSWORD_ARGON2ID;
 
 /**
  * Argon2id password hasher using PHP's built-in password_hash().

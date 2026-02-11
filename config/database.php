@@ -21,7 +21,7 @@ return [
     | Override with the DB_CONNECTION environment variable.
     |
     */
-    'default' => 'mysql',
+    'default' => 'sqlite',
 
     /*
     |--------------------------------------------------------------------------

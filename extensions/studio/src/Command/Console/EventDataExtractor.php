@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console;
 
+use Pulsar\Api\Internal;
+
 use function is_int;
 use function is_numeric;
 use function is_string;
-
-use Pulsar\Api\Internal;
 
 /**
  * Safely extracts typed values from raw event data arrays.

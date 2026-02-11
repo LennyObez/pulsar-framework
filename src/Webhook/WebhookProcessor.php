@@ -5,17 +5,16 @@ declare(strict_types=1);
 namespace Pulsar\Webhook;
 
 use DateTimeImmutable;
-
-use function is_string;
-use function json_decode;
-
-use const JSON_THROW_ON_ERROR;
-
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Webhook\Exception\WebhookException;
 use Throwable;
+
+use function is_string;
+use function json_decode;
+
+use const JSON_THROW_ON_ERROR;
 
 /**
  * Generic webhook processor: verify -> decode -> claim -> dispatch -> commit/release.

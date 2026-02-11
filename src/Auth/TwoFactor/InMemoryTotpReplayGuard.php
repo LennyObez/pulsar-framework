@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
-use function array_filter;
-
 use Pulsar\Api\Internal;
+
+use function array_filter;
 
 /**
  * In-memory TOTP replay guard for single-process and testing use.

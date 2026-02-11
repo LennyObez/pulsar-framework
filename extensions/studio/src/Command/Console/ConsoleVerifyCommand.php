@@ -4,13 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console;
 
-use function file_exists;
-use function file_get_contents;
-
 use InvalidArgumentException;
-
-use function is_string;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -22,6 +16,9 @@ use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
 use SodiumException;
 
+use function file_exists;
+use function file_get_contents;
+use function is_string;
 use function sprintf;
 use function str_repeat;
 

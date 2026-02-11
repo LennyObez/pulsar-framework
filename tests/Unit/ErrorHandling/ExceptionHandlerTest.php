@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\ErrorHandling;
 
-use function is_scalar;
-use function is_string;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,6 +22,9 @@ use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\RoutingException;
 use RuntimeException;
 use Stringable;
+
+use function is_scalar;
+use function is_string;
 
 #[CoversClass(ExceptionHandler::class)]
 final class ExceptionHandlerTest extends TestCase

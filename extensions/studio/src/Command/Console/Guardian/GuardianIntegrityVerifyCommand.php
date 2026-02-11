@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Command\Console\Guardian;
 
-use function file_exists;
-use function file_get_contents;
-
 use JsonException;
 use Override;
 use Pulsar\Api\Internal;
@@ -16,14 +13,16 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
+use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 use Pulsar\Integrity\Exception\IntegrityException;
 use Pulsar\Integrity\FileVerificationStatus;
 use Pulsar\Integrity\ManifestFormat;
 use Pulsar\Integrity\ManifestSignerInterface;
 use Pulsar\Integrity\ManifestVerifierInterface;
-use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 use SodiumException;
 
+use function file_exists;
+use function file_get_contents;
 use function sprintf;
 
 /**

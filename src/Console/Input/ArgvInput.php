@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Input;
 
-use function is_int;
-
 use Override;
 use Pulsar\Console\InputInterface;
 
+use function is_int;
 use function strlen;
 
 /**

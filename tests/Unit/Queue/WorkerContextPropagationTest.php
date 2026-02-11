@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Queue;
 
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -26,6 +22,10 @@ use Pulsar\Queue\WorkerOptions;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use RuntimeException;
+
+use function json_encode;
+
+use const JSON_THROW_ON_ERROR;
 
 #[CoversClass(Worker::class)]
 final class WorkerContextPropagationTest extends TestCase

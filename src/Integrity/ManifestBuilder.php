@@ -4,35 +4,25 @@ declare(strict_types=1);
 
 namespace Pulsar\Integrity;
 
+use FilesystemIterator;
+use Pulsar\Api\Internal;
+use Pulsar\Core\Version;
+use Pulsar\Integrity\Exception\IntegrityException;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use SplFileInfo;
+
 use function array_keys;
 use function count;
-
-use const DIRECTORY_SEPARATOR;
-
 use function explode;
 use function filesize;
-
-use FilesystemIterator;
-
-use const FNM_PATHNAME;
-
 use function fnmatch;
 use function hash_file;
 use function implode;
 use function is_dir;
 use function is_file;
 use function ltrim;
-
-use Pulsar\Api\Internal;
-use Pulsar\Core\Version;
-use Pulsar\Integrity\Exception\IntegrityException;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-
 use function sort;
-
-use SplFileInfo;
-
 use function str_contains;
 use function str_replace;
 use function str_starts_with;
@@ -40,6 +30,9 @@ use function strlen;
 use function substr;
 use function time;
 use function usort;
+
+use const DIRECTORY_SEPARATOR;
+use const FNM_PATHNAME;
 
 /**
  * Builds an integrity manifest by scanning the filesystem.

@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Studio\Console\Evidence;
 
-use function hash;
-use function microtime;
-
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,6 +17,8 @@ use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
 use Pulsar\Extension\Studio\Exception\StudioException;
 use Pulsar\Security\Crypto\HmacService;
 
+use function hash;
+use function microtime;
 use function strlen;
 
 #[CoversClass(EvidenceExporter::class)]

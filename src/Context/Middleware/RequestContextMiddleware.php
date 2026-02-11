@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Context\Middleware;
 
-use function ctype_xdigit;
-use function is_string;
-
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Context\CausationId;
@@ -18,6 +15,8 @@ use Pulsar\Http\Request;
 use Pulsar\Http\Response;
 use Random\Randomizer;
 
+use function ctype_xdigit;
+use function is_string;
 use function strlen;
 
 /**

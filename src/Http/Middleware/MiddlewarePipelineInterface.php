@@ -20,5 +20,5 @@ interface MiddlewarePipelineInterface
      *
      * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
      */
-    public function pipe(MiddlewareInterface|string $middleware): static;
+    public function pipe(MiddlewareInterface|string $middleware): MiddlewarePipelineInterface;
 }

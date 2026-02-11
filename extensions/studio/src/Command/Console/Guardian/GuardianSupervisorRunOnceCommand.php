@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Command\Console\Guardian;
 
 use JsonException;
-
-use function memory_get_usage;
-
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Console\Command;
@@ -17,6 +14,7 @@ use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Studio\Command\Console\JsonOutputHelper;
 use Pulsar\Supervisor\SupervisorInterface;
 
+use function memory_get_usage;
 use function sprintf;
 use function time;
 
