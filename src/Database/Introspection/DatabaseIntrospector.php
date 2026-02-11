@@ -19,7 +19,7 @@ use function strtolower;
  * Works directly with ConnectionInterface — no ORM required.
  */
 #[Api(since: '1.0.0')]
-final readonly class DatabaseIntrospector
+final readonly class DatabaseIntrospector implements DatabaseIntrospectorInterface
 {
     public function __construct(
         private ConnectionInterface $connection,

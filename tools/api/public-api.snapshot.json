@@ -690,6 +690,166 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Codegen\\AbstractGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\ConflictReporter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\EntityDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\FieldDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\GeneratedFile": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\GeneratedFileSet": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\GeneratorConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\GeneratorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Generator\\AdminResourceGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Generator\\ApiResourceGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Generator\\FormGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Generator\\MigrationGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Generator\\PolicyGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Generator\\RepositoryGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Generator\\TestFactoryGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Generator\\ValidationRuleGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\OverwritePolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\PathValidator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\DiffResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\EntityDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\IdentifierNormalizer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\PropertyDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\RelationType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\RelationshipDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\SchemaDiff": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\SchemaOperation": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\SchemaOperationType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\SchemaSnapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\SchemaSnapshotStore": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Schema\\SchemaSnapshotStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Template\\TemplateRenderer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Codegen\\Template\\TemplateVariable": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Concurrency\\FanOut": {
       "since": "1.0.0",
       "methods": [],
@@ -1010,7 +1170,27 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Console\\Command\\Make\\CrudCommand": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Command\\Make\\FromSchemaCommand": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Command\\Make\\MigrationDiffCommand": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Console\\Command\\NewProject\\EnvironmentPreset": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Command\\NewProject\\PackManifest": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -1336,6 +1516,11 @@
       "constants": []
     },
     "Pulsar\\Database\\Introspection\\DatabaseIntrospector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Database\\Introspection\\DatabaseIntrospectorInterface": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -5097,6 +5282,8 @@
     "Pulsar\\Console\\Command\\KeyRotateCommand",
     "Pulsar\\Console\\Command\\NewProject\\ComposerJsonGenerator",
     "Pulsar\\Console\\Command\\NewProject\\DirectoryLayout",
+    "Pulsar\\Console\\Command\\NewProject\\PackInstaller",
+    "Pulsar\\Console\\Command\\NewProject\\PackLoader",
     "Pulsar\\Console\\Command\\NewProject\\ProjectGenerator",
     "Pulsar\\Console\\Command\\NewProject\\SecureEnvGenerator",
     "Pulsar\\Console\\Command\\NewProject\\TemplateRegistry",
