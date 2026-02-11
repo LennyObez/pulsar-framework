@@ -95,7 +95,6 @@ final readonly class SafeHtmlPolicy
      * @var list<string>
      */
     private const array DANGEROUS_ATTRIBUTES = [
-        'style',
         'id',
         'srcset',
         'formaction',
@@ -318,6 +317,10 @@ final readonly class SafeHtmlPolicy
         }
 
         foreach (iterator_to_array($node->childNodes) as $child) {
+            if (!$child instanceof DOMNode) {
+                continue;
+            }
+
             $this->collectNodes($child, $nodes);
             $nodes[] = $child;
         }
@@ -361,10 +364,12 @@ final readonly class SafeHtmlPolicy
             $allowedAttrs = $allowlist[$tagName];
             $toRemove = [];
 
-            /** @var DOMAttr $attr */
-            foreach (iterator_to_array($element->attributes) as $attr) {
-                if (!in_array(strtolower($attr->name), $allowedAttrs, true)) {
-                    $toRemove[] = $attr->name;
+            if ($element->attributes !== null) {
+                /** @var DOMAttr $attr */
+                foreach (iterator_to_array($element->attributes) as $attr) {
+                    if (!in_array(strtolower($attr->name), $allowedAttrs, true)) {
+                        $toRemove[] = $attr->name;
+                    }
                 }
             }
 
@@ -571,46 +576,48 @@ final readonly class SafeHtmlPolicy
             $elementAllowedAttrs = $allowlist[$tagName] ?? [];
             $toRemove = [];
 
-            /** @var DOMAttr $attr */
-            foreach (iterator_to_array($element->attributes) as $attr) {
-                $attrNameLower = strtolower($attr->name);
+            if ($element->attributes !== null) {
+                /** @var DOMAttr $attr */
+                foreach (iterator_to_array($element->attributes) as $attr) {
+                    $attrNameLower = strtolower($attr->name);
 
-                // Skip attributes that are explicitly in this element's allowlist
-                if (in_array($attrNameLower, $elementAllowedAttrs, true)) {
-                    continue;
-                }
+                    // Skip attributes that are explicitly in this element's allowlist
+                    if (in_array($attrNameLower, $elementAllowedAttrs, true)) {
+                        continue;
+                    }
 
-                // Strip style attributes
-                if ($attrNameLower === 'style') {
-                    $toRemove[] = $attr->name;
+                    // Strip style attributes
+                    if ($attrNameLower === 'style') {
+                        $toRemove[] = $attr->name;
 
-                    continue;
-                }
+                        continue;
+                    }
 
-                // Strip on* event handlers (but not allowlisted attributes like "open")
-                if (str_starts_with($attrNameLower, 'on')) {
-                    $toRemove[] = $attr->name;
+                    // Strip on* event handlers (but not allowlisted attributes like "open")
+                    if (str_starts_with($attrNameLower, 'on')) {
+                        $toRemove[] = $attr->name;
 
-                    continue;
-                }
+                        continue;
+                    }
 
-                // Strip data-* attributes
-                if (str_starts_with($attrNameLower, 'data-')) {
-                    $toRemove[] = $attr->name;
+                    // Strip data-* attributes
+                    if (str_starts_with($attrNameLower, 'data-')) {
+                        $toRemove[] = $attr->name;
 
-                    continue;
-                }
+                        continue;
+                    }
 
-                // Strip dangerous named attributes
-                if (in_array($attrNameLower, self::DANGEROUS_ATTRIBUTES, true)) {
-                    $toRemove[] = $attr->name;
+                    // Strip dangerous named attributes
+                    if (in_array($attrNameLower, self::DANGEROUS_ATTRIBUTES, true)) {
+                        $toRemove[] = $attr->name;
 
-                    continue;
-                }
+                        continue;
+                    }
 
-                // Strip class except on <code> with valid pattern
-                if ($attrNameLower === 'class') {
-                    $toRemove[] = $attr->name;
+                    // Strip class except on <code> with valid pattern
+                    if ($attrNameLower === 'class') {
+                        $toRemove[] = $attr->name;
+                    }
                 }
             }
 

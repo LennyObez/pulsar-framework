@@ -59,6 +59,9 @@ final readonly class MediaAsset
     /**
      * Create a new media asset for a fresh upload.
      */
+    /**
+     * @param array<string, mixed>|null $exifData
+     */
     public static function create(
         string $id,
         string $uploaderId,

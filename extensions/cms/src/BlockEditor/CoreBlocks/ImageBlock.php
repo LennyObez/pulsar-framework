@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Cms\BlockEditor\CoreBlocks;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
+use Pulsar\Extension\Cms\Media\MediaAsset;
+use Pulsar\Extension\Cms\Media\ResponsiveImageRenderer;
 
 use function htmlspecialchars;
 use function in_array;
@@ -18,6 +20,10 @@ use const ENT_QUOTES;
 final readonly class ImageBlock implements BlockTypeInterface
 {
     private const array VALID_ALIGNMENTS = ['left', 'center', 'right'];
+
+    public function __construct(
+        private ?ResponsiveImageRenderer $responsiveRenderer = null,
+    ) {}
 
     #[Override]
     public function type(): string
@@ -54,7 +60,19 @@ final readonly class ImageBlock implements BlockTypeInterface
             $figureStyle = " style=\"text-align:{$alignment}\"";
         }
 
-        $html = "<figure{$figureStyle}><img src=\"{$src}\" alt=\"{$alt}\">";
+        // Use responsive renderer if available and a MediaAsset is provided
+        /** @var MediaAsset|null $asset */
+        $asset = $data['_asset'] ?? null;
+        /** @var list<\Pulsar\Extension\Cms\Media\ImageVariant> $variants */
+        $variants = $data['_variants'] ?? [];
+
+        if ($this->responsiveRenderer !== null && $asset instanceof MediaAsset && $variants !== []) {
+            $imgHtml = $this->responsiveRenderer->render($asset, $variants);
+        } else {
+            $imgHtml = "<img src=\"{$src}\" alt=\"{$alt}\" loading=\"lazy\">";
+        }
+
+        $html = "<figure{$figureStyle}>{$imgHtml}";
 
         if (is_string($caption) && $caption !== '') {
             $html .= '<figcaption>' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</figcaption>';
