@@ -31,14 +31,14 @@ final class McpAccessGateTest extends TestCase
     #[Test]
     public function localEnvironmentIsAllowed(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $env = Environment::load();
         $config = McpSecurityConfig::fromArray([]);
 
         $gate = new McpAccessGate($config, EnvironmentMode::Local, $env, '/tmp/project');
 
         $gate->assertEnvironmentAllowed();
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -57,6 +57,8 @@ final class McpAccessGateTest extends TestCase
     #[Test]
     public function stagingWithConfirmationPasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         putenv('MCP_STAGING_CONFIRM=true');
 
         $env = Environment::load();
@@ -65,8 +67,6 @@ final class McpAccessGateTest extends TestCase
         $gate = new McpAccessGate($config, EnvironmentMode::Staging, $env, '/tmp/project');
 
         $gate->assertEnvironmentAllowed();
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -102,6 +102,8 @@ final class McpAccessGateTest extends TestCase
     #[Test]
     public function concurrencySlotRelease(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $env = Environment::load();
         $config = McpSecurityConfig::fromArray([
             'max_concurrent_actions' => 1,
@@ -114,7 +116,5 @@ final class McpAccessGateTest extends TestCase
 
         // After release, should be able to acquire again
         $gate->assertConcurrencyAllowed();
-
-        $this->addToAssertionCount(1);
     }
 }

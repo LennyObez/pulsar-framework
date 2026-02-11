@@ -406,10 +406,9 @@ final class CacheIntegrityTest extends TestCase
     public function validateDirectoryAcceptsValidDirectory(): void
     {
         // Should not throw for our temp directory
-        $this->integrity->validateDirectory($this->tempDir);
+        $this->expectNotToPerformAssertions();
 
-        // If we get here, no exception was thrown
-        $this->addToAssertionCount(1);
+        $this->integrity->validateDirectory($this->tempDir);
     }
 
     #[Test]
@@ -427,10 +426,10 @@ final class CacheIntegrityTest extends TestCase
         $path = $this->tempDir . DIRECTORY_SEPARATOR . 'valid.bin';
         file_put_contents($path, 'data');
 
+        $this->expectNotToPerformAssertions();
+
         // Should not throw
         $this->integrity->validateFile($path);
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]

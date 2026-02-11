@@ -16,25 +16,53 @@ use function strlen;
 final class AuthenticationSucceededTest extends TestCase
 {
     #[Test]
-    public function constructionSetsAllProperties(): void
+    public function fromArrayDefaultsMissingFieldsToEmptyStrings(): void
     {
-        $now = new DateTimeImmutable();
+        $event = AuthenticationSucceeded::fromArray([]);
+
+        self::assertSame('', $event->identityId);
+        self::assertSame('', $event->guardName);
+        self::assertSame('', $event->method);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function fromArrayIgnoresNonStringValues(): void
+    {
+        $event = AuthenticationSucceeded::fromArray([
+            'identity_id' => 42,
+            'guard_name' => true,
+            'method' => ['array'],
+            'correlation_id' => null,
+            'nonce' => 3.14,
+        ]);
+
+        self::assertSame('', $event->identityId);
+        self::assertSame('', $event->guardName);
+        self::assertSame('', $event->method);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function toArrayIncludesSchemaVersion(): void
+    {
+        $now = new DateTimeImmutable('2025-06-15T10:30:00.000000+00:00');
 
         $event = new AuthenticationSucceeded(
             identityId: 'user-1',
             guardName: 'session',
             method: 'password',
-            correlationId: 'corr-1',
-            nonce: 'nonce123',
+            correlationId: 'c-1',
+            nonce: 'n-1',
             occurredAt: $now,
         );
 
-        self::assertSame('user-1', $event->identityId);
-        self::assertSame('session', $event->guardName);
-        self::assertSame('password', $event->method);
-        self::assertSame('corr-1', $event->correlationId);
-        self::assertSame('nonce123', $event->nonce);
-        self::assertSame($now, $event->occurredAt);
+        $array = $event->toArray();
+
+        self::assertSame(1, $array['schema_version']);
+        self::assertSame('2025-06-15T10:30:00.000000+00:00', $array['occurred_at']);
     }
 
     #[Test]

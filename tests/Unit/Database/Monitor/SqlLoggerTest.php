@@ -43,6 +43,8 @@ final class SqlLoggerTest extends TestCase
 
         $sqlLogger = new SqlLogger($logger, $config);
         $sqlLogger->log("SELECT * FROM users WHERE name = 'John' AND age = 30", ['John', 30], 5.2, 1);
+
+        self::assertInstanceOf(SqlLogger::class, $sqlLogger);
     }
 
     #[Test]
@@ -65,6 +67,8 @@ final class SqlLoggerTest extends TestCase
 
         $sqlLogger = new SqlLogger($logger, $config);
         $sqlLogger->log('SELECT * FROM users WHERE id = ?', [1], 2.0, 1);
+
+        self::assertInstanceOf(SqlLogger::class, $sqlLogger);
     }
 
     #[Test]
@@ -85,6 +89,8 @@ final class SqlLoggerTest extends TestCase
 
         $sqlLogger = new SqlLogger($logger, $config);
         $sqlLogger->log('SELECT * FROM users', [], 12.5, 42);
+
+        self::assertInstanceOf(SqlLogger::class, $sqlLogger);
     }
 
     #[Test]
@@ -104,6 +110,8 @@ final class SqlLoggerTest extends TestCase
 
         $sqlLogger = new SqlLogger($logger, $config);
         $sqlLogger->log('INSERT INTO users (name) VALUES (?)', ['Alice'], 3.0, 1);
+
+        self::assertInstanceOf(SqlLogger::class, $sqlLogger);
     }
 
     #[Test]
@@ -123,6 +131,8 @@ final class SqlLoggerTest extends TestCase
 
         $sqlLogger = new SqlLogger($logger, $config);
         $sqlLogger->log('SELECT * FROM users WHERE id = ?', [1], 1.0, 1);
+
+        self::assertInstanceOf(SqlLogger::class, $sqlLogger);
     }
 
     #[Test]
@@ -152,6 +162,8 @@ final class SqlLoggerTest extends TestCase
 
         $sqlLogger = new SqlLogger($logger, $config);
         $sqlLogger->log('SELECT * FROM users WHERE id = ?', [1], 1.0, 1);
+
+        self::assertInstanceOf(SqlLogger::class, $sqlLogger);
     }
 
     #[Test]
@@ -192,6 +204,8 @@ final class SqlLoggerTest extends TestCase
                 2.0,
                 1,
             );
+
+            self::assertInstanceOf(SqlLogger::class, $sqlLogger);
         } finally {
             if ($previousEnv === false) {
                 putenv('DB_LOG_RAW_BINDINGS');
@@ -221,5 +235,7 @@ final class SqlLoggerTest extends TestCase
 
         $sqlLogger = new SqlLogger($logger, $config);
         $sqlLogger->log('SELECT * FROM users WHERE id = ?', [1], 1.0, 1);
+
+        self::assertInstanceOf(SqlLogger::class, $sqlLogger);
     }
 }

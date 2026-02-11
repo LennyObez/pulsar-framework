@@ -14,23 +14,6 @@ use Pulsar\Database\Migration\MigrationRecord;
 final class MigrationRecordTest extends TestCase
 {
     #[Test]
-    public function constructorSetsProperties(): void
-    {
-        $appliedAt = new DateTimeImmutable('2024-01-15 10:30:00');
-        $record = new MigrationRecord(
-            version: '20240115103000',
-            name: 'create_users_table',
-            batch: 1,
-            appliedAt: $appliedAt,
-        );
-
-        self::assertSame('20240115103000', $record->version);
-        self::assertSame('create_users_table', $record->name);
-        self::assertSame(1, $record->batch);
-        self::assertSame($appliedAt, $record->appliedAt);
-    }
-
-    #[Test]
     public function fromArrayCreatesRecordFromDatabaseRow(): void
     {
         $record = MigrationRecord::fromArray([
@@ -54,5 +37,37 @@ final class MigrationRecordTest extends TestCase
         self::assertSame('', $record->version);
         self::assertSame('', $record->name);
         self::assertSame(0, $record->batch);
+    }
+
+    #[Test]
+    public function fromArrayFallsBackToNowForNonStringAppliedAt(): void
+    {
+        $before = new DateTimeImmutable();
+
+        $record = MigrationRecord::fromArray([
+            'version' => 'v1',
+            'name' => 'test',
+            'batch' => 1,
+            'applied_at' => 12345,
+        ]);
+
+        $after = new DateTimeImmutable();
+
+        self::assertGreaterThanOrEqual($before, $record->appliedAt);
+        self::assertLessThanOrEqual($after, $record->appliedAt);
+    }
+
+    #[Test]
+    public function fromArrayRoundTripPreservesDate(): void
+    {
+        $record = MigrationRecord::fromArray([
+            'version' => '20240115103000',
+            'name' => 'create_users_table',
+            'batch' => 2,
+            'applied_at' => '2024-01-15 10:30:00',
+        ]);
+
+        self::assertSame('2024-01-15', $record->appliedAt->format('Y-m-d'));
+        self::assertSame('10:30:00', $record->appliedAt->format('H:i:s'));
     }
 }

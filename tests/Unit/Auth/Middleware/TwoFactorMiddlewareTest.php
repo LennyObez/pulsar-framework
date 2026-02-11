@@ -20,6 +20,8 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
+use function json_decode;
+
 #[CoversClass(TwoFactorMiddleware::class)]
 final class TwoFactorMiddlewareTest extends TestCase
 {
@@ -145,5 +147,49 @@ final class TwoFactorMiddlewareTest extends TestCase
         $response = $middleware->process($request, $handler);
 
         self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function returns403JsonWhenNoSecurityContextAndAcceptJson(): void
+    {
+        $middleware = new TwoFactorMiddleware();
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/api/protected',
+            headers: ['Accept' => 'application/json'],
+        );
+
+        $response = $middleware->process($request, $this->passHandler());
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+
+        /** @var array<string, mixed> $body */
+        $body = json_decode((string) $response->getBody(), true);
+        self::assertSame('Two-factor authentication verification required', $body['error']);
+        self::assertSame(403, $body['status']);
+    }
+
+    #[Test]
+    public function returns403PlaintextWhenNoSecurityContextAndAcceptHtml(): void
+    {
+        $middleware = new TwoFactorMiddleware();
+        $request = new ServerRequest(
+            method: 'GET',
+            uri: '/protected',
+            headers: ['Accept' => 'text/html'],
+        );
+
+        $response = $middleware->process($request, $this->passHandler());
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertSame('Two-factor authentication verification required', (string) $response->getBody());
+    }
+
+    private function passHandler(): RequestHandlerInterface
+    {
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: ResponseStatus::OK->value, body: 'OK'));
+
+        return $handler;
     }
 }

@@ -14,6 +14,10 @@ use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Audit\ChainableAuditSinkInterface;
 
+use function file_put_contents;
+use function json_encode;
+use function random_bytes;
+
 #[CoversClass(AuditFileSink::class)]
 final class AuditFileSinkTest extends TestCase
 {
@@ -197,5 +201,115 @@ final class AuditFileSinkTest extends TestCase
         self::assertArrayHasKey('metadata', $data);
         self::assertArrayHasKey('previous_hmac', $data);
         self::assertArrayHasKey('hmac', $data);
+    }
+
+    #[Test]
+    public function lastHmacReturnsHmacFromSingleLineFile(): void
+    {
+        $logPath = $this->tempDir . '/single.jsonl';
+        $sink = new AuditFileSink($logPath);
+
+        $entry = AuditEntry::create(
+            id: 'single-entry',
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: 'compliance-officer@bank.com',
+            action: 'audit_export',
+            resource: '/reports/quarterly',
+            timestamp: new DateTimeImmutable('2025-03-07T09:00:00.000000+00:00'),
+            metadata: ['ip' => '10.0.1.50', 'report_type' => 'sox'],
+            previousHmac: 'chain-seed',
+            auditKey: $this->auditKey,
+        );
+        $sink->write($entry);
+
+        self::assertSame($entry->hmac, $sink->lastHmac());
+    }
+
+    #[Test]
+    public function lastHmacReturnsNullWhenHmacFieldMissing(): void
+    {
+        $logPath = $this->tempDir . '/no-hmac.jsonl';
+        file_put_contents($logPath, json_encode(['id' => 'test', 'event' => 'auth']) . "\n");
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertNull($sink->lastHmac());
+    }
+
+    #[Test]
+    public function lastHmacReturnsNullWhenHmacFieldIsNotString(): void
+    {
+        $logPath = $this->tempDir . '/bad-hmac.jsonl';
+        file_put_contents($logPath, json_encode(['hmac' => 12345]) . "\n");
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertNull($sink->lastHmac());
+    }
+
+    #[Test]
+    public function lastHmacHandlesFileWithOnlyNewlines(): void
+    {
+        $logPath = $this->tempDir . '/newlines.jsonl';
+        file_put_contents($logPath, "\n\n\n");
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertNull($sink->lastHmac());
+    }
+
+    #[Test]
+    public function lastHmacHandlesLargeFileByReadingFromEnd(): void
+    {
+        $logPath = $this->tempDir . '/large.jsonl';
+        $sink = new AuditFileSink($logPath);
+
+        // Write 50 entries to create a multi-line file
+        $lastEntry = null;
+        for ($i = 0; $i < 50; $i++) {
+            $lastEntry = AuditEntry::create(
+                id: 'batch-' . $i,
+                event: AuditEvent::DataAccess,
+                outcome: AuditOutcome::Success,
+                actor: 'compliance-officer@bank.com',
+                action: 'audit_export',
+                resource: '/reports/quarterly',
+                timestamp: new DateTimeImmutable('2025-03-07T09:00:00.000000+00:00'),
+                metadata: ['ip' => '10.0.1.50', 'report_type' => 'sox'],
+                previousHmac: 'chain-seed',
+                auditKey: $this->auditKey,
+            );
+            $sink->write($lastEntry);
+        }
+
+        self::assertSame($lastEntry->hmac, $sink->lastHmac());
+    }
+
+    #[Test]
+    public function writeDoesNotFailWhenDirectoryAlreadyExists(): void
+    {
+        $logPath = $this->tempDir . '/audit.jsonl';
+        $sink = new AuditFileSink($logPath);
+
+        $sink->write($this->createEntry('first'));
+        $sink->write($this->createEntry('second'));
+
+        $contents = file_get_contents($logPath);
+        self::assertIsString($contents);
+
+        $lines = array_filter(explode("\n", $contents));
+        self::assertCount(2, $lines);
+    }
+
+    #[Test]
+    public function lastHmacReturnsNullForJsonWithNullHmac(): void
+    {
+        $logPath = $this->tempDir . '/null-hmac.jsonl';
+        file_put_contents($logPath, json_encode(['hmac' => null]) . "\n");
+
+        $sink = new AuditFileSink($logPath);
+
+        self::assertNull($sink->lastHmac());
     }
 }

@@ -1,0 +1,164 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Tests\Unit\Extension\Grpc\Manifest;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Grpc\Manifest\ManifestEntry;
+use Pulsar\Extension\Grpc\Manifest\ServiceManifest;
+
+#[CoversClass(ServiceManifest::class)]
+#[CoversClass(ManifestEntry::class)]
+final class ServiceManifestTest extends TestCase
+{
+    // --- ManifestEntry ---
+
+    #[Test]
+    public function manifestEntryFromArray(): void
+    {
+        $entry = ManifestEntry::fromArray([
+            'service_name' => 'test.Service',
+            'handler_class' => 'App\\Handler',
+            'methods' => [
+                ['name' => 'Get', 'full_name' => '/test/Get', 'type' => 'unary', 'input_type' => 'Req', 'output_type' => 'Res', 'handler' => 'Handler::get'],
+            ],
+        ]);
+
+        self::assertSame('test.Service', $entry->serviceName);
+        self::assertSame('App\\Handler', $entry->handlerClass);
+        self::assertCount(1, $entry->methods);
+    }
+
+    #[Test]
+    public function manifestEntryFromArrayDefaults(): void
+    {
+        $entry = ManifestEntry::fromArray([]);
+
+        self::assertSame('', $entry->serviceName);
+        self::assertSame('', $entry->handlerClass);
+        self::assertSame([], $entry->methods);
+    }
+
+    #[Test]
+    public function manifestEntryFromArrayNonStringValues(): void
+    {
+        $entry = ManifestEntry::fromArray([
+            'service_name' => 123,
+            'handler_class' => false,
+            'methods' => 'invalid',
+        ]);
+
+        self::assertSame('', $entry->serviceName);
+        self::assertSame('', $entry->handlerClass);
+        self::assertSame([], $entry->methods);
+    }
+
+    #[Test]
+    public function manifestEntryToArray(): void
+    {
+        $methods = [
+            ['name' => 'Get', 'full_name' => '/test/Get', 'type' => 'unary', 'input_type' => 'Req', 'output_type' => 'Res', 'handler' => 'Handler::get'],
+        ];
+        $entry = new ManifestEntry(
+            serviceName: 'test.Service',
+            handlerClass: 'App\\Handler',
+            methods: $methods,
+        );
+
+        $array = $entry->toArray();
+
+        self::assertSame('test.Service', $array['service_name']);
+        self::assertSame('App\\Handler', $array['handler_class']);
+        self::assertSame($methods, $array['methods']);
+    }
+
+    // --- ServiceManifest ---
+
+    #[Test]
+    public function serviceManifestFromArray(): void
+    {
+        $manifest = ServiceManifest::fromArray([
+            'services' => [
+                ['service_name' => 'svc.One', 'handler_class' => 'App\\One', 'methods' => []],
+            ],
+            'version' => '2.0',
+            'compiled_at' => '2026-01-01T00:00:00Z',
+        ]);
+
+        self::assertCount(1, $manifest->services);
+        self::assertSame('svc.One', $manifest->services[0]->serviceName);
+        self::assertSame('2.0', $manifest->version);
+        self::assertSame('2026-01-01T00:00:00Z', $manifest->compiledAt);
+    }
+
+    #[Test]
+    public function serviceManifestFromArrayDefaults(): void
+    {
+        $manifest = ServiceManifest::fromArray([]);
+
+        self::assertSame([], $manifest->services);
+        self::assertSame('1.0', $manifest->version);
+        self::assertSame('', $manifest->compiledAt);
+    }
+
+    #[Test]
+    public function serviceManifestFromArrayNonStringValues(): void
+    {
+        $manifest = ServiceManifest::fromArray([
+            'version' => 123,
+            'compiled_at' => false,
+        ]);
+
+        self::assertSame('1.0', $manifest->version);
+        self::assertSame('', $manifest->compiledAt);
+    }
+
+    #[Test]
+    public function serviceManifestFromArraySkipsNonArrayServices(): void
+    {
+        $manifest = ServiceManifest::fromArray([
+            'services' => ['not-an-array', ['service_name' => 'valid', 'handler_class' => 'H', 'methods' => []]],
+        ]);
+
+        self::assertCount(1, $manifest->services);
+        self::assertSame('valid', $manifest->services[0]->serviceName);
+    }
+
+    #[Test]
+    public function serviceManifestToArrayRoundTrip(): void
+    {
+        $data = [
+            'services' => [
+                ['service_name' => 'svc.One', 'handler_class' => 'App\\One', 'methods' => []],
+            ],
+            'version' => '1.0',
+            'compiled_at' => '2026-03-07T12:00:00Z',
+        ];
+
+        $manifest = ServiceManifest::fromArray($data);
+        $exported = $manifest->toArray();
+
+        self::assertSame($data, $exported);
+    }
+
+    #[Test]
+    public function serviceManifestToPhpArray(): void
+    {
+        $manifest = new ServiceManifest(
+            services: [],
+            version: '1.0',
+            compiledAt: '2026-03-07',
+        );
+
+        $php = $manifest->toPhpArray();
+
+        self::assertStringContainsString('<?php', $php);
+        self::assertStringContainsString('declare(strict_types=1)', $php);
+        self::assertStringContainsString('Generated by Pulsar', $php);
+        self::assertStringContainsString('2026-03-07', $php);
+        self::assertStringContainsString('return', $php);
+    }
+}

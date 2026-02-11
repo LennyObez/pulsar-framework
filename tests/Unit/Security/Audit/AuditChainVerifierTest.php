@@ -17,6 +17,9 @@ use Pulsar\Security\Crypto\EnvKeyRing;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function random_bytes;
+use function sodium_bin2hex;
+
 #[CoversClass(AuditChainVerifier::class)]
 #[CoversClass(AuditChainResult::class)]
 final class AuditChainVerifierTest extends TestCase
@@ -213,6 +216,116 @@ final class AuditChainVerifierTest extends TestCase
 
         self::assertTrue($result->valid);
         self::assertSame(0, $result->verifiedCount);
+    }
+
+    #[Test]
+    public function legacyEntryWithoutKidVerifiesAgainstAllKeys(): void
+    {
+        $hex = sodium_bin2hex(random_bytes(32));
+        $masterKey = MasterKey::fromHex($hex);
+        $auditKey = $masterKey->deriveSubKey(2, 'audit___');
+        $keyRing = EnvKeyRing::fromMasterKey($masterKey, 2, 'audit___');
+        $verifier = new AuditChainVerifier($keyRing);
+
+        // Create a legacy entry manually (empty kid)
+        $message = AuditEntry::buildMessageFromEntry(new AuditEntry(
+            id: 'legacy-1',
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: 'system',
+            action: 'export',
+            resource: '/reports/q4',
+            timestamp: new DateTimeImmutable('2025-06-15T12:00:00+00:00'),
+            metadata: [],
+            previousHmac: 'seed',
+            hmac: '',
+            kid: '',
+        ));
+
+        $hmac = Hmac::computeHex($message, $auditKey);
+
+        $legacyEntry = new AuditEntry(
+            id: 'legacy-1',
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: 'system',
+            action: 'export',
+            resource: '/reports/q4',
+            timestamp: new DateTimeImmutable('2025-06-15T12:00:00+00:00'),
+            metadata: [],
+            previousHmac: 'seed',
+            hmac: $hmac,
+            kid: '',
+        );
+
+        self::assertTrue($verifier->verifyEntry($legacyEntry));
+    }
+
+    #[Test]
+    public function legacyEntryWithWrongHmacFailsVerification(): void
+    {
+        $hex = sodium_bin2hex(random_bytes(32));
+        $masterKey = MasterKey::fromHex($hex);
+        $keyRing = EnvKeyRing::fromMasterKey($masterKey, 2, 'audit___');
+        $verifier = new AuditChainVerifier($keyRing);
+
+        $legacyEntry = new AuditEntry(
+            id: 'legacy-bad',
+            event: AuditEvent::Authorization,
+            outcome: AuditOutcome::Denied,
+            actor: 'attacker',
+            action: 'access',
+            resource: '/admin',
+            timestamp: new DateTimeImmutable('2025-06-15T12:00:00+00:00'),
+            metadata: [],
+            previousHmac: 'seed',
+            hmac: 'forged_hmac_value_that_should_not_verify',
+            kid: '',
+        );
+
+        self::assertFalse($verifier->verifyEntry($legacyEntry));
+    }
+
+    #[Test]
+    public function verifyChainWithNoExpectedFirstPreviousHmacSkipsFirstLinkCheck(): void
+    {
+        $hex = sodium_bin2hex(random_bytes(32));
+        $masterKey = MasterKey::fromHex($hex);
+        $auditKey = $masterKey->deriveSubKey(2, 'audit___');
+        $keyRing = EnvKeyRing::fromMasterKey($masterKey, 2, 'audit___');
+        $verifier = new AuditChainVerifier($keyRing);
+
+        $entry1 = AuditEntry::create(
+            id: 'e1',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: 'user',
+            action: 'login',
+            resource: '',
+            timestamp: new DateTimeImmutable(),
+            metadata: [],
+            previousHmac: 'any-value',
+            auditKey: $auditKey,
+        );
+
+        $entry2 = AuditEntry::create(
+            id: 'e2',
+            event: AuditEvent::Authentication,
+            outcome: AuditOutcome::Success,
+            actor: 'user',
+            action: 'login',
+            resource: '',
+            timestamp: new DateTimeImmutable(),
+            metadata: [],
+            previousHmac: $entry1->hmac,
+            auditKey: $auditKey,
+        );
+
+        // No expectedFirstPreviousHmac → first entry's previousHmac is not checked
+        $result = $verifier->verifyChain([$entry1, $entry2]);
+
+        self::assertTrue($result->valid);
+        self::assertSame(2, $result->verifiedCount);
     }
 
     private function createEntry(string $id, string $previousHmac): AuditEntry

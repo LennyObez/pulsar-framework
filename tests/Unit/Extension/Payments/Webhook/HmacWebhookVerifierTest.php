@@ -30,15 +30,14 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function validSignaturePasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $payload = '{"id":"evt_1","type":"payment_intent.created"}';
         $timestamp = 1700000000;
         $signature = $this->computeSignature($payload, $timestamp, self::SECRET);
         $header = sprintf('t=%d,v1=%s', $timestamp, $signature);
 
-        // Should not throw
         $this->verifier->verify($payload, $header, self::SECRET, 300);
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -98,6 +97,8 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function multipleV1OneValidAccepts(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $payload = '{"id":"evt_multi"}';
         $timestamp = 1700000000;
         $validSig = $this->computeSignature($payload, $timestamp, self::SECRET);
@@ -105,8 +106,6 @@ final class HmacWebhookVerifierTest extends TestCase
 
         // Should not throw — one valid v1 is enough (secret rotation)
         $this->verifier->verify($payload, $header, self::SECRET, 300);
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -125,14 +124,14 @@ final class HmacWebhookVerifierTest extends TestCase
     #[Test]
     public function withinTolerancePasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $payload = '{"id":"evt_tolerance"}';
         $timestamp = 1700000000 - 299; // Just within 300s tolerance
         $signature = $this->computeSignature($payload, $timestamp, self::SECRET);
         $header = sprintf('t=%d,v1=%s', $timestamp, $signature);
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
-
-        $this->addToAssertionCount(1);
     }
 
     private function computeSignature(string $payload, int $timestamp, string $secret): string

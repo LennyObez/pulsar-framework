@@ -203,6 +203,116 @@ final class FrameworkCacheTest extends TestCase
         self::assertNotSame($key1, $key2);
     }
 
+    #[Test]
+    public function loadReturnsNullWhenManifestIsInvalid(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $cachePath = $cache->cachePath();
+        mkdir($cachePath, 0o750, true);
+
+        file_put_contents($cachePath . DIRECTORY_SEPARATOR . 'manifest.json', '{"invalid": true}');
+
+        $result = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNull($result);
+    }
+
+    #[Test]
+    public function warmAndLoadRoundTrip(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $routes = [
+            Route::get('/test', self::class, 'test.index'),
+            Route::get('/users', self::class, 'users.index'),
+        ];
+
+        $cache->warm($repository, $routes, [], 'testing', false);
+
+        self::assertTrue($cache->isWarm());
+
+        $loaded = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNotNull($loaded);
+        self::assertArrayHasKey('manifest', $loaded);
+        self::assertArrayHasKey('config', $loaded);
+        self::assertArrayHasKey('routes', $loaded);
+        self::assertArrayHasKey('containerHints', $loaded);
+    }
+
+    #[Test]
+    public function loadReturnsNullWhenInvalidationKeyDoesNotMatch(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $cache->warm($repository, [], [], 'testing', false);
+
+        file_put_contents(
+            $this->basePath . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'app.php',
+            "<?php\nreturn ['name' => 'CHANGED', 'env' => 'production', 'debug' => false, 'timezone' => 'UTC', 'locale' => 'en'];\n",
+        );
+
+        $loaded = $cache->load($this->basePath . DIRECTORY_SEPARATOR . 'config');
+
+        self::assertNull($loaded);
+    }
+
+    #[Test]
+    public function invalidationKeyChangesWithEnvFile(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configPath = $this->basePath . DIRECTORY_SEPARATOR . 'config';
+
+        $key1 = $cache->computeInvalidationKey($configPath);
+
+        file_put_contents(
+            $this->basePath . DIRECTORY_SEPARATOR . '.env',
+            "APP_KEY=test-key\nDB_HOST=localhost\n",
+        );
+
+        $key2 = $cache->computeInvalidationKey($configPath);
+
+        self::assertNotSame($key1, $key2);
+    }
+
+    #[Test]
+    public function warmWithStrictMode(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $configManager = new ConfigManager($this->basePath . DIRECTORY_SEPARATOR . 'config');
+        $configManager->load();
+        $repository = $configManager->repository();
+
+        $routes = [
+            Route::get('/api', self::class, 'api.index'),
+        ];
+
+        $result = $cache->warm($repository, $routes, [], 'production', true);
+
+        self::assertTrue($result['configCached']);
+        self::assertSame(1, $result['routesCached']);
+        self::assertTrue($result['containerCached']);
+        self::assertTrue($cache->isWarm());
+    }
+
+    #[Test]
+    public function clearOnEmptyDirectoryDoesNotThrow(): void
+    {
+        $cache = new FrameworkCache($this->basePath, $this->masterKey, new HmacService());
+        $cachePath = $cache->cachePath();
+        mkdir($cachePath, 0o750, true);
+
+        $cache->clear();
+
+        self::assertFalse($cache->isWarm());
+    }
+
     private function writeConfigStubs(string $configPath): void
     {
         file_put_contents(

@@ -177,17 +177,18 @@ final class SsrfProtectionTest extends TestCase
     {
         $client = $this->createClient();
 
+        $portBlocked = false;
+
         // Port 443 is allowed. The request will fail at the HTTP layer
         // (not the SSRF layer) since 8.8.8.8 isn't an HTTP server.
         // We verify no CmsException with "Port" message is thrown.
         try {
             $client->request('GET', 'https://8.8.8.8:443/');
         } catch (CmsException $e) {
-            // If it fails, it should NOT be due to port restriction
-            self::assertStringNotContainsString('Port 443', $e->getMessage());
+            $portBlocked = str_contains($e->getMessage(), 'Port 443');
         }
 
-        $this->addToAssertionCount(1);
+        self::assertFalse($portBlocked, 'Port 443 should not be blocked by SSRF protection');
     }
 
     #[Test]
@@ -195,13 +196,15 @@ final class SsrfProtectionTest extends TestCase
     {
         $client = $this->createClient();
 
+        $portBlocked = false;
+
         try {
             $client->request('GET', 'http://8.8.8.8:80/');
         } catch (CmsException $e) {
-            self::assertStringNotContainsString('Port 80', $e->getMessage());
+            $portBlocked = str_contains($e->getMessage(), 'Port 80');
         }
 
-        $this->addToAssertionCount(1);
+        self::assertFalse($portBlocked, 'Port 80 should not be blocked by SSRF protection');
     }
 
     #[Test]
@@ -246,16 +249,17 @@ final class SsrfProtectionTest extends TestCase
         $config = new CmsSecurityConfig(ssrfEnabled: false);
         $client = new SafeHttpClient($config, new NullLogger());
 
+        $ssrfBlocked = false;
+
         // When SSRF is disabled, private IPs should not be blocked at the validation layer.
         // The request will still fail at the HTTP layer, but we verify no SSRF-specific error.
         try {
             $client->request('GET', 'http://127.0.0.1/');
         } catch (CmsException $e) {
-            // If disabled, should NOT mention "blocked range"
-            self::assertStringNotContainsString('blocked range', $e->getMessage());
+            $ssrfBlocked = str_contains($e->getMessage(), 'blocked range');
         }
 
-        $this->addToAssertionCount(1);
+        self::assertFalse($ssrfBlocked, 'SSRF validation should be skipped when disabled');
     }
 
     // -- Additional blocked IPs via config -----------------------------------

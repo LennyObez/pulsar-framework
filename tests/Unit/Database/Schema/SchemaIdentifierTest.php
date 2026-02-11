@@ -17,21 +17,20 @@ final class SchemaIdentifierTest extends TestCase
     #[Test]
     public function validTableNamePasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         SchemaIdentifier::validateTable('users');
-        $this->addToAssertionCount(1);
         SchemaIdentifier::validateTable('_internal');
-        $this->addToAssertionCount(1);
         SchemaIdentifier::validateTable('my_table_123');
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validColumnNamePasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         SchemaIdentifier::validateColumn('email');
-        $this->addToAssertionCount(1);
         SchemaIdentifier::validateColumn('first_name');
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -95,14 +94,16 @@ final class SchemaIdentifierTest extends TestCase
     #[Test]
     public function validateIndexWorks(): void
     {
+        $this->expectNotToPerformAssertions();
+
         SchemaIdentifier::validateIndex('idx_users_email');
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validateForeignKeyWorks(): void
     {
+        $this->expectNotToPerformAssertions();
+
         SchemaIdentifier::validateForeignKey('fk_orders_user_id');
-        $this->addToAssertionCount(1);
     }
 }

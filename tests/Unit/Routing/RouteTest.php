@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Routing;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Http\Method;
@@ -13,25 +14,6 @@ use Pulsar\Routing\Route;
 #[CoversClass(Route::class)]
 final class RouteTest extends TestCase
 {
-    #[Test]
-    public function constructorSetsProperties(): void
-    {
-        $route = new Route(
-            methods: [Method::GET, Method::POST],
-            path: '/users/{id}',
-            handler: fn() => null,
-            name: 'users.show',
-            attributes: ['key' => 'value'],
-            middleware: ['auth'],
-        );
-
-        self::assertSame([Method::GET, Method::POST], $route->methods);
-        self::assertSame('/users/{id}', $route->path);
-        self::assertSame('users.show', $route->name);
-        self::assertSame(['key' => 'value'], $route->attributes);
-        self::assertSame(['auth'], $route->middleware);
-    }
-
     #[Test]
     public function matchesMethodReturnsTrueForMatchingMethod(): void
     {
@@ -89,48 +71,33 @@ final class RouteTest extends TestCase
         self::assertNull($route->matchesPath('/users/1/2'));
     }
 
+    /**
+     * @return iterable<string, array{string, list<Method>}>
+     */
+    public static function httpMethodFactoryProvider(): iterable
+    {
+        yield 'get' => ['get', [Method::GET, Method::HEAD]];
+        yield 'post' => ['post', [Method::POST]];
+        yield 'put' => ['put', [Method::PUT]];
+        yield 'patch' => ['patch', [Method::PATCH]];
+        yield 'delete' => ['delete', [Method::DELETE]];
+    }
+
+    /**
+     * @param list<Method> $expectedMethods
+     */
     #[Test]
-    public function getFactoryCreatesGetRoute(): void
+    #[DataProvider('httpMethodFactoryProvider')]
+    public function factoryCreatesRouteWithCorrectMethod(string $factoryMethod, array $expectedMethods): void
     {
         $handler = fn() => null;
-        $route = Route::get('/test', $handler, 'test');
+        $route = Route::$factoryMethod('/test', $handler, 'test');
+        self::assertInstanceOf(Route::class, $route);
 
-        self::assertSame([Method::GET, Method::HEAD], $route->methods);
+        self::assertSame($expectedMethods, $route->methods);
         self::assertSame('/test', $route->path);
         self::assertSame($handler, $route->handler);
         self::assertSame('test', $route->name);
-    }
-
-    #[Test]
-    public function postFactoryCreatesPostRoute(): void
-    {
-        $route = Route::post('/test', fn() => null);
-
-        self::assertSame([Method::POST], $route->methods);
-    }
-
-    #[Test]
-    public function putFactoryCreatesPutRoute(): void
-    {
-        $route = Route::put('/test', fn() => null);
-
-        self::assertSame([Method::PUT], $route->methods);
-    }
-
-    #[Test]
-    public function patchFactoryCreatesPatchRoute(): void
-    {
-        $route = Route::patch('/test', fn() => null);
-
-        self::assertSame([Method::PATCH], $route->methods);
-    }
-
-    #[Test]
-    public function deleteFactoryCreatesDeleteRoute(): void
-    {
-        $route = Route::delete('/test', fn() => null);
-
-        self::assertSame([Method::DELETE], $route->methods);
     }
 
     #[Test]

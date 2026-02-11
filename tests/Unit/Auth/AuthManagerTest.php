@@ -119,4 +119,25 @@ final class AuthManagerTest extends TestCase
 
         self::assertSame('token', $manager->defaultGuard());
     }
+
+    #[Test]
+    public function resetRequestStateDoesNotThrow(): void
+    {
+        $manager = new AuthManager();
+        $guard = $this->createStub(GuardInterface::class);
+        $guard->method('name')->willReturn('session');
+        $manager->addGuard($guard);
+
+        $manager->resetRequestState();
+
+        self::assertSame($guard, $manager->guard('session'));
+    }
+
+    #[Test]
+    public function defaultGuardNameDefaultsToSession(): void
+    {
+        $manager = new AuthManager();
+
+        self::assertSame('session', $manager->defaultGuard());
+    }
 }

@@ -47,74 +47,73 @@ final class FileValidatorTest extends TestCase
     #[Test]
     public function validJpegPasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $path = $this->createTempFile("\xFF\xD8\xFF\xE0" . str_repeat("\x00", 100));
         $this->createMinimalJpeg($path);
 
         $this->validator->validate($path, 'photo.jpg', 'image/jpeg', (int) filesize($path));
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validPngPasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $path = $this->createMinimalPng();
 
         $this->validator->validate($path, 'image.png', 'image/png', (int) filesize($path));
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validWebpPasses(): void
     {
-        $path = $this->createTempFileWithContent("RIFF\x00\x00\x00\x00WEBP" . str_repeat("\x00", 100));
-
-        // WebP can't be validated by getimagesize unless real, so test just magic byte + extension
-        // The image-specific validation will reject fake content, but we test the pipeline logic
-        // We'll test with a real GD-created WebP if available
-        if (function_exists('imagecreatefromwebp')) {
-            $img = imagecreatetruecolor(10, 10);
-            $tmpPath = $this->tmpDir . '/valid.webp';
-            imagewebp($img, $tmpPath);
-            unset($img);
-
-            $this->validator->validate($tmpPath, 'test.webp', 'image/webp', (int) filesize($tmpPath));
-            $this->addToAssertionCount(1);
-
-            return;
+        if (!function_exists('imagecreatefromwebp')) {
+            self::markTestSkipped('WebP support not available via GD');
         }
 
-        $this->addToAssertionCount(1);
+        $this->expectNotToPerformAssertions();
+
+        $img = imagecreatetruecolor(10, 10);
+        $tmpPath = $this->tmpDir . '/valid.webp';
+        imagewebp($img, $tmpPath);
+        unset($img);
+
+        $this->validator->validate($tmpPath, 'test.webp', 'image/webp', (int) filesize($tmpPath));
     }
 
     #[Test]
     public function validGifPasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $img = imagecreatetruecolor(10, 10);
         $path = $this->tmpDir . '/valid.gif';
         imagegif($img, $path);
         unset($img);
 
         $this->validator->validate($path, 'anim.gif', 'image/gif', (int) filesize($path));
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validPdfPasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $path = $this->createTempFileWithContent('%PDF-1.4 clean content here');
 
         $this->validator->validate($path, 'doc.pdf', 'application/pdf', strlen('%PDF-1.4 clean content here'));
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validSvgPasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $content = '<svg xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40"/></svg>';
         $path = $this->createTempFileWithContent($content);
 
         $this->validator->validate($path, 'icon.svg', 'image/svg+xml', strlen($content));
-        $this->addToAssertionCount(1);
     }
 
     // -- MIME mismatch: JPEG bytes but PNG Content-Type --------------------

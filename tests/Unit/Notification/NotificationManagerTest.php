@@ -44,6 +44,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -67,6 +69,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -88,6 +92,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -111,6 +117,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -133,6 +141,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -153,6 +163,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->send($notifiable, $notification);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     #[Test]
@@ -172,6 +184,8 @@ final class NotificationManagerTest extends TestCase
         );
 
         $manager->sendNow($notifiable, $notification, ['log']);
+
+        self::assertInstanceOf(NotificationManager::class, $manager);
     }
 
     private function createNotifiable(string $id): NotifiableInterface

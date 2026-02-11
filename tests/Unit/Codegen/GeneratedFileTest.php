@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Codegen;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Codegen\GeneratedFile;
@@ -14,20 +15,6 @@ use Pulsar\Codegen\OverwritePolicy;
 final class GeneratedFileTest extends TestCase
 {
     #[Test]
-    public function constructorSetsAllProperties(): void
-    {
-        $file = new GeneratedFile(
-            targetPath: '/project/src/Models/User.php',
-            content: '<?php class User {}',
-            overwritePolicy: OverwritePolicy::Force,
-        );
-
-        self::assertSame('/project/src/Models/User.php', $file->targetPath);
-        self::assertSame('<?php class User {}', $file->content);
-        self::assertSame(OverwritePolicy::Force, $file->overwritePolicy);
-    }
-
-    #[Test]
     public function overwritePolicyDefaultsToFail(): void
     {
         $file = new GeneratedFile(
@@ -36,5 +23,36 @@ final class GeneratedFileTest extends TestCase
         );
 
         self::assertSame(OverwritePolicy::Fail, $file->overwritePolicy);
+    }
+
+    /**
+     * @return iterable<string, array{OverwritePolicy}>
+     */
+    public static function overwritePolicyProvider(): iterable
+    {
+        yield 'skip' => [OverwritePolicy::Skip];
+        yield 'force' => [OverwritePolicy::Force];
+        yield 'fail' => [OverwritePolicy::Fail];
+    }
+
+    #[Test]
+    #[DataProvider('overwritePolicyProvider')]
+    public function allOverwritePoliciesAreAccepted(OverwritePolicy $policy): void
+    {
+        $file = new GeneratedFile(
+            targetPath: '/path',
+            content: 'content',
+            overwritePolicy: $policy,
+        );
+
+        self::assertSame($policy, $file->overwritePolicy);
+    }
+
+    #[Test]
+    public function emptyContentIsValid(): void
+    {
+        $file = new GeneratedFile(targetPath: '/path/empty.php', content: '');
+
+        self::assertSame('', $file->content);
     }
 }
