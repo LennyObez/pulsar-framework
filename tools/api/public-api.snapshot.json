@@ -3430,6 +3430,26 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Queue\\Tenant\\FanOutResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Tenant\\TenantFanOutDispatcher": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Tenant\\TenantQueueRouter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Tenant\\TenantScopedJobInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Queue\\Worker": {
       "since": "1.0.0",
       "methods": [],
@@ -3866,6 +3886,31 @@
       "constants": []
     },
     "Pulsar\\Scheduler\\SchedulerTickResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\Tenant\\MaintenanceWindow": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\Tenant\\TenantFanOutSchedule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\Tenant\\TenantScheduleProviderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\Tenant\\TenantScheduleResolver": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Scheduler\\Tenant\\TenantScheduleTickResult": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -4540,6 +4585,36 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Tenancy\\Exception\\TenantContextMismatchException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\Exception\\TenantContextMissingException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\Guard\\SystemContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\Guard\\TenantId": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\Guard\\TenantIsolationGuard": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\Guard\\TenantScope": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Tenancy\\Tenant": {
       "since": "1.0.0",
       "methods": [],
@@ -4551,6 +4626,11 @@
       "constants": []
     },
     "Pulsar\\Tenancy\\TenantDatabaseStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Tenancy\\TenantProviderInterface": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -5215,6 +5295,9 @@
     "Pulsar\\Queue\\Middleware\\RateLimit",
     "Pulsar\\Queue\\Serialization\\JsonSerializer",
     "Pulsar\\Queue\\Serialization\\MsgpackSerializer",
+    "Pulsar\\Queue\\Tenant\\TenantDeadLetterRouter",
+    "Pulsar\\Queue\\Tenant\\TenantJobMiddleware",
+    "Pulsar\\Queue\\Tenant\\TenantRateLimiter",
     "Pulsar\\Routing\\Binding\\BindingResolver",
     "Pulsar\\Routing\\Binding\\CompiledBindingMap",
     "Pulsar\\Routing\\Binding\\ExplicitBinding",
