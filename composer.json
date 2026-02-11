@@ -79,7 +79,8 @@
       "Pulsar\\Extension\\Cms\\": "extensions/cms/src/",
       "Pulsar\\Extension\\Graphql\\": "extensions/graphql/src/",
       "Pulsar\\Extension\\Forum\\": "extensions/forum/src/",
-      "Pulsar\\Extension\\Grpc\\": "extensions/grpc/src/"
+      "Pulsar\\Extension\\Grpc\\": "extensions/grpc/src/",
+      "Pulsar\\Extension\\Accessibility\\": "extensions/accessibility/src/"
     }
   },
   "autoload-dev": {
@@ -87,7 +88,8 @@
       "Pulsar\\Tests\\": "tests/",
       "Pulsar\\PHPStan\\": "tools/php/phpstan/",
       "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/",
-      "Pulsar\\Extension\\Grpc\\Tests\\": "extensions/grpc/tests/"
+      "Pulsar\\Extension\\Grpc\\Tests\\": "extensions/grpc/tests/",
+      "Pulsar\\Extension\\Accessibility\\Tests\\": "extensions/accessibility/tests/"
     }
   },
   "bin": [

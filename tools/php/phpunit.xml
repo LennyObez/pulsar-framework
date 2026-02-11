@@ -13,9 +13,11 @@
             <directory>../../tests/Unit</directory>
             <directory>../../extensions/opentelemetry/tests/Unit</directory>
             <directory>../../extensions/grpc/tests/Unit</directory>
+            <directory>../../extensions/accessibility/tests/Unit</directory>
         </testsuite>
         <testsuite name="Integration">
             <directory>../../tests/Integration</directory>
+            <directory>../../extensions/accessibility/tests/Integration</directory>
         </testsuite>
         <testsuite name="E2E">
             <directory>../../tests/E2E</directory>
@@ -53,6 +55,7 @@
             <directory>../../extensions/forum/src</directory>
             <directory>../../extensions/analytics/src</directory>
             <directory>../../extensions/grpc/src</directory>
+            <directory>../../extensions/accessibility/src</directory>
         </include>
     </source>
 </phpunit>
