@@ -33,6 +33,11 @@ return [
     // Maximum page nesting depth for hierarchy cycle detection.
     'max_hierarchy_depth' => 10,
 
+    // Content ID to serve as the homepage at GET /.
+    // When null, falls back to finding content with path = '' (empty).
+    // Set this to a specific content UUID to designate a homepage explicitly.
+    'homepage_content_id' => null,
+
     // Caching configuration
     'cache' => [
         'page_cache_ttl_seconds' => 3600,
@@ -89,5 +94,23 @@ return [
 
         // Whether imports default to dry-run mode (recommended)
         'dry_run_default' => true,
+    ],
+
+    // Form submission pipeline configuration
+    'forms' => [
+        // Aggregated spam score threshold — submissions scoring above this are classified as spam
+        'spam_threshold' => 5.0,
+
+        // Maximum form submissions per IP per hour
+        'rate_limit_per_hour' => 10,
+
+        // Email addresses that receive submission notifications (empty = no notifications)
+        'notification_recipients' => [],
+
+        // Hidden field name for bot detection (honeypot)
+        'honeypot_field_name' => '_hp_field',
+
+        // Proof-of-work SHA-256 hash prefix difficulty (e.g. '0000' = 4 leading zeros)
+        'pow_difficulty' => '0000',
     ],
 ];
