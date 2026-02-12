@@ -18,19 +18,31 @@ use Pulsar\Extension\Forum\Content\ForumBodyPolicy;
 use Pulsar\Extension\Forum\Content\MarkdownRenderer;
 use Pulsar\Extension\Forum\Content\MarkdownRendererInterface;
 use Pulsar\Extension\Forum\Internal\AntiAbuse\ForumAntiAbuseMiddleware;
+use Pulsar\Extension\Forum\Internal\Notification\BadgeEvaluator;
 use Pulsar\Extension\Forum\Internal\Notification\ForumNotificationDispatcher;
+use Pulsar\Extension\Forum\Internal\Service\AutoModerationService;
 use Pulsar\Extension\Forum\Internal\Service\BadgeService;
+use Pulsar\Extension\Forum\Internal\Service\BanService;
+use Pulsar\Extension\Forum\Internal\Service\ForumSearchService;
 use Pulsar\Extension\Forum\Internal\Service\ForumService;
+use Pulsar\Extension\Forum\Internal\Service\LeaderboardService;
 use Pulsar\Extension\Forum\Internal\Service\ModerationService;
+use Pulsar\Extension\Forum\Internal\Service\PrivilegeChecker;
 use Pulsar\Extension\Forum\Internal\Service\ReputationService;
 use Pulsar\Extension\Forum\Internal\Service\TagService;
 use Pulsar\Extension\Forum\Internal\Service\VoteService;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
+use Pulsar\Extension\Forum\Report\ForumModerationLogRepositoryInterface;
 use Pulsar\Extension\Forum\Report\PostReportRepositoryInterface;
 use Pulsar\Extension\Forum\Report\ThreadReportRepositoryInterface;
+use Pulsar\Extension\Forum\Report\UserBanRepositoryInterface;
+use Pulsar\Extension\Forum\Service\BanServiceInterface;
+use Pulsar\Extension\Forum\Service\ForumSearchServiceInterface;
 use Pulsar\Extension\Forum\Service\ForumServiceInterface;
+use Pulsar\Extension\Forum\Service\LeaderboardServiceInterface;
 use Pulsar\Extension\Forum\Service\ModerationServiceInterface;
+use Pulsar\Extension\Forum\Service\PrivilegeCheckerInterface;
 use Pulsar\Extension\Forum\Service\ReputationServiceInterface;
 use Pulsar\Extension\Forum\Service\TagServiceInterface;
 use Pulsar\Extension\Forum\Service\VoteServiceInterface;
@@ -182,6 +194,53 @@ final readonly class ForumCoreServiceProvider
                 $posts,
                 $logger,
             ),
+        );
+
+        // Privilege checker
+        $privilegeChecker = new PrivilegeChecker();
+        $container->instance(PrivilegeCheckerInterface::class, $privilegeChecker);
+
+        // Ban service
+        /** @var UserBanRepositoryInterface $userBans */
+        $userBans = $container->get(UserBanRepositoryInterface::class);
+
+        /** @var ForumModerationLogRepositoryInterface $moderationLogs */
+        $moderationLogs = $container->get(ForumModerationLogRepositoryInterface::class);
+
+        $banService = new BanService($userBans, $profiles, $moderationLogs, $events);
+        $container->instance(BanServiceInterface::class, $banService);
+
+        // Auto-moderation service
+        $container->instance(
+            AutoModerationService::class,
+            new AutoModerationService($posts, $threadReports, $postReports),
+        );
+
+        // Badge evaluator
+        $container->instance(
+            BadgeEvaluator::class,
+            new BadgeEvaluator(
+                $badgeService,
+                $posts,
+                $threads,
+                $profiles,
+                $config->badges,
+            ),
+        );
+
+        // Forum search service
+        /** @var ConnectionInterface $connection */
+        $connection = $container->get(ConnectionInterface::class);
+
+        $container->instance(
+            ForumSearchServiceInterface::class,
+            new ForumSearchService($connection),
+        );
+
+        // Leaderboard service
+        $container->instance(
+            LeaderboardServiceInterface::class,
+            new LeaderboardService($profiles, $connection),
         );
     }
 }

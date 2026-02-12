@@ -28,25 +28,35 @@ use Pulsar\Extension\Forum\Config\ForumConfig;
 use Pulsar\Extension\Forum\Event\PostAcceptedAsSolution;
 use Pulsar\Extension\Forum\Event\PostCreated;
 use Pulsar\Extension\Forum\Event\ReportSubmitted;
+use Pulsar\Extension\Forum\Event\ReputationChanged;
 use Pulsar\Extension\Forum\Event\VoteCast;
 use Pulsar\Extension\Forum\Http\Controller\Admin\BadgeController;
+use Pulsar\Extension\Forum\Http\Controller\Admin\BanController as AdminBanController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\CategoryController as AdminCategoryController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\DashboardController as AdminDashboardController;
+use Pulsar\Extension\Forum\Http\Controller\Admin\LeaderboardController as AdminLeaderboardController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\ModerationController as AdminModerationController;
+use Pulsar\Extension\Forum\Http\Controller\Admin\ModerationLogController as AdminModerationLogController;
+use Pulsar\Extension\Forum\Http\Controller\Admin\NotificationPreferencesController as AdminNotificationPreferencesController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\PostController as AdminPostController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\SettingsController as AdminSettingsController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\TagController as AdminTagController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\ThreadController as AdminThreadController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\UserController as AdminUserController;
 use Pulsar\Extension\Forum\Http\Controller\Api\CategoryApiController;
+use Pulsar\Extension\Forum\Http\Controller\Api\ForumSearchController;
+use Pulsar\Extension\Forum\Http\Controller\Api\LeaderboardController as ApiLeaderboardController;
 use Pulsar\Extension\Forum\Http\Controller\Api\ModerationApiController;
+use Pulsar\Extension\Forum\Http\Controller\Api\NotificationApiController;
 use Pulsar\Extension\Forum\Http\Controller\Api\PostApiController;
 use Pulsar\Extension\Forum\Http\Controller\Api\ProfileApiController;
+use Pulsar\Extension\Forum\Http\Controller\Api\PublicProfileController;
 use Pulsar\Extension\Forum\Http\Controller\Api\ReportApiController;
 use Pulsar\Extension\Forum\Http\Controller\Api\SearchApiController;
 use Pulsar\Extension\Forum\Http\Controller\Api\TagApiController;
 use Pulsar\Extension\Forum\Http\Controller\Api\ThreadApiController;
 use Pulsar\Extension\Forum\Http\Controller\Api\VoteApiController;
+use Pulsar\Extension\Forum\Internal\Notification\BadgeEvaluator;
 use Pulsar\Extension\Forum\Internal\Notification\ForumNotificationDispatcher;
 use Pulsar\Routing\RouterInterface;
 
@@ -178,6 +188,22 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         // Moderation API
         $router->get("{$prefix}/moderation/reports", [ModerationApiController::class, 'pendingReports'], 'forum.api.moderation.reports');
         $router->post("{$prefix}/moderation/reports/{id}/resolve", [ModerationApiController::class, 'resolveReport'], 'forum.api.moderation.reports.resolve');
+
+        // Notifications API
+        $router->get("{$prefix}/notifications", [NotificationApiController::class, 'index'], 'forum.api.notifications.index');
+        $router->patch("{$prefix}/notifications/{id}/read", [NotificationApiController::class, 'markRead'], 'forum.api.notifications.mark_read');
+        $router->post("{$prefix}/notifications/read-all", [NotificationApiController::class, 'markAllRead'], 'forum.api.notifications.read_all');
+        $router->get("{$prefix}/notifications/unread-count", [NotificationApiController::class, 'unreadCount'], 'forum.api.notifications.unread_count');
+
+        // Full-text search
+        $router->get("{$prefix}/search/full", [ForumSearchController::class, 'search'], 'forum.api.search.full');
+
+        // Leaderboard (public API)
+        $router->get("{$prefix}/leaderboard", [ApiLeaderboardController::class, 'index'], 'forum.api.leaderboard');
+
+        // Public profiles
+        $router->get("{$prefix}/users/{userId}/profile", [PublicProfileController::class, 'show'], 'forum.api.users.profile');
+        $router->get("{$prefix}/users/{userId}/activity", [PublicProfileController::class, 'activity'], 'forum.api.users.activity');
     }
 
     /**
@@ -241,6 +267,22 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         // Settings
         $router->get("{$prefix}/settings", [AdminSettingsController::class, 'show'], 'forum.admin.settings.show');
         $router->put("{$prefix}/settings", [AdminSettingsController::class, 'update'], 'forum.admin.settings.update');
+
+        // Bans
+        $router->get("{$prefix}/bans", [AdminBanController::class, 'index'], 'forum.admin.bans.index');
+        $router->get("{$prefix}/bans/{id}", [AdminBanController::class, 'show'], 'forum.admin.bans.show');
+        $router->post("{$prefix}/bans", [AdminBanController::class, 'create'], 'forum.admin.bans.create');
+        $router->post("{$prefix}/bans/{id}/revoke", [AdminBanController::class, 'revoke'], 'forum.admin.bans.revoke');
+
+        // Moderation log
+        $router->get("{$prefix}/moderation-log", [AdminModerationLogController::class, 'index'], 'forum.admin.moderation_log.index');
+
+        // Leaderboard
+        $router->get("{$prefix}/leaderboard", [AdminLeaderboardController::class, 'index'], 'forum.admin.leaderboard.index');
+
+        // Notification preferences
+        $router->get("{$prefix}/notification-preferences", [AdminNotificationPreferencesController::class, 'show'], 'forum.admin.notification_preferences.show');
+        $router->put("{$prefix}/notification-preferences", [AdminNotificationPreferencesController::class, 'update'], 'forum.admin.notification_preferences.update');
     }
 
     private function registerAdminResources(ContainerInterface $container): void
@@ -315,5 +357,35 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
             [$notificationDispatcher, 'onReportSubmitted'],
             moduleId: 'pulsar/forum',
         );
+
+        // Badge evaluator listeners
+        if ($container->has(BadgeEvaluator::class)) {
+            /** @var BadgeEvaluator $badgeEvaluator */
+            $badgeEvaluator = $container->get(BadgeEvaluator::class);
+
+            $listenerProvider->addListener(
+                PostCreated::class,
+                [$badgeEvaluator, 'handleEvent'],
+                moduleId: 'pulsar/forum',
+            );
+
+            $listenerProvider->addListener(
+                VoteCast::class,
+                [$badgeEvaluator, 'handleEvent'],
+                moduleId: 'pulsar/forum',
+            );
+
+            $listenerProvider->addListener(
+                PostAcceptedAsSolution::class,
+                [$badgeEvaluator, 'handleEvent'],
+                moduleId: 'pulsar/forum',
+            );
+
+            $listenerProvider->addListener(
+                ReputationChanged::class,
+                [$badgeEvaluator, 'handleEvent'],
+                moduleId: 'pulsar/forum',
+            );
+        }
     }
 }
