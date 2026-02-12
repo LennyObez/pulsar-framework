@@ -25,13 +25,14 @@ final class MemcachedDriverTest extends TestCase
         $this->memcached = new Memcached();
         $this->memcached->addServer('127.0.0.1', 11211);
 
-        // Verify connectivity by performing a simple operation
-        $this->memcached->getVersion();
+        // Verify connectivity — skip when no server is reachable
+        $this->memcached->set('__connectivity_test', '1', 1);
 
-        if ($this->memcached->getResultCode() === Memcached::RES_CONNECTION_SOCKET_CREATE_FAILURE
-            || $this->memcached->getResultCode() === Memcached::RES_FAILURE) {
+        if ($this->memcached->getResultCode() !== Memcached::RES_SUCCESS) {
             self::markTestSkipped('Memcached server not available at 127.0.0.1:11211');
         }
+
+        $this->memcached->delete('__connectivity_test');
 
         $this->memcached->flush();
         $this->driver = $this->createDriver();
