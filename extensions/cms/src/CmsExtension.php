@@ -32,6 +32,7 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\CommentController as AdminComment
 use Pulsar\Extension\Cms\Http\Controller\Admin\ContentController as AdminContentController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\DashboardController as AdminDashboardController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\DigitalAssetController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\DocVersionController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ExperimentController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ExportController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\FieldController;
@@ -42,10 +43,12 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\LinkHealthController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\LiveCssController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\MediaController as AdminMediaController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\MenuController as AdminMenuController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\NewsletterController as AdminNewsletterController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\OrderController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\PluginController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ProductController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\PromotionController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\RateLimitDashboardController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\RedirectController as AdminRedirectController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ReviewController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\RevisionController;
@@ -61,14 +64,22 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\TwoFactorController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\UserController;
 use Pulsar\Extension\Cms\Http\Controller\Api\AiAssistantApiController;
 use Pulsar\Extension\Cms\Http\Controller\Api\CollaborationApiController;
+use Pulsar\Extension\Cms\Http\Controller\Api\CommentApiController;
 use Pulsar\Extension\Cms\Http\Controller\Api\CommerceApiController;
 use Pulsar\Extension\Cms\Http\Controller\Api\ContentApiController;
+use Pulsar\Extension\Cms\Http\Controller\Api\DocFeedbackController;
+use Pulsar\Extension\Cms\Http\Controller\Api\FeedController;
 use Pulsar\Extension\Cms\Http\Controller\Api\MediaApiController;
+use Pulsar\Extension\Cms\Http\Controller\Api\NewsletterApiController;
 use Pulsar\Extension\Cms\Http\Controller\Api\TaxonomyApiController;
 use Pulsar\Extension\Cms\Http\Controller\CheckoutController;
 use Pulsar\Extension\Cms\Http\Controller\ContentController;
 use Pulsar\Extension\Cms\Http\Controller\DigitalDownloadController;
 use Pulsar\Extension\Cms\Http\Controller\FormSubmissionController;
+use Pulsar\Extension\Cms\Http\Controller\Newsletter\BounceWebhookController;
+use Pulsar\Extension\Cms\Http\Controller\Newsletter\TrackingController;
+use Pulsar\Extension\Cms\Http\Controller\Newsletter\UnsubscribeController;
+use Pulsar\Extension\Cms\Http\Controller\ResumePdfController;
 use Pulsar\Extension\Cms\Http\Controller\WebhookController;
 use Pulsar\Extension\Cms\Internal\Notification\CmsNotificationDispatcher;
 use Pulsar\Extension\Cms\Internal\Scheduler\BackupRetentionJob;
@@ -292,6 +303,20 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         // Comparison
         $registry->register(new BlockEditor\CoreBlocks\CompareBlock());
 
+        // Newsletter
+        $registry->register(new BlockEditor\CoreBlocks\NewsletterBlock());
+
+        // Documentation
+        $registry->register(new BlockEditor\CoreBlocks\DocsBlock());
+        $registry->register(new BlockEditor\CoreBlocks\CodeExampleBlock());
+
+        // Showcase
+        $registry->register(new BlockEditor\CoreBlocks\ShowcaseBlock());
+        $registry->register(new BlockEditor\CoreBlocks\ShowcaseHeroBlock());
+
+        // Resume
+        $registry->register(new BlockEditor\CoreBlocks\ResumeBlock());
+
         // Columns (registered last — depends on BlockRenderer which uses the registry)
         if ($container->has(BlockEditor\BlockRenderer::class)) {
             /** @var BlockEditor\BlockRenderer $blockRenderer */
@@ -399,6 +424,16 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
         // SERP preview (pure logic, no AI dependency)
         $router->post("{$prefix}/ai/serp-preview", [AiAssistantApiController::class, 'generateSerpPreview'], 'cms.api.ai.serp_preview');
+
+        // Comment API (public read, submission via CommentController)
+        $router->get('/api/cms/comments', [CommentApiController::class, 'index'], 'cms.api.comments.index');
+
+        // Newsletter API
+        $router->post('/api/cms/newsletter/subscribe', [NewsletterApiController::class, 'subscribe'], 'cms.api.newsletter.subscribe');
+
+        // Documentation feedback API
+        $router->post("{$prefix}/docs/feedback", [DocFeedbackController::class, 'submit'], 'cms.api.docs.feedback.submit');
+        $router->get("{$prefix}/docs/{docPageId}/feedback", [DocFeedbackController::class, 'summary'], 'cms.api.docs.feedback.summary');
     }
 
     private function registerPublicRoutes(RouterInterface $router, CmsConfig $config): void
@@ -420,6 +455,26 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
         // Form submissions (public POST endpoint)
         $router->post('/forms/submit', [FormSubmissionController::class, 'submit'], 'cms.forms.submit');
+
+        // RSS/Atom feeds (default locale)
+        $router->get('/feed/rss', [FeedController::class, 'rss'], 'cms.feed.rss');
+        $router->get('/feed/atom', [FeedController::class, 'atom'], 'cms.feed.atom');
+
+        // RSS/Atom feeds (locale-specific)
+        foreach ($config->supportedLocales as $locale) {
+            $router->get("/{$locale}/feed/rss", [FeedController::class, 'rss'], "cms.feed.rss.{$locale}");
+            $router->get("/{$locale}/feed/atom", [FeedController::class, 'atom'], "cms.feed.atom.{$locale}");
+        }
+
+        // Newsletter public endpoints
+        $router->get('/newsletter/unsubscribe/{token}', [UnsubscribeController::class, 'unsubscribe'], 'cms.newsletter.unsubscribe');
+        $router->get('/newsletter/confirm/{token}', [UnsubscribeController::class, 'confirm'], 'cms.newsletter.confirm');
+        $router->get('/newsletter/track/pixel/{campaignId}/{sendId}', [TrackingController::class, 'pixel'], 'cms.newsletter.track.pixel');
+        $router->get('/newsletter/track/click/{campaignId}/{sendId}/{linkHash}', [TrackingController::class, 'click'], 'cms.newsletter.track.click');
+        $router->post('/webhooks/newsletter-bounce', [BounceWebhookController::class, 'handle'], 'cms.newsletter.bounce');
+
+        // Resume print-to-PDF view
+        $router->get('/resume/{slug}/print', [ResumePdfController::class, 'printView'], 'cms.resume.print');
 
         // Public content rendering — catch-all route for locale-prefixed and default paths
         // Locale-aware routing: /{locale}/{path} or /{path} for default locale
@@ -503,10 +558,16 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->delete("{$prefix}/media/{id}", [AdminMediaController::class, 'delete'], 'cms.admin.media.delete');
         $router->get("{$prefix}/media/{id}/variants", [AdminMediaController::class, 'variants'], 'cms.admin.media.variants');
 
-        // Comments
+        // Comments (moderation queue + CRUD)
         $router->get("{$prefix}/comments", [AdminCommentController::class, 'index'], 'cms.admin.comments.index');
+        $router->get("{$prefix}/comments/queue", [AdminCommentController::class, 'queue'], 'cms.admin.comments.queue');
         $router->get("{$prefix}/comments/{id}", [AdminCommentController::class, 'show'], 'cms.admin.comments.show');
         $router->post("{$prefix}/comments/{id}/moderate", [AdminCommentController::class, 'moderate'], 'cms.admin.comments.moderate');
+        $router->post("{$prefix}/comments/{id}/approve", [AdminCommentController::class, 'approve'], 'cms.admin.comments.approve');
+        $router->post("{$prefix}/comments/{id}/reject", [AdminCommentController::class, 'reject'], 'cms.admin.comments.reject');
+        $router->post("{$prefix}/comments/{id}/spam", [AdminCommentController::class, 'markSpam'], 'cms.admin.comments.spam');
+        $router->delete("{$prefix}/comments/{id}", [AdminCommentController::class, 'delete'], 'cms.admin.comments.delete');
+        $router->post("{$prefix}/comments/bulk", [AdminCommentController::class, 'bulkAction'], 'cms.admin.comments.bulk');
 
         // Custom fields
         $router->get("{$prefix}/fields/{contentType}", [FieldController::class, 'index'], 'cms.admin.fields.index');
@@ -663,6 +724,27 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->post("{$prefix}/backups", [BackupController::class, 'create'], 'cms.admin.backups.create');
         $router->post("{$prefix}/backups/{id}/restore", [BackupController::class, 'restore'], 'cms.admin.backups.restore');
         $router->delete("{$prefix}/backups/{id}", [BackupController::class, 'delete'], 'cms.admin.backups.delete');
+
+        // Newsletter management
+        $router->get("{$prefix}/newsletter/subscribers", [AdminNewsletterController::class, 'subscribers'], 'cms.admin.newsletter.subscribers');
+        $router->get("{$prefix}/newsletter/subscribers/{id}", [AdminNewsletterController::class, 'subscriberDetail'], 'cms.admin.newsletter.subscriber_detail');
+        $router->delete("{$prefix}/newsletter/subscribers/{id}", [AdminNewsletterController::class, 'deleteSubscriber'], 'cms.admin.newsletter.subscriber_delete');
+        $router->get("{$prefix}/newsletter/campaigns", [AdminNewsletterController::class, 'campaigns'], 'cms.admin.newsletter.campaigns');
+        $router->get("{$prefix}/newsletter/campaigns/create", [AdminNewsletterController::class, 'campaignForm'], 'cms.admin.newsletter.campaign_create');
+        $router->post("{$prefix}/newsletter/campaigns", [AdminNewsletterController::class, 'createCampaign'], 'cms.admin.newsletter.campaign_store');
+        $router->get("{$prefix}/newsletter/campaigns/{id}/edit", [AdminNewsletterController::class, 'campaignForm'], 'cms.admin.newsletter.campaign_edit');
+        $router->put("{$prefix}/newsletter/campaigns/{id}", [AdminNewsletterController::class, 'updateCampaign'], 'cms.admin.newsletter.campaign_update');
+        $router->delete("{$prefix}/newsletter/campaigns/{id}", [AdminNewsletterController::class, 'deleteCampaign'], 'cms.admin.newsletter.campaign_delete');
+        $router->post("{$prefix}/newsletter/campaigns/{id}/send", [AdminNewsletterController::class, 'sendCampaign'], 'cms.admin.newsletter.campaign_send');
+        $router->get("{$prefix}/newsletter/campaigns/{id}/analytics", [AdminNewsletterController::class, 'campaignAnalytics'], 'cms.admin.newsletter.campaign_analytics');
+
+        // Rate limiting dashboard
+        $router->get("{$prefix}/rate-limits", [RateLimitDashboardController::class, 'dashboard'], 'cms.admin.rate_limits.dashboard');
+        $router->post("{$prefix}/rate-limits", [RateLimitDashboardController::class, 'updateLimit'], 'cms.admin.rate_limits.update');
+
+        // Documentation versions
+        $router->get("{$prefix}/docs/versions", [DocVersionController::class, 'index'], 'cms.admin.docs.versions.index');
+        $router->put("{$prefix}/docs/versions/default", [DocVersionController::class, 'setDefault'], 'cms.admin.docs.versions.set_default');
 
         // Form submissions
         $router->get("{$prefix}/forms", [AdminFormSubmissionController::class, 'index'], 'cms.admin.forms.index');
