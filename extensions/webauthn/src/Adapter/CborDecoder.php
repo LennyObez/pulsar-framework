@@ -183,11 +183,11 @@ final class CborDecoder
         $mantissa = $half & 0x3FF;
 
         if ($exponent === 0) {
-            $value = $mantissa * (2 ** -24);
+            $value = (float) $mantissa * (2 ** -24);
         } elseif ($exponent === 31) {
             $value = $mantissa === 0 ? INF : NAN;
         } else {
-            $value = ($mantissa + 1024) * (2 ** ($exponent - 25));
+            $value = ((float) ($mantissa + 1024)) * ((float) (2 ** ($exponent - 25)));
         }
 
         return $sign === 1 ? -$value : $value;

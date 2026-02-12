@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Grpc\Error;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_array;
+
 /**
  * Rich error details following the google.rpc.Status model.
  *
@@ -38,7 +40,7 @@ final readonly class StatusDetail
         return new self(
             code: GrpcStatus::from((int) ($data['code'] ?? GrpcStatus::Unknown->value)),
             message: (string) ($data['message'] ?? ''),
-            details: (array) ($data['details'] ?? []),
+            details: self::extractDetails($data),
         );
     }
 
@@ -52,5 +54,21 @@ final readonly class StatusDetail
             'message' => $this->message,
             'details' => $this->details,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private static function extractDetails(array $data): array
+    {
+        $raw = $data['details'] ?? [];
+
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $raw */
+        return $raw;
     }
 }

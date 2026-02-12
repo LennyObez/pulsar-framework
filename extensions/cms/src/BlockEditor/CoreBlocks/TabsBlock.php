@@ -51,7 +51,7 @@ final readonly class TabsBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{title: string, content: string}> $tabs */
+        /** @var list<mixed> $tabs */
         $tabs = $data['tabs'] ?? [];
         $defaultActive = (int) ($data['defaultActive'] ?? 0);
 

@@ -9,7 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Cache\Application\CacheDriverInterface;
+use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
 use Pulsar\Http\Message\Response;
 
@@ -50,10 +50,10 @@ final readonly class CollectionRateLimitMiddleware implements MiddlewareInterfac
             return Response::noContent();
         }
 
-        $this->cache->increment($key);
-
         if ($current === 0) {
-            $this->cache->expire($key, 60);
+            $this->cache->set($key, '1', 60);
+        } else {
+            $this->cache->increment($key);
         }
 
         return $handler->handle($request);

@@ -56,12 +56,14 @@ final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
         [$headerB64, $payloadB64, $signatureB64] = $parts;
 
         // Decode header
-        /** @var array{alg?: string, kid?: string, typ?: string} $header */
-        $header = json_decode(self::base64UrlDecode($headerB64), true, 512, JSON_THROW_ON_ERROR);
+        $rawHeader = json_decode(self::base64UrlDecode($headerB64), true, 512, JSON_THROW_ON_ERROR);
 
-        if (!is_array($header) || !isset($header['alg'])) {
+        if (!is_array($rawHeader) || !isset($rawHeader['alg'])) {
             throw SsoException::invalidIdToken('missing algorithm in header');
         }
+
+        /** @var array{alg: string, kid?: string, typ?: string} $header */
+        $header = $rawHeader;
 
         /** @var string $alg */
         $alg = $header['alg'];
@@ -87,12 +89,14 @@ final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
         }
 
         // Decode payload
-        /** @var array<string, mixed> $claims */
-        $claims = json_decode(self::base64UrlDecode($payloadB64), true, 512, JSON_THROW_ON_ERROR);
+        $rawClaims = json_decode(self::base64UrlDecode($payloadB64), true, 512, JSON_THROW_ON_ERROR);
 
-        if (!is_array($claims)) {
+        if (!is_array($rawClaims)) {
             throw SsoException::invalidIdToken('payload is not a valid JSON object');
         }
+
+        /** @var array<string, mixed> $claims */
+        $claims = $rawClaims;
 
         // Validate standard claims
         $this->validateClaims($claims, $context);

@@ -31,7 +31,7 @@ final class WebAuthnExtension implements ExtensionInterface
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
         // WebAuthn ceremony endpoints
-        $router->group('/webauthn', function (RouterInterface $router) use ($container): void {
+        $router->group('/webauthn', function (RouterInterface $router): void {
             // Registration (attestation) ceremony
             $router->post('/register/options', 'webauthn.register.options');
             $router->post('/register/verify', 'webauthn.register.verify');

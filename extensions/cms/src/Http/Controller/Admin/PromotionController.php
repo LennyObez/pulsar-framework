@@ -147,7 +147,7 @@ final readonly class PromotionController
         $this->promotions->save($promotion);
 
         // Create coupons if provided
-        /** @var list<array{code: string, single_use?: bool}> $couponData */
+        /** @var list<mixed> $couponData */
         $couponData = is_array($body['coupons'] ?? null) ? $body['coupons'] : [];
 
         foreach ($couponData as $cd) {

@@ -226,6 +226,10 @@ final readonly class ForumBodyPolicy
             $toRemove = [];
             $attributes = $element->attributes;
 
+            if ($attributes === null) {
+                continue;
+            }
+
             /** @var DOMAttr $attr */
             foreach (iterator_to_array($attributes) as $attr) {
                 $attrNameLower = strtolower($attr->name);

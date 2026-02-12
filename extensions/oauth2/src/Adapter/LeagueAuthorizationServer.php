@@ -113,6 +113,7 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
 
     private function processAuthorizationRequest(ServerRequestInterface $request): ResponseInterface
     {
+        /** @var array<string, mixed> $params */
         $params = $request->getQueryParams();
 
         $clientId = $this->extractRequiredQueryParam($params, 'client_id');
@@ -316,7 +317,9 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
         if (str_starts_with($authHeader, 'Basic ')) {
             $decoded = base64_decode(substr($authHeader, 6), true);
             if ($decoded !== false && str_contains($decoded, ':')) {
-                [$clientId, $clientSecret] = explode(':', $decoded, 2);
+                $parts = explode(':', $decoded, 2);
+                $clientId = $parts[0];
+                $clientSecret = $parts[1] ?? '';
             }
         }
 

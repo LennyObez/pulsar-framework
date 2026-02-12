@@ -12,7 +12,6 @@ use Pulsar\Security\Session\SessionInterface;
 use function array_key_exists;
 use function bin2hex;
 use function is_array;
-use function is_int;
 use function random_bytes;
 use function time;
 
@@ -39,12 +38,9 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
     {
         $state = bin2hex(random_bytes(32));
 
+        $rawStates = $this->session->get(self::STATE_KEY, []);
         /** @var array<string, int> $states */
-        $states = $this->session->get(self::STATE_KEY, []);
-
-        if (!is_array($states)) {
-            $states = [];
-        }
+        $states = is_array($rawStates) ? $rawStates : [];
 
         $states[$state] = time();
         $this->session->set(self::STATE_KEY, $states);
@@ -55,10 +51,11 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
     #[Override]
     public function verify(string $state): bool
     {
+        $rawStates = $this->session->get(self::STATE_KEY, []);
         /** @var array<string, int> $states */
-        $states = $this->session->get(self::STATE_KEY, []);
+        $states = is_array($rawStates) ? $rawStates : [];
 
-        if (!is_array($states) || !array_key_exists($state, $states)) {
+        if (!array_key_exists($state, $states)) {
             return false;
         }
 
@@ -68,10 +65,6 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
         unset($states[$state]);
         $this->session->set(self::STATE_KEY, $states);
 
-        if (!is_int($createdAt)) {
-            return false;
-        }
-
         return (time() - $createdAt) <= $this->ttlSeconds;
     }
 
@@ -80,12 +73,9 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
      */
     public function storePkceVerifier(string $state, string $verifier): void
     {
+        $rawPkce = $this->session->get(self::PKCE_KEY, []);
         /** @var array<string, string> $pkce */
-        $pkce = $this->session->get(self::PKCE_KEY, []);
-
-        if (!is_array($pkce)) {
-            $pkce = [];
-        }
+        $pkce = is_array($rawPkce) ? $rawPkce : [];
 
         $pkce[$state] = $verifier;
         $this->session->set(self::PKCE_KEY, $pkce);
@@ -98,10 +88,11 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
      */
     public function retrievePkceVerifier(string $state): ?string
     {
+        $rawPkce = $this->session->get(self::PKCE_KEY, []);
         /** @var array<string, string> $pkce */
-        $pkce = $this->session->get(self::PKCE_KEY, []);
+        $pkce = is_array($rawPkce) ? $rawPkce : [];
 
-        if (!is_array($pkce) || !array_key_exists($state, $pkce)) {
+        if (!array_key_exists($state, $pkce)) {
             return null;
         }
 

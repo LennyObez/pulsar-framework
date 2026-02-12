@@ -34,19 +34,19 @@ final readonly class BulkActionController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        /** @var string $action */
-        $action = $body['action'] ?? '';
-        /** @var list<string> $ids */
+        $action = (string) ($body['action'] ?? '');
         $ids = $body['ids'] ?? [];
-        /** @var array<string, mixed> $parameters */
         $parameters = $body['parameters'] ?? [];
 
         if (!is_array($ids)) {
             $ids = [];
         }
+        /** @var list<string> $ids */
+
         if (!is_array($parameters)) {
             $parameters = [];
         }
+        /** @var array<string, mixed> $parameters */
 
         $context = new MutationContext(
             actor: $actor,

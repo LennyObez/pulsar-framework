@@ -77,7 +77,7 @@ final readonly class ResourceUpdateController
      */
     private function renderView(string $title, array $templateData): string
     {
-        $content = 'resource-form';
+        extract(['title' => $title, 'content' => 'resource-form', 'templateData' => $templateData]);
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

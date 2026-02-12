@@ -247,7 +247,7 @@ final readonly class TrackingService implements TrackingServiceInterface
         $headers = [];
 
         foreach ($request->getHeaders() as $name => $values) {
-            $headers[strtolower($name)] = $values[0] ?? '';
+            $headers[strtolower((string) $name)] = $values[0] ?? '';
         }
 
         return $headers;

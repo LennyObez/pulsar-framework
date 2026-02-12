@@ -91,6 +91,7 @@ final readonly class RunTestsTool implements McpToolInterface
                 }
             }
 
+            /** @var list<string> $command */
             return $this->runner->run($command);
         } finally {
             $this->accessGate->releaseConcurrencySlot();

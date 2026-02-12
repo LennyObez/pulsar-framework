@@ -10,8 +10,6 @@ $e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_S
 $tables = $templateData['tables'] ?? [];
 /** @var array<string, bool> $capabilities */
 $capabilities = $templateData['capabilities'] ?? [];
-/** @var string $driver */
-$driver = $templateData['driver'] ?? 'sqlite';
 ?>
 <div class="admin-schema">
     <div class="admin-schema__header">

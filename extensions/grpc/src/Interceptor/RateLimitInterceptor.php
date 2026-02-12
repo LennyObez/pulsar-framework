@@ -94,7 +94,7 @@ final class RateLimitInterceptor implements InterceptorInterface
         }
 
         $elapsed = $now - $this->lastRefill[$key];
-        $newTokens = $elapsed * $this->config->maxRequestsPerSecond;
+        $newTokens = $elapsed * (float) $this->config->maxRequestsPerSecond;
 
         if ($newTokens > 0.0) {
             $this->tokens[$key] = min(

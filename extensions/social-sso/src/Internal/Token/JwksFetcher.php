@@ -61,22 +61,23 @@ final class JwksFetcher
             throw SsoException::jwksFetchFailed();
         }
 
-        /** @var array{keys?: list<array<string, mixed>>} $data */
-        $data = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
 
-        if (!is_array($data) || !isset($data['keys']) || !is_array($data['keys'])) {
+        if (!is_array($decoded) || !isset($decoded['keys']) || !is_array($decoded['keys'])) {
             throw SsoException::jwksFetchFailed();
         }
 
+        /** @var list<array<string, mixed>> $jwkKeys */
+        $jwkKeys = $decoded['keys'];
+
         $keys = [];
 
-        foreach ($data['keys'] as $keyData) {
-            if (!is_array($keyData) || !isset($keyData['kty'])) {
+        foreach ($jwkKeys as $keyData) {
+            if (!isset($keyData['kty'])) {
                 continue;
             }
 
-            /** @var string $kty */
-            $kty = $keyData['kty'];
+            $kty = (string) $keyData['kty'];
 
             $keys[] = new JwkKey(
                 kty: $kty,

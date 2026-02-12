@@ -10,7 +10,6 @@ use Pulsar\Api\Internal;
 use function abs;
 use function array_fill;
 use function array_map;
-use function array_merge;
 use function array_pad;
 use function array_slice;
 use function count;
@@ -149,7 +148,9 @@ final readonly class QrCodeEncoder
      */
     private function selectVersion(int $dataLength): int
     {
-        for ($v = 0; $v < count(self::VERSION_DATA_CODEWORDS); $v++) {
+        $versionCount = count(self::VERSION_DATA_CODEWORDS);
+
+        for ($v = 0; $v < $versionCount; $v++) {
             // Byte mode: 4-bit mode indicator + character count indicator + data
             $charCountBits = $v < 9 ? 8 : 16; // Versions 1-9: 8 bits, 10+: 16 bits
             $headerBits = 4 + $charCountBits;
@@ -157,9 +158,10 @@ final readonly class QrCodeEncoder
             $totalBits = $headerBits + $dataBits;
 
             // Available data bits = data codewords * 8
-            $ecBlocks = self::VERSION_EC_BLOCKS[$v];
-            $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$v];
-            $availableCodewords = self::VERSION_DATA_CODEWORDS[$v] - ($ecBlocks * $ecPerBlock);
+            $ecBlocks = self::VERSION_EC_BLOCKS[$v] ?? 0;
+            $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$v] ?? 0;
+            $totalDataCw = self::VERSION_DATA_CODEWORDS[$v] ?? 0;
+            $availableCodewords = $totalDataCw - ($ecBlocks * $ecPerBlock);
 
             if ($availableCodewords * 8 >= $totalBits) {
                 return $v + 1;
@@ -178,10 +180,9 @@ final readonly class QrCodeEncoder
      */
     private function encodeData(string $data, int $version): array
     {
-        $bits = [];
-
         // Mode indicator: 0100 (byte mode)
-        $bits = array_merge($bits, [0, 1, 0, 0]);
+        /** @var list<int> $bits */
+        $bits = [0, 1, 0, 0];
 
         // Character count indicator
         $charCountBits = $version <= 9 ? 8 : 16;
@@ -201,9 +202,11 @@ final readonly class QrCodeEncoder
         }
 
         // Terminator (up to 4 zero bits)
-        $ecBlocks = self::VERSION_EC_BLOCKS[$version - 1];
-        $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$version - 1];
-        $totalDataCodewords = self::VERSION_DATA_CODEWORDS[$version - 1] - ($ecBlocks * $ecPerBlock);
+        $vIdx = $version - 1;
+        $ecBlocks = self::VERSION_EC_BLOCKS[$vIdx] ?? 0;
+        $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$vIdx] ?? 0;
+        $totalCw = self::VERSION_DATA_CODEWORDS[$vIdx] ?? 0;
+        $totalDataCodewords = $totalCw - ($ecBlocks * $ecPerBlock);
         $totalDataBits = $totalDataCodewords * 8;
         $terminatorBits = min(4, $totalDataBits - count($bits));
 
@@ -230,6 +233,7 @@ final readonly class QrCodeEncoder
             $padIndex++;
         }
 
+        /** @var list<int> $bits */
         return $bits;
     }
 
@@ -264,8 +268,8 @@ final readonly class QrCodeEncoder
      */
     private function computeErrorCorrection(array $data, int $version): array
     {
-        $ecBlocks = self::VERSION_EC_BLOCKS[$version - 1];
-        $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$version - 1];
+        $ecBlocks = self::VERSION_EC_BLOCKS[$version - 1] ?? 0;
+        $ecPerBlock = self::VERSION_EC_CODEWORDS_PER_BLOCK[$version - 1] ?? 0;
         $totalData = count($data);
         $dataPerBlock = intdiv($totalData, $ecBlocks);
         $extraData = $totalData % $ecBlocks;
@@ -292,9 +296,11 @@ final readonly class QrCodeEncoder
      */
     private function rsGeneratorPoly(int $degree): array
     {
+        /** @var list<int> $poly */
         $poly = [1];
 
         for ($i = 0; $i < $degree; $i++) {
+            /** @var list<int> $newPoly */
             $newPoly = array_fill(0, count($poly) + 1, 0);
 
             for ($j = 0; $j < count($poly); $j++) {
@@ -349,6 +355,7 @@ final readonly class QrCodeEncoder
      */
     private function gfExp(int $n): int
     {
+        /** @var array<int<0, 255>, int>|null $expTable */
         static $expTable = null;
 
         if ($expTable === null) {
@@ -365,7 +372,9 @@ final readonly class QrCodeEncoder
             }
         }
 
-        return $expTable[$n % 255];
+        $idx = (($n % 255) + 255) % 255;
+
+        return $expTable[$idx] ?? 0;
     }
 
     /**
@@ -373,6 +382,7 @@ final readonly class QrCodeEncoder
      */
     private function gfLog(int $n): int
     {
+        /** @var array<int<0, 255>, int>|null $logTable */
         static $logTable = null;
 
         if ($logTable === null) {
@@ -389,7 +399,7 @@ final readonly class QrCodeEncoder
             }
         }
 
-        return $logTable[$n];
+        return $logTable[$n] ?? 0;
     }
 
     /**
@@ -401,7 +411,7 @@ final readonly class QrCodeEncoder
      */
     private function interleave(array $dataCodewords, array $ecBlocks, int $version): array
     {
-        $numBlocks = self::VERSION_EC_BLOCKS[$version - 1];
+        $numBlocks = self::VERSION_EC_BLOCKS[$version - 1] ?? 1;
         $totalData = count($dataCodewords);
         $dataPerBlock = intdiv($totalData, $numBlocks);
         $extraData = $totalData % $numBlocks;
@@ -470,8 +480,8 @@ final readonly class QrCodeEncoder
     /**
      * Place 7x7 finder patterns in three corners.
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function placeFinderPatterns(array &$matrix, array &$reserved, int $size): void
     {
@@ -503,8 +513,8 @@ final readonly class QrCodeEncoder
     }
 
     /**
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function setIfInBounds(array &$matrix, array &$reserved, int $row, int $col, int $value, int $size): void
     {
@@ -517,8 +527,8 @@ final readonly class QrCodeEncoder
     /**
      * Place alignment patterns.
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function placeAlignmentPatterns(array &$matrix, array &$reserved, int $version, int $size): void
     {
@@ -552,15 +562,15 @@ final readonly class QrCodeEncoder
     /**
      * Place timing patterns (row 6, column 6).
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function placeTimingPatterns(array &$matrix, array &$reserved, int $size): void
     {
         for ($i = 8; $i < $size - 8; $i++) {
             $value = ($i % 2 === 0) ? 1 : 0;
 
-            if ($reserved[6][$i] === null) {
+            if (($reserved[6][$i] ?? null) === null) {
                 $matrix[6][$i] = $value;
                 $reserved[6][$i] = 1;
             }
@@ -575,8 +585,8 @@ final readonly class QrCodeEncoder
     /**
      * Place the dark module (always at version * 4 + 13, row 8).
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function placeDarkModule(array &$matrix, array &$reserved, int $version): void
     {
@@ -588,7 +598,7 @@ final readonly class QrCodeEncoder
     /**
      * Reserve cells for format information (not filled yet).
      *
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function reserveFormatArea(array &$reserved, int $size): void
     {
@@ -612,7 +622,7 @@ final readonly class QrCodeEncoder
     /**
      * Reserve cells for version information (versions 7+).
      *
-     * @param list<list<int|null>> &$reserved
+     * @param array<int, array<int, int|null>> &$reserved
      */
     private function reserveVersionArea(array &$reserved, int $size): void
     {
@@ -634,8 +644,8 @@ final readonly class QrCodeEncoder
     /**
      * Place data bits in the matrix using the standard zigzag pattern.
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> $reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> $reserved
      * @param list<int> $bits
      */
     private function placeDataBits(array &$matrix, array $reserved, array $bits, int $size): void
@@ -684,7 +694,7 @@ final readonly class QrCodeEncoder
      * Select the best masking pattern (lowest penalty score).
      *
      * @param list<list<int|null>> $matrix
-     * @param list<list<int|null>> $reserved
+     * @param array<int, array<int, int|null>> $reserved
      */
     private function selectBestMask(array $matrix, array $reserved, int $size): int
     {
@@ -708,8 +718,8 @@ final readonly class QrCodeEncoder
     /**
      * Apply a mask pattern to the matrix.
      *
-     * @param list<list<int|null>> &$matrix
-     * @param list<list<int|null>> $reserved
+     * @param array<int, array<int, int|null>> &$matrix
+     * @param array<int, array<int, int|null>> $reserved
      */
     private function applyMask(array &$matrix, array $reserved, int $maskPattern, int $size): void
     {
@@ -881,7 +891,7 @@ final readonly class QrCodeEncoder
     /**
      * Place format information bits in the matrix.
      *
-     * @param list<list<int|null>> &$matrix
+     * @param array<int, array<int, int|null>> &$matrix
      */
     private function placeFormatInfo(array &$matrix, int $maskPattern, int $size): void
     {

@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Analytics\Config;
 
 use Pulsar\Api\Api;
 
+use function is_array;
 use function is_string;
 
 /**
@@ -52,10 +53,26 @@ final readonly class AnalyticsConfig
                 $proxies,
                 static fn(mixed $v): bool => is_string($v) && $v !== '',
             )),
-            privacy: PrivacyConfig::fromArray((array) ($data['privacy'] ?? [])),
-            tracking: TrackingConfig::fromArray((array) ($data['tracking'] ?? [])),
-            retention: RetentionConfig::fromArray((array) ($data['retention'] ?? [])),
-            rateLimit: RateLimitConfig::fromArray((array) ($data['rate_limit'] ?? [])),
+            privacy: PrivacyConfig::fromArray(self::extractSubArray($data, 'privacy')),
+            tracking: TrackingConfig::fromArray(self::extractSubArray($data, 'tracking')),
+            retention: RetentionConfig::fromArray(self::extractSubArray($data, 'retention')),
+            rateLimit: RateLimitConfig::fromArray(self::extractSubArray($data, 'rate_limit')),
         );
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private static function extractSubArray(array $data, string $key): array
+    {
+        $value = $data[$key] ?? [];
+
+        if (!is_array($value)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $value */
+        return $value;
     }
 }

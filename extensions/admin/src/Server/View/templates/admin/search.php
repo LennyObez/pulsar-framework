@@ -29,7 +29,7 @@ $totalMatches = $templateData['totalMatches'] ?? 0;
             <tbody>
                 <?php foreach ($rows as $row): ?>
                 <tr>
-                    <?php foreach ($row as $key => $value): ?>
+                    <?php foreach ($row as $value): ?>
                     <td><?= $e((string) $value) ?></td>
                     <?php endforeach; ?>
                 </tr>

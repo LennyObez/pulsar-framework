@@ -94,8 +94,8 @@ final readonly class SearchAnalyticsController
         $totalSearches = $analytics->totalSearches;
         $uniqueQueries = $analytics->uniqueQueries;
         $zeroResultRate = $totalSearches > 0
-            ? round(count($analytics->zeroResultQueries) / $totalSearches * 100, 1)
-            : 0;
+            ? round((float) count($analytics->zeroResultQueries) / (float) $totalSearches * 100.0, 1)
+            : 0.0;
 
         $data = [
             'filters' => [
@@ -106,7 +106,7 @@ final readonly class SearchAnalyticsController
                 'total_searches' => $totalSearches,
                 'unique_queries' => $uniqueQueries,
                 'zero_result_rate' => $zeroResultRate,
-                'avg_ctr' => $analytics->clickThroughRates['average'] ?? '0.0',
+                'avg_ctr' => $this->computeAverageCtr($analytics->clickThroughRates),
             ],
             'topQueries' => $analytics->topQueries,
             'zeroResultQueries' => $analytics->zeroResultQueries,
@@ -114,5 +114,23 @@ final readonly class SearchAnalyticsController
         ];
 
         return $this->respondWithView($request, 'admin.search-analytics.index', $data);
+    }
+
+    /**
+     * @param list<array{query_text: string, clicks: int, searches: int, ctr: float}> $clickThroughRates
+     */
+    private function computeAverageCtr(array $clickThroughRates): string
+    {
+        if ($clickThroughRates === []) {
+            return '0.0';
+        }
+
+        $totalCtr = 0.0;
+
+        foreach ($clickThroughRates as $entry) {
+            $totalCtr += $entry['ctr'];
+        }
+
+        return (string) round($totalCtr / (float) count($clickThroughRates), 2);
     }
 }

@@ -50,7 +50,7 @@ final readonly class ContentAssistant
 
         return $this->provider->complete($prompt, new LlmOptions(
             temperature: 0.7,
-            maxTokens: (int) ($targetWords * 2),
+            maxTokens: $targetWords * 2,
             systemPrompt: 'You are an expert content writer. Produce well-structured, original content.',
         ));
     }
@@ -166,7 +166,7 @@ final readonly class ContentAssistant
 
             return $this->provider->complete($prompt, new LlmOptions(
                 temperature: $template->defaultTemperature,
-                maxTokens: (int) (mb_strlen($content) * 2),
+                maxTokens: mb_strlen($content) * 2,
                 systemPrompt: $template->systemPrompt,
             ));
         }
@@ -178,7 +178,7 @@ final readonly class ContentAssistant
 
         return $this->provider->complete($prompt, new LlmOptions(
             temperature: 0.3,
-            maxTokens: (int) (mb_strlen($content) * 2),
+            maxTokens: mb_strlen($content) * 2,
             systemPrompt: 'You are a professional translator. Produce accurate, natural translations.',
         ));
     }
@@ -195,7 +195,7 @@ final readonly class ContentAssistant
 
             return $this->provider->complete($prompt, new LlmOptions(
                 temperature: $template->defaultTemperature,
-                maxTokens: (int) (mb_strlen($content) * 2),
+                maxTokens: mb_strlen($content) * 2,
                 systemPrompt: $template->systemPrompt,
             ));
         }
@@ -208,7 +208,7 @@ final readonly class ContentAssistant
 
         return $this->provider->complete($prompt, new LlmOptions(
             temperature: 0.5,
-            maxTokens: (int) (mb_strlen($content) * 2),
+            maxTokens: mb_strlen($content) * 2,
             systemPrompt: 'You are a readability expert. Produce clear, easy-to-read content.',
         ));
     }
@@ -320,7 +320,7 @@ final readonly class ContentAssistant
 
             return $this->provider->complete($prompt, new LlmOptions(
                 temperature: $template->defaultTemperature,
-                maxTokens: (int) (mb_strlen($content) * 2),
+                maxTokens: mb_strlen($content) * 2,
                 systemPrompt: $template->systemPrompt,
             ));
         }
@@ -332,7 +332,7 @@ final readonly class ContentAssistant
 
         return $this->provider->complete($prompt, new LlmOptions(
             temperature: 0.6,
-            maxTokens: (int) (mb_strlen($content) * 2),
+            maxTokens: mb_strlen($content) * 2,
             systemPrompt: 'You are a versatile writer. Adapt content tone while preserving meaning.',
         ));
     }

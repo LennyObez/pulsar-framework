@@ -15,14 +15,14 @@ interface PromotionServiceInterface
     /**
      * Validate a coupon code against the current cart and customer.
      *
-     * @param list<array{productId: string, quantity: int, unitPrice: int}> $cartItems
+     * @param list<array{productId: string, quantity: int, unitPrice: int, variantId?: string|null}> $cartItems
      */
     public function validateCoupon(string $code, array $cartItems, ?string $customerId = null): PromotionValidationResult;
 
     /**
      * Calculate the discount for a validated promotion.
      *
-     * @param list<array{productId: string, quantity: int, unitPrice: int}> $items
+     * @param list<array{productId: string, quantity: int, unitPrice: int, variantId?: string|null}> $items
      */
     public function calculateDiscount(Promotion $promotion, array $items): DiscountResult;
 

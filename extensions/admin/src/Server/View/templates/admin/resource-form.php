@@ -65,7 +65,7 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
             </select>
             <?php else: ?>
             <input
-                type="<?= $e($this->inputType($field->type)) ?>"
+                type="<?= $e(inputType($field->type)) ?>"
                 id="field-<?= $e($field->name) ?>"
                 name="<?= $e($field->name) ?>"
                 class="admin-form__input"

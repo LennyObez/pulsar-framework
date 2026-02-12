@@ -162,7 +162,7 @@ final readonly class MysqlSearchService implements SearchServiceInterface
                 total: 0,
                 query: $query,
                 suggestions: $this->suggest($query, $locale),
-                tookMs: round((microtime(true) - $startTime) * 1000, 2),
+                tookMs: round((microtime(true) - $startTime) * 1000.0, 2),
             );
         }
 
@@ -188,8 +188,8 @@ final readonly class MysqlSearchService implements SearchServiceInterface
             $content = $entry['content'];
 
             $daysSinceUpdate = max(0, (int) $now->diff($content->updatedAt)->days);
-            $recencyBoost = 1.0 + self::RECENCY_BOOST_BASE * exp(-$daysSinceUpdate / self::RECENCY_DECAY_DAYS);
-            $taxonomyBoost = 1.0 + self::TAXONOMY_BOOST_PER_TERM * ($taxonomyCounts[$content->id] ?? 0);
+            $recencyBoost = 1.0 + self::RECENCY_BOOST_BASE * exp((float) (-$daysSinceUpdate) / self::RECENCY_DECAY_DAYS);
+            $taxonomyBoost = 1.0 + self::TAXONOMY_BOOST_PER_TERM * (float) ($taxonomyCounts[$content->id] ?? 0);
 
             $entry['final_score'] = $entry['ft_rank'] * $recencyBoost * $taxonomyBoost;
         }
@@ -205,7 +205,7 @@ final readonly class MysqlSearchService implements SearchServiceInterface
 
         $this->recordSearch($query, $locale, $total);
 
-        $tookMs = round((microtime(true) - $startTime) * 1000, 2);
+        $tookMs = round((microtime(true) - $startTime) * 1000.0, 2);
 
         return new SearchResult(
             items: $items,

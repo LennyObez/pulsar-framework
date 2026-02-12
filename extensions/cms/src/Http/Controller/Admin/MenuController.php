@@ -44,9 +44,6 @@ final readonly class MenuController
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.menus.manage');
 
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
-
         return Response::json(['status' => 'created'], 201);
     }
 
@@ -90,9 +87,6 @@ final readonly class MenuController
         if ($menu === null) {
             return Response::json(['error' => 'Menu not found'], 404);
         }
-
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
 
         return Response::json(['id' => $menu->id, 'status' => 'updated']);
     }
