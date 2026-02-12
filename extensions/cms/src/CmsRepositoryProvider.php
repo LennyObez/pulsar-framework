@@ -25,6 +25,7 @@ use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentRevisionRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
+use Pulsar\Extension\Cms\Docs\DocFeedbackRepositoryInterface;
 use Pulsar\Extension\Cms\EventStore\ContentEventStoreInterface;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotServiceInterface;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
@@ -45,6 +46,8 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbCouponRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbCssOverrideRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbCustomerRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbDigitalAssetRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbDocFeedbackRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbDocVersionRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbEditorialReviewRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbExperimentRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbFieldRegistryRepository;
@@ -53,6 +56,9 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbInvoiceRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbLinkHealthRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbMediaRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbMenuRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbNewsletterCampaignRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbNewsletterSendRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbNewsletterSubscriberRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbOrderItemRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbOrderRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbProductRepository;
@@ -66,6 +72,9 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbThemeRepository;
 use Pulsar\Extension\Cms\LiveCss\CssOverrideRepositoryInterface;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
+use Pulsar\Extension\Cms\Newsletter\NewsletterCampaignRepositoryInterface;
+use Pulsar\Extension\Cms\Newsletter\NewsletterSendRepositoryInterface;
+use Pulsar\Extension\Cms\Newsletter\NewsletterSubscriberRepositoryInterface;
 use Pulsar\Extension\Cms\Plugins\CmsPluginRepositoryInterface;
 use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
 use Pulsar\Extension\Cms\Seo\LinkHealthRepositoryInterface;
@@ -263,6 +272,29 @@ final readonly class CmsRepositoryProvider
         $container->instance(
             FormSubmissionRepositoryInterface::class,
             new DbFormSubmissionRepository($connection),
+        );
+
+        // Documentation repositories
+        $docFeedbackRepo = new DbDocFeedbackRepository($connection);
+        $container->instance(DocFeedbackRepositoryInterface::class, $docFeedbackRepo);
+
+        $docVersionRepo = new DbDocVersionRepository($connection);
+        $container->instance(DbDocVersionRepository::class, $docVersionRepo);
+
+        // Newsletter repositories
+        $container->instance(
+            NewsletterSubscriberRepositoryInterface::class,
+            new DbNewsletterSubscriberRepository($connection),
+        );
+
+        $container->instance(
+            NewsletterCampaignRepositoryInterface::class,
+            new DbNewsletterCampaignRepository($connection),
+        );
+
+        $container->instance(
+            NewsletterSendRepositoryInterface::class,
+            new DbNewsletterSendRepository($connection),
         );
     }
 }
