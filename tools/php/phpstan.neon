@@ -9,6 +9,7 @@ parameters:
         - ../../extensions/payments/src
         - ../../extensions/psr7-bridge/src
         - ../../extensions/observability-export/src
+        - ../../extensions/opentelemetry/src
         - ../../tests
     excludePaths:
         - ../../vendor

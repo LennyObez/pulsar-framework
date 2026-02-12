@@ -12,8 +12,11 @@
     "ext-simplexml": "*",
     "ext-sodium": "*",
     "php": "^8.5",
+    "psr/cache": "^3.0",
     "psr/container": "^2.0",
-    "psr/log": "^3.0"
+    "psr/event-dispatcher": "^1.0",
+    "psr/log": "^3.0",
+    "psr/simple-cache": "^3.0"
   },
   "require-dev": {
     "deptrac/deptrac": "^4.6",
@@ -31,12 +34,20 @@
     "vimeo/psalm": "^6.15"
   },
   "suggest": {
+    "ext-apcu": "Required for APCu cache driver",
+    "ext-intl": "Required for ICU MessageFormat, number/date/currency formatting",
+    "ext-memcached": "Required for Memcached cache driver",
     "ext-pcntl": "Required for queue worker signal handling (Unix only)",
+    "ext-redis": "Required for Redis cache driver",
     "ext-sockets": "Required for persistent HTTP runtime (optional, guarded by runtime check)",
     "psr/http-message": "Required for PSR-7 bridge extension (bidirectional request/response conversion)",
-    "nyholm/psr7": "Required for PSR-7 bridge extension (PSR-7/PSR-17 implementation)"
+    "nyholm/psr7": "Required for PSR-7 bridge extension (PSR-7/PSR-17 implementation)",
+    "psy/psysh": "Required for the interactive REPL (pulsar shell)"
   },
   "autoload": {
+    "files": [
+      "src/I18n/helpers.php"
+    ],
     "psr-4": {
       "Pulsar\\": "src/",
       "Pulsar\\Extension\\Example\\": "extensions/example/src/",
@@ -47,7 +58,8 @@
       "Pulsar\\Extension\\Studio\\": "extensions/studio/src/",
       "Pulsar\\Extension\\McpServer\\": "extensions/mcp-server/src/",
       "Pulsar\\Extension\\Orm\\": "extensions/orm/src/",
-      "Pulsar\\Extension\\Admin\\": "extensions/admin/src/"
+      "Pulsar\\Extension\\Admin\\": "extensions/admin/src/",
+      "Pulsar\\Extension\\OpenTelemetry\\": "extensions/opentelemetry/src/"
     }
   },
   "autoload-dev": {
@@ -77,6 +89,7 @@
       "@boundary:deptrac",
       "@boundary:custom"
     ],
+    "qodana": "php scripts/qodana-local.php",
     "qa": [
       "@cs:check",
       "@phpstan",

@@ -36,6 +36,9 @@ coverage/
 .env.*
 !.env.example
 
+# REPL history
+.pulsar_repl_history
+
 # PHP-CS-Fixer cache
 .php-cs-fixer.cache
 

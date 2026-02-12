@@ -31,10 +31,17 @@ if ($autoloader === null) {
 require $autoloader;
 
 use Pulsar\Cache\FrameworkCache;
+use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\DatabaseConfig;
+use Pulsar\Config\Environment;
 use Pulsar\Config\IntegrityConfig;
 use Pulsar\Config\QueueConfig;
+use Pulsar\Config\ReplConfig;
+use Pulsar\Console\Repl\EnvironmentGuard;
+use Pulsar\Console\Repl\ReplAuditLogger;
+use Pulsar\Console\Repl\SecretRedactor;
+use Pulsar\Console\Repl\ShellCommand;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Config\SupervisorConfig;
 use Pulsar\Console\Application;
@@ -487,6 +494,42 @@ if ($kernel->container()->has(StudioConfig::class)) {
             ));
         }
     }
+}
+
+// Register REPL shell command
+{
+    $replConfigFile = $configPath . '/repl.php';
+
+    /** @var array<string, mixed> $replData */
+    $replData = is_file($replConfigFile) ? (require $replConfigFile) : [];
+
+    $replEnvironment = $configManager?->environment() ?? Environment::load(null);
+    $replMode = $replEnvironment->resolveMode();
+    $replConfig = is_array($replData) ? ReplConfig::fromArray($replData, $replEnvironment) : new ReplConfig();
+    $replGuard = new EnvironmentGuard($replMode, $replEnvironment, $replConfig->enabled);
+
+    $replAuditLogger = null;
+    if ($replConfig->audit && $kernel->container()->has(AuditLoggerInterface::class)) {
+        /** @var AuditLoggerInterface $auditLoggerInstance */
+        $auditLoggerInstance = $kernel->container()->get(AuditLoggerInterface::class);
+        $replAuditLogger = new ReplAuditLogger($auditLoggerInstance, bin2hex(random_bytes(16)));
+    }
+
+    $replRedactor = null;
+    if ($kernel->container()->has(SensitiveDataScrubber::class)) {
+        /** @var SensitiveDataScrubber $replScrubber */
+        $replScrubber = $kernel->container()->get(SensitiveDataScrubber::class);
+        $replRedactor = new SecretRedactor($replScrubber);
+    }
+
+    $application->add(new ShellCommand(
+        $kernel->container(),
+        $replMode,
+        $replGuard,
+        $replConfig,
+        $replAuditLogger,
+        $replRedactor,
+    ));
 }
 
 // Register extension commands

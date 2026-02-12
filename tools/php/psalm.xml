@@ -20,6 +20,12 @@
         </ignoreFiles>
     </projectFiles>
 
+    <stubs>
+        <file name="stubs/Redis.php"/>
+        <file name="stubs/Memcached.php"/>
+        <file name="stubs/PsySH.php"/>
+    </stubs>
+
     <issueHandlers>
         <!-- Allow mixed types for reflection-based DI and request handling -->
         <MixedAssignment errorLevel="suppress"/>
