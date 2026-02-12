@@ -37,6 +37,8 @@ deptrac:
           value: ^Pulsar\\Console\\Application$
         - type: classLike
           value: ^Pulsar\\Core\\Wiring\\
+        - type: classLike
+          value: ^Pulsar\\Console\\Command\\OptimizeCommand$
 
     # =================================================================
     # Foundation Tier

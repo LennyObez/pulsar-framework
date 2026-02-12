@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Event;
 
+use InvalidArgumentException;
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
@@ -42,6 +43,8 @@ final readonly class EventEnvelope
         public EventMetadata $metadata,
         public array $payload,
         public string $payloadHash,
+        public ?string $originModule = null,
+        public EventScope $scope = EventScope::CrossModule,
     ) {}
 
     /**
@@ -59,8 +62,9 @@ final readonly class EventEnvelope
         array $payload,
         EventMetadata $metadata,
         ?Randomizer $randomizer = null,
+        ?string $originModule = null,
     ): self {
-        $randomizer ??= new Randomizer(new Secure());
+        $randomizer ??= self::defaultRandomizer();
         $eventId = bin2hex($randomizer->getBytes(16));
         $payloadHash = self::computeHash($eventType, $schemaVersion, $payload);
 
@@ -71,6 +75,7 @@ final readonly class EventEnvelope
             metadata: $metadata,
             payload: $payload,
             payloadHash: $payloadHash,
+            originModule: $originModule,
         );
     }
 
@@ -86,13 +91,15 @@ final readonly class EventEnvelope
             'metadata' => $this->metadata->toArray(),
             'payload' => $this->payload,
             'payload_hash' => $this->payloadHash,
+            'origin_module' => $this->originModule,
+            'scope' => $this->scope->value,
         ];
     }
 
     /**
      * @param array<string, mixed> $data
      *
-     * @throws JsonException
+     * @throws JsonException|InvalidArgumentException
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
@@ -106,17 +113,30 @@ final readonly class EventEnvelope
         $eventId = $data['event_id'] ?? '';
         $eventType = $data['event_type'] ?? '';
         $schemaVersion = $data['schema_version'] ?? 0;
+        $originModule = $data['origin_module'] ?? null;
+        $scopeRaw = $data['scope'] ?? null;
+
+        $validEventType = is_string($eventType) ? $eventType : '';
+
+        if ($validEventType === '') {
+            throw new InvalidArgumentException('EventEnvelope requires non-empty eventType');
+        }
+
+        $scope = is_string($scopeRaw) ? (EventScope::tryFrom($scopeRaw) ?? EventScope::CrossModule) : EventScope::CrossModule;
+
         return new self(
             eventId: is_string($eventId) ? $eventId : '',
-            eventType: is_string($eventType) ? $eventType : '',
+            eventType: $validEventType,
             schemaVersion: is_int($schemaVersion) ? $schemaVersion : 0,
             metadata: EventMetadata::fromArray($metadataData),
             payload: $payload,
             payloadHash: self::computeHash(
-                is_string($eventType) ? $eventType : '',
+                $validEventType,
                 is_int($schemaVersion) ? $schemaVersion : 0,
                 $payload,
             ),
+            originModule: is_string($originModule) ? $originModule : null,
+            scope: $scope,
         );
     }
 
@@ -171,5 +191,13 @@ final readonly class EventEnvelope
         }
 
         return $data;
+    }
+
+    private static function defaultRandomizer(): Randomizer
+    {
+        /** @var Randomizer|null $randomizer */
+        static $randomizer = null;
+
+        return $randomizer ??= new Randomizer(new Secure());
     }
 }

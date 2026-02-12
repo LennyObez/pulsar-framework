@@ -181,7 +181,12 @@ final class OptimizeCommand extends Command
                 mkdir($cacheDir, 0o755, true);
             }
 
-            file_put_contents($cacheDir . DIRECTORY_SEPARATOR . 'events_map.php', $mapCode);
+            $written = file_put_contents($cacheDir . DIRECTORY_SEPARATOR . 'events_map.php', $mapCode);
+            if ($written === false) {
+                $output->errorln('  Events: failed to write compiled event map');
+
+                return;
+            }
         }
 
         $output->writeln(sprintf('  Events: %d event type(s) compiled', $eventTypeCount));

@@ -985,21 +985,6 @@
       "methods": [],
       "constants": []
     },
-    "Pulsar\\Event\\Contract\\EventSerializer": {
-      "since": "1.0.0",
-      "methods": [],
-      "constants": []
-    },
-    "Pulsar\\Event\\Contract\\EventStorePort": {
-      "since": "1.0.0",
-      "methods": [],
-      "constants": []
-    },
-    "Pulsar\\Event\\Contract\\OutboxPort": {
-      "since": "1.0.0",
-      "methods": [],
-      "constants": []
-    },
     "Pulsar\\Event\\EnvelopeRequiredEvent": {
       "since": "1.0.0",
       "methods": [],
@@ -1580,7 +1565,27 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Observability\\Log\\Logger": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\Log\\Sink\\DeferredSinkInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\Counter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\Gauge": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Metrics\\Histogram": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -1610,7 +1615,17 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Observability\\Tracing\\InMemorySpanCollector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\Tracing\\Span": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Observability\\Tracing\\SpanId": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -2261,6 +2276,7 @@
     "Pulsar\\Console\\Repl\\GuardResult",
     "Pulsar\\Console\\Repl\\ReadOnlyCachePool",
     "Pulsar\\Console\\Repl\\ReadOnlyConnection",
+    "Pulsar\\Console\\Repl\\ReadOnlyContainer",
     "Pulsar\\Console\\Repl\\ReadOnlySimpleCache",
     "Pulsar\\Console\\Repl\\ReadOnlyStorageAdapter",
     "Pulsar\\Console\\Repl\\ReplAuditLogger",
@@ -2332,6 +2348,9 @@
     "Pulsar\\Deploy\\Runtime\\PhpRuntime",
     "Pulsar\\Deploy\\Snippet\\ProxySnippetGenerator",
     "Pulsar\\Deploy\\Snippet\\TlsSnippetGenerator",
+    "Pulsar\\Event\\Contract\\EventSerializer",
+    "Pulsar\\Event\\Contract\\EventStorePort",
+    "Pulsar\\Event\\Contract\\OutboxPort",
     "Pulsar\\Event\\Internal\\CompiledListenerProvider",
     "Pulsar\\Event\\Internal\\EventDispatcher",
     "Pulsar\\Event\\Internal\\EventMapCompiler",
