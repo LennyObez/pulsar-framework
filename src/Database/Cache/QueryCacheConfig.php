@@ -42,9 +42,12 @@ final readonly class QueryCacheConfig
         /** @var list<string> $authorizationColumns */
         $authorizationColumns = $data['authorization_columns'] ?? ['user_id', 'tenant_id'];
 
+        /** @var int|string $defaultTtl */
+        $defaultTtl = $data['default_ttl_seconds'] ?? 60;
+
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            defaultTtlSeconds: (int) ($data['default_ttl_seconds'] ?? 60),
+            defaultTtlSeconds: (int) $defaultTtl,
             sensitiveTableNames: $sensitiveTableNames,
             authorizationColumns: $authorizationColumns,
         );
