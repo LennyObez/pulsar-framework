@@ -25,7 +25,7 @@ use function random_bytes;
 final class CaptureOnlyQueueDriver implements QueueDriverInterface
 {
     /** @var list<array{queue: string, jobClass: string, payload: string, delay: int}> */
-    private array $captured = [];
+    public private(set) array $captured = [];
 
     public function __construct(
         private readonly QueueDriverInterface $inner,
@@ -98,16 +98,6 @@ final class CaptureOnlyQueueDriver implements QueueDriverInterface
     public function findByStatus(JobRecordStatus $status): array
     {
         return $this->inner->findByStatus($status);
-    }
-
-    /**
-     * Get all captured push calls that would have been dispatched.
-     *
-     * @return list<array{queue: string, jobClass: string, payload: string, delay: int}>
-     */
-    public function getCaptured(): array
-    {
-        return $this->captured;
     }
 
     /**

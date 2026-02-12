@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Repl;
 
+use NoDiscard;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Storage\StorageAdapterInterface;
@@ -33,6 +34,7 @@ final readonly class ReadOnlyStorageAdapter implements StorageAdapterInterface
     }
 
     #[Override]
+    #[NoDiscard]
     public function get(string $key): string
     {
         return $this->inner->get($key);

@@ -67,14 +67,14 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     #[Override]
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {
-        $this->assertHasCapability(ExtensionCapability::ContainerWrite);
+        $this->assertCanWrite();
         $this->inner->bind($id, $concrete, $type);
     }
 
     #[Override]
     public function instance(string $id, object $instance): void
     {
-        $this->assertHasCapability(ExtensionCapability::ContainerWrite);
+        $this->assertCanWrite();
         $this->inner->instance($id, $instance);
     }
 
@@ -128,10 +128,10 @@ final readonly class ScopedContainerProxy implements ContainerInterface
         }
     }
 
-    private function assertHasCapability(ExtensionCapability $capability): void
+    private function assertCanWrite(): void
     {
-        if (!$this->hasCapability($capability)) {
-            throw CapabilityDeniedException::forCapability($this->tier, $capability);
+        if (!$this->hasCapability(ExtensionCapability::ContainerWrite)) {
+            throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ContainerWrite);
         }
     }
 

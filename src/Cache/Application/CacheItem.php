@@ -62,21 +62,21 @@ final class CacheItem implements CacheItemInterface
         return $this->isHit;
     }
 
-    public function set(mixed $value): static
+    public function set(mixed $value): self
     {
         $this->value = $value;
 
         return $this;
     }
 
-    public function expiresAt(?DateTimeInterface $expiration): static
+    public function expiresAt(?DateTimeInterface $expiration): self
     {
         $this->expiration = $expiration;
 
         return $this;
     }
 
-    public function expiresAfter(int|DateInterval|null $time): static
+    public function expiresAfter(int|DateInterval|null $time): self
     {
         if ($time === null) {
             $this->expiration = null;

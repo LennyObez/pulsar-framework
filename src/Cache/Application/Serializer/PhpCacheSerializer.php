@@ -24,7 +24,7 @@ final readonly class PhpCacheSerializer implements CacheSerializerInterface
      * @param list<class-string> $allowedClasses Classes allowed during deserialization
      */
     public function __construct(
-        private readonly array $allowedClasses = [],
+        private array $allowedClasses = [],
     ) {}
 
     public function serialize(mixed $value): string

@@ -33,6 +33,7 @@
             <directory>../../extensions/mcp-server/src</directory>
             <directory>../../extensions/orm/src</directory>
             <directory>../../extensions/admin/src</directory>
+            <directory>../../extensions/opentelemetry/src</directory>
         </include>
     </source>
 </phpunit>

@@ -10,7 +10,6 @@ use Pulsar\Event\Exception\EventException;
 
 use function array_unique;
 use function array_values;
-use function get_class;
 use function is_array;
 use function is_object;
 use function is_string;
@@ -135,7 +134,7 @@ final class EventMapCompiler
     {
         if (is_array($listener) && isset($listener[0], $listener[1])) {
             /** @var array{0: object|string, 1: string} $listener */
-            $class = is_string($listener[0]) ? $listener[0] : get_class($listener[0]);
+            $class = is_string($listener[0]) ? $listener[0] : $listener[0]::class;
 
             return ['class' => $class, 'method' => $listener[1]];
         }
@@ -146,7 +145,7 @@ final class EventMapCompiler
 
         // For objects with __invoke
         if (is_object($listener) && !($listener instanceof Closure)) {
-            return ['class' => get_class($listener), 'method' => '__invoke'];
+            return ['class' => $listener::class, 'method' => '__invoke'];
         }
 
         // Closures cannot be compiled — fail hard

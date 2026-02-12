@@ -6,6 +6,8 @@ namespace Pulsar\Extension\OpenTelemetry\Propagation;
 
 use Pulsar\Api\Api;
 
+use function array_keys;
+use function array_map;
 use function count;
 use function explode;
 use function implode;
@@ -117,12 +119,10 @@ final readonly class BaggageParser
             return '';
         }
 
-        $entries = [];
-
-        foreach ($baggage as $key => $value) {
-            $entries[] = $key . '=' . rawurlencode($value);
-        }
-
-        return implode(',', $entries);
+        return implode(',', array_map(
+            static fn(string $key, string $value): string => $key . '=' . rawurlencode($value),
+            array_keys($baggage),
+            $baggage,
+        ));
     }
 }

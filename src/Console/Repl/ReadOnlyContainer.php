@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Repl;
 
+use NoDiscard;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Container\BindingType;
@@ -24,6 +25,7 @@ final readonly class ReadOnlyContainer implements ContainerInterface
     ) {}
 
     #[Override]
+    #[NoDiscard]
     public function get(string $id): mixed
     {
         return $this->inner->get($id);
@@ -60,12 +62,14 @@ final readonly class ReadOnlyContainer implements ContainerInterface
     }
 
     #[Override]
+    #[NoDiscard]
     public function getBindings(): array
     {
         return $this->inner->getBindings();
     }
 
     #[Override]
+    #[NoDiscard]
     public function getInstances(): array
     {
         return $this->inner->getInstances();

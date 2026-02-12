@@ -418,12 +418,11 @@ final class Container implements AdvancedContainerInterface
      * Build from reflection (standard path).
      *
      * @param class-string $className
-     * @param string|null $consumerClass Consumer class for contextual binding lookups
      *
      * @throws ContainerException
      * @throws ReflectionException If class reflection fails
      */
-    private function buildFromReflection(string $className, ?string $consumerClass = null): object
+    private function buildFromReflection(string $className): object
     {
         $reflector = new ReflectionClass($className);
 
@@ -480,7 +479,7 @@ final class Container implements AdvancedContainerInterface
             $dependencyClass = $type->getName();
 
             // Check contextual bindings first
-            $resolvedContextual = $this->resolveContextual($consumerClass ?? $className, $dependencyClass);
+            $resolvedContextual = $this->resolveContextual($className, $dependencyClass);
             if ($resolvedContextual !== null) {
                 $dependencies[] = $resolvedContextual;
                 continue;

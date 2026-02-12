@@ -29,20 +29,20 @@ use function strlen;
 #[Internal]
 final readonly class EncryptedCacheDecorator implements CacheDriverInterface
 {
-    private readonly EncryptorInterface $encryptor;
-    private readonly string $hmacKey;
-    private readonly string $currentKeyId;
-    private readonly ?string $previousKeyId;
+    private EncryptorInterface $encryptor;
+    private string $hmacKey;
+    private string $currentKeyId;
+    private ?string $previousKeyId;
 
     /**
      * @throws SodiumException
      */
     public function __construct(
-        private readonly CacheDriverInterface $inner,
+        private CacheDriverInterface $inner,
         MasterKey $masterKey,
-        private readonly string $poolName,
-        private readonly string $tenantId = '',
-        private readonly string $purpose = 'cache',
+        private string $poolName,
+        private string $tenantId = '',
+        private string $purpose = 'cache',
     ) {
         $this->encryptor = Encryptor::fromDerivedKey($masterKey, 8, 'app_cenc');
         $this->hmacKey = $masterKey->deriveSubKey(9, 'app_cobs');

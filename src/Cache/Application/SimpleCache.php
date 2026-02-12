@@ -16,7 +16,7 @@ use Pulsar\Api\Api;
 final readonly class SimpleCache implements CacheInterface
 {
     public function __construct(
-        private readonly CachePool $pool,
+        private CachePool $pool,
     ) {}
 
     public function get(string $key, mixed $default = null): mixed

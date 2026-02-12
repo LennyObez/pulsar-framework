@@ -339,7 +339,7 @@ final class CachePool implements CacheItemPoolInterface
         if ($expiration !== null) {
             $diff = $expiration->getTimestamp() - time();
 
-            return $diff > 0 ? $diff : 0;
+            return max(0, $diff);
         }
 
         return $this->defaultTtlSeconds;

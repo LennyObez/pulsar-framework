@@ -32,9 +32,9 @@ final class CaptureOnlyQueueDriverTest extends TestCase
         $id = $this->driver->push('default', 'App\\Job', '{}', 0);
 
         self::assertStringStartsWith('repl_', $id);
-        self::assertCount(1, $this->driver->getCaptured());
-        self::assertSame('default', $this->driver->getCaptured()[0]['queue']);
-        self::assertSame('App\\Job', $this->driver->getCaptured()[0]['jobClass']);
+        self::assertCount(1, $this->driver->captured);
+        self::assertSame('default', $this->driver->captured[0]['queue']);
+        self::assertSame('App\\Job', $this->driver->captured[0]['jobClass']);
     }
 
     #[Test]
@@ -44,7 +44,7 @@ final class CaptureOnlyQueueDriverTest extends TestCase
         $this->driver->push('q2', 'Job2', '{"key":"val"}');
 
         self::assertSame(2, $this->driver->getCapturedCount());
-        self::assertCount(2, $this->driver->getCaptured());
+        self::assertCount(2, $this->driver->captured);
     }
 
     #[Test]

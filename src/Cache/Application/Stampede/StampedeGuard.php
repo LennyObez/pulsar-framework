@@ -23,15 +23,15 @@ use Throwable;
 #[Internal]
 final readonly class StampedeGuard
 {
-    private readonly Randomizer $randomizer;
+    private Randomizer $randomizer;
 
     public function __construct(
-        private readonly CacheDriverInterface $driver,
-        private readonly CacheSerializerInterface $serializer,
-        private readonly LockInterface $lock,
-        private readonly int $lockTtlSeconds = 30,
-        private readonly int $lockTimeoutMs = 5000,
-        private readonly float $jitterFactor = 0.1,
+        private CacheDriverInterface $driver,
+        private CacheSerializerInterface $serializer,
+        private LockInterface $lock,
+        private int $lockTtlSeconds = 30,
+        private int $lockTimeoutMs = 5000,
+        private float $jitterFactor = 0.1,
     ) {
         $this->randomizer = new Randomizer(new Secure());
     }

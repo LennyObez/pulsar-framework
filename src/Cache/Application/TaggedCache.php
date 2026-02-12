@@ -29,13 +29,13 @@ use const JSON_THROW_ON_ERROR;
 final readonly class TaggedCache implements TaggedCacheInterface
 {
     public function __construct(
-        private readonly string $poolName,
-        private readonly CacheDriverInterface $driver,
-        private readonly CacheSerializerInterface $serializer,
-        private readonly TagStrategyInterface $tagStrategy,
-        private readonly CacheEventEmitter $eventEmitter,
-        private readonly ?int $defaultTtlSeconds = null,
-        private readonly bool $critical = false,
+        private string $poolName,
+        private CacheDriverInterface $driver,
+        private CacheSerializerInterface $serializer,
+        private TagStrategyInterface $tagStrategy,
+        private CacheEventEmitter $eventEmitter,
+        private ?int $defaultTtlSeconds = null,
+        private bool $critical = false,
     ) {}
 
     /**

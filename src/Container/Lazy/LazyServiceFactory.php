@@ -64,7 +64,7 @@ final class LazyServiceFactory
             // Class-string path — resolve via container autowiring
             /** @var class-string $concrete */
             if (!class_exists($concrete)) {
-                throw new RuntimeException("Class {$concrete} does not exist");
+                throw new RuntimeException("Class $concrete does not exist");
             }
 
             /** @var object */

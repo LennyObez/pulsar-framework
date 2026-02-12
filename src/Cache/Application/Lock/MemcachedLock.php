@@ -29,10 +29,10 @@ use function usleep;
 #[Internal]
 final readonly class MemcachedLock implements LockInterface
 {
-    private readonly Randomizer $randomizer;
+    private Randomizer $randomizer;
 
     public function __construct(
-        private readonly Memcached $memcached,
+        private Memcached $memcached,
     ) {
         $this->randomizer = new Randomizer(new Secure());
     }

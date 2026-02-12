@@ -100,12 +100,9 @@ readonly class TrustedExtensionsConfig
             return null;
         }
 
-        foreach (ExtensionCapability::cases() as $case) {
-            if ($case->name === $name) {
-                return $case;
-            }
-        }
-
-        return null;
+        return array_find(
+            ExtensionCapability::cases(),
+            static fn(ExtensionCapability $case): bool => $case->name === $name,
+        );
     }
 }

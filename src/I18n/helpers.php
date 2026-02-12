@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Pulsar\I18n\Exception\I18nException;
 use Pulsar\I18n\Translator;
 
 if (!function_exists('__')) {
@@ -13,7 +14,7 @@ if (!function_exists('__')) {
      * @param ?string $locale Override locale
      * @param string $domain Translation domain
      *
-     * @throws \Pulsar\I18n\Exception\I18nException If i18n is not booted
+     * @throws I18nException If i18n is not booted
      */
     function __(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string
     {
@@ -30,7 +31,7 @@ if (!function_exists('trans')) {
      * @param ?string $locale Override locale
      * @param string $domain Translation domain
      *
-     * @throws \Pulsar\I18n\Exception\I18nException If i18n is not booted
+     * @throws I18nException If i18n is not booted
      */
     function trans(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string
     {

@@ -23,6 +23,7 @@ exclude:
   - name: PhpUndefinedVariableInspection
   - name: PhpUndefinedConstantInspection
   - name: PhpExpressionResultUnusedInspection
+  - name: PhpIllegalArrayKeyTypeInspection
   # #[Override] on PSR interface implementations — Qodana 2025.3 ships PHP 8.4 and cannot
   # verify interface implementations when composer.json requires ^8.5 (PSR packages may
   # fail to install even with --ignore-platform-reqs due to transitive constraints).
@@ -89,6 +90,38 @@ exclude:
       - extensions/admin/frontend/src/components/FormField.ts
       # DbSavedViewStore shares SQL CRUD pattern with DbActionHistoryStore
       - extensions/admin/src/Internal/Storage/DbSavedViewStore.php
+      # OTLP batch exporters are type-specialized thin wrappers around BatchExporter<T> —
+      # each handles a different signal type (spans/logs/metrics) with different builder/path
+      - extensions/opentelemetry/src/Internal/Export/SpanBatchExporter.php
+      - extensions/opentelemetry/src/Internal/Export/LogsBatchExporter.php
+      - extensions/opentelemetry/src/Internal/Export/MetricsBatchExporter.php
+      # OTLP transports share constructor URL validation and curl setup but diverge in
+      # protocol handling (HTTP/1.1 vs gRPC framing, header parsing, status interpretation)
+      - extensions/opentelemetry/src/Internal/Transport/HttpProtobufTransport.php
+      - extensions/opentelemetry/src/Internal/Transport/GrpcTransport.php
+      # Capability-gated proxies share trust-tier checking pattern but wrap different
+      # interfaces (ContainerInterface vs RouterInterface) with different enforcement logic
+      - src/Extensibility/Internal/ScopedContainerProxy.php
+      - src/Extensibility/Internal/ScopedRouterProxy.php
+      # REPL read-only decorators share delegation+throw pattern but implement different
+      # interfaces (Container, Storage, CachePool, SimpleCache, Connection)
+      - src/Console/Repl/ReadOnlyContainer.php
+      - src/Console/Repl/ReadOnlyStorageAdapter.php
+      - src/Console/Repl/ReadOnlyCachePool.php
+      - src/Console/Repl/ReadOnlySimpleCache.php
+      - src/Console/Repl/ReadOnlyConnection.php
+  # Accessor → property hook — these getters delegate to a sub-object and live in readonly
+  # classes. PHP 8.5 forbids property hooks on readonly properties, so the getters must remain.
+  - name: PhpAccessorCanBeReplacedWithPropertyHookInspection
+    paths:
+      - src/Routing/MatchedRoute.php
+  # Closure::fromCallable() → first-class callable — PHPStan max loses Closure parameter/return
+  # type information with the $fn(...) syntax. Closure::fromCallable() preserves types correctly.
+  # PHPStan max is authoritative; keep Closure::fromCallable() in these files.
+  - name: PhpClosureCanBeConvertedToFirstClassCallableInspection
+    paths:
+      - src/Container/Container.php
+      - src/Cache/Application/Event/CacheEventEmitter.php
   # Same parameter value — auditPayment() is designed for reuse across payment
   # operations; currently only cancel_intent calls it, but capture/refund will follow.
   - name: PhpSameParameterValueInspection

@@ -32,7 +32,7 @@ use function usleep;
 #[Internal]
 final readonly class ApcuLock implements LockInterface
 {
-    private readonly Randomizer $randomizer;
+    private Randomizer $randomizer;
 
     public function __construct()
     {
