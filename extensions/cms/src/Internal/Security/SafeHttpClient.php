@@ -17,6 +17,7 @@ use function filter_var;
 use function in_array;
 use function inet_pton;
 use function ip2long;
+use function is_string;
 use function ltrim;
 use function ord;
 use function parse_url;
@@ -111,7 +112,7 @@ final readonly class SafeHttpClient
         $lowHost = strtolower($host);
 
         foreach (self::METADATA_HOSTS as $metadataHost) {
-            if ($lowHost === strtolower($metadataHost)) {
+            if ($lowHost === $metadataHost) {
                 throw CmsException::ssrfBlocked($url, 'Cloud metadata endpoint blocked');
             }
         }
@@ -163,7 +164,7 @@ final readonly class SafeHttpClient
             };
         }
 
-        if ($port !== null && !in_array((int) $port, $this->config->allowedOutboundPorts, true)) {
+        if ($port !== null && !in_array($port, $this->config->allowedOutboundPorts, true)) {
             throw CmsException::ssrfBlocked(
                 $url,
                 sprintf('Port %d is not in the allowed outbound ports list', $port),
@@ -302,7 +303,8 @@ final readonly class SafeHttpClient
 
         if ($aRecords !== false) {
             foreach ($aRecords as $record) {
-                if (isset($record['ip'])) {
+                /** @var array<string, mixed> $record */
+                if (isset($record['ip']) && is_string($record['ip'])) {
                     $ips[] = $record['ip'];
                 }
             }
@@ -312,7 +314,8 @@ final readonly class SafeHttpClient
 
         if ($aaaaRecords !== false) {
             foreach ($aaaaRecords as $record) {
-                if (isset($record['ipv6'])) {
+                /** @var array<string, mixed> $record */
+                if (isset($record['ipv6']) && is_string($record['ipv6'])) {
                     $ips[] = $record['ipv6'];
                 }
             }

@@ -59,9 +59,11 @@ $listFields = array_filter($fields, static fn($f): bool => $f->visibleOnList);
     </table>
 
     <?php
-    $page = $result->page;
-$totalPages = $result->totalPages;
-$baseUrl = '/admin/resources/' . $resource->name();
+    extract([
+        'page' => $result->page,
+        'totalPages' => $result->totalPages,
+        'baseUrl' => '/admin/resources/' . $resource->name(),
+    ]);
 include __DIR__ . '/partials/pagination.php';
 ?>
 </div>

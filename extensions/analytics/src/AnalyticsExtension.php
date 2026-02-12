@@ -76,6 +76,7 @@ final readonly class AnalyticsExtension implements
                 $data = require $configPath . DIRECTORY_SEPARATOR . 'analytics.php';
 
                 if (is_array($data)) {
+                    /** @var array<string, mixed> $data */
                     $container->instance(AnalyticsConfig::class, AnalyticsConfig::fromArray($data));
                 }
             }

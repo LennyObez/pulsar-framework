@@ -41,7 +41,7 @@ final readonly class TaxCalculator implements TaxCalculatorInterface
 
         foreach ($items as $item) {
             $rate = $reverseCharge ? 0.0 : $this->findTaxRate($item['taxCategory'], $billingCountry);
-            $taxableAmount = $item['amount'] * $item['quantity'];
+            $taxableAmount = (float) ($item['amount'] * $item['quantity']);
             $taxAmount = intval(round($taxableAmount * $rate));
 
             $taxLineItems[] = new TaxLineItem(

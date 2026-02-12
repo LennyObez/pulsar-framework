@@ -59,7 +59,7 @@ final readonly class MapBlock implements BlockTypeInterface
         $bboxMaxLon = number_format($lon + 0.01, 6, '.', '');
         $bboxMaxLat = number_format($lat + 0.01, 6, '.', '');
 
-        $src = "https://www.openstreetmap.org/export/embed.html?bbox={$bboxMinLon}%2C{$bboxMinLat}%2C{$bboxMaxLon}%2C{$bboxMaxLat}&amp;layer=mapnik&amp;marker={$latStr}%2C{$lonStr}";
+        $src = "https://www.openstreetmap.org/export/embed.html?bbox={$bboxMinLon}%2C{$bboxMinLat}%2C{$bboxMaxLon}%2C{$bboxMaxLat}&amp;layer=mapnik&amp;marker={$latStr}%2C{$lonStr}&amp;zoom={$zoom}";
 
         $html = '<figure class="map">';
         $html .= "<iframe src=\"{$src}\" width=\"100%\" height=\"400\" sandbox=\"allow-scripts\" loading=\"lazy\" title=\"Map\" style=\"border:0\"></iframe>";

@@ -52,7 +52,7 @@ final readonly class SitemapGenerator implements SitemapGeneratorInterface
                 tenantId: $tenantId,
             );
 
-            $totalPages = (int) ceil($result->total / self::MAX_URLS_PER_SITEMAP);
+            $totalPages = (int) ceil(($result->total ?? 0) / self::MAX_URLS_PER_SITEMAP);
             $totalPages = $totalPages > 0 ? $totalPages : 1;
 
             for ($page = 1; $page <= $totalPages; $page++) {

@@ -76,7 +76,7 @@ final readonly class SafeArchiveExtractor implements ThemeArchiveExtractorInterf
         $result = $zip->open($archivePath);
 
         if ($result !== true) {
-            throw CmsException::themeExtractionFailed('Failed to open archive (error code: ' . $result . ')');
+            throw CmsException::themeExtractionFailed('Failed to open archive (error code: ' . (string) $result . ')');
         }
 
         try {

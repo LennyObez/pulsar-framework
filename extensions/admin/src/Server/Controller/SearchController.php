@@ -54,8 +54,7 @@ final readonly class SearchController
      */
     private function renderView(array $templateData): string
     {
-        $title = 'Search results';
-        $content = 'search';
+        extract(['title' => 'Search results', 'content' => 'search', 'templateData' => $templateData]);
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

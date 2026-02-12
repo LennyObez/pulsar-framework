@@ -150,7 +150,8 @@ final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
             return ['method' => '', 'metadata' => [], 'peer_identity' => null];
         }
 
-        $method = is_string($data['method'] ?? null) ? $data['method'] : '';
+        $rawMethod = $data['method'] ?? null;
+        $method = is_string($rawMethod) ? $rawMethod : '';
 
         /** @var array<string, list<string>> $metadata */
         $metadata = [];
@@ -164,9 +165,10 @@ final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
 
         // Only trust peer_identity when trustedProxy is enabled — this means
         // RoadRunner is configured to extract it from the TLS handshake.
+        /** @var string|null $peerIdentity */
         $peerIdentity = null;
         if ($this->trustedProxy && is_string($data['peer_identity'] ?? null)) {
-            $peerIdentity = $data['peer_identity'];
+            $peerIdentity = (string) $data['peer_identity'];
         }
 
         return ['method' => $method, 'metadata' => $metadata, 'peer_identity' => $peerIdentity];

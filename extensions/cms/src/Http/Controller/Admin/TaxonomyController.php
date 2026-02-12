@@ -36,8 +36,6 @@ final readonly class TaxonomyController
         $this->authorize($identity, 'cms.taxonomy.view');
 
         $locale = $this->resolveLocale($request);
-        /** @var string|null $tenantId */
-        $tenantId = $request->getAttribute('tenant_id');
 
         // List known taxonomy slugs — the repository API works per-slug
         $data = [
@@ -52,9 +50,6 @@ final readonly class TaxonomyController
     {
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.taxonomy.manage');
-
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
 
         return Response::json(['status' => 'created'], 201);
     }
@@ -106,9 +101,6 @@ final readonly class TaxonomyController
         if ($taxonomy === null) {
             return Response::json(['error' => 'Taxonomy not found'], 404);
         }
-
-        /** @var array<string, mixed> $body */
-        $body = (array) ($request->getParsedBody() ?? []);
 
         return Response::json(['id' => $taxonomy->id, 'status' => 'updated']);
     }

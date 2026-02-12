@@ -219,7 +219,7 @@ final readonly class ExperimentService
         }
 
         $n = (float) $impressions;
-        $p = $conversions / $n;
+        $p = (float) $conversions / $n;
 
         // z = 1.96 for 95% confidence
         $z = 1.96;

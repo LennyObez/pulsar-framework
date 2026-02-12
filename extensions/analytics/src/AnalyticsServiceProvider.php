@@ -7,7 +7,7 @@ namespace Pulsar\Extension\Analytics;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
-use Pulsar\Cache\Application\CacheDriverInterface;
+use Pulsar\Cache\Application\Driver\CacheDriverInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;

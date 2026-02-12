@@ -98,8 +98,8 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
         $container->bind(ClientCredentialsGrant::class, static function () use ($container): ClientCredentialsGrant {
             return new ClientCredentialsGrant(
                 $container->get(AccessTokenRepositoryInterface::class),
+                $container->get(ScopeRepositoryInterface::class),
                 $container->get(AuditLoggerInterface::class),
-                $container->get(OAuth2Config::class),
             );
         });
 
@@ -117,13 +117,13 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
                 $container->get(ClientRepositoryInterface::class),
                 $container->get(ScopeRepositoryInterface::class),
                 $container->get(ConsentRepositoryInterface::class),
-                $container->get(AuthorizationCodeGrant::class),
-                $container->get(ClientCredentialsGrant::class),
-                $container->get(RefreshTokenGrant::class),
                 $container->get(AccessTokenRepositoryInterface::class),
                 $container->get(RefreshTokenRepositoryInterface::class),
+                $container->get(AuthorizationCodeGrant::class),
+                $container->get(\Psr\Http\Message\ResponseFactoryInterface::class),
+                $container->get(\Psr\Http\Message\StreamFactoryInterface::class),
                 $container->get(AuditLoggerInterface::class),
-                $container->get(OAuth2Config::class),
+                [$container->get(ClientCredentialsGrant::class), $container->get(RefreshTokenGrant::class)],
             );
         });
 

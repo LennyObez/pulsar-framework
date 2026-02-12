@@ -118,8 +118,8 @@ final readonly class StatsService implements StatsServiceInterface
             'visitors' => $visitors,
             'pageviews' => $pageviews,
             'sessions' => $sessions,
-            'bounce_rate' => $count > 0 ? round($bounceSum / $count, 1) : 0.0,
-            'avg_duration' => $count > 0 ? round($durationSum / $count, 1) : 0.0,
+            'bounce_rate' => $count > 0 ? round($bounceSum / (float) $count, 1) : 0.0,
+            'avg_duration' => $count > 0 ? round($durationSum / (float) $count, 1) : 0.0,
             'events_count' => $eventsCount,
         ];
     }

@@ -322,7 +322,7 @@ final readonly class AdminServiceProvider implements ServiceProviderInterface
             $config = $container->get(AdminConfig::class);
             $basePath = $container->has('app.base_path')
                 ? (string) $container->get('app.base_path')
-                : getcwd();
+                : (getcwd() ?: '.');
 
             return new AdminServeCommand($config, $basePath);
         });

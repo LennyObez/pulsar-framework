@@ -31,6 +31,7 @@ final readonly class StatsController
 
         $from = new DateTimeImmutable((string) ($params['from'] ?? '-30 days'));
         $to = new DateTimeImmutable((string) ($params['to'] ?? 'now'));
+        /** @var array<string, string> $filters */
         $filters = (array) ($params['filters'] ?? []);
 
         $data = $this->statsService->getAggregate($siteId, $from, $to, $filters);

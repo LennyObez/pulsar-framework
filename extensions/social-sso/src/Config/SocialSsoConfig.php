@@ -28,9 +28,12 @@ final readonly class SocialSsoConfig
         $providersRaw = (array) ($data['providers'] ?? []);
         $providers = [];
         foreach ($providersRaw as $name => $providerData) {
-            $providers[(string) $name] = ProviderConfig::fromArray((string) $name, (array) $providerData);
+            /** @var array<string, mixed> $providerArray */
+            $providerArray = (array) $providerData;
+            $providers[(string) $name] = ProviderConfig::fromArray((string) $name, $providerArray);
         }
 
+        /** @var array<string, mixed> $routesData */
         $routesData = (array) ($data['routes'] ?? []);
 
         return new self(

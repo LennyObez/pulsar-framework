@@ -87,7 +87,8 @@ final readonly class WebhookHandler
         }
 
         // Replay protection: reject duplicate event IDs
-        $eventId = isset($event['id']) && is_string($event['id']) ? $event['id'] : '';
+        $rawEventId = $event['id'] ?? null;
+        $eventId = is_string($rawEventId) ? $rawEventId : '';
 
         if ($eventId !== '' && $this->isEventAlreadyProcessed($eventId)) {
             $this->auditLogger?->log(

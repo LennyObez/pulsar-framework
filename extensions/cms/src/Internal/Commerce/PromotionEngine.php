@@ -37,6 +37,9 @@ final readonly class PromotionEngine implements PromotionServiceInterface
         private ConnectionInterface $db,
     ) {}
 
+    /**
+     * @param list<array{productId: string, quantity: int, unitPrice: int}> $cartItems
+     */
     public function validateCoupon(string $code, array $cartItems, ?string $customerId = null): PromotionValidationResult
     {
         $coupon = $this->coupons->findByCode($code);
@@ -127,6 +130,9 @@ final readonly class PromotionEngine implements PromotionServiceInterface
         return new PromotionValidationResult(true, $promotion, []);
     }
 
+    /**
+     * @param list<array{productId: string, quantity: int, unitPrice: int}> $items
+     */
     public function calculateDiscount(Promotion $promotion, array $items): DiscountResult
     {
         return match ($promotion->type) {
@@ -154,6 +160,9 @@ final readonly class PromotionEngine implements PromotionServiceInterface
         }
     }
 
+    /**
+     * @param list<array{productId: string, quantity: int, unitPrice: int}> $items
+     */
     private function calculatePercentageOff(Promotion $promotion, array $items): DiscountResult
     {
         $itemDiscounts = [];
@@ -173,6 +182,9 @@ final readonly class PromotionEngine implements PromotionServiceInterface
         return new DiscountResult($totalDiscount, $itemDiscounts);
     }
 
+    /**
+     * @param list<array{productId: string, quantity: int, unitPrice: int}> $items
+     */
     private function calculateFixedAmountOff(Promotion $promotion, array $items): DiscountResult
     {
         $eligibleTotal = 0;
@@ -195,14 +207,17 @@ final readonly class PromotionEngine implements PromotionServiceInterface
                 }
 
                 $lineTotal = $item['unitPrice'] * $item['quantity'];
-                $proportion = $lineTotal / $eligibleTotal;
-                $itemDiscounts[$item['productId']] = intval(round($totalDiscount * $proportion));
+                $proportion = (float) $lineTotal / (float) $eligibleTotal;
+                $itemDiscounts[$item['productId']] = intval(round((float) $totalDiscount * $proportion));
             }
         }
 
         return new DiscountResult($totalDiscount, $itemDiscounts);
     }
 
+    /**
+     * @param list<array{productId: string, quantity: int, unitPrice: int}> $items
+     */
     private function calculateBuyXGetY(Promotion $promotion, array $items): DiscountResult
     {
         // Buy X items, get the cheapest one free for each X

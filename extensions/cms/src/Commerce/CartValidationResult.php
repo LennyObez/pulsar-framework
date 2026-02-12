@@ -15,7 +15,7 @@ final readonly class CartValidationResult
     /**
      * @param bool $isValid Whether all cart items passed validation
      * @param list<string> $errors Validation error messages
-     * @param list<array{productId: string, quantity: int, unitPrice: int, currency: string}> $validatedItems Items with current verified prices
+     * @param list<array{productId: string, quantity: int, unitPrice: int, currency: string, variantId?: string|null}> $validatedItems Items with current verified prices
      */
     public function __construct(
         public bool $isValid,

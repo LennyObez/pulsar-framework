@@ -48,6 +48,8 @@ final readonly class CollectionController
                 return Response::noContent();
             }
 
+            /** @var array<string, mixed> $payload */
+
             // Validate payload origin against registered site domain
             $site = $this->validateOrigin($request, $payload);
 

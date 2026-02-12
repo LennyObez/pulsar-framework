@@ -67,7 +67,7 @@ final readonly class ResourceViewController
      */
     private function renderView(string $title, array $templateData): string
     {
-        $content = 'resource-view';
+        extract(['title' => $title, 'content' => 'resource-view', 'templateData' => $templateData]);
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

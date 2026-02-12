@@ -47,8 +47,7 @@ final readonly class DashboardController
      */
     private function renderView(array $templateData): string
     {
-        $title = 'Dashboard';
-        $content = 'dashboard';
+        extract(['title' => 'Dashboard', 'content' => 'dashboard', 'templateData' => $templateData]);
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

@@ -60,7 +60,7 @@ final readonly class ColumnsBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{blocks: list<array{blockType: string, data: array<string, mixed>}>}> $columns */
+        /** @var list<mixed> $columns */
         $columns = $data['columns'] ?? [];
         $columnCount = count($columns);
 

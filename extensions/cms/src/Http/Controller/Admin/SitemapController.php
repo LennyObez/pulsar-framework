@@ -109,14 +109,24 @@ final readonly class SitemapController
         libxml_use_internal_errors($previousErrors);
 
         if ($doc instanceof SimpleXMLElement) {
-            foreach ($doc->children('http://www.sitemaps.org/schemas/sitemap/0.9') as $child) {
-                $loc = (string) $child->children('http://www.sitemaps.org/schemas/sitemap/0.9')->loc;
-                $lastmod = (string) $child->children('http://www.sitemaps.org/schemas/sitemap/0.9')->lastmod;
+            $children = $doc->children('http://www.sitemaps.org/schemas/sitemap/0.9');
 
-                $segments[] = [
-                    'loc' => $loc,
-                    'lastmod' => $lastmod !== '' ? $lastmod : null,
-                ];
+            if ($children !== null) {
+                foreach ($children as $child) {
+                    $childElements = $child->children('http://www.sitemaps.org/schemas/sitemap/0.9');
+
+                    if ($childElements === null) {
+                        continue;
+                    }
+
+                    $loc = (string) $childElements->loc;
+                    $lastmod = (string) $childElements->lastmod;
+
+                    $segments[] = [
+                        'loc' => $loc,
+                        'lastmod' => $lastmod !== '' ? $lastmod : null,
+                    ];
+                }
             }
         }
 

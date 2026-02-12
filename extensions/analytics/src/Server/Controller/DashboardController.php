@@ -69,6 +69,8 @@ final readonly class DashboardController
             return Response::json(['error' => 'Not found'], 404);
         }
 
+        /** @var non-empty-string $fullPath */
+
         $contentType = match ($extension) {
             'css' => 'text/css; charset=utf-8',
             'js' => 'application/javascript; charset=utf-8',
@@ -77,7 +79,6 @@ final readonly class DashboardController
             'woff2' => 'font/woff2',
             'woff' => 'font/woff',
             'ico' => 'image/x-icon',
-            default => 'application/octet-stream',
         };
 
         return new Response(
@@ -86,7 +87,7 @@ final readonly class DashboardController
                 'Cache-Control' => 'public, max-age=86400',
                 'X-Content-Type-Options' => 'nosniff',
             ],
-            body: file_get_contents($fullPath) ?: '',
+            body: (string) file_get_contents($fullPath),
         );
     }
 
@@ -99,7 +100,7 @@ final readonly class DashboardController
         }
 
         ob_start();
-        $config = $this->config;
+        extract(['config' => $this->config]);
         require $templatePath;
         $content = ob_get_clean();
 

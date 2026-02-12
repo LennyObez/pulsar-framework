@@ -105,7 +105,7 @@ final readonly class ResourceListController
      */
     private function renderView(string $title, array $templateData): string
     {
-        $content = 'resource-list';
+        extract(['title' => $title, 'content' => 'resource-list', 'templateData' => $templateData]);
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

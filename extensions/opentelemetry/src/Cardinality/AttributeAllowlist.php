@@ -36,7 +36,9 @@ final readonly class AttributeAllowlist
         int $maxTrackedUnknowns = 1000,
         private ?LoggerInterface $logger = null,
     ) {
-        $this->allowedLookup = array_map(array_flip(...), $allowedKeys);
+        /** @var array<string, array<string, int>> $lookup */
+        $lookup = array_map(array_flip(...), $allowedKeys);
+        $this->allowedLookup = $lookup;
         $this->unknownTracker = new OverflowTracker($maxTrackedUnknowns);
     }
 

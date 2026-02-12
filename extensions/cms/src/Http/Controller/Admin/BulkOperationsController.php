@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Cms\Http\Controller\Admin;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
-use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
@@ -40,7 +39,6 @@ final readonly class BulkOperationsController
         private ContentRepositoryInterface $contentRepository,
         private TaxonomyServiceInterface $taxonomyService,
         private GateInterface $gate,
-        private CmsConfig $config,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 

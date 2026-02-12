@@ -54,8 +54,7 @@ final readonly class ResourceIndexController
      */
     private function renderView(array $templateData): string
     {
-        $title = 'Resources';
-        $content = 'resources-index';
+        extract(['title' => 'Resources', 'content' => 'resources-index', 'templateData' => $templateData]);
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

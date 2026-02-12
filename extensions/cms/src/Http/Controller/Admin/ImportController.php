@@ -16,13 +16,18 @@ use Pulsar\Extension\Cms\Content\ContentType;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Internal\Tools\CsvContentImporter;
 use Pulsar\Extension\Cms\Internal\Tools\MarkdownImporter;
+use Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter;
 use Pulsar\Extension\Cms\Support\UuidGenerator;
+use Pulsar\Extension\Cms\Tools\DuplicateResolutionPolicy;
+use Pulsar\Extension\Cms\Tools\ImportAnalyzer;
 use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function count;
+use function is_array;
 use function is_string;
+use function json_decode;
 
 /**
  * Admin controller for CMS data import.
@@ -41,6 +46,8 @@ final readonly class ImportController
         private GateInterface $gate,
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
+        private ?ImportAnalyzer $importAnalyzer = null,
+        private ?MediaBundleImporter $mediaBundleImporter = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -148,7 +155,7 @@ final readonly class ImportController
                 $this->persistMarkdownItem($item);
                 $created++;
             } catch (CmsException $e) {
-                $errors[] = ($item['translation']['title'] ?: 'untitled') . ': ' . $e->getMessage();
+                $errors[] = ((string) ($item['translation']['title'] ?: 'untitled')) . ': ' . $e->getMessage();
             }
         }
 
@@ -205,7 +212,7 @@ final readonly class ImportController
                 $this->persistCsvItem($item);
                 $created++;
             } catch (CmsException $e) {
-                $errors[] = ($item['translation']['title'] ?: 'untitled') . ': ' . $e->getMessage();
+                $errors[] = ((string) ($item['translation']['title'] ?: 'untitled')) . ': ' . $e->getMessage();
             }
         }
 
@@ -214,6 +221,79 @@ final readonly class ImportController
             'created' => $created,
             'errors' => $errors,
         ]);
+    }
+
+    public function analyzeUpload(ServerRequestInterface $request): Response
+    {
+        $identity = $this->requireIdentity($request);
+        $this->authorize($identity, 'cms.tools.import');
+
+        if ($this->importAnalyzer === null) {
+            return Response::json(['error' => 'Import analysis is not available'], 501);
+        }
+
+        $fileContent = $this->extractFileContent($request, 'import_file')
+            ?? $this->extractJsonContent($request);
+
+        if ($fileContent === null) {
+            return Response::json(['error' => 'File content is required'], 400);
+        }
+
+        $data = json_decode($fileContent, true);
+
+        if (!is_array($data)) {
+            return Response::json(['error' => 'Invalid JSON content'], 422);
+        }
+
+        /** @var array<string, mixed> $data */
+        $analysis = $this->importAnalyzer->analyze($data);
+
+        return Response::json($analysis->toArray());
+    }
+
+    public function executeWithOptions(ServerRequestInterface $request): Response
+    {
+        $identity = $this->requireIdentity($request);
+        $this->authorize($identity, 'cms.tools.import');
+        $this->requireStepUp($request);
+
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
+        $policyValue = (string) ($body['duplicate_policy'] ?? 'skip');
+        $policy = DuplicateResolutionPolicy::tryFrom($policyValue) ?? DuplicateResolutionPolicy::Skip;
+
+        $fileContent = $this->extractFileContent($request, 'import_file')
+            ?? $this->extractJsonContent($request);
+
+        if ($fileContent === null) {
+            return Response::json(['error' => 'File content is required'], 400);
+        }
+
+        if ($this->mediaBundleImporter !== null) {
+            try {
+                $report = $this->mediaBundleImporter->import($fileContent, $policy, dryRun: false);
+
+                return Response::json([
+                    'status' => 'imported',
+                    'result' => $report->toArray(),
+                ]);
+            } catch (CmsException $e) {
+                return Response::json(['error' => $e->getMessage()], 422);
+            }
+        }
+
+        // Fallback to standard JSON import
+        try {
+            $result = $this->importExport->importBundle($fileContent, dryRun: false);
+
+            return Response::json([
+                'status' => 'imported',
+                'result' => $result->toArray(),
+            ]);
+        } catch (CmsException $e) {
+            return Response::json(['error' => $e->getMessage()], 422);
+        }
     }
 
     /**

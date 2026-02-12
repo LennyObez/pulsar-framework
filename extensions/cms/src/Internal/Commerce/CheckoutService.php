@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extension\Cms\Commerce\CartValidationResult;
 use Pulsar\Extension\Cms\Commerce\CheckoutServiceInterface;
@@ -65,6 +66,9 @@ final readonly class CheckoutService implements CheckoutServiceInterface
         private ?AuditLoggerInterface $auditLogger = null,
     ) {}
 
+    /**
+     * @param list<array{productId: string, quantity: int, unitPrice: int, variantId?: string|null}> $cartItems
+     */
     public function validateCart(array $cartItems): CartValidationResult
     {
         $errors = [];
@@ -147,6 +151,11 @@ final readonly class CheckoutService implements CheckoutServiceInterface
         );
     }
 
+    /**
+     * @param list<array{productId: string, quantity: int, unitPrice: int, variantId?: string|null}> $cartItems
+     * @param array{line1: string, line2?: string, city: string, region?: string, postalCode: string, country: string} $billingAddress
+     * @param array{line1: string, line2?: string, city: string, region?: string, postalCode: string, country: string}|null $shippingAddress
+     */
     public function createOrder(
         array $cartItems,
         string $customerEmail,
@@ -170,6 +179,7 @@ final readonly class CheckoutService implements CheckoutServiceInterface
             $products = $this->products->findByIds($productIds);
 
             // Batch-load all variants for this order
+            /** @var list<string> $variantIds */
             $variantIds = array_values(array_unique(array_filter(array_column($cartItems, 'variantId'))));
             $variants = $variantIds !== [] ? $this->variants->findByIds($variantIds) : [];
 
@@ -278,11 +288,12 @@ final readonly class CheckoutService implements CheckoutServiceInterface
             $taxAmount = 0;
 
             if ($this->config->taxRequired) {
+                /** @var list<array{productId: string, amount: int, taxCategory: string|null, quantity: int}> $taxItems */
                 $taxItems = array_map(
                     static fn(OrderItem $oi): array => [
                         'productId' => $oi->productId,
                         'amount' => $oi->totalPrice,
-                        'taxCategory' => $oi->productSnapshot['taxCategory'] ?? null,
+                        'taxCategory' => isset($oi->productSnapshot['taxCategory']) ? (string) $oi->productSnapshot['taxCategory'] : null,
                         'quantity' => $oi->quantity,
                     ],
                     $orderItemsList,
@@ -539,14 +550,20 @@ final readonly class CheckoutService implements CheckoutServiceInterface
     {
         $effectiveTenant = $tenantId ?? '__global__';
 
-        $db->execute(
-            <<<'SQL'
+        $sql = match ($db->driver()) {
+            Driver::MySQL => <<<'SQL'
+                INSERT INTO cms_order_sequences (tenant_id, last_number)
+                VALUES (:tenant_id, 1)
+                ON DUPLICATE KEY UPDATE last_number = last_number + 1
+                SQL,
+            Driver::PostgreSQL, Driver::SQLite => <<<'SQL'
                 INSERT INTO cms_order_sequences (tenant_id, last_number)
                 VALUES (:tenant_id, 1)
                 ON CONFLICT (tenant_id) DO UPDATE SET last_number = cms_order_sequences.last_number + 1
                 SQL,
-            ['tenant_id' => $effectiveTenant],
-        );
+        };
+
+        $db->execute($sql, ['tenant_id' => $effectiveTenant]);
 
         $result = $db->query(
             'SELECT last_number FROM cms_order_sequences WHERE tenant_id = :tenant_id',

@@ -105,7 +105,7 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
                 }
 
                 $page++;
-            } while ($paginatedContent->items !== [] && $page <= (int) ceil($paginatedContent->total / 100));
+            } while ($paginatedContent->items !== [] && $page <= (int) ceil(($paginatedContent->total ?? 0) / 100));
         }
 
         $this->eventDispatcher->dispatch(new LinkHealthCheckCompleted(
@@ -212,7 +212,6 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
     {
         $now = new DateTimeImmutable();
         $statusCode = null;
-        $isBroken = false;
         $isRedirected = false;
 
         $context = stream_context_create([

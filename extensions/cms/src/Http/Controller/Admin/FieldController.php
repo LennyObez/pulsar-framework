@@ -86,7 +86,7 @@ final readonly class FieldController
             searchable: (bool) ($body['searchable'] ?? false),
             filterable: (bool) ($body['filterable'] ?? false),
             sortable: (bool) ($body['sortable'] ?? false),
-            validationRules: (array) ($body['validation_rules'] ?? []),
+            validationRules: self::toStringKeyedArray($body['validation_rules'] ?? []),
             defaultValue: $body['default_value'] ?? null,
             sortOrder: (int) ($body['sort_order'] ?? 0),
         );
@@ -133,7 +133,7 @@ final readonly class FieldController
             searchable: (bool) ($body['searchable'] ?? $existing->searchable),
             filterable: (bool) ($body['filterable'] ?? $existing->filterable),
             sortable: (bool) ($body['sortable'] ?? $existing->sortable),
-            validationRules: (array) ($body['validation_rules'] ?? $existing->validationRules),
+            validationRules: self::toStringKeyedArray($body['validation_rules'] ?? $existing->validationRules),
             defaultValue: $body['default_value'] ?? $existing->defaultValue,
             sortOrder: (int) ($body['sort_order'] ?? $existing->sortOrder),
         );
@@ -173,4 +173,14 @@ final readonly class FieldController
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private static function toStringKeyedArray(mixed $value): array
+    {
+        /** @var array<string, mixed> $result */
+        $result = (array) $value;
+
+        return $result;
+    }
 }

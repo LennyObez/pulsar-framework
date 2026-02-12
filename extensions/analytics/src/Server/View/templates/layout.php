@@ -1,4 +1,9 @@
-<?php declare(strict_types=1); ?>
+<?php
+
+declare(strict_types=1);
+
+/** @var string $content */
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +16,7 @@
     <div class="analytics-layout">
         <?php require __DIR__ . '/partials/nav.php'; ?>
         <main class="analytics-main">
-            <?= $content ?? '' ?>
+            <?= $content ?>
         </main>
     </div>
     <script src="/analytics/assets/dashboard.js" defer></script>

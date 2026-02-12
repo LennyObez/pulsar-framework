@@ -10,8 +10,6 @@ $e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_S
 $table = $templateData['table'] ?? '';
 /** @var list<array{name: string, type: string, nullable: bool, primaryKey: bool, default: ?string}> $columns */
 $columns = $templateData['columns'] ?? [];
-/** @var ?string $primaryKey */
-$primaryKey = $templateData['primaryKey'] ?? null;
 /** @var array<string, bool> $capabilities */
 $capabilities = $templateData['capabilities'] ?? [];
 /** @var string $driver */

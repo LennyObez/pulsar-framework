@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 /** @var \Pulsar\Extension\Analytics\Config\AnalyticsConfig $config */
-$content = <<<HTML
+$boolLabel = static fn(bool $v): string => $v ? 'Yes' : 'No';
+$respectDnt = $boolLabel($config->privacy->respectDnt);
+$anonymizeReferrer = $boolLabel($config->privacy->anonymizeReferrer);
+extract(['content' => <<<HTML
     <div class="analytics-settings">
         <header class="analytics-header">
             <h2>Settings</h2>
@@ -24,9 +27,9 @@ $content = <<<HTML
                 <dt>Collection Driver</dt>
                 <dd>{$config->collectionDriver}</dd>
                 <dt>Respect DNT</dt>
-                <dd>{$this->bool($config->privacy->respectDnt)}</dd>
+                <dd>{$respectDnt}</dd>
                 <dt>Anonymize Referrer</dt>
-                <dd>{$this->bool($config->privacy->anonymizeReferrer)}</dd>
+                <dd>{$anonymizeReferrer}</dd>
                 <dt>Raw Data Retention</dt>
                 <dd>{$config->retention->rawDays} days</dd>
                 <dt>Aggregated Data Retention</dt>
@@ -36,5 +39,5 @@ $content = <<<HTML
             </dl>
         </section>
     </div>
-    HTML;
+    HTML]);
 require __DIR__ . '/layout.php';

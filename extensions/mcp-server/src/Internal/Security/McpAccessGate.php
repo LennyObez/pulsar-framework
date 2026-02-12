@@ -57,7 +57,11 @@ final class McpAccessGate implements McpAccessGateInterface
         if (file_exists($absolute)) {
             $real = realpath($absolute);
 
-            if ($real === false || !str_starts_with($real, $normalizedRoot)) {
+            if ($real === false) {
+                throw McpSecurityException::pathNotAllowed($path);
+            }
+
+            if (!str_starts_with($real, $normalizedRoot)) {
                 throw McpSecurityException::pathNotAllowed($path);
             }
 

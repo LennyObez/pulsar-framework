@@ -25,6 +25,7 @@ final readonly class InvoiceController
     public function __construct(
         private InvoiceServiceInterface $invoiceService,
         private GateInterface $gate,
+        private ?\Pulsar\View\Engine\TemplateEngineInterface $templateEngine = null,
     ) {}
 
     public function show(ServerRequestInterface $request, string $id): Response

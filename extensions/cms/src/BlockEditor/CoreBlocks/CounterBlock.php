@@ -51,7 +51,7 @@ final readonly class CounterBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{value: string, label: string}> $items */
+        /** @var list<mixed> $items */
         $items = $data['items'] ?? [];
         $columns = $data['columns'] ?? null;
 

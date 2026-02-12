@@ -49,7 +49,7 @@ final readonly class AccordionBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{title: string, content: string}> $items */
+        /** @var list<mixed> $items */
         $items = $data['items'] ?? [];
         $allowMultiple = ($data['allowMultiple'] ?? false) === true ? 'true' : 'false';
 

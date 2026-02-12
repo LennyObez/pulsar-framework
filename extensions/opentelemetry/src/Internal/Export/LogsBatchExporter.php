@@ -26,7 +26,7 @@ final readonly class LogsBatchExporter
 
     public function __construct(
         OtlpTransportInterface $transport,
-        private ResourceInfo $resource,
+        ResourceInfo $resource,
         LogsRequestBuilder $builder = new LogsRequestBuilder(),
         int $maxBatchSize = 512,
         int $maxQueueSize = 2048,
@@ -35,9 +35,9 @@ final readonly class LogsBatchExporter
         /** @var BatchExporter<OtlpLogRecord> $batchExporter */
         $batchExporter = new BatchExporter(
             transport: $transport,
-            serializer: function (array $records) use ($builder): string {
+            serializer: static function (array $records) use ($builder, $resource): string {
                 /** @var list<OtlpLogRecord> $records */
-                return $builder->build($records, $this->resource);
+                return $builder->build($records, $resource);
             },
             signalPath: '/v1/logs',
             maxBatchSize: $maxBatchSize,

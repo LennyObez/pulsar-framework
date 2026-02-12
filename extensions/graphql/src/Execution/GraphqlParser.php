@@ -23,12 +23,12 @@ use function substr;
 #[Internal(reason: 'Parser internals — use GraphqlExecutor as public entry point')]
 final class GraphqlParser
 {
-    private string $source;
-    private int $pos;
-    private int $len;
+    private string $source = '';
+    private int $pos = 0;
+    private int $len = 0;
 
     /** @var array<string, string|int|float|bool|null> */
-    private array $variables;
+    private array $variables = [];
 
     /**
      * Parse a GraphQL query string into a ParsedQuery.

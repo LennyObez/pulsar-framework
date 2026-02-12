@@ -12,7 +12,6 @@ use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\ValidationResult;
 use Pulsar\Http\Validation\Violation;
 
-use function array_values;
 use function count;
 use function implode;
 use function is_array;
@@ -110,7 +109,7 @@ final readonly class ValidationInterceptor implements InterceptorInterface
             }
         }
 
-        return array_values($violations);
+        return $violations;
     }
 
     private function formatViolations(ValidationResult $result): string

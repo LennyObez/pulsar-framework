@@ -196,6 +196,7 @@ final class GrpcServiceProvider implements ServiceProviderInterface
             $raw = $container->get('config.grpc');
 
             if (is_array($raw)) {
+                /** @var array<string, mixed> $raw */
                 return GrpcConfig::fromArray($raw);
             }
         }
@@ -254,12 +255,12 @@ final class GrpcServiceProvider implements ServiceProviderInterface
         $type = $container->get('runtime.type');
 
         if ($type instanceof RuntimeType && $type === RuntimeType::Fpm) {
-            throw new RuntimeException(sprintf(
+            throw new RuntimeException(
                 'The gRPC extension requires a persistent runtime (RoadRunner or FrankenPHP). '
                 . 'PHP-FPM cannot maintain the HTTP/2 connections required by gRPC. '
                 . 'Configure your application to use a persistent runtime: '
                 . 'set RUNTIME_DRIVER=roadrunner or RUNTIME_DRIVER=frankenphp in your environment.',
-            ));
+            );
         }
     }
 }

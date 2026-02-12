@@ -10,7 +10,6 @@ use Pulsar\Extension\Cms\ABTest\Experiment;
 use Pulsar\Extension\Cms\ABTest\ExperimentVariant;
 
 use function array_sum;
-use function array_values;
 use function count;
 use function hash;
 use function hexdec;
@@ -64,6 +63,6 @@ final readonly class TrafficSplitter
         }
 
         // Fallback (should not reach here)
-        return array_values($variants)[count($variants) - 1];
+        return $variants[count($variants) - 1];
     }
 }

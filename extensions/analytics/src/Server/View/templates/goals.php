@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-$content = <<<'HTML'
+extract(['content' => <<<'HTML'
     <div class="analytics-goals">
         <header class="analytics-header">
             <h2>Goals</h2>
@@ -37,5 +37,5 @@ $content = <<<'HTML'
             </form>
         </dialog>
     </div>
-    HTML;
+    HTML]);
 require __DIR__ . '/layout.php';

@@ -31,7 +31,7 @@ final class OAuth2Extension implements ExtensionInterface
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
         // Register OAuth2/OIDC endpoints
-        $router->group('/oauth', function (RouterInterface $router) use ($container): void {
+        $router->group('/oauth', function (RouterInterface $router): void {
             $router->get('/authorize', 'oauth2.authorize');
             $router->post('/token', 'oauth2.token');
             $router->post('/introspect', 'oauth2.introspect');

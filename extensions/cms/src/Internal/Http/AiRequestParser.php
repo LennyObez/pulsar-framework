@@ -37,7 +37,14 @@ final readonly class AiRequestParser
             return Response::json(['error' => 'AI assistant is not enabled'], 403);
         }
 
-        return (array) ($request->getParsedBody() ?? []);
+        $body = $request->getParsedBody();
+
+        if (is_array($body)) {
+            /** @var array<string, mixed> $body */
+            return $body;
+        }
+
+        return [];
     }
 
     /**

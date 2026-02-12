@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Cms\Plugins;
 
 use Pulsar\Api\Api;
 
+use function is_array;
+
 /**
  * Parsed plugin manifest (plugin.json) with all declared metadata.
  */
@@ -57,11 +59,98 @@ final readonly class PluginManifest
             authorUrl: isset($data['author_url']) ? (string) $data['author_url'] : null,
             license: isset($data['license']) ? (string) $data['license'] : null,
             pulsarVersionConstraint: isset($data['pulsar_version']) ? (string) $data['pulsar_version'] : null,
-            capabilities: (array) ($data['capabilities'] ?? []),
-            dependencies: (array) ($data['dependencies'] ?? []),
+            capabilities: self::toStringList($data['capabilities'] ?? []),
+            dependencies: self::toStringMap($data['dependencies'] ?? []),
             entryPoint: isset($data['entry_point']) ? (string) $data['entry_point'] : null,
-            settings: (array) ($data['settings'] ?? []),
-            autoload: isset($data['autoload']) ? (array) $data['autoload'] : null,
+            settings: self::toStringKeyedArray($data['settings'] ?? []),
+            autoload: isset($data['autoload']) ? self::toStringKeyedStringMap($data['autoload']) : null,
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function toStringList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $item) {
+            $result[] = (string) $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function toStringMap(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $key => $item) {
+            $result[(string) $key] = (string) $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function toStringKeyedArray(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $key => $item) {
+            $result[(string) $key] = $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, array<string, string>>
+     */
+    private static function toStringKeyedStringMap(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $key => $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $inner = [];
+
+            /** @var mixed $v */
+            foreach ($item as $k => $v) {
+                $inner[(string) $k] = (string) $v;
+            }
+
+            $result[(string) $key] = $inner;
+        }
+
+        return $result;
     }
 }

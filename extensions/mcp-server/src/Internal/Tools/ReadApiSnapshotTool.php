@@ -89,7 +89,7 @@ final readonly class ReadApiSnapshotTool implements McpToolInterface
         }
 
         // Pagination
-        $limit = (int) ($params['limit'] ?? 100);
+        $limit = max(1, (int) ($params['limit'] ?? 100));
         $cursor = $params['cursor'] ?? null;
         $allKeys = array_keys($classes);
         $totalCount = count($allKeys);

@@ -191,7 +191,11 @@ final readonly class CssValidator implements CssValidatorInterface
         // Remove hex escape sequences: \XX or \XXXXXX followed by optional space
         $result = (string) preg_replace_callback(
             '/\\\\([0-9a-fA-F]{1,6})\s?/',
-            static fn(array $matches): string => mb_chr((int) hexdec($matches[1])),
+            static function (array $matches): string {
+                $char = mb_chr((int) hexdec($matches[1]));
+
+                return $char !== false ? $char : '';
+            },
             $css,
         );
 

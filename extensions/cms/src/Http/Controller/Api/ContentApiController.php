@@ -68,6 +68,7 @@ final readonly class ContentApiController
             $tenantId,
         );
 
+        /** @var array<string, mixed> $params */
         $fieldsFilter = $this->parseFieldsFilter($params);
 
         $data = array_map(

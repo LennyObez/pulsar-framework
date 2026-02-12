@@ -41,7 +41,7 @@ final readonly class ModerationApiController
      */
     public function reports(ServerRequestInterface $request): Response
     {
-        $identity = $this->requireIdentity($request);
+        $this->requireIdentity($request);
 
         $params = $request->getQueryParams();
         $statusFilter = is_string($params['status'] ?? null) ? $params['status'] : 'pending';
