@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\WebAuthn\Adapter\AttestationVerifier;
@@ -30,9 +31,9 @@ use Pulsar\Security\Audit\AuditOutcome;
 final class RegistrationCeremonyTest extends TestCase
 {
     private WebAuthnConfig $config;
-    private AttestationVerifierInterface & MockObject $attestationVerifier;
-    private CredentialRepositoryInterface & MockObject $credentialRepository;
-    private AuditLoggerInterface & MockObject $auditLogger;
+    private AttestationVerifierInterface & Stub $attestationVerifier;
+    private CredentialRepositoryInterface & Stub $credentialRepository;
+    private AuditLoggerInterface & Stub $auditLogger;
     private RegistrationCeremony $ceremony;
 
     protected function setUp(): void
@@ -46,9 +47,9 @@ final class RegistrationCeremonyTest extends TestCase
             timeout: 60000,
         );
 
-        $this->attestationVerifier = $this->createMock(AttestationVerifierInterface::class);
-        $this->credentialRepository = $this->createMock(CredentialRepositoryInterface::class);
-        $this->auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $this->attestationVerifier = $this->createStub(AttestationVerifierInterface::class);
+        $this->credentialRepository = $this->createStub(CredentialRepositoryInterface::class);
+        $this->auditLogger = $this->createStub(AuditLoggerInterface::class);
 
         $this->ceremony = new RegistrationCeremony(
             $this->config,
@@ -63,9 +64,17 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function generateOptionsReturnsValidRegistrationOptions(): void
     {
-        $this->auditLogger->expects(self::once())->method('log');
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())->method('log');
 
-        $options = $this->ceremony->generateOptions('user-123', 'John Doe');
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $auditLogger,
+        );
+
+        $options = $ceremony->generateOptions('user-123', 'John Doe');
 
         self::assertInstanceOf(RegistrationOptions::class, $options);
         self::assertNotEmpty($options->challenge);
@@ -80,9 +89,17 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function generateOptionsIncludesUserInfo(): void
     {
-        $this->auditLogger->expects(self::once())->method('log');
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())->method('log');
 
-        $options = $this->ceremony->generateOptions('user-abc', 'Jane Smith');
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $auditLogger,
+        );
+
+        $options = $ceremony->generateOptions('user-abc', 'Jane Smith');
 
         /** @var array{name: string, displayName: string, id: string} $userOpts */
         $userOpts = $options->publicKeyOptions['user'];
@@ -94,9 +111,17 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function generateOptionsIncludesPubKeyCredParams(): void
     {
-        $this->auditLogger->expects(self::once())->method('log');
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())->method('log');
 
-        $options = $this->ceremony->generateOptions('u', 'u');
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $auditLogger,
+        );
+
+        $options = $ceremony->generateOptions('u', 'u');
 
         /** @var list<array{alg: int, type: string}> $params */
         $params = $options->publicKeyOptions['pubKeyCredParams'];
@@ -108,9 +133,17 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function generateOptionsIncludesTimeoutAndAttestation(): void
     {
-        $this->auditLogger->expects(self::once())->method('log');
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())->method('log');
 
-        $options = $this->ceremony->generateOptions('u', 'u');
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $auditLogger,
+        );
+
+        $options = $ceremony->generateOptions('u', 'u');
 
         self::assertSame(60000, $options->publicKeyOptions['timeout']);
         self::assertSame('none', $options->publicKeyOptions['attestation']);
@@ -119,9 +152,17 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function generateOptionsIncludesAuthenticatorSelection(): void
     {
-        $this->auditLogger->expects(self::once())->method('log');
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())->method('log');
 
-        $options = $this->ceremony->generateOptions('u', 'u');
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $auditLogger,
+        );
+
+        $options = $ceremony->generateOptions('u', 'u');
 
         /** @var array{residentKey: string, requireResidentKey: bool, userVerification: string} $authSel */
         $authSel = $options->publicKeyOptions['authenticatorSelection'];
@@ -146,14 +187,23 @@ final class RegistrationCeremonyTest extends TestCase
             createdAt: new DateTimeImmutable(),
         );
 
-        $this->credentialRepository->expects(self::once())
+        $credentialRepository = $this->createMock(CredentialRepositoryInterface::class);
+        $credentialRepository->expects(self::once())
             ->method('findById')
             ->with($credId)
             ->willReturn($credSource);
 
-        $this->auditLogger->expects(self::once())->method('log');
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())->method('log');
 
-        $options = $this->ceremony->generateOptions('user-1', 'User', [$credId]);
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $credentialRepository,
+            $auditLogger,
+        );
+
+        $options = $ceremony->generateOptions('user-1', 'User', [$credId]);
 
         /** @var list<array{type: string, id: string, transports: list<string>}> $excluded */
         $excluded = $options->publicKeyOptions['excludeCredentials'];
@@ -165,13 +215,22 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function generateOptionsHandlesNullCredentialGracefully(): void
     {
-        $this->credentialRepository->expects(self::once())
+        $credentialRepository = $this->createMock(CredentialRepositoryInterface::class);
+        $credentialRepository->expects(self::once())
             ->method('findById')
             ->willReturn(null);
 
-        $this->auditLogger->expects(self::once())->method('log');
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())->method('log');
 
-        $options = $this->ceremony->generateOptions('user-1', 'User', ['missing-cred']);
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $credentialRepository,
+            $auditLogger,
+        );
+
+        $options = $ceremony->generateOptions('user-1', 'User', ['missing-cred']);
 
         /** @var list<array{type: string, id: string, transports: list<string>}> $excluded */
         $excluded = $options->publicKeyOptions['excludeCredentials'];
@@ -182,7 +241,8 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function generateOptionsLogsAuditEvent(): void
     {
-        $this->auditLogger->expects(self::once())
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
             ->method('log')
             ->with(
                 AuditEvent::Authentication,
@@ -193,16 +253,31 @@ final class RegistrationCeremonyTest extends TestCase
                 self::callback(fn(array $meta): bool => $meta['user_id'] === 'user-42'),
             );
 
-        $this->ceremony->generateOptions('user-42', 'User');
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $auditLogger,
+        );
+
+        $ceremony->generateOptions('user-42', 'User');
     }
 
     #[Test]
     public function generateOptionsProducesUniqueChallengPerCall(): void
     {
-        $this->auditLogger->expects(self::exactly(2))->method('log');
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::exactly(2))->method('log');
 
-        $options1 = $this->ceremony->generateOptions('u', 'u');
-        $options2 = $this->ceremony->generateOptions('u', 'u');
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $auditLogger,
+        );
+
+        $options1 = $ceremony->generateOptions('u', 'u');
+        $options2 = $ceremony->generateOptions('u', 'u');
 
         self::assertNotSame($options1->challenge, $options2->challenge);
     }
@@ -441,7 +516,8 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function verifyLogsFailureOnException(): void
     {
-        $this->auditLogger->expects(self::once())
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
             ->method('log')
             ->with(
                 AuditEvent::Authentication,
@@ -452,8 +528,15 @@ final class RegistrationCeremonyTest extends TestCase
                 self::callback(fn(array $meta): bool => isset($meta['error']) && isset($meta['error_code'])),
             );
 
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $auditLogger,
+        );
+
         try {
-            $this->ceremony->verify('{}', 'challenge');
+            $ceremony->verify('{}', 'challenge');
         } catch (WebAuthnException) {
             // Expected
         }
@@ -462,11 +545,19 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function verifyRethrowsWebAuthnExceptionAfterLogging(): void
     {
-        $this->auditLogger->expects(self::once())->method('log');
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())->method('log');
+
+        $ceremony = new RegistrationCeremony(
+            $this->config,
+            $this->attestationVerifier,
+            $this->credentialRepository,
+            $auditLogger,
+        );
 
         $this->expectException(WebAuthnException::class);
 
-        $this->ceremony->verify('{}', 'challenge');
+        $ceremony->verify('{}', 'challenge');
     }
 
     // --- Helper methods ---
