@@ -35,6 +35,7 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\DigitalAssetController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ExperimentController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ExportController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\FieldController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\FormSubmissionController as AdminFormSubmissionController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ImportController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\InvoiceController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\LinkHealthController;
@@ -67,6 +68,7 @@ use Pulsar\Extension\Cms\Http\Controller\Api\TaxonomyApiController;
 use Pulsar\Extension\Cms\Http\Controller\CheckoutController;
 use Pulsar\Extension\Cms\Http\Controller\ContentController;
 use Pulsar\Extension\Cms\Http\Controller\DigitalDownloadController;
+use Pulsar\Extension\Cms\Http\Controller\FormSubmissionController;
 use Pulsar\Extension\Cms\Http\Controller\WebhookController;
 use Pulsar\Extension\Cms\Internal\Notification\CmsNotificationDispatcher;
 use Pulsar\Extension\Cms\Internal\Scheduler\BackupRetentionJob;
@@ -234,8 +236,14 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
         $registry->register(new BlockEditor\CoreBlocks\ParagraphBlock());
         $registry->register(new BlockEditor\CoreBlocks\HeadingBlock());
-        $registry->register(new BlockEditor\CoreBlocks\ImageBlock());
-        $registry->register(new BlockEditor\CoreBlocks\GalleryBlock());
+
+        /** @var Media\ResponsiveImageRenderer|null $responsiveRenderer */
+        $responsiveRenderer = $container->has(Media\ResponsiveImageRenderer::class)
+            ? $container->get(Media\ResponsiveImageRenderer::class)
+            : null;
+
+        $registry->register(new BlockEditor\CoreBlocks\ImageBlock($responsiveRenderer));
+        $registry->register(new BlockEditor\CoreBlocks\GalleryBlock($responsiveRenderer));
         $registry->register(new BlockEditor\CoreBlocks\CodeBlock());
         $registry->register(new BlockEditor\CoreBlocks\EmbedBlock());
         $registry->register(new BlockEditor\CoreBlocks\QuoteBlock());
@@ -280,6 +288,9 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
             $csrfManager = $container->get(CsrfTokenManagerInterface::class);
             $registry->register(new BlockEditor\CoreBlocks\ContactFormBlock($csrfManager));
         }
+
+        // Comparison
+        $registry->register(new BlockEditor\CoreBlocks\CompareBlock());
 
         // Columns (registered last — depends on BlockRenderer which uses the registry)
         if ($container->has(BlockEditor\BlockRenderer::class)) {
@@ -406,6 +417,9 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
             // Payment webhook endpoint
             $router->post('/webhooks/cms-payment', [WebhookController::class, 'handle'], 'cms.webhook.payment');
         }
+
+        // Form submissions (public POST endpoint)
+        $router->post('/forms/submit', [FormSubmissionController::class, 'submit'], 'cms.forms.submit');
 
         // Public content rendering — catch-all route for locale-prefixed and default paths
         // Locale-aware routing: /{locale}/{path} or /{path} for default locale
@@ -605,19 +619,28 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
         // Export
         $router->get("{$prefix}/export", [ExportController::class, 'form'], 'cms.admin.export.form');
+        $router->get("{$prefix}/export/selective", [ExportController::class, 'selectiveForm'], 'cms.admin.export.selective');
         $router->post("{$prefix}/export/download", [ExportController::class, 'download'], 'cms.admin.export.download');
+        $router->post("{$prefix}/export/zip", [ExportController::class, 'zipDownload'], 'cms.admin.export.zip');
         $router->get("{$prefix}/export/markdown", [ExportController::class, 'markdownExport'], 'cms.admin.export.markdown');
         $router->get("{$prefix}/export/csv", [ExportController::class, 'csvExport'], 'cms.admin.export.csv');
+        // Export routes under tools/ prefix (used by admin UI forms)
+        $router->post("{$prefix}/tools/export/download", [ExportController::class, 'download'], 'cms.admin.tools.export.download');
+        $router->post("{$prefix}/tools/export/zip", [ExportController::class, 'zipDownload'], 'cms.admin.tools.export.zip');
 
         // Import
         $router->get("{$prefix}/import", [ImportController::class, 'form'], 'cms.admin.import.form');
         $router->post("{$prefix}/import/dry-run", [ImportController::class, 'dryRun'], 'cms.admin.import.dry_run');
         $router->post("{$prefix}/import/execute", [ImportController::class, 'execute'], 'cms.admin.import.execute');
+        $router->post("{$prefix}/import/analyze", [ImportController::class, 'analyzeUpload'], 'cms.admin.import.analyze');
+        $router->post("{$prefix}/import/execute-with-options", [ImportController::class, 'executeWithOptions'], 'cms.admin.import.execute_with_options');
         $router->post("{$prefix}/import/markdown", [ImportController::class, 'markdownImport'], 'cms.admin.import.markdown');
         $router->post("{$prefix}/import/csv", [ImportController::class, 'csvImport'], 'cms.admin.import.csv');
         // Import routes under tools/ prefix (used by admin UI forms)
         $router->post("{$prefix}/tools/import/dry-run", [ImportController::class, 'dryRun'], 'cms.admin.tools.import.dry_run');
         $router->post("{$prefix}/tools/import/execute", [ImportController::class, 'execute'], 'cms.admin.tools.import.execute');
+        $router->post("{$prefix}/tools/import/analyze", [ImportController::class, 'analyzeUpload'], 'cms.admin.tools.import.analyze');
+        $router->post("{$prefix}/tools/import/execute-with-options", [ImportController::class, 'executeWithOptions'], 'cms.admin.tools.import.execute_with_options');
 
         // Site definition import
         $router->get("{$prefix}/site-import", [SiteDefinitionController::class, 'form'], 'cms.admin.site_import.form');
@@ -640,6 +663,14 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->post("{$prefix}/backups", [BackupController::class, 'create'], 'cms.admin.backups.create');
         $router->post("{$prefix}/backups/{id}/restore", [BackupController::class, 'restore'], 'cms.admin.backups.restore');
         $router->delete("{$prefix}/backups/{id}", [BackupController::class, 'delete'], 'cms.admin.backups.delete');
+
+        // Form submissions
+        $router->get("{$prefix}/forms", [AdminFormSubmissionController::class, 'index'], 'cms.admin.forms.index');
+        $router->get("{$prefix}/forms/export", [AdminFormSubmissionController::class, 'export'], 'cms.admin.forms.export');
+        $router->get("{$prefix}/forms/{id}", [AdminFormSubmissionController::class, 'show'], 'cms.admin.forms.show');
+        $router->post("{$prefix}/forms/{id}/read", [AdminFormSubmissionController::class, 'markAsRead'], 'cms.admin.forms.read');
+        $router->post("{$prefix}/forms/{id}/spam", [AdminFormSubmissionController::class, 'markAsSpam'], 'cms.admin.forms.spam');
+        $router->post("{$prefix}/forms/bulk-delete", [AdminFormSubmissionController::class, 'bulkDelete'], 'cms.admin.forms.bulk_delete');
     }
 
     private function registerSchedulerJobs(ContainerInterface $container): void

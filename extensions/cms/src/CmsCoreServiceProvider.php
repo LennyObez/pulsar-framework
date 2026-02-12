@@ -31,18 +31,30 @@ use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 use Pulsar\Extension\Cms\Content\RevisionService;
 use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
+use Pulsar\Extension\Cms\Forms\FormSubmissionRepositoryInterface;
+use Pulsar\Extension\Cms\Forms\FormSubmissionServiceInterface;
+use Pulsar\Extension\Cms\Forms\SpamDetection\SpamScorer;
 use Pulsar\Extension\Cms\Http\Controller\Api\CollaborationApiController;
+use Pulsar\Extension\Cms\Http\Controller\FormSubmissionController as PublicFormSubmissionController;
 use Pulsar\Extension\Cms\I18n\HreflangGenerator;
 use Pulsar\Extension\Cms\I18n\LocaleResolver;
 use Pulsar\Extension\Cms\Internal\ABTest\ExperimentService;
 use Pulsar\Extension\Cms\Internal\ABTest\TrafficSplitter;
 use Pulsar\Extension\Cms\Internal\AI\AnthropicProvider;
+use Pulsar\Extension\Cms\Internal\AI\CmsPromptTemplates;
 use Pulsar\Extension\Cms\Internal\AI\OpenAiProvider;
 use Pulsar\Extension\Cms\Internal\Cache\CachedContentRepository;
 use Pulsar\Extension\Cms\Internal\Cache\CachedMenuRepository;
 use Pulsar\Extension\Cms\Internal\Cache\CachedSettingsService;
 use Pulsar\Extension\Cms\Internal\Cache\CmsCacheInvalidator;
 use Pulsar\Extension\Cms\Internal\Collaboration\CollaborationService as CollaborationServiceImpl;
+use Pulsar\Extension\Cms\Internal\Forms\ContentHeuristicScorer;
+use Pulsar\Extension\Cms\Internal\Forms\FormSubmissionService;
+use Pulsar\Extension\Cms\Internal\Forms\HoneypotDetector;
+use Pulsar\Extension\Cms\Internal\Forms\ProofOfWorkVerifier;
+use Pulsar\Extension\Cms\Internal\Forms\RateLimitDetector;
+use Pulsar\Extension\Cms\Internal\Forms\TimingDetector;
+use Pulsar\Extension\Cms\Internal\Http\AiRequestParser;
 use Pulsar\Extension\Cms\Internal\Notification\CmsNotificationDispatcher;
 use Pulsar\Extension\Cms\Internal\Publishing\PublishingOrchestrator;
 use Pulsar\Extension\Cms\Internal\Publishing\RssChannel;
@@ -67,6 +79,8 @@ use Pulsar\Extension\Cms\Internal\Tools\BackupService;
 use Pulsar\Extension\Cms\Internal\Tools\ExportBundleGenerator;
 use Pulsar\Extension\Cms\Internal\Tools\ImportExportService;
 use Pulsar\Extension\Cms\Internal\Tools\ImportParser;
+use Pulsar\Extension\Cms\Internal\Tools\MediaBundleExporter;
+use Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter;
 use Pulsar\Extension\Cms\Internal\Tools\SiteDefinitionParser;
 use Pulsar\Extension\Cms\Internal\Tools\ToolsService;
 use Pulsar\Extension\Cms\Media\ImageProcessor;
@@ -99,8 +113,11 @@ use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyService;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
+use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Extension\Cms\Tools\BackupServiceInterface;
+use Pulsar\Extension\Cms\Tools\ImportAnalyzer;
 use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
+use Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface;
 use Pulsar\Extension\Cms\Tools\ToolsServiceInterface;
 use Pulsar\Extension\Cms\Workflow\ContentLockService;
 use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
@@ -525,6 +542,15 @@ final readonly class CmsCoreServiceProvider
         // Multi-channel publishing stack
         $this->bindPublishingStack($container, $config, $translationRepository, $disk, $logger);
 
+        // Form submission pipeline
+        $this->bindFormSubmissionServices($container, $config, $logger);
+
+        // Responsive image renderer
+        $container->instance(
+            \Pulsar\Extension\Cms\Media\ResponsiveImageRenderer::class,
+            new \Pulsar\Extension\Cms\Media\ResponsiveImageRenderer(),
+        );
+
         // Cache decorators — wrap repository/service bindings when cache is available
         $this->bindCacheDecorators($container);
     }
@@ -599,13 +625,13 @@ final readonly class CmsCoreServiceProvider
         $container->instance(LlmProviderInterface::class, $provider);
 
         $promptRegistry = new AI\PromptTemplateRegistry();
-        Internal\AI\CmsPromptTemplates::registerDefaults($promptRegistry);
+        CmsPromptTemplates::registerDefaults($promptRegistry);
         $container->instance(AI\PromptTemplateRegistry::class, $promptRegistry);
 
         $assistant = new ContentAssistant($provider, $promptRegistry);
         $container->instance(ContentAssistant::class, $assistant);
 
-        $parser = new Internal\Http\AiRequestParser($config);
+        $parser = new AiRequestParser($config);
 
         $container->instance(
             Http\Controller\Api\AiAssistantApiController::class,
@@ -690,17 +716,34 @@ final readonly class CmsCoreServiceProvider
 
         if ($settingsService !== null) {
             /** @var SettingsServiceInterface $settingsService */
+            $commentRepository = $container->has(CommentRepositoryInterface::class)
+                ? $container->get(CommentRepositoryInterface::class)
+                : null;
+
+            $userRepository = $container->has(CmsUserRepositoryInterface::class)
+                ? $container->get(CmsUserRepositoryInterface::class)
+                : null;
+
+            /** @var ?CommentRepositoryInterface $commentRepository */
+            /** @var ?CmsUserRepositoryInterface $userRepository */
             $exportGenerator = new ExportBundleGenerator(
                 $contentRepository,
                 $taxonomyRepository,
                 $menuRepository,
                 $settingsService,
                 $mediaRepository,
+                $commentRepository,
+                $userRepository,
                 $auditLogger,
             );
 
+            /** @var ContentBlockRepositoryInterface $blockRepository */
+            $blockRepository = $container->get(ContentBlockRepositoryInterface::class);
+
             $importParser = new ImportParser(
                 $contentRepository,
+                $translationRepository,
+                $blockRepository,
                 $taxonomyRepository,
                 $menuRepository,
                 $settingsService,
@@ -738,6 +781,37 @@ final readonly class CmsCoreServiceProvider
                 ImportExportServiceInterface::class,
                 new ImportExportService($exportGenerator, $importParser, $siteDefinitionParser),
             );
+
+            // Media bundle exporter (ZIP with media files)
+            $container->instance(
+                MediaBundleExporterInterface::class,
+                new MediaBundleExporter(
+                    $exportGenerator,
+                    $mediaRepository,
+                    $disk,
+                    $auditLogger,
+                ),
+            );
+
+            // Import analyzer (pre-import analysis)
+            $container->instance(
+                ImportAnalyzer::class,
+                new ImportAnalyzer(
+                    $contentRepository,
+                    $mediaRepository,
+                ),
+            );
+
+            // Media bundle importer (ZIP + JSON with duplicate resolution)
+            $container->instance(
+                MediaBundleImporter::class,
+                new MediaBundleImporter(
+                    $importParser,
+                    $mediaRepository,
+                    $disk,
+                    $auditLogger,
+                ),
+            );
         }
 
         // Backup service
@@ -745,5 +819,79 @@ final readonly class CmsCoreServiceProvider
             BackupServiceInterface::class,
             new BackupService($connection, $disk, $auditLogger),
         );
+    }
+
+    private function bindFormSubmissionServices(
+        ContainerInterface $container,
+        CmsConfig $config,
+        LoggerInterface $logger,
+    ): void {
+        if (!$container->has(FormSubmissionRepositoryInterface::class)) {
+            return;
+        }
+
+        /** @var FormSubmissionRepositoryInterface $formRepo */
+        $formRepo = $container->get(FormSubmissionRepositoryInterface::class);
+
+        // Build spam scorer with all available detectors
+        $formsConfig = $config->forms;
+
+        $spamScorer = new SpamScorer($formsConfig->spamThreshold);
+        $spamScorer->addDetector(new HoneypotDetector($formsConfig->honeypotFieldName));
+        $spamScorer->addDetector(new TimingDetector());
+        $spamScorer->addDetector(new ContentHeuristicScorer());
+        $spamScorer->addDetector(new ProofOfWorkVerifier());
+
+        // Rate limiter (needs cache)
+        if ($container->has(\Pulsar\Cache\Application\CacheManagerInterface::class)) {
+            /** @var \Pulsar\Cache\Application\CacheManagerInterface $cacheManager */
+            $cacheManager = $container->get(\Pulsar\Cache\Application\CacheManagerInterface::class);
+            $spamScorer->addDetector(new RateLimitDetector(
+                $cacheManager->simple(),
+                $formsConfig->rateLimitPerHour,
+            ));
+        }
+
+        $container->instance(SpamScorer::class, $spamScorer);
+
+        // Form submission service
+        if (
+            $container->has(\Pulsar\Mail\MailManager::class)
+            && $container->has(EventDispatcherInterface::class)
+            && $container->has(\Pulsar\Security\Csrf\CsrfTokenManagerInterface::class)
+        ) {
+            /** @var \Pulsar\Mail\MailManager $mailManager */
+            $mailManager = $container->get(\Pulsar\Mail\MailManager::class);
+
+            /** @var EventDispatcherInterface $eventDispatcher */
+            $eventDispatcher = $container->get(EventDispatcherInterface::class);
+
+            /** @var \Pulsar\Security\Csrf\CsrfTokenManagerInterface $csrfManager */
+            $csrfManager = $container->get(\Pulsar\Security\Csrf\CsrfTokenManagerInterface::class);
+
+            /** @var \Pulsar\Observability\Metrics\MetricRegistry|null $metricRegistry */
+            $metricRegistry = $container->has(\Pulsar\Observability\Metrics\MetricRegistry::class)
+                ? $container->get(\Pulsar\Observability\Metrics\MetricRegistry::class)
+                : null;
+
+            $formService = new FormSubmissionService(
+                $formRepo,
+                $spamScorer,
+                $mailManager,
+                $eventDispatcher,
+                $csrfManager,
+                $logger,
+                $formsConfig->notificationRecipients,
+                $metricRegistry,
+            );
+
+            $container->instance(FormSubmissionServiceInterface::class, $formService);
+
+            // Public form submission controller
+            $container->instance(
+                PublicFormSubmissionController::class,
+                new PublicFormSubmissionController($formService),
+            );
+        }
     }
 }

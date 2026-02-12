@@ -167,7 +167,7 @@ final readonly class CmsCommerceProvider
                 if ($paymentGateway !== null) {
                     $container->instance(
                         WebhookHandler::class,
-                        new WebhookHandler($orderService, $orderRepository, $paymentGateway, $auditLogger),
+                        new WebhookHandler($orderService, $orderRepository, $paymentGateway, $connection, $auditLogger),
                     );
                 }
             }

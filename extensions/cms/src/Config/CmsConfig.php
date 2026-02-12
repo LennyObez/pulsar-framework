@@ -27,6 +27,7 @@ final readonly class CmsConfig
      * @param bool $eventSourcing Enable append-only event log for content mutations
      * @param bool $atomicSnapshots Enable all-locale atomic content snapshots on publish
      * @param int $maxHierarchyDepth Maximum page nesting depth (cycle detection)
+     * @param string|null $homepageContentId Content ID to serve at GET /. When null, falls back to path='' lookup
      * @param CmsCacheConfig $cache Caching configuration
      * @param MediaConfig $media Media upload and processing configuration
      * @param CommentsConfig $comments Comments system configuration
@@ -43,6 +44,7 @@ final readonly class CmsConfig
      * @param NotificationConfig $notifications Workflow notification configuration
      * @param AiConfig $ai AI content assistant configuration
      * @param PublishingConfig $publishing Multi-channel publishing configuration
+     * @param FormsConfig $forms Form submission pipeline configuration
      */
     public function __construct(
         public string $defaultLocale = 'en',
@@ -52,6 +54,7 @@ final readonly class CmsConfig
         public bool $eventSourcing = false,
         public bool $atomicSnapshots = false,
         public int $maxHierarchyDepth = 10,
+        public ?string $homepageContentId = null,
         public CmsCacheConfig $cache = new CmsCacheConfig(),
         public MediaConfig $media = new MediaConfig(),
         public CommentsConfig $comments = new CommentsConfig(),
@@ -68,6 +71,7 @@ final readonly class CmsConfig
         public NotificationConfig $notifications = new NotificationConfig(),
         public AiConfig $ai = new AiConfig(),
         public PublishingConfig $publishing = new PublishingConfig(),
+        public FormsConfig $forms = new FormsConfig(),
     ) {}
 
     /**
@@ -75,6 +79,33 @@ final readonly class CmsConfig
      */
     public static function fromArray(array $data): self
     {
+        /** @var array<string, mixed> $cacheData */
+        $cacheData = (array) ($data['cache'] ?? []);
+        /** @var array<string, mixed> $mediaData */
+        $mediaData = (array) ($data['media'] ?? []);
+        /** @var array<string, mixed> $commentsData */
+        $commentsData = (array) ($data['comments'] ?? []);
+        /** @var array<string, mixed> $seoData */
+        $seoData = (array) ($data['seo'] ?? []);
+        /** @var array<string, mixed> $themesData */
+        $themesData = (array) ($data['themes'] ?? []);
+        /** @var array<string, mixed> $securityData */
+        $securityData = (array) ($data['security'] ?? []);
+        /** @var array<string, mixed> $commerceData */
+        $commerceData = (array) ($data['commerce'] ?? []);
+        /** @var array<string, mixed> $liveCssData */
+        $liveCssData = (array) ($data['live_css'] ?? []);
+        /** @var array<string, mixed> $importData */
+        $importData = (array) ($data['import'] ?? []);
+        /** @var array<string, mixed> $notificationsData */
+        $notificationsData = (array) ($data['notifications'] ?? []);
+        /** @var array<string, mixed> $aiData */
+        $aiData = (array) ($data['ai'] ?? []);
+        /** @var array<string, mixed> $publishingData */
+        $publishingData = (array) ($data['publishing'] ?? []);
+        /** @var array<string, mixed> $formsData */
+        $formsData = (array) ($data['forms'] ?? []);
+
         return new self(
             defaultLocale: (string) ($data['default_locale'] ?? 'en'),
             supportedLocales: (array) ($data['supported_locales'] ?? ['en']),
@@ -83,22 +114,24 @@ final readonly class CmsConfig
             eventSourcing: (bool) ($data['event_sourcing'] ?? false),
             atomicSnapshots: (bool) ($data['atomic_snapshots'] ?? false),
             maxHierarchyDepth: (int) ($data['max_hierarchy_depth'] ?? 10),
-            cache: CmsCacheConfig::fromArray((array) ($data['cache'] ?? [])),
-            media: MediaConfig::fromArray((array) ($data['media'] ?? [])),
-            comments: CommentsConfig::fromArray((array) ($data['comments'] ?? [])),
-            seo: SeoConfig::fromArray((array) ($data['seo'] ?? [])),
-            themes: ThemesConfig::fromArray((array) ($data['themes'] ?? [])),
-            security: CmsSecurityConfig::fromArray((array) ($data['security'] ?? [])),
-            commerce: isset($data['commerce']) ? CommerceConfig::fromArray((array) $data['commerce']) : null,
-            liveCss: LiveCssConfig::fromArray((array) ($data['live_css'] ?? [])),
-            import: ImportConfig::fromArray((array) ($data['import'] ?? [])),
+            homepageContentId: isset($data['homepage_content_id']) && is_string($data['homepage_content_id']) ? $data['homepage_content_id'] : null,
+            cache: CmsCacheConfig::fromArray($cacheData),
+            media: MediaConfig::fromArray($mediaData),
+            comments: CommentsConfig::fromArray($commentsData),
+            seo: SeoConfig::fromArray($seoData),
+            themes: ThemesConfig::fromArray($themesData),
+            security: CmsSecurityConfig::fromArray($securityData),
+            commerce: isset($data['commerce']) ? CommerceConfig::fromArray($commerceData) : null,
+            liveCss: LiveCssConfig::fromArray($liveCssData),
+            import: ImportConfig::fromArray($importData),
             httpCacheTtlSeconds: (int) ($data['http_cache_ttl_seconds'] ?? 300),
             publicRateLimitContent: (int) ($data['public_rate_limit_content'] ?? 120),
             publicRateLimitCheckout: (int) ($data['public_rate_limit_checkout'] ?? 30),
             apiKeyRequired: (bool) ($data['api_key_required'] ?? false),
-            notifications: NotificationConfig::fromArray((array) ($data['notifications'] ?? [])),
-            ai: AiConfig::fromArray((array) ($data['ai'] ?? [])),
-            publishing: PublishingConfig::fromArray((array) ($data['publishing'] ?? [])),
+            notifications: NotificationConfig::fromArray($notificationsData),
+            ai: AiConfig::fromArray($aiData),
+            publishing: PublishingConfig::fromArray($publishingData),
+            forms: FormsConfig::fromArray($formsData),
         );
     }
 }

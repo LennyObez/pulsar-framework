@@ -28,6 +28,7 @@ use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 use Pulsar\Extension\Cms\EventStore\ContentEventStoreInterface;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotServiceInterface;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
+use Pulsar\Extension\Cms\Forms\FormSubmissionRepositoryInterface;
 use Pulsar\Extension\Cms\Internal\Persistence\DbApiKeyRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbCmsPluginRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbCmsUserRepository;
@@ -47,6 +48,7 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbDigitalAssetRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbEditorialReviewRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbExperimentRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbFieldRegistryRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbFormSubmissionRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbInvoiceRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbLinkHealthRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbMediaRepository;
@@ -255,6 +257,12 @@ final readonly class CmsRepositoryProvider
         $container->instance(
             CollaborationRepositoryInterface::class,
             new DbCollaborationRepository($connection),
+        );
+
+        // Form submissions repository
+        $container->instance(
+            FormSubmissionRepositoryInterface::class,
+            new DbFormSubmissionRepository($connection),
         );
     }
 }

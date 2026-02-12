@@ -43,6 +43,8 @@ use Pulsar\Extension\Cms\EventStore\ContentEventStoreInterface;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotServiceInterface;
 use Pulsar\Extension\Cms\FieldRegistry\ContentTypeRegistryInterface;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
+use Pulsar\Extension\Cms\Forms\FormSubmissionRepositoryInterface;
+use Pulsar\Extension\Cms\Forms\FormSubmissionServiceInterface;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BackupController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BulkOperationsController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\CommentController as AdminCommentController;
@@ -52,6 +54,7 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\DigitalAssetController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ExperimentController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ExportController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\FieldController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\FormSubmissionController as AdminFormSubmissionController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ImportController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\InvoiceController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\LinkHealthController;
@@ -91,6 +94,7 @@ use Pulsar\Extension\Cms\Media\ImageProcessorInterface;
 use Pulsar\Extension\Cms\Media\MediaDiskInterface;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 use Pulsar\Extension\Cms\Media\MediaServiceInterface;
+use Pulsar\Extension\Cms\Media\ResponsiveImageRenderer;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 use Pulsar\Extension\Cms\Plugins\CmsPluginManagerInterface;
@@ -226,6 +230,11 @@ final class CmsServiceProvider implements ServiceProviderInterface
             CommentServiceInterface::class,
             SearchServiceInterface::class,
             SearchAnalyticsRepositoryInterface::class,
+            // Forms
+            FormSubmissionRepositoryInterface::class,
+            FormSubmissionServiceInterface::class,
+            // Media rendering
+            ResponsiveImageRenderer::class,
             // Block editor
             BlockTypeRegistry::class,
             BlockRenderer::class,
@@ -256,6 +265,9 @@ final class CmsServiceProvider implements ServiceProviderInterface
             ToolsServiceInterface::class,
             ImportExportServiceInterface::class,
             BackupServiceInterface::class,
+            \Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface::class,
+            \Pulsar\Extension\Cms\Tools\ImportAnalyzer::class,
+            \Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter::class,
             // Live CSS
             CssOverrideRepositoryInterface::class,
             CssValidatorInterface::class,
@@ -328,6 +340,7 @@ final class CmsServiceProvider implements ServiceProviderInterface
             ToolsController::class,
             SearchAnalyticsController::class,
             LinkHealthController::class,
+            AdminFormSubmissionController::class,
             Http\Controller\ContentController::class,
             \Pulsar\Extension\Cms\I18n\HreflangGenerator::class,
             // REST API controllers

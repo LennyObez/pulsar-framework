@@ -122,8 +122,20 @@ final readonly class ContentController
             return Response::redirect($targetUrl, $redirect->statusCode);
         }
 
-        // Resolve content by path
-        $translation = $this->translationRepository->findByPath($locale, $contentPath, $tenantId);
+        // Resolve content by path (or explicit homepage ID for root)
+        $translation = null;
+
+        if ($contentPath === '' && $this->config->homepageContentId !== null) {
+            // Explicit homepage: resolve by content ID + locale
+            $translation = $this->translationRepository->findByContentAndLocale(
+                $this->config->homepageContentId,
+                $locale,
+            );
+        }
+
+        if ($translation === null) {
+            $translation = $this->translationRepository->findByPath($locale, $contentPath, $tenantId);
+        }
 
         if ($translation === null) {
             // Show a styled welcome page for the root path
@@ -224,8 +236,10 @@ final readonly class ContentController
             $uri = $request->getUri();
             $baseUrl = $uri->getScheme() . '://' . $uri->getHost();
 
-            if ($uri->getPort() !== null && $uri->getPort() !== 80 && $uri->getPort() !== 443) {
-                $baseUrl .= ':' . $uri->getPort();
+            $port = $uri->getPort();
+
+            if ($port !== null && $port !== 80 && $port !== 443) {
+                $baseUrl .= ':' . $port;
             }
 
             $responseBody = $this->renderHtml($responseData, $template, $content, $translation, $baseUrl);
@@ -319,8 +333,13 @@ final readonly class ContentController
     private function renderWelcomePage(): string
     {
         $templatePath = dirname(__DIR__, 3) . '/resources/views/welcome.pulsar.php';
+        $content = file_get_contents($templatePath);
 
-        return file_get_contents($templatePath);
+        if ($content === false) {
+            return '<html><body><h1>Welcome to Pulsar CMS</h1></body></html>';
+        }
+
+        return $content;
     }
 
     /**

@@ -33,6 +33,8 @@ use Pulsar\Extension\Cms\Content\RevisionService;
 use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\Dashboard\DashboardService;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
+use Pulsar\Extension\Cms\Forms\FormSubmissionRepositoryInterface;
+use Pulsar\Extension\Cms\Forms\FormSubmissionServiceInterface;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BackupController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BulkOperationsController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\CommentController as AdminCommentController;
@@ -42,6 +44,7 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\DigitalAssetController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ExperimentController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ExportController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\FieldController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\FormSubmissionController as AdminFormSubmissionController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ImportController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\InvoiceController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\LinkHealthController;
@@ -194,7 +197,6 @@ final readonly class CmsAdminControllerProvider
                 $container->get(ContentRepositoryInterface::class),
                 $container->get(TaxonomyServiceInterface::class),
                 $gate,
-                $config,
                 $templateEngine,
             ),
         );
@@ -385,6 +387,11 @@ final readonly class CmsAdminControllerProvider
             /** @var ImportExportServiceInterface $importExport */
             $importExport = $container->get(ImportExportServiceInterface::class);
 
+            /** @var \Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface|null $mediaBundleExporter */
+            $mediaBundleExporter = $container->has(\Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface::class)
+                ? $container->get(\Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface::class)
+                : null;
+
             $container->instance(
                 ExportController::class,
                 new ExportController(
@@ -393,9 +400,21 @@ final readonly class CmsAdminControllerProvider
                     $container->get(ContentRepositoryInterface::class),
                     $container->get(ContentTranslationRepositoryInterface::class),
                     $container->get(ContentBlockRepositoryInterface::class),
+                    $mediaBundleExporter,
                     $templateEngine,
                 ),
             );
+
+            /** @var \Pulsar\Extension\Cms\Tools\ImportAnalyzer|null $importAnalyzer */
+            $importAnalyzer = $container->has(\Pulsar\Extension\Cms\Tools\ImportAnalyzer::class)
+                ? $container->get(\Pulsar\Extension\Cms\Tools\ImportAnalyzer::class)
+                : null;
+
+            /** @var \Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter|null $mediaBundleImporter */
+            $mediaBundleImporter = $container->has(\Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter::class)
+                ? $container->get(\Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter::class)
+                : null;
+
             $container->instance(
                 ImportController::class,
                 new ImportController(
@@ -403,6 +422,8 @@ final readonly class CmsAdminControllerProvider
                     $gate,
                     $container->get(ContentRepositoryInterface::class),
                     $container->get(ContentTranslationRepositoryInterface::class),
+                    $importAnalyzer,
+                    $mediaBundleImporter,
                     $templateEngine,
                 ),
             );
@@ -492,6 +513,21 @@ final readonly class CmsAdminControllerProvider
                     $workflowService,
                     $container->get(ContentRepositoryInterface::class),
                     $publishingStateMachine,
+                    $gate,
+                    $templateEngine,
+                ),
+            );
+        }
+
+        // FormSubmissionController (admin)
+        if ($container->has(FormSubmissionRepositoryInterface::class)
+            && $container->has(FormSubmissionServiceInterface::class)
+        ) {
+            $container->instance(
+                AdminFormSubmissionController::class,
+                new AdminFormSubmissionController(
+                    $container->get(FormSubmissionRepositoryInterface::class),
+                    $container->get(FormSubmissionServiceInterface::class),
                     $gate,
                     $templateEngine,
                 ),
