@@ -14,7 +14,7 @@ use Pulsar\Http\Response;
  * Middleware that applies configured security headers to every response.
  *
  * Adds headers like X-Content-Type-Options, X-Frame-Options, Referrer-Policy,
- * etc. as configured in SecurityHeadersConfig.
+ * CSP, Cross-Origin headers, and conditionally HSTS for secure requests.
  */
 final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
 {
@@ -32,6 +32,22 @@ final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
             $response = $response->withHeader($name, $value);
         }
 
+        if ($this->config->hsts->enabled && $this->isSecureRequest($request)) {
+            $response = $response->withHeader(
+                'Strict-Transport-Security',
+                $this->config->hsts->toHeaderValue(),
+            );
+        }
+
         return $response;
+    }
+
+    private function isSecureRequest(Request $request): bool
+    {
+        if ($request->isSecure()) {
+            return true;
+        }
+
+        return $request->headers->first('X-Forwarded-Proto') === 'https';
     }
 }

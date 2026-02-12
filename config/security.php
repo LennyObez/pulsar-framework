@@ -47,6 +47,33 @@ return [
         'X-Content-Type-Options' => 'nosniff',
         'X-Frame-Options' => 'DENY',
         'Referrer-Policy' => 'strict-origin-when-cross-origin',
+
+        // Content Security Policy
+        'csp' => [
+            'enabled' => true,
+            'report_only' => false,
+            'default_src' => "'self'",
+            'script_src' => "'self'",
+            'style_src' => "'self'",
+            'object_src' => "'none'",
+            'base_uri' => "'self'",
+            'frame_ancestors' => "'self'",
+        ],
+
+        // HTTP Strict Transport Security
+        'hsts' => [
+            'enabled' => true,
+            'max_age' => 31536000,
+            'include_sub_domains' => true,
+            'preload' => false,
+        ],
+
+        // Cross-Origin headers (COOP, COEP, CORP)
+        'cross_origin' => [
+            'opener_policy' => 'same-origin',
+            'embedder_policy' => '',
+            'resource_policy' => 'same-origin',
+        ],
     ],
 
     /*
