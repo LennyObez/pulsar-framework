@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Event;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -20,7 +21,7 @@ use function strlen;
 final class EventEnvelopeTest extends TestCase
 {
     #[Test]
-    public function wrapCreatesEnvelopeWithComputedHash(): void
+    public function test_wrap_creates_envelope_with_computed_hash(): void
     {
         $metadata = $this->createMetadata();
         $randomizer = new Randomizer(new Xoshiro256StarStar(42));
@@ -42,7 +43,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function payloadHashIsDeterministic(): void
+    public function test_payload_hash_is_deterministic(): void
     {
         $metadata = $this->createMetadata();
         $r1 = new Randomizer(new Xoshiro256StarStar(1));
@@ -57,7 +58,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function payloadHashIgnoresKeyInsertionOrder(): void
+    public function test_payload_hash_ignores_key_insertion_order(): void
     {
         $metadata = $this->createMetadata();
         $r1 = new Randomizer(new Xoshiro256StarStar(1));
@@ -70,7 +71,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function payloadHashRecursivelySortsNestedKeys(): void
+    public function test_payload_hash_recursively_sorts_nested_keys(): void
     {
         $metadata = $this->createMetadata();
         $r1 = new Randomizer(new Xoshiro256StarStar(1));
@@ -83,7 +84,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function differentEventTypesProduceDifferentHashes(): void
+    public function test_different_event_types_produce_different_hashes(): void
     {
         $metadata = $this->createMetadata();
         $payload = ['key' => 'value'];
@@ -97,7 +98,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function differentSchemaVersionsProduceDifferentHashes(): void
+    public function test_different_schema_versions_produce_different_hashes(): void
     {
         $metadata = $this->createMetadata();
         $payload = ['key' => 'value'];
@@ -111,7 +112,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function toArrayFromArrayRoundtrip(): void
+    public function test_toArray_fromArray_roundtrip(): void
     {
         $metadata = $this->createMetadata();
         $randomizer = new Randomizer(new Xoshiro256StarStar(42));
@@ -136,7 +137,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function toArrayUsesSnakeCaseKeys(): void
+    public function test_toArray_uses_snake_case_keys(): void
     {
         $metadata = $this->createMetadata();
         $envelope = EventEnvelope::wrap('test', 1, [], $metadata);
@@ -147,6 +148,45 @@ final class EventEnvelopeTest extends TestCase
         self::assertArrayHasKey('event_type', $array);
         self::assertArrayHasKey('schema_version', $array);
         self::assertArrayHasKey('payload_hash', $array);
+    }
+
+    #[Test]
+    public function test_fromArray_recomputes_payload_hash(): void
+    {
+        $metadata = $this->createMetadata();
+        $original = EventEnvelope::wrap(
+            eventType: 'order.created',
+            schemaVersion: 1,
+            payload: ['order_id' => 'abc-123'],
+            metadata: $metadata,
+        );
+
+        $array = $original->toArray();
+        $correctHash = $array['payload_hash'];
+
+        // Tamper with the payload hash
+        $array['payload_hash'] = 'tampered_hash_value_that_should_be_overwritten';
+
+        $restored = EventEnvelope::fromArray($array);
+
+        // fromArray recomputes the hash — tampered value should be ignored
+        self::assertSame($correctHash, $restored->payloadHash);
+        self::assertNotSame('tampered_hash_value_that_should_be_overwritten', $restored->payloadHash);
+    }
+
+    #[Test]
+    public function test_fromArray_throws_on_empty_eventType(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/non-empty eventType/');
+
+        (void) EventEnvelope::fromArray([
+            'event_id' => 'abc',
+            'event_type' => '',
+            'schema_version' => 1,
+            'payload' => [],
+            'metadata' => [],
+        ]);
     }
 
     private function createMetadata(): EventMetadata
