@@ -15,6 +15,9 @@ use Pulsar\Mail\Transport\Config\SmtpTransportConfig;
 use Pulsar\Mail\Transport\SmtpTransport;
 use ReflectionMethod;
 
+use function assert;
+use function is_string;
+
 #[CoversClass(SmtpTransport::class)]
 final class SmtpTransportTest extends TestCase
 {

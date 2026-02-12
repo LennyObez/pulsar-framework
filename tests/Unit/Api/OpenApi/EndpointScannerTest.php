@@ -7,7 +7,6 @@ namespace Pulsar\Tests\Unit\Api\OpenApi;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Api\OpenApi\EndpointMetadata;
 use Pulsar\Api\OpenApi\EndpointScanner;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Route;

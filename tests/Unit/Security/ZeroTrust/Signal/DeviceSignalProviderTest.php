@@ -64,7 +64,7 @@ final class DeviceSignalProviderTest extends TestCase
         $claims = $provider->evaluate($this->createContext());
 
         foreach ($claims as $claim) {
-            self::assertGreaterThan(new \DateTimeImmutable('-1 minute'), $claim->timestamp);
+            self::assertGreaterThan(new DateTimeImmutable('-1 minute'), $claim->timestamp);
         }
     }
 

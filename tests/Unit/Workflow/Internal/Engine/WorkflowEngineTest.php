@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Workflow\Internal\Engine;
 
+use ArrayObject;
 use DateInterval;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -39,12 +40,15 @@ use Pulsar\Workflow\Storage\WorkflowStorageInterface;
 use Pulsar\Workflow\Timeout\TimeoutHandlerInterface;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
+use stdClass;
 
 use function array_filter;
 use function array_map;
 use function array_values;
+use function assert;
 use function is_array;
 use function is_string;
+use function strlen;
 
 /**
  * Comprehensive unit tests for WorkflowEngine focusing on:
@@ -228,7 +232,7 @@ final class WorkflowEngineTest extends TestCase
     #[Test]
     public function start_preserves_classified_context(): void
     {
-        $ctx = (new ClassifiedContext())
+        $ctx = new ClassifiedContext()
             ->set('key', 'value', \Pulsar\Workflow\Storage\ClassificationLevel::Public);
 
         $instance = $this->engine()->start($this->simpleDefinition(), new ActorContext(subjectId: 'u'), $ctx);
@@ -625,7 +629,7 @@ final class WorkflowEngineTest extends TestCase
         $definition = DefinitionBuilder::create('g')
             ->initialState('draft')
             ->finalState('approved')
-            ->transition('approve', 'draft', 'approved', guards: [\stdClass::class, \ArrayObject::class])
+            ->transition('approve', 'draft', 'approved', guards: [stdClass::class, ArrayObject::class])
             ->build();
 
         $this->expectException(WorkflowException::class);

@@ -7,7 +7,6 @@ namespace Pulsar\Tests\Unit\Extension\Cms\Http\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;

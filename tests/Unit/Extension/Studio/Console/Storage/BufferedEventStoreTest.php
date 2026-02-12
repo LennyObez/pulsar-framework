@@ -12,6 +12,7 @@ use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Event\EventVersion;
 use Pulsar\Extension\Studio\Console\Storage\BufferedEventStore;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
+use RuntimeException;
 
 #[CoversClass(BufferedEventStore::class)]
 final class BufferedEventStoreTest extends TestCase
@@ -273,7 +274,7 @@ final class FailingEventStore implements EventStoreInterface
 {
     public function store(EventEnvelope $envelope, string $payloadJson, ?string $tenantHash = null): void
     {
-        throw new \RuntimeException('Simulated failure');
+        throw new RuntimeException('Simulated failure');
     }
 
     public function query(array $filters = [], int $limit = 50, int $offset = 0): array

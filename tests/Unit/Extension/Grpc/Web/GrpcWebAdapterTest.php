@@ -13,7 +13,11 @@ use Pulsar\Extension\Grpc\Adapter\GrpcRequestHandler;
 use Pulsar\Extension\Grpc\Error\GrpcStatus;
 use Pulsar\Extension\Grpc\Interceptor\InterceptorResult;
 use Pulsar\Extension\Grpc\Web\GrpcWebAdapter;
-use Pulsar\Extension\Grpc\Web\GrpcWebResponse;
+
+use function assert;
+use function chr;
+use function ord;
+use function strlen;
 
 #[CoversClass(GrpcWebAdapter::class)]
 final class GrpcWebAdapterTest extends TestCase

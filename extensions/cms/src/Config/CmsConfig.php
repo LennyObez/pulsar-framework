@@ -9,6 +9,8 @@ use Pulsar\Extension\Cms\Commerce\CommerceConfig;
 use Pulsar\Extension\Cms\LiveCss\LiveCssConfig;
 use Pulsar\Extension\Cms\Tools\ImportConfig;
 
+use function is_string;
+
 /**
  * Top-level CMS configuration DTO.
  *

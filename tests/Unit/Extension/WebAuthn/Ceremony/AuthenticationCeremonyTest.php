@@ -5,22 +5,25 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Extension\Webauthn\Ceremony;
 
 use DateTimeImmutable;
+use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\WebAuthn\Ceremony\AuthenticationCeremony;
 use Pulsar\Extension\WebAuthn\Ceremony\AuthenticationOptions;
-use Pulsar\Extension\WebAuthn\Ceremony\AuthenticationResult;
 use Pulsar\Extension\WebAuthn\Config\WebAuthnConfig;
 use Pulsar\Extension\WebAuthn\Contract\CredentialRepositoryInterface;
 use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
 use Pulsar\Extension\WebAuthn\PublicKey\CredentialSource;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
+
+use function assert;
+use function chr;
+use function is_array;
+use function is_string;
 
 #[CoversClass(AuthenticationCeremony::class)]
 final class AuthenticationCeremonyTest extends TestCase
@@ -162,7 +165,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnInvalidJson(): void
     {
-        $this->expectException(\JsonException::class);
+        $this->expectException(JsonException::class);
 
         $this->ceremony->verify('{{invalid', 'challenge');
     }

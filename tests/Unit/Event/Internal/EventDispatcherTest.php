@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Event\Internal;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\EventDispatcher\StoppableEventInterface;
@@ -21,10 +20,12 @@ use Pulsar\Event\Internal\EventDispatcher;
 use Pulsar\Event\Internal\ListenerMetadataProviderInterface;
 use Pulsar\Event\Internal\ListenerProvider;
 use Pulsar\Event\Internal\StormGuard;
-use Pulsar\Event\ListenerProviderInterface;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use RuntimeException;
 use stdClass;
+
+use function assert;
 
 #[CoversClass(EventDispatcher::class)]
 final class EventDispatcherTest extends TestCase
@@ -186,12 +187,12 @@ final class EventDispatcherTest extends TestCase
     public function dispatchLeavesStormGuardEvenWhenListenerThrows(): void
     {
         $this->provider->addListener(stdClass::class, static function (): void {
-            throw new \RuntimeException('Listener failure');
+            throw new RuntimeException('Listener failure');
         });
 
         try {
             $this->dispatcher->dispatch(new stdClass());
-        } catch (\RuntimeException) {
+        } catch (RuntimeException) {
             // expected
         }
 

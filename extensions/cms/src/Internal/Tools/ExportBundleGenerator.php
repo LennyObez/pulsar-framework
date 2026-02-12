@@ -136,11 +136,13 @@ final readonly class ExportBundleGenerator
             tenantId: $options->tenantId,
         );
 
-        return array_map(
-            /** @return array<string, mixed> */
+        /** @var list<array<string, mixed>> $mapped */
+        $mapped = array_map(
             static fn(object $content): array => (array) $content,
             $result->items,
         );
+
+        return $mapped;
     }
 
     /**
@@ -252,7 +254,9 @@ final readonly class ExportBundleGenerator
             );
 
             foreach ($result->items as $comment) {
-                $comments[] = (array) $comment;
+                /** @var array<string, mixed> $commentData */
+                $commentData = (array) $comment;
+                $comments[] = $commentData;
             }
 
             $page++;
@@ -276,10 +280,13 @@ final readonly class ExportBundleGenerator
             perPage: 10000,
         );
 
-        return array_map(
+        /** @var list<array<string, mixed>> $mapped */
+        $mapped = array_map(
             static fn(object $user): array => (array) $user,
             $result->items,
         );
+
+        return $mapped;
     }
 
     /**

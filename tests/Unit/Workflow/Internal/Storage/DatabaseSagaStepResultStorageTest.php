@@ -18,6 +18,8 @@ use Pulsar\Workflow\Storage\SagaStepDirection;
 use Pulsar\Workflow\Storage\SagaStepResult;
 use Pulsar\Workflow\Storage\SagaStepStatus;
 
+use function assert;
+use function is_string;
 use function json_decode;
 use function json_encode;
 
@@ -465,7 +467,7 @@ final class DatabaseSagaStepResultStorageTest extends TestCase
             $conn->method('driver')->willReturn(Driver::MySQL);
             $conn->method('query')->willReturn(new Result([$row]));
 
-            $results = (new DatabaseSagaStepResultStorage($conn))->getByInstance('saga-1');
+            $results = new DatabaseSagaStepResultStorage($conn)->getByInstance('saga-1');
 
             self::assertSame($direction, $results[0]->direction, "Failed for direction: {$direction->value}");
         }
@@ -480,7 +482,7 @@ final class DatabaseSagaStepResultStorageTest extends TestCase
             $conn->method('driver')->willReturn(Driver::MySQL);
             $conn->method('query')->willReturn(new Result([$row]));
 
-            $results = (new DatabaseSagaStepResultStorage($conn))->getByInstance('saga-1');
+            $results = new DatabaseSagaStepResultStorage($conn)->getByInstance('saga-1');
 
             self::assertSame($status, $results[0]->status, "Failed for status: {$status->value}");
         }

@@ -11,16 +11,15 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\SocialSso\Domain\JwkKey;
 use Pulsar\Extension\SocialSso\Internal\Token\OpenSslJwtSignatureDriver;
 
+use function assert;
 use function base64_encode;
+use function is_string;
 use function openssl_pkey_get_details;
 use function openssl_pkey_new;
 use function openssl_sign;
 use function rtrim;
-use function str_pad;
 use function str_repeat;
-use function strlen;
 use function strtr;
-use function substr;
 
 use const OPENSSL_ALGO_SHA256;
 use const OPENSSL_KEYTYPE_EC;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\SocialSso\Internal\Token;
 
+use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -158,7 +159,7 @@ final class JwksFetcherComprehensiveTest extends TestCase
 
         $fetcher = new JwksFetcher();
 
-        $this->expectException(\JsonException::class);
+        $this->expectException(JsonException::class);
 
         $fetcher->fetchKeys($this->tempFile);
     }

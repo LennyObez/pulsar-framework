@@ -12,7 +12,6 @@ use Pulsar\Api\Resource\ConditionalField;
 use Pulsar\Api\Resource\FieldAllowlist;
 use Pulsar\Api\Resource\RedactionRule;
 use Pulsar\Api\Resource\RedactionStrategy;
-use Pulsar\Api\Resource\ResourceMetadata;
 use Pulsar\Api\Security\ClearanceSnapshot;
 use Pulsar\Security\Compliance\DataClassification;
 use Pulsar\Tests\Unit\Api\Resource\Fixture\ConditionalFieldResource;
@@ -20,6 +19,9 @@ use Pulsar\Tests\Unit\Api\Resource\Fixture\FilterableSortableResource;
 use Pulsar\Tests\Unit\Api\Resource\Fixture\NestedAddressResource;
 use Pulsar\Tests\Unit\Api\Resource\Fixture\TestUserResource;
 use Pulsar\Tests\Unit\Api\Resource\Fixture\UserWithAddressResource;
+
+use function assert;
+use function is_array;
 
 #[CoversClass(AbstractApiResource::class)]
 final class AbstractApiResourceTest extends TestCase

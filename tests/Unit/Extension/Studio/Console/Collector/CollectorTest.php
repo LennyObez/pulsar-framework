@@ -24,6 +24,7 @@ use Pulsar\Observability\ErrorTracking\ErrorEvent;
 use Pulsar\Observability\ErrorTracking\ErrorFingerprint;
 use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogLevel;
+use RuntimeException;
 
 #[CoversClass(ExceptionCollector::class)]
 #[CoversClass(LogCollector::class)]
@@ -75,7 +76,7 @@ final class CollectorTest extends TestCase
     public function exceptionCollectorSwallowsEmitExceptions(): void
     {
         $emit = static function (): void {
-            throw new \RuntimeException('emit failed');
+            throw new RuntimeException('emit failed');
         };
 
         $collector = new ExceptionCollector($this->buildContextProvider(), $emit);
@@ -135,7 +136,7 @@ final class CollectorTest extends TestCase
     public function logCollectorSwallowsEmitExceptions(): void
     {
         $emit = static function (): void {
-            throw new \RuntimeException('emit failed');
+            throw new RuntimeException('emit failed');
         };
 
         $collector = new LogCollector($this->buildContextProvider(), $emit);

@@ -23,6 +23,9 @@ use Pulsar\Workflow\Storage\WorkflowInstance;
 use Pulsar\Workflow\Storage\WorkflowInstanceStatus;
 use RuntimeException;
 
+use function assert;
+use function is_array;
+use function is_string;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
@@ -130,7 +133,7 @@ final class DatabaseWorkflowStorageTest extends TestCase
     #[Test]
     public function create_serializes_context_as_json(): void
     {
-        $ctx = (new ClassifiedContext())
+        $ctx = new ClassifiedContext()
             ->set('amount', 100, ClassificationLevel::Public);
 
         $instance = new WorkflowInstance(
@@ -289,7 +292,7 @@ final class DatabaseWorkflowStorageTest extends TestCase
         $row = $this->makeRow(['context' => $contextJson]);
         $this->connection->method('query')->willReturn(new Result([$row]));
 
-        $instance = (new DatabaseWorkflowStorage($this->connection, $encryptor))->findById('inst-1');
+        $instance = new DatabaseWorkflowStorage($this->connection, $encryptor)->findById('inst-1');
 
         self::assertNotNull($instance);
         self::assertSame('secret_value', $instance->context->get('ssn'));
@@ -563,7 +566,7 @@ final class DatabaseWorkflowStorageTest extends TestCase
             $conn->method('driver')->willReturn(Driver::MySQL);
             $conn->method('query')->willReturn(new Result([$row]));
 
-            $instance = (new DatabaseWorkflowStorage($conn))->findById('inst-1');
+            $instance = new DatabaseWorkflowStorage($conn)->findById('inst-1');
 
             self::assertNotNull($instance);
             self::assertSame($status, $instance->status, "Failed for status: {$status->value}");

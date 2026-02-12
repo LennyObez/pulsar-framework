@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\ZeroTrust\DeviceIdentity;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -46,7 +47,7 @@ final class InMemoryDeviceRegistryTest extends TestCase
         self::assertSame('pk-base64', $device->publicKey);
         self::assertNull($device->lastVerifiedAt);
         self::assertSame(['os' => 'Linux'], $device->metadata);
-        self::assertGreaterThan(new \DateTimeImmutable('-1 minute'), $device->registeredAt);
+        self::assertGreaterThan(new DateTimeImmutable('-1 minute'), $device->registeredAt);
     }
 
     #[Test]

@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
 use Pulsar\Security\Crypto\MasterKey;
 
+use function strlen;
+
 #[CoversClass(CmsKeyManager::class)]
 final class CmsKeyManagerTest extends TestCase
 {

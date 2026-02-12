@@ -113,4 +113,61 @@ return [
         // Proof-of-work SHA-256 hash prefix difficulty (e.g. '0000' = 4 leading zeros)
         'pow_difficulty' => '0000',
     ],
+
+    // Newsletter subsystem configuration
+    'newsletter' => [
+        // Whether the newsletter feature is enabled
+        'enabled' => false,
+
+        // Maximum subscriptions per IP per hour (anti-abuse)
+        'rate_limit_per_hour' => 5,
+
+        // HMAC algorithm for signed unsubscribe/confirm URLs
+        'hmac_algo' => 'sha256',
+
+        // Tracking configuration (disabled by default for GDPR compliance)
+        'tracking' => [
+            'opens' => false,
+            'clicks' => false,
+        ],
+
+        // Maximum bounce count before auto-unsubscribe
+        'max_bounces' => 3,
+
+        // Campaign dispatch batch size
+        'batch_size' => 100,
+    ],
+
+    // RSS/Atom feed configuration
+    'feeds' => [
+        // Whether feeds are enabled globally
+        'enabled' => true,
+
+        // Maximum number of items in a feed
+        'item_limit' => 20,
+
+        // Include full body ('full') or excerpt only ('excerpt')
+        'body_mode' => 'excerpt',
+
+        // Cache TTL for generated feeds in seconds
+        'cache_ttl' => 3600,
+    ],
+
+    // Comments frontend configuration
+    'comments' => [
+        // Maximum nesting depth for threaded comments
+        'max_depth' => 3,
+
+        // Default comments per page
+        'per_page' => 20,
+
+        // Auto-approve comments from authenticated users
+        'auto_approve_authenticated' => false,
+
+        // Enable Gravatar avatars for commenters
+        'gravatar_enabled' => true,
+
+        // Maximum comment body length in characters
+        'max_body_length' => 5000,
+    ],
 ];

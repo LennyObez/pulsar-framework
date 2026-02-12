@@ -10,8 +10,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Internal\Cache\CachedMenuRepository;
-use Pulsar\Extension\Cms\Navigation\Menu;
 use Pulsar\Extension\Cms\Navigation\LinkTarget;
+use Pulsar\Extension\Cms\Navigation\Menu;
 use Pulsar\Extension\Cms\Navigation\MenuItem;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 

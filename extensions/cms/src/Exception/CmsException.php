@@ -373,4 +373,59 @@ class CmsException extends RuntimeException
             $expectedVersion,
         ));
     }
+
+    public static function subscriberNotFound(string $id): self
+    {
+        return new self("Newsletter subscriber not found: {$id}");
+    }
+
+    public static function subscriberNotFoundByEmail(string $email): self
+    {
+        return new self("Newsletter subscriber not found for email: {$email}");
+    }
+
+    public static function subscriberAlreadyConfirmed(string $email): self
+    {
+        return new self("Email is already subscribed and confirmed: {$email}");
+    }
+
+    public static function subscriberNotUnsubscribed(string $email): self
+    {
+        return new self("Subscriber is not in unsubscribed status: {$email}");
+    }
+
+    public static function campaignNotFound(string $id): self
+    {
+        return new self("Newsletter campaign not found: {$id}");
+    }
+
+    public static function campaignNotEditable(string $id): self
+    {
+        return new self("Campaign can only be edited in Draft status: {$id}");
+    }
+
+    public static function campaignNotDeletable(string $id): self
+    {
+        return new self("Campaign can only be deleted in Draft or Cancelled status: {$id}");
+    }
+
+    public static function campaignNotSchedulable(string $id): self
+    {
+        return new self("Campaign can only be scheduled from Draft status: {$id}");
+    }
+
+    public static function campaignNotCancellable(string $id): self
+    {
+        return new self("Campaign can only be cancelled from Scheduled status: {$id}");
+    }
+
+    public static function sendNotFound(string $id): self
+    {
+        return new self("Newsletter send record not found: {$id}");
+    }
+
+    public static function invalidUnsubscribeSignature(): self
+    {
+        return new self('Invalid or expired unsubscribe link signature');
+    }
 }

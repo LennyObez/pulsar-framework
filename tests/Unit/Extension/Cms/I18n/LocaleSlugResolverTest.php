@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Cms\I18n;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -13,7 +14,6 @@ use Psr\Http\Message\UriInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
-use DateTimeImmutable;
 use Pulsar\Extension\Cms\Content\Redirect;
 use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 use Pulsar\Extension\Cms\I18n\LocaleSlugResolver;
