@@ -1,0 +1,77 @@
+/*
+ * Pulsar CMS — Inline Editor Toolbar Stylesheet
+ *
+ * Floating toolbar that appears on text selection within
+ * contentEditable blocks in the page builder.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Floating Toolbar                                                    */
+/* ------------------------------------------------------------------ */
+.pb-inline-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem;
+  background: var(--cms-sidebar-bg, #1e293b);
+  border-radius: 0.375rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 9000;
+  pointer-events: auto;
+}
+
+/* ------------------------------------------------------------------ */
+/* Toolbar Buttons                                                     */
+/* ------------------------------------------------------------------ */
+.pb-inline-toolbar__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.375rem;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition:
+    background 0.1s,
+    color 0.1s;
+}
+
+.pb-inline-toolbar__btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.pb-inline-toolbar__btn:focus-visible {
+  outline: 2px solid var(--cms-focus-color, #2563eb);
+  outline-offset: 1px;
+}
+
+/* Active state for applied formats */
+.pb-inline-toolbar__btn--active {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* Bold button — heavier weight */
+.pb-inline-toolbar__btn--bold {
+  font-weight: 700;
+}
+
+/* Italic button — italic style */
+.pb-inline-toolbar__btn--italic {
+  font-style: italic;
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced Motion                                                      */
+/* ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .pb-inline-toolbar__btn {
+    transition: none;
+  }
+}
