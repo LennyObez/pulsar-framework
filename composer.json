@@ -89,7 +89,6 @@
       "@boundary:deptrac",
       "@boundary:custom"
     ],
-    "qodana": "php scripts/qodana-local.php",
     "qa": [
       "@cs:check",
       "@phpstan",

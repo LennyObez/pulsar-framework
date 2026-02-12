@@ -107,7 +107,7 @@ final class EventDispatcherTest extends TestCase
     #[Test]
     public function test_envelope_required_throws_for_plain_event(): void
     {
-        $metadataProvider = $this->createMock(ListenerMetadataProviderInterface::class);
+        $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('requiresEnvelopeFor')->willReturn(true);
         $metadataProvider->method('stormOverrideFor')->willReturn(null);
 
@@ -122,7 +122,7 @@ final class EventDispatcherTest extends TestCase
     #[Test]
     public function test_envelope_required_does_not_throw_for_envelope(): void
     {
-        $metadataProvider = $this->createMock(ListenerMetadataProviderInterface::class);
+        $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('requiresEnvelopeFor')->willReturn(true);
         $metadataProvider->method('stormOverrideFor')->willReturn(null);
 
@@ -137,7 +137,7 @@ final class EventDispatcherTest extends TestCase
     #[Test]
     public function test_dispatchEnvelope_computes_scope_internal(): void
     {
-        $metadataProvider = $this->createMock(ListenerMetadataProviderInterface::class);
+        $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('listenerModuleIdsFor')->willReturn(['billing']);
         $metadataProvider->method('stormOverrideFor')->willReturn(null);
         $metadataProvider->method('requiresEnvelopeFor')->willReturn(false);
@@ -153,7 +153,7 @@ final class EventDispatcherTest extends TestCase
     #[Test]
     public function test_dispatchEnvelope_computes_scope_crossModule(): void
     {
-        $metadataProvider = $this->createMock(ListenerMetadataProviderInterface::class);
+        $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('listenerModuleIdsFor')->willReturn(['billing', 'shipping']);
         $metadataProvider->method('stormOverrideFor')->willReturn(null);
         $metadataProvider->method('requiresEnvelopeFor')->willReturn(false);
@@ -198,7 +198,7 @@ final class EventDispatcherTest extends TestCase
     #[Test]
     public function test_dispatch_with_envelope_computes_scope(): void
     {
-        $metadataProvider = $this->createMock(ListenerMetadataProviderInterface::class);
+        $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);
         $metadataProvider->method('listenerModuleIdsFor')->willReturn(['billing']);
         $metadataProvider->method('stormOverrideFor')->willReturn(null);
         $metadataProvider->method('requiresEnvelopeFor')->willReturn(false);

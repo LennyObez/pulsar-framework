@@ -15,6 +15,9 @@ Thumbs.db
 .psalm-cache/
 *.log
 
+# Database
+/database/*.sqlite
+
 # Runtime / app temp
 /bootstrap/cache/
 /storage/

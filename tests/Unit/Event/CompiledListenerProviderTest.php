@@ -20,7 +20,7 @@ final class CompiledListenerProviderTest extends TestCase
     #[Test]
     public function test_getListenersForEvent_returns_empty_for_unregistered_event(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $provider = new CompiledListenerProvider([], $container);
 
         $listeners = $provider->getListenersForEvent(new stdClass());
@@ -40,7 +40,7 @@ final class CompiledListenerProviderTest extends TestCase
             }
         };
 
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
             ->with($listener::class)
             ->willReturn($listener);
@@ -69,7 +69,7 @@ final class CompiledListenerProviderTest extends TestCase
     #[Test]
     public function test_addListener_throws(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $provider = new CompiledListenerProvider([], $container);
 
         $this->expectException(EventException::class);
@@ -81,7 +81,7 @@ final class CompiledListenerProviderTest extends TestCase
     #[Test]
     public function test_addSubscriber_throws(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $provider = new CompiledListenerProvider([], $container);
 
         $subscriber = new class implements \Pulsar\Event\EventSubscriberInterface {
@@ -99,7 +99,7 @@ final class CompiledListenerProviderTest extends TestCase
     #[Test]
     public function test_listenerModuleIdsFor(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $compiledMap = [
             stdClass::class => [
                 'listeners' => [],
@@ -117,7 +117,7 @@ final class CompiledListenerProviderTest extends TestCase
     #[Test]
     public function test_listenerModuleIdsFor_unknown_event(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $provider = new CompiledListenerProvider([], $container);
 
         self::assertSame([], $provider->listenerModuleIdsFor(stdClass::class));
@@ -126,7 +126,7 @@ final class CompiledListenerProviderTest extends TestCase
     #[Test]
     public function test_stormOverrideFor(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $compiledMap = [
             stdClass::class => [
                 'listeners' => [],
@@ -144,7 +144,7 @@ final class CompiledListenerProviderTest extends TestCase
     #[Test]
     public function test_requiresEnvelopeFor(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $compiledMap = [
             stdClass::class => [
                 'listeners' => [],
@@ -163,7 +163,7 @@ final class CompiledListenerProviderTest extends TestCase
     #[Test]
     public function test_compiledEventClasses(): void
     {
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $compiledMap = [
             stdClass::class => [
                 'listeners' => [],
@@ -190,7 +190,7 @@ final class CompiledListenerProviderTest extends TestCase
             }
         };
 
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
             ->with($listener::class)
             ->willReturn($listener);
