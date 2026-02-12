@@ -7,9 +7,8 @@ namespace Pulsar\Extensibility;
 use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Config\TrustedExtensionsConfig;
-use Pulsar\Container\Container;
+use Pulsar\Container\AdvancedContainerInterface;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Container\Provider\DeferredProviderRegistry;
 use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\Internal\ScopedContainerProxy;
@@ -36,7 +35,6 @@ final class ExtensionBootstrap
 {
     public private(set) bool $registered = false;
     public private(set) bool $booted = false;
-    private ?DeferredProviderRegistry $deferredRegistry = null;
     private ?CapabilityPolicy $capabilityPolicy = null;
     private ?ServiceRestrictionMap $serviceRestrictionMap = null;
     private ?TrustedExtensionsConfig $trustedExtensionsConfig = null;
@@ -144,10 +142,9 @@ final class ExtensionBootstrap
 
                     // Defer registration for deferred providers
                     if ($provider instanceof DeferredServiceProviderInterface && $provider->isDeferred()) {
-                        if ($this->deferredRegistry === null) {
-                            $this->deferredRegistry = new DeferredProviderRegistry();
+                        if ($container instanceof AdvancedContainerInterface) {
+                            $container->registerDeferredProvider($provider);
                         }
-                        $this->deferredRegistry->register($provider);
                         continue;
                     }
 
@@ -162,11 +159,6 @@ final class ExtensionBootstrap
                 $this->registry->setState($name, ExtensionLifecycle::Failed);
                 throw ExtensionException::registrationFailed($name, $e->getMessage());
             }
-        }
-
-        // Wire deferred provider registry into the container
-        if ($this->deferredRegistry !== null && $container instanceof Container) {
-            $container->setDeferredProviderRegistry($this->deferredRegistry);
         }
 
         $this->registered = true;

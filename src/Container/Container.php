@@ -8,12 +8,14 @@ use Closure;
 use NoDiscard;
 use Override;
 use Pulsar\Container\Compiler\ContainerBuilder;
+use Pulsar\Container\Compiler\Pass\ValidateLifetimesPass;
 use Pulsar\Container\Compiler\PassRunner;
 use Pulsar\Container\Decorator\DecoratorChain;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Container\Lazy\LazyServiceFactory;
 use Pulsar\Container\Provider\DeferredProviderRegistry;
+use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use Pulsar\Container\Scope\ScopeManager;
 use ReflectionClass;
 use ReflectionException;
@@ -568,5 +570,28 @@ final class Container implements AdvancedContainerInterface
     {
         /** @var list<string> */
         return array_keys($this->instances);
+    }
+
+    #[Override]
+    public function validateScopeGraph(): void
+    {
+        $builder = new ContainerBuilder();
+
+        foreach ($this->definitions as $id => $definition) {
+            $builder->setDefinition($id, $definition);
+        }
+
+        $pass = new ValidateLifetimesPass();
+        $pass->process($builder);
+    }
+
+    #[Override]
+    public function registerDeferredProvider(DeferredServiceProviderInterface $provider): void
+    {
+        if ($this->deferredProviders === null) {
+            $this->deferredProviders = new DeferredProviderRegistry();
+        }
+
+        $this->deferredProviders->register($provider);
     }
 }

@@ -12,8 +12,6 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\Output\TableFormatter;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Container\AdvancedContainerInterface;
-use Pulsar\Container\Compiler\ContainerBuilder;
-use Pulsar\Container\Compiler\Pass\ValidateLifetimesPass;
 use Pulsar\Container\Scope\ScopeWideningException;
 use Pulsar\Core\KernelInterface;
 
@@ -88,17 +86,8 @@ final class DebugContainerCommand extends Command
             return ExitCode::Error->value;
         }
 
-        $definitions = $container->getDefinitions();
-        $builder = new ContainerBuilder();
-
-        foreach ($definitions as $id => $definition) {
-            $builder->setDefinition($id, $definition);
-        }
-
-        $pass = new ValidateLifetimesPass();
-
         try {
-            $pass->process($builder);
+            $container->validateScopeGraph();
         } catch (ScopeWideningException $e) {
             $output->errorln('Scope widening violation detected:');
             $output->newLine();
@@ -110,7 +99,7 @@ final class DebugContainerCommand extends Command
 
         $output->success(sprintf(
             'No scope widening violations found (%d definitions checked).',
-            count($definitions),
+            count($container->getDefinitions()),
         ));
 
         return ExitCode::Success->value;

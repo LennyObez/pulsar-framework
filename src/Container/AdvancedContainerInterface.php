@@ -6,6 +6,8 @@ namespace Pulsar\Container;
 
 use Pulsar\Api\Api;
 use Pulsar\Container\Compiler\PassRunner;
+use Pulsar\Container\Provider\DeferredServiceProviderInterface;
+use Pulsar\Container\Scope\ScopeWideningException;
 
 /**
  * Extended container interface for advanced DI features.
@@ -106,4 +108,21 @@ interface AdvancedContainerInterface extends ContainerInterface
      * @return array<string, ServiceDefinition>
      */
     public function getDefinitions(): array;
+
+    /**
+     * Validate the scope graph for lifetime widening violations.
+     *
+     * Checks that longer-lived services do not depend on shorter-lived ones
+     * (e.g., a Singleton depending on a RequestScope service).
+     *
+     * @throws ScopeWideningException If a scope widening violation is found
+     */
+    public function validateScopeGraph(): void;
+
+    /**
+     * Register a deferred service provider.
+     *
+     * Maps the provider's service IDs for lazy registration on first resolution.
+     */
+    public function registerDeferredProvider(DeferredServiceProviderInterface $provider): void;
 }

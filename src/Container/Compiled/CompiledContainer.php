@@ -14,6 +14,7 @@ use Pulsar\Container\ContextualBindingBuilder;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Container\Lifetime;
+use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use Pulsar\Container\Scope\ScopeManager;
 
 use function array_keys;
@@ -268,6 +269,20 @@ abstract class CompiledContainer implements AdvancedContainerInterface
      */
     #[Override]
     public function addContextualBinding(string $consumer, string $abstract, callable|string $concrete): void
+    {
+        throw new ContainerException(
+            'Cannot modify a compiled container. Run `pulsar cache:clear` to use the dynamic container.',
+        );
+    }
+
+    #[Override]
+    public function validateScopeGraph(): void
+    {
+        // No-op — scope validation happens at compile time
+    }
+
+    #[Override]
+    public function registerDeferredProvider(DeferredServiceProviderInterface $provider): void
     {
         throw new ContainerException(
             'Cannot modify a compiled container. Run `pulsar cache:clear` to use the dynamic container.',

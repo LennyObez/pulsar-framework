@@ -2000,6 +2000,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Security\\Crypto\\Encryptor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Security\\Crypto\\EncryptorInterface": {
       "since": "1.0.0",
       "methods": [],
