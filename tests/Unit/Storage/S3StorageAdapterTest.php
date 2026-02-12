@@ -13,6 +13,9 @@ use Pulsar\Storage\StorageException;
 use Pulsar\Storage\StorageObject;
 use ReflectionMethod;
 
+use function assert;
+use function is_string;
+
 #[CoversClass(S3StorageAdapter::class)]
 final class S3StorageAdapterTest extends TestCase
 {
@@ -156,20 +159,20 @@ final class S3StorageAdapterTest extends TestCase
         );
 
         $xml = <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-  <Contents>
-    <Key>docs/readme.md</Key>
-    <Size>1024</Size>
-    <LastModified>2024-06-15T10:00:00.000Z</LastModified>
-  </Contents>
-  <Contents>
-    <Key>docs/guide.md</Key>
-    <Size>2048</Size>
-    <LastModified>2024-06-14T10:00:00.000Z</LastModified>
-  </Contents>
-</ListBucketResult>
-XML;
+            <?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+              <Contents>
+                <Key>docs/readme.md</Key>
+                <Size>1024</Size>
+                <LastModified>2024-06-15T10:00:00.000Z</LastModified>
+              </Contents>
+              <Contents>
+                <Key>docs/guide.md</Key>
+                <Size>2048</Size>
+                <LastModified>2024-06-14T10:00:00.000Z</LastModified>
+              </Contents>
+            </ListBucketResult>
+            XML;
 
         /** @var list<StorageObject> $objects */
         $objects = $this->callPrivateMethod($adapter, 'parseListResponse', $xml);
@@ -190,15 +193,15 @@ XML;
         );
 
         $xml = <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<ListBucketResult>
-  <Contents>
-    <Key>test.txt</Key>
-    <Size>512</Size>
-    <LastModified>2024-01-01T00:00:00.000Z</LastModified>
-  </Contents>
-</ListBucketResult>
-XML;
+            <?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+              <Contents>
+                <Key>test.txt</Key>
+                <Size>512</Size>
+                <LastModified>2024-01-01T00:00:00.000Z</LastModified>
+              </Contents>
+            </ListBucketResult>
+            XML;
 
         /** @var list<StorageObject> $objects */
         $objects = $this->callPrivateMethod($adapter, 'parseListResponse', $xml);
@@ -218,15 +221,15 @@ XML;
         );
 
         $xml = <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-  <Contents>
-    <Key>uploads/photo.jpg</Key>
-    <Size>99999</Size>
-    <LastModified>2024-06-15T10:00:00.000Z</LastModified>
-  </Contents>
-</ListBucketResult>
-XML;
+            <?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+              <Contents>
+                <Key>uploads/photo.jpg</Key>
+                <Size>99999</Size>
+                <LastModified>2024-06-15T10:00:00.000Z</LastModified>
+              </Contents>
+            </ListBucketResult>
+            XML;
 
         /** @var list<StorageObject> $objects */
         $objects = $this->callPrivateMethod($adapter, 'parseListResponse', $xml);
@@ -258,10 +261,10 @@ XML;
         );
 
         $xml = <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
-</ListBucketResult>
-XML;
+            <?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+            </ListBucketResult>
+            XML;
 
         /** @var list<StorageObject> $objects */
         $objects = $this->callPrivateMethod($adapter, 'parseListResponse', $xml);

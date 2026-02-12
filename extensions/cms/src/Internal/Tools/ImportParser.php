@@ -969,7 +969,7 @@ final readonly class ImportParser
                 icon: isset($itemData['icon']) && is_string($itemData['icon']) ? $itemData['icon'] : null,
                 sortOrder: isset($itemData['sort_order']) && (is_int($itemData['sort_order']) || is_string($itemData['sort_order']))
                     ? (int) $itemData['sort_order']
-                    : (is_int($sortOrder) ? $sortOrder : 0),
+                    : $sortOrder,
                 visible: (bool) ($itemData['visible'] ?? true),
             );
             $translations = [];

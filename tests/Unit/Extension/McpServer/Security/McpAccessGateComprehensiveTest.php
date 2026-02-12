@@ -14,7 +14,6 @@ use Pulsar\Extension\McpServer\Config\McpSecurityConfig;
 use Pulsar\Extension\McpServer\Exception\McpSecurityException;
 use Pulsar\Extension\McpServer\Internal\Security\McpAccessGate;
 
-use function file_exists;
 use function file_put_contents;
 use function glob;
 use function is_dir;

@@ -11,6 +11,9 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Api\OpenApi\SecuritySchemeDefinition;
 use Pulsar\Api\OpenApi\SecuritySchemeType;
 
+use function assert;
+use function is_array;
+
 #[CoversClass(SecuritySchemeDefinition::class)]
 final class SecuritySchemeDefinitionTest extends TestCase
 {

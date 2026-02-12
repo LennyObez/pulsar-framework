@@ -9,6 +9,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Internal\Forms\ContentHeuristicScorer;
 
+use function assert;
+use function is_string;
+
 #[CoversClass(ContentHeuristicScorer::class)]
 final class ContentHeuristicScorerTest extends TestCase
 {

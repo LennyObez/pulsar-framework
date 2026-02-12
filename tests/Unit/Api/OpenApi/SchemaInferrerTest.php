@@ -16,9 +16,6 @@ use Pulsar\Tests\Unit\Api\OpenApi\Fixture\MixedPropertyDto;
 use Pulsar\Tests\Unit\Api\OpenApi\Fixture\NestedRefDto;
 use Pulsar\Tests\Unit\Api\OpenApi\Fixture\NullablePropertyDto;
 use Pulsar\Tests\Unit\Api\OpenApi\Fixture\StaticPropertyDto;
-use Pulsar\Tests\Unit\Api\OpenApi\Fixture\StringBackedStatusEnum;
-use Pulsar\Tests\Unit\Api\OpenApi\Fixture\IntBackedPriorityEnum;
-use Pulsar\Tests\Unit\Api\OpenApi\Fixture\UnitColorEnum;
 use Pulsar\Tests\Unit\Api\OpenApi\Fixture\UnionTypeDto;
 use Pulsar\Tests\Unit\Api\OpenApi\Fixture\WithApiFieldDto;
 use Pulsar\Tests\Unit\Api\OpenApi\Fixture\WithApiFieldFullDto;
@@ -371,7 +368,7 @@ final class SchemaInferrerTest extends TestCase
     public static function shortNameProvider(): iterable
     {
         yield 'fully qualified' => [SchemaInferrer::class, 'SchemaInferrer'];
-        yield 'single segment' => [\stdClass::class, 'stdClass'];
+        yield 'single segment' => [stdClass::class, 'stdClass'];
         yield 'deep namespace' => [DateTimeDto::class, 'DateTimeDto'];
     }
 

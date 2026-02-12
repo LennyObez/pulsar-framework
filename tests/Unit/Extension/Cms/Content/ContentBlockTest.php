@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Cms\Content;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -16,7 +17,7 @@ final class ContentBlockTest extends TestCase
     #[Test]
     public function constructorAssignsAllFields(): void
     {
-        $now = new \DateTimeImmutable('2025-01-01');
+        $now = new DateTimeImmutable('2025-01-01');
         $block = new ContentBlock(
             id: 'block-1',
             contentId: 'content-1',
@@ -73,9 +74,9 @@ final class ContentBlockTest extends TestCase
     #[Test]
     public function factoryMethodSetsTimestamps(): void
     {
-        $before = new \DateTimeImmutable();
+        $before = new DateTimeImmutable();
         $block = ContentBlock::text('b-1', 'c-1', 'en', 0, ['content' => 'x']);
-        $after = new \DateTimeImmutable();
+        $after = new DateTimeImmutable();
 
         self::assertGreaterThanOrEqual($before, $block->createdAt);
         self::assertLessThanOrEqual($after, $block->createdAt);

@@ -9,6 +9,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\ConfigOverrides;
 
+use function assert;
+use function is_array;
+
 #[CoversClass(ConfigOverrides::class)]
 final class ConfigOverridesTest extends TestCase
 {

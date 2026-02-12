@@ -6,11 +6,16 @@ namespace Pulsar\Tests\Unit\Extension\Studio\Console\Storage;
 
 use PDO;
 use PDOException;
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Studio\Console\Storage\SchemaManager;
 use Pulsar\Extension\Studio\Exception\StudioException;
+
+use function assert;
+use function is_array;
+use function is_string;
 
 #[CoversClass(SchemaManager::class)]
 final class SchemaManagerTest extends TestCase
@@ -168,7 +173,7 @@ final class SchemaManagerTest extends TestCase
 
         // Insert data
         $pdo->exec(
-            "INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) "
+            'INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) '
             . "VALUES ('evt-1', 'test', 1, 1000000, 'testing', 'localhost', '{}', 'hash')",
         );
 
@@ -177,7 +182,7 @@ final class SchemaManagerTest extends TestCase
 
         // Data should still exist
         $stmt = $pdo->query('SELECT COUNT(*) FROM studio_events');
-        assert($stmt instanceof \PDOStatement);
+        assert($stmt instanceof PDOStatement);
         self::assertSame(1, (int) $stmt->fetchColumn());
     }
 
@@ -190,7 +195,7 @@ final class SchemaManagerTest extends TestCase
         SchemaManager::ensureSchema($pdo);
 
         $stmt = $pdo->query('PRAGMA journal_mode');
-        assert($stmt instanceof \PDOStatement);
+        assert($stmt instanceof PDOStatement);
         $mode = $stmt->fetchColumn();
 
         // In-memory databases may report 'memory' rather than 'wal', but the pragma was issued
@@ -204,7 +209,7 @@ final class SchemaManagerTest extends TestCase
         SchemaManager::ensureSchema($pdo);
 
         $stmt = $pdo->query('PRAGMA busy_timeout');
-        assert($stmt instanceof \PDOStatement);
+        assert($stmt instanceof PDOStatement);
         $timeout = (int) $stmt->fetchColumn();
 
         self::assertSame(5000, $timeout);
@@ -217,7 +222,7 @@ final class SchemaManagerTest extends TestCase
         SchemaManager::ensureSchema($pdo);
 
         $stmt = $pdo->query('PRAGMA foreign_keys');
-        assert($stmt instanceof \PDOStatement);
+        assert($stmt instanceof PDOStatement);
         $fk = (int) $stmt->fetchColumn();
 
         self::assertSame(1, $fk);
@@ -232,14 +237,14 @@ final class SchemaManagerTest extends TestCase
         SchemaManager::ensureSchema($pdo);
 
         $pdo->exec(
-            "INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) "
+            'INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) '
             . "VALUES ('evt-dup', 'test', 1, 1000000, 'testing', 'localhost', '{}', 'hash')",
         );
 
         $this->expectException(PDOException::class);
 
         $pdo->exec(
-            "INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) "
+            'INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) '
             . "VALUES ('evt-dup', 'test', 1, 1000001, 'testing', 'localhost', '{}', 'hash2')",
         );
     }
@@ -252,18 +257,18 @@ final class SchemaManagerTest extends TestCase
 
         // Insert a valid event first
         $pdo->exec(
-            "INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) "
+            'INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) '
             . "VALUES ('evt-chain', 'test', 1, 1000000, 'testing', 'localhost', '{}', 'hash')",
         );
 
         // Chain link referencing it should succeed
         $pdo->exec(
-            "INSERT INTO studio_chain (event_id, previous_hash, current_hash) "
+            'INSERT INTO studio_chain (event_id, previous_hash, current_hash) '
             . "VALUES ('evt-chain', 'prev', 'curr')",
         );
 
         $stmt = $pdo->query("SELECT COUNT(*) FROM studio_chain WHERE event_id = 'evt-chain'");
-        assert($stmt instanceof \PDOStatement);
+        assert($stmt instanceof PDOStatement);
         self::assertSame(1, (int) $stmt->fetchColumn());
     }
 
@@ -277,7 +282,7 @@ final class SchemaManagerTest extends TestCase
 
         // Try to insert chain link referencing non-existent event
         $pdo->exec(
-            "INSERT INTO studio_chain (event_id, previous_hash, current_hash) "
+            'INSERT INTO studio_chain (event_id, previous_hash, current_hash) '
             . "VALUES ('nonexistent-evt', 'prev', 'curr')",
         );
     }
@@ -289,12 +294,12 @@ final class SchemaManagerTest extends TestCase
         SchemaManager::ensureSchema($pdo);
 
         $pdo->exec(
-            "INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) "
+            'INSERT INTO studio_events (event_id, event_type, schema_version, timestamp_us, app_env, hostname, payload_json, payload_hash) '
             . "VALUES ('evt-cascade', 'test', 1, 1000000, 'testing', 'localhost', '{}', 'hash')",
         );
 
         $pdo->exec(
-            "INSERT INTO studio_chain (event_id, previous_hash, current_hash) "
+            'INSERT INTO studio_chain (event_id, previous_hash, current_hash) '
             . "VALUES ('evt-cascade', 'prev', 'curr')",
         );
 
@@ -303,7 +308,7 @@ final class SchemaManagerTest extends TestCase
 
         // Chain link should be cascade-deleted
         $stmt = $pdo->query("SELECT COUNT(*) FROM studio_chain WHERE event_id = 'evt-cascade'");
-        assert($stmt instanceof \PDOStatement);
+        assert($stmt instanceof PDOStatement);
         self::assertSame(0, (int) $stmt->fetchColumn());
     }
 
@@ -333,7 +338,7 @@ final class SchemaManagerTest extends TestCase
     private function getTableNames(PDO $pdo): array
     {
         $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
-        assert($stmt instanceof \PDOStatement);
+        assert($stmt instanceof PDOStatement);
         /** @var list<string> $tables */
         $tables = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
@@ -346,7 +351,7 @@ final class SchemaManagerTest extends TestCase
     private function getColumnNames(PDO $pdo, string $table): array
     {
         $stmt = $pdo->query("PRAGMA table_info($table)");
-        assert($stmt instanceof \PDOStatement);
+        assert($stmt instanceof PDOStatement);
         $columns = [];
 
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -365,7 +370,7 @@ final class SchemaManagerTest extends TestCase
     private function getIndexNames(PDO $pdo): array
     {
         $stmt = $pdo->query("SELECT name FROM sqlite_master WHERE type='index' AND name NOT LIKE 'sqlite_%'");
-        assert($stmt instanceof \PDOStatement);
+        assert($stmt instanceof PDOStatement);
         /** @var list<string> $indexes */
         $indexes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 

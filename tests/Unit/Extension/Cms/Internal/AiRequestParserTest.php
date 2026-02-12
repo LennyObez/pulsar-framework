@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Extension\Cms\Internal;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Extension\Cms\Config\AiConfig;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Internal\Http\AiRequestParser;
 use Pulsar\Http\Message\Response;
-use Psr\Http\Message\ServerRequestInterface;
 
 #[CoversClass(AiRequestParser::class)]
 final class AiRequestParserTest extends TestCase

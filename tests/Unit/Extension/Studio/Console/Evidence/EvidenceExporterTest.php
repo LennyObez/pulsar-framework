@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceArchive;
 use Pulsar\Extension\Studio\Console\Evidence\EvidenceExporter;
-use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Exception\StudioException;
 use Pulsar\Security\Crypto\HmacInterface;

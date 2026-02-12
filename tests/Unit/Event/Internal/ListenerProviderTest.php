@@ -17,6 +17,9 @@ use Pulsar\Event\Internal\ListenerProvider;
 use RuntimeException;
 use stdClass;
 
+use function assert;
+use function is_object;
+
 #[CoversClass(ListenerProvider::class)]
 final class ListenerProviderTest extends TestCase
 {

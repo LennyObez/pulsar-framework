@@ -7,11 +7,9 @@ namespace Pulsar\Tests\Unit\Extension\Grpc\Server;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use Psr\Log\NullLogger;
 use Pulsar\Extension\Grpc\Adapter\GrpcTransportAdapterInterface;
 use Pulsar\Extension\Grpc\Config\GrpcConfig;
 use Pulsar\Extension\Grpc\Error\GrpcStatus;
@@ -19,7 +17,6 @@ use Pulsar\Extension\Grpc\Handler\MethodDescriptor;
 use Pulsar\Extension\Grpc\Handler\MethodType;
 use Pulsar\Extension\Grpc\Handler\ServiceHandlerInterface;
 use Pulsar\Extension\Grpc\Interceptor\InterceptorPipeline;
-use Pulsar\Extension\Grpc\Interceptor\InterceptorResult;
 use Pulsar\Extension\Grpc\Server\GrpcServer;
 use Pulsar\Extension\Grpc\Server\ServiceRegistryInterface;
 use RuntimeException;
@@ -28,16 +25,16 @@ use RuntimeException;
 final class GrpcServerTest extends TestCase
 {
     private GrpcConfig $config;
-    private ServiceRegistryInterface & MockObject $registry;
-    private GrpcTransportAdapterInterface & MockObject $adapter;
+    private ServiceRegistryInterface & Stub $registry;
+    private GrpcTransportAdapterInterface & Stub $adapter;
     private InterceptorPipeline $pipeline;
     private LoggerInterface & Stub $logger;
 
     protected function setUp(): void
     {
         $this->config = new GrpcConfig(host: '127.0.0.1', port: 50051);
-        $this->registry = $this->createMock(ServiceRegistryInterface::class);
-        $this->adapter = $this->createMock(GrpcTransportAdapterInterface::class);
+        $this->registry = $this->createStub(ServiceRegistryInterface::class);
+        $this->adapter = $this->createStub(GrpcTransportAdapterInterface::class);
         $this->pipeline = new InterceptorPipeline([]);
         $this->logger = $this->createStub(LoggerInterface::class);
     }
@@ -58,11 +55,12 @@ final class GrpcServerTest extends TestCase
     #[Test]
     public function startThrowsWhenNoServicesRegistered(): void
     {
-        $this->registry->expects(self::once())
+        $registry = $this->createMock(ServiceRegistryInterface::class);
+        $registry->expects(self::once())
             ->method('isEmpty')
             ->willReturn(true);
 
-        $server = $this->makeServer();
+        $server = new GrpcServer($this->config, $registry, $this->adapter, $this->pipeline);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('no services registered');
@@ -73,17 +71,18 @@ final class GrpcServerTest extends TestCase
     #[Test]
     public function startThrowsWhenAdapterNotAvailable(): void
     {
-        $this->registry->expects(self::once())
+        $registry = $this->createMock(ServiceRegistryInterface::class);
+        $registry->expects(self::once())
             ->method('isEmpty')
             ->willReturn(false);
 
-        $this->adapter->expects(self::once())
+        $adapter = $this->createMock(GrpcTransportAdapterInterface::class);
+        $adapter->expects(self::once())
             ->method('isAvailable')
             ->willReturn(false);
+        $adapter->method('name')->willReturn('test-adapter');
 
-        $this->adapter->method('name')->willReturn('test-adapter');
-
-        $server = $this->makeServer();
+        $server = new GrpcServer($this->config, $registry, $adapter, $this->pipeline);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('transport adapter "test-adapter" is not available');
@@ -95,13 +94,14 @@ final class GrpcServerTest extends TestCase
     public function startCallsAdapterListenWithCorrectHostPort(): void
     {
         $this->registry->method('isEmpty')->willReturn(false);
-        $this->adapter->method('isAvailable')->willReturn(true);
 
-        $this->adapter->expects(self::once())
+        $adapter = $this->createMock(GrpcTransportAdapterInterface::class);
+        $adapter->method('isAvailable')->willReturn(true);
+        $adapter->expects(self::once())
             ->method('listen')
             ->with('127.0.0.1', 50051, self::isInstanceOf(GrpcServer::class));
 
-        $server = $this->makeServer();
+        $server = new GrpcServer($this->config, $this->registry, $adapter, $this->pipeline);
         $server->start();
     }
 
@@ -109,16 +109,18 @@ final class GrpcServerTest extends TestCase
     public function startPassesServerAsHandler(): void
     {
         $this->registry->method('isEmpty')->willReturn(false);
-        $this->adapter->method('isAvailable')->willReturn(true);
+
+        $adapter = $this->createMock(GrpcTransportAdapterInterface::class);
+        $adapter->method('isAvailable')->willReturn(true);
 
         $capturedHandler = null;
-        $this->adapter->expects(self::once())
+        $adapter->expects(self::once())
             ->method('listen')
             ->willReturnCallback(function (string $host, int $port, $handler) use (&$capturedHandler): void {
                 $capturedHandler = $handler;
             });
 
-        $server = $this->makeServer();
+        $server = new GrpcServer($this->config, $this->registry, $adapter, $this->pipeline);
         $server->start();
 
         self::assertSame($server, $capturedHandler);
@@ -129,9 +131,10 @@ final class GrpcServerTest extends TestCase
     #[Test]
     public function stopCallsAdapterShutdown(): void
     {
-        $this->adapter->expects(self::once())->method('shutdown');
+        $adapter = $this->createMock(GrpcTransportAdapterInterface::class);
+        $adapter->expects(self::once())->method('shutdown');
 
-        $server = $this->makeServer();
+        $server = new GrpcServer($this->config, $this->registry, $adapter, $this->pipeline);
         $server->stop();
     }
 
@@ -140,12 +143,13 @@ final class GrpcServerTest extends TestCase
     #[Test]
     public function handleReturnsUnimplementedForUnknownMethod(): void
     {
-        $this->registry->expects(self::once())
+        $registry = $this->createMock(ServiceRegistryInterface::class);
+        $registry->expects(self::once())
             ->method('resolve')
             ->with('/unknown.Service/UnknownMethod')
             ->willReturn(null);
 
-        $server = $this->makeServer($this->logger);
+        $server = new GrpcServer($this->config, $registry, $this->adapter, $this->pipeline, $this->logger);
         $result = $server->handle('/unknown.Service/UnknownMethod', 'payload');
 
         self::assertSame(GrpcStatus::Unimplemented, $result->status);
@@ -167,12 +171,13 @@ final class GrpcServerTest extends TestCase
         $handler = $this->createStub(ServiceHandlerInterface::class);
         $handler->method('invoke')->willReturn('hello-response');
 
-        $this->registry->expects(self::once())
+        $registry = $this->createMock(ServiceRegistryInterface::class);
+        $registry->expects(self::once())
             ->method('resolve')
             ->with('/greeter.Greeter/SayHello')
             ->willReturn([$method, $handler]);
 
-        $server = $this->makeServer();
+        $server = new GrpcServer($this->config, $registry, $this->adapter, $this->pipeline);
         $result = $server->handle('/greeter.Greeter/SayHello', 'hello-request');
 
         self::assertTrue($result->isOk());
@@ -247,13 +252,11 @@ final class GrpcServerTest extends TestCase
 
         $this->registry->method('resolve')->willReturn([$method, $handler]);
 
-        $beforeTime = microtime(true);
         $metadata = ['grpc-timeout' => [$timeout]];
 
         $server = $this->makeServer();
         $result = $server->handle('/test.Service/Slow', '', $metadata);
 
-        // Can't directly inspect the deadline, but we verify dispatch succeeded
         self::assertTrue($result->isOk());
     }
 
@@ -382,13 +385,14 @@ final class GrpcServerTest extends TestCase
     {
         $config = new GrpcConfig(host: '192.168.1.1', port: 9090);
         $this->registry->method('isEmpty')->willReturn(false);
-        $this->adapter->method('isAvailable')->willReturn(true);
 
-        $this->adapter->expects(self::once())
+        $adapter = $this->createMock(GrpcTransportAdapterInterface::class);
+        $adapter->method('isAvailable')->willReturn(true);
+        $adapter->expects(self::once())
             ->method('listen')
             ->with('192.168.1.1', 9090, self::anything());
 
-        $server = new GrpcServer($config, $this->registry, $this->adapter, $this->pipeline);
+        $server = new GrpcServer($config, $this->registry, $adapter, $this->pipeline);
         $server->start();
     }
 }

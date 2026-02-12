@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\Exception\ApiException;
-use Pulsar\Api\Resource\FieldPolicy;
 use Pulsar\Api\Resource\ResourceMetadata;
 use Pulsar\Security\Compliance\DataClassification;
 use Pulsar\Tests\Unit\Api\Resource\Fixture\FilterableSortableResource;

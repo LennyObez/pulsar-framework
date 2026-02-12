@@ -15,6 +15,8 @@ import '../styles/cms-page-builder.css';
 import '../styles/cms-inline-editor.css';
 import '../styles/cms-media-picker.css';
 import '../styles/cms-block-inserter.css';
+import '../styles/cms-newsletter.css';
+import '../styles/cms-comments.css';
 
 // --- Shared utilities ---
 export { escapeHtml } from './utils/escapeHtml';
@@ -27,6 +29,13 @@ import './gallery/ImageCompare';
 
 // --- Forms ---
 import './forms/ProofOfWork';
+
+// --- Newsletter ---
+import './newsletter/NewsletterSignup';
+
+// --- Comments ---
+import './comments/CommentsComponent';
+import './comments/CommentForm';
 
 // --- UI components ---
 import './ui/ToastContainer';

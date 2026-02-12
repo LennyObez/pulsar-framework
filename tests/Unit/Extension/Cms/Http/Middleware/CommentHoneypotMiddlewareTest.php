@@ -22,7 +22,7 @@ final class CommentHoneypotMiddlewareTest extends TestCase
         $auditLogger = $this->createStub(AuditLoggerInterface::class);
         $middleware = new CommentHoneypotMiddleware($auditLogger);
 
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'Nice post!', 'website_url' => '']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -41,7 +41,7 @@ final class CommentHoneypotMiddlewareTest extends TestCase
         $auditLogger = $this->createStub(AuditLoggerInterface::class);
         $middleware = new CommentHoneypotMiddleware($auditLogger);
 
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'Nice post!']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -62,7 +62,7 @@ final class CommentHoneypotMiddlewareTest extends TestCase
 
         $middleware = new CommentHoneypotMiddleware($auditLogger);
 
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'Buy now!', 'website_url' => 'http://spam.com']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -101,7 +101,7 @@ final class CommentHoneypotMiddlewareTest extends TestCase
 
         $middleware = new CommentHoneypotMiddleware($auditLogger, honeypotField: 'fax_number');
 
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'Spam', 'fax_number' => '555-1234']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);

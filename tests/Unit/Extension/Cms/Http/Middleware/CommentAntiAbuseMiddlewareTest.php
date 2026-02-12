@@ -44,7 +44,7 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
     #[Test]
     public function processPassesThroughForMissingBodyField(): void
     {
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['name' => 'Test']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -60,7 +60,7 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
     #[Test]
     public function processPassesThroughForEmptyBody(): void
     {
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => '']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -78,7 +78,7 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
     {
         $middleware = new CommentAntiAbuseMiddleware($this->heuristics, maxLength: 10);
 
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'This comment exceeds the max length']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -93,7 +93,7 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
     #[Test]
     public function processRejects422ForExcessiveRepetition(): void
     {
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'aaaaaaaaaa repeating']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -110,7 +110,7 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
     {
         $middleware = new CommentAntiAbuseMiddleware($this->heuristics, maxLinks: 2);
 
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'Visit https://a.com https://b.com https://c.com']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -125,7 +125,7 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
     #[Test]
     public function processPassesThroughForValidComment(): void
     {
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'Great article, thank you!']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
@@ -147,7 +147,7 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
         $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturn($validResponse);
 
-        $request = (new ServerRequest(method: 'POST', uri: '/comments'))
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'Exact same comment']);
 
         // First submission succeeds

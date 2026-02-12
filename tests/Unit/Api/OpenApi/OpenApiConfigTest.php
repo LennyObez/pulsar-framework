@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\OpenApi\OpenApiConfig;
 use Pulsar\Api\OpenApi\SecuritySchemeDefinition;
+use stdClass;
 
 #[CoversClass(OpenApiConfig::class)]
 final class OpenApiConfigTest extends TestCase
@@ -209,7 +210,7 @@ final class OpenApiConfigTest extends TestCase
                 'not-a-scheme',
                 42,
                 null,
-                new \stdClass(),
+                new stdClass(),
             ],
         ]);
 

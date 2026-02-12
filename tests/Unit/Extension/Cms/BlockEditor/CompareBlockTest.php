@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\BlockEditor\CoreBlocks\CompareBlock;
 
+use function count;
+
 #[CoversClass(CompareBlock::class)]
 final class CompareBlockTest extends TestCase
 {

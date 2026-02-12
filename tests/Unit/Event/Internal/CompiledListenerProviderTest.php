@@ -15,6 +15,9 @@ use Pulsar\Event\Internal\CompiledListenerProvider;
 use RuntimeException;
 use stdClass;
 
+use function assert;
+use function is_array;
+
 #[CoversClass(CompiledListenerProvider::class)]
 final class CompiledListenerProviderTest extends TestCase
 {

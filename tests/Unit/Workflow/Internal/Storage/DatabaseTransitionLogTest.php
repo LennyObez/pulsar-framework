@@ -17,6 +17,9 @@ use Pulsar\Workflow\Internal\Storage\DatabaseTransitionLog;
 use Pulsar\Workflow\Storage\TransitionRecord;
 use RuntimeException;
 
+use function assert;
+use function is_array;
+use function is_string;
 use function json_decode;
 use function json_encode;
 

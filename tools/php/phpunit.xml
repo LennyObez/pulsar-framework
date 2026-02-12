@@ -33,7 +33,7 @@
         </testsuite>
     </testsuites>
     <php>
-        <ini name="memory_limit" value="2G"/>
+        <ini name="memory_limit" value="3G"/>
     </php>
     <source>
         <include>

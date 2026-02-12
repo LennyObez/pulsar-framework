@@ -11,6 +11,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Internal\Plugins\PluginManifestValidator;
 use Pulsar\Extension\Cms\Plugins\PluginManifest;
 
+use function count;
+
 #[CoversClass(PluginManifestValidator::class)]
 final class PluginManifestValidatorTest extends TestCase
 {
