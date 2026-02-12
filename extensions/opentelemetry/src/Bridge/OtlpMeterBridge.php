@@ -16,7 +16,6 @@ use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Metrics\MetricSnapshot;
 use Pulsar\Observability\Metrics\MetricType;
 
-use function count;
 use function explode;
 use function microtime;
 use function str_contains;

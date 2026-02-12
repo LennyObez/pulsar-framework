@@ -21,7 +21,7 @@ use Throwable;
  * 3. On lock timeout: retry get (another process may have regenerated), fallback to callback
  */
 #[Internal]
-final class StampedeGuard
+final readonly class StampedeGuard
 {
     private readonly Randomizer $randomizer;
 

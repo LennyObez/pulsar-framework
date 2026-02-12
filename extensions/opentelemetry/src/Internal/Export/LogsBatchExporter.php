@@ -19,14 +19,14 @@ use Pulsar\Extension\OpenTelemetry\Internal\Transport\OtlpTransportInterface;
  * the standard OTLP /v1/logs endpoint path.
  */
 #[Internal(reason: 'Logs-specific batch export wiring')]
-final class LogsBatchExporter
+final readonly class LogsBatchExporter
 {
     /** @var BatchExporter<OtlpLogRecord> */
-    private readonly BatchExporter $batchExporter;
+    private BatchExporter $batchExporter;
 
     public function __construct(
         OtlpTransportInterface $transport,
-        private readonly ResourceInfo $resource,
+        private ResourceInfo $resource,
         LogsRequestBuilder $builder = new LogsRequestBuilder(),
         int $maxBatchSize = 512,
         int $maxQueueSize = 2048,

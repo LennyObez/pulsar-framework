@@ -10,6 +10,7 @@ use Pulsar\Api\Api;
 use function array_flip;
 use function array_intersect_key;
 use function array_key_exists;
+use function array_map;
 use function sprintf;
 
 /**
@@ -20,12 +21,12 @@ use function sprintf;
  * occurrence and tracked in a bounded set.
  */
 #[Api(since: '1.0.0')]
-final class AttributeAllowlist
+final readonly class AttributeAllowlist
 {
-    private readonly OverflowTracker $unknownTracker;
+    private OverflowTracker $unknownTracker;
 
     /** @var array<string, array<string, int>> Pre-computed allowlist lookup tables */
-    private readonly array $allowedLookup;
+    private array $allowedLookup;
 
     /**
      * @param array<string, list<string>> $allowedKeys Mapping of scope name to allowed attribute keys
@@ -34,15 +35,9 @@ final class AttributeAllowlist
     public function __construct(
         array $allowedKeys,
         int $maxTrackedUnknowns = 1000,
-        private readonly ?LoggerInterface $logger = null,
+        private ?LoggerInterface $logger = null,
     ) {
-        $lookup = [];
-
-        foreach ($allowedKeys as $scope => $keys) {
-            $lookup[$scope] = array_flip($keys);
-        }
-
-        $this->allowedLookup = $lookup;
+        $this->allowedLookup = array_map(array_flip(...), $allowedKeys);
         $this->unknownTracker = new OverflowTracker($maxTrackedUnknowns);
     }
 

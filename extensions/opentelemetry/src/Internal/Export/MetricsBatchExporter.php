@@ -19,14 +19,14 @@ use Pulsar\Extension\OpenTelemetry\Internal\Transport\OtlpTransportInterface;
  * the standard OTLP /v1/metrics endpoint path.
  */
 #[Internal(reason: 'Metrics-specific batch export wiring')]
-final class MetricsBatchExporter
+final readonly class MetricsBatchExporter
 {
     /** @var BatchExporter<OtlpMetric> */
-    private readonly BatchExporter $batchExporter;
+    private BatchExporter $batchExporter;
 
     public function __construct(
         OtlpTransportInterface $transport,
-        private readonly ResourceInfo $resource,
+        private ResourceInfo $resource,
         MetricsRequestBuilder $builder = new MetricsRequestBuilder(),
         int $maxBatchSize = 512,
         int $maxQueueSize = 2048,

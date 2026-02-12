@@ -30,7 +30,7 @@ use function usleep;
  * negligibly small. For distributed locking, prefer RedisLock.
  */
 #[Internal]
-final class ApcuLock implements LockInterface
+final readonly class ApcuLock implements LockInterface
 {
     private readonly Randomizer $randomizer;
 

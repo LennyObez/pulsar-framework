@@ -27,7 +27,7 @@ use function usleep;
  * guarantees, prefer RedisLock which uses Lua scripts for atomic operations.
  */
 #[Internal]
-final class MemcachedLock implements LockInterface
+final readonly class MemcachedLock implements LockInterface
 {
     private readonly Randomizer $randomizer;
 

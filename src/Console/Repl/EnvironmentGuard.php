@@ -40,15 +40,16 @@ final readonly class EnvironmentGuard
             );
         }
 
-        // Production requires config enabled AND --i-know-what-im-doing
-        if ($this->mode === EnvironmentMode::Production) {
-            if (!$this->configEnabled) {
-                return new GuardResult(
-                    allowed: false,
-                    reason: 'REPL is not enabled. Set REPL_ENABLED=true in your environment or config/repl.php.',
-                );
-            }
+        // All environments require config enabled
+        if (!$this->configEnabled) {
+            return new GuardResult(
+                allowed: false,
+                reason: 'REPL is not enabled. Set REPL_ENABLED=true in your environment or config/repl.php.',
+            );
+        }
 
+        // Production additionally requires --i-know-what-im-doing
+        if ($this->mode === EnvironmentMode::Production) {
             if (!$forceFlag) {
                 return new GuardResult(
                     allowed: false,
@@ -60,14 +61,6 @@ final readonly class EnvironmentGuard
                 allowed: true,
                 reason: 'Production REPL override acknowledged.',
                 isProductionOverride: true,
-            );
-        }
-
-        // Staging and Local require config enabled
-        if (!$this->configEnabled) {
-            return new GuardResult(
-                allowed: false,
-                reason: 'REPL is not enabled. Set REPL_ENABLED=true in your environment or config/repl.php.',
             );
         }
 

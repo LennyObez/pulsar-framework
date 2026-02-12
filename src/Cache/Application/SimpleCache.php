@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * PSR-16 CacheInterface implementation wrapping a PSR-6 CachePool.
  */
 #[Api(since: '1.0.0')]
-final class SimpleCache implements CacheInterface
+final readonly class SimpleCache implements CacheInterface
 {
     public function __construct(
         private readonly CachePool $pool,
@@ -133,8 +133,8 @@ final class SimpleCache implements CacheInterface
     {
         $result = [];
 
-        foreach ($iterable as $item) {
-            $result[] = $item;
+        foreach ($iterable as $value) {
+            $result[] = $value;
         }
 
         return $result;

@@ -18,7 +18,7 @@ use function unserialize;
  * Pass an explicit allowlist to the constructor to permit specific classes.
  */
 #[Internal]
-final class PhpCacheSerializer implements CacheSerializerInterface
+final readonly class PhpCacheSerializer implements CacheSerializerInterface
 {
     /**
      * @param list<class-string> $allowedClasses Classes allowed during deserialization

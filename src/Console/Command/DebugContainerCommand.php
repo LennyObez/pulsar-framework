@@ -131,7 +131,6 @@ final class DebugContainerCommand extends Command
 
         $definitions = $container->getDefinitions();
 
-        /** @var array<string, list<array{id: string, priority: int}>> */
         $tagGroups = [];
 
         foreach ($definitions as $id => $definition) {

@@ -23,13 +23,7 @@ readonly class LintResult
 
     public function hasErrors(): bool
     {
-        foreach ($this->issues as $issue) {
-            if ($issue['severity'] === LintSeverity::Error) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->issues, static fn(array $issue): bool => $issue['severity'] === LintSeverity::Error);
     }
 
     public function count(): int

@@ -26,7 +26,7 @@ use const JSON_THROW_ON_ERROR;
  * Validates tag versions on read — stale items are treated as misses.
  */
 #[Api(since: '1.0.0')]
-final class TaggedCache implements TaggedCacheInterface
+final readonly class TaggedCache implements TaggedCacheInterface
 {
     public function __construct(
         private readonly string $poolName,
@@ -155,7 +155,7 @@ final class TaggedCache implements TaggedCacheInterface
         $this->tagStrategy->invalidateTags($tags);
     }
 
-    private function handleError(string $key, int $startNs, Throwable $e): mixed
+    private function handleError(string $key, int $startNs, Throwable $e): null
     {
         $this->eventEmitter->emitError(
             $this->poolName,

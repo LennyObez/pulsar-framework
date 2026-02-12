@@ -219,11 +219,9 @@ final readonly class OpenTelemetryConfig
     {
         return match (strtolower($name)) {
             'always_on' => SamplerType::Always,
-            'always_off' => SamplerType::Never,
+            'always_off', 'parentbased_always_off' => SamplerType::Never,
             'traceidratio' => SamplerType::Probability,
-            'parentbased_always_on' => SamplerType::ParentBased,
-            'parentbased_always_off' => SamplerType::Never,
-            'parentbased_traceidratio' => SamplerType::ParentBased,
+            'parentbased_always_on', 'parentbased_traceidratio' => SamplerType::ParentBased,
             default => SamplerType::tryFrom($name),
         };
     }
@@ -241,16 +239,11 @@ final readonly class OpenTelemetryConfig
         foreach ($pairs as $pair) {
             $pair = trim($pair);
 
-            if ($pair === '' || !str_contains($pair, '=')) {
-                continue;
-            }
-
             $equalsPos = strpos($pair, '=');
 
-            if ($equalsPos === false) {
+            if ($pair === '' || $equalsPos === false) {
                 continue;
             }
-
             $key = trim(substr($pair, 0, $equalsPos));
             $value = trim(substr($pair, $equalsPos + 1));
 

@@ -503,7 +503,7 @@ if ($kernel->container()->has(StudioConfig::class)) {
     /** @var array<string, mixed> $replData */
     $replData = is_file($replConfigFile) ? (require $replConfigFile) : [];
 
-    $replEnvironment = $configManager?->environment() ?? Environment::load(null);
+    $replEnvironment = $configManager?->environment() ?? Environment::load();
     $replMode = $replEnvironment->resolveMode();
     $replConfig = is_array($replData) ? ReplConfig::fromArray($replData, $replEnvironment) : new ReplConfig();
     $replGuard = new EnvironmentGuard($replMode, $replEnvironment, $replConfig->enabled);

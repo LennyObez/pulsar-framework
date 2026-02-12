@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Console\Repl;
 
+use Psr\Cache\CacheItemPoolInterface;
+use Psr\SimpleCache\CacheInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
@@ -73,13 +75,13 @@ final readonly class SafeModeProvider
     private function wrapSimpleCache(): void
     {
         /** @var class-string $interface */
-        $interface = \Psr\SimpleCache\CacheInterface::class;
+        $interface = CacheInterface::class;
 
         if (!interface_exists($interface) || !$this->container->has($interface)) {
             return;
         }
 
-        /** @var \Psr\SimpleCache\CacheInterface $cache */
+        /** @var CacheInterface $cache */
         $cache = $this->container->get($interface);
         $this->container->instance($interface, new ReadOnlySimpleCache($cache));
     }
@@ -87,13 +89,13 @@ final readonly class SafeModeProvider
     private function wrapCachePool(): void
     {
         /** @var class-string $interface */
-        $interface = \Psr\Cache\CacheItemPoolInterface::class;
+        $interface = CacheItemPoolInterface::class;
 
         if (!interface_exists($interface) || !$this->container->has($interface)) {
             return;
         }
 
-        /** @var \Psr\Cache\CacheItemPoolInterface $pool */
+        /** @var CacheItemPoolInterface $pool */
         $pool = $this->container->get($interface);
         $this->container->instance($interface, new ReadOnlyCachePool($pool));
     }

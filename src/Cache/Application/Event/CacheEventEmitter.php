@@ -48,7 +48,7 @@ final class CacheEventEmitter
         private readonly ?LoggerInterface $logger = null,
         ?callable $keyHasher = null,
     ) {
-        /** @var ?Closure(string): string $typedHasher */
+        /** @var (Closure(string): string)|null $typedHasher */
         $typedHasher = $keyHasher !== null ? Closure::fromCallable($keyHasher) : null;
         $this->keyHasher = $typedHasher;
     }

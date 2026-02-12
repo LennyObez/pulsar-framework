@@ -207,7 +207,6 @@ final class ContainerCompiler
                 '        %s => Lifetime::%s,',
                 var_export($id, true),
                 match ($lifetime) {
-                    'singleton' => 'Singleton',
                     'transient' => 'Transient',
                     'request' => 'RequestScope',
                     'tenant' => 'TenantScope',

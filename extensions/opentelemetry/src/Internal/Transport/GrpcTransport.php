@@ -11,7 +11,6 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Pulsar\Api\Internal;
 
-use function curl_close;
 use function curl_errno;
 use function curl_error;
 use function curl_exec;
@@ -112,7 +111,7 @@ final class GrpcTransport implements OtlpTransportInterface
         $ch = curl_init();
 
         if ($ch === false) {
-            return TransportResult::failure(httpStatus: 0, message: 'Failed to initialize curl', retryable: false);
+            return TransportResult::failure(httpStatus: 0, message: 'Failed to initialize curl');
         }
 
         try {
@@ -166,7 +165,6 @@ final class GrpcTransport implements OtlpTransportInterface
                 return TransportResult::failure(
                     httpStatus: $httpStatus,
                     message: 'gRPC response missing grpc-status trailer',
-                    retryable: false,
                 );
             }
 
@@ -180,7 +178,7 @@ final class GrpcTransport implements OtlpTransportInterface
                 retryable: self::isRetryableGrpcCode($grpcStatus),
             );
         } finally {
-            curl_close($ch);
+            unset($ch);
         }
     }
 

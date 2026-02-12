@@ -259,7 +259,6 @@ final class OpenTelemetryExtension implements ExtensionInterface, PreBootExtensi
                 $filePath = $configPath . DIRECTORY_SEPARATOR . 'opentelemetry.php';
 
                 if (is_file($filePath)) {
-                    /** @var mixed $data */
                     $data = require $filePath;
 
                     if (is_array($data)) {

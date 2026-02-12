@@ -19,14 +19,14 @@ use Pulsar\Extension\OpenTelemetry\Internal\Transport\OtlpTransportInterface;
  * the standard OTLP /v1/traces endpoint path.
  */
 #[Internal(reason: 'Span-specific batch export wiring')]
-final class SpanBatchExporter
+final readonly class SpanBatchExporter
 {
     /** @var BatchExporter<OtlpSpan> */
-    private readonly BatchExporter $batchExporter;
+    private BatchExporter $batchExporter;
 
     public function __construct(
         OtlpTransportInterface $transport,
-        private readonly ResourceInfo $resource,
+        private ResourceInfo $resource,
         TraceRequestBuilder $builder = new TraceRequestBuilder(),
         int $maxBatchSize = 512,
         int $maxQueueSize = 2048,

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Console\Repl;
 
 use Override;
+use Psy\Configuration;
+use Psy\Shell;
 use Pulsar\Api\Internal;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Config\ReplConfig;
@@ -16,7 +18,6 @@ use Pulsar\Container\ContainerInterface;
 
 use function class_exists;
 use function implode;
-use function is_int;
 use function is_string;
 use function microtime;
 use function sprintf;
@@ -146,9 +147,9 @@ final class ShellCommand extends Command
      */
     private function runPsyShell(array $scopeVars): int
     {
-        /** @var class-string<\Psy\Configuration> $configClass */
+        /** @var class-string<Configuration> $configClass */
         $configClass = 'Psy\\Configuration';
-        /** @var class-string<\Psy\Shell> $shellClass */
+        /** @var class-string<Shell> $shellClass */
         $shellClass = 'Psy\\Shell';
 
         $psyConfig = new $configClass([
@@ -164,10 +165,8 @@ final class ShellCommand extends Command
             $shell->addInput(implode("\n", $this->config->startupCommands));
         }
 
-        /** @var mixed $result */
-        $result = $shell->run();
-
-        return is_int($result) ? $result : ExitCode::Success->value;
+        /** @var int */
+        return $shell->run();
     }
 
     /**

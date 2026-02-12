@@ -64,7 +64,8 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Pulsar\\Tests\\": "tests/"
+      "Pulsar\\Tests\\": "tests/",
+      "Pulsar\\Extension\\OpenTelemetry\\Tests\\": "extensions/opentelemetry/tests/"
     }
   },
   "bin": [

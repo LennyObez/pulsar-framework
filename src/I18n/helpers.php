@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Pulsar\I18n\Translator;
+
 if (!function_exists('__')) {
     /**
      * Translate a message key.
@@ -15,7 +17,7 @@ if (!function_exists('__')) {
      */
     function __(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string
     {
-        return Pulsar\I18n\Translator::getGlobalInstance()->translate($key, $parameters, $locale, $domain);
+        return Translator::getGlobalInstance()->translate($key, $parameters, $locale, $domain);
     }
 }
 
@@ -32,6 +34,6 @@ if (!function_exists('trans')) {
      */
     function trans(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string
     {
-        return Pulsar\I18n\Translator::getGlobalInstance()->translate($key, $parameters, $locale, $domain);
+        return Translator::getGlobalInstance()->translate($key, $parameters, $locale, $domain);
     }
 }

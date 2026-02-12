@@ -10,7 +10,6 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Pulsar\Api\Internal;
 
-use function curl_close;
 use function curl_errno;
 use function curl_error;
 use function curl_exec;
@@ -85,18 +84,14 @@ final class HttpProtobufTransport implements OtlpTransportInterface
             $this->tlsWarningLogged = true;
         }
 
+        /** @var non-empty-string $url */
         $url = $this->endpoint . $path;
-
-        if ($url === '') {
-            return TransportResult::failure(httpStatus: 0, message: 'Empty URL', retryable: false);
-        }
-
         $curlHeaders = self::buildHeaderLines($this->headers);
 
         $ch = curl_init();
 
         if ($ch === false) {
-            return TransportResult::failure(httpStatus: 0, message: 'Failed to initialize curl', retryable: false);
+            return TransportResult::failure(httpStatus: 0, message: 'Failed to initialize curl');
         }
 
         try {
@@ -134,7 +129,7 @@ final class HttpProtobufTransport implements OtlpTransportInterface
                 retryable: self::isRetryableHttpCode($httpStatus),
             );
         } finally {
-            curl_close($ch);
+            unset($ch);
         }
     }
 

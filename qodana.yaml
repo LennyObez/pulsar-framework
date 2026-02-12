@@ -4,6 +4,7 @@
 
 version: '1.0'
 linter: jetbrains/qodana-php:2025.3
+bootstrap: composer install --no-interaction --ignore-platform-reqs
 profile:
   name: qodana.recommended
 include:
@@ -22,6 +23,11 @@ exclude:
   - name: PhpUndefinedVariableInspection
   - name: PhpUndefinedConstantInspection
   - name: PhpExpressionResultUnusedInspection
+  # #[Override] on PSR interface implementations — Qodana 2025.3 ships PHP 8.4 and cannot
+  # verify interface implementations when composer.json requires ^8.5 (PSR packages may
+  # fail to install even with --ignore-platform-reqs due to transitive constraints).
+  # PHPStan max + Psalm level 1 validate #[Override] correctness authoritatively.
+  - name: PhpAttributeIsUsedOnOverriddenMethodInspection
   # Redundant visibility modifier - CS Fixer (PER-CS2.0) enforces explicit `public` on
   # `private(set)` properties; Qodana flags it as redundant. CS Fixer is authoritative.
   - name: PhpPublicPropertyModifierCanBeOmittedInspection
@@ -39,6 +45,9 @@ exclude:
   - name: PhpUnusedParameterInspection
   # ext-pcntl is intentionally in `suggest` (Unix-only, guarded by function_exists())
   # ext-sockets is intentionally in `suggest` (guarded by extension_loaded() at PersistentRuntime:88)
+  # ext-apcu is in `suggest` (guarded by extension_loaded() in ApcuDriver/ApcuLock)
+  # ext-memcached is in `suggest` (guarded by extension_loaded() in MemcachedDriver/MemcachedLock)
+  # ext-intl is in `suggest` (guarded by extension_loaded() in IntlMessageFormatter)
   - name: PhpComposerExtensionStubsInspection
     paths:
       - src/Queue/Worker.php
@@ -47,6 +56,11 @@ exclude:
       - src/Runtime/Http/ConnectionContext.php
       - src/Runtime/Upgrade/UpgradeHandlerInterface.php
       - src/Console/Command/RuntimeServeCommand.php
+      - src/Cache/Driver/ApcuDriver.php
+      - src/Cache/Application/Lock/ApcuLock.php
+      - src/Cache/Driver/MemcachedDriver.php
+      - src/Cache/Application/Lock/MemcachedLock.php
+      - src/I18n/Format/IntlMessageFormatter.php
   # Duplicated code - Studio CLI commands share structural patterns (extract values,
   # format output) but operate on different data; further extraction is over-engineering.
   # Payments gateway/handler share validation and serialization because the handler was

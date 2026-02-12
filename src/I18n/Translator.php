@@ -85,13 +85,7 @@ final class Translator implements TranslatorInterface
             }
         }
 
-        foreach ($localeChain as $candidateLocale) {
-            if ($this->catalog->has($key, $candidateLocale, $domain)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($localeChain, fn(string $candidateLocale): bool => $this->catalog->has($key, $candidateLocale, $domain));
     }
 
     /**

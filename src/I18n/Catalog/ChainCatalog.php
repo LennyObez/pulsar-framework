@@ -16,10 +16,10 @@ use function array_values;
  * The first catalog that contains a key wins.
  */
 #[Internal]
-final class ChainCatalog implements CatalogInterface
+final readonly class ChainCatalog implements CatalogInterface
 {
     /** @var list<CatalogInterface> */
-    private readonly array $catalogs;
+    private array $catalogs;
 
     public function __construct(CatalogInterface ...$catalogs)
     {
@@ -41,13 +41,7 @@ final class ChainCatalog implements CatalogInterface
 
     public function has(string $key, string $locale, string $domain = 'messages'): bool
     {
-        foreach ($this->catalogs as $catalog) {
-            if ($catalog->has($key, $locale, $domain)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->catalogs, static fn(CatalogInterface $catalog): bool => $catalog->has($key, $locale, $domain));
     }
 
     /**

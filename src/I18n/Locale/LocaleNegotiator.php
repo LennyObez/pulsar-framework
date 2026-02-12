@@ -95,13 +95,7 @@ final readonly class LocaleNegotiator implements LocaleNegotiatorInterface
         }
 
         // Reverse: 'fr' matches supported 'fr_CA'
-        foreach ($supported as $locale) {
-            if ($this->extractLanguage($locale) === $language) {
-                return $locale;
-            }
-        }
-
-        return null;
+        return array_find($supported, fn(string $locale): bool => $this->extractLanguage($locale) === $language);
     }
 
     /**

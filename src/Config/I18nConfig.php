@@ -95,7 +95,7 @@ readonly class I18nConfig
     /**
      * Filter an array down to string values only, re-indexed as a list.
      *
-     * @param array<mixed> $items
+     * @param array<array-key, mixed> $items
      * @return list<string>
      */
     private static function filterStringList(array $items): array

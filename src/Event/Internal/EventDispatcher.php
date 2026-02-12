@@ -20,14 +20,14 @@ use Pulsar\Observability\Metrics\MetricRegistry;
  * Core PSR-14 event dispatcher with storm protection, scope computation, and metrics.
  */
 #[Internal]
-final class EventDispatcher implements EventDispatcherInterface
+final readonly class EventDispatcher implements EventDispatcherInterface
 {
     public function __construct(
-        private readonly ListenerProviderInterface $listenerProvider,
-        private readonly ?ListenerMetadataProviderInterface $metadataProvider,
-        private readonly StormGuard $stormGuard,
-        private readonly ?MetricRegistry $metrics = null,
-        private readonly ?LoggerInterface $logger = null,
+        private ListenerProviderInterface $listenerProvider,
+        private ?ListenerMetadataProviderInterface $metadataProvider,
+        private StormGuard $stormGuard,
+        private ?MetricRegistry $metrics = null,
+        private ?LoggerInterface $logger = null,
     ) {}
 
     #[Override]
@@ -149,13 +149,9 @@ final class EventDispatcher implements EventDispatcherInterface
             return EventScope::Internal;
         }
 
-        foreach ($listenerModuleIds as $moduleId) {
-            if ($moduleId !== $envelope->originModule) {
-                return EventScope::CrossModule;
-            }
-        }
-
-        return EventScope::Internal;
+        return array_any($listenerModuleIds, static fn(string $moduleId): bool => $moduleId !== $envelope->originModule)
+            ? EventScope::CrossModule
+            : EventScope::Internal;
     }
 
     /**

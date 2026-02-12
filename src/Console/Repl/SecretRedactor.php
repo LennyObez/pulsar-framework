@@ -55,13 +55,11 @@ final class SecretRedactor
         }
 
         // Redact DSN credentials (://user:pass@ pattern)
-        $output = preg_replace(
+        return preg_replace(
             '#(://[^:]+):(.+)@([^@/]+)#',
             '$1:' . self::REDACTED . '@$3',
             $output,
         ) ?? $output;
-
-        return $output;
     }
 
     /**

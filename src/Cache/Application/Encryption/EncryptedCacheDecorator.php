@@ -27,7 +27,7 @@ use function strlen;
  * encrypted under the previous master key are re-encrypted on read.
  */
 #[Internal]
-final class EncryptedCacheDecorator implements CacheDriverInterface
+final readonly class EncryptedCacheDecorator implements CacheDriverInterface
 {
     private readonly EncryptorInterface $encryptor;
     private readonly string $hmacKey;

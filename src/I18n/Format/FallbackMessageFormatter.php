@@ -42,7 +42,7 @@ final class FallbackMessageFormatter implements MessageFormatterInterface
         }
 
         return preg_replace_callback(
-            '/\{(\w+)\}/',
+            '/\{(\w+)}/',
             static function (array $matches) use ($parameters): string {
                 $key = $matches[1];
 
