@@ -218,6 +218,22 @@ deptrac:
     # Feature Tier (21 modules)
     # =================================================================
 
+    # --- Attribute ---
+    - name: Attribute
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Attribute\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Attribute\\Internal\\
+
+    - name: Attribute_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Attribute\\Internal\\
+
     # --- Audit ---
     - name: Audit
       collectors:
@@ -377,6 +393,22 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\Idempotency\\Internal\\
+
+    # --- I18n ---
+    - name: I18n
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\I18n\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\I18n\\Internal\\
+
+    - name: I18n_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\I18n\\Internal\\
 
     # --- Integrity ---
     - name: Integrity
@@ -751,6 +783,25 @@ deptrac:
             - type: layer
               value: AdminDomain
 
+    # --- OpenTelemetry Extension (Pulsar\\Extension\\Opentelemetry → OpenTelemetry) ---
+
+    # --- OpenTelemetry: public surface (excludes \Internal\ namespace) ---
+    - name: OpenTelemetryExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\OpenTelemetry\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\OpenTelemetry\\Internal\\
+
+    # --- OpenTelemetry: internal implementation (\Internal\ only) ---
+    - name: OpenTelemetryExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\OpenTelemetry\\Internal\\
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -800,6 +851,8 @@ deptrac:
       - Console_Internal
       - Extensibility
       - Extensibility_Internal
+      - Attribute
+      - Attribute_Internal
       - Audit
       - Audit_Internal
       - Auth
@@ -818,6 +871,8 @@ deptrac:
       - Event_Internal
       - FeatureFlag
       - FeatureFlag_Internal
+      - I18n
+      - I18n_Internal
       - Idempotency
       - Idempotency_Internal
       - Integrity
@@ -851,6 +906,8 @@ deptrac:
       - AdminContracts
       - AdminDomain
       - AdminInternal
+      - OpenTelemetryExtension
+      - OpenTelemetryExtension_Internal
 
     # -----------------------------------------------------------------
     # Public Layers — all public layers may depend on all other public
@@ -869,6 +926,7 @@ deptrac:
       - Routing
       - Console
       - Extensibility
+      - Attribute
       - Audit
       - Auth
       - Cache
@@ -878,6 +936,7 @@ deptrac:
       - Deploy
       - Event
       - FeatureFlag
+      - I18n
       - Idempotency
       - Integrity
       - Introspection
@@ -900,6 +959,7 @@ deptrac:
     Routing: *public_deps
     Console: *public_deps
     Extensibility: *public_deps
+    Attribute: *public_deps
     Audit: *public_deps
     Auth: *public_deps
     Cache: *public_deps
@@ -909,6 +969,7 @@ deptrac:
     Deploy: *public_deps
     Event: *public_deps
     FeatureFlag: *public_deps
+    I18n: *public_deps
     Idempotency: *public_deps
     Integrity: *public_deps
     Observability: *public_deps
@@ -934,6 +995,7 @@ deptrac:
       - Routing
       - Console
       - Extensibility
+      - Attribute
       - Audit
       - Auth
       - Cache
@@ -943,6 +1005,7 @@ deptrac:
       - Deploy
       - Event
       - FeatureFlag
+      - I18n
       - Idempotency
       - Integrity
       - Introspection
@@ -975,6 +1038,7 @@ deptrac:
     Routing_Internal: [Routing, Api, Support, Container, Config, Core, ErrorHandling]
     Console_Internal: [Console, Api, Support, Container, Config, Core, ErrorHandling]
     Extensibility_Internal: [Extensibility, Api, Support, Container, Config, Core, ErrorHandling]
+    Attribute_Internal: [Attribute, Api, Support, Container, Config, Core, ErrorHandling]
     Audit_Internal: [Audit, Api, Support, Container, Config, Core, ErrorHandling]
     Auth_Internal: [Auth, Api, Support, Container, Config, Core, ErrorHandling]
     Cache_Internal: [Cache, Api, Support, Container, Config, Core, ErrorHandling]
@@ -982,8 +1046,9 @@ deptrac:
     Database_Internal: [Database, Api, Support, Container, Config, Core, ErrorHandling]
     DataProtection_Internal: [DataProtection, Api, Support, Container, Config, Core, ErrorHandling]
     Deploy_Internal: [Deploy, Api, Support, Container, Config, Core, ErrorHandling]
-    Event_Internal: [Event, Api, Support, Container, Config, Core, ErrorHandling]
+    Event_Internal: [Event, Api, Support, Container, Config, Core, ErrorHandling, Observability]
     FeatureFlag_Internal: [FeatureFlag, Api, Support, Container, Config, Core, ErrorHandling]
+    I18n_Internal: [I18n, Api, Support, Container, Config, Core, ErrorHandling]
     Idempotency_Internal: [Idempotency, Api, Support, Container, Config, Core, ErrorHandling]
     Integrity_Internal: [Integrity, Api, Support, Container, Config, Core, ErrorHandling]
     Observability_Internal: [Observability, Api, Support, Container, Config, Core, ErrorHandling]
@@ -1390,6 +1455,52 @@ deptrac:
       - StudioExtension
       - OrmContracts
       - OrmDomain
+
+    OpenTelemetryExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Attribute
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - Integrity
+      - Introspection
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - OpenTelemetryExtension_Internal
+
+    OpenTelemetryExtension_Internal:
+      - OpenTelemetryExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Observability
 
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps

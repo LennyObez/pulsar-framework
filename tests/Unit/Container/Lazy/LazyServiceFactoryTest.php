@@ -16,25 +16,26 @@ final class LazyServiceFactoryTest extends TestCase
     #[Test]
     public function deferredInstantiation(): void
     {
-        $instantiated = false;
+        $state = ['instantiated' => false];
         $container = new Container();
 
         $proxy = LazyServiceFactory::create(
             LazyTarget::class,
-            static function () use (&$instantiated): object {
-                $instantiated = true;
+            static function () use (&$state): object {
+                $state['instantiated'] = true;
                 return new LazyTarget();
             },
             $container,
         );
 
         // Constructor not called yet
-        self::assertFalse($instantiated);
+        self::assertFalse($state['instantiated']);
 
         // First method call triggers resolution
+        /** @var LazyTarget $proxy */
         $proxy->getValue();
 
-        self::assertTrue($instantiated);
+        self::assertTrue($state['instantiated']);
     }
 
     #[Test]
@@ -52,6 +53,7 @@ final class LazyServiceFactoryTest extends TestCase
             $container,
         );
 
+        /** @var LazyTarget $proxy */
         $proxy->getValue();
         $proxy->getValue();
 

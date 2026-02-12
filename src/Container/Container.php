@@ -167,14 +167,7 @@ final class Container implements AdvancedContainerInterface
         if ($this->deferredProviders !== null && $this->deferredProviders->has($id)) {
             $this->deferredProviders->resolve($id, $this);
 
-            // After provider registration, the service should be bound
-            if (isset($this->definitions[$id])) {
-                return $this->resolve($id);
-            }
-
-            if (isset($this->instances[$id])) {
-                return $this->instances[$id];
-            }
+            return $this->resolveAfterDeferredRegistration($id);
         }
 
         throw NotFoundException::forId($id);
@@ -289,6 +282,29 @@ final class Container implements AdvancedContainerInterface
      * @throws ContainerException
      * @throws ReflectionException If class reflection fails during autowiring
      */
+    /**
+     * Resolve after deferred provider registration.
+     *
+     * Extracted to its own method so Psalm flow analysis doesn't carry
+     * the earlier isset() narrowing into this scope.
+     *
+     * @throws NotFoundException
+     * @throws ContainerException
+     * @throws ReflectionException
+     */
+    private function resolveAfterDeferredRegistration(string $id): mixed
+    {
+        if (isset($this->instances[$id])) {
+            return $this->instances[$id];
+        }
+
+        if (isset($this->definitions[$id])) {
+            return $this->resolve($id);
+        }
+
+        throw NotFoundException::forId($id);
+    }
+
     private function resolve(string $id): object
     {
         // Circular dependency detection

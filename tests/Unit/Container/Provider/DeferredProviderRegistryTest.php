@@ -44,7 +44,7 @@ final class DeferredProviderRegistryTest extends TestCase
         $registered = false;
 
         $provider = new class ($registered) implements DeferredServiceProviderInterface {
-            public function __construct(private bool &$registered) {}
+            public function __construct(public bool &$registered) {}
 
             public function register(ContainerInterface $container): void
             {

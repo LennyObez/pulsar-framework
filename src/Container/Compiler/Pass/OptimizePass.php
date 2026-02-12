@@ -59,6 +59,7 @@ final class OptimizePass implements CompilerPassInterface
                     break;
                 }
 
+                /** @var string $typeName Psalm infers class-string, but getName() can return 'self'/'static'/'parent' */
                 $typeName = $type->getName();
                 if ($typeName === 'self' || $typeName === 'static' || $typeName === 'parent') {
                     $skip = true;

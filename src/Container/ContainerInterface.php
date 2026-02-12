@@ -17,6 +17,9 @@ interface ContainerInterface extends PsrContainerInterface
     /**
      * Register a binding in the container.
      *
+     * For request-scoped or tenant-scoped lifetimes, use
+     * {@see AdvancedContainerInterface::bindWithLifetime()} instead.
+     *
      * @param string $id The binding identifier (typically an interface or class name)
      * @param callable|class-string $concrete The factory callable or class name
      * @param BindingType $type Whether to resolve as singleton or factory

@@ -20,7 +20,8 @@ final class PassRunnerTest extends TestCase
         $executionOrder = [];
 
         $passA = new class ($executionOrder) implements CompilerPassInterface {
-            public function __construct(private array &$order) {}
+            /** @param list<string> $order */
+            public function __construct(public array &$order) {}
 
             public function process(ContainerBuilder $builder): void
             {
@@ -29,7 +30,8 @@ final class PassRunnerTest extends TestCase
         };
 
         $passB = new class ($executionOrder) implements CompilerPassInterface {
-            public function __construct(private array &$order) {}
+            /** @param list<string> $order */
+            public function __construct(public array &$order) {}
 
             public function process(ContainerBuilder $builder): void
             {
@@ -54,7 +56,8 @@ final class PassRunnerTest extends TestCase
         $executionOrder = [];
 
         $passA = new class ($executionOrder) implements CompilerPassInterface {
-            public function __construct(private array &$order) {}
+            /** @param list<string> $order */
+            public function __construct(public array &$order) {}
 
             public function process(ContainerBuilder $builder): void
             {
@@ -63,7 +66,8 @@ final class PassRunnerTest extends TestCase
         };
 
         $passB = new class ($executionOrder) implements CompilerPassInterface {
-            public function __construct(private array &$order) {}
+            /** @param list<string> $order */
+            public function __construct(public array &$order) {}
 
             public function process(ContainerBuilder $builder): void
             {

@@ -40,7 +40,7 @@ final class DecoratorChainTest extends TestCase
         $inner = new InnerService();
 
         $decorators = [
-            new DecoratorDefinition(static function (object $inner) {
+            new DecoratorDefinition(static function (DecorableInterface $inner) {
                 return new MiddleDecorator($inner);
             }, 0),
         ];

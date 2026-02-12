@@ -60,7 +60,7 @@ final class ValidateLifetimesPassTest extends TestCase
         $pass = new ValidateLifetimesPass();
         $pass->process($builder); // Should not throw
 
-        self::assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -81,7 +81,7 @@ final class ValidateLifetimesPassTest extends TestCase
         $pass = new ValidateLifetimesPass();
         $pass->process($builder);
 
-        self::assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 }
 
