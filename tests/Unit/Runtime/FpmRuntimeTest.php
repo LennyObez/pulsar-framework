@@ -8,11 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Core\Kernel;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Runtime\FpmRuntime;
 use Pulsar\Runtime\RuntimeStatus;
 
@@ -48,13 +45,9 @@ final class FpmRuntimeTest extends TestCase
     {
         $runtime = new FpmRuntime($this->kernel);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         $result = $runtime->beforeRequest($request);
@@ -66,16 +59,12 @@ final class FpmRuntimeTest extends TestCase
     {
         $runtime = new FpmRuntime($this->kernel);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
-        $response = new Response(body: 'ok', status: ResponseStatus::OK);
+        $response = new Response(statusCode: 200, body: 'ok');
 
         $this->expectNotToPerformAssertions();
         $runtime->afterRequest($request, $response);

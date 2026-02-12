@@ -26,9 +26,7 @@ require $dir . '/vendor/autoload.php';
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Extension\Studio\Config\StudioConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
@@ -181,13 +179,7 @@ $router = new StudioRouter(
     safetyMode: $safetyMode,
 );
 
-// Build Request from globals
-$method = Method::tryFrom($_SERVER['REQUEST_METHOD'] ?? 'GET') ?? Method::GET;
-$queryString = $_SERVER['QUERY_STRING'] ?? '';
-$headers = new HeaderBag(getallheaders() ?: []);
-$body = file_get_contents('php://input') ?: '';
-
-// Map query parameters to _query_ attributes (matching main application middleware behavior)
+// Build ServerRequest from globals with _query_ attributes
 /** @var array<string, mixed> $queryParams */
 $queryParams = $_GET;
 $queryAttributes = [];
@@ -197,16 +189,10 @@ foreach ($queryParams as $key => $value) {
     }
 }
 
-$request = new Request(
-    method: $method,
-    uri: $requestUri,
-    path: $path,
-    queryString: $queryString,
-    headers: $headers,
-    body: $body,
-    query: $queryParams,
-    attributes: $queryAttributes,
-);
+$request = ServerRequest::fromGlobals();
+foreach ($queryAttributes as $attrKey => $attrValue) {
+    $request = $request->withAttribute($attrKey, $attrValue);
+}
 
 try {
     $response = $router->dispatch($request);
@@ -218,9 +204,9 @@ try {
 }
 
 // Emit response
-http_response_code($response->status->value);
+http_response_code($response->getStatusCode());
 
-foreach ($response->headers as $name => $values) {
+foreach ($response->getHeaders() as $name => $values) {
     $first = true;
     foreach ($values as $value) {
         header($name . ': ' . $value, $first);
@@ -228,4 +214,4 @@ foreach ($response->headers as $name => $values) {
     }
 }
 
-echo $response->body;
+echo (string) $response->getBody();

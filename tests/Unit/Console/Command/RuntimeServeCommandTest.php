@@ -24,6 +24,7 @@ use function extension_loaded;
 #[CoversClass(RuntimeServeCommand::class)]
 final class RuntimeServeCommandTest extends TestCase
 {
+    /** @var KernelInterface&\PHPUnit\Framework\MockObject\Stub */
     private KernelInterface $kernel;
     private RuntimeResolver $resolver;
 

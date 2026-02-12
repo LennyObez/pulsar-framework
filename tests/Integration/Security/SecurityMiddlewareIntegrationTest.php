@@ -7,12 +7,13 @@ namespace Pulsar\Tests\Integration\Security;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Config\SecurityHeadersConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
@@ -49,19 +50,16 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
      * @param array<string, mixed>  $post
      */
     private function createRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $path = '/',
         array $headers = [],
         array $post = [],
-    ): Request {
-        return new Request(
+    ): ServerRequest {
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag($headers),
-            body: '',
-            post: $post,
+            headers: $headers,
+            parsedBody: $post !== [] ? $post : null,
         );
     }
 
@@ -70,14 +68,15 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
     {
         $middleware = new SecurityHeadersMiddleware($this->headersConfig);
 
-        $handler = fn(Request $r): Response => Response::json(['status' => 'ok']);
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::json(['status' => 'ok']));
 
         $response = $middleware->process($this->createRequest(), $handler);
 
-        self::assertSame('nosniff', $response->headers->first('X-Content-Type-Options'));
-        self::assertSame('DENY', $response->headers->first('X-Frame-Options'));
-        self::assertSame('strict-origin-when-cross-origin', $response->headers->first('Referrer-Policy'));
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
+        self::assertSame('strict-origin-when-cross-origin', $response->getHeaderLine('Referrer-Policy'));
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -87,21 +86,22 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
         $tokenManager->method('validate')->willReturn(false);
 
         $middleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
-        $handler = fn(Request $r): Response => Response::text('OK');
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
 
         // GET passes through
         $getResponse = $middleware->process(
-            $this->createRequest(Method::GET),
+            $this->createRequest('GET'),
             $handler,
         );
-        self::assertSame(ResponseStatus::OK, $getResponse->status);
+        self::assertSame(ResponseStatus::OK->value, $getResponse->getStatusCode());
 
         // POST without token returns 403
         $postResponse = $middleware->process(
-            $this->createRequest(Method::POST, '/submit'),
+            $this->createRequest('POST', '/submit'),
             $handler,
         );
-        self::assertSame(ResponseStatus::Forbidden, $postResponse->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $postResponse->getStatusCode());
     }
 
     #[Test]
@@ -115,19 +115,20 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
-        $handler = fn(Request $r): Response => Response::text('Created');
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('Created'));
 
         $response = $middleware->process(
             $this->createRequest(
-                Method::POST,
+                'POST',
                 '/submit',
                 headers: ['X-CSRF-Token' => $token],
             ),
             $handler,
         );
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('Created', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('Created', (string) $response->getBody());
     }
 
     #[Test]
@@ -141,18 +142,19 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
-        $handler = fn(Request $r): Response => Response::text('Created');
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('Created'));
 
         $response = $middleware->process(
             $this->createRequest(
-                Method::POST,
+                'POST',
                 '/submit',
                 post: ['_csrf_token' => $token],
             ),
             $handler,
         );
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -166,25 +168,33 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
         $csrfMiddleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
         $headersMiddleware = new SecurityHeadersMiddleware($this->headersConfig);
 
-        $handler = fn(Request $r): Response => Response::json(['data' => 'value']);
+        $innerHandler = $this->createStub(RequestHandlerInterface::class);
+        $innerHandler->method('handle')->willReturn(Response::json(['data' => 'value']));
 
         // Build pipeline: security headers wraps CSRF which wraps handler
-        $pipeline = fn(Request $r): Response => $headersMiddleware->process(
-            $r,
-            fn(Request $inner): Response => $csrfMiddleware->process($inner, $handler),
-        );
+        $csrfHandler = new class ($csrfMiddleware, $innerHandler) implements RequestHandlerInterface {
+            public function __construct(
+                private readonly CsrfMiddleware $csrf,
+                private readonly RequestHandlerInterface $inner,
+            ) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->csrf->process($request, $this->inner);
+            }
+        };
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/api/data',
             headers: ['X-CSRF-Token' => $token],
         );
 
-        $response = $pipeline($request);
+        $response = $headersMiddleware->process($request, $csrfHandler);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('nosniff', $response->headers->first('X-Content-Type-Options'));
-        self::assertSame('DENY', $response->headers->first('X-Frame-Options'));
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
     }
 
     #[Test]
@@ -196,21 +206,29 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
         $csrfMiddleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
         $headersMiddleware = new SecurityHeadersMiddleware($this->headersConfig);
 
-        $handler = fn(Request $r): Response => Response::text('OK');
+        $innerHandler = $this->createStub(RequestHandlerInterface::class);
+        $innerHandler->method('handle')->willReturn(Response::text('OK'));
 
-        $pipeline = fn(Request $r): Response => $headersMiddleware->process(
-            $r,
-            fn(Request $inner): Response => $csrfMiddleware->process($inner, $handler),
-        );
+        $csrfHandler = new class ($csrfMiddleware, $innerHandler) implements RequestHandlerInterface {
+            public function __construct(
+                private readonly CsrfMiddleware $csrf,
+                private readonly RequestHandlerInterface $inner,
+            ) {}
 
-        $request = $this->createRequest(Method::POST, '/submit');
-        $response = $pipeline($request);
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->csrf->process($request, $this->inner);
+            }
+        };
+
+        $request = $this->createRequest('POST', '/submit');
+        $response = $headersMiddleware->process($request, $csrfHandler);
 
         // CSRF blocks with 403
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
 
         // But security headers are still applied
-        self::assertSame('nosniff', $response->headers->first('X-Content-Type-Options'));
-        self::assertSame('DENY', $response->headers->first('X-Frame-Options'));
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
     }
 }

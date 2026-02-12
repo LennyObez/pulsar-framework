@@ -7,11 +7,12 @@ namespace Pulsar\Tests\Unit\I18n\Locale;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\I18nConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\I18n\Locale\LocaleMiddleware;
 use Pulsar\I18n\LocaleNegotiatorInterface;
 use Pulsar\I18n\TranslatorInterface;
@@ -40,22 +41,18 @@ final class LocaleMiddlewareTest extends TestCase
 
         $middleware = new LocaleMiddleware($negotiator, $config, $translator);
 
-        $request = new Request(
-            method: Method::GET,
-            uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
-        );
+        $request = new ServerRequest(method: 'GET', uri: '/');
 
         $capturedLocale = null;
-        $next = static function (Request $r) use (&$capturedLocale): Response {
-            $capturedLocale = $r->attribute('_locale');
-            return Response::text('OK');
-        };
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects(self::once())
+            ->method('handle')
+            ->willReturnCallback(static function (ServerRequestInterface $r) use (&$capturedLocale): ResponseInterface {
+                $capturedLocale = $r->getAttribute('_locale');
+                return Response::text('OK');
+            });
 
-        $middleware->process($request, $next);
+        $middleware->process($request, $handler);
 
         self::assertSame('fr', $capturedLocale);
     }

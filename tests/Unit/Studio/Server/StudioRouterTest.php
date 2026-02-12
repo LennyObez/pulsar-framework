@@ -27,9 +27,7 @@ use Pulsar\Extension\Studio\Server\Controller\LogExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\RequestExplorerController;
 use Pulsar\Extension\Studio\Server\Controller\TimelineController;
 use Pulsar\Extension\Studio\Server\StudioRouter;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(StudioRouter::class)]
@@ -56,8 +54,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('Pulsar Studio', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('Pulsar Studio', (string) $response->getBody());
     }
 
     #[Test]
@@ -68,8 +66,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('console-overview', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('console-overview', (string) $response->getBody());
     }
 
     #[Test]
@@ -80,8 +78,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('request-explorer', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('request-explorer', (string) $response->getBody());
     }
 
     #[Test]
@@ -92,7 +90,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -103,8 +101,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('log-explorer', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('log-explorer', (string) $response->getBody());
     }
 
     #[Test]
@@ -115,8 +113,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('exception-explorer', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('exception-explorer', (string) $response->getBody());
     }
 
     #[Test]
@@ -128,7 +126,7 @@ final class StudioRouterTest extends TestCase
         $response = $router->dispatch($request);
 
         // Should return 404 since no events exist for this correlation ID
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -139,8 +137,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('application/json; charset=utf-8', $response->contentType());
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('application/json; charset=utf-8', $response->getHeaderLine('Content-Type'));
     }
 
     #[Test]
@@ -151,8 +149,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
-        self::assertSame('Not Found', $response->body);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
+        self::assertSame('Not Found', (string) $response->getBody());
     }
 
     #[Test]
@@ -163,53 +161,53 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 
     #[Test]
     public function dispatchReturnsMethodNotAllowedForPostRequest(): void
     {
         $router = $this->createRouter($this->localSafetyMode);
-        $request = $this->createRequest('/studio', Method::POST);
+        $request = $this->createRequest('/studio', 'POST');
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
-        self::assertSame('Method Not Allowed', $response->body);
-        self::assertSame('GET, HEAD', $response->headers->first('Allow'));
+        self::assertSame(ResponseStatus::MethodNotAllowed->value, $response->getStatusCode());
+        self::assertSame('Method Not Allowed', (string) $response->getBody());
+        self::assertSame('GET, HEAD', $response->getHeaderLine('Allow'));
     }
 
     #[Test]
     public function dispatchReturnsMethodNotAllowedForPutRequest(): void
     {
         $router = $this->createRouter($this->localSafetyMode);
-        $request = $this->createRequest('/studio', Method::PUT);
+        $request = $this->createRequest('/studio', 'PUT');
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
+        self::assertSame(ResponseStatus::MethodNotAllowed->value, $response->getStatusCode());
     }
 
     #[Test]
     public function dispatchReturnsMethodNotAllowedForDeleteRequest(): void
     {
         $router = $this->createRouter($this->localSafetyMode);
-        $request = $this->createRequest('/studio', Method::DELETE);
+        $request = $this->createRequest('/studio', 'DELETE');
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
+        self::assertSame(ResponseStatus::MethodNotAllowed->value, $response->getStatusCode());
     }
 
     #[Test]
     public function dispatchAllowsHeadRequest(): void
     {
         $router = $this->createRouter($this->localSafetyMode);
-        $request = $this->createRequest('/studio', Method::HEAD);
+        $request = $this->createRequest('/studio', 'HEAD');
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -220,8 +218,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('Pulsar Studio', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('Pulsar Studio', (string) $response->getBody());
     }
 
     #[Test]
@@ -232,7 +230,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -243,7 +241,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -254,7 +252,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -265,7 +263,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -276,7 +274,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -287,7 +285,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -298,7 +296,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -309,7 +307,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -320,7 +318,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -331,7 +329,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -342,7 +340,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -353,7 +351,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -364,7 +362,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -375,7 +373,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertSame('Drill-down views are disabled in production mode', $data['error']);
     }
@@ -388,7 +386,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertSame('API access is disabled in production mode', $data['error']);
     }
@@ -401,7 +399,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertSame('SSE live stream is disabled in production mode', $data['error']);
     }
@@ -414,8 +412,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('benchmark-dashboard', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('benchmark-dashboard', (string) $response->getBody());
     }
 
     #[Test]
@@ -426,7 +424,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -437,8 +435,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        $data = json_decode($response->body, true);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertArrayHasKey('deleted', $data);
     }
@@ -451,8 +449,8 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        $data = json_decode($response->body, true);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        $data = json_decode((string) $response->getBody(), true);
         self::assertIsArray($data);
         self::assertSame('Mutable API actions are restricted to local development mode', $data['error']);
     }
@@ -465,7 +463,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -476,7 +474,7 @@ final class StudioRouterTest extends TestCase
 
         $response = $router->dispatch($request);
 
-        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
+        self::assertSame(ResponseStatus::MethodNotAllowed->value, $response->getStatusCode());
     }
 
     private function createRouter(ProductionSafetyMode $safetyMode): StudioRouter
@@ -506,26 +504,20 @@ final class StudioRouterTest extends TestCase
         );
     }
 
-    private function createRequest(string $path, Method $method = Method::GET): Request
+    private function createRequest(string $path, string $method = 'GET'): ServerRequest
     {
-        return new Request(
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
     }
 
-    private function createPostJsonRequest(string $path, string $body): Request
+    private function createPostJsonRequest(string $path, string $body): ServerRequest
     {
-        return new Request(
-            method: Method::POST,
+        return new ServerRequest(
+            method: 'POST',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            headers: ['Content-Type' => 'application/json'],
             body: $body,
         );
     }

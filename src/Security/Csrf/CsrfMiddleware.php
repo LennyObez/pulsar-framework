@@ -5,18 +5,23 @@ declare(strict_types=1);
 namespace Pulsar\Security\Csrf;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\CsrfConfig;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function htmlspecialchars;
+use function in_array;
+use function is_array;
 use function is_string;
 use function parse_url;
 use function preg_replace;
 use function rtrim;
 use function sprintf;
+use function str_contains;
 use function strtolower;
 use function trim;
 
@@ -40,14 +45,14 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if (!$this->config->enabled) {
-            return $next($request);
+            return $handler->handle($request);
         }
 
-        if ($request->method->isSafe()) {
-            return $next($request);
+        if (in_array($request->getMethod(), ['GET', 'HEAD', 'OPTIONS'], true)) {
+            return $handler->handle($request);
         }
 
         // Layer 1: Origin/Referer validation
@@ -72,23 +77,24 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
             return $this->forbiddenResponse($request, 'CSRF token is invalid');
         }
 
-        return $next($request);
+        return $handler->handle($request);
     }
 
     /**
      * Extract the CSRF token from the request (header or POST field).
      */
-    private function extractToken(Request $request): ?string
+    private function extractToken(ServerRequestInterface $request): ?string
     {
         // Try header first
-        $headerToken = $request->header($this->config->headerName);
+        $headerToken = $request->getHeaderLine($this->config->headerName);
 
-        if ($headerToken !== null && $headerToken !== '') {
+        if ($headerToken !== '') {
             return $headerToken;
         }
 
         // Fall back to POST field
-        $fieldToken = $request->post($this->config->formFieldName);
+        $parsedBody = $request->getParsedBody();
+        $fieldToken = is_array($parsedBody) ? ($parsedBody[$this->config->formFieldName] ?? null) : null;
 
         if (is_string($fieldToken) && $fieldToken !== '') {
             return $fieldToken;
@@ -102,15 +108,15 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
      *
      * @return bool|null true = matched, false = rejected, null = no header present
      */
-    private function validateOrigin(Request $request): ?bool
+    private function validateOrigin(ServerRequestInterface $request): ?bool
     {
-        $origin = $request->header('Origin');
-        if ($origin !== null && $origin !== 'null') {
+        $origin = $request->getHeaderLine('Origin');
+        if ($origin !== '' && $origin !== 'null') {
             return $this->originMatchesTrusted($origin);
         }
 
-        $referer = $request->header('Referer');
-        if ($referer !== null) {
+        $referer = $request->getHeaderLine('Referer');
+        if ($referer !== '') {
             $refererOrigin = $this->extractOriginFromUrl($referer);
             if ($refererOrigin !== null) {
                 return $this->originMatchesTrusted($refererOrigin);
@@ -160,12 +166,16 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
     /**
      * Create a 403 Forbidden response, content-negotiated for the client.
      */
-    private function forbiddenResponse(Request $request, string $message): Response
+    private function forbiddenResponse(ServerRequestInterface $request, string $message): ResponseInterface
     {
-        if ($request->wantsJson() || $request->isAjax()) {
+        $accept = $request->getHeaderLine('Accept');
+
+        if (str_contains($accept, 'application/json')
+            || $request->getHeaderLine('X-Requested-With') === 'XMLHttpRequest'
+        ) {
             return Response::json(
                 ['error' => 'Forbidden', 'message' => $message],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 
@@ -177,7 +187,7 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
                 . '<body><h1>403 Forbidden</h1><p>%s</p></body></html>',
                 $escapedMessage,
             ),
-            ResponseStatus::Forbidden,
+            ResponseStatus::Forbidden->value,
         );
     }
 }

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\I18n\Locale;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Http\Request;
 use Pulsar\I18n\LocaleNegotiatorInterface;
 
 use function in_array;
@@ -28,14 +28,14 @@ final readonly class LocaleNegotiator implements LocaleNegotiatorInterface
 {
     private const int MAX_ACCEPT_LANGUAGE_TOKENS = 20;
 
-    public function negotiate(Request $request, array $supported, string $default): string
+    public function negotiate(ServerRequestInterface $request, array $supported, string $default): string
     {
         if ($supported === []) {
             return $default;
         }
 
         // 1. Query parameter
-        $queryLocale = $request->query('locale');
+        $queryLocale = $request->getQueryParams()['locale'] ?? null;
 
         if (is_string($queryLocale) && $queryLocale !== '') {
             $match = $this->matchLocale($queryLocale, $supported);
@@ -46,7 +46,7 @@ final readonly class LocaleNegotiator implements LocaleNegotiatorInterface
         }
 
         // 2. Request attribute (route parameter)
-        $attrLocale = $request->attribute('_locale');
+        $attrLocale = $request->getAttribute('_locale');
 
         if (is_string($attrLocale) && $attrLocale !== '') {
             $match = $this->matchLocale($attrLocale, $supported);
@@ -57,9 +57,9 @@ final readonly class LocaleNegotiator implements LocaleNegotiatorInterface
         }
 
         // 3. Accept-Language header
-        $acceptLanguage = $request->header('Accept-Language');
+        $acceptLanguage = $request->getHeaderLine('Accept-Language');
 
-        if (is_string($acceptLanguage) && $acceptLanguage !== '') {
+        if ($acceptLanguage !== '') {
             $match = $this->negotiateFromHeader($acceptLanguage, $supported);
 
             if ($match !== null) {

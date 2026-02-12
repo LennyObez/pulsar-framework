@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+
+use function str_contains;
 
 /**
  * Controller listing all registered admin resources.
@@ -21,7 +23,7 @@ final readonly class ResourceIndexController
         private AdminConfig $config,
     ) {}
 
-    public function index(Request $request): Response
+    public function index(ServerRequestInterface $request): Response
     {
         $resources = [];
         foreach ($this->registry->all() as $name => $resource) {
@@ -37,7 +39,7 @@ final readonly class ResourceIndexController
             ];
         }
 
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json(['resources' => $resources]);
         }
 

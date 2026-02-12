@@ -6,6 +6,9 @@ namespace Pulsar\Core;
 
 use Error;
 use JsonException;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\CachedRoute;
 use Pulsar\Cache\FrameworkCache;
@@ -49,12 +52,12 @@ use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
-use Pulsar\Http\Middleware\MiddlewareInterface;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseEmitter;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -369,9 +372,9 @@ final class Kernel implements KernelInterface
     /**
      * Add global middleware.
      *
-     * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
+     * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
      */
-    public function addMiddleware(MiddlewareInterface|string $middleware): self
+    public function addMiddleware(PsrMiddlewareInterface|string $middleware): self
     {
         $this->middleware->pipe($middleware);
         return $this;
@@ -382,7 +385,7 @@ final class Kernel implements KernelInterface
      *
      * @throws Throwable If no exception handler is registered or re-thrown after handling fails
      */
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $this->boot();
 
@@ -390,7 +393,10 @@ final class Kernel implements KernelInterface
         $this->routeContext?->reset();
 
         try {
-            return $this->middleware->handle($request, fn(Request $req) => $this->dispatchRoute($req));
+            return $this->middleware->dispatch(
+                $request,
+                fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchRoute($req),
+            );
         } catch (Throwable $e) {
             if ($this->exceptionHandler !== null) {
                 return $this->exceptionHandler->handle($e, $request);
@@ -407,7 +413,7 @@ final class Kernel implements KernelInterface
      */
     public function run(): void
     {
-        $request = Request::fromGlobals();
+        $request = ServerRequest::fromGlobals();
         $response = $this->handle($request);
 
         $emitter = new ResponseEmitter();
@@ -422,13 +428,17 @@ final class Kernel implements KernelInterface
      * @throws NotFoundException If a controller binding is not found in the container
      * @throws Error If a controller class cannot be instantiated
      */
-    private function dispatchRoute(Request $request): Response
+    private function dispatchRoute(ServerRequestInterface $request): ResponseInterface
     {
-        $host = $request->header('Host');
+        $host = $request->getHeaderLine('Host');
+        $method = $request->getMethod();
+        $path = $request->getUri()->getPath();
+
+        $methodEnum = Method::from($method);
 
         if ($this->metricsRegistry !== null) {
             $matchStart = hrtime(true);
-            $matched = $this->router->match($request->method, $request->path, $host);
+            $matched = $this->router->match($methodEnum, $path, $host !== '' ? $host : null);
             $matchUs = (int) ((hrtime(true) - $matchStart) / 1000);
 
             $this->metricsRegistry->histogram(
@@ -437,7 +447,7 @@ final class Kernel implements KernelInterface
                 [10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0],
             )->observe((float) $matchUs);
         } else {
-            $matched = $this->router->match($request->method, $request->path, $host);
+            $matched = $this->router->match($methodEnum, $path, $host !== '' ? $host : null);
         }
 
         // Populate RouteContext for observability middleware (metrics/tracing)
@@ -459,11 +469,14 @@ final class Kernel implements KernelInterface
                         $pipeline->pipe($m);
                     }
                 } else {
-                    /** @var MiddlewareInterface $middleware */
+                    /** @var PsrMiddlewareInterface $middleware */
                     $pipeline->pipe($middleware);
                 }
             }
-            return $pipeline->handle($request, fn(Request $req) => $this->invokeHandler($req, $matched));
+            return $pipeline->dispatch(
+                $request,
+                fn(ServerRequestInterface $req): ResponseInterface => $this->invokeHandler($req, $matched),
+            );
         }
 
         return $this->invokeHandler($request, $matched);
@@ -472,13 +485,18 @@ final class Kernel implements KernelInterface
     /**
      * Add matched route information to the request.
      */
-    private function addRouteAttributesToRequest(Request $request, MatchedRoute $matched): Request
-    {
-        return $request->withAttributes([
-            '_route' => $matched,
-            '_route_name' => $matched->getName(),
-            ...$matched->parameters,
-        ]);
+    private function addRouteAttributesToRequest(
+        ServerRequestInterface $request,
+        MatchedRoute $matched,
+    ): ServerRequestInterface {
+        $request = $request->withAttribute('_route', $matched);
+        $request = $request->withAttribute('_route_name', $matched->getName());
+
+        foreach ($matched->parameters as $key => $value) {
+            $request = $request->withAttribute($key, $value);
+        }
+
+        return $request;
     }
 
     /**
@@ -489,7 +507,7 @@ final class Kernel implements KernelInterface
      * @throws NotFoundException If a controller binding is not found in the container
      * @throws Error If a controller class cannot be instantiated
      */
-    private function invokeHandler(Request $request, MatchedRoute $matched): Response
+    private function invokeHandler(ServerRequestInterface $request, MatchedRoute $matched): ResponseInterface
     {
         $handler = $matched->getHandler();
 
@@ -515,7 +533,7 @@ final class Kernel implements KernelInterface
             return Response::html($response);
         }
 
-        if (!$response instanceof Response) {
+        if (!$response instanceof ResponseInterface) {
             throw RoutingException::unexpectedReturnType(get_debug_type($response));
         }
 

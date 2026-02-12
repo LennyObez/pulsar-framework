@@ -8,24 +8,18 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\ErrorHandling\ProductionRenderer;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use RuntimeException;
 
 #[CoversClass(ProductionRenderer::class)]
 final class ProductionRendererTest extends TestCase
 {
-    private function createRequest(string $path = '/'): Request
+    private function createRequest(string $path = '/'): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 

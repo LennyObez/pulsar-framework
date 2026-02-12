@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server\Controller;
 
 use JsonException;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function explode;
@@ -37,33 +36,33 @@ final readonly class ApiController
     /**
      * GET /studio/api/events — paginated JSON event listing.
      */
-    public function events(Request $request): Response
+    public function events(ServerRequestInterface $request): Response
     {
         $filters = [];
 
-        $types = $request->attribute('_query_types');
+        $types = $request->getAttribute('_query_types');
         if (is_string($types)) {
             $filters['event_type'] = explode(',', $types);
         }
 
-        $requestId = $request->attribute('_query_request_id');
+        $requestId = $request->getAttribute('_query_request_id');
         if (is_string($requestId)) {
             $filters['request_id'] = $requestId;
         }
 
-        $sinceUs = $request->attribute('_query_since');
+        $sinceUs = $request->getAttribute('_query_since');
         if (is_int($sinceUs) || is_string($sinceUs)) {
             $filters['since_us'] = (int) $sinceUs;
         }
 
-        $sinceId = $request->attribute('_query_since_id');
+        $sinceId = $request->getAttribute('_query_since_id');
         if (is_int($sinceId) || is_string($sinceId)) {
             $filters['since_id'] = (int) $sinceId;
         }
 
-        $limitAttr = $request->attribute('_query_limit');
+        $limitAttr = $request->getAttribute('_query_limit');
         $limit = (is_int($limitAttr) || is_string($limitAttr)) ? (int) $limitAttr : 50;
-        $offsetAttr = $request->attribute('_query_offset');
+        $offsetAttr = $request->getAttribute('_query_offset');
         $offset = (is_int($offsetAttr) || is_string($offsetAttr)) ? (int) $offsetAttr : 0;
 
         $events = $this->store->query($filters, $limit, $offset);
@@ -82,17 +81,17 @@ final readonly class ApiController
      *
      * @throws JsonException
      */
-    public function live(Request $request): Response
+    public function live(ServerRequestInterface $request): Response
     {
         $filters = [];
 
-        $types = $request->attribute('_query_types');
+        $types = $request->getAttribute('_query_types');
         if (is_string($types)) {
             $filters['event_type'] = explode(',', $types);
         }
 
-        $lastEventId = $request->header('Last-Event-ID');
-        $lastId = $lastEventId !== null ? (int) $lastEventId : 0;
+        $lastEventId = $request->getHeaderLine('Last-Event-ID');
+        $lastId = $lastEventId !== '' ? (int) $lastEventId : 0;
 
         // For SSE, we need to stream directly
         // Return headers-only response; actual streaming happens via output buffer
@@ -134,13 +133,12 @@ final readonly class ApiController
         }
 
         return new Response(
-            body: '',
-            status: ResponseStatus::OK,
-            headers: new HeaderBag([
+            statusCode: ResponseStatus::OK->value,
+            headers: [
                 'Content-Type' => 'text/event-stream',
                 'Cache-Control' => 'no-cache',
                 'Connection' => 'keep-alive',
-            ]),
+            ],
         );
     }
 }

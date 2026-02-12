@@ -6,13 +6,15 @@ namespace Pulsar\Auth\Middleware;
 
 use JsonException;
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\PolicyContext;
 use Pulsar\Auth\SecurityContext;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Security\Audit\AuditEvent;
@@ -20,6 +22,8 @@ use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditOutcome;
 use Random\RandomException;
 use SodiumException;
+
+use function str_contains;
 
 /**
  * Route-level middleware that triggers lazy identity resolution and checks authorization.
@@ -36,10 +40,10 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         /** @var SecurityContext|null $securityContext */
-        $securityContext = $request->attribute('_security_context');
+        $securityContext = $request->getAttribute('_security_context');
 
         if ($securityContext === null) {
             return $this->unauthorizedResponse($request);
@@ -69,17 +73,19 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
 
         // Get required permissions from the matched route
         /** @var MatchedRoute|null $matchedRoute */
-        $matchedRoute = $request->attribute('_route');
+        $matchedRoute = $request->getAttribute('_route');
 
         if ($matchedRoute !== null) {
             $attributes = $matchedRoute->getAttributes();
             /** @var list<string> $permissions */
             $permissions = $attributes['permissions'] ?? [];
 
+            $path = $request->getUri()->getPath();
+
             foreach ($permissions as $permission) {
                 $context = new PolicyContext(
                     permission: $permission,
-                    resource: $request->path,
+                    resource: $path,
                 );
 
                 if ($this->gate->denies($identity, $permission, $context)) {
@@ -93,36 +99,36 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
             }
         }
 
-        return $next($request);
+        return $handler->handle($request);
     }
 
-    private function unauthorizedResponse(Request $request): Response
+    private function unauthorizedResponse(ServerRequestInterface $request): ResponseInterface
     {
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json(
                 ['error' => 'Unauthorized', 'status' => 401],
-                ResponseStatus::Unauthorized,
+                ResponseStatus::Unauthorized->value,
             );
         }
 
         return new Response(
+            statusCode: ResponseStatus::Unauthorized->value,
             body: 'Unauthorized',
-            status: ResponseStatus::Unauthorized,
         );
     }
 
-    private function forbiddenResponse(Request $request): Response
+    private function forbiddenResponse(ServerRequestInterface $request): ResponseInterface
     {
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json(
                 ['error' => 'Forbidden', 'status' => 403],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 
         return new Response(
+            statusCode: ResponseStatus::Forbidden->value,
             body: 'Forbidden',
-            status: ResponseStatus::Forbidden,
         );
     }
 
@@ -131,14 +137,14 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
      * @throws JsonException
      * @throws SodiumException
      */
-    private function auditAuthFailure(Request $request): void
+    private function auditAuthFailure(ServerRequestInterface $request): void
     {
         $this->auditLogger?->log(
             event: AuditEvent::Authentication,
             outcome: AuditOutcome::Failure,
             actor: 'anonymous',
             action: 'authenticate',
-            resource: $request->path,
+            resource: $request->getUri()->getPath(),
             metadata: ['reason' => 'unauthenticated'],
         );
     }
@@ -148,14 +154,14 @@ final readonly class AuthorizationMiddleware implements MiddlewareInterface
      * @throws JsonException
      * @throws SodiumException
      */
-    private function auditAuthzDenied(Request $request, string $actor, string $permission): void
+    private function auditAuthzDenied(ServerRequestInterface $request, string $actor, string $permission): void
     {
         $this->auditLogger?->log(
             event: AuditEvent::Authorization,
             outcome: AuditOutcome::Denied,
             actor: $actor,
             action: 'authorize',
-            resource: $request->path,
+            resource: $request->getUri()->getPath(),
             metadata: ['permission' => $permission],
         );
     }

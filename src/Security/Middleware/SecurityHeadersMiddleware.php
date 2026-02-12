@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Security\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 
 /**
  * Middleware that applies configured security headers to every response.
@@ -23,10 +24,9 @@ final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        /** @var Response $response */
-        $response = $next($request);
+        $response = $handler->handle($request);
 
         foreach ($this->config->effectiveHeaders() as $name => $value) {
             $response = $response->withHeader($name, $value);
@@ -42,12 +42,12 @@ final readonly class SecurityHeadersMiddleware implements MiddlewareInterface
         return $response;
     }
 
-    private function isSecureRequest(Request $request): bool
+    private function isSecureRequest(ServerRequestInterface $request): bool
     {
-        if ($request->isSecure()) {
+        if ($request->getUri()->getScheme() === 'https') {
             return true;
         }
 
-        return $request->headers->first('X-Forwarded-Proto') === 'https';
+        return $request->getHeaderLine('X-Forwarded-Proto') === 'https';
     }
 }

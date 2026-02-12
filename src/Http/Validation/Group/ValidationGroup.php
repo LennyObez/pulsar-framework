@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Group;
 
+use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 
@@ -36,6 +37,7 @@ readonly class ValidationGroup
      *
      * @param list<RuleInterface> $fieldRules
      */
+    #[NoDiscard]
     public function withField(string $field, array $fieldRules): self
     {
         $rules = $this->rules;

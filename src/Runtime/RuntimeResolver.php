@@ -6,7 +6,7 @@ namespace Pulsar\Runtime;
 
 use Closure;
 use NoDiscard;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Pulsar\Config\Environment;
 
 use function extension_loaded;
@@ -17,7 +17,7 @@ use function function_exists;
  *
  * Detection priority: FrankenPHP > RoadRunner > Persistent > FPM (fallback).
  */
-#[Internal]
+#[Api(since: '1.0.0-rc.11')]
 final class RuntimeResolver
 {
     /** @var Closure(): bool */

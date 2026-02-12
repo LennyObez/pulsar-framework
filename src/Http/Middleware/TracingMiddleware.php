@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Http\Middleware;
 
 use Override;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanProcessorInterface;
@@ -44,19 +45,19 @@ final readonly class TracingMiddleware implements MiddlewareInterface
      * @throws RandomException
      */
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         // Parse incoming traceparent or create new context
         $parentContext = null;
-        $traceparent = $request->headers->first('traceparent');
+        $traceparent = $request->getHeaderLine('traceparent');
 
-        if ($traceparent !== null) {
+        if ($traceparent !== '') {
             $parentContext = $this->traceContextParser->parse($traceparent);
         }
 
         // Determine if this request should be sampled
         if (!$this->shouldSample($parentContext)) {
-            return $next($request);
+            return $handler->handle($request);
         }
 
         // Create trace context: child of incoming or new root
@@ -64,17 +65,20 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             ? $parentContext->createChild()
             : TraceContext::create();
 
+        $method = $request->getMethod();
+        $path = $request->getUri()->getPath();
+
         // Create root span
-        $spanName = sprintf('HTTP %s %s', $request->method->value, $request->path);
+        $spanName = sprintf('HTTP %s %s', $method, $path);
         $span = new Span(
             name: $spanName,
             context: $context,
             parentSpanId: $parentContext?->spanId,
         );
 
-        $span->setAttribute('http.method', $request->method->value);
-        $span->setAttribute('http.path', $request->path);
-        $span->setAttribute('http.url', $request->uri);
+        $span->setAttribute('http.method', $method);
+        $span->setAttribute('http.path', $path);
+        $span->setAttribute('http.url', (string) $request->getUri());
 
         // Attach to request attributes for downstream use
         $request = $request
@@ -82,11 +86,10 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             ->withAttribute('_root_span', $span);
 
         try {
-            /** @var Response $response */
-            $response = $next($request);
+            $response = $handler->handle($request);
 
-            $span->setAttribute('http.status_code', $response->status->value);
-            $span->status = $this->resolveSpanStatus($response->status->value);
+            $span->setAttribute('http.status_code', $response->getStatusCode());
+            $span->status = $this->resolveSpanStatus($response->getStatusCode());
 
             // Add traceparent to response
             return $response->withHeader(
@@ -98,7 +101,7 @@ final readonly class TracingMiddleware implements MiddlewareInterface
             $routeLabel = $this->routeContext?->label();
 
             if ($routeLabel !== null && $routeLabel !== 'unmatched') {
-                $span->name = sprintf('HTTP %s %s', $request->method->value, $routeLabel);
+                $span->name = sprintf('HTTP %s %s', $request->getMethod(), $routeLabel);
                 $span->setAttribute('http.route', $routeLabel);
             }
 

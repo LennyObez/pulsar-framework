@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\I18n\Locale;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\I18nConfig;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\I18n\LocaleNegotiatorInterface;
 use Pulsar\I18n\TranslatorInterface;
 
@@ -29,7 +30,7 @@ final readonly class LocaleMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $locale = $this->negotiator->negotiate(
             $request,
@@ -41,6 +42,6 @@ final readonly class LocaleMiddleware implements MiddlewareInterface
 
         $request = $request->withAttribute('_locale', $locale);
 
-        return $next($request);
+        return $handler->handle($request);
     }
 }

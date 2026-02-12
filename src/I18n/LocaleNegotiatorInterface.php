@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\I18n;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
-use Pulsar\Http\Request;
 
 /**
  * Locale negotiation contract.
@@ -19,9 +19,9 @@ interface LocaleNegotiatorInterface
     /**
      * Negotiate the best locale for the request.
      *
-     * @param Request $request The incoming HTTP request
+     * @param ServerRequestInterface $request The incoming HTTP request
      * @param list<string> $supported Supported locale tags
      * @param string $default Fallback locale
      */
-    public function negotiate(Request $request, array $supported, string $default): string;
+    public function negotiate(ServerRequestInterface $request, array $supported, string $default): string;
 }

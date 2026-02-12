@@ -7,14 +7,13 @@ namespace Pulsar\Tests\Unit\Security\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\CrossOriginConfig;
 use Pulsar\Config\CspConfig;
 use Pulsar\Config\HstsConfig;
 use Pulsar\Config\SecurityHeadersConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 
@@ -25,27 +24,44 @@ final class SecurityHeadersMiddlewareTest extends TestCase
      * @param array<string, mixed> $server
      * @param array<string, list<string>|string> $headers
      */
-    private function createRequest(array $server = [], array $headers = []): Request
+    private function createRequest(array $server = [], array $headers = []): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag($headers),
-            body: '',
-            server: $server,
+            headers: $headers,
+            serverParams: $server,
         );
     }
 
-    private function createHttpsRequest(): Request
+    private function createHttpsRequest(): ServerRequest
     {
-        return $this->createRequest(server: ['HTTPS' => 'on']);
+        return new ServerRequest(
+            method: 'GET',
+            uri: 'https://example.com/',
+            serverParams: ['HTTPS' => 'on'],
+        );
     }
 
-    private function createForwardedHttpsRequest(): Request
+    private function createForwardedHttpsRequest(): ServerRequest
     {
         return $this->createRequest(headers: ['X-Forwarded-Proto' => 'https']);
+    }
+
+    private function textHandler(): RequestHandlerInterface
+    {
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        return $handler;
+    }
+
+    private function jsonHandler(): RequestHandlerInterface
+    {
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::json(['status' => 'ok']));
+
+        return $handler;
     }
 
     #[Test]
@@ -59,12 +75,11 @@ final class SecurityHeadersMiddlewareTest extends TestCase
 
         $middleware = new SecurityHeadersMiddleware($config);
 
-        $handler = fn(Request $r): Response => Response::text('OK');
-        $response = $middleware->process($this->createRequest(), $handler);
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
 
-        self::assertSame('nosniff', $response->headers->first('X-Content-Type-Options'));
-        self::assertSame('DENY', $response->headers->first('X-Frame-Options'));
-        self::assertSame('strict-origin-when-cross-origin', $response->headers->first('Referrer-Policy'));
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
+        self::assertSame('strict-origin-when-cross-origin', $response->getHeaderLine('Referrer-Policy'));
     }
 
     #[Test]
@@ -73,15 +88,14 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         $config = new SecurityHeadersConfig(headers: []);
         $middleware = new SecurityHeadersMiddleware($config);
 
-        $handler = fn(Request $r): Response => Response::text('OK');
-        $response = $middleware->process($this->createRequest(), $handler);
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('nosniff', $response->headers->first('X-Content-Type-Options'));
-        self::assertSame('DENY', $response->headers->first('X-Frame-Options'));
-        self::assertSame('strict-origin-when-cross-origin', $response->headers->first('Referrer-Policy'));
-        self::assertSame('0', $response->headers->first('X-XSS-Protection'));
-        self::assertSame('camera=(), microphone=(), geolocation=()', $response->headers->first('Permissions-Policy'));
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
+        self::assertSame('strict-origin-when-cross-origin', $response->getHeaderLine('Referrer-Policy'));
+        self::assertSame('0', $response->getHeaderLine('X-XSS-Protection'));
+        self::assertSame('camera=(), microphone=(), geolocation=()', $response->getHeaderLine('Permissions-Policy'));
     }
 
     #[Test]
@@ -93,13 +107,12 @@ final class SecurityHeadersMiddlewareTest extends TestCase
 
         $middleware = new SecurityHeadersMiddleware($config);
 
-        $handler = fn(Request $r): Response => Response::json(['status' => 'ok']);
-        $response = $middleware->process($this->createRequest(), $handler);
+        $response = $middleware->process($this->createRequest(), $this->jsonHandler());
 
         // Original Content-Type preserved
-        self::assertStringContainsString('application/json', $response->headers->first('Content-Type') ?? '');
+        self::assertStringContainsString('application/json', $response->getHeaderLine('Content-Type'));
         // Security header added
-        self::assertSame('DENY', $response->headers->first('X-Frame-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
     }
 
     #[Test]
@@ -111,13 +124,12 @@ final class SecurityHeadersMiddlewareTest extends TestCase
 
         $middleware = new SecurityHeadersMiddleware($config);
 
-        $handler = fn(Request $r): Response => Response::text('OK');
-        $response = $middleware->process($this->createRequest(), $handler);
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
 
         // User override takes precedence
-        self::assertSame('SAMEORIGIN', $response->headers->first('X-Frame-Options'));
+        self::assertSame('SAMEORIGIN', $response->getHeaderLine('X-Frame-Options'));
         // Other minimums still present
-        self::assertSame('nosniff', $response->headers->first('X-Content-Type-Options'));
+        self::assertSame('nosniff', $response->getHeaderLine('X-Content-Type-Options'));
     }
 
     #[Test]
@@ -129,13 +141,15 @@ final class SecurityHeadersMiddlewareTest extends TestCase
 
         $middleware = new SecurityHeadersMiddleware($config);
 
-        $handler = fn(Request $r): Response => Response::text('OK')
-            ->withHeader('X-Frame-Options', 'SAMEORIGIN');
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(
+            Response::text('OK')->withHeader('X-Frame-Options', 'SAMEORIGIN'),
+        );
 
         $response = $middleware->process($this->createRequest(), $handler);
 
         // Config value should override
-        self::assertSame('DENY', $response->headers->first('X-Frame-Options'));
+        self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
     }
 
     #[Test]
@@ -147,13 +161,12 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         );
 
         $middleware = new SecurityHeadersMiddleware($config);
-        $handler = fn(Request $r): Response => Response::text('OK');
 
-        $response = $middleware->process($this->createHttpsRequest(), $handler);
+        $response = $middleware->process($this->createHttpsRequest(), $this->textHandler());
 
         self::assertSame(
             'max-age=31536000; includeSubDomains',
-            $response->headers->first('Strict-Transport-Security'),
+            $response->getHeaderLine('Strict-Transport-Security'),
         );
     }
 
@@ -166,11 +179,10 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         );
 
         $middleware = new SecurityHeadersMiddleware($config);
-        $handler = fn(Request $r): Response => Response::text('OK');
 
-        $response = $middleware->process($this->createRequest(), $handler);
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
 
-        self::assertNull($response->headers->first('Strict-Transport-Security'));
+        self::assertSame('', $response->getHeaderLine('Strict-Transport-Security'));
     }
 
     #[Test]
@@ -182,13 +194,12 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         );
 
         $middleware = new SecurityHeadersMiddleware($config);
-        $handler = fn(Request $r): Response => Response::text('OK');
 
-        $response = $middleware->process($this->createForwardedHttpsRequest(), $handler);
+        $response = $middleware->process($this->createForwardedHttpsRequest(), $this->textHandler());
 
         self::assertSame(
             'max-age=63072000; includeSubDomains; preload',
-            $response->headers->first('Strict-Transport-Security'),
+            $response->getHeaderLine('Strict-Transport-Security'),
         );
     }
 
@@ -201,11 +212,10 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         );
 
         $middleware = new SecurityHeadersMiddleware($config);
-        $handler = fn(Request $r): Response => Response::text('OK');
 
-        $response = $middleware->process($this->createHttpsRequest(), $handler);
+        $response = $middleware->process($this->createHttpsRequest(), $this->textHandler());
 
-        self::assertNull($response->headers->first('Strict-Transport-Security'));
+        self::assertSame('', $response->getHeaderLine('Strict-Transport-Security'));
     }
 
     #[Test]
@@ -217,12 +227,11 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         );
 
         $middleware = new SecurityHeadersMiddleware($config);
-        $handler = fn(Request $r): Response => Response::text('OK');
 
-        $response = $middleware->process($this->createRequest(), $handler);
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
 
-        $csp = $response->headers->first('Content-Security-Policy');
-        self::assertNotNull($csp);
+        $csp = $response->getHeaderLine('Content-Security-Policy');
+        self::assertNotEmpty($csp);
         self::assertStringContainsString("default-src 'self'", $csp);
         self::assertStringContainsString("script-src 'self' 'unsafe-inline'", $csp);
     }
@@ -233,11 +242,10 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         $config = new SecurityHeadersConfig(headers: []);
 
         $middleware = new SecurityHeadersMiddleware($config);
-        $handler = fn(Request $r): Response => Response::text('OK');
 
-        $response = $middleware->process($this->createRequest(), $handler);
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
 
-        self::assertNull($response->headers->first('Cross-Origin-Embedder-Policy'));
+        self::assertSame('', $response->getHeaderLine('Cross-Origin-Embedder-Policy'));
     }
 
     #[Test]
@@ -249,12 +257,11 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         );
 
         $middleware = new SecurityHeadersMiddleware($config);
-        $handler = fn(Request $r): Response => Response::text('OK');
 
-        $response = $middleware->process($this->createRequest(), $handler);
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
 
-        self::assertNotNull($response->headers->first('Content-Security-Policy-Report-Only'));
-        self::assertNull($response->headers->first('Content-Security-Policy'));
+        self::assertNotEmpty($response->getHeaderLine('Content-Security-Policy-Report-Only'));
+        self::assertSame('', $response->getHeaderLine('Content-Security-Policy'));
     }
 
     #[Test]
@@ -270,12 +277,11 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         );
 
         $middleware = new SecurityHeadersMiddleware($config);
-        $handler = fn(Request $r): Response => Response::text('OK');
 
-        $response = $middleware->process($this->createRequest(), $handler);
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
 
-        self::assertSame('same-origin', $response->headers->first('Cross-Origin-Opener-Policy'));
-        self::assertSame('require-corp', $response->headers->first('Cross-Origin-Embedder-Policy'));
-        self::assertSame('same-origin', $response->headers->first('Cross-Origin-Resource-Policy'));
+        self::assertSame('same-origin', $response->getHeaderLine('Cross-Origin-Opener-Policy'));
+        self::assertSame('require-corp', $response->getHeaderLine('Cross-Origin-Embedder-Policy'));
+        self::assertSame('same-origin', $response->getHeaderLine('Cross-Origin-Resource-Policy'));
     }
 }

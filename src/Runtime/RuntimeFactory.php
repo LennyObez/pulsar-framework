@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Runtime;
 
 use Psr\Log\LoggerInterface;
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use Pulsar\Config\RuntimeConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
@@ -21,7 +21,7 @@ use Pulsar\Runtime\Upgrade\UpgradeContext;
  * the container so that consumers only depend on the factory, not on internal
  * runtime construction details.
  */
-#[Internal]
+#[Api(since: '1.0.0-rc.11')]
 readonly class RuntimeFactory implements PersistentRuntimeFactoryInterface
 {
     public function __construct(

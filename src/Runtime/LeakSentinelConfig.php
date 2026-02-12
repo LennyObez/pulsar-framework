@@ -6,8 +6,6 @@ namespace Pulsar\Runtime;
 
 use Pulsar\Api\Internal;
 
-use function array_filter;
-use function array_values;
 use function is_array;
 use function is_float;
 use function is_int;

@@ -8,7 +8,9 @@ use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\PolicyContext;
@@ -19,10 +21,8 @@ use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Auth\Middleware\AuthenticationMiddleware;
 use Pulsar\Auth\Middleware\AuthorizationMiddleware;
 use Pulsar\Auth\SecurityContext;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 /**
@@ -46,40 +46,60 @@ final class AuthFlowTest extends TestCase
         $this->sessionStore = new AuthFlowTestSessionStore();
     }
 
+    /**
+     * @param array<string, string|list<string>> $headers
+     */
     private function createRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $path = '/',
-        HeaderBag $headers = new HeaderBag(),
-    ): Request {
-        return new Request(
+        array $headers = [],
+    ): ServerRequest {
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
             headers: $headers,
-            body: '',
         );
     }
 
     /**
      * Run a request through the auth middleware pipeline.
-     *
-     * @param callable(Request): Response $handler The final request handler
      */
     private function processRequest(
-        Request $request,
+        ServerRequestInterface $request,
         AuthManagerInterface $authManager,
         GateInterface $gate,
-        callable $handler,
-    ): Response {
+        RequestHandlerInterface $handler,
+    ): ResponseInterface {
         $authMiddleware = new AuthenticationMiddleware($authManager);
         $authzMiddleware = new AuthorizationMiddleware($gate);
 
         // Pipeline: authentication -> authorization -> handler
-        return $authMiddleware->process(
-            $request,
-            fn(Request $req): Response => $authzMiddleware->process($req, $handler),
-        );
+        $authzHandler = new class ($authzMiddleware, $handler) implements RequestHandlerInterface {
+            public function __construct(
+                private readonly AuthorizationMiddleware $middleware,
+                private readonly RequestHandlerInterface $inner,
+            ) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->middleware->process($request, $this->inner);
+            }
+        };
+
+        return $authMiddleware->process($request, $authzHandler);
+    }
+
+    private function createHandler(callable $fn): RequestHandlerInterface
+    {
+        return new class ($fn) implements RequestHandlerInterface {
+            /** @param callable(ServerRequestInterface): ResponseInterface $fn */
+            public function __construct(private readonly mixed $fn) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return ($this->fn)($request);
+            }
+        };
     }
 
     #[Test]
@@ -88,16 +108,16 @@ final class AuthFlowTest extends TestCase
         $authManager = new AuthFlowTestAuthManager($this->sessionStore);
         $gate = new AuthFlowTestGate();
 
-        $request = $this->createRequest(Method::GET, '/dashboard');
+        $request = $this->createRequest('GET', '/dashboard');
 
         $response = $this->processRequest(
             $request,
             $authManager,
             $gate,
-            fn(Request $req): Response => Response::text('dashboard content'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('dashboard content')),
         );
 
-        self::assertSame(ResponseStatus::Unauthorized, $response->status);
+        self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -109,17 +129,17 @@ final class AuthFlowTest extends TestCase
         // Simulate login: store identity in session
         $this->sessionStore->login('user-123', 'Alice');
 
-        $request = $this->createRequest(Method::GET, '/dashboard');
+        $request = $this->createRequest('GET', '/dashboard');
 
         $response = $this->processRequest(
             $request,
             $authManager,
             $gate,
-            fn(Request $req): Response => Response::text('dashboard content'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('dashboard content')),
         );
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('dashboard content', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('dashboard content', (string) $response->getBody());
     }
 
     #[Test]
@@ -131,15 +151,15 @@ final class AuthFlowTest extends TestCase
         // Login first
         $this->sessionStore->login('user-456', 'Bob');
 
-        $request = $this->createRequest(Method::GET, '/profile');
+        $request = $this->createRequest('GET', '/profile');
 
         $response = $this->processRequest(
             $request,
             $authManager,
             $gate,
-            function (Request $req): Response {
+            $this->createHandler(function (ServerRequestInterface $req): ResponseInterface {
                 /** @var SecurityContext|null $ctx */
-                $ctx = $req->attribute('_security_context');
+                $ctx = $req->getAttribute('_security_context');
                 $identity = $ctx?->identity();
 
                 return Response::json([
@@ -147,13 +167,13 @@ final class AuthFlowTest extends TestCase
                     'user_id' => $identity?->id(),
                     'name' => $identity?->displayName(),
                 ]);
-            },
+            }),
         );
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
 
         /** @var array{authenticated: bool, user_id: string, name: string} $data */
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertTrue($data['authenticated']);
         self::assertSame('user-456', $data['user_id']);
         self::assertSame('Bob', $data['name']);
@@ -170,24 +190,24 @@ final class AuthFlowTest extends TestCase
 
         // Verify authenticated
         $authedResponse = $this->processRequest(
-            $this->createRequest(Method::GET, '/dashboard'),
+            $this->createRequest('GET', '/dashboard'),
             $authManager,
             $gate,
-            fn(Request $req): Response => Response::text('ok'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('ok')),
         );
-        self::assertSame(ResponseStatus::OK, $authedResponse->status);
+        self::assertSame(ResponseStatus::OK->value, $authedResponse->getStatusCode());
 
         // Logout
         $this->sessionStore->logout();
 
         // Verify unauthenticated after logout
         $loggedOutResponse = $this->processRequest(
-            $this->createRequest(Method::GET, '/dashboard'),
+            $this->createRequest('GET', '/dashboard'),
             $authManager,
             $gate,
-            fn(Request $req): Response => Response::text('should not reach'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('should not reach')),
         );
-        self::assertSame(ResponseStatus::Unauthorized, $loggedOutResponse->status);
+        self::assertSame(ResponseStatus::Unauthorized->value, $loggedOutResponse->getStatusCode());
     }
 
     #[Test]
@@ -200,24 +220,24 @@ final class AuthFlowTest extends TestCase
         $this->sessionStore->login('user-999', 'Dana');
 
         $firstResponse = $this->processRequest(
-            $this->createRequest(Method::GET, '/secure'),
+            $this->createRequest('GET', '/secure'),
             $authManager,
             $gate,
-            fn(Request $req): Response => Response::text('secure data'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('secure data')),
         );
-        self::assertSame(ResponseStatus::OK, $firstResponse->status);
+        self::assertSame(ResponseStatus::OK->value, $firstResponse->getStatusCode());
 
         // Logout
         $this->sessionStore->logout();
 
         // Re-request should be 401
         $secondResponse = $this->processRequest(
-            $this->createRequest(Method::GET, '/secure'),
+            $this->createRequest('GET', '/secure'),
             $authManager,
             $gate,
-            fn(Request $req): Response => Response::text('should not reach'),
+            $this->createHandler(fn(ServerRequestInterface $req): ResponseInterface => Response::text('should not reach')),
         );
-        self::assertSame(ResponseStatus::Unauthorized, $secondResponse->status);
+        self::assertSame(ResponseStatus::Unauthorized->value, $secondResponse->getStatusCode());
     }
 }
 

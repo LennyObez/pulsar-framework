@@ -9,14 +9,15 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Internal\Middleware\AdminRateLimitMiddleware;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\RateLimit\RateLimiterInterface;
 use Pulsar\Http\RateLimit\RateLimitResult;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(AdminRateLimitMiddleware::class)]
@@ -31,22 +32,28 @@ final class AdminRateLimitMiddlewareTest extends TestCase
         $this->middleware = new AdminRateLimitMiddleware($this->rateLimiter);
     }
 
-    private static function makeRequest(Method $method = Method::GET, string $path = '/admin/users', ?IdentityInterface $identity = null): Request
+    private static function makeRequest(string $method = 'GET', string $path = '/admin/users', ?IdentityInterface $identity = null): ServerRequest
     {
         $attributes = [];
         if ($identity !== null) {
             $attributes['identity'] = $identity;
         }
 
-        return new Request(
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
             attributes: $attributes,
         );
+    }
+
+    private static function makeHandler(): RequestHandlerInterface
+    {
+        return new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(body: 'ok');
+            }
+        };
     }
 
     #[Test]
@@ -56,13 +63,11 @@ final class AdminRateLimitMiddlewareTest extends TestCase
             new RateLimitResult(allowed: true, limit: 120, remaining: 119, retryAfter: 0),
         );
 
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
+        $response = $this->middleware->process(self::makeRequest(), self::makeHandler());
 
-        $response = $this->middleware->process(self::makeRequest(), $next);
-
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('120', $response->headers->first('X-RateLimit-Limit'));
-        self::assertSame('119', $response->headers->first('X-RateLimit-Remaining'));
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('120', $response->getHeaderLine('X-RateLimit-Limit'));
+        self::assertSame('119', $response->getHeaderLine('X-RateLimit-Remaining'));
     }
 
     #[Test]
@@ -72,13 +77,11 @@ final class AdminRateLimitMiddlewareTest extends TestCase
             new RateLimitResult(allowed: false, limit: 120, remaining: 0, retryAfter: 45),
         );
 
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
+        $response = $this->middleware->process(self::makeRequest(), self::makeHandler());
 
-        $response = $this->middleware->process(self::makeRequest(), $next);
-
-        self::assertSame(ResponseStatus::TooManyRequests, $response->status);
-        self::assertSame('45', $response->headers->first('Retry-After'));
-        self::assertStringContainsString('Rate limit exceeded', $response->body);
+        self::assertSame(ResponseStatus::TooManyRequests->value, $response->getStatusCode());
+        self::assertSame('45', $response->getHeaderLine('Retry-After'));
+        self::assertStringContainsString('Rate limit exceeded', (string) $response->getBody());
     }
 
     #[Test]
@@ -92,9 +95,8 @@ final class AdminRateLimitMiddlewareTest extends TestCase
             ->willReturn(new RateLimitResult(allowed: true, limit: 120, remaining: 119, retryAfter: 0));
 
         $middleware = new AdminRateLimitMiddleware($rateLimiter);
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
 
-        $middleware->process(self::makeRequest(Method::GET), $next);
+        $middleware->process(self::makeRequest('GET'), self::makeHandler());
     }
 
     #[Test]
@@ -108,9 +110,8 @@ final class AdminRateLimitMiddlewareTest extends TestCase
             ->willReturn(new RateLimitResult(allowed: true, limit: 30, remaining: 29, retryAfter: 0));
 
         $middleware = new AdminRateLimitMiddleware($rateLimiter);
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
 
-        $middleware->process(self::makeRequest(Method::POST, '/admin/users'), $next);
+        $middleware->process(self::makeRequest('POST', '/admin/users'), self::makeHandler());
     }
 
     #[Test]
@@ -124,9 +125,8 @@ final class AdminRateLimitMiddlewareTest extends TestCase
             ->willReturn(new RateLimitResult(allowed: true, limit: 5, remaining: 4, retryAfter: 0));
 
         $middleware = new AdminRateLimitMiddleware($rateLimiter);
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
 
-        $middleware->process(self::makeRequest(Method::GET, '/admin/users/export'), $next);
+        $middleware->process(self::makeRequest('GET', '/admin/users/export'), self::makeHandler());
     }
 
     #[Test]
@@ -143,9 +143,8 @@ final class AdminRateLimitMiddlewareTest extends TestCase
             ->willReturn(new RateLimitResult(allowed: true, limit: 120, remaining: 119, retryAfter: 0));
 
         $middleware = new AdminRateLimitMiddleware($rateLimiter);
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
 
-        $middleware->process(self::makeRequest(Method::GET, '/admin/users', $identity), $next);
+        $middleware->process(self::makeRequest('GET', '/admin/users', $identity), self::makeHandler());
     }
 
     #[Test]
@@ -159,9 +158,8 @@ final class AdminRateLimitMiddlewareTest extends TestCase
             ->willReturn(new RateLimitResult(allowed: true, limit: 120, remaining: 119, retryAfter: 0));
 
         $middleware = new AdminRateLimitMiddleware($rateLimiter);
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
 
-        $middleware->process(self::makeRequest(), $next);
+        $middleware->process(self::makeRequest(), self::makeHandler());
     }
 
     #[Test]
@@ -175,8 +173,7 @@ final class AdminRateLimitMiddlewareTest extends TestCase
             ->willReturn(new RateLimitResult(allowed: true, limit: 30, remaining: 29, retryAfter: 0));
 
         $middleware = new AdminRateLimitMiddleware($rateLimiter);
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
 
-        $middleware->process(self::makeRequest(Method::DELETE, '/admin/users/1'), $next);
+        $middleware->process(self::makeRequest('DELETE', '/admin/users/1'), self::makeHandler());
     }
 }

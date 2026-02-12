@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Features\GlobalSearch\GlobalSearchHandler;
 use Pulsar\Extension\Admin\Features\GlobalSearch\GlobalSearchRequest;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 use function is_string;
+use function str_contains;
 
 /**
  * Controller for global admin search.
@@ -24,16 +25,16 @@ final readonly class SearchController
         private AdminConfig $config,
     ) {}
 
-    public function search(Request $request): Response
+    public function search(ServerRequestInterface $request): Response
     {
-        $query = $request->query('q');
+        $query = $request->getQueryParams()['q'] ?? null;
         $queryStr = is_string($query) ? $query : '';
 
         $result = $this->handler->execute(new GlobalSearchRequest(
             query: $queryStr,
         ));
 
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json([
                 'results' => $result->results,
                 'total_matches' => $result->totalMatches,

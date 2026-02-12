@@ -7,15 +7,16 @@ namespace Pulsar\Tests\Unit\Studio\Console\Collector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Studio\Console\Collector\HttpCollector;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\HttpRequestPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\HttpResponsePayload;
 use Pulsar\Extension\Studio\FiberScopedContextProvider;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Tracing\TraceId;
@@ -43,7 +44,8 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest();
 
-        $collector->process($request, fn(Request $r): Response => new Response('OK'));
+        $handler = $this->createHandlerReturning(new Response(statusCode: 200, body: 'OK'));
+        $collector->process($request, $handler);
 
         self::assertCount(2, $this->emittedEvents);
         self::assertInstanceOf(HttpRequestPayload::class, $this->emittedEvents[0]['event']);
@@ -54,9 +56,10 @@ final class HttpCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
         $request = $this->createRequest();
-        $response = new Response('OK', ResponseStatus::OK);
+        $response = new Response(statusCode: 200, body: 'OK');
 
-        $collector->process($request, fn(Request $r): Response => $response);
+        $handler = $this->createHandlerReturning($response);
+        $collector->process($request, $handler);
 
         self::assertCount(2, $this->emittedEvents);
         self::assertInstanceOf(HttpResponsePayload::class, $this->emittedEvents[1]['event']);
@@ -66,9 +69,10 @@ final class HttpCollectorTest extends TestCase
     public function processRecordsRequestMethod(): void
     {
         $collector = $this->createCollector();
-        $request = $this->createRequest(Method::POST);
+        $request = $this->createRequest(method: 'POST');
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -81,7 +85,8 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest(uri: '/api/users?page=1');
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -92,9 +97,10 @@ final class HttpCollectorTest extends TestCase
     public function processRecordsRequestPath(): void
     {
         $collector = $this->createCollector();
-        $request = $this->createRequest(uri: '/api/users?page=1', path: '/api/users');
+        $request = $this->createRequest(uri: '/api/users?page=1');
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -105,13 +111,14 @@ final class HttpCollectorTest extends TestCase
     public function processRecordsRequestHeaders(): void
     {
         $collector = $this->createCollector();
-        $headers = new HeaderBag([
+        $headers = [
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
-        ]);
+        ];
         $request = $this->createRequest(headers: $headers);
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -125,7 +132,8 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest(server: ['REMOTE_ADDR' => '192.168.1.100']);
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -136,10 +144,11 @@ final class HttpCollectorTest extends TestCase
     public function processRecordsUserAgent(): void
     {
         $collector = $this->createCollector();
-        $headers = new HeaderBag(['User-Agent' => 'Mozilla/5.0']);
+        $headers = ['User-Agent' => 'Mozilla/5.0'];
         $request = $this->createRequest(headers: $headers);
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -150,10 +159,11 @@ final class HttpCollectorTest extends TestCase
     public function processRecordsContentType(): void
     {
         $collector = $this->createCollector();
-        $headers = new HeaderBag(['Content-Type' => 'application/json']);
+        $headers = ['Content-Type' => 'application/json'];
         $request = $this->createRequest(headers: $headers);
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -164,10 +174,11 @@ final class HttpCollectorTest extends TestCase
     public function processRecordsContentLength(): void
     {
         $collector = $this->createCollector();
-        $headers = new HeaderBag(['Content-Length' => '1024']);
+        $headers = ['Content-Length' => '1024'];
         $request = $this->createRequest(headers: $headers);
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -180,7 +191,8 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest(attributes: ['_route_name' => 'api.users.index']);
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -192,9 +204,10 @@ final class HttpCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
         $request = $this->createRequest();
-        $response = new Response('Created', ResponseStatus::Created);
+        $response = new Response(statusCode: ResponseStatus::Created->value, body: 'Created');
 
-        $collector->process($request, fn(Request $r): Response => $response);
+        $handler = $this->createHandlerReturning($response);
+        $collector->process($request, $handler);
 
         /** @var HttpResponsePayload $payload */
         $payload = $this->emittedEvents[1]['event'];
@@ -207,10 +220,14 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest();
 
-        $collector->process($request, function (Request $r): Response {
-            usleep(10000); // 10ms
-            return new Response();
-        });
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $r): ResponseInterface {
+                usleep(10000); // 10ms
+                return new Response();
+            },
+        );
+        $collector->process($request, $handler);
 
         /** @var HttpResponsePayload $payload */
         $payload = $this->emittedEvents[1]['event'];
@@ -222,12 +239,13 @@ final class HttpCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
         $request = $this->createRequest();
-        $response = new Response('OK', headers: new HeaderBag([
+        $response = new Response(statusCode: 200, headers: [
             'Content-Type' => 'application/json',
             'X-Custom' => 'value',
-        ]));
+        ], body: 'OK');
 
-        $collector->process($request, fn(Request $r): Response => $response);
+        $handler = $this->createHandlerReturning($response);
+        $collector->process($request, $handler);
 
         /** @var HttpResponsePayload $payload */
         $payload = $this->emittedEvents[1]['event'];
@@ -240,9 +258,10 @@ final class HttpCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
         $request = $this->createRequest();
-        $response = new Response('Hello, World!');
+        $response = new Response(statusCode: 200, body: 'Hello, World!');
 
-        $collector->process($request, fn(Request $r): Response => $response);
+        $handler = $this->createHandlerReturning($response);
+        $collector->process($request, $handler);
 
         /** @var HttpResponsePayload $payload */
         $payload = $this->emittedEvents[1]['event'];
@@ -254,9 +273,10 @@ final class HttpCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
         $request = $this->createRequest();
-        $response = new Response('{}', headers: new HeaderBag(['Content-Type' => 'application/json']));
+        $response = new Response(statusCode: 200, headers: ['Content-Type' => 'application/json'], body: '{}');
 
-        $collector->process($request, fn(Request $r): Response => $response);
+        $handler = $this->createHandlerReturning($response);
+        $collector->process($request, $handler);
 
         /** @var HttpResponsePayload $payload */
         $payload = $this->emittedEvents[1]['event'];
@@ -269,7 +289,8 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest();
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         $context = $this->emittedEvents[0]['context'];
         self::assertInstanceOf(CorrelationContext::class, $context);
@@ -285,7 +306,8 @@ final class HttpCollectorTest extends TestCase
         $traceId = new TraceId('0123456789abcdef0123456789abcdef');
         $request = $this->createRequest(attributes: ['_trace_context' => $traceId]);
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         $context = $this->emittedEvents[0]['context'];
         self::assertNotNull($context);
@@ -298,7 +320,8 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest(attributes: ['_span_id' => 'span-123']);
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         $context = $this->emittedEvents[0]['context'];
         self::assertNotNull($context);
@@ -311,7 +334,8 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest(attributes: ['_span_id' => 12345]);
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         $context = $this->emittedEvents[0]['context'];
         self::assertNotNull($context);
@@ -325,15 +349,20 @@ final class HttpCollectorTest extends TestCase
         $request = $this->createRequest();
         $capturedRequest = null;
 
-        $collector->process($request, function (Request $r) use (&$capturedRequest): Response {
-            $capturedRequest = $r;
-            return new Response();
-        });
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $r) use (&$capturedRequest): ResponseInterface {
+                $capturedRequest = $r;
+                return new Response();
+            },
+        );
+
+        $collector->process($request, $handler);
 
         self::assertNotNull($capturedRequest);
         self::assertInstanceOf(
             CorrelationContext::class,
-            $capturedRequest->attribute('_studio_correlation'),
+            $capturedRequest->getAttribute('_studio_correlation'),
         );
     }
 
@@ -342,9 +371,10 @@ final class HttpCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
         $request = $this->createRequest();
-        $expectedResponse = new Response('Expected', ResponseStatus::Created);
+        $expectedResponse = new Response(statusCode: ResponseStatus::Created->value, body: 'Expected');
 
-        $actualResponse = $collector->process($request, fn(Request $r): Response => $expectedResponse);
+        $handler = $this->createHandlerReturning($expectedResponse);
+        $actualResponse = $collector->process($request, $handler);
 
         self::assertSame($expectedResponse, $actualResponse);
     }
@@ -355,10 +385,11 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest();
 
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->method('handle')->willThrowException(new RuntimeException('Test exception'));
+
         try {
-            $collector->process($request, function (Request $r): Response {
-                throw new RuntimeException('Test exception');
-            });
+            $collector->process($request, $handler);
         } catch (RuntimeException) {
             // Expected
         }
@@ -378,9 +409,10 @@ final class HttpCollectorTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Test exception');
 
-        $collector->process($request, function (Request $r): Response {
-            throw new RuntimeException('Test exception');
-        });
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->method('handle')->willThrowException(new RuntimeException('Test exception'));
+
+        $collector->process($request, $handler);
     }
 
     #[Test]
@@ -390,7 +422,8 @@ final class HttpCollectorTest extends TestCase
         $collector->enabled = false;
         $request = $this->createRequest();
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         self::assertCount(0, $this->emittedEvents);
     }
@@ -423,7 +456,8 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest(server: ['REMOTE_ADDR' => 123]); // Non-string
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -436,7 +470,8 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest(attributes: ['_route_name' => 123]); // Non-string
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         /** @var HttpRequestPayload $payload */
         $payload = $this->emittedEvents[0]['event'];
@@ -448,9 +483,10 @@ final class HttpCollectorTest extends TestCase
     {
         $collector = $this->createCollector();
         $request = $this->createRequest();
-        $response = new Response('');
+        $response = new Response(statusCode: 200, body: '');
 
-        $collector->process($request, fn(Request $r): Response => $response);
+        $handler = $this->createHandlerReturning($response);
+        $collector->process($request, $handler);
 
         /** @var HttpResponsePayload $payload */
         $payload = $this->emittedEvents[1]['event'];
@@ -466,7 +502,8 @@ final class HttpCollectorTest extends TestCase
         // Before processing, context should be null
         self::assertNull($this->contextProvider->current());
 
-        $collector->process($request, fn(Request $r): Response => new Response());
+        $handler = $this->createHandlerReturning(new Response());
+        $collector->process($request, $handler);
 
         // After processing, context should be cleaned up
         self::assertNull($this->contextProvider->current());
@@ -478,10 +515,11 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest();
 
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->method('handle')->willThrowException(new RuntimeException('Test'));
+
         try {
-            $collector->process($request, function (Request $r): Response {
-                throw new RuntimeException('Test');
-            });
+            $collector->process($request, $handler);
         } catch (RuntimeException) {
             // Expected
         }
@@ -502,9 +540,10 @@ final class HttpCollectorTest extends TestCase
         $request = $this->createRequest();
 
         // Should not throw
-        $response = $collector->process($request, fn(Request $r): Response => new Response('OK'));
+        $handler = $this->createHandlerReturning(new Response(statusCode: 200, body: 'OK'));
+        $response = $collector->process($request, $handler);
 
-        self::assertSame('OK', $response->body);
+        self::assertSame('OK', (string) $response->getBody());
     }
 
     private function createCollector(): HttpCollector
@@ -517,30 +556,37 @@ final class HttpCollectorTest extends TestCase
         );
     }
 
+    private function createHandlerReturning(ResponseInterface $response): RequestHandlerInterface
+    {
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn($response);
+
+        return $handler;
+    }
+
     /**
+     * @param array<string, string> $headers
      * @param array<string, mixed> $server
      * @param array<string, mixed> $attributes
      */
     private function createRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $uri = '/test',
-        string $path = '/test',
-        ?HeaderBag $headers = null,
+        array $headers = [],
         array $server = [],
         array $attributes = [],
-    ): Request {
-        return new Request(
+    ): ServerRequest {
+        $request = new ServerRequest(
             method: $method,
             uri: $uri,
-            path: $path,
-            queryString: '',
-            headers: $headers ?? new HeaderBag(),
-            body: '',
-            query: [],
-            post: [],
-            cookies: [],
-            server: $server,
-            attributes: $attributes,
+            headers: $headers,
+            serverParams: $server,
         );
+
+        foreach ($attributes as $name => $value) {
+            $request = $request->withAttribute($name, $value);
+        }
+
+        return $request;
     }
 }

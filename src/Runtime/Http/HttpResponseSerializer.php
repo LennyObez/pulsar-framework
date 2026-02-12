@@ -52,7 +52,10 @@ final class HttpResponseSerializer
         $headerStr = '';
         $hasDate = false;
 
-        foreach ($response->getHeaders() as $name => $values) {
+        /** @var array<string, list<string>> $allHeaders */
+        $allHeaders = $response->getHeaders();
+
+        foreach ($allHeaders as $name => $values) {
             $lower = strtolower($name);
 
             // Strip Transfer-Encoding to prevent framing ambiguity

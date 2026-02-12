@@ -12,12 +12,11 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Core\Kernel;
 use Pulsar\ErrorHandling\ExceptionHandler;
-use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Http\Middleware\ValidationMiddleware;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\Validation\Rule\MinLength;
 use Pulsar\Http\Validation\Rule\Required;
 use Pulsar\Http\Validation\Rule\StringType;
@@ -128,26 +127,24 @@ final class ValidationMiddlewareTest extends TestCase
         $kernel->router()->add(new Route(
             methods: [Method::POST],
             path: '/api/users',
-            handler: fn(Request $req) => Response::json(['ok' => true]),
+            handler: fn(ServerRequestInterface $req) => Response::json(['ok' => true]),
             middleware: [CreateUserValidation::class],
         ));
 
-        $request = new Request(
-            method: Method::POST,
+        $request = new ServerRequest(
+            method: 'POST',
             uri: '/api/users',
-            path: '/api/users',
-            queryString: '',
-            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            headers: ['Content-Type' => 'application/json'],
             body: '{"name":""}',
         );
 
         $response = $kernel->handle($request);
 
-        self::assertSame(422, $response->status->value);
-        self::assertStringContainsString('application/json', $response->headers->first('Content-Type') ?? '');
+        self::assertSame(422, $response->getStatusCode());
+        self::assertStringContainsString('application/json', $response->getHeaderLine('Content-Type'));
 
         /** @var array{error: string, status: int, violations: list<mixed>} $data */
-        $data = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('Validation Failed', $data['error']);
         self::assertSame(422, $data['status']);
         self::assertNotEmpty($data['violations']);
@@ -161,25 +158,24 @@ final class ValidationMiddlewareTest extends TestCase
         $kernel->router()->add(new Route(
             methods: [Method::POST],
             path: '/api/users',
-            handler: fn(Request $req) => Response::json(['created' => true]),
+            handler: fn(ServerRequestInterface $req) => Response::json(['created' => true]),
             middleware: [CreateUserValidation::class],
         ));
 
-        $request = new Request(
-            method: Method::POST,
+        $request = new ServerRequest(
+            method: 'POST',
             uri: '/api/users',
-            path: '/api/users',
-            queryString: '',
-            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            headers: ['Content-Type' => 'application/json'],
             body: '{"name":"John Doe","email":"john@example.com"}',
+            parsedBody: ['name' => 'John Doe', 'email' => 'john@example.com'],
         );
 
         $response = $kernel->handle($request);
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
 
         /** @var array{created: bool} $data */
-        $data = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertTrue($data['created']);
     }
 }

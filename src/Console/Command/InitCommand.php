@@ -145,7 +145,7 @@ final class InitCommand extends Command
             require __DIR__ . '/../vendor/autoload.php';
 
             use Pulsar\Core\Kernel;
-            use Pulsar\Http\Response;
+            use Pulsar\Http\Message\Response;
 
             $kernel = new Kernel();
 

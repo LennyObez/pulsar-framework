@@ -7,9 +7,7 @@ namespace Pulsar\Tests\Unit\I18n\Locale;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\I18n\Locale\LocaleNegotiator;
 
 #[CoversClass(LocaleNegotiator::class)]
@@ -150,21 +148,18 @@ final class LocaleNegotiatorTest extends TestCase
         array $query = [],
         array $attributes = [],
         ?string $acceptLanguage = null,
-    ): Request {
+    ): ServerRequest {
         $headers = [];
 
         if ($acceptLanguage !== null) {
-            $headers['accept-language'] = [$acceptLanguage];
+            $headers['Accept-Language'] = $acceptLanguage;
         }
 
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag($headers),
-            body: '',
-            query: $query,
+            headers: $headers,
+            queryParams: $query,
             attributes: $attributes,
         );
     }

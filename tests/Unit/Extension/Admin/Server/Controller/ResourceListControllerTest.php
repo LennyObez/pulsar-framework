@@ -16,9 +16,7 @@ use Pulsar\Extension\Admin\Domain\FieldType;
 use Pulsar\Extension\Admin\Features\ListResource\ListResourceHandler;
 use Pulsar\Extension\Admin\Internal\Policy\FieldVisibilityFilter;
 use Pulsar\Extension\Admin\Server\Controller\ResourceListController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 
 #[CoversClass(ResourceListController::class)]
 final class ResourceListControllerTest extends TestCase
@@ -69,20 +67,17 @@ final class ResourceListControllerTest extends TestCase
 
         $controller = $this->makeController($registry, $query);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/admin/resources/users',
-            path: '/admin/resources/users',
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $controller->list($request, 'users');
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertSame(50, $body['total']);
         self::assertSame(1, $body['page']);
         self::assertSame(25, $body['per_page']);
@@ -110,19 +105,16 @@ final class ResourceListControllerTest extends TestCase
 
         $controller = $this->makeController($registry, $query);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/admin/resources/users',
-            path: '/admin/resources/users',
-            queryString: 'sort_field=name&sort_dir=asc',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
-            query: ['sort_field' => 'name', 'sort_dir' => 'asc'],
+            headers: ['Accept' => 'application/json'],
+            queryParams: ['sort_field' => 'name', 'sort_dir' => 'asc'],
         );
 
         $response = $controller->list($request, 'users');
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
     }
 
     #[Test]
@@ -143,19 +135,16 @@ final class ResourceListControllerTest extends TestCase
 
         $controller = $this->makeController($registry, $query);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/admin/resources/users',
-            path: '/admin/resources/users',
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $controller->list($request, 'users');
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertSame(1, $body['page']);
         self::assertSame(25, $body['per_page']);
     }
@@ -178,20 +167,17 @@ final class ResourceListControllerTest extends TestCase
 
         $controller = $this->makeController($registry, $query);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/admin/resources/users',
-            path: '/admin/resources/users',
-            queryString: 'page=3&per_page=10',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
-            query: ['page' => '3', 'per_page' => '10'],
+            headers: ['Accept' => 'application/json'],
+            queryParams: ['page' => '3', 'per_page' => '10'],
         );
 
         $response = $controller->list($request, 'users');
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertSame(3, $body['page']);
         self::assertSame(10, $body['per_page']);
     }
@@ -214,19 +200,16 @@ final class ResourceListControllerTest extends TestCase
 
         $controller = $this->makeController($registry, $query);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/admin/resources/users',
-            path: '/admin/resources/users',
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $controller->list($request, 'users');
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertSame(0, $body['total']);
         self::assertSame([], $body['data']);
         self::assertSame(1, $body['total_pages']);

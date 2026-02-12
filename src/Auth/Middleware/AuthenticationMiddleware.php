@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Auth\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\SecurityContext;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 
 /**
  * Global middleware that attaches a SecurityContext and AnonymousIdentity to every request.
@@ -28,13 +29,13 @@ final readonly class AuthenticationMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $securityContext = new SecurityContext($this->authManager, $request);
 
         $request = $request->withAttribute('_security_context', $securityContext);
         $request = $request->withAttribute('_identity', new AnonymousIdentity());
 
-        return $next($request);
+        return $handler->handle($request);
     }
 }

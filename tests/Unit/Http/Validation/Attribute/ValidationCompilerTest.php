@@ -15,6 +15,7 @@ use Pulsar\Http\Validation\Attribute\ValidationCompiler;
 use Pulsar\Http\Validation\Filter\Trim;
 use Pulsar\Http\Validation\Rule\Required;
 use Pulsar\Http\Validation\Rule\StringType;
+use stdClass;
 
 use function file_exists;
 use function sys_get_temp_dir;
@@ -81,9 +82,9 @@ final class ValidationCompilerTest extends TestCase
     {
         $map = new CompiledValidationMap('/nonexistent/path.php');
 
-        self::assertFalse($map->has('NonExistent\\Class'));
-        self::assertSame([], $map->rulesFor('NonExistent\\Class'));
-        self::assertSame([], $map->filtersFor('NonExistent\\Class'));
+        self::assertFalse($map->has(stdClass::class));
+        self::assertSame([], $map->rulesFor(stdClass::class));
+        self::assertSame([], $map->filtersFor(stdClass::class));
     }
 
     #[Test]

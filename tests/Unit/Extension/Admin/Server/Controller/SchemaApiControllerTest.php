@@ -27,9 +27,7 @@ use Pulsar\Extension\Admin\Features\Schema\RenameTableHandler;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Extension\Admin\Server\Controller\SchemaApiController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -123,29 +121,28 @@ final class SchemaApiControllerTest extends TestCase
      * @param array<string, mixed> $bodyData
      */
     private function makeJsonRequest(
-        Method $method,
+        string $method,
         string $uri = '/admin/api/schema',
         array $bodyData = [],
-    ): Request {
+    ): ServerRequest {
         $body = json_encode($bodyData, JSON_THROW_ON_ERROR);
 
-        return new Request(
+        return new ServerRequest(
             method: $method,
             uri: $uri,
-            path: $uri,
-            queryString: '',
-            headers: new HeaderBag([
+            headers: [
                 'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-            ]),
+            ],
             body: $body,
+            parsedBody: $bodyData,
         );
     }
 
     #[Test]
     public function createRequiresReasonOfMinFiveChars(): void
     {
-        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+        $request = $this->makeJsonRequest('POST', bodyData: [
             'reason' => 'hi',
             'name' => 'test_tbl',
             'columns' => [],
@@ -160,7 +157,7 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function dropTableRequiresReasonOfMinFiveChars(): void
     {
-        $request = $this->makeJsonRequest(Method::DELETE, bodyData: ['reason' => 'xy']);
+        $request = $this->makeJsonRequest('DELETE', bodyData: ['reason' => 'xy']);
 
         $this->expectException(AdminException::class);
         $this->expectExceptionMessage('reason of at least 5 characters');
@@ -171,7 +168,7 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function createTableWithValidReasonSucceeds(): void
     {
-        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+        $request = $this->makeJsonRequest('POST', bodyData: [
             'reason' => 'Adding users table for the application',
             'name' => 'my_users',
             'columns' => [
@@ -183,9 +180,9 @@ final class SchemaApiControllerTest extends TestCase
         $response = $this->controller->create($request);
 
         // Should succeed with 201 Created
-        self::assertSame(201, $response->status->value);
+        self::assertSame(201, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertTrue($body['success']);
         self::assertIsString($body['message']);
         self::assertStringContainsString('my_users', $body['message']);
@@ -209,20 +206,17 @@ final class SchemaApiControllerTest extends TestCase
 
         $this->changeLog->method('recent')->willReturn([$entry]);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/admin/api/schema/changelog',
-            path: '/admin/api/schema/changelog',
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $this->controller->changelog($request);
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('entries', $body);
         /** @var list<array<string, mixed>> $entries */
         $entries = $body['entries'];
@@ -239,25 +233,21 @@ final class SchemaApiControllerTest extends TestCase
         $this->changeLog->method('exportSqlBundle')
             ->willReturn("-- Schema Bundle\nCREATE TABLE my_users (user_id INTEGER);");
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/admin/api/schema/changelog/export',
-            path: '/admin/api/schema/changelog/export',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
         $response = $this->controller->exportBundle($request);
 
-        self::assertSame(200, $response->status->value);
-        self::assertStringContainsString('CREATE TABLE my_users', $response->body);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('CREATE TABLE my_users', (string) $response->getBody());
     }
 
     #[Test]
     public function previewCreateReturnsStatements(): void
     {
-        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+        $request = $this->makeJsonRequest('POST', bodyData: [
             'name' => 'test_tbl',
             'columns' => [
                 ['name' => 'row_id', 'type' => 'integer', 'primary_key' => true],
@@ -266,9 +256,9 @@ final class SchemaApiControllerTest extends TestCase
 
         $response = $this->controller->previewCreate($request);
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('statements', $body);
         /** @var list<string> $statements */
         $statements = $body['statements'];
@@ -279,20 +269,17 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function previewDropTableReturnsStatements(): void
     {
-        $request = new Request(
-            method: Method::POST,
+        $request = new ServerRequest(
+            method: 'POST',
             uri: '/admin/api/schema/preview/test_tbl/drop',
-            path: '/admin/api/schema/preview/test_tbl/drop',
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $this->controller->previewDropTable($request, 'test_tbl');
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('statements', $body);
         /** @var list<string> $statements */
         $statements = $body['statements'];
@@ -303,15 +290,15 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function previewRenameTableReturnsStatements(): void
     {
-        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+        $request = $this->makeJsonRequest('POST', bodyData: [
             'new_name' => 'renamed_tbl',
         ]);
 
         $response = $this->controller->previewRenameTable($request, 'old_tbl');
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('statements', $body);
         /** @var list<string> $statements */
         $statements = $body['statements'];
@@ -321,7 +308,7 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function renameTableRequiresReasonOfMinFiveChars(): void
     {
-        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+        $request = $this->makeJsonRequest('POST', bodyData: [
             'reason' => 'xyz',
             'new_name' => 'renamed_tbl',
         ]);
@@ -335,7 +322,7 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function addColumnWithValidReasonSucceeds(): void
     {
-        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+        $request = $this->makeJsonRequest('POST', bodyData: [
             'reason' => 'Adding email column for notifications',
             'name' => 'email',
             'type' => 'string',
@@ -344,16 +331,16 @@ final class SchemaApiControllerTest extends TestCase
 
         $response = $this->controller->addColumn($request, 'test_tbl');
 
-        self::assertSame(201, $response->status->value);
+        self::assertSame(201, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertTrue($body['success']);
     }
 
     #[Test]
     public function dropColumnRequiresReason(): void
     {
-        $request = $this->makeJsonRequest(Method::DELETE, bodyData: ['reason' => 'no']);
+        $request = $this->makeJsonRequest('DELETE', bodyData: ['reason' => 'no']);
 
         $this->expectException(AdminException::class);
         $this->expectExceptionMessage('reason of at least 5 characters');
@@ -364,7 +351,7 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function addIndexWithValidReasonSucceeds(): void
     {
-        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+        $request = $this->makeJsonRequest('POST', bodyData: [
             'reason' => 'Adding index for faster lookups',
             'name' => 'idx_email',
             'columns' => ['email'],
@@ -372,16 +359,16 @@ final class SchemaApiControllerTest extends TestCase
 
         $response = $this->controller->addIndex($request, 'test_tbl');
 
-        self::assertSame(201, $response->status->value);
+        self::assertSame(201, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertTrue($body['success']);
     }
 
     #[Test]
     public function dropIndexRequiresReason(): void
     {
-        $request = $this->makeJsonRequest(Method::DELETE, bodyData: ['reason' => 'ab']);
+        $request = $this->makeJsonRequest('DELETE', bodyData: ['reason' => 'ab']);
 
         $this->expectException(AdminException::class);
         $this->expectExceptionMessage('reason of at least 5 characters');
@@ -392,7 +379,7 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function previewAddColumnReturnsStatements(): void
     {
-        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+        $request = $this->makeJsonRequest('POST', bodyData: [
             'name' => 'email',
             'type' => 'string',
             'length' => 255,
@@ -400,9 +387,9 @@ final class SchemaApiControllerTest extends TestCase
 
         $response = $this->controller->previewAddColumn($request, 'test_tbl');
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('statements', $body);
         /** @var list<string> $statements */
         $statements = $body['statements'];
@@ -413,20 +400,17 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function previewDropColumnReturnsStatements(): void
     {
-        $request = new Request(
-            method: Method::POST,
+        $request = new ServerRequest(
+            method: 'POST',
             uri: '/admin/api/schema/preview/test_tbl/column/drop',
-            path: '/admin/api/schema/preview/test_tbl/column/drop',
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $this->controller->previewDropColumn($request, 'test_tbl');
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('statements', $body);
         /** @var list<string> $statements */
         $statements = $body['statements'];
@@ -436,16 +420,16 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function previewAddIndexReturnsStatements(): void
     {
-        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+        $request = $this->makeJsonRequest('POST', bodyData: [
             'name' => 'idx_email',
             'columns' => ['email'],
         ]);
 
         $response = $this->controller->previewAddIndex($request, 'test_tbl');
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('statements', $body);
         /** @var list<string> $statements */
         $statements = $body['statements'];
@@ -456,20 +440,17 @@ final class SchemaApiControllerTest extends TestCase
     #[Test]
     public function previewDropIndexReturnsStatements(): void
     {
-        $request = new Request(
-            method: Method::POST,
+        $request = new ServerRequest(
+            method: 'POST',
             uri: '/admin/api/schema/preview/test_tbl/index/drop',
-            path: '/admin/api/schema/preview/test_tbl/index/drop',
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $this->controller->previewDropIndex($request, 'test_tbl');
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('statements', $body);
         /** @var list<string> $statements */
         $statements = $body['statements'];
