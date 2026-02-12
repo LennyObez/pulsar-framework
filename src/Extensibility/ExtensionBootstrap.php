@@ -6,7 +6,10 @@ namespace Pulsar\Extensibility;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Container\Provider\DeferredProviderRegistry;
+use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Routing\RouterInterface;
 use Throwable;
@@ -26,6 +29,7 @@ final class ExtensionBootstrap
 {
     public private(set) bool $registered = false;
     public private(set) bool $booted = false;
+    private ?DeferredProviderRegistry $deferredRegistry = null;
 
     public function __construct(
         public readonly ExtensionRegistry $registry,
@@ -97,6 +101,16 @@ final class ExtensionBootstrap
                 foreach ($extension->providers() as $providerClass) {
                     /** @var ServiceProviderInterface $provider */
                     $provider = new $providerClass();
+
+                    // Defer registration for deferred providers
+                    if ($provider instanceof DeferredServiceProviderInterface && $provider->isDeferred()) {
+                        if ($this->deferredRegistry === null) {
+                            $this->deferredRegistry = new DeferredProviderRegistry();
+                        }
+                        $this->deferredRegistry->register($provider);
+                        continue;
+                    }
+
                     $provider->register($container);
                 }
 
@@ -108,6 +122,11 @@ final class ExtensionBootstrap
                 $this->registry->setState($name, ExtensionLifecycle::Failed);
                 throw ExtensionException::registrationFailed($name, $e->getMessage());
             }
+        }
+
+        // Wire deferred provider registry into the container
+        if ($this->deferredRegistry !== null && $container instanceof Container) {
+            $container->setDeferredProviderRegistry($this->deferredRegistry);
         }
 
         $this->registered = true;

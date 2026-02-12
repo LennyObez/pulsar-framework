@@ -12,18 +12,26 @@ use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\RouteHandlerType;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigManagerInterface;
+use Pulsar\Container\AdvancedContainerInterface;
+use Pulsar\Container\Compiler\Pass\AutoTagPass;
+use Pulsar\Container\Compiler\Pass\ValidateDecoratorPass;
+use Pulsar\Container\Compiler\Pass\ValidateLifetimesPass;
+use Pulsar\Container\Compiler\PassRunner;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
 use Pulsar\Core\Wiring\AuthWiring;
+use Pulsar\Core\Wiring\CacheWiring;
 use Pulsar\Core\Wiring\ConfigWiring;
 use Pulsar\Core\Wiring\DatabaseWiring;
 use Pulsar\Core\Wiring\DeployWiring;
 use Pulsar\Core\Wiring\DiagnosticsWiring;
 use Pulsar\Core\Wiring\ErrorTrackingWiring;
+use Pulsar\Core\Wiring\EventWiring;
 use Pulsar\Core\Wiring\ExceptionHandlerWiring;
 use Pulsar\Core\Wiring\FeatureFlagWiring;
+use Pulsar\Core\Wiring\I18nWiring;
 use Pulsar\Core\Wiring\IntegrityWiring;
 use Pulsar\Core\Wiring\IntrospectionWiring;
 use Pulsar\Core\Wiring\LoggingWiring;
@@ -212,10 +220,12 @@ final class Kernel implements KernelInterface
 
             $wirings = [
                 new ConfigWiring(),
+                new I18nWiring(),
                 new LoggingWiring(),
                 new TracingWiring(),
                 new MetricsWiring(),
                 new RequestContextWiring(),
+                new EventWiring(),
                 new ErrorTrackingWiring(),
                 new ExceptionHandlerWiring(),
                 new SecurityWiring(),
@@ -226,6 +236,7 @@ final class Kernel implements KernelInterface
                 new SchedulerWiring(),
                 new ResilienceWiring(),
                 new QueueWiring(),
+                new CacheWiring(),
                 new SupervisorWiring(),
                 new IntegrityWiring(),
                 new DeployWiring(),
@@ -260,6 +271,19 @@ final class Kernel implements KernelInterface
         $this->extensionBootstrap?->register($this->container);
         $extensionRegisterUs = (int) ((hrtime(true) - $extRegisterStart) / 1000);
 
+        // Compiler pass phase (skip when cache is loaded — definitions are already processed)
+        $compilerPassStart = hrtime(true);
+
+        if (!$cacheLoaded && $this->container instanceof AdvancedContainerInterface) {
+            $passRunner = new PassRunner();
+            $passRunner->addPass(new AutoTagPass(), 100);
+            $passRunner->addPass(new ValidateLifetimesPass(), -100);
+            $passRunner->addPass(new ValidateDecoratorPass(), -100);
+            $this->container->processCompilerPasses($passRunner);
+        }
+
+        $compilerPassUs = (int) ((hrtime(true) - $compilerPassStart) / 1000);
+
         // Extension boot phase (all extensions — includes preBoot, boot, postBoot)
         $extBootStart = hrtime(true);
         $this->extensionBootstrap?->boot($this->container, $this->router);
@@ -282,6 +306,7 @@ final class Kernel implements KernelInterface
             configUs: $configUs,
             extensionRegisterUs: $extensionRegisterUs,
             extensionBootUs: $extensionBootUs,
+            compilerPassPhaseUs: $compilerPassUs,
             cacheHit: $cacheLoaded,
             routesCached: $routesCached,
         );

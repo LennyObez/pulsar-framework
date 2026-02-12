@@ -8,6 +8,8 @@ use Pulsar\Api\Api;
 
 /**
  * Defines how a container binding should be resolved.
+ *
+ * @deprecated Use {@see Lifetime} instead. This enum is retained for backward compatibility.
  */
 #[Api(since: '1.0.0')]
 enum BindingType: string
@@ -22,4 +24,15 @@ enum BindingType: string
      * Factory: A new instance is created on each resolution.
      */
     case Factory = 'factory';
+
+    /**
+     * Convert to the equivalent Lifetime value.
+     */
+    public function toLifetime(): Lifetime
+    {
+        return match ($this) {
+            self::Singleton => Lifetime::Singleton,
+            self::Factory => Lifetime::Transient,
+        };
+    }
 }

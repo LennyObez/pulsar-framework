@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Runtime;
 
 use Pulsar\Api\Internal;
+use Pulsar\Container\AdvancedContainerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Request;
 use Pulsar\Http\Response;
@@ -31,6 +32,10 @@ final readonly class RequestSandbox
     {
         $this->leakDetector->beginRequest();
 
+        if ($this->container instanceof AdvancedContainerInterface) {
+            $this->container->beginRequestScope();
+        }
+
         return $request;
     }
 
@@ -38,20 +43,26 @@ final readonly class RequestSandbox
      * Exit request scope: evict, reset, and check for leaks.
      *
      * Execution order (deterministic):
-     * 1. Evict request-bound services (forgetInstance)
-     * 2. Reset resettable singletons (resetRequestState)
-     * 3. Check leak detector for warnings
+     * 1. End request scope (evicts scoped instances via ScopeManager)
+     * 2. Evict legacy request-bound services (forgetInstance)
+     * 3. Reset resettable singletons (resetRequestState)
+     * 4. Check leak detector for warnings
      *
      * @return list<string> Leak warnings (empty if clean)
      */
     public function afterRequest(Request $request, Response $response): array
     {
-        // 1. Evict request-bound services first
+        // 1. End request scope (if container supports it)
+        if ($this->container instanceof AdvancedContainerInterface) {
+            $this->container->endRequestScope();
+        }
+
+        // 2. Evict legacy request-bound services
         foreach ($this->registry->evictableIds as $id) {
             $this->container->forgetInstance($id);
         }
 
-        // 2. Reset resettable singletons in deterministic order
+        // 3. Reset resettable singletons in deterministic order
         foreach ($this->registry->resettableIds as $id) {
             if ($this->container->has($id)) {
                 $service = $this->container->get($id);
@@ -62,7 +73,7 @@ final readonly class RequestSandbox
             }
         }
 
-        // 3. Check leak detector
+        // 4. Check leak detector
         return $this->leakDetector->endRequest();
     }
 }

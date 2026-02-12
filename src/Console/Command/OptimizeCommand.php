@@ -16,6 +16,9 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Core\KernelInterface;
+use Pulsar\Event\Exception\EventException;
+use Pulsar\Event\Internal\EventMapCompiler;
+use Pulsar\Event\Internal\ListenerProvider;
 use Pulsar\Routing\Router;
 use Random\RandomException;
 use ReflectionClass;
@@ -25,6 +28,9 @@ use SodiumException;
 use Throwable;
 
 use function count;
+use function file_put_contents;
+use function is_dir;
+use function mkdir;
 use function sprintf;
 
 /**
@@ -128,10 +134,57 @@ final class OptimizeCommand extends Command
         }
 
         $output->writeln('  Container: cached');
+
+        // Compile event map if ListenerProvider is available
+        $this->compileEventMap($output);
+
         $output->writeln();
         $output->writeln('Framework optimized successfully.');
 
         return ExitCode::Success->value;
+    }
+
+    /**
+     * Compile event listener map if the event system is registered.
+     *
+     * @throws EventException If event class naming lint fails
+     */
+    private function compileEventMap(OutputInterface $output): void
+    {
+        $container = $this->kernel->container();
+
+        if (!$container->has(ListenerProvider::class)) {
+            return;
+        }
+
+        /** @var ListenerProvider $provider */
+        $provider = $container->get(ListenerProvider::class);
+
+        $compiler = new EventMapCompiler();
+        $compiledMap = $compiler->compile($provider);
+        $eventTypeCount = count($compiledMap);
+
+        if ($eventTypeCount === 0) {
+            $output->writeln('  Events: no listeners registered');
+
+            return;
+        }
+
+        $configManager = $this->kernel->configManager();
+        $configPath = $configManager?->configPath();
+
+        if ($configPath !== null && $this->frameworkCache !== null) {
+            $mapCode = $compiler->export($compiledMap);
+            $cacheDir = $configPath . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache';
+
+            if (!is_dir($cacheDir)) {
+                mkdir($cacheDir, 0o755, true);
+            }
+
+            file_put_contents($cacheDir . DIRECTORY_SEPARATOR . 'events_map.php', $mapCode);
+        }
+
+        $output->writeln(sprintf('  Events: %d event type(s) compiled', $eventTypeCount));
     }
 
     private function getConfigRepository(): ?ConfigRepository

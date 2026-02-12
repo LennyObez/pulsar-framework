@@ -1,4 +1,11 @@
 {
   "Pulsar\\Console\\Application": "CoreRuntimeProbe needs Application to introspect registered commands",
-  "Pulsar\\Extensibility\\ExtensionRegistry": "CoreRuntimeProbe needs ExtensionRegistry to introspect loaded extensions"
+  "Pulsar\\Extensibility\\ExtensionRegistry": "CoreRuntimeProbe needs ExtensionRegistry to introspect loaded extensions",
+  "Pulsar\\Container\\Container": "ExtensionBootstrap composition root wires DeferredProviderRegistry into concrete container",
+  "Pulsar\\Container\\Provider\\DeferredProviderRegistry": "ExtensionBootstrap composition root wires deferred providers into container",
+  "Pulsar\\Container\\Compiler\\PassRunner": "Kernel composition root creates and runs compiler passes",
+  "Pulsar\\Container\\Compiler\\Pass\\AutoTagPass": "Kernel composition root registers core compiler passes",
+  "Pulsar\\Container\\Compiler\\Pass\\ValidateLifetimesPass": "Kernel and DebugContainerCommand run scope validation pass",
+  "Pulsar\\Container\\Compiler\\Pass\\ValidateDecoratorPass": "Kernel composition root registers decorator validation pass",
+  "Pulsar\\Container\\Compiler\\ContainerBuilder": "DebugContainerCommand builds temporary ContainerBuilder for validation"
 }
