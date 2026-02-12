@@ -960,7 +960,44 @@ deptrac:
     Http: *public_deps
     Routing: *public_deps
     Console: *public_deps
-    Extensibility: *public_deps
+    # Extensibility public layer accesses its own Internal (ExtensionBootstrap wires ScopedContainerProxy, ScopedRouterProxy, ServiceRestrictionMap)
+    Extensibility:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Extensibility_Internal
+      - Attribute
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - Integrity
+      - Introspection
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
     Attribute: *public_deps
     Audit: *public_deps
     Auth: *public_deps
@@ -1039,7 +1076,9 @@ deptrac:
     Http_Internal: [Http, Api, Support, Container, Config, Core, ErrorHandling]
     Routing_Internal: [Routing, Api, Support, Container, Config, Core, ErrorHandling]
     Console_Internal: [Console, Api, Support, Container, Config, Core, ErrorHandling]
-    Extensibility_Internal: [Extensibility, Api, Support, Container, Config, Core, ErrorHandling]
+    # ScopedRouterProxy implements RouterInterface (Routing) and uses Method (Http)
+    Extensibility_Internal:
+      [Extensibility, Api, Support, Container, Config, Core, ErrorHandling, Routing, Http]
     Attribute_Internal: [Attribute, Api, Support, Container, Config, Core, ErrorHandling]
     Audit_Internal: [Audit, Api, Support, Container, Config, Core, ErrorHandling]
     Auth_Internal: [Auth, Api, Support, Container, Config, Core, ErrorHandling]

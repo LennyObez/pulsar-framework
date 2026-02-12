@@ -375,6 +375,16 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Config\\CrossOriginConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\CspConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\CsrfConfig": {
       "since": "1.0.0",
       "methods": [],
@@ -426,6 +436,11 @@
       "constants": []
     },
     "Pulsar\\Config\\HealthCheckConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\HstsConfig": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -546,6 +561,11 @@
       "constants": []
     },
     "Pulsar\\Config\\TracingConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\TrustedExtensionsConfig": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -1025,6 +1045,16 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Extensibility\\CapabilityPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\Exception\\CapabilityDeniedException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Extensibility\\Exception\\DependencyException": {
       "since": "1.0.0",
       "methods": [],
@@ -1041,6 +1071,11 @@
       "constants": []
     },
     "Pulsar\\Extensibility\\ExtensionBootstrap": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\ExtensionCapability": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -1086,6 +1121,11 @@
       "constants": []
     },
     "Pulsar\\Extensibility\\ServiceProviderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extensibility\\TrustTier": {
       "since": "1.0.0",
       "methods": [],
       "constants": []

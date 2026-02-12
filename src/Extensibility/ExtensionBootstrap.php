@@ -6,11 +6,15 @@ namespace Pulsar\Extensibility;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\TrustedExtensionsConfig;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Provider\DeferredProviderRegistry;
 use Pulsar\Container\Provider\DeferredServiceProviderInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
+use Pulsar\Extensibility\Internal\ScopedContainerProxy;
+use Pulsar\Extensibility\Internal\ScopedRouterProxy;
+use Pulsar\Extensibility\Internal\ServiceRestrictionMap;
 use Pulsar\Routing\RouterInterface;
 use Throwable;
 
@@ -23,6 +27,9 @@ use Throwable;
  * 2. PreBoot phase: Extensions implementing PreBootExtensionInterface
  * 3. Boot phase: All extensions boot (in dependency order)
  * 4. PostBoot phase: Extensions implementing PostBootExtensionInterface
+ *
+ * When a CapabilityPolicy is configured, container and router access
+ * is scoped per extension based on its effective trust tier.
  */
 #[Api(since: '1.0.0')]
 final class ExtensionBootstrap
@@ -30,6 +37,9 @@ final class ExtensionBootstrap
     public private(set) bool $registered = false;
     public private(set) bool $booted = false;
     private ?DeferredProviderRegistry $deferredRegistry = null;
+    private ?CapabilityPolicy $capabilityPolicy = null;
+    private ?ServiceRestrictionMap $serviceRestrictionMap = null;
+    private ?TrustedExtensionsConfig $trustedExtensionsConfig = null;
 
     public function __construct(
         public readonly ExtensionRegistry $registry,
@@ -43,6 +53,34 @@ final class ExtensionBootstrap
     public static function create(): self
     {
         return new self(new ExtensionRegistry(), new ExtensionLoader());
+    }
+
+    /**
+     * Configure capability enforcement for extensions.
+     *
+     * When set, extensions receive scoped container/router proxies
+     * based on their effective trust tier. When null (default),
+     * extensions receive full container/router access for backward compatibility.
+     */
+    public function setCapabilityPolicy(?CapabilityPolicy $policy): void
+    {
+        $this->capabilityPolicy = $policy;
+    }
+
+    /**
+     * Configure the service restriction map for deny-by-default enforcement.
+     */
+    public function setServiceRestrictionMap(?ServiceRestrictionMap $map): void
+    {
+        $this->serviceRestrictionMap = $map;
+    }
+
+    /**
+     * Configure the host-side trusted extensions allow-list.
+     */
+    public function setTrustedExtensionsConfig(?TrustedExtensionsConfig $config): void
+    {
+        $this->trustedExtensionsConfig = $config;
     }
 
     /**
@@ -96,6 +134,8 @@ final class ExtensionBootstrap
                 continue;
             }
 
+            $scopedContainer = $this->scopeContainer($container, $name);
+
             try {
                 // Register service providers first
                 foreach ($extension->providers() as $providerClass) {
@@ -111,11 +151,11 @@ final class ExtensionBootstrap
                         continue;
                     }
 
-                    $provider->register($container);
+                    $provider->register($scopedContainer);
                 }
 
                 // Then call extension's own register method
-                $extension->register($container);
+                $extension->register($scopedContainer);
 
                 $this->registry->setState($name, ExtensionLifecycle::Registered);
             } catch (Throwable $e) {
@@ -163,8 +203,10 @@ final class ExtensionBootstrap
                 continue;
             }
 
+            $scopedContainer = $this->scopeContainer($container, $name);
+
             try {
-                $extension->preBoot($container);
+                $extension->preBoot($scopedContainer);
             } catch (Throwable $e) {
                 $this->registry->setState($name, ExtensionLifecycle::Failed);
                 throw ExtensionException::bootFailed($name, $e->getMessage());
@@ -179,8 +221,11 @@ final class ExtensionBootstrap
                 continue;
             }
 
+            $scopedContainer = $this->scopeContainer($container, $name);
+            $scopedRouter = $this->scopeRouter($router, $name);
+
             try {
-                $extension->boot($container, $router);
+                $extension->boot($scopedContainer, $scopedRouter);
                 $this->registry->setState($name, ExtensionLifecycle::Booted);
             } catch (Throwable $e) {
                 $this->registry->setState($name, ExtensionLifecycle::Failed);
@@ -194,8 +239,10 @@ final class ExtensionBootstrap
                 continue;
             }
 
+            $scopedContainer = $this->scopeContainer($container, $name);
+
             try {
-                $extension->postBoot($container);
+                $extension->postBoot($scopedContainer);
             } catch (Throwable $e) {
                 $this->registry->setState($name, ExtensionLifecycle::Failed);
                 throw ExtensionException::bootFailed($name, $e->getMessage());
@@ -221,5 +268,78 @@ final class ExtensionBootstrap
         }
 
         return $commands;
+    }
+
+    /**
+     * Scope a container for an extension based on its effective trust tier.
+     *
+     * Returns the original container when no capability policy is configured
+     * (backward compatibility) or when the extension has Core effective tier.
+     */
+    private function scopeContainer(ContainerInterface $container, string $extensionName): ContainerInterface
+    {
+        if ($this->capabilityPolicy === null) {
+            return $container;
+        }
+
+        $effectiveTier = $this->resolveEffectiveTier($extensionName);
+
+        // Core tier bypasses proxy entirely — zero overhead
+        if ($effectiveTier === TrustTier::Core) {
+            return $container;
+        }
+
+        $restrictionMap = $this->serviceRestrictionMap ?? ServiceRestrictionMap::defaults();
+        $additionalCapabilities = $this->trustedExtensionsConfig?->additionalCapabilities($extensionName) ?? [];
+
+        return new ScopedContainerProxy(
+            $container,
+            $effectiveTier,
+            $this->capabilityPolicy,
+            $restrictionMap,
+            $additionalCapabilities,
+        );
+    }
+
+    /**
+     * Scope a router for an extension based on its effective trust tier.
+     *
+     * Returns the original router when no capability policy is configured
+     * or when the extension has Core effective tier.
+     */
+    private function scopeRouter(RouterInterface $router, string $extensionName): RouterInterface
+    {
+        if ($this->capabilityPolicy === null) {
+            return $router;
+        }
+
+        $effectiveTier = $this->resolveEffectiveTier($extensionName);
+
+        // Core tier bypasses proxy entirely
+        if ($effectiveTier === TrustTier::Core) {
+            return $router;
+        }
+
+        return new ScopedRouterProxy(
+            $router,
+            $effectiveTier,
+            $extensionName,
+            $this->capabilityPolicy,
+        );
+    }
+
+    /**
+     * Resolve the effective trust tier for an extension.
+     */
+    private function resolveEffectiveTier(string $extensionName): TrustTier
+    {
+        $manifest = $this->registry->getManifest($extensionName);
+        $requested = $manifest->requestedTrustTier;
+
+        if ($this->trustedExtensionsConfig !== null) {
+            return $this->trustedExtensionsConfig->effectiveTier($extensionName, $requested);
+        }
+
+        return $requested;
     }
 }
