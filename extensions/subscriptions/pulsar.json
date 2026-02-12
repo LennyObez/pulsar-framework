@@ -1,0 +1,9 @@
+{
+  "name": "pulsar/subscriptions",
+  "version": "1.0.0",
+  "description": "Server-side subscription verification for Google Play and App Store",
+  "type": "extension",
+  "namespace": "Pulsar\\Extension\\Subscriptions",
+  "extension": "Pulsar\\Extension\\Subscriptions\\SubscriptionsExtension",
+  "providers": ["Pulsar\\Extension\\Subscriptions\\SubscriptionsServiceProvider"]
+}
