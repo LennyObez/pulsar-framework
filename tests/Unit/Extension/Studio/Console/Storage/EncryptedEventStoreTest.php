@@ -459,7 +459,6 @@ final class EncryptedEventStoreTest extends TestCase
 
         $this->encryptor->method('encrypt')->willReturn($encrypted);
         $this->encryptor->method('decrypt')
-            ->with($encrypted)
             ->willReturn($originalPayload);
 
         $envelope = $this->buildEnvelope('evt-roundtrip');
