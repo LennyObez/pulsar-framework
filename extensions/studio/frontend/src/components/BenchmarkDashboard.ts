@@ -15,18 +15,18 @@ export function renderBenchmarkDashboard(container: HTMLElement, payload: unknow
     ${renderNav()}
     <div class="dashboard">
       <div class="dashboard-header">
-        <h1>Benchmark Dashboard</h1>
+        <h1>Benchmark dashboard</h1>
         <p>Performance benchmarks across configurations</p>
       </div>
       ${renderActionBar()}
-      ${renderLatestRunSummary(data.runs[0], data.latest_profiles)}
-      ${renderProfileCharts(data.latest_profiles)}
-      ${renderProfileTable(data.latest_profiles, data.runs[0])}
+      <div id="bench-summary">${renderLatestRunSummary(data.runs[0], data.latest_profiles)}</div>
+      <div id="bench-charts">${renderProfileCharts(data.latest_profiles)}</div>
+      <div id="bench-table">${renderProfileTable(data.latest_profiles, data.runs[0])}</div>
       ${renderRunHistory(data.runs)}
     </div>
   `;
 
-  wireEvents(container);
+  wireEvents(container, data);
 }
 
 function renderNav(): string {
@@ -39,7 +39,7 @@ function renderEmptyState(container: HTMLElement): void {
     <div class="dashboard">
       ${renderActionBar()}
       <div class="empty-state">
-        <h2>No Benchmark Data</h2>
+        <h2>No benchmark data</h2>
         <p>No benchmark data yet. Click <strong>Run Benchmarks</strong> or run:</p>
         <pre><code>php bin/pulsar studio:console:bench</code></pre>
         <a href="/studio" class="btn">Back to Studio</a>
@@ -192,7 +192,7 @@ function renderProfileCharts(profiles: BenchmarkProfile[]): string {
 
   return `
     <div class="card">
-      <h3>Profile Comparison</h3>
+      <h3>Profile comparison</h3>
       <div class="chart-legend">${legend}</div>
       <div class="chart-grid">${charts}</div>
     </div>
@@ -236,7 +236,11 @@ function truncateProfile(name: string): string {
   return name.length > 18 ? name.slice(0, 16) + '\u2026' : name;
 }
 
-function renderProfileTable(profiles: BenchmarkProfile[], run: BenchmarkRun | undefined): string {
+function renderProfileTable(
+  profiles: BenchmarkProfile[],
+  run: BenchmarkRun | undefined,
+  heading?: string,
+): string {
   if (profiles.length === 0) return '';
 
   const platformNote =
@@ -246,7 +250,7 @@ function renderProfileTable(profiles: BenchmarkProfile[], run: BenchmarkRun | un
 
   return `
     <div class="card">
-      <h3>Latest Profile Comparison</h3>
+      <h3>${heading ?? 'Latest profile comparison'}</h3>
       <table class="data-table">
         <thead>
           <tr>
@@ -293,7 +297,7 @@ function renderRunHistory(runs: BenchmarkRun[]): string {
 
   return `
     <div class="card">
-      <h3>Run History</h3>
+      <h3>Run history</h3>
       <table class="data-table">
         <thead>
           <tr>
@@ -344,7 +348,7 @@ function renderRunRow(r: BenchmarkRun): string {
   `;
 }
 
-function wireEvents(container: HTMLElement): void {
+function wireEvents(container: HTMLElement, data?: BenchmarkDashboardData): void {
   const runBtn = container.querySelector<HTMLButtonElement>('#bench-run');
   const clearBtn = container.querySelector<HTMLButtonElement>('#bench-clear');
   const deleteBtn = container.querySelector<HTMLButtonElement>('#bench-delete-selected');
@@ -417,6 +421,103 @@ function wireEvents(container: HTMLElement): void {
       deleteBtn.disabled = false;
     }
   });
+
+  // Run history row click → load profiles for that run
+  if (data) {
+    wireRunHistory(container, data, statusEl);
+  }
+}
+
+function wireRunHistory(
+  container: HTMLElement,
+  data: BenchmarkDashboardData,
+  statusEl: HTMLSpanElement | null | undefined,
+): void {
+  const rows = container.querySelectorAll<HTMLTableRowElement>('tr[data-run-id]');
+
+  for (const row of rows) {
+    const runId = row.dataset.runId;
+    if (!runId) continue;
+
+    row.style.cursor = 'pointer';
+    row.addEventListener('click', async (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Don't hijack checkbox clicks
+      if (target.tagName === 'INPUT' || target.closest('td')?.querySelector('input') !== null) {
+        return;
+      }
+
+      // Highlight selected row
+      for (const r of rows) r.classList.remove('active');
+      row.classList.add('active');
+
+      const run = data.runs.find((r) => r.run_id === runId);
+
+      setStatus(statusEl, 'Loading profiles\u2026');
+
+      try {
+        const result = await fetchJson<{ profiles: BenchmarkProfile[] }>(
+          `/benchmark/profiles?run_id=${encodeURIComponent(runId)}`,
+        );
+
+        const summaryEl = container.querySelector<HTMLElement>('#bench-summary');
+        const chartsEl = container.querySelector<HTMLElement>('#bench-charts');
+        const tableEl = container.querySelector<HTMLElement>('#bench-table');
+
+        const truncatedId = runId.length > 12 ? runId.slice(0, 12) + '\u2026' : runId;
+        const ts = run ? new Date(run.timestamp_us / 1000).toLocaleString() : '';
+        const heading = `Run ${truncatedId} \u2014 ${ts}`;
+
+        if (summaryEl) summaryEl.innerHTML = renderLatestRunSummary(run, result.profiles);
+        if (chartsEl) chartsEl.innerHTML = renderProfileCharts(result.profiles);
+        if (tableEl) tableEl.innerHTML = renderProfileTable(result.profiles, run, heading);
+
+        // Show "Back to Latest" button
+        showBackToLatest(container, data, statusEl);
+        setStatus(statusEl, '');
+      } catch (err) {
+        setStatus(
+          statusEl,
+          `Error loading run: ${err instanceof Error ? err.message : 'Unknown error'}`,
+        );
+      }
+    });
+  }
+}
+
+function showBackToLatest(
+  container: HTMLElement,
+  data: BenchmarkDashboardData,
+  statusEl: HTMLSpanElement | null | undefined,
+): void {
+  if (container.querySelector('#bench-back-to-latest')) return;
+
+  const summaryEl = container.querySelector<HTMLElement>('#bench-summary');
+  if (!summaryEl) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'bench-back-to-latest';
+  btn.className = 'btn';
+  btn.textContent = '\u2190 Back to Latest';
+  btn.style.marginBottom = '1rem';
+
+  btn.addEventListener('click', () => {
+    const chartsEl = container.querySelector<HTMLElement>('#bench-charts');
+    const tableEl = container.querySelector<HTMLElement>('#bench-table');
+
+    summaryEl.innerHTML = renderLatestRunSummary(data.runs[0], data.latest_profiles);
+    if (chartsEl) chartsEl.innerHTML = renderProfileCharts(data.latest_profiles);
+    if (tableEl) tableEl.innerHTML = renderProfileTable(data.latest_profiles, data.runs[0]);
+
+    // Remove active highlight from run rows
+    const rows = container.querySelectorAll<HTMLTableRowElement>('tr[data-run-id]');
+    for (const r of rows) r.classList.remove('active');
+
+    btn.remove();
+    setStatus(statusEl, '');
+  });
+
+  summaryEl.insertBefore(btn, summaryEl.firstChild);
 }
 
 function updateDeleteButton(

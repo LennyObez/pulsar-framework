@@ -9,23 +9,17 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Server\Controller\DatabaseExplorerController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(DatabaseExplorerController::class)]
 final class DatabaseExplorerControllerTest extends TestCase
 {
-    private function createRequest(): Request
+    private function createRequest(): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/studio/console/database',
-            path: '/studio/console/database',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 
@@ -39,9 +33,9 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('text/html; charset=utf-8', $response->contentType());
-        self::assertStringContainsString('No Database Query Events', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('No database query events', (string) $response->getBody());
     }
 
     #[Test]
@@ -64,9 +58,9 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('text/html; charset=utf-8', $response->contentType());
-        self::assertStringContainsString('data-page="database-explorer"', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('data-page="database-explorer"', (string) $response->getBody());
     }
 
     #[Test]
@@ -88,8 +82,8 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('evt-001', $response->body);
-        self::assertStringContainsString('db.query', $response->body);
+        self::assertStringContainsString('evt-001', (string) $response->getBody());
+        self::assertStringContainsString('db.query', (string) $response->getBody());
     }
 
     #[Test]
@@ -111,7 +105,7 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringNotContainsString('<script>alert(1)</script>', $response->body);
+        self::assertStringNotContainsString('<script>alert(1)</script>', (string) $response->getBody());
     }
 
     #[Test]
@@ -124,11 +118,12 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('href="/studio"', $response->body);
-        self::assertStringContainsString('href="/studio/console"', $response->body);
-        self::assertStringContainsString('href="/studio/console/requests"', $response->body);
-        self::assertStringContainsString('href="/studio/console/logs"', $response->body);
-        self::assertStringContainsString('href="/studio/console/exceptions"', $response->body);
+        $body = (string) $response->getBody();
+        self::assertStringContainsString('href="/studio"', $body);
+        self::assertStringContainsString('href="/studio/console"', $body);
+        self::assertStringContainsString('href="/studio/console/requests"', $body);
+        self::assertStringContainsString('href="/studio/console/logs"', $body);
+        self::assertStringContainsString('href="/studio/console/exceptions"', $body);
     }
 
     #[Test]
@@ -141,7 +136,7 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('href="/studio/console/database" class="active"', $response->body);
+        self::assertStringContainsString('href="/studio/console/database" class="active"', (string) $response->getBody());
     }
 
     #[Test]
@@ -154,8 +149,9 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('Back to Console Overview', $response->body);
-        self::assertStringContainsString('class="btn"', $response->body);
+        $body = (string) $response->getBody();
+        self::assertStringContainsString('Back to console overview', $body);
+        self::assertStringContainsString('class="btn"', $body);
     }
 
     #[Test]
@@ -176,7 +172,7 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('href="/studio/assets/studio.css"', $response->body);
+        self::assertStringContainsString('href="/studio/assets/studio.css"', (string) $response->getBody());
     }
 
     #[Test]
@@ -197,7 +193,7 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('src="/studio/assets/main.js"', $response->body);
+        self::assertStringContainsString('src="/studio/assets/main.js"', (string) $response->getBody());
     }
 
     #[Test]
@@ -218,7 +214,7 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('<title>Database Queries - Pulsar Studio</title>', $response->body);
+        self::assertStringContainsString('<title>Database queries - Pulsar Studio</title>', (string) $response->getBody());
     }
 
     #[Test]
@@ -231,7 +227,7 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('<title>Database Queries - Pulsar Studio</title>', $response->body);
+        self::assertStringContainsString('<title>Database queries - Pulsar Studio</title>', (string) $response->getBody());
     }
 
     #[Test]

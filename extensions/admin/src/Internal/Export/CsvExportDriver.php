@@ -13,7 +13,9 @@ use function fclose;
 use function fopen;
 use function fputcsv;
 use function is_bool;
+use function is_string;
 use function rewind;
+use function str_contains;
 use function stream_get_contents;
 
 /**
@@ -72,6 +74,14 @@ final readonly class CsvExportDriver implements ExportDriverInterface
         if (is_bool($value)) {
             return $value ? 'true' : 'false';
         }
-        return (string) $value;
+
+        $str = (string) $value;
+
+        // Protect against CSV formula injection
+        if ($str !== '' && is_string($value) && str_contains("=+-@\t\r", $str[0])) {
+            return "\t" . $str;
+        }
+
+        return $str;
     }
 }

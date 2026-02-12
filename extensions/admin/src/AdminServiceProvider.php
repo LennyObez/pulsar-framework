@@ -15,7 +15,7 @@ use Pulsar\Database\Schema\DdlCompiler;
 use Pulsar\Database\Schema\SchemaCapabilities;
 use Pulsar\Database\Schema\SchemaManager;
 use Pulsar\Extensibility\ServiceProviderInterface;
-use Pulsar\Extension\Admin\Command\AdminStartCommand;
+use Pulsar\Extension\Admin\Command\AdminServeCommand;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceMutatorInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
@@ -317,14 +317,14 @@ final readonly class AdminServiceProvider implements ServiceProviderInterface
         });
 
         // Commands
-        $container->bind(AdminStartCommand::class, static function () use ($container): AdminStartCommand {
+        $container->bind(AdminServeCommand::class, static function () use ($container): AdminServeCommand {
             /** @var AdminConfig $config */
             $config = $container->get(AdminConfig::class);
             $basePath = $container->has('app.base_path')
                 ? (string) $container->get('app.base_path')
                 : getcwd();
 
-            return new AdminStartCommand($config, $basePath);
+            return new AdminServeCommand($config, $basePath);
         });
 
         // Schema DDL layer

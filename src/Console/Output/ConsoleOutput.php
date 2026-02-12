@@ -83,7 +83,7 @@ final class ConsoleOutput implements OutputInterface
 
         $formatted = $this->decorated
             ? "\033[31m" . $message . "\033[0m"
-            : $message;
+            : '[ERROR] ' . $message;
 
         fwrite($this->stderr, $formatted);
     }
@@ -99,7 +99,7 @@ final class ConsoleOutput implements OutputInterface
     {
         $formatted = $this->decorated
             ? "\033[32m" . $message . "\033[0m"
-            : $message;
+            : '[OK] ' . $message;
 
         $this->writeln($formatted);
     }
@@ -109,7 +109,7 @@ final class ConsoleOutput implements OutputInterface
     {
         $formatted = $this->decorated
             ? "\033[34m" . $message . "\033[0m"
-            : $message;
+            : '[INFO] ' . $message;
 
         $this->writeln($formatted);
     }
@@ -119,7 +119,7 @@ final class ConsoleOutput implements OutputInterface
     {
         $formatted = $this->decorated
             ? "\033[33m" . $message . "\033[0m"
-            : $message;
+            : '[WARN] ' . $message;
 
         $this->writeln($formatted);
     }

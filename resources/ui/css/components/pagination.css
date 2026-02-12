@@ -1,0 +1,72 @@
+/* Pulsar UI — Pagination Component v1.0.0
+ * ARIA: nav[aria-label="Pagination"], aria-current="page" on active
+ */
+
+.pui-pagination {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+}
+
+.pui-pagination__item {
+  display: inline-flex;
+}
+
+.pui-pagination__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding-inline: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.pui-pagination__link:hover {
+  color: var(--color-text);
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border-strong);
+  text-decoration: none;
+}
+
+.pui-pagination__link:visited {
+  color: var(--color-text-secondary);
+}
+
+.pui-pagination__link[aria-current='page'],
+.pui-pagination__link--active {
+  color: var(--color-text-inverse);
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+}
+
+.pui-pagination__link[aria-current='page']:visited {
+  color: var(--color-text-inverse);
+}
+
+.pui-pagination__link--disabled {
+  color: var(--color-text-disabled);
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.pui-pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}

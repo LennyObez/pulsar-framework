@@ -8,9 +8,9 @@ Accepted
 
 Frameworks struggle with API stability. Developers depend on classes, methods, and constants that the framework considers internal, then break on minor upgrades. Common mitigation strategies include:
 
-- **Naming conventions** (`@internal` docblocks, `Internal` namespaces) — unenforced, ignored by IDEs and static analysis.
-- **Separate packages** (public API in one package, implementation in another) — high overhead, complex dependency management.
-- **Documentation-only** ("don't use classes in this namespace") — routinely violated.
+- **Naming conventions** (`@internal` docblocks, `Internal` namespaces) - unenforced, ignored by IDEs and static analysis.
+- **Separate packages** (public API in one package, implementation in another) - high overhead, complex dependency management.
+- **Documentation-only** ("don't use classes in this namespace") - routinely violated.
 
 PHP 8.0+ attributes provide a machine-readable mechanism that static analysis tools, IDEs, and CI can enforce.
 
@@ -18,8 +18,8 @@ PHP 8.0+ attributes provide a machine-readable mechanism that static analysis to
 
 Pulsar uses two PHP attributes to classify every type in the framework:
 
-- **`#[Api]`** (`Pulsar\Api\Api`) — marks a class, method, or class constant as part of the public API. Types with this attribute are covered by semantic versioning guarantees: breaking changes require a major version bump. Accepts an optional `since` parameter.
-- **`#[Internal]`** (`Pulsar\Api\Internal`) — explicitly marks a type as internal implementation. Accepts an optional `reason` parameter. This attribute is optional — everything without `#[Api]` is internal by default.
+- **`#[Api]`** (`Pulsar\Api\Api`) - marks a class, method, or class constant as part of the public API. Types with this attribute are covered by semantic versioning guarantees: breaking changes require a major version bump. Accepts an optional `since` parameter.
+- **`#[Internal]`** (`Pulsar\Api\Internal`) - explicitly marks a type as internal implementation. Accepts an optional `reason` parameter. This attribute is optional - everything without `#[Api]` is internal by default.
 
 ### Enforcement
 
@@ -45,7 +45,7 @@ Pulsar uses two PHP attributes to classify every type in the framework:
 
 ### Negative
 
-- **Annotation overhead.** Every public type must be explicitly marked. Missing an `#[Api]` attribute means the type is internal by default — safe, but can surprise extension authors who expected a type to be public.
+- **Annotation overhead.** Every public type must be explicitly marked. Missing an `#[Api]` attribute means the type is internal by default - safe, but can surprise extension authors who expected a type to be public.
 - **Snapshot maintenance.** The API snapshot must be regenerated when the public surface changes intentionally. This adds a step to the development workflow.
 
 ### Neutral

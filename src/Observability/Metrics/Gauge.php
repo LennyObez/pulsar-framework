@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Metrics;
 
+use Pulsar\Api\Api;
+
 /**
  * Bidirectional gauge metric.
  *
  * Can go up and down. Use {@see set()}, {@see increment()}, or {@see decrement()}.
  */
+#[Api(since: '1.0.0')]
 final class Gauge
 {
     /** @var array<string, float> label-key => value */

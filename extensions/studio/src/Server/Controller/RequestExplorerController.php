@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server\Controller;
 
 use JsonException;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 use function htmlspecialchars;
 use function json_encode;
@@ -30,7 +30,7 @@ final readonly class RequestExplorerController
     /**
      * @throws JsonException
      */
-    public function handle(Request $_request): Response
+    public function handle(ServerRequestInterface $_request): Response
     {
         $events = $this->store->query(
             ['event_type' => ['http.request', 'http.response']],
@@ -46,7 +46,7 @@ final readonly class RequestExplorerController
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>HTTP Requests - Pulsar Studio</title>
+                <title>HTTP requests - Pulsar Studio</title>
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>

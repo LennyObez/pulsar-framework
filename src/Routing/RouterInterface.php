@@ -68,6 +68,14 @@ interface RouterInterface
     public function any(string $path, mixed $handler, ?string $name = null): self;
 
     /**
+     * Register a group of routes under a common prefix.
+     *
+     * @param string   $prefix   The URL prefix for all routes in the group.
+     * @param callable $callback Receives a RouterInterface to register grouped routes.
+     */
+    public function group(string $prefix, callable $callback): self;
+
+    /**
      * Match a request path and method to a route.
      *
      * @param Method $method The HTTP method
@@ -76,6 +84,14 @@ interface RouterInterface
      * @throws RoutingException When no route matches or method is not allowed
      */
     public function match(Method $method, string $path, ?string $host = null): MatchedRoute;
+
+    /**
+     * Register an explicit parameter-to-model binding.
+     *
+     * @param class-string $modelClass
+     * @param class-string|null $resolverClass
+     */
+    public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self;
 
     /**
      * Get all registered routes.

@@ -11,14 +11,21 @@ use Pulsar\Config\QueueConfig;
 use Pulsar\Config\QueueDriverType;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Queue\Attribute\EffectClassifier;
 use Pulsar\Queue\DeadLetterQueue;
 use Pulsar\Queue\Driver\InMemoryDriver;
 use Pulsar\Queue\Driver\SyncDriver;
+use Pulsar\Queue\Middleware\MiddlewarePipeline as QueueMiddlewarePipeline;
+use Pulsar\Queue\Middleware\PropagateContext;
+use Pulsar\Queue\Monitor\MetricsCollector;
 use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Queue\Retry\QueueRetryPolicy;
+use Pulsar\Queue\Serialization\SchemaVersionRegistry;
+use Pulsar\Queue\Serialization\TypeRegistry;
 use Pulsar\Queue\Worker;
 use Pulsar\Queue\WorkerOptions;
 use Pulsar\Routing\Router;
@@ -55,7 +62,7 @@ final readonly class QueueWiring implements ServiceWiringInterface
         $driver = match ($queueConfig->driver) {
             QueueDriverType::Sync => new SyncDriver($randomizer),
             QueueDriverType::Memory => new InMemoryDriver($randomizer),
-            QueueDriverType::Database => $container->has(QueueDriverInterface::class)
+            default => $container->has(QueueDriverInterface::class)
                 ? $container->get(QueueDriverInterface::class)
                 : new InMemoryDriver(),
         };
@@ -64,18 +71,71 @@ final readonly class QueueWiring implements ServiceWiringInterface
             $container->instance(QueueDriverInterface::class, $driver);
         }
 
-        // Queue manager (with context propagation)
+        // Optional services
+        $eventDispatcher = $container->has(EventDispatcherInterface::class)
+            ? $container->get(EventDispatcherInterface::class)
+            : null;
+
+        $typeRegistry = $container->has(TypeRegistry::class)
+            ? $container->get(TypeRegistry::class)
+            : null;
+
+        $schemaVersionRegistry = $container->has(SchemaVersionRegistry::class)
+            ? $container->get(SchemaVersionRegistry::class)
+            : null;
+
+        // Metrics collector
+        $metrics = new MetricsCollector($driver);
+        $container->instance(MetricsCollector::class, $metrics);
+
+        // Dispatch middleware pipeline (context propagation when available)
+        $dispatchMiddleware = [];
         $contextHolder = $container->has(RequestContextHolder::class)
             ? $container->get(RequestContextHolder::class)
             : null;
 
         /** @var RequestContextHolder|null $contextHolder */
-        $queueManager = new QueueManager($queueConfig, $driver, $contextHolder);
+        if ($contextHolder !== null) {
+            $dispatchMiddleware[] = new PropagateContext($contextHolder);
+        }
+
+        $dispatchPipeline = new QueueMiddlewarePipeline($dispatchMiddleware);
+
+        // Queue manager
+        /** @var EventDispatcherInterface|null $eventDispatcher */
+        /** @var TypeRegistry|null $typeRegistry */
+        /** @var SchemaVersionRegistry|null $schemaVersionRegistry */
+        $queueManager = new QueueManager(
+            $queueConfig,
+            $driver,
+            $eventDispatcher,
+            $metrics,
+            $typeRegistry,
+            $schemaVersionRegistry,
+            $dispatchPipeline,
+        );
         $container->instance(QueueManager::class, $queueManager);
 
         // Worker options
         $workerOptions = WorkerOptions::fromConfig($queueConfig);
         $container->instance(WorkerOptions::class, $workerOptions);
+
+        // Retry policy
+        $retryPolicy = QueueRetryPolicy::fromConfig($queueConfig);
+        $container->instance(QueueRetryPolicy::class, $retryPolicy);
+
+        // Effect classifier
+        $classifier = new EffectClassifier();
+        $container->instance(EffectClassifier::class, $classifier);
+
+        // Dead letter queue
+        /** @var EventDispatcherInterface|null $eventDispatcher */
+        $deadLetterQueue = new DeadLetterQueue($driver, $eventDispatcher);
+        $container->instance(DeadLetterQueue::class, $deadLetterQueue);
+
+        // Execution middleware pipeline (empty by default; encryption/dedup/rate-limit
+        // are added by application-level configuration or extension wirings)
+        $executionPipeline = new QueueMiddlewarePipeline();
 
         // Worker
         $logger = $container->has(LoggerInterface::class)
@@ -83,15 +143,19 @@ final readonly class QueueWiring implements ServiceWiringInterface
             : null;
 
         /** @var LoggerInterface|null $logger */
-        $worker = new Worker($driver, $workerOptions, $logger, $contextHolder);
+        $worker = new Worker(
+            $driver,
+            $workerOptions,
+            $logger,
+            $contextHolder,
+            $eventDispatcher,
+            $metrics,
+            $classifier,
+            $deadLetterQueue,
+            $typeRegistry,
+            $retryPolicy,
+            $executionPipeline,
+        );
         $container->instance(Worker::class, $worker);
-
-        // Retry policy
-        $retryPolicy = QueueRetryPolicy::fromConfig($queueConfig);
-        $container->instance(QueueRetryPolicy::class, $retryPolicy);
-
-        // Dead letter queue
-        $deadLetterQueue = new DeadLetterQueue($driver);
-        $container->instance(DeadLetterQueue::class, $deadLetterQueue);
     }
 }

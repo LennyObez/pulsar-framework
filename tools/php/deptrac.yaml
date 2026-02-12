@@ -37,6 +37,10 @@ deptrac:
           value: ^Pulsar\\Console\\Application$
         - type: classLike
           value: ^Pulsar\\Core\\Wiring\\
+        - type: classLike
+          value: ^Pulsar\\Console\\Command\\OptimizeCommand$
+        - type: classLike
+          value: ^Pulsar\\Console\\Command\\BuildCommand$
 
     # =================================================================
     # Foundation Tier
@@ -218,6 +222,22 @@ deptrac:
     # Feature Tier (21 modules)
     # =================================================================
 
+    # --- Attribute ---
+    - name: Attribute
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Attribute\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Attribute\\Internal\\
+
+    - name: Attribute_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Attribute\\Internal\\
+
     # --- Audit ---
     - name: Audit
       collectors:
@@ -233,6 +253,22 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\Audit\\Internal\\
+
+    # --- Build ---
+    - name: Build
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Build\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Build\\Internal\\
+
+    - name: Build_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Build\\Internal\\
 
     # --- Auth ---
     - name: Auth
@@ -265,6 +301,22 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\Cache\\Internal\\
+
+    # --- Concurrency ---
+    - name: Concurrency
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Concurrency\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Concurrency\\Internal\\
+
+    - name: Concurrency_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Concurrency\\Internal\\
 
     # --- Context ---
     - name: Context
@@ -377,6 +429,22 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\Idempotency\\Internal\\
+
+    # --- I18n ---
+    - name: I18n
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\I18n\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\I18n\\Internal\\
+
+    - name: I18n_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\I18n\\Internal\\
 
     # --- Integrity ---
     - name: Integrity
@@ -538,6 +606,22 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Tenancy\\Internal\\
 
+    # --- View ---
+    - name: View
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\View\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\View\\Internal\\
+
+    - name: View_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\View\\Internal\\
+
     # --- Webhook ---
     - name: Webhook
       collectors:
@@ -553,6 +637,38 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\Webhook\\Internal\\
+
+    # --- Mail ---
+    - name: Mail
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Mail\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Mail\\Internal\\
+
+    - name: Mail_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Mail\\Internal\\
+
+    # --- Notification ---
+    - name: Notification
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Notification\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Notification\\Internal\\
+
+    - name: Notification_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Notification\\Internal\\
 
     # --- Introspection ---
     - name: Introspection
@@ -751,6 +867,226 @@ deptrac:
             - type: layer
               value: AdminDomain
 
+    # --- OpenTelemetry Extension (Pulsar\\Extension\\Opentelemetry → OpenTelemetry) ---
+
+    # --- OpenTelemetry: public surface (excludes \Internal\ namespace) ---
+    - name: OpenTelemetryExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\OpenTelemetry\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\OpenTelemetry\\Internal\\
+
+    # --- OpenTelemetry: internal implementation (\Internal\ only) ---
+    - name: OpenTelemetryExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\OpenTelemetry\\Internal\\
+
+    # --- OAuth2 Extension (Pulsar\\Extension\\Oauth2 → OAuth2) ---
+
+    # --- OAuth2: public contracts ---
+    - name: OAuth2Contracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Contract\\
+
+    # --- OAuth2: domain types (value objects, enums, exceptions, config) ---
+    - name: OAuth2Domain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Config\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\AccessToken$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\RefreshToken$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\AuthorizationCode$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\TokenPair$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\Scope$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Client\\OAuthClient$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Consent\\ConsentRecord$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Grant\\GrantInterface$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Grant\\TokenResponse$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Oidc\\OidcConfig$
+
+    # --- OAuth2: internal implementation ---
+    - name: OAuth2Internal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\OAuth2\\
+          must_not:
+            - type: layer
+              value: OAuth2Contracts
+            - type: layer
+              value: OAuth2Domain
+
+    # --- Form Extension (Pulsar\\Extension\\Form) ---
+
+    # --- Form: public contracts ---
+    - name: FormContracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Contract\\
+
+    # --- Form: domain types (config, exceptions, fields, events) ---
+    - name: FormDomain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Config\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Field\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Event\\
+
+    # --- Form: internal implementation ---
+    - name: FormInternal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Form\\
+          must_not:
+            - type: layer
+              value: FormContracts
+            - type: layer
+              value: FormDomain
+
+    # --- WebAuthn Extension (Pulsar\\Extension\\Webauthn → WebAuthn) ---
+
+    # --- WebAuthn: public contracts ---
+    - name: WebAuthnContracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Contract\\
+
+    # --- WebAuthn: domain types (value objects, enums, exceptions, config) ---
+    - name: WebAuthnDomain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Config\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\PublicKey\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Attestation\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Authenticator\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Ceremony\\RegistrationOptions$
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Ceremony\\RegistrationResult$
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Ceremony\\AuthenticationOptions$
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Ceremony\\AuthenticationResult$
+
+    # --- WebAuthn: internal implementation ---
+    - name: WebAuthnInternal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\WebAuthn\\
+          must_not:
+            - type: layer
+              value: WebAuthnContracts
+            - type: layer
+              value: WebAuthnDomain
+
+    # --- CMS Extension (Pulsar\\Extension\\Cms) ---
+
+    # --- CMS: public surface (excludes \Internal\ namespace) ---
+    - name: CmsExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Cms\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Cms\\Internal\\
+
+    # --- CMS: internal implementation (\Internal\ only) ---
+    - name: CmsExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Cms\\Internal\\
+
+    # --- GraphQL Extension (Pulsar\\Extension\\Graphql) ---
+
+    # --- GraphQL: public surface (excludes \Internal\ namespace) ---
+    - name: GraphqlExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Graphql\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Graphql\\Internal\\
+
+    # --- GraphQL: internal implementation (\Internal\ only) ---
+    - name: GraphqlExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Graphql\\Internal\\
+
+    # --- Forum Extension (Pulsar\\Extension\\Forum) ---
+
+    # --- Forum: public surface (excludes \Internal\ namespace) ---
+    - name: ForumExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Forum\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Forum\\Internal\\
+
+    # --- Forum: internal implementation (\Internal\ only) ---
+    - name: ForumExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Forum\\Internal\\
+
+    # --- Analytics Extension (Pulsar\\Extension\\Analytics) ---
+
+    # --- Analytics: public surface (excludes \Internal\ namespace) ---
+    - name: AnalyticsExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Analytics\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Analytics\\Internal\\
+
+    # --- Analytics: internal implementation (\Internal\ only) ---
+    - name: AnalyticsExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Analytics\\Internal\\
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -800,10 +1136,14 @@ deptrac:
       - Console_Internal
       - Extensibility
       - Extensibility_Internal
+      - Attribute
+      - Attribute_Internal
       - Audit
       - Audit_Internal
       - Auth
       - Auth_Internal
+      - Build
+      - Build_Internal
       - Cache
       - Cache_Internal
       - Context
@@ -818,6 +1158,8 @@ deptrac:
       - Event_Internal
       - FeatureFlag
       - FeatureFlag_Internal
+      - I18n
+      - I18n_Internal
       - Idempotency
       - Idempotency_Internal
       - Integrity
@@ -840,6 +1182,12 @@ deptrac:
       - Supervisor_Internal
       - Tenancy
       - Tenancy_Internal
+      - Mail
+      - Mail_Internal
+      - Notification
+      - Notification_Internal
+      - View
+      - View_Internal
       - Webhook
       - Webhook_Internal
       - Introspection
@@ -851,6 +1199,10 @@ deptrac:
       - AdminContracts
       - AdminDomain
       - AdminInternal
+      - OpenTelemetryExtension
+      - OpenTelemetryExtension_Internal
+      - CmsExtension
+      - CmsExtension_Internal
 
     # -----------------------------------------------------------------
     # Public Layers — all public layers may depend on all other public
@@ -869,8 +1221,10 @@ deptrac:
       - Routing
       - Console
       - Extensibility
+      - Attribute
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -878,9 +1232,12 @@ deptrac:
       - Deploy
       - Event
       - FeatureFlag
+      - I18n
       - Idempotency
       - Integrity
       - Introspection
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -890,6 +1247,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - View
       - Webhook
     Support: *public_deps
     Container: *public_deps
@@ -899,18 +1257,65 @@ deptrac:
     Http: *public_deps
     Routing: *public_deps
     Console: *public_deps
-    Extensibility: *public_deps
+    # Extensibility public layer accesses its own Internal (ExtensionBootstrap wires ScopedContainerProxy, ScopedRouterProxy, ServiceRestrictionMap)
+    Extensibility:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Extensibility_Internal
+      - Attribute
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - Integrity
+      - Introspection
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - View
+      - Webhook
+    Attribute: *public_deps
     Audit: *public_deps
     Auth: *public_deps
+    Build: *public_deps
     Cache: *public_deps
+    Concurrency: *public_deps
     Context: *public_deps
     Database: *public_deps
     DataProtection: *public_deps
     Deploy: *public_deps
     Event: *public_deps
     FeatureFlag: *public_deps
+    I18n: *public_deps
     Idempotency: *public_deps
     Integrity: *public_deps
+    Mail: *public_deps
+    Notification: *public_deps
     Observability: *public_deps
     Queue: *public_deps
     Resilience: *public_deps
@@ -920,6 +1325,7 @@ deptrac:
     Storage: *public_deps
     Supervisor: *public_deps
     Tenancy: *public_deps
+    View: *public_deps
     Webhook: *public_deps
     # Introspection public layer depends on its own internal (service facades inject internal implementations)
     Introspection:
@@ -934,8 +1340,10 @@ deptrac:
       - Routing
       - Console
       - Extensibility
+      - Attribute
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -943,10 +1351,13 @@ deptrac:
       - Deploy
       - Event
       - FeatureFlag
+      - I18n
       - Idempotency
       - Integrity
       - Introspection
       - Introspection_Internal
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -956,6 +1367,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - View
       - Webhook
 
     # -----------------------------------------------------------------
@@ -974,18 +1386,26 @@ deptrac:
     Http_Internal: [Http, Api, Support, Container, Config, Core, ErrorHandling]
     Routing_Internal: [Routing, Api, Support, Container, Config, Core, ErrorHandling]
     Console_Internal: [Console, Api, Support, Container, Config, Core, ErrorHandling]
-    Extensibility_Internal: [Extensibility, Api, Support, Container, Config, Core, ErrorHandling]
+    # ScopedRouterProxy implements RouterInterface (Routing) and uses Method (Http)
+    Extensibility_Internal:
+      [Extensibility, Api, Support, Container, Config, Core, ErrorHandling, Routing, Http]
+    Attribute_Internal: [Attribute, Api, Support, Container, Config, Core, ErrorHandling]
     Audit_Internal: [Audit, Api, Support, Container, Config, Core, ErrorHandling]
     Auth_Internal: [Auth, Api, Support, Container, Config, Core, ErrorHandling]
+    Build_Internal: [Build, Api, Support, Container, Config, Core, ErrorHandling]
     Cache_Internal: [Cache, Api, Support, Container, Config, Core, ErrorHandling]
+    Concurrency_Internal: [Concurrency, Api, Support, Container, Config, Core, ErrorHandling]
     Context_Internal: [Context, Api, Support, Container, Config, Core, ErrorHandling]
     Database_Internal: [Database, Api, Support, Container, Config, Core, ErrorHandling]
     DataProtection_Internal: [DataProtection, Api, Support, Container, Config, Core, ErrorHandling]
     Deploy_Internal: [Deploy, Api, Support, Container, Config, Core, ErrorHandling]
-    Event_Internal: [Event, Api, Support, Container, Config, Core, ErrorHandling]
+    Event_Internal: [Event, Api, Support, Container, Config, Core, ErrorHandling, Observability]
     FeatureFlag_Internal: [FeatureFlag, Api, Support, Container, Config, Core, ErrorHandling]
+    I18n_Internal: [I18n, Api, Support, Container, Config, Core, ErrorHandling]
     Idempotency_Internal: [Idempotency, Api, Support, Container, Config, Core, ErrorHandling]
     Integrity_Internal: [Integrity, Api, Support, Container, Config, Core, ErrorHandling]
+    Mail_Internal: [Mail, Api, Support, Container, Config, Core, ErrorHandling]
+    Notification_Internal: [Notification, Api, Support, Container, Config, Core, ErrorHandling]
     Observability_Internal: [Observability, Api, Support, Container, Config, Core, ErrorHandling]
     Queue_Internal: [Queue, Api, Support, Container, Config, Core, ErrorHandling]
     Resilience_Internal: [Resilience, Api, Support, Container, Config, Core, ErrorHandling]
@@ -995,6 +1415,7 @@ deptrac:
     Storage_Internal: [Storage, Api, Support, Container, Config, Core, ErrorHandling]
     Supervisor_Internal: [Supervisor, Api, Support, Container, Config, Core, ErrorHandling]
     Tenancy_Internal: [Tenancy, Api, Support, Container, Config, Core, ErrorHandling]
+    View_Internal: [View, Api, Support, Container, Config, Core, ErrorHandling]
     Webhook_Internal: [Webhook, Api, Support, Container, Config, Core, ErrorHandling]
     # CoreRuntimeProbe introspects Container, ExtensionRegistry, Router (+ Http\Method), and Console Application (CompositionRoot)
     Introspection_Internal:
@@ -1032,6 +1453,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1041,6 +1463,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1069,6 +1493,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1078,6 +1503,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1105,6 +1532,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1114,6 +1542,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1142,6 +1572,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1151,6 +1582,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1178,6 +1611,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1188,6 +1622,8 @@ deptrac:
       - Idempotency
       - Integrity
       - Introspection
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1216,6 +1652,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1226,6 +1663,8 @@ deptrac:
       - Idempotency
       - Integrity
       - Introspection
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1253,6 +1692,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1262,6 +1702,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1290,6 +1732,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1299,6 +1742,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1326,6 +1771,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1335,6 +1781,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1366,6 +1814,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1375,6 +1824,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1391,10 +1842,533 @@ deptrac:
       - OrmContracts
       - OrmDomain
 
+    OpenTelemetryExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Attribute
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - Integrity
+      - Introspection
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - OpenTelemetryExtension_Internal
+
+    OpenTelemetryExtension_Internal:
+      - OpenTelemetryExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Observability
+
+    CmsExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - View
+      - Webhook
+      - StudioExtension
+      - CmsExtension_Internal
+
+    CmsExtension_Internal:
+      - CmsExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Database
+      - Auth
+      - Audit
+      - Event
+      - Security
+      - Http
+      - Routing
+      - Cache
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Scheduler
+      - Storage
+      - StudioExtension
+
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps
     StudioExtension: *public_deps
     ExampleExtension: *public_deps
+
+    AnalyticsExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Auth
+      - Cache
+      - Database
+      - Event
+      - I18n
+      - Observability
+      - Queue
+      - Scheduler
+      - Security
+      - View
+      - AnalyticsExtension_Internal
+
+    AnalyticsExtension_Internal:
+      - AnalyticsExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Auth
+      - Cache
+      - Database
+      - Event
+      - Http
+      - Routing
+      - Observability
+      - Queue
+      - Scheduler
+      - Security
+
+    GraphqlExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - View
+      - Webhook
+      - CmsExtension
+      - GraphqlExtension_Internal
+
+    GraphqlExtension_Internal:
+      - GraphqlExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Database
+      - Http
+      - Routing
+      - CmsExtension
+
+    ForumExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Auth
+      - Cache
+      - Database
+      - Event
+      - View
+      - AdminContracts
+      - AdminDomain
+      - AdminInternal
+      - CmsExtension
+      - ForumExtension_Internal
+
+    ForumExtension_Internal:
+      - ForumExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Auth
+      - Cache
+      - Database
+      - Event
+      - Http
+      - Routing
+      - View
+
+    OAuth2Contracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - OAuth2Domain
+
+    OAuth2Domain: *public_deps
+
+    OAuth2Internal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - OAuth2Contracts
+      - OAuth2Domain
+
+    FormContracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - FormDomain
+
+    FormDomain:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - FormContracts
+
+    FormInternal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - FormContracts
+      - FormDomain
+
+    WebAuthnContracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - WebAuthnDomain
+
+    WebAuthnDomain: *public_deps
+
+    WebAuthnInternal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - WebAuthnContracts
+      - WebAuthnDomain
 
   analyser:
     types:

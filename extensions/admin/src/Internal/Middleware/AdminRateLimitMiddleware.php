@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Http\Method;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 use Pulsar\Http\RateLimit\RateLimiterInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
+use function in_array;
 use function str_contains;
 
 /**
@@ -29,10 +31,10 @@ final readonly class AdminRateLimitMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         /** @var IdentityInterface|null $identity */
-        $identity = $request->attribute('identity');
+        $identity = $request->getAttribute('identity');
         $actorId = $identity?->id() ?? 'anonymous';
 
         $category = $this->categorize($request);
@@ -43,24 +45,23 @@ final readonly class AdminRateLimitMiddleware implements MiddlewareInterface
         if ($result->exceeded()) {
             return Response::json(
                 ['error' => 'Rate limit exceeded', 'retry_after' => $result->retryAfter],
-                ResponseStatus::TooManyRequests,
+                ResponseStatus::TooManyRequests->value,
             )->withHeader('Retry-After', (string) $result->retryAfter);
         }
 
-        return $next($request)
+        return $handler->handle($request)
             ->withHeader('X-RateLimit-Limit', (string) $result->limit)
             ->withHeader('X-RateLimit-Remaining', (string) $result->remaining);
     }
 
-    private function categorize(Request $request): string
+    private function categorize(ServerRequestInterface $request): string
     {
-        if (str_contains($request->path, '/export')) {
+        if (str_contains($request->getUri()->getPath(), '/export')) {
             return 'export';
         }
 
-        return match ($request->method) {
-            Method::POST, Method::PUT, Method::PATCH, Method::DELETE => 'write',
-            default => 'read',
-        };
+        return in_array($request->getMethod(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)
+            ? 'write'
+            : 'read';
     }
 }

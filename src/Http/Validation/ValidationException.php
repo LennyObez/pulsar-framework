@@ -30,7 +30,7 @@ class ValidationException extends HttpException
     }
 
     /**
-     * @return list<array{field: string, message: string, rule: string}>
+     * @return list<array{field: string, message: string, rule: string, code: string}>
      */
     public function violations(): array
     {

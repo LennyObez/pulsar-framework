@@ -12,11 +12,11 @@ PHP frameworks typically use service providers (Laravel), bundles (Symfony), or 
 - **Implicit registration.** Auto-discovery and convention-based loading make it hard to reason about what is active and in what order.
 - **No capability declaration.** Packages declare dependencies in `composer.json` but not what framework features they provide (routes, commands, middleware, migrations).
 
-Pulsar targets regulated domains where auditability, determinism, and explicit configuration are requirements — not preferences.
+Pulsar targets regulated domains where auditability, determinism, and explicit configuration are requirements - not preferences.
 
 ## Decision
 
-Adopt an extension-first architecture where all optional functionality — including first-party features like Studio, Payments, and Example — uses the same public extension API as third-party code.
+Adopt an extension-first architecture where all optional functionality - including first-party features like Studio, Payments, and Example - uses the same public extension API as third-party code.
 
 Key design choices:
 
@@ -45,3 +45,9 @@ Key design choices:
 ### Neutral
 
 - **Scaffold command available.** `php bin/pulsar make:extension` generates the boilerplate directory structure and manifest, reducing the ceremony cost.
+
+## Field report
+
+_Optional. Document operational experience that validates or challenges this decision. Add entries as they accumulate._
+
+- **rc.1 – rc.10** | Internal development: Manifest overhead proved manageable in practice. The `php bin/pulsar make:extension` scaffold command generates the full `pulsar.json` and directory structure in seconds, reducing ceremony to a one-time cost per extension. Deterministic boot ordering has been the highest-value payoff - dependency issues surface immediately at validation time rather than manifesting as subtle runtime bugs. During the rc cycle, topological sort caught three circular dependency attempts before any code executed, saving significant debugging time.

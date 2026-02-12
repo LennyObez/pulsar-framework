@@ -66,7 +66,8 @@ final readonly class IntrospectedResourceFactory
     public function forTable(string $table): DataResourceInterface
     {
         $columns = $this->introspector->columns($table);
-        $pk = $this->introspector->primaryKey($table) ?? 'id';
+        $pk = $this->introspector->primaryKey($table)
+            ?? ($columns !== [] ? $columns[0]->name : 'id');
         $fields = array_map(fn(ColumnInfo $col): FieldDefinition => $this->columnToField($col), $columns);
         $singularLabel = $this->toSingularLabel($table);
         $pluralLabel = $this->toPluralLabel($table);

@@ -12,7 +12,6 @@ use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
 use Pulsar\Config\EnvironmentMode;
-use Pulsar\Container\Container;
 use Pulsar\Core\Kernel;
 
 use function bin2hex;

@@ -7,6 +7,9 @@ namespace Pulsar\Tests\Integration\Auth;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Authorization\Gate;
 use Pulsar\Auth\Authorization\InMemoryRoleRegistry;
@@ -18,10 +21,9 @@ use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Middleware\AuthorizationMiddleware;
 use Pulsar\Auth\SecurityContext;
-use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Route;
@@ -154,11 +156,16 @@ final class AuthorizationFlowTest extends TestCase
             $authManager,
         );
 
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(statusCode: ResponseStatus::OK->value, body: 'OK');
+            }
+        };
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::Unauthorized, $response->status);
+        self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -176,11 +183,16 @@ final class AuthorizationFlowTest extends TestCase
             $authManager,
         );
 
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(statusCode: ResponseStatus::OK->value, body: 'OK');
+            }
+        };
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -198,11 +210,16 @@ final class AuthorizationFlowTest extends TestCase
             $authManager,
         );
 
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(statusCode: ResponseStatus::OK->value, body: 'OK');
+            }
+        };
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     /**
@@ -212,7 +229,7 @@ final class AuthorizationFlowTest extends TestCase
         string $path,
         array $routeAttributes,
         AuthManagerInterface $authManager,
-    ): Request {
+    ): ServerRequestInterface {
         $route = new Route(
             methods: [Method::GET],
             path: $path,
@@ -222,13 +239,10 @@ final class AuthorizationFlowTest extends TestCase
 
         $matchedRoute = new MatchedRoute($route);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
+            headers: [],
         );
 
         $securityContext = new SecurityContext($authManager, $request);

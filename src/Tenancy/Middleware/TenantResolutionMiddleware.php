@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Tenancy\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Tenancy\Tenant;
 use Pulsar\Tenancy\TenantContext;
 use Pulsar\Tenancy\TenantResolverInterface;
@@ -27,7 +28,7 @@ readonly class TenantResolutionMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $tenant = $this->resolver->resolve($request);
 
@@ -53,6 +54,6 @@ readonly class TenantResolutionMiddleware implements MiddlewareInterface
             $this->logger?->info('No tenant resolved for request');
         }
 
-        return $next($request);
+        return $handler->handle($request);
     }
 }

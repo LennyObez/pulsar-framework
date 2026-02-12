@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Http\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\RateLimit\RateLimiterInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\TrustedProxy;
 
@@ -31,7 +33,7 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $key = $this->resolveKey($request);
         $result = $this->limiter->hit($key);
@@ -39,15 +41,14 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
         if ($result->exceeded()) {
             return Response::json(
                 ['error' => 'Too Many Requests', 'retry_after' => $result->retryAfter],
-                ResponseStatus::TooManyRequests,
+                ResponseStatus::TooManyRequests->value,
             )
                 ->withHeader('Retry-After', (string) $result->retryAfter)
                 ->withHeader('X-RateLimit-Limit', (string) $result->limit)
                 ->withHeader('X-RateLimit-Remaining', '0');
         }
 
-        /** @var Response $response */
-        $response = $next($request);
+        $response = $handler->handle($request);
 
         return $response
             ->withHeader('X-RateLimit-Limit', (string) $result->limit)
@@ -60,13 +61,13 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
      * Uses TrustedProxy for IP resolution when available, otherwise
      * falls back to REMOTE_ADDR.
      */
-    private function resolveKey(Request $request): string
+    private function resolveKey(ServerRequestInterface $request): string
     {
         if ($this->trustedProxy !== null) {
             return 'rate_limit:' . $this->trustedProxy->resolveClientIp($request);
         }
 
-        $ip = $request->server('REMOTE_ADDR');
+        $ip = $request->getServerParams()['REMOTE_ADDR'] ?? null;
 
         return 'rate_limit:' . (is_string($ip) ? $ip : 'unknown');
     }
