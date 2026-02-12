@@ -13,6 +13,7 @@ use function array_key_exists;
 use function file_exists;
 use function getimagesize;
 use function is_array;
+use function is_file;
 use function is_string;
 use function sprintf;
 
@@ -54,7 +55,7 @@ readonly class Dimensions implements RuleInterface
             return $this->fail($field);
         }
 
-        if (!is_string($value['tmp_name']) || !file_exists($value['tmp_name'])) {
+        if (!is_string($value['tmp_name']) || !file_exists($value['tmp_name']) || !is_file($value['tmp_name'])) {
             return $this->fail($field);
         }
 

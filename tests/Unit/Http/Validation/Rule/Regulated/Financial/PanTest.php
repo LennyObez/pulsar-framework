@@ -114,4 +114,26 @@ final class PanTest extends TestCase
         // 19-digit number: all zeros is trivially Luhn-valid (sum=0)
         self::assertNull($this->rule->validate('card', '0000000000000000000', []));
     }
+
+    #[Test]
+    public function fifteenDigitAmexPasses(): void
+    {
+        // AMEX test number (15 digits, Luhn-valid)
+        self::assertNull($this->rule->validate('card', '378282246310005', []));
+    }
+
+    #[Test]
+    public function integerInputFails(): void
+    {
+        // Integer input must be rejected (only strings accepted)
+        $violation = $this->rule->validate('card', 4111111111111111, []);
+        self::assertNotNull($violation);
+    }
+
+    #[Test]
+    public function fifteenDigitInvalidLuhnFails(): void
+    {
+        $violation = $this->rule->validate('card', '378282246310006', []);
+        self::assertNotNull($violation);
+    }
 }

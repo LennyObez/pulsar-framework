@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Rule;
 
+use InvalidArgumentException;
 use Override;
 use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
@@ -22,7 +23,11 @@ readonly class Divisible implements RuleInterface
     public function __construct(
         private int|float $divisor,
         private string $message = '',
-    ) {}
+    ) {
+        if ($this->divisor == 0) {
+            throw new InvalidArgumentException('Divisor must not be zero.');
+        }
+    }
 
     #[Override]
     public function validate(string $field, mixed $value, array $data): ?Violation

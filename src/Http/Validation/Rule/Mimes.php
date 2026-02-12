@@ -78,20 +78,20 @@ readonly class Mimes implements RuleInterface
             return false;
         }
 
-        // Try finfo for real file detection
-        if (is_string($value['tmp_name']) && file_exists($value['tmp_name'])) {
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-
-            if ($finfo !== false) {
-                $mime = finfo_file($finfo, $value['tmp_name']);
-                finfo_close($finfo);
-
-                return is_string($mime) && in_array($mime, $this->allowedMimes, true);
-            }
+        if (!is_string($value['tmp_name']) || !file_exists($value['tmp_name'])) {
+            return false;
         }
 
-        // Fall back to the type key
-        return is_string($value['type']) && in_array($value['type'], $this->allowedMimes, true);
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+
+        if ($finfo === false) {
+            return false;
+        }
+
+        $mime = finfo_file($finfo, $value['tmp_name']);
+        finfo_close($finfo);
+
+        return is_string($mime) && in_array($mime, $this->allowedMimes, true);
     }
 
     #[Override]

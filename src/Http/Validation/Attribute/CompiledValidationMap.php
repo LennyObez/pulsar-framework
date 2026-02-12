@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Validation\Attribute;
 
+use InvalidArgumentException;
 use Pulsar\Api\Api;
 
 use function file_exists;
 use function is_array;
+use function str_contains;
+use function str_ends_with;
 
 /**
  * Loads pre-compiled validation metadata from a PHP array artifact.
@@ -28,6 +31,12 @@ final readonly class CompiledValidationMap
 
     public function __construct(string $artifactPath)
     {
+        if (str_contains($artifactPath, '..') || !str_ends_with($artifactPath, '.php')) {
+            throw new InvalidArgumentException(
+                'Artifact path must not contain traversal sequences and must end with .php.',
+            );
+        }
+
         if (!file_exists($artifactPath)) {
             $this->map = [];
 

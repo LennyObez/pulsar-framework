@@ -102,4 +102,43 @@ final class PassportNumberTest extends TestCase
         self::assertNotNull($violation);
         self::assertSame('Custom passport message', $violation->message);
     }
+
+    #[Test]
+    public function dePatternValidAlphanumericPasses(): void
+    {
+        $rule = new PassportNumber(country: 'DE');
+        self::assertNull($rule->validate('passport', 'C01X00T47', []));
+    }
+
+    #[Test]
+    public function dePatternAllDigitsPasses(): void
+    {
+        $rule = new PassportNumber(country: 'DE');
+        self::assertNull($rule->validate('passport', '123456789', []));
+    }
+
+    #[Test]
+    public function dePatternExcludedLettersFails(): void
+    {
+        $rule = new PassportNumber(country: 'DE');
+        // Letters A, B, D, E, I, O, Q, S, U are excluded
+        $violation = $rule->validate('passport', 'ABCDEFGHI', []);
+        self::assertNotNull($violation);
+    }
+
+    #[Test]
+    public function dePatternTooShortFails(): void
+    {
+        $rule = new PassportNumber(country: 'DE');
+        $violation = $rule->validate('passport', 'C01X00T4', []);
+        self::assertNotNull($violation);
+    }
+
+    #[Test]
+    public function dePatternTooLongFails(): void
+    {
+        $rule = new PassportNumber(country: 'DE');
+        $violation = $rule->validate('passport', 'C01X00T478', []);
+        self::assertNotNull($violation);
+    }
 }

@@ -15,7 +15,6 @@ use function getimagesize;
 use function is_array;
 use function is_string;
 use function sprintf;
-use function str_starts_with;
 
 use const UPLOAD_ERR_OK;
 
@@ -64,15 +63,13 @@ readonly class Image implements RuleInterface
             return false;
         }
 
-        // Try getimagesize for real file validation
-        if (is_string($value['tmp_name']) && file_exists($value['tmp_name'])) {
-            $info = @getimagesize($value['tmp_name']);
-
-            return $info !== false;
+        if (!is_string($value['tmp_name']) || !file_exists($value['tmp_name'])) {
+            return false;
         }
 
-        // Fall back to checking the type key
-        return is_string($value['type']) && str_starts_with($value['type'], 'image/');
+        $info = @getimagesize($value['tmp_name']);
+
+        return $info !== false;
     }
 
     #[Override]

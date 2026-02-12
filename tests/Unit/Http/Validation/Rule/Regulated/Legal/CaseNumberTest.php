@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http\Validation\Rule\Regulated\Legal;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -98,5 +99,23 @@ final class CaseNumberTest extends TestCase
     public function tenDigitSequencePasses(): void
     {
         self::assertNull($this->rule->validate('case', '2024-CV-1234567890', []));
+    }
+
+    #[Test]
+    public function invalidPatternThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('valid regular expression');
+
+        new CaseNumber(pattern: '/[invalid');
+    }
+
+    #[Test]
+    public function excessivelyLongPatternThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('maximum length');
+
+        new CaseNumber(pattern: '/' . str_repeat('a', 500) . '/');
     }
 }

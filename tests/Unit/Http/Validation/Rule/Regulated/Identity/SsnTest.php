@@ -139,4 +139,30 @@ final class SsnTest extends TestCase
     {
         self::assertNull($this->rule->validate('ssn', '667-01-0001', []));
     }
+
+    #[Test]
+    public function area999Fails(): void
+    {
+        $violation = $this->rule->validate('ssn', '999-01-0001', []);
+        self::assertNotNull($violation);
+    }
+
+    #[Test]
+    public function group99Passes(): void
+    {
+        self::assertNull($this->rule->validate('ssn', '123-99-0001', []));
+    }
+
+    #[Test]
+    public function serial9999Passes(): void
+    {
+        self::assertNull($this->rule->validate('ssn', '123-01-9999', []));
+    }
+
+    #[Test]
+    public function integerInputFails(): void
+    {
+        $violation = $this->rule->validate('ssn', 123456789, []);
+        self::assertNotNull($violation);
+    }
 }

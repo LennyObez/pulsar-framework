@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http\Validation\Rule\Regulated\Legal;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -106,5 +107,23 @@ final class BarNumberTest extends TestCase
     {
         $violation = $this->rule->validate('bar', 'CA123456789', []);
         self::assertNotNull($violation);
+    }
+
+    #[Test]
+    public function invalidPatternThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('valid regular expression');
+
+        new BarNumber(pattern: '/[invalid');
+    }
+
+    #[Test]
+    public function excessivelyLongPatternThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('maximum length');
+
+        new BarNumber(pattern: '/' . str_repeat('a', 500) . '/');
     }
 }

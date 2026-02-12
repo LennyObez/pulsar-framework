@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http\Validation\Rule;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -78,5 +79,30 @@ final class DivisibleTest extends TestCase
     {
         $rule = new Divisible(3);
         self::assertNull($rule->validate('field', -9, []));
+    }
+
+    #[Test]
+    public function zeroDivisorThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('must not be zero');
+
+        new Divisible(0);
+    }
+
+    #[Test]
+    public function zeroFloatDivisorThrows(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('must not be zero');
+
+        new Divisible(0.0);
+    }
+
+    #[Test]
+    public function nameReturnsDivisible(): void
+    {
+        $rule = new Divisible(2);
+        self::assertSame('divisible', $rule->name());
     }
 }

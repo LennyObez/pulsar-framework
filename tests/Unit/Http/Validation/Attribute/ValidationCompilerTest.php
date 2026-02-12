@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Http\Validation\Attribute;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -103,6 +104,31 @@ final class ValidationCompilerTest extends TestCase
 
         $map = new CompiledValidationMap($this->outputPath);
         self::assertFalse($map->has(EmptyDto::class));
+    }
+
+    #[Test]
+    public function rejectsPathWithTraversalSequence(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('traversal');
+
+        new CompiledValidationMap('/some/../path/artifact.php');
+    }
+
+    #[Test]
+    public function rejectsPathWithoutPhpExtension(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('.php');
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'val_') . '.txt';
+        file_put_contents($tmpFile, '<?php return [];');
+
+        try {
+            new CompiledValidationMap($tmpFile);
+        } finally {
+            unlink($tmpFile);
+        }
     }
 }
 

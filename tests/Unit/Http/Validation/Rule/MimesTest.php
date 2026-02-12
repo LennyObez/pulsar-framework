@@ -18,31 +18,61 @@ final class MimesTest extends TestCase
     #[Test]
     public function allowedMimePasses(): void
     {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'mime_test_');
+        self::assertNotFalse($tmpFile);
+
+        $img = imagecreatetruecolor(1, 1);
+        self::assertNotFalse($img);
+        imagejpeg($img, $tmpFile);
+
         $rule = new Mimes('image/jpeg', 'image/png');
         $file = [
-            'tmp_name' => '/tmp/nonexistent',
+            'tmp_name' => $tmpFile,
             'error' => UPLOAD_ERR_OK,
-            'size' => 1024,
+            'size' => filesize($tmpFile),
             'name' => 'photo.jpg',
             'type' => 'image/jpeg',
         ];
         self::assertNull($rule->validate('file', $file, []));
+
+        unlink($tmpFile);
     }
 
     #[Test]
     public function disallowedMimeFails(): void
     {
+        $tmpFile = tempnam(sys_get_temp_dir(), 'mime_test_');
+        self::assertNotFalse($tmpFile);
+        file_put_contents($tmpFile, '%PDF-1.4 fake pdf content');
+
         $rule = new Mimes('image/jpeg', 'image/png');
         $file = [
-            'tmp_name' => '/tmp/nonexistent',
+            'tmp_name' => $tmpFile,
             'error' => UPLOAD_ERR_OK,
-            'size' => 1024,
+            'size' => filesize($tmpFile),
             'name' => 'doc.pdf',
             'type' => 'application/pdf',
         ];
         $violation = $rule->validate('file', $file, []);
         self::assertNotNull($violation);
         self::assertSame('mimes', $violation->rule);
+
+        unlink($tmpFile);
+    }
+
+    #[Test]
+    public function nonexistentFileFails(): void
+    {
+        $rule = new Mimes('image/jpeg');
+        $file = [
+            'tmp_name' => '/tmp/nonexistent_' . uniqid(),
+            'error' => UPLOAD_ERR_OK,
+            'size' => 1024,
+            'name' => 'photo.jpg',
+            'type' => 'image/jpeg',
+        ];
+        $violation = $rule->validate('file', $file, []);
+        self::assertNotNull($violation);
     }
 
     #[Test]
