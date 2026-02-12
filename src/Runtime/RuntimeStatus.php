@@ -15,5 +15,6 @@ enum RuntimeStatus: string
     case Stopped = 'stopped';
     case Starting = 'starting';
     case Running = 'running';
+    case Draining = 'draining';
     case Stopping = 'stopping';
 }

@@ -9,6 +9,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\SecurityContext;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Config\RuntimeConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
@@ -16,11 +17,14 @@ use Pulsar\FeatureFlag\FlagEvaluationLog;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Runtime\Hygiene\HygieneProfileInterface;
+use Pulsar\Runtime\Hygiene\PersistentRuntimeHygiene;
 use Pulsar\Runtime\LeakDetector;
-use Pulsar\Runtime\PersistentRuntimeFactory;
 use Pulsar\Runtime\PersistentRuntimeFactoryInterface;
 use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
+use Pulsar\Runtime\RuntimeFactory;
+use Pulsar\Runtime\RuntimeResolver;
 use Pulsar\Tenancy\TenantContext;
 
 #[Internal]
@@ -77,13 +81,26 @@ final readonly class RuntimeWiring implements ServiceWiringInterface
         $leakDetector = new LeakDetector(logger: $logger);
         $container->instance(LeakDetector::class, $leakDetector);
 
+        // Register hygiene profile
+        $hygiene = new PersistentRuntimeHygiene();
+        $container->instance(HygieneProfileInterface::class, $hygiene);
+
         // Create request sandbox
-        $sandbox = new RequestSandbox($container, $registry, $leakDetector);
+        $sandbox = new RequestSandbox($container, $registry, $leakDetector, $hygiene);
         $container->instance(RequestSandbox::class, $sandbox);
 
-        // Runtime factory (encapsulates PersistentRuntime construction)
-        $runtimeFactory = new PersistentRuntimeFactory($container);
-        $container->instance(PersistentRuntimeFactory::class, $runtimeFactory);
+        // Runtime resolver (auto-detects available runtimes)
+        $environment = $container->has(Environment::class)
+            ? $container->get(Environment::class)
+            : Environment::load(null);
+
+        /** @var Environment $environment */
+        $resolver = new RuntimeResolver($environment);
+        $container->instance(RuntimeResolver::class, $resolver);
+
+        // Runtime factory (creates any runtime type)
+        $runtimeFactory = new RuntimeFactory($container);
+        $container->instance(RuntimeFactory::class, $runtimeFactory);
         $container->instance(PersistentRuntimeFactoryInterface::class, $runtimeFactory);
     }
 }

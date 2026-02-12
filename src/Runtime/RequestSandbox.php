@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime;
 
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Container\AdvancedContainerInterface;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Runtime\Hygiene\HygieneProfileInterface;
 
 /**
  * Orchestrates per-request state isolation in the persistent runtime.
@@ -23,13 +24,17 @@ final readonly class RequestSandbox
         private ContainerInterface $container,
         private RequestResetRegistry $registry,
         private LeakDetector $leakDetector,
+        private ?HygieneProfileInterface $hygiene = null,
     ) {}
 
     /**
      * Enter request scope: snapshot memory baseline for leak detection.
      */
-    public function beforeRequest(Request $request): Request
+    public function beforeRequest(ServerRequestInterface $request): ServerRequestInterface
     {
+        // Apply hygiene FIRST (before leak detection baseline)
+        $this->hygiene?->apply();
+
         $this->leakDetector->beginRequest();
 
         if ($this->container instanceof AdvancedContainerInterface) {
@@ -50,7 +55,7 @@ final readonly class RequestSandbox
      *
      * @return list<string> Leak warnings (empty if clean)
      */
-    public function afterRequest(Request $request, Response $response): array
+    public function afterRequest(ServerRequestInterface $request, ResponseInterface $response): array
     {
         // 1. End request scope (if container supports it)
         if ($this->container instanceof AdvancedContainerInterface) {

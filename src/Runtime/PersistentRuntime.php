@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Runtime;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\RuntimeConfig;
 use Pulsar\Core\KernelInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Exception\RuntimeException;
 use Pulsar\Runtime\Fiber\FiberScheduler;
@@ -19,11 +21,16 @@ use Pulsar\Runtime\Http\HttpRequestParser;
 use Pulsar\Runtime\Http\HttpResponseSerializer;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
 use Pulsar\Runtime\Upgrade\UpgradeResponse;
+use Pulsar\Runtime\Worker\HealthResponse;
+use Pulsar\Runtime\Worker\HealthStatus;
+use Pulsar\Runtime\Worker\WorkerInfo;
+use Pulsar\Runtime\Worker\WorkerState;
 use Socket;
 use Throwable;
 
 use function extension_loaded;
 use function function_exists;
+use function getmypid;
 use function in_array;
 use function memory_get_usage;
 use function microtime;
@@ -41,7 +48,9 @@ use function socket_strerror;
 use function socket_write;
 use function sprintf;
 use function strlen;
+use function strtolower;
 use function time;
+use function trim;
 
 use const AF_INET;
 use const SO_RCVTIMEO;
@@ -57,7 +66,7 @@ use const SOL_TCP;
  * per-request isolation via RequestSandbox.
  */
 #[Internal]
-final class PersistentRuntime implements RuntimeInterface
+final class PersistentRuntime implements ReloadableRuntimeInterface
 {
     private RuntimeStatus $status = RuntimeStatus::Stopped;
     private int $requestCount = 0;
@@ -135,13 +144,42 @@ final class PersistentRuntime implements RuntimeInterface
     }
 
     #[Override]
-    public function beforeRequest(Request $request): Request
+    public function reload(): void
+    {
+        $this->status = RuntimeStatus::Draining;
+    }
+
+    #[Override]
+    public function healthStatus(): HealthStatus
+    {
+        return match ($this->status) {
+            RuntimeStatus::Running => HealthStatus::Healthy,
+            RuntimeStatus::Draining => HealthStatus::Draining,
+            default => HealthStatus::ShuttingDown,
+        };
+    }
+
+    #[Override]
+    public function workerInfo(): WorkerInfo
+    {
+        return new WorkerInfo(
+            pid: (int) getmypid(),
+            startedAt: $this->startedAt,
+            requestCount: $this->requestCount,
+            memoryUsageMb: (int) ((float) memory_get_usage(true) / 1024.0 / 1024.0),
+            state: $this->mapToWorkerState(),
+            runtimeType: RuntimeType::Persistent,
+        );
+    }
+
+    #[Override]
+    public function beforeRequest(ServerRequestInterface $request): ServerRequestInterface
     {
         return $this->sandbox->beforeRequest($request);
     }
 
     #[Override]
-    public function afterRequest(Request $request, Response $response): void
+    public function afterRequest(ServerRequestInterface $request, ResponseInterface $response): void
     {
         $this->sandbox->afterRequest($request, $response);
     }
@@ -277,17 +315,42 @@ final class PersistentRuntime implements RuntimeInterface
                     break;
                 }
 
-                /** @var Request $request */
+                /** @var ServerRequest $request */
                 $request = $result;
                 $this->requestCount++;
                 $memBefore = memory_get_usage(true);
                 $startTime = microtime(true);
 
+                // Health endpoint — bypass kernel dispatch
+                if ($this->config->healthEndpoint && $request->getUri()->getPath() === '/_health') {
+                    $healthResponse = HealthResponse::fromWorkerInfo($this->workerInfo());
+                    $response = new Response(
+                        statusCode: $healthResponse->statusCode() === 200
+                            ? ResponseStatus::OK->value
+                            : ResponseStatus::ServiceUnavailable->value,
+                        headers: ['Content-Type' => 'application/json'],
+                        body: $healthResponse->toJson(),
+                    );
+                    $raw = $this->serializer->serialize(
+                        $response,
+                        requestMethod: $request->getMethod(),
+                        closeConnection: false,
+                        addDateHeader: $this->config->addDateHeader,
+                    );
+                    $this->socketWrite($clientSocket, $raw);
+
+                    $durationMs = (microtime(true) - $startTime) * 1000.0;
+                    $memDelta = memory_get_usage(true) - $memBefore;
+                    $this->collector?->recordRequest($request, $response, $durationMs, $memDelta);
+
+                    continue;
+                }
+
                 // Determine if keep-alive for this request
-                $connectionHeader = $request->headers->first('Connection');
+                $connectionHeader = $request->getHeaderLine('Connection');
                 $requestKeepAlive = $keepAlive && $this->isKeepAlive(
                     $connectionHeader,
-                    $request->protocolVersion,
+                    $request->getProtocolVersion(),
                 );
 
                 // Run request through sandbox and kernel
@@ -297,11 +360,11 @@ final class PersistentRuntime implements RuntimeInterface
                 } catch (Throwable $e) {
                     $this->logger?->error('Request handler error', [
                         'exception' => $e->getMessage(),
-                        'path' => $request->path,
+                        'path' => $request->getUri()->getPath(),
                     ]);
                     $response = new Response(
+                        statusCode: ResponseStatus::InternalServerError->value,
                         body: 'Internal Server Error',
-                        status: ResponseStatus::InternalServerError,
                     );
                     // Always close on 5xx
                     $requestKeepAlive = false;
@@ -310,14 +373,14 @@ final class PersistentRuntime implements RuntimeInterface
                 $this->afterRequest($request, $response);
 
                 // Handle upgrade responses (Kernel::handle() may return UpgradeResponse)
-                if ($response instanceof UpgradeResponse) { // @phpstan-ignore instanceof.alwaysFalse
+                if ($response instanceof UpgradeResponse) {
                     $this->handleUpgradeResponse($response, $request, $clientSocket);
 
                     return; // Socket is now owned by the upgrade handler
                 }
 
                 // 5xx always closes
-                if ($response->status->isServerError()) {
+                if ($response->getStatusCode() >= 500) {
                     $requestKeepAlive = false;
                 }
 
@@ -328,7 +391,7 @@ final class PersistentRuntime implements RuntimeInterface
 
                 $raw = $this->serializer->serialize(
                     $response,
-                    requestMethod: $request->method,
+                    requestMethod: $request->getMethod(),
                     closeConnection: $shouldClose,
                     addDateHeader: $this->config->addDateHeader,
                 );
@@ -354,7 +417,7 @@ final class PersistentRuntime implements RuntimeInterface
      *
      * @codeCoverageIgnore Requires real socket I/O; parser is independently tested
      */
-    private function readAndParse(ConnectionContext $ctx): Request|Response|null
+    private function readAndParse(ConnectionContext $ctx): ServerRequest|Response|null
     {
         $deadline = microtime(true) + (float) $this->config->headerTimeoutSeconds;
 
@@ -382,14 +445,14 @@ final class PersistentRuntime implements RuntimeInterface
 
         // Header timeout exceeded
         return new Response(
+            statusCode: ResponseStatus::RequestTimeout->value,
             body: 'Request Timeout',
-            status: ResponseStatus::RequestTimeout,
         );
     }
 
-    private function isKeepAlive(?string $connectionHeader, string $protocolVersion): bool
+    private function isKeepAlive(string $connectionHeader, string $protocolVersion): bool
     {
-        if ($connectionHeader !== null) {
+        if ($connectionHeader !== '') {
             $normalized = strtolower(trim($connectionHeader));
 
             return $normalized !== 'close';
@@ -397,6 +460,17 @@ final class PersistentRuntime implements RuntimeInterface
 
         // HTTP/1.1 defaults to keep-alive, 1.0 does not
         return $protocolVersion === '1.1';
+    }
+
+    private function mapToWorkerState(): WorkerState
+    {
+        return match ($this->status) {
+            RuntimeStatus::Stopped => WorkerState::Stopped,
+            RuntimeStatus::Starting => WorkerState::Booting,
+            RuntimeStatus::Running => WorkerState::Ready,
+            RuntimeStatus::Draining => WorkerState::Draining,
+            RuntimeStatus::Stopping => WorkerState::Recycling,
+        };
     }
 
     private function shouldRecycle(): bool
@@ -486,10 +560,14 @@ final class PersistentRuntime implements RuntimeInterface
 
     private function shutdownGracefully(): void
     {
+        $drainTimeout = $this->status === RuntimeStatus::Draining
+            ? $this->config->drainTimeoutSeconds
+            : $this->config->keepAliveTimeout;
+
         $this->status = RuntimeStatus::Stopping;
 
         // Drain active Fibers
-        $this->scheduler?->drain($this->config->keepAliveTimeout);
+        $this->scheduler?->drain($drainTimeout);
 
         // Close server socket
         if ($this->serverSocket !== null) {
@@ -542,11 +620,16 @@ final class PersistentRuntime implements RuntimeInterface
         pcntl_signal(SIGTERM, function (): void {
             $this->stop();
         });
+
+        /** @psalm-suppress UndefinedConstant */
+        pcntl_signal(SIGUSR1, function (): void {
+            $this->reload();
+        });
     }
 
     private function checkSignals(): void
     {
-        if ($this->status === RuntimeStatus::Stopping) {
+        if ($this->status === RuntimeStatus::Stopping || $this->status === RuntimeStatus::Draining) {
             return;
         }
 
@@ -593,12 +676,12 @@ final class PersistentRuntime implements RuntimeInterface
      */
     private function handleUpgradeResponse(
         UpgradeResponse $response,
-        Request $request,
+        ServerRequestInterface $request,
         Socket $clientSocket,
     ): void {
         $raw = $this->serializer->serialize(
             $response,
-            requestMethod: $request->method,
+            requestMethod: $request->getMethod(),
             addDateHeader: $this->config->addDateHeader,
         );
         $this->socketWrite($clientSocket, $raw);

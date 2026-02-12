@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Runtime\Http;
 
+use Psr\Http\Message\ResponseInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Http\Method;
-use Pulsar\Http\Response;
 
 use function gmdate;
 use function sprintf;
 use function strlen;
+use function strtolower;
 
 /**
- * Serializes a Pulsar Response into raw HTTP/1.1 bytes for socket writing.
+ * Serializes a PSR-7 Response into raw HTTP/1.1 bytes for socket writing.
  *
  * Guarantees:
  * - Content-Length always set (required for keep-alive framing)
@@ -32,52 +32,68 @@ final class HttpResponseSerializer
      * @param bool $addDateHeader Whether to add a Date header if not present
      */
     public function serialize(
-        Response $response,
-        ?Method $requestMethod = null,
+        ResponseInterface $response,
+        ?string $requestMethod = null,
         bool $closeConnection = false,
         bool $addDateHeader = true,
     ): string {
-        $status = $response->status;
         $statusLine = sprintf(
             "HTTP/%s %d %s\r\n",
-            $response->protocolVersion,
-            $status->value,
-            $status->reasonPhrase(),
+            $response->getProtocolVersion(),
+            $response->getStatusCode(),
+            $response->getReasonPhrase(),
         );
 
-        // Build headers — start with response headers
-        $headers = $response->headers;
+        // Read body and compute length
+        $bodyString = (string) $response->getBody();
+        $bodyLength = strlen($bodyString);
 
-        // Strip Transfer-Encoding to prevent framing ambiguity
-        if ($headers->has('Transfer-Encoding')) {
-            $headers = $headers->without('Transfer-Encoding');
-        }
-
-        // Set Content-Length from actual body length
-        $bodyLength = strlen($response->body);
-        $headers = $headers->with('Content-Length', (string) $bodyLength);
-
-        // Inject Connection: close if closing
-        if ($closeConnection) {
-            $headers = $headers->with('Connection', 'close');
-        }
-
-        // Add Date header if enabled and not already present
-        if ($addDateHeader && !$headers->has('Date')) {
-            $headers = $headers->with('Date', gmdate('D, d M Y H:i:s') . ' GMT');
-        }
-
-        // Build header string
+        // Build header string, handling overrides
         $headerStr = '';
+        $hasDate = false;
 
-        foreach ($headers->toArray() as $name => $values) {
+        foreach ($response->getHeaders() as $name => $values) {
+            $lower = strtolower($name);
+
+            // Strip Transfer-Encoding to prevent framing ambiguity
+            if ($lower === 'transfer-encoding') {
+                continue;
+            }
+
+            // Skip Content-Length — we'll set our own from actual body
+            if ($lower === 'content-length') {
+                continue;
+            }
+
+            // Skip Connection if we're injecting our own
+            if ($closeConnection && $lower === 'connection') {
+                continue;
+            }
+
+            if ($lower === 'date') {
+                $hasDate = true;
+            }
+
             foreach ($values as $value) {
                 $headerStr .= sprintf("%s: %s\r\n", $name, $value);
             }
         }
 
+        // Set Content-Length from actual body length
+        $headerStr .= sprintf("Content-Length: %d\r\n", $bodyLength);
+
+        // Inject Connection: close if closing
+        if ($closeConnection) {
+            $headerStr .= "Connection: close\r\n";
+        }
+
+        // Add Date header if enabled and not already present
+        if ($addDateHeader && !$hasDate) {
+            $headerStr .= sprintf("Date: %s GMT\r\n", gmdate('D, d M Y H:i:s'));
+        }
+
         // HEAD responses: include Content-Length but omit body
-        $body = ($requestMethod === Method::HEAD) ? '' : $response->body;
+        $body = ($requestMethod === 'HEAD') ? '' : $bodyString;
 
         return $statusLine . $headerStr . "\r\n" . $body;
     }
