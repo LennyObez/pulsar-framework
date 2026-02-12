@@ -1,5 +1,5 @@
 {
-  "name": "pulsar/framework",
+  "name": "lennyobez/pulsar",
   "version": "1.0.0-rc.11",
   "description": "Pulsar HMVC Framework (PHP 8.5)",
   "type": "library",
