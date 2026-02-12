@@ -80,7 +80,10 @@
       "Pulsar\\Extension\\Graphql\\": "extensions/graphql/src/",
       "Pulsar\\Extension\\Forum\\": "extensions/forum/src/",
       "Pulsar\\Extension\\Grpc\\": "extensions/grpc/src/",
-      "Pulsar\\Extension\\Accessibility\\": "extensions/accessibility/src/"
+      "Pulsar\\Extension\\Accessibility\\": "extensions/accessibility/src/",
+      "Pulsar\\Extension\\Devices\\": "extensions/devices/src/",
+      "Pulsar\\Extension\\Feedback\\": "extensions/feedback/src/",
+      "Pulsar\\Extension\\Subscriptions\\": "extensions/subscriptions/src/"
     }
   },
   "autoload-dev": {

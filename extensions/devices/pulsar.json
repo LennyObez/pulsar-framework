@@ -1,0 +1,9 @@
+{
+  "name": "pulsar/devices",
+  "version": "1.0.0",
+  "description": "User device management with API token authentication",
+  "type": "extension",
+  "namespace": "Pulsar\\Extension\\Devices",
+  "extension": "Pulsar\\Extension\\Devices\\DevicesExtension",
+  "providers": ["Pulsar\\Extension\\Devices\\DevicesServiceProvider"]
+}
