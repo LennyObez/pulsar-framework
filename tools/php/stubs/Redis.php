@@ -1,11 +1,16 @@
 <?php
 
 /**
+ * RedisException stub for Psalm.
+ */
+class RedisException extends RuntimeException {}
+
+/**
  * Minimal Redis stub for Psalm static analysis.
  *
  * ext-redis is optional (listed in composer.json suggest).
  * This stub provides just enough type information for Psalm
- * to analyze RedisDriver, RedisLock, and CacheManager.
+ * to analyze RedisDriver, RedisLock, CacheManager, and RedisHandler.
  */
 class Redis
 {
@@ -108,4 +113,30 @@ class Redis
      * @return bool
      */
     public function psetex(string $key, int $timeout, string $value): bool {}
+
+    /**
+     * @param string $key
+     * @param string ...$members
+     * @return int|false
+     */
+    public function sAdd(string $key, string ...$members): int|false {}
+
+    /**
+     * @param string $key
+     * @param string ...$members
+     * @return int
+     */
+    public function sRem(string $key, string ...$members): int {}
+
+    /**
+     * @param string $key
+     * @return list<string>
+     */
+    public function sMembers(string $key): array {}
+
+    /**
+     * @param string $key
+     * @return int
+     */
+    public function sCard(string $key): int {}
 }

@@ -18,12 +18,39 @@ return [
     |--------------------------------------------------------------------------
     */
     'session' => [
+        'handler' => 'file',
         'cookie_name' => 'PULSAR_SESSION',
         'lifetime' => 7200,
         'cookie_httponly' => true,
         'cookie_secure' => true,
         'cookie_samesite' => 'Strict',
+        'cookie_path' => '/',
+        'cookie_domain' => '',
         'regenerate_on_privilege_change' => true,
+        'encryption' => true,
+        'max_concurrent_sessions' => 3,
+        'save_path' => '',
+        'gc_probability' => 1,
+        'gc_divisor' => 100,
+        'cookie_max_payload_size' => 2048,
+        'cookie_replay_window' => 86400,
+
+        'validators' => [
+            'user_agent' => [
+                'enabled' => true,
+                'mode' => 'normalized',
+            ],
+            'remote_address' => [
+                'enabled' => false,
+                'mode' => 'subnet',
+                'ipv4_mask' => 24,
+                'ipv6_mask' => 48,
+            ],
+            'fingerprint' => [
+                'enabled' => false,
+                'attributes' => ['accept_language', 'accept_encoding'],
+            ],
+        ],
     ],
 
     /*

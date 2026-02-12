@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Integration\Http;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Core\Kernel;
 use Pulsar\ErrorHandling\ExceptionHandler;
@@ -190,7 +192,8 @@ final class CreateUserValidation extends ValidationMiddleware
     /**
      * @return array<string, list<RuleInterface>>
      */
-    protected function rules(Request $request): array
+    #[Override]
+    protected function rules(ServerRequestInterface $request): array
     {
         return [
             'name' => [new Required(), new StringType(), new MinLength(1)],

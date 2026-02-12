@@ -8,6 +8,7 @@ use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Authorization\PolicyContext;
@@ -266,7 +267,7 @@ final class AuthFlowTestAuthManager implements AuthManagerInterface
     ) {}
 
     #[Override]
-    public function authenticate(Request $request): IdentityInterface
+    public function authenticate(ServerRequestInterface $request): IdentityInterface
     {
         if ($this->session->isLoggedIn()) {
             return new AuthFlowTestIdentity(
@@ -360,7 +361,7 @@ final readonly class AuthFlowTestGuard implements GuardInterface
     ) {}
 
     #[Override]
-    public function authenticate(Request $request): ?IdentityInterface
+    public function authenticate(ServerRequestInterface $request): ?IdentityInterface
     {
         if ($this->session->isLoggedIn()) {
             return new AuthFlowTestIdentity(
