@@ -47,6 +47,8 @@ readonly class Row
 
     /**
      * Get a column value with a default fallback.
+     *
+     * @param mixed $default Fallback value if the column does not exist
      */
     public function getOrDefault(string $column, mixed $default = null): mixed
     {

@@ -1,0 +1,89 @@
+/* Pulsar UI — Navbar Component v1.0.0
+ * Top navigation bar.
+ * ARIA: role="navigation", aria-label="Main navigation"
+ */
+
+.pui-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--navbar-height);
+  padding-inline: var(--space-6);
+  background-color: var(--navbar-bg);
+  border-block-end: 1px solid var(--navbar-border);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.pui-navbar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.pui-navbar__brand:hover {
+  color: var(--color-link);
+  text-decoration: none;
+}
+
+.pui-navbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+}
+
+.pui-navbar__link {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-radius: var(--radius-md);
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.pui-navbar__link:hover {
+  color: var(--color-text);
+  background-color: var(--color-bg-tertiary);
+  text-decoration: none;
+}
+
+.pui-navbar__link:visited {
+  color: var(--color-text-muted);
+}
+
+.pui-navbar__link--active {
+  color: var(--color-primary-600);
+  background-color: var(--color-primary-50);
+}
+
+.pui-navbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+@media (max-width: 767px) {
+  .pui-navbar {
+    flex-wrap: wrap;
+    height: auto;
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-2);
+  }
+
+  .pui-navbar__nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+}

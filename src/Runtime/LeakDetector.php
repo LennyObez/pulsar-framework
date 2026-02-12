@@ -6,6 +6,7 @@ namespace Pulsar\Runtime;
 
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Runtime\Exception\ResourceLeakException;
 
 use function array_values;
 use function memory_get_usage;
@@ -27,9 +28,11 @@ final class LeakDetector
 
     /**
      * @param int $memoryGrowthThreshold Maximum allowed memory growth in bytes before warning
+     * @param bool $strictMode When true, throws ResourceLeakException instead of returning warnings
      */
     public function __construct(
         private readonly int $memoryGrowthThreshold = 2_097_152,
+        private readonly bool $strictMode = false,
         private readonly ?LoggerInterface $logger = null,
     ) {}
 
@@ -67,6 +70,8 @@ final class LeakDetector
      * Check for unreleased resources and memory growth.
      *
      * @return list<string> Warning messages (empty if no leaks detected)
+     *
+     * @throws ResourceLeakException In strict mode when unreleased resources exist
      */
     public function endRequest(): array
     {
@@ -74,6 +79,13 @@ final class LeakDetector
 
         // Check unreleased resources
         if ($this->trackedResources !== []) {
+            if ($this->strictMode) {
+                $entries = array_values($this->trackedResources);
+                $this->trackedResources = [];
+
+                throw ResourceLeakException::multipleLeaks($entries);
+            }
+
             foreach ($this->trackedResources as $entry) {
                 $message = sprintf(
                     'Unreleased resource: [%s] %s — %s',

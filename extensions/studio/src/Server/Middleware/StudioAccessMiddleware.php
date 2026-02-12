@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Security\StudioAccessGate;
-use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
 /**
@@ -27,25 +28,25 @@ final readonly class StudioAccessMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $result = $this->gate->check($request);
 
         if (!$result['allowed']) {
             if ($result['reason'] === 'Authentication required') {
                 return new Response(
+                    statusCode: ResponseStatus::Unauthorized->value,
+                    headers: ['WWW-Authenticate' => 'Basic realm="Pulsar Studio"'],
                     body: 'Authentication required',
-                    status: ResponseStatus::Unauthorized,
-                    headers: new HeaderBag(['WWW-Authenticate' => 'Basic realm="Pulsar Studio"']),
                 );
             }
 
             return new Response(
+                statusCode: ResponseStatus::Forbidden->value,
                 body: $result['reason'] ?? 'Access denied',
-                status: ResponseStatus::Forbidden,
             );
         }
 
-        return $next($request);
+        return $handler->handle($request);
     }
 }

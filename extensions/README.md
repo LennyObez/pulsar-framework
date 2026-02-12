@@ -1,12 +1,12 @@
-# Pulsar Extensions
+# Pulsar extensions
 
 This directory contains first-party extensions for the Pulsar Framework.
 
-## What is an Extension?
+## What is an extension?
 
 An extension is a self-contained package that adds functionality to Pulsar. Extensions use the same public API available to third-party packages.
 
-## Extension Structure
+## Extension structure
 
 Each extension follows this structure:
 
@@ -22,7 +22,7 @@ Each extension follows this structure:
 └─ tests/          # Extension tests
 ```
 
-## Extension Manifest (pulsar.json)
+## Extension manifest (pulsar.json)
 
 The `pulsar.json` file declares extension metadata and capabilities:
 
@@ -47,14 +47,14 @@ The `pulsar.json` file declares extension metadata and capabilities:
 }
 ```
 
-## Extension Lifecycle
+## Extension lifecycle
 
 1. **Discover**: Pulsar scans for `pulsar.json` manifests
 2. **Validate**: Check version compatibility and dependencies
 3. **Register**: Extension registers its services, routes, commands
 4. **Boot**: Extension performs initialization
 
-## Creating an Extension
+## Creating an extension
 
 1. Create a new directory under `extensions/`
 2. Add `pulsar.json` manifest
@@ -62,7 +62,7 @@ The `pulsar.json` file declares extension metadata and capabilities:
 4. Implement the extension service provider
 5. Register capabilities
 
-## First-Party Extensions
+## First-party extensions
 
 First-party extensions maintained by the Pulsar team will be added here as the framework matures. These extensions serve as:
 
@@ -70,9 +70,9 @@ First-party extensions maintained by the Pulsar team will be added here as the f
 - Common functionality
 - Demonstration of best practices
 
-## Complete Documentation
+## Complete documentation
 
-For the full extension development guide -- including advanced manifest options, capability declarations, lifecycle hooks, testing strategies, and publishing -- see [`docs/EXTENSIONS.md`](../docs/EXTENSIONS.md).
+For the full extension development guide - including advanced manifest options, capability declarations, lifecycle hooks, testing strategies, and publishing - see [`docs/extensions.md`](../docs/extensions.md).
 
 ## Guidelines
 

@@ -268,9 +268,11 @@ final class FeatureFlagCollectorTest extends TestCase
     #[Test]
     public function handleEvaluationSilentlySwallowsEmitExceptions(): void
     {
+        $emitAttempts = 0;
         $collector = new FeatureFlagCollector(
             contextProvider: $this->contextProvider,
-            emit: function (ConsoleEvent $event, ?CorrelationContext $context): void {
+            emit: function (ConsoleEvent $event, ?CorrelationContext $context) use (&$emitAttempts): void {
+                $emitAttempts++;
                 throw new RuntimeException('Emit failed');
             },
         );
@@ -283,11 +285,10 @@ final class FeatureFlagCollectorTest extends TestCase
             evaluatedAt: new DateTimeImmutable(),
         );
 
-        // Should not throw
         $collector->handleEvaluation($evaluation);
 
-        // Test passes if no exception was thrown - use expectNotToPerformAssertions
-        $this->expectNotToPerformAssertions();
+        // Emit was attempted (not skipped), and the exception was swallowed silently
+        self::assertSame(1, $emitAttempts);
     }
 
     #[Test]

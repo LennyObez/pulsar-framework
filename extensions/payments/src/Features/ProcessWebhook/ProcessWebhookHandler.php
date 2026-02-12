@@ -10,7 +10,7 @@ use Pulsar\Extension\Payments\Config\PaymentsConfig;
 use Pulsar\Extension\Payments\Contracts\ClockInterface;
 use Pulsar\Extension\Payments\Contracts\WebhookHandlerInterface;
 use Pulsar\Extension\Payments\Domain\WebhookEvent;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -60,7 +60,7 @@ final readonly class ProcessWebhookHandler
             return new ProcessWebhookResult(
                 Response::json(
                     ['status' => 'invalid_signature'],
-                    ResponseStatus::Forbidden,
+                    ResponseStatus::Forbidden->value,
                 ),
             );
         }
@@ -79,7 +79,7 @@ final readonly class ProcessWebhookHandler
             return new ProcessWebhookResult(
                 Response::json(
                     ['status' => 'malformed_payload'],
-                    ResponseStatus::BadRequest,
+                    ResponseStatus::BadRequest->value,
                 ),
             );
         }
@@ -100,7 +100,7 @@ final readonly class ProcessWebhookHandler
             return new ProcessWebhookResult(
                 Response::json(
                     ['status' => 'concurrent_processing'],
-                    ResponseStatus::Conflict,
+                    ResponseStatus::Conflict->value,
                 ),
             );
         }
@@ -142,7 +142,7 @@ final readonly class ProcessWebhookHandler
             return new ProcessWebhookResult(
                 Response::json(
                     ['status' => 'handler_error'],
-                    ResponseStatus::InternalServerError,
+                    ResponseStatus::InternalServerError->value,
                 ),
             );
         }

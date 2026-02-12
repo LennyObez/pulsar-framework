@@ -104,7 +104,7 @@ final readonly class TemplateRegistry
             require __DIR__ . '/../vendor/autoload.php';
 
             use Pulsar\Core\Kernel;
-            use Pulsar\Http\Response;
+            use Pulsar\Http\Message\Response;
 
             $kernel = new Kernel();
 
@@ -127,7 +127,7 @@ final readonly class TemplateRegistry
 
             use Pulsar\\Config\\ConfigManager;
             use Pulsar\\Core\\Kernel;
-            use Pulsar\\Http\\Response;
+            use Pulsar\\Http\\Message\\Response;
 
             \$configManager = new ConfigManager(__DIR__ . '/../config');
             \$kernel = new Kernel(configManager: \$configManager);
@@ -158,7 +158,7 @@ final readonly class TemplateRegistry
             use App\Http\Controller\HealthController;
             use Pulsar\Config\ConfigManager;
             use Pulsar\Core\Kernel;
-            use Pulsar\Http\Response;
+            use Pulsar\Http\Message\Response;
 
             $configManager = new ConfigManager(__DIR__ . '/../config');
             $kernel = new Kernel(configManager: $configManager);
@@ -328,12 +328,12 @@ final readonly class TemplateRegistry
 
             namespace App\Http\Controller;
 
-            use Pulsar\Http\Request;
-            use Pulsar\Http\Response;
+            use Psr\Http\Message\ServerRequestInterface;
+            use Pulsar\Http\Message\Response;
 
             final class HealthController
             {
-                public function index(Request $request): Response
+                public function index(ServerRequestInterface $request): Response
                 {
                     return Response::json([
                         'status' => 'healthy',

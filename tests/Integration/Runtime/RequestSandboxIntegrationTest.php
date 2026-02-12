@@ -14,10 +14,8 @@ use Pulsar\Container\Container;
 use Pulsar\FeatureFlag\FlagContext;
 use Pulsar\FeatureFlag\FlagEvaluationLog;
 use Pulsar\FeatureFlag\FlagEvaluationReason;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\LeakDetector;
 use Pulsar\Runtime\RequestResetRegistry;
@@ -41,15 +39,11 @@ final class RequestSandboxIntegrationTest extends TestCase
         $this->sandbox = new RequestSandbox($this->container, $this->registry, $detector);
     }
 
-    private function createRequest(): Request
+    private function createRequest(): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 
@@ -113,13 +107,10 @@ final class RequestSandboxIntegrationTest extends TestCase
 
         // Simulate middleware creating SecurityContext for request 1
         $authManager = new AuthManager();
-        $request1 = new Request(
-            method: Method::GET,
+        $request1 = new ServerRequest(
+            method: 'GET',
             uri: '/dashboard',
-            path: '/dashboard',
-            queryString: '',
-            headers: new HeaderBag(['Authorization' => 'Bearer token-user-1']),
-            body: '',
+            headers: ['Authorization' => 'Bearer token-user-1'],
         );
         $secCtx1 = new SecurityContext($authManager, $request1);
         $this->container->instance(SecurityContext::class, $secCtx1);
@@ -128,7 +119,7 @@ final class RequestSandboxIntegrationTest extends TestCase
 
         // After request 1: sandbox evicts SecurityContext
         $this->sandbox->beforeRequest($request1);
-        $this->sandbox->afterRequest($request1, new Response(body: 'ok', status: ResponseStatus::OK));
+        $this->sandbox->afterRequest($request1, new Response(statusCode: ResponseStatus::OK->value, body: 'ok'));
 
         // SecurityContext should be evicted from instances
         self::assertNotContains(SecurityContext::class, $this->container->getInstances());
@@ -143,13 +134,10 @@ final class RequestSandboxIntegrationTest extends TestCase
         $this->container->instance(\Pulsar\Auth\AuthManagerInterface::class, $authManager);
 
         // Request 1 with user-1 credentials
-        $request1 = new Request(
-            method: Method::GET,
+        $request1 = new ServerRequest(
+            method: 'GET',
             uri: '/profile',
-            path: '/profile',
-            queryString: '',
-            headers: new HeaderBag(['Authorization' => 'Bearer user-1-token']),
-            body: '',
+            headers: ['Authorization' => 'Bearer user-1-token'],
         );
 
         $secCtx1 = new SecurityContext($authManager, $request1);
@@ -162,13 +150,10 @@ final class RequestSandboxIntegrationTest extends TestCase
         $this->sandbox->afterRequest($request1, new Response());
 
         // Request 2 with user-2 credentials
-        $request2 = new Request(
-            method: Method::GET,
+        $request2 = new ServerRequest(
+            method: 'GET',
             uri: '/profile',
-            path: '/profile',
-            queryString: '',
-            headers: new HeaderBag(['Authorization' => 'Bearer user-2-token']),
-            body: '',
+            headers: ['Authorization' => 'Bearer user-2-token'],
         );
 
         // In real runtime, middleware would recreate SecurityContext

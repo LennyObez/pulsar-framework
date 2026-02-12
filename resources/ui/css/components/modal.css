@@ -1,0 +1,162 @@
+/* Pulsar UI — Modal Component v1.0.0
+ * ARIA: role="dialog", aria-modal="true", aria-labelledby, aria-describedby
+ */
+
+.pui-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-backdrop);
+  background-color: var(--modal-backdrop);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  animation: pui-modal-backdrop-enter 200ms ease forwards;
+}
+
+.pui-modal-backdrop--exiting {
+  animation: pui-modal-backdrop-exit 150ms ease forwards;
+}
+
+@keyframes pui-modal-backdrop-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pui-modal-backdrop-exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.pui-modal {
+  position: relative;
+  z-index: var(--z-modal);
+  width: 100%;
+  max-width: 32rem;
+  max-height: calc(100vh - var(--space-8));
+  display: flex;
+  flex-direction: column;
+  background-color: var(--modal-bg);
+  border-radius: var(--modal-radius);
+  box-shadow: var(--modal-shadow);
+  overflow: hidden;
+  animation: pui-modal-enter 200ms ease forwards;
+}
+
+.pui-modal-backdrop--exiting .pui-modal {
+  animation: pui-modal-exit 150ms ease forwards;
+}
+
+@keyframes pui-modal-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pui-modal-exit {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95) translateY(0.5rem);
+  }
+}
+
+/* Size variants */
+.pui-modal--sm {
+  max-width: 24rem;
+}
+
+.pui-modal--lg {
+  max-width: 48rem;
+}
+
+.pui-modal--xl {
+  max-width: 64rem;
+}
+
+.pui-modal--fullscreen {
+  max-width: none;
+  max-height: none;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+
+.pui-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-5) var(--space-6);
+  border-block-end: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.pui-modal__title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  margin: 0;
+}
+
+.pui-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast);
+}
+
+.pui-modal__close:hover {
+  color: var(--color-text);
+  background-color: var(--color-bg-tertiary);
+}
+
+.pui-modal__close:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.pui-modal__body {
+  padding: var(--space-6);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.pui-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-6);
+  border-block-start: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+[hidden].pui-modal-backdrop {
+  display: none;
+}

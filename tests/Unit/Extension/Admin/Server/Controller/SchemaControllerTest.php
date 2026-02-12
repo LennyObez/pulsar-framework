@@ -18,9 +18,7 @@ use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Extension\Admin\Server\Controller\SchemaController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 
 #[CoversClass(SchemaController::class)]
 final class SchemaControllerTest extends TestCase
@@ -48,27 +46,20 @@ final class SchemaControllerTest extends TestCase
         );
     }
 
-    private function makeJsonRequest(string $path = '/admin/schema'): Request
+    private function makeJsonRequest(string $path = '/admin/schema'): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
     }
 
-    private function makeHtmlRequest(string $path = '/admin/schema'): Request
+    private function makeHtmlRequest(string $path = '/admin/schema'): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 
@@ -115,9 +106,9 @@ final class SchemaControllerTest extends TestCase
 
         $response = $controller->list($this->makeJsonRequest());
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('tables', $body);
         self::assertArrayHasKey('capabilities', $body);
         /** @var list<array<string, mixed>> $tables */
@@ -142,10 +133,10 @@ final class SchemaControllerTest extends TestCase
 
         $response = $controller->list($this->makeHtmlRequest());
 
-        self::assertSame(200, $response->status->value);
-        self::assertStringContainsString('text/html', $response->headers->first('Content-Type') ?? '');
-        self::assertStringContainsString('Database', $response->body);
-        self::assertStringContainsString('Pulsar Admin', $response->body);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('Database', (string) $response->getBody());
+        self::assertStringContainsString('Pulsar Admin', (string) $response->getBody());
     }
 
     #[Test]
@@ -161,7 +152,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->list($this->makeJsonRequest());
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         /** @var array<string, bool> $capabilities */
         $capabilities = $body['capabilities'];
         self::assertFalse($capabilities['supportsNativeEnum']);
@@ -187,9 +178,9 @@ final class SchemaControllerTest extends TestCase
 
         $response = $controller->view($this->makeJsonRequest('/admin/schema/users'), 'users');
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertSame('users', $body['table']);
         self::assertArrayHasKey('columns', $body);
         self::assertArrayHasKey('primaryKey', $body);
@@ -225,9 +216,9 @@ final class SchemaControllerTest extends TestCase
 
         $response = $controller->view($this->makeHtmlRequest('/admin/schema/users'), 'users');
 
-        self::assertSame(200, $response->status->value);
-        self::assertStringContainsString('text/html', $response->headers->first('Content-Type') ?? '');
-        self::assertStringContainsString('Table: users', $response->body);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('Table: users', (string) $response->getBody());
     }
 
     #[Test]
@@ -248,7 +239,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->view($this->makeJsonRequest(), 'accounts');
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertSame('user_id', $body['primaryKey']);
     }
 
@@ -266,9 +257,9 @@ final class SchemaControllerTest extends TestCase
 
         $response = $controller->createForm($this->makeHtmlRequest('/admin/schema/create'));
 
-        self::assertSame(200, $response->status->value);
-        self::assertStringContainsString('text/html', $response->headers->first('Content-Type') ?? '');
-        self::assertStringContainsString('Create Table', $response->body);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('Create table', (string) $response->getBody());
     }
 
     #[Test]
@@ -297,9 +288,9 @@ final class SchemaControllerTest extends TestCase
 
         $response = $controller->changelog($this->makeJsonRequest('/admin/schema/changelog'));
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('entries', $body);
         /** @var list<array<string, mixed>> $entries */
         $entries = $body['entries'];
@@ -327,9 +318,9 @@ final class SchemaControllerTest extends TestCase
 
         $response = $controller->changelog($this->makeHtmlRequest('/admin/schema/changelog'));
 
-        self::assertSame(200, $response->status->value);
-        self::assertStringContainsString('text/html', $response->headers->first('Content-Type') ?? '');
-        self::assertStringContainsString('Schema Change Log', $response->body);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('Schema change log', (string) $response->getBody());
     }
 
     #[Test]
@@ -346,7 +337,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->changelog($this->makeJsonRequest());
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertSame([], $body['entries']);
     }
 
@@ -363,7 +354,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->list($this->makeJsonRequest());
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertSame([], $body['tables']);
     }
 
@@ -380,7 +371,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->list($this->makeHtmlRequest());
 
         // The HTML template receives driver as 'sqlite' for this driver configuration
-        self::assertStringContainsString('Pulsar Admin', $response->body);
+        self::assertStringContainsString('Pulsar Admin', (string) $response->getBody());
     }
 
     #[Test]
@@ -397,7 +388,7 @@ final class SchemaControllerTest extends TestCase
 
         $response = $controller->view($this->makeHtmlRequest(), 'my_table');
 
-        self::assertStringContainsString('Table: my_table', $response->body);
+        self::assertStringContainsString('Table: my_table', (string) $response->getBody());
     }
 
     #[Test]
@@ -440,7 +431,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->changelog($this->makeJsonRequest());
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         /** @var list<array<string, mixed>> $entries */
         $entries = $body['entries'];
         self::assertCount(2, $entries);
@@ -469,7 +460,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->view($this->makeJsonRequest(), 'no_pk_table');
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertNull($body['primaryKey']);
     }
 
@@ -488,8 +479,8 @@ final class SchemaControllerTest extends TestCase
 
         $response = $controller->createForm($this->makeHtmlRequest());
 
-        self::assertSame(200, $response->status->value);
-        self::assertStringContainsString('Create Table', $response->body);
+        self::assertSame(200, $response->getStatusCode());
+        self::assertStringContainsString('Create table', (string) $response->getBody());
     }
 
     #[Test]
@@ -505,7 +496,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->list($this->makeJsonRequest());
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         /** @var array<string, bool> $capabilities */
         $capabilities = $body['capabilities'];
         self::assertArrayHasKey('supportsDropColumn', $capabilities);

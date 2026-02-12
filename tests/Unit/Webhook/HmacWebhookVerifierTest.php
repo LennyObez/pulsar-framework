@@ -34,7 +34,8 @@ final class HmacWebhookVerifierTest extends TestCase
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
 
-        $this->addToAssertionCount(1);
+        // Verify completed without throwing — verifier is still intact
+        self::assertInstanceOf(HmacWebhookVerifier::class, $this->verifier);
     }
 
     #[Test]
@@ -101,7 +102,8 @@ final class HmacWebhookVerifierTest extends TestCase
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
 
-        $this->addToAssertionCount(1);
+        // Multiple v1 entries accepted — at least one valid signature is sufficient
+        self::assertInstanceOf(HmacWebhookVerifier::class, $this->verifier);
     }
 
     #[Test]
@@ -114,7 +116,8 @@ final class HmacWebhookVerifierTest extends TestCase
 
         $this->verifier->verify($payload, $header, self::SECRET, 300);
 
-        $this->addToAssertionCount(1);
+        // 299s old with 300s tolerance — should pass without throwing
+        self::assertInstanceOf(HmacWebhookVerifier::class, $this->verifier);
     }
 
     private function computeSignature(string $payload, int $timestamp, string $secret): string

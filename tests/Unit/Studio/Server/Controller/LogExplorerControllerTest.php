@@ -9,23 +9,17 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Server\Controller\LogExplorerController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(LogExplorerController::class)]
 final class LogExplorerControllerTest extends TestCase
 {
-    private function createRequest(): Request
+    private function createRequest(): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/studio/console/logs',
-            path: '/studio/console/logs',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 
@@ -39,9 +33,9 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('text/html; charset=utf-8', $response->contentType());
-        self::assertStringContainsString('<!DOCTYPE html>', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('<!DOCTYPE html>', (string) $response->getBody());
     }
 
     #[Test]
@@ -54,7 +48,7 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('data-page="log-explorer"', $response->body);
+        self::assertStringContainsString('data-page="log-explorer"', (string) $response->getBody());
     }
 
     #[Test]
@@ -84,9 +78,10 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('evt-001', $response->body);
-        self::assertStringContainsString('evt-002', $response->body);
-        self::assertStringContainsString('log.entry', $response->body);
+        $body = (string) $response->getBody();
+        self::assertStringContainsString('evt-001', $body);
+        self::assertStringContainsString('evt-002', $body);
+        self::assertStringContainsString('log.entry', $body);
     }
 
     #[Test]
@@ -122,7 +117,7 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringNotContainsString('<script>alert(1)</script>', $response->body);
+        self::assertStringNotContainsString('<script>alert(1)</script>', (string) $response->getBody());
     }
 
     #[Test]
@@ -135,7 +130,7 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('href="/studio/assets/studio.css"', $response->body);
+        self::assertStringContainsString('href="/studio/assets/studio.css"', (string) $response->getBody());
     }
 
     #[Test]
@@ -148,7 +143,7 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('src="/studio/assets/main.js"', $response->body);
+        self::assertStringContainsString('src="/studio/assets/main.js"', (string) $response->getBody());
     }
 
     #[Test]
@@ -161,7 +156,7 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('<title>Logs - Pulsar Studio</title>', $response->body);
+        self::assertStringContainsString('<title>Logs - Pulsar Studio</title>', (string) $response->getBody());
     }
 
     #[Test]
@@ -182,7 +177,7 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('data-payload="', $response->body);
+        self::assertStringContainsString('data-payload="', (string) $response->getBody());
     }
 
     #[Test]
@@ -195,6 +190,6 @@ final class LogExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('&quot;events&quot;:[]', $response->body);
+        self::assertStringContainsString('&quot;events&quot;:[]', (string) $response->getBody());
     }
 }

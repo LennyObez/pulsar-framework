@@ -8,7 +8,7 @@ Accepted
 
 Studio provides a development console with event collection, evidence chain, and diagnostics UI. As the framework grows, other extensions (Admin, ORM browser, queue monitor) need to contribute panels, pages, and navigation entries to the Studio UI.
 
-Without a formal module API, each extension would need to directly modify Studio's routes and templates — creating tight coupling, ordering issues, and no clear contract for third-party extensions to follow.
+Without a formal module API, each extension would need to directly modify Studio's routes and templates - creating tight coupling, ordering issues, and no clear contract for third-party extensions to follow.
 
 Regulated environments require explicit, auditable registration of every capability an extension contributes. Ad-hoc route injection or template overriding does not meet this bar.
 
@@ -34,7 +34,7 @@ Introduce a Studio Module API that lets extensions register self-contained UI mo
 
 ### Negative
 
-- **Ceremony.** Even a simple Studio panel requires implementing `StudioModuleInterface` with all its methods. This is intentional — explicit is better than implicit in regulated environments.
+- **Ceremony.** Even a simple Studio panel requires implementing `StudioModuleInterface` with all its methods. This is intentional - explicit is better than implicit in regulated environments.
 - **Route ownership.** Modules must manage their own route registration. Studio does not provide automatic CRUD scaffolding or route generation.
 
 ### Neutral

@@ -1,0 +1,403 @@
+/* Theme: Default (Modern) */
+/* Version: 1.0.0 */
+/* Author: Pulsar Framework */
+/* Since: 1.0.0-rc.11 */
+
+/* ==========================================================================
+ * Modern Pulsar theme — refined palettes, elevated surfaces, glassmorphism,
+ * multi-layer shadows, and polished interactions. WCAG AA compliant.
+ * ========================================================================== */
+
+:root {
+  /* -------------------------------------------------------------------------
+   * Primary Palette — Deeper Blue
+   *
+   * Shifted toward a richer, more saturated blue that reads confidently
+   * on both light and dark backgrounds. 500 = anchor.
+   * ---------------------------------------------------------------------- */
+  --color-primary-50: #eef4ff;
+  --color-primary-100: #d9e6ff;
+  --color-primary-200: #b3ccff;
+  --color-primary-300: #809fff;
+  --color-primary-400: #4d73ff;
+  --color-primary-500: #1b55f5;
+  --color-primary-600: #1544d4;
+  --color-primary-700: #1037b3;
+  --color-primary-800: #0d2c92;
+  --color-primary-900: #0a2170;
+  --color-primary-950: #061347;
+
+  /* -------------------------------------------------------------------------
+   * Secondary Palette — Violet
+   *
+   * A distinct violet that pairs with the deeper primary blue without
+   * clashing. Useful for accents, visited links, and secondary actions.
+   * ---------------------------------------------------------------------- */
+  --color-secondary-50: #f3eeff;
+  --color-secondary-100: #e4daff;
+  --color-secondary-200: #c9b5ff;
+  --color-secondary-300: #a98aff;
+  --color-secondary-400: #9466ff;
+  --color-secondary-500: #8347ff;
+  --color-secondary-600: #6d30e0;
+  --color-secondary-700: #5924b8;
+  --color-secondary-800: #471c91;
+  --color-secondary-900: #361569;
+  --color-secondary-950: #210d42;
+
+  /* -------------------------------------------------------------------------
+   * Semantic Colors — Light Mode
+   * ---------------------------------------------------------------------- */
+  --color-text: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+  --color-text-disabled: #9ca3af;
+
+  --color-bg: #fafbfc;
+  --color-bg-secondary: #f3f4f6;
+  --color-bg-tertiary: #e5e7eb;
+  --color-bg-elevated: #ffffff;
+
+  --color-border: #d1d5db;
+  --color-border-strong: #9ca3af;
+  --color-border-muted: #e5e7eb;
+
+  --color-focus-ring: var(--color-primary-500);
+
+  --color-link: var(--color-primary-600);
+  --color-link-hover: var(--color-primary-500);
+  --color-link-visited: var(--color-secondary-600);
+
+  /* -------------------------------------------------------------------------
+   * Border Radii — Slightly Larger
+   * ---------------------------------------------------------------------- */
+  --radius-sm: 0.1875rem;
+  --radius: 0.3125rem;
+  --radius-md: 0.4375rem;
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.125rem;
+
+  /* -------------------------------------------------------------------------
+   * Shadows — Multi-Layer, Color-Tinted
+   *
+   * Base offset: 16 24 40 for natural light direction.
+   * Each level adds subtle depth with warm-tinted ambient layer.
+   * ---------------------------------------------------------------------- */
+  --shadow-xs: 0 1px 2px 0 rgb(16 24 40 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(16 24 40 / 0.08), 0 1px 2px -1px rgb(16 24 40 / 0.06);
+  --shadow: 0 4px 8px -2px rgb(16 24 40 / 0.08), 0 2px 4px -2px rgb(16 24 40 / 0.04);
+  --shadow-md: 0 12px 20px -4px rgb(16 24 40 / 0.1), 0 4px 8px -4px rgb(16 24 40 / 0.05);
+  --shadow-lg: 0 20px 32px -8px rgb(16 24 40 / 0.12), 0 8px 16px -8px rgb(16 24 40 / 0.06);
+  --shadow-xl: 0 28px 48px -12px rgb(16 24 40 / 0.18), 0 12px 24px -8px rgb(16 24 40 / 0.08);
+  --shadow-2xl: 0 32px 64px -16px rgb(16 24 40 / 0.24), 0 16px 32px -8px rgb(16 24 40 / 0.1);
+
+  /* -------------------------------------------------------------------------
+   * Transitions — Refined Easing
+   * ---------------------------------------------------------------------- */
+  --transition-fast: 120ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-normal: 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-slow: 320ms cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* -------------------------------------------------------------------------
+   * Component Tokens — Inputs
+   * ---------------------------------------------------------------------- */
+  --input-radius: var(--radius-md);
+  --input-ring-width: 3px;
+  --input-ring-color: rgb(27 85 245 / 0.2);
+  --input-border-focus: var(--color-primary-500);
+
+  /* -------------------------------------------------------------------------
+   * Component Tokens — Buttons
+   * ---------------------------------------------------------------------- */
+  --btn-radius: var(--radius-md);
+  --btn-font-weight: var(--font-semibold);
+
+  /* -------------------------------------------------------------------------
+   * Component Tokens — Cards
+   * ---------------------------------------------------------------------- */
+  --card-radius: var(--radius-xl);
+  --card-shadow: var(--shadow-sm);
+  --card-padding: var(--space-6);
+  --card-bg: var(--color-bg-elevated);
+  --card-border: var(--color-border);
+
+  /* -------------------------------------------------------------------------
+   * Component Tokens — Navbar
+   * ---------------------------------------------------------------------- */
+  --navbar-bg: rgb(255 255 255 / 0.85);
+  --navbar-border: var(--color-border-muted);
+
+  /* -------------------------------------------------------------------------
+   * Component Tokens — Sidebar
+   * ---------------------------------------------------------------------- */
+  --sidebar-bg: var(--color-bg-secondary);
+  --sidebar-border: var(--color-border-muted);
+
+  /* -------------------------------------------------------------------------
+   * Component Tokens — Modal
+   * ---------------------------------------------------------------------- */
+  --modal-radius: var(--radius-xl);
+  --modal-shadow: var(--shadow-xl);
+  --modal-backdrop: rgb(0 0 0 / 0.45);
+
+  /* -------------------------------------------------------------------------
+   * Component Tokens — Table
+   * ---------------------------------------------------------------------- */
+  --table-border: var(--color-border-muted);
+  --table-stripe-bg: var(--color-bg-secondary);
+  --table-hover-bg: rgb(27 85 245 / 0.03);
+
+  /* -------------------------------------------------------------------------
+   * Component Tokens — Toast
+   * ---------------------------------------------------------------------- */
+  --toast-radius: var(--radius-lg);
+  --toast-shadow: var(--shadow-lg);
+
+  /* -------------------------------------------------------------------------
+   * Component Tokens — Tooltip
+   * ---------------------------------------------------------------------- */
+  --tooltip-bg: #1f2937;
+  --tooltip-text: #f9fafb;
+  --tooltip-radius: var(--radius-md);
+}
+
+/* ===========================================================================
+ * Glassmorphism — Navbar
+ *
+ * Semi-transparent background with backdrop blur for depth layering.
+ * Falls back to solid bg in browsers without backdrop-filter support.
+ * =========================================================================== */
+
+.pui-navbar {
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(180%);
+}
+
+/* ===========================================================================
+ * Enhanced Interactions
+ * =========================================================================== */
+
+/* Interactive cards — lift + shadow on hover */
+.pui-card--interactive {
+  transition:
+    transform var(--transition-normal),
+    box-shadow var(--transition-normal);
+}
+
+.pui-card--interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Primary button — colored shadow */
+.pui-btn--primary {
+  box-shadow: 0 2px 6px -1px rgb(27 85 245 / 0.35);
+}
+
+.pui-btn--primary:hover {
+  box-shadow: 0 4px 12px -2px rgb(27 85 245 / 0.4);
+}
+
+/* Danger button — red-tinted shadow */
+.pui-btn--danger {
+  box-shadow: 0 2px 6px -1px rgb(220 38 38 / 0.3);
+}
+
+.pui-btn--danger:hover {
+  box-shadow: 0 4px 12px -2px rgb(220 38 38 / 0.35);
+}
+
+/* Success button — green-tinted shadow */
+.pui-btn--success {
+  box-shadow: 0 2px 6px -1px rgb(22 163 74 / 0.3);
+}
+
+.pui-btn--success:hover {
+  box-shadow: 0 4px 12px -2px rgb(22 163 74 / 0.35);
+}
+
+/* ===========================================================================
+ * Focus Rings
+ *
+ * Primary-tinted halo for keyboard navigation visibility.
+ * Only on :focus-visible to avoid mouse-click outlines.
+ * =========================================================================== */
+
+:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+.pui-btn:focus-visible {
+  box-shadow:
+    0 0 0 3px rgb(27 85 245 / 0.25),
+    var(--shadow-sm);
+}
+
+.pui-input:focus-visible,
+.pui-select:focus-visible {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 var(--input-ring-width) var(--input-ring-color);
+  outline: none;
+}
+
+/* ===========================================================================
+ * Dark Mode
+ *
+ * Warm dark grays (#0f1117 base) with balanced contrast and deeper shadows.
+ * All color pairings maintain WCAG AA (4.5:1+) contrast ratios.
+ * =========================================================================== */
+
+[data-theme='dark'] {
+  /* Semantic color overrides */
+  --color-text: #e5e7eb;
+  --color-text-secondary: #d1d5db;
+  --color-text-muted: #9ca3af;
+  --color-text-disabled: #4b5563;
+  --color-text-inverse: #111827;
+
+  --color-bg: #0f1117;
+  --color-bg-secondary: #161822;
+  --color-bg-tertiary: #1e212e;
+  --color-bg-elevated: #1a1d2a;
+
+  --color-border: #2d3244;
+  --color-border-strong: #404759;
+  --color-border-muted: #232738;
+
+  --color-focus-ring: var(--color-primary-400);
+
+  --color-link: var(--color-primary-400);
+  --color-link-hover: var(--color-primary-300);
+  --color-link-visited: var(--color-secondary-400);
+
+  /* Component token overrides */
+  --input-bg: #161822;
+  --input-border: #2d3244;
+  --input-ring-color: rgb(27 85 245 / 0.3);
+
+  --card-bg: #1a1d2a;
+  --card-border: #2d3244;
+  --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+
+  --navbar-bg: rgb(15 17 23 / 0.85);
+  --navbar-border: #232738;
+
+  --sidebar-bg: #161822;
+  --sidebar-border: #232738;
+
+  --modal-backdrop: rgb(0 0 0 / 0.65);
+  --modal-bg: #1a1d2a;
+
+  --table-border: #2d3244;
+  --table-stripe-bg: #161822;
+  --table-hover-bg: rgb(255 255 255 / 0.04);
+
+  --tooltip-bg: #e5e7eb;
+  --tooltip-text: #111827;
+
+  /* Shadows — deeper for dark surfaces */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+  --shadow: 0 4px 8px -2px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --shadow-md: 0 12px 20px -4px rgb(0 0 0 / 0.35), 0 4px 8px -4px rgb(0 0 0 / 0.2);
+  --shadow-lg: 0 20px 32px -8px rgb(0 0 0 / 0.4), 0 8px 16px -8px rgb(0 0 0 / 0.25);
+  --shadow-xl: 0 28px 48px -12px rgb(0 0 0 / 0.5), 0 12px 24px -8px rgb(0 0 0 / 0.3);
+}
+
+/* Dark mode component overrides */
+[data-theme='dark'] .pui-btn--primary {
+  box-shadow: 0 2px 8px -1px rgb(27 85 245 / 0.45);
+}
+
+[data-theme='dark'] .pui-btn--primary:hover {
+  box-shadow: 0 4px 16px -2px rgb(27 85 245 / 0.5);
+}
+
+[data-theme='dark'] .pui-btn--danger {
+  box-shadow: 0 2px 8px -1px rgb(220 38 38 / 0.4);
+}
+
+[data-theme='dark'] .pui-btn--success {
+  box-shadow: 0 2px 8px -1px rgb(22 163 74 / 0.4);
+}
+
+[data-theme='dark'] .pui-card--interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme='dark'] .pui-btn:focus-visible {
+  box-shadow:
+    0 0 0 3px rgb(77 115 255 / 0.35),
+    var(--shadow-sm);
+}
+
+[data-theme='dark'] .pui-input:focus-visible,
+[data-theme='dark'] .pui-select:focus-visible {
+  box-shadow: 0 0 0 var(--input-ring-width) var(--input-ring-color);
+}
+
+/* ===========================================================================
+ * Dark Mode Auto-Detect
+ *
+ * Fallback for pages without an explicit data-theme attribute.
+ * Mirrors the [data-theme='dark'] overrides above.
+ * =========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-text: #e5e7eb;
+    --color-text-secondary: #d1d5db;
+    --color-text-muted: #9ca3af;
+    --color-text-disabled: #4b5563;
+    --color-text-inverse: #111827;
+
+    --color-bg: #0f1117;
+    --color-bg-secondary: #161822;
+    --color-bg-tertiary: #1e212e;
+    --color-bg-elevated: #1a1d2a;
+
+    --color-border: #2d3244;
+    --color-border-strong: #404759;
+    --color-border-muted: #232738;
+
+    --color-focus-ring: var(--color-primary-400);
+
+    --color-link: var(--color-primary-400);
+    --color-link-hover: var(--color-primary-300);
+    --color-link-visited: var(--color-secondary-400);
+
+    --input-bg: #161822;
+    --input-border: #2d3244;
+    --input-ring-color: rgb(27 85 245 / 0.3);
+
+    --card-bg: #1a1d2a;
+    --card-border: #2d3244;
+    --card-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+
+    --navbar-bg: rgb(15 17 23 / 0.85);
+    --navbar-border: #232738;
+
+    --sidebar-bg: #161822;
+    --sidebar-border: #232738;
+
+    --modal-backdrop: rgb(0 0 0 / 0.65);
+    --modal-bg: #1a1d2a;
+
+    --table-border: #2d3244;
+    --table-stripe-bg: #161822;
+    --table-hover-bg: rgb(255 255 255 / 0.04);
+
+    --tooltip-bg: #e5e7eb;
+    --tooltip-text: #111827;
+
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2);
+    --shadow: 0 4px 8px -2px rgb(0 0 0 / 0.35), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+    --shadow-md: 0 12px 20px -4px rgb(0 0 0 / 0.35), 0 4px 8px -4px rgb(0 0 0 / 0.2);
+    --shadow-lg: 0 20px 32px -8px rgb(0 0 0 / 0.4), 0 8px 16px -8px rgb(0 0 0 / 0.25);
+    --shadow-xl: 0 28px 48px -12px rgb(0 0 0 / 0.5), 0 12px 24px -8px rgb(0 0 0 / 0.3);
+  }
+}

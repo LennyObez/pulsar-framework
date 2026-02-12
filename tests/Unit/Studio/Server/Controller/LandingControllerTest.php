@@ -12,23 +12,17 @@ use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Config\StudioRetentionConfig;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Server\Controller\LandingController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(LandingController::class)]
 final class LandingControllerTest extends TestCase
 {
-    private function createRequest(): Request
+    private function createRequest(): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/studio',
-            path: '/studio',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 
@@ -59,10 +53,11 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertSame('text/html; charset=utf-8', $response->contentType());
-        self::assertStringContainsString('<!DOCTYPE html>', $response->body);
-        self::assertStringContainsString('Pulsar Studio', $response->body);
+        $body = (string) $response->getBody();
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertSame('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('<!DOCTYPE html>', $body);
+        self::assertStringContainsString('Pulsar Studio', $body);
     }
 
     #[Test]
@@ -77,7 +72,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('42', $response->body);
+        self::assertStringContainsString('42', (string) $response->getBody());
     }
 
     #[Test]
@@ -92,7 +87,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('512 B', $response->body);
+        self::assertStringContainsString('512 B', (string) $response->getBody());
     }
 
     #[Test]
@@ -107,7 +102,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('2.0 KB', $response->body);
+        self::assertStringContainsString('2.0 KB', (string) $response->getBody());
     }
 
     #[Test]
@@ -122,7 +117,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('2.0 MB', $response->body);
+        self::assertStringContainsString('2.0 MB', (string) $response->getBody());
     }
 
     #[Test]
@@ -137,7 +132,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('1.5K', $response->body);
+        self::assertStringContainsString('1.5K', (string) $response->getBody());
     }
 
     #[Test]
@@ -152,7 +147,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('1.5M', $response->body);
+        self::assertStringContainsString('1.5M', (string) $response->getBody());
     }
 
     #[Test]
@@ -163,7 +158,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('50%', $response->body);
+        self::assertStringContainsString('50%', (string) $response->getBody());
     }
 
     #[Test]
@@ -174,7 +169,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('14d', $response->body);
+        self::assertStringContainsString('14d', (string) $response->getBody());
     }
 
     #[Test]
@@ -185,7 +180,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('1000 MB', $response->body);
+        self::assertStringContainsString('1000 MB', (string) $response->getBody());
     }
 
     #[Test]
@@ -196,7 +191,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('/custom/path/studio.db', $response->body);
+        self::assertStringContainsString('/custom/path/studio.db', (string) $response->getBody());
     }
 
     #[Test]
@@ -207,8 +202,9 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringNotContainsString('<script>alert("xss")</script>', $response->body);
-        self::assertStringContainsString('&lt;script&gt;', $response->body);
+        $body = (string) $response->getBody();
+        self::assertStringNotContainsString('<script>alert("xss")</script>', $body);
+        self::assertStringContainsString('&lt;script&gt;', $body);
     }
 
     #[Test]
@@ -227,13 +223,14 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('class="collector-badge"', $response->body);
-        self::assertStringContainsString('>HTTP</span>', $response->body);
-        self::assertStringContainsString('>Database</span>', $response->body);
-        self::assertStringContainsString('>Logs</span>', $response->body);
-        self::assertStringContainsString('>Exceptions</span>', $response->body);
-        self::assertStringContainsString('>Scheduler</span>', $response->body);
-        self::assertStringContainsString('>Flags</span>', $response->body);
+        $body = (string) $response->getBody();
+        self::assertStringContainsString('class="collector-badge"', $body);
+        self::assertStringContainsString('>HTTP</span>', $body);
+        self::assertStringContainsString('>Database</span>', $body);
+        self::assertStringContainsString('>Logs</span>', $body);
+        self::assertStringContainsString('>Exceptions</span>', $body);
+        self::assertStringContainsString('>Scheduler</span>', $body);
+        self::assertStringContainsString('>Flags</span>', $body);
     }
 
     #[Test]
@@ -252,7 +249,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('class="collector-badge disabled"', $response->body);
+        self::assertStringContainsString('class="collector-badge disabled"', (string) $response->getBody());
     }
 
     #[Test]
@@ -263,11 +260,12 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('href="/studio/console"', $response->body);
-        self::assertStringContainsString('href="/studio/console/requests"', $response->body);
-        self::assertStringContainsString('href="/studio/console/database"', $response->body);
-        self::assertStringContainsString('href="/studio/console/logs"', $response->body);
-        self::assertStringContainsString('href="/studio/console/exceptions"', $response->body);
+        $body = (string) $response->getBody();
+        self::assertStringContainsString('href="/studio/console"', $body);
+        self::assertStringContainsString('href="/studio/console/requests"', $body);
+        self::assertStringContainsString('href="/studio/console/database"', $body);
+        self::assertStringContainsString('href="/studio/console/logs"', $body);
+        self::assertStringContainsString('href="/studio/console/exceptions"', $body);
     }
 
     #[Test]
@@ -278,7 +276,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('href="/studio/assets/studio.css"', $response->body);
+        self::assertStringContainsString('href="/studio/assets/studio.css"', (string) $response->getBody());
     }
 
     #[Test]
@@ -289,7 +287,7 @@ final class LandingControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
-        self::assertStringContainsString('0', $response->body);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
+        self::assertStringContainsString('0', (string) $response->getBody());
     }
 }

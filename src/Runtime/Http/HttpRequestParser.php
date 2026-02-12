@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Runtime\Http;
 
 use Pulsar\Api\Internal;
-use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use ValueError;
 
@@ -20,10 +19,10 @@ use function intval;
 use function is_string;
 use function ltrim;
 use function parse_str;
-use function rawurldecode;
 use function strlen;
 use function strpos;
 use function strtolower;
+use function strtoupper;
 use function substr;
 use function trim;
 
@@ -44,13 +43,13 @@ final class HttpRequestParser
     /**
      * Attempt to parse one complete HTTP request from the connection buffer.
      *
-     * @return Request|Response|null Request on success, Response on parse error (to send and close), null if incomplete
+     * @return ServerRequest|Response|null ServerRequest on success, Response on parse error (to send and close), null if incomplete
      */
     public function parse(
         ConnectionContext $ctx,
         int $maxHeaderSize = 8192,
         int $maxBodySize = 10_485_760,
-    ): Request|Response|null {
+    ): ServerRequest|Response|null {
         $buffer = $ctx->readBuffer;
 
         // Check if we have complete headers
@@ -62,8 +61,8 @@ final class HttpRequestParser
                 $ctx->readBuffer = '';
 
                 return new Response(
+                    statusCode: ResponseStatus::RequestHeaderFieldsTooLarge->value,
                     body: 'Request Header Fields Too Large',
-                    status: ResponseStatus::RequestHeaderFieldsTooLarge,
                 );
             }
 
@@ -77,8 +76,8 @@ final class HttpRequestParser
             $ctx->readBuffer = '';
 
             return new Response(
+                statusCode: ResponseStatus::RequestHeaderFieldsTooLarge->value,
                 body: 'Request Header Fields Too Large',
-                status: ResponseStatus::RequestHeaderFieldsTooLarge,
             );
         }
 
@@ -91,21 +90,24 @@ final class HttpRequestParser
             $ctx->readBuffer = '';
 
             return new Response(
+                statusCode: ResponseStatus::BadRequest->value,
                 body: 'Bad Request',
-                status: ResponseStatus::BadRequest,
             );
         }
 
         [$methodStr, $uri, $protocolStr] = $parts;
 
+        // Validate method string
+        $method = strtoupper($methodStr);
+
         try {
-            $method = Method::fromString($methodStr);
+            Method::from($method);
         } catch (ValueError) {
             $ctx->readBuffer = '';
 
             return new Response(
+                statusCode: ResponseStatus::BadRequest->value,
                 body: 'Bad Request',
-                status: ResponseStatus::BadRequest,
             );
         }
 
@@ -116,14 +118,15 @@ final class HttpRequestParser
             $ctx->readBuffer = '';
 
             return new Response(
+                statusCode: ResponseStatus::BadRequest->value,
                 body: 'Bad Request',
-                status: ResponseStatus::BadRequest,
             );
         }
 
         $protocolVersion = substr($protocolStr, $slashPos + 1);
 
         // Parse headers
+        /** @var array<string, string> $headers */
         $headers = [];
         $headerCount = 0;
 
@@ -140,8 +143,8 @@ final class HttpRequestParser
                 $ctx->readBuffer = '';
 
                 return new Response(
+                    statusCode: ResponseStatus::BadRequest->value,
                     body: 'Bad Request',
-                    status: ResponseStatus::BadRequest,
                 );
             }
 
@@ -151,8 +154,8 @@ final class HttpRequestParser
                 $ctx->readBuffer = '';
 
                 return new Response(
+                    statusCode: ResponseStatus::RequestHeaderFieldsTooLarge->value,
                     body: 'Request Header Fields Too Large',
-                    status: ResponseStatus::RequestHeaderFieldsTooLarge,
                 );
             }
 
@@ -166,11 +169,9 @@ final class HttpRequestParser
             }
         }
 
-        $headerBag = new HeaderBag($headers);
-
         // Determine body handling
-        $transferEncoding = $headerBag->first('Transfer-Encoding');
-        $contentLengthHeader = $headerBag->first('Content-Length');
+        $transferEncoding = $this->headerValue($headers, 'Transfer-Encoding');
+        $contentLengthHeader = $this->headerValue($headers, 'Content-Length');
         $bodyStartOffset = $headerEnd + strlen(self::HEADER_DELIMITER);
         $body = '';
 
@@ -179,8 +180,8 @@ final class HttpRequestParser
             $ctx->readBuffer = '';
 
             return new Response(
+                statusCode: ResponseStatus::BadRequest->value,
                 body: 'Bad Request',
-                status: ResponseStatus::BadRequest,
             );
         }
 
@@ -191,8 +192,8 @@ final class HttpRequestParser
                 $ctx->readBuffer = '';
 
                 return new Response(
+                    statusCode: ResponseStatus::NotImplemented->value,
                     body: 'Not Implemented',
-                    status: ResponseStatus::NotImplemented,
                 );
             }
 
@@ -223,8 +224,8 @@ final class HttpRequestParser
                 $ctx->readBuffer = '';
 
                 return new Response(
+                    statusCode: ResponseStatus::BadRequest->value,
                     body: 'Bad Request',
-                    status: ResponseStatus::BadRequest,
                 );
             }
 
@@ -232,8 +233,8 @@ final class HttpRequestParser
                 $ctx->readBuffer = '';
 
                 return new Response(
+                    statusCode: ResponseStatus::PayloadTooLarge->value,
                     body: 'Payload Too Large',
-                    status: ResponseStatus::PayloadTooLarge,
                 );
             }
 
@@ -251,23 +252,19 @@ final class HttpRequestParser
         }
 
         // Parse URI components
-        $path = $uri;
         $queryString = '';
         $queryPos = strpos($uri, '?');
 
         if ($queryPos !== false) {
-            $path = substr($uri, 0, $queryPos);
             $queryString = substr($uri, $queryPos + 1);
         }
-
-        $path = rawurldecode($path);
 
         $queryParams = $this->parseQueryParams($queryString);
 
         // Parse cookies from Cookie header
         /** @var array<string, string> $cookies */
         $cookies = [];
-        $cookieHeader = $headerBag->first('Cookie');
+        $cookieHeader = $this->headerValue($headers, 'Cookie');
 
         if ($cookieHeader !== null) {
             foreach (explode(';', $cookieHeader) as $cookie) {
@@ -280,17 +277,27 @@ final class HttpRequestParser
             }
         }
 
-        return new Request(
+        return new ServerRequest(
             method: $method,
             uri: $uri,
-            path: $path,
-            queryString: $queryString,
-            headers: $headerBag,
+            headers: $headers,
             body: $body,
-            query: $queryParams,
-            cookies: $cookies,
             protocolVersion: $protocolVersion,
+            cookieParams: $cookies,
+            queryParams: $queryParams,
         );
+    }
+
+    /**
+     * Get a header value by name (case-insensitive).
+     *
+     * @param array<string, string> $headers
+     */
+    private function headerValue(array $headers, string $name): ?string
+    {
+        $lower = strtolower($name);
+
+        return array_find($headers, static fn(string $_value, string $key): bool => strtolower($key) === $lower);
     }
 
     /**
@@ -323,8 +330,8 @@ final class HttpRequestParser
 
                 if (strlen($extension) > 256) {
                     return new Response(
+                        statusCode: ResponseStatus::BadRequest->value,
                         body: 'Bad Request',
-                        status: ResponseStatus::BadRequest,
                     );
                 }
 
@@ -380,8 +387,8 @@ final class HttpRequestParser
             // Check decoded body size limit
             if (strlen($body) + $chunkSize > $maxBodySize) {
                 return new Response(
+                    statusCode: ResponseStatus::PayloadTooLarge->value,
                     body: 'Payload Too Large',
-                    status: ResponseStatus::PayloadTooLarge,
                 );
             }
 

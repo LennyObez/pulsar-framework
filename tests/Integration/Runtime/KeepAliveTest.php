@@ -7,9 +7,8 @@ namespace Pulsar\Tests\Integration\Runtime;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Http\ConnectionContext;
 use Pulsar\Runtime\Http\HttpRequestParser;
@@ -50,16 +49,16 @@ final class KeepAliveTest extends TestCase
 
         // Parse first request
         $request1 = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $request1);
-        self::assertSame('/first', $request1->path);
+        self::assertInstanceOf(ServerRequest::class, $request1);
+        self::assertSame('/first', $request1->getUri()->getPath());
 
         // Verify connection header
-        self::assertSame('keep-alive', $request1->header('Connection'));
+        self::assertSame('keep-alive', $request1->getHeaderLine('Connection'));
 
         // Parse second request from remaining buffer
         $request2 = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $request2);
-        self::assertSame('/second', $request2->path);
+        self::assertInstanceOf(ServerRequest::class, $request2);
+        self::assertSame('/second', $request2->getUri()->getPath());
 
         // Buffer should now be empty
         self::assertSame('', $ctx->readBuffer);
@@ -74,14 +73,14 @@ final class KeepAliveTest extends TestCase
         $ctx = $this->createContext($req1 . $req2);
 
         $request1 = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $request1);
-        self::assertSame(Method::POST, $request1->method);
-        self::assertSame('Hello World', $request1->body);
+        self::assertInstanceOf(ServerRequest::class, $request1);
+        self::assertSame('POST', $request1->getMethod());
+        self::assertSame('Hello World', (string) $request1->getBody());
 
         $request2 = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $request2);
-        self::assertSame(Method::GET, $request2->method);
-        self::assertSame('', $request2->body);
+        self::assertInstanceOf(ServerRequest::class, $request2);
+        self::assertSame('GET', $request2->getMethod());
+        self::assertSame('', (string) $request2->getBody());
     }
 
     #[Test]
@@ -97,8 +96,8 @@ final class KeepAliveTest extends TestCase
         $ctx->appendToBuffer("alhost\r\n\r\n");
 
         $result = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $result);
-        self::assertSame('/', $result->path);
+        self::assertInstanceOf(ServerRequest::class, $result);
+        self::assertSame('/', $result->getUri()->getPath());
     }
 
     #[Test]
@@ -114,16 +113,16 @@ final class KeepAliveTest extends TestCase
         $ctx->appendToBuffer('World');
 
         $result = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $result);
-        self::assertSame('HelloWorld', $result->body);
+        self::assertInstanceOf(ServerRequest::class, $result);
+        self::assertSame('HelloWorld', (string) $result->getBody());
     }
 
     #[Test]
     public function response_always_has_content_length_for_keepalive(): void
     {
         $response = new Response(
+            statusCode: ResponseStatus::OK->value,
             body: 'Hello',
-            status: ResponseStatus::OK,
         );
 
         $raw = $this->serializer->serialize($response, addDateHeader: false);
@@ -134,7 +133,7 @@ final class KeepAliveTest extends TestCase
     #[Test]
     public function response_injects_connection_close_when_closing(): void
     {
-        $response = new Response(body: 'error', status: ResponseStatus::InternalServerError);
+        $response = new Response(statusCode: ResponseStatus::InternalServerError->value, body: 'error');
 
         $raw = $this->serializer->serialize(
             $response,
@@ -153,9 +152,9 @@ final class KeepAliveTest extends TestCase
         $ctx = $this->createContext($raw);
 
         $request = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $request);
-        self::assertSame('1.0', $request->protocolVersion);
-        self::assertSame('keep-alive', $request->header('Connection'));
+        self::assertInstanceOf(ServerRequest::class, $request);
+        self::assertSame('1.0', $request->getProtocolVersion());
+        self::assertSame('keep-alive', $request->getHeaderLine('Connection'));
     }
 
     #[Test]
@@ -168,15 +167,15 @@ final class KeepAliveTest extends TestCase
         $ctx = $this->createContext($req1 . $req2 . $req3);
 
         $r1 = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $r1);
-        self::assertSame('/a', $r1->path);
+        self::assertInstanceOf(ServerRequest::class, $r1);
+        self::assertSame('/a', $r1->getUri()->getPath());
 
         $r2 = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $r2);
-        self::assertSame('/b', $r2->path);
+        self::assertInstanceOf(ServerRequest::class, $r2);
+        self::assertSame('/b', $r2->getUri()->getPath());
 
         $r3 = $this->parser->parse($ctx);
-        self::assertInstanceOf(Request::class, $r3);
-        self::assertSame('/c', $r3->path);
+        self::assertInstanceOf(ServerRequest::class, $r3);
+        self::assertSame('/c', $r3->getUri()->getPath());
     }
 }

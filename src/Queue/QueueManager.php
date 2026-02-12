@@ -7,56 +7,141 @@ namespace Pulsar\Queue;
 use Pulsar\Api\Api;
 use Pulsar\Config\QueueConfig;
 use Pulsar\Config\QueueDriverType;
-use Pulsar\Context\ContextPropagator;
-use Pulsar\Context\RequestContextHolder;
+use Pulsar\Event\EventDispatcherInterface;
+use Pulsar\Queue\Driver\AmqpDriver;
+use Pulsar\Queue\Driver\Config\AmqpDriverConfig;
+use Pulsar\Queue\Driver\Config\PubSubDriverConfig;
+use Pulsar\Queue\Driver\Config\RedisDriverConfig;
+use Pulsar\Queue\Driver\Config\SqsDriverConfig;
 use Pulsar\Queue\Driver\InMemoryDriver;
+use Pulsar\Queue\Driver\PubSubDriver;
+use Pulsar\Queue\Driver\RedisDriver;
+use Pulsar\Queue\Driver\SqsDriver;
 use Pulsar\Queue\Driver\SyncDriver;
+use Pulsar\Queue\Envelope\BackoffStrategy;
+use Pulsar\Queue\Envelope\EnvelopeSerializer;
+use Pulsar\Queue\Envelope\JobEnvelope;
+use Pulsar\Queue\Event\JobDispatched;
 use Pulsar\Queue\Exception\QueueException;
+use Pulsar\Queue\Middleware\MiddlewarePipeline;
+use Pulsar\Queue\Monitor\MetricsCollector;
+use Pulsar\Queue\Serialization\SchemaVersionRegistry;
+use Pulsar\Queue\Serialization\TypeRegistry;
+use Random\Engine\Secure;
+use Random\Randomizer;
 
-use function json_encode;
-
-use const JSON_THROW_ON_ERROR;
+use function bin2hex;
+use function time;
 
 /**
  * Central orchestrator for dispatching jobs and querying queue state.
  *
- * Lazily resolves the queue driver from configuration when no explicit
- * driver is injected via the constructor. When a RequestContextHolder
- * is available, automatically propagates context into job payloads.
+ * Builds job envelopes, runs the dispatch middleware pipeline (context
+ * propagation, effect enforcement, encryption), serializes envelopes,
+ * and pushes them onto the resolved queue driver. Emits lifecycle events
+ * and records dispatch metrics when the respective services are available.
  */
 #[Api(since: '1.0.0')]
 final class QueueManager
 {
     private ?QueueDriverInterface $resolvedDriver;
 
+    private readonly Randomizer $randomizer;
+
+    private readonly EnvelopeSerializer $envelopeSerializer;
+
     public function __construct(
         private readonly QueueConfig $config,
         ?QueueDriverInterface $driver = null,
-        private readonly ?RequestContextHolder $contextHolder = null,
+        private readonly ?EventDispatcherInterface $eventDispatcher = null,
+        private readonly ?MetricsCollector $metrics = null,
+        private readonly ?TypeRegistry $typeRegistry = null,
+        private readonly ?SchemaVersionRegistry $schemaVersionRegistry = null,
+        private readonly MiddlewarePipeline $dispatchPipeline = new MiddlewarePipeline(),
     ) {
         $this->resolvedDriver = $driver;
+        $this->randomizer = new Randomizer(new Secure());
+        $this->envelopeSerializer = new EnvelopeSerializer();
     }
 
     /**
-     * Dispatch a job onto the queue.
+     * Dispatch a job onto the queue via the envelope pipeline.
      *
-     * @param string      $jobClass Fully-qualified class name of the job.
-     * @param string      $payload  Serialized job payload.
-     * @param string|null $queue    Target queue name (defaults to config default).
-     * @param int         $delay    Delay in seconds before the job becomes available.
+     * Builds a {@see JobEnvelope}, runs it through the dispatch middleware
+     * pipeline (context propagation, effect enforcement, encryption),
+     * serializes the result, and pushes it to the driver.
      *
-     * @return string The unique identifier assigned to the dispatched job.
+     * @param string               $jobClass       Fully-qualified class name of the job.
+     * @param string               $payload        Serialized job payload.
+     * @param string|null          $queue          Target queue name (defaults to config default).
+     * @param int                  $delay          Delay in seconds before the job becomes available.
+     * @param string|null          $idempotencyKey Deduplication key (empty string disables dedup).
+     * @param string|null          $subjectId      Identity of the actor dispatching the job.
+     * @param string|null          $batchId        Batch identifier for grouped jobs.
+     * @param int|null             $chainIndex     Position in a job chain (null if not chained).
+     * @param array<string, mixed> $metadata       Extensible metadata bag.
+     *
+     * @return string The unique envelope ID assigned to the dispatched job.
      */
     public function dispatch(
         string $jobClass,
         string $payload,
         ?string $queue = null,
         int $delay = 0,
+        ?string $idempotencyKey = null,
+        ?string $subjectId = null,
+        ?string $batchId = null,
+        ?int $chainIndex = null,
+        array $metadata = [],
     ): string {
-        $targetQueue = $queue ?? $this->config->defaultQueue;
-        $enrichedPayload = $this->injectContext($payload);
+        $this->typeRegistry?->assertAllowed($jobClass);
 
-        return $this->driver()->push($targetQueue, $jobClass, $enrichedPayload, $delay);
+        $targetQueue = $queue ?? $this->config->defaultQueue;
+        $schemaVersion = $this->schemaVersionRegistry?->currentVersion($jobClass) ?? 1;
+
+        $envelope = new JobEnvelope(
+            id: $this->generateId(),
+            jobClass: $jobClass,
+            payload: $payload,
+            queue: $targetQueue,
+            idempotencyKey: $idempotencyKey ?? '',
+            correlationId: '',
+            traceId: null,
+            spanId: null,
+            schemaVersion: $schemaVersion,
+            keyId: null,
+            retryMaxAttempts: $this->config->retryMaxAttempts,
+            retryBackoffStrategy: BackoffStrategy::Exponential,
+            retryDelayMs: $this->config->retryBaseDelayMs,
+            tenantId: null,
+            subjectId: $subjectId,
+            batchId: $batchId,
+            chainIndex: $chainIndex,
+            attempt: 1,
+            dispatchedAt: time(),
+            encrypted: false,
+            metadata: $metadata,
+        );
+
+        return $this->pushEnvelope($envelope, $targetQueue, $delay);
+    }
+
+    /**
+     * Dispatch a pre-built job envelope onto the queue.
+     *
+     * Runs the envelope through the dispatch middleware pipeline, serializes,
+     * and pushes it to the driver. Use this for advanced dispatch scenarios
+     * (batching, chaining) where the envelope is pre-configured.
+     *
+     * @param int $delay Delay in seconds before the job becomes available.
+     *
+     * @return string The envelope ID.
+     */
+    public function dispatchEnvelope(JobEnvelope $envelope, int $delay = 0): string
+    {
+        $this->typeRegistry?->assertAllowed($envelope->jobClass);
+
+        return $this->pushEnvelope($envelope, $envelope->queue, $delay);
     }
 
     /**
@@ -86,31 +171,57 @@ final class QueueManager
             QueueDriverType::Database => throw QueueException::driverNotConfigured(
                 'database (requires ConnectionManagerInterface injection)',
             ),
+            QueueDriverType::Redis => new RedisDriver(
+                RedisDriverConfig::fromArray($this->config->driverOptions),
+            ),
+            QueueDriverType::Amqp => new AmqpDriver(
+                AmqpDriverConfig::fromArray($this->config->driverOptions),
+            ),
+            QueueDriverType::Sqs => new SqsDriver(
+                SqsDriverConfig::fromArray($this->config->driverOptions),
+            ),
+            QueueDriverType::PubSub => new PubSubDriver(
+                PubSubDriverConfig::fromArray($this->config->driverOptions),
+            ),
         };
 
         return $this->resolvedDriver;
     }
 
     /**
-     * Inject request context into payload if holder is available.
-     *
-     * Wraps the original payload in a JSON envelope containing context metadata.
-     * The Worker extracts this envelope to restore context before job execution.
+     * Run the envelope through the dispatch pipeline, serialize, and push to the driver.
      */
-    private function injectContext(string $payload): string
+    private function pushEnvelope(JobEnvelope $envelope, string $queue, int $delay): string
     {
-        $requestContext = $this->contextHolder?->tryGet();
+        /** @var string $jobId */
+        $jobId = $this->dispatchPipeline->process(
+            $envelope,
+            function (JobEnvelope $e) use ($delay): string {
+                $serialized = $this->envelopeSerializer->serialize($e);
+                $this->driver()->push($e->queue, $e->jobClass, $serialized, $delay);
 
-        if ($requestContext === null) {
-            return $payload;
-        }
+                return $e->id;
+            },
+        );
 
-        $carrier = [];
-        ContextPropagator::inject($requestContext, $carrier);
+        $this->metrics?->recordDispatched($queue);
 
-        return json_encode([
-            '_ctx' => $carrier,
-            '_payload' => $payload,
-        ], JSON_THROW_ON_ERROR);
+        $this->eventDispatcher?->dispatch(new JobDispatched(
+            jobId: $jobId,
+            queue: $queue,
+            jobClass: $envelope->jobClass,
+            occurredAt: time(),
+            delaySeconds: $delay,
+        ));
+
+        return $jobId;
+    }
+
+    /**
+     * Generate a unique job identifier (32 hex characters).
+     */
+    private function generateId(): string
+    {
+        return bin2hex($this->randomizer->getBytes(16));
     }
 }

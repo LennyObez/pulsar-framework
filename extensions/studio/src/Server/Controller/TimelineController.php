@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server\Controller;
 
 use JsonException;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function htmlspecialchars;
@@ -31,7 +31,7 @@ final readonly class TimelineController
     /**
      * @throws JsonException
      */
-    public function handle(Request $_request, string $correlationId): Response
+    public function handle(ServerRequestInterface $_request, string $correlationId): Response
     {
         $events = $this->timelineBuilder->forCorrelation(
             requestId: $correlationId,
@@ -41,7 +41,7 @@ final readonly class TimelineController
         if ($events === []) {
             return Response::json(
                 ['error' => 'No events found for this correlation ID'],
-                ResponseStatus::NotFound,
+                ResponseStatus::NotFound->value,
             );
         }
 

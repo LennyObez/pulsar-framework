@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Auth;
 
 use Override;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Auth\Exception\AuthenticationException;
 use Pulsar\Auth\Guard\GuardInterface;
 use Pulsar\Auth\Identity\AnonymousIdentity;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Http\Request;
 use Pulsar\Runtime\ResettableInterface;
 
 use function array_key_exists;
@@ -42,7 +42,7 @@ final class AuthManager implements AuthManagerInterface, ResettableInterface
     }
 
     #[Override]
-    public function authenticate(Request $request): IdentityInterface
+    public function authenticate(ServerRequestInterface $request): IdentityInterface
     {
         foreach ($this->priority as $name) {
             $identity = $this->guards[$name]->authenticate($request);

@@ -23,8 +23,8 @@ Execution model:
 
 Fibers are permitted only in two approved subsystems:
 
-1. **Studio context isolation** — `FiberScopedContextProvider` uses a `WeakMap<object, SplStack<CorrelationContext>>` keyed by Fiber identity to isolate observability context when third-party code or test harnesses create Fibers. When no Fiber is active (the normal case), all operations use a stable root key with zero Fiber overhead.
-2. **Persistent runtime connection multiplexing** — The `runtime:serve` command's `--concurrency N` flag uses Fibers for accepting multiple connections. Individual request handling within each Fiber remains sequential.
+1. **Studio context isolation** - `FiberScopedContextProvider` uses a `WeakMap<object, SplStack<CorrelationContext>>` keyed by Fiber identity to isolate observability context when third-party code or test harnesses create Fibers. When no Fiber is active (the normal case), all operations use a stable root key with zero Fiber overhead.
+2. **Persistent runtime connection multiplexing** - The `runtime:serve` command's `--concurrency N` flag uses Fibers for accepting multiple connections. Individual request handling within each Fiber remains sequential.
 
 Fibers are not used in request business logic, middleware, controllers, or extension code.
 
@@ -34,7 +34,7 @@ Extensions are explicitly prohibited from:
 - Using `Fiber::suspend()` to yield across framework boundaries.
 - Assuming any particular Fiber execution context.
 
-These restrictions are documented in `docs/ASYNC_MODEL.md`. Enforcement is via code review and architecture tests; runtime guardrails are a future consideration.
+These restrictions are documented in `docs/async-model.md`. Enforcement is via code review and architecture tests; runtime guardrails are a future consideration.
 
 ## Consequences
 
@@ -53,4 +53,4 @@ These restrictions are documented in `docs/ASYNC_MODEL.md`. Enforcement is via c
 
 ### Neutral
 
-- **External async runtimes** can be used alongside Pulsar for dedicated I/O-heavy workloads. The framework does not prevent this — it simply does not provide or manage async infrastructure.
+- **External async runtimes** can be used alongside Pulsar for dedicated I/O-heavy workloads. The framework does not prevent this - it simply does not provide or manage async infrastructure.

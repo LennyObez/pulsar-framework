@@ -1,0 +1,84 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extension\Cms\Http\Controller\Api;
+
+use Psr\Http\Message\ServerRequestInterface;
+use Pulsar\Api\Internal;
+use Pulsar\Extension\Cms\Config\CmsConfig;
+use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
+use Pulsar\Extension\Cms\Taxonomy\TaxonomyTerm;
+use Pulsar\Http\Message\Response;
+
+use function array_map;
+use function is_string;
+
+/**
+ * Public REST API controller for CMS taxonomies.
+ *
+ * Provides read-only JSON endpoints for taxonomy and term retrieval.
+ */
+#[Internal(reason: 'CMS REST API controller — implementation detail')]
+final readonly class TaxonomyApiController
+{
+    public function __construct(
+        private TaxonomyRepositoryInterface $repository,
+        private CmsConfig $config,
+    ) {}
+
+    /**
+     * GET /api/v1/taxonomies/{slug} — Show a single taxonomy by slug.
+     */
+    public function show(ServerRequestInterface $request, string $slug): Response
+    {
+        /** @var string|null $tenantId */
+        $tenantId = $request->getAttribute('tenant_id');
+
+        $taxonomy = $this->repository->findBySlug($slug, $tenantId);
+
+        if ($taxonomy === null) {
+            return Response::json(['error' => 'Taxonomy not found', 'status' => 404], 404);
+        }
+
+        return Response::json([
+            'data' => [
+                'id' => $taxonomy->id,
+                'slug' => $taxonomy->slug,
+                'hierarchical' => $taxonomy->hierarchical,
+                'created_at' => $taxonomy->createdAt->format('c'),
+            ],
+        ]);
+    }
+
+    /**
+     * GET /api/v1/taxonomies/{slug}/terms — List terms for a taxonomy.
+     */
+    public function terms(ServerRequestInterface $request, string $slug): Response
+    {
+        /** @var string|null $tenantId */
+        $tenantId = $request->getAttribute('tenant_id');
+
+        $taxonomy = $this->repository->findBySlug($slug, $tenantId);
+
+        if ($taxonomy === null) {
+            return Response::json(['error' => 'Taxonomy not found', 'status' => 404], 404);
+        }
+
+        $params = $request->getQueryParams();
+        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : $this->config->defaultLocale;
+        $parentId = is_string($params['parent_id'] ?? null) ? $params['parent_id'] : null;
+
+        $terms = $this->repository->findTerms($taxonomy->id, $locale, $parentId);
+
+        return Response::json([
+            'data' => array_map(static fn(TaxonomyTerm $term) => [
+                'id' => $term->id,
+                'taxonomy_id' => $term->taxonomyId,
+                'parent_id' => $term->parentId,
+                'sort_order' => $term->sortOrder,
+                'created_at' => $term->createdAt->format('c'),
+            ], $terms),
+        ]);
+    }
+}

@@ -61,8 +61,8 @@ final readonly class ModuleTemplates
 
             namespace $namespace\\Controller;
 
-            use Pulsar\\Http\\Request;
-            use Pulsar\\Http\\Response;
+            use Psr\\Http\\Message\\ServerRequestInterface;
+            use Pulsar\\Http\\Message\\Response;
             use $namespace\\Contracts\\{$name}ServiceInterface;
 
             final class {$name}Controller
@@ -71,7 +71,7 @@ final readonly class ModuleTemplates
                     private {$name}ServiceInterface \${$lcName}Service,
                 ) {}
 
-                public function index(Request \$request): Response
+                public function index(ServerRequestInterface \$request): Response
                 {
                     return Response::json([
                         'module' => '$name',
@@ -223,7 +223,7 @@ final readonly class ModuleTemplates
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
             use PHPUnit\\Framework\\TestCase;
-            use Pulsar\\Http\\Request;
+            use Psr\\Http\\Message\\ServerRequestInterface;
             use Pulsar\\Http\\ResponseStatus;
             use $namespace\\Contracts\\{$name}ServiceInterface;
             use $namespace\\Controller\\{$name}Controller;
@@ -237,10 +237,10 @@ final readonly class ModuleTemplates
                     \$service = \$this->createStub({$name}ServiceInterface::class);
                     \$controller = new {$name}Controller(\$service);
 
-                    \$request = \$this->createStub(Request::class);
+                    \$request = \$this->createStub(ServerRequestInterface::class);
                     \$response = \$controller->index(\$request);
 
-                    self::assertSame(ResponseStatus::Ok, \$response->status);
+                    self::assertSame(ResponseStatus::OK->value, \$response->getStatusCode());
                 }
             }
             PHP;

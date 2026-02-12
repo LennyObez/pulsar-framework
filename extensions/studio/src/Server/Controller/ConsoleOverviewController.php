@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server\Controller;
 
 use JsonException;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 use function htmlspecialchars;
 use function json_encode;
@@ -30,7 +30,7 @@ final readonly class ConsoleOverviewController
     /**
      * @throws JsonException
      */
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
         $windowUs = $this->parseWindow($request);
 
@@ -62,7 +62,7 @@ final readonly class ConsoleOverviewController
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Console Overview - Pulsar Studio</title>
+                <title>Console overview - Pulsar Studio</title>
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
@@ -75,9 +75,9 @@ final readonly class ConsoleOverviewController
         return Response::html($html);
     }
 
-    private function parseWindow(Request $request): int
+    private function parseWindow(ServerRequestInterface $request): int
     {
-        $window = $request->attribute('_query_window');
+        $window = $request->getAttribute('_query_window');
 
         return match ($window) {
             '5m' => 5 * 60 * 1_000_000,

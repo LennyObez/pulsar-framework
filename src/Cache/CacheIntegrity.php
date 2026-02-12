@@ -35,7 +35,7 @@ use const PHP_OS_FAMILY;
 /**
  * Cache integrity: HMAC signing, verification, and filesystem hardening.
  *
- * Uses BLAKE2b HMAC via MasterKey subkey (subKeyId=7, context=fw_cache)
+ * Uses keyed BLAKE2b via MasterKey subkey (subKeyId=7, context=fw_cache)
  * for signing and verification. All comparisons use hash_equals().
  */
 #[Internal]

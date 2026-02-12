@@ -130,14 +130,16 @@ final class NewCommandTest extends TestCase
         $originalDir = getcwd();
         chdir(dirname($this->tempDir));
 
-        $dirName = basename($this->tempDir);
-        $input = $this->createInputStub($dirName, 'web', 'local');
-        $output = $this->createStub(OutputInterface::class);
+        try {
+            $dirName = basename($this->tempDir);
+            $input = $this->createInputStub($dirName, 'web', 'local');
+            $output = $this->createStub(OutputInterface::class);
 
-        $result = $command->execute($input, $output);
-
-        if ($originalDir !== false) {
-            chdir($originalDir);
+            $result = $command->execute($input, $output);
+        } finally {
+            if ($originalDir !== false) {
+                chdir($originalDir);
+            }
         }
 
         self::assertSame(ExitCode::Success->value, $result);
@@ -162,10 +164,12 @@ final class NewCommandTest extends TestCase
         $originalDir = getcwd();
         chdir(dirname($this->tempDir));
 
-        $result = $command->execute($input, $output);
-
-        if ($originalDir !== false) {
-            chdir($originalDir);
+        try {
+            $result = $command->execute($input, $output);
+        } finally {
+            if ($originalDir !== false) {
+                chdir($originalDir);
+            }
         }
 
         self::assertSame(ExitCode::Error->value, $result);
@@ -188,10 +192,12 @@ final class NewCommandTest extends TestCase
         $originalDir = getcwd();
         chdir(dirname($this->tempDir));
 
-        $result = $command->execute($input, $output);
-
-        if ($originalDir !== false) {
-            chdir($originalDir);
+        try {
+            $result = $command->execute($input, $output);
+        } finally {
+            if ($originalDir !== false) {
+                chdir($originalDir);
+            }
         }
 
         self::assertSame(ExitCode::Success->value, $result);
@@ -218,10 +224,12 @@ final class NewCommandTest extends TestCase
         $originalDir = getcwd();
         chdir(dirname($this->tempDir));
 
-        $result = $command->execute($input, $output);
-
-        if ($originalDir !== false) {
-            chdir($originalDir);
+        try {
+            $result = $command->execute($input, $output);
+        } finally {
+            if ($originalDir !== false) {
+                chdir($originalDir);
+            }
         }
 
         self::assertSame(ExitCode::Success->value, $result);

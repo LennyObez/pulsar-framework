@@ -7,14 +7,15 @@ namespace Pulsar\Tests\Unit\Studio\Server\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
 use Pulsar\Extension\Studio\Security\StudioAccessGate;
 use Pulsar\Extension\Studio\Server\Middleware\StudioAccessMiddleware;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 use function base64_encode;
@@ -30,14 +31,19 @@ final class StudioAccessMiddlewareTest extends TestCase
         $middleware = new StudioAccessMiddleware($gate);
 
         $request = $this->createRequest();
-        $expectedResponse = new Response(body: 'OK', status: ResponseStatus::OK);
+        $expectedResponse = new Response(statusCode: 200, body: 'OK');
         $handlerCalled = false;
 
-        $response = $middleware->process($request, function (Request $req) use (&$handlerCalled, $expectedResponse): Response {
-            $handlerCalled = true;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$handlerCalled, $expectedResponse): ResponseInterface {
+                $handlerCalled = true;
 
-            return $expectedResponse;
-        });
+                return $expectedResponse;
+            },
+        );
+
+        $response = $middleware->process($request, $handler);
 
         self::assertTrue($handlerCalled);
         self::assertSame($expectedResponse, $response);
@@ -56,18 +62,15 @@ final class StudioAccessMiddlewareTest extends TestCase
         $middleware = new StudioAccessMiddleware($gate);
 
         $request = $this->createRequest();
-        $handlerCalled = false;
 
-        $response = $middleware->process($request, function () use (&$handlerCalled): Response {
-            $handlerCalled = true;
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: 200, body: 'OK'));
 
-            return new Response(body: 'OK', status: ResponseStatus::OK);
-        });
+        $response = $middleware->process($request, $handler);
 
-        self::assertFalse($handlerCalled);
-        self::assertSame(ResponseStatus::Unauthorized, $response->status);
-        self::assertSame('Authentication required', $response->body);
-        self::assertSame('Basic realm="Pulsar Studio"', $response->headers->first('WWW-Authenticate'));
+        self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
+        self::assertSame('Authentication required', (string) $response->getBody());
+        self::assertSame('Basic realm="Pulsar Studio"', $response->getHeaderLine('WWW-Authenticate'));
     }
 
     #[Test]
@@ -80,17 +83,14 @@ final class StudioAccessMiddlewareTest extends TestCase
         $middleware = new StudioAccessMiddleware($gate);
 
         $request = $this->createRequest(remoteAddr: '192.168.1.100');
-        $handlerCalled = false;
 
-        $response = $middleware->process($request, function () use (&$handlerCalled): Response {
-            $handlerCalled = true;
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: 200, body: 'OK'));
 
-            return new Response(body: 'OK', status: ResponseStatus::OK);
-        });
+        $response = $middleware->process($request, $handler);
 
-        self::assertFalse($handlerCalled);
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertSame('IP not in allowlist', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertSame('IP not in allowlist', (string) $response->getBody());
     }
 
     #[Test]
@@ -103,17 +103,14 @@ final class StudioAccessMiddlewareTest extends TestCase
         $middleware = new StudioAccessMiddleware($gate);
 
         $request = $this->createRequest();
-        $handlerCalled = false;
 
-        $response = $middleware->process($request, function () use (&$handlerCalled): Response {
-            $handlerCalled = true;
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: 200, body: 'OK'));
 
-            return new Response(body: 'OK', status: ResponseStatus::OK);
-        });
+        $response = $middleware->process($request, $handler);
 
-        self::assertFalse($handlerCalled);
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertSame('Production mode requires STUDIO_PRODUCTION_CONFIRM=true', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertSame('Production mode requires STUDIO_PRODUCTION_CONFIRM=true', (string) $response->getBody());
     }
 
     #[Test]
@@ -130,14 +127,19 @@ final class StudioAccessMiddlewareTest extends TestCase
 
         $credentials = base64_encode('admin:secret');
         $request = $this->createRequest(authHeader: "Basic {$credentials}");
-        $expectedResponse = new Response(body: 'OK', status: ResponseStatus::OK);
+        $expectedResponse = new Response(statusCode: 200, body: 'OK');
         $handlerCalled = false;
 
-        $response = $middleware->process($request, function () use (&$handlerCalled, $expectedResponse): Response {
-            $handlerCalled = true;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function () use (&$handlerCalled, $expectedResponse): ResponseInterface {
+                $handlerCalled = true;
 
-            return $expectedResponse;
-        });
+                return $expectedResponse;
+            },
+        );
+
+        $response = $middleware->process($request, $handler);
 
         self::assertTrue($handlerCalled);
         self::assertSame($expectedResponse, $response);
@@ -153,14 +155,19 @@ final class StudioAccessMiddlewareTest extends TestCase
         $middleware = new StudioAccessMiddleware($gate);
 
         $request = $this->createRequest(remoteAddr: '10.5.3.1');
-        $expectedResponse = new Response(body: 'OK', status: ResponseStatus::OK);
+        $expectedResponse = new Response(statusCode: 200, body: 'OK');
         $handlerCalled = false;
 
-        $response = $middleware->process($request, function () use (&$handlerCalled, $expectedResponse): Response {
-            $handlerCalled = true;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function () use (&$handlerCalled, $expectedResponse): ResponseInterface {
+                $handlerCalled = true;
 
-            return $expectedResponse;
-        });
+                return $expectedResponse;
+            },
+        );
+
+        $response = $middleware->process($request, $handler);
 
         self::assertTrue($handlerCalled);
         self::assertSame($expectedResponse, $response);
@@ -176,11 +183,16 @@ final class StudioAccessMiddlewareTest extends TestCase
         $request = $this->createRequest();
         $capturedRequest = null;
 
-        $middleware->process($request, function (Request $req) use (&$capturedRequest): Response {
-            $capturedRequest = $req;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$capturedRequest): ResponseInterface {
+                $capturedRequest = $req;
 
-            return new Response(body: 'OK', status: ResponseStatus::OK);
-        });
+                return new Response(statusCode: 200, body: 'OK');
+            },
+        );
+
+        $middleware->process($request, $handler);
 
         self::assertSame($request, $capturedRequest);
     }
@@ -194,16 +206,19 @@ final class StudioAccessMiddlewareTest extends TestCase
 
         $request = $this->createRequest();
         $expectedResponse = new Response(
+            statusCode: 201,
+            headers: ['X-Custom' => 'value'],
             body: 'Custom Response',
-            status: ResponseStatus::Created,
-            headers: new HeaderBag(['X-Custom' => 'value']),
         );
 
-        $response = $middleware->process($request, fn(): Response => $expectedResponse);
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn($expectedResponse);
+
+        $response = $middleware->process($request, $handler);
 
         self::assertSame($expectedResponse, $response);
-        self::assertSame(ResponseStatus::Created, $response->status);
-        self::assertSame('Custom Response', $response->body);
+        self::assertSame(ResponseStatus::Created->value, $response->getStatusCode());
+        self::assertSame('Custom Response', (string) $response->getBody());
     }
 
     #[Test]
@@ -222,11 +237,16 @@ final class StudioAccessMiddlewareTest extends TestCase
         $request = $this->createRequest(remoteAddr: '192.168.1.100');
         $handlerCalled = false;
 
-        $middleware->process($request, function () use (&$handlerCalled): Response {
-            $handlerCalled = true;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function () use (&$handlerCalled): ResponseInterface {
+                $handlerCalled = true;
 
-            return new Response(body: 'OK', status: ResponseStatus::OK);
-        });
+                return new Response(statusCode: 200, body: 'OK');
+            },
+        );
+
+        $middleware->process($request, $handler);
 
         self::assertTrue($handlerCalled, 'Local mode should allow all requests regardless of other checks');
     }
@@ -249,14 +269,19 @@ final class StudioAccessMiddlewareTest extends TestCase
             remoteAddr: '10.5.3.1',
             authHeader: "Basic {$credentials}",
         );
-        $expectedResponse = new Response(body: 'OK', status: ResponseStatus::OK);
+        $expectedResponse = new Response(statusCode: 200, body: 'OK');
         $handlerCalled = false;
 
-        $response = $middleware->process($request, function () use (&$handlerCalled, $expectedResponse): Response {
-            $handlerCalled = true;
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function () use (&$handlerCalled, $expectedResponse): ResponseInterface {
+                $handlerCalled = true;
 
-            return $expectedResponse;
-        });
+                return $expectedResponse;
+            },
+        );
+
+        $response = $middleware->process($request, $handler);
 
         self::assertTrue($handlerCalled);
         self::assertSame($expectedResponse, $response);
@@ -273,31 +298,31 @@ final class StudioAccessMiddlewareTest extends TestCase
 
         $request = $this->createRequest(remoteAddr: '192.168.1.100');
 
-        $response = $middleware->process($request, fn(): Response => new Response(body: 'OK', status: ResponseStatus::OK));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(statusCode: 200, body: 'OK'));
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertNull($response->headers->first('WWW-Authenticate'));
+        $response = $middleware->process($request, $handler);
+
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertFalse($response->hasHeader('WWW-Authenticate'));
     }
 
     private function createRequest(
         ?string $remoteAddr = '127.0.0.1',
         ?string $authHeader = null,
-    ): Request {
-        $headers = new HeaderBag($authHeader !== null ? ['Authorization' => $authHeader] : []);
+    ): ServerRequest {
+        $headers = $authHeader !== null ? ['Authorization' => $authHeader] : [];
 
-        $server = [];
+        $serverParams = [];
         if ($remoteAddr !== null) {
-            $server['REMOTE_ADDR'] = $remoteAddr;
+            $serverParams['REMOTE_ADDR'] = $remoteAddr;
         }
 
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/studio',
-            path: '/studio',
-            queryString: '',
             headers: $headers,
-            body: '',
-            server: $server,
+            serverParams: $serverParams,
         );
     }
 }

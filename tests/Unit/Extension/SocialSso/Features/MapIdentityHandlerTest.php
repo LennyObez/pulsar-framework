@@ -31,7 +31,7 @@ final class MapIdentityHandlerTest extends TestCase
         $provider->method('mapIdentity')->willReturn($identity);
 
         $registry = $this->createStub(OAuthProviderRegistryInterface::class);
-        $registry->method('get')->with('google')->willReturn($provider);
+        $registry->method('get')->willReturn($provider);
 
         $handler = new MapIdentityHandler($registry);
 

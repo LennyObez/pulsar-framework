@@ -8,10 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\Container;
-use Pulsar\Extension\Psr7Bridge\Adapter\Psr7ToPulsarRequest;
-use Pulsar\Extension\Psr7Bridge\Adapter\Psr7ToPulsarResponse;
-use Pulsar\Extension\Psr7Bridge\Adapter\PulsarToPsr7Request;
-use Pulsar\Extension\Psr7Bridge\Adapter\PulsarToPsr7Response;
 use Pulsar\Extension\Psr7Bridge\Psr7BridgeExtension;
 use Pulsar\Routing\Router;
 
@@ -27,17 +23,15 @@ final class Psr7BridgeExtensionTest extends TestCase
     }
 
     #[Test]
-    public function registerBindsAdapterServices(): void
+    public function registerIsNoOpSincePsr7Native(): void
     {
         $extension = new Psr7BridgeExtension();
         $container = new Container();
 
         $extension->register($container);
 
-        self::assertTrue($container->has(PulsarToPsr7Request::class));
-        self::assertTrue($container->has(Psr7ToPulsarRequest::class));
-        self::assertTrue($container->has(PulsarToPsr7Response::class));
-        self::assertTrue($container->has(Psr7ToPulsarResponse::class));
+        // Extension is deprecated — register() is a no-op since Pulsar uses PSR-7 natively
+        self::assertFalse($container->has('Pulsar\Extension\Psr7Bridge\Adapter\PulsarToPsr7Request'));
     }
 
     #[Test]

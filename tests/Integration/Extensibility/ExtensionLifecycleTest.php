@@ -8,6 +8,7 @@ use ArrayObject;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\Kernel;
 use Pulsar\Extensibility\ExtensionBootstrap;
@@ -15,8 +16,8 @@ use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ExtensionLifecycle;
 use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\ServiceProviderInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Routing\RouterInterface;
 
 #[CoversClass(Kernel::class)]
@@ -80,21 +81,17 @@ final class ExtensionLifecycleTest extends TestCase
         $kernel->boot();
 
         // Act: Handle request to extension route
-        $request = new Request(
-            method: \Pulsar\Http\Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new \Pulsar\Http\HeaderBag(),
-            body: '',
         );
 
         $response = $kernel->handle($request);
 
         // Assert: Response is from extension controller
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array{message: string} $data */
-        $data = json_decode($response->body, true);
+        $data = json_decode((string) $response->getBody(), true);
         self::assertSame('Hello from extension!', $data['message']);
     }
 
@@ -235,7 +232,7 @@ class TestableExtension implements ExtensionInterface
 
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
-        $router->get('/test', function (Request $request): Response {
+        $router->get('/test', function (ServerRequestInterface $request): Response {
             return Response::json(['message' => 'Hello from extension!']);
         }, 'test.index');
     }

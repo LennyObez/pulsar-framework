@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Payments\Features\ProcessWebhook;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Extension\Payments\Config\PaymentsConfig;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 /**
  * HTTP endpoint for incoming payment webhooks.
@@ -18,12 +18,12 @@ final readonly class WebhookController
         private PaymentsConfig $config,
     ) {}
 
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): Response
     {
-        $signatureHeader = $request->header($this->config->webhook->signatureHeader) ?? '';
+        $signatureHeader = $request->getHeaderLine($this->config->webhook->signatureHeader);
 
         return $this->handler->execute(
-            new ProcessWebhookRequest($request->body, $signatureHeader),
+            new ProcessWebhookRequest((string) $request->getBody(), $signatureHeader),
         )->response;
     }
 }

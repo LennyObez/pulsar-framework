@@ -7,11 +7,12 @@ namespace Pulsar\Tests\Unit\Http\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\TracingMiddleware;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\W3CTraceContextParser;
@@ -19,15 +20,11 @@ use Pulsar\Observability\Tracing\W3CTraceContextParser;
 #[CoversClass(TracingMiddleware::class)]
 final class TracingMiddlewareTest extends TestCase
 {
-    private function createRequest(string $path = '/users/42'): Request
+    private function createRequest(string $path = '/users/42'): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
     }
 
@@ -45,12 +42,19 @@ final class TracingMiddlewareTest extends TestCase
 
         $request = $this->createRequest('/users/42');
 
-        $middleware->process($request, static function () use ($routeContext): Response {
-            $routeContext->pattern = '/users/{id}';
-            $routeContext->name = 'users.show';
+        $handler = new class ($routeContext) implements RequestHandlerInterface {
+            public function __construct(private RouteContext $routeContext) {}
 
-            return Response::text('OK');
-        });
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->routeContext->pattern = '/users/{id}';
+                $this->routeContext->name = 'users.show';
+
+                return Response::text('OK');
+            }
+        };
+
+        $middleware->process($request, $handler);
 
         $spans = $collector->spans();
         self::assertCount(1, $spans);
@@ -73,7 +77,10 @@ final class TracingMiddlewareTest extends TestCase
 
         $request = $this->createRequest('/users/42');
 
-        $middleware->process($request, static fn(): Response => Response::text('OK'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $middleware->process($request, $handler);
 
         $spans = $collector->spans();
         self::assertCount(1, $spans);
@@ -97,7 +104,10 @@ final class TracingMiddlewareTest extends TestCase
         $request = $this->createRequest('/not-found');
 
         // RouteContext is never populated (simulating unmatched route)
-        $middleware->process($request, static fn(): Response => Response::text('Not Found'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('Not Found'));
+
+        $middleware->process($request, $handler);
 
         $spans = $collector->spans();
         self::assertCount(1, $spans);

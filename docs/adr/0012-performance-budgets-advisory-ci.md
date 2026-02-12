@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Performance regressions are silent — unlike test failures, they do not produce errors. A commit that degrades container resolution from 80us to 500us will pass all tests and static analysis. Without measurement, regressions accumulate until they become noticeable in production.
+Performance regressions are silent - unlike test failures, they do not produce errors. A commit that degrades container resolution from 80us to 500us will pass all tests and static analysis. Without measurement, regressions accumulate until they become noticeable in production.
 
 Two approaches to CI performance enforcement exist:
 

@@ -17,6 +17,8 @@ use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
 use RuntimeException;
 
+use function is_array;
+
 #[CoversClass(InstrumentedQueueManager::class)]
 final class InstrumentedQueueManagerTest extends TestCase
 {
@@ -54,8 +56,19 @@ final class InstrumentedQueueManagerTest extends TestCase
         $driver
             ->expects(self::once())
             ->method('push')
-            ->with('default', 'App\\Jobs\\SendEmail', '{"to":"a@b.com"}', 0)
-            ->willReturn('job-001');
+            ->with(
+                'default',
+                'App\\Jobs\\SendEmail',
+                self::callback(static function (string $serialized): bool {
+                    $envelope = json_decode($serialized, true);
+
+                    return is_array($envelope)
+                        && $envelope['jobClass'] === 'App\\Jobs\\SendEmail'
+                        && $envelope['payload'] === '{"to":"a@b.com"}'
+                        && $envelope['queue'] === 'default';
+                }),
+                0,
+            );
 
         $config = new QueueConfig(defaultQueue: 'default');
         $inner = new QueueManager($config, $driver);
@@ -68,7 +81,7 @@ final class InstrumentedQueueManagerTest extends TestCase
         );
         $id = $manager->dispatch('App\\Jobs\\SendEmail', '{"to":"a@b.com"}');
 
-        self::assertSame('job-001', $id);
+        self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $id);
     }
 
     #[Test]
@@ -163,8 +176,19 @@ final class InstrumentedQueueManagerTest extends TestCase
         $driver
             ->expects(self::once())
             ->method('push')
-            ->with('default', 'App\\Jobs\\Delayed', '{}', 120)
-            ->willReturn('job-delayed');
+            ->with(
+                'default',
+                'App\\Jobs\\Delayed',
+                self::callback(static function (string $serialized): bool {
+                    $envelope = json_decode($serialized, true);
+
+                    return is_array($envelope)
+                        && $envelope['jobClass'] === 'App\\Jobs\\Delayed'
+                        && $envelope['payload'] === '{}'
+                        && $envelope['queue'] === 'default';
+                }),
+                120,
+            );
 
         $config = new QueueConfig(defaultQueue: 'default');
         $inner = new QueueManager($config, $driver);
@@ -177,7 +201,7 @@ final class InstrumentedQueueManagerTest extends TestCase
         );
         $id = $manager->dispatch('App\\Jobs\\Delayed', '{}', null, 120);
 
-        self::assertSame('job-delayed', $id);
+        self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $id);
         self::assertCount(1, $this->emittedEvents);
     }
 
@@ -231,7 +255,7 @@ final class InstrumentedQueueManagerTest extends TestCase
         // Should not throw — emit errors are silently caught
         $id = $manager->dispatch('App\\Jobs\\Noop', '{}');
 
-        self::assertSame('job-emit-fail', $id);
+        self::assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $id);
     }
 
     #[Test]

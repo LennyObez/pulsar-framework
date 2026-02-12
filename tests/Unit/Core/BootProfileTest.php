@@ -55,6 +55,7 @@ final class BootProfileTest extends TestCase
             'config_us' => 2000,
             'extension_register_us' => 500,
             'extension_boot_us' => 1500,
+            'compiler_pass_us' => 0,
             'cache_hit' => false,
             'routes_cached' => false,
         ], $array);

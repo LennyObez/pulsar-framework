@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+
+use function str_contains;
 
 /**
  * Controller for viewing action history.
@@ -21,9 +23,9 @@ final readonly class ActionHistoryController
         private AdminConfig $config,
     ) {}
 
-    public function recent(Request $request): Response
+    public function recent(ServerRequestInterface $request): Response
     {
-        $limitParam = $request->query('limit');
+        $limitParam = $request->getQueryParams()['limit'] ?? null;
         $limit = max(1, min(100, is_numeric($limitParam) ? (int) $limitParam : 50));
         $entries = $this->store->recent($limit);
 
@@ -41,16 +43,16 @@ final readonly class ActionHistoryController
             $entries,
         );
 
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json(['entries' => $data]);
         }
 
         return Response::html($this->renderHtml('Activity', $data));
     }
 
-    public function forResource(Request $request, string $resource): Response
+    public function forResource(ServerRequestInterface $request, string $resource): Response
     {
-        $limitParam = $request->query('limit');
+        $limitParam = $request->getQueryParams()['limit'] ?? null;
         $limit = max(1, min(100, is_numeric($limitParam) ? (int) $limitParam : 50));
         $entries = $this->store->forResource($resource, $limit);
 
@@ -70,7 +72,7 @@ final readonly class ActionHistoryController
 
         $e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json(['entries' => $data]);
         }
 

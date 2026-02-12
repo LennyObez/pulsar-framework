@@ -24,6 +24,9 @@ use function count;
 use function date;
 use function in_array;
 use function intdiv;
+use function is_float;
+use function is_int;
+use function is_string;
 use function json_decode;
 use function max;
 use function microtime;
@@ -262,17 +265,20 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
              WHERE event_type = :type AND timestamp_us > :since AND json_valid(payload_json)",
         );
         $stmt->execute(['type' => 'db.query', 'since' => $since]);
-        /** @var list<array{sql_fingerprint: string, sql: string, duration_ms: string}> $rows */
+        /** @var list<array{sql_fingerprint: string|null, sql: string|null, duration_ms: string|null}> $rows */
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         /** @var array<string, array{sql: string, durations: list<float>}> $grouped */
         $grouped = [];
         foreach ($rows as $row) {
-            $fp = $row['sql_fingerprint'];
-            if (!isset($grouped[$fp])) {
-                $grouped[$fp] = ['sql' => $row['sql'], 'durations' => []];
+            $fp = $row['sql_fingerprint'] ?? null;
+            if ($fp === null) {
+                continue;
             }
-            $grouped[$fp]['durations'][] = (float) $row['duration_ms'];
+            if (!isset($grouped[$fp])) {
+                $grouped[$fp] = ['sql' => $row['sql'] ?? '', 'durations' => []];
+            }
+            $grouped[$fp]['durations'][] = (float) ($row['duration_ms'] ?? 0);
         }
 
         $result = [];
@@ -602,15 +608,19 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
         $grouped = [];
 
         foreach ($rows as $row) {
-            /** @var array{sql_fingerprint: string, sql: string, duration_ms: float} $payload */
+            /** @var array{sql_fingerprint?: string, sql?: string, duration_ms?: float} $payload */
             $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
-            $fp = $payload['sql_fingerprint'];
+            $fp = $payload['sql_fingerprint'] ?? null;
 
-            if (!isset($grouped[$fp])) {
-                $grouped[$fp] = ['sql' => $payload['sql'], 'durations' => []];
+            if ($fp === null) {
+                continue;
             }
 
-            $grouped[$fp]['durations'][] = $payload['duration_ms'];
+            if (!isset($grouped[$fp])) {
+                $grouped[$fp] = ['sql' => $payload['sql'] ?? '', 'durations' => []];
+            }
+
+            $grouped[$fp]['durations'][] = (float) ($payload['duration_ms'] ?? 0);
         }
 
         $result = [];
@@ -713,16 +723,21 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
 
         $result = [];
         foreach ($rows as $row) {
-            /** @var array{run_id: string, profile_count: int, success_count: int, failure_count: int, skipped_count?: int, total_duration_ms: float, php_version: string} $payload */
+            /** @var array<string, mixed> $payload */
             $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+
+            if (!isset($payload['run_id'])) {
+                continue;
+            }
+
             $result[] = [
-                'run_id' => $payload['run_id'],
-                'profile_count' => $payload['profile_count'],
-                'success_count' => $payload['success_count'],
-                'failure_count' => $payload['failure_count'],
-                'skipped_count' => $payload['skipped_count'] ?? 0,
-                'total_duration_ms' => $payload['total_duration_ms'],
-                'php_version' => $payload['php_version'],
+                'run_id' => $this->str($payload['run_id']),
+                'profile_count' => $this->toInt($payload['profile_count'] ?? 0),
+                'success_count' => $this->toInt($payload['success_count'] ?? 0),
+                'failure_count' => $this->toInt($payload['failure_count'] ?? 0),
+                'skipped_count' => $this->toInt($payload['skipped_count'] ?? 0),
+                'total_duration_ms' => $this->toFloat($payload['total_duration_ms'] ?? 0.0),
+                'php_version' => $this->str($payload['php_version'] ?? 'unknown'),
                 'timestamp_us' => $row['timestamp_us'],
             ];
         }
@@ -747,24 +762,24 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
 
         $result = [];
         foreach ($rows as $row) {
-            /** @var array{run_id: string, profile_name: string, boot_us: int, warm_boot_us: int, p50_us: int, p95_us: int, rps: int, peak_rss_kb: int, memory_usage_kb: int, opcache_memory_kb: ?int, optimize_enabled?: bool} $payload */
+            /** @var array<string, mixed> $payload */
             $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
 
-            if ($payload['run_id'] !== $runId) {
+            if (!isset($payload['run_id']) || $payload['run_id'] !== $runId) {
                 continue;
             }
 
             $result[] = [
-                'profile_name' => $payload['profile_name'],
-                'boot_us' => $payload['boot_us'],
-                'warm_boot_us' => $payload['warm_boot_us'],
-                'p50_us' => $payload['p50_us'],
-                'p95_us' => $payload['p95_us'],
-                'rps' => $payload['rps'],
-                'peak_rss_kb' => $payload['peak_rss_kb'],
-                'memory_usage_kb' => $payload['memory_usage_kb'],
-                'opcache_memory_kb' => $payload['opcache_memory_kb'],
-                'optimize_enabled' => $payload['optimize_enabled'] ?? false,
+                'profile_name' => $this->str($payload['profile_name'] ?? 'unknown'),
+                'boot_us' => $this->toInt($payload['boot_us'] ?? 0),
+                'warm_boot_us' => $this->toInt($payload['warm_boot_us'] ?? 0),
+                'p50_us' => $this->toInt($payload['p50_us'] ?? 0),
+                'p95_us' => $this->toInt($payload['p95_us'] ?? 0),
+                'rps' => $this->toInt($payload['rps'] ?? 0),
+                'peak_rss_kb' => $this->toInt($payload['peak_rss_kb'] ?? 0),
+                'memory_usage_kb' => $this->toInt($payload['memory_usage_kb'] ?? 0),
+                'opcache_memory_kb' => isset($payload['opcache_memory_kb']) ? $this->toInt($payload['opcache_memory_kb']) : null,
+                'optimize_enabled' => !empty($payload['optimize_enabled']),
             ];
         }
 
@@ -841,6 +856,21 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
     private function nowUs(): int
     {
         return (int) (microtime(true) * 1_000_000.0);
+    }
+
+    private function str(mixed $v): string
+    {
+        return is_string($v) ? $v : '';
+    }
+
+    private function toInt(mixed $v): int
+    {
+        return is_int($v) ? $v : 0;
+    }
+
+    private function toFloat(mixed $v): float
+    {
+        return is_float($v) || is_int($v) ? (float) $v : 0.0;
     }
 
     private function resolvePdo(EventStoreInterface $store): PDO

@@ -25,7 +25,7 @@ $driver = $templateData['driver'] ?? 'sqlite';
     data-driver="<?= $e($driver) ?>"
 >
     <div class="admin-schema-view__header">
-        <a href="/admin/schema" class="admin-btn admin-btn--secondary">&larr; All Tables</a>
+        <a href="/admin/schema" class="admin-btn admin-btn--secondary">&larr; All tables</a>
     </div>
 
     <h2>Columns</h2>

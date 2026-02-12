@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Tenancy\Resolver;
 
 use Override;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Config\TenancyConfig;
-use Pulsar\Http\Request;
 use Pulsar\Tenancy\Tenant;
 use Pulsar\Tenancy\TenantResolverInterface;
 
@@ -28,9 +28,9 @@ readonly class PathPrefixTenantResolver implements TenantResolverInterface
     ) {}
 
     #[Override]
-    public function resolve(Request $request): ?Tenant
+    public function resolve(ServerRequestInterface $request): ?Tenant
     {
-        $path = $request->path;
+        $path = $request->getUri()->getPath();
 
         if (!str_starts_with($path, $this->config->pathPrefix)) {
             return null;

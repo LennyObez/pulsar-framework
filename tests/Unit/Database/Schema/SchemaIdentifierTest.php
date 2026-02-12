@@ -18,17 +18,20 @@ final class SchemaIdentifierTest extends TestCase
     public function validTableNamePasses(): void
     {
         SchemaIdentifier::validateTable('users');
+        $this->addToAssertionCount(1);
         SchemaIdentifier::validateTable('_internal');
+        $this->addToAssertionCount(1);
         SchemaIdentifier::validateTable('my_table_123');
-        $this->addToAssertionCount(3);
+        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validColumnNamePasses(): void
     {
         SchemaIdentifier::validateColumn('email');
+        $this->addToAssertionCount(1);
         SchemaIdentifier::validateColumn('first_name');
-        $this->addToAssertionCount(2);
+        $this->addToAssertionCount(1);
     }
 
     #[Test]

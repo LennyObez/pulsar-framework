@@ -14,6 +14,8 @@ use Pulsar\Http\Request;
  * Converts a Pulsar Request into a PSR-7 ServerRequestInterface.
  *
  * Uses Nyholm/PSR-7 as the concrete PSR-7 implementation.
+ *
+ * @deprecated Since 1.0.0-rc.11. Pulsar now uses PSR-7 natively — no conversion needed.
  */
 #[Api(since: '1.0.0')]
 final readonly class PulsarToPsr7Request

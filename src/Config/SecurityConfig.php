@@ -21,6 +21,7 @@ readonly class SecurityConfig
         public SecurityHeadersConfig $headers,
         public RateLimitConfig $rateLimit,
         public ?AuthConfig $auth = null,
+        public string $cipherSuite = 'sodium',
     ) {}
 
     /**
@@ -46,12 +47,16 @@ readonly class SecurityConfig
         /** @var array<string, mixed>|null $authData */
         $authData = $data['auth'] ?? null;
 
+        /** @var string $cipherSuite */
+        $cipherSuite = $data['cipher_suite'] ?? 'sodium';
+
         return new self(
             session: SessionConfig::fromArray($sessionData, $environment),
             csrf: CsrfConfig::fromArray($csrfData),
             headers: SecurityHeadersConfig::fromArray($headersData),
             rateLimit: RateLimitConfig::fromArray($rateLimitData),
             auth: $authData !== null ? AuthConfig::fromArray($authData) : null,
+            cipherSuite: $cipherSuite,
         );
     }
 }

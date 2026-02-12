@@ -49,6 +49,9 @@ final class RuntimeConfigTest extends TestCase
         self::assertSame(8192, $config->maxHeaderSize);
         self::assertSame(10_485_760, $config->maxBodySize);
         self::assertTrue($config->addDateHeader);
+        self::assertSame('auto', $config->driver);
+        self::assertSame(30, $config->drainTimeoutSeconds);
+        self::assertTrue($config->healthEndpoint);
     }
 
     #[Test]
@@ -70,6 +73,9 @@ final class RuntimeConfigTest extends TestCase
             'max_header_size' => 16384,
             'max_body_size' => 20_971_520,
             'add_date_header' => false,
+            'driver' => 'frankenphp',
+            'drain_timeout_seconds' => 60,
+            'health_endpoint' => false,
         ], $env);
 
         self::assertSame('0.0.0.0', $config->host);
@@ -85,6 +91,9 @@ final class RuntimeConfigTest extends TestCase
         self::assertSame(16384, $config->maxHeaderSize);
         self::assertSame(20_971_520, $config->maxBodySize);
         self::assertFalse($config->addDateHeader);
+        self::assertSame('frankenphp', $config->driver);
+        self::assertSame(60, $config->drainTimeoutSeconds);
+        self::assertFalse($config->healthEndpoint);
     }
 
     #[Test]
@@ -127,5 +136,43 @@ final class RuntimeConfigTest extends TestCase
 
         self::assertSame('127.0.0.1', $config->host);
         self::assertSame(8080, $config->port);
+    }
+
+    #[Test]
+    public function it_applies_driver_env_override(): void
+    {
+        $this->setEnv('RUNTIME_DRIVER', 'roadrunner');
+
+        $env = Environment::load(null);
+        $config = RuntimeConfig::fromArray(['driver' => 'fpm'], $env);
+
+        self::assertSame('roadrunner', $config->driver);
+    }
+
+    #[Test]
+    public function it_applies_drain_timeout_env_override(): void
+    {
+        $this->setEnv('RUNTIME_DRAIN_TIMEOUT_SECONDS', '45');
+
+        $env = Environment::load(null);
+        $config = RuntimeConfig::fromArray([], $env);
+
+        self::assertSame(45, $config->drainTimeoutSeconds);
+    }
+
+    #[Test]
+    public function it_creates_from_array_with_new_fields(): void
+    {
+        $env = Environment::load(null);
+
+        $config = RuntimeConfig::fromArray([
+            'driver' => 'persistent',
+            'drain_timeout_seconds' => 15,
+            'health_endpoint' => false,
+        ], $env);
+
+        self::assertSame('persistent', $config->driver);
+        self::assertSame(15, $config->drainTimeoutSeconds);
+        self::assertFalse($config->healthEndpoint);
     }
 }

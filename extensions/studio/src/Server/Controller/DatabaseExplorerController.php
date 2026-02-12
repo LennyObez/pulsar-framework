@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server\Controller;
 
 use JsonException;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 use function htmlspecialchars;
 use function json_encode;
@@ -30,7 +30,7 @@ final readonly class DatabaseExplorerController
     /**
      * @throws JsonException
      */
-    public function handle(Request $_request): Response
+    public function handle(ServerRequestInterface $_request): Response
     {
         $events = $this->store->query(
             ['event_type' => ['db.query']],
@@ -52,7 +52,7 @@ final readonly class DatabaseExplorerController
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Database Queries - Pulsar Studio</title>
+                <title>Database queries - Pulsar Studio</title>
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
@@ -73,7 +73,7 @@ final readonly class DatabaseExplorerController
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>Database Queries - Pulsar Studio</title>
+                <title>Database queries - Pulsar Studio</title>
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>
@@ -89,9 +89,9 @@ final readonly class DatabaseExplorerController
                 </nav>
                 <div class="dashboard">
                     <div class="empty-state">
-                        <h2>No Database Query Events</h2>
+                        <h2>No database query events</h2>
                         <p>No database query events have been recorded yet. Database instrumentation is active when the InstrumentedConnection decorator wraps your database connection.</p>
-                        <a href="/studio/console" class="btn">Back to Console Overview</a>
+                        <a href="/studio/console" class="btn">Back to console overview</a>
                     </div>
                 </div>
             </body>

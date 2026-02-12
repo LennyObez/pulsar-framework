@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Console\Collector;
 
 use Closure;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeLeakWarningPayload;
@@ -13,8 +15,6 @@ use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeSchedulerMetricPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerRecyclePayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerStartPayload;
 use Pulsar\Extension\Studio\FiberScopedContextProvider;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Runtime\RuntimeCollectorInterface;
@@ -80,8 +80,8 @@ final class InstrumentedRuntime implements CollectorInterface, RuntimeCollectorI
      * Record a completed request.
      */
     public function recordRequest(
-        Request $request,
-        Response $response,
+        ServerRequestInterface $request,
+        ResponseInterface $response,
         float $durationMs,
         int $memoryDeltaBytes,
     ): void {
@@ -111,9 +111,9 @@ final class InstrumentedRuntime implements CollectorInterface, RuntimeCollectorI
         }
 
         $event = new RuntimeRequestCompletePayload(
-            method: $request->method->value,
-            path: $request->path,
-            statusCode: $response->status->value,
+            method: $request->getMethod(),
+            path: $request->getUri()->getPath(),
+            statusCode: $response->getStatusCode(),
             durationMs: $durationMs,
             memoryDeltaBytes: $memoryDeltaBytes,
         );

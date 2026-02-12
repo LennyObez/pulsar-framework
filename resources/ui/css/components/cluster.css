@@ -1,0 +1,36 @@
+/* Pulsar UI — Cluster Component v1.0.0
+ * Horizontal cluster layout with wrapping.
+ */
+
+.pui-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.pui-cluster--start {
+  justify-content: flex-start;
+}
+.pui-cluster--center {
+  justify-content: center;
+}
+.pui-cluster--end {
+  justify-content: flex-end;
+}
+.pui-cluster--between {
+  justify-content: space-between;
+}
+
+.pui-cluster--xs {
+  gap: var(--space-1);
+}
+.pui-cluster--sm {
+  gap: var(--space-2);
+}
+.pui-cluster--md {
+  gap: var(--space-3);
+}
+.pui-cluster--lg {
+  gap: var(--space-6);
+}

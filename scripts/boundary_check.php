@@ -31,6 +31,8 @@ final class BoundaryAnalyzer
     private const array COMPOSITION_ROOTS = [
         'Pulsar\\Core\\Kernel',
         'Pulsar\\Console\\Application',
+        'Pulsar\\Console\\Command\\OptimizeCommand',
+        'Pulsar\\Console\\Command\\BuildCommand',
     ];
 
     /** Namespace prefixes that are composition roots (all classes within are exempt). */

@@ -59,7 +59,7 @@ final class EncryptorTest extends TestCase
         self::assertIsString($decoded);
 
         $tampered = $decoded;
-        $tampered[strlen($tampered) - 1] = chr(ord($tampered[strlen($tampered) - 1]) ^ 0xFF);
+        $tampered[strlen($tampered) - 1] = chr((ord($tampered[strlen($tampered) - 1]) ^ 0xFF) & 0xFF);
 
         $this->expectException(SecurityException::class);
         $this->expectExceptionMessage('tampered');

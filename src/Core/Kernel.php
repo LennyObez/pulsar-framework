@@ -6,28 +6,45 @@ namespace Pulsar\Core;
 
 use Error;
 use JsonException;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Build\BuildArtifactLoader;
+use Pulsar\Build\BuildException;
+use Pulsar\Build\VerificationStatus;
 use Pulsar\Cache\CachedRoute;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\RouteHandlerType;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigManagerInterface;
+use Pulsar\Container\AdvancedContainerInterface;
+use Pulsar\Container\Compiler\Pass\AutoTagPass;
+use Pulsar\Container\Compiler\Pass\ValidateDecoratorPass;
+use Pulsar\Container\Compiler\Pass\ValidateLifetimesPass;
+use Pulsar\Container\Compiler\PassRunner;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use Pulsar\Core\Wiring\ApiWiring;
 use Pulsar\Core\Wiring\AuthWiring;
+use Pulsar\Core\Wiring\CacheWiring;
 use Pulsar\Core\Wiring\ConfigWiring;
 use Pulsar\Core\Wiring\DatabaseWiring;
 use Pulsar\Core\Wiring\DeployWiring;
 use Pulsar\Core\Wiring\DiagnosticsWiring;
 use Pulsar\Core\Wiring\ErrorTrackingWiring;
+use Pulsar\Core\Wiring\EventWiring;
 use Pulsar\Core\Wiring\ExceptionHandlerWiring;
 use Pulsar\Core\Wiring\FeatureFlagWiring;
+use Pulsar\Core\Wiring\I18nWiring;
 use Pulsar\Core\Wiring\IntegrityWiring;
 use Pulsar\Core\Wiring\IntrospectionWiring;
 use Pulsar\Core\Wiring\LoggingWiring;
+use Pulsar\Core\Wiring\MailWiring;
 use Pulsar\Core\Wiring\MetricsWiring;
+use Pulsar\Core\Wiring\NotificationWiring;
 use Pulsar\Core\Wiring\QueueWiring;
 use Pulsar\Core\Wiring\RequestContextWiring;
 use Pulsar\Core\Wiring\ResilienceWiring;
@@ -37,16 +54,17 @@ use Pulsar\Core\Wiring\SecurityWiring;
 use Pulsar\Core\Wiring\SupervisorWiring;
 use Pulsar\Core\Wiring\TenancyWiring;
 use Pulsar\Core\Wiring\TracingWiring;
+use Pulsar\Core\Wiring\ViewWiring;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
-use Pulsar\Http\Middleware\MiddlewareInterface;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Method;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewarePipelineInterface;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseEmitter;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -55,9 +73,14 @@ use Pulsar\Routing\Route;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use Random\Engine\Secure;
 use Random\Randomizer;
+use ReflectionClass;
 use ReflectionException;
+use ReflectionMethod;
+use ReflectionNamedType;
 use SodiumException;
 use Throwable;
 
@@ -91,6 +114,12 @@ final class Kernel implements KernelInterface
     private ?RouteContext $routeContext = null;
     private ?BootProfile $bootProfile = null;
     private ?MetricRegistry $metricsRegistry = null;
+
+    /** @var array<string, bool> */
+    private array $handlerUsesArrayParams = [];
+
+    /** @var array<string, list<array{name: string, hasDefault: bool, default: mixed}>> */
+    private array $handlerParamMap = [];
 
     public function __construct(
         ?ContainerInterface $container = null,
@@ -198,6 +227,9 @@ final class Kernel implements KernelInterface
 
         $cacheLoadUs = (int) ((hrtime(true) - $cacheStart) / 1000);
 
+        // Build artifact verification (production mode)
+        $this->verifyBuildArtifacts($cacheLoaded);
+
         // Register shared Randomizer (CSPRNG) singleton
         $randomizer = new Randomizer(new Secure());
         $this->container->instance(Randomizer::class, $randomizer);
@@ -212,10 +244,12 @@ final class Kernel implements KernelInterface
 
             $wirings = [
                 new ConfigWiring(),
+                new I18nWiring(),
                 new LoggingWiring(),
                 new TracingWiring(),
                 new MetricsWiring(),
                 new RequestContextWiring(),
+                new EventWiring(),
                 new ErrorTrackingWiring(),
                 new ExceptionHandlerWiring(),
                 new SecurityWiring(),
@@ -226,12 +260,17 @@ final class Kernel implements KernelInterface
                 new SchedulerWiring(),
                 new ResilienceWiring(),
                 new QueueWiring(),
+                new CacheWiring(),
+                new MailWiring(),
+                new NotificationWiring(),
+                new ApiWiring(),
                 new SupervisorWiring(),
                 new IntegrityWiring(),
                 new DeployWiring(),
                 new RuntimeWiring(),
                 new DiagnosticsWiring(),
                 new IntrospectionWiring(),
+                new ViewWiring(),
             ];
 
             foreach ($wirings as $wiring) {
@@ -260,6 +299,19 @@ final class Kernel implements KernelInterface
         $this->extensionBootstrap?->register($this->container);
         $extensionRegisterUs = (int) ((hrtime(true) - $extRegisterStart) / 1000);
 
+        // Compiler pass phase (skip when cache is loaded — definitions are already processed)
+        $compilerPassStart = hrtime(true);
+
+        if (!$cacheLoaded && $this->container instanceof AdvancedContainerInterface) {
+            $passRunner = new PassRunner();
+            $passRunner->addPass(new AutoTagPass(), 100);
+            $passRunner->addPass(new ValidateLifetimesPass(), -100);
+            $passRunner->addPass(new ValidateDecoratorPass(), -100);
+            $this->container->processCompilerPasses($passRunner);
+        }
+
+        $compilerPassUs = (int) ((hrtime(true) - $compilerPassStart) / 1000);
+
         // Extension boot phase (all extensions — includes preBoot, boot, postBoot)
         $extBootStart = hrtime(true);
         $this->extensionBootstrap?->boot($this->container, $this->router);
@@ -282,6 +334,7 @@ final class Kernel implements KernelInterface
             configUs: $configUs,
             extensionRegisterUs: $extensionRegisterUs,
             extensionBootUs: $extensionBootUs,
+            compilerPassPhaseUs: $compilerPassUs,
             cacheHit: $cacheLoaded,
             routesCached: $routesCached,
         );
@@ -344,9 +397,9 @@ final class Kernel implements KernelInterface
     /**
      * Add global middleware.
      *
-     * @param MiddlewareInterface|class-string<MiddlewareInterface> $middleware
+     * @param PsrMiddlewareInterface|class-string<PsrMiddlewareInterface> $middleware
      */
-    public function addMiddleware(MiddlewareInterface|string $middleware): self
+    public function addMiddleware(PsrMiddlewareInterface|string $middleware): self
     {
         $this->middleware->pipe($middleware);
         return $this;
@@ -357,7 +410,7 @@ final class Kernel implements KernelInterface
      *
      * @throws Throwable If no exception handler is registered or re-thrown after handling fails
      */
-    public function handle(Request $request): Response
+    public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $this->boot();
 
@@ -365,7 +418,10 @@ final class Kernel implements KernelInterface
         $this->routeContext?->reset();
 
         try {
-            return $this->middleware->handle($request, fn(Request $req) => $this->dispatchRoute($req));
+            return $this->middleware->dispatch(
+                $request,
+                fn(ServerRequestInterface $req): ResponseInterface => $this->dispatchRoute($req),
+            );
         } catch (Throwable $e) {
             if ($this->exceptionHandler !== null) {
                 return $this->exceptionHandler->handle($e, $request);
@@ -382,7 +438,7 @@ final class Kernel implements KernelInterface
      */
     public function run(): void
     {
-        $request = Request::fromGlobals();
+        $request = ServerRequest::fromGlobals();
         $response = $this->handle($request);
 
         $emitter = new ResponseEmitter();
@@ -397,13 +453,17 @@ final class Kernel implements KernelInterface
      * @throws NotFoundException If a controller binding is not found in the container
      * @throws Error If a controller class cannot be instantiated
      */
-    private function dispatchRoute(Request $request): Response
+    private function dispatchRoute(ServerRequestInterface $request): ResponseInterface
     {
-        $host = $request->header('Host');
+        $host = $request->getHeaderLine('Host');
+        $method = $request->getMethod();
+        $path = $request->getUri()->getPath();
+
+        $methodEnum = Method::from($method);
 
         if ($this->metricsRegistry !== null) {
             $matchStart = hrtime(true);
-            $matched = $this->router->match($request->method, $request->path, $host);
+            $matched = $this->router->match($methodEnum, $path, $host !== '' ? $host : null);
             $matchUs = (int) ((hrtime(true) - $matchStart) / 1000);
 
             $this->metricsRegistry->histogram(
@@ -412,7 +472,7 @@ final class Kernel implements KernelInterface
                 [10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0],
             )->observe((float) $matchUs);
         } else {
-            $matched = $this->router->match($request->method, $request->path, $host);
+            $matched = $this->router->match($methodEnum, $path, $host !== '' ? $host : null);
         }
 
         // Populate RouteContext for observability middleware (metrics/tracing)
@@ -434,11 +494,14 @@ final class Kernel implements KernelInterface
                         $pipeline->pipe($m);
                     }
                 } else {
-                    /** @var MiddlewareInterface $middleware */
+                    /** @var PsrMiddlewareInterface $middleware */
                     $pipeline->pipe($middleware);
                 }
             }
-            return $pipeline->handle($request, fn(Request $req) => $this->invokeHandler($req, $matched));
+            return $pipeline->dispatch(
+                $request,
+                fn(ServerRequestInterface $req): ResponseInterface => $this->invokeHandler($req, $matched),
+            );
         }
 
         return $this->invokeHandler($request, $matched);
@@ -447,13 +510,18 @@ final class Kernel implements KernelInterface
     /**
      * Add matched route information to the request.
      */
-    private function addRouteAttributesToRequest(Request $request, MatchedRoute $matched): Request
-    {
-        return $request->withAttributes([
-            '_route' => $matched,
-            '_route_name' => $matched->getName(),
-            ...$matched->parameters,
-        ]);
+    private function addRouteAttributesToRequest(
+        ServerRequestInterface $request,
+        MatchedRoute $matched,
+    ): ServerRequestInterface {
+        $request = $request->withAttribute('_route', $matched);
+        $request = $request->withAttribute('_route_name', $matched->getName());
+
+        foreach ($matched->parameters as $key => $value) {
+            $request = $request->withAttribute($key, $value);
+        }
+
+        return $request;
     }
 
     /**
@@ -464,7 +532,7 @@ final class Kernel implements KernelInterface
      * @throws NotFoundException If a controller binding is not found in the container
      * @throws Error If a controller class cannot be instantiated
      */
-    private function invokeHandler(Request $request, MatchedRoute $matched): Response
+    private function invokeHandler(ServerRequestInterface $request, MatchedRoute $matched): ResponseInterface
     {
         $handler = $matched->getHandler();
 
@@ -473,11 +541,13 @@ final class Kernel implements KernelInterface
         } elseif (is_array($handler)) {
             [$class, $method] = $handler;
             $controller = $this->resolveController($class);
-            $response = $controller->$method($request, $matched->parameters);
+            $args = $this->resolveHandlerArguments($class, $method, $request, $matched->parameters);
+            $response = $controller->$method(...$args);
         } elseif (is_string($handler) && class_exists($handler)) {
             $controller = $this->resolveController($handler);
             if (method_exists($controller, '__invoke')) {
-                $response = $controller($request, $matched->parameters);
+                $args = $this->resolveHandlerArguments($handler, '__invoke', $request, $matched->parameters);
+                $response = $controller(...$args);
             } else {
                 throw RoutingException::invalidHandler($handler);
             }
@@ -490,7 +560,7 @@ final class Kernel implements KernelInterface
             return Response::html($response);
         }
 
-        if (!$response instanceof Response) {
+        if (!$response instanceof ResponseInterface) {
             throw RoutingException::unexpectedReturnType(get_debug_type($response));
         }
 
@@ -498,7 +568,93 @@ final class Kernel implements KernelInterface
     }
 
     /**
+     * Resolve handler arguments using reflection.
+     *
+     * If the handler's second parameter is `array $params`, pass the raw parameters array
+     * for backward compatibility. Otherwise, spread named route parameters into positional
+     * arguments based on parameter names.
+     *
+     * @param class-string $class
+     * @param array<string, string> $routeParams
+     * @return list<mixed>
+     */
+    private function resolveHandlerArguments(
+        string $class,
+        string $method,
+        ServerRequestInterface $request,
+        array $routeParams,
+    ): array {
+        $cacheKey = $class . '::' . $method;
+
+        if (!isset($this->handlerUsesArrayParams[$cacheKey])) {
+            try {
+                $reflection = new ReflectionMethod($class, $method);
+                $params = $reflection->getParameters();
+
+                // Check if the second parameter (index 1) is typed as `array`
+                $usesArray = false;
+
+                if (isset($params[1])) {
+                    $type = $params[1]->getType();
+                    $usesArray = $type instanceof ReflectionNamedType && $type->getName() === 'array';
+                }
+
+                $this->handlerUsesArrayParams[$cacheKey] = $usesArray;
+            } catch (ReflectionException) {
+                // Reflection failed — fall back to legacy array-passing
+                $this->handlerUsesArrayParams[$cacheKey] = true;
+            }
+        }
+
+        if ($this->handlerUsesArrayParams[$cacheKey]) {
+            return [$request, $routeParams];
+        }
+
+        // Spread named route params into positional args after $request
+        $args = [$request];
+
+        if (!isset($this->handlerParamMap[$cacheKey])) {
+            try {
+                $reflection = new ReflectionMethod($class, $method);
+                $paramMap = [];
+
+                foreach ($reflection->getParameters() as $i => $param) {
+                    if ($i === 0) {
+                        continue; // Skip $request
+                    }
+
+                    $paramMap[] = [
+                        'name' => $param->getName(),
+                        'hasDefault' => $param->isDefaultValueAvailable(),
+                        'default' => $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null,
+                    ];
+                }
+
+                $this->handlerParamMap[$cacheKey] = $paramMap;
+            } catch (ReflectionException) {
+                // Fall back to passing the array
+                return [$request, $routeParams];
+            }
+        }
+
+        foreach ($this->handlerParamMap[$cacheKey] as $entry) {
+            if (isset($routeParams[$entry['name']])) {
+                $args[] = $routeParams[$entry['name']];
+            } elseif ($entry['hasDefault']) {
+                $args[] = $entry['default'];
+            }
+            // If no route param and no default, skip — PHP will throw a clear error
+        }
+
+        return $args;
+    }
+
+    /**
      * Resolve a controller instance from the container or instantiate directly.
+     *
+     * Attempts container resolution first (supports registered bindings, deferred
+     * providers, and autowiring). Falls back to direct instantiation only if the
+     * container cannot resolve the class.
      *
      * @param class-string $class
      *
@@ -514,7 +670,21 @@ final class Kernel implements KernelInterface
             return $this->container->get($class);
         }
 
-        return new $class();
+        // Attempt direct instantiation only for controllers with no constructor dependencies
+        try {
+            $reflection = new ReflectionClass($class);
+            $constructor = $reflection->getConstructor();
+
+            if ($constructor === null || $constructor->getNumberOfRequiredParameters() === 0) {
+                return new $class();
+            }
+        } catch (ReflectionException) {
+            // Fall through to error
+        }
+
+        throw RoutingException::invalidHandler(
+            $class . ' (not registered in the container — required dependencies are unavailable)',
+        );
     }
 
     /**
@@ -551,6 +721,93 @@ final class Kernel implements KernelInterface
         }
 
         return $routes;
+    }
+
+    /**
+     * Verify build artifacts in production mode.
+     *
+     * In production: fail fast if artifacts are missing, optionally verify integrity.
+     * In development: skip verification (artifacts may not exist).
+     *
+     * @throws BuildException If required artifacts are missing or integrity check fails
+     */
+    private function verifyBuildArtifacts(bool $cacheLoaded): void
+    {
+        $configPath = $this->configManager?->configPath();
+
+        if ($configPath === null) {
+            return;
+        }
+
+        $isProduction = $this->isProductionMode();
+
+        // Only enforce in production mode
+        if (!$isProduction) {
+            return;
+        }
+
+        $cacheDir = $configPath . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache';
+        $loader = new BuildArtifactLoader($cacheDir);
+
+        // Production mode: require build artifacts
+        if (!$loader->hasArtifacts()) {
+            throw BuildException::missingArtifacts(['build-manifest.json']);
+        }
+
+        // Optional integrity verification
+        if (BuildArtifactLoader::isVerificationEnabled()) {
+            $manifest = $loader->loadManifest();
+
+            if ($manifest === null) {
+                throw BuildException::missingArtifact('build-manifest.json');
+            }
+
+            // Verify signature FIRST (if present and crypto services available)
+            // This ensures the manifest itself is authentic before trusting its hashes
+            if ($manifest->signature !== null
+                && $this->container->has(HmacInterface::class)
+                && $this->container->has(KeyProviderInterface::class)
+            ) {
+                /** @var HmacInterface $hmac */
+                $hmac = $this->container->get(HmacInterface::class);
+                /** @var KeyProviderInterface $keyProvider */
+                $keyProvider = $this->container->get(KeyProviderInterface::class);
+
+                if (!$loader->verifySignature($manifest, $hmac, $keyProvider)) {
+                    throw BuildException::signatureVerificationFailed();
+                }
+            }
+
+            // Then verify artifact hashes against the (now-authenticated) manifest
+            $result = $loader->verifyIntegrity($manifest);
+
+            if ($result !== null && !$result->passed) {
+                $failed = [];
+
+                foreach ($result->entries as $key => $status) {
+                    if ($status !== VerificationStatus::Ok) {
+                        $failed[] = $key;
+                    }
+                }
+
+                throw BuildException::integrityCheckFailedMultiple($failed);
+            }
+        }
+    }
+
+    /**
+     * Determine if the application is running in production mode.
+     */
+    private function isProductionMode(): bool
+    {
+        try {
+            $env = $this->configManager?->environment();
+            $appEnv = $env?->get('APP_ENV') ?? 'production';
+
+            return $appEnv === 'production';
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**

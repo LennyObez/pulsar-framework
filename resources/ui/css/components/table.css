@@ -1,0 +1,94 @@
+/* Pulsar UI — Table Component v1.0.0
+ * Variants: basic, striped, bordered, hoverable, responsive.
+ */
+
+.pui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.pui-table th,
+.pui-table td {
+  padding: var(--space-3) var(--space-4);
+  text-align: start;
+  vertical-align: middle;
+}
+
+.pui-table thead th {
+  font-weight: var(--font-semibold);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  background-color: var(--color-bg-secondary);
+  border-block-end: 2px solid var(--table-border);
+  white-space: nowrap;
+}
+
+.pui-table tbody td {
+  border-block-end: 1px solid var(--table-border);
+  color: var(--color-text);
+}
+
+.pui-table tbody tr:last-child td {
+  border-block-end: none;
+}
+
+/* Sortable header */
+.pui-table th[aria-sort] {
+  cursor: pointer;
+  user-select: none;
+}
+
+.pui-table th[aria-sort]:hover {
+  color: var(--color-text);
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Striped variant */
+.pui-table--striped tbody tr:nth-child(even) {
+  background-color: var(--table-stripe-bg);
+}
+
+/* Bordered variant */
+.pui-table--bordered {
+  border: 1px solid var(--table-border);
+}
+
+.pui-table--bordered th,
+.pui-table--bordered td {
+  border: 1px solid var(--table-border);
+}
+
+/* Hoverable variant */
+.pui-table--hoverable tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.pui-table--hoverable tbody tr:hover {
+  background-color: var(--table-hover-bg);
+}
+
+/* Compact variant */
+.pui-table--compact th,
+.pui-table--compact td {
+  padding: var(--space-1-5) var(--space-3);
+  font-size: var(--text-xs);
+}
+
+/* Responsive wrapper */
+.pui-table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--table-border);
+  border-radius: var(--radius-lg);
+}
+
+.pui-table-responsive .pui-table {
+  margin: 0;
+}
+
+.pui-table-responsive .pui-table--bordered {
+  border: none;
+}

@@ -1,0 +1,22 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Cache\Application\Event;
+
+use Pulsar\Api\Api;
+
+/**
+ * Emitted when a cache pool is cleared.
+ */
+#[Api(since: '1.0.0')]
+final readonly class CacheClearEvent extends CacheEvent
+{
+    public function __construct(
+        string $poolName,
+        string $driverName,
+        int $durationMicroseconds,
+    ) {
+        parent::__construct($poolName, $driverName, '', $durationMicroseconds, 'clear');
+    }
+}

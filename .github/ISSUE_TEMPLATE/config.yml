@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/LennyObez/pulsar-framework/tree/main/docs
+    about: Read the Pulsar Framework documentation.
+  - name: Discussions
+    url: https://github.com/LennyObez/pulsar-framework/discussions
+    about: Ask questions and discuss ideas with the community.
