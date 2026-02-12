@@ -79,9 +79,14 @@ final class ShellCommand extends Command
             $safeModeProvider->apply();
         }
 
-        // Determine audit state
+        // Determine audit state — production always requires audit logging
         $auditEnabled = $this->config->audit && !$input->hasOption('no-audit');
         $actor = $this->resolveActor();
+
+        if ($this->mode === EnvironmentMode::Production && !$auditEnabled) {
+            $auditEnabled = true;
+            $output->warning('Audit logging cannot be disabled in production. --no-audit ignored.');
+        }
 
         // Log production override if applicable
         if ($guardResult->isProductionOverride && $auditEnabled && $this->auditLogger !== null) {
@@ -106,8 +111,9 @@ final class ShellCommand extends Command
         $output->writeln('Type "exit" or press Ctrl+D to quit.');
         $output->newLine();
 
-        // Build scope variables — expose container and redactor
-        $scopeVars = ['container' => $this->container];
+        // Build scope variables — expose container (read-only in safe mode) and redactor
+        $exposedContainer = $safeMode ? new ReadOnlyContainer($this->container) : $this->container;
+        $scopeVars = ['container' => $exposedContainer];
         if ($this->redactor !== null) {
             $scopeVars['redactor'] = $this->redactor;
             $output->writeln('$redactor available — use $redactor->redactOutput($string) to scrub secrets.');
@@ -121,7 +127,8 @@ final class ShellCommand extends Command
             // Log session end (always, even if shell throws)
             if ($auditEnabled && $this->auditLogger !== null) {
                 $duration = microtime(true) - $startTime;
-                $this->auditLogger->logSessionEnd($actor, 0, $duration);
+                // Command count unavailable without PsySH instrumentation
+                $this->auditLogger->logSessionEnd($actor, null, $duration);
             }
         }
 

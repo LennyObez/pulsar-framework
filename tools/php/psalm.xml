@@ -31,6 +31,7 @@
         <MixedAssignment errorLevel="suppress"/>
         <MixedMethodCall errorLevel="suppress"/>
         <MixedArgument errorLevel="suppress"/>
+        <MixedReturnStatement errorLevel="suppress"/>
 
         <!-- Readonly classes are designed for extension in a framework -->
         <ClassMustBeFinal errorLevel="suppress"/>

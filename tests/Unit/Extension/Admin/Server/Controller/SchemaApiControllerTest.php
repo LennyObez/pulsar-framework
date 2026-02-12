@@ -331,4 +331,148 @@ final class SchemaApiControllerTest extends TestCase
 
         $this->controller->renameTable($request, 'old_tbl');
     }
+
+    #[Test]
+    public function addColumnWithValidReasonSucceeds(): void
+    {
+        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+            'reason' => 'Adding email column for notifications',
+            'name' => 'email',
+            'type' => 'string',
+            'length' => 255,
+        ]);
+
+        $response = $this->controller->addColumn($request, 'test_tbl');
+
+        self::assertSame(201, $response->status->value);
+        /** @var array<string, mixed> $body */
+        $body = json_decode($response->body, true);
+        self::assertTrue($body['success']);
+    }
+
+    #[Test]
+    public function dropColumnRequiresReason(): void
+    {
+        $request = $this->makeJsonRequest(Method::DELETE, bodyData: ['reason' => 'no']);
+
+        $this->expectException(AdminException::class);
+        $this->expectExceptionMessage('reason of at least 5 characters');
+
+        $this->controller->dropColumn($request, 'test_tbl', 'old_col');
+    }
+
+    #[Test]
+    public function addIndexWithValidReasonSucceeds(): void
+    {
+        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+            'reason' => 'Adding index for faster lookups',
+            'name' => 'idx_email',
+            'columns' => ['email'],
+        ]);
+
+        $response = $this->controller->addIndex($request, 'test_tbl');
+
+        self::assertSame(201, $response->status->value);
+        /** @var array<string, mixed> $body */
+        $body = json_decode($response->body, true);
+        self::assertTrue($body['success']);
+    }
+
+    #[Test]
+    public function dropIndexRequiresReason(): void
+    {
+        $request = $this->makeJsonRequest(Method::DELETE, bodyData: ['reason' => 'ab']);
+
+        $this->expectException(AdminException::class);
+        $this->expectExceptionMessage('reason of at least 5 characters');
+
+        $this->controller->dropIndex($request, 'test_tbl', 'idx_old');
+    }
+
+    #[Test]
+    public function previewAddColumnReturnsStatements(): void
+    {
+        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+            'name' => 'email',
+            'type' => 'string',
+            'length' => 255,
+        ]);
+
+        $response = $this->controller->previewAddColumn($request, 'test_tbl');
+
+        self::assertSame(200, $response->status->value);
+        /** @var array<string, mixed> $body */
+        $body = json_decode($response->body, true);
+        self::assertArrayHasKey('statements', $body);
+        /** @var list<string> $statements */
+        $statements = $body['statements'];
+        self::assertNotEmpty($statements);
+        self::assertStringContainsString('ALTER TABLE', $statements[0]);
+    }
+
+    #[Test]
+    public function previewDropColumnReturnsStatements(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/admin/api/schema/preview/test_tbl/column/drop',
+            path: '/admin/api/schema/preview/test_tbl/column/drop',
+            queryString: '',
+            headers: new HeaderBag(['Accept' => 'application/json']),
+            body: '',
+        );
+
+        $response = $this->controller->previewDropColumn($request, 'test_tbl');
+
+        self::assertSame(200, $response->status->value);
+        /** @var array<string, mixed> $body */
+        $body = json_decode($response->body, true);
+        self::assertArrayHasKey('statements', $body);
+        /** @var list<string> $statements */
+        $statements = $body['statements'];
+        self::assertNotEmpty($statements);
+    }
+
+    #[Test]
+    public function previewAddIndexReturnsStatements(): void
+    {
+        $request = $this->makeJsonRequest(Method::POST, bodyData: [
+            'name' => 'idx_email',
+            'columns' => ['email'],
+        ]);
+
+        $response = $this->controller->previewAddIndex($request, 'test_tbl');
+
+        self::assertSame(200, $response->status->value);
+        /** @var array<string, mixed> $body */
+        $body = json_decode($response->body, true);
+        self::assertArrayHasKey('statements', $body);
+        /** @var list<string> $statements */
+        $statements = $body['statements'];
+        self::assertNotEmpty($statements);
+        self::assertStringContainsString('CREATE INDEX', $statements[0]);
+    }
+
+    #[Test]
+    public function previewDropIndexReturnsStatements(): void
+    {
+        $request = new Request(
+            method: Method::POST,
+            uri: '/admin/api/schema/preview/test_tbl/index/drop',
+            path: '/admin/api/schema/preview/test_tbl/index/drop',
+            queryString: '',
+            headers: new HeaderBag(['Accept' => 'application/json']),
+            body: '',
+        );
+
+        $response = $this->controller->previewDropIndex($request, 'test_tbl');
+
+        self::assertSame(200, $response->status->value);
+        /** @var array<string, mixed> $body */
+        $body = json_decode($response->body, true);
+        self::assertArrayHasKey('statements', $body);
+        /** @var list<string> $statements */
+        $statements = $body['statements'];
+        self::assertNotEmpty($statements);
+    }
 }

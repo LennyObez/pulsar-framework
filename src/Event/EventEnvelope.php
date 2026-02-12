@@ -106,15 +106,17 @@ final readonly class EventEnvelope
         $eventId = $data['event_id'] ?? '';
         $eventType = $data['event_type'] ?? '';
         $schemaVersion = $data['schema_version'] ?? 0;
-        $payloadHash = $data['payload_hash'] ?? '';
-
         return new self(
             eventId: is_string($eventId) ? $eventId : '',
             eventType: is_string($eventType) ? $eventType : '',
             schemaVersion: is_int($schemaVersion) ? $schemaVersion : 0,
             metadata: EventMetadata::fromArray($metadataData),
             payload: $payload,
-            payloadHash: is_string($payloadHash) ? $payloadHash : '',
+            payloadHash: self::computeHash(
+                is_string($eventType) ? $eventType : '',
+                is_int($schemaVersion) ? $schemaVersion : 0,
+                $payload,
+            ),
         );
     }
 

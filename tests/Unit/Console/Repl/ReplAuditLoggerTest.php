@@ -67,6 +67,29 @@ final class ReplAuditLoggerTest extends TestCase
     }
 
     #[Test]
+    public function logSessionEndOmitsCommandCountWhenNull(): void
+    {
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
+            ->method('log')
+            ->with(
+                AuditEvent::SystemEvent,
+                AuditOutcome::Success,
+                'admin',
+                'repl.session_end',
+                'repl',
+                self::callback(function (array $metadata): bool {
+                    return $metadata['session_id'] === 'test-session-id'
+                        && !isset($metadata['command_count'])
+                        && $metadata['duration_seconds'] === 60.0;
+                }),
+            );
+
+        $logger = new ReplAuditLogger($auditLogger, 'test-session-id');
+        $logger->logSessionEnd('admin', null, 60.0);
+    }
+
+    #[Test]
     public function logCommand(): void
     {
         $auditLogger = $this->createMock(AuditLoggerInterface::class);

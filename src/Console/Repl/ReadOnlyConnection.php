@@ -13,6 +13,7 @@ use Pulsar\Database\Statement;
 use Pulsar\Database\Transaction;
 
 use function ltrim;
+use function preg_match;
 use function preg_replace;
 use function str_starts_with;
 use function strlen;
@@ -125,17 +126,39 @@ final readonly class ReadOnlyConnection implements ConnectionInterface
     {
         // Strip leading whitespace and SQL comments
         $normalized = preg_replace('/^\s*(?:--[^\n]*\n|\/\*.*?\*\/\s*)*/s', '', $sql) ?? $sql;
+
+        // Strip MySQL conditional comments (/*!... */ or /*!12345 ... */)
+        $normalized = preg_replace('#/\*!\d*\s*(.*?)\*/#s', '$1', $normalized) ?? $normalized;
         $normalized = ltrim($normalized);
         $upper = strtoupper($normalized);
 
-        // Simple prefix check for non-CTE statements
-        $allowed = str_starts_with($upper, 'SELECT')
-            || str_starts_with($upper, 'EXPLAIN')
-            || str_starts_with($upper, 'DESCRIBE')
-            || str_starts_with($upper, 'SHOW')
-            || str_starts_with($upper, 'PRAGMA');
+        // EXPLAIN [ANALYZE] [VERBOSE] must not wrap DML
+        if (str_starts_with($upper, 'EXPLAIN')) {
+            $remainder = preg_replace('/^EXPLAIN\s+(?:ANALYZE\s+)?(?:VERBOSE\s+)?/i', '', $upper) ?? $upper;
 
-        if ($allowed) {
+            if (str_starts_with($remainder, 'INSERT')
+                || str_starts_with($remainder, 'UPDATE')
+                || str_starts_with($remainder, 'DELETE')
+                || str_starts_with($remainder, 'MERGE')
+                || str_starts_with($remainder, 'CALL')) {
+                throw ReplSafeModeException::writeQueryBlocked($sql);
+            }
+
+            return;
+        }
+
+        // SELECT INTO OUTFILE/DUMPFILE writes to filesystem
+        if (str_starts_with($upper, 'SELECT')) {
+            if (preg_match('/\bINTO\s+(OUTFILE|DUMPFILE)\b/i', $upper)) {
+                throw ReplSafeModeException::writeQueryBlocked($sql);
+            }
+
+            return;
+        }
+
+        if (str_starts_with($upper, 'DESCRIBE')
+            || str_starts_with($upper, 'SHOW')
+            || str_starts_with($upper, 'PRAGMA')) {
             return;
         }
 
@@ -150,18 +173,44 @@ final readonly class ReadOnlyConnection implements ConnectionInterface
     /**
      * Validate that a WITH (CTE) query's final statement is read-only.
      *
-     * Tracks parenthesis depth to find where CTE definitions end,
-     * then validates the main statement keyword.
+     * Tracks parenthesis depth and string literals to find where CTE
+     * definitions end, then validates the main statement keyword.
      */
     private function isWithQueryReadOnly(string $sql): bool
     {
         $depth = 0;
         $len = strlen($sql);
+        $inString = false;
 
         for ($i = 0; $i < $len; $i++) {
-            if ($sql[$i] === '(') {
+            $char = $sql[$i];
+
+            // Track single-quoted string literals (SQL standard)
+            if ($char === "'") {
+                if ($inString) {
+                    // Check for escaped quote ('')
+                    if ($i + 1 < $len && $sql[$i + 1] === "'") {
+                        $i++; // Skip escaped quote
+
+                        continue;
+                    }
+
+                    $inString = false;
+                } else {
+                    $inString = true;
+                }
+
+                continue;
+            }
+
+            // Skip parenthesis tracking inside string literals
+            if ($inString) {
+                continue;
+            }
+
+            if ($char === '(') {
                 $depth++;
-            } elseif ($sql[$i] === ')') {
+            } elseif ($char === ')') {
                 $depth--;
 
                 if ($depth === 0) {

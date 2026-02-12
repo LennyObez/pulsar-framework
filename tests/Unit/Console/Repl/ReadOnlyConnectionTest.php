@@ -57,6 +57,9 @@ final class ReadOnlyConnectionTest extends TestCase
         yield 'WITH nested subquery' => ['WITH cte AS (SELECT * FROM (SELECT 1) sub) SELECT * FROM cte'];
         yield 'leading whitespace' => ['  SELECT 1'];
         yield 'with comment' => ["-- comment\nSELECT 1"];
+        yield 'EXPLAIN ANALYZE SELECT' => ['EXPLAIN ANALYZE SELECT * FROM users'];
+        yield 'SELECT with into_field alias' => ['SELECT into_field FROM users'];
+        yield 'WITH CTE containing string with parens' => ["WITH cte AS (SELECT '(hello)' AS val) SELECT * FROM cte"];
     }
 
     #[Test]
@@ -83,6 +86,11 @@ final class ReadOnlyConnectionTest extends TestCase
         yield 'WITH CTE + INSERT' => ['WITH cte AS (SELECT 1) INSERT INTO users (id) SELECT * FROM cte'];
         yield 'WITH CTE + UPDATE' => ['WITH cte AS (SELECT 1) UPDATE users SET active = 1'];
         yield 'WITH CTE + DELETE' => ['WITH cte AS (SELECT 1) DELETE FROM users WHERE id IN (SELECT * FROM cte)'];
+        yield 'EXPLAIN ANALYZE INSERT' => ['EXPLAIN ANALYZE INSERT INTO users (name) VALUES ("test")'];
+        yield 'EXPLAIN ANALYZE DELETE' => ['EXPLAIN ANALYZE DELETE FROM users'];
+        yield 'SELECT INTO OUTFILE' => ['SELECT * FROM users INTO OUTFILE "/tmp/data.csv"'];
+        yield 'SELECT INTO DUMPFILE' => ['SELECT * FROM users INTO DUMPFILE "/tmp/data.bin"'];
+        yield 'MySQL conditional comment INSERT' => ['/*!40000 INSERT INTO users VALUES (1) */'];
     }
 
     #[Test]

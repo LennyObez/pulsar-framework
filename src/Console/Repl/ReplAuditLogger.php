@@ -54,19 +54,24 @@ final readonly class ReplAuditLogger
     /**
      * Log the end of a REPL session.
      */
-    public function logSessionEnd(string $actor, int $commandCount, float $durationSeconds): void
+    public function logSessionEnd(string $actor, ?int $commandCount, float $durationSeconds): void
     {
+        $metadata = [
+            'session_id' => $this->sessionId,
+            'duration_seconds' => $durationSeconds,
+        ];
+
+        if ($commandCount !== null) {
+            $metadata['command_count'] = $commandCount;
+        }
+
         $this->auditLogger->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
             actor: $actor,
             action: 'repl.session_end',
             resource: 'repl',
-            metadata: [
-                'session_id' => $this->sessionId,
-                'command_count' => $commandCount,
-                'duration_seconds' => $durationSeconds,
-            ],
+            metadata: $metadata,
         );
     }
 

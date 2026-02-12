@@ -134,9 +134,6 @@ final class DeferredProviderRegistryTest extends TestCase
     /**
      * @param list<string> $provides
      */
-    /**
-     * @param list<string> $provides
-     */
     private function createProvider(array $provides): DeferredServiceProviderInterface
     {
         return new class ($provides) implements DeferredServiceProviderInterface {
