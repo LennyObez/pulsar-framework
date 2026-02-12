@@ -24,11 +24,13 @@ readonly class TranslatableViolation extends Violation
         string $rule,
         public string $translationKey,
         public array $parameters = [],
+        string $code = '',
     ) {
         parent::__construct(
             field: $field,
             message: $translationKey,
             rule: $rule,
+            code: $code,
         );
     }
 

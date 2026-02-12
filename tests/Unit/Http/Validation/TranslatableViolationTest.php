@@ -75,5 +75,19 @@ final class TranslatableViolationTest extends TestCase
         self::assertSame('name', $array['field']);
         self::assertSame('required', $array['message']);
         self::assertSame('required', $array['rule']);
+        self::assertSame('VALIDATION_REQUIRED', $array['code']);
+    }
+
+    #[Test]
+    public function explicitCodePassedToParent(): void
+    {
+        $violation = new TranslatableViolation(
+            field: 'email',
+            rule: 'email',
+            translationKey: 'email',
+            code: 'CUSTOM_CODE',
+        );
+
+        self::assertSame('CUSTOM_CODE', $violation->code);
     }
 }
