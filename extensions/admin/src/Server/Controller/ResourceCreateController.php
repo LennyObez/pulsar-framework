@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
-use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Exception\ResourceValidationException;
@@ -22,6 +21,9 @@ use Pulsar\Http\ResponseStatus;
 #[Internal]
 final readonly class ResourceCreateController
 {
+    use ExtractsRequestActor;
+    use RendersAdminLayout;
+
     public function __construct(
         private CreateResourceHandler $handler,
         private ResourceRegistryInterface $registry,
@@ -32,7 +34,7 @@ final readonly class ResourceCreateController
     {
         $resourceDef = $this->registry->get($resource);
 
-        return Response::html($this->renderView("Create {$resourceDef->label()}", [
+        return Response::html($this->renderAdminView("Create {$resourceDef->label()}", 'resource-form', [
             'resource' => $resourceDef,
             'data' => [],
             'mode' => 'create',
@@ -42,9 +44,7 @@ final readonly class ResourceCreateController
 
     public function store(ServerRequestInterface $request, string $resource): Response
     {
-        /** @var IdentityInterface|null $identity */
-        $identity = $request->getAttribute('identity');
-        $actor = $identity?->id() ?? 'anonymous';
+        $actor = $this->resolveActor($request);
 
         $context = new MutationContext(
             actor: $actor,
@@ -70,15 +70,4 @@ final readonly class ResourceCreateController
         }
     }
 
-    /**
-     * @param array<string, mixed> $templateData
-     */
-    private function renderView(string $title, array $templateData): string
-    {
-        extract(['title' => $title, 'content' => 'resource-form', 'templateData' => $templateData]);
-        ob_start();
-        include __DIR__ . '/../View/templates/admin/layout.php';
-
-        return (string) ob_get_clean();
-    }
 }

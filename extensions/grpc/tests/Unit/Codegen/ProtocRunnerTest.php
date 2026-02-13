@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Extension\Grpc\Unit\Codegen;
+namespace Pulsar\Extension\Grpc\Tests\Unit\Codegen;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -17,7 +17,6 @@ final class ProtocRunnerTest extends TestCase
     public function generateFailsWhenProtoFileNotFound(): void
     {
         $config = new CodegenConfig(
-            protocBinary: 'protoc',
             protoPath: '/nonexistent',
         );
         $runner = new ProtocRunner($config);
@@ -33,8 +32,8 @@ final class ProtocRunnerTest extends TestCase
     public function generateFailsWhenProtocNotInstalled(): void
     {
         $config = new CodegenConfig(
-            protocBinary: '/nonexistent/protoc-fake-binary-xyz',
             protoPath: sys_get_temp_dir(),
+            protocBinary: '/nonexistent/protoc-fake-binary-xyz',
         );
         $runner = new ProtocRunner($config);
 

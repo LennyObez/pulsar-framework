@@ -156,7 +156,7 @@ final readonly class AnalyticsExtension implements
         // Stats endpoints
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/stats/aggregate",
+            path: "$prefix/stats/aggregate",
             handler: [StatsController::class, 'aggregate'],
             name: 'analytics.api.stats',
             middleware: $authMiddleware,
@@ -164,7 +164,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/stats/timeseries",
+            path: "$prefix/stats/timeseries",
             handler: [TimeseriesController::class, 'timeseries'],
             name: 'analytics.api.timeseries',
             middleware: $authMiddleware,
@@ -172,7 +172,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/stats/breakdown",
+            path: "$prefix/stats/breakdown",
             handler: [BreakdownController::class, 'breakdown'],
             name: 'analytics.api.breakdown',
             middleware: $authMiddleware,
@@ -180,7 +180,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/stats/realtime",
+            path: "$prefix/stats/realtime",
             handler: [RealtimeController::class, 'realtime'],
             name: 'analytics.api.realtime',
             middleware: $authMiddleware,
@@ -188,7 +188,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/export",
+            path: "$prefix/export",
             handler: [ExportController::class, 'export'],
             name: 'analytics.api.export',
             middleware: $authMiddleware,
@@ -197,7 +197,7 @@ final readonly class AnalyticsExtension implements
         // Goals CRUD
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/goals",
+            path: "$prefix/goals",
             handler: [GoalController::class, 'index'],
             name: 'analytics.api.goals.index',
             middleware: $authMiddleware,
@@ -205,7 +205,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::POST],
-            path: "{$prefix}/goals",
+            path: "$prefix/goals",
             handler: [GoalController::class, 'create'],
             name: 'analytics.api.goals.create',
             middleware: $authMiddleware,
@@ -213,7 +213,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/goals/{id}",
+            path: "$prefix/goals/{id}",
             handler: [GoalController::class, 'show'],
             name: 'analytics.api.goals.show',
             middleware: $authMiddleware,
@@ -221,7 +221,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::PUT],
-            path: "{$prefix}/goals/{id}",
+            path: "$prefix/goals/{id}",
             handler: [GoalController::class, 'update'],
             name: 'analytics.api.goals.update',
             middleware: $authMiddleware,
@@ -229,7 +229,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::DELETE],
-            path: "{$prefix}/goals/{id}",
+            path: "$prefix/goals/{id}",
             handler: [GoalController::class, 'delete'],
             name: 'analytics.api.goals.delete',
             middleware: $authMiddleware,
@@ -238,7 +238,7 @@ final readonly class AnalyticsExtension implements
         // Sites CRUD
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/sites",
+            path: "$prefix/sites",
             handler: [SiteController::class, 'index'],
             name: 'analytics.api.sites.index',
             middleware: $authMiddleware,
@@ -246,7 +246,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::POST],
-            path: "{$prefix}/sites",
+            path: "$prefix/sites",
             handler: [SiteController::class, 'create'],
             name: 'analytics.api.sites.create',
             middleware: $authMiddleware,
@@ -254,7 +254,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
-            path: "{$prefix}/sites/{id}",
+            path: "$prefix/sites/{id}",
             handler: [SiteController::class, 'show'],
             name: 'analytics.api.sites.show',
             middleware: $authMiddleware,
@@ -262,7 +262,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::PUT],
-            path: "{$prefix}/sites/{id}",
+            path: "$prefix/sites/{id}",
             handler: [SiteController::class, 'update'],
             name: 'analytics.api.sites.update',
             middleware: $authMiddleware,
@@ -270,7 +270,7 @@ final readonly class AnalyticsExtension implements
 
         $router->add(new Route(
             methods: [Method::DELETE],
-            path: "{$prefix}/sites/{id}",
+            path: "$prefix/sites/{id}",
             handler: [SiteController::class, 'delete'],
             name: 'analytics.api.sites.delete',
             middleware: $authMiddleware,

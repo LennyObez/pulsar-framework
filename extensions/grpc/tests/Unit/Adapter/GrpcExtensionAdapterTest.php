@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Grpc\Adapter\GrpcExtensionAdapter;
+use Pulsar\Extension\Grpc\Adapter\GrpcRequestHandler;
 use RuntimeException;
 
 use function extension_loaded;
@@ -41,7 +42,7 @@ final class GrpcExtensionAdapterTest extends TestCase
         }
 
         $adapter = new GrpcExtensionAdapter();
-        $handler = $this->createStub(\Pulsar\Extension\Grpc\Adapter\GrpcRequestHandler::class);
+        $handler = $this->createStub(GrpcRequestHandler::class);
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('grpc PHP extension is not loaded');

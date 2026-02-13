@@ -172,9 +172,9 @@ final readonly class ColorParser
             throw InvalidColorException::forValue($value);
         }
 
-        $r = $this->clampInt((int) round((float) $parts[0]), 0, 255);
-        $g = $this->clampInt((int) round((float) $parts[1]), 0, 255);
-        $b = $this->clampInt((int) round((float) $parts[2]), 0, 255);
+        $r = $this->clampByte((int) round((float) $parts[0]));
+        $g = $this->clampByte((int) round((float) $parts[1]));
+        $b = $this->clampByte((int) round((float) $parts[2]));
         $a = isset($parts[3]) ? $this->parseAlpha($parts[3]) : 1.0;
 
         return new ParsedColor($r, $g, $b, $a);
@@ -314,8 +314,8 @@ final readonly class ColorParser
         return $p;
     }
 
-    private function clampInt(int $value, int $min, int $max): int
+    private function clampByte(int $value): int
     {
-        return max($min, min($max, $value));
+        return max(0, min(255, $value));
     }
 }

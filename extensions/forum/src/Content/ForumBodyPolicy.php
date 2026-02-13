@@ -113,9 +113,7 @@ final readonly class ForumBodyPolicy
         $html = preg_replace('/[\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $html) ?? $html;
 
         // Strip CDATA markers
-        $html = str_replace(['<![CDATA[', ']]>'], '', $html);
-
-        return $html;
+        return str_replace(['<![CDATA[', ']]>'], '', $html);
     }
 
     /**
@@ -407,6 +405,6 @@ final readonly class ForumBodyPolicy
 
     private function escapeToPlaintext(string $input): string
     {
-        return htmlspecialchars($input, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        return htmlspecialchars($input);
     }
 }

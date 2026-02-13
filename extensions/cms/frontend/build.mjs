@@ -24,7 +24,7 @@ if (existsSync(darkCssPath)) {
   entryPoints['cms-admin-dark'] = darkCssPath;
 }
 
-/** @type {esbuild.BuildOptions} */
+/** @type {import('esbuild').BuildOptions} */
 const sharedOptions = {
   bundle: true,
   outdir,
@@ -40,7 +40,7 @@ const sharedOptions = {
   },
 };
 
-/** @type {esbuild.BuildOptions} */
+/** @type {import('esbuild').BuildOptions} */
 const buildOptions = {
   ...sharedOptions,
   entryPoints,
@@ -70,9 +70,7 @@ try {
       const manifest = {};
       for (const [outputPath, meta] of Object.entries(result.metafile.outputs)) {
         if (meta.entryPoint) {
-          const entryName = meta.entryPoint;
-          const filename = outputPath.split('/').pop();
-          manifest[entryName] = filename;
+          manifest[meta.entryPoint] = outputPath.split('/').pop();
         }
       }
       writeFileSync(join(outdir, 'manifest.json'), JSON.stringify(manifest, null, 2));

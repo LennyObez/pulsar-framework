@@ -55,7 +55,7 @@ final readonly class CmsNotificationDispatcher
             contentTitle: $event->contentId,
             authorId: $event->publishedBy,
             publishedAt: new DateTimeImmutable(),
-            url: "/content/{$event->contentId}",
+            url: "/content/$event->contentId",
             recipientUserIds: [$event->publishedBy],
         );
 

@@ -9,12 +9,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Cms\Comments\Comment;
 use Pulsar\Extension\Cms\Comments\CommentBodyPolicy;
 use Pulsar\Extension\Cms\Comments\CommentService;
 use Pulsar\Extension\Cms\Comments\ModerationStatus;
 use Pulsar\Extension\Cms\Content\Content;
+use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentType;
 use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\Exception\CmsException;
@@ -169,18 +171,18 @@ final class E2ECommentRepository implements \Pulsar\Extension\Cms\Comments\Comme
         return $this->comments[$id] ?? null;
     }
 
-    public function findByContent(string $contentId, ?ModerationStatus $status = null, int $page = 1, int $perPage = 20): \Pulsar\Api\Pagination\PaginationResult
+    public function findByContent(string $contentId, ?ModerationStatus $status = null, int $page = 1, int $perPage = 20): PaginationResult
     {
         $items = array_filter($this->comments, static fn(Comment $c) => $c->contentId === $contentId && ($status === null || $c->status === $status));
 
-        return new \Pulsar\Api\Pagination\PaginationResult(items: array_values($items), total: count($items), hasMore: false, perPage: $perPage);
+        return new PaginationResult(items: array_values($items), total: count($items), hasMore: false, perPage: $perPage);
     }
 
-    public function findPendingModeration(?string $tenantId = null, int $page = 1, int $perPage = 20): \Pulsar\Api\Pagination\PaginationResult
+    public function findPendingModeration(?string $tenantId = null, int $page = 1, int $perPage = 20): PaginationResult
     {
         $items = array_filter($this->comments, static fn(Comment $c) => $c->status === ModerationStatus::Pending);
 
-        return new \Pulsar\Api\Pagination\PaginationResult(items: array_values($items), total: count($items), hasMore: false, perPage: $perPage);
+        return new PaginationResult(items: array_values($items), total: count($items), hasMore: false, perPage: $perPage);
     }
 
     public function save(Comment $comment): void
@@ -197,7 +199,7 @@ final class E2ECommentRepository implements \Pulsar\Extension\Cms\Comments\Comme
 /**
  * @internal In-memory content repository for E2E comment tests.
  */
-final class E2EContentRepository implements \Pulsar\Extension\Cms\Content\ContentRepositoryInterface
+final class E2EContentRepository implements ContentRepositoryInterface
 {
     /** @var array<string, Content> */
     private array $contents = [];
@@ -212,9 +214,9 @@ final class E2EContentRepository implements \Pulsar\Extension\Cms\Content\Conten
         return null;
     }
 
-    public function findPublished(string $locale, ?string $contentType = null, int $page = 1, int $perPage = 20, ?string $tenantId = null): \Pulsar\Api\Pagination\PaginationResult
+    public function findPublished(string $locale, ?string $contentType = null, int $page = 1, int $perPage = 20, ?string $tenantId = null): PaginationResult
     {
-        return new \Pulsar\Api\Pagination\PaginationResult(items: [], total: 0, hasMore: false, perPage: $perPage);
+        return new PaginationResult(items: [], total: 0, hasMore: false, perPage: $perPage);
     }
 
     public function findByIds(array $ids): array

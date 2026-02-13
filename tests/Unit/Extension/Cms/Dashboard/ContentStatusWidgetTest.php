@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Dashboard\ContentStatusQueryInterface;
 use Pulsar\Extension\Cms\Dashboard\ContentStatusWidget;
+use Pulsar\Extension\Cms\Dashboard\DashboardWidgetInterface;
 
 #[CoversClass(ContentStatusWidget::class)]
 final class ContentStatusWidgetTest extends TestCase
@@ -104,6 +105,6 @@ final class ContentStatusWidgetTest extends TestCase
         $query = $this->createStub(ContentStatusQueryInterface::class);
         $widget = new ContentStatusWidget($query);
 
-        self::assertInstanceOf(\Pulsar\Extension\Cms\Dashboard\DashboardWidgetInterface::class, $widget);
+        self::assertInstanceOf(DashboardWidgetInterface::class, $widget);
     }
 }

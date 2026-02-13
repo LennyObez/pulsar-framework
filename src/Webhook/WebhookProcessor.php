@@ -60,7 +60,7 @@ final readonly class WebhookProcessor
         // Step 2: Decode payload
         try {
             /** @var array<string, mixed> $payload */
-            $payload = json_decode($rawBody, true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($rawBody, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return new WebhookProcessingResult(
                 status: WebhookProcessingStatus::HandlerError,

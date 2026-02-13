@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\BlockEditor\CoreBlocks;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
+use Pulsar\Extension\Cms\Media\ImageVariant;
 use Pulsar\Extension\Cms\Media\MediaAsset;
 use Pulsar\Extension\Cms\Media\ResponsiveImageRenderer;
 
@@ -65,7 +66,7 @@ final readonly class GalleryBlock implements BlockTypeInterface
             $columns = 3;
         }
 
-        $html = "<div class=\"gallery\" data-gallery style=\"display:grid;grid-template-columns:repeat({$columns},1fr);gap:1rem\">";
+        $html = "<div class=\"gallery\" data-gallery style=\"display:grid;grid-template-columns:repeat($columns,1fr);gap:1rem\">";
 
         foreach ($images as $image) {
             if (!is_array($image)) {
@@ -79,17 +80,17 @@ final readonly class GalleryBlock implements BlockTypeInterface
 
             /** @var MediaAsset|null $asset */
             $asset = $image['_asset'] ?? null;
-            /** @var list<\Pulsar\Extension\Cms\Media\ImageVariant> $variants */
+            /** @var list<ImageVariant> $variants */
             $variants = $image['_variants'] ?? [];
 
             $categoryAttr = is_string($category) ? ' data-category="' . htmlspecialchars($category, ENT_QUOTES, 'UTF-8') . '"' : '';
 
-            $html .= "<figure{$categoryAttr}>";
+            $html .= "<figure$categoryAttr>";
 
             if ($this->responsiveRenderer !== null && $asset instanceof MediaAsset && $variants !== []) {
                 $html .= $this->responsiveRenderer->render($asset, $variants);
             } else {
-                $html .= "<img src=\"{$src}\" alt=\"{$alt}\" loading=\"lazy\">";
+                $html .= "<img src=\"$src\" alt=\"$alt\" loading=\"lazy\">";
             }
 
             if (is_string($caption) && $caption !== '') {
@@ -115,17 +116,17 @@ final readonly class GalleryBlock implements BlockTypeInterface
 
         foreach ($data['images'] as $index => $image) {
             if (!is_array($image)) {
-                $errors[] = "images[{$index}] must be an object";
+                $errors[] = "images[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($image['src']) || !is_string($image['src'])) {
-                $errors[] = "images[{$index}].src is required and must be a string";
+                $errors[] = "images[$index].src is required and must be a string";
             }
 
             if (!isset($image['alt']) || !is_string($image['alt'])) {
-                $errors[] = "images[{$index}].alt is required and must be a string";
+                $errors[] = "images[$index].alt is required and must be a string";
             }
         }
 

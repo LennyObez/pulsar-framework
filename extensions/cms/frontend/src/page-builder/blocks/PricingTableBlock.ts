@@ -79,7 +79,7 @@ export class CmsPbPricing extends HTMLElement {
       features.className = 'pb-block-pricing__features';
       for (const feat of plan.features ?? []) {
         const li = document.createElement('li');
-        li.textContent = typeof feat === 'string' ? feat : '';
+        li.textContent = feat;
         features.appendChild(li);
       }
       card.appendChild(features);

@@ -11,11 +11,14 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Comments\Comment;
 use Pulsar\Extension\Cms\Comments\ModerationStatus;
+use Pulsar\Extension\Cms\Commerce\OrderStatus;
+use Pulsar\Extension\Cms\Commerce\OrderStatusStateMachine;
 use Pulsar\Extension\Cms\Content\Content;
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 use Pulsar\Extension\Cms\Content\ContentType;
 use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
+use Pulsar\Extension\Cms\FieldRegistry\FieldType;
 use Pulsar\Extension\Cms\LiveCss\CssOverride;
 use Pulsar\Extension\Cms\Media\MediaAsset;
 use Pulsar\Extension\Cms\Media\MediaVisibility;
@@ -338,54 +341,54 @@ final class FunctionalVerificationTest extends TestCase
     #[Test]
     public function f11CheckoutFlow(): void
     {
-        $stateMachine = \Pulsar\Extension\Cms\Commerce\OrderStatusStateMachine::class;
-        $orderStatus = \Pulsar\Extension\Cms\Commerce\OrderStatus::class;
+        $stateMachine = OrderStatusStateMachine::class;
+        $orderStatus = OrderStatus::class;
 
         self::assertTrue(class_exists($stateMachine));
         self::assertTrue(enum_exists($orderStatus));
 
         // Valid forward transitions
         self::assertTrue($stateMachine::canTransition(
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Cart,
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::PendingPayment,
+            OrderStatus::Cart,
+            OrderStatus::PendingPayment,
         ), 'Cart → PendingPayment must be valid');
 
         self::assertTrue($stateMachine::canTransition(
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::PendingPayment,
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Confirmed,
+            OrderStatus::PendingPayment,
+            OrderStatus::Confirmed,
         ), 'PendingPayment → Confirmed must be valid');
 
         self::assertTrue($stateMachine::canTransition(
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Confirmed,
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Fulfilled,
+            OrderStatus::Confirmed,
+            OrderStatus::Fulfilled,
         ), 'Confirmed → Fulfilled must be valid');
 
         self::assertTrue($stateMachine::canTransition(
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Fulfilled,
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Refunded,
+            OrderStatus::Fulfilled,
+            OrderStatus::Refunded,
         ), 'Fulfilled → Refunded must be valid');
 
         // Invalid transitions — skipping required intermediate states
         self::assertFalse($stateMachine::canTransition(
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Cart,
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Fulfilled,
+            OrderStatus::Cart,
+            OrderStatus::Fulfilled,
         ), 'Cart → Fulfilled must be rejected (skips payment)');
 
         self::assertFalse($stateMachine::canTransition(
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Cart,
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Refunded,
+            OrderStatus::Cart,
+            OrderStatus::Refunded,
         ), 'Cart → Refunded must be rejected (skips all steps)');
 
         // A status cannot transition to itself
         self::assertFalse($stateMachine::canTransition(
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Confirmed,
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Confirmed,
+            OrderStatus::Confirmed,
+            OrderStatus::Confirmed,
         ), 'Self-transition must be rejected');
 
         // Terminal states must not allow further transitions
         self::assertFalse($stateMachine::canTransition(
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Refunded,
-            \Pulsar\Extension\Cms\Commerce\OrderStatus::Cart,
+            OrderStatus::Refunded,
+            OrderStatus::Cart,
         ), 'Refunded is terminal — no further transitions allowed');
     }
 
@@ -438,7 +441,7 @@ final class FunctionalVerificationTest extends TestCase
     #[Test]
     public function f14CustomFieldsQueryable(): void
     {
-        $registryClass = \Pulsar\Extension\Cms\FieldRegistry\FieldType::class;
+        $registryClass = FieldType::class;
         self::assertTrue(enum_exists($registryClass));
 
         // The field type enum should support common field types

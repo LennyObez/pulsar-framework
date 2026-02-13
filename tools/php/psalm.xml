@@ -72,13 +72,6 @@
         <!-- File operations can return false -->
         <RiskyTruthyFalsyComparison errorLevel="suppress"/>
 
-        <!-- Psalm 7 beta annotation demands — suppress until stable release.
-             These are informational strictness, not real bugs. -->
-        <MissingPureAnnotation errorLevel="suppress"/>
-        <MissingAbstractPureAnnotation errorLevel="suppress"/>
-        <MissingImmutableAnnotation errorLevel="suppress"/>
-        <MissingInterfaceImmutableAnnotation errorLevel="suppress"/>
-
         <!-- Framework classes/methods are consumed by downstream projects,
              not internally — Psalm can't trace those callers -->
         <PossiblyUnusedMethod errorLevel="suppress"/>

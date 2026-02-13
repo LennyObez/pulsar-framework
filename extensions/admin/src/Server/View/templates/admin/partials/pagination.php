@@ -7,7 +7,7 @@ declare(strict_types=1);
  * @var int $totalPages
  * @var string $baseUrl
  */
-$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$e = static fn(string $val): string => htmlspecialchars($val);
 ?>
 <?php if ($totalPages > 1): ?>
 <nav class="admin-pagination" aria-label="Pagination">

@@ -162,7 +162,7 @@ final class HookExecutionEngine
             AuditOutcome::Error,
             null,
             'cms.plugin.hook_failed',
-            "plugin:{$pluginSlug}",
+            "plugin:$pluginSlug",
             [
                 'hook_point' => $hookPoint,
                 'error' => $error->getMessage(),
@@ -199,7 +199,7 @@ final class HookExecutionEngine
                 AuditOutcome::Failure,
                 null,
                 'cms.plugin.circuit_breaker_tripped',
-                "plugin:{$pluginSlug}",
+                "plugin:$pluginSlug",
                 [
                     'failures_in_window' => count($this->failureTimestamps[$pluginSlug]),
                     'window_seconds' => self::CIRCUIT_BREAKER_WINDOW_SECONDS,

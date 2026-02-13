@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
-use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Database\Schema\SchemaColumn;
 use Pulsar\Database\Schema\SchemaColumnType;
 use Pulsar\Database\Schema\SchemaDefaultExpression;
@@ -35,6 +34,8 @@ use function mb_strlen;
 #[Internal]
 final readonly class SchemaApiController
 {
+    use ExtractsRequestActor;
+
     public function __construct(
         private CreateTableHandler $createHandler,
         private AlterTableHandler $alterHandler,
@@ -238,9 +239,7 @@ final readonly class SchemaApiController
 
     private function extractContext(ServerRequestInterface $request): MutationContext
     {
-        /** @var IdentityInterface|null $identity */
-        $identity = $request->getAttribute('identity');
-        $actor = $identity?->id() ?? 'anonymous';
+        $actor = $this->resolveActor($request);
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);

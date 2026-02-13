@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Extension\Grpc\Unit\Codegen;
+namespace Pulsar\Extension\Grpc\Tests\Unit\Codegen;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
@@ -109,9 +109,9 @@ final class OutputValidatorTest extends TestCase
 
             declare(strict_types=1);
 
-            namespace {$namespace};
+            namespace $namespace;
 
-            class {$className}
+            class $className
             {
             }
             PHP;

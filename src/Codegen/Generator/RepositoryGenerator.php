@@ -15,6 +15,7 @@ use Pulsar\Codegen\Schema\PropertyDefinition;
 use Pulsar\Codegen\Template\TemplateVariable;
 
 use function array_filter;
+use function array_find;
 use function array_values;
 use function implode;
 use function rtrim;
@@ -222,13 +223,7 @@ final class RepositoryGenerator extends AbstractGenerator
      */
     private function findPrimaryProperty(EntityDefinition $entity): ?PropertyDefinition
     {
-        foreach ($entity->properties as $property) {
-            if ($property->isPrimaryKey) {
-                return $property;
-            }
-        }
-
-        return null;
+        return array_find($entity->properties, static fn(PropertyDefinition $property): bool => $property->isPrimaryKey);
     }
 
     /**
@@ -295,10 +290,10 @@ final class RepositoryGenerator extends AbstractGenerator
 
             $block = <<<METHOD
 
-                    public function {$methodName}({$prop->phpType} \$value): array
+                    public function $methodName($prop->phpType \$value): array
                     {
                         \$result = \$this->connection->query(
-                            'SELECT * FROM {$entity->tableName} WHERE {$prop->columnName} = :value',
+                            'SELECT * FROM $entity->tableName WHERE $prop->columnName = :value',
                             ['value' => \$value],
                         );
 

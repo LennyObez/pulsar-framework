@@ -74,7 +74,7 @@ final readonly class ValidationInterceptor implements InterceptorInterface
 
         try {
             /** @var mixed $decoded */
-            $decoded = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
 
             if (!is_array($decoded)) {
                 return null;

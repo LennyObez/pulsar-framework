@@ -174,7 +174,7 @@ final readonly class PluginController
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.plugins.manage');
 
-        $settingsGroup = "plugin.{$id}";
+        $settingsGroup = "plugin.$id";
         $locale = $this->resolveLocale($request);
         $settings = $this->settingsService->getGroup($settingsGroup, $locale);
 
@@ -200,7 +200,7 @@ final readonly class PluginController
         /** @var array<string, mixed> $settings */
         $settings = (array) ($body['settings'] ?? []);
 
-        $settingsGroup = "plugin.{$id}";
+        $settingsGroup = "plugin.$id";
         $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;
         $reason = is_string($body['reason'] ?? null) ? $body['reason'] : null;
 

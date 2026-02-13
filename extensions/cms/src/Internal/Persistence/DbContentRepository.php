@@ -235,7 +235,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         }
 
         $inClause = InListBuilder::compile($this->connection->driver(), 'c.id', 'ids', count($ids));
-        $sql = "SELECT c.* FROM cms_contents c WHERE {$inClause} AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key AND c.deleted_at IS NULL";
+        $sql = "SELECT c.* FROM cms_contents c WHERE $inClause AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key AND c.deleted_at IS NULL";
         $bindings = InListBuilder::expandParams($this->connection->driver(), 'ids', $ids);
         $bindings['tenant_key'] = $this->tenantId ?? '00000000-0000-0000-0000-000000000000';
 
@@ -355,7 +355,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
             range(0, count($ids) - 1),
         ));
 
-        $sql = "UPDATE cms_contents SET status = :status, updated_at = :updated_at WHERE id IN ({$placeholders}) AND deleted_at IS NULL";
+        $sql = "UPDATE cms_contents SET status = :status, updated_at = :updated_at WHERE id IN ($placeholders) AND deleted_at IS NULL";
 
         $bindings = ['status' => $status->value, 'updated_at' => new DateTimeImmutable()->format('c')];
 
@@ -385,7 +385,7 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         ));
 
         $now = new DateTimeImmutable()->format('c');
-        $sql = "UPDATE cms_contents SET deleted_at = :deleted_at, updated_at = :updated_at WHERE id IN ({$placeholders}) AND deleted_at IS NULL";
+        $sql = "UPDATE cms_contents SET deleted_at = :deleted_at, updated_at = :updated_at WHERE id IN ($placeholders) AND deleted_at IS NULL";
 
         $bindings = ['deleted_at' => $now, 'updated_at' => $now];
 

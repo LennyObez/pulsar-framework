@@ -217,7 +217,7 @@ class CmsToastContainer extends HTMLElement {
     }
   }
 
-  private removeToastElement(index: number, toast: ActiveToast): void {
+  private removeToastElement(_index: number, toast: ActiveToast): void {
     toast.element.remove();
     const currentIndex = this.active.indexOf(toast);
     if (currentIndex !== -1) {

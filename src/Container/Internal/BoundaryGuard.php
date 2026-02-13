@@ -133,11 +133,7 @@ final readonly class BoundaryGuard implements ContainerInterface
 
         // Cross-module access to \Internal\ namespace is a violation
         if (str_contains($serviceId, '\\Internal\\')) {
-            $this->reportViolation(
-                $callerClass,
-                $serviceId,
-                'Cross-module resolution of \\Internal\\ service',
-            );
+            $this->reportViolation($callerClass, $serviceId);
         }
     }
 
@@ -200,9 +196,9 @@ final readonly class BoundaryGuard implements ContainerInterface
         return null;
     }
 
-    private function reportViolation(string $caller, string $serviceId, string $message): void
+    private function reportViolation(string $caller, string $serviceId): void
     {
-        $logMessage = "Boundary violation: {$message} — {$caller} resolved {$serviceId}";
+        $logMessage = "Boundary violation: Cross-module resolution of \\Internal\\ service — $caller resolved $serviceId";
 
         $this->logger->warning($logMessage, [
             'caller' => $caller,

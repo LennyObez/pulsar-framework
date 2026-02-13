@@ -40,7 +40,7 @@ final readonly class PartitionMaintenanceJob
         foreach (self::PARTITIONED_TABLES as $table) {
             // Create partitions for the next 4 weeks
             for ($i = 1; $i <= 4; $i++) {
-                $futureWeek = $now->modify("+{$i} week");
+                $futureWeek = $now->modify("+$i week");
                 $yearWeek = (int) $futureWeek->format('oW');
                 $partitionName = sprintf('p%d', $yearWeek);
 

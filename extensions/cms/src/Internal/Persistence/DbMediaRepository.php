@@ -282,7 +282,7 @@ final readonly class DbMediaRepository implements MediaRepositoryInterface
             fileHash: $row->getString('file_hash'),
             width: $row->getNullableInt('width'),
             height: $row->getNullableInt('height'),
-            exifData: $exifJson !== null ? json_decode($exifJson, true, 512, JSON_THROW_ON_ERROR) : null,
+            exifData: $exifJson !== null ? json_decode($exifJson, true, flags: JSON_THROW_ON_ERROR) : null,
             altTextDefault: $row->getNullableString('alt_text_default'),
             visibility: MediaVisibility::from($row->getString('visibility')),
             dataClassification: DataClassification::from($row->getString('data_classification')),

@@ -247,7 +247,7 @@ final readonly class ExceptionHandler
         return sprintf(
             '<h1>%d %s</h1>',
             $status->value,
-            htmlspecialchars($status->reasonPhrase(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+            htmlspecialchars($status->reasonPhrase()),
         );
     }
 }

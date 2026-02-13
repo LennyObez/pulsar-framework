@@ -42,7 +42,7 @@ final readonly class BlockRenderer
 
             if ($blockType === null) {
                 $escapedType = htmlspecialchars($block->blockType, ENT_QUOTES, 'UTF-8');
-                $parts[] = "<!-- unknown block type: {$escapedType} -->";
+                $parts[] = "<!-- unknown block type: $escapedType -->";
 
                 continue;
             }
@@ -52,7 +52,7 @@ final readonly class BlockRenderer
             if (count($errors) > 0) {
                 $escapedType = htmlspecialchars($block->blockType, ENT_QUOTES, 'UTF-8');
                 $errorList = htmlspecialchars(implode('; ', $errors), ENT_QUOTES, 'UTF-8');
-                $parts[] = "<!-- block validation error ({$escapedType}): {$errorList} -->";
+                $parts[] = "<!-- block validation error ($escapedType): $errorList -->";
 
                 continue;
             }
@@ -90,7 +90,7 @@ final readonly class BlockRenderer
 
             if ($blockType === null) {
                 $escapedType = htmlspecialchars($blockTypeName, ENT_QUOTES, 'UTF-8');
-                $parts[] = "<!-- unknown block type: {$escapedType} -->";
+                $parts[] = "<!-- unknown block type: $escapedType -->";
 
                 continue;
             }
@@ -103,7 +103,7 @@ final readonly class BlockRenderer
             if (count($errors) > 0) {
                 $escapedType = htmlspecialchars($blockTypeName, ENT_QUOTES, 'UTF-8');
                 $errorList = htmlspecialchars(implode('; ', $errors), ENT_QUOTES, 'UTF-8');
-                $parts[] = "<!-- block validation error ({$escapedType}): {$errorList} -->";
+                $parts[] = "<!-- block validation error ($escapedType): $errorList -->";
 
                 continue;
             }

@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigOverrides;
+use Pulsar\Config\Environment;
 use Pulsar\Config\Exception\ConfigException;
 use Pulsar\Config\ObservabilityConfig;
 
@@ -205,7 +206,7 @@ final class ConfigManagerTest extends TestCase
 
         self::assertInstanceOf(AppConfig::class, $repo->get(AppConfig::class));
         self::assertInstanceOf(ObservabilityConfig::class, $repo->get(ObservabilityConfig::class));
-        self::assertInstanceOf(\Pulsar\Config\Environment::class, $env);
+        self::assertInstanceOf(Environment::class, $env);
     }
 
     #[Test]

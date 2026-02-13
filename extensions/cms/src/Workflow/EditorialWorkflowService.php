@@ -87,7 +87,7 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
             AuditOutcome::Success,
             $requestedBy,
             'cms.workflow.submitted_for_review',
-            "content:{$contentId}",
+            "content:$contentId",
             [
                 'review_id' => $reviewId,
                 'reviewer_id' => $reviewerId,
@@ -136,7 +136,7 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
             AuditOutcome::Success,
             $review->reviewerId,
             'cms.workflow.approved',
-            "content:{$review->contentId}",
+            "content:$review->contentId",
             [
                 'review_id' => $reviewId,
                 'decision_reason' => $decisionReason,
@@ -185,7 +185,7 @@ final readonly class EditorialWorkflowService implements EditorialWorkflowServic
             AuditOutcome::Success,
             $review->reviewerId,
             'cms.workflow.rejected',
-            "content:{$review->contentId}",
+            "content:$review->contentId",
             [
                 'review_id' => $reviewId,
                 'decision_reason' => $decisionReason,

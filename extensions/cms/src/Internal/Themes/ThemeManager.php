@@ -116,7 +116,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
             }
 
             /** @var array<string, mixed> $manifestData */
-            $manifestData = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+            $manifestData = json_decode($manifestJson, true, flags: JSON_THROW_ON_ERROR);
             $manifest = ThemeManifest::fromArray($manifestData);
 
             $validation = $this->manifestValidator->validate($manifest);
@@ -130,7 +130,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
 
             if ($existing !== null) {
                 throw CmsException::themeManifestInvalid(
-                    "Theme with slug '{$manifest->slug}' is already installed",
+                    "Theme with slug '$manifest->slug' is already installed",
                 );
             }
 
@@ -182,7 +182,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
                 AuditOutcome::Success,
                 $installedBy,
                 'cms.theme.installed',
-                "theme:{$themeId}",
+                "theme:$themeId",
                 ['slug' => $manifest->slug, 'version' => $manifest->version],
             );
 
@@ -241,7 +241,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
             AuditOutcome::Success,
             $activatedBy,
             'cms.theme.activated',
-            "theme:{$themeId}",
+            "theme:$themeId",
             ['slug' => $theme->slug],
         );
 
@@ -315,7 +315,7 @@ final readonly class ThemeManager implements ThemeManagerInterface
             AuditOutcome::Success,
             $deletedBy,
             'cms.theme.deleted',
-            "theme:{$themeId}",
+            "theme:$themeId",
             ['slug' => $theme->slug, 'reason' => $reason],
         );
 

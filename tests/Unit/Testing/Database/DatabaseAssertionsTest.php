@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Testing\Database;
 
 use PDO;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Testing\Database\DatabaseAssertions;
@@ -13,7 +12,6 @@ use Pulsar\Testing\Database\DatabaseAssertions;
 /**
  * Verifies that DatabaseAssertions work with a real SQLite database.
  */
-#[CoversClass(DatabaseAssertions::class)]
 final class DatabaseAssertionsTest extends TestCase
 {
     use DatabaseAssertions;

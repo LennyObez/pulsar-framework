@@ -48,13 +48,13 @@ final readonly class SchemaSnapshotStore implements SchemaSnapshotStoreInterface
         $json = file_get_contents($this->path);
 
         if ($json === false) {
-            throw new RuntimeException("Failed to read snapshot file: {$this->path}");
+            throw new RuntimeException("Failed to read snapshot file: $this->path");
         }
 
-        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
 
         if (! is_array($data)) {
-            throw new RuntimeException("Invalid snapshot file format: {$this->path}");
+            throw new RuntimeException("Invalid snapshot file format: $this->path");
         }
 
         /** @var array<string, mixed> $data */
@@ -71,7 +71,7 @@ final readonly class SchemaSnapshotStore implements SchemaSnapshotStoreInterface
 
         if (! is_dir($dir)) {
             if (! mkdir($dir, 0o755, true) && ! is_dir($dir)) {
-                throw new RuntimeException("Failed to create directory: {$dir}");
+                throw new RuntimeException("Failed to create directory: $dir");
             }
         }
 
@@ -83,7 +83,7 @@ final readonly class SchemaSnapshotStore implements SchemaSnapshotStoreInterface
         $result = file_put_contents($this->path, $json . "\n");
 
         if ($result === false) {
-            throw new RuntimeException("Failed to write snapshot file: {$this->path}");
+            throw new RuntimeException("Failed to write snapshot file: $this->path");
         }
     }
 

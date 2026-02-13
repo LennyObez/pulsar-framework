@@ -23,35 +23,11 @@ abstract class AbstractRegulatedField extends AbstractField
     public function __construct(
         string $name,
         string $label,
-        private readonly string $purpose,
-        private readonly string $policyVersion,
-        private readonly string $policyText,
+        public readonly string $purpose,
+        public readonly string $policyVersion,
+        public readonly string $policyText,
     ) {
         parent::__construct($name, $label);
-    }
-
-    /**
-     * Get the machine-readable consent purpose (e.g., "marketing").
-     */
-    public function getPurpose(): string
-    {
-        return $this->purpose;
-    }
-
-    /**
-     * Get the version identifier of the policy/terms presented.
-     */
-    public function getPolicyVersion(): string
-    {
-        return $this->policyVersion;
-    }
-
-    /**
-     * Get the consent text displayed to the user.
-     */
-    public function getPolicyText(): string
-    {
-        return $this->policyText;
     }
 
     /**

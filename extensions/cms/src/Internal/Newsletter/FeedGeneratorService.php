@@ -118,12 +118,12 @@ final readonly class FeedGeneratorService implements FeedGeneratorServiceInterfa
             <?xml version="1.0" encoding="UTF-8"?>
             <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
               <channel>
-                <title>{$title}</title>
-                <link>{$escBaseUrl}</link>
-                <description>Latest {$contentType} content</description>
-                <language>{$escLocale}</language>
-                <atom:link href="{$escFeedLink}" rel="self" type="application/rss+xml"/>
-            {$body}
+                <title>$title</title>
+                <link>$escBaseUrl</link>
+                <description>Latest $contentType content</description>
+                <language>$escLocale</language>
+                <atom:link href="$escFeedLink" rel="self" type="application/rss+xml"/>
+            $body
               </channel>
             </rss>
             XML;
@@ -208,12 +208,12 @@ final readonly class FeedGeneratorService implements FeedGeneratorServiceInterfa
         return <<<XML
             <?xml version="1.0" encoding="UTF-8"?>
             <feed xmlns="http://www.w3.org/2005/Atom">
-              <title>{$title}</title>
-              <link href="{$escBaseUrl}"/>
-              <link href="{$escFeedLink}" rel="self"/>
-              <id>{$escBaseUrl}/</id>
-              <updated>{$updatedStr}</updated>
-            {$body}
+              <title>$title</title>
+              <link href="$escBaseUrl"/>
+              <link href="$escFeedLink" rel="self"/>
+              <id>$escBaseUrl/</id>
+              <updated>$updatedStr</updated>
+            $body
             </feed>
             XML;
     }

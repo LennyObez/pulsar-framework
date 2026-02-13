@@ -73,7 +73,7 @@ final class RedactionTestCommand extends Command
             $payload = $this->samplePayload();
         } else {
             /** @var array<string, mixed> $payload */
-            $payload = json_decode($payloadJson, true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($payloadJson, true, flags: JSON_THROW_ON_ERROR);
         }
 
         $redacted = $this->pipeline->redact($payload, $eventType);

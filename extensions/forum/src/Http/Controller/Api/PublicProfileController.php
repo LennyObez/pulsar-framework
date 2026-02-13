@@ -150,7 +150,7 @@ final readonly class PublicProfileController
                 'type' => 'reply',
                 'id' => $post->id,
                 'thread_id' => $post->threadId,
-                'body_preview' => self::truncate($post->body, 200),
+                'body_preview' => self::truncate($post->body),
                 'is_solution' => $post->isSolution,
                 'vote_score' => $post->voteScore,
                 'timestamp' => $post->createdAt->format('c'),
@@ -186,12 +186,12 @@ final readonly class PublicProfileController
         ];
     }
 
-    private static function truncate(string $text, int $maxLength): string
+    private static function truncate(string $text): string
     {
-        if (mb_strlen($text) <= $maxLength) {
+        if (mb_strlen($text) <= 200) {
             return $text;
         }
 
-        return mb_substr($text, 0, $maxLength) . '...';
+        return mb_substr($text, 0, 200) . '...';
     }
 }

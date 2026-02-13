@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Extension\Grpc\Unit\Codegen;
+namespace Pulsar\Extension\Grpc\Tests\Unit\Codegen;
 
 use FilesystemIterator;
 use PHPUnit\Framework\Attributes\CoversClass;

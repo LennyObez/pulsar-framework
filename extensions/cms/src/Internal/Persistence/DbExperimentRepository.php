@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\ABTest\ConversionEvent;
@@ -166,7 +167,7 @@ final readonly class DbExperimentRepository implements ExperimentRepositoryInter
     public function getConversionCounts(string $experimentId): array
     {
         // Use FILTER syntax for PostgreSQL, fallback to CASE for SQLite/MySQL
-        $sql = $this->connection->driver() === \Pulsar\Database\Driver::PostgreSQL
+        $sql = $this->connection->driver() === Driver::PostgreSQL
             ? self::SQL_COUNT_IMPRESSIONS
             : self::SQL_COUNT_IMPRESSIONS_COMPAT;
 

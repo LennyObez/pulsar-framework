@@ -99,7 +99,7 @@ export class NewsletterSignup extends HTMLElement {
     form.className = 'cms-newsletter-signup__form';
     form.setAttribute('novalidate', '');
     form.addEventListener('submit', (e) => {
-      this.handleSubmit(e);
+      void this.handleSubmit(e);
     });
 
     // Email input

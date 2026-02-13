@@ -41,7 +41,7 @@ final readonly class AudioBlock implements BlockTypeInterface
         $src = htmlspecialchars((string) ($data['src'] ?? ''), ENT_QUOTES, 'UTF-8');
         $caption = $data['caption'] ?? null;
 
-        $html = "<figure class=\"audio-block\"><audio controls src=\"{$src}\"></audio>";
+        $html = "<figure class=\"audio-block\"><audio controls src=\"$src\"></audio>";
 
         if (is_string($caption) && $caption !== '') {
             $html .= '<figcaption>' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</figcaption>';

@@ -127,7 +127,7 @@ final readonly class DesignTokenContrastChecker
         $css = (string) preg_replace('/\/\*.*?\*\//s', '', $css);
 
         // Match :root blocks (possibly with media queries wrapping them)
-        if (preg_match_all('/:root\s*\{([^}]+)\}/s', $css, $rootMatches) === false) {
+        if (preg_match_all('/:root\s*\{([^}]+)}/', $css, $rootMatches) === false) {
             return [];
         }
 

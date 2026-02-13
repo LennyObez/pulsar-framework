@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Analytics\Tests\Unit\Internal\Repository;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
@@ -17,16 +16,6 @@ use Pulsar\Extension\Analytics\Internal\Repository\DbHourlyStatsRepository;
 
 final class DbHourlyStatsRepositoryTest extends TestCase
 {
-    private ConnectionInterface&Stub $connection;
-    private DbHourlyStatsRepository $repo;
-
-    protected function setUp(): void
-    {
-        $this->connection = $this->createStub(ConnectionInterface::class);
-        $this->connection->method('driver')->willReturn(Driver::PostgreSQL);
-        $this->repo = new DbHourlyStatsRepository($this->connection);
-    }
-
     #[Test]
     public function upsertExecutesSqlWithCorrectBindings(): void
     {

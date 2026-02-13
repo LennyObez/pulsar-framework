@@ -19,6 +19,7 @@ use Pulsar\Extension\Form\Field\TelField;
 use Pulsar\Extension\Form\Field\TextareaField;
 use Pulsar\Extension\Form\Field\TimeField;
 use Pulsar\Extension\Form\Field\UrlField;
+use Pulsar\Http\Validation\RuleInterface;
 
 #[CoversClass(ColorField::class)]
 #[CoversClass(DateField::class)]
@@ -225,7 +226,7 @@ final class AllFieldTypesTest extends TestCase
         $field = new ColorField('bg');
         self::assertSame([], $field->getRules());
 
-        $rule = $this->createStub(\Pulsar\Http\Validation\RuleInterface::class);
+        $rule = $this->createStub(RuleInterface::class);
         $field->setRules([$rule]);
         self::assertCount(1, $field->getRules());
     }

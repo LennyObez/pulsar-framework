@@ -44,8 +44,8 @@ final class CollectionFieldTest extends TestCase
             maxEntries: 5,
         );
 
-        self::assertSame(1, $field->getMinEntries());
-        self::assertSame(5, $field->getMaxEntries());
+        self::assertSame(1, $field->minEntries);
+        self::assertSame(5, $field->maxEntries);
         self::assertTrue($field->isRequired());
     }
 
@@ -134,6 +134,6 @@ final class CollectionFieldTest extends TestCase
             prototype: static fn() => new TextField('item', 'Item'),
         );
 
-        self::assertNull($field->getMaxEntries());
+        self::assertNull($field->maxEntries);
     }
 }

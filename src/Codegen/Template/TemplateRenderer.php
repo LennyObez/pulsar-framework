@@ -67,7 +67,7 @@ final readonly class TemplateRenderer
      */
     private function extractPlaceholders(string $template): array
     {
-        $pattern = '/\{\{(\w+)(?:\|(\w[\w-]*))?\}\}/';
+        $pattern = '/\{\{(\w+)(?:\|(\w[\w-]*))?}}/';
         $matches = [];
         $count = preg_match_all($pattern, $template, $matches, PREG_SET_ORDER);
 
@@ -114,7 +114,7 @@ final readonly class TemplateRenderer
             'snake_case' => $this->toSnakeCase($value),
             'kebab-case' => $this->toKebabCase($value),
             default => throw new InvalidArgumentException(
-                "Unknown template filter: {$filter}. Supported: PascalCase, camelCase, snake_case, kebab-case.",
+                "Unknown template filter: $filter. Supported: PascalCase, camelCase, snake_case, kebab-case.",
             ),
         };
     }
@@ -155,7 +155,7 @@ final readonly class TemplateRenderer
         $spaced = (string) preg_replace('/([a-z])([A-Z])/', '$1 $2', $value);
 
         // Replace underscores, hyphens, and multiple spaces with a single space
-        $normalized = (string) preg_replace('/[_\-\s]+/', ' ', $spaced);
+        $normalized = (string) preg_replace('/[_\s-]+/', ' ', $spaced);
 
         return ltrim($normalized);
     }

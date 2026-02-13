@@ -113,15 +113,11 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 
     private function computeCacheKey(ServerRequestInterface $request): string
     {
-        /** @var string|null $tenantId */
-        $tenantId = $request->getAttribute('tenant_id') ?? 'default';
-
-        /** @var string $locale */
-        $locale = $request->getAttribute('locale') ?? 'en';
-
+        $tenantId = (string) ($request->getAttribute('tenant_id') ?? 'default');
+        $locale = (string) ($request->getAttribute('locale') ?? 'en');
         $path = ltrim($request->getUri()->getPath(), '/');
 
-        return sprintf('cms_page:%s:%s:%s', (string) $tenantId, $locale, hash('xxh3', $path));
+        return sprintf('cms_page:%s:%s:%s', $tenantId, $locale, hash('xxh3', $path));
     }
 
     private function storeResponse(string $cacheKey, ResponseInterface $response, ServerRequestInterface $request): void
@@ -169,14 +165,14 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
         $contentId = $request->getAttribute('cms_content_id');
 
         if ($contentId !== null) {
-            $tags[] = "cms_content:{$contentId}";
+            $tags[] = "cms_content:$contentId";
         }
 
         /** @var string|null $contentType */
         $contentType = $request->getAttribute('cms_content_type');
 
         if ($contentType !== null) {
-            $tags[] = "cms_type:{$contentType}";
+            $tags[] = "cms_type:$contentType";
         }
 
         /** @var list<string>|null $menuIds */
@@ -184,7 +180,7 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 
         if ($menuIds !== null) {
             foreach ($menuIds as $menuId) {
-                $tags[] = "cms_menu:{$menuId}";
+                $tags[] = "cms_menu:$menuId";
             }
         }
 

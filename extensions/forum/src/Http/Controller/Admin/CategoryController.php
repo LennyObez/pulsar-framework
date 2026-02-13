@@ -168,7 +168,6 @@ final readonly class CategoryController
                 $name = is_string($body['name'] ?? null) ? $body['name'] : $translation->name;
                 $description = is_string($body['description'] ?? null) ? $body['description'] : $translation->description;
                 $translation = $translation->update($name, $description);
-                $this->translationRepository->save($translation);
             } else {
                 $translation = CategoryTranslation::create(
                     id: UuidGenerator::v7(),
@@ -177,8 +176,9 @@ final readonly class CategoryController
                     name: is_string($body['name'] ?? null) ? $body['name'] : $category->slug,
                     description: is_string($body['description'] ?? null) ? $body['description'] : '',
                 );
-                $this->translationRepository->save($translation);
             }
+
+            $this->translationRepository->save($translation);
         }
 
         return Response::json(['data' => $this->serializeWithTranslations($category)]);

@@ -83,25 +83,12 @@ final readonly class StatefulSingletonAnalyzer
 
     /**
      * Check if a property is writable (not readonly, not static).
-     */
-    /**
+     *
      * @param ReflectionClass<object> $class
      */
     private function isWritableProperty(ReflectionProperty $property, ReflectionClass $class): bool
     {
-        if ($property->isStatic()) {
-            return false;
-        }
-
-        if ($property->isReadOnly()) {
-            return false;
-        }
-
-        if ($class->isReadOnly()) {
-            return false;
-        }
-
-        return true;
+        return !$property->isStatic() && !$property->isReadOnly() && !$class->isReadOnly();
     }
 
     /**

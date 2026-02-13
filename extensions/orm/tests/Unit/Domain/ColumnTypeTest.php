@@ -33,7 +33,7 @@ final class ColumnTypeTest extends TestCase
 
         foreach ($expectedCases as $name => $value) {
             $case = ColumnType::from($value);
-            self::assertSame($value, $case->value, "Case {$name} should have value {$value}");
+            self::assertSame($value, $case->value, "Case $name should have value $value");
         }
     }
 

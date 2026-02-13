@@ -15,6 +15,7 @@ use Pulsar\Codegen\Schema\PropertyDefinition;
 use Pulsar\Codegen\Template\TemplateVariable;
 
 use function implode;
+use function in_array;
 use function rtrim;
 
 /**
@@ -91,7 +92,7 @@ final class ApiResourceGenerator extends AbstractGenerator
             $filterable = $property->isFilterable ? 'true' : 'false';
             $sortable = $property->isSortable ? 'true' : 'false';
 
-            $lines[] = "            '{$property->name}' => ['expose' => {$expose}, 'filterable' => {$filterable}, 'sortable' => {$sortable}],";
+            $lines[] = "            '$property->name' => ['expose' => $expose, 'filterable' => $filterable, 'sortable' => $sortable],";
         }
 
         return implode("\n", $lines);
@@ -107,13 +108,6 @@ final class ApiResourceGenerator extends AbstractGenerator
         }
 
         // Audit columns are not exposed by default
-        $auditColumns = ['created_by', 'updated_by', 'deleted_at'];
-        foreach ($auditColumns as $auditCol) {
-            if ($property->columnName === $auditCol) {
-                return false;
-            }
-        }
-
-        return true;
+        return !in_array($property->columnName, ['created_by', 'updated_by', 'deleted_at'], true);
     }
 }

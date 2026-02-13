@@ -74,7 +74,7 @@ final readonly class FormSubmissionController
 
             return Response::redirect($redirectUrl, 303)
                 ->withHeader('X-Form-Status', 'success');
-        } catch (RuntimeException $e) {
+        } catch (RuntimeException) {
             return Response::redirect($redirectUrl, 303)
                 ->withHeader('X-Form-Status', 'error')
                 ->withHeader('X-Form-Error', 'Form submission failed');

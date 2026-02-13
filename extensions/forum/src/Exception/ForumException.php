@@ -17,12 +17,12 @@ class ForumException extends RuntimeException
 {
     public static function notFound(string $entity, string $id): self
     {
-        return new self("{$entity} not found: {$id}");
+        return new self("$entity not found: $id");
     }
 
     public static function invalidTransition(string $from, string $to): self
     {
-        return new self("Invalid status transition from '{$from}' to '{$to}'");
+        return new self("Invalid status transition from '$from' to '$to'");
     }
 
     public static function concurrencyConflict(string $entityId, int $expectedVersion): self
@@ -36,12 +36,12 @@ class ForumException extends RuntimeException
 
     public static function unauthorized(string $action): self
     {
-        return new self("Unauthorized forum action: {$action}");
+        return new self("Unauthorized forum action: $action");
     }
 
     public static function banned(string $userId): self
     {
-        return new self("User is banned from the forum: {$userId}");
+        return new self("User is banned from the forum: $userId");
     }
 
     public static function rateLimited(string $action, int $cooldownSeconds): self
@@ -55,27 +55,27 @@ class ForumException extends RuntimeException
 
     public static function duplicateVote(string $userId, string $targetId): self
     {
-        return new self("User {$userId} has already voted on: {$targetId}");
+        return new self("User $userId has already voted on: $targetId");
     }
 
     public static function alreadyResolved(string $threadId): self
     {
-        return new self("Thread already has an accepted solution: {$threadId}");
+        return new self("Thread already has an accepted solution: $threadId");
     }
 
     public static function editWindowExpired(string $postId): self
     {
-        return new self("Edit window has expired for post: {$postId}");
+        return new self("Edit window has expired for post: $postId");
     }
 
     public static function threadLocked(string $threadId): self
     {
-        return new self("Thread is locked and does not accept replies: {$threadId}");
+        return new self("Thread is locked and does not accept replies: $threadId");
     }
 
     public static function categoryLocked(string $categoryId): self
     {
-        return new self("Category is locked and does not accept new threads: {$categoryId}");
+        return new self("Category is locked and does not accept new threads: $categoryId");
     }
 
     public static function selfVote(): self
@@ -90,6 +90,6 @@ class ForumException extends RuntimeException
 
     public static function duplicateReport(string $userId, string $targetId): self
     {
-        return new self("User {$userId} already has a pending report for: {$targetId}");
+        return new self("User $userId already has a pending report for: $targetId");
     }
 }

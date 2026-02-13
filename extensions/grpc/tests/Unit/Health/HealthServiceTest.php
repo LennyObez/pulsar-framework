@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Grpc\Handler\MethodDescriptor;
 use Pulsar\Extension\Grpc\Handler\MethodType;
-use Pulsar\Extension\Grpc\Health\HealthCheckResponse;
 use Pulsar\Extension\Grpc\Health\HealthService;
 use Pulsar\Extension\Grpc\Health\HealthStatus;
 
@@ -94,7 +93,7 @@ final class HealthServiceTest extends TestCase
         $result = $this->service->invoke('Check', $payload);
 
         /** @var array{status: int} $decoded */
-        $decoded = json_decode($result, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($result, true, flags: JSON_THROW_ON_ERROR);
 
         self::assertSame(HealthStatus::Serving->value, $decoded['status']);
     }
@@ -108,7 +107,7 @@ final class HealthServiceTest extends TestCase
         $result = $this->service->invoke('Check', $payload);
 
         /** @var array{status: int} $decoded */
-        $decoded = json_decode($result, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($result, true, flags: JSON_THROW_ON_ERROR);
 
         self::assertSame(HealthStatus::NotServing->value, $decoded['status']);
     }
@@ -127,7 +126,7 @@ final class HealthServiceTest extends TestCase
     {
         $response = $this->service->check();
 
-        self::assertInstanceOf(HealthCheckResponse::class, $response);
+        self::assertSame(HealthStatus::Serving, $response->status);
     }
 
     #[Test]

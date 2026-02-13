@@ -42,11 +42,11 @@ final readonly class ContentAssistant
             ));
         }
 
-        $prompt = "Write a {$targetWords}-word article about the following topic. "
-            . "Use a {$tone} tone throughout. "
+        $prompt = "Write a $targetWords-word article about the following topic. "
+            . "Use a $tone tone throughout. "
             . 'Include an introduction, body paragraphs, and a conclusion. '
             . "Do not include a title — only the body text.\n\n"
-            . "Topic: {$topic}";
+            . "Topic: $topic";
 
         return $this->provider->complete($prompt, new LlmOptions(
             temperature: 0.7,
@@ -75,7 +75,7 @@ final readonly class ContentAssistant
             ));
         }
 
-        $prompt = "Summarize the following content in exactly {$maxSentences} sentences. "
+        $prompt = "Summarize the following content in exactly $maxSentences sentences. "
             . "Be concise and capture the key points.\n\n"
             . $content;
 
@@ -106,8 +106,8 @@ final readonly class ContentAssistant
             ));
         }
 
-        $prompt = "Suggest exactly {$count} compelling titles for the following content. "
-            . "Return exactly {$count} titles, one per line, without numbering or bullet points.\n\n"
+        $prompt = "Suggest exactly $count compelling titles for the following content. "
+            . "Return exactly $count titles, one per line, without numbering or bullet points.\n\n"
             . $content;
 
         return $this->provider->complete($prompt, new LlmOptions(
@@ -138,7 +138,7 @@ final readonly class ContentAssistant
         }
 
         $prompt = 'Write a single meta description for the following content. '
-            . "The description must be at most {$maxLength} characters. "
+            . "The description must be at most $maxLength characters. "
             . 'It should be compelling and include relevant keywords for SEO. '
             . "Return only the meta description text, nothing else.\n\n"
             . $content;
@@ -171,7 +171,7 @@ final readonly class ContentAssistant
             ));
         }
 
-        $prompt = "Translate the following content from {$sourceLocale} to {$targetLocale}. "
+        $prompt = "Translate the following content from $sourceLocale to $targetLocale. "
             . 'Preserve the original formatting and structure. '
             . "Return only the translated text, nothing else.\n\n"
             . $content;
@@ -239,9 +239,9 @@ final readonly class ContentAssistant
 
         $prompt = 'Create a detailed content outline for an article about the following topic. '
             . 'Structure it with H2 and H3 headings. '
-            . "Target audience: {$targetAudience}. "
-            . "Incorporate these keywords naturally: {$keywordList}.\n\n"
-            . "Topic: {$topic}";
+            . "Target audience: $targetAudience. "
+            . "Incorporate these keywords naturally: $keywordList.\n\n"
+            . "Topic: $topic";
 
         return $this->provider->complete($prompt, new LlmOptions(
             temperature: 0.7,
@@ -267,7 +267,7 @@ final readonly class ContentAssistant
             ));
         }
 
-        $prompt = "Expand the following content to approximately {$targetWords} words. "
+        $prompt = "Expand the following content to approximately $targetWords words. "
             . 'Add more detail, examples, and explanations while preserving the original meaning and structure. '
             . "Return only the expanded text.\n\n"
             . $content;
@@ -296,7 +296,7 @@ final readonly class ContentAssistant
             ));
         }
 
-        $prompt = "Condense the following content to approximately {$targetWords} words. "
+        $prompt = "Condense the following content to approximately $targetWords words. "
             . 'Preserve the key points and main message while removing unnecessary detail. '
             . "Return only the condensed text.\n\n"
             . $content;
@@ -325,7 +325,7 @@ final readonly class ContentAssistant
             ));
         }
 
-        $prompt = "Rewrite the following content in a {$targetTone} tone. "
+        $prompt = "Rewrite the following content in a $targetTone tone. "
             . 'Preserve the original meaning and key information while adapting the writing style. '
             . "Return only the rewritten text.\n\n"
             . $content;
@@ -354,7 +354,7 @@ final readonly class ContentAssistant
             ));
         }
 
-        $prompt = "Generate exactly {$count} frequently asked questions and answers based on the following content. "
+        $prompt = "Generate exactly $count frequently asked questions and answers based on the following content. "
             . "Format each as:\nQ: [question]\nA: [answer]\n\n"
             . $content;
 
@@ -388,10 +388,10 @@ final readonly class ContentAssistant
         }
 
         $prompt = 'Write a compelling product description for the following product. '
-            . "Use a {$tone} tone. "
+            . "Use a $tone tone. "
             . "Highlight the key features naturally.\n\n"
-            . "Product: {$productName}\n"
-            . "Features: {$featureList}";
+            . "Product: $productName\n"
+            . "Features: $featureList";
 
         return $this->provider->complete($prompt, new LlmOptions(
             temperature: 0.7,
@@ -417,7 +417,7 @@ final readonly class ContentAssistant
             ));
         }
 
-        $prompt = "Extract exactly {$count} SEO keywords from the following content. "
+        $prompt = "Extract exactly $count SEO keywords from the following content. "
             . 'List primary keywords first, then secondary keywords. '
             . "Return one keyword or phrase per line, without numbering.\n\n"
             . $content;
@@ -451,7 +451,7 @@ final readonly class ContentAssistant
             . 'score (0-100), keyword_density (percentage), title_optimization (good/fair/poor), '
             . 'meta_description_quality (good/fair/poor), heading_structure (good/fair/poor), '
             . "readability (good/fair/poor), suggestions (array of improvement strings).\n\n"
-            . "Target keyword: {$targetKeyword}\n\n"
+            . "Target keyword: $targetKeyword\n\n"
             . $content;
 
         return $this->provider->complete($prompt, new LlmOptions(
@@ -478,7 +478,7 @@ final readonly class ContentAssistant
         $prompt = 'Suggest a single URL-friendly slug for the following title. '
             . 'Use lowercase letters, numbers, and hyphens only. '
             . "Return only the slug, nothing else.\n\n"
-            . "Title: {$title}";
+            . "Title: $title";
 
         return $this->provider->complete($prompt, new LlmOptions(
             temperature: 0.3,
@@ -507,8 +507,8 @@ final readonly class ContentAssistant
         $prompt = 'Generate accessible alt text for an image. '
             . 'The alt text should be descriptive and concise (under 125 characters). '
             . "Return only the alt text, nothing else.\n\n"
-            . "Image context: {$imageContext}\n"
-            . "Surrounding content: {$surroundingContent}";
+            . "Image context: $imageContext\n"
+            . "Surrounding content: $surroundingContent";
 
         return $this->provider->complete($prompt, new LlmOptions(
             temperature: 0.4,

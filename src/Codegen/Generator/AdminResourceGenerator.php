@@ -113,7 +113,7 @@ final class AdminResourceGenerator extends AbstractGenerator
                 continue;
             }
 
-            $lines[] = "            '{$property->name}',";
+            $lines[] = "            '$property->name',";
         }
 
         return implode("\n", $lines);

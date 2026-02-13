@@ -6,7 +6,6 @@ namespace Pulsar\Tests\Unit\Extension\Feedback;
 
 use InvalidArgumentException;
 use OverflowException;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
@@ -17,7 +16,6 @@ use Pulsar\Extension\Feedback\FeedbackRepositoryInterface;
 use Pulsar\Extension\Feedback\FeedbackStatus;
 use Pulsar\Extension\Feedback\Internal\FeedbackService;
 
-#[CoversClass(FeedbackService::class)]
 final class FeedbackServiceTest extends TestCase
 {
     private FeedbackRepositoryInterface&Stub $repo;

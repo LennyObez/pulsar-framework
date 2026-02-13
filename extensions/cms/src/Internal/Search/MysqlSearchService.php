@@ -23,7 +23,6 @@ use Pulsar\Extension\Cms\Support\UuidGenerator;
 use function array_column;
 use function array_slice;
 use function bin2hex;
-use function count;
 use function exp;
 use function implode;
 use function max;

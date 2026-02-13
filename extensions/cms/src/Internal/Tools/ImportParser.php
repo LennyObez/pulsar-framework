@@ -349,7 +349,7 @@ final readonly class ImportParser
                 : 'page';
 
             if (!ContentTypeRegistry::isValid($contentTypeSlug)) {
-                $warnings[] = "Unknown content type '{$contentTypeSlug}', skipped";
+                $warnings[] = "Unknown content type '$contentTypeSlug', skipped";
                 $skipped++;
 
                 continue;
@@ -381,7 +381,7 @@ final readonly class ImportParser
 
             // Locale filtering
             if ($this->config->allowedLocales !== null && !in_array($locale, $this->config->allowedLocales, true)) {
-                $warnings[] = "Content '{$slug}' has unsupported locale '{$locale}', skipped";
+                $warnings[] = "Content '$slug' has unsupported locale '$locale', skipped";
                 $skipped++;
 
                 continue;
@@ -451,7 +451,6 @@ final readonly class ImportParser
         $existing = $this->contentRepository->findByPath($firstLocale, $slug, $tenantId);
 
         if ($existing !== null) {
-            /** @var string $existingId */
             $existingId = $existing->id;
             $resolvedFirstLocale = $firstLocale;
 
@@ -574,7 +573,7 @@ final readonly class ImportParser
     private function updateTranslations(string $contentId, array $translations): void
     {
         foreach ($translations as $locale => $transData) {
-            $localeStr = (string) $locale;
+            $localeStr = $locale;
 
             if ($this->config->allowedLocales !== null && !in_array($localeStr, $this->config->allowedLocales, true)) {
                 continue;
@@ -890,7 +889,7 @@ final readonly class ImportParser
             }
 
             if ($this->config->allowedLocales !== null && !in_array($locale, $this->config->allowedLocales, true)) {
-                $warnings[] = "Menu at location '{$location}' has unsupported locale '{$locale}', skipped";
+                $warnings[] = "Menu at location '$location' has unsupported locale '$locale', skipped";
                 $skipped++;
 
                 continue;
@@ -1007,7 +1006,7 @@ final readonly class ImportParser
 
         foreach ($settings as $group => $keys) {
             if (!is_array($keys)) {
-                $warnings[] = "Settings group '{$group}' has invalid format, skipped";
+                $warnings[] = "Settings group '$group' has invalid format, skipped";
 
                 continue;
             }

@@ -47,7 +47,7 @@ final readonly class GraphqlController
 
         try {
             /** @var array<string, mixed> $payload */
-            $payload = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return Response::json([
                 'data' => null,

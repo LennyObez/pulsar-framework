@@ -41,9 +41,9 @@ return new class implements MigrationInterface {
 
         foreach ($indexTableMap as $index => $table) {
             if ($driver === Driver::MySQL) {
-                $connection->execute("DROP INDEX IF EXISTS {$index} ON {$table}");
+                $connection->execute("DROP INDEX IF EXISTS $index ON $table");
             } else {
-                $connection->execute("DROP INDEX IF EXISTS {$index}");
+                $connection->execute("DROP INDEX IF EXISTS $index");
             }
         }
     }
@@ -143,7 +143,7 @@ return new class implements MigrationInterface {
         );
 
         if (($result->first()?->getInt('cnt') ?? 0) === 0) {
-            $connection->execute("CREATE INDEX {$indexName} ON {$table} {$columns}");
+            $connection->execute("CREATE INDEX $indexName ON $table $columns");
         }
     }
 };

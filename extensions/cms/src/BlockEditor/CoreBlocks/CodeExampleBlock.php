@@ -51,22 +51,22 @@ final readonly class CodeExampleBlock implements BlockTypeInterface
         $code = htmlspecialchars(is_string($rawCode) ? $rawCode : '', ENT_QUOTES, 'UTF-8');
         $showCopy = ($data['showCopy'] ?? true) ? 'true' : 'false';
 
-        $html = "<div class=\"cms-code-example\" data-show-copy=\"{$showCopy}\">";
+        $html = "<div class=\"cms-code-example\" data-show-copy=\"$showCopy\">";
 
         $filename = $data['filename'] ?? null;
 
         if (is_string($filename) && $filename !== '') {
             $escapedFilename = htmlspecialchars($filename, ENT_QUOTES, 'UTF-8');
-            $html .= "<div class=\"cms-code-example__filename\">{$escapedFilename}</div>";
+            $html .= "<div class=\"cms-code-example__filename\">$escapedFilename</div>";
         }
 
         $language = $data['language'] ?? null;
 
         if (is_string($language) && $language !== '' && preg_match('/^[a-zA-Z0-9_-]+$/', $language) === 1) {
             $escapedLang = htmlspecialchars($language, ENT_QUOTES, 'UTF-8');
-            $html .= "<pre><code class=\"language-{$escapedLang}\">{$code}</code></pre>";
+            $html .= "<pre><code class=\"language-$escapedLang\">$code</code></pre>";
         } else {
-            $html .= "<pre><code>{$code}</code></pre>";
+            $html .= "<pre><code>$code</code></pre>";
         }
 
         return $html . '</div>';

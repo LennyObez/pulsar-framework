@@ -70,11 +70,11 @@ final readonly class ContactFormBlock implements BlockTypeInterface
         $powChallenge = bin2hex(random_bytes(16));
         $escapedChallenge = htmlspecialchars($powChallenge, ENT_QUOTES, 'UTF-8');
 
-        $html = "<form class=\"contact-form\" method=\"post\" action=\"{$action}\" data-pow-challenge=\"{$escapedChallenge}\">";
+        $html = "<form class=\"contact-form\" method=\"post\" action=\"$action\" data-pow-challenge=\"$escapedChallenge\">";
 
         // CSRF protection
         $csrfToken = htmlspecialchars($this->csrfTokenManager->getToken(), ENT_QUOTES, 'UTF-8');
-        $html .= "<input type=\"hidden\" name=\"_csrf_token\" value=\"{$csrfToken}\">";
+        $html .= "<input type=\"hidden\" name=\"_csrf_token\" value=\"$csrfToken\">";
 
         // Timing token — spam detector rejects submissions under 3 seconds
         $html .= '<input type="hidden" name="_form_rendered_at" value="' . htmlspecialchars((string) time(), ENT_QUOTES, 'UTF-8') . '">';
@@ -85,7 +85,7 @@ final readonly class ContactFormBlock implements BlockTypeInterface
         $html .= '</div>';
 
         // Proof-of-work fields — challenge is set server-side, nonce computed by ProofOfWork.ts
-        $html .= "<input type=\"hidden\" name=\"_pow_challenge\" value=\"{$escapedChallenge}\">";
+        $html .= "<input type=\"hidden\" name=\"_pow_challenge\" value=\"$escapedChallenge\">";
         $html .= '<input type="hidden" name="_pow_nonce" value="">';
 
         foreach ($fields as $field) {
@@ -98,18 +98,18 @@ final readonly class ContactFormBlock implements BlockTypeInterface
             $label = htmlspecialchars((string) ($field['label'] ?? ''), ENT_QUOTES, 'UTF-8');
 
             $html .= '<div class="contact-form__field">';
-            $html .= "<label for=\"field-{$name}\">{$label}</label>";
+            $html .= "<label for=\"field-$name\">$label</label>";
 
             if (($field['type'] ?? '') === 'textarea') {
-                $html .= "<textarea id=\"field-{$name}\" name=\"{$name}\"></textarea>";
+                $html .= "<textarea id=\"field-$name\" name=\"$name\"></textarea>";
             } else {
-                $html .= "<input type=\"{$type}\" id=\"field-{$name}\" name=\"{$name}\">";
+                $html .= "<input type=\"$type\" id=\"field-$name\" name=\"$name\">";
             }
 
             $html .= '</div>';
         }
 
-        $html .= "<button type=\"submit\" class=\"contact-form__submit\">{$submitText}</button>";
+        $html .= "<button type=\"submit\" class=\"contact-form__submit\">$submitText</button>";
 
         return $html . '</form>';
     }
@@ -127,23 +127,23 @@ final readonly class ContactFormBlock implements BlockTypeInterface
 
         foreach ($data['fields'] as $index => $field) {
             if (!is_array($field)) {
-                $errors[] = "fields[{$index}] must be an object";
+                $errors[] = "fields[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($field['name']) || !is_string($field['name'])) {
-                $errors[] = "fields[{$index}].name is required and must be a string";
+                $errors[] = "fields[$index].name is required and must be a string";
             }
 
             if (!isset($field['type']) || !is_string($field['type'])) {
-                $errors[] = "fields[{$index}].type is required and must be a string";
+                $errors[] = "fields[$index].type is required and must be a string";
             } elseif (!in_array($field['type'], self::VALID_FIELD_TYPES, true)) {
-                $errors[] = "fields[{$index}].type '{$field['type']}' is not a valid field type";
+                $errors[] = "fields[$index].type '{$field['type']}' is not a valid field type";
             }
 
             if (!isset($field['label']) || !is_string($field['label'])) {
-                $errors[] = "fields[{$index}].label is required and must be a string";
+                $errors[] = "fields[$index].label is required and must be a string";
             }
         }
 

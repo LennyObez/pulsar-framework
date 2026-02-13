@@ -11,8 +11,11 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Database\PdoConnection;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
+use Pulsar\Database\Statement;
+use Pulsar\Database\Transaction;
 use Pulsar\Extension\Studio\Console\Collector\InstrumentedConnection;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\DatabaseQueryPayload;
@@ -158,7 +161,7 @@ final class InstrumentedConnectionTest extends TestCase
     public function delegatesPrepareThroughToInner(): void
     {
         // Statement and Transaction are final, use real PdoConnection
-        $realConn = new \Pulsar\Database\PdoConnection(
+        $realConn = new PdoConnection(
             connectionName: 'test',
             driver: Driver::SQLite,
             dsn: 'sqlite::memory:',
@@ -174,13 +177,13 @@ final class InstrumentedConnectionTest extends TestCase
         );
 
         $stmt = $conn->prepare('SELECT * FROM t WHERE id = :id');
-        self::assertInstanceOf(\Pulsar\Database\Statement::class, $stmt);
+        self::assertInstanceOf(Statement::class, $stmt);
     }
 
     #[Test]
     public function delegatesBeginTransactionThroughToInner(): void
     {
-        $realConn = new \Pulsar\Database\PdoConnection(
+        $realConn = new PdoConnection(
             connectionName: 'test',
             driver: Driver::SQLite,
             dsn: 'sqlite::memory:',
@@ -195,7 +198,7 @@ final class InstrumentedConnectionTest extends TestCase
         );
 
         $txn = $conn->beginTransaction();
-        self::assertInstanceOf(\Pulsar\Database\Transaction::class, $txn);
+        self::assertInstanceOf(Transaction::class, $txn);
         $txn->commit();
     }
 

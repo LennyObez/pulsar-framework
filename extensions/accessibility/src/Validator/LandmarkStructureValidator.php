@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Accessibility\Validator;
 
 use DOMAttr;
-use DOMDocument;
 use DOMElement;
 use DOMNode;
 use DOMXPath;
@@ -24,6 +23,7 @@ use function count;
  */
 final readonly class LandmarkStructureValidator implements ValidatorInterface
 {
+    use ParsesHtmlDom;
     public function validate(string $html): array
     {
         $dom = $this->loadHtml($html);
@@ -83,7 +83,7 @@ final readonly class LandmarkStructureValidator implements ValidatorInterface
                     rule: 'multiple-main-landmarks',
                     severity: Severity::Error,
                     element: $firstMain instanceof DOMElement ? $this->getOuterHtmlTag($firstMain) : '',
-                    message: "Multiple <main> landmarks found ({$mainElements->length}). Each must have a distinct aria-label or aria-labelledby.",
+                    message: "Multiple <main> landmarks found ($mainElements->length). Each must have a distinct aria-label or aria-labelledby.",
                     wcagCriterion: '4.1.2',
                     line: $firstMain instanceof DOMNode ? $firstMain->getLineNo() : null,
                 );
@@ -122,7 +122,7 @@ final readonly class LandmarkStructureValidator implements ValidatorInterface
         ];
 
         foreach ($landmarkTypes as $tag => $role) {
-            $elements = $xpath->query("//{$tag}|//*[@role='{$role}']");
+            $elements = $xpath->query("//$tag|//*[@role='$role']");
 
             if ($elements === false || $elements->length < 2) {
                 continue;
@@ -151,7 +151,7 @@ final readonly class LandmarkStructureValidator implements ValidatorInterface
                         rule: 'duplicate-landmark-missing-label',
                         severity: Severity::Warning,
                         element: $this->getOuterHtmlTag($element),
-                        message: "Multiple <{$tag}> (role=\"{$role}\") landmarks exist but this one has no aria-label or aria-labelledby to distinguish it.",
+                        message: "Multiple <$tag> (role=\"$role\") landmarks exist but this one has no aria-label or aria-labelledby to distinguish it.",
                         wcagCriterion: '4.1.2',
                         line: $element->getLineNo(),
                     );
@@ -164,7 +164,7 @@ final readonly class LandmarkStructureValidator implements ValidatorInterface
                         rule: 'duplicate-landmark-label',
                         severity: Severity::Warning,
                         element: $this->getOuterHtmlTag($element),
-                        message: "Multiple <{$tag}> (role=\"{$role}\") landmarks share the same label \"{$label}\". Each should have a unique label.",
+                        message: "Multiple <$tag> (role=\"$role\") landmarks share the same label \"$label\". Each should have a unique label.",
                         wcagCriterion: '4.1.2',
                         line: $element->getLineNo(),
                     );
@@ -195,31 +195,18 @@ final readonly class LandmarkStructureValidator implements ValidatorInterface
     {
         $tag = '<' . $element->nodeName;
 
-        if ($element->attributes !== null) {
-            /** @var DOMAttr $attr */
-            foreach ($element->attributes as $attr) {
-                $tag .= ' ' . $attr->nodeName . '="' . htmlspecialchars($attr->nodeValue ?? '', ENT_QUOTES, 'UTF-8') . '"';
-            }
+        $attributes = $element->attributes;
+
+        if ($attributes === null) {
+            return $tag . '>';
+        }
+
+        /** @var DOMAttr $attr */
+        foreach ($attributes as $attr) {
+            $tag .= ' ' . $attr->nodeName . '="' . htmlspecialchars($attr->nodeValue ?? '', ENT_QUOTES, 'UTF-8') . '"';
         }
 
         return $tag . '>';
     }
 
-    private function loadHtml(string $html): ?DOMDocument
-    {
-        $dom = new DOMDocument();
-        $wrapped = '<div>' . $html . '</div>';
-        libxml_use_internal_errors(true);
-        $result = @$dom->loadHTML(
-            '<?xml encoding="UTF-8"><body>' . $wrapped . '</body>',
-            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD,
-        );
-        libxml_clear_errors();
-
-        if ($result === false) {
-            return null;
-        }
-
-        return $dom;
-    }
 }

@@ -154,10 +154,10 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
             filterable: $row->getBool('filterable'),
             sortable: $row->getBool('sortable'),
             validationRules: $validationRaw !== null
-                ? json_decode($validationRaw, true, 512, JSON_THROW_ON_ERROR)
+                ? json_decode($validationRaw, true, flags: JSON_THROW_ON_ERROR)
                 : [],
             defaultValue: $defaultRaw !== null
-                ? json_decode($defaultRaw, true, 512, JSON_THROW_ON_ERROR)
+                ? json_decode($defaultRaw, true, flags: JSON_THROW_ON_ERROR)
                 : null,
             sortOrder: $row->getInt('sort_order'),
         );
@@ -183,7 +183,7 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
                 : null,
             valueDatetime: $datetimeRaw !== null ? new DateTimeImmutable($datetimeRaw) : null,
             valueJson: $jsonRaw !== null
-                ? json_decode($jsonRaw, true, 512, JSON_THROW_ON_ERROR)
+                ? json_decode($jsonRaw, true, flags: JSON_THROW_ON_ERROR)
                 : null,
         );
     }

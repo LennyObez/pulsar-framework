@@ -59,7 +59,7 @@ final readonly class SnapshotFileReader
         }
 
         try {
-            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             $warnings[] = 'Failed to decode API snapshot JSON: ' . $e->getMessage();
 

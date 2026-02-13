@@ -50,7 +50,7 @@ final readonly class ImportAnalyzer
                 $slug = $item['slug'] ?? $item['slugSegment'] ?? null;
                 $locale = $item['locale'] ?? 'en';
 
-                if ($slug !== null && $slug !== '' && is_string($slug)) {
+                if (is_string($slug) && $slug !== '') {
                     $resolvedLocale = is_string($locale) ? $locale : 'en';
                     $tenantId = isset($item['tenant_id']) && is_string($item['tenant_id']) ? $item['tenant_id'] : null;
                     $existing = $this->contentRepo->findByPath($resolvedLocale, $slug, $tenantId);
@@ -110,7 +110,7 @@ final readonly class ImportAnalyzer
 
                 $storagePath = $item['storage_path'] ?? null;
 
-                if ($storagePath !== null && is_string($storagePath) && !isset($bundleData['media_files'])) {
+                if (is_string($storagePath) && !isset($bundleData['media_files'])) {
                     $missing[] = 'media_file:' . $storagePath;
                 }
             }

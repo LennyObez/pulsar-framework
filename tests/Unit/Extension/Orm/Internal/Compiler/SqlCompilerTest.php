@@ -11,6 +11,7 @@ use Pulsar\Database\Driver;
 use Pulsar\Extension\Orm\Domain\LockMode;
 use Pulsar\Extension\Orm\Internal\Compiler\MySqlDialect;
 use Pulsar\Extension\Orm\Internal\Compiler\SqlCompiler;
+use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 
 #[CoversClass(SqlCompiler::class)]
 final class SqlCompilerTest extends TestCase
@@ -158,7 +159,7 @@ final class SqlCompilerTest extends TestCase
     public function quoterReturnsIdentifierQuoter(): void
     {
         $quoter = $this->compiler->quoter();
-        self::assertInstanceOf(\Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter::class, $quoter);
+        self::assertInstanceOf(IdentifierQuoter::class, $quoter);
     }
 
     #[Test]

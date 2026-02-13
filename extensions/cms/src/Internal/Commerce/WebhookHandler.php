@@ -68,7 +68,7 @@ final readonly class WebhookHandler
         }
 
         /** @var array{id?: string, created?: int, type: string, data: array{object: array{id?: string, metadata?: array{orderId?: string}, failure_message?: string, charge?: array{refunded?: bool, amount_refunded?: int, metadata?: array{orderId?: string}}}}} $event */
-        $event = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
+        $event = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
 
         // Replay protection: reject webhooks with stale timestamps
         $eventTimestamp = isset($event['created']) ? (int) $event['created'] : 0;
@@ -184,7 +184,7 @@ final readonly class WebhookHandler
             AuditOutcome::Success,
             null,
             'cms.commerce.webhook.payment_succeeded',
-            "order:{$orderId}",
+            "order:$orderId",
             ['paymentIntentId' => $paymentIntentId],
         );
     }
@@ -208,7 +208,7 @@ final readonly class WebhookHandler
             AuditOutcome::Failure,
             null,
             'cms.commerce.webhook.payment_failed',
-            "order:{$orderId}",
+            "order:$orderId",
             ['reason' => $reason],
         );
     }
@@ -232,7 +232,7 @@ final readonly class WebhookHandler
             AuditOutcome::Success,
             null,
             'cms.commerce.webhook.charge_refunded',
-            "order:{$orderId}",
+            "order:$orderId",
             ['amount' => $refundAmount],
         );
     }
@@ -264,7 +264,7 @@ final readonly class WebhookHandler
             AuditOutcome::Success,
             null,
             'cms.commerce.webhook.retry_dispatched',
-            "webhook:{$eventId}",
+            "webhook:$eventId",
             ['retry_count' => 0, 'delay_seconds' => $delaySeconds],
         );
     }

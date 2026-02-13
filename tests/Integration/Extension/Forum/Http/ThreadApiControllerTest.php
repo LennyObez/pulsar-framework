@@ -15,6 +15,7 @@ use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Extension\Forum\Config\ForumConfig;
 use Pulsar\Extension\Forum\Content\MarkdownRendererInterface;
 use Pulsar\Extension\Forum\Domain\ThreadType;
+use Pulsar\Extension\Forum\Exception\ForumException;
 use Pulsar\Extension\Forum\Http\Controller\Api\ThreadApiController;
 use Pulsar\Extension\Forum\Service\ForumServiceInterface;
 use Pulsar\Extension\Forum\Subscription\ThreadSubscriptionRepositoryInterface;
@@ -88,7 +89,7 @@ final class ThreadApiControllerTest extends TestCase
             parsedBody: ['title' => 'Test', 'slug' => 'test', 'category_id' => 'cat-1'],
         );
 
-        $this->expectException(\Pulsar\Extension\Forum\Exception\ForumException::class);
+        $this->expectException(ForumException::class);
         $this->controller->create($request);
     }
 

@@ -425,14 +425,13 @@ final class SpecGenerator
         }
 
         if ($response->headers !== null) {
-            $headers = [];
-            foreach ($response->headers as $name => $description) {
-                $headers[$name] = [
+            $obj['headers'] = array_map(
+                static fn(string $description): array => [
                     'description' => $description,
                     'schema' => ['type' => 'string'],
-                ];
-            }
-            $obj['headers'] = $headers;
+                ],
+                $response->headers,
+            );
         }
 
         return $obj;

@@ -191,7 +191,7 @@ readonly class Request
         }
 
         try {
-            $decoded = json_decode($this->body, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($this->body, true, flags: JSON_THROW_ON_ERROR);
 
             /** @var array<string, mixed> */
             return is_array($decoded) ? $decoded : [];

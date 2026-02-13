@@ -325,7 +325,7 @@ final readonly class AiAssistantApiController
 
         try {
             /** @var array<string, mixed> $analysis */
-            $analysis = json_decode($result->content, true, 512, JSON_THROW_ON_ERROR);
+            $analysis = json_decode($result->content, true, flags: JSON_THROW_ON_ERROR);
 
             return Response::json([
                 'analysis' => $analysis,

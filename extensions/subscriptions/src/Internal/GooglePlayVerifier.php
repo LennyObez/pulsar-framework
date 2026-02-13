@@ -63,8 +63,8 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
             return VerificationResult::invalid();
         }
 
-        $url = "{$baseUrl}/androidpublisher/v3/applications/{$packageName}"
-            . "/purchases/subscriptionsv2/tokens/{$purchaseToken}";
+        $url = "$baseUrl/androidpublisher/v3/applications/$packageName"
+            . "/purchases/subscriptionsv2/tokens/$purchaseToken";
 
         $responseBody = $this->httpGet($url, $accessToken);
 
@@ -117,7 +117,7 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
                 'exp' => $now + 3600,
             ], JSON_THROW_ON_ERROR));
 
-            $signingInput = "{$header}.{$claims}";
+            $signingInput = "$header.$claims";
             $signature = '';
             $key = openssl_pkey_get_private($privateKey);
 
@@ -132,7 +132,7 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
             }
 
             $signatureStr = is_string($signature) ? $signature : '';
-            $jwt = "{$signingInput}." . base64_encode($signatureStr);
+            $jwt = "$signingInput." . base64_encode($signatureStr);
 
             $postData = http_build_query([
                 'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -174,7 +174,7 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
             $context = stream_context_create([
                 'http' => [
                     'method' => 'GET',
-                    'header' => "Authorization: Bearer {$accessToken}\r\n"
+                    'header' => "Authorization: Bearer $accessToken\r\n"
                         . "Accept: application/json\r\n",
                     'timeout' => 15,
                 ],

@@ -40,9 +40,9 @@ final class ConsentCheckboxTest extends TestCase
     {
         $field = new ConsentCheckbox('gdpr', 'GDPR Consent', 'data_processing', 'v2.1', 'We process your data...');
 
-        self::assertSame('data_processing', $field->getPurpose());
-        self::assertSame('v2.1', $field->getPolicyVersion());
-        self::assertSame('We process your data...', $field->getPolicyText());
+        self::assertSame('data_processing', $field->purpose);
+        self::assertSame('v2.1', $field->policyVersion);
+        self::assertSame('We process your data...', $field->policyText);
     }
 
     #[Test]

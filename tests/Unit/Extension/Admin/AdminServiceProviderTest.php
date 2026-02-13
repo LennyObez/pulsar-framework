@@ -19,6 +19,7 @@ use Pulsar\Database\Introspection\DatabaseIntrospector;
 use Pulsar\Database\Schema\DdlCompiler;
 use Pulsar\Database\Schema\SchemaCapabilities;
 use Pulsar\Database\Schema\SchemaManager;
+use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Admin\AdminServiceProvider;
 use Pulsar\Extension\Admin\Command\AdminServeCommand;
 use Pulsar\Extension\Admin\Config\AdminConfig;
@@ -1013,7 +1014,7 @@ final class AdminServiceProviderTest extends TestCase
     public function implementsServiceProviderInterface(): void
     {
         self::assertInstanceOf(
-            \Pulsar\Extensibility\ServiceProviderInterface::class,
+            ServiceProviderInterface::class,
             $this->provider,
         );
     }

@@ -345,7 +345,7 @@ final readonly class CheckoutService implements CheckoutServiceInterface
                 AuditOutcome::Success,
                 $customerId,
                 'cms.commerce.order.created',
-                "order:{$order->id}",
+                "order:$order->id",
                 ['orderNumber' => $order->orderNumber, 'total' => $total],
             );
 
@@ -423,7 +423,7 @@ final readonly class CheckoutService implements CheckoutServiceInterface
             AuditOutcome::Success,
             null,
             'cms.commerce.checkout.cancelled',
-            "order:{$orderId}",
+            "order:$orderId",
             ['orderNumber' => $order->orderNumber],
         );
     }

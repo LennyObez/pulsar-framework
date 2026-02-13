@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Grpc\Security\ServiceIdentity;
-use Pulsar\Extension\Grpc\Security\ServicePermission;
 
 #[CoversClass(ServiceIdentity::class)]
 final class ServiceIdentityTest extends TestCase
@@ -36,7 +35,6 @@ final class ServiceIdentityTest extends TestCase
             allowedMethods: ['/a.Service/Method'],
         );
 
-        self::assertInstanceOf(ServicePermission::class, $identity->permissions);
         self::assertTrue($identity->permissions->allows('/a.Service/Method'));
         self::assertFalse($identity->permissions->allows('/b.Service/Other'));
     }

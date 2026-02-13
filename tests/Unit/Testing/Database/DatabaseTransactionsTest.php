@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Testing\Database;
 
 use PDO;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Testing\Database\DatabaseTransactions;
@@ -13,7 +12,6 @@ use Pulsar\Testing\Database\DatabaseTransactions;
 /**
  * Verifies that DatabaseTransactions composes into a test class.
  */
-#[CoversClass(DatabaseTransactions::class)]
 final class DatabaseTransactionsTest extends TestCase
 {
     use DatabaseTransactions;

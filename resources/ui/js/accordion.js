@@ -1,7 +1,7 @@
 /**
  * Pulsar UI — Accordion v1.0.0
  * Expand/collapse with animation.
- * Works with native <details>/<summary> and custom markup.
+ * Works with native `<details>`/`<summary>` and custom markup.
  * Zero dependencies.
  */
 'use strict';

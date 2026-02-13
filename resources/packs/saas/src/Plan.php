@@ -9,7 +9,7 @@ namespace {{namespace}}\Entity;
  *
  * Represents a subscription plan with pricing and feature limits.
  */
-final class Plan
+final readonly class Plan
 {
     /**
      * @param non-empty-string  $id              Unique plan identifier
@@ -24,26 +24,26 @@ final class Plan
      * @param bool              $isPublic        Whether this plan is publicly available
      */
     public function __construct(
-        public readonly string $id,
-        public readonly string $name,
-        public readonly string $slug,
-        public readonly int $monthlyPriceCents,
-        public readonly int $annualPriceCents,
-        public readonly string $currency = 'USD',
-        public readonly int $maxUsers = 5,
-        public readonly int $maxStorageMb = 1024,
-        public readonly array $features = [],
-        public readonly bool $isPublic = true,
+        public string $id,
+        public string $name,
+        public string $slug,
+        public int $monthlyPriceCents,
+        public int $annualPriceCents,
+        public string $currency = 'USD',
+        public int $maxUsers = 5,
+        public int $maxStorageMb = 1024,
+        public array $features = [],
+        public bool $isPublic = true,
     ) {}
 
     public function monthlyPriceFormatted(): string
     {
-        return number_format($this->monthlyPriceCents / 100, 2, '.', ',');
+        return number_format($this->monthlyPriceCents / 100, 2);
     }
 
     public function annualPriceFormatted(): string
     {
-        return number_format($this->annualPriceCents / 100, 2, '.', ',');
+        return number_format($this->annualPriceCents / 100, 2);
     }
 
     public function annualSavingsPercent(): float

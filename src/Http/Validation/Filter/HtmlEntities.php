@@ -10,9 +10,6 @@ use Pulsar\Api\Api;
 use function htmlspecialchars;
 use function is_string;
 
-use const ENT_QUOTES;
-use const ENT_SUBSTITUTE;
-
 /**
  * Encodes HTML special characters in string values. Non-strings pass through unchanged.
  */
@@ -23,7 +20,7 @@ readonly class HtmlEntities implements FilterInterface
     public function apply(mixed $value): mixed
     {
         return is_string($value)
-            ? htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+            ? htmlspecialchars($value)
             : $value;
     }
 }

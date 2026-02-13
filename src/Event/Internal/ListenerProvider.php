@@ -125,11 +125,7 @@ final class ListenerProvider implements ListenerProviderInterface, ListenerMetad
             return $a['fqcn'] <=> $b['fqcn'];
         });
 
-        $callables = [];
-
-        foreach ($allEntries as $entry) {
-            $callables[] = $entry['callable'];
-        }
+        $callables = array_map(static fn(array $entry): callable => $entry['callable'], $allEntries);
 
         $this->sortedCache[$eventClass] = $callables;
 

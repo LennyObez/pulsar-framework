@@ -20,13 +20,13 @@ use function sprintf;
  * No runtime directory scanning, reflection, or class-name guessing.
  */
 #[Api(since: '1.0.0')]
-final class FactoryMap
+final readonly class FactoryMap
 {
     /**
      * @param array<class-string, class-string<Factory>> $map Entity class => Factory class
      */
     public function __construct(
-        private readonly array $map = [],
+        private array $map = [],
     ) {}
 
     /**

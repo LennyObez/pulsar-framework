@@ -229,7 +229,7 @@ final class I18nCatalogCompiler
         }
 
         /** @var array<string, mixed>|null $data */
-        $data = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($contents, true, flags: JSON_THROW_ON_ERROR);
 
         if ($data === null) {
             return [];

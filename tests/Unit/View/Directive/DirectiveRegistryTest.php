@@ -27,6 +27,7 @@ use Pulsar\View\Directive\YieldDirective;
 use Pulsar\View\Engine\TemplateCache;
 use Pulsar\View\Engine\TemplateCompiler;
 use Pulsar\View\ViewConfig;
+use Pulsar\View\ViewException;
 
 use function sys_get_temp_dir;
 use function uniqid;
@@ -453,7 +454,7 @@ final class DirectiveRegistryTest extends TestCase
 
         $directive = new PhpDirective($config);
 
-        $this->expectException(\Pulsar\View\ViewException::class);
+        $this->expectException(ViewException::class);
         $this->expectExceptionMessageMatches('/@php/');
 
         $directive->compile('');

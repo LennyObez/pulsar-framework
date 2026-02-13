@@ -10,6 +10,8 @@ use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
 use function ord;
 use function strlen;
 
+use const INF;
+
 /**
  * Minimal CBOR decoder for WebAuthn attestation object parsing.
  *
@@ -185,7 +187,7 @@ final class CborDecoder
         if ($exponent === 0) {
             $value = (float) $mantissa * (2 ** -24);
         } elseif ($exponent === 31) {
-            $value = $mantissa === 0 ? INF : NAN;
+            $value = $mantissa === 0 ? INF : fdiv(0.0, 0.0);
         } else {
             $value = ((float) ($mantissa + 1024)) * ((float) (2 ** ($exponent - 25)));
         }

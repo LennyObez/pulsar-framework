@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
-use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Domain\SavedView;
 use Pulsar\Extension\Admin\Features\SavedViews\SavedViewsHandler;
 use Pulsar\Extension\Admin\Features\SavedViews\SavedViewsRequest;
@@ -24,6 +23,8 @@ use function time;
 #[Internal]
 final readonly class SavedViewsController
 {
+    use ExtractsRequestActor;
+
     public function __construct(
         private SavedViewsHandler $handler,
     ) {}
@@ -52,9 +53,7 @@ final readonly class SavedViewsController
 
     public function store(ServerRequestInterface $request, string $resource): Response
     {
-        /** @var IdentityInterface|null $identity */
-        $identity = $request->getAttribute('identity');
-        $actor = $identity?->id() ?? 'anonymous';
+        $actor = $this->resolveActor($request);
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);

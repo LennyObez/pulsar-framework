@@ -167,7 +167,7 @@ final class TenantFanOutScheduleTest extends TestCase
         (void) $schedule->tick($now);
 
         // After tick, tenant scope should be fully cleared
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
         self::assertFalse($this->tenantContext->isResolved());
     }
 }

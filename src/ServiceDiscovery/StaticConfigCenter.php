@@ -24,7 +24,7 @@ use function is_string;
 final class StaticConfigCenter implements ConfigCenterInterface
 {
     /** @var array<string, array<string, string>> namespace → (key → value) */
-    private array $store = [];
+    private array $store;
 
     /**
      * @param array<string, array<string, string>> $initial

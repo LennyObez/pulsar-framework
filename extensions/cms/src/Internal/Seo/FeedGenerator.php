@@ -86,7 +86,7 @@ final readonly class FeedGenerator implements FeedGeneratorInterface
                 <description>Latest content</description>
                 <language>{$this->esc($locale)}</language>
                 <atom:link href="{$this->esc($feedLink)}" rel="self" type="application/rss+xml"/>
-            {$body}
+            $body
               </channel>
             </rss>
             XML;
@@ -154,8 +154,8 @@ final readonly class FeedGenerator implements FeedGeneratorInterface
               <link href="{$this->esc($baseUrl)}"/>
               <link href="{$this->esc($feedLink)}" rel="self"/>
               <id>{$this->esc($baseUrl)}/</id>
-              <updated>{$updatedStr}</updated>
-            {$body}
+              <updated>$updatedStr</updated>
+            $body
             </feed>
             XML;
     }

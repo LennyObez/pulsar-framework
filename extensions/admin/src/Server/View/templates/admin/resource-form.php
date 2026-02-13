@@ -8,7 +8,7 @@ use Pulsar\Extension\Admin\Domain\FieldType;
 /**
  * @var array<string, mixed> $templateData
  */
-$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$e = static fn(string $val): string => htmlspecialchars($val);
 /** @var DataResourceInterface $resource */
 $resource = $templateData['resource'];
 /** @var array<string, mixed> $data */

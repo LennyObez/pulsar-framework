@@ -199,6 +199,14 @@ final class StorageFake implements StorageAdapterInterface
     }
 
     /**
+     * Get metadata for a stored file, or null if not set.
+     */
+    public function getMetadata(string $key): ?StorageMetadata
+    {
+        return $this->metadata[$key] ?? null;
+    }
+
+    /**
      * Assert storage is empty.
      */
     public function assertEmpty(): void

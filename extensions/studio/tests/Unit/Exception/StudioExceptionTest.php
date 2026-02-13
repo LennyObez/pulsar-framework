@@ -130,8 +130,8 @@ final class StudioExceptionTest extends TestCase
     #[Test]
     public function isRuntimeException(): void
     {
-        $e = StudioException::notEnabled();
+        $parents = class_parents(StudioException::class);
 
-        self::assertInstanceOf(RuntimeException::class, $e);
+        self::assertContains(RuntimeException::class, $parents);
     }
 }

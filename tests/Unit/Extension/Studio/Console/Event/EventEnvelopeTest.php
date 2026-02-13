@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Event\EventVersion;
+use Pulsar\Extension\Studio\Console\Event\Payload\LogEntryPayload;
+use Pulsar\Observability\Context\CorrelationContext;
 
 use function strlen;
 
@@ -71,14 +73,14 @@ final class EventEnvelopeTest extends TestCase
     #[Test]
     public function wrapCreatesEnvelopeFromConsoleEvent(): void
     {
-        $event = new \Pulsar\Extension\Studio\Console\Event\Payload\LogEntryPayload(
+        $event = new LogEntryPayload(
             level: 'info',
             message: 'Test message',
             channel: 'app',
             context: [],
         );
 
-        $context = new \Pulsar\Observability\Context\CorrelationContext(
+        $context = new CorrelationContext(
             requestId: 'req-wrap',
             traceId: 'trace-wrap',
         );

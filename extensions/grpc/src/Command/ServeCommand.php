@@ -80,7 +80,7 @@ final class ServeCommand extends Command
         }
 
         $output->info(sprintf('Adapter: %s', $this->config->adapter));
-        $output->writeln('');
+        $output->writeln();
 
         try {
             $this->server->start();

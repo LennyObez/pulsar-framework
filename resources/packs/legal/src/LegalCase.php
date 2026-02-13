@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Legal case entity.
  *
@@ -21,8 +23,8 @@ final class LegalCase
      * @param CaseStatus              $status          Current case status
      * @param non-empty-string|null   $assignedAttorney Primary assigned attorney
      * @param non-empty-string|null   $courtReference  Court case reference number
-     * @param \DateTimeImmutable      $openedAt        Case opening date
-     * @param \DateTimeImmutable|null $closedAt        Case closing date
+     * @param DateTimeImmutable      $openedAt        Case opening date
+     * @param DateTimeImmutable|null $closedAt        Case closing date
      */
     public function __construct(
         public readonly string $id,
@@ -33,8 +35,8 @@ final class LegalCase
         public CaseStatus $status = CaseStatus::Open,
         public readonly ?string $assignedAttorney = null,
         public readonly ?string $courtReference = null,
-        public readonly \DateTimeImmutable $openedAt = new \DateTimeImmutable(),
-        public readonly ?\DateTimeImmutable $closedAt = null,
+        public readonly DateTimeImmutable $openedAt = new DateTimeImmutable(),
+        public readonly ?DateTimeImmutable $closedAt = null,
     ) {}
 
     public function isOpen(): bool

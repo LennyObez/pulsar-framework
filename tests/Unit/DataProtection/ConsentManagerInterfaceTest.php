@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\DataProtection;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\DataProtection\ConsentManagerInterface;
 use Pulsar\DataProtection\ConsentRecordInterface;
 
-#[CoversClass(ConsentManagerInterface::class)]
 final class ConsentManagerInterfaceTest extends TestCase
 {
     #[Test]

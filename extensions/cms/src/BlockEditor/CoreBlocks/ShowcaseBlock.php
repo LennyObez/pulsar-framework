@@ -57,14 +57,14 @@ final readonly class ShowcaseBlock implements BlockTypeInterface
 
         if (is_string($industry) && $industry !== '') {
             $escaped = htmlspecialchars($industry, ENT_QUOTES, 'UTF-8');
-            $industryAttr = " data-industry=\"{$escaped}\"";
+            $industryAttr = " data-industry=\"$escaped\"";
         }
 
         return '<div class="cms-showcase-grid"'
             . $industryAttr
-            . " data-limit=\"{$limit}\""
-            . " data-show-tech=\"{$showTech}\""
-            . " data-featured-only=\"{$featuredOnly}\">"
+            . " data-limit=\"$limit\""
+            . " data-show-tech=\"$showTech\""
+            . " data-featured-only=\"$featuredOnly\">"
             . '</div>';
     }
 

@@ -84,14 +84,14 @@ final readonly class ResumeBlock implements BlockTypeInterface
 
             if ($filtered !== []) {
                 $json = htmlspecialchars(json_encode($filtered, JSON_THROW_ON_ERROR), ENT_QUOTES, 'UTF-8');
-                $sectionsAttr = " data-sections=\"{$json}\"";
+                $sectionsAttr = " data-sections=\"$json\"";
             }
         }
 
         return '<div class="cms-resume-embed"'
-            . " data-resume-slug=\"{$slug}\""
+            . " data-resume-slug=\"$slug\""
             . $sectionsAttr
-            . " data-layout=\"{$layout}\">"
+            . " data-layout=\"$layout\">"
             . '</div>';
     }
 

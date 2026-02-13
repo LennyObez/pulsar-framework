@@ -78,13 +78,16 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\ToolsController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\TwoFactorController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\UserController;
 use Pulsar\Extension\Cms\Http\Controller\Api\CollaborationApiController;
+use Pulsar\Extension\Cms\I18n\HreflangGenerator;
 use Pulsar\Extension\Cms\Internal\ABTest\ExperimentService;
 use Pulsar\Extension\Cms\Internal\ABTest\TrafficSplitter;
 use Pulsar\Extension\Cms\Internal\Collaboration\CollaborationService;
+use Pulsar\Extension\Cms\Internal\Publishing\PublishingOrchestrator;
 use Pulsar\Extension\Cms\Internal\Security\ClientFingerprintResolver;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
 use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
 use Pulsar\Extension\Cms\Internal\Security\SafeHttpClient;
+use Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter;
 use Pulsar\Extension\Cms\LiveCss\CspHashComputerInterface;
 use Pulsar\Extension\Cms\LiveCss\CssOverrideRepositoryInterface;
 use Pulsar\Extension\Cms\LiveCss\CssValidatorInterface;
@@ -102,6 +105,7 @@ use Pulsar\Extension\Cms\Plugins\CmsPluginRepositoryInterface;
 use Pulsar\Extension\Cms\Plugins\HookRegistry;
 use Pulsar\Extension\Cms\Plugins\PluginManifestValidatorInterface;
 use Pulsar\Extension\Cms\Plugins\PluginProvenanceVerifierInterface;
+use Pulsar\Extension\Cms\Publishing\ChannelRegistry;
 use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
 use Pulsar\Extension\Cms\Search\SearchServiceInterface;
 use Pulsar\Extension\Cms\Seo\FeedGeneratorInterface;
@@ -121,7 +125,9 @@ use Pulsar\Extension\Cms\Themes\ThemeManifestValidatorInterface;
 use Pulsar\Extension\Cms\Themes\ThemeProvenanceVerifierInterface;
 use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
 use Pulsar\Extension\Cms\Tools\BackupServiceInterface;
+use Pulsar\Extension\Cms\Tools\ImportAnalyzer;
 use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
+use Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface;
 use Pulsar\Extension\Cms\Tools\ToolsServiceInterface;
 use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
@@ -265,9 +271,9 @@ final class CmsServiceProvider implements ServiceProviderInterface
             ToolsServiceInterface::class,
             ImportExportServiceInterface::class,
             BackupServiceInterface::class,
-            \Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface::class,
-            \Pulsar\Extension\Cms\Tools\ImportAnalyzer::class,
-            \Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter::class,
+            MediaBundleExporterInterface::class,
+            ImportAnalyzer::class,
+            MediaBundleImporter::class,
             // Live CSS
             CssOverrideRepositoryInterface::class,
             CssValidatorInterface::class,
@@ -290,8 +296,8 @@ final class CmsServiceProvider implements ServiceProviderInterface
             PromotionServiceInterface::class,
             OrderExportServiceInterface::class,
             // Publishing
-            \Pulsar\Extension\Cms\Publishing\ChannelRegistry::class,
-            \Pulsar\Extension\Cms\Internal\Publishing\PublishingOrchestrator::class,
+            ChannelRegistry::class,
+            PublishingOrchestrator::class,
             // Collaboration
             CollaborationRepositoryInterface::class,
             CollaborationService::class,
@@ -342,7 +348,7 @@ final class CmsServiceProvider implements ServiceProviderInterface
             LinkHealthController::class,
             AdminFormSubmissionController::class,
             Http\Controller\ContentController::class,
-            \Pulsar\Extension\Cms\I18n\HreflangGenerator::class,
+            HreflangGenerator::class,
             // REST API controllers
             Http\Controller\Api\ContentApiController::class,
             Http\Controller\Api\TaxonomyApiController::class,

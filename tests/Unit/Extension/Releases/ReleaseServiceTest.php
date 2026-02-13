@@ -7,7 +7,6 @@ namespace Pulsar\Tests\Unit\Extension\Releases;
 use DateTimeImmutable;
 use InvalidArgumentException;
 use OverflowException;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -21,7 +20,6 @@ use Pulsar\Extension\Releases\Release;
 use Pulsar\Extension\Releases\ReleasePlatform;
 use Pulsar\Extension\Releases\ReleaseRepositoryInterface;
 
-#[CoversClass(ReleaseService::class)]
 final class ReleaseServiceTest extends TestCase
 {
     private ReleaseRepositoryInterface&Stub $releaseRepo;

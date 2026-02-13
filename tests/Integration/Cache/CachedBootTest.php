@@ -11,6 +11,7 @@ use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ConfigRepository;
+use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Core\Kernel;
 
@@ -114,7 +115,7 @@ final class CachedBootTest extends TestCase
 
         // Environment should be loaded even from cache path
         $env = $configManager->environment();
-        self::assertInstanceOf(\Pulsar\Config\Environment::class, $env);
+        self::assertInstanceOf(Environment::class, $env);
     }
 
     private function writeMinimalConfigs(string $configPath): void

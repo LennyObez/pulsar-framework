@@ -9,7 +9,6 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Form\Builder\Form;
 use Pulsar\Extension\Form\Exception\FormException;
 use Pulsar\Extension\Form\Field\TextField;
-use Pulsar\Http\Validation\ValidationResult;
 use Pulsar\Http\Validation\Validator;
 
 final class FormTest extends TestCase
@@ -107,7 +106,7 @@ final class FormTest extends TestCase
         $form->submit(['username' => 'john']);
 
         $result = $form->validate();
-        self::assertInstanceOf(ValidationResult::class, $result);
+        self::assertFalse($result->failed());
     }
 
     #[Test]

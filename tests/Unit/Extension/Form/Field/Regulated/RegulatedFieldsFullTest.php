@@ -180,9 +180,9 @@ final class RegulatedFieldsFullTest extends TestCase
     {
         $field = new ConsentCheckbox('gdpr', 'GDPR Consent', 'marketing', 'v2.1', 'Full policy text here');
 
-        self::assertSame('marketing', $field->getPurpose());
-        self::assertSame('v2.1', $field->getPolicyVersion());
-        self::assertSame('Full policy text here', $field->getPolicyText());
+        self::assertSame('marketing', $field->purpose);
+        self::assertSame('v2.1', $field->policyVersion);
+        self::assertSame('Full policy text here', $field->policyText);
     }
 
     #[Test]

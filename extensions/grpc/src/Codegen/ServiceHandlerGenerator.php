@@ -165,42 +165,44 @@ final readonly class ServiceHandlerGenerator
 
             declare(strict_types=1);
 
-            namespace {$namespace};
+            namespace $namespace;
 
+            use Pulsar\Extension\Grpc\Error\GrpcException;
+            use Pulsar\Extension\Grpc\Error\GrpcStatus;
             use Pulsar\Extension\Grpc\Handler\MethodDescriptor;
             use Pulsar\Extension\Grpc\Handler\MethodType;
             use Pulsar\Extension\Grpc\Handler\ServiceHandlerInterface;
 
             /**
-             * Abstract handler for the {$service->name} gRPC service.
+             * Abstract handler for the $service->name gRPC service.
              *
              * Generated from proto definitions. Implement the abstract methods
              * to provide your service logic.
              */
-            abstract class {$className} implements ServiceHandlerInterface
+            abstract class $className implements ServiceHandlerInterface
             {
                 public function serviceName(): string
                 {
-                    return '{$protoServiceName}';
+                    return '$protoServiceName';
                 }
 
                 public function methods(): array
                 {
-            {$methodDescriptors}
+            $methodDescriptors
                 }
 
                 public function invoke(string \$method, string \$payload): string
                 {
                     return match (\$method) {
             {$this->generateInvokeMatch($service->methods)}
-                        default => throw new \\Pulsar\\Extension\\Grpc\\Error\\GrpcException(
-                            \\Pulsar\\Extension\\Grpc\\Error\\GrpcStatus::Unimplemented,
+                        default => throw new GrpcException(
+                            GrpcStatus::Unimplemented,
                             'Method not implemented: ' . \$method,
                         ),
                     };
                 }
 
-            {$methodStubs}
+            $methodStubs
             }
 
             PHP;
@@ -222,13 +224,13 @@ final readonly class ServiceHandlerGenerator
         foreach ($methods as $method) {
             $stubs[] = <<<PHP
                     /**
-                     * Handle the {$method->name} RPC.
+                     * Handle the $method->name RPC.
                      *
                      * @param string \$payload Serialized protobuf request
                      *
                      * @return string Serialized protobuf response
                      */
-                    abstract protected function handle{$method->name}(string \$payload): string;
+                    abstract protected function handle$method->name(string \$payload): string;
                 PHP;
         }
 
@@ -249,13 +251,13 @@ final readonly class ServiceHandlerGenerator
         foreach ($service->methods as $method) {
             $fullName = '/' . $protoServiceName . '/' . $method->name;
             $lines[] = <<<PHP
-                            '{$method->name}' => new MethodDescriptor(
-                                name: '{$method->name}',
-                                fullName: '{$fullName}',
+                            '$method->name' => new MethodDescriptor(
+                                name: '$method->name',
+                                fullName: '$fullName',
                                 type: MethodType::Unary,
-                                inputType: '{$method->inputType}',
-                                outputType: '{$method->outputType}',
-                                handler: static::class . '::{$method->name}',
+                                inputType: '$method->inputType',
+                                outputType: '$method->outputType',
+                                handler: static::class . '::$method->name',
                             ),
                 PHP;
         }

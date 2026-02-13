@@ -37,12 +37,12 @@ final readonly class ContentPublishedNotification implements CmsNotificationInte
 
     public function subject(): string
     {
-        return "Content published: {$this->contentTitle}";
+        return "Content published: $this->contentTitle";
     }
 
     public function body(): string
     {
-        return "The content \"{$this->contentTitle}\" has been published and is now live at {$this->url}.";
+        return "The content \"$this->contentTitle\" has been published and is now live at $this->url.";
     }
 
     public function metadata(): array

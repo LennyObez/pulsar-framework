@@ -84,7 +84,6 @@ final readonly class TenantFanOutSchedule
                         $this->queueManager->dispatch(
                             jobClass: $job::class,
                             payload: '',
-                            queue: null,
                             metadata: [
                                 'scheduledJobName' => $job->getName(),
                                 'tenantId' => $tenantId->toString(),

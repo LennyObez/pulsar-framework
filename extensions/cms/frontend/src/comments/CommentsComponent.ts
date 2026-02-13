@@ -149,7 +149,7 @@ export class CommentsComponent extends HTMLElement {
     );
 
     if (this.contentId !== '') {
-      this.fetchComments(true);
+      void this.fetchComments(true);
     }
   }
 
@@ -254,7 +254,7 @@ export class CommentsComponent extends HTMLElement {
 
     this.comments = [];
     this.currentPage = 1;
-    this.fetchComments(true);
+    void this.fetchComments(true);
   }
 
   private async fetchComments(reset: boolean): Promise<void> {
@@ -282,7 +282,8 @@ export class CommentsComponent extends HTMLElement {
       const response = await cmsApi(url.toString());
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        this.renderError();
+        return;
       }
 
       const data: CommentsApiResponse = await response.json();
@@ -312,7 +313,7 @@ export class CommentsComponent extends HTMLElement {
 
   private loadMore(): void {
     this.currentPage++;
-    this.fetchComments(false);
+    void this.fetchComments(false);
   }
 
   private renderComments(): void {
@@ -574,7 +575,7 @@ export class CommentsComponent extends HTMLElement {
     // Refresh comments to show the new one (if auto-approved)
     this.comments = [];
     this.currentPage = 1;
-    this.fetchComments(true);
+    void this.fetchComments(true);
   }
 
   private renderError(): void {

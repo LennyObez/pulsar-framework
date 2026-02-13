@@ -184,7 +184,7 @@ final readonly class DbSettingsRepository
             'int' => (int) $setting->value,
             'float' => (float) $setting->value,
             'bool' => $setting->value === 'true' || $setting->value === '1',
-            'json' => json_decode($setting->value, true, 512, JSON_THROW_ON_ERROR),
+            'json' => json_decode($setting->value, true, flags: JSON_THROW_ON_ERROR),
             default => $setting->value,
         };
     }

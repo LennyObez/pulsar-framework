@@ -66,8 +66,8 @@ final class CollectionFieldTest extends TestCase
     {
         $field = new CollectionField('tags', 'Tags', fn() => new TextField('tag'), minEntries: 1, maxEntries: 5);
 
-        self::assertSame(1, $field->getMinEntries());
-        self::assertSame(5, $field->getMaxEntries());
+        self::assertSame(1, $field->minEntries);
+        self::assertSame(5, $field->maxEntries);
     }
 
     #[Test]

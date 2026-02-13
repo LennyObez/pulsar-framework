@@ -46,7 +46,7 @@ final readonly class FileDownloadBlock implements BlockTypeInterface
         $fileSize = $data['fileSize'] ?? null;
 
         $html = '<div class="file-download">';
-        $html .= "<a href=\"{$url}\" download=\"{$filename}\" class=\"file-download__link\">{$filename}</a>";
+        $html .= "<a href=\"$url\" download=\"$filename\" class=\"file-download__link\">$filename</a>";
 
         if (is_string($description) && $description !== '') {
             $html .= '<p class="file-download__description">' . htmlspecialchars($description, ENT_QUOTES, 'UTF-8') . '</p>';

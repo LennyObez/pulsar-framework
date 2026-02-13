@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\Compiled\CompiledContainer;
+use Pulsar\Container\Compiler\PassRunner;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Lifetime;
 use Pulsar\Container\Provider\DeferredServiceProviderInterface;
@@ -51,7 +52,7 @@ final class CompiledContainerAdvancedTest extends TestCase
         $this->expectException(ContainerException::class);
         $this->expectExceptionMessage('Cannot modify a compiled container');
 
-        $container->processCompilerPasses(new \Pulsar\Container\Compiler\PassRunner());
+        $container->processCompilerPasses(new PassRunner());
     }
 
     #[Test]
