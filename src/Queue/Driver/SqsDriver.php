@@ -33,7 +33,7 @@ use const JSON_THROW_ON_ERROR;
  * Supports delayed messages up to the SQS maximum of 900 seconds.
  * Receipt handles are tracked internally for acknowledge/reject operations.
  */
-#[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
+#[Internal(reason: 'Implementation detail; use QueueDriverInterface contract')]
 final class SqsDriver implements QueueDriverInterface
 {
     private const int MAX_SQS_DELAY_SECONDS = 900;

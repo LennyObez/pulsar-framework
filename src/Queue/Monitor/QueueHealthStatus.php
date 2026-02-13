@@ -7,10 +7,10 @@ namespace Pulsar\Queue\Monitor;
 use Pulsar\Api\Api;
 
 /**
- * Health status of a queue endpoint.
+ * Health status of a queue endpoint, disambiguated from Resilience\HealthCheck\HealthStatus.
  */
 #[Api(since: '1.0.0')]
-enum HealthStatus: string
+enum QueueHealthStatus: string
 {
     case Healthy = 'healthy';
     case Degraded = 'degraded';

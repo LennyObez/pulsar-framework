@@ -12,7 +12,7 @@ use function is_string;
 /**
  * Configuration DTO for the Amazon SQS queue driver.
  */
-#[Internal(reason: 'Driver configuration — use QueueConfig for public access')]
+#[Internal(reason: 'Driver configuration; use QueueConfig for public access')]
 readonly class SqsDriverConfig
 {
     public function __construct(

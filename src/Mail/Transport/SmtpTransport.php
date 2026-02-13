@@ -99,7 +99,9 @@ final class SmtpTransport implements TransportInterface
 
     private function ehlo(): void
     {
-        $this->sendCommand('EHLO localhost', '250');
+        $hostname = $this->config->ehloHostname ?? gethostname();
+
+        $this->sendCommand(sprintf('EHLO %s', $hostname !== false ? $hostname : 'localhost'), '250');
     }
 
     private function startTls(): void
@@ -127,6 +129,10 @@ final class SmtpTransport implements TransportInterface
     {
         if ($this->config->username === null || $this->config->password === null) {
             return;
+        }
+
+        if ($this->config->encryption === '' || $this->config->encryption === 'none') {
+            throw MailException::driverError('smtp', 'Cannot authenticate over unencrypted connection');
         }
 
         $this->sendCommand('AUTH LOGIN', '334');

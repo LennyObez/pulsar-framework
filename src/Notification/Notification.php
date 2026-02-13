@@ -69,6 +69,24 @@ abstract class Notification
     }
 
     /**
+     * Build the broadcast (WebSocket) representation of the notification.
+     *
+     * @return array<string, mixed>
+     */
+    public function toBroadcast(NotifiableInterface $notifiable): array
+    {
+        throw new BadMethodCallException('toBroadcast() is not implemented for ' . static::class);
+    }
+
+    /**
+     * Build the push notification representation.
+     */
+    public function toPush(NotifiableInterface $notifiable): PushMessage
+    {
+        throw new BadMethodCallException('toPush() is not implemented for ' . static::class);
+    }
+
+    /**
      * Set the locale for this notification.
      *
      * @return $this

@@ -204,7 +204,13 @@ final class Worker
     {
         $jobClass = $envelope->jobClass;
 
-        $this->typeRegistry?->assertAllowed($jobClass);
+        if ($this->typeRegistry === null) {
+            throw QueueException::typeNotAllowed(
+                $jobClass . ' (TypeRegistry is required: no job class can be instantiated without a type allowlist)',
+            );
+        }
+
+        $this->typeRegistry->assertAllowed($jobClass);
 
         if (!class_exists($jobClass)) {
             throw QueueException::serializationFailed($jobClass);
@@ -242,7 +248,7 @@ final class Worker
     /**
      * Handle a failed job: determine retry eligibility, re-queue or dead-letter.
      *
-     * Non-idempotent jobs (#[NonIdempotent]) are never auto-retried — they go
+     * Non-idempotent jobs (#[NonIdempotent]) are never auto-retried; they go
      * directly to the dead-letter queue. Idempotent and side-effect-free jobs
      * are retried per the retry policy until max attempts are exhausted.
      */
@@ -429,7 +435,7 @@ final class Worker
             return;
         }
 
-        /** @psalm-suppress UndefinedConstant — SIGINT/SIGTERM are POSIX-only, guarded by OS check above */
+        /** @psalm-suppress UndefinedConstant: SIGINT/SIGTERM are POSIX-only, guarded by OS check above */
         pcntl_signal(SIGINT, function (): void {
             $this->stop();
         });

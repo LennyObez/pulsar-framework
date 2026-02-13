@@ -21,7 +21,7 @@ use function array_map;
  *
  * When HMAC hashing is enabled, computes integrity hashes of message body
  * and attachments using a derived subkey. Recipient addresses are always
- * pseudonymized via HMAC — raw email addresses never appear in audit logs.
+ * pseudonymized via HMAC: raw email addresses never appear in audit logs.
  */
 #[Internal]
 final readonly class MailAuditor

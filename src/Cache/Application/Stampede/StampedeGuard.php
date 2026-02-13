@@ -59,7 +59,7 @@ final readonly class StampedeGuard
         try {
             $handle = $this->lock->acquire($lockResource, $this->lockTtlSeconds, $this->lockTimeoutMs);
         } catch (Throwable) {
-            // Lock timeout — retry get, then fallback to callback
+            // Lock timeout: retry get, then fallback to callback
             $raw = $this->driver->get($key);
 
             if ($raw !== null) {

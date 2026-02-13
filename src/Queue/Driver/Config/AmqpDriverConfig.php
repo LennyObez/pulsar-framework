@@ -13,7 +13,7 @@ use function is_string;
 /**
  * Configuration DTO for the AMQP queue driver.
  */
-#[Internal(reason: 'Driver configuration — use QueueConfig for public access')]
+#[Internal(reason: 'Driver configuration; use QueueConfig for public access')]
 readonly class AmqpDriverConfig
 {
     public function __construct(

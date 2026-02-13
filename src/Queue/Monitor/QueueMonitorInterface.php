@@ -23,5 +23,5 @@ interface QueueMonitorInterface
     /**
      * Check the health status of a specific queue.
      */
-    public function healthCheck(string $queue): HealthStatus;
+    public function healthCheck(string $queue): QueueHealthStatus;
 }

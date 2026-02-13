@@ -11,9 +11,9 @@ use Throwable;
 /**
  * Checks queue health based on driver connectivity and pending-job thresholds.
  *
- * Returns {@see HealthStatus::Unhealthy} when the driver cannot respond,
- * {@see HealthStatus::Degraded} when the pending-job count exceeds the
- * configured threshold, and {@see HealthStatus::Healthy} otherwise.
+ * Returns {@see QueueHealthStatus::Unhealthy} when the driver cannot respond,
+ * {@see QueueHealthStatus::Degraded} when the pending-job count exceeds the
+ * configured threshold, and {@see QueueHealthStatus::Healthy} otherwise.
  */
 #[Api(since: '1.0.0')]
 final readonly class QueueHealthCheck
@@ -26,18 +26,18 @@ final readonly class QueueHealthCheck
     /**
      * Check the health of the given queue.
      */
-    public function check(string $queue): HealthStatus
+    public function check(string $queue): QueueHealthStatus
     {
         try {
             $pending = $this->driver->size($queue);
         } catch (Throwable) {
-            return HealthStatus::Unhealthy;
+            return QueueHealthStatus::Unhealthy;
         }
 
         if ($pending >= $this->pendingThreshold) {
-            return HealthStatus::Degraded;
+            return QueueHealthStatus::Degraded;
         }
 
-        return HealthStatus::Healthy;
+        return QueueHealthStatus::Healthy;
     }
 }

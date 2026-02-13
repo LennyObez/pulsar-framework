@@ -100,7 +100,7 @@ final class MemcachedDriver extends AbstractCacheDriver
     {
         $this->memcached->delete($key);
 
-        // Treat "not found" as success — the key is already gone
+        // Treat "not found" as success: the key is already gone
         return $this->memcached->getResultCode() === Memcached::RES_SUCCESS
             || $this->memcached->getResultCode() === Memcached::RES_NOTFOUND;
     }

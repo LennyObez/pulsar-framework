@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Supported mail content encryption types (S/MIME, PGP).
  *
- * This covers message-body encryption — distinct from TLS transport encryption
+ * This covers message-body encryption: distinct from TLS transport encryption
  * configured via {@see \Pulsar\Config\MailEncryptionPolicy}.
  */
 #[Api(since: '1.0.0')]

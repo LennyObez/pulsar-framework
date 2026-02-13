@@ -25,6 +25,7 @@ final readonly class SmtpTransportConfig
         public ?string $password = null,
         public string $encryption = 'tls',
         public int $timeout = 30,
+        public ?string $ehloHostname = null,
     ) {}
 
     /**
@@ -40,6 +41,7 @@ final readonly class SmtpTransportConfig
             password: is_string($data['password'] ?? null) ? $data['password'] : null,
             encryption: is_string($data['encryption'] ?? null) ? $data['encryption'] : 'tls',
             timeout: is_int($data['timeout'] ?? null) ? $data['timeout'] : 30,
+            ehloHostname: is_string($data['ehlo_hostname'] ?? null) ? $data['ehlo_hostname'] : null,
         );
     }
 }

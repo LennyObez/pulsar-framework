@@ -45,7 +45,7 @@ final readonly class PgpEncryptor implements MailEncryptorInterface
         $importResult = call_user_func('gnupg_import', $gpg, $recipientKeyMaterial);
 
         if (!is_array($importResult) || !isset($importResult['fingerprint'])) {
-            throw MailException::sendFailed('Failed to import PGP public key — verify the key is valid ASCII-armored format');
+            throw MailException::sendFailed('Failed to import PGP public key: verify the key is valid ASCII-armored format');
         }
 
         $fingerprint = $importResult['fingerprint'];
@@ -61,7 +61,7 @@ final readonly class PgpEncryptor implements MailEncryptorInterface
         $encrypted = call_user_func('gnupg_encrypt', $gpg, $body);
 
         if (!is_string($encrypted) || $encrypted === '') {
-            throw MailException::sendFailed('PGP encryption failed — gnupg_encrypt returned no data');
+            throw MailException::sendFailed('PGP encryption failed: gnupg_encrypt returned no data');
         }
 
         return $encrypted;

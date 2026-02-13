@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Declares the classification of a notification class.
  *
  * Applied to Notification subclasses to declare whether they are transactional
- * or marketing. Classification is immutable per version — read from attribute
+ * or marketing. Classification is immutable per version; read from attribute
  * at build/boot time.
  *
  * ```php
