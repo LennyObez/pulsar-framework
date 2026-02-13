@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Security\Crypto;
 
 use NoDiscard;
+use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\RandomException;
@@ -24,6 +25,7 @@ use function strlen;
  * Supports an optional previous key for transparent fallback decryption
  * during key rotation windows.
  */
+#[Api(since: '1.0.0')]
 final class Encryptor implements EncryptorInterface
 {
     /**
