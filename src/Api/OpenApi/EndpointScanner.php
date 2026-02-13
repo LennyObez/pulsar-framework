@@ -40,13 +40,7 @@ final readonly class EndpointScanner
      */
     public function scan(array $routes): array
     {
-        $endpoints = [];
-
-        foreach ($routes as $route) {
-            $endpoints[] = $this->scanRoute($route);
-        }
-
-        return $endpoints;
+        return array_map($this->scanRoute(...), $routes);
     }
 
     /**

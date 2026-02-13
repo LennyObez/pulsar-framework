@@ -59,7 +59,7 @@ abstract class AbstractGenerator implements GeneratorInterface
         foreach ($fileSet->conflicts() as $conflict) {
             if ($conflict->overwritePolicy === OverwritePolicy::Fail) {
                 throw new InvalidArgumentException(
-                    "File already exists and overwrite policy is Fail: {$conflict->targetPath}",
+                    "File already exists and overwrite policy is Fail: $conflict->targetPath",
                 );
             }
         }

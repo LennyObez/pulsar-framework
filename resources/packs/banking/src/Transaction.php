@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Financial transaction entity.
  *
@@ -20,8 +22,8 @@ final class Transaction
      * @param non-empty-string      $currency       ISO 4217 currency code
      * @param TransactionStatus     $status         Current transaction status
      * @param non-empty-string|null $reference      External reference number
-     * @param \DateTimeImmutable    $createdAt      Creation timestamp
-     * @param \DateTimeImmutable|null $settledAt    Settlement timestamp
+     * @param DateTimeImmutable    $createdAt      Creation timestamp
+     * @param DateTimeImmutable|null $settledAt    Settlement timestamp
      */
     public function __construct(
         public readonly string $id,
@@ -31,8 +33,8 @@ final class Transaction
         public readonly string $currency,
         public TransactionStatus $status = TransactionStatus::Pending,
         public readonly ?string $reference = null,
-        public readonly \DateTimeImmutable $createdAt = new \DateTimeImmutable(),
-        public readonly ?\DateTimeImmutable $settledAt = null,
+        public readonly DateTimeImmutable $createdAt = new DateTimeImmutable(),
+        public readonly ?DateTimeImmutable $settledAt = null,
     ) {}
 
     public function isPending(): bool
@@ -47,6 +49,6 @@ final class Transaction
 
     public function amountFormatted(): string
     {
-        return number_format($this->amountCents / 100, 2, '.', ',');
+        return number_format($this->amountCents / 100, 2);
     }
 }

@@ -2250,10 +2250,67 @@ deptrac:
     Psr7BridgeExtension: *public_deps
     StudioExtension: *public_deps
     AccessibilityExtension: *public_deps
-    DevicesExtension: *public_deps
-    FeedbackExtension: *public_deps
-    ReleasesExtension: *public_deps
-    SubscriptionsExtension: *public_deps
+    DevicesExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Extensibility
+      - Auth
+      - Database
+      - DevicesExtension_Internal
+
+    FeedbackExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Extensibility
+      - Database
+      - Queue
+      - FeedbackExtension_Internal
+
+    ReleasesExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Extensibility
+      - Database
+      - Mail
+      - Queue
+      - ReleasesExtension_Internal
+
+    SubscriptionsExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Extensibility
+      - Database
+      - Queue
+      - Security
+      - SubscriptionsExtension_Internal
     ExampleExtension: *public_deps
 
     DevicesExtension_Internal:

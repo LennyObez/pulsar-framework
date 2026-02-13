@@ -41,7 +41,7 @@ final readonly class QuoteBlock implements BlockTypeInterface
         $text = htmlspecialchars((string) ($data['text'] ?? ''), ENT_QUOTES, 'UTF-8');
         $citation = $data['citation'] ?? null;
 
-        $html = "<blockquote><p>{$text}</p>";
+        $html = "<blockquote><p>$text</p>";
 
         if (is_string($citation) && $citation !== '') {
             $html .= '<cite>' . htmlspecialchars($citation, ENT_QUOTES, 'UTF-8') . '</cite>';

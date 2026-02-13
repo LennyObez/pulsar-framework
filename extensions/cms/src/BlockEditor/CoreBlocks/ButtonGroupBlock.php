@@ -69,7 +69,7 @@ final readonly class ButtonGroupBlock implements BlockTypeInterface
             $layout = 'horizontal';
         }
 
-        $html = "<div class=\"button-group button-group--{$alignment} button-group--{$layout}\">";
+        $html = "<div class=\"button-group button-group--$alignment button-group--$layout\">";
 
         foreach ($buttons as $button) {
             if (!is_array($button)) {
@@ -79,7 +79,7 @@ final readonly class ButtonGroupBlock implements BlockTypeInterface
             $text = htmlspecialchars((string) ($button['text'] ?? ''), ENT_QUOTES, 'UTF-8');
             $url = htmlspecialchars((string) ($button['url'] ?? ''), ENT_QUOTES, 'UTF-8');
 
-            $html .= "<a href=\"{$url}\" class=\"button-group__button\">{$text}</a>";
+            $html .= "<a href=\"$url\" class=\"button-group__button\">$text</a>";
         }
 
         return $html . '</div>';
@@ -98,17 +98,17 @@ final readonly class ButtonGroupBlock implements BlockTypeInterface
 
         foreach ($data['buttons'] as $index => $button) {
             if (!is_array($button)) {
-                $errors[] = "buttons[{$index}] must be an object";
+                $errors[] = "buttons[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($button['text']) || !is_string($button['text'])) {
-                $errors[] = "buttons[{$index}].text is required and must be a string";
+                $errors[] = "buttons[$index].text is required and must be a string";
             }
 
             if (!isset($button['url']) || !is_string($button['url'])) {
-                $errors[] = "buttons[{$index}].url is required and must be a string";
+                $errors[] = "buttons[$index].url is required and must be a string";
             }
         }
 

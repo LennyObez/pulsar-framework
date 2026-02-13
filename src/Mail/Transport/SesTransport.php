@@ -49,7 +49,7 @@ final readonly class SesTransport implements TransportInterface
             }
 
             /** @var array{MessageId?: string} $decoded */
-            $decoded = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($response->body, true, flags: JSON_THROW_ON_ERROR);
 
             return $decoded['MessageId'] ?? '';
         } catch (MailException $e) {

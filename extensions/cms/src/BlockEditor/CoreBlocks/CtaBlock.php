@@ -49,7 +49,7 @@ final readonly class CtaBlock implements BlockTypeInterface
             $cssClass .= ' cta-button--' . htmlspecialchars($style, ENT_QUOTES, 'UTF-8');
         }
 
-        return "<a href=\"{$url}\" class=\"{$cssClass}\">{$text}</a>";
+        return "<a href=\"$url\" class=\"$cssClass\">$text</a>";
     }
 
     #[Override]

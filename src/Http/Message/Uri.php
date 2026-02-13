@@ -277,8 +277,7 @@ readonly class Uri implements UriInterface
      */
     private static function encodePath(string $path): string
     {
-        /** @var string */
-        return preg_replace_callback(
+        return (string) preg_replace_callback(
             '/[^a-zA-Z0-9_.~!$&\'()*+,;=:@\/%-]|%(?![a-fA-F0-9]{2})/',
             static fn(array $match): string => rawurlencode($match[0]),
             $path,
@@ -290,8 +289,7 @@ readonly class Uri implements UriInterface
      */
     private static function encodeQueryOrFragment(string $value): string
     {
-        /** @var string */
-        return preg_replace_callback(
+        return (string) preg_replace_callback(
             '/[^a-zA-Z0-9_.~!$&\'()*+,;=:@\/?%-]|%(?![a-fA-F0-9]{2})/',
             static fn(array $match): string => rawurlencode($match[0]),
             $value,

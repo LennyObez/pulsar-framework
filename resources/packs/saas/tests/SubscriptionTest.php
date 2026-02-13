@@ -8,6 +8,7 @@ use {{namespace}}\Entity\Subscription;
 use {{namespace}}\Entity\SubscriptionStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Subscription::class)]
@@ -35,7 +36,7 @@ final class SubscriptionTest extends TestCase
             tenantId: 'ten_001',
             planId: 'plan_professional',
             status: SubscriptionStatus::Cancelled,
-            cancelledAt: new \DateTimeImmutable(),
+            cancelledAt: new DateTimeImmutable(),
         );
 
         self::assertTrue($subscription->isCancelled());

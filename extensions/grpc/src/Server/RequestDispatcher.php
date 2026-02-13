@@ -49,7 +49,7 @@ final readonly class RequestDispatcher
             return $this->pipeline->process($context, $terminalHandler);
         } catch (GrpcException $e) {
             return InterceptorResult::error($e->status, $e->getMessage());
-        } catch (Throwable $e) {
+        } catch (Throwable) {
             return InterceptorResult::error(
                 GrpcStatus::Internal,
                 'Internal server error',

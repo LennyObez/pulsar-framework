@@ -103,7 +103,7 @@ final class RedisDriver implements QueueDriverInterface
         }
 
         /** @var array{id: string, queue: string, job_class: string, payload: string, attempts: int, status: string, created_at: int, available_at: int} $data */
-        $data = json_decode($jobData, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($jobData, true, flags: JSON_THROW_ON_ERROR);
 
         $newAttempts = $data['attempts'] + 1;
 
@@ -164,7 +164,7 @@ final class RedisDriver implements QueueDriverInterface
             }
 
             /** @var array{id: string, queue: string, job_class: string, payload: string, attempts: int, status: string, created_at: int, available_at: int} $data */
-            $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($raw, true, flags: JSON_THROW_ON_ERROR);
 
             $data['status'] = JobRecordStatus::Failed->value;
 
@@ -221,7 +221,7 @@ final class RedisDriver implements QueueDriverInterface
 
             foreach ($allMeta as $raw) {
                 /** @var array{id: string, queue: string, job_class: string, payload: string, attempts: int, status: string, created_at: int, available_at: int} $data */
-                $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+                $data = json_decode($raw, true, flags: JSON_THROW_ON_ERROR);
 
                 if ($data['status'] === $status->value) {
                     $records[] = new JobRecord(
@@ -318,7 +318,7 @@ final class RedisDriver implements QueueDriverInterface
 
             foreach ($items as $item) {
                 /** @var array{id: string} $data */
-                $data = json_decode($item, true, 512, JSON_THROW_ON_ERROR);
+                $data = json_decode($item, true, flags: JSON_THROW_ON_ERROR);
 
                 if ($data['id'] === $jobId) {
                     $redis->lRem($processingKey, $item, 1);

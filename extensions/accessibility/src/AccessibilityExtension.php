@@ -9,6 +9,8 @@ use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
+use Pulsar\Extension\Accessibility\Audit\AccessibilityAuditor;
+use Pulsar\Extension\Accessibility\Audit\ManualChecklistGenerator;
 use Pulsar\Extension\Accessibility\Command\AccessibilityAuditCommand;
 use Pulsar\Routing\RouterInterface;
 
@@ -42,11 +44,11 @@ final readonly class AccessibilityExtension implements ExtensionInterface
             $container->bind(
                 AccessibilityAuditCommand::class,
                 static function () use ($container): AccessibilityAuditCommand {
-                    /** @var \Pulsar\Extension\Accessibility\Audit\AccessibilityAuditor $auditor */
-                    $auditor = $container->get(\Pulsar\Extension\Accessibility\Audit\AccessibilityAuditor::class);
+                    /** @var AccessibilityAuditor $auditor */
+                    $auditor = $container->get(AccessibilityAuditor::class);
 
-                    /** @var \Pulsar\Extension\Accessibility\Audit\ManualChecklistGenerator $checklist */
-                    $checklist = $container->get(\Pulsar\Extension\Accessibility\Audit\ManualChecklistGenerator::class);
+                    /** @var ManualChecklistGenerator $checklist */
+                    $checklist = $container->get(ManualChecklistGenerator::class);
 
                     return new AccessibilityAuditCommand($auditor, $checklist);
                 },

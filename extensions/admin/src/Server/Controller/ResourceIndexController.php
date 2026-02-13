@@ -18,6 +18,8 @@ use function str_contains;
 #[Internal]
 final readonly class ResourceIndexController
 {
+    use RendersAdminLayout;
+
     public function __construct(
         private ResourceRegistryInterface $registry,
         private AdminConfig $config,
@@ -43,21 +45,10 @@ final readonly class ResourceIndexController
             return Response::json(['resources' => $resources]);
         }
 
-        return Response::html($this->renderView([
+        return Response::html($this->renderAdminView('Resources', 'resources-index', [
             'resources' => $resources,
             'schema_enabled' => $this->config->schema->enabled,
         ]));
     }
 
-    /**
-     * @param array<string, mixed> $templateData
-     */
-    private function renderView(array $templateData): string
-    {
-        extract(['title' => 'Resources', 'content' => 'resources-index', 'templateData' => $templateData]);
-        ob_start();
-        include __DIR__ . '/../View/templates/admin/layout.php';
-
-        return (string) ob_get_clean();
-    }
 }

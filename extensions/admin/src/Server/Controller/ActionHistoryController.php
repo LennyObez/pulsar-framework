@@ -18,6 +18,8 @@ use function str_contains;
 #[Internal]
 final readonly class ActionHistoryController
 {
+    use RendersAdminLayout;
+
     public function __construct(
         private ActionHistoryStoreInterface $store,
         private AdminConfig $config,
@@ -25,23 +27,9 @@ final readonly class ActionHistoryController
 
     public function recent(ServerRequestInterface $request): Response
     {
-        $limitParam = $request->getQueryParams()['limit'] ?? null;
-        $limit = max(1, min(100, is_numeric($limitParam) ? (int) $limitParam : 50));
+        $limit = $this->parseLimitParam($request);
         $entries = $this->store->recent($limit);
-
-        $data = array_map(
-            static fn($e): array => [
-                'id' => $e->id,
-                'action' => $e->action,
-                'resource' => $e->resourceName,
-                'record_id' => $e->recordId,
-                'actor' => $e->actor,
-                'timestamp' => $e->timestamp,
-                'success' => $e->success,
-                'detail' => $e->detail,
-            ],
-            $entries,
-        );
+        $data = $this->serializeEntries($entries);
 
         if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json(['entries' => $data]);
@@ -52,12 +40,35 @@ final readonly class ActionHistoryController
 
     public function forResource(ServerRequestInterface $request, string $resource): Response
     {
-        $limitParam = $request->getQueryParams()['limit'] ?? null;
-        $limit = max(1, min(100, is_numeric($limitParam) ? (int) $limitParam : 50));
+        $limit = $this->parseLimitParam($request);
         $entries = $this->store->forResource($resource, $limit);
+        $data = $this->serializeEntries($entries);
 
-        $data = array_map(
-            static fn($e): array => [
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
+            return Response::json(['entries' => $data]);
+        }
+
+        $escapedResource = htmlspecialchars($resource);
+
+        return Response::html($this->renderHtml('Activity: ' . $escapedResource, $data));
+    }
+
+    private function parseLimitParam(ServerRequestInterface $request): int
+    {
+        $limitParam = $request->getQueryParams()['limit'] ?? null;
+
+        return max(1, min(100, is_numeric($limitParam) ? (int) $limitParam : 50));
+    }
+
+    /**
+     * @param list<object> $entries
+     * @return list<array{id: string, action: string, resource: string, record_id: ?string, actor: string, timestamp: int, success: bool, detail: string}>
+     */
+    private function serializeEntries(array $entries): array
+    {
+        /** @var list<array{id: string, action: string, resource: string, record_id: ?string, actor: string, timestamp: int, success: bool, detail: string}> */
+        return array_map(
+            static fn(object $e): array => [
                 'id' => $e->id,
                 'action' => $e->action,
                 'resource' => $e->resourceName,
@@ -69,14 +80,6 @@ final readonly class ActionHistoryController
             ],
             $entries,
         );
-
-        $e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-
-        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
-            return Response::json(['entries' => $data]);
-        }
-
-        return Response::html($this->renderHtml('Activity: ' . $e($resource), $data));
     }
 
     /**
@@ -84,21 +87,9 @@ final readonly class ActionHistoryController
      */
     private function renderHtml(string $pageTitle, array $entries): string
     {
-        return $this->renderView($pageTitle, [
+        return $this->renderAdminView($pageTitle, 'activity', [
             'entries' => $entries,
             'schema_enabled' => $this->config->schema->enabled,
         ]);
-    }
-
-    /**
-     * @param array<string, mixed> $templateData
-     */
-    private function renderView(string $title, array $templateData): string
-    {
-        extract(['title' => $title, 'content' => 'activity', 'templateData' => $templateData]);
-        ob_start();
-        include __DIR__ . '/../View/templates/admin/layout.php';
-
-        return (string) ob_get_clean();
     }
 }

@@ -66,7 +66,7 @@ final class TenantSchedulerIsolationTest extends TestCase
         (void) $schedule->tick($now);
 
         // After the tick completes, the scope must be fully cleared
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
         self::assertFalse($this->tenantContext->isResolved());
         self::assertNull($this->tenantContext->tryGet());
     }
@@ -161,7 +161,7 @@ final class TenantSchedulerIsolationTest extends TestCase
         self::assertSame(1, $result->jobsFailed);
 
         // Context must be clean after the tick despite the failure
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
         self::assertFalse($this->tenantContext->isResolved());
     }
 }

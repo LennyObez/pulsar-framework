@@ -22,7 +22,7 @@ final class StreamingTest extends TestCase
     {
         $ctx = new StreamContext();
 
-        self::assertFalse($ctx->isCancelled());
+        self::assertFalse($ctx->cancelled);
     }
 
     #[Test]
@@ -31,7 +31,7 @@ final class StreamingTest extends TestCase
         $ctx = new StreamContext();
         $ctx->cancel();
 
-        self::assertTrue($ctx->isCancelled());
+        self::assertTrue($ctx->cancelled);
     }
 
     #[Test]

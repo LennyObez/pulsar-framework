@@ -18,7 +18,7 @@ use Pulsar\Security\Audit\AuditOutcome;
 #[Api(since: '1.0.0')]
 final class SystemContext
 {
-    private bool $active = false;
+    public private(set) bool $active = false;
 
     public function __construct(
         private readonly ?AuditLoggerInterface $auditLogger = null,
@@ -67,8 +67,4 @@ final class SystemContext
         );
     }
 
-    public function isActive(): bool
-    {
-        return $this->active;
-    }
 }

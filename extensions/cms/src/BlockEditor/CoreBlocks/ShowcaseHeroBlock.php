@@ -49,13 +49,13 @@ final readonly class ShowcaseHeroBlock implements BlockTypeInterface
         $rawSlug = $data['projectSlug'] ?? '';
         $slug = htmlspecialchars(is_string($rawSlug) ? $rawSlug : '', ENT_QUOTES, 'UTF-8');
 
-        $html = "<section class=\"cms-showcase-hero\" data-project-slug=\"{$slug}\">";
+        $html = "<section class=\"cms-showcase-hero\" data-project-slug=\"$slug\">";
 
         $overlayText = $data['overlayText'] ?? null;
 
         if (is_string($overlayText) && $overlayText !== '') {
             $escapedText = htmlspecialchars($overlayText, ENT_QUOTES, 'UTF-8');
-            $html .= "<h2 class=\"cms-showcase-hero__title\">{$escapedText}</h2>";
+            $html .= "<h2 class=\"cms-showcase-hero__title\">$escapedText</h2>";
         }
 
         $ctaLabel = $data['ctaLabel'] ?? null;
@@ -64,7 +64,7 @@ final readonly class ShowcaseHeroBlock implements BlockTypeInterface
         if (is_string($ctaLabel) && $ctaLabel !== '' && is_string($ctaUrl) && $ctaUrl !== '') {
             $escapedLabel = htmlspecialchars($ctaLabel, ENT_QUOTES, 'UTF-8');
             $escapedUrl = htmlspecialchars($ctaUrl, ENT_QUOTES, 'UTF-8');
-            $html .= "<a href=\"{$escapedUrl}\" class=\"cms-showcase-hero__cta\">{$escapedLabel}</a>";
+            $html .= "<a href=\"$escapedUrl\" class=\"cms-showcase-hero__cta\">$escapedLabel</a>";
         }
 
         return $html . '</section>';

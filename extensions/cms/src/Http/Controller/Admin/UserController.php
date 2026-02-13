@@ -22,7 +22,6 @@ use function max;
 use function min;
 use function str_starts_with;
 use function strlen;
-use function strval;
 
 /**
  * Admin controller for CMS user management.
@@ -149,7 +148,7 @@ final readonly class UserController
             foreach ($newRoles as $role) {
                 if (!str_starts_with($role, 'cms.')) {
                     return Response::json([
-                        'error' => "Invalid CMS role: {$role}",
+                        'error' => "Invalid CMS role: $role",
                     ], 400);
                 }
             }
@@ -161,7 +160,7 @@ final readonly class UserController
                 AuditOutcome::Success,
                 $identity->id(),
                 'cms.user.roles_updated',
-                "user:{$id}",
+                "user:$id",
                 [
                     'old_roles' => $user->roles,
                     'new_roles' => $newRoles,
@@ -206,7 +205,7 @@ final readonly class UserController
             AuditOutcome::Success,
             $identity->id(),
             'cms.user.2fa_reset',
-            "user:{$id}",
+            "user:$id",
             ['reason' => $reason],
         );
 

@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Supervisor\PreflightCheck\DiskSpacePreflightCheck;
+use Pulsar\Supervisor\PreflightCheck\PreflightCheckResult;
 
 use function sys_get_temp_dir;
 
@@ -94,7 +95,7 @@ final class DiskSpacePreflightCheckTest extends TestCase
         // Default path is '/', default minimum is 100 MB
         // Just verify it doesn't throw
         $result = $check->check();
-        self::assertInstanceOf(\Pulsar\Supervisor\PreflightCheck\PreflightCheckResult::class, $result);
+        self::assertInstanceOf(PreflightCheckResult::class, $result);
     }
 
     #[Test]

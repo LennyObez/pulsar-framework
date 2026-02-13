@@ -123,7 +123,7 @@ final readonly class DbSiteRepository implements SiteRepositoryInterface
     {
         $settingsRaw = $row->getNullableString('settings');
         /** @var array<string, mixed> $settings */
-        $settings = $settingsRaw !== null ? json_decode($settingsRaw, true, 512, JSON_THROW_ON_ERROR) : [];
+        $settings = $settingsRaw !== null ? json_decode($settingsRaw, true, flags: JSON_THROW_ON_ERROR) : [];
 
         return new Site(
             id: $row->getString('id'),

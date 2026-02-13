@@ -107,7 +107,7 @@ final readonly class ToolsService implements ToolsServiceInterface
             AuditOutcome::Success,
             $userId,
             'cms.gdpr.data_exported',
-            "user:{$userId}",
+            "user:$userId",
             [
                 'content_count' => count($data['content']),
                 'comment_count' => count($data['comments']),
@@ -185,7 +185,7 @@ final readonly class ToolsService implements ToolsServiceInterface
                 AuditOutcome::Success,
                 $userId,
                 'cms.gdpr.data_erased',
-                "user:{$userId}",
+                "user:$userId",
                 ['reason' => $reason, ...$result],
             );
 

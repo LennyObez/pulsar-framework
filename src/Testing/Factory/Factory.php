@@ -67,36 +67,32 @@ abstract class Factory
      */
     public function state(array $attributes): static
     {
-        $clone = clone $this;
-        $clone->states[] = $attributes;
-
-        return $clone;
+        return clone($this, ['states' => [...$this->states, $attributes]]);
     }
 
     /**
      * Set the number of entities to create.
      *
+     * @param int $count Number of entities to generate
+     *
      * @return static
      */
     public function count(int $count): static
     {
-        $clone = clone $this;
-        $clone->count = $count;
-
-        return $clone;
+        return clone($this, ['count' => $count]);
     }
 
     /**
      * Register a sequence for a specific attribute.
      *
+     * @param string $attribute Attribute name to apply the sequence to
+     * @param Sequence $sequence Sequence generator
+     *
      * @return static
      */
     public function sequence(string $attribute, Sequence $sequence): static
     {
-        $clone = clone $this;
-        $clone->sequences[$attribute] = $sequence;
-
-        return $clone;
+        return clone($this, ['sequences' => [...$this->sequences, $attribute => $sequence]]);
     }
 
     /**

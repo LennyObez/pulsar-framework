@@ -1,5 +1,5 @@
 /**
- * <cms-theme-toggle> — Dark/light mode toggle with system preference detection.
+ * `<cms-theme-toggle>` — Dark/light mode toggle with system preference detection.
  *
  * Reads `prefers-color-scheme` on first visit, persists choice to the
  * `cms_theme` cookie (readable server-side for SSR hints), and sets

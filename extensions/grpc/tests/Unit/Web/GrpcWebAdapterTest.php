@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Tests\Extension\Grpc\Unit\Web;
+namespace Pulsar\Extension\Grpc\Tests\Unit\Web;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;

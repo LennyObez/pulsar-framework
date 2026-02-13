@@ -45,8 +45,8 @@ final class NewCommand extends Command
         $this->addArgument('name', 'Project name (used as directory name)', true);
         $this->addOption('preset', 'Project preset: minimal, web, api', 'p', 'web');
         $this->addOption('env', 'Environment preset: local, staging, production', 'e', 'local');
-        $this->addOption('pack', 'Control pack to install (e.g., banking, healthcare)', null, null);
-        $this->addOption('list-packs', 'List available control packs', 'l', null);
+        $this->addOption('pack', 'Control pack to install (e.g., banking, healthcare)');
+        $this->addOption('list-packs', 'List available control packs', 'l');
     }
 
     /**

@@ -36,7 +36,7 @@ final class TenantScopeTest extends TestCase
         $scope->exit();
 
         self::assertFalse($context->isResolved());
-        self::assertNull($scope->getActiveTenantId());
+        self::assertNull($scope->activeTenantId);
     }
 
     #[Test]
@@ -49,7 +49,7 @@ final class TenantScopeTest extends TestCase
         $scope->reset();
 
         self::assertFalse($context->isResolved());
-        self::assertNull($scope->getActiveTenantId());
+        self::assertNull($scope->activeTenantId);
     }
 
     #[Test]
@@ -58,12 +58,12 @@ final class TenantScopeTest extends TestCase
         $context = new TenantContext();
         $scope = new TenantScope($context);
 
-        self::assertNull($scope->getActiveTenantId());
+        self::assertNull($scope->activeTenantId);
 
         $tenantId = new TenantId('acme');
         $scope->enter($tenantId);
 
-        $activeTenantId = $scope->getActiveTenantId();
+        $activeTenantId = $scope->activeTenantId;
         self::assertNotNull($activeTenantId);
         self::assertTrue($tenantId->equals($activeTenantId));
     }

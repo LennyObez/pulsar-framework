@@ -63,7 +63,7 @@ final readonly class CounterBlock implements BlockTypeInterface
             $columns = 1;
         }
 
-        $html = "<div class=\"counters\" style=\"display:grid;grid-template-columns:repeat({$columns},1fr);gap:1rem\">";
+        $html = "<div class=\"counters\" style=\"display:grid;grid-template-columns:repeat($columns,1fr);gap:1rem\">";
 
         foreach ($items as $item) {
             if (!is_array($item)) {
@@ -73,7 +73,7 @@ final readonly class CounterBlock implements BlockTypeInterface
             $value = htmlspecialchars((string) ($item['value'] ?? ''), ENT_QUOTES, 'UTF-8');
             $label = htmlspecialchars((string) ($item['label'] ?? ''), ENT_QUOTES, 'UTF-8');
 
-            $html .= "<div class=\"counter\"><span class=\"counter__value\">{$value}</span><span class=\"counter__label\">{$label}</span></div>";
+            $html .= "<div class=\"counter\"><span class=\"counter__value\">$value</span><span class=\"counter__label\">$label</span></div>";
         }
 
         return $html . '</div>';
@@ -92,17 +92,17 @@ final readonly class CounterBlock implements BlockTypeInterface
 
         foreach ($data['items'] as $index => $item) {
             if (!is_array($item)) {
-                $errors[] = "items[{$index}] must be an object";
+                $errors[] = "items[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($item['value']) || !is_string($item['value'])) {
-                $errors[] = "items[{$index}].value is required and must be a string";
+                $errors[] = "items[$index].value is required and must be a string";
             }
 
             if (!isset($item['label']) || !is_string($item['label'])) {
-                $errors[] = "items[{$index}].label is required and must be a string";
+                $errors[] = "items[$index].label is required and must be a string";
             }
         }
 

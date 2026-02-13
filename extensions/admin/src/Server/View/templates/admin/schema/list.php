@@ -5,7 +5,7 @@ declare(strict_types=1);
 /**
  * @var array<string, mixed> $templateData
  */
-$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$e = static fn(string $val): string => htmlspecialchars($val);
 /** @var list<array{name: string, columns: int, primaryKey: ?string}> $tables */
 $tables = $templateData['tables'] ?? [];
 /** @var array<string, bool> $capabilities */

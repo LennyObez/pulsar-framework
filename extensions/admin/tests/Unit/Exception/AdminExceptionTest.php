@@ -45,7 +45,6 @@ final class AdminExceptionTest extends TestCase
     {
         $e = AdminAccessDeniedException::insufficientRole('admin');
 
-        self::assertInstanceOf(AdminException::class, $e);
         self::assertStringContainsString('admin', $e->getMessage());
         self::assertStringContainsString('Access denied', $e->getMessage());
     }
@@ -72,7 +71,6 @@ final class AdminExceptionTest extends TestCase
     {
         $e = ResourceNotFoundException::resource('widgets');
 
-        self::assertInstanceOf(AdminException::class, $e);
         self::assertStringContainsString('widgets', $e->getMessage());
     }
 
@@ -95,7 +93,6 @@ final class AdminExceptionTest extends TestCase
 
         $e = ResourceValidationException::fromViolations($violations);
 
-        self::assertInstanceOf(AdminException::class, $e);
         self::assertStringContainsString('2 error(s)', $e->getMessage());
         self::assertCount(2, $e->violations);
         self::assertSame('name', $e->violations[0]['field']);

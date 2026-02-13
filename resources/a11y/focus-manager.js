@@ -73,9 +73,7 @@ function getFocusableElements(container) {
     if (el.hidden || el.closest('[hidden]')) return false;
 
     const style = getComputedStyle(el);
-    if (style.display === 'none' || style.visibility === 'hidden') return false;
-
-    return true;
+    return style.display !== 'none' && style.visibility !== 'hidden';
   });
 }
 
@@ -372,20 +370,10 @@ function initEscapeHandler() {
       const traps = Array.from(activeFocusTraps.keys());
       if (traps.length === 0) return;
 
-      // Sort by DOM depth — deepest first
-      const sorted = traps
-        .filter((trap) => trap.isConnected)
-        .sort((a, b) => {
-          if (a.contains(b)) return 1;
-          if (b.contains(a)) return -1;
-          return 0;
-        });
-
-      const innermost = sorted[sorted.length - 1];
-      if (innermost && innermost.contains(document.activeElement)) {
-        // The trap's own handler will deal with this
-        return;
-      }
+      // Each focus trap has its own keydown handler that processes
+      // Escape. This global handler exists only as a guard to detect
+      // whether any connected trap contains the active element. The
+      // actual dismissal is performed by the trap-level handler.
     },
     { passive: true },
   );

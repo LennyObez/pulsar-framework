@@ -33,7 +33,7 @@ final class BadgeTest extends TestCase
     public function descriptionReturnsNonEmptyString(): void
     {
         foreach (Badge::cases() as $badge) {
-            self::assertNotEmpty($badge->description(), "Badge {$badge->value} should have a description");
+            self::assertNotEmpty($badge->description(), "Badge $badge->value should have a description");
         }
     }
 

@@ -90,7 +90,7 @@ final class TestFactoryGenerator extends AbstractGenerator
             }
 
             $default = $this->defaultForType($property);
-            $lines[] = "            '{$property->name}' => {$default},";
+            $lines[] = "            '$property->name' => $default,";
         }
 
         return implode("\n", $lines);

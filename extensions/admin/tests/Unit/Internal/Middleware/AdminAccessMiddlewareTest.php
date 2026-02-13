@@ -12,6 +12,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Internal\Middleware\AdminAccessMiddleware;
 use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\Uri;
 use Pulsar\Http\ResponseStatus;
 
 final class AdminAccessMiddlewareTest extends TestCase
@@ -25,7 +26,7 @@ final class AdminAccessMiddlewareTest extends TestCase
     {
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getMethod')->willReturn('GET');
-        $request->method('getUri')->willReturn(new \Pulsar\Http\Message\Uri('http', 'localhost', '/admin'));
+        $request->method('getUri')->willReturn(new Uri('http', 'localhost', '/admin'));
 
         return $request;
     }

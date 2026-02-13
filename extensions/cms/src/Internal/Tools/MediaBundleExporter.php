@@ -10,6 +10,8 @@ use Pulsar\Extension\Cms\Media\MediaDiskInterface;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 use Pulsar\Extension\Cms\Tools\ExportOptions;
 use Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface;
+use Pulsar\Security\Audit\AuditEvent;
+use Pulsar\Security\Audit\AuditOutcome;
 use RuntimeException;
 use ZipArchive;
 
@@ -85,7 +87,7 @@ final readonly class MediaBundleExporter implements MediaBundleExporterInterface
         $result = $zip->open($tempPath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
 
         if ($result !== true) {
-            throw new RuntimeException("Failed to create ZIP archive at {$tempPath}");
+            throw new RuntimeException("Failed to create ZIP archive at $tempPath");
         }
 
         $zip->addFromString('manifest.json', $manifestJson);
@@ -101,8 +103,8 @@ final readonly class MediaBundleExporter implements MediaBundleExporterInterface
         $this->verifyCreatedZip($tempPath, $evidenceHash);
 
         $this->auditLogger?->log(
-            \Pulsar\Security\Audit\AuditEvent::DataAccess,
-            \Pulsar\Security\Audit\AuditOutcome::Success,
+            AuditEvent::DataAccess,
+            AuditOutcome::Success,
             null,
             'cms.export.zip_created',
             'cms:export',
@@ -198,7 +200,7 @@ final readonly class MediaBundleExporter implements MediaBundleExporterInterface
         }
 
         /** @var array{evidence_hash?: string} $manifest */
-        $manifest = json_decode($manifestContent, true, 512, JSON_THROW_ON_ERROR);
+        $manifest = json_decode($manifestContent, true, flags: JSON_THROW_ON_ERROR);
 
         if (($manifest['evidence_hash'] ?? '') !== $expectedHash) {
             unlink($zipPath);

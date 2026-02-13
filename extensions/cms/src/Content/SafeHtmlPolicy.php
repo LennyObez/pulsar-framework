@@ -215,14 +215,12 @@ final readonly class SafeHtmlPolicy
 
         // Strip CDATA markers — not valid in HTML (only XML/XHTML); remove before DOM parsing
         // so they cannot be reinterpreted as bogus comments by libxml
-        $html = str_replace(['<![CDATA[', ']]>'], '', $html);
-
         // Note: entity decoding is NOT applied to the full input here — doing so would
         // convert escaped markup (e.g. &lt;script&gt;) into live elements before DOM parsing.
         // Entity-encoded javascript: bypasses in URL attributes are handled in decodeUrl()
         // during the URL sanitization step (Step 5).
 
-        return $html;
+        return str_replace(['<![CDATA[', ']]>'], '', $html);
     }
 
     /**
@@ -364,9 +362,11 @@ final readonly class SafeHtmlPolicy
             $allowedAttrs = $allowlist[$tagName];
             $toRemove = [];
 
-            if ($element->attributes !== null) {
+            $attributes = $element->attributes;
+
+            if ($attributes !== null) {
                 /** @var DOMAttr $attr */
-                foreach (iterator_to_array($element->attributes) as $attr) {
+                foreach (iterator_to_array($attributes) as $attr) {
                     if (!in_array(strtolower($attr->name), $allowedAttrs, true)) {
                         $toRemove[] = $attr->name;
                     }
@@ -576,48 +576,52 @@ final readonly class SafeHtmlPolicy
             $elementAllowedAttrs = $allowlist[$tagName] ?? [];
             $toRemove = [];
 
-            if ($element->attributes !== null) {
-                /** @var DOMAttr $attr */
-                foreach (iterator_to_array($element->attributes) as $attr) {
-                    $attrNameLower = strtolower($attr->name);
+            $attributes = $element->attributes;
 
-                    // Skip attributes that are explicitly in this element's allowlist
-                    if (in_array($attrNameLower, $elementAllowedAttrs, true)) {
-                        continue;
-                    }
+            if ($attributes === null) {
+                continue;
+            }
 
-                    // Strip style attributes
-                    if ($attrNameLower === 'style') {
-                        $toRemove[] = $attr->name;
+            /** @var DOMAttr $attr */
+            foreach (iterator_to_array($attributes) as $attr) {
+                $attrNameLower = strtolower($attr->name);
 
-                        continue;
-                    }
+                // Skip attributes that are explicitly in this element's allowlist
+                if (in_array($attrNameLower, $elementAllowedAttrs, true)) {
+                    continue;
+                }
 
-                    // Strip on* event handlers (but not allowlisted attributes like "open")
-                    if (str_starts_with($attrNameLower, 'on')) {
-                        $toRemove[] = $attr->name;
+                // Strip style attributes
+                if ($attrNameLower === 'style') {
+                    $toRemove[] = $attr->name;
 
-                        continue;
-                    }
+                    continue;
+                }
 
-                    // Strip data-* attributes
-                    if (str_starts_with($attrNameLower, 'data-')) {
-                        $toRemove[] = $attr->name;
+                // Strip on* event handlers (but not allowlisted attributes like "open")
+                if (str_starts_with($attrNameLower, 'on')) {
+                    $toRemove[] = $attr->name;
 
-                        continue;
-                    }
+                    continue;
+                }
 
-                    // Strip dangerous named attributes
-                    if (in_array($attrNameLower, self::DANGEROUS_ATTRIBUTES, true)) {
-                        $toRemove[] = $attr->name;
+                // Strip data-* attributes
+                if (str_starts_with($attrNameLower, 'data-')) {
+                    $toRemove[] = $attr->name;
 
-                        continue;
-                    }
+                    continue;
+                }
 
-                    // Strip class except on <code> with valid pattern
-                    if ($attrNameLower === 'class') {
-                        $toRemove[] = $attr->name;
-                    }
+                // Strip dangerous named attributes
+                if (in_array($attrNameLower, self::DANGEROUS_ATTRIBUTES, true)) {
+                    $toRemove[] = $attr->name;
+
+                    continue;
+                }
+
+                // Strip class except on <code> with valid pattern
+                if ($attrNameLower === 'class') {
+                    $toRemove[] = $attr->name;
                 }
             }
 
@@ -719,6 +723,6 @@ final readonly class SafeHtmlPolicy
      */
     private function escapeToPlaintext(string $input): string
     {
-        return htmlspecialchars($input, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        return htmlspecialchars($input);
     }
 }

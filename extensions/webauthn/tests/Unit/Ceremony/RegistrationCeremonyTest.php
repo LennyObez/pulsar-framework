@@ -13,7 +13,6 @@ use Pulsar\Extension\WebAuthn\Adapter\AttestationVerifier;
 use Pulsar\Extension\WebAuthn\Adapter\InMemoryCredentialRepository;
 use Pulsar\Extension\WebAuthn\Ceremony\RegistrationCeremony;
 use Pulsar\Extension\WebAuthn\Config\WebAuthnConfig;
-use Pulsar\Extension\WebAuthn\Contract\AttestationVerifierInterface;
 use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
 use Pulsar\Security\Audit\AuditEntry;
 
@@ -40,11 +39,11 @@ final class RegistrationCeremonyTest extends TestCase
         $this->auditLogger->method('log')->willReturn($this->createStub(AuditEntry::class));
     }
 
-    private function createCeremony(?AttestationVerifierInterface $verifier = null): RegistrationCeremony
+    private function createCeremony(): RegistrationCeremony
     {
         return new RegistrationCeremony(
             $this->config,
-            $verifier ?? new AttestationVerifier(),
+            new AttestationVerifier(),
             $this->credentialRepo,
             $this->auditLogger,
         );
@@ -215,7 +214,7 @@ final class RegistrationCeremonyTest extends TestCase
 
         // Build CBOR attestation object with short authData
         $shortAuthData = str_repeat("\x00", 10);
-        $attObjCbor = $this->buildMinimalAttObjCbor('none', $shortAuthData);
+        $attObjCbor = $this->buildMinimalAttObjCbor($shortAuthData);
         $attObjB64 = rtrim(strtr(base64_encode($attObjCbor), '+/', '-_'), '=');
 
         $credentialJson = json_encode([
@@ -250,7 +249,7 @@ final class RegistrationCeremonyTest extends TestCase
         $counter = "\x00\x00\x00\x00";
         $authData = $wrongRpIdHash . $flags . $counter;
 
-        $attObjCbor = $this->buildMinimalAttObjCbor('none', $authData);
+        $attObjCbor = $this->buildMinimalAttObjCbor($authData);
         $attObjB64 = rtrim(strtr(base64_encode($attObjCbor), '+/', '-_'), '=');
 
         $credentialJson = json_encode([
@@ -284,7 +283,7 @@ final class RegistrationCeremonyTest extends TestCase
         $counter = "\x00\x00\x00\x00";
         $authData = $rpIdHash . $flags . $counter;
 
-        $attObjCbor = $this->buildMinimalAttObjCbor('none', $authData);
+        $attObjCbor = $this->buildMinimalAttObjCbor($authData);
         $attObjB64 = rtrim(strtr(base64_encode($attObjCbor), '+/', '-_'), '=');
 
         $credentialJson = json_encode([
@@ -330,7 +329,7 @@ final class RegistrationCeremonyTest extends TestCase
         $counter = "\x00\x00\x00\x00";
         $authData = $rpIdHash . $flags . $counter;
 
-        $attObjCbor = $this->buildMinimalAttObjCbor('none', $authData);
+        $attObjCbor = $this->buildMinimalAttObjCbor($authData);
         $attObjB64 = rtrim(strtr(base64_encode($attObjCbor), '+/', '-_'), '=');
 
         $credentialJson = json_encode([
@@ -364,7 +363,7 @@ final class RegistrationCeremonyTest extends TestCase
         $counter = "\x00\x00\x00\x00";
         $authData = $rpIdHash . $flags . $counter;
 
-        $attObjCbor = $this->buildMinimalAttObjCbor('none', $authData);
+        $attObjCbor = $this->buildMinimalAttObjCbor($authData);
         $attObjB64 = rtrim(strtr(base64_encode($attObjCbor), '+/', '-_'), '=');
 
         $credentialJson = json_encode([
@@ -380,8 +379,9 @@ final class RegistrationCeremonyTest extends TestCase
         $ceremony->verify($credentialJson, 'test-challenge');
     }
 
-    private function buildMinimalAttObjCbor(string $fmt, string $authData): string
+    private function buildMinimalAttObjCbor(string $authData): string
     {
+        $fmt = 'none';
         $encoded = "\xa3"; // map(3)
 
         // fmt

@@ -276,7 +276,6 @@ final readonly class ExportBundleGenerator
 
         $result = $this->userRepository->listUsers(
             tenantId: $options->tenantId,
-            page: 1,
             perPage: 10000,
         );
 

@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Testing\Concern;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use Pulsar\Testing\Concern\ResetsTestState;
 use Pulsar\Testing\TestCase;
 use stdClass;
 
-#[CoversClass(ResetsTestState::class)]
 final class ResetsTestStateTest extends TestCase
 {
     #[Test]

@@ -59,12 +59,12 @@ final class TenantIsolationAdversarialTest extends TestCase
 
         self::assertTrue($this->context->isResolved());
         self::assertSame('tenant-a', $this->context->get()->id);
-        self::assertNotNull($this->scope->getActiveTenantId());
+        self::assertNotNull($this->scope->activeTenantId);
 
         $this->scope->reset();
 
         self::assertFalse($this->context->isResolved());
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
         self::assertNull($this->context->tryGet());
     }
 
@@ -90,19 +90,19 @@ final class TenantIsolationAdversarialTest extends TestCase
         // Enter tenant A
         $this->scope->enter(new TenantId('tenant-a'));
         self::assertSame('tenant-a', $this->context->get()->id);
-        $activeA = $this->scope->getActiveTenantId();
+        $activeA = $this->scope->activeTenantId;
         self::assertNotNull($activeA);
         self::assertTrue(new TenantId('tenant-a')->equals($activeA));
 
         // Exit tenant A
         $this->scope->exit();
         self::assertFalse($this->context->isResolved());
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
 
         // Enter tenant B
         $this->scope->enter(new TenantId('tenant-b'));
         self::assertSame('tenant-b', $this->context->get()->id);
-        $activeB = $this->scope->getActiveTenantId();
+        $activeB = $this->scope->activeTenantId;
         self::assertNotNull($activeB);
         self::assertTrue(new TenantId('tenant-b')->equals($activeB));
 
@@ -130,7 +130,7 @@ final class TenantIsolationAdversarialTest extends TestCase
         $this->scope->reset();
 
         self::assertFalse($this->context->isResolved());
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
     }
 
     #[Test]

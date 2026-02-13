@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Legal deadline entity.
  *
@@ -19,11 +21,11 @@ final class Deadline
      * @param non-empty-string        $title        Deadline description
      * @param non-empty-string        $deadlineType Type (e.g., "filing", "hearing", "discovery", "response")
      * @param DeadlineStatus          $status       Current deadline status
-     * @param \DateTimeImmutable      $dueAt        Due date and time
+     * @param DateTimeImmutable      $dueAt        Due date and time
      * @param int                     $reminderDays Days before due date to send reminder
      * @param non-empty-string|null   $assignedTo   Assigned attorney or staff member
      * @param non-empty-string|null   $notes        Additional notes
-     * @param \DateTimeImmutable      $createdAt    Creation timestamp
+     * @param DateTimeImmutable      $createdAt    Creation timestamp
      */
     public function __construct(
         public readonly string $id,
@@ -31,17 +33,17 @@ final class Deadline
         public readonly string $title,
         public readonly string $deadlineType,
         public DeadlineStatus $status = DeadlineStatus::Pending,
-        public readonly \DateTimeImmutable $dueAt = new \DateTimeImmutable(),
+        public readonly DateTimeImmutable $dueAt = new DateTimeImmutable(),
         public readonly int $reminderDays = 7,
         public readonly ?string $assignedTo = null,
         public readonly ?string $notes = null,
-        public readonly \DateTimeImmutable $createdAt = new \DateTimeImmutable(),
+        public readonly DateTimeImmutable $createdAt = new DateTimeImmutable(),
     ) {}
 
     public function isOverdue(): bool
     {
         return $this->status === DeadlineStatus::Pending
-            && $this->dueAt < new \DateTimeImmutable();
+            && $this->dueAt < new DateTimeImmutable();
     }
 
     public function needsReminder(): bool
@@ -50,10 +52,10 @@ final class Deadline
             return false;
         }
 
-        $reminderDate = \DateTimeImmutable::createFromInterface($this->dueAt)
+        $reminderDate = DateTimeImmutable::createFromInterface($this->dueAt)
             ->modify(sprintf('-%d days', $this->reminderDays));
 
-        return $reminderDate <= new \DateTimeImmutable() && !$this->isOverdue();
+        return $reminderDate <= new DateTimeImmutable() && !$this->isOverdue();
     }
 
     public function isPending(): bool

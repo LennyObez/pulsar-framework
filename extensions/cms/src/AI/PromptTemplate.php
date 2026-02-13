@@ -34,7 +34,7 @@ final readonly class PromptTemplate
         $result = $this->template;
 
         foreach ($variables as $key => $value) {
-            $result = str_replace("{{$key}}", (string) $value, $result);
+            $result = str_replace('{' . $key . '}', (string) $value, $result);
         }
 
         return $result;

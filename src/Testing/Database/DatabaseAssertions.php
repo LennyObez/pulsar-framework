@@ -8,7 +8,6 @@ use PDO;
 use PHPUnit\Framework\Assert;
 use Pulsar\Api\Api;
 
-use function count;
 use function get_debug_type;
 use function implode;
 use function is_scalar;
@@ -140,7 +139,7 @@ trait DatabaseAssertions
             $parts[] = sprintf(
                 '%s=%s',
                 $column,
-                $value === null ? 'NULL' : (is_scalar($value) ? sprintf('"%s"', (string) $value) : get_debug_type($value)),
+                $value === null ? 'NULL' : (is_scalar($value) ? sprintf('"%s"', $value) : get_debug_type($value)),
             );
         }
 

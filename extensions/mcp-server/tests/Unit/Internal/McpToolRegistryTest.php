@@ -18,7 +18,7 @@ final class McpToolRegistryTest extends TestCase
     {
         $tool = $this->createStub(McpToolInterface::class);
         $tool->method('name')->willReturn($name);
-        $tool->method('description')->willReturn("Description for {$name}");
+        $tool->method('description')->willReturn("Description for $name");
         $tool->method('inputSchema')->willReturn(['type' => 'object']);
         $tool->method('outputSchema')->willReturn(['type' => 'object']);
         $tool->method('category')->willReturn($category);

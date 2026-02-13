@@ -57,7 +57,7 @@ final readonly class PathValidator
         // Reject directory traversal attempts
         if (str_contains($normalized, '..')) {
             throw new InvalidArgumentException(
-                "Path contains directory traversal: {$targetPath}",
+                "Path contains directory traversal: $targetPath",
             );
         }
 
@@ -68,14 +68,12 @@ final readonly class PathValidator
         }
 
         // Check against allowlist
-        foreach ($this->allowedPrefixes as $prefix) {
-            if (str_starts_with($normalized, $prefix)) {
-                return $normalized;
-            }
+        if (array_any($this->allowedPrefixes, static fn(string $prefix): bool => str_starts_with($normalized, $prefix))) {
+            return $normalized;
         }
 
         throw new InvalidArgumentException(
-            "Path is outside allowed directories: {$targetPath}. "
+            "Path is outside allowed directories: $targetPath. "
             . 'Allowed: ' . implode(', ', $this->allowedPrefixes),
         );
     }
@@ -85,13 +83,18 @@ final readonly class PathValidator
      */
     public function isAllowed(string $targetPath): bool
     {
-        try {
-            $this->validate($targetPath);
+        $normalized = $this->normalizePath($targetPath);
 
-            return true;
-        } catch (InvalidArgumentException) {
+        if (str_contains($normalized, '..')) {
             return false;
         }
+
+        if (!$this->isAbsolute($normalized)) {
+            $root = rtrim($this->normalizePath($this->projectRoot), '/');
+            $normalized = $root . '/' . $normalized;
+        }
+
+        return array_any($this->allowedPrefixes, static fn(string $prefix): bool => str_starts_with($normalized, $prefix));
     }
 
     /**

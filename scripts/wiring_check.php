@@ -286,7 +286,7 @@ final class WiringAnalyzer
         // Skip "use function" and "use const"
         if ($i < $count && is_array($tokens[$i])) {
             if ($tokens[$i][0] === T_FUNCTION || $tokens[$i][0] === T_CONST) {
-                while ($i < $count && $tokens[$i] !== ';') {
+                while ($i < $count && (!is_string($tokens[$i]) || $tokens[$i] !== ';')) {
                     $i++;
                 }
 

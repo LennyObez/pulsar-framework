@@ -167,7 +167,7 @@ final readonly class DatabaseSagaStepResultStorage implements SagaStepResultStor
 
         /** @var array<string, mixed>|null $resultData */
         $resultData = $resultDataRaw !== null
-            ? json_decode($resultDataRaw, true, 512, JSON_THROW_ON_ERROR)
+            ? json_decode($resultDataRaw, true, flags: JSON_THROW_ON_ERROR)
             : null;
 
         $completedAtRaw = $row->getNullableString('completed_at');

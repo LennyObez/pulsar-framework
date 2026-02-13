@@ -59,7 +59,7 @@ final readonly class ShowcaseGridRenderer
         bool $featuredOnly = false,
         int $limit = 20,
     ): array {
-        $result = $this->connection->query(self::SQL_PROJECTS . " LIMIT {$limit}", [
+        $result = $this->connection->query(self::SQL_PROJECTS . " LIMIT $limit", [
             'locale' => $locale,
         ]);
 
@@ -124,7 +124,7 @@ final readonly class ShowcaseGridRenderer
             $json = $field['value_json'];
 
             if (is_string($json) && $json !== '') {
-                $values[$field['key']] = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+                $values[$field['key']] = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
             } elseif ($field['value_bool'] !== null) {
                 $values[$field['key']] = $field['value_bool'] === '1' || $field['value_bool'] === 'true';
             } elseif ($field['value_string'] !== null) {

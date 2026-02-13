@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Audit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Api\Api;
 use Pulsar\Audit\MutationContext;
 use ReflectionClass;
 
@@ -142,7 +143,7 @@ final class MutationContextTest extends TestCase
     public function hasApiAttribute(): void
     {
         $ref = new ReflectionClass(MutationContext::class);
-        $attrs = $ref->getAttributes(\Pulsar\Api\Api::class);
+        $attrs = $ref->getAttributes(Api::class);
 
         self::assertCount(1, $attrs);
     }

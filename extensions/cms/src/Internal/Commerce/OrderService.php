@@ -83,7 +83,7 @@ final readonly class OrderService
             AuditOutcome::Success,
             null,
             'cms.commerce.payment.confirmed',
-            "order:{$orderId}",
+            "order:$orderId",
             ['paymentIntentId' => $paymentIntentId],
         );
     }
@@ -122,7 +122,7 @@ final readonly class OrderService
             AuditOutcome::Failure,
             null,
             'cms.commerce.payment.failed',
-            "order:{$orderId}",
+            "order:$orderId",
             ['reason' => $reason],
         );
     }
@@ -205,7 +205,7 @@ final readonly class OrderService
             AuditOutcome::Success,
             $actorId,
             'cms.commerce.refund.processed',
-            "order:{$orderId}",
+            "order:$orderId",
             ['amount' => $amount, 'reason' => $reason, 'full' => $isFullRefund],
         );
     }
@@ -231,7 +231,7 @@ final readonly class OrderService
             AuditOutcome::Success,
             $actorId,
             'cms.commerce.order.fulfilled',
-            "order:{$orderId}",
+            "order:$orderId",
             ['orderNumber' => $order->orderNumber],
         );
     }

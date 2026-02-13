@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Extension\Devices;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -18,7 +17,6 @@ use RuntimeException;
 
 use function strlen;
 
-#[CoversClass(DeviceService::class)]
 final class DeviceServiceTest extends TestCase
 {
     private UserDeviceRepositoryInterface&Stub $repo;

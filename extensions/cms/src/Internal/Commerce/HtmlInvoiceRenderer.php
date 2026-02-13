@@ -11,7 +11,6 @@ use Pulsar\Extension\Cms\Commerce\Order;
 use Pulsar\Extension\Cms\Commerce\OrderItem;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 
-use function htmlspecialchars;
 use function number_format;
 use function sprintf;
 
@@ -121,7 +120,7 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
                     <section>
                         <h2>Bill To</h2>
                         <p>{$e($order->customerEmail, ENT_QUOTES, 'UTF-8')}</p>
-                        {$buyerAddress}
+                        $buyerAddress
                     </section>
                 </div>
 
@@ -136,7 +135,7 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
                         </tr>
                     </thead>
                     <tbody>
-                        {$itemRows}
+                        $itemRows
                     </tbody>
                 </table>
 

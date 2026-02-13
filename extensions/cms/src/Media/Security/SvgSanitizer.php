@@ -286,8 +286,6 @@ final readonly class SvgSanitizer
     private function filterAttributes(DOMElement $element): void
     {
         $toRemove = [];
-
-        /** @var DOMAttr $attr */
         $attributes = $element->attributes;
 
         if ($attributes === null) {

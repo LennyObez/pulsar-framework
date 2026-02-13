@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\OAuth2;
 
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
@@ -120,8 +122,8 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
                 $container->get(AccessTokenRepositoryInterface::class),
                 $container->get(RefreshTokenRepositoryInterface::class),
                 $container->get(AuthorizationCodeGrant::class),
-                $container->get(\Psr\Http\Message\ResponseFactoryInterface::class),
-                $container->get(\Psr\Http\Message\StreamFactoryInterface::class),
+                $container->get(ResponseFactoryInterface::class),
+                $container->get(StreamFactoryInterface::class),
                 $container->get(AuditLoggerInterface::class),
                 [$container->get(ClientCredentialsGrant::class), $container->get(RefreshTokenGrant::class)],
             );

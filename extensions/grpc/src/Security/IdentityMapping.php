@@ -8,6 +8,7 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Grpc\Config\IdentityMappingEntry;
 
 use function array_keys;
+use function array_map;
 use function array_values;
 use function count;
 
@@ -28,17 +29,14 @@ final readonly class IdentityMapping
      */
     public function __construct(array $entries)
     {
-        $compiled = [];
-
-        foreach ($entries as $san => $entry) {
-            $compiled[$san] = new ServiceIdentity(
+        $this->compiled = array_map(
+            static fn(IdentityMappingEntry $entry): ServiceIdentity => new ServiceIdentity(
                 name: $entry->name,
                 trustLevel: $entry->trustLevel,
                 allowedMethods: $entry->allowedMethods,
-            );
-        }
-
-        $this->compiled = $compiled;
+            ),
+            $entries,
+        );
     }
 
     /**

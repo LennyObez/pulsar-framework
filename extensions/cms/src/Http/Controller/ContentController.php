@@ -274,7 +274,7 @@ final readonly class ContentController
         if ($ifNoneMatch !== '' && $ifNoneMatch === $etag) {
             return new Response(statusCode: 304, headers: [
                 'ETag' => $etag,
-                'Cache-Control' => "public, max-age={$ttl}, s-maxage={$ttl}",
+                'Cache-Control' => "public, max-age=$ttl, s-maxage=$ttl",
             ]);
         }
 
@@ -287,13 +287,13 @@ final readonly class ContentController
             if ($clientDate !== false && $content->updatedAt <= $clientDate) {
                 return new Response(statusCode: 304, headers: [
                     'Last-Modified' => $lastModified,
-                    'Cache-Control' => "public, max-age={$ttl}, s-maxage={$ttl}",
+                    'Cache-Control' => "public, max-age=$ttl, s-maxage=$ttl",
                 ]);
             }
         }
 
         return $response
-            ->withHeader('Cache-Control', "public, max-age={$ttl}, s-maxage={$ttl}")
+            ->withHeader('Cache-Control', "public, max-age=$ttl, s-maxage=$ttl")
             ->withHeader('ETag', $etag)
             ->withHeader('Last-Modified', $lastModified);
     }
@@ -367,7 +367,7 @@ final readonly class ContentController
         foreach ($hreflangLinks as $link) {
             $hreflang = htmlspecialchars($link['locale'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
             $href = htmlspecialchars($link['href'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
-            $hreflangHtml .= "\n        <link rel=\"alternate\" hreflang=\"{$hreflang}\" href=\"{$href}\">";
+            $hreflangHtml .= "\n        <link rel=\"alternate\" hreflang=\"$hreflang\" href=\"$href\">";
         }
 
         // Build JSON-LD structured data
@@ -391,9 +391,9 @@ final readonly class ContentController
             $url = htmlspecialchars($crumb['url'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
             if ($crumb['is_current']) {
-                $breadcrumbHtml .= "<span aria-current=\"page\">{$label}</span>";
+                $breadcrumbHtml .= "<span aria-current=\"page\">$label</span>";
             } else {
-                $breadcrumbHtml .= "<a href=\"{$url}\">{$label}</a> <span aria-hidden=\"true\">&raquo;</span> ";
+                $breadcrumbHtml .= "<a href=\"$url\">$label</a> <span aria-hidden=\"true\">&raquo;</span> ";
             }
         }
 
@@ -401,20 +401,20 @@ final readonly class ContentController
 
         return <<<HTML
             <!DOCTYPE html>
-            <html lang="{$locale}">
+            <html lang="$locale">
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>{$metaTitle}</title>
-                <meta name="description" content="{$metaDescription}">{$hreflangHtml}{$jsonLdHtml}
+                <title>$metaTitle</title>
+                <meta name="description" content="$metaDescription">$hreflangHtml$jsonLdHtml
             </head>
             <body>
                 <a href="#main-content" class="sr-only sr-only--focusable">Skip to main content</a>
-                <nav aria-label="Breadcrumb">{$breadcrumbHtml}</nav>
+                <nav aria-label="Breadcrumb">$breadcrumbHtml</nav>
                 <main id="main-content">
                     <article>
-                        <h1>{$title}</h1>
-                        <div class="content-body">{$body}</div>
+                        <h1>$title</h1>
+                        <div class="content-body">$body</div>
                     </article>
                 </main>
             </body>

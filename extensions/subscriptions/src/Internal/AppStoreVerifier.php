@@ -78,7 +78,7 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
             ? self::SANDBOX_URL
             : self::PRODUCTION_URL;
 
-        $url = "{$baseUrl}/inApps/v1/subscriptions/{$purchaseToken}";
+        $url = "$baseUrl/inApps/v1/subscriptions/$purchaseToken";
         $responseBody = $this->httpGet($url, $jwt);
 
         if ($responseBody === null) {
@@ -130,7 +130,7 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
                 'bid' => $bundleId,
             ], JSON_THROW_ON_ERROR));
 
-            $signingInput = "{$header}.{$payload}";
+            $signingInput = "$header.$payload";
             $signature = '';
             $key = openssl_pkey_get_private($privateKeyPem);
 
@@ -146,7 +146,7 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
 
             $signatureStr = is_string($signature) ? $signature : '';
 
-            return "{$signingInput}." . $this->base64UrlEncode($signatureStr);
+            return "$signingInput." . $this->base64UrlEncode($signatureStr);
         } catch (Throwable) {
             return null;
         }
@@ -161,7 +161,7 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
             $context = stream_context_create([
                 'http' => [
                     'method' => 'GET',
-                    'header' => "Authorization: Bearer {$jwt}\r\n"
+                    'header' => "Authorization: Bearer $jwt\r\n"
                         . "Accept: application/json\r\n",
                     'timeout' => 15,
                 ],

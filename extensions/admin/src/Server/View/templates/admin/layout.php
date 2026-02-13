@@ -7,7 +7,7 @@ declare(strict_types=1);
  * @var string $content
  * @var array<string, mixed> $templateData
  */
-$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$e = static fn(string $val): string => htmlspecialchars($val);
 ?>
 <!DOCTYPE html>
 <html lang="en">

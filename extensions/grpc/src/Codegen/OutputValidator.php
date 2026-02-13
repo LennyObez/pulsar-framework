@@ -36,13 +36,11 @@ final class OutputValidator
      */
     public function validate(array $generatedFiles): array
     {
-        $errors = [];
-
-        $errors = [...$errors, ...$this->checkFilesExist($generatedFiles)];
-        $errors = [...$errors, ...$this->checkNamingConflicts($generatedFiles)];
-        $errors = [...$errors, ...$this->checkSyntax($generatedFiles)];
-
-        return $errors;
+        return [
+            ...$this->checkFilesExist($generatedFiles),
+            ...$this->checkNamingConflicts($generatedFiles),
+            ...$this->checkSyntax($generatedFiles),
+        ];
     }
 
     /**

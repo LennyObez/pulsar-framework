@@ -54,7 +54,6 @@ export class CmsPbTabs extends HTMLElement {
     tabBar.className = 'pb-block-tabs__bar';
     tabBar.setAttribute('role', 'tablist');
 
-    const tabBtns: HTMLElement[] = [];
     const panelId = `pb-tabs-panel-${this.uid}`;
 
     for (let i = 0; i < tabs.length; i++) {
@@ -69,7 +68,6 @@ export class CmsPbTabs extends HTMLElement {
       tabBtn.setAttribute('aria-selected', String(isActive));
       tabBtn.setAttribute('aria-controls', panelId);
       tabBtn.tabIndex = isActive ? 0 : -1;
-      tabBtns.push(tabBtn);
 
       const labelInput = document.createElement('input');
       labelInput.type = 'text';

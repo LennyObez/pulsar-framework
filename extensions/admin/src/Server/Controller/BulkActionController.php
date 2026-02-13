@@ -7,7 +7,6 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
-use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Features\BulkAction\BulkActionHandler;
 use Pulsar\Extension\Admin\Features\BulkAction\BulkActionRequest;
 use Pulsar\Http\Message\Response;
@@ -21,15 +20,15 @@ use function is_array;
 #[Internal]
 final readonly class BulkActionController
 {
+    use ExtractsRequestActor;
+
     public function __construct(
         private BulkActionHandler $handler,
     ) {}
 
     public function execute(ServerRequestInterface $request, string $resource): Response
     {
-        /** @var IdentityInterface|null $identity */
-        $identity = $request->getAttribute('identity');
-        $actor = $identity?->id() ?? 'anonymous';
+        $actor = $this->resolveActor($request);
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);

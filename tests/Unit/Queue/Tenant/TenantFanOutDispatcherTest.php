@@ -197,6 +197,6 @@ final class TenantFanOutDispatcherTest extends TestCase
 
         // Scope must be fully cleaned up despite failure
         self::assertFalse($this->context->isResolved());
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
     }
 }

@@ -6,10 +6,10 @@
 <?php
 $__currency = strtoupper($order['currency'] ?? 'USD');
 $__statuses = ['cart', 'pending_payment', 'confirmed', 'fulfilled'];
-$__currentIndex = array_search($order['status'] ?? 'cart', $__statuses, true);
-if ($__currentIndex === false) {
-    $__currentIndex = -1;
-}
+$__orderStatus = $order['status'] ?? 'cart';
+$__currentIndex = in_array($__orderStatus, $__statuses, true)
+    ? array_search($__orderStatus, $__statuses, true)
+    : -1;
 ?>
 <div class="cms-content-show">
     <header class="cms-content-show__header">

@@ -96,13 +96,13 @@ final readonly class ScopedContainerProxy
     {
         if (!in_array($id, $this->allowedServices, true)) {
             throw new RuntimeException(
-                "Plugin '{$this->pluginSlug}' is not allowed to access service '{$id}'",
+                "Plugin '$this->pluginSlug' is not allowed to access service '$id'",
             );
         }
 
         if (!$this->container->has($id)) {
             throw new RuntimeException(
-                "Service '{$id}' is not available in the container",
+                "Service '$id' is not available in the container",
             );
         }
 

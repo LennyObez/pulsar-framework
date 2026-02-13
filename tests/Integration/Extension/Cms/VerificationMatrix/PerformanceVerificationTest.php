@@ -14,7 +14,10 @@ use Pulsar\Extension\Cms\Content\Content;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 use Pulsar\Extension\Cms\Content\ContentType;
+use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
+use Pulsar\Extension\Cms\Media\MediaAsset;
+use Pulsar\Extension\Cms\Media\MediaVisibility;
 use Pulsar\Extension\Cms\Tools\SiteDefinition;
 
 use function array_filter;
@@ -126,7 +129,7 @@ final class PerformanceVerificationTest extends TestCase
         $start = hrtime(true);
 
         for ($i = 0; $i < 50; $i++) {
-            new \Pulsar\Extension\Cms\Media\MediaAsset(
+            new MediaAsset(
                 id: "media-{$i}",
                 tenantId: null,
                 uploaderId: 'user-001',
@@ -140,8 +143,8 @@ final class PerformanceVerificationTest extends TestCase
                 height: 1080,
                 exifData: null,
                 altTextDefault: "Image {$i}",
-                visibility: \Pulsar\Extension\Cms\Media\MediaVisibility::Public,
-                dataClassification: \Pulsar\Extension\Cms\Content\DataClassification::Public,
+                visibility: MediaVisibility::Public,
+                dataClassification: DataClassification::Public,
                 createdAt: new DateTimeImmutable(),
                 updatedAt: new DateTimeImmutable(),
                 deletedAt: null,

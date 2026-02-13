@@ -46,7 +46,7 @@ final readonly class HeadingBlock implements BlockTypeInterface
             $level = 1;
         }
 
-        return "<h{$level}>{$text}</h{$level}>";
+        return "<h$level>$text</h$level>";
     }
 
     #[Override]

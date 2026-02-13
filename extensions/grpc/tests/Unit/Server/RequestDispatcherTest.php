@@ -19,12 +19,15 @@ use Pulsar\Extension\Grpc\Interceptor\InterceptorPipeline;
 use Pulsar\Extension\Grpc\Interceptor\InterceptorResult;
 use Pulsar\Extension\Grpc\Server\RequestDispatcher;
 use RuntimeException;
+use stdClass;
 
 #[CoversClass(RequestDispatcher::class)]
 final class RequestDispatcherTest extends TestCase
 {
-    private function createContext(string $methodName = 'SayHello', string $payload = 'request'): CallContext
+    private function createContext(): CallContext
     {
+        $methodName = 'SayHello';
+
         return new CallContext(
             method: new MethodDescriptor(
                 name: $methodName,
@@ -34,7 +37,7 @@ final class RequestDispatcherTest extends TestCase
                 outputType: 'test.Response',
                 handler: 'TestService::' . $methodName,
             ),
-            payload: $payload,
+            payload: 'request',
         );
     }
 
@@ -168,31 +171,11 @@ final class RequestDispatcherTest extends TestCase
     #[Test]
     public function dispatch_multiple_interceptors_execute_in_order(): void
     {
-        $order = [];
+        $tracker = new stdClass();
+        $tracker->order = [];
 
-        $first = new class ($order) implements InterceptorInterface {
-            /** @param list<string> $order */
-            public function __construct(private array &$order) {}
-
-            public function handle(CallContext $context, Closure $next): InterceptorResult
-            {
-                $this->order[] = 'first';
-
-                return $next($context);
-            }
-        };
-
-        $second = new class ($order) implements InterceptorInterface {
-            /** @param list<string> $order */
-            public function __construct(private array &$order) {}
-
-            public function handle(CallContext $context, Closure $next): InterceptorResult
-            {
-                $this->order[] = 'second';
-
-                return $next($context);
-            }
-        };
+        $first = $this->createOrderTrackingInterceptor($tracker, 'first');
+        $second = $this->createOrderTrackingInterceptor($tracker, 'second');
 
         $pipeline = new InterceptorPipeline([$first, $second]);
         $dispatcher = new RequestDispatcher($pipeline);
@@ -204,7 +187,7 @@ final class RequestDispatcherTest extends TestCase
         $result = $dispatcher->dispatch($context, $handler);
 
         self::assertTrue($result->isOk());
-        self::assertSame(['first', 'second'], $order);
+        self::assertSame(['first', 'second'], $tracker->order);
     }
 
     #[Test]
@@ -221,5 +204,22 @@ final class RequestDispatcherTest extends TestCase
 
         self::assertTrue($result->isOk());
         self::assertSame('direct-response', $result->payload);
+    }
+
+    private function createOrderTrackingInterceptor(stdClass $tracker, string $name): InterceptorInterface
+    {
+        return new class ($tracker, $name) implements InterceptorInterface {
+            public function __construct(
+                private readonly stdClass $tracker,
+                private readonly string $name,
+            ) {}
+
+            public function handle(CallContext $context, Closure $next): InterceptorResult
+            {
+                $this->tracker->order[] = $this->name;
+
+                return $next($context);
+            }
+        };
     }
 }

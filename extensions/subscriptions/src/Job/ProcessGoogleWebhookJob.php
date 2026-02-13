@@ -46,7 +46,7 @@ final readonly class ProcessGoogleWebhookJob implements QueueableInterface
         } catch (Throwable) {
             // Retries are handled by the queue infrastructure
             throw new RuntimeException(
-                "Failed to process Google webhook: {$this->eventType}",
+                "Failed to process Google webhook: $this->eventType",
             );
         }
     }

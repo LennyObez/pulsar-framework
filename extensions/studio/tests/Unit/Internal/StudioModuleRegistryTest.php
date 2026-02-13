@@ -90,11 +90,11 @@ final class StudioModuleRegistryTest extends TestCase
 
     private function createModule(string $id, string $routePrefix, int $navOrder): StudioModuleInterface
     {
-        return new class ($id, $routePrefix, $navOrder) implements StudioModuleInterface {
+        return new readonly class ($id, $routePrefix, $navOrder) implements StudioModuleInterface {
             public function __construct(
-                private readonly string $id,
-                private readonly string $prefix,
-                private readonly int $order,
+                private string $id,
+                private string $prefix,
+                private int $order,
             ) {}
 
             #[Override]

@@ -76,8 +76,8 @@ final class InMemoryRefreshTokenRepositoryTest extends TestCase
     #[Test]
     public function replay_detection_revokes_entire_family(): void
     {
-        $this->repo->persist($this->makeToken('rt-1', 'val-1', 'fam-1'));
-        $this->repo->persist($this->makeToken('rt-2', 'val-2', 'fam-1'));
+        $this->repo->persist($this->makeToken(tokenValue: 'val-1'));
+        $this->repo->persist($this->makeToken('rt-2', 'val-2'));
 
         // First consumption succeeds
         $first = $this->repo->consume('val-1');
@@ -98,8 +98,8 @@ final class InMemoryRefreshTokenRepositoryTest extends TestCase
     #[Test]
     public function revoke_family_revokes_all_tokens_in_family(): void
     {
-        $this->repo->persist($this->makeToken('rt-1', 'val-1', 'fam-1'));
-        $this->repo->persist($this->makeToken('rt-2', 'val-2', 'fam-1'));
+        $this->repo->persist($this->makeToken(tokenValue: 'val-1'));
+        $this->repo->persist($this->makeToken('rt-2', 'val-2'));
         $this->repo->persist($this->makeToken('rt-3', 'val-3', 'fam-2'));
 
         $this->repo->revokeFamily('fam-1');
@@ -112,8 +112,8 @@ final class InMemoryRefreshTokenRepositoryTest extends TestCase
     #[Test]
     public function revoke_by_subject_revokes_all_subject_tokens(): void
     {
-        $this->repo->persist($this->makeToken('rt-1', 'val-1', 'fam-1', 'user-1'));
-        $this->repo->persist($this->makeToken('rt-2', 'val-2', 'fam-2', 'user-1'));
+        $this->repo->persist($this->makeToken(tokenValue: 'val-1'));
+        $this->repo->persist($this->makeToken('rt-2', 'val-2', 'fam-2'));
         $this->repo->persist($this->makeToken('rt-3', 'val-3', 'fam-3', 'user-2'));
 
         $this->repo->revokeBySubject('user-1');
@@ -134,7 +134,7 @@ final class InMemoryRefreshTokenRepositoryTest extends TestCase
     #[Test]
     public function was_replay_detected_resets_between_consume_calls(): void
     {
-        $this->repo->persist($this->makeToken('rt-1', 'val-1', 'fam-1'));
+        $this->repo->persist($this->makeToken(tokenValue: 'val-1'));
         $this->repo->persist($this->makeToken('rt-2', 'val-2', 'fam-2'));
 
         // Consume and replay

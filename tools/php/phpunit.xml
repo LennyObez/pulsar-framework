@@ -56,6 +56,10 @@
             <directory>../../extensions/analytics/src</directory>
             <directory>../../extensions/grpc/src</directory>
             <directory>../../extensions/accessibility/src</directory>
+            <directory>../../extensions/devices/src</directory>
+            <directory>../../extensions/feedback/src</directory>
+            <directory>../../extensions/releases/src</directory>
+            <directory>../../extensions/subscriptions/src</directory>
         </include>
     </source>
 </phpunit>

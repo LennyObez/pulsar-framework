@@ -59,7 +59,7 @@ final readonly class OpenAiProvider implements LlmProviderInterface
             'http' => [
                 'method' => 'POST',
                 'header' => "Content-Type: application/json\r\n"
-                    . "Authorization: Bearer {$this->apiKey}\r\n",
+                    . "Authorization: Bearer $this->apiKey\r\n",
                 'content' => $json,
                 'timeout' => 120,
                 'ignore_errors' => true,

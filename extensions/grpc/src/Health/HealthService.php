@@ -54,7 +54,7 @@ final class HealthService implements ServiceHandlerInterface
     {
         return match ($method) {
             'Check' => $this->handleCheck($payload),
-            default => throw new InvalidArgumentException("Unknown method: {$method}"),
+            default => throw new InvalidArgumentException("Unknown method: $method"),
         };
     }
 
@@ -87,7 +87,7 @@ final class HealthService implements ServiceHandlerInterface
     private function handleCheck(string $payload): string
     {
         /** @var array{service?: string} $request */
-        $request = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
+        $request = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
         $service = (string) ($request['service'] ?? '');
 
         $response = $this->check($service);

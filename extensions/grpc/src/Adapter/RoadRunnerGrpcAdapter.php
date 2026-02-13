@@ -8,6 +8,8 @@ use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Grpc\Interceptor\InterceptorResult;
 use RuntimeException;
+use Spiral\RoadRunner\Payload;
+use Spiral\RoadRunner\Worker;
 
 use function class_exists;
 use function is_array;
@@ -47,13 +49,12 @@ final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
             );
         }
 
-        /** @var \Spiral\RoadRunner\Worker $rrWorker */
-        $rrWorker = \Spiral\RoadRunner\Worker::create();
+        $rrWorker = Worker::create();
         $this->worker = $rrWorker;
         $this->running = true;
 
         while ($this->running) {
-            /** @var \Spiral\RoadRunner\Payload|null $payload */
+            /** @var Payload|null $payload */
             $payload = $rrWorker->waitPayload();
 
             if ($payload === null) {
@@ -85,7 +86,7 @@ final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
     #[Override]
     public function isAvailable(): bool
     {
-        return class_exists(\Spiral\RoadRunner\Worker::class)
+        return class_exists(Worker::class)
             && isset($_SERVER['RR_RPC'], $_SERVER['RR_RELAY']);
     }
 
@@ -124,7 +125,7 @@ final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
 
         if (method_exists($worker, 'respond')) {
             /** @phpstan-ignore class.notFound */
-            $response = new \Spiral\RoadRunner\Payload(
+            $response = new Payload(
                 body: $result->payload,
                 header: $this->encodeResponseHeader($result),
             );

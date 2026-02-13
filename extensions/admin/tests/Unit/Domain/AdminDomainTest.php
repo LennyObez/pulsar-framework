@@ -13,6 +13,7 @@ use Pulsar\Extension\Admin\Domain\FieldDefinition;
 use Pulsar\Extension\Admin\Domain\FieldType;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
 use Pulsar\Extension\Admin\Domain\SavedView;
+use Pulsar\Extension\Admin\Domain\ValidationRule;
 
 use function count;
 
@@ -144,7 +145,7 @@ final class AdminDomainTest extends TestCase
             visibleOnList: false,
             visibleOnDetail: true,
             visibleOnForm: false,
-            rules: [new \Pulsar\Extension\Admin\Domain\ValidationRule('required')],
+            rules: [new ValidationRule('required')],
             placeholder: '000-00-0000',
             helpText: 'Social Security Number',
         );

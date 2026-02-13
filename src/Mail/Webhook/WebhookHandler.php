@@ -66,7 +66,7 @@ final readonly class WebhookHandler implements WebhookHandlerInterface
             );
         }
 
-        $decoded = json_decode($request->payload, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($request->payload, true, flags: JSON_THROW_ON_ERROR);
         /** @var array<string, mixed> $data */
         $data = is_array($decoded) ? $decoded : [];
 

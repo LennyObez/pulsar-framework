@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\DataProtection;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\DataProtection\DataPurgeInterface;
 use Pulsar\DataProtection\DefaultRetentionPolicy;
 
-#[CoversClass(DataPurgeInterface::class)]
 final class DataPurgeInterfaceTest extends TestCase
 {
     #[Test]

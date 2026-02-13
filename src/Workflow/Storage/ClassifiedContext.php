@@ -12,6 +12,7 @@ use Throwable;
 
 use function array_key_exists;
 use function array_keys;
+use function array_map;
 use function in_array;
 use function is_string;
 use function json_decode;
@@ -213,11 +214,10 @@ final readonly class ClassifiedContext
         /** @var list<string> $encryptedFields */
         $encryptedFields = $data['encrypted'] ?? [];
 
-        $classifications = [];
-
-        foreach ($classStrings as $key => $levelString) {
-            $classifications[$key] = ClassificationLevel::from($levelString);
-        }
+        $classifications = array_map(
+            static fn(string $levelString): ClassificationLevel => ClassificationLevel::from($levelString),
+            $classStrings,
+        );
 
         $values = [];
 

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Example;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Container\Container;
@@ -12,7 +11,6 @@ use Pulsar\Extension\Example\ExampleExtension;
 use Pulsar\Extension\Example\ExampleServiceProvider;
 use Pulsar\Routing\Router;
 
-#[CoversClass(ExampleExtension::class)]
 final class ExampleExtensionTest extends TestCase
 {
     #[Test]

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Extension\Subscriptions;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -21,7 +20,6 @@ use Pulsar\Extension\Subscriptions\VerificationResult;
 use Pulsar\Extension\Subscriptions\WebhookEventRepositoryInterface;
 use RuntimeException;
 
-#[CoversClass(SubscriptionService::class)]
 final class SubscriptionServiceTest extends TestCase
 {
     private SubscriptionVerifierInterface&Stub $verifier;

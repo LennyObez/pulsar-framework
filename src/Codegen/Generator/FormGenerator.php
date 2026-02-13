@@ -92,7 +92,7 @@ final class FormGenerator extends AbstractGenerator
 
             $formType = $this->mapToFormType($property);
             $required = $property->nullable ? 'false' : 'true';
-            $lines[] = "            '{$property->name}' => ['type' => '{$formType}', 'required' => {$required}],";
+            $lines[] = "            '$property->name' => ['type' => '$formType', 'required' => $required],";
         }
 
         return implode("\n", $lines);

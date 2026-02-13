@@ -135,7 +135,7 @@ final class SqsDriver implements QueueDriverInterface
         $receiptHandle = $message['ReceiptHandle'];
 
         /** @var array{id: string, queue: string, job_class: string, payload: string, attempts: int, status: string, created_at: int, available_at: int} $data */
-        $data = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
 
         /** @var array<string, string> $attributes */
         $attributes = $message['Attributes'] ?? [];

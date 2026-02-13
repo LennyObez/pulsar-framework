@@ -132,7 +132,7 @@ final readonly class DigitalDeliveryService implements DigitalDeliveryServiceInt
             AuditOutcome::Success,
             null,
             'cms.commerce.download.processed',
-            "download:{$download->id}",
+            "download:$download->id",
             [
                 'orderItemId' => $download->orderItemId,
                 'assetId' => $download->digitalAssetId,

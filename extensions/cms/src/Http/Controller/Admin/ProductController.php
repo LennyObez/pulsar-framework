@@ -194,7 +194,7 @@ final readonly class ProductController
 
         if ($status !== $product->status && !$product->status->canTransitionTo($status)) {
             return Response::json([
-                'error' => "Cannot transition from '{$product->status->value}' to '{$status->value}'",
+                'error' => "Cannot transition from '{$product->status->value}' to '$status->value'",
             ], 422);
         }
 

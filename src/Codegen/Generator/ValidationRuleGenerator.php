@@ -94,7 +94,7 @@ final class ValidationRuleGenerator extends AbstractGenerator
             }
 
             $rulesStr = implode("', '", $rules);
-            $lines[] = "            '{$property->name}' => ['{$rulesStr}'],";
+            $lines[] = "            '$property->name' => ['$rulesStr'],";
         }
 
         return implode("\n", $lines);
@@ -116,7 +116,6 @@ final class ValidationRuleGenerator extends AbstractGenerator
         }
 
         $rules[] = match ($property->phpType) {
-            'string' => 'string',
             'int' => 'integer',
             'float' => 'numeric',
             'bool' => 'boolean',

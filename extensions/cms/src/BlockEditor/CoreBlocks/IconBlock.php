@@ -50,7 +50,7 @@ final readonly class IconBlock implements BlockTypeInterface
             $size = 'md';
         }
 
-        $cssClass = "icon icon-{$name} icon--{$size}";
+        $cssClass = "icon icon-$name icon--$size";
 
         $style = '';
 
@@ -58,7 +58,7 @@ final readonly class IconBlock implements BlockTypeInterface
             $style = ' style="color:' . htmlspecialchars($color, ENT_QUOTES, 'UTF-8') . '"';
         }
 
-        return "<span class=\"{$cssClass}\"{$style} aria-hidden=\"true\"></span>";
+        return "<span class=\"$cssClass\"$style aria-hidden=\"true\"></span>";
     }
 
     #[Override]

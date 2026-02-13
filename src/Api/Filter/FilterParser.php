@@ -16,7 +16,6 @@ use function explode;
 use function in_array;
 use function is_a;
 use function is_numeric;
-use function trim;
 
 /**
  * Parses raw filter query parameters into validated AST nodes.

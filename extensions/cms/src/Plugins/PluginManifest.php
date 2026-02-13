@@ -78,7 +78,6 @@ final readonly class PluginManifest
 
         $result = [];
 
-        /** @var mixed $item */
         foreach ($value as $item) {
             $result[] = (string) $item;
         }
@@ -97,7 +96,6 @@ final readonly class PluginManifest
 
         $result = [];
 
-        /** @var mixed $item */
         foreach ($value as $key => $item) {
             $result[(string) $key] = (string) $item;
         }
@@ -116,7 +114,6 @@ final readonly class PluginManifest
 
         $result = [];
 
-        /** @var mixed $item */
         foreach ($value as $key => $item) {
             $result[(string) $key] = $item;
         }
@@ -135,7 +132,6 @@ final readonly class PluginManifest
 
         $result = [];
 
-        /** @var mixed $item */
         foreach ($value as $key => $item) {
             if (!is_array($item)) {
                 continue;
@@ -143,7 +139,6 @@ final readonly class PluginManifest
 
             $inner = [];
 
-            /** @var mixed $v */
             foreach ($item as $k => $v) {
                 $inner[(string) $k] = (string) $v;
             }

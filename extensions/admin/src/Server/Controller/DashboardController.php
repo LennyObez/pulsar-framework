@@ -19,6 +19,8 @@ use function str_contains;
 #[Internal]
 final readonly class DashboardController
 {
+    use RendersAdminLayout;
+
     public function __construct(
         private DashboardHandler $handler,
         private AdminConfig $config,
@@ -35,22 +37,11 @@ final readonly class DashboardController
             ]);
         }
 
-        return Response::html($this->renderView([
+        return Response::html($this->renderAdminView('Dashboard', 'dashboard', [
             'widgets' => $result->widgets,
             'resources' => $result->resources,
             'schema_enabled' => $this->config->schema->enabled,
         ]));
     }
 
-    /**
-     * @param array<string, mixed> $templateData
-     */
-    private function renderView(array $templateData): string
-    {
-        extract(['title' => 'Dashboard', 'content' => 'dashboard', 'templateData' => $templateData]);
-        ob_start();
-        include __DIR__ . '/../View/templates/admin/layout.php';
-
-        return (string) ob_get_clean();
-    }
 }

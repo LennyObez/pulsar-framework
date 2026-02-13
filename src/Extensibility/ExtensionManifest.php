@@ -56,7 +56,7 @@ readonly class ExtensionManifest
 
         try {
             /** @var array<string, mixed> $data */
-            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw ManifestException::invalidJson($path, $e->getMessage());
         }

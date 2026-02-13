@@ -150,15 +150,10 @@ final class TemplateCompiler
     {
         $relativePath = $this->toRelativePath($templateName);
 
-        foreach ($this->config->templatePaths as $basePath) {
-            $fullPath = $basePath . DIRECTORY_SEPARATOR . $relativePath;
-
-            if (is_file($fullPath)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $this->config->templatePaths,
+            static fn(string $basePath): bool => is_file($basePath . DIRECTORY_SEPARATOR . $relativePath),
+        );
     }
 
     /**

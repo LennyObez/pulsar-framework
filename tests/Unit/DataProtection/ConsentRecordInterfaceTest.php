@@ -5,12 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\DataProtection;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\DataProtection\ConsentRecordInterface;
 
-#[CoversClass(ConsentRecordInterface::class)]
 final class ConsentRecordInterfaceTest extends TestCase
 {
     #[Test]

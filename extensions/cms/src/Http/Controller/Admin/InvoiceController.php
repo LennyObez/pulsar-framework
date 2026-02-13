@@ -10,6 +10,7 @@ use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Extension\Cms\Commerce\InvoiceServiceInterface;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Http\Message\Response;
+use Pulsar\View\Engine\TemplateEngineInterface;
 
 /**
  * Admin controller for invoice viewing and downloading.
@@ -25,7 +26,7 @@ final readonly class InvoiceController
     public function __construct(
         private InvoiceServiceInterface $invoiceService,
         private GateInterface $gate,
-        private ?\Pulsar\View\Engine\TemplateEngineInterface $templateEngine = null,
+        private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
     public function show(ServerRequestInterface $request, string $id): Response
@@ -53,7 +54,7 @@ final readonly class InvoiceController
             return new Response(
                 headers: [
                     'Content-Type' => 'text/html; charset=utf-8',
-                    'Content-Disposition' => "attachment; filename=\"invoice-{$id}.html\"",
+                    'Content-Disposition' => "attachment; filename=\"invoice-$id.html\"",
                 ],
                 body: $html,
             );

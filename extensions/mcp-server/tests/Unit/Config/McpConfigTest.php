@@ -14,7 +14,7 @@ final class McpConfigTest extends TestCase
     private function createEnvironment(): Environment
     {
         // Use load() with no env file — picks up only OS vars
-        return Environment::load(null);
+        return Environment::load();
     }
 
     #[Test]

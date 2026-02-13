@@ -96,6 +96,6 @@ final readonly class AiRequestParser
      */
     public function missingFieldResponse(string $field): Response
     {
-        return Response::json(['error' => "Missing required field: {$field}"], 422);
+        return Response::json(['error' => "Missing required field: $field"], 422);
     }
 }

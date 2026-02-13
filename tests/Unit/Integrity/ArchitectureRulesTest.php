@@ -112,6 +112,11 @@ final class ArchitectureRulesTest extends TestCase
         foreach (self::$fileReferences as $filePath => $references) {
             $sourceNamespace = self::$fileNamespaces[$filePath] ?? '';
 
+            // Composition roots are exempt — they wire cross-module services by design
+            if (ModuleMap::isCompositionRoot($sourceNamespace)) {
+                continue;
+            }
+
             foreach ($references as $ref) {
                 if (!ModuleMap::isController($ref)) {
                     continue;
@@ -146,6 +151,11 @@ final class ArchitectureRulesTest extends TestCase
 
         foreach (self::$fileReferences as $filePath => $references) {
             $sourceNamespace = self::$fileNamespaces[$filePath] ?? '';
+
+            // Composition roots are exempt — they wire cross-module services by design
+            if (ModuleMap::isCompositionRoot($sourceNamespace)) {
+                continue;
+            }
 
             foreach ($references as $ref) {
                 if (!ModuleMap::isView($ref)) {

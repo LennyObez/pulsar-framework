@@ -26,7 +26,7 @@ final readonly class RobotsTxtGenerator implements RobotsTxtGeneratorInterface
             'Disallow: /admin/',
             'Disallow: /api/',
             '',
-            "Sitemap: {$baseUrl}/sitemap.xml",
+            "Sitemap: $baseUrl/sitemap.xml",
         ];
 
         return implode("\n", $lines) . "\n";

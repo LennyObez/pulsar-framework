@@ -53,7 +53,7 @@ final readonly class TypeCaster
                 ? $value
                 : new DateTimeImmutable(is_string($value) ? $value : (string) $value),
             ColumnType::Json => is_string($value)
-                ? json_decode($value, true, 512, JSON_THROW_ON_ERROR)
+                ? json_decode($value, true, flags: JSON_THROW_ON_ERROR)
                 : $value,
         };
     }

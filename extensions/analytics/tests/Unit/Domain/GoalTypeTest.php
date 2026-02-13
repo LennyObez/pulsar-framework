@@ -27,6 +27,7 @@ final class GoalTypeTest extends TestCase
     #[Test]
     public function tryFromReturnsNullForInvalidValue(): void
     {
-        self::assertNull(GoalType::tryFrom('revenue'));
+        $invalidValue = 'revenue';
+        self::assertNull(GoalType::tryFrom($invalidValue));
     }
 }

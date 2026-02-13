@@ -35,10 +35,7 @@ final class AuthMiddleware implements MiddlewareInterface
 
         if ($apiKey !== '') {
             if (!$this->validateApiKey($apiKey)) {
-                return Response::json([
-                    'error' => 'unauthorized',
-                    'message' => 'Invalid API key.',
-                ], 401);
+                return self::unauthorized('Invalid API key.');
             }
 
             return $handler->handle($request);
@@ -51,19 +48,13 @@ final class AuthMiddleware implements MiddlewareInterface
             $token = substr($authorization, 7);
 
             if (!$this->validateBearerToken($token)) {
-                return Response::json([
-                    'error' => 'unauthorized',
-                    'message' => 'Invalid or expired token.',
-                ], 401);
+                return self::unauthorized('Invalid or expired token.');
             }
 
             return $handler->handle($request);
         }
 
-        return Response::json([
-            'error' => 'unauthorized',
-            'message' => 'Authentication required. Provide an API key or Bearer token.',
-        ], 401);
+        return self::unauthorized('Authentication required. Provide an API key or Bearer token.');
     }
 
     /**
@@ -82,5 +73,13 @@ final class AuthMiddleware implements MiddlewareInterface
     {
         // TODO: Implement actual token validation (JWT signature check, expiry, etc.)
         return $token !== '';
+    }
+
+    private static function unauthorized(string $message): ResponseInterface
+    {
+        return Response::json([
+            'error' => 'unauthorized',
+            'message' => $message,
+        ], 401);
     }
 }

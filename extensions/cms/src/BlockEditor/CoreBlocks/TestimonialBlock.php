@@ -50,21 +50,21 @@ final readonly class TestimonialBlock implements BlockTypeInterface
 
         if (isset($data['rating']) && is_int($data['rating']) && $data['rating'] >= 1 && $data['rating'] <= 5) {
             $stars = str_repeat("\u{2605}", $data['rating']);
-            $html .= "<div class=\"testimonial__rating\">{$stars}</div>";
+            $html .= "<div class=\"testimonial__rating\">$stars</div>";
         }
 
-        $html .= "<p class=\"testimonial__quote\">{$quote}</p><footer class=\"testimonial__footer\">";
+        $html .= "<p class=\"testimonial__quote\">$quote</p><footer class=\"testimonial__footer\">";
 
         if (isset($data['avatarUrl']) && is_string($data['avatarUrl']) && $data['avatarUrl'] !== '') {
             $avatarUrl = htmlspecialchars($data['avatarUrl'], ENT_QUOTES, 'UTF-8');
-            $html .= "<img src=\"{$avatarUrl}\" alt=\"{$author}\" class=\"testimonial__avatar\">";
+            $html .= "<img src=\"$avatarUrl\" alt=\"$author\" class=\"testimonial__avatar\">";
         }
 
-        $html .= "<cite class=\"testimonial__author\">{$author}</cite>";
+        $html .= "<cite class=\"testimonial__author\">$author</cite>";
 
         if (isset($data['role']) && is_string($data['role']) && $data['role'] !== '') {
             $role = htmlspecialchars($data['role'], ENT_QUOTES, 'UTF-8');
-            $html .= "<span class=\"testimonial__role\">{$role}</span>";
+            $html .= "<span class=\"testimonial__role\">$role</span>";
         }
 
         return $html . '</footer></blockquote>';

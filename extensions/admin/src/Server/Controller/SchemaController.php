@@ -22,6 +22,8 @@ use function str_contains;
 #[Internal]
 final readonly class SchemaController
 {
+    use RendersAdminLayout;
+
     public function __construct(
         private DatabaseIntrospector $introspector,
         private SchemaCapabilities $capabilities,
@@ -54,7 +56,7 @@ final readonly class SchemaController
             ]);
         }
 
-        return Response::html($this->renderHtml('schema/list', 'Database', [
+        return Response::html($this->renderAdminView('Database', 'schema/list', [
             'tables' => $tableData,
             'capabilities' => $this->capabilities->toArray(),
             'driver' => $this->capabilities->supportsNativeEnum() ? 'mysql' : ($this->capabilities->supportsTransactionalDdl() ? 'pgsql' : 'sqlite'),
@@ -67,7 +69,7 @@ final readonly class SchemaController
         $tables = $this->introspector->tables();
         $tableNames = array_map(static fn($t): string => $t->name, $tables);
 
-        return Response::html($this->renderHtml('schema/create', 'Create table', [
+        return Response::html($this->renderAdminView('Create table', 'schema/create', [
             'tables' => $tableNames,
             'capabilities' => $this->capabilities->toArray(),
             'driver' => $this->capabilities->supportsNativeEnum() ? 'mysql' : ($this->capabilities->supportsTransactionalDdl() ? 'pgsql' : 'sqlite'),
@@ -100,7 +102,7 @@ final readonly class SchemaController
             ]);
         }
 
-        return Response::html($this->renderHtml('schema/view', "Table: $table", [
+        return Response::html($this->renderAdminView("Table: $table", 'schema/view', [
             'table' => $table,
             'columns' => $columnData,
             'primaryKey' => $pk,
@@ -132,20 +134,10 @@ final readonly class SchemaController
             return Response::json(['entries' => $entryData]);
         }
 
-        return Response::html($this->renderHtml('schema/changelog', 'Schema change log', [
+        return Response::html($this->renderAdminView('Schema change log', 'schema/changelog', [
             'entries' => $entryData,
             'schema_enabled' => $this->config->enabled,
         ]));
     }
 
-    /**
-     * @param array<string, mixed> $templateData
-     */
-    private function renderHtml(string $content, string $title, array $templateData): string
-    {
-        ob_start();
-        include __DIR__ . '/../View/templates/admin/layout.php';
-
-        return (string) ob_get_clean();
-    }
 }

@@ -8,7 +8,6 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-// @ts-expect-error -- JS module without declaration file
 import {
   trapFocus,
   releaseFocus,

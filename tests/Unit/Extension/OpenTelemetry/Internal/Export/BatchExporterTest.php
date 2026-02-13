@@ -162,7 +162,7 @@ final class BatchExporterTest extends TestCase
         // Queue should be flushed
         self::assertSame(0, $exporter->queueSize());
         self::assertCount(1, $sentPayloads);
-        self::assertTrue($exporter->isShutDown());
+        self::assertTrue($exporter->isShutDown);
 
         // New enqueues should be ignored
         $exporter->enqueue('item3');

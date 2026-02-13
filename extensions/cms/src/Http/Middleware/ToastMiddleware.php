@@ -50,7 +50,6 @@ final readonly class ToastMiddleware implements MiddlewareInterface
             return $response;
         }
 
-        /** @var mixed $raw */
         $raw = $this->session->get('_toasts', []);
 
         $toasts = array_values(array_filter(

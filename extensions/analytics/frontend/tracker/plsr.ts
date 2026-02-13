@@ -15,7 +15,7 @@
         if (navigator.sendBeacon) {
           navigator.sendBeacon(api, body);
         } else {
-          fetch(api, {
+          void fetch(api, {
             method: 'POST',
             body,
             headers: { 'Content-Type': 'application/json' },

@@ -54,7 +54,7 @@ final readonly class ForumDashboardWidget implements WidgetInterface
     private function countTable(string $table): int
     {
         $result = $this->connection->query(
-            "SELECT COUNT(*) AS cnt FROM {$table} WHERE deleted_at IS NULL",
+            "SELECT COUNT(*) AS cnt FROM $table WHERE deleted_at IS NULL",
         );
 
         return $result->first()?->getInt('cnt') ?? 0;

@@ -146,9 +146,7 @@ final class ArtifactIntegrityVerifier
             'content_hashes' => $manifest->contentHashes,
         ];
 
-        /** @var non-empty-string $json */
-        $json = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-
-        return $json;
+        /** @var non-empty-string */
+        return json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 }

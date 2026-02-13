@@ -63,7 +63,7 @@ final readonly class CampaignEditorService implements CampaignEditorServiceInter
             AuditOutcome::Success,
             $createdBy,
             'cms.newsletter.campaign.created',
-            "campaign:{$campaign->id}",
+            "campaign:$campaign->id",
             ['subject' => $subject, 'locale' => $locale],
         );
 
@@ -91,7 +91,7 @@ final readonly class CampaignEditorService implements CampaignEditorServiceInter
             AuditOutcome::Success,
             $campaign->createdBy,
             'cms.newsletter.campaign.updated',
-            "campaign:{$campaignId}",
+            "campaign:$campaignId",
             ['subject' => $subject],
         );
 
@@ -113,7 +113,7 @@ final readonly class CampaignEditorService implements CampaignEditorServiceInter
             AuditOutcome::Success,
             $campaign->createdBy,
             'cms.newsletter.campaign.deleted',
-            "campaign:{$campaignId}",
+            "campaign:$campaignId",
             ['subject' => $campaign->subject],
         );
     }
@@ -134,7 +134,7 @@ final readonly class CampaignEditorService implements CampaignEditorServiceInter
             AuditOutcome::Success,
             $campaign->createdBy,
             'cms.newsletter.campaign.scheduled',
-            "campaign:{$campaignId}",
+            "campaign:$campaignId",
             ['scheduled_at' => $scheduledAt->format('c')],
         );
 
@@ -157,7 +157,7 @@ final readonly class CampaignEditorService implements CampaignEditorServiceInter
             AuditOutcome::Success,
             $campaign->createdBy,
             'cms.newsletter.campaign.cancelled',
-            "campaign:{$campaignId}",
+            "campaign:$campaignId",
             ['subject' => $campaign->subject],
         );
 
@@ -195,7 +195,7 @@ final readonly class CampaignEditorService implements CampaignEditorServiceInter
             AuditOutcome::Success,
             $campaign->createdBy,
             'cms.newsletter.campaign.test_sent',
-            "campaign:{$campaignId}",
+            "campaign:$campaignId",
             ['test_email' => $testEmail],
         );
     }

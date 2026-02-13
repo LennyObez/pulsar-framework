@@ -45,7 +45,7 @@ final readonly class ProcessAppleWebhookJob implements QueueableInterface
             );
         } catch (Throwable) {
             throw new RuntimeException(
-                "Failed to process Apple webhook: {$this->notificationType}",
+                "Failed to process Apple webhook: $this->notificationType",
             );
         }
     }

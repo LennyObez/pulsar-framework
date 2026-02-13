@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Pulsar\Runtime\Exception\StatefulSingletonException;
 use Pulsar\Runtime\Scope\StatefulSingletonAnalyzer;
+use Pulsar\Runtime\Scope\StatefulSingletonViolation;
 use Pulsar\Runtime\Scope\ViolationType;
 use Pulsar\Tests\Unit\Runtime\Scope\Fixtures\ImmutableService;
 use Pulsar\Tests\Unit\Runtime\Scope\Fixtures\MutableService;
@@ -160,7 +161,7 @@ final class StatefulSingletonAnalyzerTest extends TestCase
 
         $analyzer = new StatefulSingletonAnalyzer(strict: true, logger: $logger);
 
-        $violation = new \Pulsar\Runtime\Scope\StatefulSingletonViolation(
+        $violation = new StatefulSingletonViolation(
             className: 'App\\Service\\UserCache',
             property: 'cache',
             type: ViolationType::WritableProperty,
@@ -178,7 +179,7 @@ final class StatefulSingletonAnalyzerTest extends TestCase
 
         $analyzer = new StatefulSingletonAnalyzer(strict: true, logger: $logger);
 
-        $violation = new \Pulsar\Runtime\Scope\StatefulSingletonViolation(
+        $violation = new StatefulSingletonViolation(
             className: 'Pulsar\\Runtime\\SomeService',
             property: 'state',
             type: ViolationType::WritableProperty,
@@ -196,7 +197,7 @@ final class StatefulSingletonAnalyzerTest extends TestCase
     {
         $analyzer = new StatefulSingletonAnalyzer(strict: true);
 
-        $violation = new \Pulsar\Runtime\Scope\StatefulSingletonViolation(
+        $violation = new StatefulSingletonViolation(
             className: 'App\\External\\Service',
             property: 'data',
             type: ViolationType::WritableProperty,
@@ -217,7 +218,7 @@ final class StatefulSingletonAnalyzerTest extends TestCase
 
         $analyzer = new StatefulSingletonAnalyzer(strict: false, logger: $logger);
 
-        $violation = new \Pulsar\Runtime\Scope\StatefulSingletonViolation(
+        $violation = new StatefulSingletonViolation(
             className: 'Pulsar\\Runtime\\SomeService',
             property: 'state',
             type: ViolationType::WritableProperty,

@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\SocialSso\Contracts\IdTokenVerifierInterface;
 use Pulsar\Extension\SocialSso\Contracts\JwtSignatureDriverInterface;
 use Pulsar\Extension\SocialSso\Domain\IdTokenVerificationContext;
 use Pulsar\Extension\SocialSso\Domain\JwkKey;
@@ -478,7 +479,7 @@ final class JwksIdTokenVerifierComprehensiveTest extends TestCase
         $verifier = new JwksIdTokenVerifier($this->fetcher, $this->driver);
 
         self::assertInstanceOf(
-            \Pulsar\Extension\SocialSso\Contracts\IdTokenVerifierInterface::class,
+            IdTokenVerifierInterface::class,
             $verifier,
         );
     }

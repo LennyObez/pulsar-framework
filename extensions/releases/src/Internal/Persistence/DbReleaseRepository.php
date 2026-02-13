@@ -134,11 +134,11 @@ final readonly class DbReleaseRepository implements ReleaseRepositoryInterface
 
         $whereClause = $where !== [] ? 'WHERE ' . implode(' AND ', $where) : '';
 
-        $countSql = "SELECT COUNT(*) AS total FROM releases {$whereClause}";
+        $countSql = "SELECT COUNT(*) AS total FROM releases $whereClause";
         $countResult = $this->connection->query($countSql, $params);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
-        $selectSql = "SELECT * FROM releases {$whereClause} ORDER BY release_date DESC LIMIT :limit OFFSET :offset";
+        $selectSql = "SELECT * FROM releases $whereClause ORDER BY release_date DESC LIMIT :limit OFFSET :offset";
         $dataResult = $this->connection->query($selectSql, [
             ...$params,
             'limit' => $perPage,

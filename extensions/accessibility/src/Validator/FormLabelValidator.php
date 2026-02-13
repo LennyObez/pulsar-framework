@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Accessibility\Validator;
 
-use DOMDocument;
 use DOMElement;
-use DOMNode;
 use DOMXPath;
 
 use function count;
@@ -22,6 +20,7 @@ use function in_array;
  */
 final readonly class FormLabelValidator implements ValidatorInterface
 {
+    use ParsesHtmlDom;
     /** Input types that do not require labels. */
     private const array SKIP_TYPES = ['hidden', 'submit', 'button', 'image', 'reset'];
 
@@ -83,7 +82,7 @@ final readonly class FormLabelValidator implements ValidatorInterface
                 rule: 'missing-form-label',
                 severity: Severity::Error,
                 element: $snippet,
-                message: "<{$tagName}> element has no associated <label>, aria-label, or aria-labelledby attribute.",
+                message: "<$tagName> element has no associated <label>, aria-label, or aria-labelledby attribute.",
                 wcagCriterion: '4.1.2',
                 line: $input->getLineNo(),
             );
@@ -98,7 +97,7 @@ final readonly class FormLabelValidator implements ValidatorInterface
         $groupTypes = ['radio', 'checkbox'];
 
         foreach ($groupTypes as $type) {
-            $inputs = $xpath->query("//input[@type='{$type}']");
+            $inputs = $xpath->query("//input[@type='$type']");
 
             if ($inputs === false || $inputs->length < 2) {
                 continue;
@@ -142,7 +141,7 @@ final readonly class FormLabelValidator implements ValidatorInterface
                     rule: 'missing-fieldset',
                     severity: Severity::Warning,
                     element: $snippet,
-                    message: "Group of {$type} inputs with name \"{$name}\" should be wrapped in a <fieldset> with a <legend>.",
+                    message: "Group of $type inputs with name \"$name\" should be wrapped in a <fieldset> with a <legend>.",
                     wcagCriterion: '1.3.1',
                     line: $firstInput->getLineNo(),
                 );
@@ -165,7 +164,7 @@ final readonly class FormLabelValidator implements ValidatorInterface
             return false;
         }
 
-        $labels = $xpath->query("//label[@for='{$id}']");
+        $labels = $xpath->query("//label[@for='$id']");
 
         return $labels !== false && $labels->length > 0;
     }
@@ -215,29 +214,4 @@ final readonly class FormLabelValidator implements ValidatorInterface
         return false;
     }
 
-    private function loadHtml(string $html): ?DOMDocument
-    {
-        $dom = new DOMDocument();
-        $wrapped = '<div>' . $html . '</div>';
-        libxml_use_internal_errors(true);
-        $result = @$dom->loadHTML(
-            '<?xml encoding="UTF-8"><body>' . $wrapped . '</body>',
-            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD,
-        );
-        libxml_clear_errors();
-
-        if ($result === false) {
-            return null;
-        }
-
-        return $dom;
-    }
-
-    private function getOuterHtml(DOMNode $node): string
-    {
-        /** @var DOMDocument $dom */
-        $dom = $node->ownerDocument;
-
-        return trim($dom->saveHTML($node) ?: '');
-    }
 }

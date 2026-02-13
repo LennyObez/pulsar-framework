@@ -146,7 +146,7 @@ final class AmqpDriver implements QueueDriverInterface
         $body = $envelope->getBody();
 
         /** @var array{id: string, queue: string, job_class: string, payload: string, attempts: int, status: string, created_at: int, available_at: int} $data */
-        $data = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
 
         $newAttempts = $data['attempts'] + 1;
 

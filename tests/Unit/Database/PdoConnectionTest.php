@@ -8,6 +8,7 @@ use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\ConnectionConfig;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Exception\DatabaseException;
@@ -290,7 +291,7 @@ final class PdoConnectionTest extends TestCase
     #[Test]
     public function fromConfigCreatesConnection(): void
     {
-        $config = new \Pulsar\Config\ConnectionConfig(
+        $config = new ConnectionConfig(
             name: 'test_from_config',
             driver: Driver::SQLite,
             host: '',

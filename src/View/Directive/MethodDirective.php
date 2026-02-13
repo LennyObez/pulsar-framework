@@ -25,7 +25,7 @@ final readonly class MethodDirective implements DirectiveInterface
     public function compile(string $expression): string
     {
         return sprintf(
-            '<?php echo \'<input type="hidden" name="_method" value="\' . htmlspecialchars(%s, ENT_QUOTES | ENT_SUBSTITUTE, \'UTF-8\') . \'">\'; ?>',
+            '<?php echo \'<input type="hidden" name="_method" value="\' . htmlspecialchars(%s) . \'">\'; ?>',
             trim($expression),
         );
     }

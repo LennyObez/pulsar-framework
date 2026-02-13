@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\DataProtection\DefaultRetentionPolicy;
+use Pulsar\DataProtection\RetentionPolicyInterface;
 
 #[CoversClass(DefaultRetentionPolicy::class)]
 final class DefaultRetentionPolicyTest extends TestCase
@@ -196,6 +197,6 @@ final class DefaultRetentionPolicyTest extends TestCase
     {
         $policy = new DefaultRetentionPolicy('test', 30);
 
-        self::assertInstanceOf(\Pulsar\DataProtection\RetentionPolicyInterface::class, $policy);
+        self::assertInstanceOf(RetentionPolicyInterface::class, $policy);
     }
 }

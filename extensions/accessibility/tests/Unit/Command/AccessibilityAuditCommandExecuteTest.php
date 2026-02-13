@@ -38,7 +38,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
     #[Test]
     public function executeBrowserOptionShowsInstallInfo(): void
     {
-        $input = $this->createInputStub('some/path', 'text', 'browser-value', 'warning', '*.php');
+        $input = $this->createInputStub('some/path', 'text', 'browser-value', 'warning');
         $output = $this->createStub(OutputInterface::class);
 
         $exitCode = $this->command->execute($input, $output);
@@ -53,7 +53,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         file_put_contents($tmpFile, '<h1>Title</h1><label for="name">Name</label><input id="name" type="text"><img alt="Photo">');
 
         try {
-            $input = $this->createInputStub($tmpFile, 'text', null, 'warning', '*.php');
+            $input = $this->createInputStub($tmpFile, 'text', null, 'warning');
             $output = $this->createStub(OutputInterface::class);
 
             $exitCode = $this->command->execute($input, $output);
@@ -71,7 +71,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         file_put_contents($tmpFile, '<h1>Title</h1><h3>Skip h2</h3><input type="text"><img src="photo.jpg">');
 
         try {
-            $input = $this->createInputStub($tmpFile, 'text', null, 'warning', '*.php');
+            $input = $this->createInputStub($tmpFile, 'text', null, 'warning');
             $output = $this->createStub(OutputInterface::class);
 
             $exitCode = $this->command->execute($input, $output);
@@ -89,7 +89,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         file_put_contents($tmpFile, '<h1>Title</h1><input type="text">');
 
         try {
-            $input = $this->createInputStub($tmpFile, 'json', null, 'warning', '*.php');
+            $input = $this->createInputStub($tmpFile, 'json', null, 'warning');
 
             $jsonOutput = '';
             $output = $this->createStub(OutputInterface::class);
@@ -99,7 +99,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
 
             $exitCode = $this->command->execute($input, $output);
 
-            $data = json_decode($jsonOutput, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($jsonOutput, true, flags: JSON_THROW_ON_ERROR);
             self::assertArrayHasKey('summary', $data);
             self::assertArrayHasKey('violations', $data);
             self::assertArrayHasKey('filtered_violations', $data);
@@ -119,7 +119,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         file_put_contents($tmpFile, '<h1>Title</h1><h3>Skip</h3><input type="text">');
 
         try {
-            $input = $this->createInputStub($tmpFile, 'text', null, 'error', '*.php');
+            $input = $this->createInputStub($tmpFile, 'text', null, 'error');
             $output = $this->createStub(OutputInterface::class);
 
             $exitCode = $this->command->execute($input, $output);
@@ -137,7 +137,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         file_put_contents($tmpFile, '<h1>Title</h1>');
 
         try {
-            $input = $this->createInputStub($tmpFile, 'text', null, 'info', '*.php');
+            $input = $this->createInputStub($tmpFile, 'text', null, 'info');
             $output = $this->createStub(OutputInterface::class);
 
             $exitCode = $this->command->execute($input, $output);
@@ -155,7 +155,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         file_put_contents($tmpDir . '/template.php', '<h1>Test</h1><label for="x">X</label><input id="x" type="text">');
 
         try {
-            $input = $this->createInputStub($tmpDir, 'text', null, 'warning', '*.php');
+            $input = $this->createInputStub($tmpDir, 'text', null, 'warning');
             $output = $this->createStub(OutputInterface::class);
 
             $exitCode = $this->command->execute($input, $output);
@@ -170,7 +170,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
     #[Test]
     public function executeWithNonExistentPath(): void
     {
-        $input = $this->createInputStub('/nonexistent/path', 'text', null, 'warning', '*.php');
+        $input = $this->createInputStub('/nonexistent/path', 'text', null, 'warning');
         $output = $this->createStub(OutputInterface::class);
 
         $exitCode = $this->command->execute($input, $output);
@@ -185,7 +185,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         file_put_contents($tmpFile, '<h1>Title</h1>');
 
         try {
-            $input = $this->createInputStub($tmpFile, 'text', null, 'unknown', '*.php');
+            $input = $this->createInputStub($tmpFile, 'text', null, 'unknown');
             $output = $this->createStub(OutputInterface::class);
 
             $exitCode = $this->command->execute($input, $output);
@@ -203,7 +203,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         file_put_contents($tmpFile, '<h1>Title</h1><label for="x">X</label><input id="x" type="text"><img alt="Photo">');
 
         try {
-            $input = $this->createInputStub($tmpFile, 'json', null, 'warning', '*.php');
+            $input = $this->createInputStub($tmpFile, 'json', null, 'warning');
 
             $jsonOutput = '';
             $output = $this->createStub(OutputInterface::class);
@@ -213,7 +213,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
 
             $exitCode = $this->command->execute($input, $output);
 
-            $data = json_decode($jsonOutput, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($jsonOutput, true, flags: JSON_THROW_ON_ERROR);
             self::assertSame(0, $data['summary']['errors']);
             self::assertSame(ExitCode::Success->value, $exitCode);
         } finally {
@@ -228,7 +228,7 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         file_put_contents($tmpFile, '<h1>Title</h1><input type="text">');
 
         try {
-            $input = $this->createInputStub($tmpFile, 'text', null, 'warning', '*.php');
+            $input = $this->createInputStub($tmpFile, 'text', null, 'warning');
 
             $writtenLines = [];
             $output = $this->createStub(OutputInterface::class);
@@ -255,20 +255,19 @@ final class AccessibilityAuditCommandExecuteTest extends TestCase
         string $format,
         ?string $browser,
         string $severity,
-        string $pattern,
     ): InputInterface&Stub {
         $input = $this->createStub(InputInterface::class);
         $input->method('getArgument')
-            ->willReturnCallback(static fn(int|string $key): mixed => match ($key) {
+            ->willReturnCallback(static fn(int|string $key): ?string => match ($key) {
                 'path', 0 => $path,
                 default => null,
             });
         $input->method('getOption')
-            ->willReturnCallback(static fn(string $name): mixed => match ($name) {
+            ->willReturnCallback(static fn(string $name): ?string => match ($name) {
                 'format' => $format,
                 'browser' => $browser,
                 'severity' => $severity,
-                'pattern' => $pattern,
+                'pattern' => '*.php',
                 default => null,
             });
 

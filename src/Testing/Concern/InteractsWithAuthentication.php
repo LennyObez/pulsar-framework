@@ -25,6 +25,8 @@ trait InteractsWithAuthentication
     /**
      * Set the authenticated identity for subsequent operations in this test.
      *
+     * @param IdentityInterface $identity The identity to authenticate as
+     *
      * @return static
      */
     protected function actingAs(IdentityInterface $identity): static
@@ -63,7 +65,7 @@ trait InteractsWithAuthentication
             self::assertSame(
                 $expectedId,
                 $identity->id(),
-                "Expected authenticated identity '{$expectedId}', got '{$identity->id()}'.",
+                "Expected authenticated identity '$expectedId', got '{$identity->id()}'.",
             );
         }
     }

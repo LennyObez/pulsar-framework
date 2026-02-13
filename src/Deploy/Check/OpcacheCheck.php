@@ -226,17 +226,8 @@ final readonly class OpcacheCheck implements DeployCheckInterface
      */
     private function isAbsolutePath(string $path): bool
     {
-        // Unix absolute
-        if (str_starts_with($path, '/')) {
-            return true;
-        }
-
-        // Windows absolute: C:\, D:\, etc.
-        if (isset($path[2]) && $path[1] === ':' && ($path[2] === '\\' || $path[2] === '/')) {
-            return true;
-        }
-
-        return false;
+        return str_starts_with($path, '/')
+            || (isset($path[2]) && $path[1] === ':' && ($path[2] === '\\' || $path[2] === '/'));
     }
 
     /**

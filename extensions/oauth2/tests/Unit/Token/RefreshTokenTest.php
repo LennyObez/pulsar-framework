@@ -7,7 +7,9 @@ namespace Pulsar\Extension\OAuth2\Tests\Unit\Token;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\OAuth2\Token\AccessToken;
 use Pulsar\Extension\OAuth2\Token\RefreshToken;
+use Pulsar\Extension\OAuth2\Token\TokenPair;
 
 final class RefreshTokenTest extends TestCase
 {
@@ -184,7 +186,7 @@ final class RefreshTokenTest extends TestCase
     #[Test]
     public function token_pair_construction(): void
     {
-        $access = new \Pulsar\Extension\OAuth2\Token\AccessToken(
+        $access = new AccessToken(
             id: 'at-1',
             clientId: 'c',
             subjectId: 's',
@@ -203,7 +205,7 @@ final class RefreshTokenTest extends TestCase
             issuedAt: new DateTimeImmutable(),
         );
 
-        $pair = new \Pulsar\Extension\OAuth2\Token\TokenPair($access, $refresh);
+        $pair = new TokenPair($access, $refresh);
 
         self::assertSame($access, $pair->accessToken);
         self::assertSame($refresh, $pair->refreshToken);

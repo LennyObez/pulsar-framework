@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Tools;
 
 use Pulsar\Api\Api;
+use Pulsar\Extension\Cms\Exception\CmsException;
 
 /**
  * Service interface for CMS backup and restore operations.
@@ -25,7 +26,7 @@ interface BackupServiceInterface
      *
      * Validates the backup hash for tamper detection before applying.
      *
-     * @throws \Pulsar\Extension\Cms\Exception\CmsException If the backup is not found or hash is invalid
+     * @throws CmsException If the backup is not found or hash is invalid
      */
     public function restoreBackup(string $backupId, string $reason, string $actorId): RestoreResult;
 
@@ -39,7 +40,7 @@ interface BackupServiceInterface
     /**
      * Delete a backup file and its metadata.
      *
-     * @throws \Pulsar\Extension\Cms\Exception\CmsException If the backup is not found
+     * @throws CmsException If the backup is not found
      */
     public function deleteBackup(string $backupId, string $reason, string $actorId): void;
 }

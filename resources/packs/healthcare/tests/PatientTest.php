@@ -8,6 +8,7 @@ use {{namespace}}\Entity\Patient;
 use {{namespace}}\Entity\PatientStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Patient::class)]
@@ -21,7 +22,7 @@ final class PatientTest extends TestCase
             medicalRecordNumber: 'MRN-12345',
             firstName: 'Jane',
             lastName: 'Doe',
-            dateOfBirth: new \DateTimeImmutable('1990-01-15'),
+            dateOfBirth: new DateTimeImmutable('1990-01-15'),
         );
 
         self::assertSame('pat_001', $patient->id);
@@ -37,7 +38,7 @@ final class PatientTest extends TestCase
             medicalRecordNumber: 'MRN-67890',
             firstName: 'John',
             lastName: 'Smith',
-            dateOfBirth: new \DateTimeImmutable('2000-06-15'),
+            dateOfBirth: new DateTimeImmutable('2000-06-15'),
         );
 
         self::assertGreaterThan(0, $patient->ageInYears());

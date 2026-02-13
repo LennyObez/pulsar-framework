@@ -114,7 +114,7 @@ final readonly class DigitalAssetController
 
         $assetId = UuidGenerator::v7();
         $fileName = $file->getClientFilename() ?? 'download';
-        $storagePath = "digital-assets/{$productId}/{$assetId}/{$fileName}";
+        $storagePath = "digital-assets/$productId/$assetId/$fileName";
         $fileSize = (int) $file->getSize();
 
         $this->disk->write($storagePath, file_get_contents($tempPath) ?: '');

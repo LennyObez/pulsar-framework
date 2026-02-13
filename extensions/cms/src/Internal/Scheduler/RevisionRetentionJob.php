@@ -117,10 +117,9 @@ final readonly class RevisionRetentionJob implements JobInterface
         if ($this->tenantId !== null) {
             $countSql .= ' INNER JOIN cms_contents c ON c.id = r.content_id WHERE c.tenant_id = :tenant_id';
             $bindings['tenant_id'] = $this->tenantId;
-            $countSql .= ' GROUP BY r.content_id HAVING COUNT(*) > :max_revisions';
-        } else {
-            $countSql .= ' GROUP BY r.content_id HAVING COUNT(*) > :max_revisions';
         }
+
+        $countSql .= ' GROUP BY r.content_id HAVING COUNT(*) > :max_revisions';
 
         $result = $this->connection->query($countSql, $bindings);
 
@@ -171,7 +170,7 @@ final readonly class RevisionRetentionJob implements JobInterface
         $params = InListBuilder::expandParams($driver, 'id', $toDelete);
 
         return $this->connection->execute(
-            "DELETE FROM cms_content_revisions WHERE {$inClause}",
+            "DELETE FROM cms_content_revisions WHERE $inClause",
             $params,
         );
     }

@@ -36,12 +36,12 @@ final readonly class CommentReceivedNotification implements CmsNotificationInter
 
     public function subject(): string
     {
-        return "New comment on: {$this->contentTitle}";
+        return "New comment on: $this->contentTitle";
     }
 
     public function body(): string
     {
-        return "{$this->authorName} commented on \"{$this->contentTitle}\": {$this->commentBody}";
+        return "$this->authorName commented on \"$this->contentTitle\": $this->commentBody";
     }
 
     public function metadata(): array

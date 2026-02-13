@@ -49,19 +49,19 @@ final readonly class ProgressBarBlock implements BlockTypeInterface
 
         if (isset($data['color']) && is_string($data['color']) && $data['color'] !== '') {
             $color = htmlspecialchars($data['color'], ENT_QUOTES, 'UTF-8');
-            $colorStyle = ";background-color:{$color}";
+            $colorStyle = ";background-color:$color";
         }
 
         $percentage = '';
 
         if ($showPercentage) {
-            $percentage = "<span class=\"progress__percentage\">{$value}%</span>";
+            $percentage = "<span class=\"progress__percentage\">$value%</span>";
         }
 
-        return "<div class=\"progress\"><div class=\"progress__label\">{$label}</div>"
+        return "<div class=\"progress\"><div class=\"progress__label\">$label</div>"
             . '<div class="progress__track"><div class="progress__bar" role="progressbar"'
-            . " aria-valuenow=\"{$value}\" aria-valuemin=\"0\" aria-valuemax=\"100\""
-            . " style=\"width:{$value}%{$colorStyle}\">{$percentage}</div></div></div>";
+            . " aria-valuenow=\"$value\" aria-valuemin=\"0\" aria-valuemax=\"100\""
+            . " style=\"width:$value%$colorStyle\">$percentage</div></div></div>";
     }
 
     #[Override]

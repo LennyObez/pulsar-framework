@@ -69,7 +69,7 @@ final readonly class ResponsiveImageRenderer
             'loading' => $attributes['loading'] ?? 'lazy',
         ]);
 
-        return "<img {$attrs}>";
+        return "<img $attrs>";
     }
 
     /**
@@ -88,7 +88,7 @@ final readonly class ResponsiveImageRenderer
             $srcset = $this->buildSrcset($formatVariants);
             $sizes = $this->buildSizes();
             $escapedType = self::escape($mimeType);
-            $html .= "<source type=\"{$escapedType}\" srcset=\"{$srcset}\" sizes=\"{$sizes}\">";
+            $html .= "<source type=\"$escapedType\" srcset=\"$srcset\" sizes=\"$sizes\">";
         }
 
         // Original format srcset
@@ -99,7 +99,7 @@ final readonly class ResponsiveImageRenderer
             $srcset = $this->buildSrcset($originalVariants);
             $sizes = $this->buildSizes();
             $escapedType = self::escape($asset->mimeType);
-            $html .= "<source type=\"{$escapedType}\" srcset=\"{$srcset}\" sizes=\"{$sizes}\">";
+            $html .= "<source type=\"$escapedType\" srcset=\"$srcset\" sizes=\"$sizes\">";
         }
 
         // Fallback <img>
@@ -120,7 +120,7 @@ final readonly class ResponsiveImageRenderer
             $imgAttrs .= ' height="' . $asset->height . '"';
         }
 
-        $html .= "<img {$imgAttrs}>";
+        $html .= "<img $imgAttrs>";
         $html .= '</picture>';
 
         return $html;
@@ -135,7 +135,7 @@ final readonly class ResponsiveImageRenderer
 
         foreach ($variants as $variant) {
             $src = self::escape($variant->path);
-            $entries[] = "{$src} {$variant->width}w";
+            $entries[] = "$src {$variant->width}w";
         }
 
         return implode(', ', $entries);
@@ -146,7 +146,7 @@ final readonly class ResponsiveImageRenderer
         $parts = [];
 
         foreach (self::BREAKPOINTS as $query => $size) {
-            $parts[] = "{$query} {$size}";
+            $parts[] = "$query $size";
         }
 
         $parts[] = '33vw';
@@ -201,7 +201,6 @@ final readonly class ResponsiveImageRenderer
     private static function mimeToFormat(string $mimeType): string
     {
         return match ($mimeType) {
-            'image/jpeg' => 'jpeg',
             'image/png' => 'png',
             'image/webp' => 'webp',
             'image/avif' => 'avif',

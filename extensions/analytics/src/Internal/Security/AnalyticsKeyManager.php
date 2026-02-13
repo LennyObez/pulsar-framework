@@ -53,7 +53,7 @@ final readonly class AnalyticsKeyManager
         $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 
         if ($dayOffset > 0) {
-            $now = $now->modify("-{$dayOffset} days");
+            $now = $now->modify("-$dayOffset days");
         }
 
         return (int) ($now->getTimestamp() / 86400);

@@ -111,13 +111,13 @@ final readonly class DbCustomerRepository implements CustomerRepositoryInterface
         $billingRaw = $row->getNullableString('billing_address');
         /** @var array<string, mixed>|null $billingAddress */
         $billingAddress = $billingRaw !== null
-            ? json_decode($billingRaw, true, 512, JSON_THROW_ON_ERROR)
+            ? json_decode($billingRaw, true, flags: JSON_THROW_ON_ERROR)
             : null;
 
         $shippingRaw = $row->getNullableString('shipping_address');
         /** @var array<string, mixed>|null $shippingAddress */
         $shippingAddress = $shippingRaw !== null
-            ? json_decode($shippingRaw, true, 512, JSON_THROW_ON_ERROR)
+            ? json_decode($shippingRaw, true, flags: JSON_THROW_ON_ERROR)
             : null;
 
         return new Customer(

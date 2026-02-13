@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Config\Environment;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Extension\McpServer\Config\McpSecurityConfig;
+use Pulsar\Extension\McpServer\Contracts\McpAccessGateInterface;
 use Pulsar\Extension\McpServer\Exception\McpSecurityException;
 use Pulsar\Extension\McpServer\Internal\Security\McpAccessGate;
 
@@ -422,7 +423,7 @@ final class McpAccessGateComprehensiveTest extends TestCase
         $gate = $this->createGate();
 
         self::assertInstanceOf(
-            \Pulsar\Extension\McpServer\Contracts\McpAccessGateInterface::class,
+            McpAccessGateInterface::class,
             $gate,
         );
     }

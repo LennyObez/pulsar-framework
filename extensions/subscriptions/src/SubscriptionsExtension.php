@@ -61,19 +61,19 @@ final readonly class SubscriptionsExtension implements ExtensionInterface
         $prefix = '/api/v1/subscriptions';
 
         $router->post(
-            "{$prefix}/verify",
+            "$prefix/verify",
             [SubscriptionController::class, 'verify'],
             'subscriptions.api.verify',
         );
 
         $router->get(
-            "{$prefix}/status",
+            "$prefix/status",
             [SubscriptionController::class, 'status'],
             'subscriptions.api.status',
         );
 
         $router->post(
-            "{$prefix}/restore",
+            "$prefix/restore",
             [SubscriptionController::class, 'restore'],
             'subscriptions.api.restore',
         );
@@ -87,13 +87,13 @@ final readonly class SubscriptionsExtension implements ExtensionInterface
         $prefix = '/api/v1/webhooks';
 
         $router->post(
-            "{$prefix}/google-play",
+            "$prefix/google-play",
             [WebhookController::class, 'googlePlay'],
             'subscriptions.webhooks.google_play',
         );
 
         $router->post(
-            "{$prefix}/apple-sns",
+            "$prefix/apple-sns",
             [WebhookController::class, 'appleSns'],
             'subscriptions.webhooks.apple_sns',
         );

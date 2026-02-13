@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Extension\Subscriptions;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -31,7 +30,6 @@ use function random_bytes;
 use const JSON_THROW_ON_ERROR;
 use const SODIUM_CRYPTO_SECRETBOX_KEYBYTES;
 
-#[CoversClass(WebhookController::class)]
 final class WebhookControllerTest extends TestCase
 {
     private SubscriptionVerifierInterface&Stub $verifier;

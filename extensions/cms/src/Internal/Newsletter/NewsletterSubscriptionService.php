@@ -56,11 +56,11 @@ final readonly class NewsletterSubscriptionService implements NewsletterSubscrip
             return $this->resubscribe($email, $tenantId);
         }
 
+        $token = bin2hex(random_bytes(32));
+        $tokenHash = bin2hex(sodium_crypto_generichash($token));
+
         // If there is an existing pending subscriber, resend confirmation
         if ($existing !== null && $existing->isPending()) {
-            $token = bin2hex(random_bytes(32));
-            $tokenHash = bin2hex(sodium_crypto_generichash($token));
-
             $updated = $existing->resubscribe($tokenHash);
             $this->subscriberRepository->save($updated);
             $this->sendConfirmationEmail($updated, $token);
@@ -69,8 +69,6 @@ final readonly class NewsletterSubscriptionService implements NewsletterSubscrip
         }
 
         // New subscriber
-        $token = bin2hex(random_bytes(32));
-        $tokenHash = bin2hex(sodium_crypto_generichash($token));
 
         $subscriber = NewsletterSubscriber::create(
             id: UuidGenerator::v7(),
@@ -90,7 +88,7 @@ final readonly class NewsletterSubscriptionService implements NewsletterSubscrip
             AuditOutcome::Success,
             null,
             'cms.newsletter.subscribed',
-            "subscriber:{$subscriber->id}",
+            "subscriber:$subscriber->id",
             ['email' => $email, 'source' => $source, 'locale' => $locale],
         );
 
@@ -116,7 +114,7 @@ final readonly class NewsletterSubscriptionService implements NewsletterSubscrip
                     AuditOutcome::Success,
                     null,
                     'cms.newsletter.confirmed',
-                    "subscriber:{$subscriber->id}",
+                    "subscriber:$subscriber->id",
                     ['email' => $subscriber->email],
                 );
 
@@ -143,7 +141,7 @@ final readonly class NewsletterSubscriptionService implements NewsletterSubscrip
             AuditOutcome::Success,
             null,
             'cms.newsletter.unsubscribed',
-            "subscriber:{$subscriberId}",
+            "subscriber:$subscriberId",
             ['email' => $subscriber->email],
         );
 
@@ -174,7 +172,7 @@ final readonly class NewsletterSubscriptionService implements NewsletterSubscrip
             AuditOutcome::Success,
             null,
             'cms.newsletter.resubscribed',
-            "subscriber:{$subscriber->id}",
+            "subscriber:$subscriber->id",
             ['email' => $email],
         );
 

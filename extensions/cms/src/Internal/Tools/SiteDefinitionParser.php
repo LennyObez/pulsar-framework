@@ -240,7 +240,7 @@ final readonly class SiteDefinitionParser
                         $this->taxonomyRepository->saveTerm($term, $termTranslations);
                     }
 
-                    $termMap["{$slug}:{$termSlug}"] = $termId;
+                    $termMap["$slug:$termSlug"] = $termId;
                     $created++;
                 }
             }
@@ -271,7 +271,7 @@ final readonly class SiteDefinitionParser
             }
 
             if ($source !== null && !$this->config->allowExternalMediaDownload) {
-                $warnings[] = "External media download disabled, skipped: {$ref}";
+                $warnings[] = "External media download disabled, skipped: $ref";
 
                 continue;
             }
@@ -303,7 +303,7 @@ final readonly class SiteDefinitionParser
 
                     @unlink($tmpFile);
                 } catch (Throwable $e) {
-                    $warnings[] = "Failed to download media '{$ref}': {$e->getMessage()}";
+                    $warnings[] = "Failed to download media '$ref': {$e->getMessage()}";
                 }
             } elseif (!$dryRun) {
                 // Media without external source — assign a placeholder ID
@@ -348,7 +348,7 @@ final readonly class SiteDefinitionParser
             $contentType = (string) ($itemData['content_type'] ?? $itemData['type'] ?? 'page');
             $contentId = UuidGenerator::v7();
             $contentIds[] = ['id' => $contentId, 'data' => $itemData];
-            $contentRefMap["{$contentType}:{$slug}"] = $contentId;
+            $contentRefMap["$contentType:$slug"] = $contentId;
             $created++;
         }
 
@@ -657,7 +657,7 @@ final readonly class SiteDefinitionParser
     private function resolveMediaRefs(string $body, array $mediaRefMap): string
     {
         foreach ($mediaRefMap as $ref => $assetId) {
-            $body = str_replace("media://{$ref}", $assetId, $body);
+            $body = str_replace("media://$ref", $assetId, $body);
         }
 
         return $body;

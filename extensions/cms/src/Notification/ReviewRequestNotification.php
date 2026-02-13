@@ -35,15 +35,15 @@ final readonly class ReviewRequestNotification implements CmsNotificationInterfa
 
     public function subject(): string
     {
-        return "Review requested: {$this->contentTitle}";
+        return "Review requested: $this->contentTitle";
     }
 
     public function body(): string
     {
-        $body = "A review has been requested for \"{$this->contentTitle}\".";
+        $body = "A review has been requested for \"$this->contentTitle\".";
 
         if ($this->message !== null && $this->message !== '') {
-            $body .= " Message: {$this->message}";
+            $body .= " Message: $this->message";
         }
 
         return $body;

@@ -8,6 +8,7 @@ use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Core\Kernel;
 use Pulsar\Extension\Studio\Console\Collector\InstrumentedRuntime;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\EventType;
@@ -38,7 +39,7 @@ final class RuntimeStudioEventsTest extends TestCase
         $this->metricRegistry = new MetricRegistry();
         $contextProvider = new FiberScopedContextProvider();
 
-        $inner = new FpmRuntime(new \Pulsar\Core\Kernel());
+        $inner = new FpmRuntime(new Kernel());
 
         $this->collector = new InstrumentedRuntime(
             inner: $inner,

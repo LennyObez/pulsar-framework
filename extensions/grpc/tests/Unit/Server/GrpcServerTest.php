@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Grpc\Adapter\GrpcRequestHandler;
 use Pulsar\Extension\Grpc\Adapter\GrpcTransportAdapterInterface;
 use Pulsar\Extension\Grpc\Config\GrpcConfig;
+use Pulsar\Extension\Grpc\Error\GrpcException;
 use Pulsar\Extension\Grpc\Error\GrpcStatus;
 use Pulsar\Extension\Grpc\Handler\MethodDescriptor;
 use Pulsar\Extension\Grpc\Handler\MethodType;
@@ -243,7 +244,7 @@ final class GrpcServerTest extends TestCase
             ),
         ]);
         $handler->method('invoke')->willThrowException(
-            new \Pulsar\Extension\Grpc\Error\GrpcException(
+            new GrpcException(
                 GrpcStatus::PermissionDenied,
                 'Access denied',
             ),

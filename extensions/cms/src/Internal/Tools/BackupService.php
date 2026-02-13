@@ -109,7 +109,7 @@ final readonly class BackupService implements BackupServiceInterface
             }
 
             $result = $this->connection->query(
-                "SELECT * FROM {$table}{$tenantFilter}",
+                "SELECT * FROM $table$tenantFilter",
                 $bindings,
             );
 
@@ -159,7 +159,7 @@ final readonly class BackupService implements BackupServiceInterface
             AuditOutcome::Success,
             $actorId,
             'cms.backup.created',
-            "backup:{$backupId}",
+            "backup:$backupId",
             [
                 'scope' => $scope->toArray(),
                 'hash' => $hash,
@@ -180,7 +180,7 @@ final readonly class BackupService implements BackupServiceInterface
 
         $metaJson = $this->disk->read($metadataPath);
         /** @var array<string, mixed> $meta */
-        $meta = json_decode($metaJson, true, 512, JSON_THROW_ON_ERROR);
+        $meta = json_decode($metaJson, true, flags: JSON_THROW_ON_ERROR);
 
         $storagePath = (string) $meta['storage_path'];
         $expectedHash = (string) $meta['hash'];
@@ -197,7 +197,7 @@ final readonly class BackupService implements BackupServiceInterface
         }
 
         /** @var array<string, mixed> $backupData */
-        $backupData = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $backupData = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         /** @var array<string, mixed> $tables */
         $tables = $backupData['tables'] ?? [];
         /** @var array<string, mixed> $scopeData */
@@ -229,7 +229,7 @@ final readonly class BackupService implements BackupServiceInterface
                     $bindings['tenant_id'] = $scope->tenantId;
                 }
 
-                $conn->execute("DELETE FROM \"{$table}\"{$tenantFilter}", $bindings);
+                $conn->execute("DELETE FROM \"$table\"$tenantFilter", $bindings);
             }
 
             // Re-insert in forward order (parents before children)
@@ -258,13 +258,13 @@ final readonly class BackupService implements BackupServiceInterface
                         }
                     }
 
-                    $quotedColumns = array_map(static fn(string $col): string => "\"{$col}\"", $columns);
-                    $placeholders = array_map(static fn(string $col): string => ":{$col}", $columns);
+                    $quotedColumns = array_map(static fn(string $col): string => "\"$col\"", $columns);
+                    $placeholders = array_map(static fn(string $col): string => ":$col", $columns);
                     $columnList = implode(', ', $quotedColumns);
                     $placeholderList = implode(', ', $placeholders);
 
                     $conn->execute(
-                        "INSERT INTO \"{$table}\" ({$columnList}) VALUES ({$placeholderList})",
+                        "INSERT INTO \"$table\" ($columnList) VALUES ($placeholderList)",
                         $row,
                     );
                 }
@@ -278,7 +278,7 @@ final readonly class BackupService implements BackupServiceInterface
             AuditOutcome::Success,
             $actorId,
             'cms.backup.restored',
-            "backup:{$backupId}",
+            "backup:$backupId",
             [
                 'reason' => $reason,
                 'restored_counts' => $restoredCounts,
@@ -339,7 +339,7 @@ final readonly class BackupService implements BackupServiceInterface
 
         $metaJson = $this->disk->read($metadataPath);
         /** @var array<string, mixed> $meta */
-        $meta = json_decode($metaJson, true, 512, JSON_THROW_ON_ERROR);
+        $meta = json_decode($metaJson, true, flags: JSON_THROW_ON_ERROR);
 
         $storagePath = isset($meta['storage_path']) ? (string) $meta['storage_path'] : null;
 
@@ -355,7 +355,7 @@ final readonly class BackupService implements BackupServiceInterface
             AuditOutcome::Success,
             $actorId,
             'cms.backup.deleted',
-            "backup:{$backupId}",
+            "backup:$backupId",
             [
                 'reason' => $reason,
             ],

@@ -219,12 +219,6 @@ final readonly class EntityDefinition
      */
     private static function hasAllColumns(array $columnNames, array $targetColumns): bool
     {
-        foreach ($targetColumns as $target) {
-            if (! in_array($target, $columnNames, true)) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($targetColumns, static fn(string $target): bool => in_array($target, $columnNames, true));
     }
 }

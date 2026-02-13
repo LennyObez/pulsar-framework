@@ -23,6 +23,7 @@ use Pulsar\Extension\Grpc\Interceptor\InterceptorResult;
 use Pulsar\Extension\Grpc\Interceptor\ValidationRuleResolverInterface;
 use Pulsar\Observability\Tracing\TraceContextParserInterface;
 use RuntimeException;
+use stdClass;
 
 #[CoversClass(InterceptorPipeline::class)]
 final class InterceptorPipelineTest extends TestCase
@@ -42,27 +43,29 @@ final class InterceptorPipelineTest extends TestCase
     #[Test]
     public function processExecutesInterceptorsInOrder(): void
     {
-        $order = [];
+        $tracker = new stdClass();
+        $tracker->order = [];
 
-        $first = $this->createOrderTrackingInterceptor($order, 'first');
-        $second = $this->createOrderTrackingInterceptor($order, 'second');
-        $third = $this->createOrderTrackingInterceptor($order, 'third');
+        $first = $this->createOrderTrackingInterceptor($tracker, 'first');
+        $second = $this->createOrderTrackingInterceptor($tracker, 'second');
+        $third = $this->createOrderTrackingInterceptor($tracker, 'third');
 
         $pipeline = new InterceptorPipeline([$first, $second, $third]);
         $context = $this->createContext();
 
         $pipeline->process($context, static fn(CallContext $ctx): InterceptorResult => InterceptorResult::ok('done'));
 
-        self::assertSame(['first', 'second', 'third'], $order);
+        self::assertSame(['first', 'second', 'third'], $tracker->order);
     }
 
     #[Test]
     public function interceptorCanShortCircuitPipeline(): void
     {
         $handlerCalled = false;
-        $order = [];
+        $tracker = new stdClass();
+        $tracker->order = [];
 
-        $first = $this->createOrderTrackingInterceptor($order, 'first');
+        $first = $this->createOrderTrackingInterceptor($tracker, 'first');
 
         $blocker = new class implements InterceptorInterface {
             public function handle(CallContext $context, Closure $next): InterceptorResult
@@ -71,7 +74,7 @@ final class InterceptorPipelineTest extends TestCase
             }
         };
 
-        $third = $this->createOrderTrackingInterceptor($order, 'third');
+        $third = $this->createOrderTrackingInterceptor($tracker, 'third');
 
         $pipeline = new InterceptorPipeline([$first, $blocker, $third]);
         $context = $this->createContext();
@@ -84,7 +87,7 @@ final class InterceptorPipelineTest extends TestCase
 
         self::assertSame(GrpcStatus::Unauthenticated, $result->status);
         self::assertSame('blocked', $result->message);
-        self::assertSame(['first'], $order);
+        self::assertSame(['first'], $tracker->order);
         self::assertFalse($handlerCalled);
     }
 
@@ -246,21 +249,17 @@ final class InterceptorPipelineTest extends TestCase
         );
     }
 
-    /**
-     * @param list<string> $order
-     */
-    private function createOrderTrackingInterceptor(array &$order, string $name): InterceptorInterface
+    private function createOrderTrackingInterceptor(stdClass $tracker, string $name): InterceptorInterface
     {
-        return new class ($order, $name) implements InterceptorInterface {
-            /** @param list<string> $order */
+        return new class ($tracker, $name) implements InterceptorInterface {
             public function __construct(
-                private array &$order,
+                private readonly stdClass $tracker,
                 private readonly string $name,
             ) {}
 
             public function handle(CallContext $context, Closure $next): InterceptorResult
             {
-                $this->order[] = $this->name;
+                $this->tracker->order[] = $this->name;
 
                 return $next($context);
             }

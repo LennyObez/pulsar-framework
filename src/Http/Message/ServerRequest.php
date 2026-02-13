@@ -335,19 +335,21 @@ class ServerRequest implements ServerRequestInterface
         $values = is_array($value) ? $value : [$value];
         $lowered = strtolower($name);
 
-        $new = clone $this;
-        $new->headersCache = null;
-
-        if (isset($new->headers[$lowered])) {
+        if (isset($this->headers[$lowered])) {
             /** @var list<string> $merged */
-            $merged = [...$new->headers[$lowered], ...$values];
-            $new->headers[$lowered] = $merged;
-        } else {
-            $new->headerNames[$lowered] = $name;
-            $new->headers[$lowered] = $values;
+            $merged = [...$this->headers[$lowered], ...$values];
+
+            return clone($this, [
+                'headersCache' => null,
+                'headers' => [...$this->headers, $lowered => $merged],
+            ]);
         }
 
-        return $new;
+        return clone($this, [
+            'headersCache' => null,
+            'headerNames' => [...$this->headerNames, $lowered => $name],
+            'headers' => [...$this->headers, $lowered => $values],
+        ]);
     }
 
     #[NoDiscard]
@@ -870,7 +872,7 @@ class ServerRequest implements ServerRequestInterface
         }
 
         try {
-            $decoded = json_decode($body, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($body, true, flags: JSON_THROW_ON_ERROR);
 
             /** @var array<string, mixed> */
             return is_array($decoded) ? $decoded : [];

@@ -58,7 +58,7 @@ final readonly class DeviceService
 
         if ($count >= $this->maxDevicesPerUser) {
             throw new RuntimeException(
-                "Device limit reached: user {$userId} already has {$count} registered devices (max {$this->maxDevicesPerUser})",
+                "Device limit reached: user $userId already has $count registered devices (max $this->maxDevicesPerUser)",
             );
         }
 
@@ -94,7 +94,7 @@ final readonly class DeviceService
 
         if ($device === null || $device->userId !== $userId) {
             throw new RuntimeException(
-                "Device {$deviceId} not found or does not belong to user {$userId}",
+                "Device $deviceId not found or does not belong to user $userId",
             );
         }
 
@@ -120,7 +120,7 @@ final readonly class DeviceService
 
         if ($device === null || $device->userId !== $userId) {
             throw new RuntimeException(
-                "Device {$deviceId} not found or does not belong to user {$userId}",
+                "Device $deviceId not found or does not belong to user $userId",
             );
         }
 

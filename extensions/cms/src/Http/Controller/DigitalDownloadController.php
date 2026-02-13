@@ -66,7 +66,7 @@ final readonly class DigitalDownloadController
         return new Response(
             headers: [
                 'Content-Type' => $contentType,
-                'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
+                'Content-Disposition' => "attachment; filename=\"$fileName\"",
                 'Content-Length' => (string) strlen($content),
                 'Cache-Control' => 'no-store',
                 'X-Downloads-Remaining' => (string) ($result->downloadsRemaining ?? 0),

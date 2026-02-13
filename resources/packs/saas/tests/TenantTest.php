@@ -8,6 +8,7 @@ use {{namespace}}\Entity\Tenant;
 use {{namespace}}\Entity\TenantStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Tenant::class)]
@@ -36,7 +37,7 @@ final class TenantTest extends TestCase
             name: 'Trial Corp',
             slug: 'trial-corp',
             planId: 'plan_starter',
-            trialEndsAt: new \DateTimeImmutable('+14 days'),
+            trialEndsAt: new DateTimeImmutable('+14 days'),
         );
 
         self::assertTrue($tenant->isOnTrial());
@@ -51,7 +52,7 @@ final class TenantTest extends TestCase
             name: 'Expired Corp',
             slug: 'expired-corp',
             planId: 'plan_starter',
-            trialEndsAt: new \DateTimeImmutable('-1 day'),
+            trialEndsAt: new DateTimeImmutable('-1 day'),
         );
 
         self::assertFalse($tenant->isOnTrial());

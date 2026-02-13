@@ -61,55 +61,55 @@ final readonly class CssValidator implements CssValidatorInterface
             $compacted = (string) preg_replace('/[\s\x{00A0}]+/u', '', $normalized);
 
             if ($this->containsImport($compacted)) {
-                $errors[] = "Line {$lineNum}: @import is not allowed";
+                $errors[] = "Line $lineNum: @import is not allowed";
 
                 continue;
             }
 
             if ($this->containsCharset($compacted)) {
-                $errors[] = "Line {$lineNum}: @charset is not allowed";
+                $errors[] = "Line $lineNum: @charset is not allowed";
 
                 continue;
             }
 
             if ($this->containsExpression($compacted)) {
-                $errors[] = "Line {$lineNum}: expression() is not allowed";
+                $errors[] = "Line $lineNum: expression() is not allowed";
 
                 continue;
             }
 
             if ($this->containsExternalUrl($compacted)) {
-                $errors[] = "Line {$lineNum}: url() with external scheme is not allowed";
+                $errors[] = "Line $lineNum: url() with external scheme is not allowed";
 
                 continue;
             }
 
             if ($this->containsJavascript($compacted)) {
-                $errors[] = "Line {$lineNum}: javascript: protocol is not allowed";
+                $errors[] = "Line $lineNum: javascript: protocol is not allowed";
 
                 continue;
             }
 
             if ($this->containsVbscript($compacted)) {
-                $errors[] = "Line {$lineNum}: vbscript: protocol is not allowed";
+                $errors[] = "Line $lineNum: vbscript: protocol is not allowed";
 
                 continue;
             }
 
             if ($this->containsMozBinding($compacted)) {
-                $errors[] = "Line {$lineNum}: -moz-binding is not allowed";
+                $errors[] = "Line $lineNum: -moz-binding is not allowed";
 
                 continue;
             }
 
             if ($this->containsBehavior($compacted)) {
-                $errors[] = "Line {$lineNum}: behavior: is not allowed";
+                $errors[] = "Line $lineNum: behavior: is not allowed";
 
                 continue;
             }
 
             if ($this->containsOLink($compacted)) {
-                $errors[] = "Line {$lineNum}: -o-link: is not allowed";
+                $errors[] = "Line $lineNum: -o-link: is not allowed";
 
                 continue;
             }

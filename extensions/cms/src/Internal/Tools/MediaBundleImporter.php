@@ -11,6 +11,8 @@ use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 use Pulsar\Extension\Cms\Tools\DuplicateResolutionPolicy;
 use Pulsar\Extension\Cms\Tools\ExportIntegrityVerifier;
 use Pulsar\Extension\Cms\Tools\ImportReport;
+use Pulsar\Security\Audit\AuditEvent;
+use Pulsar\Security\Audit\AuditOutcome;
 use RuntimeException;
 use Throwable;
 use ZipArchive;
@@ -113,7 +115,7 @@ final readonly class MediaBundleImporter
             }
 
             /** @var array{evidence_hash?: string} $manifest */
-            $manifest = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+            $manifest = json_decode($manifestJson, true, flags: JSON_THROW_ON_ERROR);
 
             $expectedHash = $manifest['evidence_hash'] ?? '';
 
@@ -142,7 +144,7 @@ final readonly class MediaBundleImporter
             $mediaErrors = [];
 
             /** @var array<string, mixed> $bundleData */
-            $bundleData = json_decode($dataJson, true, 512, JSON_THROW_ON_ERROR);
+            $bundleData = json_decode($dataJson, true, flags: JSON_THROW_ON_ERROR);
 
             if (isset($bundleData['media_refs']) && is_array($bundleData['media_refs'])) {
                 foreach ($bundleData['media_refs'] as $mediaRef) {
@@ -194,7 +196,7 @@ final readonly class MediaBundleImporter
                                 $mediaCreated++;
                             } catch (Throwable $e) {
                                 $mediaFailed++;
-                                $mediaErrors[] = "media:{$filename}: " . $e->getMessage();
+                                $mediaErrors[] = "media:$filename: " . $e->getMessage();
                             }
 
                             continue;
@@ -206,7 +208,7 @@ final readonly class MediaBundleImporter
                         $mediaCreated++;
                     } catch (Throwable $e) {
                         $mediaFailed++;
-                        $mediaErrors[] = "media:{$filename}: " . $e->getMessage();
+                        $mediaErrors[] = "media:$filename: " . $e->getMessage();
                     }
                 }
             }
@@ -240,8 +242,8 @@ final readonly class MediaBundleImporter
             $allErrors = [...$importResult->errors, ...$mediaErrors];
 
             $this->auditLogger?->log(
-                \Pulsar\Security\Audit\AuditEvent::DataModification,
-                \Pulsar\Security\Audit\AuditOutcome::Success,
+                AuditEvent::DataModification,
+                AuditOutcome::Success,
                 null,
                 'cms.import.zip_completed',
                 'cms:import',

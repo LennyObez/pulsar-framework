@@ -9,8 +9,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
+use Pulsar\Database\Statement;
+use Pulsar\Database\Transaction;
 use Pulsar\Extension\Cms\Internal\Search\PostgresSearchService;
 use Pulsar\Extension\Cms\Search\DateRange;
 use Pulsar\Extension\Cms\Search\LocaleRegconfigMap;
@@ -469,12 +472,12 @@ final class InMemorySearchConnection implements ConnectionInterface
         return 0;
     }
 
-    public function prepare(string $sql): \Pulsar\Database\Statement
+    public function prepare(string $sql): Statement
     {
         throw new RuntimeException('Not implemented');
     }
 
-    public function beginTransaction(): \Pulsar\Database\Transaction
+    public function beginTransaction(): Transaction
     {
         throw new RuntimeException('Not implemented');
     }
@@ -489,9 +492,9 @@ final class InMemorySearchConnection implements ConnectionInterface
         return '';
     }
 
-    public function driver(): \Pulsar\Database\Driver
+    public function driver(): Driver
     {
-        return \Pulsar\Database\Driver::PostgreSQL;
+        return Driver::PostgreSQL;
     }
 
     public function name(): string

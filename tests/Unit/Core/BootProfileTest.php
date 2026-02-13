@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Core\BootProfile;
+use Pulsar\Core\Kernel;
 
 #[CoversClass(BootProfile::class)]
 final class BootProfileTest extends TestCase
@@ -81,7 +82,7 @@ final class BootProfileTest extends TestCase
     #[Test]
     public function kernelExposesBootProfileAfterBoot(): void
     {
-        $kernel = new \Pulsar\Core\Kernel();
+        $kernel = new Kernel();
 
         self::assertNull($kernel->bootProfile());
 

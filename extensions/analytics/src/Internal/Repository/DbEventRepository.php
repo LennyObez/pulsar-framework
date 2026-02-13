@@ -105,7 +105,7 @@ final readonly class DbEventRepository implements EventRepositoryInterface
     {
         $propsRaw = $row->getNullableString('event_props');
         /** @var array<string, mixed> $props */
-        $props = $propsRaw !== null ? json_decode($propsRaw, true, 512, JSON_THROW_ON_ERROR) : [];
+        $props = $propsRaw !== null ? json_decode($propsRaw, true, flags: JSON_THROW_ON_ERROR) : [];
 
         $revenueRaw = $row->get('revenue_value');
         $revenue = $revenueRaw !== null ? (float) $revenueRaw : null;

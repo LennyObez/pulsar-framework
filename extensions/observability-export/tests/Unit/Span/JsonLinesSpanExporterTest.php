@@ -61,7 +61,7 @@ final class JsonLinesSpanExporterTest extends TestCase
         $lines = array_filter(explode("\n", $content));
         self::assertCount(1, $lines);
 
-        $decoded = json_decode($lines[0], true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($lines[0], true, flags: JSON_THROW_ON_ERROR);
         self::assertSame('test.span', $decoded['name']);
         self::assertSame('1.0.0', $decoded['schema_version']);
     }

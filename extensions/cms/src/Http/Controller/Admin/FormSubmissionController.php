@@ -187,12 +187,11 @@ final readonly class FormSubmissionController
         $csv = $this->formService->exportSubmissions($contentId, $tenantId);
 
         return new Response(
-            statusCode: 200,
-            body: $csv,
             headers: [
                 'Content-Type' => 'text/csv; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="form-submissions.csv"',
             ],
+            body: $csv,
         );
     }
 

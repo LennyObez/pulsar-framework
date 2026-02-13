@@ -108,7 +108,6 @@ final readonly class LeaderboardService implements LeaderboardServiceInterface
 
         return match ($period) {
             'week' => $now->modify('-7 days'),
-            'month' => $now->modify('-30 days'),
             default => $now->modify('-30 days'),
         };
     }

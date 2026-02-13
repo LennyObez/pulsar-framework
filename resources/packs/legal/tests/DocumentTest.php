@@ -8,6 +8,7 @@ use {{namespace}}\Entity\Document;
 use {{namespace}}\Entity\DocumentStatus;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(Document::class)]
@@ -59,7 +60,7 @@ final class DocumentTest extends TestCase
             filePath: '/documents/doc_003.pdf',
             mimeType: 'application/pdf',
             litigationHold: true,
-            retainUntil: new \DateTimeImmutable('-1 year'),
+            retainUntil: new DateTimeImmutable('-1 year'),
         );
 
         self::assertFalse($document->canBeDestroyed());

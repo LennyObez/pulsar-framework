@@ -198,7 +198,7 @@ export class CommentForm extends HTMLElement {
 
     this.formEl.addEventListener('submit', (e) => {
       e.preventDefault();
-      this.handleSubmit();
+      void this.handleSubmit();
     });
 
     this.appendChild(this.formEl);

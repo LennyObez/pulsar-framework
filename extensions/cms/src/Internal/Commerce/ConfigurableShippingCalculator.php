@@ -42,7 +42,7 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
         $subtotal = $this->calculateSubtotal($items);
 
         // Find the best matching rate for the destination country
-        $rate = $this->findRate(ShippingMethod::Standard, $country);
+        $rate = $this->findRate($country);
 
         if ($rate === null) {
             // No configured rate — zero-cost standard shipping fallback
@@ -133,9 +133,11 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
         return $count;
     }
 
-    private function findRate(ShippingMethod $method, string $country): ?ShippingRateConfig
+    private function findRate(string $country): ?ShippingRateConfig
     {
-        // First: exact country match for the requested method
+        $method = ShippingMethod::Standard;
+
+        // First: exact country match for the standard method
         $exact = array_find(
             $this->config->shippingRates,
             static fn(ShippingRateConfig $rate): bool => $rate->method === $method && $rate->countryCodes !== [] && in_array($country, $rate->countryCodes, true),
@@ -145,7 +147,7 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
             return $exact;
         }
 
-        // Second: wildcard (empty country list) for the requested method
+        // Second: wildcard (empty country list) for the standard method
         return array_find(
             $this->config->shippingRates,
             static fn(ShippingRateConfig $rate): bool => $rate->method === $method && $rate->countryCodes === [],

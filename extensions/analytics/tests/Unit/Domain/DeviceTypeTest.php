@@ -31,6 +31,7 @@ final class DeviceTypeTest extends TestCase
     #[Test]
     public function tryFromReturnsNullForInvalidValue(): void
     {
-        self::assertNull(DeviceType::tryFrom('laptop'));
+        $invalidValue = 'laptop';
+        self::assertNull(DeviceType::tryFrom($invalidValue));
     }
 }

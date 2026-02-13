@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\SimpleCache\CacheInterface;
+use Pulsar\Extension\Cms\Forms\SpamDetection\SpamDetectorInterface;
 use Pulsar\Extension\Cms\Forms\SpamDetection\SpamResult;
 use Pulsar\Extension\Cms\Forms\SpamDetection\SpamScorer;
 use Pulsar\Extension\Cms\Internal\Forms\ContentHeuristicScorer;
@@ -66,10 +67,10 @@ final class SpamDetectionTest extends TestCase
     {
         $scorer = new SpamScorer(threshold: 5.0);
 
-        $detector1 = $this->createStub(\Pulsar\Extension\Cms\Forms\SpamDetection\SpamDetectorInterface::class);
+        $detector1 = $this->createStub(SpamDetectorInterface::class);
         $detector1->method('detect')->willReturn(new SpamResult(false, 2.0, 'mild'));
 
-        $detector2 = $this->createStub(\Pulsar\Extension\Cms\Forms\SpamDetection\SpamDetectorInterface::class);
+        $detector2 = $this->createStub(SpamDetectorInterface::class);
         $detector2->method('detect')->willReturn(new SpamResult(false, 1.5, 'also mild'));
 
         $scorer->addDetector($detector1);
@@ -87,7 +88,7 @@ final class SpamDetectionTest extends TestCase
     {
         $scorer = new SpamScorer(threshold: 3.0);
 
-        $detector = $this->createStub(\Pulsar\Extension\Cms\Forms\SpamDetection\SpamDetectorInterface::class);
+        $detector = $this->createStub(SpamDetectorInterface::class);
         $detector->method('detect')->willReturn(new SpamResult(true, 5.0, 'bad'));
 
         $scorer->addDetector($detector);
@@ -103,7 +104,7 @@ final class SpamDetectionTest extends TestCase
     {
         $scorer = new SpamScorer(threshold: 10.0);
 
-        $detector = $this->createStub(\Pulsar\Extension\Cms\Forms\SpamDetection\SpamDetectorInterface::class);
+        $detector = $this->createStub(SpamDetectorInterface::class);
         $detector->method('detect')->willReturn(new SpamResult(false, 1.0, null));
 
         $scorer->addDetector($detector);

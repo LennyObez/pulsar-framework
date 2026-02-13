@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Redaction\RedactionPipeline;
 use Pulsar\Extension\Studio\Console\Redaction\RedactionPolicyInterface;
+use stdClass;
 
 final class RedactionPipelineTest extends TestCase
 {
@@ -72,33 +73,34 @@ final class RedactionPipelineTest extends TestCase
     #[Test]
     public function redactAppliesGlobalBeforeTypePolicies(): void
     {
-        $order = [];
+        $tracker = new stdClass();
+        $tracker->order = [];
 
         $pipeline = new RedactionPipeline();
-        $pipeline->addGlobalPolicy(new class ($order) implements RedactionPolicyInterface {
-            public function __construct(private array &$order) {}
+        $pipeline->addGlobalPolicy(new class ($tracker) implements RedactionPolicyInterface {
+            public function __construct(private readonly stdClass $tracker) {}
 
             #[Override]
             public function redact(array $payload): array
             {
-                $this->order[] = 'global';
+                $this->tracker->order[] = 'global';
                 return $payload;
             }
         });
-        $pipeline->addTypePolicy(EventType::LogEntry, new class ($order) implements RedactionPolicyInterface {
-            public function __construct(private array &$order) {}
+        $pipeline->addTypePolicy(EventType::LogEntry, new class ($tracker) implements RedactionPolicyInterface {
+            public function __construct(private readonly stdClass $tracker) {}
 
             #[Override]
             public function redact(array $payload): array
             {
-                $this->order[] = 'type';
+                $this->tracker->order[] = 'type';
                 return $payload;
             }
         });
 
         $pipeline->redact([], EventType::LogEntry);
 
-        self::assertSame(['global', 'type'], $order);
+        self::assertSame(['global', 'type'], $tracker->order);
     }
 
     #[Test]

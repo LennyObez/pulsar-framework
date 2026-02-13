@@ -16,6 +16,7 @@ use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\HttpException;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Method;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\RoutingException;
 use RuntimeException;
@@ -67,7 +68,7 @@ final class ExceptionHandlerTest extends TestCase
         $handler = new ExceptionHandler(new DevelopmentRenderer());
 
         $response = $handler->handle(
-            RoutingException::methodNotAllowed('/test', \Pulsar\Http\Method::POST, [\Pulsar\Http\Method::GET, \Pulsar\Http\Method::PUT]),
+            RoutingException::methodNotAllowed('/test', Method::POST, [Method::GET, Method::PUT]),
             $this->createRequest('/test'),
         );
 

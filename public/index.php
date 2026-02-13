@@ -61,8 +61,8 @@ $extensions->loadFromPaths([__DIR__ . '/../extensions']);
 */
 
 $kernel = new Kernel(
-    configManager: $configManager,
     extensionBootstrap: $extensions,
+    configManager: $configManager,
 );
 
 $kernel->run();

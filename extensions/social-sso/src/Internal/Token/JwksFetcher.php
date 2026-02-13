@@ -61,7 +61,7 @@ final class JwksFetcher
             throw SsoException::jwksFetchFailed();
         }
 
-        $decoded = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($response, true, flags: JSON_THROW_ON_ERROR);
 
         if (!is_array($decoded) || !isset($decoded['keys']) || !is_array($decoded['keys'])) {
             throw SsoException::jwksFetchFailed();

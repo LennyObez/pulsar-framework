@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Devices\Http\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Devices\Internal\DeviceService;
+use Pulsar\Extension\Devices\Platform;
 use Pulsar\Extension\Devices\UserDevice;
 use Pulsar\Http\Message\Response;
 use RuntimeException;
@@ -76,7 +77,7 @@ final readonly class DeviceController
             ], 422);
         }
 
-        $platformEnum = \Pulsar\Extension\Devices\Platform::tryFrom($platform);
+        $platformEnum = Platform::tryFrom($platform);
 
         if ($platformEnum === null) {
             return Response::json([

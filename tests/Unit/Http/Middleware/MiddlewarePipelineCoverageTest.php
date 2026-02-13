@@ -11,6 +11,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Container\Container;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
@@ -127,7 +128,7 @@ final class MiddlewarePipelineCoverageTest extends TestCase
     #[Test]
     public function containerResolvesMiddlewareWhenAvailable(): void
     {
-        $container = new \Pulsar\Container\Container();
+        $container = new Container();
 
         $middleware = new class implements MiddlewareInterface {
             public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface

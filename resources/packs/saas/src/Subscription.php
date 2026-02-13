@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Subscription entity.
  *
@@ -17,9 +19,9 @@ final class Subscription
      * @param non-empty-string        $planId           Associated plan identifier
      * @param SubscriptionStatus      $status           Current subscription status
      * @param non-empty-string        $billingCycle     Billing cycle (e.g., "monthly", "annual")
-     * @param \DateTimeImmutable      $startedAt        Subscription start date
-     * @param \DateTimeImmutable|null $currentPeriodEnd Current billing period end
-     * @param \DateTimeImmutable|null $cancelledAt      Cancellation date
+     * @param DateTimeImmutable      $startedAt        Subscription start date
+     * @param DateTimeImmutable|null $currentPeriodEnd Current billing period end
+     * @param DateTimeImmutable|null $cancelledAt      Cancellation date
      */
     public function __construct(
         public readonly string $id,
@@ -27,9 +29,9 @@ final class Subscription
         public readonly string $planId,
         public SubscriptionStatus $status = SubscriptionStatus::Active,
         public readonly string $billingCycle = 'monthly',
-        public readonly \DateTimeImmutable $startedAt = new \DateTimeImmutable(),
-        public readonly ?\DateTimeImmutable $currentPeriodEnd = null,
-        public readonly ?\DateTimeImmutable $cancelledAt = null,
+        public readonly DateTimeImmutable $startedAt = new DateTimeImmutable(),
+        public readonly ?DateTimeImmutable $currentPeriodEnd = null,
+        public readonly ?DateTimeImmutable $cancelledAt = null,
     ) {}
 
     public function isActive(): bool

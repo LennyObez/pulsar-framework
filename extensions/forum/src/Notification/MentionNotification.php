@@ -33,12 +33,12 @@ final readonly class MentionNotification implements ForumNotificationInterface
 
     public function subject(): string
     {
-        return "{$this->authorName} mentioned you in: {$this->threadTitle}";
+        return "$this->authorName mentioned you in: $this->threadTitle";
     }
 
     public function body(): string
     {
-        return "{$this->authorName} mentioned you in a post in the thread \"{$this->threadTitle}\".";
+        return "$this->authorName mentioned you in a post in the thread \"$this->threadTitle\".";
     }
 
     public function metadata(): array

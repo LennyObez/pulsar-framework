@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Grpc\Adapter;
 
+use Grpc\Server as GrpcServer;
+use Grpc\ServerCredentials;
 use Override;
 use Pulsar\Api\Internal;
 use RuntimeException;
@@ -12,6 +14,11 @@ use function extension_loaded;
 use function is_array;
 use function is_string;
 use function strlen;
+
+use const Grpc\OP_RECV_CLOSE_ON_SERVER;
+use const Grpc\OP_SEND_INITIAL_METADATA;
+use const Grpc\OP_SEND_MESSAGE;
+use const Grpc\OP_SEND_STATUS_FROM_SERVER;
 
 /**
  * Transport adapter for the grpc PECL extension (C-core).
@@ -25,7 +32,6 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
 {
     private bool $running = false;
 
-    /** @var \Grpc\Server|null */
     private ?object $server = null;
 
     /**
@@ -48,15 +54,14 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
             );
         }
 
-        /** @var \Grpc\Server $server */
-        $server = new \Grpc\Server();
+        $server = new GrpcServer();
         $this->server = $server;
 
         $address = $host . ':' . $port;
 
         if ($this->hasTlsCredentials()) {
             /** @phpstan-ignore class.notFound */
-            $credentials = \Grpc\ServerCredentials::createSsl(
+            $credentials = ServerCredentials::createSsl(
                 $this->rootCert !== '' ? $this->rootCert : null,
                 [['cert_chain' => $this->certChain, 'private_key' => $this->privateKey]],
                 $this->rootCert !== '',
@@ -64,7 +69,7 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
             $server->addHttp2Port($address, $credentials);
         } else {
             /** @phpstan-ignore class.notFound */
-            $server->addHttp2Port($address, \Grpc\ServerCredentials::createInsecure());
+            $server->addHttp2Port($address, ServerCredentials::createInsecure());
         }
 
         $server->start();
@@ -119,7 +124,6 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
         /** @var string $method */
         $method = $event->method ?? '';
 
-        /** @var string $payload */
         $payload = '';
 
         /** @var object|null $call */
@@ -163,14 +167,14 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
         if ($call !== null && method_exists($call, 'startBatch')) {
             $call->startBatch([
                 /** @phpstan-ignore classConstant.notFound */
-                \Grpc\OP_SEND_INITIAL_METADATA => $result->trailers,
-                \Grpc\OP_SEND_MESSAGE => strlen($result->payload) > 0 ? $result->payload : null,
-                \Grpc\OP_SEND_STATUS_FROM_SERVER => [
+                OP_SEND_INITIAL_METADATA => $result->trailers,
+                OP_SEND_MESSAGE => strlen($result->payload) > 0 ? $result->payload : null,
+                OP_SEND_STATUS_FROM_SERVER => [
                     'code' => $result->status->value,
                     'details' => $result->message,
                     'metadata' => $result->trailers,
                 ],
-                \Grpc\OP_RECV_CLOSE_ON_SERVER => true,
+                OP_RECV_CLOSE_ON_SERVER => true,
             ]);
         }
     }

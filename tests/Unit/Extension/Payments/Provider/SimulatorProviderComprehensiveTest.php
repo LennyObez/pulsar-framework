@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Payments\Contracts\PaymentProviderInterface;
 use Pulsar\Extension\Payments\Domain\ChargeStatus;
 use Pulsar\Extension\Payments\Domain\Currency;
 use Pulsar\Extension\Payments\Domain\Money;
@@ -417,7 +418,7 @@ final class SimulatorProviderComprehensiveTest extends TestCase
     public function implementsPaymentProviderInterface(): void
     {
         self::assertInstanceOf(
-            \Pulsar\Extension\Payments\Contracts\PaymentProviderInterface::class,
+            PaymentProviderInterface::class,
             $this->provider,
         );
     }

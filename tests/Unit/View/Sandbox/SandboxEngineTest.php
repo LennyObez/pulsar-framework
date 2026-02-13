@@ -14,6 +14,7 @@ use Pulsar\View\Sandbox\AstParser;
 use Pulsar\View\Sandbox\SandboxConfig;
 use Pulsar\View\Sandbox\SandboxEngine;
 use Pulsar\View\Sandbox\TranslationCallback;
+use Pulsar\View\ViewConfig;
 use Pulsar\View\ViewException;
 
 #[CoversClass(SandboxEngine::class)]
@@ -341,7 +342,7 @@ final class SandboxEngineTest extends TestCase
     #[Test]
     public function sandboxConfigFromViewConfig(): void
     {
-        $viewConfig = new \Pulsar\View\ViewConfig(
+        $viewConfig = new ViewConfig(
             templatePaths: ['/views'],
             cachePath: '/cache',
             sandboxStepLimit: 5_000,

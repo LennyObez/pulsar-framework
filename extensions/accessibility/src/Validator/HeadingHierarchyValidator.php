@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Accessibility\Validator;
 
-use DOMDocument;
 use DOMNode;
 use DOMXPath;
 
@@ -18,6 +17,7 @@ use DOMXPath;
  */
 final readonly class HeadingHierarchyValidator implements ValidatorInterface
 {
+    use ParsesHtmlDom;
     public function validate(string $html): array
     {
         $dom = $this->loadHtml($html);
@@ -51,7 +51,7 @@ final readonly class HeadingHierarchyValidator implements ValidatorInterface
                         rule: 'multiple-h1',
                         severity: Severity::Warning,
                         element: $snippet,
-                        message: "Multiple <h1> elements found ({$h1Count} total). Pages should typically have a single <h1> element.",
+                        message: "Multiple <h1> elements found ($h1Count total). Pages should typically have a single <h1> element.",
                         wcagCriterion: '1.3.1',
                         line: $line,
                     );
@@ -63,7 +63,7 @@ final readonly class HeadingHierarchyValidator implements ValidatorInterface
                     rule: 'heading-level-skip',
                     severity: Severity::Error,
                     element: $snippet,
-                    message: "Heading level skipped: <h{$level}> follows <h{$previousLevel}>. Expected <h" . ($previousLevel + 1) . '> or lower.',
+                    message: "Heading level skipped: <h$level> follows <h$previousLevel>. Expected <h" . ($previousLevel + 1) . '> or lower.',
                     wcagCriterion: '1.3.1',
                     line: $line,
                 );
@@ -75,29 +75,4 @@ final readonly class HeadingHierarchyValidator implements ValidatorInterface
         return $violations;
     }
 
-    private function loadHtml(string $html): ?DOMDocument
-    {
-        $dom = new DOMDocument();
-        $wrapped = '<div>' . $html . '</div>';
-        libxml_use_internal_errors(true);
-        $result = @$dom->loadHTML(
-            '<?xml encoding="UTF-8"><body>' . $wrapped . '</body>',
-            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD,
-        );
-        libxml_clear_errors();
-
-        if ($result === false) {
-            return null;
-        }
-
-        return $dom;
-    }
-
-    private function getOuterHtml(DOMNode $node): string
-    {
-        /** @var DOMDocument $dom */
-        $dom = $node->ownerDocument;
-
-        return trim($dom->saveHTML($node) ?: '');
-    }
 }

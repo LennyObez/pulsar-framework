@@ -13,7 +13,6 @@ use Pulsar\Extension\Cms\Themes\ThemeAssetResolverInterface;
 use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
 
 use function file_exists;
-use function hash;
 use function hash_equals;
 use function hash_file;
 use function realpath;
@@ -41,7 +40,7 @@ final readonly class ThemeAssetResolver implements ThemeAssetResolverInterface
         $this->validatePathTraversal($assetPath, $assetDir, $assetName);
 
         if (!file_exists($assetPath)) {
-            throw CmsException::themeNotFound("Asset not found: {$assetName}");
+            throw CmsException::themeNotFound("Asset not found: $assetName");
         }
 
         return '/cms-assets/' . $theme->slug . '/' . $assetName;
@@ -61,7 +60,7 @@ final readonly class ThemeAssetResolver implements ThemeAssetResolverInterface
         $this->validatePathTraversal($templatePath, $templatesDir, $templateName);
 
         if (!file_exists($templatePath)) {
-            throw CmsException::themeNotFound("Template not found: {$templateName}");
+            throw CmsException::themeNotFound("Template not found: $templateName");
         }
 
         return $templatePath;

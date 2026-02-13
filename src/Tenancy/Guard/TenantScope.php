@@ -17,7 +17,7 @@ use Pulsar\Tenancy\TenantContext;
 #[Api(since: '1.0.0')]
 final class TenantScope
 {
-    private ?TenantId $activeTenantId = null;
+    public private(set) ?TenantId $activeTenantId = null;
 
     public function __construct(
         private readonly TenantContext $context,
@@ -82,8 +82,4 @@ final class TenantScope
         }
     }
 
-    public function getActiveTenantId(): ?TenantId
-    {
-        return $this->activeTenantId;
-    }
 }

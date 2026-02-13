@@ -38,6 +38,7 @@ use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
+use Override;
 use Pulsar\View\ViewConfig;
 
 $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
@@ -200,13 +201,13 @@ $kernel->container()->instance(ViewConfig::class, new ViewConfig(
 
 // Pre-register a permissive GateInterface for dev — grants all permissions
 $kernel->container()->instance(GateInterface::class, new class implements GateInterface {
-    #[\Override]
+    #[Override]
     public function allows(IdentityInterface $identity, string $permission, ?PolicyContext $context = null): bool
     {
         return $identity->isAuthenticated();
     }
 
-    #[\Override]
+    #[Override]
     public function denies(IdentityInterface $identity, string $permission, ?PolicyContext $context = null): bool
     {
         return !$this->allows($identity, $permission, $context);
@@ -291,10 +292,10 @@ if ($container->has(ConnectionInterface::class)) {
 
         foreach ($criticalTables as $table) {
             try {
-                $dbConnection->query("SELECT 1 FROM {$table} LIMIT 1");
+                $dbConnection->query("SELECT 1 FROM $table LIMIT 1");
             } catch (Throwable) {
                 $allReady = false;
-                error_log("[CMS Dev] Table {$table} still missing after migration");
+                error_log("[CMS Dev] Table $table still missing after migration");
             }
         }
 

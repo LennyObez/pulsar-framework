@@ -9,6 +9,7 @@ use Override;
 use Pulsar\Api\Api;
 
 use function array_filter;
+use function array_find;
 use function array_key_exists;
 use function array_keys;
 use function array_values;
@@ -66,13 +67,7 @@ final class StaticServiceDiscovery implements ServiceDiscoveryInterface
             return null;
         }
 
-        foreach ($this->registry[$serviceName] as $instance) {
-            if ($instance->healthy) {
-                return $instance;
-            }
-        }
-
-        return null;
+        return array_find($this->registry[$serviceName], static fn(ServiceInstance $instance): bool => $instance->healthy);
     }
 
     #[Override]

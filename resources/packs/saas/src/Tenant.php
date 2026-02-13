@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Tenant entity.
  *
@@ -19,8 +21,8 @@ final class Tenant
      * @param non-empty-string        $planId       Current billing plan identifier
      * @param non-empty-string|null   $region       Data residency region
      * @param TenantStatus            $status       Current tenant status
-     * @param \DateTimeImmutable      $createdAt    Tenant creation timestamp
-     * @param \DateTimeImmutable|null $trialEndsAt  Trial period end date
+     * @param DateTimeImmutable      $createdAt    Tenant creation timestamp
+     * @param DateTimeImmutable|null $trialEndsAt  Trial period end date
      */
     public function __construct(
         public readonly string $id,
@@ -29,8 +31,8 @@ final class Tenant
         public readonly string $planId,
         public readonly ?string $region = null,
         public TenantStatus $status = TenantStatus::Active,
-        public readonly \DateTimeImmutable $createdAt = new \DateTimeImmutable(),
-        public readonly ?\DateTimeImmutable $trialEndsAt = null,
+        public readonly DateTimeImmutable $createdAt = new DateTimeImmutable(),
+        public readonly ?DateTimeImmutable $trialEndsAt = null,
     ) {}
 
     public function isActive(): bool
@@ -44,7 +46,7 @@ final class Tenant
             return false;
         }
 
-        return $this->trialEndsAt > new \DateTimeImmutable();
+        return $this->trialEndsAt > new DateTimeImmutable();
     }
 
     public function isTrialExpired(): bool
@@ -53,6 +55,6 @@ final class Tenant
             return false;
         }
 
-        return $this->trialEndsAt <= new \DateTimeImmutable();
+        return $this->trialEndsAt <= new DateTimeImmutable();
     }
 }

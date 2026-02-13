@@ -211,11 +211,11 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
     private static function hydrate(Row $row): Order
     {
         /** @var array{line1: string, line2?: string, city: string, region?: string, postalCode: string, country: string} $billingAddress */
-        $billingAddress = json_decode($row->getString('billing_address'), true, 512, JSON_THROW_ON_ERROR);
+        $billingAddress = json_decode($row->getString('billing_address'), true, flags: JSON_THROW_ON_ERROR);
 
         $shippingRaw = $row->getNullableString('shipping_address');
         /** @var array{line1: string, line2?: string, city: string, region?: string, postalCode: string, country: string}|null $shippingAddress */
-        $shippingAddress = $shippingRaw !== null ? json_decode($shippingRaw, true, 512, JSON_THROW_ON_ERROR) : null;
+        $shippingAddress = $shippingRaw !== null ? json_decode($shippingRaw, true, flags: JSON_THROW_ON_ERROR) : null;
 
         return new Order(
             id: $row->getString('id'),

@@ -28,14 +28,12 @@ final readonly class RateLimitDetector implements SpamDetectorInterface
     #[Override]
     public function detect(array $data, array $meta): SpamResult
     {
-        /** @var string $ip */
         $ip = isset($meta['ip']) && is_string($meta['ip']) ? $meta['ip'] : '';
 
         if ($ip === '') {
             return new SpamResult(false, 0.0, null);
         }
 
-        /** @var string $tenantId */
         $tenantId = isset($meta['tenant_id']) && is_string($meta['tenant_id']) ? $meta['tenant_id'] : '';
         $cacheKey = 'cms_form_rate_' . sha1($tenantId . ':' . $ip);
         $count = $this->cache->get($cacheKey);

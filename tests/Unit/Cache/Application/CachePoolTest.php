@@ -138,7 +138,7 @@ final class CachePoolTest extends TestCase
     #[Test]
     public function criticalModeThrowsCacheExceptionOnDriverError(): void
     {
-        $driver = $this->createStub(\Pulsar\Cache\Application\Driver\CacheDriverInterface::class);
+        $driver = $this->createStub(CacheDriverInterface::class);
         $driver->method('get')->willThrowException(new RuntimeException('disk full'));
         $driver->method('name')->willReturn('failing');
 

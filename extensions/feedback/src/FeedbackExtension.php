@@ -60,7 +60,7 @@ final readonly class FeedbackExtension implements ExtensionInterface
 
         $router->post($prefix, [FeedbackApiController::class, 'submit'], 'feedback.api.submit');
         $router->get($prefix, [FeedbackApiController::class, 'index'], 'feedback.api.index');
-        $router->get("{$prefix}/{id}", [FeedbackApiController::class, 'show'], 'feedback.api.show');
+        $router->get("$prefix/{id}", [FeedbackApiController::class, 'show'], 'feedback.api.show');
     }
 
     private function registerAdminRoutes(RouterInterface $router): void
@@ -68,9 +68,9 @@ final readonly class FeedbackExtension implements ExtensionInterface
         $prefix = '/admin/feedback';
 
         $router->get($prefix, [AdminFeedbackController::class, 'index'], 'feedback.admin.index');
-        $router->get("{$prefix}/{id}", [AdminFeedbackController::class, 'show'], 'feedback.admin.show');
-        $router->put("{$prefix}/{id}/status", [AdminFeedbackController::class, 'updateStatus'], 'feedback.admin.update_status');
-        $router->post("{$prefix}/{id}/respond", [AdminFeedbackController::class, 'respond'], 'feedback.admin.respond');
-        $router->post("{$prefix}/{id}/github-issue", [AdminFeedbackController::class, 'createIssue'], 'feedback.admin.create_issue');
+        $router->get("$prefix/{id}", [AdminFeedbackController::class, 'show'], 'feedback.admin.show');
+        $router->put("$prefix/{id}/status", [AdminFeedbackController::class, 'updateStatus'], 'feedback.admin.update_status');
+        $router->post("$prefix/{id}/respond", [AdminFeedbackController::class, 'respond'], 'feedback.admin.respond');
+        $router->post("$prefix/{id}/github-issue", [AdminFeedbackController::class, 'createIssue'], 'feedback.admin.create_issue');
     }
 }

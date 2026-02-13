@@ -14,9 +14,9 @@ final class EntityNotFoundExceptionTest extends TestCase
     #[Test]
     public function extendsOrmException(): void
     {
-        $e = EntityNotFoundException::notFound('App\\Entity\\User', 42);
+        $parents = class_parents(EntityNotFoundException::class);
 
-        self::assertInstanceOf(OrmException::class, $e);
+        self::assertContains(OrmException::class, $parents);
     }
 
     #[Test]

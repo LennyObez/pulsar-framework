@@ -154,7 +154,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
     #[Override]
     public function renderCsrfField(FormInterface $form): string
     {
-        if (!$form instanceof Form) {
+        if (! $form instanceof Form) {
             return '';
         }
 
@@ -414,7 +414,7 @@ final readonly class HtmlFormRenderer implements FormRendererInterface
         $html .= sprintf(
             '<div class="form-policy-text" id="%s-policy">%s</div>',
             $this->esc($field->getId()),
-            $this->esc($field->getPolicyText()),
+            $this->esc($field->policyText),
         );
 
         $html .= $this->renderErrors($field, $errors);

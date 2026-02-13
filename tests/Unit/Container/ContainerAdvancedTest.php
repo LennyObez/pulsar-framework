@@ -8,6 +8,7 @@ use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Container\Compiler\PassRunner;
 use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
@@ -375,7 +376,7 @@ final class ContainerAdvancedTest extends TestCase
         $container = new Container();
         $container->bind('svc', fn() => new stdClass());
 
-        $runner = new \Pulsar\Container\Compiler\PassRunner();
+        $runner = new PassRunner();
         $container->processCompilerPasses($runner);
 
         // After processing, definitions should still exist

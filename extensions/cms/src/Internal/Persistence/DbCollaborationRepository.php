@@ -131,7 +131,7 @@ final readonly class DbCollaborationRepository implements CollaborationRepositor
     #[Override]
     public function cleanupExpiredSessions(int $maxAgeMinutes = 30): int
     {
-        $cutoff = new DateTimeImmutable("-{$maxAgeMinutes} minutes");
+        $cutoff = new DateTimeImmutable("-$maxAgeMinutes minutes");
 
         return $this->connection->execute(self::SQL_CLEANUP_EXPIRED, [
             'cutoff' => $cutoff->format('c'),

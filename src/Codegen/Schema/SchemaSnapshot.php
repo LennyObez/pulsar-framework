@@ -49,11 +49,10 @@ final readonly class SchemaSnapshot
     #[NoDiscard]
     public function toArray(): array
     {
-        $entitiesData = [];
-
-        foreach ($this->entities as $tableName => $entity) {
-            $entitiesData[$tableName] = $entity->toArray();
-        }
+        $entitiesData = array_map(
+            static fn(EntityDefinition $entity): array => $entity->toArray(),
+            $this->entities,
+        );
 
         ksort($entitiesData);
 

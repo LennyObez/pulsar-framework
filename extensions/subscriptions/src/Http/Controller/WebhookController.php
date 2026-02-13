@@ -214,7 +214,7 @@ final readonly class WebhookController
             12 => 'SUBSCRIPTION_REVOKED',
             13 => 'SUBSCRIPTION_EXPIRED',
             20 => 'SUBSCRIPTION_PENDING_PURCHASE_CANCELED',
-            default => "UNKNOWN_{$notificationType}",
+            default => "UNKNOWN_$notificationType",
         };
     }
 
@@ -224,13 +224,12 @@ final readonly class WebhookController
     private function resolveGoogleStatus(int $notificationType): SubscriptionStatus
     {
         return match ($notificationType) {
-            1, 4, 7, 8, 9 => SubscriptionStatus::Active,  // recovered, purchased, restarted, etc.
-            2 => SubscriptionStatus::Active,                // renewed
-            3 => SubscriptionStatus::Cancelled,             // canceled
-            5 => SubscriptionStatus::BillingRetry,          // on hold
-            6 => SubscriptionStatus::GracePeriod,           // in grace period
-            12 => SubscriptionStatus::Revoked,              // revoked
-            13 => SubscriptionStatus::Expired,              // expired
+            3 => SubscriptionStatus::Cancelled,  // canceled
+            5 => SubscriptionStatus::BillingRetry, // on hold
+            6 => SubscriptionStatus::GracePeriod,  // in grace period
+            12 => SubscriptionStatus::Revoked,     // revoked
+            13 => SubscriptionStatus::Expired,     // expired
+            // 1 (recovered), 2 (renewed), 4 (purchased), 7-9 (restarted, etc.) and unknown
             default => SubscriptionStatus::Active,
         };
     }
@@ -243,13 +242,11 @@ final readonly class WebhookController
     private function resolveAppleStatus(string $notificationType): SubscriptionStatus
     {
         return match ($notificationType) {
-            'DID_RENEW', 'SUBSCRIBED', 'OFFER_REDEEMED' => SubscriptionStatus::Active,
             'DID_CHANGE_RENEWAL_STATUS' => SubscriptionStatus::Cancelled,
-            'EXPIRED' => SubscriptionStatus::Expired,
-            'GRACE_PERIOD_EXPIRED' => SubscriptionStatus::Expired,
+            'EXPIRED', 'GRACE_PERIOD_EXPIRED' => SubscriptionStatus::Expired,
             'DID_FAIL_TO_RENEW' => SubscriptionStatus::GracePeriod,
-            'REVOKE' => SubscriptionStatus::Revoked,
-            'REFUND' => SubscriptionStatus::Revoked,
+            'REVOKE', 'REFUND' => SubscriptionStatus::Revoked,
+            // DID_RENEW, SUBSCRIBED, OFFER_REDEEMED and any unknown type default to Active
             default => SubscriptionStatus::Active,
         };
     }

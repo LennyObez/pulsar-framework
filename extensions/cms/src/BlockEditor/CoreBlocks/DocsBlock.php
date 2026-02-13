@@ -54,11 +54,11 @@ final readonly class DocsBlock implements BlockTypeInterface
         $showReadingTime = ($data['showReadingTime'] ?? true) ? 'true' : 'false';
 
         return '<div class="cms-docs-card"'
-            . " data-doc-slug=\"{$slug}\""
-            . " data-show-section=\"{$showSection}\""
-            . " data-show-difficulty=\"{$showDifficulty}\""
-            . " data-show-reading-time=\"{$showReadingTime}\">"
-            . "<span class=\"cms-docs-card__slug\">{$slug}</span>"
+            . " data-doc-slug=\"$slug\""
+            . " data-show-section=\"$showSection\""
+            . " data-show-difficulty=\"$showDifficulty\""
+            . " data-show-reading-time=\"$showReadingTime\">"
+            . "<span class=\"cms-docs-card__slug\">$slug</span>"
             . '</div>';
     }
 

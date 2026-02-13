@@ -45,9 +45,9 @@ return new class implements MigrationInterface {
 
         foreach ($indexTableMap as $index => $table) {
             if ($driver === Driver::MySQL) {
-                $connection->execute("DROP INDEX IF EXISTS {$index} ON {$table}");
+                $connection->execute("DROP INDEX IF EXISTS $index ON $table");
             } else {
-                $connection->execute("DROP INDEX IF EXISTS {$index}");
+                $connection->execute("DROP INDEX IF EXISTS $index");
             }
         }
 
@@ -67,7 +67,7 @@ return new class implements MigrationInterface {
                 );
 
                 if (($result->first()?->getInt('cnt') ?? 0) > 0) {
-                    $connection->execute("ALTER TABLE {$table} DROP FOREIGN KEY {$fk}");
+                    $connection->execute("ALTER TABLE $table DROP FOREIGN KEY $fk");
                 }
             }
         } elseif ($driver === Driver::PostgreSQL) {
@@ -79,7 +79,7 @@ return new class implements MigrationInterface {
             ];
 
             foreach ($fkTableMap as $fk => $table) {
-                $connection->execute("ALTER TABLE {$table} DROP CONSTRAINT IF EXISTS {$fk}");
+                $connection->execute("ALTER TABLE $table DROP CONSTRAINT IF EXISTS $fk");
             }
         }
     }
@@ -158,10 +158,10 @@ return new class implements MigrationInterface {
         $this->createIndexIfNotExists($connection, 'idx_coupons_promotion', 'cms_coupons', '(promotion_id)');
 
         // Foreign keys (MySQL supports ALTER TABLE ADD CONSTRAINT IF NOT EXISTS since 8.0.29)
-        $this->addForeignKeyIfNotExists($connection, 'fk_order_items_order', 'cms_order_items', 'order_id', 'cms_orders', 'id');
-        $this->addForeignKeyIfNotExists($connection, 'fk_product_variants_product', 'cms_product_variants', 'product_id', 'cms_products', 'id');
-        $this->addForeignKeyIfNotExists($connection, 'fk_coupons_promotion', 'cms_coupons', 'promotion_id', 'cms_promotions', 'id');
-        $this->addForeignKeyIfNotExists($connection, 'fk_translations_content', 'cms_content_translations', 'content_id', 'cms_contents', 'id');
+        $this->addForeignKeyIfNotExists($connection, 'fk_order_items_order', 'cms_order_items', 'order_id', 'cms_orders');
+        $this->addForeignKeyIfNotExists($connection, 'fk_product_variants_product', 'cms_product_variants', 'product_id', 'cms_products');
+        $this->addForeignKeyIfNotExists($connection, 'fk_coupons_promotion', 'cms_coupons', 'promotion_id', 'cms_promotions');
+        $this->addForeignKeyIfNotExists($connection, 'fk_translations_content', 'cms_content_translations', 'content_id', 'cms_contents');
     }
 
     private function upPostgresql(ConnectionInterface $connection): void
@@ -197,10 +197,10 @@ return new class implements MigrationInterface {
         $connection->execute('CREATE INDEX IF NOT EXISTS idx_coupons_promotion ON cms_coupons (promotion_id)');
 
         // Foreign keys
-        $this->addForeignKeyIfNotExistsPg($connection, 'fk_order_items_order', 'cms_order_items', 'order_id', 'cms_orders', 'id');
-        $this->addForeignKeyIfNotExistsPg($connection, 'fk_product_variants_product', 'cms_product_variants', 'product_id', 'cms_products', 'id');
-        $this->addForeignKeyIfNotExistsPg($connection, 'fk_coupons_promotion', 'cms_coupons', 'promotion_id', 'cms_promotions', 'id');
-        $this->addForeignKeyIfNotExistsPg($connection, 'fk_translations_content', 'cms_content_translations', 'content_id', 'cms_contents', 'id');
+        $this->addForeignKeyIfNotExistsPg($connection, 'fk_order_items_order', 'cms_order_items', 'order_id', 'cms_orders');
+        $this->addForeignKeyIfNotExistsPg($connection, 'fk_product_variants_product', 'cms_product_variants', 'product_id', 'cms_products');
+        $this->addForeignKeyIfNotExistsPg($connection, 'fk_coupons_promotion', 'cms_coupons', 'promotion_id', 'cms_promotions');
+        $this->addForeignKeyIfNotExistsPg($connection, 'fk_translations_content', 'cms_content_translations', 'content_id', 'cms_contents');
     }
 
     private function createIndexIfNotExists(
@@ -215,7 +215,7 @@ return new class implements MigrationInterface {
         );
 
         if (($result->first()?->getInt('cnt') ?? 0) === 0) {
-            $connection->execute("CREATE INDEX {$indexName} ON {$table} {$columns}");
+            $connection->execute("CREATE INDEX $indexName ON $table $columns");
         }
     }
 
@@ -225,7 +225,6 @@ return new class implements MigrationInterface {
         string $table,
         string $column,
         string $refTable,
-        string $refColumn,
     ): void {
         $result = $connection->query(
             "SELECT COUNT(*) AS cnt FROM information_schema.table_constraints WHERE constraint_schema = DATABASE() AND constraint_name = :name AND constraint_type = 'FOREIGN KEY'",
@@ -233,7 +232,7 @@ return new class implements MigrationInterface {
         );
 
         if (($result->first()?->getInt('cnt') ?? 0) === 0) {
-            $connection->execute("ALTER TABLE {$table} ADD CONSTRAINT {$constraintName} FOREIGN KEY ({$column}) REFERENCES {$refTable} ({$refColumn})");
+            $connection->execute("ALTER TABLE $table ADD CONSTRAINT $constraintName FOREIGN KEY ($column) REFERENCES $refTable (id)");
         }
     }
 
@@ -243,7 +242,6 @@ return new class implements MigrationInterface {
         string $table,
         string $column,
         string $refTable,
-        string $refColumn,
     ): void {
         $result = $connection->query(
             "SELECT COUNT(*) AS cnt FROM information_schema.table_constraints WHERE constraint_name = :name AND constraint_type = 'FOREIGN KEY'",
@@ -251,7 +249,7 @@ return new class implements MigrationInterface {
         );
 
         if (($result->first()?->getInt('cnt') ?? 0) === 0) {
-            $connection->execute("ALTER TABLE {$table} ADD CONSTRAINT {$constraintName} FOREIGN KEY ({$column}) REFERENCES {$refTable} ({$refColumn})");
+            $connection->execute("ALTER TABLE $table ADD CONSTRAINT $constraintName FOREIGN KEY ($column) REFERENCES $refTable (id)");
         }
     }
 };

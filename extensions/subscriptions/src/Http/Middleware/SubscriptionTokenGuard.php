@@ -42,22 +42,23 @@ final readonly class SubscriptionTokenGuard implements MiddlewareInterface
         $authHeader = $request->getHeaderLine('Authorization');
 
         if ($authHeader === '' || !preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
-            return Response::json([
-                'error' => 'Missing or malformed Authorization header',
-            ], 401);
+            return self::unauthorized('Missing or malformed Authorization header');
         }
 
         $token = $matches[1];
         $userId = ($this->tokenResolver)($token);
 
         if (!is_string($userId) || $userId === '') {
-            return Response::json([
-                'error' => 'Invalid or expired token',
-            ], 401);
+            return self::unauthorized('Invalid or expired token');
         }
 
         $authenticatedRequest = $request->withAttribute('user_id', $userId);
 
         return $handler->handle($authenticatedRequest);
+    }
+
+    private static function unauthorized(string $message): ResponseInterface
+    {
+        return Response::json(['error' => $message], 401);
     }
 }

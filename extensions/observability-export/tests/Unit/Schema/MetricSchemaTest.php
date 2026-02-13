@@ -36,7 +36,7 @@ final class MetricSchemaTest extends TestCase
     #[Test]
     public function toArrayExcludesSeriesWhenNull(): void
     {
-        $snapshot = $this->createSnapshot(series: null);
+        $snapshot = $this->createSnapshot();
         $array = MetricSchema::toArray($snapshot);
 
         self::assertArrayNotHasKey('series', $array);
@@ -59,7 +59,7 @@ final class MetricSchemaTest extends TestCase
         $snapshot = $this->createSnapshot();
         $json = MetricSchema::toJson($snapshot);
 
-        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         self::assertSame('http_requests_total', $decoded['name']);
     }
 

@@ -81,7 +81,7 @@ final class TestResponse
     {
         if ($this->decodedJson === null) {
             /** @var array<string, mixed> $decoded */
-            $decoded = json_decode($this->body, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($this->body, true, flags: JSON_THROW_ON_ERROR);
             $this->decodedJson = $decoded;
         }
 
@@ -93,7 +93,7 @@ final class TestResponse
     /**
      * Assert the response has a 200 OK status.
      */
-    public function assertOk(): static
+    public function assertOk(): self
     {
         return $this->assertStatus(200);
     }
@@ -101,7 +101,7 @@ final class TestResponse
     /**
      * Assert the response has a 201 Created status.
      */
-    public function assertCreated(): static
+    public function assertCreated(): self
     {
         return $this->assertStatus(201);
     }
@@ -109,7 +109,7 @@ final class TestResponse
     /**
      * Assert the response has a 204 No Content status.
      */
-    public function assertNoContent(): static
+    public function assertNoContent(): self
     {
         return $this->assertStatus(204);
     }
@@ -117,7 +117,7 @@ final class TestResponse
     /**
      * Assert the response has a 404 Not Found status.
      */
-    public function assertNotFound(): static
+    public function assertNotFound(): self
     {
         return $this->assertStatus(404);
     }
@@ -125,7 +125,7 @@ final class TestResponse
     /**
      * Assert the response has a 403 Forbidden status.
      */
-    public function assertForbidden(): static
+    public function assertForbidden(): self
     {
         return $this->assertStatus(403);
     }
@@ -133,7 +133,7 @@ final class TestResponse
     /**
      * Assert the response has a 401 Unauthorized status.
      */
-    public function assertUnauthorized(): static
+    public function assertUnauthorized(): self
     {
         return $this->assertStatus(401);
     }
@@ -141,7 +141,7 @@ final class TestResponse
     /**
      * Assert the response has a 422 Unprocessable Entity status.
      */
-    public function assertUnprocessable(): static
+    public function assertUnprocessable(): self
     {
         return $this->assertStatus(422);
     }
@@ -149,7 +149,7 @@ final class TestResponse
     /**
      * Assert the response has the given status code.
      */
-    public function assertStatus(int $expected): static
+    public function assertStatus(int $expected): self
     {
         $actual = $this->response->getStatusCode();
 
@@ -160,7 +160,7 @@ final class TestResponse
                 "Expected status code %d, but received %d.\nResponse body: %s",
                 $expected,
                 $actual,
-                $this->truncateBody(200),
+                $this->truncateBody(),
             ),
         );
 
@@ -170,7 +170,7 @@ final class TestResponse
     /**
      * Assert the response status is in the 2xx success range.
      */
-    public function assertSuccessful(): static
+    public function assertSuccessful(): self
     {
         $actual = $this->response->getStatusCode();
 
@@ -179,7 +179,7 @@ final class TestResponse
             sprintf(
                 "Expected a successful status code (2xx), but received %d.\nResponse body: %s",
                 $actual,
-                $this->truncateBody(200),
+                $this->truncateBody(),
             ),
         );
 
@@ -191,7 +191,7 @@ final class TestResponse
     /**
      * Assert the response has a specific header.
      */
-    public function assertHeader(string $name, ?string $value = null): static
+    public function assertHeader(string $name, ?string $value = null): self
     {
         Assert::assertTrue(
             $this->response->hasHeader($name),
@@ -221,7 +221,7 @@ final class TestResponse
     /**
      * Assert the response does NOT have a specific header.
      */
-    public function assertHeaderMissing(string $name): static
+    public function assertHeaderMissing(string $name): self
     {
         Assert::assertFalse(
             $this->response->hasHeader($name),
@@ -240,7 +240,7 @@ final class TestResponse
     /**
      * Assert the response is a redirect (3xx) to the given URL.
      */
-    public function assertRedirect(?string $url = null): static
+    public function assertRedirect(?string $url = null): self
     {
         $status = $this->response->getStatusCode();
 
@@ -264,7 +264,7 @@ final class TestResponse
     /**
      * Assert the response has JSON content type.
      */
-    public function assertJson(): static
+    public function assertJson(): self
     {
         $contentType = $this->response->getHeaderLine('Content-Type');
 
@@ -273,7 +273,7 @@ final class TestResponse
             sprintf(
                 "Expected response to have JSON content type, but got [%s].\nBody: %s",
                 $contentType,
-                $this->truncateBody(200),
+                $this->truncateBody(),
             ),
         );
 
@@ -281,7 +281,7 @@ final class TestResponse
             json_validate($this->body),
             sprintf(
                 "Expected response body to be valid JSON.\nBody: %s",
-                $this->truncateBody(200),
+                $this->truncateBody(),
             ),
         );
 
@@ -293,7 +293,7 @@ final class TestResponse
      *
      * @param array<string, mixed> $data
      */
-    public function assertJsonFragment(array $data): static
+    public function assertJsonFragment(array $data): self
     {
         $json = $this->json();
 
@@ -328,7 +328,7 @@ final class TestResponse
      *
      * @param string $path Dot-notation path (e.g., "data.user.name")
      */
-    public function assertJsonPath(string $path, mixed $expected): static
+    public function assertJsonPath(string $path, mixed $expected): self
     {
         $actual = $this->getJsonPath($path);
 
@@ -351,7 +351,7 @@ final class TestResponse
      *
      * @param list<string> $keys
      */
-    public function assertJsonStructure(array $keys): static
+    public function assertJsonStructure(array $keys): self
     {
         $json = $this->json();
 
@@ -373,7 +373,7 @@ final class TestResponse
     /**
      * Assert the JSON array at the given key has the expected count.
      */
-    public function assertJsonCount(int $count, ?string $key = null): static
+    public function assertJsonCount(int $count, ?string $key = null): self
     {
         $data = $key !== null ? $this->getJsonPath($key) : $this->json();
 
@@ -405,14 +405,14 @@ final class TestResponse
     /**
      * Assert the response body contains the given string.
      */
-    public function assertSee(string $text): static
+    public function assertSee(string $text): self
     {
         Assert::assertTrue(
             str_contains($this->body, $text),
             sprintf(
                 "Expected response body to contain [%s], but it does not.\nBody: %s",
                 $text,
-                $this->truncateBody(200),
+                $this->truncateBody(),
             ),
         );
 
@@ -422,7 +422,7 @@ final class TestResponse
     /**
      * Assert the response body does NOT contain the given string.
      */
-    public function assertDontSee(string $text): static
+    public function assertDontSee(string $text): self
     {
         Assert::assertFalse(
             str_contains($this->body, $text),
@@ -453,17 +453,17 @@ final class TestResponse
         return $current;
     }
 
-    private function truncateBody(int $maxLength): string
+    private function truncateBody(): string
     {
         if ($this->body === '') {
             return '(empty)';
         }
 
-        if (strlen($this->body) <= $maxLength) {
+        if (strlen($this->body) <= 200) {
             return $this->body;
         }
 
-        return substr($this->body, 0, $maxLength) . '... (truncated)';
+        return substr($this->body, 0, 200) . '... (truncated)';
     }
 
     private function formatHeaders(): string

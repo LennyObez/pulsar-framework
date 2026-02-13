@@ -80,7 +80,7 @@ final class PulsarToPsr7RequestTest extends TestCase
     #[Test]
     public function convertPreservesPostAsNullWhenEmpty(): void
     {
-        $request = $this->createRequest(post: []);
+        $request = $this->createRequest();
         $psr = $this->adapter->convert($request);
 
         self::assertNull($psr->getParsedBody());
@@ -117,7 +117,6 @@ final class PulsarToPsr7RequestTest extends TestCase
      * @param array<string, mixed> $query
      * @param array<string, mixed> $post
      * @param array<string, mixed> $cookies
-     * @param array<string, mixed> $server
      * @param array<string, mixed> $attributes
      */
     private function createRequest(
@@ -128,7 +127,6 @@ final class PulsarToPsr7RequestTest extends TestCase
         array $query = [],
         array $post = [],
         array $cookies = [],
-        array $server = [],
         array $attributes = [],
         string $protocolVersion = '1.1',
     ): Request {
@@ -142,7 +140,7 @@ final class PulsarToPsr7RequestTest extends TestCase
             query: $query,
             post: $post,
             cookies: $cookies,
-            server: $server,
+            server: [],
             attributes: $attributes,
             protocolVersion: $protocolVersion,
         );

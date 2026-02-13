@@ -59,7 +59,7 @@ final readonly class SafeRedirect
         $scheme = strtolower($parts['scheme']);
 
         if (!in_array($scheme, ['http', 'https'], true)) {
-            throw new InvalidArgumentException("Redirect URL scheme \"{$scheme}\" is not allowed. Only http and https are permitted.");
+            throw new InvalidArgumentException("Redirect URL scheme \"$scheme\" is not allowed. Only http and https are permitted.");
         }
 
         if ($allowedHosts === []) {
@@ -69,7 +69,7 @@ final readonly class SafeRedirect
         $host = strtolower($parts['host']);
 
         if (!in_array($host, $allowedHosts, true)) {
-            throw new InvalidArgumentException("Redirect to host \"{$host}\" is not allowed.");
+            throw new InvalidArgumentException("Redirect to host \"$host\" is not allowed.");
         }
 
         return $url;

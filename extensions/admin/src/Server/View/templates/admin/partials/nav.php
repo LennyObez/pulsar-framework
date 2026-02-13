@@ -6,7 +6,7 @@ declare(strict_types=1);
  * @var array<string, mixed> $templateData
  * @var string $title
  */
-$e = static fn(string $val): string => htmlspecialchars($val, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+$e = static fn(string $val): string => htmlspecialchars($val);
 $currentPath = $_SERVER['REQUEST_URI'] ?? '/admin';
 $currentPath = strtok($currentPath, '?') ?: '/admin';
 

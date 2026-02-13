@@ -14,11 +14,17 @@ use Pulsar\Core\Wiring\I18nWiring;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\I18n\CatalogInterface;
+use Pulsar\I18n\Format\CurrencyFormatterInterface;
+use Pulsar\I18n\Format\DateFormatterInterface;
 use Pulsar\I18n\Format\MessageFormatterInterface;
+use Pulsar\I18n\Format\NumberFormatterInterface;
+use Pulsar\I18n\Locale\LocaleUrlGenerator;
+use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\I18n\LocaleNegotiatorInterface;
 use Pulsar\I18n\Translator;
 use Pulsar\I18n\TranslatorInterface;
 use Pulsar\Routing\Router;
+use Pulsar\View\Engine\TemplateLocaleHelper;
 
 use function bin2hex;
 use function extension_loaded;
@@ -69,9 +75,9 @@ final class I18nWiringTest extends TestCase
         $wiring = new I18nWiring();
         $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
 
-        self::assertTrue($container->has(\Pulsar\I18n\Format\NumberFormatterInterface::class));
-        self::assertTrue($container->has(\Pulsar\I18n\Format\DateFormatterInterface::class));
-        self::assertTrue($container->has(\Pulsar\I18n\Format\CurrencyFormatterInterface::class));
+        self::assertTrue($container->has(NumberFormatterInterface::class));
+        self::assertTrue($container->has(DateFormatterInterface::class));
+        self::assertTrue($container->has(CurrencyFormatterInterface::class));
     }
 
     #[Test]
@@ -109,9 +115,9 @@ final class I18nWiringTest extends TestCase
         $wiring = new I18nWiring();
         $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
 
-        self::assertTrue($container->has(\Pulsar\I18n\Locale\UrlPrefixExtractor::class));
-        self::assertTrue($container->has(\Pulsar\I18n\Locale\LocaleUrlGenerator::class));
-        self::assertTrue($container->has(\Pulsar\View\Engine\TemplateLocaleHelper::class));
+        self::assertTrue($container->has(UrlPrefixExtractor::class));
+        self::assertTrue($container->has(LocaleUrlGenerator::class));
+        self::assertTrue($container->has(TemplateLocaleHelper::class));
     }
 
     private function createConfigManager(): ConfigManager

@@ -114,7 +114,7 @@ final readonly class BuildManifest
     public static function fromJson(string $json): self
     {
         /** @var array<string, mixed> $data */
-        $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $data = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
 
         return self::fromArray($data);
     }

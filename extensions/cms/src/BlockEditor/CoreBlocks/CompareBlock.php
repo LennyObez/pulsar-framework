@@ -75,12 +75,12 @@ final readonly class CompareBlock implements BlockTypeInterface
         $afterLabel = htmlspecialchars((string) ($data['afterLabel'] ?? 'After'), ENT_QUOTES, 'UTF-8');
 
         $html = '<cms-image-compare'
-            . " data-before-src=\"{$beforeSrc}\""
-            . " data-before-alt=\"{$beforeAlt}\""
-            . " data-after-src=\"{$afterSrc}\""
-            . " data-after-alt=\"{$afterAlt}\""
-            . " data-before-label=\"{$beforeLabel}\""
-            . " data-after-label=\"{$afterLabel}\""
+            . " data-before-src=\"$beforeSrc\""
+            . " data-before-alt=\"$beforeAlt\""
+            . " data-after-src=\"$afterSrc\""
+            . " data-after-alt=\"$afterAlt\""
+            . " data-before-label=\"$beforeLabel\""
+            . " data-after-label=\"$afterLabel\""
             . '></cms-image-compare>';
 
         $caption = $data['caption'] ?? null;

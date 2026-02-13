@@ -118,7 +118,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
         $exportData = array_map(function (Order $order) use ($includePii): array {
             $items = $this->orderItemRepository->findByOrder($order->id);
 
-            $orderData = [
+            return [
                 'order_number' => $order->orderNumber,
                 'status' => $order->status->value,
                 'customer_id' => $order->customerId,
@@ -146,8 +146,6 @@ final readonly class OrderExportService implements OrderExportServiceInterface
                     'product_snapshot' => $item->productSnapshot,
                 ], $items),
             ];
-
-            return $orderData;
         }, $orders);
 
         $json = json_encode([
@@ -162,8 +160,6 @@ final readonly class OrderExportService implements OrderExportServiceInterface
             'orders' => $exportData,
         ], JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
 
-        $evidenceHash = bin2hex(sodium_crypto_generichash($json));
-
         $this->auditLogger?->log(
             AuditEvent::DataAccess,
             AuditOutcome::Success,
@@ -174,7 +170,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
                 'format' => 'json',
                 'order_count' => count($exportData),
                 'pii_included' => $includePii,
-                'evidence_hash' => $evidenceHash,
+                'evidence_hash' => bin2hex(sodium_crypto_generichash($json)),
                 'filters' => $this->sanitizeFiltersForLog($filters),
             ],
         );

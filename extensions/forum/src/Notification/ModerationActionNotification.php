@@ -37,12 +37,12 @@ final readonly class ModerationActionNotification implements ForumNotificationIn
 
     public function subject(): string
     {
-        return "Moderation action on your {$this->targetType}";
+        return "Moderation action on your $this->targetType";
     }
 
     public function body(): string
     {
-        return "A moderator has taken action on your {$this->targetType}: {$this->action}. Reason: {$this->reason}";
+        return "A moderator has taken action on your $this->targetType: $this->action. Reason: $this->reason";
     }
 
     public function metadata(): array

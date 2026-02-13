@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Medical record entity.
  *
@@ -21,8 +23,8 @@ final class MedicalRecord
      * @param non-empty-string|null   $diagnosis     Diagnosis code or description (PHI)
      * @param non-empty-string|null   $treatmentPlan Treatment plan (PHI)
      * @param RecordConfidentiality   $confidentiality Confidentiality classification
-     * @param \DateTimeImmutable      $recordDate    Date of the clinical event
-     * @param \DateTimeImmutable      $createdAt     Record creation timestamp
+     * @param DateTimeImmutable      $recordDate    Date of the clinical event
+     * @param DateTimeImmutable      $createdAt     Record creation timestamp
      */
     public function __construct(
         public readonly string $id,
@@ -33,8 +35,8 @@ final class MedicalRecord
         public readonly ?string $diagnosis = null,
         public readonly ?string $treatmentPlan = null,
         public RecordConfidentiality $confidentiality = RecordConfidentiality::Normal,
-        public readonly \DateTimeImmutable $recordDate = new \DateTimeImmutable(),
-        public readonly \DateTimeImmutable $createdAt = new \DateTimeImmutable(),
+        public readonly DateTimeImmutable $recordDate = new DateTimeImmutable(),
+        public readonly DateTimeImmutable $createdAt = new DateTimeImmutable(),
     ) {}
 
     public function isRestricted(): bool

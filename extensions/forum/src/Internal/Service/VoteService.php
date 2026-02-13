@@ -182,7 +182,7 @@ final readonly class VoteService implements VoteServiceInterface
         $vote = $this->threadVotes->findByUserAndThread($userId, $threadId);
 
         if ($vote === null) {
-            throw ForumException::notFound('ThreadVote', "{$userId}:{$threadId}");
+            throw ForumException::notFound('ThreadVote', "$userId:$threadId");
         }
 
         $thread = $this->threads->findById($threadId);
@@ -223,7 +223,7 @@ final readonly class VoteService implements VoteServiceInterface
         $vote = $this->postVotes->findByUserAndPost($userId, $postId);
 
         if ($vote === null) {
-            throw ForumException::notFound('PostVote', "{$userId}:{$postId}");
+            throw ForumException::notFound('PostVote', "$userId:$postId");
         }
 
         $post = $this->posts->findById($postId);

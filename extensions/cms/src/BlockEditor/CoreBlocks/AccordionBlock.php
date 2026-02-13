@@ -53,7 +53,7 @@ final readonly class AccordionBlock implements BlockTypeInterface
         $items = $data['items'] ?? [];
         $allowMultiple = ($data['allowMultiple'] ?? false) === true ? 'true' : 'false';
 
-        $html = "<div class=\"accordion\" data-allow-multiple=\"{$allowMultiple}\">";
+        $html = "<div class=\"accordion\" data-allow-multiple=\"$allowMultiple\">";
 
         foreach ($items as $item) {
             if (!is_array($item)) {
@@ -64,8 +64,8 @@ final readonly class AccordionBlock implements BlockTypeInterface
             $content = htmlspecialchars((string) ($item['content'] ?? ''), ENT_QUOTES, 'UTF-8');
 
             $html .= '<details class="accordion__item">';
-            $html .= "<summary class=\"accordion__title\">{$title}</summary>";
-            $html .= "<div class=\"accordion__content\">{$content}</div>";
+            $html .= "<summary class=\"accordion__title\">$title</summary>";
+            $html .= "<div class=\"accordion__content\">$content</div>";
             $html .= '</details>';
         }
 
@@ -85,17 +85,17 @@ final readonly class AccordionBlock implements BlockTypeInterface
 
         foreach ($data['items'] as $index => $item) {
             if (!is_array($item)) {
-                $errors[] = "items[{$index}] must be an object";
+                $errors[] = "items[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($item['title']) || !is_string($item['title'])) {
-                $errors[] = "items[{$index}].title is required and must be a string";
+                $errors[] = "items[$index].title is required and must be a string";
             }
 
             if (!isset($item['content']) || !is_string($item['content'])) {
-                $errors[] = "items[{$index}].content is required and must be a string";
+                $errors[] = "items[$index].content is required and must be a string";
             }
         }
 

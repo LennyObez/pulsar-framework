@@ -124,7 +124,7 @@ final readonly class IdentifierNormalizer
      */
     private static function sanitize(string $identifier): string
     {
-        $result = preg_replace('/[^a-zA-Z0-9_\-]/', '', $identifier);
+        $result = preg_replace('/[^a-zA-Z0-9_-]/', '', $identifier);
 
         return $result ?? '';
     }
@@ -137,7 +137,7 @@ final readonly class IdentifierNormalizer
     private static function splitIntoParts(string $identifier): array
     {
         // First split on underscores and hyphens
-        $parts = preg_split('/[_\-]+/', $identifier);
+        $parts = preg_split('/[_-]+/', $identifier);
 
         if ($parts === false) {
             return [$identifier];

@@ -78,7 +78,6 @@ final readonly class ThemeManifest
 
         $result = [];
 
-        /** @var mixed $item */
         foreach ($value as $item) {
             $result[] = (string) $item;
         }
@@ -97,7 +96,6 @@ final readonly class ThemeManifest
 
         $result = [];
 
-        /** @var mixed $item */
         foreach ($value as $key => $item) {
             $result[(string) $key] = (string) $item;
         }
@@ -116,7 +114,6 @@ final readonly class ThemeManifest
 
         $result = [];
 
-        /** @var mixed $item */
         foreach ($value as $key => $item) {
             $result[(string) $key] = $item;
         }

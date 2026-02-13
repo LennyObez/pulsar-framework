@@ -109,7 +109,7 @@ final class BatchExporterTest extends TestCase
         $exporter->enqueue('item-1');
         $exporter->shutdown();
 
-        self::assertTrue($exporter->isShutDown());
+        self::assertTrue($exporter->isShutDown);
         self::assertSame(0, $exporter->queueSize());
         self::assertCount(1, $transport->sentPayloads);
 
@@ -128,7 +128,7 @@ final class BatchExporterTest extends TestCase
         $exporter->shutdown();
         $exporter->shutdown();
 
-        self::assertTrue($exporter->isShutDown());
+        self::assertTrue($exporter->isShutDown);
         self::assertCount(1, $transport->sentPayloads);
     }
 
@@ -207,7 +207,7 @@ final class BatchExporterTest extends TestCase
     {
         $exporter = $this->createExporter(maxBatchSize: 100);
 
-        self::assertFalse($exporter->isShutDown());
+        self::assertFalse($exporter->isShutDown);
     }
 
     #[Test]

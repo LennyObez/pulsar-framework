@@ -12,6 +12,7 @@ use Pulsar\Config\QueueDriverType;
 use Pulsar\Queue\Driver\InMemoryDriver;
 use Pulsar\Queue\Envelope\BackoffStrategy;
 use Pulsar\Queue\Envelope\JobEnvelope;
+use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Queue\Tenant\TenantDeadLetterRouter;
 use Pulsar\Queue\Tenant\TenantFanOutDispatcher;
@@ -133,7 +134,7 @@ final class TenantQueueIsolationTest extends TestCase
         /** @var list<array{tenantId: ?string, scopeActive: bool}> $snapshots */
         $snapshots = [];
 
-        $driver = $this->createMock(\Pulsar\Queue\QueueDriverInterface::class);
+        $driver = $this->createMock(QueueDriverInterface::class);
         $driver->expects(self::exactly(3))
             ->method('push')
             ->willReturnCallback(function () use (&$snapshots): string {
@@ -141,7 +142,7 @@ final class TenantQueueIsolationTest extends TestCase
                     'tenantId' => $this->context->isResolved()
                         ? $this->context->get()->id
                         : null,
-                    'scopeActive' => $this->scope->getActiveTenantId() !== null,
+                    'scopeActive' => $this->scope->activeTenantId !== null,
                 ];
 
                 return 'job-id';
@@ -160,7 +161,7 @@ final class TenantQueueIsolationTest extends TestCase
 
         // After all fan-out, scope must be fully cleared
         self::assertFalse($this->context->isResolved());
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
     }
 
     #[Test]

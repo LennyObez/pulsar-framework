@@ -5,7 +5,7 @@
  * dangerous attributes (event handlers, expression-based styles) from HTML
  * strings. Only allows a safe set of inline formatting tags and attributes.
  *
- * Security note: innerHTML is used intentionally on a detached <template>
+ * Security note: innerHTML is used intentionally on a detached `<template>`
  * element to parse the input for sanitization — the content is never
  * rendered to the live DOM until after dangerous nodes are removed.
  */

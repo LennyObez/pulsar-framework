@@ -9,6 +9,7 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Message\Stream;
 use Pulsar\Http\Message\Uri;
 
+use function array_map;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
@@ -214,11 +215,10 @@ final class TestRequestBuilder
     public function build(): ServerRequest
     {
         /** @var array<string, list<string>> $headerArrays */
-        $headerArrays = [];
-
-        foreach ($this->headers as $name => $value) {
-            $headerArrays[$name] = [$value];
-        }
+        $headerArrays = array_map(
+            static fn(string $value): array => [$value],
+            $this->headers,
+        );
 
         $request = new ServerRequest(
             method: $this->method,

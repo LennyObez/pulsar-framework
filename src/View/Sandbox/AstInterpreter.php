@@ -110,7 +110,7 @@ final class AstInterpreter
             is_bool($value) => $value ? '1' : '',
             default => '',
         };
-        $escaped = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $escaped = htmlspecialchars($stringValue);
         $this->appendOutput($escaped);
     }
 
@@ -210,7 +210,7 @@ final class AstInterpreter
             $translated = $key;
         }
 
-        $escaped = htmlspecialchars($translated, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $escaped = htmlspecialchars($translated);
         $this->appendOutput($escaped);
     }
 

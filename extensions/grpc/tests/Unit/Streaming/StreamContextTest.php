@@ -17,7 +17,7 @@ final class StreamContextTest extends TestCase
     {
         $context = new StreamContext();
 
-        self::assertFalse($context->isCancelled());
+        self::assertFalse($context->cancelled);
     }
 
     #[Test]
@@ -26,7 +26,7 @@ final class StreamContextTest extends TestCase
         $context = new StreamContext();
         $context->cancel();
 
-        self::assertTrue($context->isCancelled());
+        self::assertTrue($context->cancelled);
     }
 
     #[Test]
@@ -105,6 +105,6 @@ final class StreamContextTest extends TestCase
         $context = new StreamContext();
         $context->cancel();
 
-        self::assertTrue($context->isCancelled());
+        self::assertTrue($context->cancelled);
     }
 }

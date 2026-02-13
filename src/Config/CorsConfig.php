@@ -11,8 +11,8 @@ use function array_filter;
 use function array_map;
 use function array_values;
 use function explode;
+use function in_array;
 use function is_array;
-use function is_bool;
 use function is_int;
 use function is_string;
 use function trim;
@@ -50,7 +50,7 @@ readonly class CorsConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        $enabled = isset($data['enabled']) && is_bool($data['enabled']) ? $data['enabled'] : false;
+        $enabled = isset($data['enabled']) && $data['enabled'] === true;
 
         return new self(
             enabled: $enabled,
@@ -76,13 +76,7 @@ readonly class CorsConfig
             return true;
         }
 
-        foreach ($this->allowedOrigins as $allowed) {
-            if ($allowed === $origin) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array($origin, $this->allowedOrigins, true);
     }
 
     /**

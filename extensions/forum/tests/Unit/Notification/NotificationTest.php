@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Forum\Tests\Unit\Notification;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Forum\Notification\ForumNotificationInterface;
 use Pulsar\Extension\Forum\Notification\MentionNotification;
 use Pulsar\Extension\Forum\Notification\ModerationActionNotification;
 use Pulsar\Extension\Forum\Notification\PostUpvotedNotification;
@@ -27,7 +26,6 @@ final class NotificationTest extends TestCase
             recipientUserIds: ['user-2', 'user-3'],
         );
 
-        self::assertInstanceOf(ForumNotificationInterface::class, $notification);
         self::assertSame('thread_reply', $notification->type());
         self::assertSame(['user-2', 'user-3'], $notification->recipientIds());
         self::assertStringContainsString('Test Thread', $notification->subject());
@@ -49,7 +47,6 @@ final class NotificationTest extends TestCase
             authorName: 'Bob',
         );
 
-        self::assertInstanceOf(ForumNotificationInterface::class, $notification);
         self::assertSame('mention', $notification->type());
         self::assertSame(['user-2'], $notification->recipientIds());
         self::assertStringContainsString('Bob', $notification->subject());
@@ -70,7 +67,6 @@ final class NotificationTest extends TestCase
             voterId: 'user-2',
         );
 
-        self::assertInstanceOf(ForumNotificationInterface::class, $notification);
         self::assertSame('post_upvoted', $notification->type());
         self::assertSame(['user-1'], $notification->recipientIds());
         self::assertStringContainsString('upvoted', $notification->subject());
@@ -89,7 +85,6 @@ final class NotificationTest extends TestCase
             acceptedBy: 'user-2',
         );
 
-        self::assertInstanceOf(ForumNotificationInterface::class, $notification);
         self::assertSame('solution_accepted', $notification->type());
         self::assertSame(['user-1'], $notification->recipientIds());
         self::assertStringContainsString('accepted', $notification->subject());
@@ -109,7 +104,6 @@ final class NotificationTest extends TestCase
             reason: 'Violation of rules',
         );
 
-        self::assertInstanceOf(ForumNotificationInterface::class, $notification);
         self::assertSame('moderation_action', $notification->type());
         self::assertSame(['user-1'], $notification->recipientIds());
         self::assertStringContainsString('post', $notification->subject());

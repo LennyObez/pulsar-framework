@@ -48,12 +48,11 @@ final class AuthenticationCeremonyTest extends TestCase
 
     private function makeCredential(
         string $id = 'cred-1',
-        string $userId = 'user-1',
         int $counter = 0,
     ): CredentialSource {
         return new CredentialSource(
             credentialId: $id,
-            userId: $userId,
+            userId: 'user-1',
             publicKeyPem: '-----BEGIN PUBLIC KEY-----test-----END PUBLIC KEY-----',
             signatureCounter: $counter,
             attestationFormat: 'none',
@@ -67,8 +66,8 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function generateOptionsWithUserIdReturnsAllowCredentials(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
-        $this->credentialRepo->persist($this->makeCredential('cred-2', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
+        $this->credentialRepo->persist($this->makeCredential('cred-2'));
 
         $ceremony = $this->createCeremony();
         $options = $ceremony->generateOptions('user-1');
@@ -85,7 +84,7 @@ final class AuthenticationCeremonyTest extends TestCase
     public function generateOptionsWithNullUserIdOmitsAllowCredentials(): void
     {
         $ceremony = $this->createCeremony();
-        $options = $ceremony->generateOptions(null);
+        $options = $ceremony->generateOptions();
 
         self::assertNotEmpty($options->challenge);
         self::assertArrayNotHasKey('allowCredentials', $options->publicKeyOptions);
@@ -128,7 +127,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsWhenCredentialBelongsToDifferentUser(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
 
@@ -145,7 +144,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnInvalidClientDataJson(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
 
@@ -166,7 +165,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnWrongClientDataType(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
 
@@ -193,7 +192,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnChallengeMismatch(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
 
@@ -220,7 +219,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnOriginMismatch(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
 
@@ -247,7 +246,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnShortAuthenticatorData(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
 
@@ -276,7 +275,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnRpIdHashMismatch(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
 
@@ -308,7 +307,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsWhenUserPresenceNotSet(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
 
@@ -347,7 +346,7 @@ final class AuthenticationCeremonyTest extends TestCase
             userVerification: 'required',
         );
 
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony($config);
 
@@ -380,7 +379,7 @@ final class AuthenticationCeremonyTest extends TestCase
     public function verifyThrowsOnCloneDetection(): void
     {
         // Credential has counter=10, and the new counter must be > 10
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1', 10));
+        $this->credentialRepo->persist($this->makeCredential('cred-1', 10));
 
         $ceremony = $this->createCeremony();
 
@@ -413,7 +412,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function toArrayReturnsPublicKeyOptions(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
         $options = $ceremony->generateOptions('user-1');
@@ -425,7 +424,7 @@ final class AuthenticationCeremonyTest extends TestCase
     #[Test]
     public function verifyUsesIdFallbackWhenRawIdMissing(): void
     {
-        $this->credentialRepo->persist($this->makeCredential('cred-1', 'user-1'));
+        $this->credentialRepo->persist($this->makeCredential());
 
         $ceremony = $this->createCeremony();
 

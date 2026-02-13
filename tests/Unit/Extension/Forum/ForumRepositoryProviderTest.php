@@ -13,10 +13,14 @@ use Pulsar\Extension\Forum\Badge\UserBadgeRepositoryInterface;
 use Pulsar\Extension\Forum\Category\CategoryRepositoryInterface;
 use Pulsar\Extension\Forum\Category\CategoryTranslationRepositoryInterface;
 use Pulsar\Extension\Forum\ForumRepositoryProvider;
+use Pulsar\Extension\Forum\Notification\ForumNotificationRepositoryInterface;
+use Pulsar\Extension\Forum\Notification\NotificationPreferenceRepositoryInterface;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
+use Pulsar\Extension\Forum\Report\ForumModerationLogRepositoryInterface;
 use Pulsar\Extension\Forum\Report\PostReportRepositoryInterface;
 use Pulsar\Extension\Forum\Report\ThreadReportRepositoryInterface;
+use Pulsar\Extension\Forum\Report\UserBanRepositoryInterface;
 use Pulsar\Extension\Forum\Subscription\ThreadSubscriptionRepositoryInterface;
 use Pulsar\Extension\Forum\Tag\TagRepositoryInterface;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
@@ -63,10 +67,14 @@ final class ForumRepositoryProviderTest extends TestCase
         self::assertContains(ForumProfileRepositoryInterface::class, $boundIds);
         self::assertContains(UserBadgeRepositoryInterface::class, $boundIds);
         self::assertContains(ThreadSubscriptionRepositoryInterface::class, $boundIds);
+        self::assertContains(ForumNotificationRepositoryInterface::class, $boundIds);
+        self::assertContains(NotificationPreferenceRepositoryInterface::class, $boundIds);
+        self::assertContains(ForumModerationLogRepositoryInterface::class, $boundIds);
+        self::assertContains(UserBanRepositoryInterface::class, $boundIds);
     }
 
     #[Test]
-    public function registerBindsTwelveRepositories(): void
+    public function registerBindsSixteenRepositories(): void
     {
         $connection = $this->createStub(ConnectionInterface::class);
 
@@ -81,7 +89,7 @@ final class ForumRepositoryProviderTest extends TestCase
             },
         );
 
-        $container->expects(self::exactly(12))->method('instance');
+        $container->expects(self::exactly(16))->method('instance');
 
         $provider = new ForumRepositoryProvider();
         $provider->register($container);

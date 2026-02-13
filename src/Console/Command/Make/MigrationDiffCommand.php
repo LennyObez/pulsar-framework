@@ -51,7 +51,7 @@ final class MigrationDiffCommand extends Command
         $this->name = 'make:migration-diff';
         $this->description = 'Generate migration from entity mapping metadata changes';
         $this->addOption('path', 'Output base directory', 'p', '.');
-        $this->addOption('name', 'Custom migration name', null);
+        $this->addOption('name', 'Custom migration name');
         $this->addOption('force', 'Overwrite existing migration files');
     }
 

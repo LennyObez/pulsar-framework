@@ -56,21 +56,21 @@ final readonly class HeroBlock implements BlockTypeInterface
 
         if (isset($data['backgroundImage']) && is_string($data['backgroundImage']) && $data['backgroundImage'] !== '') {
             $bgUrl = htmlspecialchars($data['backgroundImage'], ENT_QUOTES, 'UTF-8');
-            $bgStyle = " style=\"background-image:url({$bgUrl})\"";
+            $bgStyle = " style=\"background-image:url($bgUrl)\"";
         }
 
-        $html = "<section class=\"hero hero--{$alignment}\"{$bgStyle}><div class=\"hero__content\"><h1>{$title}</h1>";
+        $html = "<section class=\"hero hero--$alignment\"$bgStyle><div class=\"hero__content\"><h1>$title</h1>";
 
         if (isset($data['subtitle']) && is_string($data['subtitle']) && $data['subtitle'] !== '') {
             $subtitle = htmlspecialchars($data['subtitle'], ENT_QUOTES, 'UTF-8');
-            $html .= "<p class=\"hero__subtitle\">{$subtitle}</p>";
+            $html .= "<p class=\"hero__subtitle\">$subtitle</p>";
         }
 
         if (isset($data['ctaUrl']) && is_string($data['ctaUrl']) && $data['ctaUrl'] !== ''
             && isset($data['ctaText']) && is_string($data['ctaText']) && $data['ctaText'] !== '') {
             $ctaUrl = htmlspecialchars($data['ctaUrl'], ENT_QUOTES, 'UTF-8');
             $ctaText = htmlspecialchars($data['ctaText'], ENT_QUOTES, 'UTF-8');
-            $html .= "<a href=\"{$ctaUrl}\" class=\"hero__cta\">{$ctaText}</a>";
+            $html .= "<a href=\"$ctaUrl\" class=\"hero__cta\">$ctaText</a>";
         }
 
         return $html . '</div></section>';

@@ -39,22 +39,24 @@ final class RateLimitMiddleware implements MiddlewareInterface
         }
 
         $this->counters[$clientId]['count']++;
-        $remaining = max(0, self::DEFAULT_LIMIT - $this->counters[$clientId]['count']);
         $resetAt = $this->counters[$clientId]['reset'];
 
         // Check if limit exceeded
         if ($this->counters[$clientId]['count'] > self::DEFAULT_LIMIT) {
-            return Response::json([
-                'error' => 'rate_limit_exceeded',
-                'message' => 'Too many requests. Please try again later.',
-                'retry_after' => $resetAt - $now,
-            ], 429);
+            return self::tooManyRequests($resetAt - $now);
         }
 
-        $response = $handler->handle($request);
-
         // Rate limit headers would be added here in a full implementation
-        return $response;
+        return $handler->handle($request);
+    }
+
+    private static function tooManyRequests(int $retryAfter): ResponseInterface
+    {
+        return Response::json([
+            'error' => 'rate_limit_exceeded',
+            'message' => 'Too many requests. Please try again later.',
+            'retry_after' => $retryAfter,
+        ], 429);
     }
 
     /**

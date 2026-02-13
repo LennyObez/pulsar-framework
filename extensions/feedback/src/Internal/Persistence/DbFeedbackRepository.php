@@ -170,11 +170,11 @@ final readonly class DbFeedbackRepository implements FeedbackRepositoryInterface
 
         $whereClause = $where !== [] ? 'WHERE ' . implode(' AND ', $where) : '';
 
-        $countSql = "SELECT COUNT(*) AS total FROM feedback {$whereClause}";
+        $countSql = "SELECT COUNT(*) AS total FROM feedback $whereClause";
         $countResult = $this->connection->query($countSql, $params);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
-        $selectSql = "SELECT * FROM feedback {$whereClause} ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
+        $selectSql = "SELECT * FROM feedback $whereClause ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
         $dataResult = $this->connection->query($selectSql, [
             ...$params,
             'limit' => $perPage,

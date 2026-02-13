@@ -37,6 +37,7 @@ final readonly class AuditReport
      * @param list<AccessibilityViolation> $violations
      * @param int $checksRun
      * @param int $filesAudited
+     * @param DateTimeImmutable $timestamp
      */
     public function __construct(
         public array $violations,

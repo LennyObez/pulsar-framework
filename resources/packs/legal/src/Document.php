@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Legal document entity.
  *
@@ -24,8 +26,8 @@ final class Document
      * @param non-empty-string|null   $privilegeReason Reason for privilege assertion
      * @param bool                    $litigationHold  Whether document is under litigation hold
      * @param DocumentStatus          $status          Current document status
-     * @param \DateTimeImmutable      $createdAt       Creation timestamp
-     * @param \DateTimeImmutable|null $retainUntil     Retention period end date
+     * @param DateTimeImmutable      $createdAt       Creation timestamp
+     * @param DateTimeImmutable|null $retainUntil     Retention period end date
      */
     public function __construct(
         public readonly string $id,
@@ -39,8 +41,8 @@ final class Document
         public readonly ?string $privilegeReason = null,
         public bool $litigationHold = false,
         public DocumentStatus $status = DocumentStatus::Active,
-        public readonly \DateTimeImmutable $createdAt = new \DateTimeImmutable(),
-        public readonly ?\DateTimeImmutable $retainUntil = null,
+        public readonly DateTimeImmutable $createdAt = new DateTimeImmutable(),
+        public readonly ?DateTimeImmutable $retainUntil = null,
     ) {}
 
     public function isPrivileged(): bool
@@ -58,7 +60,7 @@ final class Document
             return false;
         }
 
-        return $this->retainUntil < new \DateTimeImmutable();
+        return $this->retainUntil < new DateTimeImmutable();
     }
 
     public function isUnderLitigationHold(): bool

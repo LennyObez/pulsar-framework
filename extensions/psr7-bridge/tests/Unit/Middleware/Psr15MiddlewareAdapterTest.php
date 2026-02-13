@@ -15,16 +15,16 @@ use Psr\Http\Server\MiddlewareInterface as Psr15MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Psr7Bridge\Middleware\Psr15MiddlewareAdapter;
 use Pulsar\Http\Middleware\MiddlewareInterface as PulsarMiddlewareInterface;
+use stdClass;
 
 final class Psr15MiddlewareAdapterTest extends TestCase
 {
     #[Test]
     public function implementsPulsarMiddlewareInterface(): void
     {
-        $inner = $this->createStub(Psr15MiddlewareInterface::class);
-        $adapter = new Psr15MiddlewareAdapter($inner);
+        $interfaces = class_implements(Psr15MiddlewareAdapter::class);
 
-        self::assertInstanceOf(PulsarMiddlewareInterface::class, $adapter);
+        self::assertContains(PulsarMiddlewareInterface::class, $interfaces);
     }
 
     #[Test]
@@ -32,8 +32,8 @@ final class Psr15MiddlewareAdapterTest extends TestCase
     {
         $expectedResponse = new PsrResponse(201);
 
-        $inner = new class ($expectedResponse) implements Psr15MiddlewareInterface {
-            public function __construct(private readonly ResponseInterface $response) {}
+        $inner = new readonly class ($expectedResponse) implements Psr15MiddlewareInterface {
+            public function __construct(private ResponseInterface $response) {}
 
             #[Override]
             public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -54,20 +54,18 @@ final class Psr15MiddlewareAdapterTest extends TestCase
     #[Test]
     public function processPassesRequestAndHandlerThrough(): void
     {
-        $capturedRequest = null;
-        $capturedHandler = null;
+        $captured = new stdClass();
+        $captured->request = null;
+        $captured->handler = null;
 
-        $inner = new class ($capturedRequest, $capturedHandler) implements Psr15MiddlewareInterface {
-            public function __construct(
-                private ?ServerRequestInterface &$capturedRequest,
-                private ?RequestHandlerInterface &$capturedHandler,
-            ) {}
+        $inner = new class ($captured) implements Psr15MiddlewareInterface {
+            public function __construct(private readonly stdClass $captured) {}
 
             #[Override]
             public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
             {
-                $this->capturedRequest = $request;
-                $this->capturedHandler = $handler;
+                $this->captured->request = $request;
+                $this->captured->handler = $handler;
                 return $handler->handle($request);
             }
         };
@@ -79,7 +77,8 @@ final class Psr15MiddlewareAdapterTest extends TestCase
 
         $adapter->process($request, $handler);
 
-        self::assertSame('POST', $capturedRequest?->getMethod());
-        self::assertSame($handler, $capturedHandler);
+        self::assertInstanceOf(ServerRequestInterface::class, $captured->request);
+        self::assertSame('POST', $captured->request->getMethod());
+        self::assertSame($handler, $captured->handler);
     }
 }

@@ -103,7 +103,7 @@ final readonly class UnsubscribeController
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>{$title}</title>
+                <title>$title</title>
                 <style>
                     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 80px auto; padding: 20px; color: #333; text-align: center; }
                     h1 { color: #1a1a1a; font-size: 24px; margin-bottom: 16px; }
@@ -111,8 +111,8 @@ final readonly class UnsubscribeController
                 </style>
             </head>
             <body>
-                <h1>{$title}</h1>
-                <p>{$message}</p>
+                <h1>$title</h1>
+                <p>$message</p>
             </body>
             </html>
             HTML;

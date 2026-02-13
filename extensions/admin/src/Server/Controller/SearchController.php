@@ -20,6 +20,8 @@ use function str_contains;
 #[Internal]
 final readonly class SearchController
 {
+    use RendersAdminLayout;
+
     public function __construct(
         private GlobalSearchHandler $handler,
         private AdminConfig $config,
@@ -41,7 +43,7 @@ final readonly class SearchController
             ]);
         }
 
-        return Response::html($this->renderView([
+        return Response::html($this->renderAdminView('Search results', 'search', [
             'query' => $queryStr,
             'results' => $result->results,
             'totalMatches' => $result->totalMatches,
@@ -49,15 +51,4 @@ final readonly class SearchController
         ]));
     }
 
-    /**
-     * @param array<string, mixed> $templateData
-     */
-    private function renderView(array $templateData): string
-    {
-        extract(['title' => 'Search results', 'content' => 'search', 'templateData' => $templateData]);
-        ob_start();
-        include __DIR__ . '/../View/templates/admin/layout.php';
-
-        return (string) ob_get_clean();
-    }
 }

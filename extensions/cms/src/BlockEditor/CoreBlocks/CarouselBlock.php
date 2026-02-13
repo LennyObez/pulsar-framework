@@ -61,7 +61,7 @@ final readonly class CarouselBlock implements BlockTypeInterface
             $interval = 5000;
         }
 
-        $html = "<div class=\"carousel\" data-autoplay=\"{$autoplay}\" data-interval=\"{$interval}\">";
+        $html = "<div class=\"carousel\" data-autoplay=\"$autoplay\" data-interval=\"$interval\">";
         $html .= '<div class="carousel__slides">';
 
         foreach ($slides as $slide) {
@@ -74,7 +74,7 @@ final readonly class CarouselBlock implements BlockTypeInterface
             $caption = $slide['caption'] ?? null;
 
             $html .= '<div class="carousel__slide">';
-            $html .= "<img src=\"{$imageUrl}\" alt=\"{$alt}\">";
+            $html .= "<img src=\"$imageUrl\" alt=\"$alt\">";
 
             if (is_string($caption) && $caption !== '') {
                 $html .= '<p class="carousel__caption">' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</p>';
@@ -92,7 +92,7 @@ final readonly class CarouselBlock implements BlockTypeInterface
             }
 
             $label = $i + 1;
-            $html .= "<button class=\"carousel__dot\" aria-label=\"Slide {$label}\"></button>";
+            $html .= "<button class=\"carousel__dot\" aria-label=\"Slide $label\"></button>";
         }
 
         return $html . '</div></div>';
@@ -111,17 +111,17 @@ final readonly class CarouselBlock implements BlockTypeInterface
 
         foreach ($data['slides'] as $index => $slide) {
             if (!is_array($slide)) {
-                $errors[] = "slides[{$index}] must be an object";
+                $errors[] = "slides[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($slide['imageUrl']) || !is_string($slide['imageUrl'])) {
-                $errors[] = "slides[{$index}].imageUrl is required and must be a string";
+                $errors[] = "slides[$index].imageUrl is required and must be a string";
             }
 
             if (!isset($slide['alt']) || !is_string($slide['alt'])) {
-                $errors[] = "slides[{$index}].alt is required and must be a string";
+                $errors[] = "slides[$index].alt is required and must be a string";
             }
         }
 

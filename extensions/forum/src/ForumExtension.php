@@ -148,62 +148,62 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         $prefix = '/api/v1/forum';
 
         // Categories
-        $router->get("{$prefix}/categories", [CategoryApiController::class, 'index'], 'forum.api.categories.index');
-        $router->get("{$prefix}/categories/{id}", [CategoryApiController::class, 'show'], 'forum.api.categories.show');
+        $router->get("$prefix/categories", [CategoryApiController::class, 'index'], 'forum.api.categories.index');
+        $router->get("$prefix/categories/{id}", [CategoryApiController::class, 'show'], 'forum.api.categories.show');
 
         // Threads
-        $router->get("{$prefix}/threads", [ThreadApiController::class, 'index'], 'forum.api.threads.index');
-        $router->post("{$prefix}/threads", [ThreadApiController::class, 'create'], 'forum.api.threads.create');
-        $router->get("{$prefix}/threads/{id}", [ThreadApiController::class, 'show'], 'forum.api.threads.show');
-        $router->put("{$prefix}/threads/{id}", [ThreadApiController::class, 'update'], 'forum.api.threads.update');
-        $router->delete("{$prefix}/threads/{id}", [ThreadApiController::class, 'delete'], 'forum.api.threads.delete');
+        $router->get("$prefix/threads", [ThreadApiController::class, 'index'], 'forum.api.threads.index');
+        $router->post("$prefix/threads", [ThreadApiController::class, 'create'], 'forum.api.threads.create');
+        $router->get("$prefix/threads/{id}", [ThreadApiController::class, 'show'], 'forum.api.threads.show');
+        $router->put("$prefix/threads/{id}", [ThreadApiController::class, 'update'], 'forum.api.threads.update');
+        $router->delete("$prefix/threads/{id}", [ThreadApiController::class, 'delete'], 'forum.api.threads.delete');
 
         // Posts
-        $router->get("{$prefix}/threads/{threadId}/posts", [PostApiController::class, 'index'], 'forum.api.posts.index');
-        $router->post("{$prefix}/threads/{threadId}/posts", [PostApiController::class, 'create'], 'forum.api.posts.create');
-        $router->put("{$prefix}/posts/{id}", [PostApiController::class, 'update'], 'forum.api.posts.update');
-        $router->delete("{$prefix}/posts/{id}", [PostApiController::class, 'delete'], 'forum.api.posts.delete');
-        $router->post("{$prefix}/posts/{id}/solution", [PostApiController::class, 'markSolution'], 'forum.api.posts.mark_solution');
+        $router->get("$prefix/threads/{threadId}/posts", [PostApiController::class, 'index'], 'forum.api.posts.index');
+        $router->post("$prefix/threads/{threadId}/posts", [PostApiController::class, 'create'], 'forum.api.posts.create');
+        $router->put("$prefix/posts/{id}", [PostApiController::class, 'update'], 'forum.api.posts.update');
+        $router->delete("$prefix/posts/{id}", [PostApiController::class, 'delete'], 'forum.api.posts.delete');
+        $router->post("$prefix/posts/{id}/solution", [PostApiController::class, 'markSolution'], 'forum.api.posts.mark_solution');
 
         // Votes
-        $router->post("{$prefix}/threads/{id}/vote", [VoteApiController::class, 'voteThread'], 'forum.api.threads.vote');
-        $router->delete("{$prefix}/threads/{id}/vote", [VoteApiController::class, 'removeThreadVote'], 'forum.api.threads.vote.remove');
-        $router->post("{$prefix}/posts/{id}/vote", [VoteApiController::class, 'votePost'], 'forum.api.posts.vote');
-        $router->delete("{$prefix}/posts/{id}/vote", [VoteApiController::class, 'removePostVote'], 'forum.api.posts.vote.remove');
+        $router->post("$prefix/threads/{id}/vote", [VoteApiController::class, 'voteThread'], 'forum.api.threads.vote');
+        $router->delete("$prefix/threads/{id}/vote", [VoteApiController::class, 'removeThreadVote'], 'forum.api.threads.vote.remove');
+        $router->post("$prefix/posts/{id}/vote", [VoteApiController::class, 'votePost'], 'forum.api.posts.vote');
+        $router->delete("$prefix/posts/{id}/vote", [VoteApiController::class, 'removePostVote'], 'forum.api.posts.vote.remove');
 
         // Tags
-        $router->get("{$prefix}/tags", [TagApiController::class, 'index'], 'forum.api.tags.index');
-        $router->get("{$prefix}/tags/{slug}", [TagApiController::class, 'show'], 'forum.api.tags.show');
+        $router->get("$prefix/tags", [TagApiController::class, 'index'], 'forum.api.tags.index');
+        $router->get("$prefix/tags/{slug}", [TagApiController::class, 'show'], 'forum.api.tags.show');
 
         // Reports
-        $router->post("{$prefix}/threads/{id}/report", [ReportApiController::class, 'reportThread'], 'forum.api.threads.report');
-        $router->post("{$prefix}/posts/{id}/report", [ReportApiController::class, 'reportPost'], 'forum.api.posts.report');
+        $router->post("$prefix/threads/{id}/report", [ReportApiController::class, 'reportThread'], 'forum.api.threads.report');
+        $router->post("$prefix/posts/{id}/report", [ReportApiController::class, 'reportPost'], 'forum.api.posts.report');
 
         // Profiles
-        $router->get("{$prefix}/profiles/{userId}", [ProfileApiController::class, 'show'], 'forum.api.profiles.show');
+        $router->get("$prefix/profiles/{userId}", [ProfileApiController::class, 'show'], 'forum.api.profiles.show');
 
         // Search
-        $router->get("{$prefix}/search", [SearchApiController::class, 'search'], 'forum.api.search');
+        $router->get("$prefix/search", [SearchApiController::class, 'search'], 'forum.api.search');
 
         // Moderation API
-        $router->get("{$prefix}/moderation/reports", [ModerationApiController::class, 'pendingReports'], 'forum.api.moderation.reports');
-        $router->post("{$prefix}/moderation/reports/{id}/resolve", [ModerationApiController::class, 'resolveReport'], 'forum.api.moderation.reports.resolve');
+        $router->get("$prefix/moderation/reports", [ModerationApiController::class, 'pendingReports'], 'forum.api.moderation.reports');
+        $router->post("$prefix/moderation/reports/{id}/resolve", [ModerationApiController::class, 'resolveReport'], 'forum.api.moderation.reports.resolve');
 
         // Notifications API
-        $router->get("{$prefix}/notifications", [NotificationApiController::class, 'index'], 'forum.api.notifications.index');
-        $router->patch("{$prefix}/notifications/{id}/read", [NotificationApiController::class, 'markRead'], 'forum.api.notifications.mark_read');
-        $router->post("{$prefix}/notifications/read-all", [NotificationApiController::class, 'markAllRead'], 'forum.api.notifications.read_all');
-        $router->get("{$prefix}/notifications/unread-count", [NotificationApiController::class, 'unreadCount'], 'forum.api.notifications.unread_count');
+        $router->get("$prefix/notifications", [NotificationApiController::class, 'index'], 'forum.api.notifications.index');
+        $router->patch("$prefix/notifications/{id}/read", [NotificationApiController::class, 'markRead'], 'forum.api.notifications.mark_read');
+        $router->post("$prefix/notifications/read-all", [NotificationApiController::class, 'markAllRead'], 'forum.api.notifications.read_all');
+        $router->get("$prefix/notifications/unread-count", [NotificationApiController::class, 'unreadCount'], 'forum.api.notifications.unread_count');
 
         // Full-text search
-        $router->get("{$prefix}/search/full", [ForumSearchController::class, 'search'], 'forum.api.search.full');
+        $router->get("$prefix/search/full", [ForumSearchController::class, 'search'], 'forum.api.search.full');
 
         // Leaderboard (public API)
-        $router->get("{$prefix}/leaderboard", [ApiLeaderboardController::class, 'index'], 'forum.api.leaderboard');
+        $router->get("$prefix/leaderboard", [ApiLeaderboardController::class, 'index'], 'forum.api.leaderboard');
 
         // Public profiles
-        $router->get("{$prefix}/users/{userId}/profile", [PublicProfileController::class, 'show'], 'forum.api.users.profile');
-        $router->get("{$prefix}/users/{userId}/activity", [PublicProfileController::class, 'activity'], 'forum.api.users.activity');
+        $router->get("$prefix/users/{userId}/profile", [PublicProfileController::class, 'show'], 'forum.api.users.profile');
+        $router->get("$prefix/users/{userId}/activity", [PublicProfileController::class, 'activity'], 'forum.api.users.activity');
     }
 
     /**
@@ -221,68 +221,68 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         $router->get($prefix, [AdminDashboardController::class, 'index'], 'forum.admin.dashboard');
 
         // Categories
-        $router->get("{$prefix}/categories", [AdminCategoryController::class, 'index'], 'forum.admin.categories.index');
-        $router->post("{$prefix}/categories", [AdminCategoryController::class, 'create'], 'forum.admin.categories.create');
-        $router->get("{$prefix}/categories/{id}", [AdminCategoryController::class, 'show'], 'forum.admin.categories.show');
-        $router->put("{$prefix}/categories/{id}", [AdminCategoryController::class, 'update'], 'forum.admin.categories.update');
-        $router->delete("{$prefix}/categories/{id}", [AdminCategoryController::class, 'delete'], 'forum.admin.categories.delete');
+        $router->get("$prefix/categories", [AdminCategoryController::class, 'index'], 'forum.admin.categories.index');
+        $router->post("$prefix/categories", [AdminCategoryController::class, 'create'], 'forum.admin.categories.create');
+        $router->get("$prefix/categories/{id}", [AdminCategoryController::class, 'show'], 'forum.admin.categories.show');
+        $router->put("$prefix/categories/{id}", [AdminCategoryController::class, 'update'], 'forum.admin.categories.update');
+        $router->delete("$prefix/categories/{id}", [AdminCategoryController::class, 'delete'], 'forum.admin.categories.delete');
 
         // Threads
-        $router->get("{$prefix}/threads", [AdminThreadController::class, 'index'], 'forum.admin.threads.index');
-        $router->get("{$prefix}/threads/{id}", [AdminThreadController::class, 'show'], 'forum.admin.threads.show');
-        $router->put("{$prefix}/threads/{id}", [AdminThreadController::class, 'update'], 'forum.admin.threads.update');
-        $router->delete("{$prefix}/threads/{id}", [AdminThreadController::class, 'delete'], 'forum.admin.threads.delete');
-        $router->post("{$prefix}/threads/{id}/lock", [AdminThreadController::class, 'lock'], 'forum.admin.threads.lock');
-        $router->post("{$prefix}/threads/{id}/unlock", [AdminThreadController::class, 'unlock'], 'forum.admin.threads.unlock');
-        $router->post("{$prefix}/threads/{id}/pin", [AdminThreadController::class, 'pin'], 'forum.admin.threads.pin');
-        $router->post("{$prefix}/threads/{id}/unpin", [AdminThreadController::class, 'unpin'], 'forum.admin.threads.unpin');
+        $router->get("$prefix/threads", [AdminThreadController::class, 'index'], 'forum.admin.threads.index');
+        $router->get("$prefix/threads/{id}", [AdminThreadController::class, 'show'], 'forum.admin.threads.show');
+        $router->put("$prefix/threads/{id}", [AdminThreadController::class, 'update'], 'forum.admin.threads.update');
+        $router->delete("$prefix/threads/{id}", [AdminThreadController::class, 'delete'], 'forum.admin.threads.delete');
+        $router->post("$prefix/threads/{id}/lock", [AdminThreadController::class, 'lock'], 'forum.admin.threads.lock');
+        $router->post("$prefix/threads/{id}/unlock", [AdminThreadController::class, 'unlock'], 'forum.admin.threads.unlock');
+        $router->post("$prefix/threads/{id}/pin", [AdminThreadController::class, 'pin'], 'forum.admin.threads.pin');
+        $router->post("$prefix/threads/{id}/unpin", [AdminThreadController::class, 'unpin'], 'forum.admin.threads.unpin');
 
         // Posts
-        $router->get("{$prefix}/posts", [AdminPostController::class, 'index'], 'forum.admin.posts.index');
-        $router->get("{$prefix}/posts/{id}", [AdminPostController::class, 'show'], 'forum.admin.posts.show');
-        $router->delete("{$prefix}/posts/{id}", [AdminPostController::class, 'delete'], 'forum.admin.posts.delete');
+        $router->get("$prefix/posts", [AdminPostController::class, 'index'], 'forum.admin.posts.index');
+        $router->get("$prefix/posts/{id}", [AdminPostController::class, 'show'], 'forum.admin.posts.show');
+        $router->delete("$prefix/posts/{id}", [AdminPostController::class, 'delete'], 'forum.admin.posts.delete');
 
         // Moderation (reports)
-        $router->get("{$prefix}/moderation", [AdminModerationController::class, 'index'], 'forum.admin.moderation.index');
-        $router->get("{$prefix}/moderation/reports/{id}", [AdminModerationController::class, 'show'], 'forum.admin.moderation.show');
-        $router->post("{$prefix}/moderation/reports/{id}/resolve", [AdminModerationController::class, 'resolve'], 'forum.admin.moderation.resolve');
-        $router->post("{$prefix}/moderation/users/{id}/ban", [AdminModerationController::class, 'banUser'], 'forum.admin.moderation.ban');
-        $router->post("{$prefix}/moderation/users/{id}/unban", [AdminModerationController::class, 'unbanUser'], 'forum.admin.moderation.unban');
+        $router->get("$prefix/moderation", [AdminModerationController::class, 'index'], 'forum.admin.moderation.index');
+        $router->get("$prefix/moderation/reports/{id}", [AdminModerationController::class, 'show'], 'forum.admin.moderation.show');
+        $router->post("$prefix/moderation/reports/{id}/resolve", [AdminModerationController::class, 'resolve'], 'forum.admin.moderation.resolve');
+        $router->post("$prefix/moderation/users/{id}/ban", [AdminModerationController::class, 'banUser'], 'forum.admin.moderation.ban');
+        $router->post("$prefix/moderation/users/{id}/unban", [AdminModerationController::class, 'unbanUser'], 'forum.admin.moderation.unban');
 
         // Tags
-        $router->get("{$prefix}/tags", [AdminTagController::class, 'index'], 'forum.admin.tags.index');
-        $router->post("{$prefix}/tags", [AdminTagController::class, 'create'], 'forum.admin.tags.create');
-        $router->put("{$prefix}/tags/{id}", [AdminTagController::class, 'update'], 'forum.admin.tags.update');
-        $router->delete("{$prefix}/tags/{id}", [AdminTagController::class, 'delete'], 'forum.admin.tags.delete');
+        $router->get("$prefix/tags", [AdminTagController::class, 'index'], 'forum.admin.tags.index');
+        $router->post("$prefix/tags", [AdminTagController::class, 'create'], 'forum.admin.tags.create');
+        $router->put("$prefix/tags/{id}", [AdminTagController::class, 'update'], 'forum.admin.tags.update');
+        $router->delete("$prefix/tags/{id}", [AdminTagController::class, 'delete'], 'forum.admin.tags.delete');
 
         // Users
-        $router->get("{$prefix}/users", [AdminUserController::class, 'index'], 'forum.admin.users.index');
-        $router->get("{$prefix}/users/{id}", [AdminUserController::class, 'show'], 'forum.admin.users.show');
+        $router->get("$prefix/users", [AdminUserController::class, 'index'], 'forum.admin.users.index');
+        $router->get("$prefix/users/{id}", [AdminUserController::class, 'show'], 'forum.admin.users.show');
 
         // Badges
-        $router->get("{$prefix}/badges", [BadgeController::class, 'index'], 'forum.admin.badges.index');
-        $router->post("{$prefix}/badges/{userId}/award", [BadgeController::class, 'award'], 'forum.admin.badges.award');
-        $router->delete("{$prefix}/badges/{userId}/{badge}", [BadgeController::class, 'revoke'], 'forum.admin.badges.revoke');
+        $router->get("$prefix/badges", [BadgeController::class, 'index'], 'forum.admin.badges.index');
+        $router->post("$prefix/badges/{userId}/award", [BadgeController::class, 'award'], 'forum.admin.badges.award');
+        $router->delete("$prefix/badges/{userId}/{badge}", [BadgeController::class, 'revoke'], 'forum.admin.badges.revoke');
 
         // Settings
-        $router->get("{$prefix}/settings", [AdminSettingsController::class, 'show'], 'forum.admin.settings.show');
-        $router->put("{$prefix}/settings", [AdminSettingsController::class, 'update'], 'forum.admin.settings.update');
+        $router->get("$prefix/settings", [AdminSettingsController::class, 'show'], 'forum.admin.settings.show');
+        $router->put("$prefix/settings", [AdminSettingsController::class, 'update'], 'forum.admin.settings.update');
 
         // Bans
-        $router->get("{$prefix}/bans", [AdminBanController::class, 'index'], 'forum.admin.bans.index');
-        $router->get("{$prefix}/bans/{id}", [AdminBanController::class, 'show'], 'forum.admin.bans.show');
-        $router->post("{$prefix}/bans", [AdminBanController::class, 'create'], 'forum.admin.bans.create');
-        $router->post("{$prefix}/bans/{id}/revoke", [AdminBanController::class, 'revoke'], 'forum.admin.bans.revoke');
+        $router->get("$prefix/bans", [AdminBanController::class, 'index'], 'forum.admin.bans.index');
+        $router->get("$prefix/bans/{id}", [AdminBanController::class, 'show'], 'forum.admin.bans.show');
+        $router->post("$prefix/bans", [AdminBanController::class, 'create'], 'forum.admin.bans.create');
+        $router->post("$prefix/bans/{id}/revoke", [AdminBanController::class, 'revoke'], 'forum.admin.bans.revoke');
 
         // Moderation log
-        $router->get("{$prefix}/moderation-log", [AdminModerationLogController::class, 'index'], 'forum.admin.moderation_log.index');
+        $router->get("$prefix/moderation-log", [AdminModerationLogController::class, 'index'], 'forum.admin.moderation_log.index');
 
         // Leaderboard
-        $router->get("{$prefix}/leaderboard", [AdminLeaderboardController::class, 'index'], 'forum.admin.leaderboard.index');
+        $router->get("$prefix/leaderboard", [AdminLeaderboardController::class, 'index'], 'forum.admin.leaderboard.index');
 
         // Notification preferences
-        $router->get("{$prefix}/notification-preferences", [AdminNotificationPreferencesController::class, 'show'], 'forum.admin.notification_preferences.show');
-        $router->put("{$prefix}/notification-preferences", [AdminNotificationPreferencesController::class, 'update'], 'forum.admin.notification_preferences.update');
+        $router->get("$prefix/notification-preferences", [AdminNotificationPreferencesController::class, 'show'], 'forum.admin.notification_preferences.show');
+        $router->put("$prefix/notification-preferences", [AdminNotificationPreferencesController::class, 'update'], 'forum.admin.notification_preferences.update');
     }
 
     private function registerAdminResources(ContainerInterface $container): void

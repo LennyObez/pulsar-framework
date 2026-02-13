@@ -49,7 +49,7 @@ final readonly class VideoBlock implements BlockTypeInterface
             $posterAttr = ' poster="' . htmlspecialchars($poster, ENT_QUOTES, 'UTF-8') . '"';
         }
 
-        $html = "<figure class=\"video-block\"><video controls src=\"{$src}\"{$posterAttr}></video>";
+        $html = "<figure class=\"video-block\"><video controls src=\"$src\"$posterAttr></video>";
 
         if (is_string($caption) && $caption !== '') {
             $html .= '<figcaption>' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</figcaption>';
