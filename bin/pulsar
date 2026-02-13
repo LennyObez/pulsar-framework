@@ -151,6 +151,9 @@ use Pulsar\Extension\Studio\Console\Retention\RetentionEnforcer;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\StudioManager;
 use Pulsar\Supervisor\Supervisor;
+use Pulsar\View\Command\PlaygroundServeCommand;
+use Pulsar\View\Command\ViewCompileCommand;
+use Pulsar\View\ViewConfig;
 
 // Create kernel with optional extension support
 $extensionBootstrap = null;
@@ -495,6 +498,15 @@ if ($kernel->container()->has(StudioConfig::class)) {
         }
     }
 }
+
+// Register View commands
+if ($kernel->container()->has(ViewCompileCommand::class)) {
+    /** @var ViewCompileCommand $viewCompileCmd */
+    $viewCompileCmd = $kernel->container()->get(ViewCompileCommand::class);
+    $application->add($viewCompileCmd);
+}
+
+$application->add(new PlaygroundServeCommand($basePath));
 
 // Register REPL shell command
 {

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pulsar UI Playground</title>
+    <link rel="stylesheet" href="/playground.css" />
+  </head>
+  <body>
+    <div class="pg-layout">
+      <!-- Toolbar -->
+      <div class="pg-toolbar" role="toolbar" aria-label="Playground controls">
+        <span class="pg-toolbar__brand" aria-hidden="true">Pulsar UI</span>
+
+        <div class="pg-toolbar__separator" aria-hidden="true"></div>
+
+        <!-- Theme selector -->
+        <div class="pg-toolbar__group">
+          <label class="pg-toolbar__label" for="theme-select">Theme</label>
+          <select class="pg-toolbar__select" id="theme-select">
+            <option value="default">default (read-only)</option>
+          </select>
+        </div>
+
+        <div class="pg-toolbar__separator" aria-hidden="true"></div>
+
+        <!-- Save / Reset / Delete -->
+        <div class="pg-toolbar__group">
+          <button
+            class="pg-toolbar__btn pg-toolbar__btn--primary"
+            id="btn-save"
+            title="Save theme (Ctrl+S)"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            Save
+          </button>
+          <button class="pg-toolbar__btn" id="btn-save-as" title="Save as new theme">
+            Save As
+          </button>
+          <button class="pg-toolbar__btn" id="btn-reset" title="Reset to default theme">
+            Reset
+          </button>
+          <button class="pg-toolbar__btn" id="btn-delete" title="Delete current custom theme">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path
+                d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+              />
+            </svg>
+            Delete
+          </button>
+        </div>
+
+        <div class="pg-toolbar__separator" aria-hidden="true"></div>
+
+        <!-- Responsive preview toggles -->
+        <div class="pg-toolbar__group pg-toolbar__group--end">
+          <span class="pg-toolbar__label">Preview</span>
+          <button
+            class="pg-toolbar__btn pg-toolbar__btn--icon pg-toolbar__btn--active"
+            data-preview="desktop"
+            title="Desktop preview"
+            aria-label="Desktop preview"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+          </button>
+          <button
+            class="pg-toolbar__btn pg-toolbar__btn--icon"
+            data-preview="tablet"
+            title="Tablet preview (768px)"
+            aria-label="Tablet preview"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="4" y="2" width="16" height="20" rx="2" />
+              <line x1="12" y1="18" x2="12" y2="18" />
+            </svg>
+          </button>
+          <button
+            class="pg-toolbar__btn pg-toolbar__btn--icon"
+            data-preview="mobile"
+            title="Mobile preview (375px)"
+            aria-label="Mobile preview"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="5" y="2" width="14" height="20" rx="2" />
+              <line x1="12" y1="18" x2="12" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Split pane -->
+      <div class="pg-split">
+        <!-- Editor pane (left) -->
+        <div class="pg-editor-pane">
+          <div class="pg-editor-pane__header">
+            <span class="pg-editor-pane__title">Custom CSS</span>
+            <span>Ctrl+S to save</span>
+          </div>
+          <div class="pg-editor" role="textbox" aria-label="CSS Editor" aria-multiline="true">
+            <div class="pg-editor__gutter" id="editor-gutter" aria-hidden="true">
+              <span class="pg-editor__gutter-line">1</span>
+            </div>
+            <div class="pg-editor__input-wrapper">
+              <pre class="pg-editor__highlight" id="editor-highlight" aria-hidden="true"></pre>
+              <textarea
+                class="pg-editor__textarea"
+                id="editor-textarea"
+                spellcheck="false"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                aria-label="CSS source code"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Drag handle -->
+        <div
+          class="pg-handle"
+          role="separator"
+          aria-label="Resize editor and preview panes"
+          tabindex="0"
+        ></div>
+
+        <!-- Preview pane (right) -->
+        <div class="pg-preview-pane">
+          <div class="pg-preview-pane__header">
+            <span class="pg-preview-pane__title">Component Catalog</span>
+          </div>
+          <div class="pg-preview-wrapper">
+            <iframe
+              class="pg-preview-frame"
+              id="catalog-frame"
+              src="/catalog"
+              title="Component catalog preview"
+            ></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status bar -->
+      <div class="pg-status" role="status" aria-live="polite">
+        <div class="pg-status__item">
+          <span class="pg-status__dot"></span>
+          <span id="status-text">Ready</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="pg-toast" id="pg-toast" role="alert" aria-live="assertive"></div>
+
+    <!-- Save dialog -->
+    <div
+      class="pg-dialog-backdrop"
+      id="save-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Save theme as"
+    >
+      <div class="pg-dialog">
+        <div class="pg-dialog__title">Save Theme As</div>
+        <input
+          class="pg-dialog__input"
+          id="save-dialog-input"
+          type="text"
+          placeholder="my-custom-theme"
+          aria-label="Theme name"
+          maxlength="64"
+        />
+        <div class="pg-dialog__hint">
+          Use letters, numbers, and hyphens only. Cannot be "default".
+        </div>
+        <div class="pg-dialog__actions">
+          <button class="pg-toolbar__btn" id="save-dialog-cancel">Cancel</button>
+          <button class="pg-toolbar__btn pg-toolbar__btn--primary" id="save-dialog-confirm">
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="/editor.js"></script>
+    <script src="/playground.js"></script>
+  </body>
+</html>

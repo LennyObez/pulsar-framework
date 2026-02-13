@@ -572,6 +572,22 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Tenancy\\Internal\\
 
+    # --- View ---
+    - name: View
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\View\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\View\\Internal\\
+
+    - name: View_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\View\\Internal\\
+
     # --- Webhook ---
     - name: Webhook
       collectors:
@@ -897,6 +913,8 @@ deptrac:
       - Supervisor_Internal
       - Tenancy
       - Tenancy_Internal
+      - View
+      - View_Internal
       - Webhook
       - Webhook_Internal
       - Introspection
@@ -951,6 +969,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - View
       - Webhook
     Support: *public_deps
     Container: *public_deps
@@ -997,6 +1016,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - View
       - Webhook
     Attribute: *public_deps
     Audit: *public_deps
@@ -1020,6 +1040,7 @@ deptrac:
     Storage: *public_deps
     Supervisor: *public_deps
     Tenancy: *public_deps
+    View: *public_deps
     Webhook: *public_deps
     # Introspection public layer depends on its own internal (service facades inject internal implementations)
     Introspection:
@@ -1058,6 +1079,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - View
       - Webhook
 
     # -----------------------------------------------------------------
@@ -1101,6 +1123,7 @@ deptrac:
     Storage_Internal: [Storage, Api, Support, Container, Config, Core, ErrorHandling]
     Supervisor_Internal: [Supervisor, Api, Support, Container, Config, Core, ErrorHandling]
     Tenancy_Internal: [Tenancy, Api, Support, Container, Config, Core, ErrorHandling]
+    View_Internal: [View, Api, Support, Container, Config, Core, ErrorHandling]
     Webhook_Internal: [Webhook, Api, Support, Container, Config, Core, ErrorHandling]
     # CoreRuntimeProbe introspects Container, ExtensionRegistry, Router (+ Http\Method), and Console Application (CompositionRoot)
     Introspection_Internal:

@@ -3065,6 +3065,61 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\View\\Directive\\DirectiveInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Engine\\CompiledTemplate": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Engine\\TemplateEngineInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\AttributeEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\CssEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\EscaperInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\HtmlEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\JsEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\Escaping\\UrlEscaper": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\ViewConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\View\\ViewException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Webhook\\Exception\\WebhookException": {
       "since": "1.0.0",
       "methods": [],
@@ -3225,6 +3280,7 @@
     "Pulsar\\Core\\Wiring\\SupervisorWiring",
     "Pulsar\\Core\\Wiring\\TenancyWiring",
     "Pulsar\\Core\\Wiring\\TracingWiring",
+    "Pulsar\\Core\\Wiring\\ViewWiring",
     "Pulsar\\DataProtection\\DefaultRetentionPolicy",
     "Pulsar\\Database\\Monitor\\PiiMasker",
     "Pulsar\\Database\\Monitor\\QueryClassifier",
@@ -3339,6 +3395,36 @@
     "Pulsar\\Supervisor\\PreflightCheck\\PreflightRunner",
     "Pulsar\\Supervisor\\StuckJobDetector",
     "Pulsar\\Supervisor\\StuckJobRecovery",
-    "Pulsar\\Supervisor\\Supervisor"
+    "Pulsar\\Supervisor\\Supervisor",
+    "Pulsar\\View\\Command\\PlaygroundServeCommand",
+    "Pulsar\\View\\Command\\ViewCompileCommand",
+    "Pulsar\\View\\Directive\\AuthDirective",
+    "Pulsar\\View\\Directive\\CanDirective",
+    "Pulsar\\View\\Directive\\CaseDirective",
+    "Pulsar\\View\\Directive\\ComponentDirective",
+    "Pulsar\\View\\Directive\\ControlFlowDirective",
+    "Pulsar\\View\\Directive\\CsrfDirective",
+    "Pulsar\\View\\Directive\\DirectiveRegistry",
+    "Pulsar\\View\\Directive\\ExtendsDirective",
+    "Pulsar\\View\\Directive\\GuestDirective",
+    "Pulsar\\View\\Directive\\I18nDirective",
+    "Pulsar\\View\\Directive\\IncludeDirective",
+    "Pulsar\\View\\Directive\\MethodDirective",
+    "Pulsar\\View\\Directive\\PhpDirective",
+    "Pulsar\\View\\Directive\\SectionDirective",
+    "Pulsar\\View\\Directive\\SimpleDirective",
+    "Pulsar\\View\\Directive\\SlotDirective",
+    "Pulsar\\View\\Directive\\YieldDirective",
+    "Pulsar\\View\\Engine\\TemplateCache",
+    "Pulsar\\View\\Engine\\TemplateCompiler",
+    "Pulsar\\View\\Engine\\TemplateEngine",
+    "Pulsar\\View\\Engine\\TemplateInheritance",
+    "Pulsar\\View\\Sandbox\\AstInterpreter",
+    "Pulsar\\View\\Sandbox\\AstNode",
+    "Pulsar\\View\\Sandbox\\AstNodeType",
+    "Pulsar\\View\\Sandbox\\AstParser",
+    "Pulsar\\View\\Sandbox\\SandboxConfig",
+    "Pulsar\\View\\Sandbox\\SandboxEngine",
+    "Pulsar\\View\\Sandbox\\TranslationCallback"
   ]
 }

@@ -1,0 +1,244 @@
+/* Pulsar UI — Button Component v1.0.0
+ * Variants: primary, secondary, danger, success, warning, outline, ghost.
+ * Sizes: sm, md (default), lg.
+ * States: hover, focus, active, disabled, loading.
+ */
+
+.pui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--btn-font-weight);
+  line-height: var(--leading-normal);
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: var(--btn-radius);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    color var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.pui-btn:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Primary */
+.pui-btn--primary {
+  color: #ffffff;
+  background-color: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+}
+
+.pui-btn--primary:hover {
+  background-color: var(--color-primary-700);
+  border-color: var(--color-primary-700);
+  text-decoration: none;
+}
+
+.pui-btn--primary:active {
+  background-color: var(--color-primary-800);
+  border-color: var(--color-primary-800);
+}
+
+/* Secondary */
+.pui-btn--secondary {
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  border-color: var(--color-border);
+}
+
+.pui-btn--secondary:hover {
+  background-color: var(--color-bg-tertiary);
+  border-color: var(--color-border-strong);
+  text-decoration: none;
+}
+
+.pui-btn--secondary:active {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Danger */
+.pui-btn--danger {
+  color: #ffffff;
+  background-color: var(--color-danger-600);
+  border-color: var(--color-danger-600);
+}
+
+.pui-btn--danger:hover {
+  background-color: var(--color-danger-700);
+  border-color: var(--color-danger-700);
+  text-decoration: none;
+}
+
+.pui-btn--danger:active {
+  background-color: var(--color-danger-800);
+  border-color: var(--color-danger-800);
+}
+
+/* Success */
+.pui-btn--success {
+  color: #ffffff;
+  background-color: var(--color-success-600);
+  border-color: var(--color-success-600);
+}
+
+.pui-btn--success:hover {
+  background-color: var(--color-success-700);
+  border-color: var(--color-success-700);
+  text-decoration: none;
+}
+
+.pui-btn--success:active {
+  background-color: var(--color-success-800);
+  border-color: var(--color-success-800);
+}
+
+/* Warning */
+.pui-btn--warning {
+  color: var(--color-warning-900);
+  background-color: var(--color-warning-500);
+  border-color: var(--color-warning-500);
+}
+
+.pui-btn--warning:hover {
+  background-color: var(--color-warning-600);
+  border-color: var(--color-warning-600);
+  text-decoration: none;
+}
+
+.pui-btn--warning:active {
+  background-color: var(--color-warning-700);
+  border-color: var(--color-warning-700);
+}
+
+/* Outline */
+.pui-btn--outline {
+  color: var(--color-primary-600);
+  background-color: transparent;
+  border-color: var(--color-primary-600);
+}
+
+.pui-btn--outline:hover {
+  color: #ffffff;
+  background-color: var(--color-primary-600);
+  text-decoration: none;
+}
+
+.pui-btn--outline:active {
+  background-color: var(--color-primary-700);
+}
+
+/* Ghost */
+.pui-btn--ghost {
+  color: var(--color-text-secondary);
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.pui-btn--ghost:hover {
+  color: var(--color-text);
+  background-color: var(--color-bg-tertiary);
+  text-decoration: none;
+}
+
+.pui-btn--ghost:active {
+  background-color: var(--color-bg-tertiary);
+}
+
+/* Link style */
+.pui-btn--link {
+  color: var(--color-link);
+  background-color: transparent;
+  border-color: transparent;
+  padding-inline: 0;
+  text-decoration: underline;
+}
+
+.pui-btn--link:hover {
+  color: var(--color-link-hover);
+}
+
+/* Sizes */
+.pui-btn--sm {
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--text-xs);
+  gap: var(--space-1);
+}
+
+.pui-btn--lg {
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-base);
+  gap: var(--space-2-5);
+}
+
+/* Full width */
+.pui-btn--block {
+  display: flex;
+  width: 100%;
+}
+
+/* Icon-only */
+.pui-btn--icon {
+  padding: var(--space-2);
+  gap: 0;
+}
+
+.pui-btn--icon.pui-btn--sm {
+  padding: var(--space-1);
+}
+
+.pui-btn--icon.pui-btn--lg {
+  padding: var(--space-3);
+}
+
+/* Disabled */
+.pui-btn:disabled,
+.pui-btn--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Loading */
+.pui-btn--loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.pui-btn--loading::after {
+  content: '';
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: var(--radius-full);
+  animation: pui-btn-spin 600ms linear infinite;
+  /* Restore color visibility for the spinner */
+  color: inherit;
+}
+
+.pui-btn--primary.pui-btn--loading::after {
+  color: #ffffff;
+}
+
+.pui-btn--secondary.pui-btn--loading::after {
+  color: var(--color-text);
+}
+
+@keyframes pui-btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
