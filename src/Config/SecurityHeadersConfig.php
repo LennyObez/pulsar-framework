@@ -7,6 +7,7 @@ namespace Pulsar\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_array;
 use function is_scalar;
 use function is_string;
 
@@ -31,19 +32,45 @@ readonly class SecurityHeadersConfig
      */
     public function __construct(
         public array $headers,
+        public CspConfig $csp = new CspConfig(),
+        public HstsConfig $hsts = new HstsConfig(),
+        public CrossOriginConfig $crossOrigin = new CrossOriginConfig(),
     ) {}
 
     /**
-     * Return the effective headers: minimum defaults merged with user config.
+     * Return the effective headers: minimum defaults merged with user config,
+     * plus CSP and Cross-Origin headers when enabled.
      *
-     * User-configured headers take precedence over minimum defaults.
+     * HSTS is intentionally excluded here because it requires request context
+     * (must only be sent over HTTPS). The middleware handles HSTS separately.
      *
      * @return array<string, string>
      */
     #[NoDiscard]
     public function effectiveHeaders(): array
     {
-        return [...self::MINIMUM_HEADERS, ...$this->headers];
+        $headers = [...self::MINIMUM_HEADERS, ...$this->headers];
+
+        if ($this->csp->enabled) {
+            $cspValue = $this->csp->toHeaderValue();
+            if ($cspValue !== '') {
+                $headers[$this->csp->headerName()] = $cspValue;
+            }
+        }
+
+        if ($this->crossOrigin->openerPolicy !== '') {
+            $headers['Cross-Origin-Opener-Policy'] = $this->crossOrigin->openerPolicy;
+        }
+
+        if ($this->crossOrigin->embedderPolicy !== '') {
+            $headers['Cross-Origin-Embedder-Policy'] = $this->crossOrigin->embedderPolicy;
+        }
+
+        if ($this->crossOrigin->resourcePolicy !== '') {
+            $headers['Cross-Origin-Resource-Policy'] = $this->crossOrigin->resourcePolicy;
+        }
+
+        return $headers;
     }
 
     /**
@@ -54,9 +81,29 @@ readonly class SecurityHeadersConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var array<string, string> $headers */
-        $headers = array_map(static fn(mixed $value): string => is_string($value) ? $value : (is_scalar($value) ? (string) $value : ''), $data);
+        /** @var array<string, mixed> $cspData */
+        $cspData = is_array($data['csp'] ?? null) ? $data['csp'] : [];
 
-        return new self(headers: $headers);
+        /** @var array<string, mixed> $hstsData */
+        $hstsData = is_array($data['hsts'] ?? null) ? $data['hsts'] : [];
+
+        /** @var array<string, mixed> $crossOriginData */
+        $crossOriginData = is_array($data['cross_origin'] ?? null) ? $data['cross_origin'] : [];
+
+        // Remove sub-config keys before flattening scalar headers
+        unset($data['csp'], $data['hsts'], $data['cross_origin']);
+
+        /** @var array<string, string> $headers */
+        $headers = array_map(
+            static fn(mixed $value): string => is_string($value) ? $value : (is_scalar($value) ? (string) $value : ''),
+            $data,
+        );
+
+        return new self(
+            headers: $headers,
+            csp: CspConfig::fromArray($cspData),
+            hsts: HstsConfig::fromArray($hstsData),
+            crossOrigin: CrossOriginConfig::fromArray($crossOriginData),
+        );
     }
 }
