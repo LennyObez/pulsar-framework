@@ -11,6 +11,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Storage\Storage;
 use Pulsar\Storage\StorageAdapterInterface;
 use Pulsar\Storage\StorageManager;
 
@@ -36,6 +37,9 @@ final readonly class StorageWiring implements ServiceWiringInterface
 
         $manager = new StorageManager($storageConfig);
         $container->instance(StorageManager::class, $manager);
+
+        // Bind static facade for convenience access
+        Storage::bind($manager);
 
         // Register default disk adapter as the interface binding
         if ($storageConfig->disks !== []) {

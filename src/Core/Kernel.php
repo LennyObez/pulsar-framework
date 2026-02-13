@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Core;
 
+use Closure;
 use Error;
 use JsonException;
 use Psr\Http\Message\ResponseInterface;
@@ -28,9 +29,13 @@ use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use Pulsar\Core\Event\TerminateEvent;
+use Pulsar\Core\Wiring\AntiSpamWiring;
 use Pulsar\Core\Wiring\ApiWiring;
+use Pulsar\Core\Wiring\AssetWiring;
 use Pulsar\Core\Wiring\AuthWiring;
 use Pulsar\Core\Wiring\CacheWiring;
+use Pulsar\Core\Wiring\CloudWiring;
 use Pulsar\Core\Wiring\ConfigWiring;
 use Pulsar\Core\Wiring\DatabaseWiring;
 use Pulsar\Core\Wiring\DeployWiring;
@@ -59,6 +64,7 @@ use Pulsar\Core\Wiring\TenancyWiring;
 use Pulsar\Core\Wiring\TracingWiring;
 use Pulsar\Core\Wiring\ViewWiring;
 use Pulsar\ErrorHandling\ExceptionHandler;
+use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extensibility\Exception\ExtensionException;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\FeatureFlag\Exception\FeatureFlagException;
@@ -88,6 +94,7 @@ use ReflectionNamedType;
 use SodiumException;
 use Throwable;
 
+use function dirname;
 use function is_array;
 use function is_callable;
 use function is_string;
@@ -268,9 +275,11 @@ final class Kernel implements KernelInterface
                 new ResilienceWiring(),
                 new QueueWiring(),
                 new CacheWiring(),
+                new AntiSpamWiring(),
                 new MailWiring(),
                 new NotificationWiring(),
                 new StorageWiring(),
+                new CloudWiring(),
                 new ServiceDiscoveryWiring(),
                 new ApiWiring(),
                 new OpenApiWiring(),
@@ -281,6 +290,7 @@ final class Kernel implements KernelInterface
                 new DiagnosticsWiring(),
                 new IntrospectionWiring(),
                 new ViewWiring(),
+                new AssetWiring(),
             ];
 
             foreach ($wirings as $wiring) {
@@ -304,12 +314,25 @@ final class Kernel implements KernelInterface
 
         $configUs = (int) ((hrtime(true) - $configStart) / 1000);
 
+        // Load project route files (routes/web.php, routes/api.php)
+        if (!$routesCached) {
+            $this->loadProjectRouteFiles();
+        }
+
+        // Auto-discover extensions when no bootstrap was provided but a
+        // config manager exists (indicating a real project context, not a
+        // bare kernel in tests). Scans getcwd()/extensions for pulsar.json
+        // manifests so HTTP entry points work without explicit bootstrap.
+        if ($this->extensionBootstrap === null && $this->configManager !== null) {
+            $this->autoDiscoverExtensions();
+        }
+
         // Extension register phase (all extensions)
         $extRegisterStart = hrtime(true);
         $this->extensionBootstrap?->register($this->container);
         $extensionRegisterUs = (int) ((hrtime(true) - $extRegisterStart) / 1000);
 
-        // Compiler pass phase (skip when cache is loaded — definitions are already processed)
+        // Compiler pass phase (skip when cache is loaded; definitions are already processed)
         $compilerPassStart = hrtime(true);
 
         if (!$cacheLoaded && $this->container instanceof AdvancedContainerInterface) {
@@ -322,10 +345,18 @@ final class Kernel implements KernelInterface
 
         $compilerPassUs = (int) ((hrtime(true) - $compilerPassStart) / 1000);
 
-        // Extension boot phase (all extensions — includes preBoot, boot, postBoot)
+        // Import/export registry: singleton available for extension postBoot registration
+        $importExportRegistry = new \Pulsar\ImportExport\ImportExportRegistry();
+        $this->container->instance(\Pulsar\ImportExport\ImportExportRegistry::class, $importExportRegistry);
+
+        // Extension boot phase (all extensions; includes preBoot, boot, postBoot)
         $extBootStart = hrtime(true);
         $this->extensionBootstrap?->boot($this->container, $this->router);
         $extensionBootUs = (int) ((hrtime(true) - $extBootStart) / 1000);
+
+        // After extensions boot, add their view paths to the template engine.
+        // Extensions may provide Pulse templates under resources/views/ (e.g., cms::public.pages.page).
+        $this->registerExtensionViewPaths();
 
         $this->booted = true;
 
@@ -440,7 +471,7 @@ final class Kernel implements KernelInterface
                 return $this->middleware->handle($request);
             }
 
-            // No global middleware — dispatch directly
+            // No global middleware: dispatch directly
             return $this->dispatchRoute($request);
         } catch (Throwable $e) {
             if ($this->exceptionHandler !== null) {
@@ -462,6 +493,8 @@ final class Kernel implements KernelInterface
         $response = $this->handle($request);
 
         new ResponseEmitter()->emit($response);
+
+        $this->terminate($request, $response);
     }
 
     /**
@@ -568,8 +601,9 @@ final class Kernel implements KernelInterface
 
         if (is_callable($handler)) {
             $response = $handler($request, $matched->parameters);
-        } elseif (is_array($handler)) {
-            [$class, $method] = $handler;
+        } elseif (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1]) && class_exists($handler[0])) {
+            $class = $handler[0];
+            $method = $handler[1];
             $controller = $this->resolveController($class);
             $args = $this->resolveHandlerArguments($class, $method, $request, $matched->parameters);
             $response = $controller->$method(...$args);
@@ -631,7 +665,7 @@ final class Kernel implements KernelInterface
 
                 $this->handlerUsesArrayParams[$cacheKey] = $usesArray;
             } catch (ReflectionException) {
-                // Reflection failed — fall back to legacy array-passing
+                // Reflection failed; fall back to legacy array-passing
                 $this->handlerUsesArrayParams[$cacheKey] = true;
             }
         }
@@ -673,18 +707,19 @@ final class Kernel implements KernelInterface
             } elseif ($entry['hasDefault']) {
                 $args[] = $entry['default'];
             }
-            // If no route param and no default, skip — PHP will throw a clear error
+            // If no route param and no default, skip: PHP will throw a clear error
         }
 
         return $args;
     }
 
     /**
-     * Resolve a controller instance from the container or instantiate directly.
+     * Resolve a controller instance from the container or autowire it.
      *
-     * Attempts container resolution first (supports registered bindings, deferred
-     * providers, and autowiring). Falls back to direct instantiation only if the
-     * container cannot resolve the class.
+     * Resolution order:
+     * 1. Container binding (registered classes, deferred providers)
+     * 2. Autowiring: reflect the constructor, resolve each type-hinted
+     *    parameter from the container, and instantiate the controller
      *
      * @param class-string $class
      *
@@ -700,21 +735,62 @@ final class Kernel implements KernelInterface
             return $this->container->get($class);
         }
 
-        // Attempt direct instantiation only for controllers with no constructor dependencies
+        // Autowire: resolve constructor dependencies from the container
         try {
             $reflection = new ReflectionClass($class);
+
+            if (!$reflection->isInstantiable()) {
+                throw RoutingException::invalidHandler(
+                    $class . ' is not instantiable (abstract class or interface)',
+                );
+            }
+
             $constructor = $reflection->getConstructor();
 
-            if ($constructor === null || $constructor->getNumberOfRequiredParameters() === 0) {
+            if ($constructor === null || $constructor->getNumberOfParameters() === 0) {
                 return new $class();
             }
-        } catch (ReflectionException) {
-            // Fall through to error
-        }
 
-        throw RoutingException::invalidHandler(
-            $class . ' (not registered in the container — required dependencies are unavailable)',
-        );
+            $args = [];
+
+            foreach ($constructor->getParameters() as $param) {
+                $type = $param->getType();
+
+                if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+                    $typeName = $type->getName();
+
+                    if ($this->container->has($typeName)) {
+                        $args[] = $this->container->get($typeName);
+
+                        continue;
+                    }
+                }
+
+                if ($param->isDefaultValueAvailable()) {
+                    $args[] = $param->getDefaultValue();
+
+                    continue;
+                }
+
+                if ($type instanceof ReflectionNamedType && $type->allowsNull()) {
+                    $args[] = null;
+
+                    continue;
+                }
+
+                throw RoutingException::invalidHandler(
+                    $class . ': cannot resolve constructor parameter $' . $param->getName(),
+                );
+            }
+
+            return $reflection->newInstanceArgs($args);
+        } catch (RoutingException $e) {
+            throw $e;
+        } catch (ReflectionException) {
+            throw RoutingException::invalidHandler(
+                $class . ' (not registered in the container: required dependencies are unavailable)',
+            );
+        }
     }
 
     /**
@@ -826,6 +902,175 @@ final class Kernel implements KernelInterface
     }
 
     /**
+     * Load project-level route files from the routes/ directory.
+     *
+     * Scans for routes/web.php and routes/api.php relative to the config
+     * path's parent directory (the project root). Each file receives the
+     * Router instance and can register routes directly.
+     */
+    private function loadProjectRouteFiles(): void
+    {
+        $configPath = $this->configManager?->configPath();
+
+        if ($configPath !== null) {
+            $projectRoot = dirname($configPath);
+        } else {
+            // Fallback: use current working directory when no config manager
+            // is available (e.g., HTTP entry points without explicit config)
+            $cwd = getcwd();
+
+            if ($cwd === false) {
+                return;
+            }
+
+            $projectRoot = $cwd;
+        }
+
+        $routesDir = $projectRoot . DIRECTORY_SEPARATOR . 'routes';
+
+        $routeFiles = ['web.php', 'api.php'];
+
+        foreach ($routeFiles as $file) {
+            $routeFile = $routesDir . DIRECTORY_SEPARATOR . $file;
+
+            if (is_file($routeFile)) {
+                /** @psalm-suppress UnresolvableInclude */
+                $result = (function () use ($routeFile): mixed {
+                    $router = $this->router;
+                    $container = $this->container;
+
+                    /** @psalm-suppress UnresolvableInclude */
+                    return require $routeFile;
+                })();
+
+                // Support route files that return a closure: invoke with router
+                if ($result instanceof Closure) {
+                    $result($this->router);
+                }
+            }
+        }
+    }
+
+    /**
+     * Auto-discover extensions from the project extensions directory.
+     *
+     * When no ExtensionBootstrap is provided (common in HTTP entry points),
+     * this scans `getcwd()/extensions` for pulsar.json manifests and
+     * creates a bootstrap instance automatically.
+     */
+    /**
+     * After extensions boot, add their resources/views/ directories to the
+     * template compiler's search paths. This allows namespace-prefixed templates
+     * like "cms::public.pages.page" to resolve to the CMS extension's views.
+     */
+    private function registerExtensionViewPaths(): void
+    {
+        if (!$this->container->has(\Pulsar\View\Engine\TemplateCompiler::class)) {
+            return;
+        }
+
+        // Get extension paths from the bootstrap's manifests
+        $manifests = $this->extensionBootstrap?->getManifests() ?? [];
+
+        if ($manifests === []) {
+            return;
+        }
+
+        $extensionViewPaths = [];
+
+        foreach ($manifests as $manifest) {
+            if ($manifest->path !== '') {
+                $viewsDir = $manifest->path . DIRECTORY_SEPARATOR . 'resources' . DIRECTORY_SEPARATOR . 'views';
+
+                if (is_dir($viewsDir)) {
+                    $extensionViewPaths[] = $viewsDir;
+                }
+            }
+        }
+
+        /** @var \Pulsar\View\ViewConfig $existingConfig */
+        $existingConfig = $this->container->get(\Pulsar\View\ViewConfig::class);
+
+        // Also add the project's theme/ subdirectory as a search path.
+        // Projects may organize templates under resources/views/theme/ for separation
+        // from framework-provided templates. This is searched after the root views dir.
+        $themeViewPaths = [];
+
+        foreach ($existingConfig->templatePaths as $viewPath) {
+            $themePath = $viewPath . DIRECTORY_SEPARATOR . 'theme';
+
+            if (is_dir($themePath)) {
+                $themeViewPaths[] = $themePath;
+            }
+        }
+
+        if ($extensionViewPaths === [] && $themeViewPaths === []) {
+            return;
+        }
+
+        // Rebuild the ViewConfig and TemplateCompiler with all paths
+
+        $updatedConfig = new \Pulsar\View\ViewConfig(
+            templatePaths: [...$existingConfig->templatePaths, ...$themeViewPaths, ...$extensionViewPaths],
+            cachePath: $existingConfig->cachePath,
+            autoEscape: $existingConfig->autoEscape,
+            activeTheme: $existingConfig->activeTheme,
+            phpDirectiveAllowed: $existingConfig->phpDirectiveAllowed,
+            sandboxMode: $existingConfig->sandboxMode,
+            sandboxStepLimit: $existingConfig->sandboxStepLimit,
+            sandboxLoopLimit: $existingConfig->sandboxLoopLimit,
+            sandboxOutputSizeLimit: $existingConfig->sandboxOutputSizeLimit,
+            sandboxWallClockCheckInterval: $existingConfig->sandboxWallClockCheckInterval,
+        );
+
+        // Replace the config and rebuild the compiler with the new paths
+        $this->container->instance(\Pulsar\View\ViewConfig::class, $updatedConfig);
+
+        /** @var \Pulsar\View\Engine\TemplateCache $cache */
+        $cache = $this->container->get(\Pulsar\View\Engine\TemplateCache::class);
+        $newCompiler = new \Pulsar\View\Engine\TemplateCompiler($updatedConfig, $cache);
+
+        // Re-register directives on the new compiler
+        if ($this->container->has(\Pulsar\View\Directive\DirectiveRegistry::class)) {
+            /** @var \Pulsar\View\Directive\DirectiveRegistry $directives */
+            $directives = $this->container->get(\Pulsar\View\Directive\DirectiveRegistry::class);
+            $directives->bindTo($newCompiler);
+        }
+
+        $this->container->instance(\Pulsar\View\Engine\TemplateCompiler::class, $newCompiler);
+
+        // Rebuild the engine with the new compiler
+        $newEngine = new \Pulsar\View\Engine\TemplateEngine($newCompiler);
+        $this->container->instance(\Pulsar\View\Engine\TemplateEngineInterface::class, $newEngine);
+        $this->container->instance(\Pulsar\View\Engine\TemplateEngine::class, $newEngine);
+        \Pulsar\Http\Message\Response::setTemplateEngine($newEngine);
+    }
+
+    private function autoDiscoverExtensions(): void
+    {
+        // Derive the project root from the config path (parent of config/).
+        // Falls back to getcwd() when no config path is available.
+        $configPath = $this->configManager?->configPath();
+        $projectRoot = $configPath !== null ? dirname($configPath) : (getcwd() ?: null);
+
+        if ($projectRoot === null) {
+            return;
+        }
+
+        $extensionsDir = $projectRoot . DIRECTORY_SEPARATOR . 'extensions';
+
+        if (!is_dir($extensionsDir)) {
+            return;
+        }
+
+        $bootstrap = ExtensionBootstrap::create();
+        $bootstrap->loadFromPaths([$extensionsDir]);
+
+        $this->extensionBootstrap = $bootstrap;
+        $this->container->instance(ExtensionBootstrap::class, $bootstrap);
+    }
+
+    /**
      * Determine if the application is running in production mode.
      */
     private function isProductionMode(): bool
@@ -837,6 +1082,25 @@ final class Kernel implements KernelInterface
             return $appEnv === 'production';
         } catch (Throwable) {
             return false;
+        }
+    }
+
+    /**
+     * Perform post-response cleanup and dispatch the terminate event.
+     *
+     * Must be called after the response has been sent to the client.
+     * Dispatches KernelEvents::TERMINATE via the event dispatcher and
+     * runs terminable middleware. Critical for persistent runtimes.
+     */
+    public function terminate(ServerRequestInterface $request, ResponseInterface $response): void
+    {
+        $event = new TerminateEvent($request, $response);
+
+        // Dispatch the terminate event if the event dispatcher is available
+        if ($this->container->has(EventDispatcherInterface::class)) {
+            /** @var EventDispatcherInterface $dispatcher */
+            $dispatcher = $this->container->get(EventDispatcherInterface::class);
+            $dispatcher->dispatch($event);
         }
     }
 

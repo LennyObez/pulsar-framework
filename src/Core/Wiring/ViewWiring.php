@@ -10,6 +10,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Routing\Router;
+use Pulsar\Security\Escaper\ContextEscaper;
 use Pulsar\View\Command\PlaygroundServeCommand;
 use Pulsar\View\Command\ViewCompileCommand;
 use Pulsar\View\Directive\DirectiveRegistry;
@@ -78,13 +79,17 @@ final readonly class ViewWiring implements ServiceWiringInterface
         $container->instance(TemplateEngineInterface::class, $engine);
         $container->instance(TemplateEngine::class, $engine);
 
-        // Escapers
+        // Configure Response::view() static engine so controllers can use it directly
+        \Pulsar\Http\Message\Response::setTemplateEngine($engine);
+
+        // Escapers: register both the View-layer escapers and the security ContextEscaper
         $container->instance(EscaperInterface::class, new HtmlEscaper());
         $container->instance(HtmlEscaper::class, new HtmlEscaper());
         $container->instance(UrlEscaper::class, new UrlEscaper());
         $container->instance(AttributeEscaper::class, new AttributeEscaper());
         $container->instance(JsEscaper::class, new JsEscaper());
         $container->instance(CssEscaper::class, new CssEscaper());
+        $container->instance(ContextEscaper::class, new ContextEscaper());
 
         // Sandbox engine for untrusted templates
         $sandboxConfig = SandboxConfig::fromViewConfig($config);

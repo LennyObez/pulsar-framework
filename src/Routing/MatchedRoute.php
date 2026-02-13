@@ -39,8 +39,6 @@ readonly class MatchedRoute
 
     /**
      * Get the route handler.
-     *
-     * @return callable|class-string|array{0: class-string, 1: string}
      */
     public function getHandler(): mixed
     {
