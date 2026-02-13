@@ -18,7 +18,7 @@ use function sprintf;
  *
  * ABA RTNs are 9 digits with a Federal Reserve checksum:
  * (3*d1 + 7*d2 + d3 + 3*d4 + 7*d5 + d6 + 3*d7 + 7*d8 + d9) mod 10 === 0
- * This is a FORMAT validator only — it does not verify that the
+ * This is a FORMAT validator only; it does not verify that the
  * routing number is currently active. For authoritative verification,
  * consult the Federal Reserve.
  *

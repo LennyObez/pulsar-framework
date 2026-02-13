@@ -30,7 +30,7 @@ final readonly class CorsMiddleware implements MiddlewareInterface
     {
         $origin = $request->getHeaderLine('Origin');
 
-        // No Origin header — not a CORS request
+        // No Origin header: not a CORS request
         if ($origin === '') {
             return $handler->handle($request);
         }
@@ -44,7 +44,7 @@ final readonly class CorsMiddleware implements MiddlewareInterface
             return $this->handlePreflight($origin);
         }
 
-        // Actual request — add CORS headers to response
+        // Actual request: add CORS headers to response
         $response = $handler->handle($request);
 
         return $this->addCorsHeaders($response, $origin);

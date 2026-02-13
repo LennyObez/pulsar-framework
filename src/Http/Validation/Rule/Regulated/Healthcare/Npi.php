@@ -20,7 +20,7 @@ use function strlen;
  *
  * NPIs are 10-digit identifiers assigned to healthcare providers.
  * Validation uses the Luhn algorithm with the prefix 80840 per CMS specification.
- * This is a FORMAT validator only — it does not verify that the NPI
+ * This is a FORMAT validator only; it does not verify that the NPI
  * is registered with NPPES. For authoritative verification, query
  * the NPI Registry.
  *

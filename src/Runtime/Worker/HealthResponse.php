@@ -18,7 +18,7 @@ use const JSON_THROW_ON_ERROR;
 final readonly class HealthResponse
 {
     public function __construct(
-        public HealthStatus $status,
+        public WorkerHealthStatus $status,
         public int $requestCount,
         public int $memoryUsageMb,
         public int $uptimeSeconds,
@@ -26,7 +26,7 @@ final readonly class HealthResponse
 
     public function statusCode(): int
     {
-        return $this->status === HealthStatus::Healthy ? 200 : 503;
+        return $this->status === WorkerHealthStatus::Healthy ? 200 : 503;
     }
 
     public function toJson(): string
@@ -42,9 +42,9 @@ final readonly class HealthResponse
     public static function fromWorkerInfo(WorkerInfo $info): self
     {
         $healthStatus = match ($info->state) {
-            WorkerState::Draining => HealthStatus::Draining,
-            WorkerState::Recycling, WorkerState::Stopped => HealthStatus::ShuttingDown,
-            default => HealthStatus::Healthy,
+            WorkerState::Draining => WorkerHealthStatus::Draining,
+            WorkerState::Recycling, WorkerState::Stopped => WorkerHealthStatus::ShuttingDown,
+            default => WorkerHealthStatus::Healthy,
         };
 
         return new self(

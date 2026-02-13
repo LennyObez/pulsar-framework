@@ -39,7 +39,7 @@ use function trim;
 use const JSON_THROW_ON_ERROR;
 
 /**
- * PSR-7 server request — the canonical HTTP request object for Pulsar.
+ * PSR-7 server request: the canonical HTTP request object for Pulsar.
  *
  * Implements ServerRequestInterface with Pulsar-specific convenience methods.
  * Headers are stored lowercase internally with deterministic iteration order.

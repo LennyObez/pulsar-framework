@@ -16,7 +16,7 @@ use function sprintf;
 
 /**
  * Field is required when ANY of the specified fields are present (non-null) in data.
- * Does NOT skip null — it checks the condition and fails if required and missing.
+ * Does NOT skip null; it checks the condition and fails if required and missing.
  */
 #[Api(since: '1.0.0')]
 readonly class RequiredWith implements RuleInterface

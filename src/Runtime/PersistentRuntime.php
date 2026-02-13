@@ -22,7 +22,7 @@ use Pulsar\Runtime\Http\HttpResponseSerializer;
 use Pulsar\Runtime\Upgrade\UpgradeContext;
 use Pulsar\Runtime\Upgrade\UpgradeResponse;
 use Pulsar\Runtime\Worker\HealthResponse;
-use Pulsar\Runtime\Worker\HealthStatus;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
 use Pulsar\Runtime\Worker\WorkerInfo;
 use Pulsar\Runtime\Worker\WorkerState;
 use Socket;
@@ -150,12 +150,12 @@ final class PersistentRuntime implements ReloadableRuntimeInterface
     }
 
     #[Override]
-    public function healthStatus(): HealthStatus
+    public function healthStatus(): WorkerHealthStatus
     {
         return match ($this->status) {
-            RuntimeStatus::Running => HealthStatus::Healthy,
-            RuntimeStatus::Draining => HealthStatus::Draining,
-            default => HealthStatus::ShuttingDown,
+            RuntimeStatus::Running => WorkerHealthStatus::Healthy,
+            RuntimeStatus::Draining => WorkerHealthStatus::Draining,
+            default => WorkerHealthStatus::ShuttingDown,
         };
     }
 
@@ -195,7 +195,7 @@ final class PersistentRuntime implements ReloadableRuntimeInterface
     }
 
     /**
-     * Synchronous accept loop — one connection at a time.
+     * Synchronous accept loop: one connection at a time.
      *
      * @codeCoverageIgnore Requires a running server socket and real network connections
      */
@@ -304,7 +304,7 @@ final class PersistentRuntime implements ReloadableRuntimeInterface
                 }
 
                 if ($result instanceof Response) {
-                    // Parse error — send error response and close
+                    // Parse error: send error response and close
                     $raw = $this->serializer->serialize(
                         $result,
                         closeConnection: true,
@@ -321,7 +321,7 @@ final class PersistentRuntime implements ReloadableRuntimeInterface
                 $memBefore = memory_get_usage(true);
                 $startTime = microtime(true);
 
-                // Health endpoint — bypass kernel dispatch
+                // Health endpoint: bypass kernel dispatch
                 if ($this->config->healthEndpoint && $request->getUri()->getPath() === '/_health') {
                     $healthResponse = HealthResponse::fromWorkerInfo($this->workerInfo());
                     $response = new Response(
@@ -432,7 +432,7 @@ final class PersistentRuntime implements ReloadableRuntimeInterface
                 return $result;
             }
 
-            // Need more data — read from socket
+            // Need more data: read from socket
             $data = @socket_read($ctx->socket, 8192);
 
             if ($data === false || $data === '') {
@@ -610,7 +610,7 @@ final class PersistentRuntime implements ReloadableRuntimeInterface
             return;
         }
 
-        /** @psalm-suppress UndefinedConstant — POSIX-only, guarded by OS check */
+        /** @psalm-suppress UndefinedConstant: POSIX-only, guarded by OS check */
         pcntl_signal(SIGINT, function (): void {
             $this->stop();
         });

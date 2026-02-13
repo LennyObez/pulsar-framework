@@ -16,8 +16,8 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Exception\RuntimeException;
 use Pulsar\Runtime\Worker\HealthResponse;
-use Pulsar\Runtime\Worker\HealthStatus;
 use Pulsar\Runtime\Worker\WorkerContext;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
 use Pulsar\Runtime\Worker\WorkerInfo;
 use Throwable;
 
@@ -149,11 +149,11 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
     {
         $this->status = RuntimeStatus::Draining;
         $this->workerContext->drain();
-        $this->logger?->info('FrankenPHP worker reload requested — draining');
+        $this->logger?->info('FrankenPHP worker reload requested: draining');
     }
 
     #[Override]
-    public function healthStatus(): HealthStatus
+    public function healthStatus(): WorkerHealthStatus
     {
         return $this->workerContext->healthStatus();
     }
@@ -267,7 +267,7 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
             return;
         }
 
-        /** @psalm-suppress UndefinedConstant — POSIX-only, guarded by OS check */
+        /** @psalm-suppress UndefinedConstant: POSIX-only, guarded by OS check */
         pcntl_signal(SIGINT, function (): void {
             $this->stop();
         });

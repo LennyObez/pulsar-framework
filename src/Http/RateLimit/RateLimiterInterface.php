@@ -11,6 +11,13 @@ use Pulsar\Api\Api;
  *
  * Implementations track request counts per key within time windows
  * and determine whether requests should be allowed or throttled.
+ *
+ * Note: In-memory implementations (e.g., {@see RateLimiter}) have an inherent
+ * TOCTOU window under concurrent requests because the check-and-increment is
+ * not atomic across processes. This is conservative (may allow slightly more
+ * requests than the limit) rather than destructive. For strict atomicity in
+ * multi-process deployments, use {@see SqliteRateLimiter} which uses database
+ * transactions, or a Redis-based implementation with Lua scripting.
  */
 #[Api(since: '1.0.0')]
 interface RateLimiterInterface

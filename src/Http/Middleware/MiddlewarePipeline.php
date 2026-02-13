@@ -13,6 +13,7 @@ use Psr\Http\Server\RequestHandlerInterface as PsrRequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Container\ContainerInterface;
 use RuntimeException;
+use Throwable;
 
 use function array_reverse;
 use function assert;
@@ -182,6 +183,18 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
         }
 
         if (class_exists($middleware)) {
+            // Try container resolution for classes with constructor dependencies
+            if ($this->container !== null) {
+                try {
+                    $resolved = $this->container->get($middleware);
+                    if ($resolved instanceof PsrMiddlewareInterface) {
+                        return $resolved;
+                    }
+                } catch (Throwable) {
+                    // Container resolution failed; fall through to direct instantiation
+                }
+            }
+
             return new $middleware();
         }
 

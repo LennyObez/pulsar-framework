@@ -41,7 +41,7 @@ final readonly class StatefulSingletonAnalyzer
                     property: $property->getName(),
                     type: ViolationType::WritableProperty,
                     message: sprintf(
-                        'Singleton %s has writable property $%s — may cause cross-request state leakage',
+                        'Singleton %s has writable property $%s: may cause cross-request state leakage',
                         $className,
                         $property->getName(),
                     ),
@@ -56,7 +56,7 @@ final readonly class StatefulSingletonAnalyzer
                     property: $property->getName(),
                     type: ViolationType::MutableStatic,
                     message: sprintf(
-                        'Singleton %s has mutable static property $%s — will leak state across requests',
+                        'Singleton %s has mutable static property $%s: will leak state across requests',
                         $className,
                         $property->getName(),
                     ),
@@ -71,7 +71,7 @@ final readonly class StatefulSingletonAnalyzer
                 property: $methodName . '()',
                 type: ViolationType::ResetMethod,
                 message: sprintf(
-                    'Singleton %s has %s() method — indicates mutable state that needs manual reset',
+                    'Singleton %s has %s() method: indicates mutable state that needs manual reset',
                     $className,
                     $methodName,
                 ),
@@ -100,7 +100,7 @@ final readonly class StatefulSingletonAnalyzer
     }
 
     /**
-     * Report violations — throws in strict mode for core namespaces, logs warnings otherwise.
+     * Report violations; throws in strict mode for core namespaces, logs warnings otherwise.
      *
      * @param list<StatefulSingletonViolation> $violations
      * @throws StatefulSingletonException In strict mode for core namespace violations

@@ -37,7 +37,7 @@ final class RuntimeException extends BaseRuntimeException
 
     public static function bindingRefused(string $host, int $port, string $reason): self
     {
-        return new self(sprintf('Cannot bind to %s:%d — %s', $host, $port, $reason));
+        return new self(sprintf('Cannot bind to %s:%d: %s', $host, $port, $reason));
     }
 
     public static function extensionMissing(string $extension): self

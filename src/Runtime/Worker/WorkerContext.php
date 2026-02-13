@@ -105,12 +105,12 @@ final class WorkerContext
         );
     }
 
-    public function healthStatus(): HealthStatus
+    public function healthStatus(): WorkerHealthStatus
     {
         return match ($this->state) {
-            WorkerState::Draining => HealthStatus::Draining,
-            WorkerState::Recycling, WorkerState::Stopped => HealthStatus::ShuttingDown,
-            default => HealthStatus::Healthy,
+            WorkerState::Draining => WorkerHealthStatus::Draining,
+            WorkerState::Recycling, WorkerState::Stopped => WorkerHealthStatus::ShuttingDown,
+            default => WorkerHealthStatus::Healthy,
         };
     }
 
