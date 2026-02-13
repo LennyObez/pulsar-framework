@@ -20,7 +20,9 @@ final class SchemaIdentifierTest extends TestCase
         $this->expectNotToPerformAssertions();
 
         SchemaIdentifier::validateTable('users');
+        $this->addToAssertionCount(1);
         SchemaIdentifier::validateTable('_internal');
+        $this->addToAssertionCount(1);
         SchemaIdentifier::validateTable('my_table_123');
     }
 
@@ -30,6 +32,7 @@ final class SchemaIdentifierTest extends TestCase
         $this->expectNotToPerformAssertions();
 
         SchemaIdentifier::validateColumn('email');
+        $this->addToAssertionCount(1);
         SchemaIdentifier::validateColumn('first_name');
     }
 

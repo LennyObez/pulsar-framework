@@ -127,6 +127,12 @@ final class Kernel implements KernelInterface
     /** @var array<string, list<array{name: string, hasDefault: bool, default: mixed}>> */
     private array $handlerParamMap = [];
 
+    /** @var array<string, bool> */
+    private array $handlerUsesArrayParams = [];
+
+    /** @var array<string, list<array{name: string, hasDefault: bool, default: mixed}>> */
+    private array $handlerParamMap = [];
+
     public function __construct(
         ?ContainerInterface $container = null,
         ?Router $router = null,
@@ -251,6 +257,7 @@ final class Kernel implements KernelInterface
 
             $wirings = [
                 new ConfigWiring(),
+                new I18nWiring(),
                 new LoggingWiring(),
                 new TracingWiring(),
                 new SecurityWiring(),
