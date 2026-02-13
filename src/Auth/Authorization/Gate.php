@@ -22,9 +22,9 @@ use function in_array;
  *
  * Evaluation order:
  * 1. Super-role bypass (configurable roles that skip all checks)
- * 2. ABAC policies — explicit deny short-circuits immediately
- * 3. RBAC — role→permission check via RoleRegistry
- * 4. ABAC policies — explicit allow can grant access without RBAC match
+ * 2. ABAC policies: explicit deny short-circuits immediately
+ * 3. RBAC: role→permission check via RoleRegistry
+ * 4. ABAC policies: explicit allow can grant access without RBAC match
  * 5. Default: deny
  *
  * When an EventDispatcherInterface is provided, dispatches AuthorizationGranted

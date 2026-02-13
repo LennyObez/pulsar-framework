@@ -20,9 +20,9 @@ use function strlen;
  *
  * Validates the attestation format, challenge binding, and origin.
  * Returns DeviceProofResult with confidence appropriate to the attestation type:
- *   - "none": low confidence (0.3) — self-attestation, no hardware proof
- *   - "packed": high confidence (0.9) — includes attestation certificate
- *   - "fido-u2f": high confidence (0.9) — hardware U2F key attestation
+ *   - "none": low confidence (0.3): self-attestation, no hardware proof
+ *   - "packed": high confidence (0.9): includes attestation certificate
+ *   - "fido-u2f": high confidence (0.9): hardware U2F key attestation
  *
  * All crypto operations go through KeyRingInterface (Finding B).
  */

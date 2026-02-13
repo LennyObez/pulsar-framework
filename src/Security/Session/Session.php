@@ -47,7 +47,7 @@ final class Session implements SessionInterface
             return;
         }
 
-        session_name($this->config->cookieName);
+        session_name($this->config->effectiveCookieName());
 
         $started = session_start([
             'cookie_httponly' => $this->config->cookieHttpOnly,
@@ -93,7 +93,7 @@ final class Session implements SessionInterface
     {
         $this->ensureStarted();
 
-        /** @psalm-suppress InvalidScalarArgument -- $_SESSION is always available after session_start() */
+        /** @psalm-suppress InvalidScalarArgument: $_SESSION is always available after session_start() */
         return array_key_exists($key, $_SESSION);
     }
 
@@ -156,7 +156,7 @@ final class Session implements SessionInterface
      *
      * @return array<string, mixed>
      *
-     * @psalm-suppress InvalidReturnType, InvalidReturnStatement -- $_SESSION keys are strings after session_start()
+     * @psalm-suppress InvalidReturnType, InvalidReturnStatement: $_SESSION keys are strings after session_start()
      */
     #[Override]
     public function all(): array

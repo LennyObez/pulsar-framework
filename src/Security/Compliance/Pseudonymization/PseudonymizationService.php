@@ -86,7 +86,7 @@ final class PseudonymizationService implements PseudonymizationServiceInterface
      */
     public function __serialize(): array
     {
-        throw new LogicException('PseudonymizationService must not be serialized — derived key material would leak.');
+        throw new LogicException('PseudonymizationService must not be serialized: derived key material would leak.');
     }
 
     #[Override]

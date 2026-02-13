@@ -11,11 +11,15 @@ use Throwable;
 
 use function dirname;
 use function fclose;
+use function fflush;
 use function file_put_contents;
+use function flock;
 use function fopen;
 use function fread;
 use function fseek;
 use function fstat;
+use function fsync;
+use function fwrite;
 use function is_array;
 use function is_dir;
 use function is_file;
@@ -24,12 +28,14 @@ use function json_decode;
 use function json_encode;
 use function mkdir;
 use function sprintf;
+use function strlen;
 use function strrpos;
 use function substr;
 use function trim;
 
 use const FILE_APPEND;
 use const LOCK_EX;
+use const LOCK_UN;
 use const SEEK_END;
 
 /**
@@ -48,6 +54,7 @@ final class AuditFileSink implements ChainableAuditSinkInterface
 
     public function __construct(
         private readonly string $logPath,
+        private readonly bool $fsync = false,
     ) {}
 
     /**
@@ -63,6 +70,12 @@ final class AuditFileSink implements ChainableAuditSinkInterface
             JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
         ) . "\n";
 
+        if ($this->fsync) {
+            $this->writeWithFsync($line);
+
+            return;
+        }
+
         $result = file_put_contents($this->logPath, $line, FILE_APPEND | LOCK_EX);
 
         if ($result === false) {
@@ -77,7 +90,7 @@ final class AuditFileSink implements ChainableAuditSinkInterface
      *
      * Uses backward seek to efficiently read only the last line without
      * scanning the entire file. Returns null for empty, missing, or
-     * corrupt files — never throws.
+     * corrupt files: never throws.
      */
     #[Override]
     public function lastHmac(): ?string
@@ -103,7 +116,7 @@ final class AuditFileSink implements ChainableAuditSinkInterface
 
             $fileSize = $stat['size'];
 
-            // Read up to 8KB from the end — enough for one JSONL audit entry
+            // Read up to 8KB from the end: enough for one JSONL audit entry
             /** @var positive-int $readSize */
             $readSize = min($fileSize, 8192);
             fseek($handle, -$readSize, SEEK_END);
@@ -134,6 +147,45 @@ final class AuditFileSink implements ChainableAuditSinkInterface
             return $data['hmac'];
         } catch (Throwable) {
             return null;
+        }
+    }
+
+    /**
+     * Write with explicit fsync to ensure durability for regulated deployments.
+     *
+     * Opens the file with an exclusive lock, appends the line, calls fsync()
+     * to flush OS buffers to disk, then releases the lock.
+     */
+    private function writeWithFsync(string $line): void
+    {
+        $handle = fopen($this->logPath, 'ab');
+
+        if ($handle === false) {
+            throw SecurityException::auditWriteFailed(
+                sprintf('Could not open audit log at "%s"', $this->logPath),
+            );
+        }
+
+        try {
+            if (!flock($handle, LOCK_EX)) {
+                throw SecurityException::auditWriteFailed(
+                    sprintf('Could not acquire lock on audit log at "%s"', $this->logPath),
+                );
+            }
+
+            $written = fwrite($handle, $line);
+
+            if ($written === false || $written !== strlen($line)) {
+                throw SecurityException::auditWriteFailed(
+                    sprintf('Incomplete write to audit log at "%s"', $this->logPath),
+                );
+            }
+
+            fflush($handle);
+            fsync($handle);
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
         }
     }
 

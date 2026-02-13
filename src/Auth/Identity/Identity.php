@@ -143,7 +143,7 @@ readonly class Identity implements IdentityInterface
     /**
      * Return a new identity with the given two-factor status.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement -- Psalm does not yet infer clone() return type
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
      */
     #[NoDiscard]
     public function withTwoFactorStatus(TwoFactorStatus $status): self

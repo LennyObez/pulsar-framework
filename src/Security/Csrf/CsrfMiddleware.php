@@ -8,6 +8,7 @@ use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Api\Api;
 use Pulsar\Config\CsrfConfig;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
@@ -37,6 +38,7 @@ use function trim;
  *
  * Returns a 403 Forbidden JSON response when validation fails.
  */
+#[Api(since: '1.0.0')]
 final readonly class CsrfMiddleware implements MiddlewareInterface
 {
     public function __construct(

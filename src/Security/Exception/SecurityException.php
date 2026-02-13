@@ -111,7 +111,7 @@ final class SecurityException extends RuntimeException
     #[NoDiscard]
     public static function serializationForbidden(string $class): self
     {
-        return new self(sprintf('Serialization of %s is forbidden — key material must not leave process memory', $class));
+        return new self(sprintf('Serialization of %s is forbidden: key material must not leave process memory', $class));
     }
 
     /**
@@ -157,5 +157,32 @@ final class SecurityException extends RuntimeException
     public static function sessionPayloadTooLarge(int $size, int $max): self
     {
         return new self(sprintf('Session payload size %d bytes exceeds maximum of %d bytes', $size, $max));
+    }
+
+    /**
+     * Session has been idle for longer than the configured timeout (PCI-DSS 8.2.8).
+     */
+    #[NoDiscard]
+    public static function sessionIdleExpired(int $idleSeconds, int $maxIdle): self
+    {
+        return new self(sprintf('Session idle timeout exceeded: %d seconds idle, maximum is %d seconds', $idleSeconds, $maxIdle));
+    }
+
+    /**
+     * Secret vault key not found.
+     */
+    #[NoDiscard]
+    public static function vaultKeyNotFound(string $key): self
+    {
+        return new self(sprintf('Secret "%s" not found in the vault', $key));
+    }
+
+    /**
+     * Runtime security assertion failed.
+     */
+    #[NoDiscard]
+    public static function assertionFailed(string $assertion, string $detail): self
+    {
+        return new self(sprintf('Security assertion failed [%s]: %s', $assertion, $detail));
     }
 }

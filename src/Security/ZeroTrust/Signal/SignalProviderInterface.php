@@ -25,7 +25,7 @@ interface SignalProviderInterface
      *
      * Returns an empty ClaimSet when the provider cannot produce claims
      * (e.g., missing required context data). Implementations must never
-     * throw exceptions for missing optional data — return reduced confidence instead.
+     * throw exceptions for missing optional data; return reduced confidence instead.
      */
     public function evaluate(SignalContext $context): ClaimSet;
 

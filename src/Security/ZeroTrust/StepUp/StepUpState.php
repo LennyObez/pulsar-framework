@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Tracks step-up authentication attempts for an identity.
  *
  * Records attempt history to enforce rate limiting, cooldown periods,
- * and lockout thresholds. Immutable — each state transition returns
+ * and lockout thresholds. Immutable: each state transition returns
  * a new instance.
  */
 #[Api(since: '1.0.0')]

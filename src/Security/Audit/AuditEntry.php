@@ -30,7 +30,7 @@ readonly class AuditEntry
 {
     /**
      * @param array<string, mixed> $metadata
-     * @param string $kid Key identifier — empty for legacy entries created before kid tracking
+     * @param string $kid Key identifier: empty for legacy entries created before kid tracking
      */
     public function __construct(
         public string $id,
@@ -49,7 +49,7 @@ readonly class AuditEntry
     /**
      * Create a new audit entry and compute its HMAC.
      *
-     * The kid is always derived from the actual key bytes — callers cannot
+     * The kid is always derived from the actual key bytes; callers cannot
      * accidentally omit or forge it.
      *
      * @param array<string, mixed> $metadata
@@ -70,7 +70,7 @@ readonly class AuditEntry
         string $previousHmac,
         string $auditKey,
     ): self {
-        // Compute kid from the actual key bytes — 16 hex chars (64 bits)
+        // Compute kid from the actual key bytes: 16 hex chars (64 bits)
         // Uses minimum generichash output (16 bytes) then takes first 16 hex chars
         $kid = substr(sodium_bin2hex(sodium_crypto_generichash($auditKey, '', SODIUM_CRYPTO_GENERICHASH_BYTES_MIN)), 0, 16);
 

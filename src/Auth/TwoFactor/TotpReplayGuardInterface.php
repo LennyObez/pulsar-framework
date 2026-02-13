@@ -12,7 +12,7 @@ use Pulsar\Api\Api;
  * Implementations track which time steps have been used for each identity
  * and purpose to prevent the same code from being accepted more than once.
  *
- * The key scope is (identityId, purpose, timeStep) — not (identityId, code).
+ * The key scope is (identityId, purpose, timeStep): not (identityId, code).
  * This prevents replay across different purposes and correctly ties the
  * guard to the accepted time step rather than the code string.
  */

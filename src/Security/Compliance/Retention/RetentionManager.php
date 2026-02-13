@@ -17,7 +17,7 @@ use Pulsar\Security\Audit\AuditOutcome;
  *
  * Calculates what records are eligible for purging based on the retention
  * schedule. Actual purge execution against a data store is delegated to
- * domain-specific implementations — this manager determines WHAT should
+ * domain-specific implementations: this manager determines WHAT should
  * be purged and logs the action via the audit trail.
  */
 #[Internal(reason: 'Retention management implementation detail')]

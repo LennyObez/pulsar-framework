@@ -20,7 +20,7 @@ interface ChainableAuditSinkInterface extends AuditSinkInterface
      * Read the HMAC of the last written audit entry.
      *
      * Returns null if the store is empty, the file is missing, or the
-     * last entry cannot be parsed. Must never throw — callers fall back
+     * last entry cannot be parsed. Must never throw: callers fall back
      * to the seed HMAC on null.
      */
     public function lastHmac(): ?string;

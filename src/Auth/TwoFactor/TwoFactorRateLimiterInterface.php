@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Optional rate limiting for 2FA verification attempts.
  *
- * Not wired by default — apps provide their own implementation
+ * Not wired by default: apps provide their own implementation
  * scoped to their specific rate limiting needs (identity + IP + timeframe, etc.).
  *
  * Documented context keys (apps decide which to populate):

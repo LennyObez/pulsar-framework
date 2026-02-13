@@ -86,9 +86,23 @@ final readonly class TwoFactorManager implements TwoFactorManagerInterface
     ): Confirm2faSetupResult {
         assert($identityId !== '', 'identityId must not be empty');
 
+        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt($identityId, TwoFactorPurpose::Setup)) {
+            $this->emitAudit(
+                AuditEvent::SecurityEvent,
+                AuditOutcome::Denied,
+                $identityId,
+                '2fa_setup_confirmation_failed',
+                ['reason' => 'rate_limited'],
+            );
+
+            return Confirm2faSetupResult::failure(VerifyReason::RateLimited);
+        }
+
         $timeStep = $this->verifier->verify(
             $secret,
             $code,
+            replayGuard: $this->replayGuard,
+            identityId: $identityId,
             purpose: TwoFactorPurpose::Setup,
         );
 

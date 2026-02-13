@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Session\Handler;
 
+use InvalidArgumentException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Security\Exception\SecurityException;
@@ -14,6 +15,7 @@ use function glob;
 use function is_dir;
 use function is_file;
 use function mkdir;
+use function preg_match;
 use function rename;
 use function sprintf;
 use function tempnam;
@@ -35,10 +37,12 @@ final class FileHandler implements SessionHandlerInterface
     #[Override]
     public function open(string $path, string $name): bool
     {
-        $this->savePath = $path;
+        // Use the provided path, or fall back to a sensible default
+        // when session.save_path is not configured.
+        $this->savePath = $path !== '' ? $path : (base_path('storage/sessions'));
 
         if (!is_dir($this->savePath)) {
-            mkdir($this->savePath, 0o700, true);
+            @mkdir($this->savePath, 0o700, true);
         }
 
         return is_dir($this->savePath);
@@ -158,6 +162,10 @@ final class FileHandler implements SessionHandlerInterface
 
     private function sessionFile(string $id): string
     {
+        if (preg_match('/^[0-9a-f]+$/', $id) !== 1) {
+            throw new InvalidArgumentException('Invalid session ID format');
+        }
+
         return sprintf('%s/sess_%s', $this->savePath, $id);
     }
 }

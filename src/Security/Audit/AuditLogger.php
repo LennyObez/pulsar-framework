@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Security\Audit;
 
 use DateTimeImmutable;
+use Fiber;
 use JsonException;
 use Override;
 use Pulsar\Api\Api;
@@ -37,6 +38,9 @@ final class AuditLogger implements AuditLoggerInterface
     private const string SEED_MESSAGE = 'PULSAR_AUDIT_SEED';
 
     private string $previousHmac;
+
+    /** Cooperative fiber mutex for HMAC chain integrity. */
+    private bool $chainLocked = false;
 
     /**
      * @throws SodiumException
@@ -107,21 +111,32 @@ final class AuditLogger implements AuditLoggerInterface
         $id = bin2hex($this->randomizer->getBytes(16));
         $timestamp = new DateTimeImmutable();
 
-        $entry = AuditEntry::create(
-            id: $id,
-            event: $event,
-            outcome: $outcome,
-            actor: $resolvedActor ?? 'system',
-            action: $action,
-            resource: $resource,
-            timestamp: $timestamp,
-            metadata: $enrichedMetadata,
-            previousHmac: $this->previousHmac,
-            auditKey: $this->auditKey,
-        );
+        // Acquire cooperative mutex: suspend fiber until the chain is unlocked.
+        // Only suspend when running inside a Fiber; main-thread calls are inherently serial.
+        while ($this->chainLocked && Fiber::getCurrent() !== null) {
+            Fiber::suspend();
+        }
+        $this->chainLocked = true;
 
-        $this->sink->write($entry);
-        $this->previousHmac = $entry->hmac;
+        try {
+            $entry = AuditEntry::create(
+                id: $id,
+                event: $event,
+                outcome: $outcome,
+                actor: $resolvedActor ?? 'system',
+                action: $action,
+                resource: $resource,
+                timestamp: $timestamp,
+                metadata: $enrichedMetadata,
+                previousHmac: $this->previousHmac,
+                auditKey: $this->auditKey,
+            );
+
+            $this->sink->write($entry);
+            $this->previousHmac = $entry->hmac;
+        } finally {
+            $this->chainLocked = false;
+        }
 
         return $entry;
     }

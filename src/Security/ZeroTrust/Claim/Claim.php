@@ -22,7 +22,7 @@ readonly class Claim
 {
     /**
      * @param string $name Claim identifier (e.g., "device.registered", "ip.in_range")
-     * @param mixed $value Claim payload — type depends on the claim
+     * @param mixed $value Claim payload: type depends on the claim
      * @param ClaimSource $source Signal provider that produced this claim
      * @param float $confidence Confidence level, must be between 0.0 and 1.0 inclusive
      * @param DateTimeImmutable $timestamp When the claim was produced
