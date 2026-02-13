@@ -71,7 +71,7 @@ final class SessionManager implements SessionInterface
             $this->sessionId = $this->generateId();
         }
 
-        $this->handler->open($this->config->savePath, $this->config->cookieName);
+        $this->handler->open($this->config->savePath, $this->config->effectiveCookieName());
 
         $raw = $this->handler->read($this->sessionId);
 
@@ -113,7 +113,7 @@ final class SessionManager implements SessionInterface
             return;
         }
 
-        $cookieValue = $request->getCookieParams()[$this->config->cookieName] ?? null;
+        $cookieValue = $request->getCookieParams()[$this->config->effectiveCookieName()] ?? null;
         $existingId = is_string($cookieValue) ? $cookieValue : '';
 
         if ($existingId !== '' && preg_match('/^[0-9a-f]{64}$/', $existingId) === 1) {
@@ -122,7 +122,7 @@ final class SessionManager implements SessionInterface
             $this->sessionId = $this->generateId();
         }
 
-        $this->handler->open($this->config->savePath, $this->config->cookieName);
+        $this->handler->open($this->config->savePath, $this->config->effectiveCookieName());
 
         $raw = $this->handler->read($this->sessionId);
         $isExistingSession = $raw !== '' && $raw !== false;
@@ -152,6 +152,18 @@ final class SessionManager implements SessionInterface
                 userAgent: $userAgent,
             );
         } else {
+            // PCI-DSS 8.2.8: Enforce idle timeout before updating lastActivity
+            $idleTimeout = $this->config->idleTimeout;
+
+            if ($idleTimeout > 0) {
+                $idleSeconds = time() - $this->metadata->lastActivity;
+
+                if ($idleSeconds > $idleTimeout) {
+                    $this->destroy();
+                    throw SecurityException::sessionIdleExpired($idleSeconds, $idleTimeout);
+                }
+            }
+
             $this->metadata = new SessionMetadata(
                 createdAt: $this->metadata->createdAt,
                 lastActivity: time(),

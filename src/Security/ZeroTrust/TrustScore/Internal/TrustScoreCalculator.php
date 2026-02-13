@@ -17,7 +17,7 @@ use function min;
  * Computes a trust score from a ClaimSet using configurable weights.
  *
  * The trust score is a diagnostic metric (0.0-1.0) intended for dashboards
- * and telemetry. It is NOT used for access decisions — the policy engine
+ * and telemetry. It is NOT used for access decisions: the policy engine
  * handles authorization independently.
  *
  * Score computation: weighted average of present claims' confidence values.

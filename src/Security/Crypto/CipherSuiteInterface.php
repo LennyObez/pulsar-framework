@@ -13,6 +13,11 @@ use Pulsar\Security\Exception\SecurityException;
  * Allows swapping between sodium (default) and AES-GCM cipher suites
  * without changing calling code. Each implementation handles authenticated
  * encryption with optional associated data (AEAD) and keyed HMAC.
+ *
+ * FIPS 140-2 compatible: uses FIPS 140-2 approved algorithms (AES-256-GCM,
+ * HMAC-SHA-256) via the AesGcmCipherSuite implementation. Achieves FIPS 140-2
+ * compliance when deployed with a NIST-validated OpenSSL FIPS provider.
+ * Use FipsValidator::verify() to confirm your deployment meets FIPS requirements.
  */
 #[Api(since: '1.0.0')]
 interface CipherSuiteInterface

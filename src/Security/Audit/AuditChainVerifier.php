@@ -44,7 +44,7 @@ final readonly class AuditChainVerifier
             return Hmac::verifyHex($message, $entry->hmac, $key);
         }
 
-        // Legacy entry without kid — try all keys in the ring.
+        // Legacy entry without kid: try all keys in the ring.
         $keys = $this->keyRing->all();
         /** @var array<string, string> $keysArray */
         $keysArray = $keys instanceof Traversable ? iterator_to_array($keys) : $keys;

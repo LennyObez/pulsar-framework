@@ -24,8 +24,8 @@ use function time;
  * - Horizontal scaling
  *
  * Data model:
- * - Session data: `{prefix}session:{id}` — stores JSON with data + metadata
- * - User sessions: `{prefix}user:{userId}` — Redis Set of active session IDs
+ * - Session data: `{prefix}session:{id}`: stores JSON with data + metadata
+ * - User sessions: `{prefix}user:{userId}`: Redis Set of active session IDs
  */
 #[Internal]
 final class RedisHandler implements SessionHandlerInterface
@@ -157,7 +157,7 @@ final class RedisHandler implements SessionHandlerInterface
     #[Override]
     public function gc(int $max_lifetime): int
     {
-        // Redis handles expiry via TTL — no manual GC needed.
+        // Redis handles expiry via TTL: no manual GC needed.
         // Clean up stale entries in user session sets.
         return 0;
     }

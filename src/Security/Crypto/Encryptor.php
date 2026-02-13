@@ -10,6 +10,7 @@ use Pulsar\Security\Exception\SecurityException;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
+use SensitiveParameter;
 use SodiumException;
 
 use function sodium_crypto_secretbox;
@@ -46,7 +47,9 @@ final class Encryptor implements EncryptorInterface
     private readonly Randomizer $randomizer;
 
     private function __construct(
+        #[SensitiveParameter]
         private string $key,
+        #[SensitiveParameter]
         private ?string $previousKey = null,
         private readonly ?CipherSuiteInterface $cipherSuite = null,
     ) {

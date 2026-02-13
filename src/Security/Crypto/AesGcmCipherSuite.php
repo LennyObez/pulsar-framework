@@ -24,7 +24,10 @@ use function substr;
 /**
  * Cipher suite backed by AES-256-GCM via OpenSSL.
  *
- * Provides FIPS 140-2 compliant authenticated encryption with associated data.
+ * FIPS 140-2 compatible: uses FIPS 140-2 approved algorithms (AES-256-GCM,
+ * HMAC-SHA-256). Achieves FIPS 140-2 compliance when deployed with a
+ * NIST-validated OpenSSL FIPS provider. Use FipsValidator::verify() to
+ * confirm your deployment meets FIPS requirements.
  *
  * Ciphertext format: version byte (0x02) || nonce (12) || tag (16) || ciphertext.
  */
@@ -122,6 +125,17 @@ final readonly class AesGcmCipherSuite implements CipherSuiteInterface
         $computed = $this->hmac($data, $key);
 
         return hash_equals($expected, $computed);
+    }
+
+    /**
+     * Check if the OpenSSL build has FIPS mode enabled.
+     *
+     * Delegates to FipsValidator for comprehensive detection.
+     */
+    #[NoDiscard]
+    public static function isFipsAvailable(): bool
+    {
+        return FipsValidator::isFipsAvailable();
     }
 
     #[NoDiscard]

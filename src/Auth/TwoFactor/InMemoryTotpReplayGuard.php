@@ -12,7 +12,7 @@ use function array_filter;
  * In-memory TOTP replay guard for single-process and testing use.
  *
  * Tracks used time steps in process memory keyed by (identityId, purpose, timeStep).
- * Does not protect against replay attacks across different processes or workers —
+ * Does not protect against replay attacks across different processes or workers --
  * use SqliteTotpReplayGuard for production multi-worker deployments.
  */
 #[Internal]
