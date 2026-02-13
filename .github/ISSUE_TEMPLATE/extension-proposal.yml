@@ -1,0 +1,103 @@
+name: Extension Proposal
+description: Propose a new extension for Pulsar Framework
+title: '[Extension] '
+labels: ['extension', 'proposal']
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Extension name
+      description: The name of the proposed extension.
+      placeholder: e.g., pulsar/audit-trail
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does this extension do and why is it needed?
+    validations:
+      required: true
+  - type: dropdown
+    id: trust-tier
+    attributes:
+      label: Trust tier requested
+      description: The trust tier this extension should operate under (see ADR-0023).
+      options:
+        - Core
+        - Verified
+        - Community
+        - Untrusted
+    validations:
+      required: true
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Capabilities needed
+      description: Which capabilities from the ExtensionCapability enum does this extension require?
+      placeholder: |
+        - RegisterServices
+        - RegisterRoutes
+        - RegisterCommands
+    validations:
+      required: true
+  - type: textarea
+    id: services
+    attributes:
+      label: Services, routes, and commands provided
+      description: What does this extension register with the framework?
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies on other extensions
+      description: List any extensions this one depends on.
+    validations:
+      required: false
+  - type: textarea
+    id: success
+    attributes:
+      label: Success indicators
+      description: How will you measure whether this extension is working correctly?
+    validations:
+      required: false
+  - type: textarea
+    id: failure
+    attributes:
+      label: Failure modes
+      description: What happens when this extension fails? How does it degrade?
+    validations:
+      required: false
+  - type: dropdown
+    id: confidence
+    attributes:
+      label: Confidence level
+      description: How confident are you in this design?
+      options:
+        - Proven
+        - Tested
+        - Theoretical
+    validations:
+      required: true
+  - type: textarea
+    id: threat-model
+    attributes:
+      label: Threat model notes
+      description: What data does this extension touch? Does it require egress? Does it handle secrets?
+    validations:
+      required: true
+  - type: textarea
+    id: deterministic
+    attributes:
+      label: Deterministic and build impact
+      description: Does this extension affect build-time operations or deterministic behavior?
+    validations:
+      required: false
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Boundary impact
+      description: Does this extension need to cross module boundaries or access internal APIs?
+    validations:
+      required: false
