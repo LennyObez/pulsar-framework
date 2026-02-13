@@ -28,7 +28,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Envelope wrapping a domain/integration event with metadata and integrity hash.
  *
  * The payload hash is computed from canonical serialization: event type, schema version,
- * and recursively key-sorted JSON payload — protecting the semantic meaning of the event.
+ * and recursively key-sorted JSON payload: protecting the semantic meaning of the event.
  */
 #[Api(since: '1.0.0')]
 final readonly class EventEnvelope

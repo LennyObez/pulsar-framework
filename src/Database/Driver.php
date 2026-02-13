@@ -6,7 +6,12 @@ namespace Pulsar\Database;
 
 use Pulsar\Api\Api;
 
+use function getcwd;
 use function sprintf;
+use function str_starts_with;
+
+use const DIRECTORY_SEPARATOR;
+use const PHP_OS_FAMILY;
 
 /**
  * Supported database drivers.
@@ -27,8 +32,36 @@ enum Driver: string
             self::MySQL => sprintf('mysql:host=%s;port=%d;dbname=%s', $host, $port, $database)
                 . ($charset !== null ? sprintf(';charset=%s', $charset) : ''),
             self::PostgreSQL => sprintf('pgsql:host=%s;port=%d;dbname=%s', $host, $port, $database),
-            self::SQLite => sprintf('sqlite:%s', $database),
+            self::SQLite => sprintf('sqlite:%s', self::resolveSqlitePath($database)),
         };
+    }
+
+    /**
+     * Resolve a SQLite database path to an absolute path.
+     *
+     * Special values (:memory:) are returned as-is. Relative paths are
+     * resolved against the current working directory. For production use,
+     * prefer passing absolute paths via ConnectionConfig to avoid
+     * working-directory ambiguity in symlinked projects.
+     */
+    private static function resolveSqlitePath(string $database): string
+    {
+        if ($database === ':memory:' || $database === '') {
+            return $database;
+        }
+
+        // Already absolute (Unix or Windows)
+        if (str_starts_with($database, '/') || (PHP_OS_FAMILY === 'Windows' && isset($database[1]) && $database[1] === ':')) {
+            return $database;
+        }
+
+        // Relative path: resolve against cwd
+        $cwd = getcwd();
+        if ($cwd === false) {
+            return $database;
+        }
+
+        return $cwd . DIRECTORY_SEPARATOR . $database;
     }
 
     /**

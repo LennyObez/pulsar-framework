@@ -201,4 +201,61 @@ final class DatabaseException extends RuntimeException
             previous: $previous,
         );
     }
+
+    /**
+     * Seeder was not found.
+     */
+    #[NoDiscard]
+    public static function seederNotFound(string $name): self
+    {
+        return new self(sprintf('Seeder "%s" not found', $name));
+    }
+
+    /**
+     * Seeder execution failed.
+     */
+    #[NoDiscard]
+    public static function seederFailed(string $name, ?Throwable $previous = null): self
+    {
+        $message = sprintf('Seeder "%s" failed', $name);
+
+        if ($previous !== null) {
+            $message .= ': ' . $previous->getMessage();
+        }
+
+        return new self($message, previous: $previous);
+    }
+
+    /**
+     * Seeder file is invalid.
+     */
+    #[NoDiscard]
+    public static function seederInvalid(string $reason): self
+    {
+        return new self(sprintf('Invalid seeder: %s', $reason));
+    }
+
+    /**
+     * Migration diff generation failed.
+     */
+    #[NoDiscard]
+    public static function diffFailed(string $reason, ?Throwable $previous = null): self
+    {
+        return new self(
+            sprintf('Migration diff failed: %s', $reason),
+            previous: $previous,
+        );
+    }
+
+    /**
+     * A unique constraint was violated during an insert or update.
+     */
+    #[NoDiscard]
+    public static function uniqueConstraintViolation(string $constraint, ?Throwable $previous = null): self
+    {
+        return new self(
+            sprintf('Unique constraint violation: %s', $constraint),
+            previous: $previous,
+        );
+    }
 }

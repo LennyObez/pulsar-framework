@@ -22,7 +22,7 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Append-only transition log backed by the `workflow_transitions` table.
  *
- * Only INSERT operations are performed — rows are never updated or deleted.
+ * Only INSERT operations are performed; rows are never updated or deleted.
  * The full transition history serves as the audit trail and enables
  * state reconstruction.
  */
