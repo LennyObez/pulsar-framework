@@ -12,7 +12,6 @@ use Pulsar\Http\Validation\Violation;
 use function array_key_exists;
 use function array_values;
 use function file_exists;
-use function finfo_close;
 use function finfo_file;
 use function finfo_open;
 use function implode;
@@ -89,7 +88,6 @@ readonly class Mimes implements RuleInterface
         }
 
         $mime = finfo_file($finfo, $value['tmp_name']);
-        finfo_close($finfo);
 
         return is_string($mime) && in_array($mime, $this->allowedMimes, true);
     }
