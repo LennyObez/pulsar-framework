@@ -42,6 +42,12 @@ Proposed | Accepted | Deprecated | Superseded by ADR-NNNN
 
 - ...
 
+## Field Report
+
+_Optional. Document operational experience that validates or challenges this decision. Add entries as they accumulate._
+
+- **[Date range]** | [Incident link / ticket]: [What happened, what was learned, measurable impact (perf, reliability, security).]
+
 ## Security Impact
 
 [Explicit "None" if none. Otherwise describe changes to attack surface, crypto, auth, or data handling.]
