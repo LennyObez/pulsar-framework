@@ -5,8 +5,6 @@
  * file size, optional description, and a download button.
  */
 
-import { escapeHtml } from '../../utils/escapeHtml.js';
-
 export class CmsPbFileDownload extends HTMLElement {
   private blockData: Record<string, unknown> = {};
 

@@ -1,6 +1,6 @@
 {
   "name": "lennyobez/pulsar",
-  "version": "dev",
+  "version": "1.0.0-rc.12",
   "description": "Pulsar HMVC Framework (PHP 8.5)",
   "type": "library",
   "license": "Apache-2.0",

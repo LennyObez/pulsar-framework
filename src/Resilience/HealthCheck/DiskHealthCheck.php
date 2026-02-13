@@ -50,7 +50,7 @@ final readonly class DiskHealthCheck implements HealthCheckInterface
                 );
             }
 
-            $freeMb = $freeBytes / (1024 * 1024);
+            $freeMb = $freeBytes / 1_048_576.0;
 
             if ($freeMb < $this->thresholdMb) {
                 return HealthCheckResult::unhealthy(

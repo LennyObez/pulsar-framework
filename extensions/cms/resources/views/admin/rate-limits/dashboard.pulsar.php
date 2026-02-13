@@ -93,6 +93,54 @@
         </table>
     </section>
 
+    {{-- Alert threshold configuration --}}
+    <section class="cms-rate-limits__section">
+        <h2 class="cms-rate-limits__section-title">Alert Threshold Configuration</h2>
+        <form method="POST" action="/admin/cms/rate-limits/thresholds" class="cms-form">
+            @csrf
+            <div class="cms-rate-limits__threshold-grid">
+                <div class="cms-form-group">
+                    <label for="threshold-rejection-rate" class="cms-form-group__label">Rejection Rate Alert (%)</label>
+                    <input type="number"
+                           id="threshold-rejection-rate"
+                           name="rejection_rate_threshold"
+                           value="{{ $thresholds['rejection_rate'] ?? 10 }}"
+                           min="1"
+                           max="100"
+                           class="cms-form-group__input cms-form-group__input--sm"
+                           aria-label="Alert when rejection rate exceeds this percentage">
+                    <p class="cms-form-group__help">Trigger an alert when the rejection rate exceeds this percentage.</p>
+                </div>
+                <div class="cms-form-group">
+                    <label for="threshold-rejections-per-ip" class="cms-form-group__label">Rejections per IP Alert</label>
+                    <input type="number"
+                           id="threshold-rejections-per-ip"
+                           name="rejections_per_ip_threshold"
+                           value="{{ $thresholds['rejections_per_ip'] ?? 100 }}"
+                           min="1"
+                           max="100000"
+                           class="cms-form-group__input cms-form-group__input--sm"
+                           aria-label="Alert when a single IP exceeds this many rejections">
+                    <p class="cms-form-group__help">Trigger an alert when a single IP exceeds this many rejections in 24 hours.</p>
+                </div>
+                <div class="cms-form-group">
+                    <label for="threshold-notify-email" class="cms-form-group__label">Notification Email</label>
+                    <input type="email"
+                           id="threshold-notify-email"
+                           name="notify_email"
+                           value="{{ $thresholds['notify_email'] ?? '' }}"
+                           class="cms-form-group__input"
+                           placeholder="admin@example.com"
+                           aria-label="Email address for rate limit alerts">
+                    <p class="cms-form-group__help">Email address to receive rate limit threshold alerts. Leave empty to disable email alerts.</p>
+                </div>
+            </div>
+            <div class="cms-form-group cms-form-group--actions">
+                <button type="submit" class="cms-btn cms-btn--primary">Save Thresholds</button>
+            </div>
+        </form>
+    </section>
+
     {{-- Top IPs --}}
     <section class="cms-rate-limits__section">
         <h2 class="cms-rate-limits__section-title">Top 10 IPs Hitting Limits</h2>

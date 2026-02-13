@@ -30,7 +30,7 @@
                     <tr>
                         <td style="padding: 24px 40px; background-color: #f9fafb; border-top: 1px solid #e5e7eb;">
                             <p style="margin: 0; font-size: 13px; line-height: 1.5; color: #9ca3af; text-align: center;">
-                                You are receiving this email because you subscribed to our newsletter.
+                                You are receiving this email because you subscribed to the {{ $siteName ?? 'our' }} newsletter.
                             </p>
                             <p style="margin: 8px 0 0 0; font-size: 13px; line-height: 1.5; color: #9ca3af; text-align: center;">
                                 <a href="{{ $unsubscribe_url }}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a>

@@ -5,7 +5,6 @@
  * a URL and the block attempts to render it as an embedded preview.
  */
 
-import { escapeHtml } from '../../utils/escapeHtml.js';
 import { isValidUrl } from '../../utils/sanitizeHtml.js';
 
 export class CmsPbEmbed extends HTMLElement {

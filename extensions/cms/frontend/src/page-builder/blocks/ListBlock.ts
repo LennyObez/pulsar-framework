@@ -5,8 +5,6 @@
  * Items can be added, removed, and reordered.
  */
 
-import { escapeHtml } from '../../utils/escapeHtml.js';
-
 export class CmsPbList extends HTMLElement {
   private blockData: Record<string, unknown> = {};
 

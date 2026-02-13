@@ -6,7 +6,7 @@
  * and integrates with the undo stack via executeCommand.
  */
 
-import type { PageBuilderStore, BlockData } from './PageBuilderStore.js';
+import type { PageBuilderStore } from './PageBuilderStore.js';
 import type { Command } from './UndoStack.js';
 
 interface ClipboardEntry {

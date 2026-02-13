@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Feedback\Job;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Feedback\FeedbackRepositoryInterface;
 
+use function is_resource;
+use function is_string;
 use function json_encode;
 use function mb_substr;
 use function sprintf;

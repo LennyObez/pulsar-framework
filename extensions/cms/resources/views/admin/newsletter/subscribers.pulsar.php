@@ -11,7 +11,10 @@
                 <span class="cms-widget__badge" aria-label="{{ $statusCounts['confirmed'] }} confirmed subscribers">{{ $statusCounts['confirmed'] }} confirmed</span>
             @endif
         </h1>
-        <a href="/admin/cms" class="cms-btn cms-btn--outline">Back to Dashboard</a>
+        <div class="cms-newsletter-subscribers__actions">
+            <a href="/admin/cms/newsletter/campaigns" class="cms-btn cms-btn--outline">Campaigns</a>
+            <a href="/admin/cms" class="cms-btn cms-btn--outline">Back to Dashboard</a>
+        </div>
     </header>
 
     {{-- Status tabs --}}
@@ -44,10 +47,22 @@
     <div class="cms-newsletter-subscribers__filters" data-cms-filter-bar>
         <form method="GET" action="/admin/cms/newsletter/subscribers" class="cms-filter-form">
             <input type="hidden" name="status" value="{{ $activeStatus ?? 'confirmed' }}">
+
             <div class="cms-filter-form__group">
                 <label for="filter-search" class="cms-filter-form__label">Search</label>
                 <input type="text" id="filter-search" name="search" value="{{ $filters['search'] ?? '' }}" class="cms-filter-form__input" placeholder="Search by email...">
             </div>
+
+            <div class="cms-filter-form__group">
+                <label for="filter-locale" class="cms-filter-form__label">Locale</label>
+                <select id="filter-locale" name="locale" class="cms-filter-form__select">
+                    <option value="">All Locales</option>
+                    @foreach ($locales ?? [] as $loc)
+                        <option value="{{ $loc }}" @if (($filters['locale'] ?? '') === $loc) selected @endif>{{ strtoupper($loc) }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <button type="submit" class="cms-btn cms-btn--outline">Filter</button>
         </form>
     </div>
@@ -62,6 +77,7 @@
                 @can('cms.newsletter.manage')
                     <option value="delete">Delete Selected</option>
                     <option value="unsubscribe">Unsubscribe Selected</option>
+                    <option value="export_csv">Export Selected as CSV</option>
                 @endcan
             </select>
             <button type="submit" class="cms-btn cms-btn--outline" data-cms-bulk-submit>Apply</button>
@@ -73,11 +89,11 @@
                     <th class="cms-table__th cms-table__th--checkbox" scope="col">
                         <input type="checkbox" aria-label="Select all" data-cms-select-all>
                     </th>
-                    <th class="cms-table__th" scope="col">Email</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="email">Email</th>
                     <th class="cms-table__th" scope="col">Locale</th>
-                    <th class="cms-table__th" scope="col">Source</th>
                     <th class="cms-table__th" scope="col">Status</th>
-                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="created_at">Subscribed</th>
+                    <th class="cms-table__th" scope="col">Source</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="confirmed_at">Confirmed At</th>
                     <th class="cms-table__th" scope="col">Actions</th>
                 </tr>
             </thead>
@@ -99,9 +115,8 @@
                             </a>
                         </td>
                         <td class="cms-table__td">
-                            <span class="cms-badge">{{ $subscriber['locale'] }}</span>
+                            <span class="cms-badge">{{ strtoupper($subscriber['locale'] ?? '') }}</span>
                         </td>
-                        <td class="cms-table__td">{{ $subscriber['source'] }}</td>
                         <td class="cms-table__td">
                             <?php
                             $__subscriberBadgeClass = match ($subscriber['status'] ?? '') {
@@ -113,8 +128,13 @@
             ?>
                             <span class="{{ $__subscriberBadgeClass }}" role="status">{{ ucfirst($subscriber['status'] ?? '') }}</span>
                         </td>
+                        <td class="cms-table__td">{{ $subscriber['source'] ?? '' }}</td>
                         <td class="cms-table__td">
-                            <time datetime="{{ $subscriber['created_at'] }}">{{ $subscriber['created_at'] }}</time>
+                            @if (isset($subscriber['confirmed_at']) && $subscriber['confirmed_at'] !== null)
+                                <time datetime="{{ $subscriber['confirmed_at'] }}">{{ $subscriber['confirmed_at_human'] ?? $subscriber['confirmed_at'] }}</time>
+                            @else
+                                &mdash;
+                            @endif
                         </td>
                         <td class="cms-table__td cms-table__td--actions">
                             <div class="cms-action-group" role="group" aria-label="Subscriber actions">
@@ -126,6 +146,11 @@
                                             <button type="submit" class="cms-btn cms-btn--sm cms-btn--warning">Unsubscribe</button>
                                         </form>
                                     @endif
+                                    <form method="POST" action="/admin/cms/newsletter/subscribers/{{ $subscriber['id'] }}/delete" class="cms-inline-form" data-cms-confirm="Permanently delete this subscriber? This cannot be undone.">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="cms-btn cms-btn--sm cms-btn--danger">Delete</button>
+                                    </form>
                                 @endcan
                             </div>
                         </td>
