@@ -12,6 +12,7 @@ use Pulsar\Extensibility\ExtensionManifest;
 use Pulsar\Extensibility\Manifest\ProvidesConfig;
 use Pulsar\Extensibility\Manifest\PulsarVersionConfig;
 use Pulsar\Extensibility\Manifest\RequiresConfig;
+use Pulsar\Extensibility\TrustTier;
 
 #[CoversClass(ExtensionManifest::class)]
 #[CoversClass(ProvidesConfig::class)]
@@ -210,5 +211,69 @@ final class ExtensionManifestTest extends TestCase
         ]);
 
         self::assertSame(['dep1', 'dep2'], $manifest->getDependencies());
+    }
+
+    #[Test]
+    public function trustTierDefaultsToCommunityWhenMissing(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+        ]);
+
+        self::assertSame(TrustTier::Community, $manifest->requestedTrustTier);
+    }
+
+    #[Test]
+    public function trustTierParsesCoreTier(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'trust_tier' => 'core',
+        ]);
+
+        self::assertSame(TrustTier::Core, $manifest->requestedTrustTier);
+    }
+
+    #[Test]
+    public function trustTierParsesVerifiedTier(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'trust_tier' => 'verified',
+        ]);
+
+        self::assertSame(TrustTier::Verified, $manifest->requestedTrustTier);
+    }
+
+    #[Test]
+    public function trustTierParsesUntrustedTier(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'trust_tier' => 'untrusted',
+        ]);
+
+        self::assertSame(TrustTier::Untrusted, $manifest->requestedTrustTier);
+    }
+
+    #[Test]
+    public function trustTierDefaultsToCommunityForInvalidValue(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'test',
+            'version' => '1.0.0',
+            'extension_class' => 'Test',
+            'trust_tier' => 'invalid',
+        ]);
+
+        self::assertSame(TrustTier::Community, $manifest->requestedTrustTier);
     }
 }
