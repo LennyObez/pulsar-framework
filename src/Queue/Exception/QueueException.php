@@ -129,7 +129,7 @@ final class QueueException extends RuntimeException
     {
         return new self(sprintf(
             'Job class "%s" is marked #[NonIdempotent] but does not have '
-            . '#[AllowNonIdempotent] — required in regulated presets',
+            . '#[AllowNonIdempotent]: required in regulated presets',
             $jobClass,
         ));
     }
@@ -179,7 +179,7 @@ final class QueueException extends RuntimeException
     public static function duplicateJob(string $id, string $idempotencyKey): self
     {
         return new self(sprintf(
-            'Duplicate job "%s" rejected — idempotency key "%s" is already in use',
+            'Duplicate job "%s" rejected: idempotency key "%s" is already in use',
             $id,
             $idempotencyKey,
         ));

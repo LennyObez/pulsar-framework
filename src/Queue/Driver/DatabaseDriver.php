@@ -37,7 +37,7 @@ use function time;
  *     reserved_at INT DEFAULT NULL
  *   )
  */
-#[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
+#[Internal(reason: 'Implementation detail; use QueueDriverInterface contract')]
 final readonly class DatabaseDriver implements QueueDriverInterface
 {
     private Randomizer $randomizer;

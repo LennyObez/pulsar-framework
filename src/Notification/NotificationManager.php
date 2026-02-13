@@ -29,7 +29,7 @@ use function sprintf;
 use function time;
 
 /**
- * Central notification dispatcher — resolves channels, dispatches delivery, emits events.
+ * Central notification dispatcher: resolves channels, dispatches delivery, emits events.
  *
  * When a PreferenceStoreInterface and NotificationClassificationRegistry are provided,
  * marketing notifications are blocked for notifiables who have not opted in.
@@ -167,6 +167,19 @@ final readonly class NotificationManager implements NotificationManagerInterface
                     $notifiable->getNotifiableId(),
                     $channelName,
                     $e->getMessage(),
+                );
+
+                $this->auditLog(
+                    AuditOutcome::Error,
+                    'notification.unexpected_error',
+                    $notification::class,
+                    [
+                        'notification_id' => $notificationId,
+                        'notifiable_id' => $notifiable->getNotifiableId(),
+                        'channel' => $channelName,
+                        'error' => $e->getMessage(),
+                        'exception_class' => $e::class,
+                    ],
                 );
             }
         }

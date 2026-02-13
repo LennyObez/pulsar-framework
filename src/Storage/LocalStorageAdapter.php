@@ -28,6 +28,9 @@ use const LOCK_EX;
  * Local filesystem storage adapter.
  *
  * Maps storage keys to files under a base path with path traversal prevention.
+ * Path traversal via `..` is blocked, but symlinks within the base path are
+ * followed. Deployers who allow untrusted file uploads should ensure the base
+ * path contains no symlinks that escape the intended storage boundary.
  */
 final readonly class LocalStorageAdapter implements StorageAdapterInterface
 {

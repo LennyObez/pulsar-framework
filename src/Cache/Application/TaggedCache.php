@@ -23,7 +23,7 @@ use const JSON_THROW_ON_ERROR;
  * Tag-based cache wrapping a driver + tag strategy.
  *
  * Stores tag version snapshots with each item.
- * Validates tag versions on read — stale items are treated as misses.
+ * Validates tag versions on read: stale items are treated as misses.
  */
 #[Api(since: '1.0.0')]
 final readonly class TaggedCache implements TaggedCacheInterface

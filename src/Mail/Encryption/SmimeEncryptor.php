@@ -62,7 +62,7 @@ final readonly class SmimeEncryptor implements MailEncryptorInterface
             );
 
             if ($result === false) {
-                throw MailException::sendFailed('S/MIME encryption failed — verify the recipient certificate is valid');
+                throw MailException::sendFailed('S/MIME encryption failed: verify the recipient certificate is valid');
             }
 
             $encrypted = file_get_contents($outputFile);

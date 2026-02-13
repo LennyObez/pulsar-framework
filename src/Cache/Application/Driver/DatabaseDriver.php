@@ -169,7 +169,7 @@ final class DatabaseDriver extends AbstractCacheDriver
                     return (int) ($result->first()?->getString('value') ?? '0');
                 }
 
-                // Row doesn't exist — insert initial value
+                // Row doesn't exist: insert initial value
                 $conn->execute(
                     'INSERT INTO cache_entries (pool, cache_key, value, expires_at) VALUES (:pool, :cache_key, :value, NULL)',
                     ['pool' => $this->pool, 'cache_key' => $key, 'value' => (string) $step],

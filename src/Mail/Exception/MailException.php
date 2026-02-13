@@ -61,7 +61,7 @@ final class MailException extends RuntimeException
     {
         return new self(
             sprintf(
-                'TLS encryption fallback for recipient "%s" under policy "%s" — sent without encryption',
+                'TLS encryption fallback for recipient "%s" under policy "%s": sent without encryption',
                 $recipient,
                 $policy->value,
             ),

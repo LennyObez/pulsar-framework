@@ -98,7 +98,7 @@ final class RouteCache
     /**
      * Normalize a route handler to a RouteHandler or null if not cacheable.
      *
-     * @param callable|class-string|list<string> $handler
+     * @param mixed $handler
      */
     private function normalizeHandler(mixed $handler): ?RouteHandler
     {

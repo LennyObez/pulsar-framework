@@ -23,7 +23,12 @@ use function substr;
  * AEAD payload encryption using XChaCha20-Poly1305 with associated data.
  *
  * AAD composition (pipe-delimited string):
- *   tenant_id | queue_name | job_class_fqcn | schema_version | correlation_id | attempt_number
+ *   tenant_id | queue_name | job_class_fqcn | schema_version | correlation_id
+ *
+ * IMPORTANT: The attempt number is intentionally excluded from AAD. Including
+ * it would cause decryption failures on retry because the attempt is incremented
+ * after dispatch. The payload is encrypted once at dispatch time and must remain
+ * decryptable through all retry attempts.
  *
  * AAD rationale: Transport/driver IDs are NOT included because they break
  * legitimate workflows (dev Redis -> prod SQS, driver migrations, failover).
@@ -141,9 +146,11 @@ final class AeadPayloadEncryptor
     /**
      * Compose the AAD string from envelope fields.
      *
-     * Format: tenant_id|queue|job_class|schema_version|correlation_id|attempt
+     * Format: tenant_id|queue|job_class|schema_version|correlation_id
      *
      * All fields are joined with pipe delimiter. Null tenant is represented as empty string.
+     * The attempt number is intentionally excluded: the payload is encrypted once at
+     * dispatch and must remain decryptable through all retry attempts.
      */
     public static function composeAad(
         ?string $tenantId,
@@ -151,8 +158,7 @@ final class AeadPayloadEncryptor
         string $jobClass,
         int $schemaVersion,
         string $correlationId,
-        int $attempt,
     ): string {
-        return ($tenantId ?? '') . '|' . $queue . '|' . $jobClass . '|' . $schemaVersion . '|' . $correlationId . '|' . $attempt;
+        return ($tenantId ?? '') . '|' . $queue . '|' . $jobClass . '|' . $schemaVersion . '|' . $correlationId;
     }
 }

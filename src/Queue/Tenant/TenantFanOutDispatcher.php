@@ -22,7 +22,7 @@ use function count;
  * For each tenant, temporarily enters the tenant scope so that
  * TenantJobMiddleware captures the tenant ID into the envelope
  * during dispatch. Each tenant's dispatch is an independent failure
- * domain — one failure does not prevent other tenants' jobs from
+ * domain: one failure does not prevent other tenants' jobs from
  * being dispatched.
  */
 #[Api(since: '1.0.0')]
@@ -49,7 +49,7 @@ final readonly class TenantFanOutDispatcher
         string $innerPayload,
         string $queue = 'default',
         int $delay = 0,
-    ): FanOutResult {
+    ): TenantFanOutResult {
         $tenants = $this->tenantProvider->getActiveTenants();
         $dispatched = 0;
         $failed = 0;
@@ -115,7 +115,7 @@ final readonly class TenantFanOutDispatcher
             ],
         );
 
-        return new FanOutResult(
+        return new TenantFanOutResult(
             dispatched: $dispatched,
             failed: $failed,
             failedTenantIds: $failedTenantIds,
