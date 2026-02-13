@@ -1,6 +1,6 @@
 {
   "name": "lennyobez/pulsar",
-  "version": "1.0.0-rc.11",
+  "version": "dev",
   "description": "Pulsar HMVC Framework (PHP 8.5)",
   "type": "library",
   "license": "Apache-2.0",
@@ -83,7 +83,8 @@
       "Pulsar\\Extension\\Accessibility\\": "extensions/accessibility/src/",
       "Pulsar\\Extension\\Devices\\": "extensions/devices/src/",
       "Pulsar\\Extension\\Feedback\\": "extensions/feedback/src/",
-      "Pulsar\\Extension\\Subscriptions\\": "extensions/subscriptions/src/"
+      "Pulsar\\Extension\\Subscriptions\\": "extensions/subscriptions/src/",
+      "Pulsar\\Extension\\Releases\\": "extensions/releases/src/"
     }
   },
   "autoload-dev": {

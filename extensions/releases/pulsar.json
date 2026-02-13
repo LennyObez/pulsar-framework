@@ -1,0 +1,9 @@
+{
+  "name": "pulsar/releases",
+  "version": "1.0.0",
+  "description": "Release management and beta signup system",
+  "type": "extension",
+  "namespace": "Pulsar\\Extension\\Releases",
+  "extension": "Pulsar\\Extension\\Releases\\ReleasesExtension",
+  "providers": ["Pulsar\\Extension\\Releases\\ReleasesServiceProvider"]
+}
