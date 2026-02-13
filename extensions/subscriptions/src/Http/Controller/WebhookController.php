@@ -17,6 +17,7 @@ use function base64_encode;
 use function count;
 use function explode;
 use function is_array;
+use function is_int;
 use function is_string;
 use function json_decode;
 use function random_bytes;

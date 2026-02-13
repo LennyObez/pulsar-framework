@@ -45,7 +45,7 @@ export class CmsPbMap extends HTMLElement {
       const iframe = document.createElement('iframe');
       iframe.className = 'pb-block-map__iframe';
       const query = encodeURIComponent(addressStr);
-      iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=&layer=mapnik&marker=&query=${query}`;
+      iframe.src = `https://www.openstreetmap.org/export/embed.html?bbox=&layer=mapnik&marker=&query=${query}&zoom=${zoomNum}`;
       iframe.title = `Map of ${addressStr}`;
       iframe.setAttribute('loading', 'lazy');
       iframe.sandbox.add('allow-scripts', 'allow-same-origin');

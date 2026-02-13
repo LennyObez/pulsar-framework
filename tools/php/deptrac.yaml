@@ -1208,6 +1208,82 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Accessibility\\
 
+    # --- Devices Extension (Pulsar\\Extension\\Devices) ---
+
+    # --- Devices: public surface (excludes \Internal\ namespace) ---
+    - name: DevicesExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Devices\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Devices\\Internal\\
+
+    # --- Devices: internal implementation (\Internal\ only) ---
+    - name: DevicesExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Devices\\Internal\\
+
+    # --- Feedback Extension (Pulsar\\Extension\\Feedback) ---
+
+    # --- Feedback: public surface (excludes \Internal\ namespace) ---
+    - name: FeedbackExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Feedback\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Feedback\\Internal\\
+
+    # --- Feedback: internal implementation (\Internal\ only) ---
+    - name: FeedbackExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Feedback\\Internal\\
+
+    # --- Releases Extension (Pulsar\\Extension\\Releases) ---
+
+    # --- Releases: public surface (excludes \Internal\ namespace) ---
+    - name: ReleasesExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Releases\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Releases\\Internal\\
+
+    # --- Releases: internal implementation (\Internal\ only) ---
+    - name: ReleasesExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Releases\\Internal\\
+
+    # --- Subscriptions Extension (Pulsar\\Extension\\Subscriptions) ---
+
+    # --- Subscriptions: public surface (excludes \Internal\ namespace) ---
+    - name: SubscriptionsExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Subscriptions\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Subscriptions\\Internal\\
+
+    # --- Subscriptions: internal implementation (\Internal\ only) ---
+    - name: SubscriptionsExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Subscriptions\\Internal\\
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -2174,7 +2250,66 @@ deptrac:
     Psr7BridgeExtension: *public_deps
     StudioExtension: *public_deps
     AccessibilityExtension: *public_deps
+    DevicesExtension: *public_deps
+    FeedbackExtension: *public_deps
+    ReleasesExtension: *public_deps
+    SubscriptionsExtension: *public_deps
     ExampleExtension: *public_deps
+
+    DevicesExtension_Internal:
+      - DevicesExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+
+    FeedbackExtension_Internal:
+      - FeedbackExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+      - Queue
+
+    ReleasesExtension_Internal:
+      - ReleasesExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+
+    SubscriptionsExtension_Internal:
+      - SubscriptionsExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+      - Queue
+      - Security
 
     GrpcExtension:
       - CompositionRoot

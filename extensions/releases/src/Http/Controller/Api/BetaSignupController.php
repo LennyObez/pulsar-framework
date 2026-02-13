@@ -79,7 +79,7 @@ final readonly class BetaSignupController
         if (is_array($rawBrands)) {
             $cameraBrands = array_values(array_filter(
                 $rawBrands,
-                static fn (mixed $brand): bool => is_string($brand) && $brand !== '',
+                static fn(mixed $brand): bool => is_string($brand) && $brand !== '',
             ));
         }
 

@@ -59,14 +59,10 @@ class ToastManager {
     this.interceptInstalled = true;
 
     const originalFetch = window.fetch;
-    const self = this;
 
-    window.fetch = async function (
-      input: RequestInfo | URL,
-      init?: RequestInit,
-    ): Promise<Response> {
-      const response = await originalFetch.call(this, input, init);
-      self.processResponse(response);
+    window.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      const response = await originalFetch.call(window, input, init);
+      this.processResponse(response);
       return response;
     };
   }

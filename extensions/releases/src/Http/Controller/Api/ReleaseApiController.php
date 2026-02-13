@@ -6,10 +6,10 @@ namespace Pulsar\Extension\Releases\Http\Controller\Api;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Releases\Internal\ReleaseService;
 use Pulsar\Extension\Releases\Release;
 use Pulsar\Extension\Releases\ReleasePlatform;
 use Pulsar\Extension\Releases\ReleaseRepositoryInterface;
-use Pulsar\Extension\Releases\Internal\ReleaseService;
 use Pulsar\Http\Message\Response;
 
 use function array_map;
