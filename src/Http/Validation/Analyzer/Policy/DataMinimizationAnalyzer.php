@@ -17,7 +17,7 @@ use function strtolower;
 /**
  * Flags fields with names suggesting unnecessary PII collection.
  *
- * Advisory only — not a compliance gate. This analyzer checks field names
+ * Advisory only: not a compliance gate. This analyzer checks field names
  * against patterns that indicate potentially unnecessary personally identifiable
  * information collection (e.g., maiden names, full SSNs). Results should be
  * reviewed by qualified privacy personnel.

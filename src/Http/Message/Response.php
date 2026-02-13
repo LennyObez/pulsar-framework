@@ -12,11 +12,19 @@ use Psr\Http\Message\StreamInterface;
 use Pulsar\Api\Api;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Http\SafeRedirect;
+use Pulsar\View\Engine\TemplateEngineInterface;
+use RuntimeException;
 
+use function basename;
+use function filesize;
 use function implode;
 use function is_array;
+use function is_file;
+use function is_int;
+use function is_readable;
 use function is_string;
 use function json_encode;
+use function sprintf;
 use function strtolower;
 
 use const JSON_THROW_ON_ERROR;
@@ -24,7 +32,7 @@ use const JSON_UNESCAPED_SLASHES;
 use const JSON_UNESCAPED_UNICODE;
 
 /**
- * PSR-7 response — the canonical HTTP response object for Pulsar.
+ * PSR-7 response: the canonical HTTP response object for Pulsar.
  *
  * Implements ResponseInterface with Pulsar-specific convenience factories.
  * Headers are stored lowercase internally with deterministic iteration order.
@@ -152,6 +160,89 @@ class Response implements ResponseInterface
     }
 
     /**
+     * Create a file download response.
+     *
+     * Sets Content-Disposition to "attachment" so the browser prompts a download.
+     * If no filename is given, the basename of the path is used.
+     *
+     * @param string      $path     Absolute filesystem path to the file
+     * @param string|null $filename Download filename presented to the user
+     * @param string      $contentType MIME type (default: application/octet-stream)
+     *
+     * @throws InvalidArgumentException If the file does not exist or is not readable
+     */
+    #[NoDiscard]
+    public static function download(
+        string $path,
+        ?string $filename = null,
+        string $contentType = 'application/octet-stream',
+    ): self {
+        if (!is_file($path) || !is_readable($path)) {
+            throw new InvalidArgumentException(
+                sprintf('File "%s" does not exist or is not readable', $path),
+            );
+        }
+
+        $filename ??= basename($path);
+        $stream = Stream::fromFile($path, 'rb');
+        $size = filesize($path);
+
+        $headers = [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => sprintf('attachment; filename="%s"', $filename),
+        ];
+
+        if ($size !== false) {
+            $headers['Content-Length'] = (string) $size;
+        }
+
+        return new self(
+            statusCode: 200,
+            headers: $headers,
+            body: $stream,
+        );
+    }
+
+    /**
+     * Create an inline file response.
+     *
+     * Sets Content-Disposition to "inline" so the browser renders the file
+     * directly (e.g. images, PDFs) rather than triggering a download.
+     *
+     * @param string $path        Absolute filesystem path to the file
+     * @param string $contentType MIME type
+     *
+     * @throws InvalidArgumentException If the file does not exist or is not readable
+     */
+    #[NoDiscard]
+    public static function file(string $path, string $contentType = 'application/octet-stream'): self
+    {
+        if (!is_file($path) || !is_readable($path)) {
+            throw new InvalidArgumentException(
+                sprintf('File "%s" does not exist or is not readable', $path),
+            );
+        }
+
+        $stream = Stream::fromFile($path, 'rb');
+        $size = filesize($path);
+
+        $headers = [
+            'Content-Type' => $contentType,
+            'Content-Disposition' => sprintf('inline; filename="%s"', basename($path)),
+        ];
+
+        if ($size !== false) {
+            $headers['Content-Length'] = (string) $size;
+        }
+
+        return new self(
+            statusCode: 200,
+            headers: $headers,
+            body: $stream,
+        );
+    }
+
+    /**
      * Create an empty 204 No Content response.
      */
     #[NoDiscard]
@@ -177,6 +268,104 @@ class Response implements ResponseInterface
             status: 422,
         );
     }
+
+    /**
+     * Create an HTML response by rendering a template.
+     *
+     * Accepts an explicit {@see TemplateEngineInterface} for full dependency
+     * injection, or falls back to the statically configured engine set by
+     * {@see Response::setTemplateEngine()} during kernel boot.
+     *
+     * @param TemplateEngineInterface|string $engineOrTemplate Engine instance (explicit) or template name (static fallback)
+     * @param string|array<string, mixed> $templateOrData Template name when engine is explicit, or data when using static engine
+     * @param array<string, mixed>|int $dataOrStatus Data when engine is explicit, or status code when using static engine
+     * @param int|array<string, string|list<string>> $statusOrHeaders Status code when engine is explicit, or unused
+     * @param array<string, string|list<string>> $headers Additional response headers (only when engine is explicit)
+     *
+     * @throws RuntimeException If no template engine is configured (static fallback)
+     */
+    #[NoDiscard]
+    public static function view(
+        TemplateEngineInterface|string $engineOrTemplate,
+        string|array $templateOrData = [],
+        array|int $dataOrStatus = [],
+        int|array $statusOrHeaders = 200,
+        array $headers = [],
+    ): self {
+        // Explicit engine: view($engine, $template, $data, $status, $headers)
+        if ($engineOrTemplate instanceof TemplateEngineInterface) {
+            $engine = $engineOrTemplate;
+            /** @var string $template */
+            $template = is_string($templateOrData) ? $templateOrData : '';
+            /** @var array<string, mixed> $data */
+            $data = is_array($dataOrStatus) ? $dataOrStatus : [];
+            /** @var int $status */
+            $status = is_int($statusOrHeaders) ? $statusOrHeaders : 200;
+
+            $html = $engine->render($template, $data);
+
+            $response = new self(
+                statusCode: $status,
+                headers: ['Content-Type' => 'text/html; charset=utf-8', ...$headers],
+                body: $html,
+            );
+
+            return $response;
+        }
+
+        // Static engine fallback: view($template, $data, $status)
+        $engine = self::$templateEngine;
+
+        if ($engine === null) {
+            throw new RuntimeException(
+                'No TemplateEngineInterface has been configured. '
+                . 'Call Response::setTemplateEngine() during bootstrap or register ViewWiring.',
+            );
+        }
+
+        $template = $engineOrTemplate;
+        /** @var array<string, mixed> $data */
+        $data = is_array($templateOrData) ? $templateOrData : [];
+        /** @var int $status */
+        $status = is_int($dataOrStatus) ? $dataOrStatus : 200;
+
+        $html = $engine->render($template, $data);
+
+        return self::html($html, $status);
+    }
+
+    /**
+     * Set the template engine used by {@see Response::view()}.
+     *
+     * Called once during kernel boot (by ViewWiring). The engine is stored
+     * statically because Response factories are static and need access
+     * without requiring a container reference.
+     */
+    public static function setTemplateEngine(TemplateEngineInterface $engine): void
+    {
+        self::$templateEngine = $engine;
+    }
+
+    /**
+     * Get the currently configured template engine (if any).
+     *
+     * Used by CMS ContentController to resolve the engine lazily after
+     * the Kernel rebuilds it with extension view paths post-boot.
+     */
+    public static function getTemplateEngine(): ?TemplateEngineInterface
+    {
+        return self::$templateEngine;
+    }
+
+    /**
+     * Remove the template engine reference (used in testing).
+     */
+    public static function clearTemplateEngine(): void
+    {
+        self::$templateEngine = null;
+    }
+
+    private static ?TemplateEngineInterface $templateEngine = null;
 
     // ── PSR-7 MessageInterface ──────────────────────────────────────────
 

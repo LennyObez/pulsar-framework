@@ -65,7 +65,7 @@ final class HttpResponseSerializer
                 continue;
             }
 
-            // Skip Content-Length — we'll set our own from actual body
+            // Skip Content-Length: we'll set our own from actual body
             if ($lower === 'content-length') {
                 continue;
             }

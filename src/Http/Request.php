@@ -100,7 +100,7 @@ readonly class Request
     /**
      * Return a new request with an added attribute.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement -- Psalm does not yet infer clone() return type
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
      */
     #[NoDiscard]
     public function withAttribute(string $key, mixed $value): self

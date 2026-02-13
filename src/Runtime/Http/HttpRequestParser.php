@@ -56,7 +56,7 @@ final class HttpRequestParser
         $headerEnd = strpos($buffer, self::HEADER_DELIMITER);
 
         if ($headerEnd === false) {
-            // Headers not yet complete — check if already too large
+            // Headers not yet complete: check if already too large
             if (strlen($buffer) > $maxHeaderSize) {
                 $ctx->readBuffer = '';
 
@@ -341,7 +341,7 @@ final class HttpRequestParser
             $chunkSize = (int) hexdec(trim($chunkLine));
 
             if ($chunkSize === 0) {
-                // Terminal chunk — skip trailing \r\n after 0-chunk
+                // Terminal chunk: skip trailing \r\n after 0-chunk
                 $terminator = $lineEnd + 2;
 
                 // Look for trailer end (\r\n after 0\r\n)
@@ -360,7 +360,7 @@ final class HttpRequestParser
                     ];
                 }
 
-                // Silently ignore trailers — find the final empty line
+                // Silently ignore trailers: find the final empty line
                 $pos = $terminator;
 
                 while ($pos < $dataLen) {
@@ -408,7 +408,7 @@ final class HttpRequestParser
     /**
      * Parse a query string into a string-keyed parameter array.
      *
-     * @psalm-suppress MixedReturnTypeCoercion — Psalm cannot narrow key types through ARRAY_FILTER_USE_KEY
+     * @psalm-suppress MixedReturnTypeCoercion: Psalm cannot narrow key types through ARRAY_FILTER_USE_KEY
      *
      * @return array<string, mixed>
      */

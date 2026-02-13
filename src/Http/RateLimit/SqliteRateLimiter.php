@@ -110,7 +110,7 @@ final readonly class SqliteRateLimiter implements RateLimiterInterface
             $this->db->prepare('DELETE FROM rate_limits WHERE window_start < ?')
                 ->execute([$currentWindowStart]);
         } catch (PDOException) {
-            // Best-effort pruning — non-critical
+            // Best-effort pruning: non-critical
         }
     }
 }
