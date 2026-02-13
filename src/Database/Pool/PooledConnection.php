@@ -104,6 +104,20 @@ final class PooledConnection implements ConnectionInterface
     }
 
     /**
+     * Auto-return the connection to the pool if not explicitly returned.
+     *
+     * Prevents connection leaks when PooledConnection goes out of scope
+     * without calling disconnect(), especially during fiber crashes.
+     */
+    public function __destruct()
+    {
+        if (!$this->returned) {
+            $this->returned = true;
+            $this->pool->checkin($this);
+        }
+    }
+
+    /**
      * Get the underlying unwrapped connection.
      */
     public function unwrap(): ConnectionInterface

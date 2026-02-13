@@ -15,6 +15,7 @@ use Pulsar\Event\Exception\EventException;
 use Pulsar\Event\ListenerProviderInterface;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Throwable;
 
 /**
  * Core PSR-14 event dispatcher with storm protection, scope computation, and metrics.
@@ -76,18 +77,37 @@ final readonly class EventDispatcher implements EventDispatcherInterface
 
         try {
             $listeners = $this->listenerProvider->getListenersForEvent($event);
+            /** @var list<Throwable> $listenerErrors */
+            $listenerErrors = [];
 
             foreach ($listeners as $listener) {
                 if ($event instanceof StoppableEventInterface && $event->isPropagationStopped()) {
                     break;
                 }
 
-                /** @var callable $listener */
-                $listener($event);
+                try {
+                    /** @var callable $listener */
+                    $listener($event);
+                } catch (Throwable $e) {
+                    $listenerErrors[] = $e;
+
+                    $this->logger?->error('Event listener threw exception', [
+                        'event_type' => $eventType,
+                        'listener' => get_debug_type($listener),
+                        'error' => $e->getMessage(),
+                    ]);
+
+                    $this->metrics?->counter('pulsar_event_listener_error_total', 'Event listener errors')
+                        ->increment(new LabelSet(['event_class' => $eventType]));
+                }
             }
 
             // Emit dispatch counter
             $this->emitDispatchMetric($event, $eventType);
+
+            if ($listenerErrors !== []) {
+                throw $listenerErrors[0];
+            }
 
             return $event;
         } finally {

@@ -9,10 +9,10 @@ use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Row;
-use Pulsar\Workflow\Storage\SagaStepDirection;
-use Pulsar\Workflow\Storage\SagaStepResult;
-use Pulsar\Workflow\Storage\SagaStepResultStorageInterface;
-use Pulsar\Workflow\Storage\SagaStepStatus;
+use Pulsar\Saga\SagaStepResultStorageInterface;
+use Pulsar\Saga\Step\SagaStepDirection;
+use Pulsar\Saga\Step\SagaStepResult;
+use Pulsar\Saga\Step\SagaStepStatus;
 
 use function json_decode;
 use function json_encode;

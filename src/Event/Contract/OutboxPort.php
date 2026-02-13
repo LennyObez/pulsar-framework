@@ -13,7 +13,7 @@ use Pulsar\Event\EventEnvelope;
  * Implementations store events alongside domain writes in the same transaction,
  * then publish asynchronously via a relay process.
  */
-#[Internal(reason: 'Unimplemented port — will be promoted to #[Api] when an adapter ships')]
+#[Internal(reason: 'Unimplemented port; will be promoted to #[Api] when an adapter ships')]
 interface OutboxPort
 {
     /**

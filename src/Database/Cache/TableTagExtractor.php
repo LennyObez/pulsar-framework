@@ -25,7 +25,7 @@ final readonly class TableTagExtractor
     /**
      * Combined pattern matching all SQL clause types in a single pass.
      *
-     * Matches: FROM, JOIN, INTO, UPDATE, DELETE FROM — each followed by a
+     * Matches: FROM, JOIN, INTO, UPDATE, DELETE FROM: each followed by a
      * quoted/unquoted table identifier. The FROM clause also handles
      * comma-separated table lists.
      */

@@ -30,5 +30,6 @@ final readonly class SchemaColumn
         public ?int $precision = null,
         public ?int $scale = null,
         public array $enumValues = [],
+        public ?string $comment = null,
     ) {}
 }

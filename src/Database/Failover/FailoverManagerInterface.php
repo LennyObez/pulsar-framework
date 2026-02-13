@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * Manages database failover detection and switching.
  *
  * Handles circuit-breaking and failover execution, but does NOT
- * handle promotion — that is the database cluster's responsibility.
+ * handle promotion: that is the database cluster's responsibility.
  */
 #[Api(since: '1.0.0')]
 interface FailoverManagerInterface

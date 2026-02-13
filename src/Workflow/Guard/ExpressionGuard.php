@@ -17,9 +17,9 @@ use function sprintf;
  * The expression is read from the transition metadata under the 'guard_expression'
  * key. Supported expressions check for the existence and value of context fields:
  *
- * - `context.has:<field>` — checks that the field exists in the instance context
- * - `context.eq:<field>:<value>` — checks that the field equals a string value
- * - `context.neq:<field>:<value>` — checks that the field does not equal a string value
+ * - `context.has:<field>`; checks that the field exists in the instance context
+ * - `context.eq:<field>:<value>`: checks that the field equals a string value
+ * - `context.neq:<field>:<value>`: checks that the field does not equal a string value
  *
  * This guard is intentionally limited to deterministic, side-effect-free evaluations.
  * For complex logic, implement a custom {@see TransitionGuardInterface}.

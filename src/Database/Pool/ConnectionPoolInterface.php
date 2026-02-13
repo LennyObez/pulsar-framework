@@ -11,7 +11,7 @@ use Pulsar\Database\Exception\DatabaseException;
 /**
  * Manages a pool of reusable database connections for persistent runtimes.
  *
- * Under FPM, no pool is created — connections are managed per-request
+ * Under FPM, no pool is created; connections are managed per-request
  * by the ConnectionManager directly.
  */
 #[Api(since: '1.0.0')]

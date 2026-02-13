@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Database;
 
+use Closure;
 use PDO;
 use PDOException;
 use Pulsar\Api\Api;
@@ -24,9 +25,13 @@ final class Transaction
     public private(set) bool $committed = false;
     public private(set) bool $rolledBack = false;
 
+    /**
+     * @param Closure(): void $onFinish Callback invoked after commit or rollback to update connection state.
+     */
     public function __construct(
         private readonly PDO $pdo,
         private readonly int $depth,
+        private readonly ?Closure $onFinish = null,
     ) {}
 
     /**
@@ -50,6 +55,7 @@ final class Transaction
 
         $this->active = false;
         $this->committed = true;
+        $this->onFinish?->__invoke();
     }
 
     /**
@@ -73,6 +79,7 @@ final class Transaction
 
         $this->active = false;
         $this->rolledBack = true;
+        $this->onFinish?->__invoke();
     }
 
     /**

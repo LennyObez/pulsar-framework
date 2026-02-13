@@ -20,7 +20,7 @@ use function usort;
  * Read-only listener provider that loads from a compiled event map.
  *
  * Resolves listener classes from the container at dispatch time.
- * Registration methods throw — use ListenerProvider for dynamic registration.
+ * Registration methods throw: use ListenerProvider for dynamic registration.
  */
 #[Internal]
 final class CompiledListenerProvider implements ListenerProviderInterface, ListenerMetadataProviderInterface
@@ -96,7 +96,7 @@ final class CompiledListenerProvider implements ListenerProviderInterface, Liste
     }
 
     /**
-     * @throws EventException Always — compiled providers are read-only
+     * @throws EventException Always: compiled providers are read-only
      */
     #[Override]
     public function addListener(string $eventClass, callable $listener, int $priority = 0, string $moduleId = ''): void
@@ -105,7 +105,7 @@ final class CompiledListenerProvider implements ListenerProviderInterface, Liste
     }
 
     /**
-     * @throws EventException Always — compiled providers are read-only
+     * @throws EventException Always: compiled providers are read-only
      */
     #[Override]
     public function addSubscriber(EventSubscriberInterface $subscriber, string $moduleId = ''): void

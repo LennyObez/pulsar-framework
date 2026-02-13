@@ -43,7 +43,7 @@ final readonly class ClassifiedContext
     /**
      * Set a field with its classification level.
      *
-     * Returns a new instance — this object is immutable.
+     * Returns a new instance: this object is immutable.
      */
     public function set(string $key, mixed $value, ClassificationLevel $level): self
     {
