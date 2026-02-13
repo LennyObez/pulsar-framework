@@ -82,14 +82,30 @@ final readonly class CreateGitHubIssueJob
             $this->githubRepo,
         );
 
-        // Stub: In production, this would use proc_open() with explicit arg array:
-        //   ['gh', 'issue', 'create', '--repo', $this->githubRepo,
-        //    '--title', $title, '--body', $body, '--label', $label]
-        // and parse the returned issue URL, then:
-        //   $updated = $feedback->linkGitHubIssue($issueUrl);
-        //   $this->repository->save($updated);
+        $command = [
+            'gh', 'issue', 'create',
+            '--repo', $this->githubRepo,
+            '--title', $title,
+            '--body', $body,
+            '--label', $label,
+        ];
 
-        // Reference all built variables to satisfy static analysis
-        ($title && $body && $label);
+        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+
+        if (!is_resource($process)) {
+            return;
+        }
+
+        $output = is_resource($pipes[1]) ? stream_get_contents($pipes[1]) : '';
+        is_resource($pipes[1]) && fclose($pipes[1]);
+        is_resource($pipes[2]) && fclose($pipes[2]);
+        proc_close($process);
+
+        $issueUrl = is_string($output) ? trim($output) : '';
+
+        if ($issueUrl !== '' && str_starts_with($issueUrl, 'https://')) {
+            $updated = $feedback->linkGitHubIssue($issueUrl);
+            $this->repository->save($updated);
+        }
     }
 }

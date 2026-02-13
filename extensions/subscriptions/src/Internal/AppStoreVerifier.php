@@ -144,7 +144,9 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
                 return null;
             }
 
-            return "{$signingInput}." . $this->base64UrlEncode($signature);
+            $signatureStr = is_string($signature) ? $signature : '';
+
+            return "{$signingInput}." . $this->base64UrlEncode($signatureStr);
         } catch (Throwable) {
             return null;
         }

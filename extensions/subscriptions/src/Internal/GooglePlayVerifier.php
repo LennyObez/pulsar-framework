@@ -125,8 +125,14 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
                 return null;
             }
 
-            openssl_sign($signingInput, $signature, $key, OPENSSL_ALGO_SHA256);
-            $jwt = "{$signingInput}." . base64_encode($signature);
+            $signed = openssl_sign($signingInput, $signature, $key, OPENSSL_ALGO_SHA256);
+
+            if (!$signed) {
+                return null;
+            }
+
+            $signatureStr = is_string($signature) ? $signature : '';
+            $jwt = "{$signingInput}." . base64_encode($signatureStr);
 
             $postData = http_build_query([
                 'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
