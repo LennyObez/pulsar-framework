@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Database\Monitor;
 
+use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
@@ -44,6 +45,7 @@ final class MonitoredConnectionTest extends TestCase
         );
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function test_query_logs_sql_and_checks_slow(): void
     {
         $result = Result::fromArrays([['id' => 1]]);
@@ -54,19 +56,20 @@ final class MonitoredConnectionTest extends TestCase
             ->with(
                 'SELECT * FROM users WHERE id = :id',
                 ['id' => 1],
-                $this->isType('float'),
+                $this->isFloat(),
                 1,
             );
 
         $this->slowDetector->expects($this->once())
             ->method('check')
-            ->with('SELECT * FROM users WHERE id = :id', $this->isType('float'));
+            ->with('SELECT * FROM users WHERE id = :id', $this->isFloat());
 
         $returned = $this->connection->query('SELECT * FROM users WHERE id = :id', ['id' => 1]);
 
         $this->assertSame($result, $returned);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function test_execute_logs_sql_and_checks_slow(): void
     {
         $this->inner->method('execute')->willReturn(3);
@@ -76,7 +79,7 @@ final class MonitoredConnectionTest extends TestCase
             ->with(
                 'DELETE FROM sessions WHERE expired = :expired',
                 ['expired' => true],
-                $this->isType('float'),
+                $this->isFloat(),
                 3,
             );
 
@@ -90,6 +93,7 @@ final class MonitoredConnectionTest extends TestCase
         $this->assertSame(3, $rowCount);
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function test_disconnect_logs_disconnection(): void
     {
         $this->auditor->expects($this->once())
@@ -101,16 +105,19 @@ final class MonitoredConnectionTest extends TestCase
         $this->connection->disconnect();
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function test_delegates_name(): void
     {
         $this->assertSame('test', $this->connection->name());
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function test_delegates_driver(): void
     {
         $this->assertSame(Driver::SQLite, $this->connection->driver());
     }
 
+    #[AllowMockObjectsWithoutExpectations]
     public function test_delegates_in_transaction(): void
     {
         $this->inner->method('inTransaction')->willReturn(true);

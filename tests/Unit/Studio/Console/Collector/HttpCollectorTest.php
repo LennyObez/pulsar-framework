@@ -220,7 +220,7 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest();
 
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturnCallback(
             function (ServerRequestInterface $r): ResponseInterface {
                 usleep(10000); // 10ms
@@ -349,7 +349,7 @@ final class HttpCollectorTest extends TestCase
         $request = $this->createRequest();
         $capturedRequest = null;
 
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willReturnCallback(
             function (ServerRequestInterface $r) use (&$capturedRequest): ResponseInterface {
                 $capturedRequest = $r;
@@ -385,7 +385,7 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest();
 
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willThrowException(new RuntimeException('Test exception'));
 
         try {
@@ -409,7 +409,7 @@ final class HttpCollectorTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Test exception');
 
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willThrowException(new RuntimeException('Test exception'));
 
         $collector->process($request, $handler);
@@ -515,7 +515,7 @@ final class HttpCollectorTest extends TestCase
         $collector = $this->createCollector();
         $request = $this->createRequest();
 
-        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler = $this->createStub(RequestHandlerInterface::class);
         $handler->method('handle')->willThrowException(new RuntimeException('Test'));
 
         try {

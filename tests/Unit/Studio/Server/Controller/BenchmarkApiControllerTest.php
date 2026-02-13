@@ -16,7 +16,6 @@ use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 use function hash;
-use function is_array;
 use function json_encode;
 
 use const JSON_THROW_ON_ERROR;

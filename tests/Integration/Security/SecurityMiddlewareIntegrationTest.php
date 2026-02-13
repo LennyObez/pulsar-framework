@@ -111,7 +111,6 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
 
         $tokenManager = $this->createStub(CsrfTokenManagerInterface::class);
         $tokenManager->method('validate')
-            ->with($token)
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
@@ -138,7 +137,6 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
 
         $tokenManager = $this->createStub(CsrfTokenManagerInterface::class);
         $tokenManager->method('validate')
-            ->with($token)
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
@@ -163,7 +161,7 @@ final class SecurityMiddlewareIntegrationTest extends TestCase
         $token = bin2hex(random_bytes(32));
 
         $tokenManager = $this->createStub(CsrfTokenManagerInterface::class);
-        $tokenManager->method('validate')->with($token)->willReturn(true);
+        $tokenManager->method('validate')->willReturn(true);
 
         $csrfMiddleware = new CsrfMiddleware($tokenManager, $this->csrfConfig);
         $headersMiddleware = new SecurityHeadersMiddleware($this->headersConfig);

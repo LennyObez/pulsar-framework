@@ -33,7 +33,7 @@ final class ReadOnlyCachePoolTest extends TestCase
     public function getItemDelegates(): void
     {
         $item = $this->createStub(CacheItemInterface::class);
-        $this->inner->method('getItem')->with('key')->willReturn($item);
+        $this->inner->method('getItem')->willReturn($item);
 
         self::assertSame($item, $this->pool->getItem('key'));
     }
@@ -42,7 +42,7 @@ final class ReadOnlyCachePoolTest extends TestCase
     public function getItemsDelegates(): void
     {
         $items = [$this->createStub(CacheItemInterface::class)];
-        $this->inner->method('getItems')->with(['key'])->willReturn($items);
+        $this->inner->method('getItems')->willReturn($items);
 
         self::assertSame($items, $this->pool->getItems(['key']));
     }
@@ -50,7 +50,7 @@ final class ReadOnlyCachePoolTest extends TestCase
     #[Test]
     public function hasItemDelegates(): void
     {
-        $this->inner->method('hasItem')->with('key')->willReturn(true);
+        $this->inner->method('hasItem')->willReturn(true);
 
         self::assertTrue($this->pool->hasItem('key'));
     }

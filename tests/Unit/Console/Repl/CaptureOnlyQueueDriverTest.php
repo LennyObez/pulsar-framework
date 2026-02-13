@@ -77,7 +77,7 @@ final class CaptureOnlyQueueDriverTest extends TestCase
     #[Test]
     public function sizeDelegates(): void
     {
-        $this->inner->method('size')->with('default')->willReturn(42);
+        $this->inner->method('size')->willReturn(42);
 
         self::assertSame(42, $this->driver->size('default'));
     }
@@ -97,7 +97,7 @@ final class CaptureOnlyQueueDriverTest extends TestCase
         $records = [
             new JobRecord('1', 'default', 'Job', '{}', 0, JobRecordStatus::Pending, 0, 0),
         ];
-        $this->inner->method('findByStatus')->with(JobRecordStatus::Pending)->willReturn($records);
+        $this->inner->method('findByStatus')->willReturn($records);
 
         self::assertSame($records, $this->driver->findByStatus(JobRecordStatus::Pending));
     }

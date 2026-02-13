@@ -104,7 +104,7 @@ final class FrankenPhpRuntimeTest extends TestCase
     #[Test]
     public function before_request_delegates_to_sandbox(): void
     {
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
 
         $result = $this->runtime->beforeRequest($request);
 
@@ -114,8 +114,8 @@ final class FrankenPhpRuntimeTest extends TestCase
     #[Test]
     public function after_request_delegates_to_sandbox(): void
     {
-        $request = $this->createMock(ServerRequestInterface::class);
-        $response = $this->createMock(ResponseInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
 
         $this->expectNotToPerformAssertions();
         $this->runtime->afterRequest($request, $response);

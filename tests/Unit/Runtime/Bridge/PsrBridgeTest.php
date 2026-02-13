@@ -254,15 +254,15 @@ final class PsrBridgeTest extends TestCase
         string $protocolVersion = '1.1',
         ?array $parsedBody = null,
     ): ServerRequestInterface {
-        $uri = $this->createMock(UriInterface::class);
+        $uri = $this->createStub(UriInterface::class);
         $uri->method('getPath')->willReturn($path);
         $uri->method('getQuery')->willReturn($query);
         $uri->method('__toString')->willReturn($path . ($query !== '' ? '?' . $query : ''));
 
-        $stream = $this->createMock(StreamInterface::class);
+        $stream = $this->createStub(StreamInterface::class);
         $stream->method('__toString')->willReturn($body);
 
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getMethod')->willReturn($method);
         $request->method('getUri')->willReturn($uri);
         $request->method('getQueryParams')->willReturn($queryParams);

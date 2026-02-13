@@ -42,7 +42,6 @@ final class CompiledListenerProviderTest extends TestCase
 
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
-            ->with($listener::class)
             ->willReturn($listener);
 
         $compiledMap = [
@@ -192,7 +191,6 @@ final class CompiledListenerProviderTest extends TestCase
 
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
-            ->with($listener::class)
             ->willReturn($listener);
 
         $compiledMap = [

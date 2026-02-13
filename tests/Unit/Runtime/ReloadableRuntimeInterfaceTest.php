@@ -76,7 +76,7 @@ final class ReloadableRuntimeInterfaceTest extends TestCase
             runtimeType: RuntimeType::Persistent,
         );
 
-        $mock = $this->createMock(ReloadableRuntimeInterface::class);
+        $mock = $this->createStub(ReloadableRuntimeInterface::class);
         $mock->method('healthStatus')->willReturn(HealthStatus::Healthy);
         $mock->method('workerInfo')->willReturn($workerInfo);
 

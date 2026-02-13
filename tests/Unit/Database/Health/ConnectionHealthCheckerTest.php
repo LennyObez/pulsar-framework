@@ -18,10 +18,9 @@ final class ConnectionHealthCheckerTest extends TestCase
     #[Test]
     public function healthyConnectionReturnsTrue(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('query')
-            ->with('SELECT 1')
-            ->willReturn($this->createMock(Result::class));
+            ->willReturn($this->createStub(Result::class));
 
         $checker = new ConnectionHealthChecker();
 
@@ -31,9 +30,8 @@ final class ConnectionHealthCheckerTest extends TestCase
     #[Test]
     public function unhealthyConnectionReturnsFalse(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('query')
-            ->with('SELECT 1')
             ->willThrowException(new RuntimeException('Connection lost'));
 
         $checker = new ConnectionHealthChecker();
@@ -44,9 +42,8 @@ final class ConnectionHealthCheckerTest extends TestCase
     #[Test]
     public function connectionExceptionReturnsFalse(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $connection->method('query')
-            ->with('SELECT 1')
             ->willThrowException(new RuntimeException('PDO error'));
 
         $checker = new ConnectionHealthChecker(timeoutSeconds: 1.0);

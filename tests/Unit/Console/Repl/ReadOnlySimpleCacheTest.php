@@ -31,7 +31,7 @@ final class ReadOnlySimpleCacheTest extends TestCase
     #[Test]
     public function getDelegates(): void
     {
-        $this->inner->method('get')->with('key', null)->willReturn('value');
+        $this->inner->method('get')->willReturn('value');
 
         self::assertSame('value', $this->cache->get('key'));
     }
@@ -41,7 +41,7 @@ final class ReadOnlySimpleCacheTest extends TestCase
     {
         $keys = ['a', 'b'];
         $expected = ['a' => 1, 'b' => 2];
-        $this->inner->method('getMultiple')->with($keys, null)->willReturn($expected);
+        $this->inner->method('getMultiple')->willReturn($expected);
 
         self::assertSame($expected, $this->cache->getMultiple($keys));
     }
@@ -49,7 +49,7 @@ final class ReadOnlySimpleCacheTest extends TestCase
     #[Test]
     public function hasDelegates(): void
     {
-        $this->inner->method('has')->with('key')->willReturn(true);
+        $this->inner->method('has')->willReturn(true);
 
         self::assertTrue($this->cache->has('key'));
     }

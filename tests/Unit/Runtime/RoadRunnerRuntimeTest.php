@@ -6,7 +6,7 @@ namespace Pulsar\Tests\Unit\Runtime;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -29,17 +29,17 @@ use RuntimeException;
 #[CoversClass(RoadRunnerRuntime::class)]
 final class RoadRunnerRuntimeTest extends TestCase
 {
-    /** @var KernelInterface&MockObject */
+    /** @var KernelInterface&Stub */
     private KernelInterface $kernel;
     private RequestSandbox $sandbox;
     private RuntimeConfig $config;
-    /** @var WorkerInterface&MockObject */
+    /** @var WorkerInterface&Stub */
     private WorkerInterface $worker;
 
     protected function setUp(): void
     {
-        $this->kernel = $this->createMock(KernelInterface::class);
-        $container = $this->createMock(ContainerInterface::class);
+        $this->kernel = $this->createStub(KernelInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $container->method('has')->willReturn(false);
         $this->sandbox = new RequestSandbox(
             $container,
@@ -47,7 +47,7 @@ final class RoadRunnerRuntimeTest extends TestCase
             new LeakDetector(),
         );
         $this->config = new RuntimeConfig();
-        $this->worker = $this->createMock(WorkerInterface::class);
+        $this->worker = $this->createStub(WorkerInterface::class);
     }
 
     #[Test]
@@ -131,42 +131,35 @@ final class RoadRunnerRuntimeTest extends TestCase
     public function start_processes_requests_from_worker(): void
     {
         $psrRequest = $this->createPsrRequest('/test');
-        $psrResponse = $this->createMock(ResponseInterface::class);
+        $psrResponse = $this->createStub(ResponseInterface::class);
 
-        // Worker returns one request then null to stop
-        $this->worker->method('waitRequest')
+        $worker = $this->createMock(WorkerInterface::class);
+        $worker->method('waitRequest')
             ->willReturnOnConsecutiveCalls($psrRequest, null);
-
-        // Kernel handles the request and returns PSR-7 response
-        $this->kernel->method('handle')
-            ->willReturn($psrResponse);
-
-        // Worker should receive a response
-        $this->worker->expects(self::once())
+        $worker->expects(self::once())
             ->method('respond')
             ->with($psrResponse);
 
-        $runtime = $this->createRuntime();
+        $this->kernel->method('handle')
+            ->willReturn($psrResponse);
+
+        $runtime = $this->createRuntime(worker: $worker);
         $runtime->start();
 
-        // After start() completes, status should be Stopped
         self::assertSame(RuntimeStatus::Stopped, $runtime->status());
     }
 
     #[Test]
     public function start_calls_kernel_boot_once(): void
     {
-        // Worker returns null immediately
         $this->worker->method('waitRequest')
             ->willReturn(null);
 
-        $this->kernel->expects(self::once())
-            ->method('boot');
+        $kernel = $this->createMock(KernelInterface::class);
+        $kernel->expects(self::once())->method('boot');
+        $kernel->expects(self::once())->method('shutdown');
 
-        $this->kernel->expects(self::once())
-            ->method('shutdown');
-
-        $runtime = $this->createRuntime();
+        $runtime = $this->createRuntime(kernel: $kernel);
         $runtime->start();
     }
 
@@ -175,20 +168,17 @@ final class RoadRunnerRuntimeTest extends TestCase
     {
         $psrRequest = $this->createPsrRequest('/error');
 
-        // Worker returns one request then null
-        $this->worker->method('waitRequest')
+        $worker = $this->createMock(WorkerInterface::class);
+        $worker->method('waitRequest')
             ->willReturnOnConsecutiveCalls($psrRequest, null);
-
-        // Kernel throws
-        $this->kernel->method('handle')
-            ->willThrowException(new RuntimeException('Kernel error'));
-
-        // Worker should still receive an error response (500)
-        $this->worker->expects(self::once())
+        $worker->expects(self::once())
             ->method('respond')
             ->with(self::callback(static function (ResponseInterface $response): bool {
                 return $response->getStatusCode() === 500;
             }));
+
+        $this->kernel->method('handle')
+            ->willThrowException(new RuntimeException('Kernel error'));
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger->expects(self::atLeastOnce())
@@ -198,7 +188,7 @@ final class RoadRunnerRuntimeTest extends TestCase
             $this->kernel,
             $this->sandbox,
             $this->config,
-            $this->worker,
+            $worker,
             $logger,
         );
 
@@ -212,26 +202,23 @@ final class RoadRunnerRuntimeTest extends TestCase
     {
         $psrRequest = $this->createPsrRequest('/_health');
 
-        // Worker returns health request then null
-        $this->worker->method('waitRequest')
-            ->willReturnOnConsecutiveCalls($psrRequest, null);
+        $kernel = $this->createMock(KernelInterface::class);
+        $kernel->expects(self::never())->method('handle');
 
-        // Worker should respond with a health response
-        $this->worker->expects(self::once())
+        $worker = $this->createMock(WorkerInterface::class);
+        $worker->method('waitRequest')
+            ->willReturnOnConsecutiveCalls($psrRequest, null);
+        $worker->expects(self::once())
             ->method('respond')
             ->with(self::isInstanceOf(ResponseInterface::class));
-
-        // Kernel should NOT be called for health endpoint
-        $this->kernel->expects(self::never())
-            ->method('handle');
 
         $config = new RuntimeConfig(healthEndpoint: true);
 
         $runtime = new RoadRunnerRuntime(
-            $this->kernel,
+            $kernel,
             $this->sandbox,
             $config,
-            $this->worker,
+            $worker,
         );
 
         $runtime->start();
@@ -241,21 +228,20 @@ final class RoadRunnerRuntimeTest extends TestCase
     public function start_skips_health_endpoint_when_disabled(): void
     {
         $psrRequest = $this->createPsrRequest('/_health');
-        $psrResponse = $this->createMock(ResponseInterface::class);
+        $psrResponse = $this->createStub(ResponseInterface::class);
 
-        // Worker returns health request then null
-        $this->worker->method('waitRequest')
-            ->willReturnOnConsecutiveCalls($psrRequest, null);
-
-        // Kernel SHOULD be called when health endpoint is disabled
-        $this->kernel->expects(self::once())
+        $kernel = $this->createMock(KernelInterface::class);
+        $kernel->expects(self::once())
             ->method('handle')
             ->willReturn($psrResponse);
+
+        $this->worker->method('waitRequest')
+            ->willReturnOnConsecutiveCalls($psrRequest, null);
 
         $config = new RuntimeConfig(healthEndpoint: false);
 
         $runtime = new RoadRunnerRuntime(
-            $this->kernel,
+            $kernel,
             $this->sandbox,
             $config,
             $this->worker,
@@ -264,28 +250,31 @@ final class RoadRunnerRuntimeTest extends TestCase
         $runtime->start();
     }
 
-    private function createRuntime(?LoggerInterface $logger = null): RoadRunnerRuntime
-    {
+    private function createRuntime(
+        ?KernelInterface $kernel = null,
+        ?WorkerInterface $worker = null,
+        ?LoggerInterface $logger = null,
+    ): RoadRunnerRuntime {
         return new RoadRunnerRuntime(
-            $this->kernel,
+            $kernel ?? $this->kernel,
             $this->sandbox,
             $this->config,
-            $this->worker,
+            $worker ?? $this->worker,
             $logger,
         );
     }
 
     private function createPsrRequest(string $path): ServerRequestInterface
     {
-        $uri = $this->createMock(UriInterface::class);
+        $uri = $this->createStub(UriInterface::class);
         $uri->method('getPath')->willReturn($path);
         $uri->method('getQuery')->willReturn('');
         $uri->method('__toString')->willReturn($path);
 
-        $body = $this->createMock(StreamInterface::class);
+        $body = $this->createStub(StreamInterface::class);
         $body->method('__toString')->willReturn('');
 
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getMethod')->willReturn('GET');
         $request->method('getUri')->willReturn($uri);
         $request->method('getBody')->willReturn($body);
@@ -301,10 +290,10 @@ final class RoadRunnerRuntimeTest extends TestCase
 
     private function createPsrResponse(int $statusCode, string $body): ResponseInterface
     {
-        $stream = $this->createMock(StreamInterface::class);
+        $stream = $this->createStub(StreamInterface::class);
         $stream->method('__toString')->willReturn($body);
 
-        $response = $this->createMock(ResponseInterface::class);
+        $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn($statusCode);
         $response->method('getBody')->willReturn($stream);
 

@@ -96,7 +96,6 @@ final class AuthenticationFlowTest extends TestCase
 
         $resolver = $this->createStub(TokenResolverInterface::class);
         $resolver->method('resolve')
-            ->with('valid-api-token')
             ->willReturn($expectedIdentity);
 
         $guard = new TokenGuard($resolver);
@@ -194,7 +193,6 @@ final class AuthenticationFlowTest extends TestCase
         // Token guard resolves the token
         $resolver = $this->createStub(TokenResolverInterface::class);
         $resolver->method('resolve')
-            ->with('my-token')
             ->willReturn($tokenIdentity);
 
         $tokenGuard = new TokenGuard($resolver);

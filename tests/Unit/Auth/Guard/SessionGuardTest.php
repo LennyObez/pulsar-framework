@@ -50,7 +50,7 @@ final class SessionGuardTest extends TestCase
     public function authenticateReturnsNullWhenNoIdentityInSession(): void
     {
         $this->session->method('isStarted')->willReturn(true);
-        $this->session->method('has')->with('_pulsar_identity')->willReturn(false);
+        $this->session->method('has')->willReturn(false);
 
         $request = new ServerRequest(
             method: 'GET',
@@ -72,8 +72,8 @@ final class SessionGuardTest extends TestCase
         ];
 
         $this->session->method('isStarted')->willReturn(true);
-        $this->session->method('has')->with('_pulsar_identity')->willReturn(true);
-        $this->session->method('get')->with('_pulsar_identity')->willReturn($identityData);
+        $this->session->method('has')->willReturn(true);
+        $this->session->method('get')->willReturn($identityData);
 
         $request = new ServerRequest(
             method: 'GET',

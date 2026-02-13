@@ -17,10 +17,10 @@ final class HeartbeatMonitorTest extends TestCase
     #[Test]
     public function registersConnections(): void
     {
-        $healthChecker = $this->createMock(ConnectionHealthCheckerInterface::class);
+        $healthChecker = $this->createStub(ConnectionHealthCheckerInterface::class);
         $monitor = new HeartbeatMonitor($healthChecker);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $monitor->register('primary', $connection);
 
         self::assertTrue($monitor->isRegistered('primary'));
@@ -30,11 +30,10 @@ final class HeartbeatMonitorTest extends TestCase
     #[Test]
     public function reportsUnhealthyConnections(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
 
-        $healthChecker = $this->createMock(ConnectionHealthCheckerInterface::class);
+        $healthChecker = $this->createStub(ConnectionHealthCheckerInterface::class);
         $healthChecker->method('isHealthy')
-            ->with($connection)
             ->willReturn(false);
 
         $monitor = new HeartbeatMonitor($healthChecker, maxConsecutiveFailures: 5);
@@ -54,11 +53,10 @@ final class HeartbeatMonitorTest extends TestCase
     #[Test]
     public function removesDeadConnections(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
 
-        $healthChecker = $this->createMock(ConnectionHealthCheckerInterface::class);
+        $healthChecker = $this->createStub(ConnectionHealthCheckerInterface::class);
         $healthChecker->method('isHealthy')
-            ->with($connection)
             ->willReturn(false);
 
         $monitor = new HeartbeatMonitor($healthChecker, maxConsecutiveFailures: 2);
@@ -76,9 +74,9 @@ final class HeartbeatMonitorTest extends TestCase
     #[Test]
     public function healthyCheckResetsFailureCount(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
 
-        $healthChecker = $this->createMock(ConnectionHealthCheckerInterface::class);
+        $healthChecker = $this->createStub(ConnectionHealthCheckerInterface::class);
         $healthChecker->method('isHealthy')
             ->willReturnOnConsecutiveCalls(false, true, false, false);
 
@@ -105,9 +103,9 @@ final class HeartbeatMonitorTest extends TestCase
     #[Test]
     public function statusReturnsLastKnownState(): void
     {
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
 
-        $healthChecker = $this->createMock(ConnectionHealthCheckerInterface::class);
+        $healthChecker = $this->createStub(ConnectionHealthCheckerInterface::class);
         $healthChecker->method('isHealthy')->willReturn(true);
 
         $monitor = new HeartbeatMonitor($healthChecker);
@@ -120,10 +118,10 @@ final class HeartbeatMonitorTest extends TestCase
     #[Test]
     public function unregisterRemovesConnection(): void
     {
-        $healthChecker = $this->createMock(ConnectionHealthCheckerInterface::class);
+        $healthChecker = $this->createStub(ConnectionHealthCheckerInterface::class);
         $monitor = new HeartbeatMonitor($healthChecker);
 
-        $connection = $this->createMock(ConnectionInterface::class);
+        $connection = $this->createStub(ConnectionInterface::class);
         $monitor->register('primary', $connection);
         self::assertTrue($monitor->isRegistered('primary'));
 

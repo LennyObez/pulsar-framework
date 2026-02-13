@@ -107,7 +107,7 @@ final class RuntimeFactoryTest extends TestCase
     {
         $worker = $this->createStub(WorkerInterface::class);
 
-        $container = $this->createMock(ContainerInterface::class);
+        $container = $this->createStub(ContainerInterface::class);
         $container->method('has')->willReturnCallback(
             static fn(string $id): bool => $id === WorkerInterface::class,
         );

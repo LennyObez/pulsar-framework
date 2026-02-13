@@ -6,7 +6,7 @@ namespace Pulsar\Tests\Unit\Database\Failover;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Exception\DatabaseException;
@@ -21,17 +21,17 @@ use Pulsar\Resilience\CircuitBreakerState;
 #[CoversClass(FailoverManager::class)]
 final class FailoverManagerTest extends TestCase
 {
-    private ConnectionInterface&MockObject $connection;
-    private ConnectionHealthCheckerInterface&MockObject $healthChecker;
-    private FailoverStrategyInterface&MockObject $strategy;
+    private ConnectionInterface&Stub $connection;
+    private ConnectionHealthCheckerInterface&Stub $healthChecker;
+    private FailoverStrategyInterface&Stub $strategy;
     private CircuitBreaker $circuitBreaker;
     private MetricRegistry $metrics;
 
     protected function setUp(): void
     {
-        $this->connection = $this->createMock(ConnectionInterface::class);
-        $this->healthChecker = $this->createMock(ConnectionHealthCheckerInterface::class);
-        $this->strategy = $this->createMock(FailoverStrategyInterface::class);
+        $this->connection = $this->createStub(ConnectionInterface::class);
+        $this->healthChecker = $this->createStub(ConnectionHealthCheckerInterface::class);
+        $this->strategy = $this->createStub(FailoverStrategyInterface::class);
         $this->circuitBreaker = new CircuitBreaker(
             name: 'db-primary',
             failureThreshold: 3,

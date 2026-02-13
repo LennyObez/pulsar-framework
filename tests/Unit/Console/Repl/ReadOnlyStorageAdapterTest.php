@@ -28,7 +28,7 @@ final class ReadOnlyStorageAdapterTest extends TestCase
     #[Test]
     public function getDelegates(): void
     {
-        $this->inner->method('get')->with('key')->willReturn('content');
+        $this->inner->method('get')->willReturn('content');
 
         self::assertSame('content', $this->adapter->get('key'));
     }
@@ -36,7 +36,7 @@ final class ReadOnlyStorageAdapterTest extends TestCase
     #[Test]
     public function existsDelegates(): void
     {
-        $this->inner->method('exists')->with('key')->willReturn(true);
+        $this->inner->method('exists')->willReturn(true);
 
         self::assertTrue($this->adapter->exists('key'));
     }
@@ -45,7 +45,7 @@ final class ReadOnlyStorageAdapterTest extends TestCase
     public function listDelegates(): void
     {
         $objects = [new StorageObject('file.txt', 100, 1000)];
-        $this->inner->method('list')->with('prefix/')->willReturn($objects);
+        $this->inner->method('list')->willReturn($objects);
 
         self::assertSame($objects, $this->adapter->list('prefix/'));
     }
@@ -53,7 +53,7 @@ final class ReadOnlyStorageAdapterTest extends TestCase
     #[Test]
     public function temporaryUrlDelegates(): void
     {
-        $this->inner->method('temporaryUrl')->with('key', 3600)->willReturn('https://example.com/tmp');
+        $this->inner->method('temporaryUrl')->willReturn('https://example.com/tmp');
 
         self::assertSame('https://example.com/tmp', $this->adapter->temporaryUrl('key'));
     }

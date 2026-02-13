@@ -82,7 +82,6 @@ final class CsrfMiddlewareTest extends TestCase
     public function postWithValidHeaderTokenPasses(): void
     {
         $this->tokenManager->method('validate')
-            ->with($this->validToken)
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
@@ -102,7 +101,6 @@ final class CsrfMiddlewareTest extends TestCase
     public function postWithValidFormFieldTokenPasses(): void
     {
         $this->tokenManager->method('validate')
-            ->with($this->validToken)
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
@@ -237,7 +235,6 @@ final class CsrfMiddlewareTest extends TestCase
     public function headerTokenTakesPrecedenceOverFormField(): void
     {
         $this->tokenManager->method('validate')
-            ->with($this->validToken)
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
