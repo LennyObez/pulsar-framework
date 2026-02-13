@@ -18,7 +18,7 @@ use function is_string;
  * Host-side allow-list mapping extension names to allowed trust tiers.
  *
  * Loaded from config/extensions.php. Controls the effective trust tier
- * for each extension — the extension's requested tier is capped by
+ * for each extension: the extension's requested tier is capped by
  * the host's allowed tier.
  */
 #[Api(since: '1.0.0')]

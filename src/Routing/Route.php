@@ -33,7 +33,7 @@ readonly class Route
     /**
      * @param list<Method> $methods Allowed HTTP methods
      * @param string $path The route path pattern
-     * @param callable|class-string|array{0: class-string, 1: string} $handler The route handler
+     * @param mixed $handler The route handler
      * @param string|null $name Optional route name
      * @param array<string, mixed> $attributes Additional route attributes
      * @param list<string> $middleware Middleware to apply
@@ -75,7 +75,7 @@ readonly class Route
     {
         $requestPath = '/' . trim($path, '/');
 
-        // Static route — no parameters
+        // Static route: no parameters
         if ($this->compiledPattern === null) {
             $routePath = '/' . trim($this->path, '/');
             return $routePath === $requestPath ? [] : null;
@@ -114,13 +114,16 @@ readonly class Route
         );
         $pattern = $replaced ?? $pattern;
 
-        // Convert {param?} to (?:(?P<param>CONSTRAINT))? using constraints or default [^/]+
+        // Convert /{param?} to (?:/(?P<param>CONSTRAINT))?: the preceding slash
+        // becomes optional together with the parameter so that /blog/{page?}
+        // matches both /blog and /blog/2.
+        // Note: preg_quote escapes ? to \?, so we match the escaped form.
         $replaced = preg_replace_callback(
-            '#\{([a-zA-Z_][a-zA-Z0-9_]*)\?}#',
+            '#/\{([a-zA-Z_][a-zA-Z0-9_]*)\\\\\?}#',
             static function (array $matches) use ($constraints): string {
                 $name = $matches[1];
                 $regex = $constraints[$name] ?? '[^/]+';
-                return '(?:(?P<' . $name . '>' . $regex . '))?';
+                return '(?:/(?P<' . $name . '>' . $regex . '))?';
             },
             $pattern,
         );
@@ -169,7 +172,7 @@ readonly class Route
     /**
      * Create a GET route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function get(string $path, mixed $handler, ?string $name = null): self
@@ -180,7 +183,7 @@ readonly class Route
     /**
      * Create a POST route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function post(string $path, mixed $handler, ?string $name = null): self
@@ -191,7 +194,7 @@ readonly class Route
     /**
      * Create a PUT route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function put(string $path, mixed $handler, ?string $name = null): self
@@ -202,7 +205,7 @@ readonly class Route
     /**
      * Create a PATCH route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function patch(string $path, mixed $handler, ?string $name = null): self
@@ -213,7 +216,7 @@ readonly class Route
     /**
      * Create a DELETE route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function delete(string $path, mixed $handler, ?string $name = null): self
@@ -224,7 +227,7 @@ readonly class Route
     /**
      * Create a route matching any method.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
+     * @param mixed $handler
      */
     #[NoDiscard]
     public static function any(string $path, mixed $handler, ?string $name = null): self
@@ -245,7 +248,7 @@ readonly class Route
      *
      * @param array<int|string, string> $matches
      *
-     * @psalm-suppress InvalidReturnType — Psalm cannot narrow key types through ARRAY_FILTER_USE_KEY
+     * @psalm-suppress InvalidReturnType: Psalm cannot narrow key types through ARRAY_FILTER_USE_KEY
      *
      * @return array<string, string>
      */

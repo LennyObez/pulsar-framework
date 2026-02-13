@@ -14,6 +14,8 @@ use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\Observability\Diagnostics\DiagnosticsRenderer;
 use Pulsar\Observability\ErrorTracking\ErrorAggregator;
 use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Observability\Rum\RumCollector;
+use Pulsar\Observability\Rum\RumController;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Routing\Router;
 
@@ -56,5 +58,16 @@ final readonly class DiagnosticsWiring implements ServiceWiringInterface
 
             return Response::html($renderer->render());
         });
+
+        // RUM (Real User Monitoring): collection endpoint for frontend metrics
+        /** @var MetricRegistry $metricsRegistry */
+        $metricsRegistry = $container->get(MetricRegistry::class);
+        $rumCollector = new RumCollector($metricsRegistry);
+        $container->instance(RumCollector::class, $rumCollector);
+
+        $rumController = new RumController($rumCollector);
+        $container->instance(RumController::class, $rumController);
+
+        $router->post('/_pulsar/rum/collect', $rumController);
     }
 }

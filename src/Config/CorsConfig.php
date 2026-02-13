@@ -6,6 +6,7 @@ namespace Pulsar\Config;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Config\Exception\ConfigException;
 
 use function array_filter;
 use function array_map;
@@ -46,15 +47,30 @@ readonly class CorsConfig
 
     /**
      * @param array<string, mixed> $data Raw `cors` sub-array from config
+     *
+     * @throws ConfigException If allowedOrigins=['*'] combined with allowCredentials=true
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
         $enabled = isset($data['enabled']) && $data['enabled'] === true;
+        $origins = self::normalizeStringList($data['allowed_origins'] ?? []);
+        $allowCredentials = isset($data['allow_credentials']) && $data['allow_credentials'] === true;
+
+        // CORS spec forbids Access-Control-Allow-Origin: * with credentials.
+        // Browsers will reject the response, and it exposes all origins to
+        // credential-bearing requests: a security risk.
+        if ($enabled && $allowCredentials && in_array('*', $origins, true)) {
+            throw ConfigException::invalidValue(
+                'security.cors',
+                'allowedOrigins cannot be ["*"] when allowCredentials is true. '
+                . 'Specify explicit origin(s) instead.',
+            );
+        }
 
         return new self(
             enabled: $enabled,
-            allowedOrigins: self::normalizeStringList($data['allowed_origins'] ?? []),
+            allowedOrigins: $origins,
             allowedMethods: self::normalizeStringList(
                 $data['allowed_methods'] ?? ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
             ),
@@ -62,7 +78,7 @@ readonly class CorsConfig
                 $data['allowed_headers'] ?? ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
             ),
             exposedHeaders: self::normalizeStringList($data['exposed_headers'] ?? []),
-            allowCredentials: isset($data['allow_credentials']) && $data['allow_credentials'] === true,
+            allowCredentials: $allowCredentials,
             maxAge: isset($data['max_age']) && is_int($data['max_age']) ? $data['max_age'] : 0,
         );
     }
@@ -72,8 +88,13 @@ readonly class CorsConfig
      */
     public function isOriginAllowed(string $origin): bool
     {
-        if ($this->allowedOrigins === [] || $this->allowedOrigins === ['*']) {
+        if ($this->allowedOrigins === ['*']) {
             return true;
+        }
+
+        // Empty allowedOrigins means deny all: explicit origins required
+        if ($this->allowedOrigins === []) {
+            return false;
         }
 
         return in_array($origin, $this->allowedOrigins, true);

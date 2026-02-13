@@ -15,7 +15,7 @@ use function is_string;
  * Used in production to skip runtime reflection. Built by the
  * optimize command and loaded from a cached PHP file.
  */
-#[Internal(reason: 'Cache artifact — built by optimize command')]
+#[Internal(reason: 'Cache artifact; built by optimize command')]
 final readonly class CompiledBindingMap
 {
     /**

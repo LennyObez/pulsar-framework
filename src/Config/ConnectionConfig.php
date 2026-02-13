@@ -9,6 +9,10 @@ use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
 
 use function is_string;
+use function str_starts_with;
+
+use const DIRECTORY_SEPARATOR;
+use const PHP_OS_FAMILY;
 
 /**
  * Typed configuration DTO for a single database connection.
@@ -34,9 +38,11 @@ readonly class ConnectionConfig
      * Build from a raw config array and environment.
      *
      * @param array<string, mixed> $data Raw connection config array
+     * @param string|null $basePath Project root for resolving relative SQLite paths.
+     *                              When null, relative paths are left as-is (resolved by Driver at DSN time).
      */
     #[NoDiscard]
-    public static function fromArray(string $name, array $data, Environment $environment): self
+    public static function fromArray(string $name, array $data, Environment $environment, ?string $basePath = null): self
     {
         $rawDriver = $data['driver'] ?? 'mysql';
         $driverString = is_string($rawDriver) ? $rawDriver : 'mysql';
@@ -54,6 +60,12 @@ readonly class ConnectionConfig
         /** @var string $dbDefault */
         $dbDefault = $data['database'] ?? '';
         $database = $environment->get('DB_DATABASE') ?? $dbDefault;
+
+        // For SQLite, resolve relative paths against the project root at config time.
+        // This ensures symlinked projects write to their own database, not the framework's.
+        if ($driver === Driver::SQLite && $basePath !== null) {
+            $database = self::resolveSqlitePath($database, $basePath);
+        }
 
         /** @var string $usernameDefault */
         $usernameDefault = $data['username'] ?? '';
@@ -84,5 +96,24 @@ readonly class ConnectionConfig
             collation: $collation,
             options: $options,
         );
+    }
+
+    /**
+     * Resolve a relative SQLite database path against a project root.
+     *
+     * Absolute paths, :memory:, and empty strings are returned unchanged.
+     */
+    private static function resolveSqlitePath(string $database, string $basePath): string
+    {
+        if ($database === ':memory:' || $database === '') {
+            return $database;
+        }
+
+        // Already absolute (Unix or Windows)
+        if (str_starts_with($database, '/') || (PHP_OS_FAMILY === 'Windows' && isset($database[1]) && $database[1] === ':')) {
+            return $database;
+        }
+
+        return $basePath . DIRECTORY_SEPARATOR . $database;
     }
 }

@@ -71,9 +71,10 @@ final readonly class ResilienceWiring implements ServiceWiringInterface
         // Register built-in health checks
         $healthCheckRunner->register(new DiskHealthCheck());
 
-        // Health endpoint — lazily registers checks that depend on services
-        // wired after ResilienceWiring (e.g. CacheWiring)
-        $router->get('/_pulsar/health', static function () use ($container, $healthCheckRunner): Response {
+        // Health endpoint: lazily registers checks that depend on services
+        // wired after ResilienceWiring (e.g. CacheWiring).
+        // Registered at both /_pulsar/health and /health for convenience.
+        $healthHandler = static function () use ($container, $healthCheckRunner): Response {
             // Register cache health check on first request when PSR-16 cache is available
             if ($container->has(CacheInterface::class)) {
                 /** @var CacheInterface $cache */
@@ -87,7 +88,10 @@ final readonly class ResilienceWiring implements ServiceWiringInterface
             $controller = new HealthController($healthCheckRunner);
 
             return $controller();
-        });
+        };
+
+        $router->get('/_pulsar/health', $healthHandler);
+        $router->get('/health', $healthHandler);
 
         // Repair runner
         $repairRunner = new RepairRunner();

@@ -21,6 +21,9 @@ readonly class NotificationConfig
     /**
      * @param list<NotificationChannelType> $defaultChannels Default channels when notification does not specify via()
      * @param string|null $unsubscribeUrlPattern URL pattern with {notifiable_id} and {channel} placeholders for RFC 8058 headers
+     * @param string|null $fcmServerKey Legacy FCM server key (deprecated; use fcmProjectId + fcmOAuthToken)
+     * @param string|null $fcmProjectId Firebase project ID for FCM v1 API
+     * @param string|null $fcmOAuthToken OAuth2 Bearer token for FCM v1 API authentication
      */
     public function __construct(
         public bool $enabled = false,
@@ -29,6 +32,9 @@ readonly class NotificationConfig
         public bool $regulated = false,
         public bool $auditHashEnabled = false,
         public ?string $unsubscribeUrlPattern = null,
+        public ?string $fcmServerKey = null,
+        public ?string $fcmProjectId = null,
+        public ?string $fcmOAuthToken = null,
     ) {}
 
     /**
@@ -72,6 +78,15 @@ readonly class NotificationConfig
         $unsubscribeUrlPattern = $environment->get('NOTIFICATION_UNSUBSCRIBE_URL')
             ?? (is_string($data['unsubscribe_url_pattern'] ?? null) ? $data['unsubscribe_url_pattern'] : null);
 
+        $fcmServerKey = $environment->get('NOTIFICATION_FCM_SERVER_KEY')
+            ?? (is_string($data['fcm_server_key'] ?? null) ? $data['fcm_server_key'] : null);
+
+        $fcmProjectId = $environment->get('NOTIFICATION_FCM_PROJECT_ID')
+            ?? (is_string($data['fcm_project_id'] ?? null) ? $data['fcm_project_id'] : null);
+
+        $fcmOAuthToken = $environment->get('NOTIFICATION_FCM_OAUTH_TOKEN')
+            ?? (is_string($data['fcm_oauth_token'] ?? null) ? $data['fcm_oauth_token'] : null);
+
         return new self(
             enabled: $enabled,
             defaultChannels: $defaultChannels,
@@ -79,6 +94,9 @@ readonly class NotificationConfig
             regulated: $regulated,
             auditHashEnabled: $auditHashEnabled,
             unsubscribeUrlPattern: $unsubscribeUrlPattern,
+            fcmServerKey: $fcmServerKey,
+            fcmProjectId: $fcmProjectId,
+            fcmOAuthToken: $fcmOAuthToken,
         );
     }
 }

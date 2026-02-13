@@ -40,9 +40,10 @@ readonly class DatabaseConfig
      * Build from the raw database config array and environment.
      *
      * @param array<string, mixed> $data Raw array from config/database.php
+     * @param string|null $basePath Project root for resolving relative SQLite paths
      */
     #[NoDiscard]
-    public static function fromArray(array $data, Environment $environment): self
+    public static function fromArray(array $data, Environment $environment, ?string $basePath = null): self
     {
         /** @var string $defaultFromConfig */
         $defaultFromConfig = $data['default'] ?? 'mysql';
@@ -54,7 +55,7 @@ readonly class DatabaseConfig
         $connections = [];
         foreach ($connectionsData as $name => $connData) {
             /** @var array<string, mixed> $connData */
-            $connections[$name] = ConnectionConfig::fromArray($name, $connData, $environment);
+            $connections[$name] = ConnectionConfig::fromArray($name, $connData, $environment, $basePath);
         }
 
         /** @var array<string, mixed> $migrationsData */

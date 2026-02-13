@@ -143,10 +143,9 @@ final readonly class ModelBinder
     /**
      * Extract controller class and method from a route handler.
      *
-     * @param array{0: class-string, 1: string}|callable|class-string $handler
      * @return array{0: class-string, 1: string}|null
      */
-    private function resolveHandlerInfo(array|string|callable $handler): ?array
+    private function resolveHandlerInfo(mixed $handler): ?array
     {
         // Array handler: [ControllerClass::class, 'method']
         if (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1])) {

@@ -41,7 +41,7 @@ use function str_contains;
  * Resolves bound models, enforces authorization based on the
  * configured preset, and attaches resolved models to the request.
  */
-#[Internal(reason: 'Middleware wiring — registered in the middleware pipeline by the composition root')]
+#[Internal(reason: 'Middleware wiring; registered in the middleware pipeline by the composition root')]
 final readonly class ModelBindingMiddleware implements MiddlewareInterface
 {
     /**
@@ -228,10 +228,9 @@ final readonly class ModelBindingMiddleware implements MiddlewareInterface
     /**
      * Extract controller class and method from a route handler.
      *
-     * @param array{0: class-string, 1: string}|callable|class-string $handler
      * @return array{0: class-string, 1: string}|null
      */
-    private function resolveHandlerInfo(array|string|callable $handler): ?array
+    private function resolveHandlerInfo(mixed $handler): ?array
     {
         if (is_array($handler) && isset($handler[0], $handler[1]) && is_string($handler[0]) && is_string($handler[1])) {
             /** @var class-string $class */

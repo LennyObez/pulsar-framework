@@ -44,7 +44,27 @@ readonly class SessionConfig
         public string $savePath = '',
         public int $cookieMaxPayloadSize = 2048,
         public int $cookieReplayWindow = 86400,
+        public int $idleTimeout = 900,
+        public bool $cookieHostPrefix = false,
     ) {}
+
+    /**
+     * Get the effective cookie name, applying the `__Host-` prefix when enabled.
+     *
+     * The `__Host-` prefix instructs browsers to enforce: Secure flag, Path=/,
+     * and no Domain attribute: preventing cookie tossing attacks from sibling
+     * subdomains. Requires `cookieSecure=true`, `cookiePath='/'`, and
+     * `cookieDomain=''` to be valid per the spec.
+     */
+    #[NoDiscard]
+    public function effectiveCookieName(): string
+    {
+        if ($this->cookieHostPrefix) {
+            return '__Host-' . $this->cookieName;
+        }
+
+        return $this->cookieName;
+    }
 
     /**
      * Build from the raw session config array.
@@ -103,6 +123,11 @@ readonly class SessionConfig
         $rawCookieReplayWindow = $data['cookie_replay_window'] ?? 86400;
         $cookieReplayWindow = is_int($rawCookieReplayWindow) ? $rawCookieReplayWindow : 86400;
 
+        $rawIdleTimeout = $data['idle_timeout'] ?? 900;
+        $idleTimeout = is_int($rawIdleTimeout) ? $rawIdleTimeout : 900;
+
+        $cookieHostPrefix = (bool) ($data['cookie_host_prefix'] ?? false);
+
         return new self(
             cookieName: $cookieName,
             lifetime: $lifetime,
@@ -121,6 +146,8 @@ readonly class SessionConfig
             savePath: $savePath,
             cookieMaxPayloadSize: $cookieMaxPayloadSize,
             cookieReplayWindow: $cookieReplayWindow,
+            idleTimeout: $idleTimeout,
+            cookieHostPrefix: $cookieHostPrefix,
         );
     }
 }

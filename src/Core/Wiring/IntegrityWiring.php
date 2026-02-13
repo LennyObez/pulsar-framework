@@ -77,7 +77,7 @@ final readonly class IntegrityWiring implements ServiceWiringInterface
                 $container->instance(ManifestSigner::class, $signer);
                 $container->instance(ManifestSignerInterface::class, $signer);
             } catch (SodiumException) {
-                // Signing key derivation failed — skip signer registration
+                // Signing key derivation failed: skip signer registration
             }
         }
     }

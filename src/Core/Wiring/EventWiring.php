@@ -33,12 +33,15 @@ final readonly class EventWiring implements ServiceWiringInterface
     ): void {
         $repository = $configManager->repository();
 
-        if (!$repository->has(EventConfig::class)) {
-            return;
+        // Use configured EventConfig or fall back to defaults so the event
+        // dispatcher is always available for extensions that depend on it.
+        if ($repository->has(EventConfig::class)) {
+            /** @var EventConfig $eventConfig */
+            $eventConfig = $repository->get(EventConfig::class);
+        } else {
+            $eventConfig = new EventConfig();
         }
 
-        /** @var EventConfig $eventConfig */
-        $eventConfig = $repository->get(EventConfig::class);
         $container->instance(EventConfig::class, $eventConfig);
 
         if (!$eventConfig->enabled) {

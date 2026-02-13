@@ -41,5 +41,19 @@ final readonly class DatabaseWiring implements ServiceWiringInterface
 
         // Convenience binding: default connection available as ConnectionInterface
         $container->bind(ConnectionInterface::class, static fn(): ConnectionInterface => $connectionManager->connection());
+
+        // Seeder runner: discovers and executes database seeders.
+        // Uses lazy binding so ConnectionInterface is resolved at use time, not at wiring time.
+        $seederFactory = static function () use ($connectionManager): \Pulsar\Database\Seeder\SeederRunner {
+            $basePath = getcwd() ?: '.';
+
+            return new \Pulsar\Database\Seeder\SeederRunner(
+                $connectionManager->connection(),
+                $basePath . DIRECTORY_SEPARATOR . 'database' . DIRECTORY_SEPARATOR . 'seeders',
+            );
+        };
+
+        $container->bind(\Pulsar\Database\Seeder\SeederRunner::class, $seederFactory);
+        $container->bind(\Pulsar\Database\Seeder\SeederRunnerInterface::class, $seederFactory);
     }
 }

@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
 /**
  * Framework version information.
  *
- * Reads the version from Composer's InstalledVersions at runtime (zero IO —
+ * Reads the version from Composer's InstalledVersions at runtime (zero IO --
  * the data is compiled into vendor/composer/installed.php). Falls back to the
  * compile-time constants when InstalledVersions is unavailable (e.g., running
  * without the Composer autoloader).
@@ -24,12 +24,12 @@ final class Version
     public const int PATCH = 0;
 
     /** Pre-release suffix including the leading hyphen, or '' for stable releases. */
-    public const string PRERELEASE_SUFFIX = '-rc.10';
+    public const string PRERELEASE_SUFFIX = '-rc.11';
 
     private const string PACKAGE_NAME = 'pulsar/framework';
 
     /**
-     * Get the full version string (e.g. "1.0.0-rc.10" or "1.0.0").
+     * Get the full version string (e.g. "1.0.0-rc.11" or "1.0.0").
      */
     #[NoDiscard]
     public static function full(): string

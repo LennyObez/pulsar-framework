@@ -92,7 +92,7 @@ final readonly class BindingResolver
             $paramName = $param->getName();
 
             // Check if this parameter name matches a route parameter
-            // Route parameters may use {param:key} syntax — strip the key suffix
+            // Route parameters may use {param:key} syntax; strip the key suffix
             $routeParamName = $this->findRouteParameter($paramName, $routeParameters);
             if ($routeParamName === null) {
                 continue;
@@ -142,7 +142,7 @@ final readonly class BindingResolver
      */
     private function applyExplicitOverrides(array $bindings, MatchedRoute $matchedRoute): array
     {
-        // Apply explicit bindings — these always override implicit resolution
+        // Apply explicit bindings: these always override implicit resolution
         foreach ($this->explicitBindings as $explicit) {
             $paramName = $explicit->parameter;
 

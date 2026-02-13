@@ -9,12 +9,15 @@ use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\I18nConfig;
 use Pulsar\Container\ContainerInterface;
+use Pulsar\Http\Controller\Api\I18nController;
+use Pulsar\Http\Controller\Api\RegionApiController;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
 use Pulsar\I18n\Catalog\ChainCatalog;
 use Pulsar\I18n\Catalog\JsonCatalog;
 use Pulsar\I18n\Catalog\PhpCatalog;
 use Pulsar\I18n\CatalogInterface;
+use Pulsar\I18n\Compiler\TranslationCompiler;
 use Pulsar\I18n\Exception\I18nException;
 use Pulsar\I18n\Format\CurrencyFormatterInterface;
 use Pulsar\I18n\Format\DateFormatterInterface;
@@ -34,6 +37,10 @@ use Pulsar\I18n\Locale\LocaleUrlStrategy;
 use Pulsar\I18n\Locale\RouteBasedLocaleUrlResolver;
 use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\I18n\LocaleNegotiatorInterface;
+use Pulsar\I18n\Region\CountryRegistry;
+use Pulsar\I18n\Region\CurrencyResolver;
+use Pulsar\I18n\Region\RegionMiddleware;
+use Pulsar\I18n\Region\RegionResolver;
 use Pulsar\I18n\Translator;
 use Pulsar\I18n\TranslatorInterface;
 use Pulsar\Routing\Router;
@@ -102,6 +109,26 @@ final readonly class I18nWiring implements ServiceWiringInterface
             $currencyFormatter = new IntlCurrencyFormatter($translator);
             $container->instance(CurrencyFormatterInterface::class, $currencyFormatter);
         }
+
+        // Register i18n API routes
+        $compiler = new TranslationCompiler($catalog);
+        $container->instance(TranslationCompiler::class, $compiler);
+        $router->get('/api/i18n/{locale}', [I18nController::class, 'show'], 'api.i18n.locale');
+
+        // Region system
+        $countryRegistry = new CountryRegistry();
+        $container->instance(CountryRegistry::class, $countryRegistry);
+
+        $regionResolver = new RegionResolver($countryRegistry, $config->defaultLocale === 'en' ? 'US' : 'US');
+        $container->instance(RegionResolver::class, $regionResolver);
+
+        $currencyResolver = new CurrencyResolver($countryRegistry);
+        $container->instance(CurrencyResolver::class, $currencyResolver);
+
+        $regionMiddleware = new RegionMiddleware($regionResolver, $currencyResolver);
+        $middleware->pipe($regionMiddleware);
+
+        $router->get('/api/i18n/regions.json', RegionApiController::class, 'api.i18n.regions');
 
         // Wire middleware based on URL strategy
         if ($config->urlStrategy === LocaleUrlStrategy::PathPrefix) {

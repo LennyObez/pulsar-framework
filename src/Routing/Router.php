@@ -6,11 +6,13 @@ namespace Pulsar\Routing;
 
 use InvalidArgumentException;
 use Pulsar\Api\Api;
+use Pulsar\Config\DomainConfig;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Binding\ExplicitBinding;
 
 use function array_values;
 use function count;
+use function is_string;
 use function sprintf;
 
 /**
@@ -44,7 +46,7 @@ final class Router implements RouterInterface
      * O(1) hash map for static routes (no dynamic segments).
      *
      * Indexed by HTTP method then normalized path, enabling constant-time
-     * lookups for routes without parameters — the most common case.
+     * lookups for routes without parameters: the most common case.
      *
      * @var array<string, array<string, Route>>
      */
@@ -120,8 +122,6 @@ final class Router implements RouterInterface
     /**
      * Register a GET route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
-     *
      * @throws RoutingException If the router is locked in strict cache mode
      */
     public function get(string $path, mixed $handler, ?string $name = null): self
@@ -131,8 +131,6 @@ final class Router implements RouterInterface
 
     /**
      * Register a POST route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      *
      * @throws RoutingException If the router is locked in strict cache mode
      */
@@ -144,8 +142,6 @@ final class Router implements RouterInterface
     /**
      * Register a PUT route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
-     *
      * @throws RoutingException If the router is locked in strict cache mode
      */
     public function put(string $path, mixed $handler, ?string $name = null): self
@@ -155,8 +151,6 @@ final class Router implements RouterInterface
 
     /**
      * Register a PATCH route.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      *
      * @throws RoutingException If the router is locked in strict cache mode
      */
@@ -168,8 +162,6 @@ final class Router implements RouterInterface
     /**
      * Register a DELETE route.
      *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
-     *
      * @throws RoutingException If the router is locked in strict cache mode
      */
     public function delete(string $path, mixed $handler, ?string $name = null): self
@@ -179,8 +171,6 @@ final class Router implements RouterInterface
 
     /**
      * Register a route matching any method.
-     *
-     * @param callable|class-string|array{0: class-string, 1: string} $handler
      *
      * @throws RoutingException If the router is locked in strict cache mode
      */
@@ -257,7 +247,7 @@ final class Router implements RouterInterface
             }
         }
 
-        // Cold path: no match found — scan all routes for 405 detection
+        // Cold path: no match found: scan all routes for 405 detection
         $pathMatches = [];
 
         foreach ($this->routes as $route) {
@@ -322,10 +312,16 @@ final class Router implements RouterInterface
     /**
      * Generate a URL for a named route.
      *
+     * When a DomainConfig is provided and the route's attributes include
+     * a 'scope' that is mapped to a subdomain, generates a fully-qualified
+     * URL with the correct subdomain (e.g., 'https://forum.example.com/threads/1').
+     *
+     * Without domain config, returns a relative path as before.
+     *
      * @param array<string, string> $parameters
      * @throws InvalidArgumentException If route not found
      */
-    public function url(string $name, array $parameters = []): string
+    public function url(string $name, array $parameters = [], ?DomainConfig $domainConfig = null): string
     {
         $route = $this->getByName($name)
             ?? throw new InvalidArgumentException(sprintf('Route "%s" not found', $name));
@@ -354,7 +350,23 @@ final class Router implements RouterInterface
         $replaced = preg_replace('#//+#', '/', $path);
         $path = $replaced ?? $path;
 
-        return '/' . trim($path, '/');
+        $relativePath = '/' . trim($path, '/');
+
+        // Domain-aware URL generation: if a route has a scope attribute and
+        // that scope is mapped to a subdomain, generate a fully-qualified URL
+        if ($domainConfig !== null && $domainConfig->hasSubdomainMappings()) {
+            $scope = $route->attributes['scope'] ?? null;
+
+            if (is_string($scope)) {
+                $subdomain = $domainConfig->subdomainForScope($scope);
+
+                if ($subdomain !== null) {
+                    return $domainConfig->scheme . '://' . $subdomain . '.' . $domainConfig->defaultDomain . $relativePath;
+                }
+            }
+        }
+
+        return $relativePath;
     }
 
     /**
@@ -399,6 +411,90 @@ final class Router implements RouterInterface
         $this->explicitBindings[] = new ExplicitBinding($parameter, $modelClass, $resolverClass);
 
         return $this;
+    }
+
+    /**
+     * Register a full resource route set (7 routes).
+     *
+     * Generates: index, create, store, show, edit, update, destroy.
+     *
+     * @param string $name Resource name (e.g. 'photos'): used for URL prefix and route names
+     * @param string $controller Controller class or handler prefix (e.g. 'App\Controller\PhotoController')
+     * @param list<string> $middleware Middleware applied to all resource routes
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
+     */
+    public function resource(string $name, string $controller, array $middleware = []): self
+    {
+        $prefix = '/' . trim($name, '/');
+        $paramName = $this->singularize($name);
+        $paramSegment = '/{' . $paramName . '}';
+
+        $this->add(new Route([Method::GET, Method::HEAD], $prefix, [$controller, 'index'], $name . '.index', middleware: $middleware));
+        $this->add(new Route([Method::GET, Method::HEAD], $prefix . '/create', [$controller, 'create'], $name . '.create', middleware: $middleware));
+        $this->add(new Route([Method::POST], $prefix, [$controller, 'store'], $name . '.store', middleware: $middleware));
+        $this->add(new Route([Method::GET, Method::HEAD], $prefix . $paramSegment, [$controller, 'show'], $name . '.show', middleware: $middleware));
+        $this->add(new Route([Method::GET, Method::HEAD], $prefix . $paramSegment . '/edit', [$controller, 'edit'], $name . '.edit', middleware: $middleware));
+        $this->add(new Route([Method::PUT, Method::PATCH], $prefix . $paramSegment, [$controller, 'update'], $name . '.update', middleware: $middleware));
+        $this->add(new Route([Method::DELETE], $prefix . $paramSegment, [$controller, 'destroy'], $name . '.destroy', middleware: $middleware));
+
+        return $this;
+    }
+
+    /**
+     * Register an API resource route set (5 routes, no create/edit forms).
+     *
+     * Generates: index, store, show, update, destroy.
+     *
+     * @param string $name Resource name (e.g. 'photos'): used for URL prefix and route names
+     * @param string $controller Controller class or handler prefix
+     * @param list<string> $middleware Middleware applied to all resource routes
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
+     */
+    public function apiResource(string $name, string $controller, array $middleware = []): self
+    {
+        $prefix = '/' . trim($name, '/');
+        $paramName = $this->singularize($name);
+        $paramSegment = '/{' . $paramName . '}';
+
+        $this->add(new Route([Method::GET, Method::HEAD], $prefix, [$controller, 'index'], $name . '.index', middleware: $middleware));
+        $this->add(new Route([Method::POST], $prefix, [$controller, 'store'], $name . '.store', middleware: $middleware));
+        $this->add(new Route([Method::GET, Method::HEAD], $prefix . $paramSegment, [$controller, 'show'], $name . '.show', middleware: $middleware));
+        $this->add(new Route([Method::PUT, Method::PATCH], $prefix . $paramSegment, [$controller, 'update'], $name . '.update', middleware: $middleware));
+        $this->add(new Route([Method::DELETE], $prefix . $paramSegment, [$controller, 'destroy'], $name . '.destroy', middleware: $middleware));
+
+        return $this;
+    }
+
+    /**
+     * Naive English pluralization: derive singular from plural resource name.
+     *
+     * Handles common suffixes: -ies -> -y, -ses/-xes/-zes/-shes/-ches -> drop suffix, -s -> drop s.
+     * For irregular nouns, the user should specify the parameter name via route constraints.
+     */
+    private function singularize(string $name): string
+    {
+        // Only take the last segment if nested (e.g. 'admin/photos' -> 'photos')
+        if (str_contains($name, '/')) {
+            $segments = explode('/', trim($name, '/'));
+            $name = end($segments);
+        }
+
+        if (str_ends_with($name, 'ies')) {
+            return substr($name, 0, -3) . 'y';
+        }
+
+        if (str_ends_with($name, 'ses') || str_ends_with($name, 'xes') || str_ends_with($name, 'zes')
+            || str_ends_with($name, 'shes') || str_ends_with($name, 'ches')) {
+            return substr($name, 0, -2);
+        }
+
+        if (str_ends_with($name, 's') && !str_ends_with($name, 'ss')) {
+            return substr($name, 0, -1);
+        }
+
+        return $name;
     }
 
     /**

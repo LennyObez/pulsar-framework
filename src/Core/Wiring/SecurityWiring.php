@@ -5,19 +5,36 @@ declare(strict_types=1);
 namespace Pulsar\Core\Wiring;
 
 use PDO;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\FrameworkCacheInterface;
+use Pulsar\Config\AppConfig;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\DeployConfig;
+use Pulsar\Config\DomainConfig;
 use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Context\RequestContextHolder;
+use Pulsar\DataProtection\AuditLogPurge;
+use Pulsar\DataProtection\ConsentManagerInterface;
+use Pulsar\DataProtection\DataProtectionConfig;
+use Pulsar\DataProtection\DataPurgeInterface;
+use Pulsar\DataProtection\DataPurgeOrchestrator;
+use Pulsar\DataProtection\DefaultRetentionPolicy;
+use Pulsar\DataProtection\InMemoryConsentManager;
+use Pulsar\DataProtection\RetentionPolicyInterface;
+use Pulsar\DataProtection\SessionPurge;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
+use Pulsar\Routing\DomainResolverInterface;
+use Pulsar\Routing\Internal\ConfigDomainResolver;
 use Pulsar\Routing\Router;
+use Pulsar\Routing\SubdomainRoutingMiddleware;
+use Pulsar\Security\Assertion\SecurityAssertionRunner;
 use Pulsar\Security\Audit\AuditChainVerifier;
 use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditLogger;
@@ -30,14 +47,20 @@ use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\EnvKeyRing;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\HmacService;
+use Pulsar\Security\Crypto\InMemoryTokenStore;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Security\Crypto\KeyRingInterface;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Security\Crypto\SodiumCipherSuite;
+use Pulsar\Security\Crypto\TokenizationService;
+use Pulsar\Security\Crypto\TokenizationServiceInterface;
+use Pulsar\Security\Crypto\TokenStoreInterface;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 use Pulsar\Security\Exception\SecurityException;
+use Pulsar\Security\Incident\IncidentReporterInterface;
+use Pulsar\Security\Incident\InMemoryIncidentReporter;
 use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 use Pulsar\Security\Session\Flash\FlashBag;
 use Pulsar\Security\Session\Handler\ArrayHandler;
@@ -55,13 +78,18 @@ use Pulsar\Security\Session\Validator\FingerprintValidator;
 use Pulsar\Security\Session\Validator\RemoteAddressValidator;
 use Pulsar\Security\Session\Validator\SessionValidatorInterface;
 use Pulsar\Security\Session\Validator\UserAgentValidator;
+use Pulsar\Security\Vault\SecretVault;
 use Random\Randomizer;
 use Redis;
 use SodiumException;
 
 use function dirname;
 use function is_array;
+use function is_file;
 use function sodium_hex2bin;
+use function sprintf;
+
+use const DIRECTORY_SEPARATOR;
 
 #[Internal]
 final readonly class SecurityWiring implements ServiceWiringInterface
@@ -78,7 +106,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         /** @var SecurityConfig $securityConfig */
         $securityConfig = $configManager->repository()->get(SecurityConfig::class);
 
-        // HmacService adapter — always available (no key required, delegates to static Hmac methods)
+        // HmacService adapter: always available (no key required, delegates to static Hmac methods)
         $hmacService = new HmacService();
         $container->instance(HmacInterface::class, $hmacService);
 
@@ -96,7 +124,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                 );
                 $container->instance(MasterKey::class, $masterKey);
 
-                // Build key provider — use CompositeKeyProvider if overrides are present
+                // Build key provider: use CompositeKeyProvider if overrides are present
                 $keyProvider = $this->buildKeyProvider($masterKey, $environment);
                 $container->instance(KeyProviderInterface::class, $keyProvider);
                 if ($keyProvider instanceof CompositeKeyProvider) {
@@ -110,6 +138,15 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                 $encryptor = Encryptor::fromMasterKey($masterKey, $cipherSuite);
                 $container->instance(Encryptor::class, $encryptor);
                 $container->instance(EncryptorInterface::class, $encryptor);
+
+                // Tokenization service (PCI-DSS Req 3.4)
+                $tokenStore = $container->has(TokenStoreInterface::class)
+                    ? $container->get(TokenStoreInterface::class)
+                    : new InMemoryTokenStore();
+                $container->instance(TokenStoreInterface::class, $tokenStore);
+                $tokenizationService = new TokenizationService($masterKey, $tokenStore, $cipherSuite);
+                $container->instance(TokenizationService::class, $tokenizationService);
+                $container->instance(TokenizationServiceInterface::class, $tokenizationService);
 
                 // Session encryption via Keyring (Finding B)
                 if ($securityConfig->session->encryption) {
@@ -159,15 +196,67 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                     $chainVerifier = new AuditChainVerifier($auditKeyRing);
                     $container->instance(AuditChainVerifier::class, $chainVerifier);
                 }
+                // Secret vault: encrypted config secrets (API keys, credentials, DSN strings)
+                $configPath = $configManager->configPath();
+                if ($configPath !== null) {
+                    $vaultPath = dirname($configPath) . DIRECTORY_SEPARATOR . 'secrets.encrypted.php';
+                    $vault = SecretVault::create($masterKey, $vaultPath);
+                    $container->instance(SecretVault::class, $vault);
+                }
             } catch (SecurityException | SodiumException) {
-                // Master key is invalid or sodium operation failed — skip crypto/audit registration.
+                // Master key is invalid or sodium operation failed: skip crypto/audit registration.
                 // Session, CSRF, and headers still work without it.
                 $masterKey = null;
                 $sessionEncryption = null;
             }
         }
 
-        // Session — build handler, validators, and manager
+        // Security assertions: verify security posture in production mode
+        $appEnv = $environment->get('APP_ENV') ?? 'local';
+        if ($appEnv === 'production') {
+            $repository = $configManager->repository();
+            $debugMode = $repository->has(AppConfig::class)
+                && $repository->get(AppConfig::class)->debug;
+
+            $assertionRunner = new SecurityAssertionRunner(
+                debugMode: $debugMode,
+                httpsEnforced: $securityConfig->headers->hsts->enabled,
+                hstsConfig: $securityConfig->headers->hsts,
+                sessionConfig: $securityConfig->session,
+            );
+            $container->instance(SecurityAssertionRunner::class, $assertionRunner);
+
+            // Run assertions: violations are logged via PSR-3 rather than halting boot
+            // to avoid breaking deployments with missing config.
+            // LoggingWiring runs before SecurityWiring in the kernel boot sequence,
+            // so LoggerInterface is always available here.
+            // For strict enforcement, callers use assertAll() directly.
+            $violations = $assertionRunner->check();
+            if ($violations !== []) {
+                /** @var LoggerInterface|null $logger */
+                $logger = $container->has(LoggerInterface::class)
+                    ? $container->get(LoggerInterface::class)
+                    : null;
+
+                foreach ($violations as $violation) {
+                    $message = sprintf(
+                        '%s: %s',
+                        $violation->assertion,
+                        $violation->message,
+                    );
+
+                    if ($logger !== null) {
+                        $logger->warning($message, [
+                            'assertion' => $violation->assertion,
+                            'severity' => $violation->severity->value,
+                            'category' => 'security',
+                        ]);
+                    }
+                }
+            }
+        }
+
+        // Session: build handler, validators, and manager
         $sessionHandler = $this->buildSessionHandler($securityConfig, $container, $sessionEncryption);
         $container->instance(SessionHandlerInterface::class, $sessionHandler);
 
@@ -182,9 +271,11 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $container->instance(SessionManager::class, $sessionManager);
         $container->instance(SessionInterface::class, $sessionManager);
 
-        // Legacy Session alias for backward compatibility with existing SessionGuard
-        $legacySession = new Session($securityConfig->session);
-        $container->instance(Session::class, $legacySession);
+        // Legacy Session alias for backward compatibility with existing SessionGuard.
+        // Register the SessionManager under the Session::class key instead of creating
+        // a separate Session instance, which would result in two independent session
+        // stores and potential data inconsistency.
+        $container->instance(Session::class, $sessionManager);
 
         // Flash messages
         $flashBag = new FlashBag($sessionManager);
@@ -208,9 +299,108 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         $csrfMiddleware = new CsrfMiddleware($csrfTokenManager, $securityConfig->csrf);
         $container->instance(CsrfMiddleware::class, $csrfMiddleware);
 
-        // Security Headers
-        $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers);
+        // Security Headers: gate X-Forwarded-Proto on trusted proxy IPs (CFR-71)
+        $repository = $configManager->repository();
+        /** @var list<string> $trustedProxies */
+        $trustedProxies = $repository->has(DeployConfig::class)
+            ? $repository->get(DeployConfig::class)->trustedProxies
+            : [];
+        $headersMiddleware = new SecurityHeadersMiddleware($securityConfig->headers, $trustedProxies);
         $container->instance(SecurityHeadersMiddleware::class, $headersMiddleware);
+
+        // Incident Reporter: default to in-memory, override with FileIncidentReporter via config
+        if (!$container->has(IncidentReporterInterface::class)) {
+            $incidentReporter = new InMemoryIncidentReporter();
+            $container->instance(IncidentReporterInterface::class, $incidentReporter);
+            $container->instance(InMemoryIncidentReporter::class, $incidentReporter);
+        }
+
+        // Consent Manager: default to in-memory, override with database-backed via config
+        if (!$container->has(ConsentManagerInterface::class)) {
+            $consentManager = new InMemoryConsentManager();
+            $container->instance(ConsentManagerInterface::class, $consentManager);
+            $container->instance(InMemoryConsentManager::class, $consentManager);
+        }
+
+        // Data Purge Orchestrator: wire up reference purge implementations
+        if (!$container->has(DataPurgeOrchestrator::class)) {
+            /** @var array<string, DataPurgeInterface> $purgers */
+            $purgers = [];
+
+            // Audit log purge: uses the same log path from observability config
+            if ($repository->has(ObservabilityConfig::class)) {
+                /** @var ObservabilityConfig $obsConfigForPurge */
+                $obsConfigForPurge = $repository->get(ObservabilityConfig::class);
+
+                if ($obsConfigForPurge->audit->enabled) {
+                    $purgers['audit_logs'] = new AuditLogPurge($obsConfigForPurge->audit->logPath);
+                }
+            }
+
+            // Session purge: uses the active session handler
+            if ($container->has(SessionHandlerInterface::class)) {
+                $purgers['sessions'] = new SessionPurge($container->get(SessionHandlerInterface::class));
+            }
+
+            // Build policies from DataProtectionConfig
+            $dpConfig = $repository->has(DataProtectionConfig::class)
+                ? $repository->get(DataProtectionConfig::class)
+                : new DataProtectionConfig();
+
+            /** @var array<string, RetentionPolicyInterface> $policies */
+            $policies = [];
+
+            foreach ($dpConfig->retention as $retentionPolicy) {
+                $policies[$retentionPolicy->category] = new DefaultRetentionPolicy(
+                    category: $retentionPolicy->category,
+                    retentionDays: max(0, $retentionPolicy->retentionDays),
+                    legalBasis: $retentionPolicy->legalBasis,
+                );
+            }
+
+            $auditLogger = $container->has(AuditLoggerInterface::class)
+                ? $container->get(AuditLoggerInterface::class)
+                : null;
+
+            $orchestrator = new DataPurgeOrchestrator(
+                purgers: $purgers,
+                policies: $policies,
+                config: $dpConfig,
+                auditLogger: $auditLogger,
+            );
+            $container->instance(DataPurgeOrchestrator::class, $orchestrator);
+        }
+
+        // Multi-domain / subdomain routing: zero-cost when no mappings configured
+        $domainConfig = $this->buildDomainConfig($configManager);
+        $container->instance(DomainConfig::class, $domainConfig);
+
+        $domainResolver = new ConfigDomainResolver($domainConfig);
+        $container->instance(DomainResolverInterface::class, $domainResolver);
+        $container->instance(ConfigDomainResolver::class, $domainResolver);
+
+        $subdomainMiddleware = new SubdomainRoutingMiddleware($domainResolver);
+        $container->instance(SubdomainRoutingMiddleware::class, $subdomainMiddleware);
+
+        // Add subdomain middleware to the global pipeline (resolves domain context for routing)
+        $middleware->pipe($subdomainMiddleware);
+
+        // Named middleware aliases: allow routes to use string references
+        $middlewareRegistry->alias('session', SessionMiddleware::class);
+        $middlewareRegistry->alias('csrf', CsrfMiddleware::class);
+        $middlewareRegistry->alias('headers', SecurityHeadersMiddleware::class);
+        $middlewareRegistry->alias('subdomain', SubdomainRoutingMiddleware::class);
+
+        // Middleware groups: composable sets for common route profiles
+        $middlewareRegistry->group('web', [
+            SecurityHeadersMiddleware::class,
+            SessionMiddleware::class,
+            CsrfMiddleware::class,
+        ]);
+
+        $middlewareRegistry->group('api', [
+            SecurityHeadersMiddleware::class,
+        ]);
     }
 
     private function buildSessionHandler(
@@ -324,5 +514,26 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         }
 
         return new CompositeKeyProvider($masterKey, $overrides);
+    }
+
+    /**
+     * Load multi-domain configuration from config/domains.php.
+     */
+    private function buildDomainConfig(ConfigManager $configManager): DomainConfig
+    {
+        $configPath = $configManager->configPath();
+        $environment = $configManager->environment();
+
+        if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'domains.php')) {
+            /** @psalm-suppress UnresolvableInclude */
+            $data = require $configPath . DIRECTORY_SEPARATOR . 'domains.php';
+
+            if (is_array($data)) {
+                /** @var array<string, mixed> $data */
+                return DomainConfig::fromArray($data, $environment);
+            }
+        }
+
+        return new DomainConfig();
     }
 }
