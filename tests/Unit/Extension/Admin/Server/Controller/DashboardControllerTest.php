@@ -13,9 +13,7 @@ use Pulsar\Extension\Admin\Contracts\ResourceRegistryInterface;
 use Pulsar\Extension\Admin\Contracts\WidgetInterface;
 use Pulsar\Extension\Admin\Features\Dashboard\DashboardHandler;
 use Pulsar\Extension\Admin\Server\Controller\DashboardController;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 
 #[CoversClass(DashboardController::class)]
 final class DashboardControllerTest extends TestCase
@@ -37,15 +35,12 @@ final class DashboardControllerTest extends TestCase
         return new DashboardController($handler, $config);
     }
 
-    private function makeJsonRequest(): Request
+    private function makeJsonRequest(): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/admin',
-            path: '/admin',
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
     }
 
@@ -69,9 +64,9 @@ final class DashboardControllerTest extends TestCase
 
         $response = $controller->index($this->makeJsonRequest());
 
-        self::assertSame(200, $response->status->value);
+        self::assertSame(200, $response->getStatusCode());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertArrayHasKey('widgets', $body);
         self::assertArrayHasKey('resources', $body);
         /** @var list<mixed> $widgets */
@@ -96,7 +91,7 @@ final class DashboardControllerTest extends TestCase
         $response = $controller->index($this->makeJsonRequest());
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         /** @var list<array<string, mixed>> $widgets */
         $widgets = $body['widgets'];
         self::assertSame('recent_activity', $widgets[0]['id']);
@@ -111,7 +106,7 @@ final class DashboardControllerTest extends TestCase
         $response = $controller->index($this->makeJsonRequest());
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertSame([], $body['widgets']);
         self::assertSame([], $body['resources']);
     }
@@ -130,7 +125,7 @@ final class DashboardControllerTest extends TestCase
         $response = $controller->index($this->makeJsonRequest());
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         /** @var list<array<string, mixed>> $resources */
         $resources = $body['resources'];
         self::assertSame('orders', $resources[0]['name']);

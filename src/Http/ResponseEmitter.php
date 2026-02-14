@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http;
 
+use Psr\Http\Message\ResponseInterface;
 use Pulsar\Api\Api;
 use RuntimeException;
 
@@ -20,7 +21,7 @@ final class ResponseEmitter
      *
      * This sends headers and outputs the body. Should only be called once.
      */
-    public function emit(Response $response): void
+    public function emit(ResponseInterface $response): void
     {
         $this->assertHeadersNotSent();
 
@@ -32,24 +33,24 @@ final class ResponseEmitter
     /**
      * Emit the HTTP status line.
      */
-    private function emitStatusLine(Response $response): void
+    private function emitStatusLine(ResponseInterface $response): void
     {
         $statusLine = sprintf(
             'HTTP/%s %d %s',
-            $response->protocolVersion,
-            $response->status->value,
-            $response->status->reasonPhrase(),
+            $response->getProtocolVersion(),
+            $response->getStatusCode(),
+            $response->getReasonPhrase(),
         );
 
-        header($statusLine, true, $response->status->value);
+        header($statusLine, true, $response->getStatusCode());
     }
 
     /**
      * Emit all response headers.
      */
-    private function emitHeaders(Response $response): void
+    private function emitHeaders(ResponseInterface $response): void
     {
-        foreach ($response->headers as $name => $values) {
+        foreach ($response->getHeaders() as $name => $values) {
             $first = true;
             foreach ($values as $value) {
                 header(
@@ -64,13 +65,15 @@ final class ResponseEmitter
     /**
      * Emit the response body.
      */
-    private function emitBody(Response $response): void
+    private function emitBody(ResponseInterface $response): void
     {
-        if ($response->isEmpty()) {
+        $body = $response->getBody();
+
+        if ($body->getSize() === 0) {
             return;
         }
 
-        echo $response->body;
+        echo $body;
     }
 
     /**

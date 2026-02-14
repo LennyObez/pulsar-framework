@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 
 use function bin2hex;
 use function random_bytes;
@@ -27,7 +28,7 @@ final readonly class AdminCspMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $nonce = '';
         if ($this->config->security->cspNonce) {
@@ -35,7 +36,7 @@ final readonly class AdminCspMiddleware implements MiddlewareInterface
             $request = $request->withAttribute('csp_nonce', $nonce);
         }
 
-        $response = $next($request);
+        $response = $handler->handle($request);
 
         $scriptSrc = $nonce !== '' ? "'nonce-$nonce'" : "'self'";
         $csp = "default-src 'self'; script-src $scriptSrc; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";

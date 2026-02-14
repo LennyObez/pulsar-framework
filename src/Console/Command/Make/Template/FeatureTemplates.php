@@ -19,8 +19,8 @@ final readonly class FeatureTemplates
             namespace $namespace\\Features\\$feature\\Contracts;
 
             use Pulsar\\Api\\Api;
-            use Pulsar\\Http\\Request;
-            use Pulsar\\Http\\Response;
+            use Psr\\Http\\Message\\ServerRequestInterface;
+            use Pulsar\\Http\\Message\\Response;
 
             /**
              * Handler contract for the $feature feature.
@@ -28,7 +28,7 @@ final readonly class FeatureTemplates
             #[Api(since: '1.0.0')]
             interface {$feature}HandlerInterface
             {
-                public function handle(Request \$request): Response;
+                public function handle(ServerRequestInterface \$request): Response;
             }
             PHP;
     }
@@ -43,14 +43,14 @@ final readonly class FeatureTemplates
             namespace $namespace\\Features\\$feature;
 
             use Override;
-            use Pulsar\\Http\\Request;
-            use Pulsar\\Http\\Response;
+            use Psr\\Http\\Message\\ServerRequestInterface;
+            use Pulsar\\Http\\Message\\Response;
             use $namespace\\Features\\$feature\\Contracts\\{$feature}HandlerInterface;
 
             final readonly class {$feature}Handler implements {$feature}HandlerInterface
             {
                 #[Override]
-                public function handle(Request \$request): Response
+                public function handle(ServerRequestInterface \$request): Response
                 {
                     return Response::json([
                         'feature' => '$feature',
@@ -73,7 +73,7 @@ final readonly class FeatureTemplates
             use PHPUnit\\Framework\\Attributes\\CoversClass;
             use PHPUnit\\Framework\\Attributes\\Test;
             use PHPUnit\\Framework\\TestCase;
-            use Pulsar\\Http\\Request;
+            use Psr\\Http\\Message\\ServerRequestInterface;
             use Pulsar\\Http\\ResponseStatus;
             use $namespace\\Features\\$feature\\Contracts\\{$feature}HandlerInterface;
             use $namespace\\Features\\$feature\\{$feature}Handler;
@@ -93,11 +93,11 @@ final readonly class FeatureTemplates
                 public function it_returns_json_response(): void
                 {
                     \$handler = new {$feature}Handler();
-                    \$request = \$this->createStub(Request::class);
+                    \$request = \$this->createStub(ServerRequestInterface::class);
 
                     \$response = \$handler->handle(\$request);
 
-                    self::assertSame(ResponseStatus::Ok, \$response->status);
+                    self::assertSame(ResponseStatus::OK->value, \$response->getStatusCode());
                 }
             }
             PHP;

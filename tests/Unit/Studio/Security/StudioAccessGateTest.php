@@ -11,9 +11,7 @@ use Pulsar\Config\EnvironmentMode;
 use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
 use Pulsar\Extension\Studio\Security\AllowlistChecker;
 use Pulsar\Extension\Studio\Security\StudioAccessGate;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 
 use function base64_encode;
 
@@ -326,22 +324,19 @@ final class StudioAccessGateTest extends TestCase
     private function createRequest(
         ?string $remoteAddr = '127.0.0.1',
         ?string $authHeader = null,
-    ): Request {
-        $headers = new HeaderBag($authHeader !== null ? ['Authorization' => $authHeader] : []);
+    ): ServerRequest {
+        $headers = $authHeader !== null ? ['Authorization' => $authHeader] : [];
 
-        $server = [];
+        $serverParams = [];
         if ($remoteAddr !== null) {
-            $server['REMOTE_ADDR'] = $remoteAddr;
+            $serverParams['REMOTE_ADDR'] = $remoteAddr;
         }
 
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
             headers: $headers,
-            body: '',
-            server: $server,
+            serverParams: $serverParams,
         );
     }
 }

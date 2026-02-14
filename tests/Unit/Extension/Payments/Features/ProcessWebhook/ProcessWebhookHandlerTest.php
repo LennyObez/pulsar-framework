@@ -56,8 +56,8 @@ final class ProcessWebhookHandlerTest extends TestCase
 
         $result = $processor->execute(new ProcessWebhookRequest($body, $header));
 
-        self::assertSame(ResponseStatus::OK, $result->response->status);
-        self::assertStringContainsString('processed', $result->response->body);
+        self::assertSame(ResponseStatus::OK->value, $result->response->getStatusCode());
+        self::assertStringContainsString('processed', (string) $result->response->getBody());
         self::assertCount(1, $handler->events);
     }
 
@@ -71,7 +71,7 @@ final class ProcessWebhookHandlerTest extends TestCase
 
         $result = $processor->execute(new ProcessWebhookRequest($body, 't=1700000000,v1=invalid'));
 
-        self::assertSame(ResponseStatus::Forbidden, $result->response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $result->response->getStatusCode());
         self::assertCount(0, $handler->events);
     }
 
@@ -87,8 +87,8 @@ final class ProcessWebhookHandlerTest extends TestCase
         $processor->execute(new ProcessWebhookRequest($body, $header));
         $result = $processor->execute(new ProcessWebhookRequest($body, $header));
 
-        self::assertSame(ResponseStatus::OK, $result->response->status);
-        self::assertStringContainsString('already_processed', $result->response->body);
+        self::assertSame(ResponseStatus::OK->value, $result->response->getStatusCode());
+        self::assertStringContainsString('already_processed', (string) $result->response->getBody());
         self::assertCount(1, $handler->events);
     }
 
@@ -109,7 +109,7 @@ final class ProcessWebhookHandlerTest extends TestCase
 
         $result = $processor->execute(new ProcessWebhookRequest($body, $header));
 
-        self::assertSame(ResponseStatus::InternalServerError, $result->response->status);
+        self::assertSame(ResponseStatus::InternalServerError->value, $result->response->getStatusCode());
     }
 
     #[Test]
@@ -142,8 +142,8 @@ final class ProcessWebhookHandlerTest extends TestCase
 
         $result = $processor->execute(new ProcessWebhookRequest($body, $header));
 
-        self::assertSame(ResponseStatus::BadRequest, $result->response->status);
-        self::assertStringContainsString('malformed_payload', $result->response->body);
+        self::assertSame(ResponseStatus::BadRequest->value, $result->response->getStatusCode());
+        self::assertStringContainsString('malformed_payload', (string) $result->response->getBody());
         self::assertCount(0, $handler->events);
     }
 
@@ -163,8 +163,8 @@ final class ProcessWebhookHandlerTest extends TestCase
 
         $result = $processor->execute(new ProcessWebhookRequest($body, $header));
 
-        self::assertSame(ResponseStatus::BadRequest, $result->response->status);
-        self::assertStringContainsString('malformed_payload', $result->response->body);
+        self::assertSame(ResponseStatus::BadRequest->value, $result->response->getStatusCode());
+        self::assertStringContainsString('malformed_payload', (string) $result->response->getBody());
         self::assertCount(0, $handler->events);
     }
 
@@ -204,8 +204,8 @@ final class ProcessWebhookHandlerTest extends TestCase
 
         $result = $processor->execute(new ProcessWebhookRequest($body, $header));
 
-        self::assertSame(ResponseStatus::Conflict, $result->response->status);
-        self::assertStringContainsString('concurrent_processing', $result->response->body);
+        self::assertSame(ResponseStatus::Conflict->value, $result->response->getStatusCode());
+        self::assertStringContainsString('concurrent_processing', (string) $result->response->getBody());
         self::assertCount(0, $handler->events);
     }
 
