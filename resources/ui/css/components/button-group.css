@@ -1,0 +1,55 @@
+/* Pulsar UI — Button Group Component v1.0.0 */
+
+.pui-btn-group {
+  display: inline-flex;
+}
+
+.pui-btn-group > .pui-btn {
+  border-radius: 0;
+}
+
+.pui-btn-group > .pui-btn:first-child {
+  border-start-start-radius: var(--btn-radius);
+  border-end-start-radius: var(--btn-radius);
+}
+
+.pui-btn-group > .pui-btn:last-child {
+  border-start-end-radius: var(--btn-radius);
+  border-end-end-radius: var(--btn-radius);
+}
+
+/* Prevent double borders */
+.pui-btn-group > .pui-btn + .pui-btn {
+  margin-inline-start: -1px;
+}
+
+.pui-btn-group > .pui-btn:hover,
+.pui-btn-group > .pui-btn:focus-visible {
+  z-index: 1;
+}
+
+/* Vertical variant */
+.pui-btn-group--vertical {
+  flex-direction: column;
+}
+
+.pui-btn-group--vertical > .pui-btn {
+  border-radius: 0;
+}
+
+.pui-btn-group--vertical > .pui-btn:first-child {
+  border-start-start-radius: var(--btn-radius);
+  border-start-end-radius: var(--btn-radius);
+  border-end-start-radius: 0;
+}
+
+.pui-btn-group--vertical > .pui-btn:last-child {
+  border-end-start-radius: var(--btn-radius);
+  border-end-end-radius: var(--btn-radius);
+  border-start-end-radius: 0;
+}
+
+.pui-btn-group--vertical > .pui-btn + .pui-btn {
+  margin-inline-start: 0;
+  margin-block-start: -1px;
+}

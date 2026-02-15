@@ -1,0 +1,91 @@
+/* Pulsar UI — Toggle Switch Component v1.0.0
+ * ARIA: role="switch", aria-checked
+ * Usage: <label class="pui-toggle"><input type="checkbox" role="switch"><span class="pui-toggle__track"></span><span>Label</span></label>
+ */
+
+.pui-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.pui-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.pui-toggle__track {
+  position: relative;
+  display: inline-block;
+  width: 2.5rem;
+  height: 1.375rem;
+  flex-shrink: 0;
+  background-color: var(--color-gray-300);
+  border-radius: var(--radius-full);
+  transition: background-color var(--transition-fast);
+}
+
+.pui-toggle__track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  width: 1.125rem;
+  height: 1.125rem;
+  background-color: #ffffff;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--transition-fast);
+}
+
+.pui-toggle input:checked + .pui-toggle__track {
+  background-color: var(--color-primary-600);
+}
+
+.pui-toggle input:checked + .pui-toggle__track::after {
+  transform: translateX(1.125rem);
+}
+
+[dir='rtl'] .pui-toggle input:checked + .pui-toggle__track::after {
+  transform: translateX(-1.125rem);
+}
+
+.pui-toggle input:focus-visible + .pui-toggle__track {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+.pui-toggle input:disabled + .pui-toggle__track {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pui-toggle:has(input:disabled) {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Small variant */
+.pui-toggle--sm .pui-toggle__track {
+  width: 2rem;
+  height: 1.125rem;
+}
+
+.pui-toggle--sm .pui-toggle__track::after {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.pui-toggle--sm input:checked + .pui-toggle__track::after {
+  transform: translateX(0.875rem);
+}
+
+[dir='rtl'] .pui-toggle--sm input:checked + .pui-toggle__track::after {
+  transform: translateX(-0.875rem);
+}

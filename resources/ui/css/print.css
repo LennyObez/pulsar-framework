@@ -1,0 +1,252 @@
+/* Pulsar UI Print Stylesheet v1.0.0
+ *
+ * Optimized for printing: hides interactive elements,
+ * shows URLs after links, and uses print-friendly typography.
+ */
+
+@media print {
+  /* -------------------------------------------------------------------------
+   * 1. Base Print Overrides
+   * ---------------------------------------------------------------------- */
+
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html {
+    font-size: 12pt;
+  }
+
+  body {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    line-height: 1.5;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 2. Typography for Print
+   * ---------------------------------------------------------------------- */
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+    orphans: 3;
+    widows: 3;
+  }
+
+  h1 {
+    font-size: 24pt;
+  }
+  h2 {
+    font-size: 20pt;
+  }
+  h3 {
+    font-size: 16pt;
+  }
+  h4 {
+    font-size: 14pt;
+  }
+  h5 {
+    font-size: 12pt;
+  }
+  h6 {
+    font-size: 11pt;
+  }
+
+  p,
+  blockquote,
+  ul,
+  ol,
+  dl,
+  table,
+  pre {
+    orphans: 3;
+    widows: 3;
+  }
+
+  blockquote {
+    border-inline-start: 2pt solid #000;
+    padding-inline-start: 10pt;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 3. Links — Show URLs
+   * ---------------------------------------------------------------------- */
+
+  a,
+  a:visited {
+    text-decoration: underline;
+  }
+
+  a[href]::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.8em;
+    font-weight: normal;
+    word-break: break-all;
+  }
+
+  /* Do not show URLs for anchors or JavaScript links */
+  a[href^='#']::after,
+  a[href^='javascript:']::after {
+    content: '';
+  }
+
+  /* Do not show URLs for links with an explicit print-no-url class */
+  a.print-no-url::after {
+    content: '';
+  }
+
+  abbr[title]::after {
+    content: ' (' attr(title) ')';
+  }
+
+  /* -------------------------------------------------------------------------
+   * 4. Images & Media
+   * ---------------------------------------------------------------------- */
+
+  img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  figure {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 5. Tables
+   * ---------------------------------------------------------------------- */
+
+  table {
+    border-collapse: collapse;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 4pt 8pt;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 6. Code Blocks
+   * ---------------------------------------------------------------------- */
+
+  pre,
+  code {
+    font-family: 'Courier New', Courier, monospace;
+  }
+
+  pre {
+    border: 1px solid #999;
+    padding: 8pt;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 7. Hide Interactive / Non-print Elements
+   * ---------------------------------------------------------------------- */
+
+  nav,
+  .navbar,
+  .sidebar-nav,
+  .sidebar,
+  .breadcrumbs,
+  .pagination,
+  .tabs,
+  .modal,
+  .dialog,
+  .toast,
+  .tooltip,
+  .dropdown,
+  .menu,
+  .btn,
+  .button,
+  .toggle,
+  .file-upload,
+  .skeleton,
+  .progress,
+  button,
+  [role='navigation'],
+  [role='banner'],
+  [role='complementary'],
+  [aria-hidden='true'],
+  .d-print-none,
+  .no-print {
+    display: none !important;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 8. Page Margins
+   * ---------------------------------------------------------------------- */
+
+  @page {
+    margin: 2cm;
+  }
+
+  @page :first {
+    margin-top: 3cm;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 9. Print-specific Display Classes
+   * ---------------------------------------------------------------------- */
+
+  .d-print-block {
+    display: block !important;
+  }
+  .d-print-inline {
+    display: inline !important;
+  }
+  .d-print-inline-block {
+    display: inline-block !important;
+  }
+  .d-print-flex {
+    display: flex !important;
+  }
+  .d-print-table {
+    display: table !important;
+  }
+
+  /* -------------------------------------------------------------------------
+   * 10. Layout Simplification
+   * ---------------------------------------------------------------------- */
+
+  .container {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .row {
+    display: block;
+  }
+
+  .row > * {
+    width: 100%;
+    padding: 0;
+  }
+}
