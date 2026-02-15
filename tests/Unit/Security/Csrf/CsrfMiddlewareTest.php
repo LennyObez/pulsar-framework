@@ -8,11 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\CsrfConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
@@ -42,28 +41,28 @@ final class CsrfMiddlewareTest extends TestCase
 
     /**
      * @param array<string, string> $headers
-     * @param array<string, mixed>  $post
+     * @param array<string, mixed>|null $parsedBody
      */
     private function createRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $path = '/',
         array $headers = [],
-        array $post = [],
-    ): Request {
-        return new Request(
+        ?array $parsedBody = null,
+    ): ServerRequest {
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag($headers),
-            body: '',
-            post: $post,
+            headers: $headers,
+            parsedBody: $parsedBody,
         );
     }
 
-    private function successHandler(): callable
+    private function successHandler(): RequestHandlerInterface
     {
-        return fn(Request $r): Response => Response::text('OK');
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        return $handler;
     }
 
     #[Test]
@@ -71,11 +70,11 @@ final class CsrfMiddlewareTest extends TestCase
     {
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
-        foreach ([Method::GET, Method::HEAD, Method::OPTIONS] as $method) {
+        foreach (['GET', 'HEAD', 'OPTIONS'] as $method) {
             $request = $this->createRequest($method);
             $response = $middleware->process($request, $this->successHandler());
 
-            self::assertSame(ResponseStatus::OK, $response->status, "Failed for method: {$method->value}");
+            self::assertSame(ResponseStatus::OK->value, $response->getStatusCode(), "Failed for method: {$method}");
         }
     }
 
@@ -83,40 +82,38 @@ final class CsrfMiddlewareTest extends TestCase
     public function postWithValidHeaderTokenPasses(): void
     {
         $this->tokenManager->method('validate')
-            ->with($this->validToken)
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['X-CSRF-Token' => $this->validToken],
         );
 
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
     public function postWithValidFormFieldTokenPasses(): void
     {
         $this->tokenManager->method('validate')
-            ->with($this->validToken)
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
-            post: ['_csrf_token' => $this->validToken],
+            parsedBody: ['_csrf_token' => $this->validToken],
         );
 
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -125,16 +122,16 @@ final class CsrfMiddlewareTest extends TestCase
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['Accept' => 'application/json'],
         );
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
 
         /** @var array{error: string, message: string} $body */
-        $body = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        $body = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('Forbidden', $body['error']);
         self::assertStringContainsString('missing', $body['message']);
     }
@@ -148,17 +145,17 @@ final class CsrfMiddlewareTest extends TestCase
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['X-CSRF-Token' => 'wrong_token', 'Accept' => 'application/json'],
         );
 
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
 
         /** @var array{error: string, message: string} $body */
-        $body = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        $body = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertStringContainsString('invalid', $body['message']);
     }
 
@@ -167,14 +164,14 @@ final class CsrfMiddlewareTest extends TestCase
     {
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
-        foreach ([Method::PUT, Method::PATCH, Method::DELETE] as $method) {
+        foreach (['PUT', 'PATCH', 'DELETE'] as $method) {
             $request = $this->createRequest($method, '/resource');
             $response = $middleware->process($request, $this->successHandler());
 
             self::assertSame(
-                ResponseStatus::Forbidden,
-                $response->status,
-                "Expected 403 for method: {$method->value}",
+                ResponseStatus::Forbidden->value,
+                $response->getStatusCode(),
+                "Expected 403 for method: {$method}",
             );
         }
     }
@@ -191,10 +188,10 @@ final class CsrfMiddlewareTest extends TestCase
 
         $middleware = new CsrfMiddleware($this->tokenManager, $config);
 
-        $request = $this->createRequest(Method::POST, '/submit');
+        $request = $this->createRequest('POST', '/submit');
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -203,16 +200,16 @@ final class CsrfMiddlewareTest extends TestCase
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['Accept' => 'text/html'],
         );
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('text/html', $response->headers->first('Content-Type') ?? '');
-        self::assertStringContainsString('403 Forbidden', $response->body);
-        self::assertStringContainsString('CSRF token is missing', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
+        self::assertStringContainsString('403 Forbidden', (string) $response->getBody());
+        self::assertStringContainsString('CSRF token is missing', (string) $response->getBody());
     }
 
     #[Test]
@@ -221,16 +218,16 @@ final class CsrfMiddlewareTest extends TestCase
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['X-Requested-With' => 'XMLHttpRequest'],
         );
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
 
         /** @var array{error: string, message: string} $body */
-        $body = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+        $body = json_decode((string) $response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         self::assertSame('Forbidden', $body['error']);
     }
 
@@ -238,21 +235,20 @@ final class CsrfMiddlewareTest extends TestCase
     public function headerTokenTakesPrecedenceOverFormField(): void
     {
         $this->tokenManager->method('validate')
-            ->with($this->validToken)
             ->willReturn(true);
 
         $middleware = new CsrfMiddleware($this->tokenManager, $this->config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['X-CSRF-Token' => $this->validToken],
-            post: ['_csrf_token' => 'different_token'],
+            parsedBody: ['_csrf_token' => 'different_token'],
         );
 
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -270,14 +266,14 @@ final class CsrfMiddlewareTest extends TestCase
         $middleware = new CsrfMiddleware($this->tokenManager, $config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['Origin' => 'https://evil.com', 'X-CSRF-Token' => $this->validToken],
         );
 
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -297,14 +293,14 @@ final class CsrfMiddlewareTest extends TestCase
         $middleware = new CsrfMiddleware($this->tokenManager, $config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['Origin' => 'https://example.com', 'X-CSRF-Token' => $this->validToken],
         );
 
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -324,14 +320,14 @@ final class CsrfMiddlewareTest extends TestCase
         $middleware = new CsrfMiddleware($this->tokenManager, $config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['Origin' => 'https://example.com:443', 'X-CSRF-Token' => $this->validToken],
         );
 
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -349,14 +345,14 @@ final class CsrfMiddlewareTest extends TestCase
         $middleware = new CsrfMiddleware($this->tokenManager, $config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['X-CSRF-Token' => $this->validToken],
         );
 
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -376,14 +372,14 @@ final class CsrfMiddlewareTest extends TestCase
         $middleware = new CsrfMiddleware($this->tokenManager, $config);
 
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['Referer' => 'https://example.com/page?q=1', 'X-CSRF-Token' => $this->validToken],
         );
 
         $response = $middleware->process($request, $this->successHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -404,7 +400,7 @@ final class CsrfMiddlewareTest extends TestCase
 
         // "null" string Origin (privacy redirect) should be treated as absent
         $request = $this->createRequest(
-            Method::POST,
+            'POST',
             '/submit',
             headers: ['Origin' => 'null', 'X-CSRF-Token' => $this->validToken],
         );
@@ -412,6 +408,6 @@ final class CsrfMiddlewareTest extends TestCase
         $response = $middleware->process($request, $this->successHandler());
 
         // In optional mode, absent origin falls through to token validation
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 }
