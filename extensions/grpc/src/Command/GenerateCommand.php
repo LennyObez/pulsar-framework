@@ -169,7 +169,7 @@ final class GenerateCommand extends Command
                 $output->writeln(sprintf('    %s', $handlerFile));
             }
         } else {
-            $output->writeln('  No service definitions found — no handlers generated');
+            $output->writeln('  No service definitions found: no handlers generated');
         }
 
         $totalFiles = count($allGeneratedFiles) + count($handlerFiles);

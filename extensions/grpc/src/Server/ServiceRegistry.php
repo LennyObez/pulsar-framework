@@ -10,16 +10,15 @@ use Pulsar\Extension\Grpc\Handler\MethodDescriptor;
 use Pulsar\Extension\Grpc\Handler\ServiceHandlerInterface;
 
 use function array_keys;
-use function array_values;
 
 /**
  * In-memory service registry populated from compiled service manifests.
  *
  * Stores services keyed by name and builds a method lookup map of the form
  * "/package.Service/Method" => (handler, descriptor) for O(1) method resolution.
- * No runtime reflection — all data comes from pre-compiled manifests.
+ * No runtime reflection: all data comes from pre-compiled manifests.
  */
-#[Internal(reason: 'Registry implementation — use ServiceRegistryInterface')]
+#[Internal(reason: 'Registry implementation; use ServiceRegistryInterface')]
 final class ServiceRegistry implements ServiceRegistryInterface
 {
     /** @var array<string, ServiceHandlerInterface> Keyed by service name */
@@ -72,7 +71,7 @@ final class ServiceRegistry implements ServiceRegistryInterface
     #[Override]
     public function serviceNames(): array
     {
-        return array_values(array_keys($this->services));
+        return array_keys($this->services);
     }
 
     #[Override]

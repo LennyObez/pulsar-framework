@@ -13,7 +13,7 @@ use function is_bool;
  * Configuration for gRPC server reflection.
  *
  * Reflection allows tools like grpcurl to discover services.
- * Disabled by default in production — enabling emits a security event.
+ * Disabled by default in production; enabling emits a security event.
  */
 #[Api(since: '1.0.0')]
 final readonly class ReflectionConfig

@@ -123,6 +123,7 @@ final class AuditReportTest extends TestCase
         );
 
         $json = json_encode($report->toArray());
+        self::assertIsString($json);
 
         self::assertStringNotContainsString('WCAG compliant', $json);
         self::assertStringNotContainsString('wcag compliant', strtolower($json));
@@ -188,10 +189,12 @@ final class AuditReportTest extends TestCase
 
         $array = $report->toArray();
 
-        self::assertCount(1, $array['violations']);
-        self::assertSame('missing-alt', $array['violations'][0]['rule']);
-        self::assertSame('error', $array['violations'][0]['severity']);
-        self::assertSame('1.1.1', $array['violations'][0]['wcag_criterion']);
-        self::assertSame(5, $array['violations'][0]['line']);
+        /** @var list<array<string, mixed>> $violations */
+        $violations = $array['violations'];
+        self::assertCount(1, $violations);
+        self::assertSame('missing-alt', $violations[0]['rule']);
+        self::assertSame('error', $violations[0]['severity']);
+        self::assertSame('1.1.1', $violations[0]['wcag_criterion']);
+        self::assertSame(5, $violations[0]['line']);
     }
 }

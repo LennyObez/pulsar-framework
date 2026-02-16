@@ -99,7 +99,7 @@ final class ServiceIdentityTest extends TestCase
             allowedMethods: ['*', '/extra.Service/Method'],
         );
 
-        // Wildcard only works as a solo ["*"] — mixed list falls through to in_array
+        // Wildcard only works as a solo ["*"]: mixed list falls through to in_array
         self::assertTrue($identity->isMethodAllowed('*'));
         self::assertTrue($identity->isMethodAllowed('/extra.Service/Method'));
         self::assertFalse($identity->isMethodAllowed('/other.Service/Method'));

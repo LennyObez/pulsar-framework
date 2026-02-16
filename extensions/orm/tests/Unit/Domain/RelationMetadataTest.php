@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Orm\Domain\RelationMetadata;
 use Pulsar\Extension\Orm\Domain\RelationType;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\TagEntity;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\UserEntity;
 
 final class RelationMetadataTest extends TestCase
 {
@@ -17,14 +19,14 @@ final class RelationMetadataTest extends TestCase
         $rel = new RelationMetadata(
             propertyName: 'author',
             type: RelationType::BelongsTo,
-            targetEntity: 'App\\Entity\\User',
+            targetEntity: UserEntity::class,
             foreignKey: 'author_id',
             localKey: 'id',
         );
 
         self::assertSame('author', $rel->propertyName);
         self::assertSame(RelationType::BelongsTo, $rel->type);
-        self::assertSame('App\\Entity\\User', $rel->targetEntity);
+        self::assertSame(UserEntity::class, $rel->targetEntity);
         self::assertSame('author_id', $rel->foreignKey);
         self::assertSame('id', $rel->localKey);
         self::assertNull($rel->pivotTable);
@@ -36,7 +38,7 @@ final class RelationMetadataTest extends TestCase
         $rel = new RelationMetadata(
             propertyName: 'tags',
             type: RelationType::BelongsToMany,
-            targetEntity: 'App\\Entity\\Tag',
+            targetEntity: TagEntity::class,
             foreignKey: 'post_id',
             localKey: 'id',
             pivotTable: 'post_tags',

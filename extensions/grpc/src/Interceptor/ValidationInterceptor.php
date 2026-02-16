@@ -26,7 +26,7 @@ use const JSON_THROW_ON_ERROR;
  * rules for the target method, and applies them. On failure, rejects the
  * call with INVALID_ARGUMENT containing violation details.
  */
-#[Internal(reason: 'Pipeline implementation detail — use InterceptorPipeline')]
+#[Internal(reason: 'Pipeline implementation detail; use InterceptorPipeline')]
 final readonly class ValidationInterceptor implements InterceptorInterface
 {
     public function __construct(

@@ -52,7 +52,6 @@ final class ManualChecklistGeneratorTest extends TestCase
         $grouped = $this->generator->generateGrouped();
 
         self::assertNotEmpty($grouped);
-        self::assertIsArray($grouped);
 
         foreach ($grouped as $category => $items) {
             self::assertIsString($category);

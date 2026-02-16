@@ -76,7 +76,7 @@ final readonly class AltTextValidator implements ValidatorInterface
 
             $altText = $image->getAttribute('alt');
 
-            // alt="" is valid for decorative images — no violation
+            // alt="" is valid for decorative images: no violation
             if ($altText === '') {
                 continue;
             }

@@ -13,6 +13,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function is_array;
+use function is_string;
 
 /**
  * Controller for bulk actions on resource records.
@@ -33,7 +34,8 @@ final readonly class BulkActionController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $action = (string) ($body['action'] ?? '');
+        $actionRaw = $body['action'] ?? '';
+        $action = is_string($actionRaw) ? $actionRaw : '';
         $ids = $body['ids'] ?? [];
         $parameters = $body['parameters'] ?? [];
 

@@ -14,6 +14,7 @@ use Pulsar\Http\ResponseStatus;
 
 use function bin2hex;
 use function is_array;
+use function is_string;
 use function random_bytes;
 use function time;
 
@@ -58,10 +59,12 @@ final readonly class SavedViewsController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $label = $body['label'] ?? '';
+        $labelRaw = $body['label'] ?? '';
+        $label = is_string($labelRaw) ? $labelRaw : '';
         $filters = $body['filters'] ?? [];
         $sort = $body['sort'] ?? [];
-        $perPage = (int) ($body['per_page'] ?? 25);
+        $perPageRaw = $body['per_page'] ?? 25;
+        $perPage = is_numeric($perPageRaw) ? (int) $perPageRaw : 25;
         $isDefault = (bool) ($body['is_default'] ?? false);
 
         if (!is_array($filters)) {

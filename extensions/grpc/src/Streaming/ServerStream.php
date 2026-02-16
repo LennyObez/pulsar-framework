@@ -26,8 +26,9 @@ final class ServerStream implements StreamInterface
 
     public function __construct()
     {
-        /** @var SplQueue<string> */
-        $this->buffer = new SplQueue();
+        /** @var SplQueue<string> $buffer */
+        $buffer = new SplQueue();
+        $this->buffer = $buffer;
     }
 
     /**

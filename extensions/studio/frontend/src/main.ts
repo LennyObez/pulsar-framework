@@ -1,7 +1,10 @@
 import type { PageType } from './types.js';
+import { renderActivityLog } from './components/ActivityLog.js';
 import { renderBenchmarkDashboard } from './components/BenchmarkDashboard.js';
 import { renderConsoleOverview } from './components/ConsoleOverview.js';
+import { renderDeploymentViewer } from './components/DeploymentViewer.js';
 import { renderEventTable } from './components/EventTable.js';
+import { renderHealthDashboard } from './components/HealthDashboard.js';
 import { renderTimeline } from './components/Timeline.js';
 
 function init(): void {
@@ -38,6 +41,15 @@ function init(): void {
       break;
     case 'benchmark-dashboard':
       renderBenchmarkDashboard(app, payload);
+      break;
+    case 'activity-log':
+      renderActivityLog(app, payload);
+      break;
+    case 'health-dashboard':
+      renderHealthDashboard(app, payload);
+      break;
+    case 'deployment-viewer':
+      renderDeploymentViewer(app, payload);
       break;
     default:
       app.innerHTML = '<p class="error">Unknown page type.</p>';

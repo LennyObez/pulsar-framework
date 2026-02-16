@@ -159,7 +159,9 @@ final class GrpcWebAdapterTest extends TestCase
         // Find the trailer frame (flag = 0x80)
         $dataLength = unpack('N', substr($body, 1, 4));
         self::assertIsArray($dataLength);
-        $trailerStart = 5 + $dataLength[1];
+        /** @var int $length */
+        $length = $dataLength[1];
+        $trailerStart = 5 + $length;
 
         self::assertGreaterThan($trailerStart, strlen($body));
         self::assertSame(0x80, ord($body[$trailerStart]));

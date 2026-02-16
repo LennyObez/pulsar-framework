@@ -79,7 +79,7 @@ final readonly class DesignTokenContrastChecker
             $textValue = $tokens[$textToken];
             $bgValue = $tokens[$bgToken];
 
-            // Skip var() references — cannot resolve statically
+            // Skip var() references; cannot resolve statically
             if ($this->containsVarReference($textValue) || $this->containsVarReference($bgValue)) {
                 continue;
             }

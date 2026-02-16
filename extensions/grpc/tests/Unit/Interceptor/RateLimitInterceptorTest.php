@@ -152,11 +152,11 @@ final class RateLimitInterceptorTest extends TestCase
         $result = $interceptor->handle($context, $handler);
         self::assertTrue($result->isOk());
 
-        // No time passes — should be rejected
+        // No time passes: should be rejected
         $result = $interceptor->handle($context, $handler);
         self::assertSame(GrpcStatus::ResourceExhausted, $result->status);
 
-        // Advance time by 1 second — should refill 10 tokens (capped to burstSize=1)
+        // Advance time by 1 second: should refill 10 tokens (capped to burstSize=1)
         $time = 1001.0;
         $result = $interceptor->handle($context, $handler);
         self::assertTrue($result->isOk());

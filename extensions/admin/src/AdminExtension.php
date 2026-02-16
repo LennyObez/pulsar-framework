@@ -145,7 +145,7 @@ final readonly class AdminExtension implements ExtensionInterface, PreBootExtens
             $router->get("$prefix/schema/changelog", [SchemaController::class, 'changelog'], 'admin.schema.changelog');
             $router->get("$prefix/schema/{table}", [SchemaController::class, 'view'], 'admin.schema.view');
 
-            // JSON API — mutations
+            // JSON API: mutations
             $router->post("$prefix/api/schema", [SchemaApiController::class, 'create'], 'admin.api.schema.create');
             $router->delete("$prefix/api/schema/{table}", [SchemaApiController::class, 'dropTable'], 'admin.api.schema.drop');
             $router->post("$prefix/api/schema/{table}/rename", [SchemaApiController::class, 'renameTable'], 'admin.api.schema.rename');

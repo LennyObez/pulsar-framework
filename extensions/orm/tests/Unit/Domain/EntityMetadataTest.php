@@ -9,6 +9,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Orm\Domain\ColumnMetadata;
 use Pulsar\Extension\Orm\Domain\ColumnType;
 use Pulsar\Extension\Orm\Domain\EntityMetadata;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\PostEntity;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\UserEntity;
 
 final class EntityMetadataTest extends TestCase
 {
@@ -21,7 +23,7 @@ final class EntityMetadataTest extends TestCase
         $readOnly = new ColumnMetadata('audit', 'audit_hash', ColumnType::String, insertable: true, updatable: false);
 
         return new EntityMetadata(
-            entityClass: 'App\\Entity\\User',
+            entityClass: UserEntity::class,
             tableName: 'users',
             schema: 'public',
             primaryKey: $pk,
@@ -116,7 +118,7 @@ final class EntityMetadataTest extends TestCase
     {
         $pk = new ColumnMetadata('id', 'id', ColumnType::BigInt, isPrimaryKey: true);
         $meta = new EntityMetadata(
-            entityClass: 'App\\Entity\\Post',
+            entityClass: PostEntity::class,
             tableName: 'posts',
             schema: null,
             primaryKey: $pk,

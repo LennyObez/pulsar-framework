@@ -12,9 +12,18 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 
+use function file_exists;
 use function is_int;
+use function is_resource;
 use function is_string;
+use function proc_close;
+use function proc_open;
 use function sprintf;
+
+use const PHP_BINARY;
+use const STDERR;
+use const STDIN;
+use const STDOUT;
 
 /**
  * Starts the Admin panel development server.
@@ -75,15 +84,22 @@ final class AdminServeCommand extends Command
         $output->writeln('Press Ctrl+C to stop.');
         $output->newLine();
 
-        $command = sprintf(
-            'php -S %s:%d -t %s %s',
-            $host,
-            $port,
-            escapeshellarg($documentRoot),
-            escapeshellarg($routerScript),
+        $address = sprintf('%s:%d', $host, $port);
+
+        // nosemgrep: php.lang.security.exec-use.exec-use: array form bypasses the shell entirely
+        $process = proc_open(
+            [PHP_BINARY, '-S', $address, '-t', $documentRoot, $routerScript],
+            [STDIN, STDOUT, STDERR],
+            $pipes,
         );
 
-        passthru($command, $exitCode);
+        if (!is_resource($process)) {
+            $output->errorln('Failed to start PHP built-in server');
+
+            return ExitCode::Error->value;
+        }
+
+        $exitCode = proc_close($process);
 
         return $exitCode === 0 ? ExitCode::Success->value : ExitCode::Error->value;
     }

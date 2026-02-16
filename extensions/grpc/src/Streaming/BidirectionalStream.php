@@ -27,10 +27,12 @@ final class BidirectionalStream implements StreamInterface
 
     public function __construct()
     {
-        /** @var SplQueue<string> */
-        $this->readBuffer = new SplQueue();
-        /** @var SplQueue<string> */
-        $this->writeBuffer = new SplQueue();
+        /** @var SplQueue<string> $readBuffer */
+        $readBuffer = new SplQueue();
+        $this->readBuffer = $readBuffer;
+        /** @var SplQueue<string> $writeBuffer */
+        $writeBuffer = new SplQueue();
+        $this->writeBuffer = $writeBuffer;
     }
 
     /**

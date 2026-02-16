@@ -19,7 +19,7 @@ use function round;
  * WARNING (client error), or ERROR (server error) level. Records method
  * name, gRPC status, duration, and client identity when available.
  */
-#[Internal(reason: 'Pipeline implementation detail — use InterceptorPipeline')]
+#[Internal(reason: 'Pipeline implementation detail; use InterceptorPipeline')]
 final readonly class LoggingInterceptor implements InterceptorInterface
 {
     public function __construct(

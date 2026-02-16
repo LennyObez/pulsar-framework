@@ -109,12 +109,13 @@ final class StatusDetailTest extends TestCase
     #[Test]
     public function fromArrayCastsTypes(): void
     {
+        // Non-int code falls back to Unknown; non-string message falls back to ''
         $detail = StatusDetail::fromArray([
             'code' => '3',
             'message' => 123,
         ]);
 
-        self::assertSame(GrpcStatus::InvalidArgument, $detail->code);
-        self::assertSame('123', $detail->message);
+        self::assertSame(GrpcStatus::Unknown, $detail->code);
+        self::assertSame('', $detail->message);
     }
 }

@@ -38,7 +38,7 @@ use function sprintf;
  * Detects the runtime type and refuses to register when running under
  * PHP-FPM, which cannot support gRPC's persistent HTTP/2 connections.
  */
-#[Internal(reason: 'gRPC service wiring — use GrpcServer, ServiceRegistryInterface for public API')]
+#[Internal(reason: 'gRPC service wiring; use GrpcServer, ServiceRegistryInterface for public API')]
 final class GrpcServiceProvider implements ServiceProviderInterface
 {
     public function register(ContainerInterface $container): void
@@ -54,7 +54,7 @@ final class GrpcServiceProvider implements ServiceProviderInterface
             static fn(): ServiceRegistry => new ServiceRegistry(),
         );
 
-        // Transport adapter — wired with TLS credentials when enabled
+        // Transport adapter: wired with TLS credentials when enabled
         $container->bind(
             GrpcTransportAdapterInterface::class,
             static function () use ($config): GrpcTransportAdapterInterface {
@@ -80,7 +80,7 @@ final class GrpcServiceProvider implements ServiceProviderInterface
             },
         );
 
-        // mTLS identity mapper — with optional audit logger for unknown cert events
+        // mTLS identity mapper: with optional audit logger for unknown cert events
         $container->bind(
             MtlsIdentityMapper::class,
             static function () use ($config, $container): MtlsIdentityMapper {
@@ -106,7 +106,7 @@ final class GrpcServiceProvider implements ServiceProviderInterface
             );
         }
 
-        // Reflection service with guard — auto-audits when reflection enabled in production
+        // Reflection service with guard: auto-audits when reflection enabled in production
         $container->bind(
             ReflectionGuard::class,
             static function () use ($config, $container): ReflectionGuard {

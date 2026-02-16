@@ -191,7 +191,7 @@ final class InterceptorPipelineTest extends TestCase
 
         $pipeline = InterceptorPipeline::fromConfig($config, $container);
 
-        // Auth requires AuthValidatorInterface — skipped when not in container
+        // Auth requires AuthValidatorInterface: skipped when not in container
         self::assertTrue($pipeline->isEmpty());
     }
 
@@ -259,7 +259,10 @@ final class InterceptorPipelineTest extends TestCase
 
             public function handle(CallContext $context, Closure $next): InterceptorResult
             {
-                $this->tracker->order[] = $this->name;
+                /** @var list<string> $order */
+                $order = $this->tracker->order;
+                $order[] = $this->name;
+                $this->tracker->order = $order;
 
                 return $next($context);
             }

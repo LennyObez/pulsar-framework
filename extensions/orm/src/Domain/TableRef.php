@@ -39,6 +39,9 @@ final readonly class TableRef
         return $this->alias ?? $this->table;
     }
 
+    /**
+     * @param callable(string): string $quoteIdentifier
+     */
     public function toSql(callable $quoteIdentifier): string
     {
         $quoted = $quoteIdentifier($this->table);

@@ -196,7 +196,7 @@ final class GrpcServerTest extends TestCase
 
         $server = new GrpcServer($config, $registry, $adapter, $pipeline);
 
-        // 'x' is not a valid gRPC timeout unit — should not crash
+        // 'x' is not a valid gRPC timeout unit; should not crash
         $result = $server->handle(
             '/helloworld.Greeter/SayHello',
             'payload',

@@ -34,7 +34,7 @@ use function substr;
  * HTTP middleware collector for Studio.
  *
  * Creates a CorrelationContext per request, enters a fiber-local scope,
- * and emits HttpRequest/HttpResponse events. Does NOT resolve tenant —
+ * and emits HttpRequest/HttpResponse events. Does NOT resolve tenant --
  * that happens in StudioManager::ingest().
  */
 #[Internal]

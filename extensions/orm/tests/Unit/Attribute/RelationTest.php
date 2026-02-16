@@ -8,6 +8,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Orm\Attribute\Relation;
 use Pulsar\Extension\Orm\Domain\RelationType;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\TagEntity;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\UserEntity;
 
 final class RelationTest extends TestCase
 {
@@ -16,12 +18,12 @@ final class RelationTest extends TestCase
     {
         $rel = new Relation(
             type: RelationType::BelongsTo,
-            target: 'App\\Entity\\User',
+            target: UserEntity::class,
             foreignKey: 'user_id',
         );
 
         self::assertSame(RelationType::BelongsTo, $rel->type);
-        self::assertSame('App\\Entity\\User', $rel->target);
+        self::assertSame(UserEntity::class, $rel->target);
         self::assertSame('user_id', $rel->foreignKey);
         self::assertNull($rel->localKey);
         self::assertNull($rel->pivotTable);
@@ -32,7 +34,7 @@ final class RelationTest extends TestCase
     {
         $rel = new Relation(
             type: RelationType::BelongsToMany,
-            target: 'App\\Entity\\Role',
+            target: TagEntity::class,
             pivotTable: 'user_roles',
             pivotForeignKey: 'user_id',
             pivotRelatedKey: 'role_id',

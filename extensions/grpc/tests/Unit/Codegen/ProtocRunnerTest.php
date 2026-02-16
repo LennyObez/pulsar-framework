@@ -78,7 +78,7 @@ final class ProtocRunnerTest extends TestCase
         if ($version !== null) {
             self::assertMatchesRegularExpression('/^\d+\.\d+/', $version);
         } else {
-            self::assertNull($version);
+            self::markTestSkipped('protoc is not installed');
         }
     }
 }

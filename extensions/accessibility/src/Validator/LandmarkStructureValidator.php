@@ -197,10 +197,6 @@ final readonly class LandmarkStructureValidator implements ValidatorInterface
 
         $attributes = $element->attributes;
 
-        if ($attributes === null) {
-            return $tag . '>';
-        }
-
         /** @var DOMAttr $attr */
         foreach ($attributes as $attr) {
             $tag .= ' ' . $attr->nodeName . '="' . htmlspecialchars($attr->nodeValue ?? '', ENT_QUOTES, 'UTF-8') . '"';

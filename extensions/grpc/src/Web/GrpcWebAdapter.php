@@ -26,7 +26,7 @@ use function unpack;
  * gRPC unary calls, then formats the response in gRPC-Web wire format.
  *
  * For production use, prefer Envoy proxy with the gRPC-Web filter.
- * This adapter only supports unary RPCs — streaming is not supported.
+ * This adapter only supports unary RPCs: streaming is not supported.
  */
 #[Api(since: '1.0.0')]
 final readonly class GrpcWebAdapter
@@ -177,7 +177,7 @@ final readonly class GrpcWebAdapter
      */
     private function encodeFrame(int $flags, string $data): string
     {
-        return chr($flags) . pack('N', strlen($data)) . $data;
+        return chr($flags & 0xFF) . pack('N', strlen($data)) . $data;
     }
 
     /**

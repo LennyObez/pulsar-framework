@@ -410,7 +410,7 @@ function wireEvents(container: HTMLElement, data?: BenchmarkDashboardData): void
       await postAction<{ deleted: number }>('/benchmark/delete', { run_ids: runIds });
 
       for (const id of runIds) {
-        const row = container.querySelector(`tr[data-run-id="${id}"]`);
+        const row = container.querySelector(`tr[data-run-id="${CSS.escape(id)}"]`);
         row?.remove();
       }
 
@@ -466,7 +466,7 @@ function wireRunHistory(
 
         const truncatedId = runId.length > 12 ? runId.slice(0, 12) + '\u2026' : runId;
         const ts = run ? new Date(run.timestamp_us / 1000).toLocaleString() : '';
-        const heading = `Run ${truncatedId} \u2014 ${ts}`;
+        const heading = `Run ${escapeHtml(truncatedId)} \u2014 ${escapeHtml(ts)}`;
 
         if (summaryEl) summaryEl.innerHTML = renderLatestRunSummary(run, result.profiles);
         if (chartsEl) chartsEl.innerHTML = renderProfileCharts(result.profiles);

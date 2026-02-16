@@ -37,6 +37,7 @@ final class FormLabelValidatorGroupTest extends TestCase
 
         self::assertNotEmpty($fieldsetViolations);
         $violation = reset($fieldsetViolations);
+        self::assertNotFalse($violation);
         self::assertSame(Severity::Warning, $violation->severity);
         self::assertSame('1.3.1', $violation->wcagCriterion);
         self::assertStringContainsString('radio', $violation->message);
@@ -85,6 +86,7 @@ final class FormLabelValidatorGroupTest extends TestCase
 
         self::assertNotEmpty($fieldsetViolations);
         $violation = reset($fieldsetViolations);
+        self::assertNotFalse($violation);
         self::assertStringContainsString('checkbox', $violation->message);
     }
 

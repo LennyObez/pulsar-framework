@@ -9,6 +9,8 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extension\Admin\Domain\SavedView;
 
+use function is_string;
+
 /**
  * Database-backed saved view store using ConnectionInterface.
  */
@@ -98,21 +100,28 @@ final readonly class DbSavedViewStore implements SavedViewStoreInterface
      */
     private function hydrate(array $row): SavedView
     {
+        $filtersJson = isset($row['filters']) && is_string($row['filters']) ? $row['filters'] : '{}';
+        $sortJson = isset($row['sort']) && is_string($row['sort']) ? $row['sort'] : '{}';
         /** @var array<string, mixed> $filters */
-        $filters = json_decode((string) $row['filters'], true, 512, JSON_THROW_ON_ERROR);
+        $filters = json_decode($filtersJson, true, 512, JSON_THROW_ON_ERROR);
         /** @var array<string, string> $sort */
-        $sort = json_decode((string) $row['sort'], true, 512, JSON_THROW_ON_ERROR);
+        $sort = json_decode($sortJson, true, 512, JSON_THROW_ON_ERROR);
+
+        $id = isset($row['id']) && is_string($row['id']) ? $row['id'] : '';
+        $resourceName = isset($row['resource_name']) && is_string($row['resource_name']) ? $row['resource_name'] : '';
+        $label = isset($row['label']) && is_string($row['label']) ? $row['label'] : '';
+        $createdBy = isset($row['created_by']) && is_string($row['created_by']) ? $row['created_by'] : '';
 
         return new SavedView(
-            id: (string) $row['id'],
-            resourceName: (string) $row['resource_name'],
-            label: (string) $row['label'],
+            id: $id,
+            resourceName: $resourceName,
+            label: $label,
             filters: $filters,
             sort: $sort,
-            perPage: (int) $row['per_page'],
-            createdBy: (string) $row['created_by'],
-            isDefault: (bool) $row['is_default'],
-            createdAt: (int) $row['created_at'],
+            perPage: isset($row['per_page']) && is_numeric($row['per_page']) ? (int) $row['per_page'] : 25,
+            createdBy: $createdBy,
+            isDefault: !empty($row['is_default']),
+            createdAt: isset($row['created_at']) && is_numeric($row['created_at']) ? (int) $row['created_at'] : 0,
         );
     }
 }

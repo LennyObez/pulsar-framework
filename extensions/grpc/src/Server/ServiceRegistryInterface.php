@@ -11,7 +11,7 @@ use Pulsar\Extension\Grpc\Handler\ServiceHandlerInterface;
 /**
  * Registry of gRPC services and their method descriptors.
  *
- * Populated from the compiled service manifest at boot time — no runtime
+ * Populated from the compiled service manifest at boot time: no runtime
  * reflection or scanning. Services are resolved by fully qualified method name.
  */
 #[Api(since: '1.0.0')]

@@ -18,7 +18,7 @@ use Pulsar\Routing\RouterInterface;
  * Accessibility extension for WCAG 2.1 AA compliance tooling.
  *
  * Provides composable helpers, static validators, contrast checking,
- * and audit reporting. All components are opt-in building blocks —
+ * and audit reporting. All components are opt-in building blocks --
  * no middleware blindly injects ARIA into arbitrary HTML.
  */
 #[Api(since: '1.0.0')]
@@ -39,7 +39,7 @@ final readonly class AccessibilityExtension implements ExtensionInterface
     #[Override]
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
-        // a11y:audit is dev/CI only — never registered in production
+        // a11y:audit is dev/CI only: never registered in production
         if ($this->isDevMode($container)) {
             $container->bind(
                 AccessibilityAuditCommand::class,

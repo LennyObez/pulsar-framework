@@ -14,6 +14,7 @@ use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Exception\SecurityException;
 use Random\RandomException;
 use SodiumException;
+use Throwable;
 
 use function array_map;
 use function hash;
@@ -43,21 +44,33 @@ final readonly class EncryptedEventStore implements EventStoreInterface
     public function store(EventEnvelope $envelope, string $payloadJson, ?string $tenantHash = null): void
     {
         $encrypted = $this->encryptor->encrypt($payloadJson);
-
-        // Store event with encrypted payload
-        // We need to modify the envelope to carry the ciphertext_hash
-        // But EventEnvelope is readonly, so we work at the SQL level
-        $this->inner->store($envelope, $encrypted, $tenantHash);
-
-        // Update ciphertext_hash after insert
         $ciphertextHash = hash('sha256', $encrypted);
+
+        // Store event with encrypted payload and ciphertext_hash atomically
         $pdo = $this->inner->pdo();
-        $stmt = $pdo->prepare('UPDATE studio_events SET ciphertext_hash = :hash WHERE event_id = :id');
-        $stmt->execute(['hash' => $ciphertextHash, 'id' => $envelope->eventId]);
+        $pdo->beginTransaction();
+
+        try {
+            $this->inner->store($envelope, $encrypted, $tenantHash);
+
+            $stmt = $pdo->prepare('UPDATE studio_events SET ciphertext_hash = :hash WHERE event_id = :id');
+            $stmt->execute(['hash' => $ciphertextHash, 'id' => $envelope->eventId]);
+
+            $pdo->commit();
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            throw $e;
+        }
     }
 
     /**
      * Store with chain link, encrypting the payload.
+     *
+     * Computes ciphertext_hash before storeWithChain() and passes it as a parameter
+     * so it is set in the same transaction, ensuring atomicity.
      *
      * @throws JsonException If JSON encoding fails
      * @throws PDOException If a non-retryable database error occurs
@@ -75,14 +88,9 @@ final readonly class EncryptedEventStore implements EventStoreInterface
         $encrypted = $this->encryptor->encrypt($payloadJson);
         $ciphertextHash = hash('sha256', $encrypted);
 
-        // Use the inner store's storeWithChain but with encrypted payload
-        // The chain canonical form uses envelope->payloadHash which is the PLAINTEXT hash
-        $this->inner->storeWithChain($envelope, $encrypted, $tenantHash, $chainMacKey);
-
-        // Update ciphertext_hash
-        $pdo = $this->inner->pdo();
-        $stmt = $pdo->prepare('UPDATE studio_events SET ciphertext_hash = :hash WHERE event_id = :id');
-        $stmt->execute(['hash' => $ciphertextHash, 'id' => $envelope->eventId]);
+        // storeWithChain runs in a BEGIN IMMEDIATE transaction internally.
+        // We pass the ciphertext_hash so it's set atomically in the same transaction.
+        $this->inner->storeWithChain($envelope, $encrypted, $tenantHash, $chainMacKey, $ciphertextHash);
     }
 
     #[Override]
@@ -176,7 +184,7 @@ final readonly class EncryptedEventStore implements EventStoreInterface
             try {
                 $row['payload_json'] = $this->encryptor->decrypt($row['payload_json']);
             } catch (SecurityException | SodiumException) {
-                // Key rotation or dev session change — return a fallback marker
+                // Key rotation or dev session change; return a fallback marker
                 $row['payload_json'] = '{"_decryption_failed":true}';
             }
         }

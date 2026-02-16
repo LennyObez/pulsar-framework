@@ -34,7 +34,7 @@ final readonly class ApiController
     ) {}
 
     /**
-     * GET /studio/api/events — paginated JSON event listing.
+     * GET /studio/api/events: paginated JSON event listing.
      */
     public function events(ServerRequestInterface $request): Response
     {
@@ -77,7 +77,7 @@ final readonly class ApiController
     }
 
     /**
-     * GET /studio/api/live — Server-Sent Events stream.
+     * GET /studio/api/live: Server-Sent Events stream.
      *
      * @throws JsonException
      */

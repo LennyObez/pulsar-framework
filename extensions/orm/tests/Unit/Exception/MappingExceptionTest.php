@@ -8,48 +8,50 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Orm\Exception\MappingException;
 use Pulsar\Extension\Orm\Exception\OrmException;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\PostEntity;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\UserEntity;
 
 final class MappingExceptionTest extends TestCase
 {
     #[Test]
     public function extendsOrmException(): void
     {
-        self::assertInstanceOf(OrmException::class, MappingException::missingTable('X'));
+        self::assertInstanceOf(OrmException::class, MappingException::missingTable(UserEntity::class));
     }
 
     #[Test]
     public function missingTableIncludesClass(): void
     {
-        $e = MappingException::missingTable('App\\Entity\\User');
+        $e = MappingException::missingTable(UserEntity::class);
 
-        self::assertStringContainsString('App\\Entity\\User', $e->getMessage());
+        self::assertStringContainsString('UserEntity', $e->getMessage());
         self::assertStringContainsString('#[Table]', $e->getMessage());
     }
 
     #[Test]
     public function missingIdIncludesClass(): void
     {
-        $e = MappingException::missingId('App\\Entity\\User');
+        $e = MappingException::missingId(UserEntity::class);
 
-        self::assertStringContainsString('App\\Entity\\User', $e->getMessage());
+        self::assertStringContainsString('UserEntity', $e->getMessage());
         self::assertStringContainsString('#[Id]', $e->getMessage());
     }
 
     #[Test]
     public function duplicateColumnIncludesDetails(): void
     {
-        $e = MappingException::duplicateColumn('App\\Entity\\User', 'email');
+        $e = MappingException::duplicateColumn(UserEntity::class, 'email');
 
-        self::assertStringContainsString('App\\Entity\\User', $e->getMessage());
+        self::assertStringContainsString('UserEntity', $e->getMessage());
         self::assertStringContainsString('email', $e->getMessage());
     }
 
     #[Test]
     public function invalidRelationIncludesPropertyAndReason(): void
     {
-        $e = MappingException::invalidRelation('App\\Entity\\Post', 'tags', 'missing pivot');
+        $e = MappingException::invalidRelation(PostEntity::class, 'tags', 'missing pivot');
 
-        self::assertStringContainsString('Post', $e->getMessage());
+        self::assertStringContainsString('PostEntity', $e->getMessage());
         self::assertStringContainsString('tags', $e->getMessage());
         self::assertStringContainsString('missing pivot', $e->getMessage());
     }

@@ -18,6 +18,8 @@ use Pulsar\Extension\Orm\Features\Persistence\GenericRepository;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 use Pulsar\Extension\Orm\Features\Schema\SchemaBuilder;
 
+use function assert;
+
 /**
  * Central gateway for ORM operations.
  *
@@ -31,13 +33,17 @@ final class EntityManager
     /** @var array<class-string, RepositoryInterface<object>> */
     private array $repositories = [];
 
+    private readonly IdentityMap $identityMap;
+
     public function __construct(
         private readonly ConnectionInterface $connection,
         private readonly MetadataRegistryInterface $metadataRegistry,
         private readonly EntityHydratorInterface $hydrator,
         private readonly AuditingPersister $persister,
         private readonly TransactionManagerInterface $transactionManager,
-    ) {}
+    ) {
+        $this->identityMap = new IdentityMap();
+    }
 
     /**
      * Get a repository for the given entity class.
@@ -65,13 +71,31 @@ final class EntityManager
     /**
      * Find an entity by primary key.
      *
+     * Checks the identity map first to avoid redundant queries and ensure
+     * that the same row always maps to the same PHP object reference within
+     * a single unit-of-work. Falls back to a database query if the entity
+     * is not yet tracked.
+     *
      * @template T of object
      * @param class-string<T> $entityClass
      * @return T|null
      */
     public function find(string $entityClass, string|int $id, ?FetchPlan $fetchPlan = null): ?object
     {
-        return $this->repository($entityClass)->find($id, $fetchPlan);
+        // Check identity map first; return cached reference if available
+        if ($fetchPlan === null && $this->identityMap->has($entityClass, $id)) {
+            /** @var T|null */
+            return $this->identityMap->get($entityClass, $id);
+        }
+
+        $entity = $this->repository($entityClass)->find($id, $fetchPlan);
+
+        // Track the loaded entity in the identity map
+        if ($entity !== null) {
+            $this->identityMap->put($entityClass, $id, $entity);
+        }
+
+        return $entity;
     }
 
     /**
@@ -99,13 +123,52 @@ final class EntityManager
     }
 
     /**
+     * Persist multiple entities in a single transaction.
+     *
+     * @param list<object> $entities
+     */
+    public function bulkPersist(array $entities, MutationContext $context): void
+    {
+        if ($entities === []) {
+            return;
+        }
+
+        $this->connection->transaction(function () use ($entities, $context): void {
+            foreach ($entities as $entity) {
+                $this->persister->insert($entity, $context);
+            }
+        });
+    }
+
+    /**
+     * Update multiple entities in a single transaction.
+     *
+     * @param list<object> $entities
+     */
+    public function bulkUpdate(array $entities, MutationContext $context): void
+    {
+        if ($entities === []) {
+            return;
+        }
+
+        $this->connection->transaction(function () use ($entities, $context): void {
+            foreach ($entities as $entity) {
+                $this->persister->update($entity, $context);
+            }
+        });
+    }
+
+    /**
      * Create a query builder for the given entity.
      *
      * @param class-string $entityClass
      */
     public function query(string $entityClass): SelectBuilder
     {
-        return $this->repository($entityClass)->query();
+        $builder = $this->repository($entityClass)->query();
+        assert($builder instanceof SelectBuilder);
+
+        return $builder;
     }
 
     /**
@@ -158,5 +221,24 @@ final class EntityManager
     public function connection(): ConnectionInterface
     {
         return $this->connection;
+    }
+
+    /**
+     * Get the identity map.
+     */
+    public function identityMap(): IdentityMap
+    {
+        return $this->identityMap;
+    }
+
+    /**
+     * Clear the identity map and repository cache.
+     *
+     * Call this between requests in persistent workers.
+     */
+    public function clear(): void
+    {
+        $this->identityMap->clear();
+        $this->repositories = [];
     }
 }

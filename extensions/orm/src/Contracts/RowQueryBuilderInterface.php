@@ -16,7 +16,7 @@ use Pulsar\Extension\Orm\Domain\SortDirection;
 /**
  * Read-only query builder for raw row results.
  *
- * No insert/update/delete on the public interface — all writes
+ * No insert/update/delete on the public interface: all writes
  * go through repositories with MutationContext.
  */
 #[Api(since: '1.0.0')]
@@ -77,6 +77,17 @@ interface RowQueryBuilderInterface
      * Add a raw WHERE condition.
      */
     public function whereRaw(RawExpression $expression): RowQueryBuilderInterface;
+
+    /**
+     * Add an OR WHERE condition group.
+     *
+     * The callback receives a fresh WhereGroup builder. All conditions
+     * added inside the callback are combined with AND, then the entire
+     * group is OR-ed with the previous WHERE clauses.
+     *
+     * @param callable(RowQueryBuilderInterface): void $callback
+     */
+    public function orWhere(callable $callback): RowQueryBuilderInterface;
 
     /**
      * Add an ORDER BY clause.

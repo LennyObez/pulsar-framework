@@ -23,7 +23,7 @@ $resources = $templateData['resources'] ?? [];
     </section>
 
     <section class="admin-resources">
-        <h2>Resources</h2>
+        <h2 data-t="admin.dashboard.resources"><?= __('admin.dashboard.resources') ?></h2>
         <div class="admin-resource-grid">
             <?php foreach ($resources as $resource): ?>
             <a href="/admin/resources/<?= $e($resource['name']) ?>" class="admin-resource-card">

@@ -21,7 +21,7 @@ use function hrtime;
  * Uses atomic decrement-first to avoid TOCTOU race conditions, and caps
  * the total number of buckets with LRU eviction to prevent unbounded growth.
  */
-#[Internal(reason: 'Pipeline implementation detail — use InterceptorPipeline')]
+#[Internal(reason: 'Pipeline implementation detail; use InterceptorPipeline')]
 final class RateLimitInterceptor implements InterceptorInterface
 {
     private const int MAX_BUCKETS = 10_000;
@@ -55,7 +55,7 @@ final class RateLimitInterceptor implements InterceptorInterface
         $this->tokens[$key] -= 1.0;
 
         if ($this->tokens[$key] < 0.0) {
-            // Restore the token — this request was not served
+            // Restore the token: this request was not served
             $this->tokens[$key] += 1.0;
 
             return InterceptorResult::error(

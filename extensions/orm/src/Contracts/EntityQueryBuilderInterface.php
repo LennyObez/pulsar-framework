@@ -23,16 +23,12 @@ interface EntityQueryBuilderInterface extends RowQueryBuilderInterface
     /**
      * Execute the query and return hydrated entities.
      *
-     * @template T of object
-     * @return list<T>
+     * @return list<object>
      */
     public function getEntities(): array;
 
     /**
      * Execute the query and return the first hydrated entity.
-     *
-     * @template T of object
-     * @return T|null
      */
     public function firstEntity(): ?object;
 

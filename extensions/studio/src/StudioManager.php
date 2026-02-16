@@ -66,7 +66,7 @@ final readonly class StudioManager
 
             $this->doIngest($event, $context);
         } catch (Throwable) {
-            // Ingest failures are silently swallowed — Studio must never crash the app
+            // Ingest failures are silently swallowed: Studio must never crash the app
         }
     }
 
@@ -135,7 +135,7 @@ final readonly class StudioManager
         if ($this->store instanceof SqliteEventStore) {
             $this->store->storeWithChain($envelope, $payloadJson, $tenantHash, $this->chainMacKey);
         } else {
-            // EncryptedEventStore or other decorator — use storeWithChain if available
+            // EncryptedEventStore or other decorator: use storeWithChain if available
             $store = $this->store;
 
             if (method_exists($store, 'storeWithChain')) {

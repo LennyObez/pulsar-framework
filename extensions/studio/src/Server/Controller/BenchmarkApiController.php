@@ -55,7 +55,7 @@ final readonly class BenchmarkApiController
     }
 
     /**
-     * POST /studio/api/benchmark/run — start benchmark as a background process.
+     * POST /studio/api/benchmark/run: start benchmark as a background process.
      *
      * Writes a temporary PHP runner script that executes the benchmark,
      * captures output to a file, and writes the exit code to another file.
@@ -126,7 +126,7 @@ final readonly class BenchmarkApiController
     }
 
     /**
-     * GET /studio/api/benchmark/status — poll benchmark completion.
+     * GET /studio/api/benchmark/status: poll benchmark completion.
      */
     public function status(ServerRequestInterface $_request): Response
     {
@@ -140,7 +140,7 @@ final readonly class BenchmarkApiController
             return Response::json(['running' => false, 'completed' => false]);
         }
 
-        // Check if exit file exists — means process finished
+        // Check if exit file exists: means process finished
         if (file_exists($exitFile)) {
             $exitCode = (int) trim((string) file_get_contents($exitFile));
             $output = file_exists($outputFile) ? (string) file_get_contents($outputFile) : '';
@@ -174,7 +174,7 @@ final readonly class BenchmarkApiController
     }
 
     /**
-     * POST /studio/api/benchmark/delete — delete specific benchmark runs.
+     * POST /studio/api/benchmark/delete: delete specific benchmark runs.
      */
     public function deleteRuns(ServerRequestInterface $request): Response
     {
@@ -211,7 +211,7 @@ final readonly class BenchmarkApiController
     }
 
     /**
-     * POST /studio/api/benchmark/clear — delete all benchmark events.
+     * POST /studio/api/benchmark/clear: delete all benchmark events.
      */
     public function clearHistory(ServerRequestInterface $_request): Response
     {
@@ -221,7 +221,7 @@ final readonly class BenchmarkApiController
     }
 
     /**
-     * GET /studio/api/benchmark/profiles — fetch profiles for a specific run.
+     * GET /studio/api/benchmark/profiles: fetch profiles for a specific run.
      */
     public function profiles(ServerRequestInterface $request): Response
     {

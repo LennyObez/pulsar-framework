@@ -68,6 +68,71 @@ final class HttpRequestPayloadTest extends TestCase
         self::assertSame('{"key":"val"}', $array['body_preview']);
     }
 
+    #[Test]
+    public function toArrayIncludesStructuredRequestDetails(): void
+    {
+        $payload = new HttpRequestPayload(
+            method: 'GET',
+            uri: '/api/users/42',
+            path: '/api/users/42',
+            headers: ['Host' => 'example.com', 'Accept' => 'application/json'],
+            clientIp: '10.0.0.1',
+            userAgent: 'TestBot/1.0',
+            contentType: 'application/json',
+            contentLength: 0,
+            routeName: 'api.users.show',
+            controllerClass: 'App\\Http\\Controller\\UserController',
+            controllerMethod: 'show',
+            session: ['user_id' => '***', 'role' => 'admin'],
+            middleware: ['auth', 'throttle:60,1', 'cors'],
+            routeParams: ['id' => '42'],
+        );
+
+        $array = $payload->toArray();
+
+        self::assertSame('App\\Http\\Controller\\UserController', $array['controller_class']);
+        self::assertSame('show', $array['controller_method']);
+        self::assertSame(['user_id' => '***', 'role' => 'admin'], $array['session']);
+        self::assertSame(['auth', 'throttle:60,1', 'cors'], $array['middleware']);
+        self::assertSame(['id' => '42'], $array['route_params']);
+    }
+
+    #[Test]
+    public function structuredFieldsDefaultToEmpty(): void
+    {
+        $payload = $this->createPayload();
+        $array = $payload->toArray();
+
+        self::assertNull($array['controller_class']);
+        self::assertNull($array['controller_method']);
+        self::assertSame([], $array['session']);
+        self::assertSame([], $array['middleware']);
+        self::assertSame([], $array['route_params']);
+    }
+
+    #[Test]
+    public function controllerPropertiesAreAccessible(): void
+    {
+        $payload = new HttpRequestPayload(
+            method: 'POST',
+            uri: '/api/posts',
+            path: '/api/posts',
+            headers: [],
+            clientIp: null,
+            userAgent: null,
+            contentType: null,
+            contentLength: null,
+            routeName: 'api.posts.create',
+            controllerClass: 'App\\Controller\\PostController',
+            controllerMethod: 'store',
+            middleware: ['auth', 'validate'],
+        );
+
+        self::assertSame('App\\Controller\\PostController', $payload->controllerClass);
+        self::assertSame('store', $payload->controllerMethod);
+        self::assertCount(2, $payload->middleware);
+    }
+
     private function createPayload(): HttpRequestPayload
     {
         return new HttpRequestPayload(

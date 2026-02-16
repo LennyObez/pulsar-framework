@@ -21,7 +21,7 @@ $driver = $templateData['driver'] ?? 'sqlite';
 >
     <noscript>
         <div class="admin-alert admin-alert--warning">
-            JavaScript is required for the schema builder.
+            <?= __('admin.schema.js_required') ?>
         </div>
     </noscript>
 </div>

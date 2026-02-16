@@ -131,13 +131,20 @@ final class SqliteEventStore implements EventStoreInterface
         string $payloadJson,
         ?string $tenantHash,
         ?string $chainMacKey,
+        ?string $ciphertextHash = null,
     ): void {
-        $this->ingestWithRetry(function () use ($envelope, $payloadJson, $tenantHash, $chainMacKey): void {
+        $this->ingestWithRetry(function () use ($envelope, $payloadJson, $tenantHash, $chainMacKey, $ciphertextHash): void {
             $this->pdo->exec('BEGIN IMMEDIATE');
 
             try {
                 // Store the event
                 $this->store($envelope, $payloadJson, $tenantHash);
+
+                // Set ciphertext_hash atomically if provided (from EncryptedEventStore)
+                if ($ciphertextHash !== null) {
+                    $hashStmt = $this->pdo->prepare('UPDATE studio_events SET ciphertext_hash = :hash WHERE event_id = :id');
+                    $hashStmt->execute(['hash' => $ciphertextHash, 'id' => $envelope->eventId]);
+                }
 
                 // Read current chain tip
                 $tipStmt = $this->pdo->query(

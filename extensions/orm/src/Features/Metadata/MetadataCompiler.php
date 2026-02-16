@@ -261,6 +261,11 @@ final readonly class MetadataCompiler
             pivotTable: $relation->pivotTable,
             pivotForeignKey: $relation->pivotForeignKey,
             pivotRelatedKey: $relation->pivotRelatedKey,
+            morphTypeColumn: $relation->morphTypeColumn,
+            morphIdColumn: $relation->morphIdColumn,
+            throughEntity: $relation->throughEntity,
+            throughForeignKey: $relation->throughForeignKey,
+            throughLocalKey: $relation->throughLocalKey,
         );
     }
 
