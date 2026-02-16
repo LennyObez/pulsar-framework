@@ -73,7 +73,7 @@
   "scripts": {
     "test": "phpunit -c tools/php/phpunit.xml",
     "test:coverage": "phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml --coverage-html coverage/html",
-    "phpstan": "php -d memory_limit=512M vendor/bin/phpstan analyse -c tools/php/phpstan.neon",
+    "phpstan": "php -d memory_limit=1G vendor/bin/phpstan analyse -c tools/php/phpstan.neon",
     "psalm": "psalm -c tools/php/psalm.xml",
     "cs:check": "php-cs-fixer fix --dry-run --diff",
     "cs:fix": "php-cs-fixer fix",
