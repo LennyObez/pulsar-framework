@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Console\Output;
 
 use Override;
+use Pulsar\Api\Api;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Console\Verbosity;
 
 /**
  * Output that buffers content (useful for testing).
  */
+#[Api(since: '1.0.0')]
 final class BufferedOutput implements OutputInterface
 {
     public private(set) string $buffer = '';

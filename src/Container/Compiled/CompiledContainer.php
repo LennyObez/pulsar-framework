@@ -26,7 +26,7 @@ use function in_array;
  *
  * Generated compiled containers extend this class and provide a
  * $methodMap of service IDs to factory method names. All mutation
- * methods throw ContainerException — compiled containers are read-only.
+ * methods throw ContainerException: compiled containers are read-only.
  */
 #[Internal]
 abstract class CompiledContainer implements AdvancedContainerInterface
@@ -154,6 +154,12 @@ abstract class CompiledContainer implements AdvancedContainerInterface
     }
 
     #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        $this->bind($id, $concrete, BindingType::Singleton);
+    }
+
+    #[Override]
     public function bindWithLifetime(string $id, callable|string $concrete, Lifetime $lifetime = Lifetime::Singleton): void
     {
         throw new ContainerException(
@@ -176,7 +182,7 @@ abstract class CompiledContainer implements AdvancedContainerInterface
     #[Override]
     public function setResolutionHints(?array $hints): void
     {
-        // No-op in compiled container — hints are baked in
+        // No-op in compiled container: hints are baked in
     }
 
     #[NoDiscard]
@@ -278,7 +284,7 @@ abstract class CompiledContainer implements AdvancedContainerInterface
     #[Override]
     public function validateScopeGraph(): void
     {
-        // No-op — scope validation happens at compile time
+        // No-op: scope validation happens at compile time
     }
 
     #[Override]
@@ -287,5 +293,11 @@ abstract class CompiledContainer implements AdvancedContainerInterface
         throw new ContainerException(
             'Cannot modify a compiled container. Run `pulsar cache:clear` to use the dynamic container.',
         );
+    }
+
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        return $callable(...$params);
     }
 }

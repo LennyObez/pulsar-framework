@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 use function array_merge;
 
 /**
- * Base class for entity factories — define defaults, apply states, create entities.
+ * Base class for entity factories: define defaults, apply states, create entities.
  *
  * Usage:
  *   class UserFactory extends Factory

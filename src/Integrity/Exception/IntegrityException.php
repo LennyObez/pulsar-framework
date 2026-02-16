@@ -42,7 +42,7 @@ final class IntegrityException extends RuntimeException
     #[NoDiscard]
     public static function signatureInvalid(): self
     {
-        return new self('Integrity manifest signature is invalid — the manifest may have been tampered with');
+        return new self('Integrity manifest signature is invalid: the manifest may have been tampered with');
     }
 
     /**

@@ -50,7 +50,7 @@ final class AutoTagPass implements CompilerPassInterface
                 $definition = $definition->withTags(...$newTags);
             }
 
-            // Scan #[Lazy] attribute — PHP 8.4+ newLazyProxy() works with final classes
+            // Scan #[Lazy] attribute: PHP 8.4+ newLazyProxy() works with final classes
             $lazyAttributes = $reflector->getAttributes(Lazy::class);
             if ($lazyAttributes !== []) {
                 $definition = $definition->withLazy();

@@ -120,6 +120,42 @@ final readonly class IdentifierNormalizer
     }
 
     /**
+     * Convert a PascalCase class name to a snake_case table name.
+     *
+     * Pluralizes by appending 's' (simple heuristic).
+     */
+    #[NoDiscard]
+    public static function toTableName(string $className): string
+    {
+        $cleaned = self::sanitize($className);
+
+        if ($cleaned === '') {
+            return 'entities';
+        }
+
+        $snake = strtolower((string) preg_replace('/(?<=[a-z0-9])([A-Z])/', '_$1', $cleaned));
+
+        return str_replace('-', '_', $snake) . 's';
+    }
+
+    /**
+     * Convert a camelCase or PascalCase name to a snake_case column name.
+     */
+    #[NoDiscard]
+    public static function toColumnName(string $propertyName): string
+    {
+        $cleaned = self::sanitize($propertyName);
+
+        if ($cleaned === '') {
+            return 'column';
+        }
+
+        $snake = strtolower((string) preg_replace('/(?<=[a-z0-9])([A-Z])/', '_$1', $cleaned));
+
+        return str_replace('-', '_', $snake);
+    }
+
+    /**
      * Remove non-alphanumeric characters except underscores and hyphens.
      */
     private static function sanitize(string $identifier): string

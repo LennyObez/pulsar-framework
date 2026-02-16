@@ -44,6 +44,12 @@ final readonly class ReadOnlyContainer implements ContainerInterface
     }
 
     #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        throw ReplSafeModeException::operationBlocked('container mutation');
+    }
+
+    #[Override]
     public function instance(string $id, object $instance): void
     {
         throw ReplSafeModeException::operationBlocked('container mutation');
@@ -73,5 +79,11 @@ final readonly class ReadOnlyContainer implements ContainerInterface
     public function getInstances(): array
     {
         return $this->inner->getInstances();
+    }
+
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        return $this->inner->call($callable, $params);
     }
 }

@@ -127,6 +127,13 @@ final class Application
 
         try {
             $command = $this->get($commandName);
+
+            // Resolve short option flags (-m) to their long names (--method)
+            // so commands can look up options by their canonical name.
+            if ($command instanceof Command && $input instanceof ArgvInput) {
+                $input->resolveShortcuts($command->options);
+            }
+
             return $command->execute($input, $output);
         } catch (CommandNotFoundException $e) {
             $output->errorln($e->getMessage());

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Workflow\Storage;
+namespace Pulsar\Saga\Step;
 
 use DateTimeImmutable;
 use Pulsar\Api\Api;

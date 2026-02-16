@@ -80,7 +80,7 @@ final class ShellCommand extends Command
             $safeModeProvider->apply();
         }
 
-        // Determine audit state — production always requires audit logging
+        // Determine audit state: production always requires audit logging
         $auditEnabled = $this->config->audit && !$input->hasOption('no-audit');
         $actor = $this->resolveActor();
 
@@ -112,16 +112,16 @@ final class ShellCommand extends Command
         $output->writeln('Type "exit" or press Ctrl+D to quit.');
         $output->newLine();
 
-        // Build scope variables — expose container (read-only in safe mode) and redactor
+        // Build scope variables: expose container (read-only in safe mode) and redactor
         $exposedContainer = $safeMode ? new ReadOnlyContainer($this->container) : $this->container;
         $scopeVars = ['container' => $exposedContainer];
         if ($this->redactor !== null) {
             $scopeVars['redactor'] = $this->redactor;
-            $output->writeln('$redactor available — use $redactor->redactOutput($string) to scrub secrets.');
+            $output->writeln('$redactor available: use $redactor->redactOutput($string) to scrub secrets.');
             $output->newLine();
         }
 
-        // Run PsySH (suggested dependency — dynamically resolved to avoid compile-time coupling)
+        // Run PsySH (suggested dependency; dynamically resolved to avoid compile-time coupling)
         try {
             $exitCode = $this->runPsyShell($scopeVars);
         } finally {
@@ -139,7 +139,7 @@ final class ShellCommand extends Command
     /**
      * Configure and run the PsySH shell.
      *
-     * PsySH is a suggested dependency — string-based dynamic instantiation
+     * PsySH is a suggested dependency; string-based dynamic instantiation
      * avoids compile-time coupling. class_exists() is checked before this
      * method is called.
      *

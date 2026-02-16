@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Console\Input;
 
 use Override;
+use Pulsar\Api\Api;
 use Pulsar\Console\InputInterface;
 
 use function array_key_exists;
@@ -14,6 +15,7 @@ use function is_scalar;
 /**
  * Input from an array (useful for testing).
  */
+#[Api(since: '1.0.0')]
 final class ArrayInput implements InputInterface
 {
     /** @var list<string> */

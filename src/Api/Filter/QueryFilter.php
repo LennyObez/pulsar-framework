@@ -13,7 +13,7 @@ use function is_string;
  *
  * This class bridges the gap between the parsed filter AST and the
  * database query builder. It maps each filter expression to a safe
- * query builder call — no raw SQL is ever constructed.
+ * query builder call: no raw SQL is ever constructed.
  */
 #[Api(since: '1.0.0')]
 final readonly class QueryFilter

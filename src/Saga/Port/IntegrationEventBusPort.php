@@ -10,7 +10,7 @@ use Pulsar\Api\Api;
  * Port for publishing integration events to other services.
  *
  * In regulated presets, saga step handlers MUST NOT inject this port
- * directly — they must use {@see OutboxPort} instead to ensure atomic
+ * directly: they must use {@see OutboxPort} instead to ensure atomic
  * event emission. This is enforced by a PHPStan rule and an optional
  * runtime container guard.
  */

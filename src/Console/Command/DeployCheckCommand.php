@@ -82,7 +82,7 @@ final class DeployCheckCommand extends Command
         DeployReport $report,
         bool $strict,
     ): int {
-        $output->writeln(sprintf('Deploy Readiness Check — %s', $report->environment));
+        $output->writeln(sprintf('Deploy Readiness Check: %s', $report->environment));
         $output->writeln(str_repeat('=', 50));
         $output->newLine();
 

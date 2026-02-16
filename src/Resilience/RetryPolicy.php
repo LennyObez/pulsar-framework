@@ -88,7 +88,7 @@ readonly class RetryPolicy
                 $attemptDelays[] = $delay;
 
                 $logger?->warning(sprintf(
-                    'Attempt %d/%d failed: %s — retrying in %dms',
+                    'Attempt %d/%d failed: %s: retrying in %dms',
                     $attempt,
                     $this->maxAttempts,
                     $e->getMessage(),

@@ -24,7 +24,7 @@ final class ComposerJsonGenerator
     /**
      * The Composer package name for the Pulsar framework.
      *
-     * Single source of truth — update here when the package migrates
+     * Single source of truth: update here when the package migrates
      * from `lennyobez/pulsar` to `pulsar/framework`.
      */
     public const string FRAMEWORK_PACKAGE = 'lennyobez/pulsar';

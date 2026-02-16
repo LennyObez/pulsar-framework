@@ -29,7 +29,7 @@ final readonly class ReadOnlySimpleCache implements CacheInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function set(string $key, mixed $value, null|int|DateInterval $ttl = null): bool
@@ -38,7 +38,7 @@ final readonly class ReadOnlySimpleCache implements CacheInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function delete(string $key): bool
@@ -47,7 +47,7 @@ final readonly class ReadOnlySimpleCache implements CacheInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function clear(): bool
@@ -64,7 +64,7 @@ final readonly class ReadOnlySimpleCache implements CacheInterface
     /**
      * @param iterable<mixed, mixed> $values
      *
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function setMultiple(iterable $values, null|int|DateInterval $ttl = null): bool
@@ -73,7 +73,7 @@ final readonly class ReadOnlySimpleCache implements CacheInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function deleteMultiple(iterable $keys): bool

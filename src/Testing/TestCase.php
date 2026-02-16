@@ -12,7 +12,7 @@ use Pulsar\Testing\Concern\ResetsTestState;
  * Pulsar base test case with automatic fake management.
  *
  * Extends PHPUnit TestCase with convenience methods for creating fakes
- * and guarantees all fakes are reset after each test — no state leakage.
+ * and guarantees all fakes are reset after each test: no state leakage.
  *
  * Usage:
  *   class MyTest extends TestCase

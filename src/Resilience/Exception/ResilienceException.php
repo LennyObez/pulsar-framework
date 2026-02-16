@@ -23,7 +23,7 @@ final class ResilienceException extends RuntimeException
     #[NoDiscard]
     public static function circuitOpen(string $name): self
     {
-        return new self(sprintf('Circuit breaker "%s" is open — calls are being rejected', $name));
+        return new self(sprintf('Circuit breaker "%s" is open: calls are being rejected', $name));
     }
 
     /**
@@ -54,5 +54,32 @@ final class ResilienceException extends RuntimeException
     public static function repairFailed(string $repairName, string $reason): self
     {
         return new self(sprintf('Repair "%s" failed: %s', $repairName, $reason));
+    }
+
+    /**
+     * Operation exceeded the configured timeout.
+     */
+    #[NoDiscard]
+    public static function timeout(string $operation, int $timeoutMs, int $elapsedMs): self
+    {
+        return new self(sprintf(
+            'Operation "%s" timed out after %dms (limit: %dms)',
+            $operation,
+            $elapsedMs,
+            $timeoutMs,
+        ));
+    }
+
+    /**
+     * Bulkhead rejected the request due to concurrency limit.
+     */
+    #[NoDiscard]
+    public static function bulkheadFull(string $resource, int $maxConcurrent): self
+    {
+        return new self(sprintf(
+            'Bulkhead for "%s" is full: %d concurrent executions already running',
+            $resource,
+            $maxConcurrent,
+        ));
     }
 }

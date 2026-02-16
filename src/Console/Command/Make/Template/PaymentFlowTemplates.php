@@ -557,12 +557,12 @@ final readonly class PaymentFlowTemplates
 
             ## Structure
 
-            - `Contracts/` — Public API interfaces (`#[Api(since: '1.0.0')]`)
-            - `Internal/Infrastructure/` — Provider implementations
-            - `Gateway/` — Payment orchestration with idempotency
-            - `Config/` — Configuration DTOs
-            - `Domain/` — Value objects and enums
-            - `Exception/` — Domain exceptions
+            - `Contracts/`: Public API interfaces (`#[Api(since: '1.0.0')]`)
+            - `Internal/Infrastructure/`: Provider implementations
+            - `Gateway/`: Payment orchestration with idempotency
+            - `Config/`: Configuration DTOs
+            - `Domain/`: Value objects and enums
+            - `Exception/`: Domain exceptions
             MD;
     }
 

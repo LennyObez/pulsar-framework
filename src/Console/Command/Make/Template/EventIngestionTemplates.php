@@ -432,12 +432,12 @@ final readonly class EventIngestionTemplates
 
             ## Structure
 
-            - `Contracts/` — Public API interfaces (`#[Api(since: '1.0.0')]`)
-            - `Internal/Infrastructure/` — Handler and verifier implementations
-            - `Controller/` — Webhook HTTP endpoint
-            - `Config/` — Configuration DTOs
-            - `Domain/` — Event envelope and type enum
-            - `Exception/` — Domain exceptions
+            - `Contracts/`: Public API interfaces (`#[Api(since: '1.0.0')]`)
+            - `Internal/Infrastructure/`: Handler and verifier implementations
+            - `Controller/`: Webhook HTTP endpoint
+            - `Config/`: Configuration DTOs
+            - `Domain/`: Event envelope and type enum
+            - `Exception/`: Domain exceptions
             MD;
     }
 

@@ -40,6 +40,9 @@ final class MigrateRunCommand extends Command
             $applied = $this->runner->runPending();
         } catch (Throwable $e) {
             $output->errorln(sprintf('Migration failed: %s', $e->getMessage()));
+            if ($e->getPrevious() !== null) {
+                $output->errorln(sprintf('Caused by: %s', $e->getPrevious()->getMessage()));
+            }
             return ExitCode::Error->value;
         }
 

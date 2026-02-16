@@ -25,7 +25,7 @@ final readonly class ReadOnlyStorageAdapter implements StorageAdapterInterface
     ) {}
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function put(string $key, string $content, ?StorageMetadata $metadata = null): void
@@ -47,7 +47,7 @@ final readonly class ReadOnlyStorageAdapter implements StorageAdapterInterface
     }
 
     /**
-     * @throws ReplSafeModeException Always — blocked in safe mode
+     * @throws ReplSafeModeException Always: blocked in safe mode
      */
     #[Override]
     public function delete(string $key): void

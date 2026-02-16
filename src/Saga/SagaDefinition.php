@@ -13,7 +13,7 @@ use function array_keys;
 use function count;
 
 /**
- * Immutable definition of a saga — a sequence of steps with forward and
+ * Immutable definition of a saga: a sequence of steps with forward and
  * compensation actions.
  *
  * Steps are ordered: they execute sequentially in the forward direction

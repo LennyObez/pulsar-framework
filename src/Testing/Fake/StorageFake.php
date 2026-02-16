@@ -22,7 +22,7 @@ use function strlen;
 use function time;
 
 /**
- * Fake storage adapter for testing — in-memory file store with operation tracking.
+ * Fake storage adapter for testing: in-memory file store with operation tracking.
  *
  * Records all put/get/delete operations and provides assertions for
  * verifying storage behavior without a real filesystem or object store.

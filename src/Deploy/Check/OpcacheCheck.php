@@ -165,7 +165,7 @@ final readonly class OpcacheCheck implements DeployCheckInterface
         if (!$this->isAbsolutePath($preloadPath)) {
             return CheckResult::warning(
                 self::CHECK_NAME,
-                'Preload path is relative — use an absolute path to avoid ambiguity across SAPIs',
+                'Preload path is relative: use an absolute path to avoid ambiguity across SAPIs',
                 [
                     sprintf('Current path: %s', $preloadPath),
                     'Set opcache.preload to an absolute path (e.g., /var/www/app/preload.generated.php).',
@@ -243,7 +243,7 @@ final readonly class OpcacheCheck implements DeployCheckInterface
         }
 
         // Unix unsafe prefixes
-        /** @psalm-suppress MixedReturnStatement — Psalm 6.x lacks return-type inference for array_find() */
+        /** @psalm-suppress MixedReturnStatement: Psalm 6.x lacks return-type inference for array_find() */
         return array_find(self::UNSAFE_PATH_PREFIXES, static fn(string $prefix): bool => str_starts_with($path, $prefix))
             // Windows unsafe prefixes (case-insensitive)
             ?? array_find(self::UNSAFE_PATH_PREFIXES_WINDOWS, static fn(string $prefix): bool => str_starts_with(strtolower($path), $prefix))

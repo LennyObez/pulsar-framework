@@ -41,7 +41,7 @@ abstract class AbstractApiResource
      * @param array<string, RedactionRule> $redactionRules Field name => redaction rule
      * @param bool $includeRedactionMeta Whether to include `_meta.redactions` in the output.
      *     Only enable for callers with debug/audit privileges. Regular API consumers
-     *     must never see which fields were omitted — that leaks hidden field names.
+     *     must never see which fields were omitted: that leaks hidden field names.
      *
      * @return array<string, mixed>
      */
@@ -63,7 +63,7 @@ abstract class AbstractApiResource
             $policy = $metadata->fieldPolicies[$fieldName] ?? null;
 
             if ($policy === null) {
-                // Field not in the policy map — skip silently
+                // Field not in the policy map: skip silently
                 continue;
             }
 
@@ -148,7 +148,7 @@ abstract class AbstractApiResource
         }
 
         // Attach redaction metadata only when the debug/audit flag is enabled.
-        // Regular API consumers must never see this — it leaks hidden field names.
+        // Regular API consumers must never see this: it leaks hidden field names.
         if ($includeRedactionMeta && $redactions !== []) {
             $output['_meta'] = ['redactions' => $redactions];
         }

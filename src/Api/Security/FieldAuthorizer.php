@@ -21,9 +21,9 @@ final readonly class FieldAuthorizer
      * Determine the authorization result for a field.
      *
      * Checks in order:
-     * 1. Classification clearance — denied if clearance is below field classification
-     * 2. Required permissions — denied if any required permission is missing
-     * 3. Required roles — denied if no matching role found (when roles are specified)
+     * 1. Classification clearance: denied if clearance is below field classification
+     * 2. Required permissions; denied if any required permission is missing
+     * 3. Required roles; denied if no matching role found (when roles are specified)
      */
     public function authorize(FieldPolicy $policy, ClearanceSnapshot $clearance): FieldAuthorizationResult
     {
@@ -37,12 +37,12 @@ final readonly class FieldAuthorizer
             return FieldAuthorizationResult::Denied;
         }
 
-        // Permission check — all required permissions must be present
+        // Permission check: all required permissions must be present
         if (array_any($policy->requiredPermissions, static fn(string $permission): bool => !$clearance->hasPermission($permission))) {
             return FieldAuthorizationResult::Denied;
         }
 
-        // Role check — any matching role grants access
+        // Role check: any matching role grants access
         if ($policy->requiredRoles !== [] && !$clearance->hasAnyRole($policy->requiredRoles)) {
             return FieldAuthorizationResult::Denied;
         }

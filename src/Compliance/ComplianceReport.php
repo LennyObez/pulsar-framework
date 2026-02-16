@@ -13,7 +13,7 @@ use function count;
 /**
  * Generates compliance status reports from catalog, mapping, and verification data.
  *
- * Reports use "control coverage" language — the framework provides coverage
+ * Reports use "control coverage" language: the framework provides coverage
  * for regulatory controls, it does not guarantee compliance. Compliance is
  * an organizational responsibility that extends beyond technical controls.
  */

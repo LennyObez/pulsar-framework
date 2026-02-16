@@ -28,7 +28,7 @@ use const JSON_THROW_ON_ERROR;
  * Wraps a PSR-7 response with testing assertions.
  *
  * Provides fluent assertion methods for HTTP status, headers, JSON content,
- * and redirects — with detailed failure messages showing actual response state.
+ * and redirects: with detailed failure messages showing actual response state.
  */
 #[Api(since: '1.0.0')]
 final class TestResponse

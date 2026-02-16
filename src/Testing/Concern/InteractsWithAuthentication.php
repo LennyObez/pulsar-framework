@@ -76,7 +76,7 @@ trait InteractsWithAuthentication
     protected function assertGuest(): void
     {
         if ($this->authenticatedIdentity === null) {
-            // No identity set — acting as guest. Count an assertion to avoid risky test.
+            // No identity set: acting as guest. Count an assertion to avoid risky test.
             $this->addToAssertionCount(1);
 
             return;

@@ -17,9 +17,9 @@ use function is_string;
 use function sprintf;
 
 /**
- * Readonly DTO representing a control pack manifest (pack.json).
+ * Readonly DTO representing a scaffolding pack manifest (pack.json).
  *
- * Each control pack ships a `pack.json` file that describes its metadata,
+ * Each scaffolding pack ships a `pack.json` file that describes its metadata,
  * compliance coverage, file templates, and post-install hooks.
  */
 #[Api(since: '1.0.0')]

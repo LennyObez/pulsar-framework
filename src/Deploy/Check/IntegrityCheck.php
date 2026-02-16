@@ -16,7 +16,7 @@ use function sprintf;
  * Validates that file integrity verification is enabled.
  *
  * Integrity checking detects unauthorized modifications to source files,
- * configuration, and binaries — a critical control for regulated environments.
+ * configuration, and binaries: a critical control for regulated environments.
  */
 #[Internal]
 final readonly class IntegrityCheck implements DeployCheckInterface

@@ -252,7 +252,7 @@ final class OptimizeCommand extends Command
                 }
 
                 $typeName = $type->getName();
-                /** @psalm-suppress TypeDoesNotContainType — getName() returns class-string but can be 'self'/'static'/'parent' at runtime */
+                /** @psalm-suppress TypeDoesNotContainType: getName() returns class-string but can be 'self'/'static'/'parent' at runtime */
                 if ($typeName === 'self' || $typeName === 'static' || $typeName === 'parent') {
                     $skip = true;
                     break;

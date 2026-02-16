@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
 use function sprintf;
 
 /**
- * Deterministic clock for testing — freeze, advance, or rewind time at will.
+ * Deterministic clock for testing: freeze, advance, or rewind time at will.
  *
  * Usage:
  *   $clock = TestClock::frozen();                    // freeze at current time

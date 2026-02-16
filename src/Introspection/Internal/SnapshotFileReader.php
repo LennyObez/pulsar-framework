@@ -20,7 +20,7 @@ use const JSON_THROW_ON_ERROR;
  * Reads the public API snapshot from tools/api/public-api.snapshot.json.
  *
  * If the file is missing or invalid, returns empty data with a warning
- * rather than throwing an exception — introspection degrades gracefully.
+ * rather than throwing an exception: introspection degrades gracefully.
  */
 #[Internal]
 final readonly class SnapshotFileReader
@@ -39,7 +39,7 @@ final readonly class SnapshotFileReader
         $path = $this->projectRoot . '/tools/api/public-api.snapshot.json';
 
         if (!is_file($path)) {
-            $warnings[] = 'API snapshot file not found at tools/api/public-api.snapshot.json — API snapshot section is empty.';
+            $warnings[] = 'API snapshot file not found at tools/api/public-api.snapshot.json: API snapshot section is empty.';
 
             return new ApiSnapshotData();
         }
@@ -47,13 +47,13 @@ final readonly class SnapshotFileReader
         $content = file_get_contents($path);
 
         if ($content === false) {
-            $warnings[] = 'Failed to read API snapshot file — API snapshot section is empty.';
+            $warnings[] = 'Failed to read API snapshot file: API snapshot section is empty.';
 
             return new ApiSnapshotData();
         }
 
         if (!json_validate($content)) {
-            $warnings[] = 'API snapshot file contains invalid JSON — API snapshot section is empty.';
+            $warnings[] = 'API snapshot file contains invalid JSON: API snapshot section is empty.';
 
             return new ApiSnapshotData();
         }
@@ -67,7 +67,7 @@ final readonly class SnapshotFileReader
         }
 
         if (!is_array($data)) {
-            $warnings[] = 'API snapshot file root is not an object — API snapshot section is empty.';
+            $warnings[] = 'API snapshot file root is not an object: API snapshot section is empty.';
 
             return new ApiSnapshotData();
         }
@@ -76,7 +76,7 @@ final readonly class SnapshotFileReader
         $classes = $data['api_classes'] ?? [];
 
         if (!is_array($classes)) {
-            $warnings[] = 'API snapshot "api_classes" is not an object — API snapshot section is empty.';
+            $warnings[] = 'API snapshot "api_classes" is not an object: API snapshot section is empty.';
 
             return new ApiSnapshotData();
         }

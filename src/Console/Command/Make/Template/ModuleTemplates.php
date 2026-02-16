@@ -172,13 +172,13 @@ final readonly class ModuleTemplates
 
             ## Structure
 
-            - `Contracts/` — Public API interfaces (`#[Api(since: '1.0.0')]`)
-            - `Internal/Infrastructure/` — Implementation details
-            - `Controller/` — HTTP controllers
-            - `Config/` — Configuration DTOs
-            - `Middleware/` — HTTP middleware
-            - `Models/` — Domain models
-            - `Views/` — View templates
+            - `Contracts/`: Public API interfaces (`#[Api(since: '1.0.0')]`)
+            - `Internal/Infrastructure/`: Implementation details
+            - `Controller/`: HTTP controllers
+            - `Config/`: Configuration DTOs
+            - `Middleware/`: HTTP middleware
+            - `Models/`: Domain models
+            - `Views/`: View templates
             MD;
     }
 

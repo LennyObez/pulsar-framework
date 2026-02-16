@@ -38,10 +38,12 @@ final class PciDssMapping
             framework: 'pci_dss',
             title: 'Render PAN Unreadable Anywhere It Is Stored',
             description: 'Render PAN unreadable anywhere it is stored by using strong one-way hash functions, '
-                . 'truncation, index tokens, or strong cryptography. Covered by the encryption subsystem '
-                . 'and tokenization capabilities.',
-            status: ControlStatus::Partial,
-            frameworkFeatures: ['crypto_keyring', 'envelope_encryption', 'tokenization'],
+                . 'truncation, index tokens, or strong cryptography. Covered by TokenizationService '
+                . '(format-preserving PAN tokenization with first-6/last-4 preservation), encrypted '
+                . 'token vault via Encryptor (AES-256-GCM or XSalsa20-Poly1305), and DatabaseTokenStore '
+                . 'for production persistence.',
+            status: ControlStatus::Implemented,
+            frameworkFeatures: ['crypto_keyring', 'envelope_encryption', 'tokenization', 'token_vault'],
         ));
 
         $catalog->register(new Control(

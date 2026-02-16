@@ -5,10 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Api\OpenApi;
 
 use Pulsar\Api\Api;
-use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Request;
-use Pulsar\Http\Response;
-use Pulsar\Http\ResponseStatus;
 
 use function file_exists;
 use function file_get_contents;
@@ -80,29 +78,27 @@ final readonly class SwaggerUiController
     public function spec(Request $request): Response
     {
         if (!file_exists($this->specPath)) {
-            return new Response(
-                body: '{"error":"OpenAPI spec not found. Run the api:spec command to generate it."}',
-                status: ResponseStatus::NotFound,
-                headers: new HeaderBag(['Content-Type' => 'application/json; charset=utf-8']),
+            return Response::json(
+                ['error' => 'OpenAPI spec not found. Run the api:spec command to generate it.'],
+                404,
             );
         }
 
         $content = file_get_contents($this->specPath);
         if ($content === false) {
-            return new Response(
-                body: '{"error":"Failed to read OpenAPI spec file."}',
-                status: ResponseStatus::InternalServerError,
-                headers: new HeaderBag(['Content-Type' => 'application/json; charset=utf-8']),
+            return Response::json(
+                ['error' => 'Failed to read OpenAPI spec file.'],
+                500,
             );
         }
 
-        return new Response(
-            body: $content,
-            status: ResponseStatus::OK,
-            headers: new HeaderBag([
+        return (new Response(
+            statusCode: 200,
+            headers: [
                 'Content-Type' => 'application/json; charset=utf-8',
                 'Cache-Control' => 'public, max-age=3600',
-            ]),
-        );
+            ],
+            body: $content,
+        ));
     }
 }

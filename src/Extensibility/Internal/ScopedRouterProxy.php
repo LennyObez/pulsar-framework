@@ -132,6 +132,24 @@ final readonly class ScopedRouterProxy implements RouterInterface
     }
 
     #[Override]
+    public function resource(string $name, string $controller, array $middleware = []): self
+    {
+        $this->assertCanRegisterRoute('/' . $name);
+        $this->inner->resource($name, $controller, $middleware);
+
+        return $this;
+    }
+
+    #[Override]
+    public function apiResource(string $name, string $controller, array $middleware = []): self
+    {
+        $this->assertCanRegisterRoute('/' . $name);
+        $this->inner->apiResource($name, $controller, $middleware);
+
+        return $this;
+    }
+
+    #[Override]
     public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self
     {
         $this->inner->model($parameter, $modelClass, $resolverClass);

@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Workflow\Storage;
+namespace Pulsar\Saga;
 
 use Pulsar\Api\Api;
+use Pulsar\Saga\Step\SagaStepDirection;
+use Pulsar\Saga\Step\SagaStepResult;
+use Pulsar\Saga\Step\SagaStepStatus;
 
 /**
  * Port for saga step execution result persistence.

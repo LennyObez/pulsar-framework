@@ -14,9 +14,9 @@ use Pulsar\Security\Compliance\DataClassification;
  * These annotations are emitted as vendor extensions in the generated
  * OpenAPI schema:
  *
- * - `x-pulsar-classification` — data sensitivity level
- * - `x-pulsar-access-level` — minimum role or clearance required
- * - `x-pulsar-redacted` — whether the field may be omitted for unauthorized callers
+ * - `x-pulsar-classification`: data sensitivity level
+ * - `x-pulsar-access-level`: minimum role or clearance required
+ * - `x-pulsar-redacted`: whether the field may be omitted for unauthorized callers
  */
 #[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_PARAMETER)]
 #[Api(since: '1.0.0')]

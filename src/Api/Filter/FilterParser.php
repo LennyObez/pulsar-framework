@@ -119,7 +119,7 @@ final readonly class FilterParser
         FilterOperator $operator,
         string $field,
     ): mixed {
-        // Handle "in" operator — comma-separated list
+        // Handle "in" operator: comma-separated list
         if ($operator === FilterOperator::In) {
             $parts = array_map(trim(...), explode(',', $rawValue));
 

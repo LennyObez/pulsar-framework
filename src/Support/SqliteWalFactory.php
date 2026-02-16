@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Support;
 
+use InvalidArgumentException;
 use PDO;
 use Pulsar\Api\Api;
 
 use function dirname;
 use function is_dir;
 use function mkdir;
+use function preg_match;
+use function sprintf;
 
 /**
  * Factory for creating SQLite PDO connections with WAL journaling.
@@ -29,17 +32,32 @@ final readonly class SqliteWalFactory
      */
     public static function create(string $storagePath, string $schema): PDO
     {
+        self::assertDdl($schema);
+
         $dir = dirname($storagePath);
         if (!is_dir($dir)) {
             mkdir($dir, 0o750, true);
         }
 
-        $db = new PDO('sqlite:' . $storagePath);
-        $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $db->exec('PRAGMA journal_mode=WAL');
-        $db->exec('PRAGMA busy_timeout=5000');
-        $db->exec($schema);
+        $pdo = new PDO('sqlite:' . $storagePath);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->exec('PRAGMA journal_mode=WAL');
+        $pdo->exec('PRAGMA busy_timeout=5000');
+        $pdo->exec($schema);
 
-        return $db;
+        return $pdo;
+    }
+
+    /**
+     * Validate that the schema string starts with a DDL statement.
+     */
+    private static function assertDdl(string $schema): void
+    {
+        if (preg_match('/\A\s*(CREATE|ALTER|DROP)\b/i', $schema) !== 1) {
+            throw new InvalidArgumentException(sprintf(
+                'Schema must start with a DDL statement (CREATE, ALTER, or DROP). Got: "%s"',
+                substr($schema, 0, 40),
+            ));
+        }
     }
 }

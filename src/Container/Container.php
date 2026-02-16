@@ -7,6 +7,7 @@ namespace Pulsar\Container;
 use Closure;
 use NoDiscard;
 use Override;
+use Pulsar\Api\Api;
 use Pulsar\Container\Compiler\ContainerBuilder;
 use Pulsar\Container\Compiler\Pass\ValidateLifetimesPass;
 use Pulsar\Container\Compiler\PassRunner;
@@ -35,6 +36,7 @@ use function sprintf;
  * service tags, contextual bindings, scoped lifetimes, lazy proxies,
  * decorator chains, deferred providers, and compiler pass support.
  */
+#[Api(since: '1.0.0')]
 final class Container implements AdvancedContainerInterface
 {
     /**
@@ -96,7 +98,7 @@ final class Container implements AdvancedContainerInterface
     /**
      * Load optimization hints from cache.
      *
-     * Hints are fallible — if a hint fails at resolution time,
+     * Hints are fallible; if a hint fails at resolution time,
      * the container silently falls back to reflection. Passing null
      * clears all hints.
      *
@@ -112,6 +114,12 @@ final class Container implements AdvancedContainerInterface
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {
         $this->bindWithLifetime($id, $concrete, $type->toLifetime());
+    }
+
+    #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        $this->bind($id, $concrete, BindingType::Singleton);
     }
 
     #[Override]
@@ -307,7 +315,7 @@ final class Container implements AdvancedContainerInterface
 
     private function resolve(string $id): object
     {
-        // Circular dependency detection — O(1) via associative array
+        // Circular dependency detection: O(1) via associative array
         if (isset($this->resolving[$id])) {
             throw ContainerException::circularDependency($id, array_keys($this->resolving));
         }
@@ -327,7 +335,7 @@ final class Container implements AdvancedContainerInterface
                 }
             }
 
-            // Build the instance — lazy proxy wrapping if flagged
+            // Build the instance: lazy proxy wrapping if flagged
             if ($definition->lazy) {
                 $instance = LazyServiceFactory::create($id, $concrete, $this);
             } elseif ($concrete instanceof Closure) {
@@ -591,5 +599,69 @@ final class Container implements AdvancedContainerInterface
         }
 
         $this->deferredProviders->register($provider);
+    }
+
+    /**
+     * Call a callable, resolving type-hinted parameters from the container.
+     *
+     * @param callable $callable The callable to invoke
+     * @param array<string, mixed> $params Explicit parameter overrides
+     *
+     * @throws ContainerException If a required parameter cannot be resolved
+     * @throws ReflectionException If reflection on the callable fails
+     */
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        $reflection = CallableReflector::reflect($callable);
+        $arguments = [];
+
+        foreach ($reflection->getParameters() as $parameter) {
+            $name = $parameter->getName();
+
+            // Explicit parameters take precedence
+            if (isset($params[$name])) {
+                $arguments[] = $params[$name];
+
+                continue;
+            }
+
+            $type = $parameter->getType();
+
+            // Try to resolve from container by type hint
+            if ($type instanceof ReflectionNamedType && !$type->isBuiltin()) {
+                $typeName = $type->getName();
+
+                if ($this->has($typeName)) {
+                    $arguments[] = $this->get($typeName);
+
+                    continue;
+                }
+            }
+
+            // Fall back to default value
+            if ($parameter->isDefaultValueAvailable()) {
+                $arguments[] = $parameter->getDefaultValue();
+
+                continue;
+            }
+
+            // Nullable parameters default to null
+            if ($type !== null && $type->allowsNull()) {
+                $arguments[] = null;
+
+                continue;
+            }
+
+            throw ContainerException::unresolvable(
+                'call()',
+                sprintf(
+                    'Cannot resolve parameter "%s" for callable: no container binding and no default value',
+                    $name,
+                ),
+            );
+        }
+
+        return $callable(...$arguments);
     }
 }

@@ -14,12 +14,17 @@ use Attribute;
  *
  * Everything without this attribute is internal by default and may change
  * between minor versions without notice.
+ *
+ * Stability grades:
+ * - "stable"      : BC guaranteed within the same major version
+ * - "experimental": may change in minor releases, not yet locked
  */
 #[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_METHOD | Attribute::TARGET_CLASS_CONSTANT)]
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class Api
 {
     public function __construct(
         public string $since = '',
+        public string $stability = 'stable',
     ) {}
 }

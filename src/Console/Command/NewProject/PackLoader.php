@@ -25,7 +25,7 @@ use const DIRECTORY_SEPARATOR;
 use const JSON_THROW_ON_ERROR;
 
 /**
- * Loads and validates control pack manifests from the packs directory.
+ * Loads and validates scaffolding pack manifests from the packs directory.
  *
  * Packs are stored under `resources/packs/{name}/pack.json`.
  */

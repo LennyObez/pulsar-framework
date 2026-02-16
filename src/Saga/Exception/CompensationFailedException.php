@@ -13,7 +13,7 @@ use function sprintf;
 /**
  * Thrown when a compensation action itself fails.
  *
- * This is a critical error — the saga is in a partially compensated state
+ * This is a critical error: the saga is in a partially compensated state
  * and requires operator intervention.
  */
 #[Api(since: '1.0.0')]
