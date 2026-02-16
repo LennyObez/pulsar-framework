@@ -21,7 +21,7 @@ use function substr;
  *
  * PAN numbers are detected via regex pattern matching and masked to show
  * only the last 4 digits. CVV values are fully masked. This masking is
- * irreversible — original data cannot be recovered from logs.
+ * irreversible: original data cannot be recovered from logs.
  *
  * Supports controls for PCI DSS Requirement 3.4 (render PAN unreadable).
  */

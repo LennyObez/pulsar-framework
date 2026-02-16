@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Extensibility;
 
 use NoDiscard;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Pulsar\Api\Api;
 use Pulsar\Config\TrustedExtensionsConfig;
 use Pulsar\Container\AdvancedContainerInterface;
@@ -16,6 +18,11 @@ use Pulsar\Extensibility\Internal\ScopedRouterProxy;
 use Pulsar\Extensibility\Internal\ServiceRestrictionMap;
 use Pulsar\Routing\RouterInterface;
 use Throwable;
+
+use function array_filter;
+use function array_values;
+use function in_array;
+use function sprintf;
 
 /**
  * Bootstraps extensions into the kernel lifecycle.
@@ -39,9 +46,21 @@ final class ExtensionBootstrap
     public ?ServiceRestrictionMap $serviceRestrictionMap = null;
     public ?TrustedExtensionsConfig $trustedExtensionsConfig = null;
 
+    /** @var list<string> */
+    private array $loadWarnings = [];
+
+    /**
+     * When non-null, only extensions whose names appear in this list are loaded.
+     * When null (default), all discovered extensions are loaded.
+     *
+     * @var list<string>|null
+     */
+    private ?array $enabledFilter = null;
+
     public function __construct(
         public readonly ExtensionRegistry $registry,
         public readonly ExtensionLoader $loader,
+        private readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 
     /**
@@ -54,28 +73,154 @@ final class ExtensionBootstrap
     }
 
     /**
+     * Restrict which extensions are loaded by name.
+     *
+     * When set, only extensions whose manifest name appears in the given
+     * list will proceed past discovery. Extensions not in the list are
+     * silently skipped. Pass null to clear the filter and load all.
+     *
+     * @param list<string>|null $names Extension names (e.g., ['pulsar/cms', 'pulsar/forum'])
+     */
+    public function setEnabledFilter(?array $names): void
+    {
+        $this->enabledFilter = $names;
+    }
+
+    /**
      * Discover and load extensions from paths.
      *
+     * Each path may be:
+     *   - A parent directory to scan for extensions (e.g. `extensions/`)
+     *   - An individual extension directory containing a `pulsar.json`
+     *
+     * Individual extensions that fail validation or instantiation are skipped
+     * with a warning logged rather than aborting the entire loading process.
+     *
+     * When an enabled filter is set via setEnabledFilter(), only manifests
+     * whose name appears in the filter list proceed past discovery.
+     *
      * @param list<string> $paths Directories to scan for extensions
-     * @throws ExtensionException If loading fails
      */
     public function loadFromPaths(array $paths): void
     {
-        $manifests = $this->loader->discover($paths);
+        $this->loadWarnings = [];
 
-        // Validate and sort by dependencies
+        try {
+            $manifests = $this->loader->discover($paths);
+        } catch (Throwable $e) {
+            // Discovery failure (e.g., invalid JSON in a manifest) should not
+            // abort the entire loading process. Record the warning and attempt
+            // per-directory discovery with individual error handling.
+            $this->loadWarnings[] = sprintf('Discovery error: %s', $e->getMessage());
+            $this->logger->warning('Extension discovery failed: ' . $e->getMessage());
+            $manifests = $this->discoverWithFallback($paths);
+        }
+
+        // Apply enabled filter: skip extensions not in the allowed list
+        if ($this->enabledFilter !== null) {
+            $manifests = array_values(array_filter(
+                $manifests,
+                fn(ExtensionManifest $m): bool => in_array($m->name, $this->enabledFilter, true),
+            ));
+        }
+
+        // Validate each manifest individually: skip failures, don't abort all
+        $validManifests = [];
+
         foreach ($manifests as $manifest) {
-            $this->loader->validateCompatibility($manifest);
-            $this->loader->validateExtensionClass($manifest);
+            try {
+                $this->loader->validateCompatibility($manifest);
+            } catch (Throwable $e) {
+                $warning = sprintf(
+                    'Skipping extension "%s": incompatible version: %s',
+                    $manifest->name,
+                    $e->getMessage(),
+                );
+                $this->loadWarnings[] = $warning;
+                $this->logger->warning($warning);
+
+                continue;
+            }
+
+            try {
+                $this->loader->validateExtensionClass($manifest);
+            } catch (Throwable $e) {
+                $warning = sprintf(
+                    'Skipping extension "%s": class not found: %s',
+                    $manifest->name,
+                    $e->getMessage(),
+                );
+                $this->loadWarnings[] = $warning;
+                $this->logger->warning($warning);
+
+                continue;
+            }
+
+            $validManifests[] = $manifest;
         }
 
-        $sorted = $this->loader->resolveDependencies($manifests);
+        $sorted = $this->loader->resolveDependencies($validManifests);
 
-        // Instantiate and register extensions
+        // Instantiate each extension individually: skip failures
         foreach ($sorted as $manifest) {
-            $extension = $this->loader->instantiate($manifest);
-            $this->registry->add($extension, $manifest, ExtensionLifecycle::Validated);
+            try {
+                $extension = $this->loader->instantiate($manifest);
+                $this->registry->add($extension, $manifest, ExtensionLifecycle::Validated);
+            } catch (Throwable $e) {
+                $warning = sprintf(
+                    'Skipping extension "%s": instantiation failed: %s',
+                    $manifest->name,
+                    $e->getMessage(),
+                );
+                $this->loadWarnings[] = $warning;
+                $this->logger->warning($warning);
+            }
         }
+    }
+
+    /**
+     * Fallback discovery that processes each path individually, skipping
+     * paths that cause parse errors instead of aborting all discovery.
+     *
+     * @param list<string> $paths
+     * @return list<ExtensionManifest>
+     */
+    private function discoverWithFallback(array $paths): array
+    {
+        $manifests = [];
+
+        foreach ($paths as $path) {
+            try {
+                $discovered = $this->loader->discover([$path]);
+                $manifests = [...$manifests, ...$discovered];
+            } catch (Throwable $e) {
+                $warning = sprintf('Skipping path "%s": %s', $path, $e->getMessage());
+                $this->loadWarnings[] = $warning;
+                $this->logger->warning($warning);
+            }
+        }
+
+        return $manifests;
+    }
+
+    /**
+     * Get warnings produced during the last loadFromPaths() call.
+     *
+     * @return list<string>
+     */
+    public function getLoadWarnings(): array
+    {
+        return $this->loadWarnings;
+    }
+
+    /**
+     * Get all loaded extension manifests.
+     *
+     * @return array<string, ExtensionManifest>
+     */
+    public function getManifests(): array
+    {
+        return $this->registry->allManifests();
     }
 
     /**
@@ -133,6 +278,10 @@ final class ExtensionBootstrap
             }
         }
 
+        // Expose the registry in the container so composition root services
+        // (migration wiring, introspection, health checks) can access extension metadata.
+        $container->instance(ExtensionRegistry::class, $this->registry);
+
         $this->registered = true;
     }
 
@@ -155,7 +304,7 @@ final class ExtensionBootstrap
             throw ExtensionException::bootBeforeRegister();
         }
 
-        // Phase 2: preBoot (optional — only PreBootExtensionInterface implementors)
+        // Phase 2: preBoot (optional; only PreBootExtensionInterface implementors)
         foreach ($this->registry->all() as $name => $extension) {
             if (!$extension instanceof PreBootExtensionInterface) {
                 continue;
@@ -197,7 +346,7 @@ final class ExtensionBootstrap
             }
         }
 
-        // Phase 4: postBoot (optional — only PostBootExtensionInterface implementors)
+        // Phase 4: postBoot (optional; only PostBootExtensionInterface implementors)
         foreach ($this->registry->all() as $name => $extension) {
             if (!$extension instanceof PostBootExtensionInterface) {
                 continue;
@@ -248,7 +397,7 @@ final class ExtensionBootstrap
 
         $effectiveTier = $this->resolveEffectiveTier($extensionName);
 
-        // Core tier bypasses proxy entirely — zero overhead
+        // Core tier bypasses proxy entirely: zero overhead
         if ($effectiveTier === TrustTier::Core) {
             return $container;
         }

@@ -20,7 +20,7 @@ final readonly class HalRenderer implements ResponseRendererInterface
     {
         $response = $data;
 
-        // Remove _meta if present — HAL doesn't use _meta
+        // Remove _meta if present: HAL doesn't use _meta
         unset($response['_meta']);
 
         $links = ['self' => ['href' => '']];

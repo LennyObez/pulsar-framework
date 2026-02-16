@@ -33,7 +33,7 @@ final class Span
     }
 
     /**
-     * End this span. Idempotent — subsequent calls are no-ops.
+     * End this span. Idempotent: subsequent calls are no-ops.
      */
     public function end(): void
     {

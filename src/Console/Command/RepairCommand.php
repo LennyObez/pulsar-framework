@@ -40,7 +40,7 @@ final class RepairCommand extends Command
 
         foreach ($diagnoses as $diagnosis) {
             $status = $diagnosis->needsRepair ? 'NEEDS REPAIR' : 'OK';
-            $output->writeln(sprintf('  [%s] %s — %s', $status, $diagnosis->repairJobName, $diagnosis->description));
+            $output->writeln(sprintf('  [%s] %s: %s', $status, $diagnosis->repairJobName, $diagnosis->description));
 
             if ($diagnosis->needsRepair) {
                 $needsRepair++;
@@ -62,7 +62,7 @@ final class RepairCommand extends Command
 
         foreach ($results as $result) {
             $status = $result->success ? 'FIXED' : 'FAILED';
-            $output->writeln(sprintf('  [%s] %s — %s', $status, $result->repairJobName, $result->description));
+            $output->writeln(sprintf('  [%s] %s: %s', $status, $result->repairJobName, $result->description));
 
             foreach ($result->actionsPerformed as $action) {
                 $output->writeln(sprintf('    → %s', $action));

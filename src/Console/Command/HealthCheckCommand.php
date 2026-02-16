@@ -45,7 +45,7 @@ final class HealthCheckCommand extends Command
             };
 
             $output->writeln(sprintf(
-                '  [%s] %s — %s (%.1fms)',
+                '  [%s] %s: %s (%.1fms)',
                 $icon,
                 $result->name,
                 $result->message,

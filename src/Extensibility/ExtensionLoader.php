@@ -25,6 +25,10 @@ final class ExtensionLoader
     /**
      * Discover extension manifests in the given paths.
      *
+     * Each path may be:
+     *   - A parent directory containing extension subdirectories (e.g. `extensions/`)
+     *   - An individual extension directory containing a `pulsar.json` directly
+     *
      * @param list<string> $paths Directories to scan for extensions
      * @return list<ExtensionManifest>
      * @throws ManifestException If a manifest is invalid
@@ -32,13 +36,34 @@ final class ExtensionLoader
     public function discover(array $paths): array
     {
         $manifests = [];
+        $seen = [];
 
         foreach ($paths as $path) {
             if (!is_dir($path)) {
                 continue;
             }
 
-            $manifests = [...$manifests, ...$this->scanDirectory($path)];
+            // If the path itself contains a manifest, load it directly
+            $directManifest = $path . DIRECTORY_SEPARATOR . self::MANIFEST_FILENAME;
+
+            if (file_exists($directManifest)) {
+                $manifest = ExtensionManifest::fromFile($directManifest);
+
+                if (!isset($seen[$manifest->name])) {
+                    $manifests[] = $manifest;
+                    $seen[$manifest->name] = true;
+                }
+
+                continue;
+            }
+
+            // Otherwise scan for extension subdirectories
+            foreach ($this->scanDirectory($path) as $manifest) {
+                if (!isset($seen[$manifest->name])) {
+                    $manifests[] = $manifest;
+                    $seen[$manifest->name] = true;
+                }
+            }
         }
 
         return $manifests;
@@ -46,6 +71,10 @@ final class ExtensionLoader
 
     /**
      * Scan a directory for extension manifests.
+     *
+     * Checks each subdirectory for a pulsar.json manifest. If a subdirectory
+     * does not contain a manifest, it is scanned recursively (one level) to
+     * support grouped layouts like extensions/compliance/dora/.
      *
      * @return list<ExtensionManifest>
      */
@@ -63,6 +92,9 @@ final class ExtensionLoader
 
             if (file_exists($manifestPath)) {
                 $manifests[] = ExtensionManifest::fromFile($manifestPath);
+            } else {
+                // Recurse into subdirectory groups (e.g., extensions/compliance/)
+                $manifests = [...$manifests, ...$this->scanDirectory($item->getPathname())];
             }
         }
 
@@ -121,17 +153,32 @@ final class ExtensionLoader
             $byName[$manifest->name] = $manifest;
         }
 
-        // Validate all dependencies exist
-        foreach ($manifests as $manifest) {
+        // Validate dependencies: skip extensions with unsatisfied deps
+        $skipped = [];
+        $manifests = array_filter($manifests, function (ExtensionManifest $manifest) use ($byName, &$skipped): bool {
             foreach ($manifest->getDependencies() as $dependency) {
                 if (!isset($byName[$dependency])) {
-                    throw DependencyException::missingDependency($manifest->name, $dependency);
+                    $skipped[] = $manifest->name . ' (requires ' . $dependency . ')';
+
+                    return false;
                 }
             }
+
+            return true;
+        });
+
+        // Rebuild lookup after filtering
+        $byName = [];
+        foreach ($manifests as $manifest) {
+            $byName[$manifest->name] = $manifest;
+        }
+
+        if ($skipped !== []) {
+            error_log('Extensions skipped due to missing dependencies: ' . implode(', ', $skipped));
         }
 
         // Topological sort using Kahn's algorithm
-        return $this->topologicalSort($manifests, $byName);
+        return $this->topologicalSort(array_values($manifests), $byName);
     }
 
     /**

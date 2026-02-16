@@ -63,7 +63,7 @@ final class ContainerCompiler
                 $depsMap[$id] = self::resolveDependencyIds($concrete, $definitions);
                 $methods[] = self::generateClassFactoryMethod($methodName, $id, $concrete, $definition);
             } else {
-                // Callable factories cannot be compiled — generate a placeholder
+                // Callable factories cannot be compiled: generate a placeholder
                 // that throws at runtime. The optimize command should warn about these.
                 $methods[] = self::generateUnsupportedFactoryMethod($methodName, $id);
             }
@@ -161,7 +161,7 @@ final class ContainerCompiler
 
         return <<<PHP
                 /**
-                 * Service: $id (callable factory — not compilable)
+                 * Service: $id (callable factory; not compilable)
                  */
                 private function $methodName(): object
                 {

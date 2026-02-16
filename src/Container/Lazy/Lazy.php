@@ -14,7 +14,7 @@ use Pulsar\Api\Api;
  * native PHP lazy proxy (via ReflectionClass::newLazyProxy()). The actual
  * service is not instantiated until first method call.
  *
- * Cannot be applied to final classes — the AutoTagPass will throw a
+ * Cannot be applied to final classes: the AutoTagPass will throw a
  * ContainerException at compile time if this constraint is violated.
  */
 #[Attribute(Attribute::TARGET_CLASS)]

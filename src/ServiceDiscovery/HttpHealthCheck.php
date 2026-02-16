@@ -6,6 +6,7 @@ namespace Pulsar\ServiceDiscovery;
 
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Security\Validation\UrlSafetyValidator;
 use Throwable;
 
 use function file_get_contents;
@@ -19,6 +20,10 @@ use function stream_context_create;
  * Performs a GET request to the service's health endpoint and evaluates
  * the HTTP status code. A 2xx response is healthy, 5xx is unhealthy,
  * and other codes indicate degraded status.
+ *
+ * By default, private/internal IP addresses are allowed since health checks
+ * typically target internal services. Set $allowPrivateNetworks to false
+ * to enforce SSRF protection for external-facing health checks.
  */
 #[Api(since: '1.0.0')]
 final readonly class HttpHealthCheck implements HealthCheckInterface
@@ -26,12 +31,21 @@ final readonly class HttpHealthCheck implements HealthCheckInterface
     public function __construct(
         private string $healthPath = '/health',
         private float $timeoutSeconds = 5.0,
+        private bool $allowPrivateNetworks = true,
     ) {}
 
     #[Override]
     public function check(ServiceInstance $instance): HealthCheckResult
     {
         $url = sprintf('%s%s', $instance->uri(), $this->healthPath);
+
+        // SSRF protection: validate URL before making the request
+        $validation = UrlSafetyValidator::validate($url, $this->allowPrivateNetworks);
+
+        if (!$validation->safe) {
+            return HealthCheckResult::unhealthy($validation->reason);
+        }
+
         $start = microtime(true);
 
         try {

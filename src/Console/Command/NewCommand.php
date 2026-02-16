@@ -46,7 +46,7 @@ final class NewCommand extends Command
         $this->addOption('preset', 'Project preset: minimal, web, api', 'p', 'web');
         $this->addOption('env', 'Environment preset: local, staging, production', 'e', 'local');
         $this->addOption('pack', 'Control pack to install (e.g., banking, healthcare)');
-        $this->addOption('list-packs', 'List available control packs', 'l');
+        $this->addOption('list-packs', 'List available scaffolding packs', 'l');
     }
 
     /**
@@ -94,7 +94,7 @@ final class NewCommand extends Command
             $generator = new ProjectGenerator();
             $generator->generate($name, $preset, $env, $targetPath, $output);
 
-            // Install control pack if specified
+            // Install scaffolding pack if specified
             if (is_string($packValue) && $packValue !== '') {
                 $output->newLine();
                 $installer = new PackInstaller();
@@ -123,7 +123,7 @@ final class NewCommand extends Command
 
         if (is_string($packValue) && $packValue !== '') {
             $output->newLine();
-            $output->writeln('  Review CONTROLS.md for compliance control coverage.');
+            $output->writeln('  Review SCAFFOLDING.md for scaffolding coverage.');
             $output->writeln('  Review NOT-CERTIFIED.md for important disclaimers.');
         }
 
@@ -131,7 +131,7 @@ final class NewCommand extends Command
     }
 
     /**
-     * List all available control packs.
+     * List all available scaffolding packs.
      */
     private function listPacks(OutputInterface $output): int
     {
@@ -139,12 +139,12 @@ final class NewCommand extends Command
         $packs = $loader->available();
 
         if ($packs === []) {
-            $output->writeln('No control packs available.');
+            $output->writeln('No scaffolding packs available.');
             return ExitCode::Success->value;
         }
 
         $output->newLine();
-        $output->writeln('Available control packs:');
+        $output->writeln('Available scaffolding packs:');
         $output->newLine();
 
         foreach ($packs as $packName) {

@@ -19,7 +19,7 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Generic webhook processor: verify -> decode -> claim -> dispatch -> commit/release.
  *
- * HTTP-agnostic — returns WebhookProcessingResult, not a Response.
+ * HTTP-agnostic: returns WebhookProcessingResult, not a Response.
  * Domain-specific controllers map the result to their HTTP response format.
  */
 #[Api(since: '1.0.0')]

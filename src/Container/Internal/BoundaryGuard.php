@@ -71,6 +71,12 @@ final readonly class BoundaryGuard implements ContainerInterface
     }
 
     #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        $this->inner->singleton($id, $concrete);
+    }
+
+    #[Override]
     public function instance(string $id, object $instance): void
     {
         $this->inner->instance($id, $instance);
@@ -100,6 +106,12 @@ final readonly class BoundaryGuard implements ContainerInterface
     public function getInstances(): array
     {
         return $this->inner->getInstances();
+    }
+
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        return $this->inner->call($callable, $params);
     }
 
     private function checkBoundary(string $serviceId): void
@@ -198,7 +210,7 @@ final readonly class BoundaryGuard implements ContainerInterface
 
     private function reportViolation(string $caller, string $serviceId): void
     {
-        $logMessage = "Boundary violation: Cross-module resolution of \\Internal\\ service — $caller resolved $serviceId";
+        $logMessage = "Boundary violation: Cross-module resolution of \\Internal\\ service: $caller resolved $serviceId";
 
         $this->logger->warning($logMessage, [
             'caller' => $caller,

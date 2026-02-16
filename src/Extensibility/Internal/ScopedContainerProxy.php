@@ -42,7 +42,7 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     ) {}
 
     /**
-     * Truthfully delegates to the real container — never lies about existence.
+     * Truthfully delegates to the real container: never lies about existence.
      */
     #[Override]
     public function has(string $id): bool
@@ -72,6 +72,13 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     }
 
     #[Override]
+    public function singleton(string $id, callable|string $concrete): void
+    {
+        $this->assertCanWrite();
+        $this->inner->singleton($id, $concrete);
+    }
+
+    #[Override]
     public function instance(string $id, object $instance): void
     {
         $this->assertCanWrite();
@@ -81,12 +88,14 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     #[Override]
     public function forgetInstance(string $id): void
     {
+        $this->assertCanWrite();
         $this->inner->forgetInstance($id);
     }
 
     #[Override]
     public function setResolutionHints(?array $hints): void
     {
+        $this->assertCanWrite();
         $this->inner->setResolutionHints($hints);
     }
 
@@ -94,6 +103,8 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     #[NoDiscard]
     public function getBindings(): array
     {
+        $this->assertCanRead();
+
         return $this->inner->getBindings();
     }
 
@@ -101,7 +112,15 @@ final readonly class ScopedContainerProxy implements ContainerInterface
     #[NoDiscard]
     public function getInstances(): array
     {
+        $this->assertCanRead();
+
         return $this->inner->getInstances();
+    }
+
+    #[Override]
+    public function call(callable $callable, array $params = []): mixed
+    {
+        return $this->inner->call($callable, $params);
     }
 
     private function assertCanResolve(string $serviceId): void
@@ -122,9 +141,16 @@ final readonly class ScopedContainerProxy implements ContainerInterface
             return;
         }
 
-        // Unknown service — deny by default for non-Core tiers
+        // Unknown service; deny by default for non-Core tiers
         if (!$this->tier->atLeast(TrustTier::Core)) {
             throw CapabilityDeniedException::forUnknownService($serviceId, $this->tier);
+        }
+    }
+
+    private function assertCanRead(): void
+    {
+        if (!$this->hasCapability(ExtensionCapability::ContainerRead)) {
+            throw CapabilityDeniedException::forCapability($this->tier, ExtensionCapability::ContainerRead);
         }
     }
 

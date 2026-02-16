@@ -23,12 +23,14 @@ readonly class ProvidesConfig
      * @param list<string> $commands Command class names provided
      * @param bool $routes Whether the extension provides routes
      * @param list<string> $middleware Middleware class names provided
+     * @param list<string> $migrations Relative paths to migration directories
      */
     public function __construct(
         public array $services = [],
         public array $commands = [],
         public bool $routes = false,
         public array $middleware = [],
+        public array $migrations = [],
     ) {}
 
     /**
@@ -42,6 +44,7 @@ readonly class ProvidesConfig
         $services = $data['services'] ?? [];
         $commands = $data['commands'] ?? [];
         $middleware = $data['middleware'] ?? [];
+        $migrations = $data['migrations'] ?? [];
         $routes = $data['routes'] ?? false;
 
         if (!is_array($services)) {
@@ -54,6 +57,10 @@ readonly class ProvidesConfig
 
         if (!is_array($middleware)) {
             throw ManifestException::invalidFieldType('provides.middleware', 'list', 'non-array', '');
+        }
+
+        if (!is_array($migrations)) {
+            throw ManifestException::invalidFieldType('provides.migrations', 'list', 'non-array', '');
         }
 
         if ($services !== [] && !array_is_list($services)) {
@@ -71,11 +78,17 @@ readonly class ProvidesConfig
         }
         /** @var list<string> $middleware */
 
+        if ($migrations !== [] && !array_is_list($migrations)) {
+            throw ManifestException::invalidFieldType('provides.migrations', 'list', 'associative array', '');
+        }
+        /** @var list<string> $migrations */
+
         return new self(
             services: $services,
             commands: $commands,
             routes: is_bool($routes) ? $routes : false,
             middleware: $middleware,
+            migrations: $migrations,
         );
     }
 
@@ -112,6 +125,14 @@ readonly class ProvidesConfig
     }
 
     /**
+     * Check if the extension provides migrations.
+     */
+    public function hasMigrations(): bool
+    {
+        return $this->migrations !== [];
+    }
+
+    /**
      * Check if the extension provides anything.
      */
     public function providesAnything(): bool
@@ -119,6 +140,7 @@ readonly class ProvidesConfig
         return $this->hasServices()
             || $this->hasCommands()
             || $this->hasRoutes()
-            || $this->hasMiddleware();
+            || $this->hasMiddleware()
+            || $this->hasMigrations();
     }
 }

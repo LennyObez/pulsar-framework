@@ -104,7 +104,7 @@ readonly class ExtensionManifest
         $requiresData = $data['requires'] ?? [];
         $requires = RequiresConfig::fromArray($requiresData);
 
-        // Parse trust tier — metadata only, effective tier resolved by host policy
+        // Parse trust tier: metadata only, effective tier resolved by host policy
         $trustTierValue = isset($data['trust_tier']) && is_string($data['trust_tier'])
             ? $data['trust_tier']
             : '';

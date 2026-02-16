@@ -18,9 +18,9 @@ interface IdempotencyStoreInterface
      * Atomically claim an idempotency key.
      *
      * Returns IdempotencyClaim indicating:
-     * - Replay: key exists with matching parametersHash — return cached payload
-     * - Claimed: key is now held by this caller — caller must run provider then commit()
-     * - Mismatch: key exists with different parametersHash — throw
+     * - Replay: key exists with matching parametersHash; return cached payload
+     * - Claimed: key is now held by this caller; caller must run provider then commit()
+     * - Mismatch: key exists with different parametersHash; throw
      *
      * @throws IdempotencyException On concurrent claim for in-flight key
      */

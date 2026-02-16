@@ -33,7 +33,7 @@ final class DecoratorChain
     #[NoDiscard]
     public static function resolve(object $inner, array $decorators, ContainerInterface $container): object
     {
-        // Sort by priority DESC — highest priority wraps outermost
+        // Sort by priority DESC: highest priority wraps outermost
         $sorted = $decorators;
         usort($sorted, static fn(DecoratorDefinition $a, DecoratorDefinition $b): int => $b->priority <=> $a->priority);
 

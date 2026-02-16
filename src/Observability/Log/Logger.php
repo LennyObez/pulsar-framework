@@ -22,7 +22,7 @@ use function sprintf;
  * PSR-3 compliant logger.
  *
  * Dispatches log entries to one or more sinks. Level filtering is applied
- * via the configured threshold. Sink failures are silently swallowed —
+ * via the configured threshold. Sink failures are silently swallowed --
  * logging must never crash a request.
  */
 #[Api(since: '1.0.0')]
@@ -137,7 +137,7 @@ final readonly class Logger implements LoggerInterface
                 channel: $this->channel,
             );
         } catch (Throwable) {
-            // Entry creation failure is silently swallowed — logging never crashes a request
+            // Entry creation failure is silently swallowed; logging never crashes a request
             return;
         }
 

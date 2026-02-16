@@ -25,11 +25,11 @@ use function ucfirst;
  * Generates repository interface and implementation from an EntityDefinition.
  *
  * Produces two files per entity:
- * - `Contracts/{ClassName}RepositoryInterface.php` — standard CRUD + custom finders
- * - `Repository/{ClassName}Repository.php` — parameterized query implementation
+ * - `Contracts/{ClassName}RepositoryInterface.php`: standard CRUD + custom finders
+ * - `Repository/{ClassName}Repository.php`: parameterized query implementation
  *
  * Custom finders are generated for filterable, non-primary string/int columns.
- * All queries use parameterized bindings — SQL injection is impossible by construction.
+ * All queries use parameterized bindings: SQL injection is impossible by construction.
  */
 #[Api(since: '1.0.0')]
 final class RepositoryGenerator extends AbstractGenerator
@@ -99,7 +99,7 @@ final class RepositoryGenerator extends AbstractGenerator
         /**
          * Database-backed repository for {{className}} entities.
          *
-         * All queries use parameterized bindings — SQL injection is impossible by construction.
+         * All queries use parameterized bindings: SQL injection is impossible by construction.
          */
         final readonly class {{className}}Repository implements {{className}}RepositoryInterface
         {

@@ -29,7 +29,7 @@ use function preg_match;
  * to gather runtime-dependent metadata.
  *
  * Only exposes FQCN-like binding keys, route handler class::method
- * references, and extension names/versions — never config values,
+ * references, and extension names/versions: never config values,
  * secrets, or absolute file paths.
  *
  * ExtensionRegistry and Console\Application are #[Internal] in their
@@ -80,7 +80,7 @@ final readonly class CoreRuntimeProbe
     public function probeRoutes(array &$warnings): RouteMapData
     {
         if ($this->router === null) {
-            $warnings[] = 'Router not available — route map is empty.';
+            $warnings[] = 'Router not available: route map is empty.';
 
             return new RouteMapData();
         }
@@ -118,7 +118,7 @@ final readonly class CoreRuntimeProbe
     public function probeCommands(array &$warnings): CommandReferenceData
     {
         if ($this->commandProber === null) {
-            $warnings[] = 'Console Application not available — command reference is empty.';
+            $warnings[] = 'Console Application not available: command reference is empty.';
 
             return new CommandReferenceData();
         }
@@ -142,7 +142,7 @@ final readonly class CoreRuntimeProbe
     private function probeExtensions(array &$warnings): array
     {
         if ($this->extensionProber === null) {
-            $warnings[] = 'ExtensionRegistry not available — extension list is empty.';
+            $warnings[] = 'ExtensionRegistry not available: extension list is empty.';
 
             return [];
         }
@@ -171,7 +171,7 @@ final readonly class CoreRuntimeProbe
             return [];
         }
 
-        // Filter to FQCN-like keys only — never expose service-locator keys
+        // Filter to FQCN-like keys only: never expose service-locator keys
         return array_values(
             array_filter(
                 $allBindings,
@@ -184,10 +184,7 @@ final readonly class CoreRuntimeProbe
      * Format a route handler for safe display: Class::method or string representation.
      * Never exposes file paths or closure source locations.
      */
-    /**
-     * @param array{0: class-string, 1: string}|callable|class-string $handler
-     */
-    private static function formatHandler(array|string|callable $handler): string
+    private static function formatHandler(mixed $handler): string
     {
         if (is_string($handler)) {
             return $handler;

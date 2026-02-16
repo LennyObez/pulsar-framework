@@ -50,12 +50,12 @@ final class InMemoryIdempotencyStore implements IdempotencyStoreInterface
                     return IdempotencyClaim::mismatch();
                 }
 
-                // Replay — return cached result if committed
+                // Replay; return cached result if committed
                 if ($record->resultPayload !== null) {
                     return IdempotencyClaim::replay($record->resultPayload);
                 }
 
-                // Record exists but not committed — concurrent processing
+                // Record exists but not committed: concurrent processing
                 throw IdempotencyException::concurrentClaim($key);
             }
         }

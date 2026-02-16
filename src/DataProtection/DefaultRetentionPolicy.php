@@ -18,7 +18,7 @@ use function max;
  * Default retention policy that reads configuration from the data_protection
  * config array.
  *
- * This is the framework's built-in implementation — applications may provide
+ * This is the framework's built-in implementation; applications may provide
  * custom implementations of RetentionPolicyInterface for domain-specific needs.
  */
 #[Internal(reason: 'Default implementation; use RetentionPolicyInterface for type hints')]

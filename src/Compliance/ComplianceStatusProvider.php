@@ -56,7 +56,7 @@ final readonly class ComplianceStatusProvider
             'frameworks' => $frameworks,
             'total_controls' => $this->catalog->count(),
             'coverage' => $this->report->crossFrameworkSummary($frameworks),
-            'disclaimer' => 'Control coverage assessment — does not constitute compliance certification.',
+            'disclaimer' => 'Control coverage assessment: does not constitute compliance certification.',
         ];
     }
 

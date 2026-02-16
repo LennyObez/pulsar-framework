@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
  * Each step declares a forward action and (optionally) a compensation action
  * with idempotency keys, retry policies, and an irreversibility flag.
  *
- * Compensation is NOT rollback — each step explicitly declares compensation
+ * Compensation is NOT rollback; each step explicitly declares compensation
  * semantics. Irreversible steps (e.g., sending emails) cannot be compensated;
  * the saga handles this via logging and operator alerts.
  */

@@ -21,7 +21,7 @@ use function str_replace;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * Applies a control pack to a generated project directory.
+ * Applies a scaffolding pack to a generated project directory.
  *
  * Copies template files from the pack, substituting placeholders for
  * project-specific values. Uses safe string replacement (no eval).
@@ -37,7 +37,7 @@ final readonly class PackInstaller
     }
 
     /**
-     * Install a control pack into the target project directory.
+     * Install a scaffolding pack into the target project directory.
      *
      * @param string          $packName   Pack identifier (e.g., "banking")
      * @param string          $projectName Project name for variable substitution
@@ -55,7 +55,7 @@ final readonly class PackInstaller
         $manifest = $this->loader->load($packName);
         $packDir = $this->loader->packDirectory($packName);
 
-        $output->writeln(sprintf('Installing control pack: %s v%s', $manifest->name, $manifest->version));
+        $output->writeln(sprintf('Installing scaffolding pack: %s v%s', $manifest->name, $manifest->version));
         $output->writeln(sprintf('  %s', $manifest->description));
         $output->newLine();
 
@@ -65,12 +65,12 @@ final readonly class PackInstaller
         // Copy and process template files
         $this->copyPackFiles($packDir, $manifest, $targetPath, $variables, $output);
 
-        // Copy static files (CONTROLS.md, NOT-CERTIFIED.md, docs/)
+        // Copy static files (SCAFFOLDING.md, NOT-CERTIFIED.md, docs/)
         $this->copyStaticFiles($packDir, $targetPath, $output);
 
         $output->newLine();
         $output->writeln(sprintf(
-            'Control pack "%s" installed. See CONTROLS.md and NOT-CERTIFIED.md for compliance details.',
+            'Scaffolding pack "%s" installed. See SCAFFOLDING.md and NOT-CERTIFIED.md for compliance details.',
             $manifest->name,
         ));
     }
@@ -128,7 +128,7 @@ final readonly class PackInstaller
         string $targetPath,
         OutputInterface $output,
     ): void {
-        $staticFiles = ['CONTROLS.md', 'NOT-CERTIFIED.md'];
+        $staticFiles = ['SCAFFOLDING.md', 'NOT-CERTIFIED.md'];
 
         foreach ($staticFiles as $file) {
             $sourcePath = $packDir . DIRECTORY_SEPARATOR . $file;

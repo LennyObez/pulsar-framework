@@ -28,7 +28,7 @@ use const JSON_UNESCAPED_UNICODE;
  * Build-time OpenAPI v3.1 specification generator.
  *
  * Takes pre-scanned endpoint metadata and produces a complete OpenAPI
- * specification array. No runtime reflection is performed — all type
+ * specification array. No runtime reflection is performed; all type
  * information must be provided via `EndpointMetadata` instances
  * collected at build time.
  */

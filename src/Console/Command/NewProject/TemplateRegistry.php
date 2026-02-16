@@ -50,6 +50,12 @@ final readonly class TemplateRegistry
         return [
             'public/index.php' => $this->indexPhp($appName, $preset),
             'config/app.php' => $this->appConfig($appName),
+            'config/database.php' => $this->databaseConfig(),
+            'config/observability.php' => $this->observabilityConfig(),
+            'config/i18n.php' => $this->i18nConfig(),
+            'config/view.php' => $this->viewConfig(),
+            'config/cache.php' => $this->cacheConfig(),
+            'config/mail.php' => $this->mailConfig(),
             '.gitignore' => $this->gitignore(),
             'composer.json' => $this->composerGenerator->generate($appName, $preset),
         ];
@@ -101,7 +107,10 @@ final readonly class TemplateRegistry
 
             declare(strict_types=1);
 
-            require __DIR__ . '/../vendor/autoload.php';
+            $basePath = dirname(__DIR__);
+            putenv('PULSAR_BASE_PATH=' . $basePath);
+
+            require $basePath . '/vendor/autoload.php';
 
             use Pulsar\Core\Kernel;
             use Pulsar\Http\Message\Response;
@@ -123,24 +132,49 @@ final readonly class TemplateRegistry
 
             declare(strict_types=1);
 
-            require __DIR__ . '/../vendor/autoload.php';
+            \$basePath = dirname(__DIR__);
+            putenv('PULSAR_BASE_PATH=' . \$basePath);
+
+            require \$basePath . '/vendor/autoload.php';
 
             use Pulsar\\Config\\ConfigManager;
             use Pulsar\\Core\\Kernel;
+            use Pulsar\\Extensibility\\ExtensionBootstrap;
             use Pulsar\\Http\\Message\\Response;
 
-            \$configManager = new ConfigManager(__DIR__ . '/../config');
-            \$kernel = new Kernel(configManager: \$configManager);
+            \$configManager = new ConfigManager(
+                configPath: \$basePath . '/config',
+                envFilePath: \$basePath . '/.env',
+            );
 
-            \$kernel->router()->get('/', static function () use (\$kernel): Response {
-                \$viewPath = dirname(__DIR__) . '/resources/views/welcome.php';
+            \$extensions = ExtensionBootstrap::create();
 
-                ob_start();
-                require \$viewPath;
-                \$html = ob_get_clean();
+            // Discover extensions: framework bundled + project-local
+            \$extensionPaths = [];
+            \$fwExt = \$basePath . '/vendor/pulsar/framework/extensions';
+            if (is_dir(\$fwExt)) {
+                \$extensionPaths[] = \$fwExt;
+            }
+            \$projExt = \$basePath . '/extensions';
+            if (is_dir(\$projExt)) {
+                \$extensionPaths[] = \$projExt;
+            }
 
-                return Response::html(\$html !== false ? \$html : '');
-            }, 'home');
+            // Filter to extensions.enabled from config/app.php
+            \$appCfg = \$basePath . '/config/app.php';
+            if (is_file(\$appCfg)) {
+                \$cfg = require \$appCfg;
+                if (is_array(\$cfg) && isset(\$cfg['extensions']['enabled']) && is_array(\$cfg['extensions']['enabled'])) {
+                    \$extensions->setEnabledFilter(\$cfg['extensions']['enabled']);
+                }
+            }
+
+            \$extensions->loadFromPaths(\$extensionPaths);
+
+            \$kernel = new Kernel(
+                extensionBootstrap: \$extensions,
+                configManager: \$configManager,
+            );
 
             \$kernel->run();
             PHP;
@@ -153,15 +187,48 @@ final readonly class TemplateRegistry
 
             declare(strict_types=1);
 
-            require __DIR__ . '/../vendor/autoload.php';
+            $basePath = dirname(__DIR__);
+            putenv('PULSAR_BASE_PATH=' . $basePath);
+
+            require $basePath . '/vendor/autoload.php';
 
             use App\Http\Controller\HealthController;
             use Pulsar\Config\ConfigManager;
             use Pulsar\Core\Kernel;
+            use Pulsar\Extensibility\ExtensionBootstrap;
             use Pulsar\Http\Message\Response;
 
-            $configManager = new ConfigManager(__DIR__ . '/../config');
-            $kernel = new Kernel(configManager: $configManager);
+            $configManager = new ConfigManager(
+                configPath: $basePath . '/config',
+                envFilePath: $basePath . '/.env',
+            );
+
+            $extensions = ExtensionBootstrap::create();
+
+            $extensionPaths = [];
+            $fwExt = $basePath . '/vendor/pulsar/framework/extensions';
+            if (is_dir($fwExt)) {
+                $extensionPaths[] = $fwExt;
+            }
+            $projExt = $basePath . '/extensions';
+            if (is_dir($projExt)) {
+                $extensionPaths[] = $projExt;
+            }
+
+            $appCfg = $basePath . '/config/app.php';
+            if (is_file($appCfg)) {
+                $cfg = require $appCfg;
+                if (is_array($cfg) && isset($cfg['extensions']['enabled']) && is_array($cfg['extensions']['enabled'])) {
+                    $extensions->setEnabledFilter($cfg['extensions']['enabled']);
+                }
+            }
+
+            $extensions->loadFromPaths($extensionPaths);
+
+            $kernel = new Kernel(
+                extensionBootstrap: $extensions,
+                configManager: $configManager,
+            );
 
             $kernel->router()->get('/', static function (): Response {
                 return Response::json(['message' => 'Pulsar API is running']);
@@ -343,6 +410,137 @@ final readonly class TemplateRegistry
                     ]);
                 }
             }
+            PHP;
+    }
+
+    private function databaseConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'default' => $_ENV['DB_CONNECTION'] ?? 'sqlite',
+
+                'connections' => [
+                    'sqlite' => [
+                        'driver' => 'sqlite',
+                        'database' => __DIR__ . '/../var/database.sqlite',
+                    ],
+                ],
+
+                'migrations' => [
+                    'path' => __DIR__ . '/../database/migrations',
+                    'table' => 'migrations',
+                ],
+            ];
+            PHP;
+    }
+
+    private function observabilityConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'logging' => [
+                    'default_channel' => 'file',
+                    'channels' => [
+                        'file' => [
+                            'driver' => 'file',
+                            'path' => __DIR__ . '/../var/log/app.log',
+                            'level' => $_ENV['LOG_LEVEL'] ?? 'debug',
+                        ],
+                    ],
+                ],
+
+                'metrics' => [
+                    'enabled' => false,
+                ],
+
+                'tracing' => [
+                    'enabled' => false,
+                ],
+            ];
+            PHP;
+    }
+
+    private function i18nConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'default_locale' => 'en',
+                'supported_locales' => ['en'],
+                'fallback_locale' => 'en',
+            ];
+            PHP;
+    }
+
+    private function viewConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'paths' => [
+                    __DIR__ . '/../resources/views',
+                ],
+
+                'compiled_path' => __DIR__ . '/../var/cache/views',
+            ];
+            PHP;
+    }
+
+    private function cacheConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'default' => 'file',
+
+                'stores' => [
+                    'file' => [
+                        'driver' => 'file',
+                        'path' => __DIR__ . '/../var/cache/data',
+                    ],
+                ],
+            ];
+            PHP;
+    }
+
+    private function mailConfig(): string
+    {
+        return <<<'PHP'
+            <?php
+
+            declare(strict_types=1);
+
+            return [
+                'default' => 'log',
+
+                'mailers' => [
+                    'log' => [
+                        'driver' => 'log',
+                    ],
+                ],
+
+                'from' => [
+                    'address' => $_ENV['MAIL_FROM_ADDRESS'] ?? 'noreply@example.com',
+                    'name' => $_ENV['MAIL_FROM_NAME'] ?? 'Pulsar App',
+                ],
+            ];
             PHP;
     }
 }
