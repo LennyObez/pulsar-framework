@@ -22,9 +22,9 @@ use function max;
 use function min;
 
 /**
- * Admin controller for post management — edit, delete, hide.
+ * Admin controller for post management: edit, delete, hide.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class PostController
 {
     use RendersAdminView;
@@ -39,7 +39,7 @@ final readonly class PostController
     ) {}
 
     /**
-     * GET /admin/forum/threads/{threadId}/posts — List posts in a thread.
+     * GET /admin/forum/threads/{threadId}/posts: List posts in a thread.
      */
     public function index(ServerRequestInterface $request, string $threadId): Response
     {
@@ -62,7 +62,7 @@ final readonly class PostController
     }
 
     /**
-     * GET /admin/forum/posts/{id} — Show a single post.
+     * GET /admin/forum/posts/{id}: Show a single post.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -81,7 +81,7 @@ final readonly class PostController
     }
 
     /**
-     * PUT /admin/forum/posts/{id} — Admin edit a post (bypasses edit window).
+     * PUT /admin/forum/posts/{id}: Admin edit a post (bypasses edit window).
      */
     public function edit(ServerRequestInterface $request, string $id): Response
     {
@@ -107,7 +107,7 @@ final readonly class PostController
     }
 
     /**
-     * DELETE /admin/forum/posts/{id} — Soft delete a post.
+     * DELETE /admin/forum/posts/{id}: Soft delete a post.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -115,7 +115,7 @@ final readonly class PostController
         $this->authorize($identity, 'forum.admin.posts.delete');
 
         try {
-            $this->forumService->deletePost($id);
+            $this->forumService->deletePost($id, $identity->id());
 
             return Response::json(['data' => ['id' => $id, 'status' => 'deleted']]);
         } catch (ForumException $e) {

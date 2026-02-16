@@ -12,7 +12,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Subscription\ThreadSubscription;
 use Pulsar\Extension\Forum\Subscription\ThreadSubscriptionRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use ThreadSubscriptionRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ThreadSubscriptionRepositoryInterface for public API')]
 final readonly class DbThreadSubscriptionRepository implements ThreadSubscriptionRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';

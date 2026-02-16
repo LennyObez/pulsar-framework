@@ -19,10 +19,19 @@ use function is_array;
  *
  * Walks the AST, invokes the appropriate resolver for each root field,
  * and projects the requested selection set onto the resolved data.
+ *
+ * Security limits: queries exceeding {@see MAX_DEPTH} nesting levels
+ * or {@see MAX_FIELDS} total selected fields are rejected before execution.
  */
 #[Api(since: '1.0.0')]
 final readonly class GraphqlExecutor
 {
+    /** Maximum allowed nesting depth of selection sets. */
+    private const int MAX_DEPTH = 15;
+
+    /** Maximum allowed total number of selected fields in a query. */
+    private const int MAX_FIELDS = 500;
+
     private GraphqlParser $parser;
 
     public function __construct(
@@ -47,6 +56,9 @@ final readonly class GraphqlExecutor
 
         try {
             $parsed = $this->parser->parse($query, $variables);
+
+            $this->validateComplexity($parsed->fields);
+
             $data = [];
 
             foreach ($parsed->fields as $field) {
@@ -72,6 +84,40 @@ final readonly class GraphqlExecutor
         ];
     }
 
+    /**
+     * Validate that the parsed query does not exceed depth or field-count limits.
+     *
+     * @param list<ParsedField> $fields
+     * @throws GraphqlException When limits are exceeded
+     */
+    private function validateComplexity(array $fields, int $currentDepth = 1): int
+    {
+        if ($currentDepth > self::MAX_DEPTH) {
+            throw GraphqlException::queryTooComplex('Maximum query depth exceeded');
+        }
+
+        $fieldCount = 0;
+
+        foreach ($fields as $field) {
+            $fieldCount++;
+
+            if ($fieldCount > self::MAX_FIELDS) {
+                throw GraphqlException::queryTooComplex('Too many fields requested');
+            }
+
+            if ($field->selections !== []) {
+                $fieldCount += $this->validateComplexity($field->selections, $currentDepth + 1);
+
+                if ($fieldCount > self::MAX_FIELDS) {
+                    throw GraphqlException::queryTooComplex('Too many fields requested');
+                }
+            }
+        }
+
+        return $fieldCount;
+    }
+
+    /** @return array<string, mixed>|null */
     private function resolveRootField(ParsedField $field): ?array
     {
         return match ($field->name) {
@@ -83,6 +129,7 @@ final readonly class GraphqlExecutor
         };
     }
 
+    /** @return array<string, mixed>|null */
     private function resolveContent(ParsedField $field): ?array
     {
         $id = $this->requireArgument($field, 'id');
@@ -110,6 +157,7 @@ final readonly class GraphqlExecutor
         return $this->projectSelections($data, $field->selections, 'ContentConnection');
     }
 
+    /** @return array<string, mixed>|null */
     private function resolveTaxonomy(ParsedField $field): ?array
     {
         $slug = (string) $this->requireArgument($field, 'slug');
@@ -122,6 +170,7 @@ final readonly class GraphqlExecutor
         return $this->projectSelections($data, $field->selections, 'Taxonomy');
     }
 
+    /** @return array<string, mixed>|null */
     private function resolveMedia(ParsedField $field): ?array
     {
         $id = $this->requireArgument($field, 'id');
@@ -189,6 +238,9 @@ final readonly class GraphqlExecutor
 
     /**
      * Resolve fields that require additional repository calls.
+     *
+     * @param array<string, mixed> $data
+     * @return array<int|string, mixed>|null
      */
     private function resolveLazyField(array $data, string $typeName, ParsedField $field): ?array
     {
@@ -273,7 +325,7 @@ final readonly class GraphqlExecutor
     }
 
     /**
-     * @param array $value
+     * @param array<mixed> $value
      */
     private function isIndexedList(array $value): bool
     {

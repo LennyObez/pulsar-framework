@@ -24,7 +24,7 @@ use function trim;
  * A full-text search engine integration can be wired in via the
  * extension's service provider.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class SearchApiController
 {
     public function __construct(
@@ -33,7 +33,7 @@ final readonly class SearchApiController
     ) {}
 
     /**
-     * GET /api/v1/forum/search — Search threads.
+     * GET /api/v1/forum/search: Search threads.
      */
     public function search(ServerRequestInterface $request): Response
     {

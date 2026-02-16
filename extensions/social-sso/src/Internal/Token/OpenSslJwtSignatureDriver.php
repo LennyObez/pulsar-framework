@@ -108,11 +108,11 @@ final readonly class OpenSslJwtSignatureDriver implements JwtSignatureDriverInte
             $s = "\x00" . $s;
         }
 
-        $rAsn = "\x02" . chr(strlen($r)) . $r;
-        $sAsn = "\x02" . chr(strlen($s)) . $s;
+        $rAsn = "\x02" . chr(strlen($r) & 0xFF) . $r;
+        $sAsn = "\x02" . chr(strlen($s) & 0xFF) . $s;
         $sequence = $rAsn . $sAsn;
 
-        return "\x30" . chr(strlen($sequence)) . $sequence;
+        return "\x30" . chr(strlen($sequence) & 0xFF) . $sequence;
     }
 
     /**

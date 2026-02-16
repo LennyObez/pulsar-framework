@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Error;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Error;
 
 use Pulsar\Api\Api;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;

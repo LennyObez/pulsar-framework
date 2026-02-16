@@ -24,7 +24,7 @@ use function min;
 /**
  * Public REST API controller for forum categories.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class CategoryApiController
 {
     public function __construct(
@@ -35,7 +35,7 @@ final readonly class CategoryApiController
     ) {}
 
     /**
-     * GET /api/v1/forum/categories — List root categories.
+     * GET /api/v1/forum/categories: List root categories.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -55,7 +55,7 @@ final readonly class CategoryApiController
     }
 
     /**
-     * GET /api/v1/forum/categories/{id} — Show a single category with children.
+     * GET /api/v1/forum/categories/{id}: Show a single category with children.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -82,7 +82,7 @@ final readonly class CategoryApiController
     }
 
     /**
-     * GET /api/v1/forum/categories/{id}/threads — List threads in a category.
+     * GET /api/v1/forum/categories/{id}/threads: List threads in a category.
      */
     public function threads(ServerRequestInterface $request, string $id): Response
     {

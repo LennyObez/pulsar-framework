@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Api;
 
 /**
- * Forum category — organizes threads into a hierarchical taxonomy.
+ * Forum category: organizes threads into a hierarchical taxonomy.
  *
  * Supports nesting via parentId and ordering via sortOrder.
  * Thread creation can be disabled per category via isLocked.

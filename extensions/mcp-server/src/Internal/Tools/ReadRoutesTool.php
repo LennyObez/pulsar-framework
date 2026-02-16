@@ -16,6 +16,7 @@ use function array_slice;
 use function array_values;
 use function count;
 use function in_array;
+use function is_int;
 use function is_string;
 use function json_encode;
 use function str_contains;
@@ -96,7 +97,8 @@ final readonly class ReadRoutesTool implements McpToolInterface
         }
 
         // Pagination
-        $limit = (int) ($params['limit'] ?? 100);
+        /** @var int $limit */
+        $limit = isset($params['limit']) && is_int($params['limit']) ? $params['limit'] : 100;
         $totalCount = count($routes);
         $cursor = $params['cursor'] ?? null;
         $offset = is_string($cursor) && $cursor !== '' ? (int) $cursor : 0;

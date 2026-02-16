@@ -21,7 +21,7 @@ use function similar_text;
  * to flag suspicious content, rate-limit new users, and detect abuse
  * patterns before they reach human moderators.
  */
-#[Internal(reason: 'Internal auto-moderation engine — not part of public API')]
+#[Internal(reason: 'Internal auto-moderation engine; not part of public API')]
 final readonly class AutoModerationService
 {
     /** Reputation threshold below which posts are queued for review. */

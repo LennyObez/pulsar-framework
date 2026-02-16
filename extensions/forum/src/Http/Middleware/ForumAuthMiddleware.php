@@ -24,7 +24,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  * for guests when allowGuestViewing is enabled in the forum config.
  * Checks the forum.access permission via GateInterface when a gate is available.
  */
-#[Internal(reason: 'Forum auth middleware — implementation detail')]
+#[Internal(reason: 'Forum auth middleware; implementation detail')]
 final readonly class ForumAuthMiddleware implements MiddlewareInterface
 {
     public function __construct(
@@ -58,7 +58,10 @@ final readonly class ForumAuthMiddleware implements MiddlewareInterface
             $profile = $this->profiles->findByUser($identity->id());
 
             if ($profile !== null && $profile->isBanned) {
-                if ($profile->banExpiresAt === null || $profile->banExpiresAt > new DateTimeImmutable()) {
+                if ($profile->banExpiresAt !== null && $profile->banExpiresAt <= new DateTimeImmutable()) {
+                    // Ban has expired; auto-clear so subsequent requests are not blocked
+                    $this->profiles->clearBanFlag($profile->userId);
+                } else {
                     return Response::json(['error' => 'You are banned from the forum', 'reason' => $profile->banReason], 403);
                 }
             }

@@ -20,7 +20,7 @@ use Pulsar\Extension\Forum\Report\UserBanRepositoryInterface;
 use Pulsar\Extension\Forum\Service\BanServiceInterface;
 
 /**
- * Ban service — manages user bans with full audit trail via moderation logs.
+ * Ban service: manages user bans with full audit trail via moderation logs.
  */
 #[Internal(reason: 'Use BanServiceInterface for public API')]
 final readonly class BanService implements BanServiceInterface

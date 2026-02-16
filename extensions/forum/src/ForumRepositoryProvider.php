@@ -43,7 +43,7 @@ use Pulsar\Extension\Forum\Vote\ThreadVoteRepositoryInterface;
 /**
  * Binds all forum repository interfaces to their database-backed implementations.
  */
-#[Internal(reason: 'Forum service wiring — use interfaces for public API')]
+#[Internal(reason: 'Forum service wiring; use interfaces for public API')]
 final readonly class ForumRepositoryProvider
 {
     public function register(ContainerInterface $container): void

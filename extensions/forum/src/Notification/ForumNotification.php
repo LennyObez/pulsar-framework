@@ -19,7 +19,7 @@ final readonly class ForumNotification
 {
     /**
      * @param string $id UUIDv7
-     * @param string $userId UUIDv7 FK auth_users — the recipient
+     * @param string $userId UUIDv7 FK auth_users: the recipient
      * @param string $type Notification type identifier (e.g. 'thread_reply')
      * @param string $title Human-readable title
      * @param string $body Human-readable description

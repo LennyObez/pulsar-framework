@@ -47,6 +47,7 @@ final readonly class ForumBodyPolicy
     private const array ELEMENT_ATTRIBUTES = [
         'p' => [],
         'br' => [],
+        'h1' => ['id', 'class'],
         'h2' => [],
         'h3' => [],
         'h4' => [],
@@ -143,7 +144,7 @@ final readonly class ForumBodyPolicy
     }
 
     /**
-     * Walk DOM tree depth-first, bottom-up — remove disallowed elements.
+     * Walk DOM tree depth-first, bottom-up: remove disallowed elements.
      */
     private function walkTree(DOMDocument $dom): void
     {
@@ -353,25 +354,32 @@ final readonly class ForumBodyPolicy
 
     /**
      * Serialize and validate with defense-in-depth.
+     *
+     * Uses DOM-aware extraction via saveHTML($node) on the body element
+     * to avoid greedy regex stripping of wrapper tags.
      */
     private function serializeAndValidate(DOMDocument $dom, string $originalHtml): string
     {
-        $html = $dom->saveHTML();
+        // Extract content from <body> using DOM instead of regex stripping
+        $body = $dom->getElementsByTagName('body')->item(0);
 
-        if ($html === false) {
-            return $this->escapeToPlaintext($originalHtml);
+        if ($body !== null) {
+            $html = '';
+
+            foreach ($body->childNodes as $child) {
+                $fragment = $dom->saveHTML($child);
+
+                if ($fragment !== false) {
+                    $html .= $fragment;
+                }
+            }
+        } else {
+            $html = $dom->saveHTML();
+
+            if ($html === false) {
+                return $this->escapeToPlaintext($originalHtml);
+            }
         }
-
-        // Strip wrapper div
-        if (preg_match('#^<div>(.*)</div>$#s', $html, $matches)) {
-            $html = $matches[1];
-        }
-
-        // Strip <html><body> wrappers
-        $html = (string) preg_replace('#^<!DOCTYPE[^>]*>#i', '', $html);
-        $html = (string) preg_replace('#</?html[^>]*>#i', '', $html);
-        $html = (string) preg_replace('#</?body[^>]*>#i', '', $html);
-        $html = (string) preg_replace('#</?head[^>]*>#i', '', $html);
 
         // Remove CDATA and PIs from output
         $html = str_replace('<![CDATA[', '', $html);

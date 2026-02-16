@@ -11,7 +11,7 @@ use Pulsar\Extension\Forum\Domain\ThreadType;
 use Pulsar\Extension\Forum\Exception\ForumException;
 
 /**
- * Thread aggregate root — represents a discussion thread in the forum.
+ * Thread aggregate root: represents a discussion thread in the forum.
  *
  * Supports typed discussions (Q&A, bug report, feature request, etc.),
  * status transitions (open/closed/locked), pinning, and solution marking.
@@ -171,7 +171,7 @@ final readonly class Thread
     }
 
     /**
-     * Lock the thread — prevents new replies.
+     * Lock the thread: prevents new replies.
      *
      * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
@@ -184,7 +184,7 @@ final readonly class Thread
     }
 
     /**
-     * Unlock the thread — allows new replies.
+     * Unlock the thread: allows new replies.
      *
      * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */

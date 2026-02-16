@@ -27,7 +27,7 @@ use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
  * Actual delivery is delegated to the framework's notification infrastructure.
  * This dispatcher creates the appropriate forum notification DTO and logs it.
  */
-#[Internal(reason: 'Forum notification wiring — use ForumNotificationInterface for public API')]
+#[Internal(reason: 'Forum notification wiring; use ForumNotificationInterface for public API')]
 final readonly class ForumNotificationDispatcher
 {
     public function __construct(

@@ -16,7 +16,7 @@ return new class implements MigrationInterface {
                 id VARCHAR(36) NOT NULL,
                 tenant_id VARCHAR(36) DEFAULT NULL,
                 parent_id VARCHAR(36) DEFAULT NULL,
-                name VARCHAR(200) NOT NULL,
+                name VARCHAR(200) NOT NULL DEFAULT '',
                 slug VARCHAR(200) NOT NULL,
                 description TEXT DEFAULT NULL,
                 sort_order INTEGER NOT NULL DEFAULT 0,

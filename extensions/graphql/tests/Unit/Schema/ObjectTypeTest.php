@@ -35,7 +35,9 @@ final class ObjectTypeTest extends TestCase
 
         self::assertSame('OBJECT', $intro['kind']);
         self::assertSame('Media', $intro['name']);
-        self::assertCount(1, $intro['fields']);
-        self::assertSame('filename', $intro['fields'][0]['name']);
+        /** @var list<array<string, mixed>> $fields */
+        $fields = $intro['fields'];
+        self::assertCount(1, $fields);
+        self::assertSame('filename', $fields[0]['name']);
     }
 }

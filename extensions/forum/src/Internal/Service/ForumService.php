@@ -218,7 +218,7 @@ final readonly class ForumService implements ForumServiceInterface
         return $post;
     }
 
-    public function deletePost(string $postId): void
+    public function deletePost(string $postId, string $deletedBy = ''): void
     {
         $post = $this->posts->findById($postId);
 
@@ -237,12 +237,12 @@ final readonly class ForumService implements ForumServiceInterface
         $this->events->dispatch(new PostDeleted(
             postId: $post->id,
             threadId: $post->threadId,
-            deletedBy: $post->authorId,
+            deletedBy: $deletedBy !== '' ? $deletedBy : $post->authorId,
             tenantId: $post->tenantId,
         ));
     }
 
-    public function deleteThread(string $threadId): void
+    public function deleteThread(string $threadId, string $deletedBy = ''): void
     {
         $thread = $this->threads->findById($threadId);
 
@@ -257,7 +257,7 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadDeleted(
             threadId: $thread->id,
-            deletedBy: $thread->authorId,
+            deletedBy: $deletedBy !== '' ? $deletedBy : $thread->authorId,
             tenantId: $thread->tenantId,
         ));
     }
@@ -305,7 +305,7 @@ final readonly class ForumService implements ForumServiceInterface
         return $thread;
     }
 
-    public function lockThread(string $threadId): Thread
+    public function lockThread(string $threadId, string $actorId = ''): Thread
     {
         $thread = $this->threads->findById($threadId);
 
@@ -318,14 +318,14 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadLocked(
             threadId: $thread->id,
-            lockedBy: $thread->authorId,
+            lockedBy: $actorId !== '' ? $actorId : $thread->authorId,
             tenantId: $thread->tenantId,
         ));
 
         return $thread;
     }
 
-    public function unlockThread(string $threadId): Thread
+    public function unlockThread(string $threadId, string $actorId = ''): Thread
     {
         $thread = $this->threads->findById($threadId);
 
@@ -338,14 +338,14 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadUnlocked(
             threadId: $thread->id,
-            unlockedBy: $thread->authorId,
+            unlockedBy: $actorId !== '' ? $actorId : $thread->authorId,
             tenantId: $thread->tenantId,
         ));
 
         return $thread;
     }
 
-    public function pinThread(string $threadId): Thread
+    public function pinThread(string $threadId, string $actorId = ''): Thread
     {
         $thread = $this->threads->findById($threadId);
 
@@ -358,14 +358,14 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadPinned(
             threadId: $thread->id,
-            pinnedBy: $thread->authorId,
+            pinnedBy: $actorId !== '' ? $actorId : $thread->authorId,
             tenantId: $thread->tenantId,
         ));
 
         return $thread;
     }
 
-    public function unpinThread(string $threadId): Thread
+    public function unpinThread(string $threadId, string $actorId = ''): Thread
     {
         $thread = $this->threads->findById($threadId);
 
@@ -378,7 +378,7 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadUnpinned(
             threadId: $thread->id,
-            unpinnedBy: $thread->authorId,
+            unpinnedBy: $actorId !== '' ? $actorId : $thread->authorId,
             tenantId: $thread->tenantId,
         ));
 

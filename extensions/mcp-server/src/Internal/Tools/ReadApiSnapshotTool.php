@@ -12,6 +12,7 @@ use Pulsar\Introspection\ProjectMetadataService;
 
 use function array_slice;
 use function count;
+use function is_int;
 use function is_string;
 use function json_encode;
 use function str_starts_with;
@@ -89,7 +90,9 @@ final readonly class ReadApiSnapshotTool implements McpToolInterface
         }
 
         // Pagination
-        $limit = max(1, (int) ($params['limit'] ?? 100));
+        /** @var int $limitVal */
+        $limitVal = isset($params['limit']) && is_int($params['limit']) ? $params['limit'] : 100;
+        $limit = max(1, $limitVal);
         $cursor = $params['cursor'] ?? null;
         $allKeys = array_keys($classes);
         $totalCount = count($allKeys);

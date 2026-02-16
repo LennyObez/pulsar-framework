@@ -12,7 +12,7 @@ use Pulsar\Extension\Forum\Report\PostReport;
 use Pulsar\Extension\Forum\Report\ThreadReport;
 
 /**
- * Moderation service — content reporting, report review, and user banning.
+ * Moderation service: content reporting, report review, and user banning.
  */
 #[Api(since: '1.0.0')]
 interface ModerationServiceInterface
@@ -64,7 +64,7 @@ interface ModerationServiceInterface
     ): PostReport;
 
     /**
-     * Resolve a thread report (Actioned) — typically after moderator action.
+     * Resolve a thread report (Actioned): typically after moderator action.
      */
     public function resolveThreadReport(
         string $reportId,
@@ -73,7 +73,7 @@ interface ModerationServiceInterface
     ): ThreadReport;
 
     /**
-     * Resolve a post report (Actioned) — typically after moderator action.
+     * Resolve a post report (Actioned): typically after moderator action.
      */
     public function resolvePostReport(
         string $reportId,
@@ -82,7 +82,7 @@ interface ModerationServiceInterface
     ): PostReport;
 
     /**
-     * Dismiss a thread report — no action taken.
+     * Dismiss a thread report: no action taken.
      */
     public function dismissThreadReport(
         string $reportId,
@@ -91,7 +91,7 @@ interface ModerationServiceInterface
     ): ThreadReport;
 
     /**
-     * Dismiss a post report — no action taken.
+     * Dismiss a post report: no action taken.
      */
     public function dismissPostReport(
         string $reportId,

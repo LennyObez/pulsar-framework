@@ -20,7 +20,7 @@ use function substr;
  * arguments with scalar values, aliases, fragment definitions, and fragment spreads.
  * Does not support mutations, subscriptions, directives, or inline fragments.
  */
-#[Internal(reason: 'Parser internals — use GraphqlExecutor as public entry point')]
+#[Internal(reason: 'Parser internals; use GraphqlExecutor as public entry point')]
 final class GraphqlParser
 {
     private string $source = '';
@@ -355,7 +355,7 @@ final class GraphqlParser
         // "on TypeName"
         $this->consumeWord('on');
         $this->skipWhitespaceAndComments();
-        $this->parseName(); // type condition — consumed but not used for resolution
+        $this->parseName(); // type condition: consumed but not used for resolution
 
         $fields = $this->parseSelectionSet();
 
@@ -385,11 +385,16 @@ final class GraphqlParser
     /**
      * Resolve fragment spreads in a field list.
      *
+     * Uses a $visited set to detect circular fragment references. If the same
+     * fragment name appears in the current resolution chain, a validation
+     * error is thrown to prevent infinite recursion.
+     *
      * @param list<ParsedField> $fields
      * @param array<string, list<ParsedField>> $fragments
+     * @param array<string, true> $visited Fragment names currently being resolved (cycle detection)
      * @return list<ParsedField>
      */
-    private function resolveFragments(array $fields, array $fragments): array
+    private function resolveFragments(array $fields, array $fragments, array $visited = []): array
     {
         $resolved = [];
 
@@ -398,13 +403,19 @@ final class GraphqlParser
                 $fragmentName = $field->alias;
 
                 if ($fragmentName !== null && isset($fragments[$fragmentName])) {
-                    foreach ($this->resolveFragments($fragments[$fragmentName], $fragments) as $f) {
+                    if (isset($visited[$fragmentName])) {
+                        throw GraphqlException::validationError('Circular fragment spread detected');
+                    }
+
+                    $visited[$fragmentName] = true;
+
+                    foreach ($this->resolveFragments($fragments[$fragmentName], $fragments, $visited) as $f) {
                         $resolved[] = $f;
                     }
                 }
             } else {
                 $subSelections = $field->selections !== []
-                    ? $this->resolveFragments($field->selections, $fragments)
+                    ? $this->resolveFragments($field->selections, $fragments, $visited)
                     : [];
 
                 $resolved[] = new ParsedField(
@@ -427,7 +438,7 @@ final class GraphqlParser
             if ($char === ' ' || $char === "\t" || $char === "\n" || $char === "\r" || $char === ',') {
                 $this->pos++;
             } elseif ($char === '#') {
-                // Line comment — skip until end of line
+                // Line comment: skip until end of line
                 while ($this->pos < $this->len && $this->source[$this->pos] !== "\n") {
                     $this->pos++;
                 }

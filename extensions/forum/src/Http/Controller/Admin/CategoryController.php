@@ -21,7 +21,7 @@ use function is_string;
 /**
  * Admin controller for forum category CRUD with translation management.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class CategoryController
 {
     use RendersAdminView;
@@ -34,7 +34,7 @@ final readonly class CategoryController
     ) {}
 
     /**
-     * GET /admin/forum/categories — List all categories.
+     * GET /admin/forum/categories: List all categories.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -54,7 +54,7 @@ final readonly class CategoryController
     }
 
     /**
-     * GET /admin/forum/categories/{id} — Show a single category with translations.
+     * GET /admin/forum/categories/{id}: Show a single category with translations.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -78,7 +78,7 @@ final readonly class CategoryController
     }
 
     /**
-     * POST /admin/forum/categories — Create a new category.
+     * POST /admin/forum/categories: Create a new category.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -129,7 +129,7 @@ final readonly class CategoryController
     }
 
     /**
-     * PUT /admin/forum/categories/{id} — Update a category.
+     * PUT /admin/forum/categories/{id}: Update a category.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -185,7 +185,7 @@ final readonly class CategoryController
     }
 
     /**
-     * DELETE /admin/forum/categories/{id} — Delete a category.
+     * DELETE /admin/forum/categories/{id}: Delete a category.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

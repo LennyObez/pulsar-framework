@@ -78,7 +78,7 @@ final class SocialSsoServiceProvider implements ServiceProviderInterface
         // ID token verifier (JWKS-based)
         $container->bind(IdTokenVerifierInterface::class, JwksIdTokenVerifier::class);
 
-        // Social identity linker (null default — apps override with their own implementation)
+        // Social identity linker (null default; apps override with their own implementation)
         $container->bind(SocialIdentityLinkerInterface::class, NullSocialIdentityLinker::class);
 
         // SSO gateway

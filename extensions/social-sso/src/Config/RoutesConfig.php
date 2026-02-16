@@ -7,6 +7,8 @@ namespace Pulsar\Extension\SocialSso\Config;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function is_string;
+
 #[Api(since: '1.0.0')]
 final readonly class RoutesConfig
 {
@@ -19,9 +21,14 @@ final readonly class RoutesConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        /** @var string $login */
+        $login = isset($data['login_path']) && is_string($data['login_path']) ? $data['login_path'] : '/sso/{provider}/login';
+        /** @var string $callback */
+        $callback = isset($data['callback_path']) && is_string($data['callback_path']) ? $data['callback_path'] : '/sso/{provider}/callback';
+
         return new self(
-            loginPath: (string) ($data['login_path'] ?? '/sso/{provider}/login'),
-            callbackPath: (string) ($data['callback_path'] ?? '/sso/{provider}/callback'),
+            loginPath: $login,
+            callbackPath: $callback,
         );
     }
 }

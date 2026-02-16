@@ -11,7 +11,7 @@ use Pulsar\Extension\Forum\Domain\Badge;
 /**
  * Records a badge awarded to a user.
  *
- * Unique per (tenant, user, badge) — enforced at the repository/DB level.
+ * Unique per (tenant, user, badge): enforced at the repository/DB level.
  */
 #[Api(since: '1.0.0')]
 final readonly class UserBadge

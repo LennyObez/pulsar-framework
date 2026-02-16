@@ -24,7 +24,7 @@ use function trim;
  * against the device registry, and populates user_id and device_id
  * request attributes on success. Returns 401 JSON on failure.
  */
-#[Internal(reason: 'Device token authentication guard — implementation detail')]
+#[Internal(reason: 'Device token authentication guard; implementation detail')]
 final readonly class DeviceTokenGuard implements MiddlewareInterface
 {
     private const string BEARER_PREFIX = 'Bearer ';

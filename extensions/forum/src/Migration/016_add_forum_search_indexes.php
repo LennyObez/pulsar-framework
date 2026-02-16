@@ -123,7 +123,7 @@ return new class implements MigrationInterface {
 
     /**
      * SQLite has no native full-text index support on existing tables.
-     * Search falls back to LIKE queries — no schema changes needed.
+     * Search falls back to LIKE queries: no schema changes needed.
      */
     private function upSqlite(): void
     {

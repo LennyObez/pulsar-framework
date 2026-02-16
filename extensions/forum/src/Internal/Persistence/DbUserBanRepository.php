@@ -18,7 +18,7 @@ use function ceil;
 use function max;
 use function min;
 
-#[Internal(reason: 'Raw-DB repository — use UserBanRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use UserBanRepositoryInterface for public API')]
 final readonly class DbUserBanRepository implements UserBanRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

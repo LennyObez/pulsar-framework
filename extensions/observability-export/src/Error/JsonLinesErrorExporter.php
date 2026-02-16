@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Error;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Error;
 
 use Override;
-use Pulsar\Api\Internal;
-use Pulsar\Extension\ObservabilityExport\Internal\JsonLinesFileWriter;
-use Pulsar\Extension\ObservabilityExport\Schema\ErrorSchema;
+use Pulsar\Api\Api;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Internal\JsonLinesFileWriter;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Schema\ErrorSchema;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;
 
 use function count;
@@ -20,7 +20,7 @@ use const PHP_EOL;
  * Buffers events in memory and flushes to disk when the threshold is reached.
  * Uses flock(LOCK_EX) for multi-process safety.
  */
-#[Internal(reason: 'Implementation detail; depend on ErrorExporterInterface')]
+#[Api(since: '1.0.0')]
 final class JsonLinesErrorExporter implements ErrorExporterInterface
 {
     /** @var list<ErrorEvent> */

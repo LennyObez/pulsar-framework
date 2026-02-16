@@ -20,7 +20,7 @@ use function sodium_crypto_generichash;
  * Tokens are generated as 64-byte random hex strings and stored only as BLAKE2b hashes.
  * The raw token is returned exactly once (on creation or rotation) and never persisted.
  */
-#[Internal(reason: 'Device management service — use DeviceService via the container')]
+#[Internal(reason: 'Device management service; use DeviceService via the container')]
 final readonly class DeviceService
 {
     public function __construct(

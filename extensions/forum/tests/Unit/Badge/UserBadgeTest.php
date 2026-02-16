@@ -24,7 +24,7 @@ final class UserBadgeTest extends TestCase
         self::assertNull($userBadge->tenantId);
         self::assertSame('user-1', $userBadge->userId);
         self::assertSame(Badge::FirstPost, $userBadge->badge);
-        self::assertNotNull($userBadge->awardedAt);
+        self::assertEqualsWithDelta(time(), $userBadge->awardedAt->getTimestamp(), 2);
     }
 
     #[Test]

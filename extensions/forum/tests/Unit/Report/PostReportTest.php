@@ -30,7 +30,7 @@ final class PostReportTest extends TestCase
         self::assertSame(ReportStatus::Pending, $report->status);
         self::assertNull($report->moderatorId);
         self::assertNull($report->moderatorNote);
-        self::assertNotNull($report->createdAt);
+        self::assertEqualsWithDelta(time(), $report->createdAt->getTimestamp(), 2);
         self::assertNull($report->reviewedAt);
     }
 

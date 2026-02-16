@@ -108,8 +108,8 @@ final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
         $iss = $claims['iss'];
         /** @var string|list<string> $aud */
         $aud = $claims['aud'];
-        $exp = (int) $claims['exp'];
-        $iat = (int) $claims['iat'];
+        $exp = is_numeric($claims['exp'] ?? null) ? (int) $claims['exp'] : 0;
+        $iat = is_numeric($claims['iat'] ?? null) ? (int) $claims['iat'] : 0;
 
         $nonce = isset($claims['nonce']) && is_string($claims['nonce']) ? $claims['nonce'] : null;
         $azp = isset($claims['azp']) && is_string($claims['azp']) ? $claims['azp'] : null;
@@ -154,7 +154,7 @@ final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
             return $key;
         }
 
-        // No kid in header — determine key from JWKS
+        // No kid in header: determine key from JWKS
         $keys = $this->fetcher->fetchKeys($jwksUri);
 
         if (count($keys) === 0) {
@@ -219,8 +219,8 @@ final readonly class JwksIdTokenVerifier implements IdTokenVerifierInterface
 
         // Validate expiration
         $now = time();
-        $exp = (int) $claims['exp'];
-        $iat = (int) $claims['iat'];
+        $exp = is_numeric($claims['exp'] ?? null) ? (int) $claims['exp'] : 0;
+        $iat = is_numeric($claims['iat'] ?? null) ? (int) $claims['iat'] : 0;
 
         if ($exp + $context->maxClockSkewSeconds < $now) {
             throw SsoException::invalidIdToken('token has expired');

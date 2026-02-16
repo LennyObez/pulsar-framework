@@ -21,7 +21,7 @@ final readonly class UserDevice
 {
     /**
      * @param string $id Hex device identifier (32 chars)
-     * @param string $userId FK auth_users — the device owner
+     * @param string $userId FK auth_users: the device owner
      * @param string $deviceName Human-readable device label
      * @param Platform $platform Operating system / platform
      * @param string $appVersion Application version string

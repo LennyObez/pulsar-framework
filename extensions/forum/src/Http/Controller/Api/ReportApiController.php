@@ -17,7 +17,7 @@ use function is_string;
 /**
  * Public REST API controller for content reporting.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ReportApiController
 {
     public function __construct(
@@ -25,7 +25,7 @@ final readonly class ReportApiController
     ) {}
 
     /**
-     * POST /api/v1/forum/threads/{id}/report — Report a thread.
+     * POST /api/v1/forum/threads/{id}/report; Report a thread.
      */
     public function reportThread(ServerRequestInterface $request, string $id): Response
     {
@@ -74,7 +74,7 @@ final readonly class ReportApiController
     }
 
     /**
-     * POST /api/v1/forum/posts/{id}/report — Report a post.
+     * POST /api/v1/forum/posts/{id}/report; Report a post.
      */
     public function reportPost(ServerRequestInterface $request, string $id): Response
     {

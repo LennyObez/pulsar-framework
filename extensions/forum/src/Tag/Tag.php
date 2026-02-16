@@ -7,7 +7,7 @@ namespace Pulsar\Extension\Forum\Tag;
 use Pulsar\Api\Api;
 
 /**
- * Forum tag — a label that can be applied to threads for topic classification.
+ * Forum tag: a label that can be applied to threads for topic classification.
  */
 #[Api(since: '1.0.0')]
 final readonly class Tag

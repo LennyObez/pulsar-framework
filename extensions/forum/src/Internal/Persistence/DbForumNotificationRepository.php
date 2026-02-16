@@ -21,7 +21,7 @@ use function min;
 
 use const JSON_THROW_ON_ERROR;
 
-#[Internal(reason: 'Raw-DB repository — use ForumNotificationRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ForumNotificationRepositoryInterface for public API')]
 final readonly class DbForumNotificationRepository implements ForumNotificationRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

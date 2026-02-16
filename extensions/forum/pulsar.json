@@ -20,6 +20,7 @@
       "ForumProfileRepositoryInterface",
       "TagRepositoryInterface"
     ],
-    "routes": true
+    "routes": true,
+    "migrations": ["src/Migration"]
   }
 }

@@ -71,6 +71,7 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
     /**
      * Store a PKCE code verifier associated with the given state token.
      */
+    #[Override]
     public function storePkceVerifier(string $state, string $verifier): void
     {
         $rawPkce = $this->session->get(self::PKCE_KEY, []);
@@ -86,6 +87,7 @@ final readonly class SessionOAuthStateManager implements OAuthStateManagerInterf
      *
      * Returns null if no verifier was stored for this state.
      */
+    #[Override]
     public function retrievePkceVerifier(string $state): ?string
     {
         $rawPkce = $this->session->get(self::PKCE_KEY, []);

@@ -12,7 +12,7 @@ use Pulsar\Extension\Forum\Service\PrivilegeCheckerInterface;
 /**
  * Compares a user's reputation score against the privilege's threshold.
  */
-#[Internal(reason: 'Privilege enforcement — use PrivilegeCheckerInterface for public API')]
+#[Internal(reason: 'Privilege enforcement; use PrivilegeCheckerInterface for public API')]
 final readonly class PrivilegeChecker implements PrivilegeCheckerInterface
 {
     public function canPerform(ForumPrivilege $privilege, ForumProfile $profile): bool

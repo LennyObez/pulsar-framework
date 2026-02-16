@@ -9,6 +9,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Forum\Config\ForumConfig;
+use Pulsar\Extension\Forum\Content\ForumBodyPolicy;
 use Pulsar\Extension\Forum\Content\MarkdownRendererInterface;
 use Pulsar\Extension\Forum\Domain\ThreadType;
 use Pulsar\Extension\Forum\Exception\ForumException;
@@ -30,7 +31,7 @@ use function min;
 /**
  * Public REST API controller for forum threads.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ThreadApiController
 {
     public function __construct(
@@ -38,12 +39,13 @@ final readonly class ThreadApiController
         private ThreadSubscriptionRepositoryInterface $subscriptionRepository,
         private ForumServiceInterface $forumService,
         private MarkdownRendererInterface $markdown,
+        private ForumBodyPolicy $bodyPolicy,
         private ForumConfig $config,
         private ?GateInterface $gate = null,
     ) {}
 
     /**
-     * GET /api/v1/forum/threads — List recent threads.
+     * GET /api/v1/forum/threads: List recent threads.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -64,7 +66,7 @@ final readonly class ThreadApiController
     }
 
     /**
-     * POST /api/v1/forum/threads — Create a new thread.
+     * POST /api/v1/forum/threads: Create a new thread.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -108,7 +110,7 @@ final readonly class ThreadApiController
                 slug: is_string($body['slug'] ?? null) ? $body['slug'] : '',
                 type: $type,
                 body: $rawBody,
-                bodyHtml: $this->markdown->render($rawBody),
+                bodyHtml: $this->bodyPolicy->sanitize($this->markdown->render($rawBody)),
                 ipHash: $ipHash,
                 userAgentHash: $userAgentHash,
                 tenantId: $tenantId,
@@ -121,7 +123,7 @@ final readonly class ThreadApiController
     }
 
     /**
-     * GET /api/v1/forum/threads/{id} — Show a single thread.
+     * GET /api/v1/forum/threads/{id}: Show a single thread.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -135,7 +137,7 @@ final readonly class ThreadApiController
     }
 
     /**
-     * PUT /api/v1/forum/threads/{id} — Update a thread.
+     * PUT /api/v1/forum/threads/{id}: Update a thread.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -170,7 +172,7 @@ final readonly class ThreadApiController
     }
 
     /**
-     * DELETE /api/v1/forum/threads/{id} — Soft delete a thread.
+     * DELETE /api/v1/forum/threads/{id}: Soft delete a thread.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -190,7 +192,7 @@ final readonly class ThreadApiController
         }
 
         try {
-            $this->forumService->deleteThread($id);
+            $this->forumService->deleteThread($id, $identity->id());
 
             return Response::json(['data' => ['id' => $id, 'status' => 'deleted']]);
         } catch (ForumException $e) {
@@ -199,7 +201,7 @@ final readonly class ThreadApiController
     }
 
     /**
-     * POST /api/v1/forum/threads/{id}/lock — Lock a thread.
+     * POST /api/v1/forum/threads/{id}/lock: Lock a thread.
      */
     public function lock(ServerRequestInterface $request, string $id): Response
     {
@@ -210,7 +212,7 @@ final readonly class ThreadApiController
         }
 
         try {
-            $thread = $this->forumService->lockThread($id);
+            $thread = $this->forumService->lockThread($id, $identity->id());
 
             return Response::json(['data' => self::serializeThread($thread)]);
         } catch (ForumException $e) {
@@ -219,7 +221,7 @@ final readonly class ThreadApiController
     }
 
     /**
-     * POST /api/v1/forum/threads/{id}/pin — Pin a thread.
+     * POST /api/v1/forum/threads/{id}/pin: Pin a thread.
      */
     public function pin(ServerRequestInterface $request, string $id): Response
     {
@@ -230,7 +232,7 @@ final readonly class ThreadApiController
         }
 
         try {
-            $thread = $this->forumService->pinThread($id);
+            $thread = $this->forumService->pinThread($id, $identity->id());
 
             return Response::json(['data' => self::serializeThread($thread)]);
         } catch (ForumException $e) {
@@ -239,7 +241,7 @@ final readonly class ThreadApiController
     }
 
     /**
-     * POST /api/v1/forum/threads/{id}/subscribe — Subscribe to a thread.
+     * POST /api/v1/forum/threads/{id}/subscribe: Subscribe to a thread.
      */
     public function subscribe(ServerRequestInterface $request, string $id): Response
     {
@@ -273,7 +275,7 @@ final readonly class ThreadApiController
     }
 
     /**
-     * DELETE /api/v1/forum/threads/{id}/subscribe — Unsubscribe from a thread.
+     * DELETE /api/v1/forum/threads/{id}/subscribe: Unsubscribe from a thread.
      */
     public function unsubscribe(ServerRequestInterface $request, string $id): Response
     {

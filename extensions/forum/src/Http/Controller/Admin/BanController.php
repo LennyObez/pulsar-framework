@@ -26,7 +26,7 @@ use function min;
 /**
  * Admin controller for managing forum user bans.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class BanController
 {
     use RendersAdminView;
@@ -39,7 +39,7 @@ final readonly class BanController
     ) {}
 
     /**
-     * GET /admin/forum/bans — List active bans with pagination.
+     * GET /admin/forum/bans: List active bans with pagination.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -70,7 +70,7 @@ final readonly class BanController
     }
 
     /**
-     * GET /admin/forum/bans/{id} — Show ban detail.
+     * GET /admin/forum/bans/{id}: Show ban detail.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -111,7 +111,7 @@ final readonly class BanController
     }
 
     /**
-     * POST /admin/forum/bans — Create a new ban.
+     * POST /admin/forum/bans: Create a new ban.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -171,7 +171,7 @@ final readonly class BanController
     }
 
     /**
-     * POST /admin/forum/bans/{id}/revoke — Revoke an active ban.
+     * POST /admin/forum/bans/{id}/revoke: Revoke an active ban.
      */
     public function revoke(ServerRequestInterface $request, string $id): Response
     {

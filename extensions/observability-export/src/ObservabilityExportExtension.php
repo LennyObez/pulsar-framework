@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace Pulsar\Extension\ObservabilityExport;
 
 use Override;
+use Pulsar\Api\Api;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Extensibility\ExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
-use Pulsar\Extension\ObservabilityExport\Error\ErrorExporterInterface;
-use Pulsar\Extension\ObservabilityExport\Error\JsonLinesErrorExporter;
-use Pulsar\Extension\ObservabilityExport\Metrics\JsonLinesMetricsExporter;
-use Pulsar\Extension\ObservabilityExport\Metrics\MetricsExporterInterface;
-use Pulsar\Extension\ObservabilityExport\Span\JsonLinesSpanExporter;
-use Pulsar\Extension\ObservabilityExport\Span\SpanExporterInterface;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Error\ErrorExporterInterface;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Error\JsonLinesErrorExporter;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Metrics\JsonLinesMetricsExporter;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Metrics\MetricsExporterInterface;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Span\JsonLinesSpanExporter;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Span\SpanExporterInterface;
 use Pulsar\Routing\RouterInterface;
 
 /**
@@ -23,6 +24,7 @@ use Pulsar\Routing\RouterInterface;
  * All exporters write to configurable file paths with buffered,
  * multi-process-safe I/O.
  */
+#[Api(since: '1.0.0')]
 final class ObservabilityExportExtension implements ExtensionInterface
 {
     private const string DEFAULT_SPANS_PATH = 'var/observability/spans.jsonl';

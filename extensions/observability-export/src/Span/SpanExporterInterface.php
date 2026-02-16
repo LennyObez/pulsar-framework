@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Span;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Span;
 
 use Pulsar\Api\Api;
 use Pulsar\Observability\Tracing\Span;

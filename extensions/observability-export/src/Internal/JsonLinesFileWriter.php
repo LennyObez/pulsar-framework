@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Internal;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Internal;
 
 use Pulsar\Api\Internal;
 use RuntimeException;

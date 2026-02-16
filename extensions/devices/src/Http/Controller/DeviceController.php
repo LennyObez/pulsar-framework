@@ -21,7 +21,7 @@ use function is_string;
  * Provides CRUD operations for user devices plus token rotation.
  * All endpoints require an authenticated user (user_id request attribute).
  */
-#[Internal(reason: 'Devices HTTP controller — implementation detail')]
+#[Internal(reason: 'Devices HTTP controller; implementation detail')]
 final readonly class DeviceController
 {
     public function __construct(
@@ -29,7 +29,7 @@ final readonly class DeviceController
     ) {}
 
     /**
-     * GET /api/v1/devices — List the authenticated user's devices.
+     * GET /api/v1/devices: List the authenticated user's devices.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -48,7 +48,7 @@ final readonly class DeviceController
     }
 
     /**
-     * POST /api/v1/devices — Register a new device and return the raw API token once.
+     * POST /api/v1/devices: Register a new device and return the raw API token once.
      */
     public function register(ServerRequestInterface $request): Response
     {
@@ -99,7 +99,7 @@ final readonly class DeviceController
     }
 
     /**
-     * POST /api/v1/devices/{id}/rotate — Rotate the API token for a device.
+     * POST /api/v1/devices/{id}/rotate: Rotate the API token for a device.
      */
     public function rotate(ServerRequestInterface $request, string $id): Response
     {
@@ -123,7 +123,7 @@ final readonly class DeviceController
     }
 
     /**
-     * DELETE /api/v1/devices/{id} — Remove a device registration.
+     * DELETE /api/v1/devices/{id}: Remove a device registration.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

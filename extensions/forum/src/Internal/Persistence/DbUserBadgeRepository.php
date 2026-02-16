@@ -13,7 +13,7 @@ use Pulsar\Extension\Forum\Badge\UserBadge;
 use Pulsar\Extension\Forum\Badge\UserBadgeRepositoryInterface;
 use Pulsar\Extension\Forum\Domain\Badge;
 
-#[Internal(reason: 'Raw-DB repository — use UserBadgeRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use UserBadgeRepositoryInterface for public API')]
 final readonly class DbUserBadgeRepository implements UserBadgeRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';

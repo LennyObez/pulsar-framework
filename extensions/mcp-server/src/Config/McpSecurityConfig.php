@@ -7,6 +7,9 @@ namespace Pulsar\Extension\McpServer\Config;
 use NoDiscard;
 use Pulsar\Api\Internal;
 
+use function is_array;
+use function is_int;
+
 /**
  * Security sub-configuration for MCP access control.
  */
@@ -32,15 +35,18 @@ final readonly class McpSecurityConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var list<string> $pathAllowlist */
-        $pathAllowlist = (array) ($data['path_allowlist'] ?? []);
+        $pathAllowlistRaw = $data['path_allowlist'] ?? [];
+        $pathAllowlist = is_array($pathAllowlistRaw) ? array_values(array_filter($pathAllowlistRaw, '\is_string')) : [];
 
-        $rateLimitPerMinute = (int) ($data['rate_limit_per_minute'] ?? 60);
+        $rateLimitRaw = $data['rate_limit_per_minute'] ?? null;
+        $rateLimitPerMinute = is_int($rateLimitRaw) ? $rateLimitRaw : 60;
 
+        $toolRateLimitsRaw = $data['tool_rate_limits'] ?? [];
         /** @var array<string, int> $toolRateLimits */
-        $toolRateLimits = (array) ($data['tool_rate_limits'] ?? []);
+        $toolRateLimits = is_array($toolRateLimitsRaw) ? $toolRateLimitsRaw : [];
 
-        $maxConcurrentActions = (int) ($data['max_concurrent_actions'] ?? 1);
+        $maxConcurrentRaw = $data['max_concurrent_actions'] ?? null;
+        $maxConcurrentActions = is_int($maxConcurrentRaw) ? $maxConcurrentRaw : 1;
 
         return new self(
             pathAllowlist: $pathAllowlist,

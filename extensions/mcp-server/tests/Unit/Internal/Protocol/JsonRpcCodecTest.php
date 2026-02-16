@@ -97,6 +97,7 @@ final class JsonRpcCodecTest extends TestCase
     public function encodeResultProducesValidJson(): void
     {
         $encoded = $this->codec->encodeResult(1, ['key' => 'value']);
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($encoded, true);
 
         self::assertSame('2.0', $decoded['jsonrpc']);
@@ -116,22 +117,30 @@ final class JsonRpcCodecTest extends TestCase
     public function encodeErrorProducesValidJson(): void
     {
         $encoded = $this->codec->encodeError(1, -32600, 'Invalid request');
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($encoded, true);
 
         self::assertSame('2.0', $decoded['jsonrpc']);
         self::assertSame(1, $decoded['id']);
-        self::assertSame(-32600, $decoded['error']['code']);
-        self::assertSame('Invalid request', $decoded['error']['message']);
-        self::assertArrayNotHasKey('data', $decoded['error']);
+        /** @var array<string, mixed> $error */
+        $error = $decoded['error'];
+        self::assertSame(-32600, $error['code']);
+        self::assertSame('Invalid request', $error['message']);
+        self::assertArrayNotHasKey('data', $error);
     }
 
     #[Test]
     public function encodeErrorIncludesDataWhenProvided(): void
     {
         $encoded = $this->codec->encodeError(null, -32700, 'Parse', ['detail' => 'unexpected token']);
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($encoded, true);
 
         self::assertNull($decoded['id']);
-        self::assertSame('unexpected token', $decoded['error']['data']['detail']);
+        /** @var array<string, mixed> $error */
+        $error = $decoded['error'];
+        /** @var array<string, mixed> $data */
+        $data = $error['data'];
+        self::assertSame('unexpected token', $data['detail']);
     }
 }

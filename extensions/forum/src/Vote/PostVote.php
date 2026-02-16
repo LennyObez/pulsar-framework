@@ -11,7 +11,7 @@ use Pulsar\Extension\Forum\Domain\VoteDirection;
 /**
  * A user's vote on a post.
  *
- * Unique per (tenant, user, post) — enforced at the repository/DB level.
+ * Unique per (tenant, user, post): enforced at the repository/DB level.
  */
 #[Api(since: '1.0.0')]
 final readonly class PostVote

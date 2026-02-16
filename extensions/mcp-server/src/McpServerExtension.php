@@ -44,7 +44,7 @@ use function is_file;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * MCP server extension — exposes project metadata and developer tools
+ * MCP server extension: exposes project metadata and developer tools
  * to AI assistants via the Model Context Protocol (JSON-RPC 2.0 over stdio).
  */
 final class McpServerExtension implements ExtensionInterface, PreBootExtensionInterface
@@ -185,7 +185,7 @@ final class McpServerExtension implements ExtensionInterface, PreBootExtensionIn
 
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
-        // MCP uses stdio transport — no HTTP routes
+        // MCP uses stdio transport: no HTTP routes
     }
 
     public function providers(): array

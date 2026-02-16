@@ -11,7 +11,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Notification\NotificationPreference;
 use Pulsar\Extension\Forum\Notification\NotificationPreferenceRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use NotificationPreferenceRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use NotificationPreferenceRepositoryInterface for public API')]
 final readonly class DbNotificationPreferenceRepository implements NotificationPreferenceRepositoryInterface
 {
     private const string SQL_FIND_BY_USER = <<<'SQL'

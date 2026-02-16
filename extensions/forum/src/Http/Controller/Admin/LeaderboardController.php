@@ -21,7 +21,7 @@ use function min;
 /**
  * Admin controller for the forum leaderboard with period selector.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class LeaderboardController
 {
     use RendersAdminView;
@@ -33,7 +33,7 @@ final readonly class LeaderboardController
     ) {}
 
     /**
-     * GET /admin/forum/leaderboard — Show leaderboard with period selector.
+     * GET /admin/forum/leaderboard: Show leaderboard with period selector.
      */
     public function index(ServerRequestInterface $request): Response
     {

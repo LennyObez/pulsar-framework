@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Span;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Span;
 
 use Override;
-use Pulsar\Api\Internal;
-use Pulsar\Extension\ObservabilityExport\Internal\JsonLinesFileWriter;
-use Pulsar\Extension\ObservabilityExport\Schema\SpanSchema;
+use Pulsar\Api\Api;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Internal\JsonLinesFileWriter;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Schema\SpanSchema;
 use Pulsar\Observability\Tracing\Span;
 
 use function count;
@@ -20,7 +20,7 @@ use const PHP_EOL;
  * Buffers spans in memory and flushes to disk when the threshold is reached.
  * Uses flock(LOCK_EX) for multi-process safety.
  */
-#[Internal(reason: 'Implementation detail; depend on SpanExporterInterface')]
+#[Api(since: '1.0.0')]
 final class JsonLinesSpanExporter implements SpanExporterInterface
 {
     /** @var list<Span> */

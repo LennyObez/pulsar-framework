@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Tests\Unit\Error;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Tests\Unit\Error;
 
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\ObservabilityExport\Error\JsonLinesErrorExporter;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Error\JsonLinesErrorExporter;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;
 use Pulsar\Observability\ErrorTracking\ErrorFingerprint;
 

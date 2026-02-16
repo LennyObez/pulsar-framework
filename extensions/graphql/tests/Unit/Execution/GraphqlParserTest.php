@@ -226,4 +226,108 @@ final class GraphqlParserTest extends TestCase
 
         self::assertSame('PUBLISHED', $parsed->fields[0]->arguments['status']);
     }
+
+    #[Test]
+    public function parseThrowsOnDirectCircularFragmentSpread(): void
+    {
+        $query = <<<'GQL'
+            fragment A on Content {
+                id
+                ...A
+            }
+
+            {
+                content(id: "1") {
+                    ...A
+                }
+            }
+            GQL;
+
+        $this->expectException(GraphqlException::class);
+        $this->expectExceptionMessage('Circular fragment spread detected');
+        $this->parser->parse($query);
+    }
+
+    #[Test]
+    public function parseThrowsOnIndirectCircularFragmentSpread(): void
+    {
+        $query = <<<'GQL'
+            fragment A on Content {
+                id
+                ...B
+            }
+
+            fragment B on Content {
+                title
+                ...A
+            }
+
+            {
+                content(id: "1") {
+                    ...A
+                }
+            }
+            GQL;
+
+        $this->expectException(GraphqlException::class);
+        $this->expectExceptionMessage('Circular fragment spread detected');
+        $this->parser->parse($query);
+    }
+
+    #[Test]
+    public function parseResolvesNonCircularFragmentSpreadsNormally(): void
+    {
+        $query = <<<'GQL'
+            fragment Fields on Content {
+                id
+                title
+            }
+
+            fragment MoreFields on Content {
+                slug
+            }
+
+            {
+                content(id: "1") {
+                    ...Fields
+                    ...MoreFields
+                }
+            }
+            GQL;
+
+        $parsed = $this->parser->parse($query);
+
+        self::assertCount(3, $parsed->fields[0]->selections);
+        self::assertSame('id', $parsed->fields[0]->selections[0]->name);
+        self::assertSame('title', $parsed->fields[0]->selections[1]->name);
+        self::assertSame('slug', $parsed->fields[0]->selections[2]->name);
+    }
+
+    #[Test]
+    public function parseThrowsOnTripleIndirectCircularFragmentSpread(): void
+    {
+        $query = <<<'GQL'
+            fragment A on Content {
+                ...B
+            }
+
+            fragment B on Content {
+                ...C
+            }
+
+            fragment C on Content {
+                ...A
+            }
+
+            {
+                content(id: "1") {
+                    ...A
+                }
+            }
+            GQL;
+
+        $this->expectException(GraphqlException::class);
+        $this->expectExceptionMessage('Circular fragment spread detected');
+        $this->parser->parse($query);
+    }
 }

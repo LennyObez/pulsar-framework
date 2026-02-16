@@ -53,9 +53,13 @@ final class SchemaTest extends TestCase
 
         $intro = $schema->toIntrospection();
 
-        self::assertSame('Query', $intro['__schema']['queryType']['name']);
-        self::assertNull($intro['__schema']['mutationType']);
-        self::assertNull($intro['__schema']['subscriptionType']);
+        /** @var array<string, mixed> $schema */
+        $schema = $intro['__schema'];
+        /** @var array<string, mixed> $queryType */
+        $queryType = $schema['queryType'];
+        self::assertSame('Query', $queryType['name']);
+        self::assertNull($schema['mutationType']);
+        self::assertNull($schema['subscriptionType']);
     }
 
     #[Test]
@@ -64,7 +68,11 @@ final class SchemaTest extends TestCase
         $schema = $this->buildSchema();
 
         $intro = $schema->toIntrospection();
-        $typeNames = array_column($intro['__schema']['types'], 'name');
+        /** @var array<string, mixed> $schemaData */
+        $schemaData = $intro['__schema'];
+        /** @var list<array<string, mixed>> $types */
+        $types = $schemaData['types'];
+        $typeNames = array_column($types, 'name');
 
         self::assertContains('String', $typeNames);
         self::assertContains('Int', $typeNames);
@@ -79,7 +87,11 @@ final class SchemaTest extends TestCase
         $schema = $this->buildSchema();
 
         $intro = $schema->toIntrospection();
-        $typeNames = array_column($intro['__schema']['types'], 'name');
+        /** @var array<string, mixed> $schemaData */
+        $schemaData = $intro['__schema'];
+        /** @var list<array<string, mixed>> $types */
+        $types = $schemaData['types'];
+        $typeNames = array_column($types, 'name');
 
         self::assertContains('Query', $typeNames);
         self::assertContains('Content', $typeNames);
