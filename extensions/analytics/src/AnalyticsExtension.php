@@ -13,6 +13,10 @@ use Pulsar\Extensibility\PostBootExtensionInterface;
 use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
+use Pulsar\Extension\Analytics\Contracts\FunnelServiceInterface;
+use Pulsar\Extension\Analytics\Contracts\GoalServiceInterface;
+use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
+use Pulsar\Extension\Analytics\ImportExport\AnalyticsImportExportProvider;
 use Pulsar\Extension\Analytics\Internal\Middleware\AnalyticsAuthMiddleware;
 use Pulsar\Extension\Analytics\Internal\Middleware\BotFilterMiddleware;
 use Pulsar\Extension\Analytics\Internal\Middleware\CollectionCorsMiddleware;
@@ -20,21 +24,32 @@ use Pulsar\Extension\Analytics\Internal\Middleware\CollectionRateLimitMiddleware
 use Pulsar\Extension\Analytics\Internal\Scheduler\AggregationJob;
 use Pulsar\Extension\Analytics\Internal\Scheduler\PartitionMaintenanceJob;
 use Pulsar\Extension\Analytics\Internal\Scheduler\RetentionCleanupJob;
+use Pulsar\Extension\Analytics\Server\Controller\AttributionController;
 use Pulsar\Extension\Analytics\Server\Controller\BreakdownController;
 use Pulsar\Extension\Analytics\Server\Controller\CollectionController;
+use Pulsar\Extension\Analytics\Server\Controller\ConsentController;
+use Pulsar\Extension\Analytics\Server\Controller\CustomEventController;
 use Pulsar\Extension\Analytics\Server\Controller\DashboardController;
+use Pulsar\Extension\Analytics\Server\Controller\DsarController;
+use Pulsar\Extension\Analytics\Server\Controller\EcommerceController;
 use Pulsar\Extension\Analytics\Server\Controller\ExportController;
+use Pulsar\Extension\Analytics\Server\Controller\FlowController;
+use Pulsar\Extension\Analytics\Server\Controller\FunnelController;
 use Pulsar\Extension\Analytics\Server\Controller\GoalController;
 use Pulsar\Extension\Analytics\Server\Controller\RealtimeController;
+use Pulsar\Extension\Analytics\Server\Controller\SearchAnalyticsController;
+use Pulsar\Extension\Analytics\Server\Controller\SegmentController;
 use Pulsar\Extension\Analytics\Server\Controller\SiteController;
 use Pulsar\Extension\Analytics\Server\Controller\StatsController;
 use Pulsar\Extension\Analytics\Server\Controller\TimeseriesController;
 use Pulsar\Extension\Analytics\Server\Controller\TrackerController;
 use Pulsar\Http\Method;
+use Pulsar\ImportExport\ImportExportRegistry;
 use Pulsar\Routing\Route;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Scheduler\JobRegistryInterface;
 use Pulsar\Scheduler\Schedule;
+use Pulsar\Security\Csrf\CsrfMiddleware;
 
 use function is_array;
 use function is_file;
@@ -45,7 +60,7 @@ use const DIRECTORY_SEPARATOR;
  * Privacy-focused, self-hosted web analytics extension.
  *
  * Provides page view tracking, session management, custom events, goals,
- * and multi-site analytics without cookies — fully GDPR/ePrivacy compliant.
+ * and multi-site analytics without cookies: fully GDPR/ePrivacy compliant.
  */
 #[Api(since: '1.0.0')]
 final readonly class AnalyticsExtension implements
@@ -99,6 +114,8 @@ final readonly class AnalyticsExtension implements
         $this->registerPublicRoutes($router, $container);
         $this->registerApiRoutes($router);
         $this->registerDashboardRoutes($router);
+        $this->registerConsentRoutes($router);
+        $this->registerDsarRoutes($router);
     }
 
     #[Override]
@@ -113,6 +130,8 @@ final readonly class AnalyticsExtension implements
         if ($container->has(JobRegistryInterface::class)) {
             $this->registerSchedulerJobs($container);
         }
+
+        $this->registerImportExportProvider($container);
     }
 
     /**
@@ -152,6 +171,7 @@ final readonly class AnalyticsExtension implements
     {
         $prefix = '/plsr/api/v1';
         $authMiddleware = [AnalyticsAuthMiddleware::class];
+        $mutationMiddleware = [AnalyticsAuthMiddleware::class, CsrfMiddleware::class];
 
         // Stats endpoints
         $router->add(new Route(
@@ -208,7 +228,7 @@ final readonly class AnalyticsExtension implements
             path: "$prefix/goals",
             handler: [GoalController::class, 'create'],
             name: 'analytics.api.goals.create',
-            middleware: $authMiddleware,
+            middleware: $mutationMiddleware,
         ));
 
         $router->add(new Route(
@@ -224,7 +244,7 @@ final readonly class AnalyticsExtension implements
             path: "$prefix/goals/{id}",
             handler: [GoalController::class, 'update'],
             name: 'analytics.api.goals.update',
-            middleware: $authMiddleware,
+            middleware: $mutationMiddleware,
         ));
 
         $router->add(new Route(
@@ -232,6 +252,181 @@ final readonly class AnalyticsExtension implements
             path: "$prefix/goals/{id}",
             handler: [GoalController::class, 'delete'],
             name: 'analytics.api.goals.delete',
+            middleware: $mutationMiddleware,
+        ));
+
+        // Flow / Behavior Flow
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/flow",
+            handler: [FlowController::class, 'flow'],
+            name: 'analytics.api.flow',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/flow/exits",
+            handler: [FlowController::class, 'exits'],
+            name: 'analytics.api.flow.exits',
+            middleware: $authMiddleware,
+        ));
+
+        // Funnels
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/funnels",
+            handler: [FunnelController::class, 'index'],
+            name: 'analytics.api.funnels.index',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::POST],
+            path: "$prefix/funnels",
+            handler: [FunnelController::class, 'create'],
+            name: 'analytics.api.funnels.create',
+            middleware: $mutationMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/funnels/{id}/evaluate",
+            handler: [FunnelController::class, 'evaluate'],
+            name: 'analytics.api.funnels.evaluate',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::DELETE],
+            path: "$prefix/funnels/{id}",
+            handler: [FunnelController::class, 'delete'],
+            name: 'analytics.api.funnels.delete',
+            middleware: $mutationMiddleware,
+        ));
+
+        // E-commerce
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/ecommerce/summary",
+            handler: [EcommerceController::class, 'summary'],
+            name: 'analytics.api.ecommerce.summary',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/ecommerce/products",
+            handler: [EcommerceController::class, 'products'],
+            name: 'analytics.api.ecommerce.products',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/ecommerce/revenue",
+            handler: [EcommerceController::class, 'revenue'],
+            name: 'analytics.api.ecommerce.revenue',
+            middleware: $authMiddleware,
+        ));
+
+        // Custom Events
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/events/names",
+            handler: [CustomEventController::class, 'names'],
+            name: 'analytics.api.events.names',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/events/properties",
+            handler: [CustomEventController::class, 'properties'],
+            name: 'analytics.api.events.properties',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/events/timeseries",
+            handler: [CustomEventController::class, 'timeseries'],
+            name: 'analytics.api.events.timeseries',
+            middleware: $authMiddleware,
+        ));
+
+        // Segments
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/segments",
+            handler: [SegmentController::class, 'index'],
+            name: 'analytics.api.segments.index',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::POST],
+            path: "$prefix/segments",
+            handler: [SegmentController::class, 'create'],
+            name: 'analytics.api.segments.create',
+            middleware: $mutationMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/segments/{id}/count",
+            handler: [SegmentController::class, 'count'],
+            name: 'analytics.api.segments.count',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::DELETE],
+            path: "$prefix/segments/{id}",
+            handler: [SegmentController::class, 'delete'],
+            name: 'analytics.api.segments.delete',
+            middleware: $mutationMiddleware,
+        ));
+
+        // Attribution
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/attribution",
+            handler: [AttributionController::class, 'calculate'],
+            name: 'analytics.api.attribution',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/attribution/compare",
+            handler: [AttributionController::class, 'compare'],
+            name: 'analytics.api.attribution.compare',
+            middleware: $authMiddleware,
+        ));
+
+        // Search Analytics
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/search/overview",
+            handler: [SearchAnalyticsController::class, 'overview'],
+            name: 'analytics.api.search.overview',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/search/queries",
+            handler: [SearchAnalyticsController::class, 'topQueries'],
+            name: 'analytics.api.search.queries',
+            middleware: $authMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::GET, Method::HEAD],
+            path: "$prefix/search/zero-results",
+            handler: [SearchAnalyticsController::class, 'zeroResults'],
+            name: 'analytics.api.search.zero_results',
             middleware: $authMiddleware,
         ));
 
@@ -249,7 +444,7 @@ final readonly class AnalyticsExtension implements
             path: "$prefix/sites",
             handler: [SiteController::class, 'create'],
             name: 'analytics.api.sites.create',
-            middleware: $authMiddleware,
+            middleware: $mutationMiddleware,
         ));
 
         $router->add(new Route(
@@ -265,7 +460,7 @@ final readonly class AnalyticsExtension implements
             path: "$prefix/sites/{id}",
             handler: [SiteController::class, 'update'],
             name: 'analytics.api.sites.update',
-            middleware: $authMiddleware,
+            middleware: $mutationMiddleware,
         ));
 
         $router->add(new Route(
@@ -273,7 +468,7 @@ final readonly class AnalyticsExtension implements
             path: "$prefix/sites/{id}",
             handler: [SiteController::class, 'delete'],
             name: 'analytics.api.sites.delete',
-            middleware: $authMiddleware,
+            middleware: $mutationMiddleware,
         ));
     }
 
@@ -313,12 +508,91 @@ final readonly class AnalyticsExtension implements
             middleware: $authMiddleware,
         ));
 
-        // Static assets do not require auth — served publicly
+        // GA4-level dashboard pages
+        $ga4Pages = ['funnels', 'ecommerce', 'events', 'segments', 'attribution', 'flow', 'search'];
+
+        foreach ($ga4Pages as $page) {
+            $router->add(new Route(
+                methods: [Method::GET, Method::HEAD],
+                path: "/analytics/{$page}",
+                handler: [DashboardController::class, 'index'],
+                name: "analytics.dashboard.{$page}",
+                middleware: $authMiddleware,
+            ));
+        }
+
+        // Static assets do not require auth; served publicly
         $router->add(new Route(
             methods: [Method::GET, Method::HEAD],
             path: '/analytics/assets/{path}',
             handler: [DashboardController::class, 'asset'],
             name: 'analytics.assets',
+        ));
+    }
+
+    private function registerConsentRoutes(RouterInterface $router): void
+    {
+        $consentMiddleware = [CsrfMiddleware::class];
+
+        $router->add(new Route(
+            methods: [Method::POST],
+            path: '/plsr/consent/grant',
+            handler: [ConsentController::class, 'grant'],
+            name: 'analytics.consent.grant',
+            middleware: $consentMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::POST],
+            path: '/plsr/consent/revoke',
+            handler: [ConsentController::class, 'revoke'],
+            name: 'analytics.consent.revoke',
+            middleware: $consentMiddleware,
+        ));
+    }
+
+    private function registerDsarRoutes(RouterInterface $router): void
+    {
+        $dsarMiddleware = [AnalyticsAuthMiddleware::class, CsrfMiddleware::class];
+
+        $router->add(new Route(
+            methods: [Method::POST],
+            path: '/plsr/dsar/request',
+            handler: [DsarController::class, 'request'],
+            name: 'analytics.dsar.request',
+            middleware: $dsarMiddleware,
+        ));
+
+        $router->add(new Route(
+            methods: [Method::POST],
+            path: '/plsr/dsar/erase',
+            handler: [DsarController::class, 'erase'],
+            name: 'analytics.dsar.erase',
+            middleware: $dsarMiddleware,
+        ));
+    }
+
+    private function registerImportExportProvider(ContainerInterface $container): void
+    {
+        if (!$container->has(ImportExportRegistry::class)) {
+            return;
+        }
+
+        if (
+            !$container->has(SiteRepositoryInterface::class)
+            || !$container->has(GoalServiceInterface::class)
+            || !$container->has(FunnelServiceInterface::class)
+        ) {
+            return;
+        }
+
+        /** @var ImportExportRegistry $registry */
+        $registry = $container->get(ImportExportRegistry::class);
+
+        $registry->register(new AnalyticsImportExportProvider(
+            $container->get(SiteRepositoryInterface::class),
+            $container->get(GoalServiceInterface::class),
+            $container->get(FunnelServiceInterface::class),
         ));
     }
 

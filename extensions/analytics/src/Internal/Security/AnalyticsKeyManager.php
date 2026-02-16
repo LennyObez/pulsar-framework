@@ -7,7 +7,7 @@ namespace Pulsar\Extension\Analytics\Internal\Security;
 use DateTimeImmutable;
 use DateTimeZone;
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 
 /**
  * Analytics-specific key derivation manager.
@@ -18,14 +18,14 @@ use Pulsar\Security\Crypto\MasterKey;
  *
  * SubkeyID: 20, Context: 'anal_vis' (8 bytes per libsodium KDF requirement).
  */
-#[Internal(reason: 'Analytics security internals — use via service binding')]
+#[Internal(reason: 'Analytics security internals; use via service binding')]
 final readonly class AnalyticsKeyManager
 {
     private const int SUBKEY_ID = 20;
     private const string CONTEXT = 'anal_vis';
 
     public function __construct(
-        private MasterKey $masterKey,
+        private KeyProviderInterface $masterKey,
     ) {}
 
     /**

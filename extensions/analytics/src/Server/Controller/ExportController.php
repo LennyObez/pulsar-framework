@@ -10,6 +10,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
 use Pulsar\Http\Message\Response;
 
+use function is_string;
 use function sprintf;
 use function str_contains;
 use function str_replace;
@@ -27,14 +28,17 @@ final readonly class ExportController
     public function export(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
-        $siteId = (string) ($params['site_id'] ?? '');
+        $rawSiteId = $params['site_id'] ?? null;
+        $siteId = is_string($rawSiteId) ? $rawSiteId : '';
 
         if ($siteId === '') {
             return Response::json(['error' => 'site_id is required'], 400);
         }
 
-        $from = new DateTimeImmutable((string) ($params['from'] ?? '-30 days'));
-        $to = new DateTimeImmutable((string) ($params['to'] ?? 'now'));
+        $rawFrom = $params['from'] ?? null;
+        $rawTo = $params['to'] ?? null;
+        $from = new DateTimeImmutable(is_string($rawFrom) ? $rawFrom : '-30 days');
+        $to = new DateTimeImmutable(is_string($rawTo) ? $rawTo : 'now');
 
         $pageViews = $this->pageViewRepository->findBySite($siteId, $from, $to, 10000);
 
@@ -78,7 +82,7 @@ final readonly class ExportController
      */
     private function escapeCsv(string $value): string
     {
-        // Prevent CSV formula injection — prefix dangerous start characters
+        // Prevent CSV formula injection: prefix dangerous start characters
         if ($value !== '' && str_contains("=+-@\t\r", $value[0])) {
             $value = "\t" . $value;
         }

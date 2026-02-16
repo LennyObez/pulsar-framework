@@ -30,9 +30,11 @@ final readonly class TrackingConfig
      */
     public static function fromArray(array $data): self
     {
+        $tracker = $data['tracker_endpoint'] ?? null;
+        $script = $data['script_endpoint'] ?? null;
         return new self(
-            trackerEndpoint: (string) ($data['tracker_endpoint'] ?? '/plsr/api/event'),
-            scriptEndpoint: (string) ($data['script_endpoint'] ?? '/plsr/js/tracker.js'),
+            trackerEndpoint: $tracker !== null ? (is_string($tracker) ? $tracker : '') : '/plsr/api/event',
+            scriptEndpoint: $script !== null ? (is_string($script) ? $script : '') : '/plsr/js/tracker.js',
             extensions: array_values(array_filter(
                 (array) ($data['extensions'] ?? []),
                 static fn(mixed $v): bool => is_string($v) && $v !== '',

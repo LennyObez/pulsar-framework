@@ -10,7 +10,7 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Analytics\Domain\GoalConversion;
 
-#[Internal(reason: 'Concrete repository — used internally by GoalService')]
+#[Internal(reason: 'Concrete repository; used internally by GoalService')]
 final readonly class DbGoalConversionRepository
 {
     private const string SQL_INSERT = <<<'SQL'
@@ -117,7 +117,7 @@ final readonly class DbGoalConversionRepository
     private static function hydrate(Row $row): GoalConversion
     {
         $revenueRaw = $row->get('revenue_value');
-        $revenue = $revenueRaw !== null ? (float) $revenueRaw : null;
+        $revenue = is_numeric($revenueRaw) ? (float) $revenueRaw : null;
 
         return new GoalConversion(
             id: $row->getString('id'),

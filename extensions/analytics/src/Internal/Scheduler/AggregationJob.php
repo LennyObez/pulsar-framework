@@ -6,36 +6,54 @@ namespace Pulsar\Extension\Analytics\Internal\Scheduler;
 
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Analytics\Contracts\AggregationServiceInterface;
+use Pulsar\Extension\Analytics\Contracts\DailyStatsRepositoryInterface;
 use Pulsar\Extension\Analytics\Contracts\SiteRepositoryInterface;
-use Pulsar\Extension\Analytics\Internal\Service\AggregationService;
 
 /**
  * Hourly job: aggregates raw page views into stats tables.
  *
- * At hour 0-1, also runs daily aggregation for the previous day.
+ * Runs hourly aggregation for the previous hour, and checks whether
+ * the previous day's daily aggregation is missing or stale, running
+ * it if needed regardless of the current hour.
  */
 #[Internal(reason: 'Scheduled aggregation job')]
 final readonly class AggregationJob
 {
     public function __construct(
-        private AggregationService $aggregationService,
+        private AggregationServiceInterface $aggregationService,
         private SiteRepositoryInterface $siteRepository,
+        private DailyStatsRepositoryInterface $dailyStatsRepository,
     ) {}
 
     public function __invoke(): void
     {
         $now = new DateTimeImmutable();
         $previousHour = $now->modify('-1 hour');
+        $yesterday = $now->modify('-1 day');
         $sites = $this->siteRepository->findAll();
 
         foreach ($sites as $site) {
             $this->aggregationService->aggregateHourly($previousHour, $site->id);
 
-            // At the first hour of the day, also aggregate the previous day
-            if ((int) $now->format('G') <= 1) {
-                $yesterday = $now->modify('-1 day');
+            // Always check if yesterday's daily stats exist, run if missing
+            if ($this->isDailyAggregationMissing($site->id, $yesterday)) {
                 $this->aggregationService->aggregateDaily($yesterday, $site->id);
             }
         }
+    }
+
+    /**
+     * Check if the daily aggregation for the given date is missing.
+     */
+    private function isDailyAggregationMissing(string $siteId, DateTimeImmutable $date): bool
+    {
+        $stats = $this->dailyStatsRepository->findByDateRange(
+            $siteId,
+            $date,
+            $date,
+        );
+
+        return $stats === [];
     }
 }

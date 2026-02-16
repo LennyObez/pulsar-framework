@@ -11,7 +11,7 @@ use Pulsar\Database\Driver;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Analytics\Domain\HourlyStats;
 
-#[Internal(reason: 'Concrete repository — used internally by AggregationService and StatsService')]
+#[Internal(reason: 'Concrete repository; used internally by AggregationService and StatsService')]
 final readonly class DbHourlyStatsRepository
 {
     private const string SQL_UPSERT_PGSQL = <<<'SQL'

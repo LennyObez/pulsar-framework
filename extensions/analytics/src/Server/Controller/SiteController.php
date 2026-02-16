@@ -10,6 +10,9 @@ use Pulsar\Extension\Analytics\Contracts\SiteServiceInterface;
 use Pulsar\Extension\Analytics\Exception\AnalyticsException;
 use Pulsar\Http\Message\Response;
 
+use function is_array;
+use function is_string;
+
 /**
  * Site CRUD API controller.
  */
@@ -41,11 +44,11 @@ final readonly class SiteController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $domain = (string) ($body['domain'] ?? '');
-        $name = (string) ($body['name'] ?? '');
-        $timezone = (string) ($body['timezone'] ?? 'UTC');
+        $domain = is_string($body['domain'] ?? null) ? $body['domain'] : '';
+        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
+        $timezone = is_string($body['timezone'] ?? null) ? $body['timezone'] : 'UTC';
         /** @var array<string, mixed> $settings */
-        $settings = (array) ($body['settings'] ?? []);
+        $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
 
         if ($domain === '' || $name === '') {
             return Response::json(['error' => 'domain and name are required'], 400);
@@ -88,11 +91,11 @@ final readonly class SiteController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $domain = (string) ($body['domain'] ?? '');
-        $name = (string) ($body['name'] ?? '');
-        $timezone = (string) ($body['timezone'] ?? 'UTC');
+        $domain = is_string($body['domain'] ?? null) ? $body['domain'] : '';
+        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
+        $timezone = is_string($body['timezone'] ?? null) ? $body['timezone'] : 'UTC';
         /** @var array<string, mixed> $settings */
-        $settings = (array) ($body['settings'] ?? []);
+        $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
 
         if ($domain === '' || $name === '') {
             return Response::json(['error' => 'domain and name are required'], 400);

@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Analytics\Internal\Service;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Domain\ReferrerSource;
 
+use function is_string;
 use function parse_str;
 use function parse_url;
 use function preg_replace;
@@ -19,7 +20,7 @@ use function trim;
  * Classifies referrers as direct, organic search, social media, UTM-tagged,
  * or generic referral based on domain and query parameter analysis.
  */
-#[Internal(reason: 'Referrer parsing internals — use via service binding')]
+#[Internal(reason: 'Referrer parsing internals; use via service binding')]
 final readonly class ReferrerParser
 {
     /**
@@ -96,10 +97,14 @@ final readonly class ReferrerParser
         if ($queryString !== '') {
             parse_str($queryString, $queryParams);
             if (isset($queryParams['utm_source']) && $queryParams['utm_source'] !== '') {
+                $utmSource = $queryParams['utm_source'];
+                $utmMedium = $queryParams['utm_medium'] ?? '';
+                $utmCampaign = $queryParams['utm_campaign'] ?? '';
+
                 return ReferrerSource::fromUtm(
-                    source: (string) $queryParams['utm_source'],
-                    medium: (string) ($queryParams['utm_medium'] ?? ''),
-                    campaign: (string) ($queryParams['utm_campaign'] ?? ''),
+                    source: is_string($utmSource) ? $utmSource : '',
+                    medium: is_string($utmMedium) ? $utmMedium : '',
+                    campaign: is_string($utmCampaign) ? $utmCampaign : '',
                     rawUrl: $referrerUrl,
                 );
             }
@@ -112,7 +117,7 @@ final readonly class ReferrerParser
             }
         }
 
-        // Check social networks — exact domain matches first (short domains like t.co)
+        // Check social networks: exact domain matches first (short domains like t.co)
         if (isset(self::SOCIAL_EXACT_DOMAINS[$normalizedHost])) {
             return ReferrerSource::fromSocial(self::SOCIAL_EXACT_DOMAINS[$normalizedHost], $referrerUrl);
         }

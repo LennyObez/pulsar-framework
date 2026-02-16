@@ -17,7 +17,7 @@ use function count;
  *
  * Shows summary analytics: visitors today, top page, active sites count.
  */
-#[Internal(reason: 'Admin widget — optional integration')]
+#[Internal(reason: 'Admin widget; optional integration')]
 final readonly class AnalyticsAdminWidget
 {
     public function __construct(

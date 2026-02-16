@@ -22,7 +22,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  * is delegated to the framework's GateInterface (RBAC+ABAC) rather than
  * relying on duck typing.
  */
-#[Internal(reason: 'Analytics auth middleware — route-level guard')]
+#[Internal(reason: 'Analytics auth middleware; route-level guard')]
 final readonly class AnalyticsAuthMiddleware implements MiddlewareInterface
 {
     private const string DEFAULT_PERMISSION = 'analytics.view';
@@ -36,7 +36,7 @@ final readonly class AnalyticsAuthMiddleware implements MiddlewareInterface
     {
         $identity = $request->getAttribute('identity');
 
-        // No identity attached or anonymous — require authentication
+        // No identity attached or anonymous: require authentication
         if (!$identity instanceof IdentityInterface || $identity instanceof AnonymousIdentity) {
             return Response::json(['error' => 'Authentication required'], 401);
         }
