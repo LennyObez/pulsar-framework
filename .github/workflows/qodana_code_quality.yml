@@ -22,9 +22,17 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
-      - name: 'Qodana Scan'
-        uses: JetBrains/qodana-action@v2025.3
+
+      - uses: shivammathur/setup-php@v2
         with:
+          php-version: '8.4'
+          extensions: pdo_sqlite
+          coverage: none
+
+      - name: 'Qodana Scan'
+        uses: JetBrains/qodana-action@v2025.3.1
+        with:
+          args: --linter,qodana-php:2025.3
           pr-mode: false
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN_390358227 }}
