@@ -1,4 +1,17 @@
 <?php
+/**
+ * Form submission notification email template.
+ *
+ * @var string $submitted_at
+ * @var array<string, mixed> $fields
+ * @var string $submission_id
+ */
+
+use function htmlspecialchars;
+use function is_string;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -35,7 +48,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
         <h1>New Form Submission</h1>
     </div>
     <div class="content">
-        <p>A new form submission was received on <?php echo $this->escape($submitted_at ?? ''); ?>.</p>
+        <p>A new form submission was received on <?php echo htmlspecialchars($submitted_at ?? '', ENT_QUOTES, 'UTF-8'); ?>.</p>
 
         <table class="field-table">
             <thead>
@@ -46,16 +59,17 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
             </thead>
             <tbody>
                 <?php foreach (($fields ?? []) as $fieldName => $fieldValue): ?>
+                    <?php /** @var string $fieldName */ /** @var mixed $fieldValue */ ?>
                     <tr>
-                        <td><?php echo $this->escape((string) $fieldName); ?></td>
-                        <td><?php echo $this->escape(is_string($fieldValue) ? $fieldValue : (string) $fieldValue); ?></td>
+                        <td><?php echo htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8'); ?></td>
+                        <td><?php echo htmlspecialchars(is_string($fieldValue) ? $fieldValue : (is_scalar($fieldValue) ? (string) $fieldValue : ''), ENT_QUOTES, 'UTF-8'); ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
     </div>
     <div class="footer">
-        <p>Submission ID: <?php echo $this->escape($submission_id ?? ''); ?></p>
+        <p>Submission ID: <?php echo htmlspecialchars($submission_id ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
     </div>
 </div>
 </body>

@@ -30,10 +30,8 @@
 
 /* Search */
 .bi-search {
-  width: 100%;
   box-sizing: border-box;
   padding: 0.5rem 0.75rem;
-  margin-bottom: 0.5rem;
   border: 1px solid var(--cms-border, #e2e8f0);
   border-radius: 6px;
   font-size: 0.875rem;
@@ -111,4 +109,47 @@
   line-height: 1.3;
   text-align: center;
   word-break: break-word;
+}
+
+/* Focus */
+.bi-block-btn:focus-visible {
+  outline: 2px solid var(--cms-primary, #3b82f6);
+  outline-offset: -1px;
+}
+
+.bi-search:focus-visible {
+  outline: 2px solid var(--cms-primary, #3b82f6);
+  outline-offset: -1px;
+}
+
+/* Dark Mode */
+[data-theme='dark'] .bi-panel {
+  background: var(--cms-card-bg, #1e293b);
+  border-color: var(--cms-border-color, #334155);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .bi-search {
+  background: var(--cms-bg, #0f172a);
+  border-color: var(--cms-border-color, #334155);
+  color: var(--cms-text, #e2e8f0);
+}
+
+[data-theme='dark'] .bi-section__heading {
+  color: var(--cms-text-muted, #94a3b8);
+}
+
+[data-theme='dark'] .bi-block-btn {
+  color: var(--cms-text, #e2e8f0);
+}
+
+[data-theme='dark'] .bi-block-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--cms-border-color, #334155);
+}
+
+[data-theme='dark'] .bi-block-btn__icon {
+  color: var(--cms-accent, #3b82f6);
 }

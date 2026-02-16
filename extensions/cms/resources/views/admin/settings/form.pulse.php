@@ -43,6 +43,7 @@
         @endif
 
         @foreach ($settings ?? [] as $key => $value)
+            <?php /** @var string $key */ /** @var mixed $value */ ?>
             <div class="cms-form-group">
                 <label for="setting-{{ $key }}" class="cms-form-group__label">
                     {{ ucfirst(str_replace(['_', '.'], ' ', $key)) }}
@@ -72,7 +73,7 @@
                               rows="4">{{ json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</textarea>
                     <span class="cms-form-group__hint">JSON format</span>
                 @else
-                    <?php $__strVal = (string) $value; ?>
+                    <?php $__strVal = is_scalar($value) ? (string) $value : ''; ?>
                     @if (strlen($__strVal) > 200)
                         <textarea id="setting-{{ $key }}"
                                   name="settings[{{ $key }}]"

@@ -70,12 +70,16 @@
                 </div>
             @endif
 
-            {{-- Body preview --}}
+            {{-- Body preview (sandboxed to prevent stored XSS from rendering in admin context) --}}
             <div class="cms-content-show__preview">
                 <h2 class="cms-content-show__section-title">Content Preview</h2>
-                <div class="cms-content-show__rendered">
-                    {!! $translation['body'] ?? '' !!}
-                </div>
+                <iframe
+                    class="cms-content-show__rendered"
+                    sandbox=""
+                    srcdoc="{{ htmlspecialchars($translation['body'] ?? '', ENT_QUOTES, 'UTF-8') }}"
+                    title="Content preview"
+                    style="width:100%;min-height:300px;border:1px solid var(--cms-border, #e5e7eb);border-radius:4px;"
+                ></iframe>
             </div>
 
             {{-- Content Blocks --}}
@@ -127,7 +131,7 @@
                             @foreach ($translations as $trans)
                                 <li class="cms-translation-list__item">
                                     <a href="/admin/cms/content/{{ $content['id'] }}?locale={{ $trans['locale'] }}">
-                                        <strong>{{ strtoupper($trans['locale']) }}</strong> — {{ $trans['title'] ?? '(Untitled)' }}
+                                        <strong>{{ strtoupper($trans['locale']) }}</strong>: {{ $trans['title'] ?? '(Untitled)' }}
                                     </a>
                                 </li>
                             @endforeach

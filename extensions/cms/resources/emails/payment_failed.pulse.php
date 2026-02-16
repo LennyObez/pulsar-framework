@@ -1,4 +1,16 @@
 <?php
+/**
+ * Payment failed email template.
+ *
+ * @var string $order_number
+ * @var string $reason
+ * @var string $retry_url
+ */
+
+use function htmlspecialchars;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -38,16 +50,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
         <p>Dear Customer,</p>
 
         <div class="alert-box">
-            <p>We were unable to process the payment for your order <strong>#<?php echo $this->escape($order_number); ?></strong>.</p>
+            <p>We were unable to process the payment for your order <strong>#<?php echo htmlspecialchars($order_number, ENT_QUOTES, 'UTF-8'); ?></strong>.</p>
             <?php if (isset($reason) && $reason !== ''): ?>
-            <p>Reason: <?php echo $this->escape($reason); ?></p>
+            <p>Reason: <?php echo htmlspecialchars($reason, ENT_QUOTES, 'UTF-8'); ?></p>
             <?php endif; ?>
         </div>
 
         <p>Please update your payment details and try again.</p>
 
         <?php if (isset($retry_url)): ?>
-        <a href="<?php echo $this->escape($retry_url); ?>" class="btn">Retry Payment</a>
+        <a href="<?php echo htmlspecialchars($retry_url, ENT_QUOTES, 'UTF-8'); ?>" class="btn">Retry Payment</a>
         <?php endif; ?>
     </div>
     <div class="footer">

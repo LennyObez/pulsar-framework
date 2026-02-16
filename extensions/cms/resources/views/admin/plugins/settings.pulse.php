@@ -18,6 +18,7 @@
         @endif
 
         @foreach ($schema ?? [] as $key => $field)
+            <?php /** @var string $key */ /** @var array{type: string, default: mixed, label?: string, hint?: string, options?: array<string, string>} $field */ /** @var array<string, mixed> $values */ ?>
             <div class="cms-form-group">
                 <label for="plugin-setting-{{ $key }}" class="cms-form-group__label">
                     {{ $field['label'] ?? ucfirst(str_replace(['_', '.'], ' ', $key)) }}

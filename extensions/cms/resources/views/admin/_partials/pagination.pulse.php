@@ -1,5 +1,9 @@
 {{-- Pagination component. Expects: $page (int), $perPage (int), $total (int), $baseUrl (string) --}}
 <?php
+/** @var int $page */
+/** @var int $perPage */
+/** @var int $total */
+/** @var string $baseUrl */
 $__totalPages = $total > 0 ? (int) ceil($total / $perPage) : 1;
 $__prevPage = max(1, $page - 1);
 $__nextPage = min($__totalPages, $page + 1);

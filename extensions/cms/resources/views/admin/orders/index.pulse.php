@@ -86,7 +86,7 @@
             @endif
 
             @foreach ($orders as $order)
-                <?php
+                <?php /** @var array{id: string, order_number: string, currency: string, customer_email: string, created_at: string, created_at_human?: string, subtotal: int, tax_amount: int, discount_amount: int, total: int, status: string} $order */
                 $__currency = strtoupper($order['currency'] ?? 'USD');
                 ?>
                 <tr class="cms-table__row">
@@ -100,6 +100,7 @@
                     </td>
                     <td class="cms-table__td" title="{{ $order['customer_email'] ?? '' }}">
                         <?php
+                        /** @var string $__email */
                         $__email = $order['customer_email'] ?? '';
                 echo htmlspecialchars(strlen($__email) > 25 ? substr($__email, 0, 22) . '...' : $__email, ENT_QUOTES, 'UTF-8');
                 ?>

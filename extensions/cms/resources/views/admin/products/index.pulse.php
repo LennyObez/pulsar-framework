@@ -58,6 +58,7 @@
             @endif
 
             @foreach ($products as $product)
+                <?php /** @var array{id: string, name: string, sku: string, price_amount: int, price_currency: string, digital: bool, status: string, stock?: int} $product */ ?>
                 <tr class="cms-table__row">
                     <td class="cms-table__td cms-table__td--title">
                         <a href="/admin/cms/products/{{ $product['id'] }}/edit" class="cms-content-list__link">
@@ -70,8 +71,8 @@
                     <td class="cms-table__td">
                         <?php
                         $__amount = ($product['price_amount'] ?? 0) / 100;
-                        $__currency = strtoupper($product['price_currency'] ?? 'USD');
-                        ?>
+                $__currency = strtoupper($product['price_currency'] ?? 'USD');
+                ?>
                         {{ number_format($__amount, 2) }} {{ $__currency }}
                     </td>
                     <td class="cms-table__td">

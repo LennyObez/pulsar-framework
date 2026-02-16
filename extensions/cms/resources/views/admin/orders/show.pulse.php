@@ -4,6 +4,7 @@
 
 @section('cms-content')
 <?php
+/** @var array{order_number: string, currency: string, status: string, customer_email: string, billing_address: array<string, string>, shipping_address: array<string, string>, created_at: string} $order */
 $__currency = strtoupper($order['currency'] ?? 'USD');
 $__statuses = ['cart', 'pending_payment', 'confirmed', 'fulfilled'];
 $__orderStatus = $order['status'] ?? 'cart';

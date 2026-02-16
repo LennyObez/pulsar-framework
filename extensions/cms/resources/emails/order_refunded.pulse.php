@@ -1,4 +1,17 @@
 <?php
+/**
+ * Order refunded email template.
+ *
+ * @var string $order_number
+ * @var string $refund_amount
+ * @var string $currency
+ * @var string $reason
+ */
+
+use function htmlspecialchars;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -40,14 +53,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
     </div>
     <div class="content">
         <p>Dear Customer,</p>
-        <p>A refund has been processed for your order <strong>#<?php echo $this->escape($order_number); ?></strong>.</p>
+        <p>A refund has been processed for your order <strong>#<?php echo htmlspecialchars($order_number, ENT_QUOTES, 'UTF-8'); ?></strong>.</p>
 
         <dl class="refund-box">
             <dt>Refund Amount</dt>
-            <dd><strong><?php echo $this->escape($refund_amount); ?> <?php echo $this->escape($currency); ?></strong></dd>
+            <dd><strong><?php echo htmlspecialchars($refund_amount, ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?></strong></dd>
             <?php if (isset($reason) && $reason !== ''): ?>
             <dt>Reason</dt>
-            <dd><?php echo $this->escape($reason); ?></dd>
+            <dd><?php echo htmlspecialchars($reason, ENT_QUOTES, 'UTF-8'); ?></dd>
             <?php endif; ?>
         </dl>
 

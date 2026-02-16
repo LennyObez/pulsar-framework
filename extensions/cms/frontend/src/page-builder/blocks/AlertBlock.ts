@@ -6,6 +6,7 @@
  */
 
 import { InlineEditor } from '../InlineEditor.js';
+import { sanitizeHtml } from '../../utils/sanitizeHtml.js';
 
 const ALERT_TYPES = ['info', 'success', 'warning', 'error'] as const;
 
@@ -88,7 +89,8 @@ export class CmsPbAlert extends HTMLElement {
     // Editable message
     const msgEl = document.createElement('div');
     msgEl.className = 'pb-block-alert__message';
-    msgEl.innerHTML = typeof message === 'string' ? message : 'Alert message...';
+    // Sanitized to prevent XSS from stored data
+    msgEl.innerHTML = typeof message === 'string' ? sanitizeHtml(message) : 'Alert message...';
     this.messageEl = msgEl;
     wrapper.appendChild(msgEl);
 

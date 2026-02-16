@@ -1,4 +1,21 @@
 <?php
+/**
+ * Order confirmation email template.
+ *
+ * @var string $order_number
+ * @var list<array{name: string, quantity: int, total: string}> $items
+ * @var string $subtotal
+ * @var string $tax_amount
+ * @var string $discount_amount
+ * @var string $total
+ * @var string $currency
+ * @var string $invoice_url
+ */
+
+use function htmlspecialchars;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -49,7 +66,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
     </div>
     <div class="content">
         <p>Dear Customer,</p>
-        <p>Thank you for your order! Your order <strong>#<?php echo $this->escape($order_number); ?></strong> has been confirmed and is being processed.</p>
+        <p>Thank you for your order! Your order <strong>#<?php echo htmlspecialchars($order_number, ENT_QUOTES, 'UTF-8'); ?></strong> has been confirmed and is being processed.</p>
 
         <h2>Order Summary</h2>
         <table class="items-table">
@@ -63,25 +80,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
             <tbody>
                 <?php foreach ($items as $item): ?>
                 <tr>
-                    <td><?php echo $this->escape($item['name']); ?></td>
-                    <td><?php echo $this->escape((string) $item['quantity']); ?></td>
-                    <td><?php echo $this->escape($item['total']); ?></td>
+                    <td><?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars((string) $item['quantity'], ENT_QUOTES, 'UTF-8'); ?></td>
+                    <td><?php echo htmlspecialchars($item['total'], ENT_QUOTES, 'UTF-8'); ?></td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
 
         <dl class="totals">
-            <dt>Subtotal:</dt><dd><?php echo $this->escape($subtotal); ?></dd>
-            <dt>Tax:</dt><dd><?php echo $this->escape($tax_amount); ?></dd>
+            <dt>Subtotal:</dt><dd><?php echo htmlspecialchars($subtotal, ENT_QUOTES, 'UTF-8'); ?></dd>
+            <dt>Tax:</dt><dd><?php echo htmlspecialchars($tax_amount, ENT_QUOTES, 'UTF-8'); ?></dd>
             <?php if (($discount_amount ?? '') !== ''): ?>
-            <dt>Discount:</dt><dd>-<?php echo $this->escape($discount_amount); ?></dd>
+            <dt>Discount:</dt><dd>-<?php echo htmlspecialchars($discount_amount, ENT_QUOTES, 'UTF-8'); ?></dd>
             <?php endif; ?>
-            <dt>Total:</dt><dd><strong><?php echo $this->escape($total); ?> <?php echo $this->escape($currency); ?></strong></dd>
+            <dt>Total:</dt><dd><strong><?php echo htmlspecialchars($total, ENT_QUOTES, 'UTF-8'); ?> <?php echo htmlspecialchars($currency, ENT_QUOTES, 'UTF-8'); ?></strong></dd>
         </dl>
 
         <?php if (isset($invoice_url)): ?>
-        <a href="<?php echo $this->escape($invoice_url); ?>" class="btn">View Invoice</a>
+        <a href="<?php echo htmlspecialchars($invoice_url, ENT_QUOTES, 'UTF-8'); ?>" class="btn">View Invoice</a>
         <?php endif; ?>
     </div>
     <div class="footer">

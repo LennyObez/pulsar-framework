@@ -3,6 +3,7 @@
 @section('title', 'Comment Detail')
 
 @section('content')
+<?php /** @var array<string, mixed> $comment */ /** @var array{total_comments: int, spam_count: int}|null $authorStats */ ?>
 <div class="cms-comment-detail">
     <header class="cms-comment-detail__header">
         <div class="cms-comment-detail__meta">
@@ -15,7 +16,7 @@
                 'spam' => 'cms-badge cms-badge--spam',
                 default => 'cms-badge',
             };
-            ?>
+?>
             <span class="{{ $__commentStatusClass }}" role="status">{{ ucfirst($comment['status'] ?? '') }}</span>
         </div>
         <div class="cms-comment-detail__actions">
@@ -148,10 +149,10 @@
                             <dt class="cms-detail-list__term">Spam Rate</dt>
                             <dd class="cms-detail-list__value">
                                 <?php
-                                $__spamRate = ($authorStats['total_comments'] ?? 0) > 0
-                                    ? round(($authorStats['spam_count'] ?? 0) / $authorStats['total_comments'] * 100, 1)
-                                    : 0;
-            ?>
+                    $__spamRate = ($authorStats['total_comments'] ?? 0) > 0
+                        ? round(($authorStats['spam_count'] ?? 0) / $authorStats['total_comments'] * 100, 1)
+                        : 0;
+?>
                                 <span class="@if ($__spamRate > 50) cms-text--danger @elseif ($__spamRate > 20) cms-text--warning @endif">
                                     {{ $__spamRate }}%
                                 </span>

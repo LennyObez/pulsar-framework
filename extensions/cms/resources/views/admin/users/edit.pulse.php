@@ -1,6 +1,6 @@
 @extends('admin.layout')
 
-@section('title', 'Edit User — ' . ($user['name'] ?? ''))
+@section('title', 'Edit User: ' . ($user['name'] ?? ''))
 
 @section('content')
 <div class="cms-user-edit">
@@ -80,6 +80,36 @@
             @endcan
         @endif
     </section>
+
+    {{-- Extension-contributed sections (orders, forum activity, badges, etc.) --}}
+    @if (!empty($sections))
+        <section class="cms-user-edit__extensions" aria-labelledby="extensions-heading">
+            <h2 class="cms-user-edit__section-title" id="extensions-heading">@t('admin.users.activity')</h2>
+
+            <div class="cms-tabs" role="tablist">
+                <a href="/admin/cms/users/{{ $user['id'] }}?section=details"
+                   class="cms-tabs__tab @if (($active_section ?? 'details') === 'details') cms-tabs__tab--active @endif"
+                   role="tab">@t('admin.users.details')</a>
+
+                @foreach ($sections as $section)
+                    <a href="/admin/cms/users/{{ $user['id'] }}?section={{ $section->id }}"
+                       class="cms-tabs__tab @if (($active_section ?? '') === $section->id) cms-tabs__tab--active @endif"
+                       role="tab">
+                        {{ $section->label }}
+                        @if ($section->badgeCount !== null)
+                            <span class="cms-badge cms-badge--sm">{{ $section->badgeCount }}</span>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+
+            @if (($active_section ?? 'details') !== 'details' && !empty($section_html))
+                <div class="cms-tabs__panel" role="tabpanel">
+                    {!! $section_html !!}
+                </div>
+            @endif
+        </section>
+    @endif
 </div>
 
 @include('cms::admin._partials.confirm-modal')

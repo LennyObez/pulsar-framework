@@ -35,7 +35,7 @@
             @endif
 
             @foreach ($campaigns as $campaign)
-                <?php
+                <?php /** @var array{id: string, subject: string, status: string, recipient_count: int, opened_count: int, clicked_count: int, sent_at?: string, created_at: string} $campaign */
                 $__recipientCount = max(1, $campaign['recipient_count'] ?? 1);
                 $__openRate = ($campaign['recipient_count'] ?? 0) > 0
                     ? round(($campaign['opened_count'] ?? 0) / $__recipientCount * 100, 1)

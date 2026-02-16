@@ -3,6 +3,7 @@
 @section('title', 'Campaign Analytics')
 
 @section('content')
+<?php /** @var array{subject: string, status: string, sent_at?: string, recipient_count: int, sent_count: int, delivered_count: int, opened_count: int, clicked_count: int, bounced_count: int, failed_count: int} $campaign */ ?>
 <div class="cms-newsletter-analytics">
     <header class="cms-newsletter-analytics__header">
         <h1 class="cms-newsletter-analytics__title">Campaign Analytics</h1>
@@ -19,7 +20,7 @@
                 'sending' => 'cms-badge cms-badge--in-review',
                 default => 'cms-badge',
             };
-            ?>
+?>
             <span class="{{ $__analyticsBadgeClass }}" role="status">{{ ucfirst($campaign['status'] ?? '') }}</span>
             @if (isset($campaign['sent_at']))
                 <span class="cms-newsletter-analytics__sent-at">
@@ -78,16 +79,17 @@
             </thead>
             <tbody class="cms-table__body">
                 <?php
-                $__totalRecipients = max(1, $analytics['recipient_count'] ?? 1);
-            $__breakdownRows = [
-                ['Sent', $analytics['sent_count'] ?? 0, 'cms-badge--in-review'],
-                ['Delivered', $analytics['delivered_count'] ?? 0, 'cms-badge--approved'],
-                ['Opened', $analytics['opened_count'] ?? 0, 'cms-badge--approved'],
-                ['Clicked', $analytics['clicked_count'] ?? 0, 'cms-badge--approved'],
-                ['Bounced', $analytics['bounced_count'] ?? 0, 'cms-badge--spam'],
-                ['Failed', $analytics['failed_count'] ?? 0, 'cms-badge--archived'],
-            ];
-            ?>
+    /** @var array{recipient_count: int, sent_count: int, delivered_count: int, opened_count: int, clicked_count: int, bounced_count: int, failed_count: int} $analytics */
+    $__totalRecipients = max(1, $analytics['recipient_count'] ?? 1);
+$__breakdownRows = [
+    ['Sent', $analytics['sent_count'] ?? 0, 'cms-badge--in-review'],
+    ['Delivered', $analytics['delivered_count'] ?? 0, 'cms-badge--approved'],
+    ['Opened', $analytics['opened_count'] ?? 0, 'cms-badge--approved'],
+    ['Clicked', $analytics['clicked_count'] ?? 0, 'cms-badge--approved'],
+    ['Bounced', $analytics['bounced_count'] ?? 0, 'cms-badge--spam'],
+    ['Failed', $analytics['failed_count'] ?? 0, 'cms-badge--archived'],
+];
+?>
                 @foreach ($__breakdownRows as $__row)
                     <tr class="cms-table__row">
                         <td class="cms-table__td">
@@ -122,18 +124,19 @@
                 @endif
 
                 @foreach ($recentSends ?? [] as $send)
+                    <?php /** @var array<string, mixed> $send */ ?>
                     <tr class="cms-table__row">
                         <td class="cms-table__td">{{ $send['subscriber_email'] ?? '' }}</td>
                         <td class="cms-table__td">
                             <?php
-                        $__sendBadgeClass = match ($send['status'] ?? '') {
-                            'sent' => 'cms-badge cms-badge--in-review',
-                            'delivered', 'opened', 'clicked' => 'cms-badge cms-badge--approved',
-                            'bounced' => 'cms-badge cms-badge--spam',
-                            'failed' => 'cms-badge cms-badge--archived',
-                            default => 'cms-badge',
-                        };
-            ?>
+            $__sendBadgeClass = match ($send['status'] ?? '') {
+                'sent' => 'cms-badge cms-badge--in-review',
+                'delivered', 'opened', 'clicked' => 'cms-badge cms-badge--approved',
+                'bounced' => 'cms-badge cms-badge--spam',
+                'failed' => 'cms-badge cms-badge--archived',
+                default => 'cms-badge',
+            };
+?>
                             <span class="{{ $__sendBadgeClass }}" role="status">{{ ucfirst($send['status'] ?? '') }}</span>
                         </td>
                         <td class="cms-table__td">

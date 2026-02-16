@@ -1,4 +1,18 @@
 <?php
+/**
+ * Order shipped email template.
+ *
+ * @var string $order_number
+ * @var string $tracking_number
+ * @var string $carrier
+ * @var string $estimated_delivery
+ * @var string $tracking_url
+ */
+
+use function htmlspecialchars;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -42,25 +56,25 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
     </div>
     <div class="content">
         <p>Dear Customer,</p>
-        <p>Great news! Your order <strong>#<?php echo $this->escape($order_number); ?></strong> has been shipped.</p>
+        <p>Great news! Your order <strong>#<?php echo htmlspecialchars($order_number, ENT_QUOTES, 'UTF-8'); ?></strong> has been shipped.</p>
 
         <dl class="tracking-box">
             <?php if (isset($tracking_number)): ?>
             <dt>Tracking Number</dt>
-            <dd><?php echo $this->escape($tracking_number); ?></dd>
+            <dd><?php echo htmlspecialchars($tracking_number, ENT_QUOTES, 'UTF-8'); ?></dd>
             <?php endif; ?>
             <?php if (isset($carrier)): ?>
             <dt>Carrier</dt>
-            <dd><?php echo $this->escape($carrier); ?></dd>
+            <dd><?php echo htmlspecialchars($carrier, ENT_QUOTES, 'UTF-8'); ?></dd>
             <?php endif; ?>
             <?php if (isset($estimated_delivery)): ?>
             <dt>Estimated Delivery</dt>
-            <dd><?php echo $this->escape($estimated_delivery); ?></dd>
+            <dd><?php echo htmlspecialchars($estimated_delivery, ENT_QUOTES, 'UTF-8'); ?></dd>
             <?php endif; ?>
         </dl>
 
         <?php if (isset($tracking_url)): ?>
-        <a href="<?php echo $this->escape($tracking_url); ?>" class="btn">Track Your Package</a>
+        <a href="<?php echo htmlspecialchars($tracking_url, ENT_QUOTES, 'UTF-8'); ?>" class="btn">Track Your Package</a>
         <?php endif; ?>
     </div>
     <div class="footer">

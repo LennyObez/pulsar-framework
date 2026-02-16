@@ -123,7 +123,7 @@
                                 <option value="">None (Top Level)</option>
                                 @foreach ($terms ?? [] as $term)
                                     <option value="{{ $term['id'] }}">
-                                        {{ str_repeat('— ', $term['depth'] ?? 0) }}{{ $term['name'] ?? '' }}
+                                        {{ str_repeat('-- ', $term['depth'] ?? 0) }}{{ $term['name'] ?? '' }}
                                     </option>
                                 @endforeach
                             </select>

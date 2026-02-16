@@ -8,6 +8,8 @@
 
 // --- Styles ---
 import '../styles/cms-admin.css';
+import '../styles/cms-admin-dark.css';
+import '../styles/cms-public.css';
 import '../styles/cms-toast.css';
 import '../styles/cms-command-palette.css';
 import '../styles/cms-skeleton.css';
@@ -17,6 +19,7 @@ import '../styles/cms-media-picker.css';
 import '../styles/cms-block-inserter.css';
 import '../styles/cms-newsletter.css';
 import '../styles/cms-comments.css';
+import '../styles/cms-lightbox.css';
 
 // --- Shared utilities ---
 export { escapeHtml } from './utils/escapeHtml';

@@ -140,7 +140,7 @@
                                 @endforeach
                             </div>
                             @foreach ($locales as $locIndex => $locale)
-                                <?php $__altText = $translations[$locale]['alt_text'] ?? ''; ?>
+                                <?php /** @var string $locale */ /** @var array<string, array{alt_text: string}> $translations */ $__altText = $translations[$locale]['alt_text'] ?? ''; ?>
                                 <div class="cms-media-show__alt-panel @if ($locIndex > 0) cms-media-show__alt-panel--hidden @endif"
                                      data-cms-alt-panel="{{ $locale }}"
                                      role="tabpanel">
@@ -172,8 +172,102 @@
                 </div>
             </div>
 
-            {{-- EXIF data --}}
-            @if (!empty($exifData))
+            {{-- Structured EXIF / Photo Metadata --}}
+            @if (!empty($metadata))
+                <div class="cms-sidebar-panel">
+                    <h3 class="cms-sidebar-panel__title">
+                        <button type="button" class="cms-sidebar-panel__toggle" data-cms-collapsible-toggle aria-expanded="true">
+                            Photo Metadata
+                        </button>
+                    </h3>
+                    <div class="cms-sidebar-panel__body" data-cms-collapsible-body>
+                        <form method="POST" action="/admin/cms/media/{{ $asset['id'] }}/metadata" data-cms-metadata-form>
+                            @csrf
+                            @method('PUT')
+                            <dl class="cms-detail-list cms-detail-list--compact">
+                                @if (!empty($metadata['camera_model']))
+                                    <dt class="cms-detail-list__term">Camera</dt>
+                                    <dd class="cms-detail-list__value">{{ ($metadata['camera_make'] ?? '') . ' ' . $metadata['camera_model'] }}</dd>
+                                @endif
+
+                                @if (!empty($metadata['lens']))
+                                    <dt class="cms-detail-list__term">Lens</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['lens'] }}</dd>
+                                @endif
+
+                                @if (!empty($metadata['focal_length']))
+                                    <dt class="cms-detail-list__term">Focal Length</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['focal_length'] }}</dd>
+                                @endif
+
+                                @if (!empty($metadata['aperture']))
+                                    <dt class="cms-detail-list__term">Aperture</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['aperture'] }}</dd>
+                                @endif
+
+                                @if (!empty($metadata['exposure_time']))
+                                    <dt class="cms-detail-list__term">Exposure</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['exposure_time'] }}</dd>
+                                @endif
+
+                                @if (!empty($metadata['iso']))
+                                    <dt class="cms-detail-list__term">ISO</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['iso'] }}</dd>
+                                @endif
+
+                                @if (!empty($metadata['flash']))
+                                    <dt class="cms-detail-list__term">Flash</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['flash'] }}</dd>
+                                @endif
+
+                                @if (!empty($metadata['white_balance']))
+                                    <dt class="cms-detail-list__term">White Balance</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['white_balance'] }}</dd>
+                                @endif
+
+                                @if (!empty($metadata['color_space']))
+                                    <dt class="cms-detail-list__term">Color Space</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['color_space'] }}</dd>
+                                @endif
+
+                                @if (!empty($metadata['date_taken']))
+                                    <dt class="cms-detail-list__term">Date Taken</dt>
+                                    <dd class="cms-detail-list__value">
+                                        <input type="text"
+                                               name="date_taken"
+                                               value="{{ $metadata['date_taken'] }}"
+                                               class="cms-form-group__input cms-form-group__input--inline"
+                                               placeholder="Date taken">
+                                    </dd>
+                                @endif
+
+                                @if (isset($metadata['gps_latitude']) && isset($metadata['gps_longitude']))
+                                    <dt class="cms-detail-list__term">GPS</dt>
+                                    <dd class="cms-detail-list__value">
+                                        <span>{{ $metadata['gps_latitude'] }}, {{ $metadata['gps_longitude'] }}</span>
+                                        <button type="button" class="cms-btn cms-btn--xs cms-btn--outline" data-cms-remove-gps>Remove GPS</button>
+                                        <input type="hidden" name="remove_gps" value="0" data-cms-remove-gps-input>
+                                    </dd>
+                                @endif
+
+                                @if (!empty($metadata['x_resolution']))
+                                    <dt class="cms-detail-list__term">Resolution</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['x_resolution'] }}&times;{{ $metadata['y_resolution'] ?? $metadata['x_resolution'] }} DPI</dd>
+                                @endif
+
+                                @if (!empty($metadata['software']))
+                                    <dt class="cms-detail-list__term">Software</dt>
+                                    <dd class="cms-detail-list__value">{{ $metadata['software'] }}</dd>
+                                @endif
+                            </dl>
+                            <button type="submit" class="cms-btn cms-btn--primary cms-btn--sm">Save Metadata</button>
+                        </form>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Legacy EXIF data (raw key/value) --}}
+            @if (!empty($exifData) && empty($metadata))
                 <div class="cms-sidebar-panel">
                     <h3 class="cms-sidebar-panel__title">
                         <button type="button" class="cms-sidebar-panel__toggle" data-cms-collapsible-toggle aria-expanded="false">
@@ -190,6 +284,81 @@
                     </div>
                 </div>
             @endif
+
+            {{-- Licensing --}}
+            <div class="cms-sidebar-panel">
+                <h3 class="cms-sidebar-panel__title">Licensing</h3>
+                <div class="cms-sidebar-panel__body">
+                    <form method="POST" action="/admin/cms/media/{{ $asset['id'] }}/license" data-cms-license-form>
+                        @csrf
+                        @method('PUT')
+                        <div class="cms-form-group">
+                            <label for="license" class="cms-form-group__label">License</label>
+                            <select id="license" name="license" class="cms-form-group__select">
+                                <option value="">None</option>
+                                <option value="CC-BY" @if (($asset['license'] ?? '') === 'CC-BY') selected @endif>CC Attribution</option>
+                                <option value="CC-BY-SA" @if (($asset['license'] ?? '') === 'CC-BY-SA') selected @endif>CC Attribution-ShareAlike</option>
+                                <option value="CC-BY-NC" @if (($asset['license'] ?? '') === 'CC-BY-NC') selected @endif>CC Attribution-NonCommercial</option>
+                                <option value="CC-BY-NC-SA" @if (($asset['license'] ?? '') === 'CC-BY-NC-SA') selected @endif>CC Attribution-NC-ShareAlike</option>
+                                <option value="CC-BY-ND" @if (($asset['license'] ?? '') === 'CC-BY-ND') selected @endif>CC Attribution-NoDerivatives</option>
+                                <option value="CC-BY-NC-ND" @if (($asset['license'] ?? '') === 'CC-BY-NC-ND') selected @endif>CC Attribution-NC-NoDerivatives</option>
+                                <option value="CC0" @if (($asset['license'] ?? '') === 'CC0') selected @endif>CC0 Public Domain</option>
+                                <option value="All Rights Reserved" @if (($asset['license'] ?? '') === 'All Rights Reserved') selected @endif>All Rights Reserved</option>
+                                <option value="Custom" @if (($asset['license'] ?? '') === 'Custom') selected @endif>Custom</option>
+                            </select>
+                        </div>
+                        <div class="cms-form-group">
+                            <label for="copyright-holder" class="cms-form-group__label">Copyright Holder</label>
+                            <input type="text"
+                                   id="copyright-holder"
+                                   name="copyright_holder"
+                                   value="{{ $asset['copyright_holder'] ?? '' }}"
+                                   class="cms-form-group__input"
+                                   maxlength="255"
+                                   placeholder="Name or organization">
+                        </div>
+                        <button type="submit" class="cms-btn cms-btn--primary cms-btn--sm">Save License</button>
+                    </form>
+                </div>
+            </div>
+
+            {{-- SEO Metadata --}}
+            <div class="cms-sidebar-panel">
+                <h3 class="cms-sidebar-panel__title">SEO</h3>
+                <div class="cms-sidebar-panel__body">
+                    <form method="POST" action="/admin/cms/media/{{ $asset['id'] }}/seo" data-cms-seo-form>
+                        @csrf
+                        @method('PUT')
+                        <div class="cms-form-group">
+                            <label for="seo-title" class="cms-form-group__label">Title</label>
+                            <input type="text"
+                                   id="seo-title"
+                                   name="title"
+                                   value="{{ $asset['title'] ?? '' }}"
+                                   class="cms-form-group__input"
+                                   maxlength="255">
+                        </div>
+                        <div class="cms-form-group">
+                            <label for="seo-description" class="cms-form-group__label">Description</label>
+                            <textarea id="seo-description"
+                                      name="description"
+                                      class="cms-form-group__textarea"
+                                      rows="3"
+                                      maxlength="1000">{{ $asset['description'] ?? '' }}</textarea>
+                        </div>
+                        <div class="cms-form-group">
+                            <label for="seo-caption" class="cms-form-group__label">Caption</label>
+                            <input type="text"
+                                   id="seo-caption"
+                                   name="caption"
+                                   value="{{ $asset['caption'] ?? '' }}"
+                                   class="cms-form-group__input"
+                                   maxlength="500">
+                        </div>
+                        <button type="submit" class="cms-btn cms-btn--primary cms-btn--sm">Save SEO</button>
+                    </form>
+                </div>
+            </div>
 
             {{-- Derivatives --}}
             @if (!empty($derivatives))

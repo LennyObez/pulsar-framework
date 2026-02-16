@@ -1,9 +1,9 @@
 {{-- Destructive action confirmation modal.
      Expects:
-       $actionDescription (string) — e.g. "delete this plugin"
-       $formAction (string) — form POST target URL
-       $formMethod (string, optional) — HTTP method override (default: DELETE)
-       $csrfToken (string) — CSRF token value
+       $actionDescription (string): e.g. "delete this plugin"
+       $formAction (string): form POST target URL
+       $formMethod (string, optional): HTTP method override (default: DELETE)
+       $csrfToken (string): CSRF token value
 --}}
 <div class="cms-modal cms-modal--destructive" data-cms-destructive-modal role="dialog" aria-modal="true" aria-labelledby="cms-destructive-title" hidden>
     <div class="cms-modal__backdrop" data-cms-modal-close></div>
