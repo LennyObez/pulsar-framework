@@ -16,6 +16,7 @@ use Pulsar\Config\RateLimitConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Config\SessionConfig;
+use ReflectionClass;
 
 #[CoversClass(SecurityConfig::class)]
 #[CoversClass(SessionConfig::class)]
@@ -211,7 +212,7 @@ final class SecurityConfigTest extends TestCase
         self::assertTrue($config->csp->enabled);
         self::assertSame("'self'", $config->csp->defaultSrc);
         self::assertTrue($config->hsts->enabled);
-        self::assertSame(31536000, $config->hsts->maxAge);
+        self::assertSame(63072000, $config->hsts->maxAge);
         self::assertSame('same-origin', $config->crossOrigin->openerPolicy);
     }
 
@@ -279,5 +280,12 @@ final class SecurityConfigTest extends TestCase
         self::assertArrayNotHasKey('Cross-Origin-Opener-Policy', $effective);
         self::assertArrayNotHasKey('Cross-Origin-Embedder-Policy', $effective);
         self::assertArrayNotHasKey('Cross-Origin-Resource-Policy', $effective);
+    }
+
+    #[Test]
+    public function classIsFinal(): void
+    {
+        $reflection = new ReflectionClass(SecurityConfig::class);
+        self::assertTrue($reflection->isFinal(), 'SecurityConfig must be final to prevent config DTO subclassing');
     }
 }

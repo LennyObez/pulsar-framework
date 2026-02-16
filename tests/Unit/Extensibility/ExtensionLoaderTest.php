@@ -97,7 +97,7 @@ final class ExtensionLoaderTest extends TestCase
     }
 
     #[Test]
-    public function resolveDependenciesThrowsOnMissingDependency(): void
+    public function resolveDependenciesSkipsExtensionWithMissingDependency(): void
     {
         $manifest = ExtensionManifest::fromArray([
             'name' => 'ext/a',
@@ -106,10 +106,12 @@ final class ExtensionLoaderTest extends TestCase
             'requires' => ['ext/missing' => '1.0'],
         ]);
 
-        $this->expectException(DependencyException::class);
-        $this->expectExceptionMessage('requires extension "ext/missing"');
+        // Source logs skipped extensions via error_log() — redirect to temp file to avoid risky test
+        $previousLog = ini_set('error_log', tempnam(sys_get_temp_dir(), 'phpunit'));
+        $sorted = $this->loader->resolveDependencies([$manifest]);
+        ini_set('error_log', $previousLog !== false ? $previousLog : '');
 
-        $this->loader->resolveDependencies([$manifest]);
+        self::assertSame([], $sorted);
     }
 
     #[Test]
@@ -153,6 +155,73 @@ final class ExtensionLoaderTest extends TestCase
         $sorted = $this->loader->resolveDependencies([$manifestA, $manifestB]);
 
         self::assertCount(2, $sorted);
+    }
+
+    #[Test]
+    public function discoverLoadsIndividualExtensionPathWithManifest(): void
+    {
+        // Create an extension directory that itself contains pulsar.json
+        $extDir = $this->tempDir . '/my-ext';
+        mkdir($extDir);
+        file_put_contents($extDir . '/pulsar.json', json_encode([
+            'name' => 'test/individual',
+            'version' => '1.0.0',
+            'extension_class' => 'Test\\IndividualExtension',
+        ]));
+
+        // Pass the individual extension directory itself, not its parent
+        $manifests = $this->loader->discover([$extDir]);
+
+        self::assertCount(1, $manifests);
+        self::assertSame('test/individual', $manifests[0]->name);
+    }
+
+    #[Test]
+    public function discoverDeduplicatesSameExtensionFromMultiplePaths(): void
+    {
+        // Create extension in parent directory scan
+        $extDir = $this->tempDir . '/ext-a';
+        mkdir($extDir);
+        file_put_contents($extDir . '/pulsar.json', json_encode([
+            'name' => 'test/dedup',
+            'version' => '1.0.0',
+            'extension_class' => 'Test\\DedupExtension',
+        ]));
+
+        // Pass both the parent dir and the individual dir
+        $manifests = $this->loader->discover([$this->tempDir, $extDir]);
+
+        self::assertCount(1, $manifests);
+        self::assertSame('test/dedup', $manifests[0]->name);
+    }
+
+    #[Test]
+    public function discoverMixesParentAndIndividualPaths(): void
+    {
+        // Extension in a parent directory scan
+        $parentDir = $this->tempDir . '/framework-exts';
+        mkdir($parentDir . '/ext-a', 0o755, true);
+        file_put_contents($parentDir . '/ext-a/pulsar.json', json_encode([
+            'name' => 'framework/ext-a',
+            'version' => '1.0.0',
+            'extension_class' => 'Framework\\ExtA',
+        ]));
+
+        // Individual app extension directory
+        $appExtDir = $this->tempDir . '/app-ext';
+        mkdir($appExtDir);
+        file_put_contents($appExtDir . '/pulsar.json', json_encode([
+            'name' => 'app/custom',
+            'version' => '1.0.0',
+            'extension_class' => 'App\\CustomExtension',
+        ]));
+
+        $manifests = $this->loader->discover([$parentDir, $appExtDir]);
+
+        self::assertCount(2, $manifests);
+        $names = array_map(fn(ExtensionManifest $m) => $m->name, $manifests);
+        self::assertContains('framework/ext-a', $names);
+        self::assertContains('app/custom', $names);
     }
 
     #[Test]

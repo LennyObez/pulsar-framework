@@ -57,7 +57,7 @@ final class TrackingConfigTest extends TestCase
     }
 
     #[Test]
-    public function fromArrayCastsNonStringEndpointsToString(): void
+    public function fromArrayRejectsNonStringEndpointsAndFallsBack(): void
     {
         $config = TrackingConfig::fromArray([
             'tracker_endpoint' => 123,
@@ -65,10 +65,11 @@ final class TrackingConfigTest extends TestCase
             'extensions' => 'not-array',
         ]);
 
-        // (string) 123 = '123', (string) false = '', no type-guarded fallback
-        self::assertSame('123', $config->trackerEndpoint);
+        // is_string(123) = false, key is set → falls back to ''
+        self::assertSame('', $config->trackerEndpoint);
+        // is_string(false) = false, key is set → falls back to ''
         self::assertSame('', $config->scriptEndpoint);
-        // (array) 'not-array' = ['not-array'], is_string passes -> kept
+        // (array) 'not-array' = ['not-array'], is_string('not-array') = true → kept
         self::assertSame(['not-array'], $config->extensions);
     }
 }

@@ -200,6 +200,91 @@ final class EventDispatcherTest extends TestCase
     }
 
     #[Test]
+    public function dispatchContinuesAfterListenerExceptionAndRethrows(): void
+    {
+        $order = [];
+
+        $this->provider->addListener(stdClass::class, static function () use (&$order): void {
+            $order[] = 'first';
+            throw new RuntimeException('First listener failed');
+        }, priority: 10);
+
+        $this->provider->addListener(stdClass::class, static function () use (&$order): void {
+            $order[] = 'second';
+        }, priority: 0);
+
+        try {
+            $this->dispatcher->dispatch(new stdClass());
+            self::fail('Expected RuntimeException to be re-thrown');
+        } catch (RuntimeException $e) {
+            self::assertSame('First listener failed', $e->getMessage());
+        }
+
+        // Both listeners were called despite the first one throwing
+        self::assertSame(['first', 'second'], $order);
+    }
+
+    #[Test]
+    public function dispatchRethrowsFirstExceptionWhenMultipleListenersFail(): void
+    {
+        $this->provider->addListener(stdClass::class, static function (): void {
+            throw new RuntimeException('Error A');
+        }, priority: 10);
+
+        $this->provider->addListener(stdClass::class, static function (): void {
+            throw new RuntimeException('Error B');
+        }, priority: 0);
+
+        try {
+            $this->dispatcher->dispatch(new stdClass());
+            self::fail('Expected RuntimeException');
+        } catch (RuntimeException $e) {
+            self::assertSame('Error A', $e->getMessage());
+        }
+    }
+
+    #[Test]
+    public function dispatchLogsListenerException(): void
+    {
+        $logger = $this->createMock(LoggerInterface::class);
+        $logger->expects(self::atLeastOnce())->method('error')->with(
+            'Event listener threw exception',
+            self::callback(static fn(array $ctx): bool => $ctx['event_type'] === stdClass::class && $ctx['error'] === 'Listener blew up'),
+        );
+
+        $dispatcher = new EventDispatcher($this->provider, $this->provider, $this->stormGuard, null, $logger);
+
+        $this->provider->addListener(stdClass::class, static function (): void {
+            throw new RuntimeException('Listener blew up');
+        });
+
+        try {
+            $dispatcher->dispatch(new stdClass());
+        } catch (RuntimeException) {
+            // expected
+        }
+    }
+
+    #[Test]
+    public function dispatchEmitsListenerErrorMetric(): void
+    {
+        $metrics = new MetricRegistry();
+        $dispatcher = new EventDispatcher($this->provider, $this->provider, $this->stormGuard, $metrics);
+
+        $this->provider->addListener(stdClass::class, static function (): void {
+            throw new RuntimeException('Metric test');
+        });
+
+        try {
+            $dispatcher->dispatch(new stdClass());
+        } catch (RuntimeException) {
+            // expected
+        }
+
+        self::assertTrue($metrics->has('pulsar_event_listener_error_total'));
+    }
+
+    #[Test]
     public function dispatchUsesStormOverrideFromMetadataProvider(): void
     {
         $metadataProvider = $this->createStub(ListenerMetadataProviderInterface::class);

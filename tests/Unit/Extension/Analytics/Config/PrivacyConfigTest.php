@@ -17,8 +17,8 @@ final class PrivacyConfigTest extends TestCase
     {
         $config = new PrivacyConfig();
 
-        self::assertFalse($config->respectDnt);
-        self::assertFalse($config->anonymizeReferrer);
+        self::assertTrue($config->respectDnt);
+        self::assertTrue($config->anonymizeReferrer);
     }
 
     #[Test]
@@ -47,8 +47,8 @@ final class PrivacyConfigTest extends TestCase
     {
         $config = PrivacyConfig::fromArray([]);
 
-        self::assertFalse($config->respectDnt);
-        self::assertFalse($config->anonymizeReferrer);
+        self::assertTrue($config->respectDnt);
+        self::assertTrue($config->anonymizeReferrer);
     }
 
     #[Test]

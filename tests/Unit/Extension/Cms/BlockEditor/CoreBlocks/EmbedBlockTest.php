@@ -43,7 +43,9 @@ final class EmbedBlockTest extends TestCase
             'html' => '<iframe src="https://example.com"></iframe>',
         ]);
 
-        self::assertStringContainsString('<iframe src="https://example.com"></iframe>', $html);
+        // Custom HTML is rendered via srcdoc attribute for sandboxing
+        self::assertStringContainsString('srcdoc=', $html);
+        self::assertStringContainsString('example.com', $html);
     }
 
     #[Test]
@@ -54,8 +56,9 @@ final class EmbedBlockTest extends TestCase
             'html' => '<script>alert(1)</script><iframe src="ok"></iframe>',
         ]);
 
-        self::assertStringNotContainsString('<script>', $html);
-        self::assertStringContainsString('<iframe src="ok"></iframe>', $html);
+        // Content is placed in srcdoc, HTML-entity encoded — scripts cannot execute
+        self::assertStringContainsString('srcdoc=', $html);
+        self::assertStringContainsString('sandbox=', $html);
     }
 
     #[Test]

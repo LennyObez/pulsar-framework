@@ -186,7 +186,7 @@ final class ScaffoldTraitTest extends TestCase
     #[Test]
     public function list_files_recursive_returns_empty_for_nonexistent(): void
     {
-        self::assertSame([], $this->listFilesRecursive('/nonexistent'));
+        self::assertSame([], $this->listFilesRecursive(sys_get_temp_dir() . '/pulsar_nonexistent_' . bin2hex(random_bytes(16))));
     }
 
     #[Test]

@@ -316,6 +316,16 @@ final class InMemoryMenuRepository implements MenuRepositoryInterface
     /** @var array<string, MenuItem> */
     private array $items = [];
 
+    public function findByImportId(string $importId): ?Menu
+    {
+        return null;
+    }
+
+    public function findItemByImportId(string $importId): ?MenuItem
+    {
+        return null;
+    }
+
     public function findByLocation(string $location, string $locale, ?string $tenantId = null): ?Menu
     {
         foreach ($this->menus as $menu) {

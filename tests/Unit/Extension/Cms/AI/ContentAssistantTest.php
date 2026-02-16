@@ -7,10 +7,11 @@ namespace Pulsar\Tests\Unit\Extension\Cms\AI;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\AI\AiClientInterface;
+use Pulsar\AI\AiResponse;
+use Pulsar\AI\Config\AiRequestOptions;
 use Pulsar\Extension\Cms\AI\ContentAssistant;
-use Pulsar\Extension\Cms\AI\LlmOptions;
-use Pulsar\Extension\Cms\AI\LlmProviderInterface;
-use Pulsar\Extension\Cms\AI\LlmResponse;
+use RuntimeException;
 
 #[CoversClass(ContentAssistant::class)]
 final class ContentAssistantTest extends TestCase
@@ -313,17 +314,32 @@ final class ContentAssistantTest extends TestCase
     #[Test]
     public function returns_provider_response_unchanged(): void
     {
-        $expected = new LlmResponse('Generated content', 100, 200, 'stop');
+        $expected = new AiResponse('Generated content', 100, 200, 'stop');
 
-        $provider = new class ($expected) implements LlmProviderInterface {
-            public function __construct(private readonly LlmResponse $response) {}
+        $provider = new class ($expected) implements AiClientInterface {
+            public function __construct(private readonly AiResponse $response) {}
 
-            public function complete(string $prompt, LlmOptions $options = new LlmOptions()): LlmResponse
+            public function chat(array $messages, AiRequestOptions $options = new AiRequestOptions()): AiResponse
             {
                 return $this->response;
             }
 
-            public function name(): string
+            public function complete(string $prompt, AiRequestOptions $options = new AiRequestOptions()): AiResponse
+            {
+                return $this->response;
+            }
+
+            public function embed(array $inputs, AiRequestOptions $options = new AiRequestOptions()): \Pulsar\AI\Embedding\EmbeddingResult
+            {
+                throw new RuntimeException('Not implemented');
+            }
+
+            public function structuredOutput(string $prompt, array $schema, AiRequestOptions $options = new AiRequestOptions()): AiResponse
+            {
+                return $this->response;
+            }
+
+            public function providerName(): string
             {
                 return 'test';
             }
@@ -340,25 +356,40 @@ final class ContentAssistantTest extends TestCase
 
     /**
      * @param-out string $capturedPrompt
-     * @param-out LlmOptions|null $capturedOptions
+     * @param-out AiRequestOptions|null $capturedOptions
      */
-    private function createCapturingProvider(string &$capturedPrompt, ?LlmOptions &$capturedOptions): LlmProviderInterface
+    private function createCapturingProvider(string &$capturedPrompt, ?AiRequestOptions &$capturedOptions): AiClientInterface
     {
-        return new class ($capturedPrompt, $capturedOptions) implements LlmProviderInterface {
+        return new class ($capturedPrompt, $capturedOptions) implements AiClientInterface {
             public function __construct(
                 public string &$capturedPrompt,
-                public ?LlmOptions &$capturedOptions,
+                public ?AiRequestOptions &$capturedOptions,
             ) {}
 
-            public function complete(string $prompt, LlmOptions $options = new LlmOptions()): LlmResponse
+            public function chat(array $messages, AiRequestOptions $options = new AiRequestOptions()): AiResponse
+            {
+                return new AiResponse('test response', 10, 20, 'stop');
+            }
+
+            public function complete(string $prompt, AiRequestOptions $options = new AiRequestOptions()): AiResponse
             {
                 $this->capturedPrompt = $prompt;
                 $this->capturedOptions = $options;
 
-                return new LlmResponse('test response', 10, 20, 'stop');
+                return new AiResponse('test response', 10, 20, 'stop');
             }
 
-            public function name(): string
+            public function embed(array $inputs, AiRequestOptions $options = new AiRequestOptions()): \Pulsar\AI\Embedding\EmbeddingResult
+            {
+                throw new RuntimeException('Not implemented');
+            }
+
+            public function structuredOutput(string $prompt, array $schema, AiRequestOptions $options = new AiRequestOptions()): AiResponse
+            {
+                return new AiResponse('test response', 10, 20, 'stop');
+            }
+
+            public function providerName(): string
             {
                 return 'test';
             }

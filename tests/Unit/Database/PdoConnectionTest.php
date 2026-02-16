@@ -147,10 +147,7 @@ final class PdoConnectionTest extends TestCase
         self::assertTrue($this->connection->inTransaction());
 
         $txn->commit();
-        // Note: beginTransaction/commit directly does not auto-decrement depth,
-        // that is handled by the transaction() wrapper method.
-        // So inTransaction() remains true after direct commit.
-        self::assertTrue($this->connection->inTransaction());
+        self::assertFalse($this->connection->inTransaction());
     }
 
     #[Test]

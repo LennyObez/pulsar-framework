@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Build\ArtifactEntry;
 use Pulsar\Build\BuildManifest;
 use Pulsar\Config\ConfigManagerInterface;
+use Pulsar\Config\ConfigRepository;
 use Pulsar\Console\Command\BuildCommand;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\Input\ArrayInput;
@@ -18,6 +19,7 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Core\KernelInterface;
 
 use function bin2hex;
+use function file_get_contents;
 use function file_put_contents;
 use function hash;
 use function is_dir;
@@ -147,6 +149,35 @@ final class BuildCommandTest extends TestCase
 
         self::assertSame(ExitCode::Error->value, $exit);
         self::assertStringContainsString('No build manifest found', $output->errorBuffer);
+    }
+
+    #[Test]
+    public function compiledConfigIncludesAllowedClassesFalse(): void
+    {
+        $repository = new ConfigRepository();
+        $configManager = $this->createStub(ConfigManagerInterface::class);
+        $configManager->method('configPath')->willReturn($this->configPath);
+        $configManager->method('repository')->willReturn($repository);
+
+        $container = $this->createStub(ContainerInterface::class);
+        $container->method('has')->willReturn(false);
+
+        $kernel = $this->createStub(KernelInterface::class);
+        $kernel->method('configManager')->willReturn($configManager);
+        $kernel->method('container')->willReturn($container);
+
+        $command = new BuildCommand($kernel);
+        $output = new BufferedOutput();
+        $input = new ArrayInput('build');
+
+        $command->execute($input, $output);
+
+        $compiledPath = $this->cacheDir . DIRECTORY_SEPARATOR . 'config.compiled.php';
+        self::assertFileExists($compiledPath);
+
+        $content = file_get_contents($compiledPath);
+        self::assertIsString($content);
+        self::assertStringContainsString("'allowed_classes' => false", $content);
     }
 
     private function createKernelStub(): KernelInterface

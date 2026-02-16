@@ -246,6 +246,81 @@ final class RequestContextMiddlewareTest extends TestCase
         self::assertSame($parentCausation, $capturedContext->attributes['parent_causation_id']);
     }
 
+    #[Test]
+    public function rejectsValidHexCorrelationIdWithWrongLength(): void
+    {
+        // 16 hex chars = valid hex but not 32 chars
+        $shortHex = str_repeat('ab', 8);
+        $request = $this->createRequest(['X-Correlation-ID' => [$shortHex]]);
+        $capturedContext = null;
+
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$capturedContext): ResponseInterface {
+                /** @var RequestContext $ctx */
+                $ctx = $req->getAttribute('_request_context');
+                $capturedContext = $ctx;
+
+                return new Response(body: 'ok');
+            },
+        );
+
+        $this->middleware->process($request, $handler);
+
+        self::assertNotNull($capturedContext);
+        // Should generate a new ID since the header isn't exactly 32 hex chars
+        self::assertNotSame($shortHex, $capturedContext->correlationId->value);
+        self::assertSame(32, strlen($capturedContext->correlationId->value));
+    }
+
+    #[Test]
+    public function handlesNonStringRemoteAddr(): void
+    {
+        $request = $this->createRequest(
+            server: ['REMOTE_ADDR' => 12345],
+        );
+        $capturedContext = null;
+
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$capturedContext): ResponseInterface {
+                /** @var RequestContext $ctx */
+                $ctx = $req->getAttribute('_request_context');
+                $capturedContext = $ctx;
+
+                return new Response(body: 'ok');
+            },
+        );
+
+        $this->middleware->process($request, $handler);
+
+        self::assertNotNull($capturedContext);
+        self::assertNull($capturedContext->ip);
+    }
+
+    #[Test]
+    public function noCausationHeaderMeansNoParentAttribute(): void
+    {
+        $request = $this->createRequest();
+        $capturedContext = null;
+
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$capturedContext): ResponseInterface {
+                /** @var RequestContext $ctx */
+                $ctx = $req->getAttribute('_request_context');
+                $capturedContext = $ctx;
+
+                return new Response(body: 'ok');
+            },
+        );
+
+        $this->middleware->process($request, $handler);
+
+        self::assertNotNull($capturedContext);
+        self::assertArrayNotHasKey('parent_causation_id', $capturedContext->attributes);
+    }
+
     /**
      * @param array<string, list<string>> $headers
      * @param array<string, mixed> $server

@@ -87,6 +87,43 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
+    public function coreCanRegisterSingletons(): void
+    {
+        $proxy = $this->proxy(TrustTier::Core);
+        $proxy->singleton('test.singleton', fn() => new stdClass());
+
+        self::assertTrue($proxy->has('test.singleton'));
+    }
+
+    #[Test]
+    public function verifiedCanRegisterSingletons(): void
+    {
+        $proxy = $this->proxy(TrustTier::Verified);
+        $proxy->singleton('test.singleton', fn() => new stdClass());
+
+        self::assertTrue($proxy->has('test.singleton'));
+    }
+
+    #[Test]
+    public function communityCanRegisterSingletons(): void
+    {
+        $proxy = $this->proxy(TrustTier::Community);
+        $proxy->singleton('test.singleton', fn() => new stdClass());
+
+        self::assertTrue($proxy->has('test.singleton'));
+    }
+
+    #[Test]
+    public function untrustedCannotRegisterSingletons(): void
+    {
+        $proxy = $this->proxy(TrustTier::Untrusted);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessage('ContainerWrite');
+        $proxy->singleton('test.singleton', fn() => new stdClass());
+    }
+
+    #[Test]
     public function coreCanRegisterInstances(): void
     {
         $proxy = $this->proxy(TrustTier::Core);
@@ -274,10 +311,10 @@ final class ScopedContainerProxyTest extends TestCase
         self::assertInstanceOf(stdClass::class, $proxy->get('Pulsar\Database\ConnectionInterface'));
     }
 
-    // --- Delegation methods ---
+    // --- Delegation methods with capability guards ---
 
     #[Test]
-    public function forgetInstanceDelegatesToInner(): void
+    public function forgetInstanceDelegatesToInnerWhenAllowed(): void
     {
         $this->container->instance('test.forget', new stdClass());
         $proxy = $this->proxy(TrustTier::Community);
@@ -289,7 +326,38 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
-    public function getBindingsDelegatesToInner(): void
+    public function untrustedCannotForgetInstance(): void
+    {
+        $this->container->instance('test.forget', new stdClass());
+        $proxy = $this->proxy(TrustTier::Untrusted);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessage('ContainerWrite');
+        $proxy->forgetInstance('test.forget');
+    }
+
+    #[Test]
+    public function setResolutionHintsDelegatesToInnerWhenAllowed(): void
+    {
+        $proxy = $this->proxy(TrustTier::Community);
+        $proxy->setResolutionHints(null);
+
+        // Verify proxy delegates without throwing by checking container is still consistent
+        self::assertInstanceOf(ScopedContainerProxy::class, $proxy);
+    }
+
+    #[Test]
+    public function untrustedCannotSetResolutionHints(): void
+    {
+        $proxy = $this->proxy(TrustTier::Untrusted);
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessage('ContainerWrite');
+        $proxy->setResolutionHints(null);
+    }
+
+    #[Test]
+    public function getBindingsDelegatesToInnerWhenAllowed(): void
     {
         $this->container->bind('proxy.test', fn() => new stdClass());
         $proxy = $this->proxy(TrustTier::Community);
@@ -299,7 +367,23 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
-    public function getInstancesDelegatesToInner(): void
+    public function getBindingsDeniedWithoutContainerRead(): void
+    {
+        $policy = new CapabilityPolicy([]);
+        $proxy = new ScopedContainerProxy(
+            $this->container,
+            TrustTier::Untrusted,
+            $policy,
+            $this->map,
+        );
+
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessage('ContainerRead');
+        $_ = $proxy->getBindings();
+    }
+
+    #[Test]
+    public function getInstancesDelegatesToInnerWhenAllowed(): void
     {
         $proxy = $this->proxy(TrustTier::Community);
 
@@ -308,12 +392,18 @@ final class ScopedContainerProxyTest extends TestCase
     }
 
     #[Test]
-    public function setResolutionHintsDelegatesToInner(): void
+    public function getInstancesDeniedWithoutContainerRead(): void
     {
-        $proxy = $this->proxy(TrustTier::Community);
-        $proxy->setResolutionHints(null);
+        $policy = new CapabilityPolicy([]);
+        $proxy = new ScopedContainerProxy(
+            $this->container,
+            TrustTier::Untrusted,
+            $policy,
+            $this->map,
+        );
 
-        // Verify proxy delegates by checking no exception is thrown and state is consistent
-        self::assertInstanceOf(ScopedContainerProxy::class, $proxy);
+        $this->expectException(CapabilityDeniedException::class);
+        $this->expectExceptionMessage('ContainerRead');
+        $_ = $proxy->getInstances();
     }
 }

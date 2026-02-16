@@ -276,4 +276,22 @@ final class ExtensionManifestTest extends TestCase
 
         self::assertSame(TrustTier::Community, $manifest->requestedTrustTier);
     }
+
+    #[Test]
+    public function fromArrayPreservesMigrationsInProvides(): void
+    {
+        $manifest = ExtensionManifest::fromArray([
+            'name' => 'vendor/cms',
+            'version' => '1.0.0',
+            'extension_class' => 'Vendor\\Cms\\CmsExtension',
+            'provides' => [
+                'services' => ['ContentService'],
+                'routes' => true,
+                'migrations' => ['src/Migration', 'database/migrations'],
+            ],
+        ]);
+
+        self::assertSame(['src/Migration', 'database/migrations'], $manifest->provides->migrations);
+        self::assertTrue($manifest->provides->hasMigrations());
+    }
 }

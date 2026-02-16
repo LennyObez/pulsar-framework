@@ -96,6 +96,42 @@ final class ContainerTest extends TestCase
     }
 
     #[Test]
+    public function singletonRegistersAsSingleton(): void
+    {
+        $container = new Container();
+        $callCount = 0;
+
+        $container->singleton('service', function () use (&$callCount) {
+            $callCount++;
+            return new stdClass();
+        });
+
+        $first = $container->get('service');
+        $second = $container->get('service');
+
+        self::assertSame($first, $second);
+        self::assertSame(1, $callCount);
+    }
+
+    #[Test]
+    public function singletonOverwritesPreviousBinding(): void
+    {
+        $container = new Container();
+
+        $container->singleton('service', fn() => (object) ['v' => 1]);
+        /** @var stdClass $first */
+        $first = $container->get('service');
+
+        $container->singleton('service', fn() => (object) ['v' => 2]);
+        /** @var stdClass $second */
+        $second = $container->get('service');
+
+        self::assertSame(1, $first->v);
+        self::assertSame(2, $second->v);
+        self::assertNotSame($first, $second);
+    }
+
+    #[Test]
     public function getResolvesFactoryEachTime(): void
     {
         $container = new Container();

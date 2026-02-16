@@ -19,9 +19,11 @@ use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\JobContext;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueableInterface;
+use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Queue\Retry\QueueRetryPolicy;
 use Pulsar\Queue\Retry\RetryDecision;
+use Pulsar\Queue\Serialization\TypeRegistry;
 use Pulsar\Queue\Worker;
 use Pulsar\Queue\WorkerOptions;
 use Pulsar\Queue\WorkerStatus;
@@ -47,10 +49,33 @@ use function time;
 final class QueuePipelineTest extends TestCase
 {
     private EnvelopeSerializer $envelopeSerializer;
+    private TypeRegistry $typeRegistry;
 
     protected function setUp(): void
     {
         $this->envelopeSerializer = new EnvelopeSerializer();
+        $this->typeRegistry = new TypeRegistry();
+        $this->typeRegistry->register(PipelineSuccessJob::class);
+        $this->typeRegistry->register(PipelineFailingJob::class);
+        $this->typeRegistry->register(PipelineCountingJob::class);
+        $this->typeRegistry->register(PipelineOrderTrackerFirst::class);
+        $this->typeRegistry->register(PipelineOrderTrackerSecond::class);
+        $this->typeRegistry->register(PipelineOrderTrackerThird::class);
+    }
+
+    private function createWorker(
+        QueueDriverInterface $driver,
+        WorkerOptions $options,
+        ?QueueRetryPolicy $retryPolicy = null,
+        ?DeadLetterQueue $dlq = null,
+    ): Worker {
+        return new Worker(
+            driver: $driver,
+            options: $options,
+            typeRegistry: $this->typeRegistry,
+            retryPolicy: $retryPolicy,
+            deadLetterQueue: $dlq,
+        );
     }
 
     // ---- SyncDriver happy path ----
@@ -135,7 +160,7 @@ final class QueuePipelineTest extends TestCase
 
         // Worker processes it
         $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
         $worker->run('default');
 
         self::assertTrue(PipelineSuccessJob::$handled, 'Worker should have processed the job');
@@ -159,7 +184,7 @@ final class QueuePipelineTest extends TestCase
         $this->pushEnvelope($driver, 'default', PipelineOrderTrackerThird::class, '{}');
 
         $options = new WorkerOptions(maxJobs: 3, sleepMs: 1, maxMemoryMb: 0);
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
         $worker->run('default');
 
         /** @var list<string> $order */
@@ -179,7 +204,7 @@ final class QueuePipelineTest extends TestCase
         self::assertSame(1, $driver->size('default'));
 
         $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
         $worker->run('default');
 
         // After successful processing, the job should be acknowledged (removed)
@@ -198,7 +223,7 @@ final class QueuePipelineTest extends TestCase
         $this->pushEnvelope($driver, 'default', PipelineFailingJob::class, '{}', attempt: 3, retryMaxAttempts: 3);
 
         $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
         $worker->run('default');
 
         $failedJobs = $driver->findByStatus(JobRecordStatus::Failed);
@@ -215,7 +240,7 @@ final class QueuePipelineTest extends TestCase
         $this->pushEnvelope($driver, 'default', PipelineFailingJob::class, '{}', attempt: 1, retryMaxAttempts: 3);
 
         $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
         $worker->run('default');
 
         // The original job should be acknowledged (removed), and a retry job should be pending
@@ -413,7 +438,7 @@ final class QueuePipelineTest extends TestCase
         }
 
         $options = new WorkerOptions(maxJobs: 3, sleepMs: 1, maxMemoryMb: 0);
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
         $worker->run('default');
 
         /** @var int $processedCount */
@@ -434,7 +459,7 @@ final class QueuePipelineTest extends TestCase
         // maxJobs is higher than available jobs; worker will run idle loop once then stop due to time/signal
         // Use maxJobs to cap at 10 so test doesn't hang
         $options = new WorkerOptions(maxJobs: 10, sleepMs: 1, timeLimitSeconds: 1, maxMemoryMb: 0);
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
         $worker->run('default');
 
         /** @var int $processedCount */
@@ -448,7 +473,7 @@ final class QueuePipelineTest extends TestCase
     {
         $driver = new InMemoryDriver();
         $options = new WorkerOptions(sleepMs: 1);
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
 
         $worker->stop();
 
@@ -460,7 +485,7 @@ final class QueuePipelineTest extends TestCase
     {
         $driver = new InMemoryDriver();
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
 
         $result = $worker->processNextJob('default');
 
@@ -476,7 +501,7 @@ final class QueuePipelineTest extends TestCase
         $this->pushEnvelope($driver, 'default', PipelineSuccessJob::class, '{}');
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
 
         $result = $worker->processNextJob('default');
 
@@ -540,7 +565,7 @@ final class QueuePipelineTest extends TestCase
 
         // Process
         $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
-        $worker = new Worker($driver, $options);
+        $worker = $this->createWorker($driver, $options);
         $worker->run('work');
 
         // Verify

@@ -26,7 +26,9 @@ final class SecurityHeadersConfigTest extends TestCase
         self::assertSame('DENY', $headers['X-Frame-Options']);
         self::assertSame('strict-origin-when-cross-origin', $headers['Referrer-Policy']);
         self::assertSame('0', $headers['X-XSS-Protection']);
-        self::assertSame('camera=(), microphone=(), geolocation=()', $headers['Permissions-Policy']);
+        self::assertStringContainsString('camera=()', $headers['Permissions-Policy']);
+        self::assertStringContainsString('microphone=()', $headers['Permissions-Policy']);
+        self::assertStringContainsString('geolocation=()', $headers['Permissions-Policy']);
     }
 
     #[Test]

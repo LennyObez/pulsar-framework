@@ -16,7 +16,6 @@ use function implode;
 use function preg_match;
 use function sprintf;
 use function str_contains;
-use function ucfirst;
 
 use const DIRECTORY_SEPARATOR;
 use const GLOB_ONLYDIR;
@@ -106,7 +105,7 @@ final class DeptracConfigTest extends TestCase
             foreach ($extDirs as $extDir) {
                 if (preg_match('/extensions[\\\\\/]([^\\\\\/]+)[\\\\\/]src$/', $extDir, $matches) === 1) {
                     $extName = $matches[1];
-                    $namespace = 'Pulsar\\\\Extension\\\\' . ucfirst($extName);
+                    $namespace = 'Pulsar\\\\Extension\\\\' . str_replace(' ', '', ucwords(str_replace('-', ' ', $extName)));
 
                     if (!str_contains($content, $namespace)) {
                         $uncovered[] = $extName;

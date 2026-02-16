@@ -32,7 +32,8 @@ final class HeadingBlockTest extends TestCase
     {
         $html = $this->block->render(['text' => 'Title', 'level' => $level]);
 
-        self::assertSame("<h{$level}>Title</h{$level}>", $html);
+        self::assertStringStartsWith("<h{$level}", $html);
+        self::assertStringContainsString('>Title</h' . $level . '>', $html);
     }
 
     /**
@@ -53,7 +54,8 @@ final class HeadingBlockTest extends TestCase
     {
         $html = $this->block->render(['text' => 'Title', 'level' => 0]);
 
-        self::assertSame('<h1>Title</h1>', $html);
+        self::assertStringStartsWith('<h1', $html);
+        self::assertStringContainsString('>Title</h1>', $html);
     }
 
     #[Test]

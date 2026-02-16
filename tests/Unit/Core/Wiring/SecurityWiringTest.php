@@ -134,6 +134,63 @@ final class SecurityWiringTest extends TestCase
         self::assertTrue($container->has(SessionHandlerInterface::class));
     }
 
+    #[Test]
+    public function legacySessionAliasPointsToSessionManager(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager();
+        $configManager->load();
+
+        $wiring = new SecurityWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        // Session::class must resolve to the same SessionManager instance,
+        // not a separate Session object (which would cause dual-session bugs).
+        $sessionManager = $container->get(SessionManager::class);
+        $legacySession = $container->get(Session::class);
+
+        self::assertSame(
+            $sessionManager,
+            $legacySession,
+            'Session::class alias must point to the SessionManager instance, not a separate Session',
+        );
+    }
+
+    #[Test]
+    public function wireRegistersWebAndApiMiddlewareGroups(): void
+    {
+        $container = new Container();
+        $container->instance(Randomizer::class, new Randomizer());
+        $router = new Router();
+        $middleware = new MiddlewarePipeline($container);
+        $middlewareRegistry = new MiddlewareRegistry();
+
+        $configManager = $this->createConfigManager();
+        $configManager->load();
+
+        $wiring = new SecurityWiring();
+        $wiring->wire($container, $configManager, $middleware, $middlewareRegistry, $router);
+
+        self::assertTrue($middlewareRegistry->hasGroup('web'), 'web middleware group should be registered');
+        self::assertTrue($middlewareRegistry->hasGroup('api'), 'api middleware group should be registered');
+        self::assertTrue($middlewareRegistry->hasAlias('session'), 'session middleware alias should be registered');
+        self::assertTrue($middlewareRegistry->hasAlias('csrf'), 'csrf middleware alias should be registered');
+        self::assertTrue($middlewareRegistry->hasAlias('headers'), 'headers middleware alias should be registered');
+
+        // Verify 'web' group resolves to 3 middleware (headers, session, csrf)
+        $webMiddleware = $middlewareRegistry->resolve('web');
+        self::assertCount(3, $webMiddleware);
+
+        // Verify 'api' group resolves to 1 middleware (headers)
+        $apiMiddleware = $middlewareRegistry->resolve('api');
+        self::assertCount(1, $apiMiddleware);
+    }
+
     private function createConfigManager(?string $masterKeyHex = null, string $sessionHandler = 'file'): ConfigManager
     {
         $configPath = sys_get_temp_dir() . '/pulsar_security_wiring_' . bin2hex(random_bytes(4));

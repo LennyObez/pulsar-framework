@@ -128,8 +128,10 @@ final class PerformanceVerificationTest extends TestCase
     {
         $start = hrtime(true);
 
+        $assets = [];
+
         for ($i = 0; $i < 50; $i++) {
-            new MediaAsset(
+            $assets[] = new MediaAsset(
                 id: "media-{$i}",
                 tenantId: null,
                 uploaderId: 'user-001',
@@ -150,6 +152,8 @@ final class PerformanceVerificationTest extends TestCase
                 deletedAt: null,
             );
         }
+
+        self::assertCount(50, $assets);
 
         $elapsed = (hrtime(true) - $start) / 1_000_000;
         $perAsset = $elapsed / 50;
@@ -311,6 +315,11 @@ final class PerformanceContentRepository implements ContentRepositoryInterface
     public function findById(string $id): ?Content
     {
         return $this->contents[$id] ?? null;
+    }
+
+    public function findByImportId(string $importId): ?Content
+    {
+        return null;
     }
 
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?Content

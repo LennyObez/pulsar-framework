@@ -255,7 +255,7 @@ final class AdminDtosTest extends TestCase
     #[Test]
     public function fieldTypeCaseCount(): void
     {
-        self::assertCount(12, FieldType::cases());
+        self::assertCount(31, FieldType::cases());
     }
 
     #[Test]

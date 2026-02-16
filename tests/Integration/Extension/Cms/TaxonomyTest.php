@@ -173,6 +173,16 @@ final class InMemoryTaxonomyRepository implements TaxonomyRepositoryInterface
     /** @var array<string, list<TaxonomyTermTranslation>> */
     private array $termTranslations = [];
 
+    public function findByImportId(string $importId): ?Taxonomy
+    {
+        return null;
+    }
+
+    public function findTermByImportId(string $importId): ?TaxonomyTerm
+    {
+        return null;
+    }
+
     public function findBySlug(string $slug, ?string $tenantId = null): ?Taxonomy
     {
         foreach ($this->taxonomies as $taxonomy) {

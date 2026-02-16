@@ -202,4 +202,34 @@ final class PooledConnectionTest extends TestCase
 
         self::assertSame($wrapped, $pooled->unwrap());
     }
+
+    #[Test]
+    public function destructorReturnsConnectionToPool(): void
+    {
+        $wrapped = $this->createStub(ConnectionInterface::class);
+
+        $pool = $this->createMock(ConnectionPoolInterface::class);
+        $pool->expects(self::once())->method('checkin');
+
+        $pooled = new PooledConnection($wrapped, $pool, time());
+
+        // Simulate going out of scope
+        unset($pooled);
+    }
+
+    #[Test]
+    public function destructorDoesNotDoubleReturnAfterDisconnect(): void
+    {
+        $wrapped = $this->createStub(ConnectionInterface::class);
+
+        $pool = $this->createMock(ConnectionPoolInterface::class);
+        // checkin should only be called once — by disconnect(), not again by __destruct()
+        $pool->expects(self::once())->method('checkin');
+
+        $pooled = new PooledConnection($wrapped, $pool, time());
+        $pooled->disconnect();
+
+        // Destructor fires here but should be a no-op
+        unset($pooled);
+    }
 }
