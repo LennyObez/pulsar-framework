@@ -17,6 +17,9 @@ use function is_string;
 #[Api(since: '1.0.0')]
 readonly class QueueConfig
 {
+    /**
+     * @param array<string, mixed> $driverOptions Driver-specific configuration (host, port, credentials, etc.)
+     */
     public function __construct(
         public bool $enabled = false,
         public QueueDriverType $driver = QueueDriverType::Sync,
@@ -31,6 +34,7 @@ readonly class QueueConfig
         public float $retryMultiplier = 2.0,
         public bool $deadLetterEnabled = true,
         public int $deadLetterRetentionDays = 30,
+        public array $driverOptions = [],
     ) {}
 
     /**
@@ -68,6 +72,9 @@ readonly class QueueConfig
         $rawMultiplier = $retryData['multiplier'] ?? 2.0;
         $rawDlRetention = $dlData['retention_days'] ?? 30;
 
+        /** @var array<string, mixed> $rawDriverOptions */
+        $rawDriverOptions = $data['driver_options'] ?? [];
+
         return new self(
             enabled: $enabled,
             driver: $driver,
@@ -82,6 +89,7 @@ readonly class QueueConfig
             retryMultiplier: is_float($rawMultiplier) || is_int($rawMultiplier) ? (float) $rawMultiplier : 2.0,
             deadLetterEnabled: (bool) ($dlData['enabled'] ?? true),
             deadLetterRetentionDays: is_int($rawDlRetention) ? $rawDlRetention : 30,
+            driverOptions: $rawDriverOptions,
         );
     }
 }

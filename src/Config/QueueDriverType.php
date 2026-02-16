@@ -15,4 +15,8 @@ enum QueueDriverType: string
     case Sync = 'sync';
     case Database = 'database';
     case Memory = 'memory';
+    case Redis = 'redis';
+    case Amqp = 'amqp';
+    case Sqs = 'sqs';
+    case PubSub = 'pubsub';
 }
