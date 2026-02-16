@@ -13,6 +13,9 @@ use Pulsar\Extension\Analytics\Domain\PageView;
 use Pulsar\Queue\JobContext;
 use Pulsar\Queue\QueueableInterface;
 
+use function is_int;
+use function is_string;
+
 /**
  * Optional queue mode: processes page view inserts asynchronously.
  *
@@ -31,27 +34,41 @@ final readonly class ProcessPageViewJob implements QueueableInterface
     public function handle(JobContext $context): void
     {
         $pageView = new PageView(
-            id: (string) ($this->data['id'] ?? ''),
-            siteId: (string) ($this->data['site_id'] ?? ''),
-            visitorId: (string) ($this->data['visitor_id'] ?? ''),
-            sessionId: (string) ($this->data['session_id'] ?? ''),
-            pathname: (string) ($this->data['pathname'] ?? '/'),
-            referrerSource: (string) ($this->data['referrer_source'] ?? ''),
-            utmSource: (string) ($this->data['utm_source'] ?? ''),
-            utmMedium: (string) ($this->data['utm_medium'] ?? ''),
-            utmCampaign: (string) ($this->data['utm_campaign'] ?? ''),
-            utmTerm: (string) ($this->data['utm_term'] ?? ''),
-            utmContent: (string) ($this->data['utm_content'] ?? ''),
-            countryCode: (string) ($this->data['country_code'] ?? ''),
-            deviceType: DeviceType::tryFrom((string) ($this->data['device_type'] ?? '')) ?? DeviceType::Unknown,
-            browser: (string) ($this->data['browser'] ?? ''),
-            os: (string) ($this->data['os'] ?? ''),
-            screenWidth: (int) ($this->data['screen_width'] ?? 0),
+            id: $this->str('id'),
+            siteId: $this->str('site_id'),
+            visitorId: $this->str('visitor_id'),
+            sessionId: $this->str('session_id'),
+            pathname: $this->str('pathname', '/'),
+            referrerSource: $this->str('referrer_source'),
+            utmSource: $this->str('utm_source'),
+            utmMedium: $this->str('utm_medium'),
+            utmCampaign: $this->str('utm_campaign'),
+            utmTerm: $this->str('utm_term'),
+            utmContent: $this->str('utm_content'),
+            countryCode: $this->str('country_code'),
+            deviceType: DeviceType::tryFrom($this->str('device_type')) ?? DeviceType::Unknown,
+            browser: $this->str('browser'),
+            os: $this->str('os'),
+            screenWidth: $this->int('screen_width'),
             isBounce: (bool) ($this->data['is_bounce'] ?? true),
-            createdAt: new DateTimeImmutable((string) ($this->data['created_at'] ?? 'now')),
+            createdAt: new DateTimeImmutable($this->str('created_at', 'now')),
         );
 
         $this->repository->insert($pageView);
+    }
+
+    private function str(string $key, string $default = ''): string
+    {
+        $value = $this->data[$key] ?? null;
+
+        return is_string($value) ? $value : $default;
+    }
+
+    private function int(string $key, int $default = 0): int
+    {
+        $value = $this->data[$key] ?? null;
+
+        return is_int($value) ? $value : $default;
     }
 
     #[Override]

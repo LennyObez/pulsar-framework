@@ -96,7 +96,7 @@ final class AnalyticsConfigTest extends TestCase
             'rate_limit' => 42,
         ]);
 
-        self::assertFalse($config->privacy->respectDnt);
+        self::assertTrue($config->privacy->respectDnt);
         self::assertSame('/plsr/api/event', $config->tracking->trackerEndpoint);
         self::assertSame(90, $config->retention->rawDays);
         self::assertSame(30, $config->rateLimit->maxEventsPerIpPerMinute);

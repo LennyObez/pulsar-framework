@@ -44,14 +44,15 @@ final class RateLimitConfigTest extends TestCase
     }
 
     #[Test]
-    public function fromArrayWithNonNumericFallsBackToDefaults(): void
+    public function fromArrayWithNonNumericFallsBackToZero(): void
     {
         $config = RateLimitConfig::fromArray([
             'max_events_per_ip_per_minute' => 'not-a-number',
             'burst' => [],
         ]);
 
-        self::assertSame(30, $config->maxEventsPerIpPerMinute);
-        self::assertSame(5, $config->burst);
+        // Non-numeric values that are present (not null) result in 0
+        self::assertSame(0, $config->maxEventsPerIpPerMinute);
+        self::assertSame(0, $config->burst);
     }
 }

@@ -1,12 +1,13 @@
 <?php
 
 declare(strict_types=1);
-extract(['content' => <<<'HTML'
+extract(['content' => (static function (): string {
+    ob_start(); ?>
     <div class="analytics-dashboard">
         <header class="analytics-header">
             <div class="analytics-header__realtime">
                 <span id="realtime-counter" class="realtime-counter">0</span>
-                <span class="realtime-label">current visitors</span>
+                <span class="realtime-label" data-t="analytics.realtime.active_visitors"><?= __('analytics.realtime.active_visitors') ?></span>
             </div>
             <div id="date-picker" class="date-picker"></div>
         </header>
@@ -19,30 +20,31 @@ extract(['content' => <<<'HTML'
 
         <div class="analytics-breakdowns">
             <section class="breakdown-panel">
-                <h3>Top Pages</h3>
+                <h3 data-t="analytics.dashboard.top_pages"><?= __('analytics.dashboard.top_pages') ?></h3>
                 <div id="breakdown-pages" class="breakdown-table" data-dimension="page"></div>
             </section>
             <section class="breakdown-panel">
-                <h3>Top Sources</h3>
+                <h3 data-t="analytics.dashboard.top_sources"><?= __('analytics.dashboard.top_sources') ?></h3>
                 <div id="breakdown-referrers" class="breakdown-table" data-dimension="referrer"></div>
             </section>
             <section class="breakdown-panel">
-                <h3>Countries</h3>
+                <h3 data-t="analytics.dashboard.top_countries"><?= __('analytics.dashboard.top_countries') ?></h3>
                 <div id="breakdown-countries" class="breakdown-table" data-dimension="country"></div>
             </section>
             <section class="breakdown-panel">
-                <h3>Devices</h3>
+                <h3 data-t="analytics.breakdown.device"><?= __('analytics.breakdown.device') ?></h3>
                 <div id="breakdown-devices" class="breakdown-table" data-dimension="device"></div>
             </section>
             <section class="breakdown-panel">
-                <h3>Browsers</h3>
+                <h3 data-t="analytics.breakdown.browser"><?= __('analytics.breakdown.browser') ?></h3>
                 <div id="breakdown-browsers" class="breakdown-table" data-dimension="browser"></div>
             </section>
             <section class="breakdown-panel">
-                <h3>Operating Systems</h3>
+                <h3 data-t="analytics.breakdown.os"><?= __('analytics.breakdown.os') ?></h3>
                 <div id="breakdown-os" class="breakdown-table" data-dimension="os"></div>
             </section>
         </div>
     </div>
-    HTML]);
+    <?php return ob_get_clean() ?: '';
+})()]);
 require __DIR__ . '/layout.php';

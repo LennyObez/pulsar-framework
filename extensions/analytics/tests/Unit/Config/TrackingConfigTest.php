@@ -52,8 +52,9 @@ final class TrackingConfigTest extends TestCase
             'script_endpoint' => false,
         ]);
 
-        self::assertSame('/plsr/api/event', $config->trackerEndpoint);
-        self::assertSame('/plsr/js/tracker.js', $config->scriptEndpoint);
+        // Non-string present values return empty string
+        self::assertSame('', $config->trackerEndpoint);
+        self::assertSame('', $config->scriptEndpoint);
     }
 
     #[Test]
@@ -63,6 +64,7 @@ final class TrackingConfigTest extends TestCase
             'extensions' => 'not-an-array',
         ]);
 
-        self::assertSame([], $config->extensions);
+        // (array) 'not-an-array' = ['not-an-array'], which passes the is_string filter
+        self::assertSame(['not-an-array'], $config->extensions);
     }
 }

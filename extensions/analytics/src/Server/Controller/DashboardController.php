@@ -69,7 +69,7 @@ final readonly class DashboardController
             return Response::json(['error' => 'Not found'], 404);
         }
 
-        /** @var non-empty-string $fullPath */
+        /** @var non-falsy-string $fullPath */
 
         $contentType = match ($extension) {
             'css' => 'text/css; charset=utf-8',

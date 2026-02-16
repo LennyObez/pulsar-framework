@@ -36,7 +36,7 @@ use function trim;
  *
  * Falls back gracefully when the database file is not available.
  */
-#[Internal(reason: 'Geo resolver — implements GeoLocationResolverInterface')]
+#[Internal(reason: 'Geo resolver; implements GeoLocationResolverInterface')]
 final class DbIpLiteResolver implements GeoLocationResolverInterface
 {
     private bool $resolved = false;
@@ -168,7 +168,7 @@ final class DbIpLiteResolver implements GeoLocationResolverInterface
             $parts = str_getcsv(trim($line));
 
             if (count($parts) < 3) {
-                // Corrupted line — move forward
+                // Corrupted line: move forward
                 $low = $mid + 1;
 
                 continue;
@@ -188,7 +188,7 @@ final class DbIpLiteResolver implements GeoLocationResolverInterface
             } elseif ($ipLong > $end) {
                 $low = ftell($this->handle) ?: $mid + 1;
             } else {
-                $result = strtoupper(trim($parts[2]));
+                $result = strtoupper(trim($parts[2] ?? ''));
 
                 break;
             }

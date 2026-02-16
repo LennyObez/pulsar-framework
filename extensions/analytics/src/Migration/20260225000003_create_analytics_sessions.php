@@ -42,7 +42,7 @@ return new class implements MigrationInterface {
             SQL);
 
         // Composite index for SessionResolver::findActiveByVisitor() which queries
-        // (site_id, visitor_id, ended_at >= ?) — the three-column index covers
+        // (site_id, visitor_id, ended_at >= ?): the three-column index covers
         // the exact predicate and avoids a full table scan.
         $connection->execute(<<<'SQL'
             CREATE INDEX IF NOT EXISTS idx_session_active_visitor ON analytics_sessions (site_id, visitor_id, ended_at)

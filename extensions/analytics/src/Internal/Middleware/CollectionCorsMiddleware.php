@@ -22,7 +22,7 @@ use const PHP_URL_HOST;
 /**
  * Validates Origin header against registered site domains and sets CORS headers.
  */
-#[Internal(reason: 'Analytics middleware — CORS validation')]
+#[Internal(reason: 'Analytics middleware; CORS validation')]
 final readonly class CollectionCorsMiddleware implements MiddlewareInterface
 {
     public function __construct(

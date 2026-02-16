@@ -59,4 +59,25 @@ interface StatsServiceInterface
      * @return array{current_visitors: int, active_pages: list<array{pathname: string, visitors: int}>}
      */
     public function getRealtime(string $siteId): array;
+
+    /**
+     * Get aggregate metrics with comparison to a previous period.
+     *
+     * Returns current period metrics and percentage change from previous period.
+     *
+     * @param array<string, string> $filters Optional dimension filters
+     * @return array{
+     *     current: array{visitors: int, pageviews: int, sessions: int, bounce_rate: float, avg_duration: float, events_count: int},
+     *     previous: array{visitors: int, pageviews: int, sessions: int, bounce_rate: float, avg_duration: float, events_count: int},
+     *     change: array{visitors: float, pageviews: float, sessions: float, bounce_rate: float, avg_duration: float, events_count: float},
+     * }
+     */
+    public function getAggregateWithComparison(
+        string $siteId,
+        DateTimeImmutable $from,
+        DateTimeImmutable $to,
+        DateTimeImmutable $previousFrom,
+        DateTimeImmutable $previousTo,
+        array $filters = [],
+    ): array;
 }

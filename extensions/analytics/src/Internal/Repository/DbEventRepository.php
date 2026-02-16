@@ -16,7 +16,7 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-#[Internal(reason: 'Raw-DB repository — use EventRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use EventRepositoryInterface for public API')]
 final readonly class DbEventRepository implements EventRepositoryInterface
 {
     private const string SQL_INSERT = <<<'SQL'
@@ -44,8 +44,19 @@ final readonly class DbEventRepository implements EventRepositoryInterface
         LIMIT :limit
         SQL;
 
+    private const string SQL_FIND_BY_VISITOR = <<<'SQL'
+        SELECT * FROM analytics_events
+        WHERE visitor_id = :visitor_id
+        ORDER BY created_at DESC
+        LIMIT :limit
+        SQL;
+
     private const string SQL_DELETE_OLDER_THAN = <<<'SQL'
         DELETE FROM analytics_events WHERE created_at < :before
+        SQL;
+
+    private const string SQL_DELETE_BY_VISITOR = <<<'SQL'
+        DELETE FROM analytics_events WHERE visitor_id = :visitor_id
         SQL;
 
     public function __construct(
@@ -94,10 +105,25 @@ final readonly class DbEventRepository implements EventRepositoryInterface
         ])->map(self::hydrate(...));
     }
 
+    public function findByVisitorId(string $visitorId, int $limit = 10000): array
+    {
+        return $this->connection->query(self::SQL_FIND_BY_VISITOR, [
+            'visitor_id' => $visitorId,
+            'limit' => $limit,
+        ])->map(self::hydrate(...));
+    }
+
     public function deleteOlderThan(DateTimeImmutable $before): int
     {
         return $this->connection->execute(self::SQL_DELETE_OLDER_THAN, [
             'before' => $before->format('Y-m-d H:i:s'),
+        ]);
+    }
+
+    public function deleteByVisitorId(string $visitorId): int
+    {
+        return $this->connection->execute(self::SQL_DELETE_BY_VISITOR, [
+            'visitor_id' => $visitorId,
         ]);
     }
 
@@ -108,7 +134,7 @@ final readonly class DbEventRepository implements EventRepositoryInterface
         $props = $propsRaw !== null ? json_decode($propsRaw, true, flags: JSON_THROW_ON_ERROR) : [];
 
         $revenueRaw = $row->get('revenue_value');
-        $revenue = $revenueRaw !== null ? (float) $revenueRaw : null;
+        $revenue = $revenueRaw !== null && is_numeric($revenueRaw) ? (float) $revenueRaw : null;
 
         return new CustomEvent(
             id: $row->getString('id'),

@@ -1,29 +1,39 @@
-/* Analytics Dashboard Styles */
+/* =============================================================================
+ * Pulsar Analytics — Dashboard Styles
+ *
+ * Uses Pulsar Design System tokens from pulsar-ui.css (loaded via layout.php).
+ * Extension accent: Pulsar Deep Blue (#0039cb) via [data-extension="analytics"].
+ *
+ * Sections:
+ *   1.  Reset & Body
+ *   2.  Layout
+ *   3.  Navigation
+ *   4.  Header
+ *   5.  Realtime Counter
+ *   6.  Date Picker
+ *   7.  Metric Cards
+ *   8.  Charts
+ *   9.  Breakdowns
+ *  10.  Buttons
+ *  11.  Forms
+ *  12.  Dialogs
+ *  13.  Settings
+ *  14.  Goals Table
+ *  15.  Sites List
+ *  16.  Focus & Accessibility
+ *  17.  Responsive
+ *  18.  Reduced Motion
+ *  19.  Print
+ * ============================================================================= */
+
+/* Analytics-specific layout tokens (not in base design system) */
 :root {
-  --analytics-bg: #f8fafc;
-  --analytics-surface: #ffffff;
-  --analytics-border: #e2e8f0;
-  --analytics-text: #1e293b;
-  --analytics-text-muted: #64748b;
-  --analytics-primary: #6366f1;
-  --analytics-primary-hover: #4f46e5;
-  --analytics-danger: #ef4444;
-  --analytics-success: #22c55e;
-  --analytics-radius: 8px;
-  --analytics-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   --analytics-nav-width: 220px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --analytics-bg: #0f172a;
-    --analytics-surface: #1e293b;
-    --analytics-border: #334155;
-    --analytics-text: #f1f5f9;
-    --analytics-text-muted: #94a3b8;
-    --analytics-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
-}
+/* =============================================================================
+ * 1. Reset & Body
+ * ============================================================================= */
 
 *,
 *::before,
@@ -33,18 +43,16 @@
 
 body {
   margin: 0;
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
-  background: var(--analytics-bg);
-  color: var(--analytics-text);
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: var(--leading-normal);
 }
 
-/* Layout */
+/* =============================================================================
+ * 2. Layout
+ * ============================================================================= */
+
 .analytics-layout {
   display: flex;
   min-height: 100vh;
@@ -52,45 +60,50 @@ body {
 
 .analytics-main {
   flex: 1;
-  padding: 24px;
+  padding: var(--space-6);
   max-width: 1400px;
   margin: 0 auto;
 }
 
-/* Navigation */
+/* =============================================================================
+ * 3. Navigation
+ * ============================================================================= */
+
 .analytics-nav {
   width: var(--analytics-nav-width);
-  background: var(--analytics-surface);
-  border-right: 1px solid var(--analytics-border);
-  padding: 20px 0;
+  background: var(--color-bg-secondary);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-5) 0;
   flex-shrink: 0;
 }
 
 .analytics-nav__brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 20px 20px;
-  border-bottom: 1px solid var(--analytics-border);
-  margin-bottom: 12px;
+  gap: var(--space-2-5);
+  padding: 0 var(--space-5) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-3);
 }
 
 .analytics-nav__logo {
   width: 32px;
   height: 32px;
-  background: var(--analytics-primary);
-  color: white;
-  border-radius: 6px;
+  background: var(--ext-accent);
+  color: var(--ext-accent-text);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: var(--font-bold);
+  font-size: var(--text-base);
+  font-family: var(--font-heading);
 }
 
 .analytics-nav__title {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  font-family: var(--font-heading);
 }
 
 .analytics-nav__links {
@@ -101,132 +114,189 @@ body {
 
 .analytics-nav__link {
   display: block;
-  padding: 10px 20px;
-  color: var(--analytics-text-muted);
+  padding: var(--space-2-5) var(--space-5);
+  color: var(--color-text-muted);
   text-decoration: none;
-  font-size: 14px;
-  transition: all 0.15s;
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
 }
 
 .analytics-nav__link:hover {
-  color: var(--analytics-text);
-  background: var(--analytics-bg);
+  color: var(--color-text);
+  background: var(--color-bg-tertiary);
 }
 
-/* Header */
+.analytics-nav__link.active {
+  color: var(--ext-accent);
+  background: var(--ext-accent-dim);
+}
+
+/* =============================================================================
+ * 4. Header
+ * ============================================================================= */
+
 .analytics-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
   flex-wrap: wrap;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
-/* Realtime Counter */
+.analytics-header h1 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-bold);
+  font-size: var(--text-2xl);
+  margin: 0;
+}
+
+/* =============================================================================
+ * 5. Realtime Counter
+ * ============================================================================= */
+
 .realtime-counter {
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--analytics-success);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-success-500);
   font-variant-numeric: tabular-nums;
 }
 
 .realtime-label {
-  font-size: 13px;
-  color: var(--analytics-text-muted);
-  margin-left: 6px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-left: var(--space-1-5);
 }
 
-/* Date Picker */
+/* =============================================================================
+ * 6. Date Picker
+ * ============================================================================= */
+
 .date-picker {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
 .date-picker__presets {
   display: flex;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .date-picker__btn {
-  padding: 6px 12px;
-  border: 1px solid var(--analytics-border);
-  background: var(--analytics-surface);
-  color: var(--analytics-text-muted);
-  border-radius: var(--analytics-radius);
+  padding: var(--space-1-5) var(--space-3);
+  border: 1px solid var(--input-border);
+  background: var(--card-bg);
+  color: var(--color-text-muted);
+  border-radius: var(--btn-radius);
   cursor: pointer;
-  font-size: 13px;
-  transition: all 0.15s;
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+  transition: all var(--transition-fast);
 }
 
 .date-picker__btn:hover {
-  border-color: var(--analytics-primary);
-  color: var(--analytics-primary);
+  border-color: var(--ext-accent);
+  color: var(--ext-accent);
 }
 
 .date-picker__btn--active {
-  background: var(--analytics-primary);
-  border-color: var(--analytics-primary);
-  color: white;
+  background: var(--ext-accent);
+  border-color: var(--ext-accent);
+  color: var(--ext-accent-text);
 }
 
 .date-picker__custom {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1-5);
 }
 
 .date-picker__input {
-  padding: 6px 10px;
-  border: 1px solid var(--analytics-border);
-  background: var(--analytics-surface);
-  color: var(--analytics-text);
-  border-radius: var(--analytics-radius);
-  font-size: 13px;
+  padding: var(--space-1-5) var(--space-2-5);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
+  border-radius: var(--input-radius);
+  font-size: var(--text-xs);
+  font-family: var(--font-sans);
+}
+
+.date-picker__input:focus {
+  outline: none;
+  border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 var(--input-ring-width) var(--input-ring-color);
 }
 
 .date-picker__sep {
-  color: var(--analytics-text-muted);
+  color: var(--color-text-muted);
 }
 
-/* Metric Cards */
+/* =============================================================================
+ * 7. Metric Cards
+ * ============================================================================= */
+
 .metric-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
 .metric-card {
-  background: var(--analytics-surface);
-  border: 1px solid var(--analytics-border);
-  border-radius: var(--analytics-radius);
-  padding: 20px;
-  box-shadow: var(--analytics-shadow);
+  background: var(--card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  box-shadow: var(--card-shadow);
 }
 
 .metric-card__value {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
   font-variant-numeric: tabular-nums;
-  color: var(--analytics-text);
+  color: var(--color-text);
+  font-family: var(--font-heading);
 }
 
 .metric-card__label {
-  font-size: 13px;
-  color: var(--analytics-text-muted);
-  margin-top: 4px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
 }
 
-/* Chart */
+.metric-card__change {
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  margin-top: var(--space-1);
+}
+
+.metric-card__change--up {
+  color: var(--color-success-500);
+}
+
+.metric-card__change--down {
+  color: var(--color-danger-500);
+}
+
+/* =============================================================================
+ * 8. Charts
+ * ============================================================================= */
+
 .analytics-chart {
-  background: var(--analytics-surface);
-  border: 1px solid var(--analytics-border);
-  border-radius: var(--analytics-radius);
-  padding: 20px;
-  margin-bottom: 24px;
-  box-shadow: var(--analytics-shadow);
+  background: var(--card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--card-shadow);
+}
+
+.analytics-chart h3 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-4);
 }
 
 .timeseries-canvas {
@@ -236,30 +306,34 @@ body {
 
 .chart-empty {
   text-align: center;
-  color: var(--analytics-text-muted);
-  padding: 60px 0;
+  color: var(--color-text-muted);
+  padding: var(--space-16) 0;
 }
 
-/* Breakdowns */
+/* =============================================================================
+ * 9. Breakdowns
+ * ============================================================================= */
+
 .analytics-breakdowns {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .breakdown-panel {
-  background: var(--analytics-surface);
-  border: 1px solid var(--analytics-border);
-  border-radius: var(--analytics-radius);
-  padding: 20px;
-  box-shadow: var(--analytics-shadow);
+  background: var(--card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  box-shadow: var(--card-shadow);
 }
 
 .breakdown-panel h3 {
-  font-size: 14px;
-  font-weight: 600;
-  margin: 0 0 16px;
-  color: var(--analytics-text);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  font-family: var(--font-heading);
+  margin: 0 0 var(--space-4);
+  color: var(--color-text);
 }
 
 .breakdown-table__inner {
@@ -268,12 +342,12 @@ body {
 }
 
 .breakdown-table__inner th {
-  font-size: 11px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--analytics-text-muted);
-  font-weight: 500;
-  padding: 0 0 8px;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  font-weight: var(--font-medium);
+  padding: 0 0 var(--space-2);
   text-align: left;
 }
 
@@ -287,8 +361,8 @@ body {
 }
 
 .breakdown-row td {
-  padding: 6px 0;
-  font-size: 14px;
+  padding: var(--space-1-5) 0;
+  font-size: var(--text-sm);
 }
 
 .breakdown-row__name {
@@ -301,9 +375,9 @@ body {
   top: 2px;
   left: 0;
   bottom: 2px;
-  background: var(--analytics-primary);
+  background: var(--ext-accent);
   opacity: 0.08;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .breakdown-row__text {
@@ -314,149 +388,187 @@ body {
 .breakdown-row__visitors {
   text-align: right;
   font-variant-numeric: tabular-nums;
-  color: var(--analytics-text-muted);
+  color: var(--color-text-muted);
 }
 
 .breakdown-empty {
   text-align: center;
-  color: var(--analytics-text-muted);
-  font-size: 13px;
-  padding: 20px 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  padding: var(--space-5) 0;
 }
 
-/* Buttons */
+/* =============================================================================
+ * 10. Buttons
+ * ============================================================================= */
+
 .btn {
   display: inline-flex;
   align-items: center;
-  padding: 8px 16px;
-  border: 1px solid var(--analytics-border);
-  background: var(--analytics-surface);
-  color: var(--analytics-text);
-  border-radius: var(--analytics-radius);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--input-border);
+  background: var(--card-bg);
+  color: var(--color-text);
+  border-radius: var(--btn-radius);
   cursor: pointer;
-  font-size: 14px;
-  transition: all 0.15s;
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+  font-weight: var(--btn-font-weight);
+  transition: all var(--transition-fast);
 }
 
 .btn:hover {
-  border-color: var(--analytics-text-muted);
+  border-color: var(--color-border-strong);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
 }
 
 .btn-primary {
-  background: var(--analytics-primary);
-  border-color: var(--analytics-primary);
-  color: white;
+  background: var(--ext-accent);
+  border-color: var(--ext-accent);
+  color: var(--ext-accent-text);
 }
 
 .btn-primary:hover {
-  background: var(--analytics-primary-hover);
+  background: var(--ext-accent-hover);
+  border-color: var(--ext-accent-hover);
 }
 
 .btn-danger {
-  color: var(--analytics-danger);
-  border-color: var(--analytics-danger);
+  color: var(--color-danger-500);
+  border-color: var(--color-danger-500);
+}
+
+.btn-danger:hover {
+  background: var(--color-danger-50);
 }
 
 .btn-sm {
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: var(--space-1) var(--space-2-5);
+  font-size: var(--text-xs);
 }
 
-/* Forms */
+/* =============================================================================
+ * 11. Forms
+ * ============================================================================= */
+
 .form-group {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-4);
 }
 
 .form-group label {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 4px;
-  color: var(--analytics-text);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  margin-bottom: var(--space-1);
+  color: var(--color-text);
 }
 
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--analytics-border);
-  background: var(--analytics-surface);
-  color: var(--analytics-text);
-  border-radius: var(--analytics-radius);
-  font-size: 14px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--input-text);
+  border-radius: var(--input-radius);
+  font-size: var(--text-sm);
+  font-family: var(--font-sans);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 var(--input-ring-width) var(--input-ring-color);
 }
 
 .form-group small {
   display: block;
-  font-size: 12px;
-  color: var(--analytics-text-muted);
-  margin-top: 4px;
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
 }
 
 .form-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   justify-content: flex-end;
-  margin-top: 24px;
+  margin-top: var(--space-6);
 }
 
-/* Dialog */
+/* =============================================================================
+ * 12. Dialogs
+ * ============================================================================= */
+
 dialog {
-  border: 1px solid var(--analytics-border);
-  border-radius: calc(var(--analytics-radius) * 2);
-  padding: 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--modal-radius);
+  padding: var(--space-6);
   max-width: 480px;
   width: 100%;
-  background: var(--analytics-surface);
-  color: var(--analytics-text);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  background: var(--modal-bg);
+  color: var(--color-text);
+  box-shadow: var(--modal-shadow);
 }
 
 dialog::backdrop {
-  background: rgba(0, 0, 0, 0.4);
+  background: var(--modal-backdrop);
 }
 
-/* Settings */
+/* =============================================================================
+ * 13. Settings
+ * ============================================================================= */
+
 .settings-section {
-  background: var(--analytics-surface);
-  border: 1px solid var(--analytics-border);
-  border-radius: var(--analytics-radius);
-  padding: 20px;
-  margin-bottom: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  margin-bottom: var(--space-4);
 }
 
 .settings-section h3 {
-  margin: 0 0 12px;
-  font-size: 15px;
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-family: var(--font-heading);
+  font-weight: var(--font-semibold);
 }
 
 .settings-list {
   display: grid;
   grid-template-columns: 200px 1fr;
-  gap: 8px 16px;
+  gap: var(--space-2) var(--space-4);
 }
 
 .settings-list dt {
-  font-size: 13px;
-  color: var(--analytics-text-muted);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
 }
 
 .settings-list dd {
   margin: 0;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
 }
 
 .code-block {
-  background: var(--analytics-bg);
-  border: 1px solid var(--analytics-border);
-  border-radius: var(--analytics-radius);
-  padding: 16px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  padding: var(--space-4);
   overflow-x: auto;
-  font-size: 13px;
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
 }
 
-/* Goals table */
+/* =============================================================================
+ * 14. Goals Table
+ * ============================================================================= */
+
 .goals-table {
   width: 100%;
   border-collapse: collapse;
@@ -464,27 +576,67 @@ dialog::backdrop {
 
 .goals-table th {
   text-align: left;
-  font-size: 12px;
+  font-size: var(--text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--analytics-text-muted);
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--analytics-border);
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--table-border);
 }
 
 .goals-table td {
-  padding: 10px 12px;
-  font-size: 14px;
-  border-bottom: 1px solid var(--analytics-border);
+  padding: var(--space-2-5) var(--space-3);
+  font-size: var(--text-sm);
+  border-bottom: 1px solid var(--table-border);
 }
 
-/* Sites list */
+.goals-table tr:hover td {
+  background: var(--table-hover-bg);
+}
+
+/* =============================================================================
+ * 15. Sites List
+ * ============================================================================= */
+
 .sites-list {
   display: grid;
-  gap: 12px;
+  gap: var(--space-3);
 }
 
-/* Responsive */
+/* =============================================================================
+ * 16. Focus & Accessibility
+ * ============================================================================= */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only--focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: var(--space-2) var(--space-4);
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background: var(--ext-accent);
+  color: var(--ext-accent-text);
+  z-index: var(--z-toast);
+}
+
+/* =============================================================================
+ * 17. Responsive
+ * ============================================================================= */
+
 @media (max-width: 768px) {
   .analytics-layout {
     flex-direction: column;
@@ -493,13 +645,13 @@ dialog::backdrop {
   .analytics-nav {
     width: 100%;
     border-right: none;
-    border-bottom: 1px solid var(--analytics-border);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .analytics-nav__links {
     display: flex;
-    padding: 0 12px;
-    gap: 4px;
+    padding: 0 var(--space-3);
+    gap: var(--space-1);
   }
 
   .analytics-breakdowns {
@@ -508,5 +660,60 @@ dialog::backdrop {
 
   .date-picker {
     flex-wrap: wrap;
+  }
+
+  .settings-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =============================================================================
+ * 18. Reduced Motion
+ * ============================================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* =============================================================================
+ * 19. Print
+ * ============================================================================= */
+
+@media print {
+  .analytics-nav,
+  .date-picker,
+  .btn,
+  .form-actions {
+    display: none !important;
+  }
+
+  .analytics-layout {
+    display: block;
+  }
+
+  .analytics-main {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  body {
+    background: white;
+    color: black;
+  }
+
+  .metric-card,
+  .breakdown-panel,
+  .analytics-chart,
+  .settings-section {
+    box-shadow: none;
+    border: 1px solid #ccc;
+    break-inside: avoid;
   }
 }

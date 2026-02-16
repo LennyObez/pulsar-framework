@@ -15,7 +15,7 @@ use function sprintf;
 /**
  * Weekly job: creates future partitions and drops expired ones.
  *
- * Only operates on MySQL/MariaDB — no-op for SQLite.
+ * Only operates on MySQL/MariaDB: no-op for SQLite.
  */
 #[Internal(reason: 'Scheduled partition maintenance job')]
 final readonly class PartitionMaintenanceJob

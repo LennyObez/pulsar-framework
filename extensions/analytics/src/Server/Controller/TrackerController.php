@@ -19,7 +19,7 @@ use function is_file;
  * than embedding it as a PHP string constant, allowing proper build tooling,
  * versioning, and cache-busting via ETag.
  */
-#[Internal(reason: 'Serves tracker JS — public endpoint')]
+#[Internal(reason: 'Serves tracker JS; public endpoint')]
 final readonly class TrackerController
 {
     /**

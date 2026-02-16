@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Analytics\Internal\Service;
 
 use DateTimeImmutable;
+use InvalidArgumentException;
+use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Extension\Analytics\Contracts\AggregationServiceInterface;
 use Pulsar\Extension\Analytics\Contracts\DailyStatsRepositoryInterface;
 use Pulsar\Extension\Analytics\Domain\DailyStats;
 use Pulsar\Extension\Analytics\Domain\HourlyStats;
@@ -20,8 +23,8 @@ use Pulsar\Extension\Analytics\Internal\Repository\DbHourlyStatsRepository;
  * UPDATE, PostgreSQL uses ON CONFLICT ... DO UPDATE with EXCLUDED, SQLite uses
  * ON CONFLICT ... DO UPDATE with lowercase excluded).
  */
-#[Internal(reason: 'Aggregation pipeline — used by scheduled jobs')]
-final readonly class AggregationService
+#[Internal(reason: 'Aggregation pipeline; used by scheduled jobs')]
+final readonly class AggregationService implements AggregationServiceInterface
 {
     private const string SQL_HOURLY_AGGREGATE = <<<'SQL'
         SELECT
@@ -326,6 +329,7 @@ final readonly class AggregationService
         private ConnectionInterface $connection,
     ) {}
 
+    #[Override]
     public function aggregateHourly(DateTimeImmutable $hour, string $siteId): void
     {
         $from = $hour->setTime((int) $hour->format('G'), 0);
@@ -371,6 +375,7 @@ final readonly class AggregationService
         $this->hourlyStatsRepository->upsert($stats);
     }
 
+    #[Override]
     public function aggregateDaily(DateTimeImmutable $date, string $siteId): void
     {
         $from = $date->setTime(0, 0);
@@ -427,6 +432,7 @@ final readonly class AggregationService
     {
         $driver = $this->connection->driver();
 
+        /** @var Driver $driver */
         return match ($table) {
             'pages' => match ($driver) {
                 Driver::MySQL => self::SQL_DAILY_PAGES_MYSQL,
@@ -448,6 +454,7 @@ final readonly class AggregationService
                 Driver::SQLite => self::SQL_DAILY_LOCATIONS_SQLITE,
                 Driver::PostgreSQL => self::SQL_DAILY_LOCATIONS_PGSQL,
             },
+            default => throw new InvalidArgumentException("Unknown aggregation table: $table"),
         };
     }
 }

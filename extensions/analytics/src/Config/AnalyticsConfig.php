@@ -48,7 +48,7 @@ final readonly class AnalyticsConfig
 
         return new self(
             enabled: (bool) ($data['enabled'] ?? true),
-            collectionDriver: (string) ($collection['driver'] ?? 'direct'),
+            collectionDriver: is_string($collection['driver'] ?? null) ? $collection['driver'] : 'direct',
             trustedProxies: array_values(array_filter(
                 $proxies,
                 static fn(mixed $v): bool => is_string($v) && $v !== '',

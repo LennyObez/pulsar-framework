@@ -26,9 +26,12 @@ final readonly class RateLimitConfig
      */
     public static function fromArray(array $data): self
     {
+        $rawMax = $data['max_events_per_ip_per_minute'] ?? null;
+        $rawBurst = $data['burst'] ?? null;
+
         return new self(
-            maxEventsPerIpPerMinute: (int) ($data['max_events_per_ip_per_minute'] ?? 30),
-            burst: (int) ($data['burst'] ?? 5),
+            maxEventsPerIpPerMinute: $rawMax !== null ? (is_numeric($rawMax) ? (int) $rawMax : 0) : 30,
+            burst: $rawBurst !== null ? (is_numeric($rawBurst) ? (int) $rawBurst : 0) : 5,
         );
     }
 }
