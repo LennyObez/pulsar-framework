@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Security;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Config\EnvironmentMode;
 use Pulsar\Extension\Studio\Config\StudioSecurityConfig;
-use Pulsar\Http\Request;
 
 use function base64_decode;
 use function count;
@@ -41,7 +41,7 @@ final readonly class StudioAccessGate
      *
      * @return array{allowed: bool, reason: ?string}
      */
-    public function check(Request $request): array
+    public function check(ServerRequestInterface $request): array
     {
         // Local mode: always allowed
         if ($this->mode === EnvironmentMode::Local) {
@@ -54,7 +54,7 @@ final readonly class StudioAccessGate
         }
 
         // CIDR check
-        $clientIp = $request->server('REMOTE_ADDR');
+        $clientIp = $request->getServerParams()['REMOTE_ADDR'] ?? null;
         if (is_string($clientIp) && !$this->allowlistChecker->isAllowed($clientIp)) {
             return ['allowed' => false, 'reason' => 'IP not in allowlist'];
         }
@@ -70,14 +70,14 @@ final readonly class StudioAccessGate
         return ['allowed' => true, 'reason' => null];
     }
 
-    private function checkBasicAuth(Request $request): bool
+    private function checkBasicAuth(ServerRequestInterface $request): bool
     {
         if ($this->config->username === null || $this->config->password === null) {
             return false;
         }
 
-        $authHeader = $request->header('Authorization');
-        if ($authHeader === null) {
+        $authHeader = $request->getHeaderLine('Authorization');
+        if ($authHeader === '') {
             return false;
         }
 

@@ -6,6 +6,7 @@ namespace Pulsar\Resilience;
 
 use Closure;
 use NoDiscard;
+use Pulsar\Api\Api;
 use Pulsar\Config\CircuitBreakerConfig;
 use Pulsar\Resilience\Exception\ResilienceException;
 use Throwable;
@@ -17,6 +18,7 @@ use Throwable;
  * After a timeout period, allows a limited number of probe requests (half-open state).
  * Resets to closed after sufficient successful probes.
  */
+#[Api(since: '1.0.0-rc.11')]
 final class CircuitBreaker
 {
     private CircuitBreakerState $state = CircuitBreakerState::Closed;

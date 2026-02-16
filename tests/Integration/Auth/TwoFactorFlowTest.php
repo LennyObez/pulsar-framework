@@ -7,6 +7,9 @@ namespace Pulsar\Tests\Integration\Auth;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\AuthManagerInterface;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
@@ -17,10 +20,8 @@ use Pulsar\Auth\TwoFactor\RecoveryCodeVerifier;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
 use Pulsar\Auth\TwoFactor\TwoFactorManager;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(TwoFactorManager::class)]
@@ -110,24 +111,26 @@ final class TwoFactorFlowTest extends TestCase
         $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($pendingIdentity);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/dashboard',
-            path: '/dashboard',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
+            headers: [],
         );
 
         $securityContext = new SecurityContext($authManager, $request);
         $request = $request->withAttribute('_security_context', $securityContext);
 
         $middleware = new TwoFactorMiddleware();
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(statusCode: ResponseStatus::OK->value, body: 'OK');
+            }
+        };
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -143,24 +146,26 @@ final class TwoFactorFlowTest extends TestCase
         $authManager = $this->createStub(AuthManagerInterface::class);
         $authManager->method('authenticate')->willReturn($verifiedIdentity);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/dashboard',
-            path: '/dashboard',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
+            headers: [],
         );
 
         $securityContext = new SecurityContext($authManager, $request);
         $request = $request->withAttribute('_security_context', $securityContext);
 
         $middleware = new TwoFactorMiddleware();
-        $handler = fn(Request $req): Response => new Response(body: 'OK', status: ResponseStatus::OK);
+        $handler = new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return new Response(statusCode: ResponseStatus::OK->value, body: 'OK');
+            }
+        };
 
         $response = $middleware->process($request, $handler);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]

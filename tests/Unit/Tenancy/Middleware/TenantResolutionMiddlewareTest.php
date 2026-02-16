@@ -7,11 +7,12 @@ namespace Pulsar\Tests\Unit\Tenancy\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\TenancyConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Tenancy\Middleware\TenantResolutionMiddleware;
 use Pulsar\Tenancy\Resolver\HeaderTenantResolver;
 use Pulsar\Tenancy\Tenant;
@@ -35,21 +36,17 @@ final class TenantResolutionMiddlewareTest extends TestCase
         $resolver = new HeaderTenantResolver($config);
         $middleware = new TenantResolutionMiddleware($resolver, $context, $config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(['X-Tenant-ID' => ['acme']]),
-            body: '',
+            headers: ['X-Tenant-ID' => 'acme'],
         );
 
-        $response = new Response(body: 'ok');
-        $next = function (Request $r) use ($response): Response {
-            return $response;
-        };
+        $response = new Response(statusCode: 200, body: 'ok');
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn($response);
 
-        $middleware->process($request, $next);
+        $middleware->process($request, $handler);
 
         self::assertTrue($context->isResolved());
         self::assertSame('acme', $context->get()->id);
@@ -69,27 +66,36 @@ final class TenantResolutionMiddlewareTest extends TestCase
         $resolver = new HeaderTenantResolver($config);
         $middleware = new TenantResolutionMiddleware($resolver, $context, $config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(['X-Tenant-ID' => ['acme']]),
-            body: '',
+            headers: ['X-Tenant-ID' => 'acme'],
         );
 
         $capturedRequest = null;
-        $response = new Response(body: 'ok');
-        $next = function (Request $r) use ($response, &$capturedRequest): Response {
-            $capturedRequest = $r;
+        $response = new Response(statusCode: 200, body: 'ok');
+        $handler = new class ($response, $capturedRequest) implements RequestHandlerInterface {
+            public ?ServerRequestInterface $capturedRequest = null;
 
-            return $response;
+            public function __construct(
+                private ResponseInterface $response,
+                ?ServerRequestInterface &$ref,
+            ) {
+                $this->capturedRequest = &$ref;
+            }
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->capturedRequest = $request;
+
+                return $this->response;
+            }
         };
 
-        $middleware->process($request, $next);
+        $middleware->process($request, $handler);
 
-        self::assertNotNull($capturedRequest);
-        $tenant = $capturedRequest->attribute('_tenant');
+        self::assertNotNull($handler->capturedRequest);
+        $tenant = $handler->capturedRequest->getAttribute('_tenant');
         self::assertInstanceOf(Tenant::class, $tenant);
         self::assertSame('acme', $tenant->id);
     }
@@ -112,21 +118,16 @@ final class TenantResolutionMiddlewareTest extends TestCase
         $resolver = new HeaderTenantResolver($config);
         $middleware = new TenantResolutionMiddleware($resolver, $context, $config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
-        $response = new Response(body: 'ok');
-        $next = function (Request $r) use ($response): Response {
-            return $response;
-        };
+        $response = new Response(statusCode: 200, body: 'ok');
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn($response);
 
-        $middleware->process($request, $next);
+        $middleware->process($request, $handler);
 
         self::assertTrue($context->isResolved());
         self::assertSame('fallback', $context->get()->id);
@@ -147,28 +148,36 @@ final class TenantResolutionMiddlewareTest extends TestCase
         $resolver = new HeaderTenantResolver($config);
         $middleware = new TenantResolutionMiddleware($resolver, $context, $config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
-        $response = new Response(body: 'ok');
+        $response = new Response(statusCode: 200, body: 'ok');
         $capturedRequest = null;
-        $next = function (Request $r) use ($response, &$capturedRequest): Response {
-            $capturedRequest = $r;
+        $handler = new class ($response, $capturedRequest) implements RequestHandlerInterface {
+            public ?ServerRequestInterface $capturedRequest = null;
 
-            return $response;
+            public function __construct(
+                private ResponseInterface $response,
+                ?ServerRequestInterface &$ref,
+            ) {
+                $this->capturedRequest = &$ref;
+            }
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->capturedRequest = $request;
+
+                return $this->response;
+            }
         };
 
-        $result = $middleware->process($request, $next);
+        $result = $middleware->process($request, $handler);
 
         self::assertFalse($context->isResolved());
         self::assertSame($response, $result);
-        self::assertNotNull($capturedRequest);
-        self::assertNull($capturedRequest->attribute('_tenant'));
+        self::assertNotNull($handler->capturedRequest);
+        self::assertNull($handler->capturedRequest->getAttribute('_tenant'));
     }
 }

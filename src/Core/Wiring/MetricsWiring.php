@@ -8,11 +8,10 @@ use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Container\ContainerInterface;
-use Pulsar\Http\HeaderBag;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MetricsMiddleware;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
-use Pulsar\Http\Response;
 use Pulsar\Http\RouteContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Observability\Metrics\OpenMetricsExporter;
@@ -59,8 +58,9 @@ final readonly class MetricsWiring implements ServiceWiringInterface
                 $exporter = new OpenMetricsExporter($registry);
 
                 return new Response(
+                    statusCode: 200,
+                    headers: ['Content-Type' => 'text/plain; version=0.0.4; charset=utf-8'],
                     body: $exporter->export(),
-                    headers: new HeaderBag(['content-type' => ['text/plain; version=0.0.4; charset=utf-8']]),
                 );
             });
         }

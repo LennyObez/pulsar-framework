@@ -15,9 +15,7 @@ use Pulsar\Context\RequestContextHolder;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
 use Pulsar\ErrorHandling\ExceptionHandler;
 use Pulsar\ErrorHandling\HttpException;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\RoutingException;
 use RuntimeException;
@@ -29,15 +27,11 @@ use function is_string;
 #[CoversClass(ExceptionHandler::class)]
 final class ExceptionHandlerTest extends TestCase
 {
-    private function createRequest(string $path = '/'): Request
+    private function createRequest(string $path = '/'): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 
@@ -51,7 +45,7 @@ final class ExceptionHandlerTest extends TestCase
             $this->createRequest(),
         );
 
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -64,7 +58,7 @@ final class ExceptionHandlerTest extends TestCase
             $this->createRequest('/missing'),
         );
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -73,12 +67,12 @@ final class ExceptionHandlerTest extends TestCase
         $handler = new ExceptionHandler(new DevelopmentRenderer());
 
         $response = $handler->handle(
-            RoutingException::methodNotAllowed('/test', Method::POST, [Method::GET, Method::PUT]),
+            RoutingException::methodNotAllowed('/test', \Pulsar\Http\Method::POST, [\Pulsar\Http\Method::GET, \Pulsar\Http\Method::PUT]),
             $this->createRequest('/test'),
         );
 
-        self::assertSame(ResponseStatus::MethodNotAllowed, $response->status);
-        self::assertSame('GET, PUT', $response->headers->first('Allow'));
+        self::assertSame(ResponseStatus::MethodNotAllowed->value, $response->getStatusCode());
+        self::assertSame('GET, PUT', $response->getHeaderLine('Allow'));
     }
 
     #[Test]
@@ -91,7 +85,7 @@ final class ExceptionHandlerTest extends TestCase
             $this->createRequest(),
         );
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -107,7 +101,7 @@ final class ExceptionHandlerTest extends TestCase
 
         $response = $handler->handle($exception, $this->createRequest());
 
-        self::assertSame('60', $response->headers->first('Retry-After'));
+        self::assertSame('60', $response->getHeaderLine('Retry-After'));
     }
 
     #[Test]
@@ -153,7 +147,7 @@ final class ExceptionHandlerTest extends TestCase
         );
 
         // Should not throw, should produce a response
-        self::assertSame(ResponseStatus::InternalServerError, $response->status);
+        self::assertSame(ResponseStatus::InternalServerError->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -200,13 +194,10 @@ final class ExceptionHandlerTest extends TestCase
             requestContextHolder: $holder,
         );
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/api/data',
-            path: '/api/data',
-            queryString: '',
-            headers: new HeaderBag(['Accept' => 'application/json']),
-            body: '',
+            headers: ['Accept' => 'application/json'],
         );
 
         $response = $handler->handle(
@@ -215,7 +206,7 @@ final class ExceptionHandlerTest extends TestCase
         );
 
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertIsArray($body);
         self::assertArrayHasKey('correlation_id', $body);
         self::assertSame(str_repeat('ef', 16), $body['correlation_id']);

@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Pulsar\ErrorHandling;
 
 use Override;
-use Pulsar\Http\Request;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\ErrorTracking\SensitiveDataScrubber;
 use Throwable;
 
 use function htmlspecialchars;
+use function implode;
 use function is_array;
 use function is_scalar;
 use function is_string;
@@ -28,7 +29,7 @@ final readonly class DevelopmentRenderer implements ExceptionRendererInterface
         private SensitiveDataScrubber $scrubber = new SensitiveDataScrubber(),
     ) {}
     #[Override]
-    public function render(Throwable $exception, Request $request, ResponseStatus $status): string
+    public function render(Throwable $exception, ServerRequestInterface $request, ResponseStatus $status): string
     {
         $title = sprintf('%d %s', $status->value, $this->escape($status->reasonPhrase()));
         $exceptionClass = $this->escape($exception::class);
@@ -37,11 +38,13 @@ final readonly class DevelopmentRenderer implements ExceptionRendererInterface
         $line = $exception->getLine();
         $trace = $this->escape($exception->getTraceAsString());
 
-        $requestMethod = $this->escape($request->method->value);
-        $requestUri = $this->escape($request->uri);
+        $requestMethod = $this->escape($request->getMethod());
+        $requestUri = $this->escape((string) $request->getUri());
 
         $headersHtml = $this->renderHeaders($request);
-        $queryHtml = $this->renderArray($request->query);
+        /** @var array<string, mixed> $queryParams */
+        $queryParams = $request->getQueryParams();
+        $queryHtml = $this->renderArray($queryParams);
         $previousHtml = $this->renderPreviousExceptions($exception);
 
         return <<<HTML
@@ -114,10 +117,12 @@ final readonly class DevelopmentRenderer implements ExceptionRendererInterface
             HTML;
     }
 
-    private function renderHeaders(Request $request): string
+    private function renderHeaders(ServerRequestInterface $request): string
     {
         $html = '';
-        $headers = $this->scrubber->scrubHeaders($request->headers->toArray());
+        /** @var array<string, list<string>|string> $rawHeaders */
+        $rawHeaders = $request->getHeaders();
+        $headers = $this->scrubber->scrubHeaders($rawHeaders);
 
         foreach ($headers as $name => $values) {
             $escapedName = $this->escape($name);

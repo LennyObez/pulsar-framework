@@ -7,27 +7,38 @@ namespace Pulsar\Tests\Unit\Extension\Admin\Internal\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Internal\Middleware\AdminAccessMiddleware;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(AdminAccessMiddleware::class)]
 final class AdminAccessMiddlewareTest extends TestCase
 {
-    private static function makeRequest(): Request
+    private static function makeRequest(): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/admin/dashboard',
-            path: '/admin/dashboard',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
+    }
+
+    private static function makeHandler(Response $response): RequestHandlerInterface
+    {
+        $handler = new class ($response) implements RequestHandlerInterface {
+            public function __construct(private readonly Response $response) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->response;
+            }
+        };
+
+        return $handler;
     }
 
     #[Test]
@@ -37,11 +48,11 @@ final class AdminAccessMiddlewareTest extends TestCase
         $middleware = new AdminAccessMiddleware($config);
 
         $expectedResponse = Response::json(['status' => 'ok']);
-        $next = static fn(Request $r): Response => $expectedResponse;
+        $handler = self::makeHandler($expectedResponse);
 
-        $response = $middleware->process(self::makeRequest(), $next);
+        $response = $middleware->process(self::makeRequest(), $handler);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -50,12 +61,12 @@ final class AdminAccessMiddlewareTest extends TestCase
         $config = AdminConfig::fromArray(['enabled' => false]);
         $middleware = new AdminAccessMiddleware($config);
 
-        $next = static fn(Request $r): Response => Response::json(['status' => 'ok']);
+        $handler = self::makeHandler(Response::json(['status' => 'ok']));
 
-        $response = $middleware->process(self::makeRequest(), $next);
+        $response = $middleware->process(self::makeRequest(), $handler);
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
-        self::assertStringContainsString('disabled', $response->body);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
+        self::assertStringContainsString('disabled', (string) $response->getBody());
     }
 
     #[Test]
@@ -65,14 +76,10 @@ final class AdminAccessMiddlewareTest extends TestCase
         $middleware = new AdminAccessMiddleware($config);
 
         $called = false;
-        $next = static function (Request $r) use (&$called): Response {
-            $called = true;
-            return Response::json(['status' => 'ok']);
-        };
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->never())->method('handle');
 
-        $middleware->process(self::makeRequest(), $next);
-
-        self::assertFalse($called);
+        $middleware->process(self::makeRequest(), $handler);
     }
 
     #[Test]
@@ -82,13 +89,16 @@ final class AdminAccessMiddlewareTest extends TestCase
         $middleware = new AdminAccessMiddleware($config);
 
         $receivedRequest = null;
-        $next = static function (Request $r) use (&$receivedRequest): Response {
-            $receivedRequest = $r;
-            return Response::json(['status' => 'ok']);
-        };
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$receivedRequest): ResponseInterface {
+                $receivedRequest = $req;
+                return Response::json(['status' => 'ok']);
+            },
+        );
 
         $request = self::makeRequest();
-        $middleware->process($request, $next);
+        $middleware->process($request, $handler);
 
         self::assertSame($request, $receivedRequest);
     }
@@ -99,10 +109,10 @@ final class AdminAccessMiddlewareTest extends TestCase
         $config = AdminConfig::fromArray([]);
         $middleware = new AdminAccessMiddleware($config);
 
-        $next = static fn(Request $r): Response => Response::json(['status' => 'ok']);
+        $handler = self::makeHandler(Response::json(['status' => 'ok']));
 
-        $response = $middleware->process(self::makeRequest(), $next);
+        $response = $middleware->process(self::makeRequest(), $handler);
 
-        self::assertSame(ResponseStatus::NotFound, $response->status);
+        self::assertSame(ResponseStatus::NotFound->value, $response->getStatusCode());
     }
 }

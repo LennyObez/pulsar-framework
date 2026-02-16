@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\FeatureFlag;
 
 use NoDiscard;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
-use Pulsar\Http\Request;
 
 /**
  * Context for evaluating a feature flag.
@@ -28,13 +28,13 @@ readonly class FlagContext
      * Build a FlagContext from an HTTP request.
      */
     #[NoDiscard]
-    public static function fromRequest(Request $request): self
+    public static function fromRequest(ServerRequestInterface $request): self
     {
         /** @var ?string $tenantId */
-        $tenantId = $request->attribute('_tenant_id');
+        $tenantId = $request->getAttribute('_tenant_id');
 
         /** @var ?string $userId */
-        $userId = $request->attribute('_user_id');
+        $userId = $request->getAttribute('_user_id');
 
         return new self(
             tenantId: $tenantId,
