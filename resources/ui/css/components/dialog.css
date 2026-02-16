@@ -1,0 +1,61 @@
+/* Pulsar UI — Dialog Component v1.0.0
+ * Confirmation dialog — lightweight specialization of modal.
+ * ARIA: role="alertdialog", aria-modal="true", aria-labelledby, aria-describedby
+ */
+
+.pui-dialog {
+  text-align: center;
+  max-width: 24rem;
+}
+
+.pui-dialog .pui-modal__header {
+  justify-content: center;
+  border-block-end: none;
+  padding-block-end: 0;
+}
+
+.pui-dialog .pui-modal__body {
+  padding-block-start: var(--space-2);
+  padding-block-end: var(--space-4);
+}
+
+.pui-dialog__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: var(--radius-full);
+  margin-block-end: var(--space-4);
+}
+
+.pui-dialog__icon--danger {
+  background-color: var(--color-danger-100);
+  color: var(--color-danger-600);
+}
+
+.pui-dialog__icon--warning {
+  background-color: var(--color-warning-100);
+  color: var(--color-warning-600);
+}
+
+.pui-dialog__icon--info {
+  background-color: var(--color-info-100);
+  color: var(--color-info-600);
+}
+
+.pui-dialog__icon--success {
+  background-color: var(--color-success-100);
+  color: var(--color-success-600);
+}
+
+.pui-dialog__message {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.pui-dialog .pui-modal__footer {
+  justify-content: center;
+  border-block-start: none;
+}

@@ -1,0 +1,84 @@
+/* Pulsar UI — Card Component v1.0.0 */
+
+.pui-card {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+.pui-card__img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.pui-card__img--top {
+  border-start-start-radius: calc(var(--card-radius) - 1px);
+  border-start-end-radius: calc(var(--card-radius) - 1px);
+}
+
+.pui-card__body {
+  padding: var(--card-padding);
+  flex: 1;
+}
+
+.pui-card__title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+  margin-block-end: var(--space-2);
+}
+
+.pui-card__subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-block-end: var(--space-3);
+}
+
+.pui-card__text {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+}
+
+.pui-card__header {
+  padding: var(--space-4) var(--card-padding);
+  border-block-end: 1px solid var(--card-border);
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+}
+
+.pui-card__footer {
+  padding: var(--space-4) var(--card-padding);
+  border-block-start: 1px solid var(--card-border);
+  background-color: var(--color-bg-secondary);
+}
+
+/* Interactive card — clickable */
+.pui-card--interactive {
+  cursor: pointer;
+  transition:
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.pui-card--interactive:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-300);
+}
+
+.pui-card--interactive:focus-within {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Card grid */
+.pui-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--space-6);
+}

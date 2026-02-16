@@ -1,0 +1,147 @@
+/* Pulsar UI — Toast Component v1.0.0
+ * ARIA: role="status", aria-live="polite" (or aria-live="assertive" for errors)
+ */
+
+.pui-toast-container {
+  position: fixed;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  pointer-events: none;
+  padding: var(--space-4);
+}
+
+.pui-toast-container--top-end {
+  top: 0;
+  inset-inline-end: 0;
+}
+
+.pui-toast-container--top-center {
+  top: 0;
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+}
+
+.pui-toast-container--bottom-end {
+  bottom: 0;
+  inset-inline-end: 0;
+}
+
+.pui-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 18rem;
+  max-width: 24rem;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--toast-radius);
+  box-shadow: var(--toast-shadow);
+  pointer-events: auto;
+  animation: pui-toast-enter 200ms ease forwards;
+}
+
+.pui-toast--exiting {
+  animation: pui-toast-exit 150ms ease forwards;
+}
+
+@keyframes pui-toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pui-toast-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+.pui-toast__icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-block-start: 1px;
+}
+
+.pui-toast__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.pui-toast__title {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-text);
+}
+
+.pui-toast__message {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-block-start: var(--space-0-5);
+}
+
+.pui-toast__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.pui-toast__close:hover {
+  color: var(--color-text);
+}
+
+.pui-toast__close:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Progress bar for auto-dismiss timer */
+.pui-toast__progress {
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 0;
+  height: 3px;
+  background-color: var(--color-primary-500);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  transition: width linear;
+}
+
+/* Semantic variants */
+.pui-toast--success .pui-toast__icon {
+  color: var(--color-success-500);
+}
+
+.pui-toast--danger .pui-toast__icon {
+  color: var(--color-danger-500);
+}
+
+.pui-toast--warning .pui-toast__icon {
+  color: var(--color-warning-500);
+}
+
+.pui-toast--info .pui-toast__icon {
+  color: var(--color-info-500);
+}
