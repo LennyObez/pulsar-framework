@@ -313,6 +313,37 @@ Fields with `searchable: true` have their values concatenated into the `customFi
 
 Fields with `filterable: true` can be queried directly via their typed database column for the admin list filter UI.
 
+## Custom content types and import
+
+The CMS import system (JSON, CSV, and Markdown importers) accepts any `content_type` value that is registered in `ContentTypeRegistry`. By default, only the two built-in types (`page` and `article`) are recognized.
+
+To import content with a custom type, register the type before running the import. This happens automatically when your plugin registers a content type definition via `ContentTypeRegistryInterface`. You can also register types directly:
+
+```php
+use Pulsar\Extension\Cms\Content\ContentTypeRegistry;
+
+// Register a custom type so the importer accepts it
+ContentTypeRegistry::register('recipe');
+ContentTypeRegistry::register('product-review');
+```
+
+In your import JSON file, use the registered type slug:
+
+```json
+{
+  "content": [
+    {
+      "content_type": "recipe",
+      "locale": "en",
+      "slug": "classic-pancakes",
+      "title": "Classic Pancakes"
+    }
+  ]
+}
+```
+
+If the import file contains an unregistered `content_type`, the importer skips that item and logs a warning: `Unknown content type 'xyz', skipped`. No data is lost; all valid items are still processed.
+
 ## Related documentation
 
 - [Plugin Development Guide](plugin-development.md) - How plugins register content types
