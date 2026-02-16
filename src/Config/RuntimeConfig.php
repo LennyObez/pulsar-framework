@@ -31,6 +31,9 @@ final readonly class RuntimeConfig
         public int $maxHeaderSize = 8192,
         public int $maxBodySize = 10_485_760,
         public bool $addDateHeader = true,
+        public string $driver = 'auto',
+        public int $drainTimeoutSeconds = 30,
+        public bool $healthEndpoint = true,
     ) {}
 
     /**
@@ -41,6 +44,9 @@ final readonly class RuntimeConfig
     {
         $host = $environment->get('RUNTIME_HOST');
         $hostValue = is_string($data['host'] ?? null) ? $data['host'] : '127.0.0.1';
+
+        $driver = $environment->get('RUNTIME_DRIVER');
+        $driverValue = is_string($data['driver'] ?? null) ? $data['driver'] : 'auto';
 
         return new self(
             host: $host ?? $hostValue,
@@ -61,6 +67,10 @@ final readonly class RuntimeConfig
             maxHeaderSize: self::int($data, 'max_header_size', 8192),
             maxBodySize: self::int($data, 'max_body_size', 10_485_760),
             addDateHeader: self::bool($data, 'add_date_header'),
+            driver: $driver ?? $driverValue,
+            drainTimeoutSeconds: self::envInt($environment, 'RUNTIME_DRAIN_TIMEOUT_SECONDS')
+                ?? self::int($data, 'drain_timeout_seconds', 30),
+            healthEndpoint: self::bool($data, 'health_endpoint'),
         );
     }
 
