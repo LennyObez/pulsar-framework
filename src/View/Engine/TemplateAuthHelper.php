@@ -14,7 +14,7 @@ use Pulsar\Auth\Identity\IdentityInterface;
  * Provides `can()`, `guest()`, and `authenticated()` checks used by
  * the @can, @auth, and @guest directives.
  */
-#[Api]
+#[Api(since: '1.0.0')]
 final readonly class TemplateAuthHelper
 {
     public function __construct(

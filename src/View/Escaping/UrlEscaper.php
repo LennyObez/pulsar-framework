@@ -43,7 +43,7 @@ final readonly class UrlEscaper implements EscaperInterface
             return $this->encodeUrl($trimmed);
         }
 
-        // Relative URL or path — encode safely
+        // Relative URL or path: encode safely
         return $this->encodeUrl($trimmed);
     }
 

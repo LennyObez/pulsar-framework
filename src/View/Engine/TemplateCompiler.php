@@ -27,12 +27,13 @@ use function trim;
 use const DIRECTORY_SEPARATOR;
 
 /**
- * Compiles `.pulsar.php` templates to cached PHP for trusted template execution.
+ * Compiles Pulse templates (`.pulse.php`) to cached PHP for trusted template execution.
  *
  * Compilation is deterministic: identical source input always produces identical
  * compiled output, with no timestamps, PIDs, or non-deterministic elements.
  *
  * Supports extensible directive compilation via a callback registry.
+ * Templates use the `.pulse.php` extension.
  */
 #[Internal(reason: 'Compiler internals are not part of the public API')]
 final class TemplateCompiler
@@ -40,10 +41,17 @@ final class TemplateCompiler
     /** @var array<string, callable(string): string> */
     private array $directiveCompilers = [];
 
+    private readonly ?SandboxCompiler $sandboxCompiler;
+
     public function __construct(
         private readonly ViewConfig $config,
         private readonly TemplateCache $cache,
-    ) {}
+        ?SandboxCompiler $sandboxCompiler = null,
+    ) {
+        $this->sandboxCompiler = $config->sandboxMode
+            ? ($sandboxCompiler ?? new SandboxCompiler())
+            : null;
+    }
 
     /**
      * Compile a template by name and return the compiled artifact.
@@ -71,6 +79,8 @@ final class TemplateCompiler
         }
 
         $compiledOutput = $this->compileSource($sourceContent, $templateName);
+
+        $this->sandboxCompiler?->validate($compiledOutput, $templateName);
 
         return $this->cache->put($templateName, $sourceContent, $compiledOutput);
     }
@@ -127,6 +137,12 @@ final class TemplateCompiler
     #[NoDiscard]
     public function resolve(string $templateName): string
     {
+        // Absolute path: return directly if the file exists.
+        // This supports ContentController returning resolved project template paths.
+        if (is_file($templateName)) {
+            return $templateName;
+        }
+
         $relativePath = $this->toRelativePath($templateName);
 
         foreach ($this->config->templatePaths as $basePath) {
@@ -159,7 +175,8 @@ final class TemplateCompiler
     /**
      * Convert a dot-notation template name to a relative filesystem path.
      *
-     * Strips namespace prefixes (e.g., 'cms::admin.layout' → 'admin/layout.pulsar.php').
+     * Strips namespace prefixes (e.g., 'cms::admin.layout' → 'admin/layout.pulse.php').
+     * Uses the `.pulse.php` extension.
      */
     private function toRelativePath(string $templateName): string
     {
@@ -168,7 +185,9 @@ final class TemplateCompiler
             $templateName = $parts[1] ?? $templateName;
         }
 
-        return str_replace('.', DIRECTORY_SEPARATOR, $templateName) . '.pulsar.php';
+        $baseName = str_replace('.', DIRECTORY_SEPARATOR, $templateName);
+
+        return $baseName . '.pulse.php';
     }
 
     /**
@@ -192,13 +211,15 @@ final class TemplateCompiler
     /**
      * Compile escaped output expressions: {{ $expr }}
      *
-     * Compiles to htmlspecialchars() with ENT_QUOTES | ENT_SUBSTITUTE and UTF-8.
+     * Compiles to ContextEscaper::html() which applies ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5
+     * with UTF-8 encoding. This uses the centralized context-aware escaper instead of
+     * inline htmlspecialchars() calls, ensuring consistent XSS prevention.
      */
     private function compileEscapedEchos(string $source): string
     {
         return (string) preg_replace_callback(
             '/\{\{\s*(.+?)\s*}}/s',
-            static fn(array $matches): string => '<?php echo htmlspecialchars((string) (' . trim($matches[1]) . '), ENT_QUOTES | ENT_SUBSTITUTE, \'UTF-8\'); ?>',
+            static fn(array $matches): string => '<?php echo \Pulsar\Security\Escaper\ContextEscaper::html((string) (' . trim($matches[1]) . ')); ?>',
             $source,
         );
     }
@@ -266,7 +287,7 @@ final class TemplateCompiler
 
             $name = substr($source, $nameStart, $nameEnd - $nameStart);
 
-            // Not a registered directive — emit as-is and advance past the @name
+            // Not a registered directive; emit as-is and advance past the @name
             if ($name === '' || !array_key_exists($name, $this->directiveCompilers)) {
                 $result .= substr($source, $atPos, $nameEnd - $atPos);
                 $offset = $nameEnd;
@@ -290,7 +311,7 @@ final class TemplateCompiler
                 $result .= $compiled;
                 $offset = $closePos;
             } else {
-                // No parentheses — e.g. @else, @endif, @endforeach
+                // No parentheses: e.g. @else, @endif, @endforeach
                 $compiled = ($this->directiveCompilers[$name])('');
                 $result .= $compiled;
                 $offset = $nameEnd;
@@ -324,7 +345,7 @@ final class TemplateCompiler
             }
         }
 
-        // Unbalanced — return everything after the opening paren
+        // Unbalanced; return everything after the opening paren
         return substr($source, $openPos + 1);
     }
 }

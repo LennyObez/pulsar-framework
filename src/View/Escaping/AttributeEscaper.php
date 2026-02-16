@@ -14,7 +14,7 @@ use function mb_substr;
  * HTML attribute context escaper.
  *
  * Escapes values for safe use inside double-quoted HTML attribute values.
- * More aggressive than standard HTML escaping — encodes all non-alphanumeric
+ * More aggressive than standard HTML escaping: encodes all non-alphanumeric
  * characters as numeric HTML entities using Unicode codepoints.
  *
  * Multi-byte UTF-8 characters are properly handled by iterating over

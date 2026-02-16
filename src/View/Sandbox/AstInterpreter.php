@@ -97,7 +97,7 @@ final class AstInterpreter
 
     /**
      * Evaluate an output node ({{ $var }}).
-     * All output is auto-escaped — no raw bypass.
+     * All output is auto-escaped: no raw bypass.
      *
      * @param array<string, mixed> $data
      */
@@ -110,7 +110,7 @@ final class AstInterpreter
             is_bool($value) => $value ? '1' : '',
             default => '',
         };
-        $escaped = htmlspecialchars($stringValue);
+        $escaped = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $this->appendOutput($escaped);
     }
 
@@ -210,7 +210,7 @@ final class AstInterpreter
             $translated = $key;
         }
 
-        $escaped = htmlspecialchars($translated);
+        $escaped = htmlspecialchars($translated, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $this->appendOutput($escaped);
     }
 

@@ -26,6 +26,7 @@ readonly class ViewConfig
      * @param bool $autoEscape Whether output is HTML-escaped by default
      * @param string $activeTheme Active theme name (maps to resources/themes/{name}.css)
      * @param bool $phpDirectiveAllowed Whether @php blocks are permitted at compile time
+     * @param bool $sandboxMode When true, compiled output is validated against a function/class allowlist
      * @param int $sandboxStepLimit Maximum AST node evaluations in untrusted mode
      * @param int $sandboxLoopLimit Maximum iterations per loop construct in untrusted mode
      * @param int $sandboxOutputSizeLimit Maximum rendered output bytes in untrusted mode
@@ -37,6 +38,7 @@ readonly class ViewConfig
         public bool $autoEscape = true,
         public string $activeTheme = 'default',
         public bool $phpDirectiveAllowed = false,
+        public bool $sandboxMode = false,
         public int $sandboxStepLimit = 10_000,
         public int $sandboxLoopLimit = 1_000,
         public int $sandboxOutputSizeLimit = 1_048_576,
@@ -63,6 +65,7 @@ readonly class ViewConfig
         $activeTheme = is_string($rawTheme) ? $rawTheme : 'default';
 
         $phpDirectiveAllowed = ($data['php_directive_allowed'] ?? false) === true;
+        $sandboxMode = ($data['sandbox_mode'] ?? false) === true;
 
         $rawStepLimit = $data['sandbox_step_limit'] ?? 10_000;
         $sandboxStepLimit = is_int($rawStepLimit) && $rawStepLimit > 0 ? $rawStepLimit : 10_000;
@@ -82,6 +85,7 @@ readonly class ViewConfig
             autoEscape: $autoEscape,
             activeTheme: $activeTheme,
             phpDirectiveAllowed: $phpDirectiveAllowed,
+            sandboxMode: $sandboxMode,
             sandboxStepLimit: $sandboxStepLimit,
             sandboxLoopLimit: $sandboxLoopLimit,
             sandboxOutputSizeLimit: $sandboxOutputSizeLimit,

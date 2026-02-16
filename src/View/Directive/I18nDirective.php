@@ -25,7 +25,7 @@ final readonly class I18nDirective implements DirectiveInterface
     public function compile(string $expression): string
     {
         return sprintf(
-            '<?php echo htmlspecialchars(__(%s)); ?>',
+            '<?php echo htmlspecialchars(__(%s), ENT_QUOTES | ENT_SUBSTITUTE, \'UTF-8\'); ?>',
             trim($expression),
         );
     }
