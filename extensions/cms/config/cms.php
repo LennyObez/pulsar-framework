@@ -98,7 +98,7 @@ return [
 
     // Form submission pipeline configuration
     'forms' => [
-        // Aggregated spam score threshold — submissions scoring above this are classified as spam
+        // Aggregated spam score threshold: submissions scoring above this are classified as spam
         'spam_threshold' => 5.0,
 
         // Maximum form submissions per IP per hour
