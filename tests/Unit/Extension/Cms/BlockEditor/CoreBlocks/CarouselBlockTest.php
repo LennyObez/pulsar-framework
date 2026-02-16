@@ -81,9 +81,9 @@ final class CarouselBlockTest extends TestCase
             ],
         ]);
 
-        self::assertStringContainsString('aria-label="Slide 1"', $html);
-        self::assertStringContainsString('aria-label="Slide 2"', $html);
-        self::assertStringContainsString('aria-label="Slide 3"', $html);
+        self::assertStringContainsString('aria-label="Go to slide 1"', $html);
+        self::assertStringContainsString('aria-label="Go to slide 2"', $html);
+        self::assertStringContainsString('aria-label="Go to slide 3"', $html);
         self::assertSame(3, substr_count($html, 'class="carousel__dot"'));
     }
 

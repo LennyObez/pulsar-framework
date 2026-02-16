@@ -13,6 +13,7 @@ use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Extension\Forum\Config\ForumConfig;
+use Pulsar\Extension\Forum\Content\ForumBodyPolicy;
 use Pulsar\Extension\Forum\Content\MarkdownRendererInterface;
 use Pulsar\Extension\Forum\Domain\ThreadType;
 use Pulsar\Extension\Forum\Exception\ForumException;
@@ -47,6 +48,7 @@ final class ThreadApiControllerTest extends TestCase
             $this->subscriptionRepository,
             $this->forumService,
             $this->markdown,
+            new ForumBodyPolicy(),
             $this->config,
         );
     }
@@ -206,6 +208,7 @@ final class ThreadApiControllerTest extends TestCase
             $this->subscriptionRepository,
             $this->forumService,
             $this->markdown,
+            new ForumBodyPolicy(),
             $this->config,
             $gate,
         );

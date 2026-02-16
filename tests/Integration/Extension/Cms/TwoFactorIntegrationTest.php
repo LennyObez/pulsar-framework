@@ -14,10 +14,12 @@ use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
+use Pulsar\Cache\Application\Lock\LockHandle;
+use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Http\Controller\Admin\TwoFactorController;
 use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
-use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
+use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 use Pulsar\Http\Message\Response;
 
 use function json_decode;
@@ -57,7 +59,10 @@ final class TwoFactorIntegrationTest extends TestCase
 
         $auditLogger = $this->createStub(AuditLoggerInterface::class);
 
-        $rateLimiter = new CmsRateLimiter($this->createStub(TaggedCacheInterface::class));
+        $lockStub = $this->createStub(LockInterface::class);
+        $lockStub->method('acquire')->willReturn(new LockHandle('r', 't', 1.0, 60));
+        $lockStub->method('release')->willReturn(true);
+        $rateLimiter = new CmsRateLimiter($this->createStub(TaggedCacheInterface::class), $lockStub);
 
         $this->controller = new TwoFactorController(
             $this->generator,
@@ -65,8 +70,8 @@ final class TwoFactorIntegrationTest extends TestCase
             $this->recoveryGenerator,
             $qrEncoder,
             $rateLimiter,
-            $gate,
             $auditLogger,
+            $gate,
         );
     }
 

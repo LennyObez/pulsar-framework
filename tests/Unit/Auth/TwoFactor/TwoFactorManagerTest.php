@@ -880,4 +880,84 @@ final class TwoFactorManagerTest extends TestCase
         self::assertTrue($result->verified);
         self::assertSame(TwoFactorPurpose::StepUp, $result->purpose);
     }
+
+    #[Test]
+    public function confirmSetupRateLimitedReturnsFailure(): void
+    {
+        $rateLimiter = $this->createStub(TwoFactorRateLimiterInterface::class);
+        $rateLimiter->method('attempt')->willReturn(false);
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            rateLimiter: $rateLimiter,
+        );
+
+        $secret = $this->generator->generateSecret();
+        $code = $this->generator->computeCode($secret);
+
+        $result = $manager->confirmSetup('user-1', $secret, $code);
+
+        self::assertFalse($result->confirmed);
+        self::assertSame(VerifyReason::RateLimited, $result->reason);
+    }
+
+    #[Test]
+    public function confirmSetupRateLimitedAuditsEvent(): void
+    {
+        $rateLimiter = $this->createStub(TwoFactorRateLimiterInterface::class);
+        $rateLimiter->method('attempt')->willReturn(false);
+
+        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger->expects(self::once())
+            ->method('log')
+            ->with(
+                AuditEvent::SecurityEvent,
+                AuditOutcome::Denied,
+                'user-1',
+                '2fa_setup_confirmation_failed',
+            );
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            rateLimiter: $rateLimiter,
+            auditLogger: $auditLogger,
+        );
+
+        $secret = $this->generator->generateSecret();
+        $code = $this->generator->computeCode($secret);
+
+        $manager->confirmSetup('user-1', $secret, $code);
+    }
+
+    #[Test]
+    public function confirmSetupUsesReplayGuardWhenRateLimiterPasses(): void
+    {
+        $rateLimiter = $this->createStub(TwoFactorRateLimiterInterface::class);
+        $rateLimiter->method('attempt')->willReturn(true);
+
+        $manager = new TwoFactorManager(
+            generator: $this->generator,
+            verifier: $this->verifier,
+            recoveryCodeGenerator: $this->recoveryCodeGenerator,
+            recoveryCodeVerifier: $this->recoveryCodeVerifier,
+            rateLimiter: $rateLimiter,
+            replayGuard: $this->replayGuard,
+        );
+
+        $secret = $this->generator->generateSecret();
+        $code = $this->generator->computeCode($secret);
+
+        $result = $manager->confirmSetup('user-1', $secret, $code);
+        self::assertTrue($result->confirmed);
+
+        // Replay should fail (replay guard is active)
+        $result2 = $manager->confirmSetup('user-1', $secret, $code);
+        self::assertFalse($result2->confirmed);
+    }
 }

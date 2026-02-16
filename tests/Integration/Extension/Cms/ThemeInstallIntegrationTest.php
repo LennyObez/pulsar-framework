@@ -327,7 +327,7 @@ final class ThemeInstallIntegrationTest extends TestCase
         $zip = new ZipArchive();
         $zip->open($zipPath, ZipArchive::CREATE);
         $zip->addFromString('theme.json', $manifest);
-        $zip->addFromString('templates/article.pulsar.php', '<?php // article template');
+        $zip->addFromString('templates/article.pulse.php', '<?php // article template');
         $zip->addFromString('assets/style.css', 'body { color: #333; }');
         $zip->close();
 

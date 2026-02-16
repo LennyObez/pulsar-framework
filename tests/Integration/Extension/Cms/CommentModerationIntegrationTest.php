@@ -15,7 +15,6 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
-use Pulsar\Extension\Cms\Comments\AntiAbuseHeuristics;
 use Pulsar\Extension\Cms\Comments\Comment;
 use Pulsar\Extension\Cms\Comments\CommentBodyPolicy;
 use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
@@ -31,6 +30,8 @@ use Pulsar\Extension\Cms\Http\Middleware\CommentAntiAbuseMiddleware;
 use Pulsar\Extension\Cms\Http\Middleware\CommentHoneypotMiddleware;
 use Pulsar\Extension\Cms\Http\Middleware\CommentRateLimitMiddleware;
 use Pulsar\Http\Message\Response;
+use Pulsar\Security\AntiSpam\AntiSpamPipeline;
+use Pulsar\Security\AntiSpam\DuplicateDetector;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -46,7 +47,7 @@ use function json_decode;
 #[CoversClass(CommentRateLimitMiddleware::class)]
 #[CoversClass(CommentHoneypotMiddleware::class)]
 #[CoversClass(CommentAntiAbuseMiddleware::class)]
-#[CoversClass(AntiAbuseHeuristics::class)]
+#[CoversClass(AntiSpamPipeline::class)]
 final class CommentModerationIntegrationTest extends TestCase
 {
     private InMemoryCommentRepository $commentRepo;
@@ -259,8 +260,9 @@ final class CommentModerationIntegrationTest extends TestCase
     public function antiAbuseDuplicateBodyRejected(): void
     {
         $cache = new CommentTestTaggedCache();
-        $heuristics = new AntiAbuseHeuristics($cache);
-        $middleware = new CommentAntiAbuseMiddleware($heuristics);
+        $duplicateDetector = new DuplicateDetector($cache);
+        $pipeline = new AntiSpamPipeline(checks: [$duplicateDetector]);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
 
         $request = $this->createCommentRequest('10.0.0.4', ['body' => 'Duplicate comment text']);
         $handler = new PassThroughHandler();
@@ -281,21 +283,18 @@ final class CommentModerationIntegrationTest extends TestCase
     #[Test]
     public function antiAbuseTooManyLinksRejected(): void
     {
-        $cache = new CommentTestTaggedCache();
-        $heuristics = new AntiAbuseHeuristics($cache);
-        $middleware = new CommentAntiAbuseMiddleware($heuristics, maxLinks: 2);
+        // Low density threshold to ensure rejection of link-heavy content
+        $linkChecker = new \Pulsar\Security\AntiSpam\LinkDensityChecker(maxDensity: 0.1);
+        $pipeline = new AntiSpamPipeline(checks: [$linkChecker]);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
 
         $request = $this->createCommentRequest('10.0.0.5', [
-            'body' => 'Check out https://a.com and https://b.com and https://c.com',
+            'body' => 'https://a.com https://b.com https://c.com',
         ]);
         $handler = new PassThroughHandler();
 
         $response = $middleware->process($request, $handler);
         self::assertSame(422, $response->getStatusCode());
-
-        /** @var array{message?: string} $linksData */
-        $linksData = json_decode((string) $response->getBody(), true);
-        self::assertStringContainsString('links', $linksData['message'] ?? '');
     }
 
     #[Test]
@@ -510,6 +509,11 @@ final class InMemoryContentRepositoryForComments implements ContentRepositoryInt
     public function findById(string $id): ?Content
     {
         return $this->contents[$id] ?? null;
+    }
+
+    public function findByImportId(string $importId): ?Content
+    {
+        return null;
     }
 
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?Content

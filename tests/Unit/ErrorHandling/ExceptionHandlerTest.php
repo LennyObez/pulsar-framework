@@ -21,6 +21,7 @@ use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\RoutingException;
 use RuntimeException;
 use Stringable;
+use Throwable;
 
 use function is_scalar;
 use function is_string;
@@ -226,6 +227,59 @@ final class ExceptionHandlerTest extends TestCase
 
         self::assertCount(1, $logger->logs);
         self::assertArrayNotHasKey('correlation_id', $logger->logs[0]['context']);
+    }
+
+    #[Test]
+    public function fallbackBodyRendersCompleteHtmlDocument(): void
+    {
+        // Use a renderer that always throws to trigger the fallback
+        $failingRenderer = new class implements \Pulsar\ErrorHandling\ExceptionRendererInterface {
+            public function render(Throwable $exception, \Psr\Http\Message\ServerRequestInterface $request, ResponseStatus $status): string
+            {
+                throw new RuntimeException('Renderer failed — database connection lost');
+            }
+        };
+
+        $handler = new ExceptionHandler($failingRenderer);
+
+        $response = $handler->handle(
+            new RuntimeException('Database went away'),
+            $this->createRequest(),
+        );
+
+        $body = (string) $response->getBody();
+
+        // Should produce a complete HTML document, not just a fragment
+        self::assertStringContainsString('<!DOCTYPE html>', $body);
+        self::assertStringContainsString('<html lang="en">', $body);
+        self::assertStringContainsString('<meta charset="utf-8">', $body);
+        self::assertStringContainsString('<title>500 Internal Server Error</title>', $body);
+        self::assertStringContainsString('Return to homepage', $body);
+        self::assertSame(500, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function fallbackBodyFor404RendersNotFoundPage(): void
+    {
+        $failingRenderer = new class implements \Pulsar\ErrorHandling\ExceptionRendererInterface {
+            public function render(Throwable $exception, \Psr\Http\Message\ServerRequestInterface $request, ResponseStatus $status): string
+            {
+                throw new RuntimeException('Template engine broken');
+            }
+        };
+
+        $handler = new ExceptionHandler($failingRenderer);
+
+        $response = $handler->handle(
+            RoutingException::notFound('/missing-page'),
+            $this->createRequest('/missing-page'),
+        );
+
+        $body = (string) $response->getBody();
+
+        self::assertStringContainsString('<!DOCTYPE html>', $body);
+        self::assertStringContainsString('<title>404 Not Found</title>', $body);
+        self::assertSame(404, $response->getStatusCode());
     }
 }
 

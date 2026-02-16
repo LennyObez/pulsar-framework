@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\I18nConfig;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Introspection\DatabaseIntrospector;
@@ -19,6 +20,8 @@ use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogEntry;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 use Pulsar\Extension\Admin\Server\Controller\SchemaController;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\I18n\CatalogInterface;
+use Pulsar\I18n\Translator;
 
 #[CoversClass(SchemaController::class)]
 final class SchemaControllerTest extends TestCase
@@ -27,7 +30,24 @@ final class SchemaControllerTest extends TestCase
 
     protected function setUp(): void
     {
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturn(null);
+        $catalog->method('has')->willReturn(false);
+        Translator::setGlobalInstance(new Translator($catalog, new I18nConfig(
+            defaultLocale: 'en',
+            supportedLocales: ['en'],
+            fallbackLocales: [],
+            catalogPath: null,
+            regulated: false,
+            maxSupportedLocales: 50,
+            strictMode: false,
+        )));
         $this->changeLog = $this->createStub(SchemaChangeLogStoreInterface::class);
+    }
+
+    protected function tearDown(): void
+    {
+        Translator::resetGlobalInstance();
     }
 
     private function makeControllerWithIntrospector(
@@ -136,7 +156,7 @@ final class SchemaControllerTest extends TestCase
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('text/html', $response->getHeaderLine('Content-Type'));
         self::assertStringContainsString('Database', (string) $response->getBody());
-        self::assertStringContainsString('Pulsar Admin', (string) $response->getBody());
+        self::assertStringContainsString('admin.nav.brand', (string) $response->getBody());
     }
 
     #[Test]
@@ -371,7 +391,7 @@ final class SchemaControllerTest extends TestCase
         $response = $controller->list($this->makeHtmlRequest());
 
         // The HTML template receives driver as 'sqlite' for this driver configuration
-        self::assertStringContainsString('Pulsar Admin', (string) $response->getBody());
+        self::assertStringContainsString('admin.nav.brand', (string) $response->getBody());
     }
 
     #[Test]
