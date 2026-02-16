@@ -11,6 +11,7 @@ declare(strict_types=1);
  *   GET  /                    — Main playground page
  *   GET  /catalog             — Component catalog (loaded in iframe)
  *   GET  /api/csrf-token      — Generate CSRF token
+ *   GET  /api/base-css        — Concatenated base design system CSS
  *   GET  /api/themes          — List available themes
  *   GET  /api/themes/{name}   — Read theme CSS content
  *   POST /api/themes/{name}   — Save theme CSS content
@@ -145,6 +146,49 @@ if ($requestUri === '/api/csrf-token' && $method === 'GET') {
     jsonResponse(['token' => getCsrfToken()]);
 }
 
+// Base CSS — concatenate all design system CSS files (resolving @import directives)
+if ($requestUri === '/api/base-css' && $method === 'GET') {
+    $cssDir = $uiDir . DIRECTORY_SEPARATOR . 'css';
+    $entryFile = $cssDir . DIRECTORY_SEPARATOR . 'pulsar-ui.css';
+
+    if (!file_exists($entryFile)) {
+        jsonError('Base CSS entry file not found.', 500);
+    }
+
+    // Use session cache to avoid re-reading on every request
+    $cacheKey = 'base_css_cache';
+    $mtimeKey = 'base_css_mtime';
+    $entryMtime = filemtime($entryFile);
+
+    if (
+        !empty($_SESSION[$cacheKey])
+        && isset($_SESSION[$mtimeKey])
+        && $_SESSION[$mtimeKey] === $entryMtime
+    ) {
+        jsonResponse(['css' => $_SESSION[$cacheKey]]);
+    }
+
+    $entryContent = file_get_contents($entryFile);
+    $result = preg_replace_callback(
+        "/@import\s+'([^']+)'\s*;/",
+        function (array $matches) use ($cssDir): string {
+            $importPath = $cssDir . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $matches[1]);
+
+            if (!file_exists($importPath)) {
+                return '/* [missing: ' . $matches[1] . '] */';
+            }
+
+            return "/* --- " . $matches[1] . " --- */\n" . file_get_contents($importPath);
+        },
+        $entryContent,
+    );
+
+    $_SESSION[$cacheKey] = $result;
+    $_SESSION[$mtimeKey] = $entryMtime;
+
+    jsonResponse(['css' => $result]);
+}
+
 // List themes
 if ($requestUri === '/api/themes' && $method === 'GET') {
     $themes = [];
@@ -190,8 +234,8 @@ if (preg_match('#^/api/themes/([^/]+)$#', $requestUri, $matches)) {
             jsonError('Invalid CSRF token.', 403);
         }
 
-        if ($themeName === 'default') {
-            jsonError('Cannot overwrite the default theme.', 403);
+        if (in_array($themeName, ['default', 'legacy'], true)) {
+            jsonError('Cannot overwrite built-in themes.', 403);
         }
 
         $body = file_get_contents('php://input');
@@ -216,8 +260,8 @@ if (preg_match('#^/api/themes/([^/]+)$#', $requestUri, $matches)) {
             jsonError('Invalid CSRF token.', 403);
         }
 
-        if ($themeName === 'default') {
-            jsonError('Cannot delete the default theme.', 403);
+        if (in_array($themeName, ['default', 'legacy'], true)) {
+            jsonError('Cannot delete built-in themes.', 403);
         }
 
         if (!file_exists($themePath)) {

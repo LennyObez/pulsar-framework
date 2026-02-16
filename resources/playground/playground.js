@@ -5,21 +5,36 @@
  * - Fetching/saving/deleting themes via the API
  * - Loading theme CSS into the editor
  * - Injecting CSS into the catalog iframe in real time
+ * - Full base CSS visibility with editable theme overrides
  * - Responsive preview toggles (desktop/tablet/mobile)
  * - Split pane drag resizing
  * - CSRF token management
  *
  * Zero external dependencies.
  */
+/* global PulsarEditor */
 'use strict';
 
 (function () {
+  // -----------------------------------------------------------------------
+  // Constants
+  // -----------------------------------------------------------------------
+
+  var BUILTIN_THEMES = ['default', 'legacy'];
+
+  var SEPARATOR =
+    '/* ═══════════════════════════════════════════════════════════════════\n' +
+    ' * THEME OVERRIDES — Edit below this line\n' +
+    ' * Your custom CSS goes here. Everything above is the base design system.\n' +
+    ' * ═══════════════════════════════════════════════════════════════════ */';
+
   // -----------------------------------------------------------------------
   // State
   // -----------------------------------------------------------------------
   var csrfToken = '';
   var currentThemeName = 'default';
   var isDirty = false;
+  var baseCSSContent = '';
 
   // -----------------------------------------------------------------------
   // DOM References (populated on DOMContentLoaded)
@@ -30,8 +45,6 @@
   var themeSelect;
   /** @type {HTMLElement} */
   var editorPane;
-  /** @type {HTMLElement} */
-  var previewWrapper;
   /** @type {HTMLElement} */
   var handle;
   /** @type {HTMLElement} */
@@ -44,6 +57,43 @@
   var statusDot;
   /** @type {HTMLElement} */
   var statusText;
+
+  // -----------------------------------------------------------------------
+  // Helpers
+  // -----------------------------------------------------------------------
+
+  /**
+   * Check whether a theme name is a protected built-in theme.
+   * @param {string} name
+   * @returns {boolean}
+   */
+  function isBuiltinTheme(name) {
+    return BUILTIN_THEMES.indexOf(name) !== -1;
+  }
+
+  /**
+   * Build the full editor content from base CSS and theme overrides.
+   * @param {string} themeCSS
+   * @returns {string}
+   */
+  function buildEditorContent(themeCSS) {
+    return baseCSSContent + '\n\n' + SEPARATOR + '\n\n' + themeCSS;
+  }
+
+  /**
+   * Extract the theme override portion from editor content.
+   * Returns only the CSS after the separator marker.
+   * If the separator is missing, returns the full content.
+   * @param {string} fullContent
+   * @returns {string}
+   */
+  function extractThemeOverrides(fullContent) {
+    var idx = fullContent.indexOf(SEPARATOR);
+    if (idx === -1) {
+      return fullContent;
+    }
+    return fullContent.substring(idx + SEPARATOR.length).replace(/^\n+/, '');
+  }
 
   // -----------------------------------------------------------------------
   // API Helpers
@@ -61,6 +111,21 @@
       .then(function (data) {
         csrfToken = data.token;
         return csrfToken;
+      });
+  }
+
+  /**
+   * Fetch the concatenated base design system CSS.
+   * @returns {Promise<string>}
+   */
+  function fetchBaseCSS() {
+    return fetch('/api/base-css')
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        baseCSSContent = data.css;
+        return baseCSSContent;
       });
   }
 
@@ -151,8 +216,8 @@
         var opt = document.createElement('option');
         opt.value = name;
         opt.textContent = name;
-        if (name === 'default') {
-          opt.textContent = 'default (read-only)';
+        if (isBuiltinTheme(name)) {
+          opt.textContent = name + ' (read-only)';
         }
         themeSelect.appendChild(opt);
       });
@@ -173,10 +238,11 @@
   function switchTheme(name) {
     loadThemeCSS(name)
       .then(function (css) {
-        PulsarEditor.setValue(css);
+        var editorContent = buildEditorContent(css);
+        PulsarEditor.setValue(editorContent);
         currentThemeName = name;
         isDirty = false;
-        injectCSS(css);
+        injectCSS(editorContent);
         updateStatus();
       })
       .catch(function () {
@@ -208,15 +274,16 @@
    * Handle the save action.
    */
   function handleSave() {
-    var css = PulsarEditor.getValue();
-
-    // If current theme is default or we have no custom name, prompt for name
-    if (currentThemeName === 'default') {
+    // Built-in themes always redirect to Save As
+    if (isBuiltinTheme(currentThemeName)) {
       openSaveDialog();
       return;
     }
 
-    saveTheme(currentThemeName, css)
+    var fullContent = PulsarEditor.getValue();
+    var themeCSS = extractThemeOverrides(fullContent);
+
+    saveTheme(currentThemeName, themeCSS)
       .then(function () {
         isDirty = false;
         updateStatus();
@@ -233,7 +300,7 @@
    */
   function openSaveDialog() {
     dialogBackdrop.classList.add('pg-dialog-backdrop--open');
-    dialogInput.value = currentThemeName === 'default' ? '' : currentThemeName;
+    dialogInput.value = isBuiltinTheme(currentThemeName) ? '' : currentThemeName;
     dialogInput.focus();
     dialogInput.select();
   }
@@ -262,17 +329,18 @@
       return;
     }
 
-    if (name === 'default') {
-      showToast('Cannot overwrite the default theme.', true);
+    if (isBuiltinTheme(name)) {
+      showToast('Cannot overwrite built-in themes.', true);
       dialogInput.focus();
       return;
     }
 
-    var css = PulsarEditor.getValue();
+    var fullContent = PulsarEditor.getValue();
+    var themeCSS = extractThemeOverrides(fullContent);
 
     closeSaveDialog();
 
-    saveTheme(name, css)
+    saveTheme(name, themeCSS)
       .then(function () {
         currentThemeName = name;
         isDirty = false;
@@ -409,7 +477,6 @@
     iframe = document.getElementById('catalog-frame');
     themeSelect = document.getElementById('theme-select');
     editorPane = document.querySelector('.pg-editor-pane');
-    previewWrapper = document.querySelector('.pg-preview-wrapper');
     handle = document.querySelector('.pg-handle');
     toast = document.getElementById('pg-toast');
     dialogBackdrop = document.getElementById('save-dialog');
@@ -434,12 +501,17 @@
       onSave: handleSave,
     });
 
-    // Fetch CSRF token, then load themes
-    fetchCsrfToken().then(function () {
-      return refreshThemeList().then(function () {
+    // Fetch CSRF token + base CSS, then load themes
+    fetchCsrfToken()
+      .then(function () {
+        return fetchBaseCSS();
+      })
+      .then(function () {
+        return refreshThemeList();
+      })
+      .then(function () {
         switchTheme('default');
       });
-    });
 
     // Theme select change
     themeSelect.addEventListener('change', function () {
@@ -469,8 +541,8 @@
     var btnDelete = document.getElementById('btn-delete');
     if (btnDelete) {
       btnDelete.addEventListener('click', function () {
-        if (currentThemeName === 'default') {
-          showToast('Cannot delete the default theme.', true);
+        if (isBuiltinTheme(currentThemeName)) {
+          showToast('Cannot delete built-in themes.', true);
           return;
         }
         if (!confirm('Delete theme "' + currentThemeName + '"? This cannot be undone.')) {

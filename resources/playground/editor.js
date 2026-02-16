@@ -11,6 +11,7 @@
  *
  * Zero external dependencies.
  */
+/* exported PulsarEditor */
 'use strict';
 
 var PulsarEditor = (function () {
