@@ -23,6 +23,7 @@ use function array_flip;
 use function array_intersect_key;
 use function array_map;
 use function explode;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -34,7 +35,7 @@ use function min;
  * and soft deletion. Authentication is handled by the CmsApiKeyMiddleware
  * in the middleware pipeline.
  */
-#[Internal(reason: 'CMS REST API controller — implementation detail')]
+#[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class ContentApiController
 {
     public function __construct(
@@ -46,7 +47,7 @@ final readonly class ContentApiController
     ) {}
 
     /**
-     * GET /api/v1/content — List content with pagination and filtering.
+     * GET /api/v1/content: List content with pagination and filtering.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -54,8 +55,8 @@ final readonly class ContentApiController
 
         $locale = is_string($params['locale'] ?? null) ? $params['locale'] : $this->config->defaultLocale;
         $contentType = is_string($params['type'] ?? null) ? $params['type'] : null;
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -83,7 +84,7 @@ final readonly class ContentApiController
     }
 
     /**
-     * GET /api/v1/content/{id} — Show a single content item with all related data.
+     * GET /api/v1/content/{id}: Show a single content item with all related data.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -139,7 +140,7 @@ final readonly class ContentApiController
     }
 
     /**
-     * POST /api/v1/content — Create new content from JSON body.
+     * POST /api/v1/content: Create new content from JSON body.
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -156,7 +157,7 @@ final readonly class ContentApiController
             ], 422);
         }
 
-        $contentType = ContentType::tryFrom((string) ($body['content_type'] ?? 'page'));
+        $contentType = ContentType::tryFrom(is_string($body['content_type'] ?? null) ? $body['content_type'] : 'page');
 
         if ($contentType === null) {
             return Response::json([
@@ -166,10 +167,10 @@ final readonly class ContentApiController
             ], 422);
         }
 
-        $locale = (string) ($body['locale'] ?? $this->config->defaultLocale);
-        $title = (string) $body['title'];
-        $slugSegment = (string) $body['slug'];
-        $bodyContent = (string) ($body['body'] ?? '');
+        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : $this->config->defaultLocale;
+        $title = (is_string($body['title']) ? $body['title'] : '');
+        $slugSegment = (is_string($body['slug']) ? $body['slug'] : '');
+        $bodyContent = is_string($body['body'] ?? null) ? $body['body'] : '';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -178,7 +179,7 @@ final readonly class ContentApiController
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: (string) ($body['author_id'] ?? 'api'),
+            authorId: is_string($body['author_id'] ?? null) ? $body['author_id'] : 'api',
             tenantId: $tenantId,
             template: is_string($body['template'] ?? null) ? $body['template'] : null,
             parentId: is_string($body['parent_id'] ?? null) ? $body['parent_id'] : null,
@@ -230,7 +231,7 @@ final readonly class ContentApiController
     }
 
     /**
-     * PUT /api/v1/content/{id} — Update existing content.
+     * PUT /api/v1/content/{id}: Update existing content.
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -243,16 +244,16 @@ final readonly class ContentApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $locale = (string) ($body['locale'] ?? $this->config->defaultLocale);
+        $locale = is_string($body['locale'] ?? null) ? $body['locale'] : $this->config->defaultLocale;
         $translation = $this->translationRepository->findByContentAndLocale($id, $locale);
 
         if ($translation === null) {
             return Response::json(['error' => 'Translation not found for locale', 'status' => 404], 404);
         }
 
-        $title = (string) ($body['title'] ?? $translation->title);
-        $bodyContent = (string) ($body['body'] ?? $translation->body);
-        $slugSegment = (string) ($body['slug'] ?? $translation->slugSegment);
+        $title = is_string($body['title'] ?? null) ? $body['title'] : $translation->title;
+        $bodyContent = is_string($body['body'] ?? null) ? $body['body'] : $translation->body;
+        $slugSegment = is_string($body['slug'] ?? null) ? $body['slug'] : $translation->slugSegment;
 
         $path = $translation->path;
 
@@ -296,7 +297,7 @@ final readonly class ContentApiController
     }
 
     /**
-     * DELETE /api/v1/content/{id} — Soft delete content.
+     * DELETE /api/v1/content/{id}: Soft delete content.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
@@ -327,7 +328,7 @@ final readonly class ContentApiController
             return null;
         }
 
-        return array_filter(explode(',', $fields), static fn(string $f) => $f !== '');
+        return array_values(array_filter(explode(',', $fields), static fn(string $f) => $f !== ''));
     }
 
     /**

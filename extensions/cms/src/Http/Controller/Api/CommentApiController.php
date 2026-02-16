@@ -21,7 +21,7 @@ use function min;
  *
  * Used by the <cms-comments> custom element to render comment threads.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class CommentApiController
 {
     public function __construct(

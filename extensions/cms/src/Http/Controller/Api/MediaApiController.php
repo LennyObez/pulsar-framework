@@ -15,6 +15,7 @@ use Pulsar\Extension\Cms\Media\MediaVisibility;
 use Pulsar\Http\Message\Response;
 
 use function array_map;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -25,7 +26,7 @@ use function min;
  * Provides JSON endpoints for listing, retrieving, uploading,
  * and deleting media assets.
  */
-#[Internal(reason: 'CMS REST API controller — implementation detail')]
+#[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class MediaApiController
 {
     public function __construct(
@@ -34,14 +35,14 @@ final readonly class MediaApiController
     ) {}
 
     /**
-     * GET /api/v1/media — List media assets with pagination.
+     * GET /api/v1/media: List media assets with pagination.
      */
     public function index(ServerRequestInterface $request): Response
     {
         $params = $request->getQueryParams();
 
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
         $mimeType = is_string($params['mime'] ?? null) ? $params['mime'] : null;
 
         /** @var string|null $tenantId */
@@ -75,7 +76,7 @@ final readonly class MediaApiController
     }
 
     /**
-     * GET /api/v1/media/{id} — Show a single media asset.
+     * GET /api/v1/media/{id}: Show a single media asset.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -102,7 +103,7 @@ final readonly class MediaApiController
     }
 
     /**
-     * POST /api/v1/media — Upload a new media asset via multipart form data.
+     * POST /api/v1/media: Upload a new media asset via multipart form data.
      */
     public function upload(ServerRequestInterface $request): Response
     {
@@ -155,7 +156,7 @@ final readonly class MediaApiController
     }
 
     /**
-     * DELETE /api/v1/media/{id} — Delete a media asset.
+     * DELETE /api/v1/media/{id}: Delete a media asset.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {

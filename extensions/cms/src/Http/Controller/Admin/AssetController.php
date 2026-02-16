@@ -9,10 +9,8 @@ use Pulsar\Api\Internal;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
-use function assert;
 use function dirname;
 use function is_file;
-use function is_string;
 use function pathinfo;
 use function preg_match;
 use function realpath;
@@ -28,7 +26,7 @@ use const PATHINFO_EXTENSION;
  * the framework router. In development, the dev router serves assets
  * directly before kernel boot for better performance.
  */
-#[Internal(reason: 'CMS admin asset serving — implementation detail')]
+#[Internal(reason: 'CMS admin asset serving; implementation detail')]
 final readonly class AssetController
 {
     private const array MIME_TYPES = [
@@ -66,8 +64,6 @@ final readonly class AssetController
             if ($realPath === false || !is_file($realPath) || !str_starts_with($realPath, realpath($baseDir) ?: '')) {
                 continue;
             }
-
-            assert(is_string($realPath));
 
             $ext = pathinfo($realPath, PATHINFO_EXTENSION);
             $contentType = self::MIME_TYPES[$ext] ?? 'application/octet-stream';

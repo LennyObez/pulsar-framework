@@ -18,6 +18,26 @@ interface MenuRepositoryInterface
     public function findByLocation(string $location, string $locale, ?string $tenantId = null): ?Menu;
 
     /**
+     * Find a menu by its stable import identifier for idempotent imports.
+     */
+    public function findByImportId(string $importId): ?Menu;
+
+    /**
+     * Find a menu item by its stable import identifier for idempotent imports.
+     */
+    public function findItemByImportId(string $importId): ?MenuItem;
+
+    /**
+     * Load all items for a menu, resolved for the given locale.
+     *
+     * Items are returned in sort_order, with their locale-specific
+     * label and title attribute resolved from translations.
+     *
+     * @return list<MenuItemResolved>
+     */
+    public function findItemsByMenu(string $menuId, string $locale): array;
+
+    /**
      * Persist a menu and its translations.
      *
      * @param list<MenuTranslation> $translations

@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Cms\Themes;
 use Pulsar\Api\Api;
 
 use function is_array;
+use function is_scalar;
+use function is_string;
 
 /**
  * Parsed theme manifest (theme.json) with all declared metadata.
@@ -51,15 +53,15 @@ final readonly class ThemeManifest
     public static function fromArray(array $data): self
     {
         return new self(
-            slug: (string) ($data['slug'] ?? ''),
-            displayName: (string) ($data['display_name'] ?? $data['name'] ?? ''),
-            version: (string) ($data['version'] ?? '0.0.0'),
-            description: isset($data['description']) ? (string) $data['description'] : null,
-            authorName: isset($data['author_name']) ? (string) $data['author_name'] : null,
-            authorUrl: isset($data['author_url']) ? (string) $data['author_url'] : null,
-            license: isset($data['license']) ? (string) $data['license'] : null,
-            pulsarVersionConstraint: isset($data['pulsar_version']) ? (string) $data['pulsar_version'] : null,
-            parentTheme: isset($data['parent_theme']) ? (string) $data['parent_theme'] : null,
+            slug: is_string($data['slug'] ?? null) ? $data['slug'] : '',
+            displayName: is_string($data['display_name'] ?? null) ? $data['display_name'] : (is_string($data['name'] ?? null) ? $data['name'] : ''),
+            version: is_string($data['version'] ?? null) ? $data['version'] : '0.0.0',
+            description: isset($data['description']) ? (is_string($data['description']) ? $data['description'] : '') : null,
+            authorName: isset($data['author_name']) ? (is_string($data['author_name']) ? $data['author_name'] : '') : null,
+            authorUrl: isset($data['author_url']) ? (is_string($data['author_url']) ? $data['author_url'] : '') : null,
+            license: isset($data['license']) ? (is_string($data['license']) ? $data['license'] : '') : null,
+            pulsarVersionConstraint: isset($data['pulsar_version']) ? (is_string($data['pulsar_version']) ? $data['pulsar_version'] : '') : null,
+            parentTheme: isset($data['parent_theme']) ? (is_string($data['parent_theme']) ? $data['parent_theme'] : '') : null,
             regions: self::toStringList($data['regions'] ?? []),
             supportedContentTypes: self::toStringList($data['supported_content_types'] ?? []),
             settings: self::toStringKeyedArray($data['settings'] ?? []),
@@ -79,7 +81,7 @@ final readonly class ThemeManifest
         $result = [];
 
         foreach ($value as $item) {
-            $result[] = (string) $item;
+            $result[] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
         }
 
         return $result;
@@ -97,7 +99,8 @@ final readonly class ThemeManifest
         $result = [];
 
         foreach ($value as $key => $item) {
-            $result[(string) $key] = (string) $item;
+            $strKey = is_string($key) ? $key : (string) $key;
+            $result[$strKey] = is_string($item) ? $item : (is_scalar($item) ? (string) $item : '');
         }
 
         return $result;

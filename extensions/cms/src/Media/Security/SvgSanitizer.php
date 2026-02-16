@@ -288,10 +288,6 @@ final readonly class SvgSanitizer
         $toRemove = [];
         $attributes = $element->attributes;
 
-        if ($attributes === null) {
-            return;
-        }
-
         /** @var DOMAttr $attr */
         foreach (iterator_to_array($attributes) as $attr) {
             $attrNameLower = strtolower($attr->name);
@@ -345,6 +341,13 @@ final readonly class SvgSanitizer
 
             // Block javascript: and vbscript: schemes
             if (str_starts_with($hrefLower, 'javascript:') || str_starts_with($hrefLower, 'vbscript:')) {
+                $element->removeAttribute($attrName);
+
+                continue;
+            }
+
+            // Block protocol-relative URLs (bypass for scheme filtering)
+            if (str_starts_with($hrefLower, '//')) {
                 $element->removeAttribute($attrName);
 
                 continue;

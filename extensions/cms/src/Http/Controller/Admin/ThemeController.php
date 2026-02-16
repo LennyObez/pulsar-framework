@@ -30,7 +30,7 @@ use function unlink;
  * activating, deactivating, previewing, and deleting themes.
  * Dangerous operations (install, activate, delete) require step-up auth.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class ThemeController
 {
     use RendersAdminView;
@@ -40,7 +40,7 @@ final readonly class ThemeController
     public function __construct(
         private ThemeManagerInterface $themeManager,
         private ?CmsRateLimiter $rateLimiter,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 

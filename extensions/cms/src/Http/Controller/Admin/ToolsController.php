@@ -18,16 +18,16 @@ use function strlen;
  * Admin controller for CMS administrative tools.
  *
  * Provides GDPR data export and PII erasure endpoints.
- * Both operations require step-up authentication and the cms.tools.export permission.
+ * Export requires cms.tools.export; erasure requires cms.tools.gdpr.erase.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class ToolsController
 {
     use RendersAdminView;
 
     public function __construct(
         private ToolsServiceInterface $toolsService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -66,7 +66,7 @@ final readonly class ToolsController
     public function eraseUserData(ServerRequestInterface $request): Response
     {
         $identity = $this->requireIdentity($request);
-        $this->authorize($identity, 'cms.tools.export');
+        $this->authorize($identity, 'cms.tools.gdpr.erase');
         $this->requireStepUp($request);
 
         /** @var array<string, mixed> $body */
@@ -91,6 +91,8 @@ final readonly class ToolsController
             'status' => 'erased',
             'comments_anonymized' => $result['comments_anonymized'],
             'content_anonymized' => $result['content_anonymized'],
+            'form_submissions_deleted' => $result['form_submissions_deleted'],
+            'newsletter_subscribers_deleted' => $result['newsletter_subscribers_deleted'],
         ]);
     }
 }

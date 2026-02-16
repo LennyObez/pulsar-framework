@@ -6,9 +6,9 @@ namespace Pulsar\Extension\Cms\Http\Controller\Api;
 
 use JsonException;
 use Psr\Http\Message\ServerRequestInterface;
+use Pulsar\AI\AiResponse;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\AI\ContentAssistant;
-use Pulsar\Extension\Cms\AI\LlmResponse;
 use Pulsar\Extension\Cms\Internal\Http\AiRequestParser;
 use Pulsar\Extension\Cms\Seo\SerpPreview;
 use Pulsar\Http\Message\Response;
@@ -24,7 +24,7 @@ use const JSON_THROW_ON_ERROR;
  * All endpoints require API key authentication (CmsApiKeyMiddleware)
  * and return a uniform response shape.
  */
-#[Internal(reason: 'CMS AI API controller — implementation detail')]
+#[Internal(reason: 'CMS AI API controller; implementation detail')]
 final readonly class AiAssistantApiController
 {
     public function __construct(
@@ -423,7 +423,7 @@ final readonly class AiAssistantApiController
         return Response::json($preview->toArray());
     }
 
-    private function formatResponse(LlmResponse $result): Response
+    private function formatResponse(AiResponse $result): Response
     {
         $status = $result->finishReason === 'error' ? 502 : 200;
 

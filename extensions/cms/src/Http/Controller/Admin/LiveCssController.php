@@ -17,6 +17,7 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function is_array;
+use function is_int;
 use function is_string;
 use function strlen;
 
@@ -26,7 +27,7 @@ use function strlen;
  * Provides theme token editing, CSS override management, version history,
  * and rollback capabilities. All operations are versioned and auditable.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class LiveCssController
 {
     use RendersAdminView;
@@ -36,7 +37,7 @@ final readonly class LiveCssController
         private CssValidatorInterface $validator,
         private ThemeTokenResolverInterface $tokenResolver,
         private ThemeManagerInterface $themeManager,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -91,9 +92,9 @@ final readonly class LiveCssController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $themeId = (string) ($body['theme_id'] ?? '');
-        $cssContent = (string) ($body['css_content'] ?? '');
-        $reason = (string) ($body['reason'] ?? '');
+        $themeId = is_string($body['theme_id'] ?? null) ? $body['theme_id'] : '';
+        $cssContent = is_string($body['css_content'] ?? null) ? $body['css_content'] : '';
+        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
 
         if ($themeId === '') {
             return Response::json(['error' => 'Theme ID is required'], 400);
@@ -148,7 +149,7 @@ final readonly class LiveCssController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $overrideId = (string) ($body['override_id'] ?? '');
+        $overrideId = is_string($body['override_id'] ?? null) ? $body['override_id'] : '';
         $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
 
         if ($overrideId === '') {
@@ -178,9 +179,9 @@ final readonly class LiveCssController
         $this->authorize($identity, 'cms.themes.view');
 
         $params = $request->getQueryParams();
-        $themeId = (string) ($params['theme_id'] ?? '');
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $themeId = is_string($params['theme_id'] ?? null) ? $params['theme_id'] : '';
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
 
         if ($themeId === '') {
             return Response::json(['error' => 'Theme ID is required'], 400);

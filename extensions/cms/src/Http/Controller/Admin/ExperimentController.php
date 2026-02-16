@@ -14,15 +14,19 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_array;
+use function is_float;
+use function is_int;
+use function is_string;
 
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class ExperimentController
 {
     use RendersAdminView;
 
     public function __construct(
         private ExperimentService $experimentService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -57,9 +61,9 @@ final readonly class ExperimentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = (string) ($body['name'] ?? '');
-        $contentId = (string) ($body['content_id'] ?? '');
-        $trafficPercentage = (float) ($body['traffic_percentage'] ?? 1.0);
+        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
+        $contentId = is_string($body['content_id'] ?? null) ? $body['content_id'] : '';
+        $trafficPercentage = is_float($body['traffic_percentage'] ?? null) ? $body['traffic_percentage'] : (float) 1.0;
 
         if ($name === '' || $contentId === '') {
             return Response::json(['error' => 'Name and content_id are required'], 400);
@@ -69,14 +73,14 @@ final readonly class ExperimentController
 
         // Add variants if provided
         /** @var list<array{name?: string, content_id?: string, weight?: int}> $variants */
-        $variants = (array) ($body['variants'] ?? []);
+        $variants = is_array($body['variants'] ?? null) ? $body['variants'] : [];
 
         $createdVariants = [];
 
         foreach ($variants as $variantData) {
-            $variantName = (string) ($variantData['name'] ?? '');
-            $variantContentId = (string) ($variantData['content_id'] ?? '');
-            $weight = (int) ($variantData['weight'] ?? 1);
+            $variantName = is_string($variantData['name'] ?? null) ? $variantData['name'] : '';
+            $variantContentId = is_string($variantData['content_id'] ?? null) ? $variantData['content_id'] : '';
+            $weight = is_int($variantData['weight'] ?? null) ? $variantData['weight'] : 1;
 
             if ($variantName !== '' && $variantContentId !== '') {
                 $createdVariants[] = $this->experimentService->addVariant(

@@ -6,6 +6,11 @@ namespace Pulsar\Extension\Cms\Tools;
 
 use Pulsar\Api\Api;
 
+use function is_array;
+use function is_bool;
+use function is_int;
+use function is_string;
+
 /**
  * Configuration for CMS import operations.
  */
@@ -30,24 +35,22 @@ final readonly class ImportConfig
     ) {}
 
     /**
-     * @param array{
-     *     max_import_size_bytes?: int,
-     *     allow_external_media_download?: bool,
-     *     dry_run_default?: bool,
-     *     duplicate_policy?: string,
-     *     allowed_locales?: list<string>|null,
-     * } $data
+     * @param array<string, mixed> $data
      */
     public static function fromArray(array $data): self
     {
+        $allowedLocales = isset($data['allowed_locales']) && is_array($data['allowed_locales'])
+            ? array_values(array_filter($data['allowed_locales'], 'is_string'))
+            : null;
+
         return new self(
-            maxImportSizeBytes: $data['max_import_size_bytes'] ?? self::DEFAULT_MAX_IMPORT_SIZE,
-            allowExternalMediaDownload: $data['allow_external_media_download'] ?? true,
-            dryRunDefault: $data['dry_run_default'] ?? true,
-            duplicatePolicy: isset($data['duplicate_policy'])
+            maxImportSizeBytes: is_int($data['max_import_size_bytes'] ?? null) ? $data['max_import_size_bytes'] : self::DEFAULT_MAX_IMPORT_SIZE,
+            allowExternalMediaDownload: is_bool($data['allow_external_media_download'] ?? null) ? $data['allow_external_media_download'] : true,
+            dryRunDefault: is_bool($data['dry_run_default'] ?? null) ? $data['dry_run_default'] : true,
+            duplicatePolicy: isset($data['duplicate_policy']) && is_string($data['duplicate_policy'])
                 ? (DuplicateResolutionPolicy::tryFrom($data['duplicate_policy']) ?? DuplicateResolutionPolicy::Skip)
                 : DuplicateResolutionPolicy::Skip,
-            allowedLocales: $data['allowed_locales'] ?? null,
+            allowedLocales: $allowedLocales,
         );
     }
 }

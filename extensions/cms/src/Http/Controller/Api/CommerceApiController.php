@@ -14,6 +14,7 @@ use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Http\Message\Response;
 
 use function array_map;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -23,7 +24,7 @@ use function min;
  *
  * All endpoints return 404 when commerce is not enabled in CmsConfig.
  */
-#[Internal(reason: 'CMS REST API controller — implementation detail')]
+#[Internal(reason: 'CMS REST API controller; implementation detail')]
 final readonly class CommerceApiController
 {
     public function __construct(
@@ -33,7 +34,7 @@ final readonly class CommerceApiController
     ) {}
 
     /**
-     * GET /api/v1/products — List products with pagination.
+     * GET /api/v1/products: List products with pagination.
      */
     public function listProducts(ServerRequestInterface $request): Response
     {
@@ -42,8 +43,8 @@ final readonly class CommerceApiController
         }
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
 
         /** @var array<string, mixed> $filters */
         $filters = [];
@@ -79,7 +80,7 @@ final readonly class CommerceApiController
     }
 
     /**
-     * GET /api/v1/products/{id} — Show a single product.
+     * GET /api/v1/products/{id}: Show a single product.
      */
     public function showProduct(ServerRequestInterface $request, string $id): Response
     {
@@ -111,7 +112,7 @@ final readonly class CommerceApiController
     }
 
     /**
-     * GET /api/v1/orders — List orders with pagination.
+     * GET /api/v1/orders: List orders with pagination.
      */
     public function listOrders(ServerRequestInterface $request): Response
     {
@@ -120,8 +121,8 @@ final readonly class CommerceApiController
         }
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
 
         /** @var array<string, mixed> $filters */
         $filters = [];
@@ -161,7 +162,7 @@ final readonly class CommerceApiController
     }
 
     /**
-     * GET /api/v1/orders/{id} — Show a single order.
+     * GET /api/v1/orders/{id}: Show a single order.
      */
     public function showOrder(ServerRequestInterface $request, string $id): Response
     {

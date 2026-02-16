@@ -18,7 +18,7 @@ use function is_string;
  *
  * Allows viewing and editing the robots.txt content stored in CMS settings.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class RobotsController
 {
     use RendersAdminView;
@@ -29,7 +29,7 @@ final readonly class RobotsController
 
     public function __construct(
         private SettingsServiceInterface $settings,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 

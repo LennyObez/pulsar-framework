@@ -22,7 +22,7 @@ use function is_string;
  * and auto-unsubscribes addresses after 3 hard bounces to protect sender
  * reputation.
  */
-#[Internal(reason: 'CMS newsletter controller — implementation detail')]
+#[Internal(reason: 'CMS newsletter controller; implementation detail')]
 final readonly class BounceWebhookController
 {
     private const int HARD_BOUNCE_THRESHOLD = 3;

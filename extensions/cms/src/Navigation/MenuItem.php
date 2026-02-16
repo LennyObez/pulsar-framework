@@ -26,6 +26,7 @@ final readonly class MenuItem
      * @param string|null $icon Optional icon identifier
      * @param int $sortOrder Position among siblings
      * @param bool $visible Whether the item is rendered
+     * @param string|null $importId Stable import identifier for idempotent imports
      */
     public function __construct(
         public string $id,
@@ -38,5 +39,6 @@ final readonly class MenuItem
         public ?string $icon,
         public int $sortOrder,
         public bool $visible,
+        public ?string $importId = null,
     ) {}
 }

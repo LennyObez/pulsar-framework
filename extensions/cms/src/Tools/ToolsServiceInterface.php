@@ -30,9 +30,9 @@ interface ToolsServiceInterface
      *
      * Anonymizes: guest_email → [redacted], zeroes ip_hash and
      * user_agent_hash in comments, anonymizes display names in
-     * content attribution. Does NOT delete content — only PII.
+     * content attribution. Does NOT delete content: only PII.
      *
-     * @return array{comments_anonymized: int, content_anonymized: int, reviews_anonymized: int, media_anonymized: int, customers_redacted: int, orders_redacted: int, revisions_anonymized: int, api_keys_anonymized: int, settings_history_anonymized: int}
+     * @return array{comments_anonymized: int, content_anonymized: int, reviews_anonymized: int, media_anonymized: int, customers_redacted: int, orders_redacted: int, revisions_anonymized: int, api_keys_anonymized: int, settings_history_anonymized: int, form_submissions_deleted: int, newsletter_subscribers_deleted: int}
      */
     public function eraseUserData(string $userId, string $reason): array;
 }

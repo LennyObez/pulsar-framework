@@ -13,7 +13,7 @@ use Pulsar\Auth\TwoFactor\RecoveryCodeGenerator;
 use Pulsar\Auth\TwoFactor\TotpGenerator;
 use Pulsar\Auth\TwoFactor\TotpVerifier;
 use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
-use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
+use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 use Pulsar\Http\Message\Response;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -28,7 +28,7 @@ use function strlen;
  * Provides endpoints for enrolling (with QR code), verifying, and disabling 2FA.
  * All operations require step-up authentication and appropriate permissions.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class TwoFactorController
 {
     use RendersAdminView;
@@ -41,8 +41,8 @@ final readonly class TwoFactorController
         private RecoveryCodeGenerator $recoveryCodeGenerator,
         private QrCodeEncoder $qrCodeEncoder,
         private ?CmsRateLimiter $rateLimiter,
-        private GateInterface $gate,
         private ?AuditLoggerInterface $auditLogger,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -63,7 +63,7 @@ final readonly class TwoFactorController
     }
 
     /**
-     * Begin 2FA enrollment — generate secret and QR code.
+     * Begin 2FA enrollment: generate secret and QR code.
      *
      * Returns a provisioning URI and SVG QR code for scanning with an authenticator app.
      * The secret is returned to be stored temporarily until the user confirms with a valid code.

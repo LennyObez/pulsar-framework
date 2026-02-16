@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Cms\Media;
 
 use Pulsar\Api\Api;
 
+use function is_string;
+
 /**
  * Represents a generated image variant with its physical dimensions,
  * output format, and file size.
@@ -27,11 +29,11 @@ final readonly class ImageVariant
     public static function fromArray(array $data): self
     {
         return new self(
-            path: (string) ($data['path'] ?? ''),
-            width: (int) ($data['width'] ?? 0),
-            height: (int) ($data['height'] ?? 0),
-            format: (string) ($data['format'] ?? ''),
-            sizeBytes: (int) ($data['size_bytes'] ?? 0),
+            path: isset($data['path']) ? (is_string($data['path'] ?? null) ? $data['path'] : '') : '',
+            width: is_numeric($data['width'] ?? null) ? (int) $data['width'] : 0,
+            height: is_numeric($data['height'] ?? null) ? (int) $data['height'] : 0,
+            format: is_string($data['format'] ?? null) ? $data['format'] : '',
+            sizeBytes: is_numeric($data['size_bytes'] ?? null) ? (int) $data['size_bytes'] : 0,
         );
     }
 }

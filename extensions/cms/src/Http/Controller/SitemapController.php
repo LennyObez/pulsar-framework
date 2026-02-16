@@ -12,7 +12,7 @@ use Pulsar\Http\Message\Response;
 /**
  * Serves XML sitemap files (index and per-type pages).
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class SitemapController
 {
     public function __construct(

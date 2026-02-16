@@ -22,7 +22,7 @@ use function trim;
  * authenticated and guest submissions. CSRF validation is expected
  * to be handled by middleware before this controller is reached.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class CommentController
 {
     public function __construct(
@@ -34,7 +34,7 @@ final readonly class CommentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $commentBody = trim((string) ($body['body'] ?? ''));
+        $commentBody = trim(is_string($body['body'] ?? null) ? $body['body'] : '');
 
         if ($commentBody === '') {
             return Response::validationError([
@@ -60,7 +60,8 @@ final readonly class CommentController
             }
         }
 
-        $ipHash = hash('sha256', $request->getServerParams()['REMOTE_ADDR'] ?? '');
+        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? '';
+        $ipHash = hash('sha256', is_string($remoteAddr) ? $remoteAddr : '');
         $userAgentHash = hash('sha256', $request->getHeaderLine('User-Agent'));
 
         try {

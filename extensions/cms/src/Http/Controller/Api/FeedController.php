@@ -16,12 +16,12 @@ use function in_array;
  * Serves RSS 2.0 and Atom 1.0 feeds for published CMS content.
  *
  * Routes:
- *   GET /feed/rss       — RSS 2.0 feed (default locale)
- *   GET /feed/atom      — Atom 1.0 feed (default locale)
- *   GET /{locale}/feed/rss  — RSS 2.0 feed for locale
- *   GET /{locale}/feed/atom — Atom 1.0 feed for locale
+ *   GET /feed/rss      : RSS 2.0 feed (default locale)
+ *   GET /feed/atom     : Atom 1.0 feed (default locale)
+ *   GET /{locale}/feed/rss : RSS 2.0 feed for locale
+ *   GET /{locale}/feed/atom: Atom 1.0 feed for locale
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class FeedController
 {
     private const int CACHE_TTL_SECONDS = 3600;
