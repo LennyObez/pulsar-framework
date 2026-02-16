@@ -58,7 +58,9 @@
       "Pulsar\\Extension\\McpServer\\": "extensions/mcp-server/src/",
       "Pulsar\\Extension\\Orm\\": "extensions/orm/src/",
       "Pulsar\\Extension\\Admin\\": "extensions/admin/src/",
-      "Pulsar\\Extension\\OpenTelemetry\\": "extensions/opentelemetry/src/"
+      "Pulsar\\Extension\\OpenTelemetry\\": "extensions/opentelemetry/src/",
+      "Pulsar\\Extension\\OAuth2\\": "extensions/oauth2/src/",
+      "Pulsar\\Extension\\WebAuthn\\": "extensions/webauthn/src/"
     }
   },
   "autoload-dev": {

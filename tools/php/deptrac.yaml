@@ -820,6 +820,98 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\OpenTelemetry\\Internal\\
 
+    # --- OAuth2 Extension (Pulsar\\Extension\\Oauth2 → OAuth2) ---
+
+    # --- OAuth2: public contracts ---
+    - name: OAuth2Contracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Contract\\
+
+    # --- OAuth2: domain types (value objects, enums, exceptions, config) ---
+    - name: OAuth2Domain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Config\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\AccessToken$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\RefreshToken$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\AuthorizationCode$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\TokenPair$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Token\\Scope$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Client\\OAuthClient$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Consent\\ConsentRecord$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Grant\\GrantInterface$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Grant\\TokenResponse$
+        - type: classLike
+          value: ^Pulsar\\Extension\\OAuth2\\Oidc\\OidcConfig$
+
+    # --- OAuth2: internal implementation ---
+    - name: OAuth2Internal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\OAuth2\\
+          must_not:
+            - type: layer
+              value: OAuth2Contracts
+            - type: layer
+              value: OAuth2Domain
+
+    # --- WebAuthn Extension (Pulsar\\Extension\\Webauthn → WebAuthn) ---
+
+    # --- WebAuthn: public contracts ---
+    - name: WebAuthnContracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Contract\\
+
+    # --- WebAuthn: domain types (value objects, enums, exceptions, config) ---
+    - name: WebAuthnDomain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Config\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\PublicKey\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Attestation\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Authenticator\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Ceremony\\RegistrationOptions$
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Ceremony\\RegistrationResult$
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Ceremony\\AuthenticationOptions$
+        - type: classLike
+          value: ^Pulsar\\Extension\\WebAuthn\\Ceremony\\AuthenticationResult$
+
+    # --- WebAuthn: internal implementation ---
+    - name: WebAuthnInternal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\WebAuthn\\
+          must_not:
+            - type: layer
+              value: WebAuthnContracts
+            - type: layer
+              value: WebAuthnDomain
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -1570,6 +1662,152 @@ deptrac:
     Psr7BridgeExtension: *public_deps
     StudioExtension: *public_deps
     ExampleExtension: *public_deps
+
+    OAuth2Contracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - OAuth2Domain
+
+    OAuth2Domain: *public_deps
+
+    OAuth2Internal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - OAuth2Contracts
+      - OAuth2Domain
+
+    WebAuthnContracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - WebAuthnDomain
+
+    WebAuthnDomain: *public_deps
+
+    WebAuthnInternal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - WebAuthnContracts
+      - WebAuthnDomain
 
   analyser:
     types:
