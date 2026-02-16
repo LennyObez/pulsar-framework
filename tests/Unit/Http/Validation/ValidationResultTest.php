@@ -73,8 +73,8 @@ final class ValidationResultTest extends TestCase
         ]);
 
         self::assertSame([
-            ['field' => 'email', 'message' => 'Required.', 'rule' => 'required'],
-            ['field' => 'name', 'message' => 'Too short.', 'rule' => 'min_length'],
+            ['field' => 'email', 'message' => 'Required.', 'rule' => 'required', 'code' => 'VALIDATION_REQUIRED'],
+            ['field' => 'name', 'message' => 'Too short.', 'rule' => 'min_length', 'code' => 'VALIDATION_MIN_LENGTH'],
         ], $result->toArray());
     }
 }
