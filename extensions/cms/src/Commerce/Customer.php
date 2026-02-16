@@ -21,6 +21,7 @@ final readonly class Customer
      * @param string|null $displayName Customer display name
      * @param array<string, mixed>|null $billingAddress Structured billing address
      * @param array<string, mixed>|null $shippingAddress Structured shipping address
+     * @param string|null $notes Admin notes (timestamped, append-only)
      * @param DateTimeImmutable $createdAt When customer was first created
      * @param DateTimeImmutable $updatedAt Last update timestamp
      */
@@ -32,6 +33,7 @@ final readonly class Customer
         public ?string $displayName,
         public ?array $billingAddress,
         public ?array $shippingAddress,
+        public ?string $notes,
         public DateTimeImmutable $createdAt,
         public DateTimeImmutable $updatedAt,
     ) {}

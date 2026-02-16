@@ -16,6 +16,9 @@ use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Support\UuidGenerator;
 
+use function is_array;
+use function is_int;
+use function is_string;
 use function sprintf;
 
 /**
@@ -53,7 +56,7 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
                 ['content_id' => $contentId],
             );
 
-            $nextNumber = ((int) $result->firstOrFail()->get('max_num')) + 1;
+            $nextNumber = ($result->firstOrFail()->getInt('max_num')) + 1;
 
             // Serialize all translations
             $translations = $this->translationRepository->findByContentId($contentId);
@@ -105,7 +108,7 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
             $taxonomyTermIds = [];
 
             foreach ($termResult->rows as $row) {
-                $taxonomyTermIds[] = (string) $row->get('term_id');
+                $taxonomyTermIds[] = $row->getString('term_id');
             }
 
             // Compute evidence hash over entire payload
@@ -162,30 +165,33 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
         }
 
         /** @var list<array<string, mixed>> $translationsData */
-        $translationsData = json_decode((string) $row->get('translations_json'), true, 512, JSON_THROW_ON_ERROR);
+        $translationsData = json_decode($row->getString('translations_json'), true, 512, JSON_THROW_ON_ERROR);
 
         $this->db->transaction(function (ConnectionInterface $db) use ($translationsData, $row, $restoredBy): void {
-            $contentId = (string) $row->get('content_id');
-            $snapshotNumber = (int) $row->get('snapshot_number');
+            $contentId = $row->getString('content_id');
+            $snapshotNumber = $row->getInt('snapshot_number');
 
             foreach ($translationsData as $data) {
-                $locale = (string) $data['locale'];
+                $locale = is_string($data['locale'] ?? null) ? $data['locale'] : '';
+
+                /** @var array<string, mixed>|null $overrides */
+                $overrides = is_array($data['structured_data_overrides'] ?? null) ? $data['structured_data_overrides'] : null;
 
                 $translation = new ContentTranslation(
-                    id: (string) $data['id'],
+                    id: is_string($data['id'] ?? null) ? $data['id'] : '',
                     contentId: $contentId,
                     locale: $locale,
-                    title: (string) $data['title'],
-                    slugSegment: (string) $data['slug_segment'],
-                    path: (string) $data['path'],
-                    body: (string) $data['body'],
-                    excerpt: $data['excerpt'] !== null ? (string) $data['excerpt'] : null,
-                    metaTitle: $data['meta_title'] !== null ? (string) $data['meta_title'] : null,
-                    metaDescription: $data['meta_description'] !== null ? (string) $data['meta_description'] : null,
-                    ogImageId: $data['og_image_id'] !== null ? (string) $data['og_image_id'] : null,
-                    robots: $data['robots'] !== null ? (string) $data['robots'] : null,
-                    structuredDataOverrides: $data['structured_data_overrides'],
-                    readingTimeMinutes: $data['reading_time_minutes'] !== null ? (int) $data['reading_time_minutes'] : null,
+                    title: is_string($data['title'] ?? null) ? $data['title'] : '',
+                    slugSegment: is_string($data['slug_segment'] ?? null) ? $data['slug_segment'] : '',
+                    path: is_string($data['path'] ?? null) ? $data['path'] : '',
+                    body: is_string($data['body'] ?? null) ? $data['body'] : '',
+                    excerpt: is_string($data['excerpt'] ?? null) ? $data['excerpt'] : null,
+                    metaTitle: is_string($data['meta_title'] ?? null) ? $data['meta_title'] : null,
+                    metaDescription: is_string($data['meta_description'] ?? null) ? $data['meta_description'] : null,
+                    ogImageId: is_string($data['og_image_id'] ?? null) ? $data['og_image_id'] : null,
+                    robots: is_string($data['robots'] ?? null) ? $data['robots'] : null,
+                    structuredDataOverrides: $overrides,
+                    readingTimeMinutes: is_int($data['reading_time_minutes'] ?? null) ? $data['reading_time_minutes'] : null,
                     bodyPlaintext: '',
                     headingsText: '',
                     customFieldsText: '',
@@ -220,17 +226,24 @@ final readonly class ContentSnapshotService implements ContentSnapshotServiceInt
         $snapshots = [];
 
         foreach ($result->rows as $row) {
+            /** @var list<array<string, mixed>> $translationsDecoded */
+            $translationsDecoded = json_decode($row->getString('translations_json'), true, 512, JSON_THROW_ON_ERROR);
+            /** @var list<array<string, mixed>> $blocksDecoded */
+            $blocksDecoded = json_decode($row->getString('blocks_json'), true, 512, JSON_THROW_ON_ERROR);
+            /** @var list<string> $termIdsDecoded */
+            $termIdsDecoded = json_decode($row->getString('taxonomy_term_ids'), true, 512, JSON_THROW_ON_ERROR);
+
             $snapshots[] = new ContentSnapshot(
-                id: (string) $row->get('id'),
-                contentId: (string) $row->get('content_id'),
-                snapshotNumber: (int) $row->get('snapshot_number'),
-                translationsJson: json_decode((string) $row->get('translations_json'), true, 512, JSON_THROW_ON_ERROR),
-                blocksJson: json_decode((string) $row->get('blocks_json'), true, 512, JSON_THROW_ON_ERROR),
-                taxonomyTermIds: json_decode((string) $row->get('taxonomy_term_ids'), true, 512, JSON_THROW_ON_ERROR),
-                evidenceHash: (string) $row->get('evidence_hash'),
-                reason: (string) $row->get('reason'),
-                createdBy: (string) $row->get('created_by'),
-                createdAt: new DateTimeImmutable((string) $row->get('created_at')),
+                id: $row->getString('id'),
+                contentId: $row->getString('content_id'),
+                snapshotNumber: $row->getInt('snapshot_number'),
+                translationsJson: $translationsDecoded,
+                blocksJson: $blocksDecoded,
+                taxonomyTermIds: $termIdsDecoded,
+                evidenceHash: $row->getString('evidence_hash'),
+                reason: $row->getString('reason'),
+                createdBy: $row->getString('created_by'),
+                createdAt: new DateTimeImmutable($row->getString('created_at')),
             );
         }
 

@@ -67,7 +67,7 @@ final readonly class ThemeProvenanceVerifier implements ThemeProvenanceVerifierI
         $signature = base64_decode($signatureRaw, strict: true);
 
         if ($signature === false || strlen($signature) !== self::SIGNATURE_LENGTH) {
-            return ProvenanceResult::failed('Invalid signature format — expected 64-byte Ed25519 signature');
+            return ProvenanceResult::failed('Invalid signature format: expected 64-byte Ed25519 signature');
         }
 
         // Step 4: Read the archive contents for verification
@@ -107,7 +107,7 @@ final readonly class ThemeProvenanceVerifier implements ThemeProvenanceVerifierI
         }
 
         // Signature present but no matching key verified it
-        $this->logger->warning('Theme signature verification failed — no trusted key matched', [
+        $this->logger->warning('Theme signature verification failed: no trusted key matched', [
             'archive' => $archivePath,
             'trusted_key_count' => count($this->config->trustedPublicKeys),
         ]);

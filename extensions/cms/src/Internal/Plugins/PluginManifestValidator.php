@@ -79,19 +79,19 @@ final readonly class PluginManifestValidator implements PluginManifestValidatorI
 
         // Optional warnings
         if ($manifest->description === null || trim($manifest->description) === '') {
-            $warnings[] = 'Missing description — recommended for plugin marketplace listing';
+            $warnings[] = 'Missing description: recommended for plugin marketplace listing';
         }
 
         if ($manifest->authorName === null || trim($manifest->authorName) === '') {
-            $warnings[] = 'Missing author_name — recommended for attribution';
+            $warnings[] = 'Missing author_name: recommended for attribution';
         }
 
         if ($manifest->license === null || trim($manifest->license) === '') {
-            $warnings[] = 'Missing license — recommended for compliance';
+            $warnings[] = 'Missing license: recommended for compliance';
         }
 
         if ($manifest->entryPoint === null || trim($manifest->entryPoint) === '') {
-            $warnings[] = 'Missing entry_point — plugin will have no executable code';
+            $warnings[] = 'Missing entry_point: plugin will have no executable code';
         }
 
         if ($errors !== []) {

@@ -19,7 +19,7 @@ use const ENT_QUOTES;
  * Renders a semantic `<section>` element with data attributes for client-side
  * enrichment. Supports optional overlay text and CTA button.
  */
-#[Internal(reason: 'CMS block type — implementation detail')]
+#[Internal(reason: 'CMS block type; implementation detail')]
 final readonly class ShowcaseHeroBlock implements BlockTypeInterface
 {
     #[Override]

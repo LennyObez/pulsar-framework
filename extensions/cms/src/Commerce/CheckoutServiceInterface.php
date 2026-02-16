@@ -13,7 +13,7 @@ use Pulsar\Api\Api;
 interface CheckoutServiceInterface
 {
     /**
-     * Validate cart items — verify products exist, are active, have sufficient stock, and prices are current.
+     * Validate cart items: verify products exist, are active, have sufficient stock, and prices are current.
      *
      * @param list<array{productId: string, quantity: int, unitPrice: int, variantId?: string|null}> $cartItems
      */
@@ -45,6 +45,9 @@ interface CheckoutServiceInterface
 
     /**
      * Cancel an in-progress checkout, releasing any reserved stock.
+     *
+     * @param string $orderId The order to cancel
+     * @param string|null $actorId The user performing the cancellation, for audit logging
      */
-    public function cancelCheckout(string $orderId): void;
+    public function cancelCheckout(string $orderId, ?string $actorId = null): void;
 }

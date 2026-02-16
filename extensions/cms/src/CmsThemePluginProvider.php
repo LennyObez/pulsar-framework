@@ -18,6 +18,7 @@ use Pulsar\Extension\Cms\Internal\LiveCss\CssValidator;
 use Pulsar\Extension\Cms\Internal\LiveCss\LiveCssService;
 use Pulsar\Extension\Cms\Internal\LiveCss\ThemeTokenResolver;
 use Pulsar\Extension\Cms\Internal\Persistence\CachePreviewSessionRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\InMemoryPreviewSessionRepository;
 use Pulsar\Extension\Cms\Internal\Plugins\CmsPluginManager;
 use Pulsar\Extension\Cms\Internal\Plugins\HookExecutionEngine;
 use Pulsar\Extension\Cms\Internal\Plugins\PluginManifestValidator;
@@ -51,7 +52,7 @@ use function rtrim;
 /**
  * Binds theme manager, plugin manager, hook engine, and live CSS services.
  */
-#[Internal(reason: 'CMS service wiring — use interfaces for public API')]
+#[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsThemePluginProvider
 {
     public function register(ContainerInterface $container): void
@@ -100,37 +101,44 @@ final readonly class CmsThemePluginProvider
             new ThemeAssetResolver($themeRepository, $logger),
         );
 
-        // Preview session repository (cache-backed when TaggedCacheInterface is available)
+        // Preview session repository: prefer cache-backed when TaggedCacheInterface
+        // is available (Redis/Memcached), fall back to in-memory for dev/single-process.
         if ($container->has(TaggedCacheInterface::class)) {
             /** @var TaggedCacheInterface $taggedCache */
             $taggedCache = $container->get(TaggedCacheInterface::class);
             $previewSessionRepository = new CachePreviewSessionRepository($taggedCache);
-            $container->instance(PreviewSessionRepositoryInterface::class, $previewSessionRepository);
+        } else {
+            $previewSessionRepository = new InMemoryPreviewSessionRepository();
+        }
 
-            if ($eventDispatcher !== null) {
-                /** @var string $basePath */
-                $basePath = $container->has('app.base_path')
-                    ? $container->get('app.base_path')
-                    : (getcwd() ?: '.');
+        $container->instance(PreviewSessionRepositoryInterface::class, $previewSessionRepository);
 
-                $publicPath = rtrim($basePath, '/') . '/public';
+        // ThemeManager: register unconditionally when an event dispatcher is available.
+        // No longer gated on TaggedCacheInterface since the preview session repository
+        // has an in-memory fallback.
+        if ($eventDispatcher !== null) {
+            /** @var string $basePath */
+            $basePath = $container->has('app.base_path')
+                ? $container->get('app.base_path')
+                : (getcwd() ?: '.');
 
-                $container->instance(
-                    ThemeManagerInterface::class,
-                    new ThemeManager(
-                        $themeRepository,
-                        $manifestValidator,
-                        $provenanceVerifier,
-                        $archiveExtractor,
-                        $themesConfig,
-                        $eventDispatcher,
-                        $auditLogger,
-                        $logger,
-                        $previewSessionRepository,
-                        $publicPath,
-                    ),
-                );
-            }
+            $publicPath = rtrim($basePath, '/') . '/public';
+
+            $container->instance(
+                ThemeManagerInterface::class,
+                new ThemeManager(
+                    $themeRepository,
+                    $manifestValidator,
+                    $provenanceVerifier,
+                    $archiveExtractor,
+                    $themesConfig,
+                    $eventDispatcher,
+                    $auditLogger,
+                    $logger,
+                    $previewSessionRepository,
+                    $publicPath,
+                ),
+            );
         }
 
         // Plugin stack

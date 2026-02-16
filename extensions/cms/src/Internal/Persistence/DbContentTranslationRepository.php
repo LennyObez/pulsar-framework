@@ -18,7 +18,7 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-#[Internal(reason: 'Raw-DB repository — use ContentTranslationRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ContentTranslationRepositoryInterface for public API')]
 final readonly class DbContentTranslationRepository implements ContentTranslationRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
@@ -40,7 +40,7 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
         SELECT * FROM cms_content_translations
         WHERE locale = :locale
             AND path = :path
-            AND tenant_key = COALESCE(:tenant_id, '00000000-0000-0000-0000-000000000000')
+            AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = COALESCE(:tenant_id, '00000000-0000-0000-0000-000000000000')
         SQL;
 
     private const array UPSERT_COLUMNS = [
@@ -186,6 +186,11 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
     {
         $structuredDataRaw = $row->getNullableString('structured_data_overrides');
 
+        /** @var array<string, mixed>|null $structuredDataOverrides */
+        $structuredDataOverrides = $structuredDataRaw !== null
+            ? json_decode($structuredDataRaw, true, flags: JSON_THROW_ON_ERROR)
+            : null;
+
         return new ContentTranslation(
             id: $row->getString('id'),
             contentId: $row->getString('content_id'),
@@ -199,9 +204,7 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
             metaDescription: $row->getNullableString('meta_description'),
             ogImageId: $row->getNullableString('og_image_id'),
             robots: $row->getNullableString('robots'),
-            structuredDataOverrides: $structuredDataRaw !== null
-                ? json_decode($structuredDataRaw, true, flags: JSON_THROW_ON_ERROR)
-                : null,
+            structuredDataOverrides: $structuredDataOverrides,
             readingTimeMinutes: $row->getNullableInt('reading_time_minutes'),
             bodyPlaintext: $row->getString('body_plaintext'),
             headingsText: $row->getString('headings_text'),

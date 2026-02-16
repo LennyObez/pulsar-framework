@@ -10,7 +10,7 @@ use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Exception\CmsException;
 
 /**
- * Comment entity — represents a user or guest comment on a content item.
+ * Comment entity: represents a user or guest comment on a content item.
  *
  * Supports threaded replies via parent_id, authenticated and guest authors,
  * and a time-limited edit window after submission.

@@ -20,7 +20,7 @@ use function count;
  * Provides data export and PII erasure for CMS-managed user data.
  * All operations are logged to the audit trail.
  */
-#[Internal(reason: 'GDPR tools implementation — use ToolsServiceInterface')]
+#[Internal(reason: 'GDPR tools implementation; use ToolsServiceInterface')]
 final readonly class ToolsService implements ToolsServiceInterface
 {
     public function __construct(
@@ -119,7 +119,7 @@ final readonly class ToolsService implements ToolsServiceInterface
     }
 
     /**
-     * @return array{comments_anonymized: int, content_anonymized: int, reviews_anonymized: int, media_anonymized: int, customers_redacted: int, orders_redacted: int, revisions_anonymized: int, api_keys_anonymized: int, settings_history_anonymized: int}
+     * @return array{comments_anonymized: int, content_anonymized: int, reviews_anonymized: int, media_anonymized: int, customers_redacted: int, orders_redacted: int, revisions_anonymized: int, api_keys_anonymized: int, settings_history_anonymized: int, form_submissions_deleted: int, newsletter_subscribers_deleted: int}
      */
     public function eraseUserData(string $userId, string $reason): array
     {
@@ -132,7 +132,7 @@ final readonly class ToolsService implements ToolsServiceInterface
                 ['user_id' => $userId],
             );
 
-            // Anonymize content authorship (keep content itself — only PII fields)
+            // Anonymize content authorship (keep content itself; only PII fields)
             $result['content_anonymized'] = $conn->execute(
                 "UPDATE cms_contents SET author_id = '[anonymized]' WHERE author_id = :user_id AND deleted_at IS NULL",
                 ['user_id' => $userId],
@@ -177,6 +177,18 @@ final readonly class ToolsService implements ToolsServiceInterface
             // Anonymize settings change history
             $result['settings_history_anonymized'] = $conn->execute(
                 "UPDATE cms_settings_history SET changed_by = '[anonymized]' WHERE changed_by = :user_id",
+                ['user_id' => $userId],
+            );
+
+            // Delete form submissions by submitter email or IP hash (PII)
+            $result['form_submissions_deleted'] = $conn->execute(
+                'DELETE FROM cms_form_submissions WHERE submitter_email = (SELECT email FROM cms_customers WHERE user_id = :user_id LIMIT 1) OR submitter_ip_hash IN (SELECT ip_hash FROM cms_comments WHERE author_id = :user_id2 AND ip_hash != \'\')',
+                ['user_id' => $userId, 'user_id2' => $userId],
+            );
+
+            // Delete newsletter subscriber records by email
+            $result['newsletter_subscribers_deleted'] = $conn->execute(
+                'DELETE FROM cms_newsletter_subscribers WHERE email = (SELECT email FROM cms_customers WHERE user_id = :user_id LIMIT 1)',
                 ['user_id' => $userId],
             );
 

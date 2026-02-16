@@ -22,7 +22,7 @@ use const ENT_QUOTES;
  * Renders a container element with data attributes that the frontend
  * populates with a filterable grid of showcase/portfolio projects.
  */
-#[Internal(reason: 'CMS block type — implementation detail')]
+#[Internal(reason: 'CMS block type; implementation detail')]
 final readonly class ShowcaseBlock implements BlockTypeInterface
 {
     #[Override]

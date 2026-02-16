@@ -20,7 +20,7 @@ use const ENT_QUOTES;
  * or server-side enrichment layer populates with title, section,
  * difficulty badge, and reading time.
  */
-#[Internal(reason: 'CMS block type — implementation detail')]
+#[Internal(reason: 'CMS block type; implementation detail')]
 final readonly class DocsBlock implements BlockTypeInterface
 {
     #[Override]

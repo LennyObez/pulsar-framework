@@ -15,7 +15,7 @@ use function count;
  *
  * Comments pending longer than 24 hours are flagged as urgent.
  */
-#[Internal(reason: 'CMS dashboard widget — implementation detail')]
+#[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class ModerationQueueWidget implements DashboardWidgetInterface
 {
     private const int URGENT_THRESHOLD_HOURS = 24;

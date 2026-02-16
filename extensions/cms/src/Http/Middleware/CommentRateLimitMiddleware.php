@@ -29,7 +29,7 @@ use function time;
  *
  * Returns 429 Too Many Requests with Retry-After header when exceeded.
  */
-#[Internal(reason: 'CMS middleware — not a public API surface')]
+#[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
 {
     private const int DEFAULT_PER_MINUTE = 5;
@@ -91,7 +91,7 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
     /**
      * Resolve a stable hash of the client IP address.
      *
-     * Uses REMOTE_ADDR only — never trusts X-Forwarded-For or similar
+     * Uses REMOTE_ADDR only: never trusts X-Forwarded-For or similar
      * headers which are trivially spoofable.
      */
     private function resolveIpHash(ServerRequestInterface $request): string
@@ -108,7 +108,7 @@ final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
     private function incrementCounter(string $key, int $ttlSeconds): int
     {
         $current = $this->cache->get($key);
-        $count = ($current !== null) ? ((int) $current + 1) : 1;
+        $count = ($current !== null && is_numeric($current)) ? ((int) $current + 1) : 1;
 
         $this->cache->set($key, (string) $count, ['cms_comment_rate'], $ttlSeconds);
 

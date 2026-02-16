@@ -19,7 +19,7 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-#[Internal(reason: 'Raw-DB repository — use FieldRegistryRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use FieldRegistryRepositoryInterface for public API')]
 final readonly class DbFieldRegistryRepository implements FieldRegistryRepositoryInterface
 {
     private const string SQL_FIND_FIELDS = <<<'SQL'
@@ -143,6 +143,11 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
         $validationRaw = $row->getNullableString('validation_rules');
         $defaultRaw = $row->getNullableString('default_value');
 
+        /** @var array<string, mixed> $validationRules */
+        $validationRules = $validationRaw !== null
+            ? json_decode($validationRaw, true, flags: JSON_THROW_ON_ERROR)
+            : [];
+
         return new ContentTypeField(
             id: $row->getString('id'),
             contentType: $row->getString('content_type'),
@@ -153,9 +158,7 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
             searchable: $row->getBool('searchable'),
             filterable: $row->getBool('filterable'),
             sortable: $row->getBool('sortable'),
-            validationRules: $validationRaw !== null
-                ? json_decode($validationRaw, true, flags: JSON_THROW_ON_ERROR)
-                : [],
+            validationRules: $validationRules,
             defaultValue: $defaultRaw !== null
                 ? json_decode($defaultRaw, true, flags: JSON_THROW_ON_ERROR)
                 : null,
@@ -167,6 +170,11 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
     {
         $jsonRaw = $row->getNullableString('value_json');
         $datetimeRaw = $row->getNullableString('value_datetime');
+
+        /** @var array<string, mixed>|null $valueJson */
+        $valueJson = $jsonRaw !== null
+            ? json_decode($jsonRaw, true, flags: JSON_THROW_ON_ERROR)
+            : null;
 
         return new ContentFieldValue(
             id: $row->getString('id'),
@@ -182,9 +190,7 @@ final readonly class DbFieldRegistryRepository implements FieldRegistryRepositor
                 ? $row->getBool('value_bool')
                 : null,
             valueDatetime: $datetimeRaw !== null ? new DateTimeImmutable($datetimeRaw) : null,
-            valueJson: $jsonRaw !== null
-                ? json_decode($jsonRaw, true, flags: JSON_THROW_ON_ERROR)
-                : null,
+            valueJson: $valueJson,
         );
     }
 }

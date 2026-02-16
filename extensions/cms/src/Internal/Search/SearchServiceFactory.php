@@ -13,7 +13,7 @@ use Pulsar\Extension\Cms\Search\SearchServiceInterface;
 /**
  * Creates the appropriate search service adapter based on the database driver.
  */
-#[Internal(reason: 'Search adapter factory — use SearchServiceInterface')]
+#[Internal(reason: 'Search adapter factory; use SearchServiceInterface')]
 final readonly class SearchServiceFactory
 {
     public static function create(

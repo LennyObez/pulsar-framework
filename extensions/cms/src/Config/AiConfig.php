@@ -6,11 +6,13 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
+use function is_string;
+
 /**
  * AI content assistant configuration.
  *
  * Controls which LLM provider to use and connection parameters.
- * Disabled by default — requires explicit opt-in and API key configuration.
+ * Disabled by default; requires explicit opt-in and API key configuration.
  */
 #[Api(since: '1.0.0')]
 final readonly class AiConfig
@@ -37,10 +39,10 @@ final readonly class AiConfig
     {
         return new self(
             enabled: (bool) ($data['enabled'] ?? false),
-            provider: (string) ($data['provider'] ?? 'openai'),
-            model: (string) ($data['model'] ?? ''),
-            apiKey: (string) ($data['api_key'] ?? ''),
-            baseUrl: (string) ($data['base_url'] ?? ''),
+            provider: is_string($data['provider'] ?? null) ? $data['provider'] : 'openai',
+            model: is_string($data['model'] ?? null) ? $data['model'] : '',
+            apiKey: is_string($data['api_key'] ?? null) ? $data['api_key'] : '',
+            baseUrl: is_string($data['base_url'] ?? null) ? $data['base_url'] : '',
         );
     }
 }

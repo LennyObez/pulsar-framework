@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Internal\Tools;
 
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 
 use function array_combine;
 use function count;
@@ -21,11 +22,18 @@ use function rewind;
  * Expects a header row matching the column names produced by {@see CsvContentExporter}.
  * Maps each row into content and translation data arrays.
  */
-#[Internal(reason: 'Import/export internals — use ImportExportServiceInterface')]
+#[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
 final readonly class CsvContentImporter
 {
+    public function __construct(
+        private SafeHtmlPolicy $safeHtmlPolicy,
+    ) {}
+
     /**
      * Parse a CSV string into content data arrays.
+     *
+     * Body fields are sanitized through SafeHtmlPolicy before storage
+     * to prevent stored XSS via imported CSV content.
      *
      * @return list<array{content: array<string, mixed>, translation: array<string, mixed>}>
      */
@@ -52,7 +60,7 @@ final readonly class CsvContentImporter
         $results = [];
 
         while (($row = fgetcsv($stream, escape: '')) !== false) {
-            if ($row === null || count($row) !== count($headers)) {
+            if (count($row) !== count($headers)) {
                 continue;
             }
 
@@ -73,7 +81,7 @@ final readonly class CsvContentImporter
                     'title' => $mapped['title'] ?? '',
                     'slug' => $mapped['slug'] ?? '',
                     'path' => $mapped['path'] ?? '',
-                    'body' => $mapped['body'] ?? '',
+                    'body' => $this->safeHtmlPolicy->sanitize($mapped['body'] ?? ''),
                     'excerpt' => ($mapped['excerpt'] ?? '') !== '' ? $mapped['excerpt'] : null,
                     'meta_title' => ($mapped['meta_title'] ?? '') !== '' ? $mapped['meta_title'] : null,
                     'meta_description' => ($mapped['meta_description'] ?? '') !== '' ? $mapped['meta_description'] : null,

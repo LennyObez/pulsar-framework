@@ -13,7 +13,7 @@ use function array_map;
  *
  * Displays content published, comment moderated, theme changed, and similar events.
  */
-#[Internal(reason: 'CMS dashboard widget — implementation detail')]
+#[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class RecentActivityWidget implements DashboardWidgetInterface
 {
     private const string CMS_ACTION_PREFIX = 'cms.';

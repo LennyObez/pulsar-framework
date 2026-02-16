@@ -42,7 +42,7 @@ use const PHP_URL_SCHEME;
  *
  * Uses DNS pre-resolution to prevent DNS rebinding attacks.
  */
-#[Internal(reason: 'CMS security internals — use via service binding')]
+#[Internal(reason: 'CMS security internals; use via service binding')]
 final readonly class SafeHttpClient
 {
     /** Cloud metadata endpoints explicitly blocked regardless of CIDR. */

@@ -75,10 +75,10 @@ final readonly class PricingTableBlock implements BlockTypeInterface
                 $cssClass .= ' pricing-plan--highlighted';
             }
 
-            $name = htmlspecialchars((string) ($plan['name'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $price = htmlspecialchars((string) ($plan['price'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $ctaText = htmlspecialchars((string) ($plan['ctaText'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $ctaUrl = htmlspecialchars((string) ($plan['ctaUrl'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $name = htmlspecialchars(is_string($plan['name'] ?? null) ? $plan['name'] : '', ENT_QUOTES, 'UTF-8');
+            $price = htmlspecialchars(is_string($plan['price'] ?? null) ? $plan['price'] : '', ENT_QUOTES, 'UTF-8');
+            $ctaText = htmlspecialchars(is_string($plan['ctaText'] ?? null) ? $plan['ctaText'] : '', ENT_QUOTES, 'UTF-8');
+            $ctaUrl = htmlspecialchars(is_string($plan['ctaUrl'] ?? null) ? $plan['ctaUrl'] : '', ENT_QUOTES, 'UTF-8');
 
             $html .= "<div class=\"$cssClass\">";
             $html .= "<h3 class=\"pricing-plan__name\">$name</h3>";

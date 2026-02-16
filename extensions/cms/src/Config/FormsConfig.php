@@ -6,6 +6,11 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
+use function is_array;
+use function is_float;
+use function is_int;
+use function is_string;
+
 /**
  * Form submission pipeline configuration.
  */
@@ -33,11 +38,11 @@ final readonly class FormsConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            spamThreshold: (float) ($data['spam_threshold'] ?? 5.0),
-            rateLimitPerHour: (int) ($data['rate_limit_per_hour'] ?? 10),
-            notificationRecipients: (array) ($data['notification_recipients'] ?? []),
-            honeypotFieldName: (string) ($data['honeypot_field_name'] ?? '_hp_field'),
-            powDifficulty: (string) ($data['pow_difficulty'] ?? '0000'),
+            spamThreshold: is_float($data['spam_threshold'] ?? null) ? $data['spam_threshold'] : (float) 5.0,
+            rateLimitPerHour: is_int($data['rate_limit_per_hour'] ?? null) ? $data['rate_limit_per_hour'] : 10,
+            notificationRecipients: is_array($data['notification_recipients'] ?? null) ? array_values(array_map(static fn(mixed $v): string => is_string($v) ? $v : '', $data['notification_recipients'])) : [],
+            honeypotFieldName: is_string($data['honeypot_field_name'] ?? null) ? $data['honeypot_field_name'] : '_hp_field',
+            powDifficulty: is_string($data['pow_difficulty'] ?? null) ? $data['pow_difficulty'] : '0000',
         );
     }
 }

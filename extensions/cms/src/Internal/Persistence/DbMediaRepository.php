@@ -24,7 +24,7 @@ use function max;
 
 use const JSON_THROW_ON_ERROR;
 
-#[Internal(reason: 'Raw-DB repository — use MediaRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use MediaRepositoryInterface for public API')]
 final readonly class DbMediaRepository implements MediaRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
@@ -270,6 +270,9 @@ final readonly class DbMediaRepository implements MediaRepositoryInterface
     {
         $exifJson = $row->getNullableString('exif_data');
 
+        /** @var array<string, mixed>|null $exifData */
+        $exifData = $exifJson !== null ? json_decode($exifJson, true, flags: JSON_THROW_ON_ERROR) : null;
+
         return new MediaAsset(
             id: $row->getString('id'),
             tenantId: $row->getNullableString('tenant_id'),
@@ -282,7 +285,7 @@ final readonly class DbMediaRepository implements MediaRepositoryInterface
             fileHash: $row->getString('file_hash'),
             width: $row->getNullableInt('width'),
             height: $row->getNullableInt('height'),
-            exifData: $exifJson !== null ? json_decode($exifJson, true, flags: JSON_THROW_ON_ERROR) : null,
+            exifData: $exifData,
             altTextDefault: $row->getNullableString('alt_text_default'),
             visibility: MediaVisibility::from($row->getString('visibility')),
             dataClassification: DataClassification::from($row->getString('data_classification')),

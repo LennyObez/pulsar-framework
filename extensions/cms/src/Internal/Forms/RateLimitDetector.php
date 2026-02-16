@@ -10,14 +10,14 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Forms\SpamDetection\SpamDetectorInterface;
 use Pulsar\Extension\Cms\Forms\SpamDetection\SpamResult;
 
+use function hash;
 use function is_int;
 use function is_string;
-use function sha1;
 
 /**
  * Detects spam by rate-limiting submissions per IP address.
  */
-#[Internal(reason: 'Spam detector — use SpamDetectorInterface')]
+#[Internal(reason: 'Spam detector; use SpamDetectorInterface')]
 final readonly class RateLimitDetector implements SpamDetectorInterface
 {
     public function __construct(
@@ -35,7 +35,7 @@ final readonly class RateLimitDetector implements SpamDetectorInterface
         }
 
         $tenantId = isset($meta['tenant_id']) && is_string($meta['tenant_id']) ? $meta['tenant_id'] : '';
-        $cacheKey = 'cms_form_rate_' . sha1($tenantId . ':' . $ip);
+        $cacheKey = 'cms_form_rate_' . hash('xxh128', $tenantId . ':' . $ip);
         $count = $this->cache->get($cacheKey);
 
         $currentCount = is_int($count) ? $count : 0;

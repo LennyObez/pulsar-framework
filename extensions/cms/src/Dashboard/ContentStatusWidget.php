@@ -11,7 +11,7 @@ use function array_sum;
 /**
  * Dashboard widget showing content counts by publishing status with sparkline trend data.
  */
-#[Internal(reason: 'CMS dashboard widget — implementation detail')]
+#[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class ContentStatusWidget implements DashboardWidgetInterface
 {
     public function __construct(

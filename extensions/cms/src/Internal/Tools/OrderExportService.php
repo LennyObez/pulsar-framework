@@ -22,6 +22,8 @@ use function count;
 use function fclose;
 use function fopen;
 use function fputcsv;
+use function is_int;
+use function is_string;
 use function json_encode;
 use function number_format;
 use function rewind;
@@ -37,7 +39,7 @@ use const JSON_THROW_ON_ERROR;
  * Filters by date range, status, and tenant. PII redaction
  * is applied by default in JSON exports unless explicitly included.
  */
-#[Internal(reason: 'Order export internals — use OrderExportServiceInterface')]
+#[Internal(reason: 'Order export internals; use OrderExportServiceInterface')]
 final readonly class OrderExportService implements OrderExportServiceInterface
 {
     public function __construct(
@@ -192,8 +194,9 @@ final readonly class OrderExportService implements OrderExportServiceInterface
     {
         $repoFilters = [];
 
-        if (isset($filters['status']) && $filters['status'] !== '') {
-            $status = OrderStatus::tryFrom($filters['status']);
+        $statusFilter = $filters['status'] ?? '';
+        if (is_string($statusFilter) && $statusFilter !== '') {
+            $status = OrderStatus::tryFrom($statusFilter);
 
             if ($status !== null) {
                 $repoFilters['status'] = $status;
@@ -216,8 +219,8 @@ final readonly class OrderExportService implements OrderExportServiceInterface
             $repoFilters['customerId'] = $filters['customerId'];
         }
 
-        $page = (int) ($filters['page'] ?? 1);
-        $perPage = (int) ($filters['perPage'] ?? 10000);
+        $page = is_int($filters['page'] ?? null) ? $filters['page'] : 1;
+        $perPage = is_int($filters['perPage'] ?? null) ? $filters['perPage'] : 10000;
 
         return $this->orderRepository->listOrders($repoFilters, $page, $perPage);
     }

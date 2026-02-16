@@ -38,7 +38,7 @@ final readonly class AudioBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $src = htmlspecialchars((string) ($data['src'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $src = htmlspecialchars(is_string($data['src'] ?? null) ? $data['src'] : '', ENT_QUOTES, 'UTF-8');
         $caption = $data['caption'] ?? null;
 
         $html = "<figure class=\"audio-block\"><audio controls src=\"$src\"></audio>";

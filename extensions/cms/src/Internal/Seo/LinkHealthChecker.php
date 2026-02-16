@@ -21,6 +21,7 @@ use Pulsar\Extension\Cms\Support\UuidGenerator;
 use function array_map;
 use function array_unique;
 use function in_array;
+use function is_string;
 use function preg_match_all;
 
 use const PREG_SET_ORDER;
@@ -202,7 +203,7 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
             }
         }
 
-        return array_unique($urls);
+        return array_values(array_unique($urls));
     }
 
     /**
@@ -234,7 +235,7 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
             $isBroken = true;
         } else {
             // Parse the HTTP status code from the first header line
-            $statusLine = $headers[0] ?? '';
+            $statusLine = is_string($headers[0] ?? null) ? $headers[0] : '';
 
             if (preg_match('/HTTP\/[\d.]+\s+(\d{3})/', $statusLine, $m)) {
                 $statusCode = (int) $m[1];

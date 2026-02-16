@@ -7,7 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Studio\Dto;
 use Pulsar\Api\Internal;
 
 /**
- * Row in the content cache inspector panel — a single cached page entry.
+ * Row in the content cache inspector panel: a single cached page entry.
  */
 #[Internal]
 final readonly class CacheInspectorEntry

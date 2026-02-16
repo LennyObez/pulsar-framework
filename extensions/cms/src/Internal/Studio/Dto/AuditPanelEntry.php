@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 
 /**
- * Row in the CMS audit panel — a single CMS-relevant audit event.
+ * Row in the CMS audit panel: a single CMS-relevant audit event.
  */
 #[Internal]
 final readonly class AuditPanelEntry

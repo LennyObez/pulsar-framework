@@ -10,7 +10,7 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbDocVersionRepository;
 
 use function array_map;
 
-#[Internal(reason: 'Internal implementation — use DocVersionServiceInterface for public API')]
+#[Internal(reason: 'Internal implementation; use DocVersionServiceInterface for public API')]
 final readonly class DocVersionService implements DocVersionServiceInterface
 {
     public function __construct(

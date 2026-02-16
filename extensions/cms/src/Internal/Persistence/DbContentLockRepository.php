@@ -11,7 +11,7 @@ use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Workflow\ContentLock;
 
-#[Internal(reason: 'Raw-DB repository — use ContentLockServiceInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ContentLockServiceInterface for public API')]
 final readonly class DbContentLockRepository
 {
     private const string SQL_FIND_ACTIVE = <<<'SQL'

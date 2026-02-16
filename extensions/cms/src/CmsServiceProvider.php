@@ -12,6 +12,7 @@ use Pulsar\Database\ConnectionInterface;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Cms\ABTest\ExperimentRepositoryInterface;
+use Pulsar\Extension\Cms\Account\AccountSectionRegistry;
 use Pulsar\Extension\Cms\BlockEditor\BlockRenderer;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeRegistry;
 use Pulsar\Extension\Cms\Collaboration\CollaborationRepositoryInterface;
@@ -85,7 +86,6 @@ use Pulsar\Extension\Cms\Internal\Collaboration\CollaborationService;
 use Pulsar\Extension\Cms\Internal\Publishing\PublishingOrchestrator;
 use Pulsar\Extension\Cms\Internal\Security\ClientFingerprintResolver;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
-use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
 use Pulsar\Extension\Cms\Internal\Security\SafeHttpClient;
 use Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter;
 use Pulsar\Extension\Cms\LiveCss\CspHashComputerInterface;
@@ -108,6 +108,7 @@ use Pulsar\Extension\Cms\Plugins\PluginProvenanceVerifierInterface;
 use Pulsar\Extension\Cms\Publishing\ChannelRegistry;
 use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
 use Pulsar\Extension\Cms\Search\SearchServiceInterface;
+use Pulsar\Extension\Cms\Security\QrCodeEncoder;
 use Pulsar\Extension\Cms\Seo\FeedGeneratorInterface;
 use Pulsar\Extension\Cms\Seo\LinkHealthRepositoryInterface;
 use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
@@ -139,13 +140,13 @@ use function getcwd;
  * Orchestrator that delegates to focused sub-providers for CMS service wiring.
  *
  * Sub-providers:
- *  - CmsRepositoryProvider       — all repository interface → implementation bindings
- *  - CmsCoreServiceProvider      — settings, taxonomy, media, comments, search, SEO, tools, security
- *  - CmsThemePluginProvider      — theme manager, plugin manager, hook engine, live CSS
- *  - CmsCommerceProvider         — checkout, tax, promotions, invoicing, digital delivery
- *  - CmsAdminControllerProvider  — all admin controller bindings
+ *  - CmsRepositoryProvider      : all repository interface → implementation bindings
+ *  - CmsCoreServiceProvider     : settings, taxonomy, media, comments, search, SEO, tools, security
+ *  - CmsThemePluginProvider     : theme manager, plugin manager, hook engine, live CSS
+ *  - CmsCommerceProvider        : checkout, tax, promotions, invoicing, digital delivery
+ *  - CmsAdminControllerProvider : all admin controller bindings
  */
-#[Internal(reason: 'CMS service wiring — use interfaces for public API')]
+#[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final class CmsServiceProvider implements ServiceProviderInterface
 {
     public function register(ContainerInterface $container): void
@@ -153,7 +154,13 @@ final class CmsServiceProvider implements ServiceProviderInterface
         // 1. Repository layer (DB-backed implementations)
         new CmsRepositoryProvider()->register($container);
 
-        // 2. Core services (settings, media, SEO, tools, security, workflow, content controller)
+        // 2. Account section registry (cross-extension integration point)
+        $container->instance(
+            AccountSectionRegistry::class,
+            new AccountSectionRegistry(),
+        );
+
+        // 3. Core services (settings, media, SEO, tools, security, workflow, content controller)
         new CmsCoreServiceProvider()->register($container);
 
         // 3. Theme and plugin systems (includes live CSS)
@@ -232,6 +239,10 @@ final class CmsServiceProvider implements ServiceProviderInterface
             MediaServiceInterface::class,
             MediaDiskInterface::class,
             ImageProcessorInterface::class,
+            Media\Metadata\ExifExtractor::class,
+            Media\Watermark\WatermarkService::class,
+            Media\License\LicenseBadgeRenderer::class,
+            Media\Security\HotlinkProtectionMiddleware::class,
             CommentRepositoryInterface::class,
             CommentServiceInterface::class,
             SearchServiceInterface::class,
@@ -348,6 +359,8 @@ final class CmsServiceProvider implements ServiceProviderInterface
             LinkHealthController::class,
             AdminFormSubmissionController::class,
             Http\Controller\ContentController::class,
+            Http\Controller\SitemapController::class,
+            Http\Controller\SeoController::class,
             HreflangGenerator::class,
             // REST API controllers
             Http\Controller\Api\ContentApiController::class,
@@ -355,8 +368,7 @@ final class CmsServiceProvider implements ServiceProviderInterface
             Http\Controller\Api\MediaApiController::class,
             Http\Controller\Api\CommerceApiController::class,
             Http\Middleware\CmsApiContentNegotiationMiddleware::class,
-            // AI content assistant (conditional)
-            AI\LlmProviderInterface::class,
+            // AI content assistant (conditional; uses core AiClientInterface)
             AI\ContentAssistant::class,
             Http\Controller\Api\AiAssistantApiController::class,
         ];

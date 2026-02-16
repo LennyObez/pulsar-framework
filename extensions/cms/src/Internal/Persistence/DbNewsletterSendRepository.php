@@ -23,7 +23,7 @@ use function max;
  * Supports batch inserts for efficient campaign dispatch where thousands
  * of send records are created simultaneously.
  */
-#[Internal(reason: 'Raw-DB repository — use NewsletterSendRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use NewsletterSendRepositoryInterface for public API')]
 final readonly class DbNewsletterSendRepository implements NewsletterSendRepositoryInterface
 {
     private const string SQL_COUNT_BY_CAMPAIGN = <<<'SQL'

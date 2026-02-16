@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\Internal\Publishing;
 
+use Override;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Content\Content;
 use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Publishing\ChannelRegistry;
+use Pulsar\Extension\Cms\Publishing\PublishingOrchestratorInterface;
 use Pulsar\Extension\Cms\Publishing\PublishResult;
 use Pulsar\Queue\QueueDriverInterface;
 use Throwable;
@@ -24,8 +26,8 @@ use const JSON_THROW_ON_ERROR;
  * When a queue driver is available, channel execution is dispatched
  * asynchronously. Otherwise, channels are invoked synchronously.
  */
-#[Internal(reason: 'Triggered by PublishingStateMachine — not a public API')]
-final readonly class PublishingOrchestrator
+#[Internal(reason: 'Triggered by PublishingStateMachine; not a public API')]
+final readonly class PublishingOrchestrator implements PublishingOrchestratorInterface
 {
     public function __construct(
         private ChannelRegistry $registry,
@@ -39,6 +41,7 @@ final readonly class PublishingOrchestrator
      *
      * @return list<PublishResult>
      */
+    #[Override]
     public function publishToAll(Content $content): array
     {
         $translations = $this->translationRepository->findByContentId($content->id);
@@ -59,7 +62,7 @@ final readonly class PublishingOrchestrator
                             ], JSON_THROW_ON_ERROR),
                         );
 
-                        $results[] = PublishResult::success($channel->name());
+                        $results[] = PublishResult::queued($channel->name());
                     } catch (Throwable $e) {
                         $this->logger?->error(sprintf(
                             'Failed to queue publish for channel "%s": %s',
@@ -92,6 +95,7 @@ final readonly class PublishingOrchestrator
      *
      * @return list<PublishResult>
      */
+    #[Override]
     public function unpublishFromAll(Content $content): array
     {
         $results = [];

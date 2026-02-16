@@ -67,12 +67,12 @@ final readonly class CompareBlock implements BlockTypeInterface
         /** @var array<string, mixed> $after */
         $after = $data['afterImage'] ?? [];
 
-        $beforeSrc = htmlspecialchars((string) ($before['src'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $beforeAlt = htmlspecialchars((string) ($before['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $afterSrc = htmlspecialchars((string) ($after['src'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $afterAlt = htmlspecialchars((string) ($after['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $beforeLabel = htmlspecialchars((string) ($data['beforeLabel'] ?? 'Before'), ENT_QUOTES, 'UTF-8');
-        $afterLabel = htmlspecialchars((string) ($data['afterLabel'] ?? 'After'), ENT_QUOTES, 'UTF-8');
+        $beforeSrc = htmlspecialchars(is_string($before['src'] ?? null) ? $before['src'] : '', ENT_QUOTES, 'UTF-8');
+        $beforeAlt = htmlspecialchars(is_string($before['alt'] ?? null) ? $before['alt'] : '', ENT_QUOTES, 'UTF-8');
+        $afterSrc = htmlspecialchars(is_string($after['src'] ?? null) ? $after['src'] : '', ENT_QUOTES, 'UTF-8');
+        $afterAlt = htmlspecialchars(is_string($after['alt'] ?? null) ? $after['alt'] : '', ENT_QUOTES, 'UTF-8');
+        $beforeLabel = htmlspecialchars(is_string($data['beforeLabel'] ?? null) ? $data['beforeLabel'] : 'Before', ENT_QUOTES, 'UTF-8');
+        $afterLabel = htmlspecialchars(is_string($data['afterLabel'] ?? null) ? $data['afterLabel'] : 'After', ENT_QUOTES, 'UTF-8');
 
         $html = '<cms-image-compare'
             . " data-before-src=\"$beforeSrc\""

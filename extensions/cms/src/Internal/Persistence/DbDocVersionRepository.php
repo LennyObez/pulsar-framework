@@ -8,7 +8,7 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Row;
 
-#[Internal(reason: 'Raw-DB repository — used internally by DocVersionService')]
+#[Internal(reason: 'Raw-DB repository; used internally by DocVersionService')]
 final readonly class DbDocVersionRepository
 {
     private const string SQL_FIND_ALL = <<<'SQL'
