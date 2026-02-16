@@ -9,13 +9,14 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Seo\FeedGeneratorInterface;
 use Pulsar\Http\Message\Response;
 
+use function is_int;
 use function max;
 use function min;
 
 /**
  * Serves RSS and Atom feeds for published content.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class FeedController
 {
     public function __construct(
@@ -72,6 +73,6 @@ final readonly class FeedController
     {
         $params = $request->getQueryParams();
 
-        return min(100, max(1, (int) ($params['limit'] ?? 20)));
+        return min(100, max(1, is_int($params['limit'] ?? null) ? $params['limit'] : 20));
     }
 }

@@ -36,16 +36,17 @@ use function json_decode;
  * Execute operations require step-up authentication.
  * Accepts JSON bundles, Markdown (with YAML frontmatter), and CSV formats.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class ImportController
 {
     use RendersAdminView;
 
     public function __construct(
         private ImportExportServiceInterface $importExport,
-        private GateInterface $gate,
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
+        private CsvContentImporter $csvImporter,
+        private ?GateInterface $gate = null,
         private ?ImportAnalyzer $importAnalyzer = null,
         private ?MediaBundleImporter $mediaBundleImporter = null,
         private ?TemplateEngineInterface $templateEngine = null,
@@ -155,7 +156,7 @@ final readonly class ImportController
                 $this->persistMarkdownItem($item);
                 $created++;
             } catch (CmsException $e) {
-                $errors[] = ((string) ($item['translation']['title'] ?: 'untitled')) . ': ' . $e->getMessage();
+                $errors[] = (is_string($item['translation']['title'] ?? null) ? $item['translation']['title'] : 'untitled') . ': ' . $e->getMessage();
             }
         }
 
@@ -177,8 +178,7 @@ final readonly class ImportController
             return Response::json(['error' => 'CSV content is required'], 400);
         }
 
-        $importer = new CsvContentImporter();
-        $parsed = $importer->parse($csvContent);
+        $parsed = $this->csvImporter->parse($csvContent);
 
         if ($parsed === []) {
             return Response::json(['error' => 'No valid rows found in CSV'], 422);
@@ -212,7 +212,7 @@ final readonly class ImportController
                 $this->persistCsvItem($item);
                 $created++;
             } catch (CmsException $e) {
-                $errors[] = ((string) ($item['translation']['title'] ?: 'untitled')) . ': ' . $e->getMessage();
+                $errors[] = (is_string($item['translation']['title'] ?? null) ? $item['translation']['title'] : 'untitled') . ': ' . $e->getMessage();
             }
         }
 
@@ -260,7 +260,7 @@ final readonly class ImportController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $policyValue = (string) ($body['duplicate_policy'] ?? 'skip');
+        $policyValue = is_string($body['duplicate_policy'] ?? null) ? $body['duplicate_policy'] : 'skip';
         $policy = DuplicateResolutionPolicy::tryFrom($policyValue) ?? DuplicateResolutionPolicy::Skip;
 
         $fileContent = $this->extractFileContent($request, 'import_file')
@@ -301,13 +301,15 @@ final readonly class ImportController
      */
     private function persistMarkdownItem(array $item): void
     {
+        $c = $item['content'];
+        $t = $item['translation'];
         $contentId = UuidGenerator::v7();
-        $contentType = ContentType::tryFrom($item['content']['content_type'] ?? 'page') ?? ContentType::Page;
+        $contentType = ContentType::tryFrom(is_string($c['content_type'] ?? null) ? $c['content_type'] : 'page') ?? ContentType::Page;
 
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: $item['content']['author_id'] ?? 'system',
+            authorId: is_string($c['author_id'] ?? null) ? $c['author_id'] : 'system',
         );
 
         $this->contentRepository->save($content);
@@ -315,14 +317,14 @@ final readonly class ImportController
         $translation = ContentTranslation::create(
             id: UuidGenerator::v7(),
             contentId: $contentId,
-            locale: $item['translation']['locale'] ?? 'en',
-            title: $item['translation']['title'] ?? '',
-            slugSegment: $item['translation']['slug'] ?? 'untitled',
-            path: $item['translation']['path'] ?? $item['translation']['slug'] ?? 'untitled',
-            body: $item['translation']['body'] ?? '',
-            excerpt: $item['translation']['excerpt'] ?? null,
-            metaTitle: $item['translation']['meta_title'] ?? null,
-            metaDescription: $item['translation']['meta_description'] ?? null,
+            locale: is_string($t['locale'] ?? null) ? $t['locale'] : 'en',
+            title: is_string($t['title'] ?? null) ? $t['title'] : '',
+            slugSegment: is_string($t['slug'] ?? null) ? $t['slug'] : 'untitled',
+            path: is_string($t['path'] ?? null) ? $t['path'] : (is_string($t['slug'] ?? null) ? $t['slug'] : 'untitled'),
+            body: is_string($t['body'] ?? null) ? $t['body'] : '',
+            excerpt: is_string($t['excerpt'] ?? null) ? $t['excerpt'] : null,
+            metaTitle: is_string($t['meta_title'] ?? null) ? $t['meta_title'] : null,
+            metaDescription: is_string($t['meta_description'] ?? null) ? $t['meta_description'] : null,
         );
 
         $this->translationRepository->save($translation);
@@ -333,13 +335,15 @@ final readonly class ImportController
      */
     private function persistCsvItem(array $item): void
     {
+        $c = $item['content'];
+        $t = $item['translation'];
         $contentId = UuidGenerator::v7();
-        $contentType = ContentType::tryFrom($item['content']['content_type'] ?? 'page') ?? ContentType::Page;
+        $contentType = ContentType::tryFrom(is_string($c['content_type'] ?? null) ? $c['content_type'] : 'page') ?? ContentType::Page;
 
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
-            authorId: $item['content']['author_id'] ?? 'system',
+            authorId: is_string($c['author_id'] ?? null) ? $c['author_id'] : 'system',
         );
 
         $this->contentRepository->save($content);
@@ -347,14 +351,14 @@ final readonly class ImportController
         $translation = ContentTranslation::create(
             id: UuidGenerator::v7(),
             contentId: $contentId,
-            locale: $item['translation']['locale'] ?? 'en',
-            title: $item['translation']['title'] ?? '',
-            slugSegment: $item['translation']['slug'] ?? 'untitled',
-            path: $item['translation']['path'] ?? $item['translation']['slug'] ?? 'untitled',
-            body: $item['translation']['body'] ?? '',
-            excerpt: $item['translation']['excerpt'] ?? null,
-            metaTitle: $item['translation']['meta_title'] ?? null,
-            metaDescription: $item['translation']['meta_description'] ?? null,
+            locale: is_string($t['locale'] ?? null) ? $t['locale'] : 'en',
+            title: is_string($t['title'] ?? null) ? $t['title'] : '',
+            slugSegment: is_string($t['slug'] ?? null) ? $t['slug'] : 'untitled',
+            path: is_string($t['path'] ?? null) ? $t['path'] : (is_string($t['slug'] ?? null) ? $t['slug'] : 'untitled'),
+            body: is_string($t['body'] ?? null) ? $t['body'] : '',
+            excerpt: is_string($t['excerpt'] ?? null) ? $t['excerpt'] : null,
+            metaTitle: is_string($t['meta_title'] ?? null) ? $t['meta_title'] : null,
+            metaDescription: is_string($t['meta_description'] ?? null) ? $t['meta_description'] : null,
         );
 
         $this->translationRepository->save($translation);

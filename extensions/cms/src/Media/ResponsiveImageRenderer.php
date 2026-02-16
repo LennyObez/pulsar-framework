@@ -80,7 +80,7 @@ final readonly class ResponsiveImageRenderer
     {
         $html = '<picture>';
 
-        // Group variants by format for <source> elements — modern formats first
+        // Group variants by format for <source> elements: modern formats first
         $modernVariants = $this->filterByFormats($variants, self::MODERN_FORMATS);
 
         foreach ($this->groupByFormat($modernVariants) as $format => $formatVariants) {

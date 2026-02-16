@@ -11,6 +11,8 @@ use function array_diff;
 use function array_keys;
 use function implode;
 use function is_array;
+use function is_scalar;
+use function is_string;
 use function json_decode;
 use function json_last_error;
 use function json_last_error_msg;
@@ -36,6 +38,7 @@ final readonly class SiteDefinition
      * @param list<array<string, mixed>> $media Media asset references with source URLs
      * @param list<array<string, mixed>> $redirects URL redirect definitions
      * @param array<string, mixed> $seo SEO configuration (robots, sitemap, structured data)
+     * @param array<string, mixed>|null $forum Optional forum section for cross-extension import
      */
     public function __construct(
         public array $site,
@@ -45,6 +48,7 @@ final readonly class SiteDefinition
         public array $media,
         public array $redirects,
         public array $seo,
+        public ?array $forum = null,
     ) {}
 
     /**
@@ -75,8 +79,10 @@ final readonly class SiteDefinition
         $version = $data['version'] ?? null;
 
         if ($version !== '1.0') {
+            $versionStr = is_string($version) ? $version : (is_scalar($version) ? (string) $version : 'unknown');
+
             throw new InvalidArgumentException(
-                "Unsupported site definition version: $version. Expected: 1.0",
+                "Unsupported site definition version: $versionStr. Expected: 1.0",
             );
         }
 
@@ -86,6 +92,10 @@ final readonly class SiteDefinition
         /** @var array<string, mixed> $seoData */
         $seoData = is_array($seoValue) ? $seoValue : [];
 
+        $forumValue = $data['forum'] ?? null;
+        /** @var array<string, mixed>|null $forumData */
+        $forumData = is_array($forumValue) ? $forumValue : null;
+
         return new self(
             site: $siteData,
             taxonomies: self::ensureList($data, 'taxonomies'),
@@ -94,10 +104,12 @@ final readonly class SiteDefinition
             media: self::ensureList($data, 'media'),
             redirects: self::ensureList($data, 'redirects'),
             seo: $seoData,
+            forum: $forumData,
         );
     }
 
     /**
+     * @param array<array-key, mixed> $data
      * @return list<array<string, mixed>>
      */
     private static function ensureList(array $data, string $key): array
@@ -108,6 +120,15 @@ final readonly class SiteDefinition
             throw new InvalidArgumentException("The \"$key\" key must be an array");
         }
 
-        return $value;
+        $result = [];
+
+        foreach ($value as $item) {
+            if (is_array($item)) {
+                /** @var array<string, mixed> $item */
+                $result[] = $item;
+            }
+        }
+
+        return $result;
     }
 }

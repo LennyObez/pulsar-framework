@@ -17,15 +17,15 @@ use function is_string;
 /**
  * Admin controller for menu and menu item management.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class MenuController
 {
     use RendersAdminView;
 
     public function __construct(
         private MenuRepositoryInterface $menuRepository,
-        private GateInterface $gate,
         private CmsConfig $config,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 

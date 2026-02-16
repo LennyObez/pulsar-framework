@@ -20,7 +20,7 @@ use Pulsar\Http\Message\Response;
  * cache headers based on visibility. Public assets get long-lived immutable
  * caching; private assets require authentication and get no-store.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class MediaController
 {
     private const string CACHE_DERIVATIVE = 'public, max-age=2592000, immutable';

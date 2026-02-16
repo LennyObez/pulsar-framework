@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Cms\Tools;
 
 use Pulsar\Api\Api;
 
+use function array_sum;
+
 /**
  * Result of a CMS data import operation.
  *
@@ -31,6 +33,61 @@ final readonly class ImportResult
         public array $errors,
         public bool $dryRun,
     ) {}
+
+    public function totalCreated(): int
+    {
+        return (int) array_sum($this->created);
+    }
+
+    public function totalUpdated(): int
+    {
+        return (int) array_sum($this->updated);
+    }
+
+    public function totalSkipped(): int
+    {
+        return (int) array_sum($this->skipped);
+    }
+
+    public function hasErrors(): bool
+    {
+        return $this->errors !== [];
+    }
+
+    /**
+     * Merge another ImportResult into this one, combining counts and messages.
+     *
+     * Used when importing multiple files or delegating to extension providers.
+     */
+    public function merge(self $other): self
+    {
+        return new self(
+            created: self::mergeCountMaps($this->created, $other->created),
+            updated: self::mergeCountMaps($this->updated, $other->updated),
+            skipped: self::mergeCountMaps($this->skipped, $other->skipped),
+            warnings: [...$this->warnings, ...$other->warnings],
+            errors: [...$this->errors, ...$other->errors],
+            dryRun: $this->dryRun && $other->dryRun,
+        );
+    }
+
+    /**
+     * Merge two count maps, summing values for shared keys.
+     *
+     * @param array<string, int> $a
+     * @param array<string, int> $b
+     * @return array<string, int>
+     */
+    private static function mergeCountMaps(array $a, array $b): array
+    {
+        $result = $a;
+
+        foreach ($b as $key => $value) {
+            $result[$key] = ($result[$key] ?? 0) + $value;
+        }
+
+        return $result;
+    }
 
     /**
      * @return array<string, mixed>

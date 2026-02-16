@@ -18,6 +18,16 @@ interface TaxonomyRepositoryInterface
     public function findBySlug(string $slug, ?string $tenantId = null): ?Taxonomy;
 
     /**
+     * Find a taxonomy by its stable import identifier for idempotent imports.
+     */
+    public function findByImportId(string $importId): ?Taxonomy;
+
+    /**
+     * Find a taxonomy term by its stable import identifier for idempotent imports.
+     */
+    public function findTermByImportId(string $importId): ?TaxonomyTerm;
+
+    /**
      * Find terms for a taxonomy, optionally filtered by locale and parent.
      *
      * @return list<TaxonomyTerm>

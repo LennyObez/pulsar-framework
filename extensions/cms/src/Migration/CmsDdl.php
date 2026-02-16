@@ -21,7 +21,7 @@ final class CmsDdl
      * Adapt PostgreSQL DDL to the target driver.
      *
      * Handles: TIMESTAMPTZ, JSONB, TSVECTOR, DOUBLE PRECISION, DEFAULT NOW().
-     * Does NOT handle structural differences (indexes, CHECK constraints) — those
+     * Does NOT handle structural differences (indexes, CHECK constraints); those
      * are handled per-migration with driver conditionals.
      */
     public static function adapt(string $sql, Driver $driver): string

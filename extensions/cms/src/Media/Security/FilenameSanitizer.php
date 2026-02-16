@@ -34,7 +34,7 @@ final readonly class FilenameSanitizer
      */
     public function sanitize(string $filename, string $fileHash): string
     {
-        // Strip path info — basename only
+        // Strip path info: basename only
         $sanitized = basename($filename);
 
         // Lowercase

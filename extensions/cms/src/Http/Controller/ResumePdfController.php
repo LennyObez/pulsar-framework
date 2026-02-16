@@ -22,7 +22,7 @@ use const JSON_THROW_ON_ERROR;
  * The generated page is optimized for browser print-to-PDF with
  * proper page breaks and print media styles.
  */
-#[Internal(reason: 'CMS controller — implementation detail')]
+#[Internal(reason: 'CMS controller; implementation detail')]
 final readonly class ResumePdfController
 {
     private const string SQL_FIND_RESUME = <<<'SQL'
@@ -48,7 +48,7 @@ final readonly class ResumePdfController
     ) {}
 
     /**
-     * GET /resume/{slug}/print — Print-friendly HTML page for PDF export.
+     * GET /resume/{slug}/print: Print-friendly HTML page for PDF export.
      */
     public function printView(ServerRequestInterface $request, string $slug): Response
     {

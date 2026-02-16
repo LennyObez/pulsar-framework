@@ -23,7 +23,7 @@ use function trim;
  * Processes POST requests from contact forms and other CMS form blocks,
  * delegates to the form submission service, and returns a redirect.
  */
-#[Internal(reason: 'CMS HTTP controller — implementation detail')]
+#[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class FormSubmissionController
 {
     public function __construct(

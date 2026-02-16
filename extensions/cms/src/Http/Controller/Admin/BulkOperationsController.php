@@ -26,7 +26,7 @@ use function is_string;
  * Supports bulk publish, unpublish, archive, delete, tag, and untag
  * actions on multiple content items in a single request.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class BulkOperationsController
 {
     use RendersAdminView;
@@ -38,7 +38,7 @@ final readonly class BulkOperationsController
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private TaxonomyServiceInterface $taxonomyService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 

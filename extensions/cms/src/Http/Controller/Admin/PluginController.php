@@ -19,6 +19,8 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 use function array_map;
 use function count;
 use function file_exists;
+use function is_array;
+use function is_bool;
 use function is_string;
 use function strlen;
 use function sys_get_temp_dir;
@@ -32,7 +34,7 @@ use function unlink;
  * enabling/disabling, reading and updating plugin settings, and deleting.
  * Dangerous operations (install, toggle, delete) require step-up auth.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class PluginController
 {
     use RendersAdminView;
@@ -43,7 +45,7 @@ final readonly class PluginController
         private CmsPluginManagerInterface $pluginManager,
         private SettingsServiceInterface $settingsService,
         private ?CmsRateLimiter $rateLimiter,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -149,7 +151,7 @@ final readonly class PluginController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $enabled = (bool) ($body['enabled'] ?? false);
+        $enabled = is_bool($body['enabled'] ?? null) ? $body['enabled'] : false;
 
         try {
             $plugin = $enabled
@@ -198,7 +200,7 @@ final readonly class PluginController
         $body = (array) ($request->getParsedBody() ?? []);
 
         /** @var array<string, mixed> $settings */
-        $settings = (array) ($body['settings'] ?? []);
+        $settings = is_array($body['settings'] ?? null) ? $body['settings'] : [];
 
         $settingsGroup = "plugin.$id";
         $locale = is_string($body['locale'] ?? null) ? $body['locale'] : null;

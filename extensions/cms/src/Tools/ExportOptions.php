@@ -39,8 +39,8 @@ final readonly class ExportOptions
      * @param bool $includePii Whether to include PII fields in the export
      * @param string|null $tenantId Tenant scope, null for all tenants
      * @param list<string>|null $contentTypes Filter by content type slugs (e.g. 'page', 'article')
-     * @param string|null $dateFrom ISO 8601 date string — include content created on or after this date
-     * @param string|null $dateTo ISO 8601 date string — include content created on or before this date
+     * @param string|null $dateFrom ISO 8601 date string: include content created on or after this date
+     * @param string|null $dateTo ISO 8601 date string: include content created on or before this date
      * @param string|null $status Filter by publishing status (e.g. 'published', 'draft', 'scheduled')
      */
     public function __construct(

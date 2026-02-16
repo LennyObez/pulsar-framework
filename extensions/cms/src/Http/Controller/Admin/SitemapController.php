@@ -23,14 +23,14 @@ use function simplexml_load_string;
  * Provides a read-only preview of sitemap entries grouped by type
  * and locale, and the ability to force regeneration.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class SitemapController
 {
     use RendersAdminView;
 
     public function __construct(
         private SitemapGeneratorInterface $sitemapGenerator,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 

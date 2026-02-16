@@ -19,6 +19,8 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function is_array;
+use function is_bool;
+use function is_int;
 use function is_string;
 
 /**
@@ -26,7 +28,7 @@ use function is_string;
  *
  * All actions require CMS commerce permissions checked via GateInterface.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class PromotionController
 {
     use RendersAdminView;
@@ -34,7 +36,7 @@ final readonly class PromotionController
     public function __construct(
         private PromotionRepositoryInterface $promotions,
         private CouponRepositoryInterface $coupons,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -85,8 +87,8 @@ final readonly class PromotionController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $name = (string) ($body['name'] ?? '');
-        $typeStr = (string) ($body['type'] ?? '');
+        $name = is_string($body['name'] ?? null) ? $body['name'] : '';
+        $typeStr = is_string($body['type'] ?? null) ? $body['type'] : '';
 
         if ($name === '') {
             return Response::json(['error' => 'Promotion name is required'], 400);
@@ -98,7 +100,7 @@ final readonly class PromotionController
             return Response::json(['error' => 'Invalid promotion type'], 400);
         }
 
-        $value = (int) ($body['value'] ?? 0);
+        $value = is_int($body['value'] ?? null) ? $body['value'] : 0;
 
         if ($value <= 0) {
             return Response::json(['error' => 'Promotion value must be positive'], 400);
@@ -133,9 +135,9 @@ final readonly class PromotionController
             name: $name,
             type: $type,
             value: $value,
-            minOrderAmount: isset($body['min_order_amount']) ? (int) $body['min_order_amount'] : null,
-            maxUses: isset($body['max_uses']) ? (int) $body['max_uses'] : null,
-            maxUsesPerCustomer: isset($body['max_uses_per_customer']) ? (int) $body['max_uses_per_customer'] : null,
+            minOrderAmount: isset($body['min_order_amount']) ? (is_int($body['min_order_amount']) ? $body['min_order_amount'] : 0) : null,
+            maxUses: isset($body['max_uses']) ? (is_int($body['max_uses']) ? $body['max_uses'] : 0) : null,
+            maxUsesPerCustomer: isset($body['max_uses_per_customer']) ? (is_int($body['max_uses_per_customer']) ? $body['max_uses_per_customer'] : 0) : null,
             currentUses: 0,
             applicableProductIds: $productIds,
             applicableCategoryIds: $categoryIds,
@@ -159,7 +161,7 @@ final readonly class PromotionController
                 id: UuidGenerator::v7(),
                 promotionId: $promotionId,
                 code: $cd['code'],
-                isSingleUse: (bool) ($cd['single_use'] ?? false),
+                isSingleUse: is_bool($cd['single_use'] ?? null) ? $cd['single_use'] : false,
                 usedAt: null,
                 usedBy: null,
             );
@@ -252,16 +254,16 @@ final readonly class PromotionController
             tenantId: $promotion->tenantId,
             name: $name,
             type: $type,
-            value: isset($body['value']) ? (int) $body['value'] : $promotion->value,
-            minOrderAmount: isset($body['min_order_amount']) ? (int) $body['min_order_amount'] : $promotion->minOrderAmount,
-            maxUses: isset($body['max_uses']) ? (int) $body['max_uses'] : $promotion->maxUses,
-            maxUsesPerCustomer: isset($body['max_uses_per_customer']) ? (int) $body['max_uses_per_customer'] : $promotion->maxUsesPerCustomer,
+            value: isset($body['value']) ? (is_int($body['value']) ? $body['value'] : 0) : $promotion->value,
+            minOrderAmount: isset($body['min_order_amount']) ? (is_int($body['min_order_amount']) ? $body['min_order_amount'] : 0) : $promotion->minOrderAmount,
+            maxUses: isset($body['max_uses']) ? (is_int($body['max_uses']) ? $body['max_uses'] : 0) : $promotion->maxUses,
+            maxUsesPerCustomer: isset($body['max_uses_per_customer']) ? (is_int($body['max_uses_per_customer']) ? $body['max_uses_per_customer'] : 0) : $promotion->maxUsesPerCustomer,
             currentUses: $promotion->currentUses,
             applicableProductIds: is_array($body['applicable_product_ids'] ?? null)
-                ? $body['applicable_product_ids']
+                ? array_values(array_filter($body['applicable_product_ids'], 'is_string'))
                 : $promotion->applicableProductIds,
             applicableCategoryIds: is_array($body['applicable_category_ids'] ?? null)
-                ? $body['applicable_category_ids']
+                ? array_values(array_filter($body['applicable_category_ids'], 'is_string'))
                 : $promotion->applicableCategoryIds,
             startsAt: $startsAt,
             expiresAt: $expiresAt,

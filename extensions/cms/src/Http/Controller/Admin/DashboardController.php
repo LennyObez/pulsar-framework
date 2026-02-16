@@ -22,7 +22,7 @@ use function count;
 /**
  * Admin CMS dashboard controller with widget data.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class DashboardController
 {
     use RendersAdminView;

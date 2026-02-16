@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Content\DataClassification;
 
 /**
- * Media asset aggregate root — represents an uploaded file
+ * Media asset aggregate root: represents an uploaded file
  * (image, document, or other media) stored in the CMS.
  */
 #[Api(since: '1.0.0')]

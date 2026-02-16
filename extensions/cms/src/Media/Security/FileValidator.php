@@ -163,7 +163,7 @@ final readonly class FileValidator
             return 'image/svg+xml';
         }
 
-        // No known magic bytes matched — use extension mapping as fallback
+        // No known magic bytes matched: use extension mapping as fallback
         $expectedMime = self::EXTENSION_MIME_MAP[$extension] ?? null;
 
         if ($expectedMime !== null) {

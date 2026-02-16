@@ -23,7 +23,7 @@ use function array_reverse;
  * single batch query for translations, replacing the previous N+1
  * pattern of one query per ancestor level.
  */
-#[Internal(reason: 'CMS navigation — implementation detail')]
+#[Internal(reason: 'CMS navigation; implementation detail')]
 final readonly class BreadcrumbGenerator implements BreadcrumbGeneratorInterface
 {
     public function __construct(

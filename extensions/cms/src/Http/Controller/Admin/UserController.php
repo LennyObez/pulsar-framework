@@ -8,6 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Auth\Authorization\GateInterface;
+use Pulsar\Extension\Cms\Account\AccountSectionRegistry;
 use Pulsar\Extension\Cms\Users\CmsUser;
 use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Http\Message\Response;
@@ -17,6 +18,8 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
 use function is_array;
+use function is_int;
+use function is_scalar;
 use function is_string;
 use function max;
 use function min;
@@ -26,18 +29,20 @@ use function strlen;
 /**
  * Admin controller for CMS user management.
  *
- * Lists users with CMS roles, shows user details with role badges
- * and 2FA status, updates roles (with step-up), and resets 2FA.
+ * Lists users with CMS roles, shows user details with role badges,
+ * 2FA status, and extension-contributed tabs (orders, forum activity, etc.).
+ * Updates roles (with step-up) and resets 2FA.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class UserController
 {
     use RendersAdminView;
 
     public function __construct(
         private CmsUserRepositoryInterface $userRepository,
-        private GateInterface $gate,
         private ?AuditLoggerInterface $auditLogger,
+        private ?AccountSectionRegistry $sectionRegistry = null,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -50,8 +55,8 @@ final readonly class UserController
         $this->authorize($identity, 'cms.users.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
         $role = is_string($params['role'] ?? null) ? $params['role'] : null;
 
         /** @var string|null $tenantId */
@@ -84,7 +89,11 @@ final readonly class UserController
     }
 
     /**
-     * Show detailed user information.
+     * Show detailed user information with extension-contributed tabs.
+     *
+     * When extensions like Forum or Payments are active, their
+     * AccountSectionProviders contribute tabs showing orders,
+     * forum activity, badges, invoices, etc.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -95,6 +104,26 @@ final readonly class UserController
 
         if ($user === null) {
             return Response::json(['error' => 'User not found'], 404);
+        }
+
+        $params = $request->getQueryParams();
+        $activeSection = is_string($params['section'] ?? null) ? $params['section'] : 'details';
+
+        // Collect extension-contributed sections (orders, forum activity, etc.)
+        $sections = $this->sectionRegistry?->getSections($id) ?? [];
+
+        // Render extension section content if a non-built-in section is active
+        $sectionHtml = '';
+
+        if ($activeSection !== 'details' && $this->sectionRegistry !== null) {
+            /** @var array<string, mixed> $sectionParams */
+            $sectionParams = $params;
+
+            $sectionHtml = $this->sectionRegistry->renderBackOffice(
+                $activeSection,
+                $id,
+                $sectionParams,
+            );
         }
 
         $data = [
@@ -111,6 +140,9 @@ final readonly class UserController
                 'created_at' => $user->createdAt->format('c'),
                 'is_locked' => $user->isLocked,
             ],
+            'sections' => $sections,
+            'active_section' => $activeSection,
+            'section_html' => $sectionHtml,
         ];
 
         return $this->respondWithView($request, 'admin.users.edit', $data);
@@ -142,7 +174,7 @@ final readonly class UserController
             }
 
             /** @var list<string> $newRoles */
-            $newRoles = array_map(strval(...), $body['roles']);
+            $newRoles = array_map(static fn(mixed $v): string => is_string($v) ? $v : (is_scalar($v) ? (string) $v : ''), $body['roles']);
 
             // Validate that all roles are CMS roles
             foreach ($newRoles as $role) {

@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Api;
 
 /**
- * Newsletter send entity — tracks the delivery status of a single
+ * Newsletter send entity: tracks the delivery status of a single
  * campaign email to a specific subscriber.
  *
  * One-to-one mapping: each (campaign_id, subscriber_id) pair is unique.

@@ -23,6 +23,8 @@ use function fclose;
 use function filesize;
 use function fopen;
 use function is_array;
+use function is_bool;
+use function is_string;
 use function json_encode;
 use function stream_get_contents;
 use function strlen;
@@ -39,17 +41,17 @@ use const JSON_UNESCAPED_UNICODE;
  * verification. The evidence hash is included as a response header.
  * Also supports Markdown and CSV export formats.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class ExportController
 {
     use RendersAdminView;
 
     public function __construct(
         private ImportExportServiceInterface $importExport,
-        private GateInterface $gate,
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
         private ContentBlockRepositoryInterface $blockRepository,
+        private ?GateInterface $gate = null,
         private ?MediaBundleExporterInterface $mediaBundleExporter = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
@@ -137,12 +139,12 @@ final readonly class ExportController
             $options = ExportOptions::fromArray([
                 'scope' => $scope,
                 'locales' => $locales,
-                'include_pii' => (bool) ($body['include_pii'] ?? false),
+                'include_pii' => is_bool($body['include_pii'] ?? null) ? $body['include_pii'] : false,
                 'tenant_id' => $tenantId,
                 'content_types' => $contentTypes,
-                'date_from' => isset($body['date_from']) && $body['date_from'] !== '' ? (string) $body['date_from'] : null,
-                'date_to' => isset($body['date_to']) && $body['date_to'] !== '' ? (string) $body['date_to'] : null,
-                'status' => isset($body['status']) && $body['status'] !== '' ? (string) $body['status'] : null,
+                'date_from' => isset($body['date_from']) && $body['date_from'] !== '' ? (is_string($body['date_from']) ? $body['date_from'] : '') : null,
+                'date_to' => isset($body['date_to']) && $body['date_to'] !== '' ? (is_string($body['date_to']) ? $body['date_to'] : '') : null,
+                'status' => isset($body['status']) && $body['status'] !== '' ? (is_string($body['status']) ? $body['status'] : '') : null,
             ]);
         } catch (InvalidArgumentException $e) {
             return Response::json(['error' => $e->getMessage()], 400);
@@ -203,7 +205,7 @@ final readonly class ExportController
             $options = ExportOptions::fromArray([
                 'scope' => $scope,
                 'locales' => $locales,
-                'include_pii' => (bool) ($body['include_pii'] ?? false),
+                'include_pii' => is_bool($body['include_pii'] ?? null) ? $body['include_pii'] : false,
                 'tenant_id' => $tenantId,
             ]);
         } catch (InvalidArgumentException $e) {
@@ -234,7 +236,7 @@ final readonly class ExportController
         $this->authorize($identity, 'cms.tools.export');
 
         $params = $request->getQueryParams();
-        $locale = (string) ($params['locale'] ?? 'en');
+        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -285,7 +287,7 @@ final readonly class ExportController
         $this->authorize($identity, 'cms.tools.export');
 
         $params = $request->getQueryParams();
-        $locale = (string) ($params['locale'] ?? 'en');
+        $locale = is_string($params['locale'] ?? null) ? $params['locale'] : 'en';
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');

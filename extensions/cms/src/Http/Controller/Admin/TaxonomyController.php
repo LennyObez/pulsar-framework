@@ -18,7 +18,7 @@ use function is_string;
 /**
  * Admin controller for taxonomy and term management.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class TaxonomyController
 {
     use RendersAdminView;
@@ -37,7 +37,7 @@ final readonly class TaxonomyController
 
         $locale = $this->resolveLocale($request);
 
-        // List known taxonomy slugs — the repository API works per-slug
+        // List known taxonomy slugs: the repository API works per-slug
         $data = [
             'taxonomies' => [],
             'locale' => $locale,
@@ -125,6 +125,6 @@ final readonly class TaxonomyController
     {
         $locale = $request->getQueryParams()['locale'] ?? null;
 
-        return is_string($locale) ? $locale : ($this->config?->defaultLocale ?? 'en');
+        return is_string($locale) ? $locale : ($this->config !== null ? $this->config->defaultLocale : 'en');
     }
 }

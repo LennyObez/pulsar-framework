@@ -17,7 +17,7 @@ use function is_string;
  * Provides endpoints to list available doc versions and set
  * the default version displayed to visitors.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class DocVersionController
 {
     public function __construct(
@@ -25,7 +25,7 @@ final readonly class DocVersionController
     ) {}
 
     /**
-     * GET /admin/cms/docs/versions — List all documentation versions.
+     * GET /admin/cms/docs/versions: List all documentation versions.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -38,7 +38,7 @@ final readonly class DocVersionController
     }
 
     /**
-     * PUT /admin/cms/docs/versions/default — Set the default documentation version.
+     * PUT /admin/cms/docs/versions/default: Set the default documentation version.
      */
     public function setDefault(ServerRequestInterface $request): Response
     {

@@ -18,6 +18,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -29,7 +30,7 @@ use function strlen;
  * Provides CRUD operations for the media library: listing with filters,
  * file upload via multipart form, asset detail with derivatives, and soft delete.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class MediaController
 {
     use RendersAdminView;
@@ -37,7 +38,7 @@ final readonly class MediaController
     public function __construct(
         private MediaRepositoryInterface $mediaRepository,
         private MediaServiceInterface $mediaService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -50,8 +51,8 @@ final readonly class MediaController
         $this->authorize($identity, 'cms.media.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
         $mimeType = is_string($params['mime'] ?? null) ? $params['mime'] : null;
         $visibility = is_string($params['visibility'] ?? null) ? $params['visibility'] : null;
 

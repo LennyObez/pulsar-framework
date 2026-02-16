@@ -8,7 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Api;
 
 /**
- * Installed theme entity — represents a theme package installed in the CMS.
+ * Installed theme entity: represents a theme package installed in the CMS.
  */
 #[Api(since: '1.0.0')]
 final readonly class InstalledTheme

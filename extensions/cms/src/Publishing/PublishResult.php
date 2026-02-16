@@ -28,6 +28,26 @@ final readonly class PublishResult
         );
     }
 
+    /**
+     * Create a result indicating the publish operation was queued for async processing.
+     */
+    public static function queued(string $channelName): self
+    {
+        return new self(
+            success: true,
+            channelName: $channelName,
+            errorMessage: null,
+        );
+    }
+
+    /**
+     * Whether this result represents a queued (deferred) operation.
+     */
+    public function isQueued(): bool
+    {
+        return $this->success && $this->externalUrl === null && $this->errorMessage === null;
+    }
+
     public static function failure(string $channelName, string $error): self
     {
         return new self(

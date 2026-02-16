@@ -18,6 +18,7 @@ use function array_map;
 use function count;
 use function in_array;
 use function is_array;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -28,7 +29,7 @@ use function min;
  * Provides a moderation queue with filtering by status, detail view with
  * parent context and author stats, bulk moderation, and delete actions.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class CommentController
 {
     use RendersAdminView;
@@ -36,7 +37,7 @@ final readonly class CommentController
     public function __construct(
         private CommentRepositoryInterface $commentRepository,
         private CommentServiceInterface $commentService,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -52,8 +53,8 @@ final readonly class CommentController
 
         $params = $request->getQueryParams();
         $statusFilter = is_string($params['status'] ?? null) ? $params['status'] : 'pending';
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -89,8 +90,8 @@ final readonly class CommentController
 
         $params = $request->getQueryParams();
         $filter = is_string($params['filter'] ?? null) ? $params['filter'] : 'pending';
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 20)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 20));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -211,7 +212,7 @@ final readonly class CommentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $action = (string) ($body['action'] ?? '');
+        $action = is_string($body['action'] ?? null) ? $body['action'] : '';
         $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
 
         if (!in_array($action, ['approve', 'reject', 'spam'], true)) {
@@ -269,7 +270,7 @@ final readonly class CommentController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        $action = (string) ($body['bulk_action'] ?? '');
+        $action = is_string($body['bulk_action'] ?? null) ? $body['bulk_action'] : '';
         $rawIds = is_array($body['ids'] ?? null) ? $body['ids'] : [];
 
         if (!in_array($action, ['approve', 'reject', 'spam'], true)) {

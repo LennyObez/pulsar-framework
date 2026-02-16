@@ -17,6 +17,7 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 use function array_map;
 use function count;
 use function in_array;
+use function is_int;
 use function is_string;
 use function max;
 use function min;
@@ -28,14 +29,14 @@ use function sprintf;
  * Provides CRUD operations for redirects: listing with pagination,
  * creation, deletion, bulk CSV import with dry-run, and CSV export.
  */
-#[Internal(reason: 'CMS admin controller — implementation detail')]
+#[Internal(reason: 'CMS admin controller; implementation detail')]
 final readonly class RedirectController
 {
     use RendersAdminView;
 
     public function __construct(
         private RedirectManagerInterface $redirectManager,
-        private GateInterface $gate,
+        private ?GateInterface $gate = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -48,8 +49,8 @@ final readonly class RedirectController
         $this->authorize($identity, 'cms.seo.view');
 
         $params = $request->getQueryParams();
-        $page = max(1, (int) ($params['page'] ?? 1));
-        $perPage = min(100, max(1, (int) ($params['per_page'] ?? 50)));
+        $page = max(1, is_int($params['page'] ?? null) ? $params['page'] : 1);
+        $perPage = min(100, max(1, is_int($params['per_page'] ?? null) ? $params['per_page'] : 50));
 
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
@@ -91,7 +92,7 @@ final readonly class RedirectController
 
         $fromPath = is_string($body['from_path'] ?? null) ? $body['from_path'] : '';
         $toPath = is_string($body['to_path'] ?? null) ? $body['to_path'] : '';
-        $statusCode = (int) ($body['status_code'] ?? 301);
+        $statusCode = is_int($body['status_code'] ?? null) ? $body['status_code'] : 301;
         $locale = is_string($body['locale'] ?? null) && $body['locale'] !== '' ? $body['locale'] : null;
         $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Created via admin';
 

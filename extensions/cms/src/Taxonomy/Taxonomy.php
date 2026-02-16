@@ -22,6 +22,7 @@ final readonly class Taxonomy
      * @param string $slug URL-safe identifier, unique per tenant
      * @param bool $hierarchical Whether terms support parent-child relationships
      * @param DateTimeImmutable $createdAt Immutable creation timestamp
+     * @param string|null $importId Stable import identifier for idempotent imports
      */
     public function __construct(
         public string $id,
@@ -29,5 +30,6 @@ final readonly class Taxonomy
         public string $slug,
         public bool $hierarchical,
         public DateTimeImmutable $createdAt,
+        public ?string $importId = null,
     ) {}
 }
