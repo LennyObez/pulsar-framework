@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Runtime;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Runtime\ReloadableRuntimeInterface;
@@ -14,7 +14,7 @@ use Pulsar\Runtime\Worker\WorkerInfo;
 use Pulsar\Runtime\Worker\WorkerState;
 use ReflectionClass;
 
-#[CoversClass(ReloadableRuntimeInterface::class)]
+#[CoversNothing]
 final class ReloadableRuntimeInterfaceTest extends TestCase
 {
     #[Test]

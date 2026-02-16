@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\View\Engine;
 
-use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\Api;
@@ -13,7 +13,7 @@ use Pulsar\View\Engine\TemplateEngineInterface;
 use ReflectionClass;
 use ReflectionNamedType;
 
-#[CoversClass(TemplateEngineInterface::class)]
+#[CoversNothing]
 final class TemplateEngineInterfaceTest extends TestCase
 {
     #[Test]
