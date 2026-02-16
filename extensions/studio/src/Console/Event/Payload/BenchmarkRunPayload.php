@@ -10,7 +10,7 @@ use Pulsar\Extension\Studio\Console\Event\EventType;
 use Pulsar\Extension\Studio\Console\Event\EventVersion;
 
 /**
- * Benchmark run summary event payload — one per benchmark run.
+ * Benchmark run summary event payload: one per benchmark run.
  */
 #[Internal]
 final readonly class BenchmarkRunPayload implements ConsoleEvent

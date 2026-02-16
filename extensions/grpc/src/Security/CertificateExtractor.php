@@ -16,7 +16,7 @@ use function trim;
 /**
  * Extracts Subject Alternative Name (SAN) from X.509 client certificates.
  *
- * Structured data extraction only — no dynamic interpretation.
+ * Structured data extraction only: no dynamic interpretation.
  * Uses openssl_x509_parse() for certificate parsing.
  */
 #[Internal(reason: 'Certificate parsing utility')]

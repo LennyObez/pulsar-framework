@@ -46,7 +46,7 @@ final readonly class ReflectionGuard
             return false;
         }
 
-        // Reflection force-enabled in production — emit audit event
+        // Reflection force-enabled in production; emit audit event
         $this->emitReflectionEnabled();
 
         return true;

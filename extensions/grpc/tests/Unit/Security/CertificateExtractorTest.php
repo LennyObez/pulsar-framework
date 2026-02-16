@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Grpc\Tests\Unit\Security;
 
+use OpenSSLAsymmetricKey;
+use OpenSSLCertificateSigningRequest;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Grpc\Security\CertificateExtractor;
 
 use function extension_loaded;
+use function is_string;
 
 #[CoversClass(CertificateExtractor::class)]
 final class CertificateExtractorTest extends TestCase
@@ -133,25 +136,26 @@ final class CertificateExtractorTest extends TestCase
 
         $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
 
-        if ($key === false) {
+        if (!$key instanceof OpenSSLAsymmetricKey) {
             unlink($configFile);
 
             return null;
         }
 
+        $signingKey = $key;
         $csr = openssl_csr_new(
             ['commonName' => 'test'],
             $key,
             ['config' => $configFile],
         );
 
-        if ($csr === false) {
+        if (!$csr instanceof OpenSSLCertificateSigningRequest) {
             unlink($configFile);
 
             return null;
         }
 
-        $cert = openssl_csr_sign($csr, null, $key, 1, ['config' => $configFile, 'x509_extensions' => 'v3_ext']);
+        $cert = openssl_csr_sign($csr, null, $signingKey, 1, ['config' => $configFile, 'x509_extensions' => 'v3_ext']);
 
         unlink($configFile);
 
@@ -162,7 +166,7 @@ final class CertificateExtractorTest extends TestCase
         $pem = '';
         openssl_x509_export($cert, $pem);
 
-        return $pem !== '' ? $pem : null;
+        return is_string($pem) && $pem !== '' ? $pem : null;
     }
 
     /**
@@ -176,17 +180,18 @@ final class CertificateExtractorTest extends TestCase
 
         $key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
 
-        if ($key === false) {
+        if (!$key instanceof OpenSSLAsymmetricKey) {
             return null;
         }
 
+        $signingKey = $key;
         $csr = openssl_csr_new(['commonName' => 'test-no-san'], $key);
 
-        if ($csr === false) {
+        if (!$csr instanceof OpenSSLCertificateSigningRequest) {
             return null;
         }
 
-        $cert = openssl_csr_sign($csr, null, $key, 1);
+        $cert = openssl_csr_sign($csr, null, $signingKey, 1);
 
         if ($cert === false) {
             return null;
@@ -195,6 +200,6 @@ final class CertificateExtractorTest extends TestCase
         $pem = '';
         openssl_x509_export($cert, $pem);
 
-        return $pem !== '' ? $pem : null;
+        return is_string($pem) && $pem !== '' ? $pem : null;
     }
 }

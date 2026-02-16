@@ -83,6 +83,23 @@ interface RepositoryInterface
     public function delete(object $entity, MutationContext $context): void;
 
     /**
+     * Insert multiple entities in a single batch.
+     *
+     * @param list<T> $entities
+     * @throws OrmException
+     */
+    public function bulkInsert(array $entities, MutationContext $context): void;
+
+    /**
+     * Update multiple entities in a single batch.
+     *
+     * @param list<T> $entities
+     * @throws OrmException
+     * @throws OptimisticLockException
+     */
+    public function bulkUpdate(array $entities, MutationContext $context): void;
+
+    /**
      * Count entities matching optional criteria.
      *
      * @param array<string, mixed> $criteria

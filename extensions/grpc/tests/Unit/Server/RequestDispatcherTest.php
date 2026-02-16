@@ -216,7 +216,10 @@ final class RequestDispatcherTest extends TestCase
 
             public function handle(CallContext $context, Closure $next): InterceptorResult
             {
-                $this->tracker->order[] = $this->name;
+                /** @var list<string> $order */
+                $order = $this->tracker->order;
+                $order[] = $this->name;
+                $this->tracker->order = $order;
 
                 return $next($context);
             }

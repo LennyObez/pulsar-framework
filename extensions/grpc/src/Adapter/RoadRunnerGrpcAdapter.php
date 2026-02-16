@@ -11,6 +11,7 @@ use RuntimeException;
 use Spiral\RoadRunner\Payload;
 use Spiral\RoadRunner\Worker;
 
+use function call_user_func;
 use function class_exists;
 use function is_array;
 use function is_string;
@@ -22,7 +23,7 @@ use function is_string;
  * deserialized gRPC frames via the RoadRunner worker protocol and
  * runs them through the Pulsar interceptor pipeline and service dispatch.
  */
-#[Internal(reason: 'Transport adapter implementation — use GrpcTransportAdapterInterface')]
+#[Internal(reason: 'Transport adapter implementation; use GrpcTransportAdapterInterface')]
 final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
 {
     private bool $running = false;
@@ -49,13 +50,16 @@ final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
             );
         }
 
-        $rrWorker = Worker::create();
+        // RoadRunner classes are only available at runtime inside the RR process.
+        // isAvailable() guards this path, so Worker::create() is safe here.
+        /** @var object $rrWorker */
+        $rrWorker = call_user_func([Worker::class, 'create']);
         $this->worker = $rrWorker;
         $this->running = true;
 
         while ($this->running) {
-            /** @var Payload|null $payload */
-            $payload = $rrWorker->waitPayload();
+            /** @var object|null $payload */
+            $payload = method_exists($rrWorker, 'waitPayload') ? $rrWorker->waitPayload() : null;
 
             if ($payload === null) {
                 break;
@@ -124,7 +128,6 @@ final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
         }
 
         if (method_exists($worker, 'respond')) {
-            /** @phpstan-ignore class.notFound */
             $response = new Payload(
                 body: $result->payload,
                 header: $this->encodeResponseHeader($result),
@@ -164,7 +167,7 @@ final class RoadRunnerGrpcAdapter implements GrpcTransportAdapterInterface
             }
         }
 
-        // Only trust peer_identity when trustedProxy is enabled — this means
+        // Only trust peer_identity when trustedProxy is enabled: this means
         // RoadRunner is configured to extract it from the TLS handshake.
         /** @var string|null $peerIdentity */
         $peerIdentity = null;

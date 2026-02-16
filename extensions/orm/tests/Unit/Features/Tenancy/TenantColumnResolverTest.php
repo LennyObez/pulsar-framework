@@ -13,6 +13,7 @@ use Pulsar\Extension\Orm\Domain\ColumnMetadata;
 use Pulsar\Extension\Orm\Domain\ColumnType;
 use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Features\Tenancy\TenantColumnResolver;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\FooEntity;
 
 final class TenantColumnResolverTest extends TestCase
 {
@@ -32,7 +33,7 @@ final class TenantColumnResolverTest extends TestCase
         $pk = new ColumnMetadata('id', 'id', ColumnType::BigInt, isPrimaryKey: true);
 
         return new EntityMetadata(
-            entityClass: 'App\\Entity\\Foo',
+            entityClass: FooEntity::class,
             tableName: 'foos',
             schema: null,
             primaryKey: $pk,

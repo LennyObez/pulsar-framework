@@ -49,6 +49,15 @@ final class QueryBuilderException extends OrmException
     }
 
     #[NoDiscard]
+    public static function invalidOperator(string $operator): self
+    {
+        return new self(sprintf(
+            'Invalid SQL operator: "%s". Allowed operators: =, !=, <>, <, >, <=, >=, LIKE, NOT LIKE, IN, NOT IN, IS, IS NOT, BETWEEN',
+            $operator,
+        ));
+    }
+
+    #[NoDiscard]
     public static function invalid(string $message): self
     {
         return new self($message);

@@ -27,7 +27,7 @@ use const Grpc\OP_SEND_STATUS_FROM_SERVER;
  * transport and protobuf framing. Pulsar owns the service contracts
  * and interceptor pipeline; this adapter owns the wire protocol.
  */
-#[Internal(reason: 'Transport adapter implementation — use GrpcTransportAdapterInterface')]
+#[Internal(reason: 'Transport adapter implementation; use GrpcTransportAdapterInterface')]
 final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
 {
     private bool $running = false;
@@ -54,21 +54,20 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
             );
         }
 
-        $server = new GrpcServer();
+        $server = new GrpcServer([]);
         $this->server = $server;
 
         $address = $host . ':' . $port;
 
         if ($this->hasTlsCredentials()) {
-            /** @phpstan-ignore class.notFound */
+            $rootCert = $this->rootCert !== '' ? $this->rootCert : null;
             $credentials = ServerCredentials::createSsl(
-                $this->rootCert !== '' ? $this->rootCert : null,
+                $rootCert ?? '',
                 [['cert_chain' => $this->certChain, 'private_key' => $this->privateKey]],
                 $this->rootCert !== '',
             );
             $server->addHttp2Port($address, $credentials);
         } else {
-            /** @phpstan-ignore class.notFound */
             $server->addHttp2Port($address, ServerCredentials::createInsecure());
         }
 
@@ -166,7 +165,6 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
 
         if ($call !== null && method_exists($call, 'startBatch')) {
             $call->startBatch([
-                /** @phpstan-ignore classConstant.notFound */
                 OP_SEND_INITIAL_METADATA => $result->trailers,
                 OP_SEND_MESSAGE => strlen($result->payload) > 0 ? $result->payload : null,
                 OP_SEND_STATUS_FROM_SERVER => [

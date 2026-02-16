@@ -50,8 +50,13 @@ final readonly class ResourceListController
             ? [$sortField => is_string($sortDir) ? $sortDir : 'asc']
             : [];
 
-        $page = max(1, (int) ($queryParams['page'] ?? 1));
-        $perPage = max(1, (int) ($queryParams['per_page'] ?? 25));
+        $pageRaw = $queryParams['page'] ?? 1;
+        $page = max(1, is_numeric($pageRaw) ? (int) $pageRaw : 1);
+        $perPageRaw = $queryParams['per_page'] ?? 25;
+        $perPage = min(
+            $this->config->pagination->maxPerPage,
+            max(1, is_numeric($perPageRaw) ? (int) $perPageRaw : 25),
+        );
 
         try {
             $result = $this->handler->execute(new ListResourceRequest(

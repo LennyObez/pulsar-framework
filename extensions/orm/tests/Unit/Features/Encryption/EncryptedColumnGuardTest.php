@@ -12,6 +12,7 @@ use Pulsar\Extension\Orm\Domain\ColumnType;
 use Pulsar\Extension\Orm\Domain\EntityMetadata;
 use Pulsar\Extension\Orm\Exception\EncryptedColumnQueryException;
 use Pulsar\Extension\Orm\Features\Encryption\EncryptedColumnGuard;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\SecureEntity;
 
 final class EncryptedColumnGuardTest extends TestCase
 {
@@ -27,7 +28,7 @@ final class EncryptedColumnGuardTest extends TestCase
         );
 
         return new EntityMetadata(
-            entityClass: 'App\\Entity\\Secure',
+            entityClass: SecureEntity::class,
             tableName: 'secure',
             schema: null,
             primaryKey: $pk,
@@ -59,7 +60,7 @@ final class EncryptedColumnGuardTest extends TestCase
     {
         $guard = $this->createGuard($this->createMetadata(false, null));
 
-        $guard->guardWhere('App\\Entity\\Secure', 'secret_enc');
+        $guard->guardWhere(SecureEntity::class, 'secret_enc');
 
         $this->addToAssertionCount(1);
     }
@@ -69,7 +70,7 @@ final class EncryptedColumnGuardTest extends TestCase
     {
         $guard = $this->createGuard($this->createMetadata(true, 'secret_idx'));
 
-        $guard->guardWhere('App\\Entity\\Secure', 'secret_enc');
+        $guard->guardWhere(SecureEntity::class, 'secret_enc');
 
         $this->addToAssertionCount(1);
     }
@@ -81,7 +82,7 @@ final class EncryptedColumnGuardTest extends TestCase
 
         $this->expectException(EncryptedColumnQueryException::class);
 
-        $guard->guardWhere('App\\Entity\\Secure', 'secret_enc');
+        $guard->guardWhere(SecureEntity::class, 'secret_enc');
     }
 
     #[Test]
@@ -89,7 +90,7 @@ final class EncryptedColumnGuardTest extends TestCase
     {
         $guard = $this->createGuard($this->createMetadata(true, null));
 
-        $guard->guardWhere('App\\Entity\\Secure', 'nonexistent');
+        $guard->guardWhere(SecureEntity::class, 'nonexistent');
 
         $this->addToAssertionCount(1);
     }
@@ -99,7 +100,7 @@ final class EncryptedColumnGuardTest extends TestCase
     {
         $guard = $this->createGuard($this->createMetadata(false, null));
 
-        $guard->guardOrderBy('App\\Entity\\Secure', 'secret_enc');
+        $guard->guardOrderBy(SecureEntity::class, 'secret_enc');
 
         $this->addToAssertionCount(1);
     }
@@ -111,6 +112,6 @@ final class EncryptedColumnGuardTest extends TestCase
 
         $this->expectException(EncryptedColumnQueryException::class);
 
-        $guard->guardOrderBy('App\\Entity\\Secure', 'secret_enc');
+        $guard->guardOrderBy(SecureEntity::class, 'secret_enc');
     }
 }

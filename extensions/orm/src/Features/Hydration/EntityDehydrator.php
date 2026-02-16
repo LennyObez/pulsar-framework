@@ -12,6 +12,9 @@ use Pulsar\Extension\Orm\Domain\ColumnMetadata;
 use Pulsar\Extension\Orm\Internal\Support\TypeCaster;
 use ReflectionClass;
 
+use function is_scalar;
+use function is_string;
+
 /**
  * Dehydrates entity objects into database-ready column => value arrays.
  */
@@ -46,7 +49,8 @@ final readonly class EntityDehydrator
             if ($col->encrypted && $col->blindIndexColumn !== null && $this->encryptor !== null) {
                 $rawValue = $reflection->getProperty($col->propertyName)->getValue($entity);
                 if ($rawValue !== null) {
-                    $hash = $this->encryptor->blindIndex((string) $rawValue, $col->blindIndexHashLength ?? 32);
+                    $strValue = is_string($rawValue) ? $rawValue : (is_scalar($rawValue) ? (string) $rawValue : '');
+                    $hash = $this->encryptor->blindIndex($strValue, $col->blindIndexHashLength ?? 32);
                     $values[$col->blindIndexColumn] = Param::binary($hash);
                 }
             }
@@ -74,7 +78,8 @@ final readonly class EntityDehydrator
             if ($col->encrypted && $col->blindIndexColumn !== null && $this->encryptor !== null) {
                 $rawValue = $reflection->getProperty($col->propertyName)->getValue($entity);
                 if ($rawValue !== null) {
-                    $hash = $this->encryptor->blindIndex((string) $rawValue, $col->blindIndexHashLength ?? 32);
+                    $strValue = is_string($rawValue) ? $rawValue : (is_scalar($rawValue) ? (string) $rawValue : '');
+                    $hash = $this->encryptor->blindIndex($strValue, $col->blindIndexHashLength ?? 32);
                     $values[$col->blindIndexColumn] = Param::binary($hash);
                 }
             }
@@ -132,7 +137,8 @@ final readonly class EntityDehydrator
 
         // Encrypt if needed
         if ($col->encrypted && $value !== null && $this->encryptor !== null) {
-            $encrypted = $this->encryptor->encrypt((string) $value);
+            $strValue = is_string($value) ? $value : (is_scalar($value) ? (string) $value : '');
+            $encrypted = $this->encryptor->encrypt($strValue);
 
             return Param::binary($encrypted);
         }

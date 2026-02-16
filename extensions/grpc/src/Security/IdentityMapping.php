@@ -16,7 +16,7 @@ use function count;
  * Compiled, immutable mapping from certificate SANs to service identities.
  *
  * Built from configuration at boot time. Once constructed, the mapping is
- * frozen — no entries can be added or removed at runtime.
+ * frozen: no entries can be added or removed at runtime.
  */
 #[Api(since: '1.0.0')]
 final readonly class IdentityMapping

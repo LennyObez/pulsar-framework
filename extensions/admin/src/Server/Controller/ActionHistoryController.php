@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Admin\Server\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Config\AdminConfig;
+use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryEntry;
 use Pulsar\Extension\Admin\Internal\Storage\ActionHistoryStoreInterface;
 use Pulsar\Http\Message\Response;
 
@@ -61,14 +62,14 @@ final readonly class ActionHistoryController
     }
 
     /**
-     * @param list<object> $entries
+     * @param list<ActionHistoryEntry> $entries
      * @return list<array{id: string, action: string, resource: string, record_id: ?string, actor: string, timestamp: int, success: bool, detail: string}>
      */
     private function serializeEntries(array $entries): array
     {
         /** @var list<array{id: string, action: string, resource: string, record_id: ?string, actor: string, timestamp: int, success: bool, detail: string}> */
         return array_map(
-            static fn(object $e): array => [
+            static fn(ActionHistoryEntry $e): array => [
                 'id' => $e->id,
                 'action' => $e->action,
                 'resource' => $e->resourceName,

@@ -11,8 +11,8 @@ use Pulsar\Api\Api;
  * Specifies a custom caster class for a column value.
  *
  * The caster class must implement two static methods:
- * - fromDatabase(mixed $value): mixed — convert DB value to PHP value
- * - toDatabase(mixed $value): mixed — convert PHP value to DB value
+ * - fromDatabase(mixed $value): mixed: convert DB value to PHP value
+ * - toDatabase(mixed $value): mixed: convert PHP value to DB value
  */
 #[Attribute(Attribute::TARGET_PROPERTY)]
 #[Api(since: '1.0.0')]

@@ -115,21 +115,22 @@ final class SqliteSavedViewStore implements SavedViewStoreInterface
      */
     private function hydrate(array $row): SavedView
     {
+        /** @var array{id: string, resource_name: string, label: string, filters: string, sort: string, per_page: int, created_by: string, is_default: int, created_at: int} $row */
         /** @var array<string, mixed> $filters */
-        $filters = json_decode((string) $row['filters'], true, 512, JSON_THROW_ON_ERROR);
+        $filters = json_decode($row['filters'], true, 512, JSON_THROW_ON_ERROR);
         /** @var array<string, string> $sort */
-        $sort = json_decode((string) $row['sort'], true, 512, JSON_THROW_ON_ERROR);
+        $sort = json_decode($row['sort'], true, 512, JSON_THROW_ON_ERROR);
 
         return new SavedView(
-            id: (string) $row['id'],
-            resourceName: (string) $row['resource_name'],
-            label: (string) $row['label'],
+            id: $row['id'],
+            resourceName: $row['resource_name'],
+            label: $row['label'],
             filters: $filters,
             sort: $sort,
-            perPage: (int) $row['per_page'],
-            createdBy: (string) $row['created_by'],
+            perPage: $row['per_page'],
+            createdBy: $row['created_by'],
             isDefault: (bool) $row['is_default'],
-            createdAt: (int) $row['created_at'],
+            createdAt: $row['created_at'],
         );
     }
 }

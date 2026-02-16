@@ -50,7 +50,7 @@ use const PHP_SAPI;
 use const PHP_VERSION;
 
 /**
- * Studio benchmark command — runs the profile matrix and emits events.
+ * Studio benchmark command: runs the profile matrix and emits events.
  */
 #[Internal]
 final class ConsoleBenchmarkCommand extends Command
@@ -215,7 +215,7 @@ final class ConsoleBenchmarkCommand extends Command
                     $results[$name] = ['error' => 'optimize command failed'];
 
                     if (!$isJson) {
-                        $output->writeln(sprintf('  [skip] %s — optimize command failed', $name));
+                        $output->writeln(sprintf('  [skip] %s: optimize command failed', $name));
                     }
 
                     continue;
@@ -352,7 +352,7 @@ final class ConsoleBenchmarkCommand extends Command
             $results[$name] = ['error' => 'preload not supported on this platform'];
 
             if (!$isJson) {
-                $output->writeln(sprintf('  [skip] %s — preloading requires Linux/macOS', $name));
+                $output->writeln(sprintf('  [skip] %s: preloading requires Linux/macOS', $name));
             }
 
             return;

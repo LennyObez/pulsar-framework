@@ -13,7 +13,7 @@ use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 use function sprintf;
 
 /**
- * Internal DELETE builder — not exposed on the public API.
+ * Internal DELETE builder: not exposed on the public API.
  *
  * All writes go through repositories with MutationContext.
  */

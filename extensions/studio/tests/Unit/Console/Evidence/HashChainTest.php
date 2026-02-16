@@ -14,6 +14,7 @@ use Pulsar\Extension\Studio\Console\Event\EventVersion;
 use Pulsar\Extension\Studio\Console\Evidence\HashChain;
 use Pulsar\Observability\Context\CorrelationContext;
 
+use function random_bytes;
 use function strlen;
 
 final class HashChainTest extends TestCase
@@ -92,6 +93,57 @@ final class HashChainTest extends TestCase
         $chain = new HashChain();
 
         self::assertFalse($chain->hasMacKey());
+    }
+
+    #[Test]
+    public function deriveSeedFromMasterKeyProducesDeterministicHex(): void
+    {
+        $masterKeyRaw = random_bytes(SODIUM_CRYPTO_KDF_KEYBYTES);
+
+        $seed1 = HashChain::deriveSeedFromMasterKey($masterKeyRaw);
+        $seed2 = HashChain::deriveSeedFromMasterKey($masterKeyRaw);
+
+        self::assertSame($seed1, $seed2);
+        // Hex-encoded 32 bytes = 64 hex chars
+        self::assertSame(64, strlen($seed1));
+        self::assertMatchesRegularExpression('/^[0-9a-f]+$/', $seed1);
+    }
+
+    #[Test]
+    public function deriveSeedFromMasterKeyDiffersPerKey(): void
+    {
+        $key1 = random_bytes(SODIUM_CRYPTO_KDF_KEYBYTES);
+        $key2 = random_bytes(SODIUM_CRYPTO_KDF_KEYBYTES);
+
+        $seed1 = HashChain::deriveSeedFromMasterKey($key1);
+        $seed2 = HashChain::deriveSeedFromMasterKey($key2);
+
+        self::assertNotSame($seed1, $seed2);
+    }
+
+    #[Test]
+    public function seedHashWithDerivedSeedDiffersFromFallback(): void
+    {
+        $masterKeyRaw = random_bytes(SODIUM_CRYPTO_KDF_KEYBYTES);
+        $derivedSeed = HashChain::deriveSeedFromMasterKey($masterKeyRaw);
+
+        $fallbackHash = HashChain::seedHash();
+        $derivedHash = HashChain::seedHash($derivedSeed);
+
+        self::assertNotSame($fallbackHash, $derivedHash);
+        self::assertSame(64, strlen($derivedHash));
+    }
+
+    #[Test]
+    public function seedHashWithDerivedSeedIsDeterministic(): void
+    {
+        $masterKeyRaw = random_bytes(SODIUM_CRYPTO_KDF_KEYBYTES);
+        $derivedSeed = HashChain::deriveSeedFromMasterKey($masterKeyRaw);
+
+        $hash1 = HashChain::seedHash($derivedSeed);
+        $hash2 = HashChain::seedHash($derivedSeed);
+
+        self::assertSame($hash1, $hash2);
     }
 
     private function createEnvelope(): EventEnvelope

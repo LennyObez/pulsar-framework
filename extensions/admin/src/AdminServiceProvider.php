@@ -76,6 +76,8 @@ use Pulsar\Extension\Admin\Server\Controller\SchemaController;
 use Pulsar\Extension\Admin\Server\Controller\SearchController;
 use Pulsar\Http\RateLimit\RateLimiterInterface;
 
+use function is_string;
+
 /**
  * Service provider for the admin extension.
  *
@@ -87,7 +89,7 @@ final readonly class AdminServiceProvider implements ServiceProviderInterface
     #[Override]
     public function register(ContainerInterface $container): void
     {
-        // Config (loaded in preBoot via AdminExtension — only set defaults if missing)
+        // Config (loaded in preBoot via AdminExtension; only set defaults if missing)
         if (!$container->has(AdminConfig::class)) {
             $container->instance(AdminConfig::class, AdminConfig::fromArray([]));
         }
@@ -255,7 +257,7 @@ final readonly class AdminServiceProvider implements ServiceProviderInterface
         $container->bind(DashboardHandler::class, static function () use ($container): DashboardHandler {
             $widgets = [];
 
-            // ResourceCountWidget requires a database — only include when available
+            // ResourceCountWidget requires a database: only include when available
             if ($container->has(ConnectionInterface::class)) {
                 $widgets[] = $container->get(ResourceCountWidget::class);
             }
@@ -320,9 +322,10 @@ final readonly class AdminServiceProvider implements ServiceProviderInterface
         $container->bind(AdminServeCommand::class, static function () use ($container): AdminServeCommand {
             /** @var AdminConfig $config */
             $config = $container->get(AdminConfig::class);
-            $basePath = $container->has('app.base_path')
-                ? (string) $container->get('app.base_path')
-                : (getcwd() ?: '.');
+            $basePathValue = $container->has('app.base_path')
+                ? $container->get('app.base_path')
+                : null;
+            $basePath = is_string($basePathValue) ? $basePathValue : (getcwd() ?: '.');
 
             return new AdminServeCommand($config, $basePath);
         });

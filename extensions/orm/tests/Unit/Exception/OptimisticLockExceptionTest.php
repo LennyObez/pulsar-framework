@@ -8,6 +8,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Orm\Exception\OptimisticLockException;
 use Pulsar\Extension\Orm\Exception\OrmException;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\FooEntity;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\OrderEntity;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\UserEntity;
 
 final class OptimisticLockExceptionTest extends TestCase
 {
@@ -16,16 +19,16 @@ final class OptimisticLockExceptionTest extends TestCase
     {
         self::assertInstanceOf(
             OrmException::class,
-            OptimisticLockException::versionMismatch('X', 1, 2, 3),
+            OptimisticLockException::versionMismatch(FooEntity::class, 1, 2, 3),
         );
     }
 
     #[Test]
     public function versionMismatchIncludesAllDetails(): void
     {
-        $e = OptimisticLockException::versionMismatch('App\\Entity\\Order', 42, 5, 6);
+        $e = OptimisticLockException::versionMismatch(OrderEntity::class, 42, 5, 6);
 
-        self::assertStringContainsString('App\\Entity\\Order', $e->getMessage());
+        self::assertStringContainsString('OrderEntity', $e->getMessage());
         self::assertStringContainsString('42', $e->getMessage());
         self::assertStringContainsString('5', $e->getMessage());
         self::assertStringContainsString('6', $e->getMessage());
@@ -34,9 +37,9 @@ final class OptimisticLockExceptionTest extends TestCase
     #[Test]
     public function staleEntityIncludesClassAndId(): void
     {
-        $e = OptimisticLockException::staleEntity('App\\Entity\\User', 'abc-123');
+        $e = OptimisticLockException::staleEntity(UserEntity::class, 'abc-123');
 
-        self::assertStringContainsString('App\\Entity\\User', $e->getMessage());
+        self::assertStringContainsString('UserEntity', $e->getMessage());
         self::assertStringContainsString('abc-123', $e->getMessage());
     }
 }

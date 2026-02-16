@@ -75,7 +75,7 @@ final class GuardianDeployCheckCommand extends Command
             return $success ? ExitCode::Success->value : ExitCode::Error->value;
         }
 
-        $output->writeln(sprintf('Deploy Readiness — %s', $environment));
+        $output->writeln(sprintf('Deploy Readiness: %s', $environment));
         $output->writeln(str_repeat('=', 60));
 
         foreach ($report->results as $result) {

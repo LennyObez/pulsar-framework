@@ -89,7 +89,7 @@ final class ReflectionGuardTest extends TestCase
         $config = new ReflectionConfig(enabled: true, allowInProduction: true);
         $guard = new ReflectionGuard($config);
 
-        // Should not throw — audit logger is optional
+        // Should not throw; audit logger is optional
         self::assertTrue($guard->isAllowed(isProduction: true));
     }
 

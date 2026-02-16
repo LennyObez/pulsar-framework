@@ -75,7 +75,7 @@ final class ServeCommand extends Command
             $output->info('TLS enabled');
 
             if ($this->config->tls->isMutual()) {
-                $output->info('Mutual TLS (mTLS) enabled — client certificates required');
+                $output->info('Mutual TLS (mTLS) enabled: client certificates required');
             }
         }
 

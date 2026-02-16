@@ -74,11 +74,26 @@ function renderRecentActivityWidget(container: HTMLElement, data: Record<string,
     const li = document.createElement('li');
     const time = new Date(entry.timestamp * 1000).toLocaleString();
     const status = entry.success ? 'ok' : 'fail';
-    li.innerHTML = `<span class="admin-activity__status admin-activity__status--${status}"></span>
-      <span class="admin-activity__action">${escapeHtml(entry.action)}</span>
-      <span class="admin-activity__resource">${escapeHtml(entry.resource)}</span>
-      <span class="admin-activity__actor">${escapeHtml(entry.actor)}</span>
-      <time>${escapeHtml(time)}</time>`;
+
+    const statusSpan = document.createElement('span');
+    statusSpan.className = `admin-activity__status admin-activity__status--${status}`;
+
+    const actionSpan = document.createElement('span');
+    actionSpan.className = 'admin-activity__action';
+    actionSpan.textContent = entry.action;
+
+    const resourceSpan = document.createElement('span');
+    resourceSpan.className = 'admin-activity__resource';
+    resourceSpan.textContent = entry.resource;
+
+    const actorSpan = document.createElement('span');
+    actorSpan.className = 'admin-activity__actor';
+    actorSpan.textContent = entry.actor;
+
+    const timeEl = document.createElement('time');
+    timeEl.textContent = time;
+
+    li.append(statusSpan, actionSpan, resourceSpan, actorSpan, timeEl);
     list.appendChild(li);
   }
 

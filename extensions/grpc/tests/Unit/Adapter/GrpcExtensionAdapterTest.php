@@ -29,9 +29,8 @@ final class GrpcExtensionAdapterTest extends TestCase
     {
         $adapter = new GrpcExtensionAdapter();
 
-        // The grpc extension is typically not loaded in test environments.
-        // This test verifies the method returns a boolean without error.
-        self::assertIsBool($adapter->isAvailable());
+        // isAvailable() delegates to extension_loaded('grpc')
+        self::assertSame(extension_loaded('grpc'), $adapter->isAvailable());
     }
 
     #[Test]

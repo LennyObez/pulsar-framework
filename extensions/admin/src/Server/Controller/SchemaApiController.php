@@ -25,6 +25,7 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function array_map;
+use function is_scalar;
 use function is_string;
 use function mb_strlen;
 
@@ -202,7 +203,8 @@ final readonly class SchemaApiController
     {
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $limit = (int) ($body['limit'] ?? '100');
+        $limitRaw = $body['limit'] ?? 100;
+        $limit = is_numeric($limitRaw) ? (int) $limitRaw : 100;
         $entries = $this->changeLog->recent($limit);
 
         $entryData = array_map(
@@ -308,7 +310,8 @@ final readonly class SchemaApiController
      */
     private function buildColumnFromArray(array $c): SchemaColumn
     {
-        $type = SchemaColumnType::from((string) ($c['type'] ?? 'string'));
+        $typeRaw = $c['type'] ?? 'string';
+        $type = SchemaColumnType::from(is_string($typeRaw) ? $typeRaw : 'string');
 
         $defaultExpression = null;
         if (isset($c['default_expression']) && is_string($c['default_expression']) && $c['default_expression'] !== '') {
@@ -318,20 +321,25 @@ final readonly class SchemaApiController
         /** @var list<string> $enumValues */
         $enumValues = $c['enum_values'] ?? [];
 
+        $nameRaw = $c['name'] ?? '';
+        $defaultValue = $c['default_value'] ?? null;
+        /** @var bool|float|int|string|null $typedDefault */
+        $typedDefault = is_scalar($defaultValue) || $defaultValue === null ? $defaultValue : null;
+
         return new SchemaColumn(
-            name: (string) ($c['name'] ?? ''),
+            name: is_string($nameRaw) ? $nameRaw : '',
             type: $type,
-            nullable: (bool) ($c['nullable'] ?? false),
-            primaryKey: (bool) ($c['primary_key'] ?? false),
-            autoIncrement: (bool) ($c['auto_increment'] ?? false),
-            unsigned: (bool) ($c['unsigned'] ?? false),
-            unique: (bool) ($c['unique'] ?? false),
-            default: $c['default_value'] ?? null,
-            hasDefault: (bool) ($c['has_default'] ?? false),
+            nullable: !empty($c['nullable']),
+            primaryKey: !empty($c['primary_key']),
+            autoIncrement: !empty($c['auto_increment']),
+            unsigned: !empty($c['unsigned']),
+            unique: !empty($c['unique']),
+            default: $typedDefault,
+            hasDefault: !empty($c['has_default']),
             defaultExpression: $defaultExpression,
-            length: isset($c['length']) ? (int) $c['length'] : null,
-            precision: isset($c['precision']) ? (int) $c['precision'] : null,
-            scale: isset($c['scale']) ? (int) $c['scale'] : null,
+            length: isset($c['length']) && is_numeric($c['length']) ? (int) $c['length'] : null,
+            precision: isset($c['precision']) && is_numeric($c['precision']) ? (int) $c['precision'] : null,
+            scale: isset($c['scale']) && is_numeric($c['scale']) ? (int) $c['scale'] : null,
             enumValues: $enumValues,
         );
     }
@@ -344,10 +352,11 @@ final readonly class SchemaApiController
         /** @var list<string> $columns */
         $columns = $i['columns'] ?? [];
 
+        $nameRaw = $i['name'] ?? '';
         return new SchemaIndex(
-            name: (string) ($i['name'] ?? ''),
+            name: is_string($nameRaw) ? $nameRaw : '',
             columns: $columns,
-            unique: (bool) ($i['unique'] ?? false),
+            unique: !empty($i['unique']),
         );
     }
 
@@ -361,13 +370,17 @@ final readonly class SchemaApiController
         /** @var list<string> $referencedColumns */
         $referencedColumns = $fk['referenced_columns'] ?? [];
 
+        $fkName = $fk['name'] ?? '';
+        $refTable = $fk['referenced_table'] ?? '';
+        $onDelete = $fk['on_delete'] ?? 'RESTRICT';
+        $onUpdate = $fk['on_update'] ?? 'RESTRICT';
         return new SchemaForeignKey(
-            name: (string) ($fk['name'] ?? ''),
+            name: is_string($fkName) ? $fkName : '',
             columns: $columns,
-            referencedTable: (string) ($fk['referenced_table'] ?? ''),
+            referencedTable: is_string($refTable) ? $refTable : '',
             referencedColumns: $referencedColumns,
-            onDelete: SchemaReferentialAction::from((string) ($fk['on_delete'] ?? 'RESTRICT')),
-            onUpdate: SchemaReferentialAction::from((string) ($fk['on_update'] ?? 'RESTRICT')),
+            onDelete: SchemaReferentialAction::from(is_string($onDelete) ? $onDelete : 'RESTRICT'),
+            onUpdate: SchemaReferentialAction::from(is_string($onUpdate) ? $onUpdate : 'RESTRICT'),
         );
     }
 }

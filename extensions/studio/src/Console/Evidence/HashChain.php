@@ -10,7 +10,11 @@ use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
 use Pulsar\Security\Crypto\HmacInterface;
 use SodiumException;
 
+use function bin2hex;
 use function hash;
+use function sodium_crypto_kdf_derive_from_key;
+
+use const SODIUM_CRYPTO_KDF_KEYBYTES;
 
 /**
  * SHA-256 evidence hash chain with optional BLAKE2b per-link MAC.
@@ -18,11 +22,28 @@ use function hash;
  * Each link's hash chains from its predecessor using the event's canonical form.
  * The chain is publicly verifiable (no keys needed) for integrity.
  * Optional per-link MAC provides tamper-evident verification (requires key).
+ *
+ * The chain seed is derived from the master key via KDF with a Studio-specific
+ * context, preventing prediction by attackers without key material.
+ * The derived seed is stored in studio_meta on first boot for chain continuity.
  */
 #[Internal]
 final class HashChain
 {
-    private const string CHAIN_SEED_INPUT = 'PULSAR_STUDIO_CHAIN_SEED';
+    /**
+     * Sub-key ID for Studio chain seed derivation.
+     */
+    private const int CHAIN_SEED_SUB_KEY_ID = 15;
+
+    /**
+     * KDF context for chain seed (exactly 8 bytes).
+     */
+    private const string CHAIN_SEED_CONTEXT = 'stu_seed';
+
+    /**
+     * Fallback constant for environments without master key (dev/testing).
+     */
+    private const string CHAIN_SEED_FALLBACK = 'PULSAR_STUDIO_CHAIN_SEED';
 
     public function __construct(
         private readonly ?HmacInterface $hmac = null,
@@ -31,11 +52,43 @@ final class HashChain
 
     /**
      * Get the seed hash (anchor for the first link).
+     *
+     * Uses the fallback constant when no master-key-derived seed is available.
+     * Production deployments should use {@see deriveSeedFromMasterKey()} at boot
+     * and store the result in studio_meta.
      */
     #[NoDiscard]
-    public static function seedHash(): string
+    public static function seedHash(?string $derivedSeed = null): string
     {
-        return hash('sha256', self::CHAIN_SEED_INPUT);
+        if ($derivedSeed !== null) {
+            return hash('sha256', $derivedSeed);
+        }
+
+        return hash('sha256', self::CHAIN_SEED_FALLBACK);
+    }
+
+    /**
+     * Derive a chain seed from the master key via sodium KDF.
+     *
+     * Call this at boot and store the result in studio_meta('chain_seed').
+     * Subsequent calls to seedHash() should pass this derived value.
+     *
+     * @param string $masterKeyRaw Raw 32-byte master key
+     * @return string Hex-encoded derived seed
+     *
+     * @throws SodiumException
+     */
+    #[NoDiscard]
+    public static function deriveSeedFromMasterKey(string $masterKeyRaw): string
+    {
+        $derived = sodium_crypto_kdf_derive_from_key(
+            SODIUM_CRYPTO_KDF_KEYBYTES,
+            self::CHAIN_SEED_SUB_KEY_ID,
+            self::CHAIN_SEED_CONTEXT,
+            $masterKeyRaw,
+        );
+
+        return bin2hex($derived);
     }
 
     /**

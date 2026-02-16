@@ -12,6 +12,8 @@ use Pulsar\Extension\Admin\Features\DeleteResource\DeleteResourceRequest;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
+use function is_string;
+
 /**
  * Controller for deleting resource records.
  */
@@ -33,7 +35,7 @@ final readonly class ResourceDeleteController
 
         $context = new MutationContext(
             actor: $actor,
-            reason: (string) ($body['reason'] ?? 'Admin panel delete'),
+            reason: isset($body['reason']) && is_string($body['reason']) ? $body['reason'] : 'Admin panel delete',
         );
 
         $result = $this->handler->execute(new DeleteResourceRequest(

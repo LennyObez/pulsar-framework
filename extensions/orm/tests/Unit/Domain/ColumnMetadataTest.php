@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Orm\Domain\ColumnMetadata;
 use Pulsar\Extension\Orm\Domain\ColumnType;
+use Pulsar\Extension\Orm\Tests\Unit\Fixtures\StubCaster;
 
 final class ColumnMetadataTest extends TestCase
 {
@@ -51,7 +52,7 @@ final class ColumnMetadataTest extends TestCase
             blindIndexHashLength: null,
             insertable: false,
             updatable: false,
-            casterClass: 'App\\Caster',
+            casterClass: StubCaster::class,
         );
 
         self::assertSame('id', $col->propertyName);
@@ -61,7 +62,7 @@ final class ColumnMetadataTest extends TestCase
         self::assertTrue($col->autoIncrement);
         self::assertFalse($col->insertable);
         self::assertFalse($col->updatable);
-        self::assertSame('App\\Caster', $col->casterClass);
+        self::assertSame(StubCaster::class, $col->casterClass);
     }
 
     #[Test]

@@ -13,7 +13,7 @@ use Pulsar\Extension\Orm\Internal\Support\IdentifierQuoter;
 use function array_keys;
 
 /**
- * Internal INSERT builder — not exposed on the public API.
+ * Internal INSERT builder: not exposed on the public API.
  *
  * All writes go through repositories with MutationContext.
  */

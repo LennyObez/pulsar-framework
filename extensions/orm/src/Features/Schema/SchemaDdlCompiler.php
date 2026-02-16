@@ -13,6 +13,7 @@ use function implode;
 use function is_bool;
 use function is_float;
 use function is_int;
+use function is_scalar;
 use function sprintf;
 
 /**
@@ -164,7 +165,7 @@ final readonly class SchemaDdlCompiler
             } elseif (is_int($default) || is_float($default)) {
                 $sql .= sprintf(' DEFAULT %s', $default);
             } else {
-                $sql .= sprintf(" DEFAULT '%s'", $default);
+                $sql .= sprintf(" DEFAULT '%s'", is_scalar($default) ? (string) $default : '');
             }
         }
 

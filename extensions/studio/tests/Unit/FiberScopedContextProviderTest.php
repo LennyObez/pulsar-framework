@@ -52,13 +52,19 @@ final class FiberScopedContextProviderTest extends TestCase
         $inner = new CorrelationContext(requestId: 'inner');
 
         $outerScope = $provider->enter($outer);
-        self::assertSame('outer', $provider->current()?->requestId);
+        $current = $provider->current();
+        self::assertNotNull($current);
+        self::assertSame('outer', $current->requestId);
 
         $innerScope = $provider->enter($inner);
-        self::assertSame('inner', $provider->current()?->requestId);
+        $current = $provider->current();
+        self::assertNotNull($current);
+        self::assertSame('inner', $current->requestId);
 
         $innerScope->close();
-        self::assertSame('outer', $provider->current()?->requestId);
+        $current = $provider->current();
+        self::assertNotNull($current);
+        self::assertSame('outer', $current->requestId);
 
         $outerScope->close();
         self::assertNull($provider->current());

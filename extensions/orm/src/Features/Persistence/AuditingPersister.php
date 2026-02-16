@@ -16,6 +16,7 @@ use Pulsar\Extension\Orm\Features\Hydration\EntityDehydrator;
 use Pulsar\Extension\Orm\Features\Query\DeleteBuilder;
 use Pulsar\Extension\Orm\Features\Query\InsertBuilder;
 use Pulsar\Extension\Orm\Features\Query\UpdateBuilder;
+use Pulsar\Extension\Orm\Features\Tenancy\TenantInsertEnricher;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 use ReflectionClass;
@@ -33,6 +34,7 @@ final readonly class AuditingPersister
         private MetadataRegistryInterface $metadataRegistry,
         private EntityDehydrator $dehydrator,
         private ?AuditLoggerInterface $auditLogger = null,
+        private ?TenantInsertEnricher $tenantEnricher = null,
     ) {}
 
     /**
@@ -43,6 +45,11 @@ final readonly class AuditingPersister
         $metadata = $this->metadataRegistry->get($entity::class);
         $values = $this->dehydrator->dehydrateForInsert($entity);
 
+        // Enrich with tenant column if applicable
+        if ($this->tenantEnricher !== null) {
+            $values = $this->tenantEnricher->enrich($values, $metadata);
+        }
+
         // Add timestamps
         if ($metadata->hasTimestamps && $metadata->createdAtColumn !== null) {
             $values[$metadata->createdAtColumn] = date('Y-m-d H:i:s');
@@ -51,33 +58,31 @@ final readonly class AuditingPersister
             }
         }
 
-        // Tenant column: value should already be on the entity,
-        // handled by TenantInsertEnricher if needed.
-
         // Set initial version
         if ($metadata->versionProperty !== null) {
             $versionCol = $metadata->columns[$metadata->versionProperty];
             $values[$versionCol->columnName] = 1;
         }
 
-        $insertBuilder = new InsertBuilder($this->connection, $metadata->tableName);
+        $insertBuilder = new InsertBuilder($this->connection, $metadata->qualifiedTableName());
         $lastInsertId = $insertBuilder->values($values)->execute();
 
-        // Set the generated ID back on the entity
-        if ($metadata->primaryKey->autoIncrement) {
+        // Set the generated ID and initial version back on the entity
+        if ($metadata->primaryKey->autoIncrement || $metadata->versionProperty !== null) {
             $reflection = new ReflectionClass($entity);
-            $prop = $reflection->getProperty($metadata->primaryKey->propertyName);
-            $prop->setValue($entity, $metadata->primaryKey->type === ColumnType::Integer
-                || $metadata->primaryKey->type === ColumnType::BigInt
-                ? (int) $lastInsertId
-                : $lastInsertId);
-        }
 
-        // Set initial version back on entity
-        if ($metadata->versionProperty !== null) {
-            $reflection = new ReflectionClass($entity);
-            $prop = $reflection->getProperty($metadata->versionProperty);
-            $prop->setValue($entity, 1);
+            if ($metadata->primaryKey->autoIncrement) {
+                $prop = $reflection->getProperty($metadata->primaryKey->propertyName);
+                $prop->setValue($entity, $metadata->primaryKey->type === ColumnType::Integer
+                    || $metadata->primaryKey->type === ColumnType::BigInt
+                    ? (int) $lastInsertId
+                    : $lastInsertId);
+            }
+
+            if ($metadata->versionProperty !== null) {
+                $prop = $reflection->getProperty($metadata->versionProperty);
+                $prop->setValue($entity, 1);
+            }
         }
 
         $this->logAudit($metadata, $context, 'insert', $this->dehydrator->extractId($entity));
@@ -99,7 +104,7 @@ final readonly class AuditingPersister
             $values[$metadata->updatedAtColumn] = date('Y-m-d H:i:s');
         }
 
-        $updateBuilder = new UpdateBuilder($this->connection, $metadata->tableName);
+        $updateBuilder = new UpdateBuilder($this->connection, $metadata->qualifiedTableName());
         $updateBuilder->set($values)->where($metadata->primaryKey->columnName, $id);
 
         // Optimistic locking
@@ -147,14 +152,14 @@ final readonly class AuditingPersister
 
         if ($metadata->hasSoftDelete && $metadata->softDeleteColumn !== null) {
             // Soft delete: set the deleted_at column
-            $updateBuilder = new UpdateBuilder($this->connection, $metadata->tableName);
+            $updateBuilder = new UpdateBuilder($this->connection, $metadata->qualifiedTableName());
             $updateBuilder
                 ->set([$metadata->softDeleteColumn => date('Y-m-d H:i:s')])
                 ->where($metadata->primaryKey->columnName, $id)
                 ->execute();
         } else {
             // Hard delete
-            $deleteBuilder = new DeleteBuilder($this->connection, $metadata->tableName);
+            $deleteBuilder = new DeleteBuilder($this->connection, $metadata->qualifiedTableName());
             $deleteBuilder->where($metadata->primaryKey->columnName, $id)->execute();
         }
 

@@ -15,6 +15,7 @@ use Pulsar\Extension\Orm\Contracts\MetadataRegistryInterface;
 use Pulsar\Extension\Orm\Contracts\SchemaBuilderInterface;
 use Pulsar\Extension\Orm\Contracts\TransactionManagerInterface;
 use Pulsar\Extension\Orm\Features\Encryption\AttributeColumnEncryptor;
+use Pulsar\Extension\Orm\Features\Encryption\EncryptedColumnGuard;
 use Pulsar\Extension\Orm\Features\Hydration\EntityDehydrator;
 use Pulsar\Extension\Orm\Features\Hydration\EntityHydrator;
 use Pulsar\Extension\Orm\Features\Metadata\CachedMetadataRegistry;
@@ -22,6 +23,8 @@ use Pulsar\Extension\Orm\Features\Metadata\MetadataCompiler;
 use Pulsar\Extension\Orm\Features\Persistence\AuditingPersister;
 use Pulsar\Extension\Orm\Features\Persistence\TransactionManager;
 use Pulsar\Extension\Orm\Features\Schema\SchemaBuilder;
+use Pulsar\Extension\Orm\Features\Tenancy\TenantColumnResolver;
+use Pulsar\Extension\Orm\Features\Tenancy\TenantInsertEnricher;
 use Pulsar\Extension\Orm\Gateway\EntityManager;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\KeyProviderInterface;
@@ -119,6 +122,36 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             return new EntityDehydrator($registry, $encryptor);
         });
 
+        // Tenancy
+        $container->bind(TenantColumnResolver::class, static function () use ($container): TenantColumnResolver {
+            /** @var OrmConfig $config */
+            $config = $container->get(OrmConfig::class);
+
+            return new TenantColumnResolver($config);
+        });
+
+        $container->bind(TenantInsertEnricher::class, static function () use ($container): ?TenantInsertEnricher {
+            if (!$container->has(Contracts\TenantScopeInterface::class)) {
+                return null;
+            }
+
+            /** @var Contracts\TenantScopeInterface $tenantScope */
+            $tenantScope = $container->get(Contracts\TenantScopeInterface::class);
+
+            /** @var TenantColumnResolver $columnResolver */
+            $columnResolver = $container->get(TenantColumnResolver::class);
+
+            return new TenantInsertEnricher($tenantScope, $columnResolver);
+        });
+
+        // Encrypted column guard
+        $container->bind(EncryptedColumnGuard::class, static function () use ($container): EncryptedColumnGuard {
+            /** @var MetadataRegistryInterface $registry */
+            $registry = $container->get(MetadataRegistryInterface::class);
+
+            return new EncryptedColumnGuard($registry);
+        });
+
         // Persistence
         $container->bind(AuditingPersister::class, static function () use ($container): AuditingPersister {
             /** @var ConnectionInterface $connection */
@@ -135,7 +168,12 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
                 ? $container->get(AuditLoggerInterface::class)
                 : null;
 
-            return new AuditingPersister($connection, $registry, $dehydrator, $auditLogger);
+            /** @var TenantInsertEnricher|null $tenantEnricher */
+            $tenantEnricher = $container->has(TenantInsertEnricher::class)
+                ? $container->get(TenantInsertEnricher::class)
+                : null;
+
+            return new AuditingPersister($connection, $registry, $dehydrator, $auditLogger, $tenantEnricher);
         });
 
         // Transaction manager
@@ -185,6 +223,9 @@ final readonly class OrmServiceProvider implements ServiceProviderInterface
             ColumnEncryptorInterface::class,
             EntityHydratorInterface::class,
             EntityDehydrator::class,
+            TenantColumnResolver::class,
+            TenantInsertEnricher::class,
+            EncryptedColumnGuard::class,
             AuditingPersister::class,
             TransactionManagerInterface::class,
             SchemaBuilderInterface::class,

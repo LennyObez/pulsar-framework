@@ -40,7 +40,9 @@ final class DefaultRedactionPolicyTest extends TestCase
             'header' => 'Bearer eyJhbGciOiJIUzI1NiJ9.test',
         ]);
 
-        self::assertStringNotContainsString('eyJhbGciOiJIUzI1NiJ9', $result['header']);
+        /** @var string $header */
+        $header = $result['header'];
+        self::assertStringNotContainsString('eyJhbGciOiJIUzI1NiJ9', $header);
     }
 
     #[Test]
@@ -50,7 +52,9 @@ final class DefaultRedactionPolicyTest extends TestCase
             'dsn' => 'mysql://root:password123@localhost/db',
         ]);
 
-        self::assertStringNotContainsString('password123', $result['dsn']);
+        /** @var string $dsn */
+        $dsn = $result['dsn'];
+        self::assertStringNotContainsString('password123', $dsn);
     }
 
     #[Test]
@@ -63,8 +67,10 @@ final class DefaultRedactionPolicyTest extends TestCase
             ],
         ]);
 
-        self::assertSame('[REDACTED]', $result['data']['secret']);
-        self::assertSame('visible', $result['data']['name']);
+        /** @var array<string, mixed> $nested */
+        $nested = $result['data'];
+        self::assertSame('[REDACTED]', $nested['secret']);
+        self::assertSame('visible', $nested['name']);
     }
 
     #[Test]
@@ -90,6 +96,8 @@ final class DefaultRedactionPolicyTest extends TestCase
             'value' => 'Contains CUSTOM_SECRET_VALUE in text',
         ]);
 
-        self::assertStringNotContainsString('CUSTOM_SECRET_VALUE', $result['value']);
+        /** @var string $value */
+        $value = $result['value'];
+        self::assertStringNotContainsString('CUSTOM_SECRET_VALUE', $value);
     }
 }

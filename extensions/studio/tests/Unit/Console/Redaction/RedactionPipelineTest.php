@@ -73,11 +73,13 @@ final class RedactionPipelineTest extends TestCase
     #[Test]
     public function redactAppliesGlobalBeforeTypePolicies(): void
     {
+        /** @var stdClass&object{order: list<string>} $tracker */
         $tracker = new stdClass();
         $tracker->order = [];
 
         $pipeline = new RedactionPipeline();
         $pipeline->addGlobalPolicy(new class ($tracker) implements RedactionPolicyInterface {
+            /** @param stdClass&object{order: list<string>} $tracker */
             public function __construct(private readonly stdClass $tracker) {}
 
             #[Override]
@@ -88,6 +90,7 @@ final class RedactionPipelineTest extends TestCase
             }
         });
         $pipeline->addTypePolicy(EventType::LogEntry, new class ($tracker) implements RedactionPolicyInterface {
+            /** @param stdClass&object{order: list<string>} $tracker */
             public function __construct(private readonly stdClass $tracker) {}
 
             #[Override]
