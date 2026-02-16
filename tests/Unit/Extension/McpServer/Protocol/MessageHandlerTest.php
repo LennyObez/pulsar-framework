@@ -209,7 +209,6 @@ final class MessageHandlerTest extends TestCase
 
         $registry = self::createStub(McpToolRegistryInterface::class);
         $registry->method('call')
-            ->with('read_routes', [])
             ->willReturn($toolResult);
 
         $redactionPipeline = self::createStub(McpRedactionPipelineInterface::class);
