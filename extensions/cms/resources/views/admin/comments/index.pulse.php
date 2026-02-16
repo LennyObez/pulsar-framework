@@ -3,6 +3,7 @@
 @section('title', 'Comment Moderation')
 
 @section('content')
+<?php /** @var list<array<string, mixed>> $comments */ ?>
 <div class="cms-comment-moderation">
     <header class="cms-comment-moderation__header">
         <h1 class="cms-comment-moderation__title">
@@ -25,7 +26,7 @@
                 'spam' => 'Spam',
                 '' => 'All',
             ];
-            ?>
+?>
             @foreach ($__statusTabs as $tabValue => $tabLabel)
                 <li role="presentation">
                     <a href="/admin/cms/comments{{ $tabValue !== '' ? '?status=' . $tabValue : '' }}"
@@ -106,6 +107,7 @@
                 @endif
 
                 @foreach ($comments as $comment)
+                    <?php /** @var array<string, mixed> $comment */ ?>
                     <tr class="cms-table__row" data-cms-comment-id="{{ $comment['id'] }}">
                         <td class="cms-table__td cms-table__td--checkbox">
                             <input type="checkbox" name="ids[]" value="{{ $comment['id'] }}" aria-label="Select comment by {{ $comment['author_name'] ?? 'unknown' }}">
@@ -139,14 +141,14 @@
                         </td>
                         <td class="cms-table__td">
                             <?php
-                            $__commentBadgeClass = match ($comment['status'] ?? '') {
-                                'pending' => 'cms-badge cms-badge--in-review',
-                                'approved' => 'cms-badge cms-badge--approved',
-                                'rejected' => 'cms-badge cms-badge--archived',
-                                'spam' => 'cms-badge cms-badge--spam',
-                                default => 'cms-badge',
-                            };
-            ?>
+                $__commentBadgeClass = match ($comment['status'] ?? '') {
+                    'pending' => 'cms-badge cms-badge--in-review',
+                    'approved' => 'cms-badge cms-badge--approved',
+                    'rejected' => 'cms-badge cms-badge--archived',
+                    'spam' => 'cms-badge cms-badge--spam',
+                    default => 'cms-badge',
+                };
+?>
                             <span class="{{ $__commentBadgeClass }}" role="status">{{ ucfirst($comment['status'] ?? '') }}</span>
                         </td>
                         <td class="cms-table__td cms-table__td--actions">

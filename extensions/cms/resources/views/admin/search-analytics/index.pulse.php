@@ -50,16 +50,18 @@
 
     {{-- Daily query volume chart (CSS-only) --}}
     @if (!empty($dailyVolume))
+        <?php /** @var list<array{date: string, count: int}> $dailyVolume */ ?>
         <section class="cms-search-analytics__chart" aria-labelledby="chart-daily-volume">
             <h2 class="cms-search-analytics__section-title" id="chart-daily-volume">Daily Query Volume</h2>
             <div class="cms-bar-chart" role="img" aria-label="Bar chart showing daily search query volume">
                 <?php
-                $__maxVolume = max(array_column($dailyVolume, 'count'));
-                $__maxVolume = $__maxVolume > 0 ? $__maxVolume : 1;
-                ?>
+                $__counts = array_column($dailyVolume, 'count');
+        $__maxVolume = $__counts !== [] ? max($__counts) : 1;
+        $__maxVolume = $__maxVolume > 0 ? $__maxVolume : 1;
+        ?>
                 <div class="cms-bar-chart__bars">
                     @foreach ($dailyVolume as $day)
-                        <?php $__pct = round(($day['count'] / $__maxVolume) * 100); ?>
+                        <?php /** @var array{date: string, count: int} $day */ $__pct = round(($day['count'] / $__maxVolume) * 100); ?>
                         <div class="cms-bar-chart__bar-group">
                             <div class="cms-bar-chart__bar"
                                  style="--bar-height: {{ $__pct }}%"

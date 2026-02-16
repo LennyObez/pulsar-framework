@@ -105,6 +105,7 @@
                 @endif
 
                 @foreach ($subscribers as $subscriber)
+                    <?php /** @var array<string, mixed> $subscriber */ ?>
                     <tr class="cms-table__row">
                         <td class="cms-table__td cms-table__td--checkbox">
                             <input type="checkbox" name="ids[]" value="{{ $subscriber['id'] }}" aria-label="Select {{ $subscriber['email'] }}">

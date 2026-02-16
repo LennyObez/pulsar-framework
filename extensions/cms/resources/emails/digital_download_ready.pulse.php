@@ -1,4 +1,16 @@
 <?php
+/**
+ * Digital download ready email template.
+ *
+ * @var string $order_number
+ * @var list<array{url: string, fileName: string, downloadsRemaining: int, expiresAt: string}> $downloads
+ * @var int|string $expiry_days
+ */
+
+use function htmlspecialchars;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -41,21 +53,21 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
     </div>
     <div class="content">
         <p>Dear Customer,</p>
-        <p>Your digital purchases from order <strong>#<?php echo $this->escape($order_number); ?></strong> are ready for download.</p>
+        <p>Your digital purchases from order <strong>#<?php echo htmlspecialchars($order_number, ENT_QUOTES, 'UTF-8'); ?></strong> are ready for download.</p>
 
         <ul class="download-list">
             <?php foreach ($downloads as $download): ?>
             <li>
-                <a href="<?php echo $this->escape($download['url']); ?>"><?php echo $this->escape($download['fileName']); ?></a>
+                <a href="<?php echo htmlspecialchars($download['url'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($download['fileName'], ENT_QUOTES, 'UTF-8'); ?></a>
                 <div class="meta">
-                    Downloads remaining: <?php echo $this->escape((string) $download['downloadsRemaining']); ?>
-                    | Expires: <?php echo $this->escape($download['expiresAt']); ?>
+                    Downloads remaining: <?php echo htmlspecialchars((string) $download['downloadsRemaining'], ENT_QUOTES, 'UTF-8'); ?>
+                    | Expires: <?php echo htmlspecialchars($download['expiresAt'], ENT_QUOTES, 'UTF-8'); ?>
                 </div>
             </li>
             <?php endforeach; ?>
         </ul>
 
-        <p>Each download link is valid for <?php echo $this->escape((string) $expiry_days); ?> days and allows a limited number of downloads.</p>
+        <p>Each download link is valid for <?php echo htmlspecialchars((string) $expiry_days, ENT_QUOTES, 'UTF-8'); ?> days and allows a limited number of downloads.</p>
     </div>
     <div class="footer">
         <p>If you have any issues with your downloads, please contact our support team.</p>

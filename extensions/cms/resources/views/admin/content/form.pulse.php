@@ -16,7 +16,7 @@
         {{-- Lock indicator --}}
         @if (isset($lock))
             <div class="cms-alert cms-alert--warning" role="alert">
-                <strong>Locked</strong> — This content is currently being edited by {{ $lock['locked_by'] ?? 'another user' }}.
+                <strong>Locked</strong>: This content is currently being edited by {{ $lock['locked_by'] ?? 'another user' }}.
                 Lock expires at <time datetime="{{ $lock['expires_at'] ?? '' }}">{{ $lock['expires_at'] ?? '' }}</time>.
             </div>
         @endif
@@ -88,7 +88,7 @@
                               maxlength="500">{{ $translation['excerpt'] ?? '' }}</textarea>
                 </div>
 
-                {{-- Content Blocks — Visual Page Builder --}}
+                {{-- Content Blocks: Visual Page Builder --}}
                 <fieldset class="cms-fieldset">
                     <legend class="cms-fieldset__legend">Content Blocks</legend>
                     <cms-page-builder content-id="{{ $content['id'] ?? '' }}" locale="{{ $activeLocale ?? 'en' }}">
@@ -101,6 +101,7 @@
                     <fieldset class="cms-fieldset">
                         <legend class="cms-fieldset__legend">Custom Fields</legend>
                         @foreach ($customFieldDefinitions as $fieldDef)
+                            <?php /** @var array{field_key: string, field_type: string, default_value: mixed, required: bool, validation_rules?: array<string, mixed>} $fieldDef */ /** @var array<string, mixed> $customFieldValues */ ?>
                             <div class="cms-form-group">
                                 <label for="custom-field-{{ $fieldDef['field_key'] }}" class="cms-form-group__label">
                                     {{ ucfirst(str_replace('_', ' ', $fieldDef['field_key'])) }}
@@ -310,7 +311,7 @@
                                 <option value="">None (Top Level)</option>
                                 @foreach ($parentPages ?? [] as $parent)
                                     <option value="{{ $parent['id'] }}" @if (($content['parent_id'] ?? '') === $parent['id']) selected @endif>
-                                        {{ str_repeat('— ', $parent['depth'] ?? 0) }}{{ $parent['title'] ?? '' }}
+                                        {{ str_repeat('-- ', $parent['depth'] ?? 0) }}{{ $parent['title'] ?? '' }}
                                     </option>
                                 @endforeach
                             </select>

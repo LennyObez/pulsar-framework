@@ -1,9 +1,28 @@
+<?php
+/**
+ * Checkout page template.
+ *
+ * @var string $locale
+ * @var string $siteName
+ * @var list<array{name: string, quantity: int, unit_price: int, currency: string}> $items
+ * @var int $subtotal
+ * @var int $shippingAmount
+ * @var int $taxAmount
+ * @var int $total
+ * @var string $currency
+ * @var string $csrfToken
+ * @var string $email
+ * @var string $appliedCoupon
+ * @var array{name: string, line1: string, line2: string, city: string, postalCode: string, country: string} $billingAddress
+ * @var array{name: string, line1: string, line2: string, city: string, postalCode: string, country: string} $shippingAddress
+ */
+?>
 <!DOCTYPE html>
 <html lang="{{ $locale ?? 'en' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout — {{ $siteName ?? 'Store' }}</title>
+    <title>Checkout | {{ $siteName ?? 'Store' }}</title>
 </head>
 <body>
 <main class="cms-checkout">
@@ -17,18 +36,19 @@
 
                 <ul class="cms-checkout__items">
                     @foreach ($items ?? [] as $item)
+                        <?php /** @var array{name: string, quantity: int, unit_price: int, currency: string} $item */ ?>
                         <li class="cms-checkout__item">
                             <div class="cms-checkout__item-details">
-                                <span class="cms-checkout__item-name"><?php echo htmlspecialchars($item['name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></span>
-                                <span class="cms-checkout__item-qty">Qty: <?php echo htmlspecialchars((string) ($item['quantity'] ?? 1), ENT_QUOTES, 'UTF-8'); ?></span>
+                                <span class="cms-checkout__item-name"><?php echo htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8'); ?></span>
+                                <span class="cms-checkout__item-qty">Qty: <?php echo htmlspecialchars((string) $item['quantity'], ENT_QUOTES, 'UTF-8'); ?></span>
                             </div>
                             <span class="cms-checkout__item-price">
-                                <?php echo htmlspecialchars(number_format(($item['unit_price'] ?? 0) / 100, 2), ENT_QUOTES, 'UTF-8'); ?>
-                                <?php echo htmlspecialchars(strtoupper($item['currency'] ?? 'USD'), ENT_QUOTES, 'UTF-8'); ?>
+                                <?php echo htmlspecialchars(number_format($item['unit_price'] / 100, 2), ENT_QUOTES, 'UTF-8'); ?>
+                                <?php echo htmlspecialchars(strtoupper($item['currency']), ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                             <span class="cms-checkout__item-subtotal">
-                                <?php echo htmlspecialchars(number_format((($item['unit_price'] ?? 0) * ($item['quantity'] ?? 1)) / 100, 2), ENT_QUOTES, 'UTF-8'); ?>
-                                <?php echo htmlspecialchars(strtoupper($item['currency'] ?? 'USD'), ENT_QUOTES, 'UTF-8'); ?>
+                                <?php echo htmlspecialchars(number_format(($item['unit_price'] * $item['quantity']) / 100, 2), ENT_QUOTES, 'UTF-8'); ?>
+                                <?php echo htmlspecialchars(strtoupper($item['currency']), ENT_QUOTES, 'UTF-8'); ?>
                             </span>
                         </li>
                     @endforeach

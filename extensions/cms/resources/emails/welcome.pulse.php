@@ -1,4 +1,16 @@
 <?php
+/**
+ * Welcome email template.
+ *
+ * @var string $site_name
+ * @var string $user_name
+ * @var string $login_url
+ */
+
+use function htmlspecialchars;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -31,18 +43,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
 <body>
 <div class="container">
     <div class="header">
-        <h1>Welcome to <?php echo $this->escape($site_name); ?></h1>
+        <h1>Welcome to <?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?></h1>
     </div>
     <div class="content">
-        <p>Hello <?php echo $this->escape($user_name); ?>,</p>
-        <p>Welcome to <strong><?php echo $this->escape($site_name); ?></strong>! Your account has been created successfully.</p>
+        <p>Hello <?php echo htmlspecialchars($user_name, ENT_QUOTES, 'UTF-8'); ?>,</p>
+        <p>Welcome to <strong><?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?></strong>! Your account has been created successfully.</p>
 
-        <a href="<?php echo $this->escape($login_url); ?>" class="btn">Log In</a>
+        <a href="<?php echo htmlspecialchars($login_url, ENT_QUOTES, 'UTF-8'); ?>" class="btn">Log In</a>
 
         <p>If you did not create this account, please disregard this email.</p>
     </div>
     <div class="footer">
-        <p>&copy; <?php echo $this->escape($site_name); ?>. All rights reserved.</p>
+        <p>&copy; <?php echo htmlspecialchars($site_name, ENT_QUOTES, 'UTF-8'); ?>. All rights reserved.</p>
     </div>
 </div>
 </body>

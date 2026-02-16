@@ -17,7 +17,7 @@ $seoSections = ['search-analytics', 'seo-redirects', 'seo-link-health', 'seo-sit
 $commerceSections = ['products', 'orders', 'promotions', 'digital-assets'];
 $appearanceSections = ['themes', 'plugins', 'live-css'];
 $toolsSections = ['export', 'import', 'site-import', 'backups'];
-$adminSections = ['users', '2fa', 'settings'];
+$adminSections = ['users', '2fa', 'settings', 'business-profile'];
 ?>
 <nav aria-label="CMS Navigation">
     {{-- Dashboard --}}
@@ -305,7 +305,7 @@ $adminSections = ['users', '2fa', 'settings'];
                     <a href="/admin/cms/users" class="cms-sidebar__link @if ($active === 'users') cms-sidebar__link--active @endif"
                         @if ($active === 'users') aria-current="page" @endif>
                         <i class="fa-solid fa-users cms-sidebar__icon" aria-hidden="true"></i>
-                        Users
+                        @t('admin.nav.users')
                     </a>
                 </li>
             @endcan
@@ -317,6 +317,13 @@ $adminSections = ['users', '2fa', 'settings'];
                 </a>
             </li>
             @can('cms.settings.view')
+                <li class="cms-sidebar__item">
+                    <a href="/admin/cms/settings/business" class="cms-sidebar__link @if ($active === 'business-profile') cms-sidebar__link--active @endif"
+                        @if ($active === 'business-profile') aria-current="page" @endif>
+                        <i class="fa-solid fa-building cms-sidebar__icon" aria-hidden="true"></i>
+                        @t('admin.nav.business_profile')
+                    </a>
+                </li>
                 <li class="cms-sidebar__item">
                     <a href="/admin/cms/settings/general" class="cms-sidebar__link @if ($active === 'settings') cms-sidebar__link--active @endif"
                         @if ($active === 'settings') aria-current="page" @endif>

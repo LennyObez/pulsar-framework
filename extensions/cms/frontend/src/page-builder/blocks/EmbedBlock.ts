@@ -38,7 +38,7 @@ export class CmsPbEmbed extends HTMLElement {
       if (typeof html === 'string' && html !== '') {
         const iframe = document.createElement('iframe');
         iframe.className = 'pb-block-embed__preview';
-        iframe.sandbox.add('allow-same-origin');
+        // Fully sandboxed — no tokens added (allow-same-origin would defeat the sandbox with srcdoc)
         iframe.srcdoc = html;
         iframe.title = 'Embed preview';
         wrapper.appendChild(iframe);
@@ -52,7 +52,7 @@ export class CmsPbEmbed extends HTMLElement {
         iframe.src = url;
         iframe.title = 'Embedded content';
         iframe.setAttribute('loading', 'lazy');
-        iframe.sandbox.add('allow-same-origin', 'allow-popups');
+        iframe.sandbox.add('allow-scripts', 'allow-popups');
         container.appendChild(iframe);
         wrapper.appendChild(container);
       }

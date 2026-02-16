@@ -76,6 +76,7 @@
                 @endif
 
                 @foreach ($backups ?? [] as $backup)
+                    <?php /** @var array{created_at: string, created_by: string, scope: array{include_content: bool, include_media: bool, include_taxonomies: bool, include_menus: bool, include_settings: bool}, size: int, id: string, integrity: string} $backup */ ?>
                     <tr class="cms-table__row">
                         <td class="cms-table__td">
                             <time datetime="{{ $backup['created_at'] ?? '' }}">{{ $backup['created_at'] ?? '' }}</time>
@@ -84,36 +85,36 @@
                         <td class="cms-table__td">
                             <?php
                             $__scope = $backup['scope'] ?? [];
-                            $__scopeLabels = [];
-                            if ($__scope['include_content'] ?? false) {
-                                $__scopeLabels[] = 'Content';
-                            }
-                            if ($__scope['include_media'] ?? false) {
-                                $__scopeLabels[] = 'Media';
-                            }
-                            if ($__scope['include_taxonomies'] ?? false) {
-                                $__scopeLabels[] = 'Taxonomies';
-                            }
-                            if ($__scope['include_menus'] ?? false) {
-                                $__scopeLabels[] = 'Menus';
-                            }
-                            if ($__scope['include_settings'] ?? false) {
-                                $__scopeLabels[] = 'Settings';
-                            }
-                            ?>
+                    $__scopeLabels = [];
+                    if ($__scope['include_content'] ?? false) {
+                        $__scopeLabels[] = 'Content';
+                    }
+                    if ($__scope['include_media'] ?? false) {
+                        $__scopeLabels[] = 'Media';
+                    }
+                    if ($__scope['include_taxonomies'] ?? false) {
+                        $__scopeLabels[] = 'Taxonomies';
+                    }
+                    if ($__scope['include_menus'] ?? false) {
+                        $__scopeLabels[] = 'Menus';
+                    }
+                    if ($__scope['include_settings'] ?? false) {
+                        $__scopeLabels[] = 'Settings';
+                    }
+                    ?>
                             {{ implode(', ', $__scopeLabels) ?: 'None' }}
                         </td>
                         <td class="cms-table__td">
                             <?php
-                            $__size = $backup['size'] ?? 0;
-                            if ($__size >= 1048576) {
-                                echo htmlspecialchars(number_format($__size / 1048576, 2), ENT_QUOTES, 'UTF-8') . ' MB';
-                            } elseif ($__size >= 1024) {
-                                echo htmlspecialchars(number_format($__size / 1024, 1), ENT_QUOTES, 'UTF-8') . ' KB';
-                            } else {
-                                echo htmlspecialchars((string) $__size, ENT_QUOTES, 'UTF-8') . ' B';
-                            }
-                            ?>
+                    $__size = $backup['size'] ?? 0;
+                    if ($__size >= 1048576) {
+                        echo htmlspecialchars(number_format($__size / 1048576, 2), ENT_QUOTES, 'UTF-8') . ' MB';
+                    } elseif ($__size >= 1024) {
+                        echo htmlspecialchars(number_format($__size / 1024, 1), ENT_QUOTES, 'UTF-8') . ' KB';
+                    } else {
+                        echo htmlspecialchars((string) $__size, ENT_QUOTES, 'UTF-8') . ' B';
+                    }
+                    ?>
                         </td>
                         <td class="cms-table__td" title="{{ $backup['hash'] ?? '' }}">
                             <code>{{ substr($backup['hash'] ?? '', 0, 12) }}...</code>

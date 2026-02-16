@@ -1,6 +1,6 @@
 <?php
 /**
- * CMS Studio — Content Cache Inspector Panel.
+ * CMS Studio: Content Cache Inspector Panel.
  *
  * @var list<array{cacheKey: string, contentId: string, isHit: bool}>|null $entries
  * @var float|null $hitRate

@@ -1,4 +1,18 @@
 <?php
+/**
+ * Review requested email template.
+ *
+ * @var string $reviewer_name
+ * @var string $title
+ * @var string $author_name
+ * @var string $submitted_at
+ * @var string $review_url
+ */
+
+use function htmlspecialchars;
+
+use const ENT_QUOTES;
+
 /*
 PLAIN TEXT VERSION:
 
@@ -39,19 +53,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; m
         <h1>Content Review Requested</h1>
     </div>
     <div class="content">
-        <p>Hello <?php echo $this->escape($reviewer_name); ?>,</p>
+        <p>Hello <?php echo htmlspecialchars($reviewer_name, ENT_QUOTES, 'UTF-8'); ?>,</p>
         <p>A content item has been submitted for your review:</p>
 
         <dl class="review-box">
             <dt>Title</dt>
-            <dd><?php echo $this->escape($title); ?></dd>
+            <dd><?php echo htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></dd>
             <dt>Submitted by</dt>
-            <dd><?php echo $this->escape($author_name); ?></dd>
+            <dd><?php echo htmlspecialchars($author_name, ENT_QUOTES, 'UTF-8'); ?></dd>
             <dt>Submitted at</dt>
-            <dd><?php echo $this->escape($submitted_at); ?></dd>
+            <dd><?php echo htmlspecialchars($submitted_at, ENT_QUOTES, 'UTF-8'); ?></dd>
         </dl>
 
-        <a href="<?php echo $this->escape($review_url); ?>" class="btn">Review Content</a>
+        <a href="<?php echo htmlspecialchars($review_url, ENT_QUOTES, 'UTF-8'); ?>" class="btn">Review Content</a>
     </div>
     <div class="footer">
         <p>You received this email because you are a reviewer for this content type.</p>
