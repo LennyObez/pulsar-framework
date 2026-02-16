@@ -575,6 +575,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Config\\ZeroTrustConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Console\\Command": {
       "since": "1.0.0",
       "methods": [],
@@ -2920,6 +2925,161 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Security\\ZeroTrust\\Claim\\Claim": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Claim\\ClaimSet": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Claim\\ClaimSource": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\ContinuousVerification\\ContinuousVerificationInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\DeviceIdentity": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\DeviceProofResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\DeviceRegistryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\AnomalyDetectedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\PolicyDecisionEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\SignalRetentionPolicyChangedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\StepUpAttemptedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Event\\StepUpLockoutEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\ClaimRequirement": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\PolicyDecision": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\PolicyEngineInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\PolicyEvaluationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Policy\\PolicyRule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Privacy\\PseudonymizerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Privacy\\SignalRetentionPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\BehaviorBaseline": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\BehaviorBaselineInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\GeoLocation": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\GeoLocationResolverInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\NetworkIntelligenceInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\SignalContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\Signal\\SignalProviderInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\StepUp\\StepUpAction": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\StepUp\\StepUpConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\StepUp\\StepUpState": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\TrustScore\\ScoreExplanation": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\ZeroTrust\\TrustScore\\TrustScoreResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Storage\\StorageAdapterInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -3389,6 +3549,22 @@
     "Pulsar\\Security\\Session\\Validator\\FingerprintValidator",
     "Pulsar\\Security\\Session\\Validator\\RemoteAddressValidator",
     "Pulsar\\Security\\Session\\Validator\\UserAgentValidator",
+    "Pulsar\\Security\\ZeroTrust\\ContinuousVerification\\Internal\\ContinuousVerificationManager",
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\Internal\\DeviceCookieManager",
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\Internal\\DeviceProofVerifier",
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\Internal\\FingerprintCollector",
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\Internal\\InMemoryDeviceRegistry",
+    "Pulsar\\Security\\ZeroTrust\\DeviceIdentity\\Internal\\WebAuthnAttestationVerifier",
+    "Pulsar\\Security\\ZeroTrust\\Middleware\\ZeroTrustMiddleware",
+    "Pulsar\\Security\\ZeroTrust\\Policy\\Internal\\PolicyEngine",
+    "Pulsar\\Security\\ZeroTrust\\Privacy\\Internal\\HmacPseudonymizer",
+    "Pulsar\\Security\\ZeroTrust\\Signal\\Internal\\BehaviorSignalProvider",
+    "Pulsar\\Security\\ZeroTrust\\Signal\\Internal\\DeviceSignalProvider",
+    "Pulsar\\Security\\ZeroTrust\\Signal\\Internal\\LocationSignalProvider",
+    "Pulsar\\Security\\ZeroTrust\\Signal\\Internal\\NetworkSignalProvider",
+    "Pulsar\\Security\\ZeroTrust\\Signal\\Internal\\TimeSignalProvider",
+    "Pulsar\\Security\\ZeroTrust\\StepUp\\Internal\\StepUpManager",
+    "Pulsar\\Security\\ZeroTrust\\TrustScore\\Internal\\TrustScoreCalculator",
     "Pulsar\\Supervisor\\InvariantCheck\\InvariantRunner",
     "Pulsar\\Supervisor\\PreflightCheck\\DiskSpacePreflightCheck",
     "Pulsar\\Supervisor\\PreflightCheck\\MemoryPreflightCheck",
