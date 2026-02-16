@@ -51,12 +51,13 @@ use Pulsar\Extension\Forum\Tag\TagRepositoryInterface;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 use Pulsar\Extension\Forum\Vote\PostVoteRepositoryInterface;
 use Pulsar\Extension\Forum\Vote\ThreadVoteRepositoryInterface;
+use Pulsar\Security\AntiSpam\AntiSpamPipelineInterface;
 
 /**
  * Binds forum core services: reputation, badges, voting, moderation, forum
  * service, tag service, content rendering, anti-abuse, and notifications.
  */
-#[Internal(reason: 'Forum service wiring — use interfaces for public API')]
+#[Internal(reason: 'Forum service wiring; use interfaces for public API')]
 final readonly class ForumCoreServiceProvider
 {
     public function register(ContainerInterface $container): void
@@ -86,10 +87,12 @@ final readonly class ForumCoreServiceProvider
         $bodyPolicy = new ForumBodyPolicy();
         $container->instance(ForumBodyPolicy::class, $bodyPolicy);
 
-        // Anti-abuse middleware (uses defaults — thresholds baked into the class)
+        // Anti-abuse middleware (delegates to the shared anti-spam pipeline)
+        /** @var AntiSpamPipelineInterface $antiSpamPipeline */
+        $antiSpamPipeline = $container->get(AntiSpamPipelineInterface::class);
         $container->instance(
             ForumAntiAbuseMiddleware::class,
-            new ForumAntiAbuseMiddleware(),
+            new ForumAntiAbuseMiddleware($antiSpamPipeline),
         );
 
         // Reputation service

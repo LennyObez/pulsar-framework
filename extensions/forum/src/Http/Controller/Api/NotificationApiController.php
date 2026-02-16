@@ -18,7 +18,7 @@ use function max;
 /**
  * Public REST API controller for the user's notification inbox.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class NotificationApiController
 {
     public function __construct(
@@ -26,7 +26,7 @@ final readonly class NotificationApiController
     ) {}
 
     /**
-     * GET /api/v1/forum/notifications — Paginated notifications for the authenticated user.
+     * GET /api/v1/forum/notifications: Paginated notifications for the authenticated user.
      */
     public function list(ServerRequestInterface $request): Response
     {
@@ -60,7 +60,7 @@ final readonly class NotificationApiController
     }
 
     /**
-     * PATCH /api/v1/forum/notifications/{id}/read — Mark a single notification as read.
+     * PATCH /api/v1/forum/notifications/{id}/read: Mark a single notification as read.
      */
     public function markRead(ServerRequestInterface $request, string $id): Response
     {
@@ -78,7 +78,7 @@ final readonly class NotificationApiController
     }
 
     /**
-     * POST /api/v1/forum/notifications/read-all — Mark all notifications as read.
+     * POST /api/v1/forum/notifications/read-all: Mark all notifications as read.
      */
     public function markAllRead(ServerRequestInterface $request): Response
     {
@@ -90,7 +90,7 @@ final readonly class NotificationApiController
     }
 
     /**
-     * GET /api/v1/forum/notifications/unread-count — Unread notification count.
+     * GET /api/v1/forum/notifications/unread-count: Unread notification count.
      */
     public function unreadCount(ServerRequestInterface $request): Response
     {

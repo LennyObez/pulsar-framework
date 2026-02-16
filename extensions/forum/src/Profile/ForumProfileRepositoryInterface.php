@@ -32,7 +32,7 @@ interface ForumProfileRepositoryInterface
     ): PaginationResult;
 
     /**
-     * @note The entity object is stale after this call — the database fields are updated server-side.
+     * @note The entity object is stale after this call: the database fields are updated server-side.
      *       Re-fetch via findByUser() if you need the updated version.
      */
     public function save(ForumProfile $profile): void;
@@ -55,4 +55,9 @@ interface ForumProfileRepositoryInterface
      * @param int $delta Positive to increment, negative to decrement (floors at 0)
      */
     public function incrementThreadCount(string $userId, ?string $tenantId = null, int $delta = 1): void;
+
+    /**
+     * Clear the ban flag and related fields for a user whose ban has expired.
+     */
+    public function clearBanFlag(string $userId, ?string $tenantId = null): void;
 }

@@ -19,7 +19,7 @@ use Pulsar\Extension\Devices\UserDeviceRepositoryInterface;
  * Uses portable upsert queries for save operations and BLAKE2b token hash
  * lookups via a unique index on api_token_hash.
  */
-#[Internal(reason: 'Raw-DB repository — use UserDeviceRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use UserDeviceRepositoryInterface for public API')]
 final readonly class DbUserDeviceRepository implements UserDeviceRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

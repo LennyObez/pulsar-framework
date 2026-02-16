@@ -17,7 +17,7 @@ use Pulsar\Extension\Forum\Support\UuidGenerator;
 use function count;
 
 /**
- * Reputation service — manages reputation scores and level thresholds.
+ * Reputation service: manages reputation scores and level thresholds.
  */
 #[Internal(reason: 'Use ReputationServiceInterface for public API')]
 final readonly class ReputationService implements ReputationServiceInterface

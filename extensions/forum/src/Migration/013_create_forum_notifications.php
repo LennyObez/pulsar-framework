@@ -12,7 +12,7 @@ return new class implements MigrationInterface {
     {
         $driver = $connection->driver();
 
-        // -- Notification inbox ------------------------------------------------
+        //: Notification inbox ------------------------------------------------
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_notifications (
                 id VARCHAR(36) NOT NULL,
@@ -45,7 +45,7 @@ return new class implements MigrationInterface {
                 SQL),
         };
 
-        // -- Notification preferences ------------------------------------------
+        //: Notification preferences ------------------------------------------
         $connection->execute(ForumDdl::adapt(<<<'SQL'
             CREATE TABLE IF NOT EXISTS forum_notification_preferences (
                 user_id VARCHAR(36) NOT NULL,

@@ -2,8 +2,11 @@
   "name": "pulsar/devices",
   "version": "1.0.0",
   "description": "User device management with API token authentication",
-  "type": "extension",
+  "type": "extension_class",
   "namespace": "Pulsar\\Extension\\Devices",
-  "extension": "Pulsar\\Extension\\Devices\\DevicesExtension",
-  "providers": ["Pulsar\\Extension\\Devices\\DevicesServiceProvider"]
+  "extension_class": "Pulsar\\Extension\\Devices\\DevicesExtension",
+  "providers": ["Pulsar\\Extension\\Devices\\DevicesServiceProvider"],
+  "provides": {
+    "migrations": ["src/Migration"]
+  }
 }

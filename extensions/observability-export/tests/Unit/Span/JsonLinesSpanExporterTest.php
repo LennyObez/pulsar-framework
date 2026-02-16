@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Tests\Unit\Span;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Tests\Unit\Span;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\ObservabilityExport\Span\JsonLinesSpanExporter;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Span\JsonLinesSpanExporter;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanId;
 use Pulsar\Observability\Tracing\TraceContext;
@@ -61,6 +61,7 @@ final class JsonLinesSpanExporterTest extends TestCase
         $lines = array_filter(explode("\n", $content));
         self::assertCount(1, $lines);
 
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($lines[0], true, flags: JSON_THROW_ON_ERROR);
         self::assertSame('test.span', $decoded['name']);
         self::assertSame('1.0.0', $decoded['schema_version']);

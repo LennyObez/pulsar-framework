@@ -21,8 +21,8 @@ final class CategoryTest extends TestCase
         self::assertSame('general', $category->slug);
         self::assertSame(0, $category->sortOrder);
         self::assertFalse($category->isLocked);
-        self::assertNotNull($category->createdAt);
-        self::assertNotNull($category->updatedAt);
+        self::assertEqualsWithDelta(time(), $category->createdAt->getTimestamp(), 2);
+        self::assertEqualsWithDelta(time(), $category->updatedAt->getTimestamp(), 2);
     }
 
     #[Test]

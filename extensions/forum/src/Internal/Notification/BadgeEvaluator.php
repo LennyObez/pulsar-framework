@@ -22,11 +22,11 @@ use function count;
 /**
  * Listens to domain events and evaluates badge criteria for automatic awarding.
  *
- * When criteria are met the badge service handles idempotent awarding —
+ * When criteria are met the badge service handles idempotent awarding --
  * duplicate awards are silently skipped, so this evaluator can fire
  * aggressively without risk of double-granting.
  */
-#[Internal(reason: 'Badge automation — internal event listener')]
+#[Internal(reason: 'Badge automation; internal event listener')]
 final readonly class BadgeEvaluator
 {
     public function __construct(
@@ -161,7 +161,7 @@ final readonly class BadgeEvaluator
             return;
         }
 
-        // The event itself confirms the post was just accepted — that's the first.
+        // The event itself confirms the post was just accepted; that's the first.
         $this->badgeService->award($userId, Badge::FirstAnswer, $tenantId);
     }
 

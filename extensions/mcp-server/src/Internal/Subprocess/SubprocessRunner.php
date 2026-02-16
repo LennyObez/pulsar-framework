@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\McpServer\Internal\Subprocess;
 
+use LogicException;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\McpServer\Contracts\McpRedactionPipelineInterface;
 use Pulsar\Extension\McpServer\Domain\ToolResult;
@@ -19,6 +20,7 @@ use function proc_close;
 use function proc_get_status;
 use function proc_open;
 use function proc_terminate;
+use function spl_object_id;
 use function stream_set_blocking;
 use function strlen;
 use function substr;
@@ -29,11 +31,24 @@ use function usleep;
  *
  * All subprocess output is passed through the redaction pipeline before being
  * returned, ensuring sensitive data never reaches the MCP wire protocol.
+ *
+ * **Cancellation contract**: A single SubprocessRunner instance MUST be shared
+ * between the fiber that calls {@see run()} and the fiber/handler that calls
+ * {@see cancel()}. The `$cancelled` flag is polled inside the run loop, so
+ * calling `cancel()` on a different instance has no effect. Use the same
+ * object reference in both the spawning fiber and the MCP
+ * `notifications/cancelled` handler.
  */
-#[Internal]
+#[Internal(reason: 'MCP subprocess execution; not part of public API')]
 final class SubprocessRunner
 {
     private bool $cancelled = false;
+
+    /**
+     * Object ID captured at construction time. Used by {@see assertSameInstance()}
+     * to verify that the caller holds a reference to this exact instance.
+     */
+    private readonly int $identity;
 
     /**
      * @param string $projectRoot Working directory for subprocess execution
@@ -46,7 +61,28 @@ final class SubprocessRunner
         private readonly int $timeout,
         private readonly int $maxOutputBytes,
         private readonly McpRedactionPipelineInterface $redactionPipeline,
-    ) {}
+    ) {
+        $this->identity = spl_object_id($this);
+    }
+
+    /**
+     * Assert that the given reference points to this exact instance.
+     *
+     * Call this in the cancellation handler to guard against accidentally
+     * holding a stale or cloned runner reference. Throws if the object
+     * identities do not match.
+     *
+     * @throws LogicException When the reference is not the same instance
+     */
+    public function assertSameInstance(self $other): void
+    {
+        if ($this->identity !== $other->identity) {
+            throw new LogicException(
+                'SubprocessRunner cancellation requires the same instance that called run(). '
+                . 'Ensure the spawning fiber and the cancellation handler share one reference.',
+            );
+        }
+    }
 
     /**
      * Run a subprocess command with timeout and output capping.

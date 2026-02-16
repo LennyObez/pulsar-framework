@@ -21,8 +21,8 @@ final readonly class UserBan
 {
     /**
      * @param string $id UUIDv7
-     * @param string $userId UUIDv7 FK auth_users — the banned user
-     * @param string $bannedBy UUIDv7 FK auth_users — the moderator who imposed the ban
+     * @param string $userId UUIDv7 FK auth_users: the banned user
+     * @param string $bannedBy UUIDv7 FK auth_users: the moderator who imposed the ban
      * @param string $reason Moderator-provided justification
      * @param BanType $type Whether the ban is temporary or permanent
      * @param DateTimeImmutable|null $expiresAt When the ban expires (null for permanent)

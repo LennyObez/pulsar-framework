@@ -24,7 +24,7 @@ use function trim;
  * page, per_page. Delegates to ForumSearchServiceInterface for
  * driver-specific full-text search.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ForumSearchController
 {
     public function __construct(
@@ -33,7 +33,7 @@ final readonly class ForumSearchController
     ) {}
 
     /**
-     * GET /api/v1/forum/search — Full-text search with filters.
+     * GET /api/v1/forum/search: Full-text search with filters.
      */
     public function search(ServerRequestInterface $request): Response
     {

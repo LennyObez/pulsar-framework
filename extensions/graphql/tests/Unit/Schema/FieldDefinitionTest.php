@@ -32,8 +32,10 @@ final class FieldDefinitionTest extends TestCase
         $intro = $field->toIntrospection();
 
         self::assertSame('name', $intro['name']);
-        self::assertSame('SCALAR', $intro['type']['kind']);
-        self::assertSame('String', $intro['type']['name']);
+        /** @var array<string, mixed> $type */
+        $type = $intro['type'];
+        self::assertSame('SCALAR', $type['kind']);
+        self::assertSame('String', $type['name']);
         self::assertSame([], $intro['args']);
     }
 
@@ -44,8 +46,12 @@ final class FieldDefinitionTest extends TestCase
 
         $intro = $field->toIntrospection();
 
-        self::assertSame('NON_NULL', $intro['type']['kind']);
-        self::assertSame('ID', $intro['type']['ofType']['name']);
+        /** @var array<string, mixed> $type */
+        $type = $intro['type'];
+        self::assertSame('NON_NULL', $type['kind']);
+        /** @var array<string, mixed> $ofType */
+        $ofType = $type['ofType'];
+        self::assertSame('ID', $ofType['name']);
     }
 
     #[Test]
@@ -55,8 +61,12 @@ final class FieldDefinitionTest extends TestCase
 
         $intro = $field->toIntrospection();
 
-        self::assertSame('LIST', $intro['type']['kind']);
-        self::assertSame('SCALAR', $intro['type']['ofType']['kind']);
+        /** @var array<string, mixed> $type */
+        $type = $intro['type'];
+        self::assertSame('LIST', $type['kind']);
+        /** @var array<string, mixed> $ofType */
+        $ofType = $type['ofType'];
+        self::assertSame('SCALAR', $ofType['kind']);
     }
 
     #[Test]
@@ -66,10 +76,18 @@ final class FieldDefinitionTest extends TestCase
 
         $intro = $field->toIntrospection();
 
-        self::assertSame('NON_NULL', $intro['type']['kind']);
-        self::assertSame('LIST', $intro['type']['ofType']['kind']);
-        self::assertSame('NON_NULL', $intro['type']['ofType']['ofType']['kind']);
-        self::assertSame('Content', $intro['type']['ofType']['ofType']['ofType']['name']);
+        /** @var array<string, mixed> $type */
+        $type = $intro['type'];
+        self::assertSame('NON_NULL', $type['kind']);
+        /** @var array<string, mixed> $listType */
+        $listType = $type['ofType'];
+        self::assertSame('LIST', $listType['kind']);
+        /** @var array<string, mixed> $itemWrapper */
+        $itemWrapper = $listType['ofType'];
+        self::assertSame('NON_NULL', $itemWrapper['kind']);
+        /** @var array<string, mixed> $itemType */
+        $itemType = $itemWrapper['ofType'];
+        self::assertSame('Content', $itemType['name']);
     }
 
     #[Test]
@@ -85,8 +103,10 @@ final class FieldDefinitionTest extends TestCase
 
         $intro = $field->toIntrospection();
 
-        self::assertCount(1, $intro['args']);
-        self::assertSame('id', $intro['args'][0]['name']);
+        /** @var list<array<string, mixed>> $args */
+        $args = $intro['args'];
+        self::assertCount(1, $args);
+        self::assertSame('id', $args[0]['name']);
     }
 
     #[Test]
@@ -96,6 +116,8 @@ final class FieldDefinitionTest extends TestCase
 
         $intro = $field->toIntrospection();
 
-        self::assertSame('OBJECT', $intro['type']['kind']);
+        /** @var array<string, mixed> $type */
+        $type = $intro['type'];
+        self::assertSame('OBJECT', $type['kind']);
     }
 }

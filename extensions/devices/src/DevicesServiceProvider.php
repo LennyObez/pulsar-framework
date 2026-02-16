@@ -16,7 +16,7 @@ use Pulsar\Extension\Devices\Internal\Persistence\DbUserDeviceRepository;
 /**
  * Wires device management services: repository, service, controller, and middleware.
  */
-#[Internal(reason: 'Devices service wiring — use interfaces for public API')]
+#[Internal(reason: 'Devices service wiring; use interfaces for public API')]
 final class DevicesServiceProvider implements ServiceProviderInterface
 {
     public function register(ContainerInterface $container): void

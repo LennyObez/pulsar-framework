@@ -13,7 +13,7 @@ use Pulsar\Extension\Forum\Domain\VoteDirection;
 use Pulsar\Extension\Forum\Vote\ThreadVote;
 use Pulsar\Extension\Forum\Vote\ThreadVoteRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use ThreadVoteRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ThreadVoteRepositoryInterface for public API')]
 final readonly class DbThreadVoteRepository implements ThreadVoteRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';

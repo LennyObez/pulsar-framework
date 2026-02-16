@@ -8,6 +8,8 @@ use NoDiscard;
 use Pulsar\Api\Internal;
 use Pulsar\Config\Environment;
 
+use function is_string;
+
 /**
  * Top-level MCP server configuration DTO.
  *
@@ -41,14 +43,16 @@ final readonly class McpConfig
             $enabled = $envEnabled === '1' || $envEnabled === 'true';
         }
 
-        $clientId = (string) ($data['client_id'] ?? 'default');
+        /** @var string $clientId */
+        $clientId = isset($data['client_id']) && is_string($data['client_id']) ? $data['client_id'] : 'default';
 
         $envClientId = $environment->get('MCP_CLIENT_ID');
         if ($envClientId !== null) {
             $clientId = $envClientId;
         }
 
-        $projectRoot = (string) ($data['project_root'] ?? '');
+        /** @var string $projectRoot */
+        $projectRoot = isset($data['project_root']) && is_string($data['project_root']) ? $data['project_root'] : '';
 
         /** @var array<string, mixed> $toolsData */
         $toolsData = (array) ($data['tools'] ?? []);

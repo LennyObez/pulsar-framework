@@ -30,6 +30,7 @@ use Pulsar\Extension\Forum\Event\PostCreated;
 use Pulsar\Extension\Forum\Event\ReportSubmitted;
 use Pulsar\Extension\Forum\Event\ReputationChanged;
 use Pulsar\Extension\Forum\Event\VoteCast;
+use Pulsar\Extension\Forum\Http\Controller\Account\AccountController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\BadgeController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\BanController as AdminBanController;
 use Pulsar\Extension\Forum\Http\Controller\Admin\CategoryController as AdminCategoryController;
@@ -56,8 +57,19 @@ use Pulsar\Extension\Forum\Http\Controller\Api\SearchApiController;
 use Pulsar\Extension\Forum\Http\Controller\Api\TagApiController;
 use Pulsar\Extension\Forum\Http\Controller\Api\ThreadApiController;
 use Pulsar\Extension\Forum\Http\Controller\Api\VoteApiController;
+use Pulsar\Extension\Forum\Http\Controller\Auth\LoginController;
+use Pulsar\Extension\Forum\Http\Controller\Auth\PasswordResetController;
+use Pulsar\Extension\Forum\Http\Controller\Auth\RegisterController;
+use Pulsar\Extension\Forum\Http\Controller\Page\CategoryPageController;
+use Pulsar\Extension\Forum\Http\Controller\Page\HomeController;
+use Pulsar\Extension\Forum\Http\Controller\Page\SearchPageController;
+use Pulsar\Extension\Forum\Http\Controller\Page\TagPageController;
+use Pulsar\Extension\Forum\Http\Controller\Page\ThreadPageController;
+use Pulsar\Extension\Forum\Http\Controller\Page\UserProfilePageController;
+use Pulsar\Extension\Forum\ImportExport\ForumImportExportProvider;
 use Pulsar\Extension\Forum\Internal\Notification\BadgeEvaluator;
 use Pulsar\Extension\Forum\Internal\Notification\ForumNotificationDispatcher;
+use Pulsar\ImportExport\ImportExportRegistry;
 use Pulsar\Routing\RouterInterface;
 
 use function is_array;
@@ -120,6 +132,9 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
     #[Override]
     public function boot(ContainerInterface $container, RouterInterface $router): void
     {
+        $this->registerPageRoutes($router);
+        $this->registerAuthRoutes($router);
+        $this->registerAccountRoutes($router);
         $this->registerApiRoutes($router);
         $this->registerAdminRoutes($router);
     }
@@ -130,6 +145,54 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         $this->registerNotificationListeners($container);
         $this->registerAdminResources($container);
         $this->registerCmsWidgets($container);
+        $this->registerAccountSections($container);
+        $this->registerImportExportProvider($container);
+    }
+
+    /**
+     * Register forum sections in the CMS account view (when CMS is active).
+     */
+    private function registerAccountSections(ContainerInterface $container): void
+    {
+        if (!$container->has(\Pulsar\Extension\Cms\Account\AccountSectionRegistry::class)) {
+            return;
+        }
+
+        /** @var \Pulsar\Extension\Cms\Account\AccountSectionRegistry $registry */
+        $registry = $container->get(\Pulsar\Extension\Cms\Account\AccountSectionRegistry::class);
+
+        $registry->register(new Account\ForumAccountSectionProvider(
+            $container->get(Thread\ThreadRepositoryInterface::class),
+            $container->get(Post\PostRepositoryInterface::class),
+            $container->get(Badge\BadgeServiceInterface::class),
+            $container->get(Profile\ForumProfileRepositoryInterface::class),
+        ));
+    }
+
+    private function registerImportExportProvider(ContainerInterface $container): void
+    {
+        if (!$container->has(ImportExportRegistry::class)) {
+            return;
+        }
+
+        if (
+            !$container->has(Category\CategoryRepositoryInterface::class)
+            || !$container->has(Category\CategoryTranslationRepositoryInterface::class)
+            || !$container->has(Thread\ThreadRepositoryInterface::class)
+            || !$container->has(Tag\TagRepositoryInterface::class)
+        ) {
+            return;
+        }
+
+        /** @var ImportExportRegistry $registry */
+        $registry = $container->get(ImportExportRegistry::class);
+
+        $registry->register(new ForumImportExportProvider(
+            $container->get(Category\CategoryRepositoryInterface::class),
+            $container->get(Category\CategoryTranslationRepositoryInterface::class),
+            $container->get(Thread\ThreadRepositoryInterface::class),
+            $container->get(Tag\TagRepositoryInterface::class),
+        ));
     }
 
     /**
@@ -141,6 +204,74 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         return [
             ForumServiceProvider::class,
         ];
+    }
+
+    /**
+     * Register public-facing page routes under /community.
+     *
+     * These routes serve server-rendered HTML pages for categories, threads,
+     * posts, user profiles, tags, and search. All page routes are prefixed
+     * with /community to avoid colliding with the CMS catch-all route.
+     */
+    private function registerPageRoutes(RouterInterface $router): void
+    {
+        $prefix = '/community';
+
+        // Homepage
+        $router->get($prefix, [HomeController::class, 'index'], 'forum.page.home');
+
+        // Category pages
+        $router->get("$prefix/c/{slug}", [CategoryPageController::class, 'show'], 'forum.page.category');
+
+        // Thread pages
+        $router->get("$prefix/t/{slug}", [ThreadPageController::class, 'show'], 'forum.page.thread');
+
+        // User profiles
+        $router->get("$prefix/u/{userId}", [UserProfilePageController::class, 'show'], 'forum.page.user_profile');
+
+        // Tags
+        $router->get("$prefix/tags", [TagPageController::class, 'index'], 'forum.page.tags');
+
+        // Search
+        $router->get("$prefix/search", [SearchPageController::class, 'index'], 'forum.page.search');
+    }
+
+    /**
+     * Register authentication routes (registration, login, password reset).
+     *
+     * All routes are prefixed with /community to avoid colliding with the
+     * CMS or other extensions.
+     */
+    private function registerAuthRoutes(RouterInterface $router): void
+    {
+        $prefix = '/community';
+
+        $router->get("$prefix/register", [RegisterController::class, 'showForm'], 'forum.auth.register');
+        $router->post("$prefix/register", [RegisterController::class, 'register'], 'forum.auth.register.submit');
+
+        $router->get("$prefix/login", [LoginController::class, 'showForm'], 'forum.auth.login');
+        $router->post("$prefix/login", [LoginController::class, 'login'], 'forum.auth.login.submit');
+        $router->post("$prefix/logout", [LoginController::class, 'logout'], 'forum.auth.logout');
+
+        $router->get("$prefix/forgot-password", [PasswordResetController::class, 'showRequestForm'], 'forum.auth.forgot_password');
+        $router->post("$prefix/forgot-password", [PasswordResetController::class, 'sendResetLink'], 'forum.auth.forgot_password.submit');
+        $router->get("$prefix/reset-password", [PasswordResetController::class, 'showResetForm'], 'forum.auth.reset_password');
+        $router->post("$prefix/reset-password", [PasswordResetController::class, 'resetPassword'], 'forum.auth.reset_password.submit');
+    }
+
+    /**
+     * Register authenticated user account routes.
+     *
+     * Prefixed with /community to avoid collisions with other extensions.
+     */
+    private function registerAccountRoutes(RouterInterface $router): void
+    {
+        $prefix = '/community';
+
+        $router->get("$prefix/account", [AccountController::class, 'profile'], 'forum.account.profile');
+        $router->get("$prefix/account/threads", [AccountController::class, 'threads'], 'forum.account.threads');
+        $router->get("$prefix/account/posts", [AccountController::class, 'posts'], 'forum.account.posts');
+        $router->get("$prefix/account/settings", [AccountController::class, 'settings'], 'forum.account.settings');
     }
 
     private function registerApiRoutes(RouterInterface $router): void
@@ -163,12 +294,12 @@ final readonly class ForumExtension implements ExtensionInterface, PreBootExtens
         $router->post("$prefix/threads/{threadId}/posts", [PostApiController::class, 'create'], 'forum.api.posts.create');
         $router->put("$prefix/posts/{id}", [PostApiController::class, 'update'], 'forum.api.posts.update');
         $router->delete("$prefix/posts/{id}", [PostApiController::class, 'delete'], 'forum.api.posts.delete');
-        $router->post("$prefix/posts/{id}/solution", [PostApiController::class, 'markSolution'], 'forum.api.posts.mark_solution');
+        $router->post("$prefix/posts/{id}/solution", [PostApiController::class, 'accept'], 'forum.api.posts.mark_solution');
 
         // Votes
-        $router->post("$prefix/threads/{id}/vote", [VoteApiController::class, 'voteThread'], 'forum.api.threads.vote');
+        $router->post("$prefix/threads/{id}/vote", [VoteApiController::class, 'threadVote'], 'forum.api.threads.vote');
         $router->delete("$prefix/threads/{id}/vote", [VoteApiController::class, 'removeThreadVote'], 'forum.api.threads.vote.remove');
-        $router->post("$prefix/posts/{id}/vote", [VoteApiController::class, 'votePost'], 'forum.api.posts.vote');
+        $router->post("$prefix/posts/{id}/vote", [VoteApiController::class, 'postVote'], 'forum.api.posts.vote');
         $router->delete("$prefix/posts/{id}/vote", [VoteApiController::class, 'removePostVote'], 'forum.api.posts.vote.remove');
 
         // Tags

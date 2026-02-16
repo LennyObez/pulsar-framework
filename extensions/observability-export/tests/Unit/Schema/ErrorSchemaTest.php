@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Tests\Unit\Schema;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Tests\Unit\Schema;
 
 use DateTimeImmutable;
 use DateTimeZone;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\ObservabilityExport\Schema\ErrorSchema;
+use Pulsar\Extension\OpenTelemetry\Export\JsonLines\Schema\ErrorSchema;
 use Pulsar\Observability\ErrorTracking\ErrorEvent;
 use Pulsar\Observability\ErrorTracking\ErrorFingerprint;
 use Pulsar\Observability\Tracing\TraceId;
@@ -37,7 +37,9 @@ final class ErrorSchemaTest extends TestCase
         self::assertSame(42, $array['line']);
         self::assertSame([], $array['stack_trace']);
         self::assertSame(['key' => 'value'], $array['context']);
-        self::assertStringContainsString('2024-01-15', $array['occurred_at']);
+        /** @var string $occurredAt */
+        $occurredAt = $array['occurred_at'];
+        self::assertStringContainsString('2024-01-15', $occurredAt);
     }
 
     #[Test]

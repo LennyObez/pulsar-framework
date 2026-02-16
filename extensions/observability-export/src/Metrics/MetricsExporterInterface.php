@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\ObservabilityExport\Metrics;
+namespace Pulsar\Extension\OpenTelemetry\Export\JsonLines\Metrics;
 
 use Pulsar\Api\Api;
 use Pulsar\Observability\Metrics\MetricSnapshot;

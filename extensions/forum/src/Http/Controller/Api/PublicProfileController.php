@@ -30,7 +30,7 @@ use function usort;
  * and recent activity timelines. Private data (ban details, IP hashes) is
  * excluded from the response.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class PublicProfileController
 {
     public function __construct(
@@ -41,7 +41,7 @@ final readonly class PublicProfileController
     ) {}
 
     /**
-     * GET /api/v1/forum/users/{userId} — Extended public profile with badges and stats.
+     * GET /api/v1/forum/users/{userId}: Extended public profile with badges and stats.
      */
     public function show(ServerRequestInterface $request, string $userId): Response
     {
@@ -76,7 +76,7 @@ final readonly class PublicProfileController
     }
 
     /**
-     * GET /api/v1/forum/users/{userId}/activity — Recent activity timeline.
+     * GET /api/v1/forum/users/{userId}/activity: Recent activity timeline.
      */
     public function activity(ServerRequestInterface $request, string $userId): Response
     {

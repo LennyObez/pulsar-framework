@@ -24,9 +24,9 @@ use function max;
 use function min;
 
 /**
- * Admin controller for the moderation queue — report review and actions.
+ * Admin controller for the moderation queue; report review and actions.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class ModerationController
 {
     use RendersAdminView;
@@ -40,7 +40,7 @@ final readonly class ModerationController
     ) {}
 
     /**
-     * GET /admin/forum/moderation — Moderation queue.
+     * GET /admin/forum/moderation: Moderation queue.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -86,7 +86,7 @@ final readonly class ModerationController
     }
 
     /**
-     * POST /admin/forum/moderation/thread-reports/{id} — Review a thread report.
+     * POST /admin/forum/moderation/thread-reports/{id}: Review a thread report.
      */
     public function reviewThreadReport(ServerRequestInterface $request, string $id): Response
     {
@@ -121,7 +121,7 @@ final readonly class ModerationController
     }
 
     /**
-     * POST /admin/forum/moderation/post-reports/{id} — Review a post report.
+     * POST /admin/forum/moderation/post-reports/{id}: Review a post report.
      */
     public function reviewPostReport(ServerRequestInterface $request, string $id): Response
     {

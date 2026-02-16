@@ -39,8 +39,10 @@ final class ArgumentDefinitionTest extends TestCase
         $intro = $arg->toIntrospection();
 
         self::assertSame('name', $intro['name']);
-        self::assertSame('SCALAR', $intro['type']['kind']);
-        self::assertSame('String', $intro['type']['name']);
+        /** @var array<string, mixed> $type */
+        $type = $intro['type'];
+        self::assertSame('SCALAR', $type['kind']);
+        self::assertSame('String', $type['name']);
     }
 
     #[Test]
@@ -50,9 +52,13 @@ final class ArgumentDefinitionTest extends TestCase
 
         $intro = $arg->toIntrospection();
 
-        self::assertSame('NON_NULL', $intro['type']['kind']);
-        self::assertSame('SCALAR', $intro['type']['ofType']['kind']);
-        self::assertSame('ID', $intro['type']['ofType']['name']);
+        /** @var array<string, mixed> $type */
+        $type = $intro['type'];
+        self::assertSame('NON_NULL', $type['kind']);
+        /** @var array<string, mixed> $ofType */
+        $ofType = $type['ofType'];
+        self::assertSame('SCALAR', $ofType['kind']);
+        self::assertSame('ID', $ofType['name']);
     }
 
     #[Test]
@@ -62,7 +68,9 @@ final class ArgumentDefinitionTest extends TestCase
 
         $intro = $arg->toIntrospection();
 
-        self::assertSame('OBJECT', $intro['type']['kind']);
-        self::assertSame('ContentInput', $intro['type']['name']);
+        /** @var array<string, mixed> $type */
+        $type = $intro['type'];
+        self::assertSame('OBJECT', $type['kind']);
+        self::assertSame('ContentInput', $type['name']);
     }
 }

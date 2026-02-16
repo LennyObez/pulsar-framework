@@ -11,7 +11,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Category\CategoryTranslation;
 use Pulsar\Extension\Forum\Category\CategoryTranslationRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use CategoryTranslationRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use CategoryTranslationRepositoryInterface for public API')]
 final readonly class DbCategoryTranslationRepository implements CategoryTranslationRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

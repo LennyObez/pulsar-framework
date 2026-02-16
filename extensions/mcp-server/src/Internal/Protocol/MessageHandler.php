@@ -88,7 +88,7 @@ final readonly class MessageHandler
         };
     }
 
-    private function handleNotification(JsonRpcRequest $request): ?string
+    private function handleNotification(JsonRpcRequest $request): null
     {
         if ($request->method === 'notifications/cancelled') {
             $this->handleCancelled($request->params);

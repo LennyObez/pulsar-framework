@@ -14,7 +14,7 @@ use Pulsar\Extension\Forum\Tag\TagRepositoryInterface;
 use function array_slice;
 
 /**
- * Tag service — CRUD and thread association management.
+ * Tag service: CRUD and thread association management.
  */
 #[Internal(reason: 'Use TagServiceInterface for public API')]
 final readonly class TagService implements TagServiceInterface

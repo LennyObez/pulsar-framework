@@ -214,7 +214,7 @@ final readonly class JwkKey
     private static function asn1Length(int $length): string
     {
         if ($length < 0x80) {
-            return chr($length);
+            return chr($length & 0xFF);
         }
 
         $bytes = '';
@@ -224,6 +224,6 @@ final readonly class JwkKey
             $temp >>= 8;
         }
 
-        return chr(0x80 | strlen($bytes)) . $bytes;
+        return chr((0x80 | strlen($bytes)) & 0xFF) . $bytes;
     }
 }

@@ -43,7 +43,7 @@ interface PostRepositoryInterface
     public function countByThread(string $threadId): int;
 
     /**
-     * @note The entity object is stale after this call — the database version is incremented server-side.
+     * @note The entity object is stale after this call: the database version is incremented server-side.
      *       Re-fetch via findById() if you need the updated version.
      */
     public function save(Post $post): void;

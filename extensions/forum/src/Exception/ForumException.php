@@ -47,7 +47,7 @@ class ForumException extends RuntimeException
     public static function rateLimited(string $action, int $cooldownSeconds): self
     {
         return new self(sprintf(
-            'Rate limited: %s — please wait %d seconds',
+            'Rate limited: %s: please wait %d seconds',
             $action,
             $cooldownSeconds,
         ));
@@ -85,7 +85,7 @@ class ForumException extends RuntimeException
 
     public static function insufficientReputation(int $required): self
     {
-        return new self(sprintf('Insufficient reputation to downvote — %d required', $required));
+        return new self(sprintf('Insufficient reputation to downvote: %d required', $required));
     }
 
     public static function duplicateReport(string $userId, string $targetId): self

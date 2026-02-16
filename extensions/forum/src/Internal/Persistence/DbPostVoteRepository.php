@@ -13,7 +13,7 @@ use Pulsar\Extension\Forum\Domain\VoteDirection;
 use Pulsar\Extension\Forum\Vote\PostVote;
 use Pulsar\Extension\Forum\Vote\PostVoteRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use PostVoteRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use PostVoteRepositoryInterface for public API')]
 final readonly class DbPostVoteRepository implements PostVoteRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';

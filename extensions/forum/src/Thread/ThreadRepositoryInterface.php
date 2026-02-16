@@ -69,7 +69,19 @@ interface ThreadRepositoryInterface
     ): PaginationResult;
 
     /**
-     * @note The entity object is stale after this call — the database version is incremented server-side.
+     * Search threads by title or body content.
+     *
+     * @return PaginationResult<Thread>
+     */
+    public function search(
+        string $query,
+        int $page = 1,
+        int $perPage = 25,
+        ?string $tenantId = null,
+    ): PaginationResult;
+
+    /**
+     * @note The entity object is stale after this call: the database version is incremented server-side.
      *       Re-fetch via findById() if you need the updated version.
      */
     public function save(Thread $thread): void;

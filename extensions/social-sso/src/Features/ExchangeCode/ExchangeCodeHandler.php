@@ -12,7 +12,6 @@ use Pulsar\Extension\SocialSso\Contracts\OAuthStateManagerInterface;
 use Pulsar\Extension\SocialSso\Domain\IdTokenClaims;
 use Pulsar\Extension\SocialSso\Domain\IdTokenVerificationContext;
 use Pulsar\Extension\SocialSso\Exception\SsoException;
-use Pulsar\Extension\SocialSso\Internal\Session\SessionOAuthStateManager;
 
 /**
  * Exchanges an OAuth authorization code for tokens.
@@ -40,10 +39,7 @@ final readonly class ExchangeCodeHandler
             throw SsoException::invalidState();
         }
 
-        $codeVerifier = null;
-        if ($this->stateManager instanceof SessionOAuthStateManager) {
-            $codeVerifier = $this->stateManager->retrievePkceVerifier($request->state);
-        }
+        $codeVerifier = $this->stateManager->retrievePkceVerifier($request->state);
 
         $provider = $this->providerRegistry->get($request->providerName);
         $providerConfig = $this->config->providers[$request->providerName];

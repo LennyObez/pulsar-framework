@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Forum\Http\Controller\Api;
 use DateTimeImmutable;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Forum\Domain\ReportStatus;
 use Pulsar\Extension\Forum\Exception\ForumException;
@@ -27,21 +28,22 @@ use function min;
 /**
  * API controller for moderation operations (requires moderator permissions).
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class ModerationApiController
 {
     public function __construct(
         private ThreadReportRepositoryInterface $threadReportRepository,
         private PostReportRepositoryInterface $postReportRepository,
         private ModerationServiceInterface $moderationService,
+        private GateInterface $gate,
     ) {}
 
     /**
-     * GET /api/v1/forum/moderation/reports — List reports by status.
+     * GET /api/v1/forum/moderation/reports: List reports by status.
      */
     public function reports(ServerRequestInterface $request): Response
     {
-        $this->requireIdentity($request);
+        $this->requireModerator($request);
 
         $params = $request->getQueryParams();
         $statusFilter = is_string($params['status'] ?? null) ? $params['status'] : 'pending';
@@ -86,11 +88,11 @@ final readonly class ModerationApiController
     }
 
     /**
-     * POST /api/v1/forum/moderation/reports/{id}/review — Review a report.
+     * POST /api/v1/forum/moderation/reports/{id}/review: Review a report.
      */
     public function reviewReport(ServerRequestInterface $request, string $id): Response
     {
-        $identity = $this->requireIdentity($request);
+        $identity = $this->requireModerator($request);
 
         $parsed = $request->getParsedBody();
 
@@ -143,11 +145,11 @@ final readonly class ModerationApiController
     }
 
     /**
-     * POST /api/v1/forum/moderation/ban/{userId} — Ban a user.
+     * POST /api/v1/forum/moderation/ban/{userId}: Ban a user.
      */
     public function ban(ServerRequestInterface $request, string $userId): Response
     {
-        $identity = $this->requireIdentity($request);
+        $identity = $this->requireModerator($request);
 
         $parsed = $request->getParsedBody();
 
@@ -190,11 +192,11 @@ final readonly class ModerationApiController
     }
 
     /**
-     * POST /api/v1/forum/moderation/unban/{userId} — Unban a user.
+     * POST /api/v1/forum/moderation/unban/{userId}: Unban a user.
      */
     public function unban(ServerRequestInterface $request, string $userId): Response
     {
-        $identity = $this->requireIdentity($request);
+        $identity = $this->requireModerator($request);
 
         try {
             $profile = $this->moderationService->unbanUser($userId, $identity->id());
@@ -210,6 +212,11 @@ final readonly class ModerationApiController
         }
     }
 
+    /**
+     * Require an authenticated identity from the request.
+     *
+     * @throws ForumException If no authenticated identity is present
+     */
     private function requireIdentity(ServerRequestInterface $request): IdentityInterface
     {
         /** @var IdentityInterface|null $identity */
@@ -217,6 +224,22 @@ final readonly class ModerationApiController
 
         if ($identity === null || !$identity->isAuthenticated()) {
             throw ForumException::unauthorized('authentication_required');
+        }
+
+        return $identity;
+    }
+
+    /**
+     * Require the authenticated identity to have moderator permissions.
+     *
+     * @throws ForumException If no authenticated identity is present
+     */
+    private function requireModerator(ServerRequestInterface $request): IdentityInterface
+    {
+        $identity = $this->requireIdentity($request);
+
+        if (!$this->gate->allows($identity, 'forum.moderate')) {
+            throw ForumException::unauthorized('forum.moderate');
         }
 
         return $identity;

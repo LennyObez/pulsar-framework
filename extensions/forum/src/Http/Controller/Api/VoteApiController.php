@@ -18,7 +18,7 @@ use function is_string;
 /**
  * Public REST API controller for forum votes.
  */
-#[Internal(reason: 'Forum REST API controller — implementation detail')]
+#[Internal(reason: 'Forum REST API controller; implementation detail')]
 final readonly class VoteApiController
 {
     public function __construct(
@@ -26,7 +26,7 @@ final readonly class VoteApiController
     ) {}
 
     /**
-     * POST /api/v1/forum/threads/{id}/vote — Vote on a thread.
+     * POST /api/v1/forum/threads/{id}/vote: Vote on a thread.
      */
     public function threadVote(ServerRequestInterface $request, string $id): Response
     {
@@ -75,7 +75,7 @@ final readonly class VoteApiController
     }
 
     /**
-     * POST /api/v1/forum/posts/{id}/vote — Vote on a post.
+     * POST /api/v1/forum/posts/{id}/vote: Vote on a post.
      */
     public function postVote(ServerRequestInterface $request, string $id): Response
     {
@@ -124,7 +124,7 @@ final readonly class VoteApiController
     }
 
     /**
-     * DELETE /api/v1/forum/threads/{id}/vote — Remove a thread vote.
+     * DELETE /api/v1/forum/threads/{id}/vote: Remove a thread vote.
      */
     public function removeThreadVote(ServerRequestInterface $request, string $id): Response
     {
@@ -140,7 +140,7 @@ final readonly class VoteApiController
     }
 
     /**
-     * DELETE /api/v1/forum/posts/{id}/vote — Remove a post vote.
+     * DELETE /api/v1/forum/posts/{id}/vote: Remove a post vote.
      */
     public function removePostVote(ServerRequestInterface $request, string $id): Response
     {

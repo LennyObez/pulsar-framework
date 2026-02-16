@@ -21,7 +21,7 @@ use function min;
 /**
  * Admin controller for viewing the moderation action history log.
  */
-#[Internal(reason: 'Forum admin controller — implementation detail')]
+#[Internal(reason: 'Forum admin controller; implementation detail')]
 final readonly class ModerationLogController
 {
     use RendersAdminView;
@@ -33,7 +33,7 @@ final readonly class ModerationLogController
     ) {}
 
     /**
-     * GET /admin/forum/moderation-log — Paginated moderation action log.
+     * GET /admin/forum/moderation-log: Paginated moderation action log.
      */
     public function index(ServerRequestInterface $request): Response
     {
