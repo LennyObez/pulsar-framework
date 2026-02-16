@@ -18,7 +18,7 @@ use function trim;
  * Bots typically fill all form fields, including hidden ones.
  * Legitimate users never see or interact with the honeypot field.
  */
-#[Internal(reason: 'Spam detector — use SpamDetectorInterface')]
+#[Internal(reason: 'Spam detector; use SpamDetectorInterface')]
 final readonly class HoneypotDetector implements SpamDetectorInterface
 {
     public function __construct(

@@ -26,7 +26,7 @@ use function substr;
  * Executes registered hooks with guardrails: output buffering, memory limits,
  * circuit breaker integration, and per-callback error isolation.
  */
-#[Internal(reason: 'Hook execution internals — not a public API')]
+#[Internal(reason: 'Hook execution internals; not a public API')]
 final class HookExecutionEngine
 {
     /** Maximum memory a single hook callback may consume (32 MB). */
@@ -189,7 +189,7 @@ final class HookExecutionEngine
         if (count($this->failureTimestamps[$pluginSlug]) >= self::CIRCUIT_BREAKER_FAILURE_THRESHOLD) {
             $this->circuitBroken[$pluginSlug] = true;
 
-            $this->logger->critical('Plugin circuit breaker tripped — auto-disabling', [
+            $this->logger->critical('Plugin circuit breaker tripped: auto-disabling', [
                 'plugin' => $pluginSlug,
                 'failures_in_window' => count($this->failureTimestamps[$pluginSlug]),
             ]);
@@ -216,7 +216,7 @@ final class HookExecutionEngine
     {
         $memoryLimit = $this->getMemoryLimitBytes();
         if ($memoryLimit <= 0) {
-            // Unlimited memory (-1 in php.ini) — always allow
+            // Unlimited memory (-1 in php.ini): always allow
             return true;
         }
 

@@ -13,6 +13,7 @@ use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
 use function array_key_exists;
 use function in_array;
 use function is_array;
+use function is_string;
 use function preg_match;
 use function str_contains;
 use function strtolower;
@@ -71,11 +72,11 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
             $constraintsArray = is_array($rawConstraints) ? $rawConstraints : [];
 
             $tokens[] = new ThemeToken(
-                name: (string) $def['name'],
-                type: (string) $def['type'],
-                default: (string) ($def['default'] ?? ''),
-                label: (string) ($def['label'] ?? $def['name']),
-                group: (string) ($def['group'] ?? 'General'),
+                name: (is_string($def['name']) ? $def['name'] : ''),
+                type: (is_string($def['type']) ? $def['type'] : ''),
+                default: is_string($def['default'] ?? null) ? $def['default'] : '',
+                label: is_string($def['label'] ?? null) ? $def['label'] : (is_string($def['name'] ?? null) ? $def['name'] : ''),
+                group: is_string($def['group'] ?? null) ? $def['group'] : 'General',
                 constraints: $constraintsArray,
             );
         }
@@ -158,13 +159,17 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
         $numericValue = (float) $matches[1];
 
         if (array_key_exists('min', $token->constraints)) {
-            if ($numericValue < (float) $token->constraints['min']) {
+            $min = $token->constraints['min'];
+
+            if (is_numeric($min) && $numericValue < (float) $min) {
                 return false;
             }
         }
 
         if (array_key_exists('max', $token->constraints)) {
-            if ($numericValue > (float) $token->constraints['max']) {
+            $max = $token->constraints['max'];
+
+            if (is_numeric($max) && $numericValue > (float) $max) {
                 return false;
             }
         }

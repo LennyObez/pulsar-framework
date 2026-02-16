@@ -46,7 +46,7 @@ final readonly class ListBlock implements BlockTypeInterface
     {
         /** @var list<string> $items */
         $items = $data['items'] ?? [];
-        $ordered = (bool) ($data['ordered'] ?? false);
+        $ordered = is_bool($data['ordered'] ?? null) ? $data['ordered'] : false;
 
         $tag = $ordered ? 'ol' : 'ul';
         $listItems = [];

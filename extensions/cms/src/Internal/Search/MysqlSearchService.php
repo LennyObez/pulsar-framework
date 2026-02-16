@@ -196,7 +196,7 @@ final readonly class MysqlSearchService implements SearchServiceInterface
         unset($entry);
 
         // Re-sort by final composite score (higher is better)
-        usort($ranked, static fn(array $a, array $b): int => $b['final_score'] <=> $a['final_score']);
+        usort($ranked, static fn(array $a, array $b): int => ($b['final_score'] ?? 0.0) <=> ($a['final_score'] ?? 0.0));
 
         // Apply pagination to re-ranked results
         $pageSlice = array_slice($ranked, $offset, $perPage);

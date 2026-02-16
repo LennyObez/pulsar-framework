@@ -6,6 +6,10 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
+use function is_bool;
+use function is_int;
+use function is_string;
+
 /**
  * Comments system configuration.
  */
@@ -45,17 +49,17 @@ final readonly class CommentsConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: (bool) ($data['enabled'] ?? true),
-            autoApproveAuthenticated: (bool) ($data['auto_approve_authenticated'] ?? false),
-            editWindowMinutes: (int) ($data['edit_window_minutes'] ?? 15),
-            maxNestingDepth: (int) ($data['max_nesting_depth'] ?? 3),
-            rateLimitPerMinute: (int) ($data['rate_limit_per_minute'] ?? 5),
-            rateLimitPerHour: (int) ($data['rate_limit_per_hour'] ?? 30),
-            guestCommentsAllowed: (bool) ($data['guest_comments_allowed'] ?? true),
-            requireEmail: (bool) ($data['require_email'] ?? false),
-            maxBodyLength: (int) ($data['max_body_length'] ?? 10_000),
-            maxLinksPerComment: (int) ($data['max_links_per_comment'] ?? 3),
-            honeypotFieldName: (string) ($data['honeypot_field_name'] ?? 'website_url'),
+            enabled: is_bool($data['enabled'] ?? null) ? $data['enabled'] : true,
+            autoApproveAuthenticated: is_bool($data['auto_approve_authenticated'] ?? null) ? $data['auto_approve_authenticated'] : false,
+            editWindowMinutes: is_int($data['edit_window_minutes'] ?? null) ? $data['edit_window_minutes'] : 15,
+            maxNestingDepth: is_int($data['max_nesting_depth'] ?? null) ? $data['max_nesting_depth'] : 3,
+            rateLimitPerMinute: is_int($data['rate_limit_per_minute'] ?? null) ? $data['rate_limit_per_minute'] : 5,
+            rateLimitPerHour: is_int($data['rate_limit_per_hour'] ?? null) ? $data['rate_limit_per_hour'] : 30,
+            guestCommentsAllowed: is_bool($data['guest_comments_allowed'] ?? null) ? $data['guest_comments_allowed'] : true,
+            requireEmail: is_bool($data['require_email'] ?? null) ? $data['require_email'] : false,
+            maxBodyLength: is_int($data['max_body_length'] ?? null) ? $data['max_body_length'] : 10_000,
+            maxLinksPerComment: is_int($data['max_links_per_comment'] ?? null) ? $data['max_links_per_comment'] : 3,
+            honeypotFieldName: is_string($data['honeypot_field_name'] ?? null) ? $data['honeypot_field_name'] : 'website_url',
         );
     }
 }

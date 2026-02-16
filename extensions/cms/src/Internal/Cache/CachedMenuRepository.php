@@ -13,7 +13,7 @@ use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 
 use function sprintf;
 
-#[Internal(reason: 'Caching decorator for menus — use MenuRepositoryInterface')]
+#[Internal(reason: 'Caching decorator for menus; use MenuRepositoryInterface')]
 final readonly class CachedMenuRepository implements MenuRepositoryInterface
 {
     private const int TTL = 300;
@@ -22,6 +22,18 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
         private MenuRepositoryInterface $inner,
         private TaggedCacheInterface $cache,
     ) {}
+
+    #[Override]
+    public function findByImportId(string $importId): ?Menu
+    {
+        return $this->inner->findByImportId($importId);
+    }
+
+    #[Override]
+    public function findItemByImportId(string $importId): ?MenuItem
+    {
+        return $this->inner->findItemByImportId($importId);
+    }
 
     #[Override]
     public function findByLocation(string $location, string $locale, ?string $tenantId = null): ?Menu
@@ -42,6 +54,26 @@ final readonly class CachedMenuRepository implements MenuRepositoryInterface
         }
 
         return $menu;
+    }
+
+    #[Override]
+    public function findItemsByMenu(string $menuId, string $locale): array
+    {
+        $cacheKey = sprintf('cms_menu_items:%s:%s', $menuId, $locale);
+        $cached = $this->cache->get($cacheKey);
+
+        if ($cached !== null) {
+            /** @var list<\Pulsar\Extension\Cms\Navigation\MenuItemResolved> $cached */
+            return $cached;
+        }
+
+        $items = $this->inner->findItemsByMenu($menuId, $locale);
+
+        if ($items !== []) {
+            $this->cache->set($cacheKey, $items, ['cms_menu', 'cms_menu_items'], self::TTL);
+        }
+
+        return $items;
     }
 
     #[Override]

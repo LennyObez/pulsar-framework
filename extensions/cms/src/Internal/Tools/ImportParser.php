@@ -38,6 +38,7 @@ use function array_key_first;
 use function bin2hex;
 use function in_array;
 use function is_array;
+use function is_bool;
 use function is_int;
 use function is_string;
 use function json_decode;
@@ -57,9 +58,10 @@ use const JSON_ERROR_NONE;
  * Supports content with blocks, translations, taxonomy hierarchy preservation,
  * duplicate resolution policies, and locale filtering.
  */
-#[Internal(reason: 'Import/export internals — use ImportExportServiceInterface')]
+#[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
 final readonly class ImportParser
 {
+    use ImportFieldResolverTrait;
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
@@ -118,6 +120,9 @@ final readonly class ImportParser
             $warnings = [...$warnings, ...$result['warnings']];
         }
 
+        /** @var array<string, string> $contentRefMap Maps content slug to content ID */
+        $contentRefMap = [];
+
         if (isset($data['content']) && is_array($data['content'])) {
             /** @var list<array<string, mixed>> $contentData */
             $contentData = $data['content'];
@@ -126,12 +131,13 @@ final readonly class ImportParser
             $updated['content'] = $result['updated'];
             $skipped['content'] = $result['skipped'];
             $warnings = [...$warnings, ...$result['warnings']];
+            $contentRefMap = $result['ref_map'];
         }
 
         if (isset($data['menus']) && is_array($data['menus'])) {
             /** @var list<array<string, mixed>> $menuData */
             $menuData = $data['menus'];
-            $result = $this->processMenus($menuData, $dryRun);
+            $result = $this->processMenus($menuData, $contentRefMap, $dryRun);
             $created['menus'] = $result['created'];
             $updated['menus'] = $result['updated'];
             $skipped['menus'] = $result['skipped'];
@@ -216,7 +222,7 @@ final readonly class ImportParser
                         id: $taxonomyId,
                         tenantId: $tenantId,
                         slug: $slug,
-                        hierarchical: (bool) ($taxData['hierarchical'] ?? false),
+                        hierarchical: is_bool($taxData['hierarchical'] ?? null) ? $taxData['hierarchical'] : false,
                         createdAt: new DateTimeImmutable(),
                     );
                     $translations = [];
@@ -332,7 +338,7 @@ final readonly class ImportParser
      *
      * @param list<array<string, mixed>> $contentItems
      *
-     * @return array{created: int, updated: int, skipped: int, warnings: list<string>}
+     * @return array{created: int, updated: int, skipped: int, warnings: list<string>, ref_map: array<string, string>}
      */
     private function processContent(array $contentItems, bool $dryRun): array
     {
@@ -340,6 +346,8 @@ final readonly class ImportParser
         $updated = 0;
         $skipped = 0;
         $warnings = [];
+        /** @var array<string, string> $contentRefMap Maps "slug" => content ID for newly created items */
+        $contentRefMap = [];
         $policy = $this->config->duplicatePolicy;
 
         foreach ($contentItems as $itemData) {
@@ -367,9 +375,7 @@ final readonly class ImportParser
             }
 
             // Flat format (backward compatible)
-            $slug = isset($itemData['slug']) && is_string($itemData['slug'])
-                ? $itemData['slug']
-                : (isset($itemData['slug_segment']) && is_string($itemData['slug_segment']) ? $itemData['slug_segment'] : null);
+            $slug = $this->resolveSlug($itemData);
             $locale = isset($itemData['locale']) && is_string($itemData['locale']) ? $itemData['locale'] : 'en';
 
             if ($slug === null || $slug === '') {
@@ -400,12 +406,13 @@ final readonly class ImportParser
                 $created++;
 
                 if (!$dryRun) {
-                    $this->createContentItem($itemData, $locale, $slug);
+                    $newId = $this->createContentItem($itemData, $locale, $slug);
+                    $contentRefMap[$slug] = $newId;
                 }
             }
         }
 
-        return ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'warnings' => $warnings];
+        return ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'warnings' => $warnings, 'ref_map' => $contentRefMap];
     }
 
     /**
@@ -436,12 +443,18 @@ final readonly class ImportParser
         }
 
         $firstTranslation = $translations[$firstLocale];
-        $slug = isset($firstTranslation['slug_segment']) && is_string($firstTranslation['slug_segment'])
-            ? $firstTranslation['slug_segment']
-            : (isset($firstTranslation['path']) && is_string($firstTranslation['path']) ? $firstTranslation['path'] : null);
+        $importId = isset($itemData['import_id']) && is_string($itemData['import_id']) ? $itemData['import_id'] : null;
+        $slug = $this->resolveSlug($firstTranslation, $importId);
 
-        if ($slug === null || $slug === '') {
-            $warnings[] = 'Content translation missing slug_segment, skipped';
+        // Also check 'path' as a last resort before import_id
+        if ($slug === null && is_string($firstTranslation['path'] ?? null)) {
+            $slug = $firstTranslation['path'];
+        }
+
+        // Allow empty slug_segment for homepage (root page).
+        // Only skip if slug is null (field completely absent).
+        if ($slug === null) {
+            $warnings[] = 'Content translation missing slug_segment and import_id, skipped';
             $skipped++;
 
             return ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'warnings' => $warnings];
@@ -454,7 +467,7 @@ final readonly class ImportParser
             $existingId = $existing->id;
             $resolvedFirstLocale = $firstLocale;
 
-            // Content already exists — apply duplicate resolution policy
+            // Content already exists: apply duplicate resolution policy
             match ($policy) {
                 DuplicateResolutionPolicy::Skip => $skipped++,
                 DuplicateResolutionPolicy::Replace,
@@ -481,7 +494,7 @@ final readonly class ImportParser
             return ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'warnings' => $warnings];
         }
 
-        // New content — create with all translations
+        // New content: create with all translations
         $created++;
 
         if (!$dryRun) {
@@ -505,15 +518,17 @@ final readonly class ImportParser
             : 'page';
         $contentType = ContentType::tryFrom($contentTypeSlug) ?? ContentType::Page;
 
-        $status = isset($itemData['status']) && is_string($itemData['status']) ? $itemData['status'] : 'draft';
-        $authorId = isset($itemData['author_id']) && is_string($itemData['author_id']) ? $itemData['author_id'] : 'system';
+        $status = isset($itemData['status']) && is_string($itemData['status']) ? $itemData['status'] : 'published';
+        $authorId = $this->resolveAuthorId($itemData);
         $tenantId = isset($itemData['tenant_id']) && is_string($itemData['tenant_id']) ? $itemData['tenant_id'] : null;
+        $template = isset($itemData['template']) && is_string($itemData['template']) ? $itemData['template'] : null;
 
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
             authorId: $authorId,
             tenantId: $tenantId,
+            template: $template,
         );
 
         if ($status === 'published') {
@@ -528,15 +543,16 @@ final readonly class ImportParser
             }
 
             $title = isset($transData['title']) && is_string($transData['title']) ? $transData['title'] : 'Untitled';
-            $slugSegment = isset($transData['slug_segment']) && is_string($transData['slug_segment'])
-                ? $transData['slug_segment']
-                : (isset($transData['path']) && is_string($transData['path']) ? $transData['path'] : $this->slugify($title));
+            $slugSegment = $this->resolveTranslationSlugSegment(
+                $transData,
+                is_string($transData['path'] ?? null) ? $transData['path'] : $this->slugify($title),
+            );
 
             if ($appendSlug) {
                 $slugSegment .= '-imported';
             }
 
-            $path = isset($transData['path']) && is_string($transData['path']) ? $transData['path'] : $slugSegment;
+            $path = ltrim(isset($transData['path']) && is_string($transData['path']) ? $transData['path'] : $slugSegment, '/');
 
             $translation = ContentTranslation::create(
                 id: UuidGenerator::v7(),
@@ -694,24 +710,26 @@ final readonly class ImportParser
      *
      * @param array<string, mixed> $itemData
      */
-    private function createContentItem(array $itemData, string $locale, string $slug): void
+    private function createContentItem(array $itemData, string $locale, string $slug): string
     {
         $contentId = UuidGenerator::v7();
         $contentTypeSlug = isset($itemData['content_type']) && is_string($itemData['content_type'])
             ? $itemData['content_type']
             : 'page';
         $contentType = ContentType::tryFrom($contentTypeSlug) ?? ContentType::Page;
-        $authorId = isset($itemData['author_id']) && is_string($itemData['author_id']) ? $itemData['author_id'] : 'system';
+        $authorId = $this->resolveAuthorId($itemData);
         $tenantId = isset($itemData['tenant_id']) && is_string($itemData['tenant_id']) ? $itemData['tenant_id'] : null;
+        $template = isset($itemData['template']) && is_string($itemData['template']) ? $itemData['template'] : null;
 
         $content = Content::create(
             id: $contentId,
             contentType: $contentType,
             authorId: $authorId,
             tenantId: $tenantId,
+            template: $template,
         );
 
-        $status = isset($itemData['status']) && is_string($itemData['status']) ? $itemData['status'] : 'draft';
+        $status = isset($itemData['status']) && is_string($itemData['status']) ? $itemData['status'] : 'published';
 
         if ($status === 'published') {
             $content = $content->publish();
@@ -721,7 +739,7 @@ final readonly class ImportParser
 
         // Create translation
         $title = isset($itemData['title']) && is_string($itemData['title']) ? $itemData['title'] : 'Untitled';
-        $path = isset($itemData['path']) && is_string($itemData['path']) ? $itemData['path'] : $slug;
+        $path = ltrim(isset($itemData['path']) && is_string($itemData['path']) ? $itemData['path'] : $slug, '/');
         $body = isset($itemData['body']) && is_string($itemData['body']) ? $itemData['body'] : '';
 
         $translation = ContentTranslation::create(
@@ -745,6 +763,8 @@ final readonly class ImportParser
             $blocks = $itemData['blocks'];
             $this->importBlocks($contentId, $blocks, $locale, false);
         }
+
+        return $contentId;
     }
 
     /**
@@ -865,11 +885,25 @@ final readonly class ImportParser
     }
 
     /**
+     * Process menu entries from the import data.
+     *
+     * Supports both flat format (single locale per menu) and the multilingual
+     * translations format (one menu entry with an embedded locale map).
+     *
+     * Flat format:
+     *   {"location": "header", "locale": "en", "name": "Main Nav", "items": [...]}
+     *
+     * Multilingual format:
+     *   {"location": "header", "translations": {"en": {"name": "Main Nav"}, "fr": {"name": "Nav"}}, "items": [...]}
+     *
+     * Accepts 'slug' as a fallback alias for 'location'.
+     *
      * @param list<array<string, mixed>> $menus
+     * @param array<string, string> $contentRefMap Maps content slug to content ID for linking menu items
      *
      * @return array{created: int, updated: int, skipped: int, warnings: list<string>}
      */
-    private function processMenus(array $menus, bool $dryRun): array
+    private function processMenus(array $menus, array $contentRefMap, bool $dryRun): array
     {
         $created = 0;
         $updated = 0;
@@ -878,8 +912,9 @@ final readonly class ImportParser
         $policy = $this->config->duplicatePolicy;
 
         foreach ($menus as $menuData) {
-            $location = isset($menuData['location']) && is_string($menuData['location']) ? $menuData['location'] : null;
-            $locale = isset($menuData['locale']) && is_string($menuData['locale']) ? $menuData['locale'] : 'en';
+            $location = isset($menuData['location']) && is_string($menuData['location'])
+                ? $menuData['location']
+                : (isset($menuData['slug']) && is_string($menuData['slug']) ? $menuData['slug'] : null);
 
             if ($location === null || $location === '') {
                 $warnings[] = 'Menu entry missing location, skipped';
@@ -887,6 +922,20 @@ final readonly class ImportParser
 
                 continue;
             }
+
+            // Multilingual format: one menu, multiple locales via translations map
+            if (isset($menuData['translations']) && is_array($menuData['translations'])) {
+                $result = $this->processMultilocaleMenu($menuData, $location, $contentRefMap, $dryRun, $policy);
+                $created += $result['created'];
+                $updated += $result['updated'];
+                $skipped += $result['skipped'];
+                $warnings = [...$warnings, ...$result['warnings']];
+
+                continue;
+            }
+
+            // Flat format: single locale per menu entry
+            $locale = isset($menuData['locale']) && is_string($menuData['locale']) ? $menuData['locale'] : 'en';
 
             if ($this->config->allowedLocales !== null && !in_array($locale, $this->config->allowedLocales, true)) {
                 $warnings[] = "Menu at location '$location' has unsupported locale '$locale', skipped";
@@ -901,13 +950,13 @@ final readonly class ImportParser
             if ($existing !== null) {
                 match ($policy) {
                     DuplicateResolutionPolicy::Skip => $skipped++,
-                    DuplicateResolutionPolicy::Replace => (function () use (&$updated, $existing, $menuData, $locale, $dryRun): void {
+                    DuplicateResolutionPolicy::Replace => (function () use (&$updated, $existing, $menuData, $locale, $contentRefMap, $dryRun): void {
                         $updated++;
 
                         if (!$dryRun && isset($menuData['items']) && is_array($menuData['items'])) {
                             /** @var list<array<string, mixed>> $items */
                             $items = $menuData['items'];
-                            $this->importMenuItems($existing->id, $items, $locale);
+                            $this->importMenuItems($existing->id, $items, $locale, $contentRefMap);
                         }
                     })(),
                     DuplicateResolutionPolicy::Merge,
@@ -939,7 +988,7 @@ final readonly class ImportParser
                     if (isset($menuData['items']) && is_array($menuData['items'])) {
                         /** @var list<array<string, mixed>> $items */
                         $items = $menuData['items'];
-                        $this->importMenuItems($menuId, $items, $locale);
+                        $this->importMenuItems($menuId, $items, $locale, $contentRefMap);
                     }
                 }
             }
@@ -949,9 +998,138 @@ final readonly class ImportParser
     }
 
     /**
-     * @param list<array<string, mixed>> $items
+     * Process a menu with the multilingual translations format.
+     *
+     * Creates one menu and one MenuTranslation per locale in the translations map.
+     *
+     * @param array<string, mixed> $menuData
+     *
+     * @return array{created: int, updated: int, skipped: int, warnings: list<string>}
      */
-    private function importMenuItems(string $menuId, array $items, string $locale, ?string $parentId = null): void
+    /**
+     * @param array<string, string> $contentRefMap
+     */
+    private function processMultilocaleMenu(
+        array $menuData,
+        string $location,
+        array $contentRefMap,
+        bool $dryRun,
+        DuplicateResolutionPolicy $policy,
+    ): array {
+        $created = 0;
+        $updated = 0;
+        $skipped = 0;
+        $warnings = [];
+
+        /** @var array<string, array<string, mixed>> $translations */
+        $translations = $menuData['translations'];
+
+        // Use the first locale to check for an existing menu
+        $firstLocale = array_key_first($translations);
+
+        if (!is_string($firstLocale)) {
+            $warnings[] = "Menu at location '$location' has empty translations, skipped";
+            $skipped++;
+
+            return ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'warnings' => $warnings];
+        }
+
+        $tenantId = isset($menuData['tenant_id']) && is_string($menuData['tenant_id']) ? $menuData['tenant_id'] : null;
+        $existing = $this->menuRepository->findByLocation($location, $firstLocale, $tenantId);
+
+        if ($existing !== null) {
+            match ($policy) {
+                DuplicateResolutionPolicy::Skip => $skipped++,
+                DuplicateResolutionPolicy::Replace => (function () use (&$updated, $existing, $menuData, $firstLocale, $contentRefMap, $dryRun): void {
+                    $updated++;
+
+                    if (!$dryRun && isset($menuData['items']) && is_array($menuData['items'])) {
+                        /** @var list<array<string, mixed>> $items */
+                        $items = $menuData['items'];
+                        $this->importMenuItems($existing->id, $items, $firstLocale, $contentRefMap);
+                    }
+                })(),
+                DuplicateResolutionPolicy::Merge,
+                DuplicateResolutionPolicy::ImportAsNew => $updated++,
+            };
+
+            return ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'warnings' => $warnings];
+        }
+
+        $created++;
+
+        if (!$dryRun) {
+            $menuId = UuidGenerator::v7();
+            $menu = new Menu(
+                id: $menuId,
+                tenantId: $tenantId,
+                location: $location,
+                createdAt: new DateTimeImmutable(),
+            );
+            $menuTranslations = [];
+
+            foreach ($translations as $locale => $transData) {
+                if (!is_string($locale) || !is_array($transData)) {
+                    continue;
+                }
+
+                if ($this->config->allowedLocales !== null && !in_array($locale, $this->config->allowedLocales, true)) {
+                    continue;
+                }
+
+                $name = is_string($transData['name'] ?? null) ? $transData['name'] : '';
+
+                if ($name !== '') {
+                    $menuTranslations[] = new MenuTranslation(
+                        menuId: $menuId,
+                        locale: $locale,
+                        name: $name,
+                    );
+                }
+            }
+
+            $this->menuRepository->save($menu, $menuTranslations);
+
+            if (isset($menuData['items']) && is_array($menuData['items'])) {
+                /** @var list<array<string, mixed>> $items */
+                $items = $menuData['items'];
+                $this->importMenuItems($menuId, $items, $firstLocale, $contentRefMap);
+            }
+        }
+
+        return ['created' => $created, 'updated' => $updated, 'skipped' => $skipped, 'warnings' => $warnings];
+    }
+
+    /**
+     * Resolve a menu item's content ID, checking the ref map for newly imported content.
+     *
+     * @param array<string, mixed> $itemData
+     * @param array<string, string> $contentRefMap
+     */
+    private function resolveMenuItemContentId(array $itemData, array $contentRefMap): ?string
+    {
+        $contentId = isset($itemData['content_id']) && is_string($itemData['content_id']) ? $itemData['content_id'] : null;
+
+        // If the content_id looks like a slug reference, resolve it from the ref map
+        if ($contentId !== null && isset($contentRefMap[$contentId])) {
+            return $contentRefMap[$contentId];
+        }
+
+        // Check content_ref as an explicit slug reference field
+        $contentRef = isset($itemData['content_ref']) && is_string($itemData['content_ref']) ? $itemData['content_ref'] : null;
+
+        if ($contentRef !== null && isset($contentRefMap[$contentRef])) {
+            return $contentRefMap[$contentRef];
+        }
+
+        return $contentId;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $items
+     * @param array<string, string> $contentRefMap Maps content slug to content ID
+     */
+    private function importMenuItems(string $menuId, array $items, string $locale, array $contentRefMap = [], ?string $parentId = null): void
     {
         foreach ($items as $sortOrder => $itemData) {
             $itemId = UuidGenerator::v7();
@@ -961,7 +1139,7 @@ final readonly class ImportParser
                 id: $itemId,
                 menuId: $menuId,
                 parentId: $parentId,
-                contentId: isset($itemData['content_id']) && is_string($itemData['content_id']) ? $itemData['content_id'] : null,
+                contentId: $this->resolveMenuItemContentId($itemData, $contentRefMap),
                 url: isset($itemData['url']) && is_string($itemData['url']) ? $itemData['url'] : null,
                 target: LinkTarget::tryFrom($targetStr) ?? LinkTarget::Self,
                 cssClass: isset($itemData['css_class']) && is_string($itemData['css_class']) ? $itemData['css_class'] : null,
@@ -969,7 +1147,7 @@ final readonly class ImportParser
                 sortOrder: isset($itemData['sort_order']) && (is_int($itemData['sort_order']) || is_string($itemData['sort_order']))
                     ? (int) $itemData['sort_order']
                     : $sortOrder,
-                visible: (bool) ($itemData['visible'] ?? true),
+                visible: is_bool($itemData['visible'] ?? null) ? $itemData['visible'] : true,
             );
             $translations = [];
 
@@ -988,7 +1166,7 @@ final readonly class ImportParser
             if (isset($itemData['children']) && is_array($itemData['children'])) {
                 /** @var list<array<string, mixed>> $children */
                 $children = $itemData['children'];
-                $this->importMenuItems($menuId, $children, $locale, $itemId);
+                $this->importMenuItems($menuId, $children, $locale, $contentRefMap, $itemId);
             }
         }
     }
@@ -1003,6 +1181,22 @@ final readonly class ImportParser
         $created = 0;
         $updated = 0;
         $warnings = [];
+
+        // Detect flat array format: if any value is not an array, treat
+        // the entire payload as a single "general" group. This handles
+        // imports that use {"key": "value"} instead of {"group": {"key": "value"}}.
+        $isFlat = false;
+
+        foreach ($settings as $value) {
+            if (!is_array($value)) {
+                $isFlat = true;
+                break;
+            }
+        }
+
+        if ($isFlat) {
+            $settings = ['general' => $settings];
+        }
 
         foreach ($settings as $group => $keys) {
             if (!is_array($keys)) {

@@ -16,7 +16,7 @@ use Pulsar\Extension\Cms\Docs\DocFeedbackRepositoryInterface;
 use function ceil;
 use function max;
 
-#[Internal(reason: 'Raw-DB repository — use DocFeedbackRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use DocFeedbackRepositoryInterface for public API')]
 final readonly class DbDocFeedbackRepository implements DocFeedbackRepositoryInterface
 {
     private const string SQL_COUNT_BY_DOC_PAGE = <<<'SQL'

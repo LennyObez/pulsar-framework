@@ -103,7 +103,7 @@ final readonly class DigitalDeliveryService implements DigitalDeliveryServiceInt
             );
         }
 
-        // Atomically decrement — returns affected rows count.
+        // Atomically decrement: returns affected rows count.
         // This is the authoritative check: if it returns 0, another concurrent
         // request already consumed the last download.
         $decremented = $this->assets->decrementDownloads($download->id);

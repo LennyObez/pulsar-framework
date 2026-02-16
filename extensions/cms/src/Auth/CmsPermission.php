@@ -9,7 +9,7 @@ use Pulsar\Api\Internal;
 /**
  * All CMS-specific permissions used for authorization checks.
  */
-#[Internal(reason: 'CMS authorization — implementation detail')]
+#[Internal(reason: 'CMS authorization; implementation detail')]
 enum CmsPermission: string
 {
     case ContentView = 'content.view';
@@ -35,4 +35,7 @@ enum CmsPermission: string
     case CollaborationManage = 'collaboration.manage';
 
     case AiUse = 'ai.use';
+
+    case ToolsExport = 'tools.export';
+    case ToolsGdprErase = 'tools.gdpr.erase';
 }

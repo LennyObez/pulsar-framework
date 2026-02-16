@@ -148,38 +148,38 @@ final readonly class SafeHtmlPolicy
             return '';
         }
 
-        // Step 1 — Input canonicalization
+        // Step 1: Input canonicalization
         $canonicalized = $this->canonicalizeInput($html);
 
         if ($canonicalized === null) {
             return $this->escapeToPlaintext($html);
         }
 
-        // Step 2 — DOM parsing
+        // Step 2: DOM parsing
         $dom = $this->parseDom($canonicalized);
 
         if ($dom === null) {
             return $this->escapeToPlaintext($canonicalized);
         }
 
-        // Step 3 — Tree walk (depth-first, bottom-up)
+        // Step 3: Tree walk (depth-first, bottom-up)
         $this->walkTree($dom, $allowlist);
 
-        // Step 4 — Attribute filtering
+        // Step 4: Attribute filtering
         $this->filterAttributes($dom, $allowlist);
 
-        // Step 5 — URL sanitization
+        // Step 5: URL sanitization
         $this->sanitizeUrls($dom, $allowlist);
 
-        // Step 6 — Dangerous construct removal
+        // Step 6: Dangerous construct removal
         $this->removeDangerousConstructs($dom, $allowlist);
 
-        // Step 7 — Serialization + final validation
+        // Step 7: Serialization + final validation
         return $this->serializeAndValidate($dom, $html);
     }
 
     /**
-     * Step 1 — Canonicalize input to a safe UTF-8 string.
+     * Step 1: Canonicalize input to a safe UTF-8 string.
      *
      * Returns null if the input cannot be converted to UTF-8.
      */
@@ -213,9 +213,9 @@ final readonly class SafeHtmlPolicy
         // Remove BiDi control characters: U+202A–U+202E, U+2066–U+2069
         $html = preg_replace('/[\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $html) ?? $html;
 
-        // Strip CDATA markers — not valid in HTML (only XML/XHTML); remove before DOM parsing
+        // Strip CDATA markers: not valid in HTML (only XML/XHTML); remove before DOM parsing
         // so they cannot be reinterpreted as bogus comments by libxml
-        // Note: entity decoding is NOT applied to the full input here — doing so would
+        // Note: entity decoding is NOT applied to the full input here; doing so would
         // convert escaped markup (e.g. &lt;script&gt;) into live elements before DOM parsing.
         // Entity-encoded javascript: bypasses in URL attributes are handled in decodeUrl()
         // during the URL sanitization step (Step 5).
@@ -224,7 +224,7 @@ final readonly class SafeHtmlPolicy
     }
 
     /**
-     * Step 2 — Parse HTML into a DOMDocument.
+     * Step 2: Parse HTML into a DOMDocument.
      *
      * Returns null on parse failure.
      */
@@ -255,7 +255,7 @@ final readonly class SafeHtmlPolicy
     }
 
     /**
-     * Step 3 — Walk DOM tree depth-first, bottom-up.
+     * Step 3: Walk DOM tree depth-first, bottom-up.
      *
      * Removes disallowed elements (unwrapping children), comment nodes,
      * processing instructions, and CDATA sections.
@@ -343,7 +343,7 @@ final readonly class SafeHtmlPolicy
     }
 
     /**
-     * Step 4 — Filter attributes on allowed elements to their specific allowlists.
+     * Step 4: Filter attributes on allowed elements to their specific allowlists.
      *
      * @param array<string, list<string>> $allowlist
      */
@@ -389,7 +389,7 @@ final readonly class SafeHtmlPolicy
     }
 
     /**
-     * Step 5 — Sanitize URL attributes (href and src).
+     * Step 5: Sanitize URL attributes (href and src).
      *
      * @param array<string, list<string>> $allowlist
      */
@@ -448,7 +448,7 @@ final readonly class SafeHtmlPolicy
         $scheme = $this->extractScheme($normalized);
 
         if ($scheme === null) {
-            // Relative URL — allowed
+            // Relative URL: allowed
             return true;
         }
 
@@ -480,7 +480,7 @@ final readonly class SafeHtmlPolicy
         $scheme = $this->extractScheme($normalized);
 
         if ($scheme === null) {
-            // Relative URL — must start with /media/
+            // Relative URL: must start with /media/
             return str_starts_with($normalized, '/media/');
         }
 
@@ -562,7 +562,7 @@ final readonly class SafeHtmlPolicy
     }
 
     /**
-     * Step 6 — Remove additional dangerous constructs as defense-in-depth.
+     * Step 6: Remove additional dangerous constructs as defense-in-depth.
      *
      * @param array<string, list<string>> $allowlist
      */
@@ -632,7 +632,7 @@ final readonly class SafeHtmlPolicy
     }
 
     /**
-     * Step 7 — Serialize the DOM and apply final validation.
+     * Step 7: Serialize the DOM and apply final validation.
      *
      * @param string $originalHtml Original input for fallback escaping
      */

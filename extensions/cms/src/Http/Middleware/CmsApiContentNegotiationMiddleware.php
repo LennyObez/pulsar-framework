@@ -18,7 +18,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  * Ensures all responses carry JSON content type, adds CORS headers,
  * and handles OPTIONS preflight requests with a 204 No Content response.
  */
-#[Internal(reason: 'CMS API content negotiation — middleware implementation')]
+#[Internal(reason: 'CMS API content negotiation; middleware implementation')]
 final readonly class CmsApiContentNegotiationMiddleware implements MiddlewareInterface
 {
     private const string ALLOWED_METHODS = 'GET, POST, PUT, DELETE, OPTIONS';

@@ -21,20 +21,20 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Database-backed repository for CSS override persistence.
  */
-#[Internal(reason: 'Raw-DB repository — use CssOverrideRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use CssOverrideRepositoryInterface for public API')]
 final readonly class DbCssOverrideRepository implements CssOverrideRepositoryInterface
 {
-    private const string TENANT_SENTINEL = '__GLOBAL__';
+    private const string TENANT_SENTINEL = '00000000-0000-0000-0000-000000000000';
 
     private const string SQL_FIND_ACTIVE = <<<'SQL'
         SELECT * FROM cms_css_overrides
-        WHERE theme_id = :theme_id AND tenant_key = :tenant_key AND is_active = true
+        WHERE theme_id = :theme_id AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key AND is_active = true
         LIMIT 1
         SQL;
 
     private const string SQL_FIND_BY_VERSION = <<<'SQL'
         SELECT * FROM cms_css_overrides
-        WHERE theme_id = :theme_id AND tenant_key = :tenant_key AND version = :version
+        WHERE theme_id = :theme_id AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key AND version = :version
         LIMIT 1
         SQL;
 
@@ -44,7 +44,7 @@ final readonly class DbCssOverrideRepository implements CssOverrideRepositoryInt
 
     private const string SQL_HISTORY = <<<'SQL'
         SELECT * FROM cms_css_overrides
-        WHERE theme_id = :theme_id AND tenant_key = :tenant_key
+        WHERE theme_id = :theme_id AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         ORDER BY version DESC
         LIMIT :limit OFFSET :offset
         SQL;
@@ -52,11 +52,11 @@ final readonly class DbCssOverrideRepository implements CssOverrideRepositoryInt
     private const string SQL_MAX_VERSION = <<<'SQL'
         SELECT COALESCE(MAX(version), 0) AS max_version
         FROM cms_css_overrides
-        WHERE theme_id = :theme_id AND tenant_key = :tenant_key
+        WHERE theme_id = :theme_id AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const array UPSERT_COLUMNS = [
-        'id', 'tenant_id', 'tenant_key', 'theme_id', 'version', 'css_content', 'css_hash',
+        'id', 'tenant_id', 'theme_id', 'version', 'css_content', 'css_hash',
         'token_overrides', 'is_active', 'created_at', 'created_by', 'reason',
     ];
 
@@ -65,7 +65,7 @@ final readonly class DbCssOverrideRepository implements CssOverrideRepositoryInt
     private const string SQL_DEACTIVATE_ALL = <<<'SQL'
         UPDATE cms_css_overrides
         SET is_active = false
-        WHERE theme_id = :theme_id AND tenant_key = :tenant_key AND is_active = true
+        WHERE theme_id = :theme_id AND COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key AND is_active = true
         SQL;
 
     public function __construct(
@@ -144,7 +144,6 @@ final readonly class DbCssOverrideRepository implements CssOverrideRepositoryInt
         $this->connection->execute($sql, [
             'id' => $override->id,
             'tenant_id' => $override->tenantId,
-            'tenant_key' => $override->tenantId ?? self::TENANT_SENTINEL,
             'theme_id' => $override->themeId,
             'version' => $override->version,
             'css_content' => $override->cssContent,

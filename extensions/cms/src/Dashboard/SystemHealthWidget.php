@@ -13,7 +13,7 @@ use function count;
  * Dashboard widget showing system health: cache hit rate, queue depth,
  * storage usage (media disk), and failed job count.
  */
-#[Internal(reason: 'CMS dashboard widget — implementation detail')]
+#[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class SystemHealthWidget implements DashboardWidgetInterface
 {
     private const string MEDIA_QUEUE = 'media_derivatives';

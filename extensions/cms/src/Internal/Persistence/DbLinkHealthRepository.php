@@ -16,7 +16,7 @@ use Pulsar\Extension\Cms\Seo\LinkHealthRepositoryInterface;
 use function count;
 use function max;
 
-#[Internal(reason: 'Raw-DB repository — use LinkHealthRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use LinkHealthRepositoryInterface for public API')]
 final readonly class DbLinkHealthRepository implements LinkHealthRepositoryInterface
 {
     private const string SQL_FIND_BY_CONTENT = <<<'SQL'

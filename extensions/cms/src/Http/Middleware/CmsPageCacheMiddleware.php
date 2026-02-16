@@ -15,15 +15,16 @@ use Pulsar\Extension\Cms\Config\CmsCacheConfig;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
 
-use function array_filter;
 use function array_key_exists;
 use function array_values;
 use function hash;
 use function in_array;
 use function is_array;
+use function is_int;
 use function is_string;
 use function json_decode;
 use function json_encode;
+use function ksort;
 use function sprintf;
 use function str_starts_with;
 use function strtoupper;
@@ -42,7 +43,7 @@ use const JSON_THROW_ON_ERROR;
  * - Non-GET/HEAD methods
  * - _nocache query parameter present
  */
-#[Internal(reason: 'CMS middleware — not a public API surface')]
+#[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 {
     public function __construct(
@@ -67,8 +68,8 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 
             if (is_array($decoded) && array_key_exists('body', $decoded)) {
                 $response = new Response(
-                    statusCode: (int) ($decoded['status'] ?? 200),
-                    headers: (array) ($decoded['headers'] ?? []),
+                    statusCode: is_int($decoded['status'] ?? null) ? $decoded['status'] : 200,
+                    headers: is_array($decoded['headers'] ?? null) ? $decoded['headers'] : [],
                     body: (string) $decoded['body'],
                 );
 
@@ -111,13 +112,61 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
         return false;
     }
 
+    /** @var list<string> Query parameter prefixes excluded from the cache key. */
+    private const array EXCLUDED_QUERY_PREFIXES = ['utm_', 'fbclid', 'gclid', 'msclkid'];
+
     private function computeCacheKey(ServerRequestInterface $request): string
     {
-        $tenantId = (string) ($request->getAttribute('tenant_id') ?? 'default');
-        $locale = (string) ($request->getAttribute('locale') ?? 'en');
+        $rawTenantId = $request->getAttribute('tenant_id');
+        $tenantId = is_string($rawTenantId) ? $rawTenantId : 'default';
+        $rawLocale = $request->getAttribute('locale');
+        $locale = is_string($rawLocale) ? $rawLocale : 'en';
         $path = ltrim($request->getUri()->getPath(), '/');
 
-        return sprintf('cms_page:%s:%s:%s', $tenantId, $locale, hash('xxh3', $path));
+        // Include filtered, sorted query params in the cache key so different
+        // query strings produce different cache entries. Marketing/tracking
+        // parameters and the _nocache flag are excluded.
+        /** @var array<string, mixed> $queryParams */
+        $queryParams = $request->getQueryParams();
+        $filtered = $this->filterQueryParams($queryParams);
+        ksort($filtered);
+        $queryHash = $filtered !== [] ? '?' . http_build_query($filtered) : '';
+
+        return sprintf('cms_page:%s:%s:%s', $tenantId, $locale, hash('xxh3', $path . $queryHash));
+    }
+
+    /**
+     * Filter out tracking and cache-bypass query parameters.
+     *
+     * @param array<string, mixed> $params
+     *
+     * @return array<string, mixed>
+     */
+    private function filterQueryParams(array $params): array
+    {
+        $filtered = [];
+
+        foreach ($params as $key => $value) {
+            if ($key === '_nocache') {
+                continue;
+            }
+
+            $excluded = false;
+
+            foreach (self::EXCLUDED_QUERY_PREFIXES as $prefix) {
+                if (str_starts_with($key, $prefix)) {
+                    $excluded = true;
+
+                    break;
+                }
+            }
+
+            if (!$excluded) {
+                $filtered[$key] = $value;
+            }
+        }
+
+        return $filtered;
     }
 
     private function storeResponse(string $cacheKey, ResponseInterface $response, ServerRequestInterface $request): void
@@ -186,6 +235,6 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 
         $tags[] = 'cms_settings';
 
-        return array_values(array_filter($tags));
+        return array_values(array_unique($tags));
     }
 }

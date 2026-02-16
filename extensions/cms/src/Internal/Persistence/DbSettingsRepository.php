@@ -13,13 +13,14 @@ use Pulsar\Extension\Cms\Settings\SiteSetting;
 
 use function array_map;
 use function implode;
+use function is_scalar;
 use function json_decode;
 use function json_encode;
 use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
 
-#[Internal(reason: 'Raw-DB repository — use SettingsServiceInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use SettingsServiceInterface for public API')]
 final readonly class DbSettingsRepository
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
@@ -192,11 +193,11 @@ final readonly class DbSettingsRepository
     public static function encodeValue(mixed $value, string $valueType): string
     {
         return match ($valueType) {
-            'int' => (string) (int) $value,
-            'float' => (string) (float) $value,
+            'int' => (string) (is_numeric($value) ? (int) $value : 0),
+            'float' => (string) (is_numeric($value) ? (float) $value : 0.0),
             'bool' => $value ? 'true' : 'false',
             'json' => json_encode($value, JSON_THROW_ON_ERROR),
-            default => (string) $value,
+            default => is_scalar($value) ? (string) $value : '',
         };
     }
 

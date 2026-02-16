@@ -13,7 +13,7 @@ use Pulsar\Extension\Cms\Publishing\PublishResult;
 /**
  * Default web publishing channel.
  *
- * Web publishing is handled by the content controller — this channel
+ * Web publishing is handled by the content controller: this channel
  * always succeeds as a no-op to confirm the web channel participated.
  */
 #[Internal(reason: 'Use PublishingChannelInterface for public API')]

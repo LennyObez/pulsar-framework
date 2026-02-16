@@ -7,6 +7,10 @@ namespace Pulsar\Extension\Cms\Content;
 use DateTimeImmutable;
 use Pulsar\Api\Api;
 
+use function sodium_crypto_generichash;
+
+use const SODIUM_CRYPTO_GENERICHASH_BYTES;
+
 /**
  * Immutable snapshot of a content translation at a point in time.
  *
@@ -106,6 +110,6 @@ final readonly class ContentRevision
             $metaDescription ?? '',
         ]);
 
-        return hash('blake2b', $payload);
+        return bin2hex(sodium_crypto_generichash($payload, '', SODIUM_CRYPTO_GENERICHASH_BYTES));
     }
 }

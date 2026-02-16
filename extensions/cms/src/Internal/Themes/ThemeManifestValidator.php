@@ -57,19 +57,19 @@ final readonly class ThemeManifestValidator implements ThemeManifestValidatorInt
 
         // Optional warnings
         if ($manifest->description === null || trim($manifest->description) === '') {
-            $warnings[] = 'Missing description — recommended for theme marketplace listing';
+            $warnings[] = 'Missing description: recommended for theme marketplace listing';
         }
 
         if ($manifest->authorName === null || trim($manifest->authorName) === '') {
-            $warnings[] = 'Missing author_name — recommended for attribution';
+            $warnings[] = 'Missing author_name: recommended for attribution';
         }
 
         if ($manifest->license === null || trim($manifest->license) === '') {
-            $warnings[] = 'Missing license — recommended for compliance';
+            $warnings[] = 'Missing license: recommended for compliance';
         }
 
         if ($manifest->regions === []) {
-            $warnings[] = 'No regions declared — theme may not render correctly';
+            $warnings[] = 'No regions declared: theme may not render correctly';
         }
 
         if ($errors !== []) {

@@ -6,6 +6,9 @@ namespace Pulsar\Extension\Cms\LiveCss;
 
 use Pulsar\Api\Api;
 
+use function is_bool;
+use function is_int;
+
 /**
  * Configuration for the Live CSS editor subsystem.
  */
@@ -29,9 +32,9 @@ final readonly class LiveCssConfig
     public static function fromArray(array $data): self
     {
         return new self(
-            enabled: (bool) ($data['enabled'] ?? true),
-            maxCssLength: (int) ($data['max_css_length'] ?? 100_000),
-            allowExternalFonts: (bool) ($data['allow_external_fonts'] ?? false),
+            enabled: is_bool($data['enabled'] ?? null) ? $data['enabled'] : true,
+            maxCssLength: is_int($data['max_css_length'] ?? null) ? $data['max_css_length'] : 100_000,
+            allowExternalFonts: is_bool($data['allow_external_fonts'] ?? null) ? $data['allow_external_fonts'] : false,
         );
     }
 }

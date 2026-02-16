@@ -6,8 +6,10 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
-use function array_map;
 use function is_array;
+use function is_bool;
+use function is_int;
+use function is_string;
 
 /**
  * Media upload and processing configuration.
@@ -17,22 +19,25 @@ final readonly class MediaConfig
 {
     /**
      * @param string $disk Storage disk name
-     * @param int $maxUploadSize Maximum upload size in bytes (default: 10 MB)
+     * @param int $maxUploadSize Maximum upload size in bytes (default: 50 MB)
      * @param list<string> $allowedMimeTypes Permitted MIME types for upload
      * @param list<string> $allowedExtensions Permitted file extensions
      * @param int $maxImageWidth Maximum image width in pixels
      * @param int $maxImageHeight Maximum image height in pixels
      * @param int $maxPixelCount Maximum total pixel count (width x height)
      * @param bool $preserveExif Whether to preserve EXIF data on images
+     * @param int $jpegQuality JPEG compression quality (0-100)
      * @param int $webpQuality WebP conversion quality (0-100)
      * @param int $avifQuality AVIF conversion quality (0-100)
      * @param bool $avifEnabled Whether AVIF derivative generation is enabled
      * @param string $storagePath Base storage path for media files
      * @param list<ImageVariantConfig> $imageVariants Configured image variant definitions
+     * @param bool $progressiveJpeg Whether to generate progressive JPEGs
+     * @param bool $preserveOriginal Whether to always store untouched uploads alongside derivatives
      */
     public function __construct(
         public string $disk = 'local',
-        public int $maxUploadSize = 10_485_760,
+        public int $maxUploadSize = 52_428_800,
         public array $allowedMimeTypes = [
             'image/jpeg',
             'image/png',
@@ -47,11 +52,14 @@ final readonly class MediaConfig
         public int $maxImageHeight = 16384,
         public int $maxPixelCount = 100_000_000,
         public bool $preserveExif = false,
+        public int $jpegQuality = 85,
         public int $webpQuality = 80,
         public int $avifQuality = 60,
         public bool $avifEnabled = true,
         public string $storagePath = 'storage/cms/media',
         public array $imageVariants = [],
+        public bool $progressiveJpeg = true,
+        public bool $preserveOriginal = true,
     ) {}
 
     /**
@@ -59,19 +67,21 @@ final readonly class MediaConfig
      */
     public static function fromArray(array $data): self
     {
-        $rawVariants = $data['image_variants'] ?? [];
-        $imageVariants = is_array($rawVariants)
-            ? array_map(
-                /** @param array<string, mixed> $v */
-                static fn(array $v): ImageVariantConfig => ImageVariantConfig::fromArray($v),
-                $rawVariants,
-            )
-            : [];
+        $rawVariants = is_array($data['image_variants'] ?? null) ? $data['image_variants'] : [];
+        /** @var list<ImageVariantConfig> $imageVariants */
+        $imageVariants = [];
+
+        foreach ($rawVariants as $v) {
+            if (is_array($v)) {
+                /** @var array<string, mixed> $v */
+                $imageVariants[] = ImageVariantConfig::fromArray($v);
+            }
+        }
 
         return new self(
-            disk: (string) ($data['disk'] ?? 'local'),
-            maxUploadSize: (int) ($data['max_upload_size'] ?? 10_485_760),
-            allowedMimeTypes: (array) ($data['allowed_mime_types'] ?? [
+            disk: is_string($data['disk'] ?? null) ? $data['disk'] : 'local',
+            maxUploadSize: is_int($data['max_upload_size'] ?? null) ? $data['max_upload_size'] : 52_428_800,
+            allowedMimeTypes: self::toStringList($data['allowed_mime_types'] ?? null, [
                 'image/jpeg',
                 'image/png',
                 'image/webp',
@@ -80,18 +90,38 @@ final readonly class MediaConfig
                 'image/svg+xml',
                 'application/pdf',
             ]),
-            allowedExtensions: (array) ($data['allowed_extensions'] ?? [
+            allowedExtensions: self::toStringList($data['allowed_extensions'] ?? null, [
                 'jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'svg', 'pdf',
             ]),
-            maxImageWidth: (int) ($data['max_image_width'] ?? 16384),
-            maxImageHeight: (int) ($data['max_image_height'] ?? 16384),
-            maxPixelCount: (int) ($data['max_pixel_count'] ?? 100_000_000),
-            preserveExif: (bool) ($data['preserve_exif'] ?? false),
-            webpQuality: (int) ($data['webp_quality'] ?? 80),
-            avifQuality: (int) ($data['avif_quality'] ?? 60),
-            avifEnabled: (bool) ($data['avif_enabled'] ?? true),
-            storagePath: (string) ($data['storage_path'] ?? 'storage/cms/media'),
+            maxImageWidth: is_int($data['max_image_width'] ?? null) ? $data['max_image_width'] : 16384,
+            maxImageHeight: is_int($data['max_image_height'] ?? null) ? $data['max_image_height'] : 16384,
+            maxPixelCount: is_int($data['max_pixel_count'] ?? null) ? $data['max_pixel_count'] : 100_000_000,
+            preserveExif: is_bool($data['preserve_exif'] ?? null) ? $data['preserve_exif'] : false,
+            jpegQuality: is_int($data['jpeg_quality'] ?? null) ? $data['jpeg_quality'] : 85,
+            webpQuality: is_int($data['webp_quality'] ?? null) ? $data['webp_quality'] : 80,
+            avifQuality: is_int($data['avif_quality'] ?? null) ? $data['avif_quality'] : 60,
+            avifEnabled: is_bool($data['avif_enabled'] ?? null) ? $data['avif_enabled'] : true,
+            storagePath: is_string($data['storage_path'] ?? null) ? $data['storage_path'] : 'storage/cms/media',
             imageVariants: $imageVariants,
+            progressiveJpeg: is_bool($data['progressive_jpeg'] ?? null) ? $data['progressive_jpeg'] : true,
+            preserveOriginal: is_bool($data['preserve_original'] ?? null) ? $data['preserve_original'] : true,
         );
+    }
+
+    /**
+     * @param list<string> $default
+     * @return list<string>
+     */
+    private static function toStringList(mixed $raw, array $default): array
+    {
+        if (!is_array($raw)) {
+            return $default;
+        }
+        $result = [];
+        foreach ($raw as $item) {
+            $result[] = is_string($item) ? $item : '';
+        }
+
+        return $result;
     }
 }

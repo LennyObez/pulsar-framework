@@ -15,7 +15,7 @@ use Pulsar\Security\Crypto\MasterKey;
  *
  * Context strings are exactly 8 bytes per libsodium KDF requirements.
  */
-#[Internal(reason: 'CMS security internals — use via service binding')]
+#[Internal(reason: 'CMS security internals; use via service binding')]
 final readonly class CmsKeyManager
 {
     public function __construct(

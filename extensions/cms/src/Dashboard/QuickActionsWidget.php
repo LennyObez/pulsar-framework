@@ -11,7 +11,7 @@ use Pulsar\Api\Internal;
  *
  * Renders "New Article", "New Page", "Upload Media", and "View Site" links.
  */
-#[Internal(reason: 'CMS dashboard widget — implementation detail')]
+#[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class QuickActionsWidget implements DashboardWidgetInterface
 {
     public function __construct(

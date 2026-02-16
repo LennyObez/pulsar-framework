@@ -33,7 +33,7 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
 /**
  * Generates export bundles from CMS data with PII redaction and integrity hashing.
  */
-#[Internal(reason: 'Import/export internals — use ImportExportServiceInterface')]
+#[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
 final readonly class ExportBundleGenerator
 {
     /** PII field names that are redacted when includePii is false. */

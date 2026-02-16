@@ -23,6 +23,7 @@ use Throwable;
 use function array_keys;
 use function bin2hex;
 use function implode;
+use function is_scalar;
 use function is_string;
 use function sodium_crypto_generichash;
 use function str_contains;
@@ -32,7 +33,7 @@ use function str_replace;
  * Processes form submissions with CSRF validation, spam detection,
  * evidence hashing, email notification, and metric emission.
  */
-#[Internal(reason: 'Form submission service — use FormSubmissionServiceInterface for public API')]
+#[Internal(reason: 'Form submission service; use FormSubmissionServiceInterface for public API')]
 final readonly class FormSubmissionService implements FormSubmissionServiceInterface
 {
     /**
@@ -181,7 +182,7 @@ final readonly class FormSubmissionService implements FormSubmissionServiceInter
 
             foreach (array_keys($allKeys) as $key) {
                 $value = $submission->data[$key] ?? '';
-                $row[] = is_string($value) ? $value : (string) $value;
+                $row[] = is_string($value) ? $value : (is_scalar($value) ? (string) $value : '');
             }
 
             $lines[] = self::csvLine($row);

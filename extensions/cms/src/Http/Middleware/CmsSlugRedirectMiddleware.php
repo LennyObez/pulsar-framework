@@ -19,7 +19,7 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  * If a matching redirect is found for the current path, returns an
  * HTTP redirect response (301 or 308) and increments the hit counter.
  */
-#[Internal(reason: 'CMS middleware — not a public API surface')]
+#[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CmsSlugRedirectMiddleware implements MiddlewareInterface
 {
     public function __construct(
@@ -48,7 +48,7 @@ final readonly class CmsSlugRedirectMiddleware implements MiddlewareInterface
         $redirect = $this->redirectRepository->findByPath($lookupPath, $locale, $tenantId);
 
         if ($redirect === null && $locale !== null) {
-            // Try without locale prefix — the path may match a global redirect
+            // Try without locale prefix: the path may match a global redirect
             $redirect = $this->redirectRepository->findByPath($lookupPath, null, $tenantId);
         }
 
@@ -56,14 +56,14 @@ final readonly class CmsSlugRedirectMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        // Validate redirect status code — only 301 (permanent) and 308 (permanent, method-preserving)
+        // Validate redirect status code: only 301 (permanent) and 308 (permanent, method-preserving)
         $statusCode = $redirect->statusCode;
 
         if ($statusCode !== 301 && $statusCode !== 308) {
             $statusCode = 301;
         }
 
-        // Increment hit counter (fire-and-forget — don't block the response)
+        // Increment hit counter (fire-and-forget; don't block the response)
         $this->redirectRepository->incrementHits($redirect->id);
 
         $targetUrl = $redirect->toPath;
@@ -72,12 +72,12 @@ final readonly class CmsSlugRedirectMiddleware implements MiddlewareInterface
         if (!str_starts_with($targetUrl, 'http://') && !str_starts_with($targetUrl, 'https://')) {
             $targetUrl = '/' . ltrim($targetUrl, '/');
         } else {
-            // Absolute URL — validate that the host matches the current request to prevent open redirects
+            // Absolute URL: validate that the host matches the current request to prevent open redirects
             $targetHost = parse_url($targetUrl, PHP_URL_HOST);
             $requestHost = $request->getUri()->getHost();
 
             if ($targetHost !== false && $targetHost !== null && strtolower($targetHost) !== strtolower($requestHost)) {
-                // External redirect blocked — fall through to next handler
+                // External redirect blocked; fall through to next handler
                 return $handler->handle($request);
             }
         }

@@ -12,7 +12,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Themes\InstalledTheme;
 use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
 
-#[Internal(reason: 'Raw-DB repository — use ThemeRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ThemeRepositoryInterface for public API')]
 final readonly class DbThemeRepository implements ThemeRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

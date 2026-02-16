@@ -41,8 +41,8 @@ final readonly class ProgressBarBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $value = (int) ($data['value'] ?? 0);
-        $label = htmlspecialchars((string) ($data['label'] ?? ''), ENT_QUOTES, 'UTF-8');
+        $value = is_int($data['value'] ?? null) ? $data['value'] : 0;
+        $label = htmlspecialchars(is_string($data['label'] ?? null) ? $data['label'] : '', ENT_QUOTES, 'UTF-8');
         $showPercentage = $data['showPercentage'] ?? true;
 
         $colorStyle = '';

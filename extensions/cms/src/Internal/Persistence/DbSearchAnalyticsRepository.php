@@ -16,7 +16,7 @@ use function round;
 /**
  * Persistence layer for search analytics data.
  */
-#[Internal(reason: 'Raw-DB repository — use SearchServiceInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use SearchServiceInterface for public API')]
 final readonly class DbSearchAnalyticsRepository implements SearchAnalyticsRepositoryInterface
 {
     private const string SQL_INSERT = <<<'SQL'

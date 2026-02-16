@@ -18,7 +18,7 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-#[Internal(reason: 'Raw-DB repository — use ContentSnapshotServiceInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ContentSnapshotServiceInterface for public API')]
 final readonly class DbContentSnapshotRepository implements ContentSnapshotServiceInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'
@@ -128,10 +128,10 @@ final readonly class DbContentSnapshotRepository implements ContentSnapshotServi
 
     private static function hydrate(Row $row): ContentSnapshot
     {
-        /** @var array<string, mixed> $translationsJson */
+        /** @var list<array<string, mixed>> $translationsJson */
         $translationsJson = json_decode($row->getString('translations_json'), true, 512, JSON_THROW_ON_ERROR);
 
-        /** @var array<string, mixed> $blocksJson */
+        /** @var list<array<string, mixed>> $blocksJson */
         $blocksJson = json_decode($row->getString('blocks_json'), true, 512, JSON_THROW_ON_ERROR);
 
         /** @var list<string> $taxonomyTermIds */

@@ -28,7 +28,7 @@ use function str_replace;
  * campaign's locale and tenant, sends each email, and updates the send record
  * statuses. After all sends are processed, marks the campaign as Sent.
  */
-#[Internal(reason: 'Queue job — implementation detail')]
+#[Internal(reason: 'Queue job; implementation detail')]
 final readonly class CampaignDispatchJob implements QueueableInterface
 {
     public function __construct(

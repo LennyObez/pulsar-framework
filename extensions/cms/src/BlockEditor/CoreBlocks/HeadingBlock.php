@@ -11,6 +11,9 @@ use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
 use function htmlspecialchars;
 use function is_int;
 use function is_string;
+use function preg_replace;
+use function strtolower;
+use function trim;
 
 use const ENT_QUOTES;
 
@@ -39,14 +42,39 @@ final readonly class HeadingBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        $text = htmlspecialchars((string) ($data['text'] ?? ''), ENT_QUOTES, 'UTF-8');
-        $level = (int) ($data['level'] ?? 1);
+        $rawText = is_string($data['text'] ?? null) ? $data['text'] : '';
+        $text = htmlspecialchars($rawText, ENT_QUOTES, 'UTF-8');
+        $level = is_int($data['level'] ?? null) ? $data['level'] : 1;
 
         if ($level < 1 || $level > 6) {
             $level = 1;
         }
 
-        return "<h$level>$text</h$level>";
+        // Auto-generate anchor ID for table of contents
+        $anchor = $data['anchor'] ?? null;
+
+        if (!is_string($anchor) || $anchor === '') {
+            $anchor = self::slugify($rawText);
+        } else {
+            $anchor = htmlspecialchars($anchor, ENT_QUOTES, 'UTF-8');
+        }
+
+        $className = isset($data['className']) && is_string($data['className'])
+            ? ' class="' . htmlspecialchars($data['className'], ENT_QUOTES, 'UTF-8') . '"'
+            : '';
+
+        $idAttr = $anchor !== '' ? " id=\"$anchor\"" : '';
+
+        return "<h$level$idAttr$className>$text</h$level>";
+    }
+
+    private static function slugify(string $text): string
+    {
+        $slug = strtolower($text);
+        $slug = (string) preg_replace('/[^a-z0-9\s-]/', '', $slug);
+        $slug = (string) preg_replace('/[\s-]+/', '-', $slug);
+
+        return trim($slug, '-');
     }
 
     #[Override]

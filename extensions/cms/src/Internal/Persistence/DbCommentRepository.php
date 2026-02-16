@@ -18,7 +18,7 @@ use Pulsar\Extension\Cms\Content\DataClassification;
 use function ceil;
 use function max;
 
-#[Internal(reason: 'Raw-DB repository — use CommentRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use CommentRepositoryInterface for public API')]
 final readonly class DbCommentRepository implements CommentRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

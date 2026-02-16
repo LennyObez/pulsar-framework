@@ -26,7 +26,7 @@ use function is_string;
  * (only bots would fill a hidden field), the request is silently rejected
  * with a fake 200 success response to avoid tipping off the bot.
  */
-#[Internal(reason: 'CMS middleware — not a public API surface')]
+#[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CommentHoneypotMiddleware implements MiddlewareInterface
 {
     public function __construct(

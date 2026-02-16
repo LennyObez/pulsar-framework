@@ -20,7 +20,7 @@ use function is_string;
  * Applies X-Robots-Tag, Link (canonical), and content language headers
  * based on the CMS configuration and the current request context.
  */
-#[Internal(reason: 'CMS middleware — not a public API surface')]
+#[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CmsSeoHeadersMiddleware implements MiddlewareInterface
 {
     public function __construct(

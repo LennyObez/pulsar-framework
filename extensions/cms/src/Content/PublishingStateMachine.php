@@ -7,7 +7,7 @@ namespace Pulsar\Extension\Cms\Content;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Exception\CmsException;
-use Pulsar\Extension\Cms\Internal\Publishing\PublishingOrchestrator;
+use Pulsar\Extension\Cms\Publishing\PublishingOrchestratorInterface;
 
 /**
  * Validates and applies publishing status transitions on Content aggregates.
@@ -22,7 +22,7 @@ use Pulsar\Extension\Cms\Internal\Publishing\PublishingOrchestrator;
 final readonly class PublishingStateMachine
 {
     public function __construct(
-        private ?PublishingOrchestrator $orchestrator = null,
+        private ?PublishingOrchestratorInterface $orchestrator = null,
     ) {}
 
     /**

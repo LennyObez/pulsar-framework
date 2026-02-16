@@ -25,7 +25,7 @@ use function is_string;
  *
  * Gracefully handles a missing MetricRegistry by passing through without recording.
  */
-#[Internal(reason: 'CMS HTTP middleware — implementation detail')]
+#[Internal(reason: 'CMS HTTP middleware; implementation detail')]
 final readonly class RateLimitMetricsMiddleware implements MiddlewareInterface
 {
     public function __construct(

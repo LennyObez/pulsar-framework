@@ -14,7 +14,7 @@ use Pulsar\Extension\Cms\Collaboration\CollaborationRepositoryInterface;
 use Pulsar\Extension\Cms\Collaboration\CollaborationSession;
 use Pulsar\Extension\Cms\Collaboration\CrdtDocument;
 
-#[Internal(reason: 'Raw-DB repository — use CollaborationRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use CollaborationRepositoryInterface for public API')]
 final readonly class DbCollaborationRepository implements CollaborationRepositoryInterface
 {
     private const string SQL_GET_DOCUMENT = <<<'SQL'

@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
 
+use function is_string;
+
 /**
  * Multi-channel publishing configuration.
  */
@@ -33,8 +35,8 @@ final readonly class PublishingConfig
         return new self(
             rssEnabled: (bool) ($data['rss_enabled'] ?? false),
             staticSiteEnabled: (bool) ($data['static_site_enabled'] ?? false),
-            staticSiteOutputPath: (string) ($data['static_site_output_path'] ?? './public/static'),
-            rssFeedPath: (string) ($data['rss_feed_path'] ?? './public/feed.xml'),
+            staticSiteOutputPath: is_string($data['static_site_output_path'] ?? null) ? $data['static_site_output_path'] : './public/static',
+            rssFeedPath: is_string($data['rss_feed_path'] ?? null) ? $data['rss_feed_path'] : './public/feed.xml',
         );
     }
 }

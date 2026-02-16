@@ -6,6 +6,9 @@ namespace Pulsar\Extension\Cms\Commerce;
 
 use Pulsar\Api\Api;
 
+use function is_array;
+use function is_string;
+
 /**
  * Configuration for the commerce subsystem.
  */
@@ -46,14 +49,23 @@ final readonly class CommerceConfig
     {
         $taxRates = [];
 
-        foreach ($data['taxRates'] ?? [] as $rate) {
-            $taxRates[] = TaxRateConfig::fromArray($rate);
+        $rawTaxRates = is_array($data['taxRates'] ?? null) ? $data['taxRates'] : [];
+
+        foreach ($rawTaxRates as $rate) {
+            if (is_array($rate)) {
+                /** @var array<string, mixed> $rate */
+                $taxRates[] = TaxRateConfig::fromArray($rate);
+            }
         }
 
         $shippingRates = [];
+        $rawShippingRates = is_array($data['shippingRates'] ?? null) ? $data['shippingRates'] : [];
 
-        foreach ($data['shippingRates'] ?? [] as $rate) {
-            $shippingRates[] = ShippingRateConfig::fromArray($rate);
+        foreach ($rawShippingRates as $rate) {
+            if (is_array($rate)) {
+                /** @var array<string, mixed> $rate */
+                $shippingRates[] = ShippingRateConfig::fromArray($rate);
+            }
         }
 
         $defaultEuCodes = [
@@ -65,13 +77,16 @@ final readonly class CommerceConfig
         return new self(
             taxRates: $taxRates,
             shippingRates: $shippingRates,
-            invoiceRenderer: (string) ($data['invoiceRenderer'] ?? 'html'),
-            downloadTokenExpiryDays: (int) ($data['downloadTokenExpiryDays'] ?? 30),
-            maxDownloads: (int) ($data['maxDownloads'] ?? 5),
+            invoiceRenderer: isset($data['invoiceRenderer']) ? (is_string($data['invoiceRenderer'] ?? null) ? $data['invoiceRenderer'] : '') : 'html',
+            downloadTokenExpiryDays: is_numeric($data['downloadTokenExpiryDays'] ?? null) ? (int) $data['downloadTokenExpiryDays'] : 30,
+            maxDownloads: is_numeric($data['maxDownloads'] ?? null) ? (int) $data['maxDownloads'] : 5,
             taxRequired: (bool) ($data['taxRequired'] ?? false),
-            currency: (string) ($data['currency'] ?? 'EUR'),
-            sellerCountry: (string) ($data['sellerCountry'] ?? 'US'),
-            euCountryCodes: array_map(strval(...), $data['euCountryCodes'] ?? $defaultEuCodes),
+            currency: isset($data['currency']) ? (is_string($data['currency'] ?? null) ? $data['currency'] : '') : 'EUR',
+            sellerCountry: isset($data['sellerCountry']) ? (is_string($data['sellerCountry'] ?? null) ? $data['sellerCountry'] : '') : 'US',
+            euCountryCodes: array_values(array_map(
+                static fn(mixed $v): string => is_string($v) ? $v : '',
+                is_array($data['euCountryCodes'] ?? null) ? $data['euCountryCodes'] : $defaultEuCodes,
+            )),
         );
     }
 }

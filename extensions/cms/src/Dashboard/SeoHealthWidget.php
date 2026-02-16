@@ -14,7 +14,7 @@ use function count;
  * Dashboard widget showing SEO health: broken link count, sitemap status,
  * and last sitemap generation timestamp.
  */
-#[Internal(reason: 'CMS dashboard widget — implementation detail')]
+#[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class SeoHealthWidget implements DashboardWidgetInterface
 {
     public function __construct(

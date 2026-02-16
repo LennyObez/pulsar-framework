@@ -15,7 +15,7 @@ use Pulsar\Extension\Cms\Content\PublishingStatus;
 
 use function sprintf;
 
-#[Internal(reason: 'Caching decorator for content — use ContentRepositoryInterface')]
+#[Internal(reason: 'Caching decorator for content; use ContentRepositoryInterface')]
 final readonly class CachedContentRepository implements ContentRepositoryInterface
 {
     private const int TTL = 60;
@@ -45,6 +45,12 @@ final readonly class CachedContentRepository implements ContentRepositoryInterfa
         }
 
         return $content;
+    }
+
+    #[Override]
+    public function findByImportId(string $importId): ?Content
+    {
+        return $this->inner->findByImportId($importId);
     }
 
     #[Override]

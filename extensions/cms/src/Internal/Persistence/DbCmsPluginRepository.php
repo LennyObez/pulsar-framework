@@ -17,7 +17,7 @@ use function json_encode;
 
 use const JSON_THROW_ON_ERROR;
 
-#[Internal(reason: 'Raw-DB repository — use CmsPluginRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use CmsPluginRepositoryInterface for public API')]
 final readonly class DbCmsPluginRepository implements CmsPluginRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

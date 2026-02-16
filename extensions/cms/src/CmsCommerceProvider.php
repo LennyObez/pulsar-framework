@@ -43,7 +43,7 @@ use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 /**
  * Binds commerce services: checkout, tax, promotions, invoicing, digital delivery.
  */
-#[Internal(reason: 'CMS service wiring — use interfaces for public API')]
+#[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsCommerceProvider
 {
     public function register(

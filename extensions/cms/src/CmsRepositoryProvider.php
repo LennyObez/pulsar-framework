@@ -85,7 +85,7 @@ use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 /**
  * Binds all CMS repository interfaces to their database-backed implementations.
  */
-#[Internal(reason: 'CMS service wiring — use interfaces for public API')]
+#[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsRepositoryProvider
 {
     public function register(ContainerInterface $container): void

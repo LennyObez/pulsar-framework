@@ -13,7 +13,7 @@ use Pulsar\Extension\Cms\Taxonomy\Taxonomy;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyTerm;
 
-#[Internal(reason: 'Raw-DB repository — use TaxonomyRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use TaxonomyRepositoryInterface for public API')]
 final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
@@ -48,6 +48,41 @@ final readonly class DbTaxonomyRepository implements TaxonomyRepositoryInterface
         private ConnectionInterface $connection,
         private ?string $tenantId,
     ) {}
+
+    public function findByImportId(string $importId): ?Taxonomy
+    {
+        $result = $this->connection->query(
+            'SELECT * FROM cms_taxonomies WHERE import_id = :import_id LIMIT 1',
+            ['import_id' => $importId],
+        );
+        $row = $result->first();
+
+        return $row !== null ? new Taxonomy(
+            id: $row->getString('id'),
+            tenantId: $row->getNullableString('tenant_id'),
+            slug: $row->getString('slug'),
+            hierarchical: $row->getBool('hierarchical'),
+            createdAt: new DateTimeImmutable($row->getString('created_at')),
+        ) : null;
+    }
+
+    public function findTermByImportId(string $importId): ?TaxonomyTerm
+    {
+        $result = $this->connection->query(
+            'SELECT * FROM cms_taxonomy_terms WHERE import_id = :import_id LIMIT 1',
+            ['import_id' => $importId],
+        );
+        $row = $result->first();
+
+        return $row !== null ? new TaxonomyTerm(
+            id: $row->getString('id'),
+            taxonomyId: $row->getString('taxonomy_id'),
+            tenantId: $row->getNullableString('tenant_id'),
+            parentId: $row->getNullableString('parent_id'),
+            sortOrder: $row->getInt('sort_order'),
+            createdAt: new DateTimeImmutable($row->getString('created_at')),
+        ) : null;
+    }
 
     public function findBySlug(string $slug, ?string $tenantId = null): ?Taxonomy
     {

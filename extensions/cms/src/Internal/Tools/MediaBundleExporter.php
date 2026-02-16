@@ -34,11 +34,11 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
  * Creates ZIP bundles containing CMS export data and media files.
  *
  * ZIP structure:
- *  - manifest.json — schema version, timestamp, entity counts, evidence hash
- *  - data.json — export bundle data
- *  - media/{filename} — actual media files from storage
+ *  - manifest.json: schema version, timestamp, entity counts, evidence hash
+ *  - data.json: export bundle data
+ *  - media/{filename}: actual media files from storage
  */
-#[Internal(reason: 'Media bundle export internals — use MediaBundleExporterInterface')]
+#[Internal(reason: 'Media bundle export internals; use MediaBundleExporterInterface')]
 final readonly class MediaBundleExporter implements MediaBundleExporterInterface
 {
     private const string SCHEMA_VERSION = '1.0.0';

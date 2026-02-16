@@ -25,7 +25,7 @@ use Pulsar\Extension\Cms\Notification\ReviewRequestNotification;
  * Real channel delivery (email, database, etc.) is a framework-level concern
  * wired through NotificationManagerInterface when available.
  */
-#[Internal(reason: 'CMS notification wiring — use CmsNotificationInterface for public API')]
+#[Internal(reason: 'CMS notification wiring; use CmsNotificationInterface for public API')]
 final readonly class CmsNotificationDispatcher
 {
     public function __construct(

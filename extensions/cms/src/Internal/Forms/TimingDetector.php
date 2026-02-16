@@ -18,7 +18,7 @@ use function time;
  * Human users need at least a few seconds to fill a form.
  * Bots typically submit instantly.
  */
-#[Internal(reason: 'Spam detector — use SpamDetectorInterface')]
+#[Internal(reason: 'Spam detector; use SpamDetectorInterface')]
 final readonly class TimingDetector implements SpamDetectorInterface
 {
     private const int MIN_SECONDS = 3;
@@ -26,7 +26,7 @@ final readonly class TimingDetector implements SpamDetectorInterface
     #[Override]
     public function detect(array $data, array $meta): SpamResult
     {
-        // Only read from $meta — the controller extracts _form_rendered_at before
+        // Only read from $meta: the controller extracts _form_rendered_at before
         // stripping _-prefixed keys from $data, so $data never contains this key.
         $renderedAt = $meta['_form_rendered_at'] ?? null;
 

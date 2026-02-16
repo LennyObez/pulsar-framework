@@ -11,7 +11,7 @@ use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 
 use function sprintf;
 
-#[Internal(reason: 'Caching decorator for settings — use SettingsServiceInterface')]
+#[Internal(reason: 'Caching decorator for settings; use SettingsServiceInterface')]
 final readonly class CachedSettingsService implements SettingsServiceInterface
 {
     private const int TTL = 300;

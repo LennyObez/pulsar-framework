@@ -55,7 +55,7 @@ final readonly class TableBlock implements BlockTypeInterface
 
         /** @var list<mixed> $rows */
         $rows = $data['rows'] ?? [];
-        $hasHeaderRow = (bool) ($data['hasHeaderRow'] ?? true);
+        $hasHeaderRow = is_bool($data['hasHeaderRow'] ?? null) ? $data['hasHeaderRow'] : true;
 
         $html = '<table>';
 
@@ -79,7 +79,7 @@ final readonly class TableBlock implements BlockTypeInterface
             $html .= '<tr>';
 
             foreach ($row as $cell) {
-                $html .= '<td>' . htmlspecialchars($cell, ENT_QUOTES, 'UTF-8') . '</td>';
+                $html .= '<td>' . htmlspecialchars(is_string($cell) ? $cell : '', ENT_QUOTES, 'UTF-8') . '</td>';
             }
 
             $html .= '</tr>';

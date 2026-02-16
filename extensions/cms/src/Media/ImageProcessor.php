@@ -12,7 +12,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
 use function ceil;
 use function exif_read_data;
 use function imageavif;
-use function imagecolorallocate;
+use function imagecolorallocatealpha;
 use function imagecopyresampled;
 use function imagecreatefromgif;
 use function imagecreatefromjpeg;
@@ -21,6 +21,7 @@ use function imagecreatefromwebp;
 use function imagecreatetruecolor;
 use function imagefill;
 use function imagegif;
+use function imageinterlace;
 use function imagejpeg;
 use function imagepng;
 use function imagesx;
@@ -58,23 +59,21 @@ final readonly class ImageProcessor implements ImageProcessorInterface
             $height = $sourceHeight;
         }
 
-        $destination = imagecreatetruecolor($width, $height);
+        $destination = imagecreatetruecolor(max(1, $width), max(1, $height));
 
         if ($destination === false) {
             throw CmsException::invalidImageFile();
         }
 
-        // Preserve transparency for PNG and WebP
+        // Preserve alpha transparency for PNG and WebP
         if ($format === 'png' || $format === 'webp') {
-            $transparent = imagecolorallocate($destination, 0, 0, 0);
+            imagealphablending($destination, false);
+            imagesavealpha($destination, true);
+            $transparent = imagecolorallocatealpha($destination, 0, 0, 0, 127);
 
             if ($transparent !== false) {
                 imagefill($destination, 0, 0, $transparent);
-                imagecolortransparent($destination, $transparent);
             }
-
-            imagesavealpha($destination, true);
-            imagealphablending($destination, false);
         }
 
         imagecopyresampled($destination, $source, 0, 0, 0, 0, $width, $height, $sourceWidth, $sourceHeight);
@@ -101,7 +100,7 @@ final readonly class ImageProcessor implements ImageProcessorInterface
 
         // Resize to 20px wide, proportional height
         $targetWidth = 20;
-        $targetHeight = (int) ceil(20.0 * (float) $sourceHeight / (float) $sourceWidth);
+        $targetHeight = max(1, (int) ceil(20.0 * (float) $sourceHeight / (float) $sourceWidth));
 
         $destination = imagecreatetruecolor($targetWidth, $targetHeight);
 
@@ -139,7 +138,16 @@ final readonly class ImageProcessor implements ImageProcessorInterface
 
     public function stripExif(string $sourcePath): string
     {
-        // GD re-encode inherently strips EXIF data
+        // GD re-encode inherently strips EXIF data: detect source format
+        // and re-encode in the same format to avoid lossy conversion.
+        $info = @getimagesize($sourcePath);
+        $format = match ($info[2] ?? null) {
+            IMAGETYPE_PNG => 'png',
+            IMAGETYPE_GIF => 'gif',
+            IMAGETYPE_WEBP => 'webp',
+            default => 'jpg',
+        };
+
         $source = $this->loadImage($sourcePath);
         $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_exif_');
 
@@ -147,9 +155,8 @@ final readonly class ImageProcessor implements ImageProcessorInterface
             throw CmsException::invalidImageFile();
         }
 
-        $outputPath = $tempFile . '.jpg';
-
-        imagejpeg($source, $outputPath, 95);
+        $outputPath = $tempFile . '.' . $format;
+        $this->saveImage($source, $outputPath, $format);
         unset($source);
 
         return $outputPath;
@@ -190,8 +197,13 @@ final readonly class ImageProcessor implements ImageProcessorInterface
      */
     private function saveImage(GdImage $image, string $path, string $format): void
     {
+        // Enable progressive JPEG for better perceived loading on slow connections
+        if (($format === 'jpeg' || $format === 'jpg') && $this->config->progressiveJpeg) {
+            imageinterlace($image, true);
+        }
+
         match ($format) {
-            'jpeg', 'jpg' => imagejpeg($image, $path, 85),
+            'jpeg', 'jpg' => imagejpeg($image, $path, $this->config->jpegQuality),
             'png' => imagepng($image, $path, 6),
             'gif' => imagegif($image, $path),
             'webp' => imagewebp($image, $path, $this->config->webpQuality),

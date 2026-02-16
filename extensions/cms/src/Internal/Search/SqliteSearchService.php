@@ -173,7 +173,7 @@ final readonly class SqliteSearchService implements SearchServiceInterface
 
         foreach ($result->rows as $row) {
             $content = self::hydrateContent($row);
-            // bm25() returns negative values — lower (more negative) = better match
+            // bm25() returns negative values: lower (more negative) = better match
             $ftsRank = -$row->getFloat('fts_rank');
             $contentIds[] = $content->id;
             $ranked[] = ['content' => $content, 'fts_rank' => $ftsRank];
@@ -199,7 +199,7 @@ final readonly class SqliteSearchService implements SearchServiceInterface
         unset($entry);
 
         // Re-sort by final composite score (higher is better)
-        usort($ranked, static fn(array $a, array $b): int => $b['final_score'] <=> $a['final_score']);
+        usort($ranked, static fn(array $a, array $b): int => ($b['final_score'] ?? 0.0) <=> ($a['final_score'] ?? 0.0));
 
         // Apply pagination to re-ranked results
         $pageSlice = array_slice($ranked, $offset, $perPage);

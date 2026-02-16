@@ -12,7 +12,7 @@ use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
  * @deprecated Use PostgresSearchService directly. This alias exists for backward compatibility
  *             during the transition to multi-database search adapters.
  */
-#[Internal(reason: 'Deprecated — use SearchServiceFactory to obtain the correct adapter')]
+#[Internal(reason: 'Deprecated; use SearchServiceFactory to obtain the correct adapter')]
 final readonly class SearchService extends PostgresSearchService
 {
     public function __construct(

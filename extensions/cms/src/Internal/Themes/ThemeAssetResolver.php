@@ -54,7 +54,7 @@ final readonly class ThemeAssetResolver implements ThemeAssetResolverInterface
 
         // Append default extension if not present
         if (!str_contains($templateName, '.')) {
-            $templatePath .= '.pulsar.php';
+            $templatePath .= '.pulse.php';
         }
 
         $this->validatePathTraversal($templatePath, $templatesDir, $templateName);
@@ -88,14 +88,14 @@ final readonly class ThemeAssetResolver implements ThemeAssetResolverInterface
         }
 
         if (!hash_equals($theme->manifestHash, $currentHash)) {
-            $this->logger->warning('Theme integrity check failed — manifest hash mismatch', [
+            $this->logger->warning('Theme integrity check failed: manifest hash mismatch', [
                 'theme_id' => $themeId,
                 'slug' => $theme->slug,
                 'stored_hash' => $theme->manifestHash,
                 'current_hash' => $currentHash,
             ]);
 
-            return ProvenanceResult::failed('Manifest hash mismatch — theme files may have been tampered with');
+            return ProvenanceResult::failed('Manifest hash mismatch: theme files may have been tampered with');
         }
 
         return ProvenanceResult::verified();

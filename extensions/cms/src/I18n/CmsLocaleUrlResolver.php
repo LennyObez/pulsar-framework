@@ -21,10 +21,10 @@ use function str_starts_with;
  * content paths via the translation repository. Falls back to simple
  * locale prefix swapping when no content context is available.
  *
- * Registered as a singleton — use {@see withContentId()} to create a
+ * Registered as a singleton: use {@see withContentId()} to create a
  * per-request copy with content context for translated slug resolution.
  */
-#[Internal(reason: 'CMS i18n — locale URL resolution via content translations')]
+#[Internal(reason: 'CMS i18n; locale URL resolution via content translations')]
 final readonly class CmsLocaleUrlResolver implements LocaleUrlResolverInterface
 {
     public function __construct(
@@ -39,7 +39,7 @@ final readonly class CmsLocaleUrlResolver implements LocaleUrlResolverInterface
      *
      * Controllers call this per-request to bind the current content context
      * without mutating the shared singleton. The clone shares the stateless
-     * translation repository — safe for single-threaded PHP request handling.
+     * translation repository: safe for single-threaded PHP request handling.
      */
     public function withContentId(string $contentId): self
     {
@@ -50,7 +50,7 @@ final readonly class CmsLocaleUrlResolver implements LocaleUrlResolverInterface
     public function resolveAlternates(string $currentPath, string $currentLocale): array
     {
         if ($this->currentContentId === null) {
-            // No content context — fall back to prefix swapping
+            // No content context; fall back to prefix swapping
             $alternates = [];
 
             foreach ($this->config->supportedLocales as $locale) {

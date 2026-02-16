@@ -41,7 +41,7 @@ final readonly class HtmlBlock implements BlockTypeInterface
     {
         $html = $data['html'] ?? '';
 
-        return $this->sanitizer->sanitize((string) $html);
+        return $this->sanitizer->sanitize(is_string($html) ? $html : '');
     }
 
     #[Override]

@@ -498,9 +498,11 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                 $this->registerPsr4Autoloader($plugin->storagePath, $manifest->autoload['psr-4']);
             }
 
-            // 4. Fallback: direct file require
-            if (!class_exists($manifest->entryPoint)) {
-                $classFile = $plugin->storagePath . '/src/' . str_replace('\\', '/', $manifest->entryPoint) . '.php';
+            // 4. Fallback: direct file require (class_exists re-checked after autoloader registration)
+            $entryPointClass = $manifest->entryPoint;
+
+            if (!class_exists($entryPointClass)) {
+                $classFile = $plugin->storagePath . '/src/' . str_replace('\\', '/', $entryPointClass) . '.php';
 
                 if (file_exists($classFile)) {
                     require_once $classFile;

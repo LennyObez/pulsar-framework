@@ -17,6 +17,8 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 use Throwable;
 
+use function is_array;
+use function is_int;
 use function is_string;
 use function json_decode;
 use function json_encode;
@@ -27,7 +29,7 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Handles incoming payment provider webhooks for asynchronous payment events.
  */
-#[Internal(reason: 'Internal webhook processing — not part of public API')]
+#[Internal(reason: 'Internal webhook processing; not part of public API')]
 final readonly class WebhookHandler
 {
     /** Maximum age (in seconds) for a webhook timestamp to be considered valid. */
@@ -107,19 +109,26 @@ final readonly class WebhookHandler
         $object = $event['data']['object'] ?? [];
 
         try {
-            match ($type) {
-                'payment_intent.succeeded' => $this->handlePaymentSucceeded($object),
-                'payment_intent.payment_failed' => $this->handlePaymentFailed($object),
-                'charge.refunded' => $this->handleChargeRefunded($object),
-                default => $this->auditLogger?->log(
-                    AuditEvent::SystemEvent,
-                    AuditOutcome::Success,
-                    null,
-                    'cms.commerce.webhook.unhandled',
-                    'webhook:payment',
-                    ['type' => $type],
-                ),
-            };
+            $this->connection->transaction(function () use ($type, $object, $eventId): void {
+                match ($type) {
+                    'payment_intent.succeeded' => $this->handlePaymentSucceeded($object),
+                    'payment_intent.payment_failed' => $this->handlePaymentFailed($object),
+                    'charge.refunded' => $this->handleChargeRefunded($object),
+                    default => $this->auditLogger?->log(
+                        AuditEvent::SystemEvent,
+                        AuditOutcome::Success,
+                        null,
+                        'cms.commerce.webhook.unhandled',
+                        'webhook:payment',
+                        ['type' => $type],
+                    ),
+                };
+
+                // Record the event as processed within the same transaction
+                if ($eventId !== '') {
+                    $this->recordProcessedEvent($eventId);
+                }
+            });
         } catch (Throwable $e) {
             if ($this->queueDriver !== null) {
                 $this->dispatchRetry($eventId, $payload, $signature);
@@ -128,11 +137,6 @@ final readonly class WebhookHandler
             }
 
             throw $e;
-        }
-
-        // Record the event as processed to prevent replay
-        if ($eventId !== '') {
-            $this->recordProcessedEvent($eventId);
         }
     }
 
@@ -159,8 +163,9 @@ final readonly class WebhookHandler
      */
     private function handlePaymentSucceeded(array $object): void
     {
-        $paymentIntentId = (string) ($object['id'] ?? '');
-        $orderId = (string) ($object['metadata']['orderId'] ?? '');
+        $paymentIntentId = is_string($object['id'] ?? null) ? $object['id'] : '';
+        $metadata = is_array($object['metadata'] ?? null) ? $object['metadata'] : [];
+        $orderId = is_string($metadata['orderId'] ?? null) ? $metadata['orderId'] : '';
 
         if ($orderId === '') {
             return;
@@ -194,8 +199,9 @@ final readonly class WebhookHandler
      */
     private function handlePaymentFailed(array $object): void
     {
-        $orderId = (string) ($object['metadata']['orderId'] ?? '');
-        $reason = (string) ($object['failure_message'] ?? 'Payment failed');
+        $metadata = is_array($object['metadata'] ?? null) ? $object['metadata'] : [];
+        $orderId = is_string($metadata['orderId'] ?? null) ? $metadata['orderId'] : '';
+        $reason = is_string($object['failure_message'] ?? null) ? $object['failure_message'] : 'Payment failed';
 
         if ($orderId === '') {
             return;
@@ -218,8 +224,9 @@ final readonly class WebhookHandler
      */
     private function handleChargeRefunded(array $object): void
     {
-        $orderId = (string) ($object['metadata']['orderId'] ?? '');
-        $refundAmount = (int) ($object['amount_refunded'] ?? 0);
+        $metadata = is_array($object['metadata'] ?? null) ? $object['metadata'] : [];
+        $orderId = is_string($metadata['orderId'] ?? null) ? $metadata['orderId'] : '';
+        $refundAmount = is_int($object['amount_refunded'] ?? null) ? $object['amount_refunded'] : 0;
 
         if ($orderId === '' || $refundAmount === 0) {
             return;
@@ -239,7 +246,7 @@ final readonly class WebhookHandler
 
     private function dispatchRetry(string $eventId, string $payload, string $signature): void
     {
-        /** @var QueueDriverInterface $queueDriver — non-null guaranteed by caller */
+        /** @var QueueDriverInterface $queueDriver: non-null guaranteed by caller */
         $queueDriver = $this->queueDriver;
 
         $jobPayload = json_encode([

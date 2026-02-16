@@ -14,7 +14,7 @@ use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 
 use function max;
 
-#[Internal(reason: 'Raw-DB repository — use RedirectRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use RedirectRepositoryInterface for public API')]
 final readonly class DbRedirectRepository implements RedirectRepositoryInterface
 {
     private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';

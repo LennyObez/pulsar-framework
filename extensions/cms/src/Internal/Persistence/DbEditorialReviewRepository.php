@@ -12,7 +12,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Workflow\EditorialReview;
 use Pulsar\Extension\Cms\Workflow\ReviewStatus;
 
-#[Internal(reason: 'Raw-DB repository — use EditorialWorkflowServiceInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use EditorialWorkflowServiceInterface for public API')]
 final readonly class DbEditorialReviewRepository
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

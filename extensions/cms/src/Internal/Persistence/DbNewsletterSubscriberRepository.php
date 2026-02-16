@@ -20,7 +20,7 @@ use function max;
 /**
  * Database-backed newsletter subscriber repository.
  */
-#[Internal(reason: 'Raw-DB repository — use NewsletterSubscriberRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use NewsletterSubscriberRepositoryInterface for public API')]
 final readonly class DbNewsletterSubscriberRepository implements NewsletterSubscriberRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

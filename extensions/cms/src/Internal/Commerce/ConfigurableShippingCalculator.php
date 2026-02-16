@@ -15,6 +15,7 @@ use function array_filter;
 use function array_map;
 use function array_values;
 use function in_array;
+use function is_string;
 
 /**
  * Config-driven shipping calculator. Reads rates from CommerceConfig.
@@ -38,14 +39,14 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
             );
         }
 
-        $country = (string) ($address['country'] ?? '');
+        $country = is_string($address['country'] ?? null) ? $address['country'] : '';
         $subtotal = $this->calculateSubtotal($items);
 
         // Find the best matching rate for the destination country
         $rate = $this->findRate($country);
 
         if ($rate === null) {
-            // No configured rate — zero-cost standard shipping fallback
+            // No configured rate: zero-cost standard shipping fallback
             return new ShippingResult(
                 amount: 0,
                 method: ShippingMethod::Standard,
@@ -74,7 +75,7 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
 
     public function availableMethods(array $address): array
     {
-        $country = (string) ($address['country'] ?? '');
+        $country = is_string($address['country'] ?? null) ? $address['country'] : '';
 
         $methods = array_filter(
             $this->config->shippingRates,

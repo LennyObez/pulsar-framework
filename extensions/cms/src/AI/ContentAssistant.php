@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms\AI;
 
+use Pulsar\AI\AiClientInterface;
+use Pulsar\AI\AiResponse;
+use Pulsar\AI\Config\AiRequestOptions;
 use Pulsar\Api\Api;
 
 use function implode;
@@ -11,20 +14,23 @@ use function mb_strlen;
 
 /**
  * High-level AI content assistant that constructs focused prompts
- * and delegates to an LLM provider for generation.
+ * and delegates to the core AI client for generation.
+ *
+ * Uses the framework-level {@see AiClientInterface} for all LLM operations,
+ * unifying provider management across the CMS and core.
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentAssistant
 {
     public function __construct(
-        private LlmProviderInterface $provider,
+        private AiClientInterface $client,
         private ?PromptTemplateRegistry $templates = null,
     ) {}
 
     /**
      * Generate a content draft on the given topic.
      */
-    public function generateDraft(string $topic, string $tone = 'professional', int $targetWords = 500): LlmResponse
+    public function generateDraft(string $topic, string $tone = 'professional', int $targetWords = 500): AiResponse
     {
         $template = $this->templates?->get('generate_draft');
 
@@ -35,7 +41,7 @@ final readonly class ContentAssistant
                 'targetWords' => $targetWords,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $targetWords * 2,
                 systemPrompt: $template->systemPrompt,
@@ -45,10 +51,10 @@ final readonly class ContentAssistant
         $prompt = "Write a $targetWords-word article about the following topic. "
             . "Use a $tone tone throughout. "
             . 'Include an introduction, body paragraphs, and a conclusion. '
-            . "Do not include a title — only the body text.\n\n"
+            . "Do not include a title: only the body text.\n\n"
             . "Topic: $topic";
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.7,
             maxTokens: $targetWords * 2,
             systemPrompt: 'You are an expert content writer. Produce well-structured, original content.',
@@ -58,7 +64,7 @@ final readonly class ContentAssistant
     /**
      * Summarize content into a concise form.
      */
-    public function summarize(string $content, int $maxSentences = 3): LlmResponse
+    public function summarize(string $content, int $maxSentences = 3): AiResponse
     {
         $template = $this->templates?->get('summarize');
 
@@ -68,7 +74,7 @@ final readonly class ContentAssistant
                 'maxSentences' => $maxSentences,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -79,7 +85,7 @@ final readonly class ContentAssistant
             . "Be concise and capture the key points.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.3,
             maxTokens: 256,
             systemPrompt: 'You are a summarization expert. Return only the summary, nothing else.',
@@ -89,7 +95,7 @@ final readonly class ContentAssistant
     /**
      * Suggest titles for the given content.
      */
-    public function suggestTitle(string $content, int $count = 5): LlmResponse
+    public function suggestTitle(string $content, int $count = 5): AiResponse
     {
         $template = $this->templates?->get('suggest_title');
 
@@ -99,7 +105,7 @@ final readonly class ContentAssistant
                 'count' => $count,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -110,7 +116,7 @@ final readonly class ContentAssistant
             . "Return exactly $count titles, one per line, without numbering or bullet points.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.8,
             maxTokens: 256,
             systemPrompt: 'You are a headline specialist. Return only the titles, one per line.',
@@ -120,7 +126,7 @@ final readonly class ContentAssistant
     /**
      * Suggest an SEO-optimized meta description.
      */
-    public function suggestMetaDescription(string $content, int $maxLength = 160): LlmResponse
+    public function suggestMetaDescription(string $content, int $maxLength = 160): AiResponse
     {
         $template = $this->templates?->get('suggest_meta_description');
 
@@ -130,7 +136,7 @@ final readonly class ContentAssistant
                 'maxLength' => $maxLength,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -143,7 +149,7 @@ final readonly class ContentAssistant
             . "Return only the meta description text, nothing else.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.5,
             maxTokens: 128,
             systemPrompt: 'You are an SEO specialist. Return only the meta description.',
@@ -153,7 +159,7 @@ final readonly class ContentAssistant
     /**
      * Translate content between locales.
      */
-    public function translateContent(string $content, string $sourceLocale, string $targetLocale): LlmResponse
+    public function translateContent(string $content, string $sourceLocale, string $targetLocale): AiResponse
     {
         $template = $this->templates?->get('translate_content');
 
@@ -164,7 +170,7 @@ final readonly class ContentAssistant
                 'targetLocale' => $targetLocale,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: mb_strlen($content) * 2,
                 systemPrompt: $template->systemPrompt,
@@ -176,7 +182,7 @@ final readonly class ContentAssistant
             . "Return only the translated text, nothing else.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.3,
             maxTokens: mb_strlen($content) * 2,
             systemPrompt: 'You are a professional translator. Produce accurate, natural translations.',
@@ -186,14 +192,14 @@ final readonly class ContentAssistant
     /**
      * Suggest readability improvements for the given content.
      */
-    public function improveReadability(string $content): LlmResponse
+    public function improveReadability(string $content): AiResponse
     {
         $template = $this->templates?->get('improve_readability');
 
         if ($template !== null) {
             $prompt = $template->render(['content' => $content]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: mb_strlen($content) * 2,
                 systemPrompt: $template->systemPrompt,
@@ -206,7 +212,7 @@ final readonly class ContentAssistant
             . "Return only the improved text, nothing else.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.5,
             maxTokens: mb_strlen($content) * 2,
             systemPrompt: 'You are a readability expert. Produce clear, easy-to-read content.',
@@ -218,7 +224,7 @@ final readonly class ContentAssistant
      *
      * @param list<string> $keywords
      */
-    public function generateOutline(string $topic, array $keywords, string $targetAudience): LlmResponse
+    public function generateOutline(string $topic, array $keywords, string $targetAudience): AiResponse
     {
         $keywordList = implode(', ', $keywords);
         $template = $this->templates?->get('generate_outline');
@@ -230,7 +236,7 @@ final readonly class ContentAssistant
                 'targetAudience' => $targetAudience,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -243,14 +249,14 @@ final readonly class ContentAssistant
             . "Incorporate these keywords naturally: $keywordList.\n\n"
             . "Topic: $topic";
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.7,
             maxTokens: 1024,
             systemPrompt: 'You are a content strategist. Produce well-structured outlines with clear heading hierarchy.',
         ));
     }
 
-    public function expandContent(string $content, int $targetWords = 800): LlmResponse
+    public function expandContent(string $content, int $targetWords = 800): AiResponse
     {
         $template = $this->templates?->get('expand_content');
 
@@ -260,7 +266,7 @@ final readonly class ContentAssistant
                 'targetWords' => $targetWords,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $targetWords * 2,
                 systemPrompt: $template->systemPrompt,
@@ -272,14 +278,14 @@ final readonly class ContentAssistant
             . "Return only the expanded text.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.6,
             maxTokens: $targetWords * 2,
             systemPrompt: 'You are a content writer. Expand content naturally without adding filler.',
         ));
     }
 
-    public function condenseContent(string $content, int $targetWords = 200): LlmResponse
+    public function condenseContent(string $content, int $targetWords = 200): AiResponse
     {
         $template = $this->templates?->get('condense_content');
 
@@ -289,7 +295,7 @@ final readonly class ContentAssistant
                 'targetWords' => $targetWords,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $targetWords * 2,
                 systemPrompt: $template->systemPrompt,
@@ -301,14 +307,14 @@ final readonly class ContentAssistant
             . "Return only the condensed text.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.4,
             maxTokens: $targetWords * 2,
             systemPrompt: 'You are an editor. Condense content while preserving meaning and readability.',
         ));
     }
 
-    public function adjustTone(string $content, string $targetTone): LlmResponse
+    public function adjustTone(string $content, string $targetTone): AiResponse
     {
         $template = $this->templates?->get('adjust_tone');
 
@@ -318,7 +324,7 @@ final readonly class ContentAssistant
                 'targetTone' => $targetTone,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: mb_strlen($content) * 2,
                 systemPrompt: $template->systemPrompt,
@@ -330,14 +336,14 @@ final readonly class ContentAssistant
             . "Return only the rewritten text.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.6,
             maxTokens: mb_strlen($content) * 2,
             systemPrompt: 'You are a versatile writer. Adapt content tone while preserving meaning.',
         ));
     }
 
-    public function generateFaq(string $content, int $count = 5): LlmResponse
+    public function generateFaq(string $content, int $count = 5): AiResponse
     {
         $template = $this->templates?->get('generate_faq');
 
@@ -347,7 +353,7 @@ final readonly class ContentAssistant
                 'count' => $count,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -358,7 +364,7 @@ final readonly class ContentAssistant
             . "Format each as:\nQ: [question]\nA: [answer]\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.6,
             maxTokens: 1024,
             systemPrompt: 'You are a content analyst. Generate relevant, helpful FAQ pairs.',
@@ -368,7 +374,7 @@ final readonly class ContentAssistant
     /**
      * @param list<string> $features
      */
-    public function generateProductDescription(string $productName, array $features, string $tone = 'professional'): LlmResponse
+    public function generateProductDescription(string $productName, array $features, string $tone = 'professional'): AiResponse
     {
         $featureList = implode(', ', $features);
         $template = $this->templates?->get('generate_product_description');
@@ -380,7 +386,7 @@ final readonly class ContentAssistant
                 'tone' => $tone,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -393,14 +399,14 @@ final readonly class ContentAssistant
             . "Product: $productName\n"
             . "Features: $featureList";
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.7,
             maxTokens: 512,
             systemPrompt: 'You are an e-commerce copywriter. Write persuasive product descriptions.',
         ));
     }
 
-    public function extractKeywords(string $content, int $count = 10): LlmResponse
+    public function extractKeywords(string $content, int $count = 10): AiResponse
     {
         $template = $this->templates?->get('extract_keywords');
 
@@ -410,7 +416,7 @@ final readonly class ContentAssistant
                 'count' => $count,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -422,14 +428,14 @@ final readonly class ContentAssistant
             . "Return one keyword or phrase per line, without numbering.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.3,
             maxTokens: 256,
             systemPrompt: 'You are an SEO specialist. Extract the most relevant keywords.',
         ));
     }
 
-    public function analyzeSeoScore(string $content, string $targetKeyword): LlmResponse
+    public function analyzeSeoScore(string $content, string $targetKeyword): AiResponse
     {
         $template = $this->templates?->get('analyze_seo_score');
 
@@ -439,7 +445,7 @@ final readonly class ContentAssistant
                 'targetKeyword' => $targetKeyword,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -454,21 +460,21 @@ final readonly class ContentAssistant
             . "Target keyword: $targetKeyword\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.2,
             maxTokens: 1024,
             systemPrompt: 'You are an SEO analyst. Return only valid JSON with the requested structure.',
         ));
     }
 
-    public function suggestSlug(string $title): LlmResponse
+    public function suggestSlug(string $title): AiResponse
     {
         $template = $this->templates?->get('suggest_slug');
 
         if ($template !== null) {
             $prompt = $template->render(['title' => $title]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -480,14 +486,14 @@ final readonly class ContentAssistant
             . "Return only the slug, nothing else.\n\n"
             . "Title: $title";
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.3,
             maxTokens: 64,
             systemPrompt: 'You are a URL optimization specialist. Return only the slug.',
         ));
     }
 
-    public function generateAltText(string $imageContext, string $surroundingContent): LlmResponse
+    public function generateAltText(string $imageContext, string $surroundingContent): AiResponse
     {
         $template = $this->templates?->get('generate_alt_text');
 
@@ -497,7 +503,7 @@ final readonly class ContentAssistant
                 'surroundingContent' => $surroundingContent,
             ]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -510,21 +516,21 @@ final readonly class ContentAssistant
             . "Image context: $imageContext\n"
             . "Surrounding content: $surroundingContent";
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.4,
             maxTokens: 128,
             systemPrompt: 'You are an accessibility expert. Write descriptive, concise alt text.',
         ));
     }
 
-    public function optimizeHeadings(string $content): LlmResponse
+    public function optimizeHeadings(string $content): AiResponse
     {
         $template = $this->templates?->get('optimize_headings');
 
         if ($template !== null) {
             $prompt = $template->render(['content' => $content]);
 
-            return $this->provider->complete($prompt, new LlmOptions(
+            return $this->client->complete($prompt, new AiRequestOptions(
                 temperature: $template->defaultTemperature,
                 maxTokens: $template->defaultMaxTokens,
                 systemPrompt: $template->systemPrompt,
@@ -536,7 +542,7 @@ final readonly class ContentAssistant
             . "Return suggested headings with explanations for changes.\n\n"
             . $content;
 
-        return $this->provider->complete($prompt, new LlmOptions(
+        return $this->client->complete($prompt, new AiRequestOptions(
             temperature: 0.4,
             maxTokens: 512,
             systemPrompt: 'You are an SEO and content structure expert. Optimize heading hierarchy.',

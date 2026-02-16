@@ -31,7 +31,7 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * Limits: at most 10 toasts per response, each message truncated to 500 characters.
  */
-#[Internal(reason: 'CMS middleware — not a public API surface')]
+#[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class ToastMiddleware implements MiddlewareInterface
 {
     private const int MAX_TOASTS = 10;

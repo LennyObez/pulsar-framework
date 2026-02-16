@@ -58,7 +58,7 @@ final readonly class ContentEventService
                 ['content_id' => $contentId],
             );
 
-            $nextSequence = ((int) $result->firstOrFail()->get('max_seq')) + 1;
+            $nextSequence = ($result->firstOrFail()->getInt('max_seq')) + 1;
 
             $evidenceHash = self::computeEvidenceHash($contentId, $nextSequence, $eventType, $payload);
             $now = new DateTimeImmutable();
@@ -120,16 +120,19 @@ final readonly class ContentEventService
         $events = [];
 
         foreach ($result->rows as $row) {
+            /** @var array<string, mixed> $payload */
+            $payload = json_decode($row->getString('payload'), true, 512, JSON_THROW_ON_ERROR);
+
             $events[] = new ContentEvent(
-                id: (string) $row->get('id'),
-                contentId: (string) $row->get('content_id'),
-                sequence: (int) $row->get('sequence'),
-                eventType: (string) $row->get('event_type'),
-                payload: json_decode((string) $row->get('payload'), true, 512, JSON_THROW_ON_ERROR),
-                actorId: (string) $row->get('actor_id'),
-                reason: $row->get('reason') !== null ? (string) $row->get('reason') : null,
-                evidenceHash: (string) $row->get('evidence_hash'),
-                createdAt: new DateTimeImmutable((string) $row->get('created_at')),
+                id: $row->getString('id'),
+                contentId: $row->getString('content_id'),
+                sequence: $row->getInt('sequence'),
+                eventType: $row->getString('event_type'),
+                payload: $payload,
+                actorId: $row->getString('actor_id'),
+                reason: $row->get('reason') !== null ? $row->getString('reason') : null,
+                evidenceHash: $row->getString('evidence_hash'),
+                createdAt: new DateTimeImmutable($row->getString('created_at')),
             );
         }
 

@@ -76,8 +76,8 @@ final readonly class ButtonGroupBlock implements BlockTypeInterface
                 continue;
             }
 
-            $text = htmlspecialchars((string) ($button['text'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $url = htmlspecialchars((string) ($button['url'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $text = htmlspecialchars(is_string($button['text'] ?? null) ? $button['text'] : '', ENT_QUOTES, 'UTF-8');
+            $url = htmlspecialchars(is_string($button['url'] ?? null) ? $button['url'] : '', ENT_QUOTES, 'UTF-8');
 
             $html .= "<a href=\"$url\" class=\"button-group__button\">$text</a>";
         }

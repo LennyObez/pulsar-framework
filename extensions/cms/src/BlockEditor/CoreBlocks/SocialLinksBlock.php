@@ -81,8 +81,8 @@ final readonly class SocialLinksBlock implements BlockTypeInterface
                 continue;
             }
 
-            $platform = (string) ($link['platform'] ?? '');
-            $url = htmlspecialchars((string) ($link['url'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $platform = is_string($link['platform'] ?? null) ? $link['platform'] : '';
+            $url = htmlspecialchars(is_string($link['url'] ?? null) ? $link['url'] : '', ENT_QUOTES, 'UTF-8');
             $escapedPlatform = htmlspecialchars($platform, ENT_QUOTES, 'UTF-8');
             $label = self::PLATFORM_LABELS[$platform] ?? $escapedPlatform;
 

@@ -23,7 +23,7 @@ use const JSON_THROW_ON_ERROR;
  * Embeds specific resume sections (experience, skills, education, etc.)
  * into regular pages, allowing selective display with configurable layout.
  */
-#[Internal(reason: 'CMS block type — implementation detail')]
+#[Internal(reason: 'CMS block type; implementation detail')]
 final readonly class ResumeBlock implements BlockTypeInterface
 {
     private const array VALID_LAYOUTS = ['single-column', 'two-column'];

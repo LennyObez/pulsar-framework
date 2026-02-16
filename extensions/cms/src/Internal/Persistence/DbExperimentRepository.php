@@ -16,7 +16,7 @@ use Pulsar\Extension\Cms\ABTest\ExperimentRepositoryInterface;
 use Pulsar\Extension\Cms\ABTest\ExperimentStatus;
 use Pulsar\Extension\Cms\ABTest\ExperimentVariant;
 
-#[Internal(reason: 'Raw-DB repository — use ExperimentRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ExperimentRepositoryInterface for public API')]
 final readonly class DbExperimentRepository implements ExperimentRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

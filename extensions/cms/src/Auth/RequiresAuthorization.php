@@ -18,7 +18,7 @@ use Pulsar\Http\Message\Response;
  * framework's GateInterface. Controllers using this trait must
  * declare a `$gate` property of type GateInterface.
  */
-#[Internal(reason: 'CMS API authorization trait — implementation detail')]
+#[Internal(reason: 'CMS API authorization trait; implementation detail')]
 trait RequiresAuthorization
 {
     /**

@@ -22,7 +22,7 @@ use Throwable;
  * useful when campaigns need per-recipient queuing for better fault isolation.
  * Each job sends one email and updates the corresponding send record status.
  */
-#[Internal(reason: 'Queue job — implementation detail')]
+#[Internal(reason: 'Queue job; implementation detail')]
 final readonly class SendNewsletterEmailJob implements QueueableInterface
 {
     public function __construct(
