@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Extension\Feedback;
+namespace Pulsar\Tests\Unit\Extension\Feedback;
 
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\Test;

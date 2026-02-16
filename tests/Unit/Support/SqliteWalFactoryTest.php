@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Support;
 
+use InvalidArgumentException;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Support\SqliteWalFactory;
-use ValueError;
 
 use function is_dir;
 use function is_file;
@@ -158,7 +158,7 @@ final class SqliteWalFactoryTest extends TestCase
     {
         $path = $this->tempDir . DIRECTORY_SEPARATOR . 'empty_schema.db';
 
-        $this->expectException(ValueError::class);
+        $this->expectException(InvalidArgumentException::class);
 
         SqliteWalFactory::create($path, '');
     }

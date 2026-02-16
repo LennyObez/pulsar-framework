@@ -11,7 +11,6 @@ use Pulsar\Extension\Cms\Commerce\CommerceConfig;
 use Pulsar\Extension\Cms\Commerce\ShippingMethod;
 use Pulsar\Extension\Cms\Commerce\ShippingRateConfig;
 use Pulsar\Extension\Cms\Commerce\TaxRateConfig;
-use TypeError;
 
 #[CoversClass(CommerceConfig::class)]
 #[CoversClass(TaxRateConfig::class)]
@@ -99,27 +98,29 @@ final class CommerceConfigTest extends TestCase
     }
 
     #[Test]
-    public function fromArrayThrowsOnNonArrayTaxRateEntry(): void
+    public function fromArraySkipsNonArrayTaxRateEntry(): void
     {
-        $this->expectException(TypeError::class);
-
-        CommerceConfig::fromArray([
+        $config = CommerceConfig::fromArray([
             'taxRates' => ['not-an-array', 42],
         ]);
+
+        // Non-array entries are silently skipped
+        self::assertSame([], $config->taxRates);
     }
 
     #[Test]
-    public function fromArrayThrowsOnNonArrayShippingRateEntry(): void
+    public function fromArraySkipsNonArrayShippingRateEntry(): void
     {
-        $this->expectException(TypeError::class);
-
-        CommerceConfig::fromArray([
+        $config = CommerceConfig::fromArray([
             'shippingRates' => ['string-entry'],
         ]);
+
+        // Non-array entries are silently skipped
+        self::assertSame([], $config->shippingRates);
     }
 
     #[Test]
-    public function fromArrayCastsInvalidTypesInsteadOfDefaulting(): void
+    public function fromArrayRejectsInvalidTypesWithTypeGuards(): void
     {
         $config = CommerceConfig::fromArray([
             'invoiceRenderer' => 42,
@@ -129,12 +130,16 @@ final class CommerceConfigTest extends TestCase
             'sellerCountry' => 123,
         ]);
 
-        // Production code casts values: (string)42 = '42', (int)'not-int' = 0, etc.
-        self::assertSame('42', $config->invoiceRenderer);
-        self::assertSame(0, $config->downloadTokenExpiryDays);
-        self::assertSame(0, $config->maxDownloads);
+        // is_string(42) = false, key is set → ''
+        self::assertSame('', $config->invoiceRenderer);
+        // is_numeric('not-int') = false → default 30
+        self::assertSame(30, $config->downloadTokenExpiryDays);
+        // is_numeric('not-int') = false → default 5
+        self::assertSame(5, $config->maxDownloads);
+        // is_string(false) = false, key is set → ''
         self::assertSame('', $config->currency);
-        self::assertSame('123', $config->sellerCountry);
+        // is_string(123) = false, key is set → ''
+        self::assertSame('', $config->sellerCountry);
     }
 
     #[Test]

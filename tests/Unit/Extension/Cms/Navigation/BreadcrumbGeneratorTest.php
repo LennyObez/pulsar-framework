@@ -297,6 +297,11 @@ final class BreadcrumbGeneratorTest extends TestCase
                 return $this->contents[$id] ?? null;
             }
 
+            public function findByImportId(string $importId): ?Content
+            {
+                return null;
+            }
+
             public function findByPath(string $locale, string $path, ?string $tenantId = null): ?Content
             {
                 return null;
@@ -430,6 +435,11 @@ final class InMemoryBreadcrumbContentRepository implements ContentRepositoryInte
     public function findById(string $id): ?Content
     {
         return $this->contents[$id] ?? null;
+    }
+
+    public function findByImportId(string $importId): ?Content
+    {
+        return null;
     }
 
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?Content

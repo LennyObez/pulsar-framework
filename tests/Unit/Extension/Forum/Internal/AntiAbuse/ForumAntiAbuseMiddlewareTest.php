@@ -7,211 +7,161 @@ namespace Pulsar\Tests\Unit\Extension\Forum\Internal\AntiAbuse;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Forum\Internal\AntiAbuse\ForumAntiAbuseMiddleware;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Message\Uri;
+use Pulsar\Security\AntiSpam\AntiSpamCheckResult;
+use Pulsar\Security\AntiSpam\AntiSpamPipelineInterface;
+use Pulsar\Security\AntiSpam\AntiSpamResult;
 
 #[CoversClass(ForumAntiAbuseMiddleware::class)]
 final class ForumAntiAbuseMiddlewareTest extends TestCase
 {
-    private ForumAntiAbuseMiddleware $middleware;
+    private RequestHandlerInterface $handler;
 
     protected function setUp(): void
     {
-        $this->middleware = new ForumAntiAbuseMiddleware();
-    }
-
-    // --- Link density checks ---
-
-    #[Test]
-    public function passesLinkDensityCheckWithNoLinks(): void
-    {
-        self::assertTrue($this->middleware->passesLinkDensityCheck('This is normal text without links.'));
+        $this->handler = $this->createStub(RequestHandlerInterface::class);
+        $this->handler->method('handle')->willReturn(new Response(200));
     }
 
     #[Test]
-    public function passesLinkDensityCheckWithEmptyBody(): void
+    public function passesRequestThroughWhenBodyIsNotArray(): void
     {
-        self::assertTrue($this->middleware->passesLinkDensityCheck(''));
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $middleware = new ForumAntiAbuseMiddleware($pipeline);
+
+        $request = new ServerRequest('POST', new Uri(path: '/forum/post'))
+            ->withParsedBody(null);
+
+        $response = $middleware->process($request, $this->handler);
+
+        self::assertSame(200, $response->getStatusCode());
     }
 
     #[Test]
-    public function passesLinkDensityCheckWithModerateLinks(): void
+    public function passesRequestThroughWhenBodyFieldMissing(): void
     {
-        $body = 'Check out https://example.com for more info on this large paragraph of text that is sufficiently long to keep the ratio low.';
-        self::assertTrue($this->middleware->passesLinkDensityCheck($body));
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $middleware = new ForumAntiAbuseMiddleware($pipeline);
+
+        $request = new ServerRequest('POST', new Uri(path: '/forum/post'))
+            ->withParsedBody(['title' => 'No body field']);
+
+        $response = $middleware->process($request, $this->handler);
+
+        self::assertSame(200, $response->getStatusCode());
     }
 
     #[Test]
-    public function failsLinkDensityCheckWhenMostlyLinks(): void
+    public function passesRequestThroughWhenBodyFieldEmpty(): void
     {
-        $body = 'https://spam.example.com/very-long-url-path https://spam.example.com/another';
-        self::assertFalse($this->middleware->passesLinkDensityCheck($body));
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $middleware = new ForumAntiAbuseMiddleware($pipeline);
+
+        $request = new ServerRequest('POST', new Uri(path: '/forum/post'))
+            ->withParsedBody(['body' => '']);
+
+        $response = $middleware->process($request, $this->handler);
+
+        self::assertSame(200, $response->getStatusCode());
     }
 
     #[Test]
-    public function linkDensityRespectsCustomThreshold(): void
+    public function passesRequestThroughWhenPipelinePasses(): void
     {
-        $strict = new ForumAntiAbuseMiddleware(maxLinkDensity: 0.1);
-        $body = 'Visit https://example.com for details about this topic.';
+        $passResult = AntiSpamResult::fromCheckResults([
+            AntiSpamCheckResult::pass('honeypot'),
+            AntiSpamCheckResult::pass('link_density'),
+        ]);
 
-        // With 0.1 threshold, even moderate links may fail
-        $result = $strict->passesLinkDensityCheck($body);
-        // The URL is ~23 chars out of ~55 chars total = ~0.42 density, should fail at 0.1
-        self::assertFalse($result);
-    }
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $pipeline->method('evaluate')->willReturn($passResult);
 
-    // --- Similarity checks ---
+        $middleware = new ForumAntiAbuseMiddleware($pipeline);
 
-    #[Test]
-    public function passesSimilarityCheckWithDifferentPosts(): void
-    {
-        self::assertTrue($this->middleware->passesSimilarityCheck(
-            'How do I configure routing in Pulsar?',
-            'What database drivers does the framework support?',
-        ));
-    }
+        $request = new ServerRequest('POST', new Uri(path: '/forum/post'))
+            ->withParsedBody(['body' => 'A normal forum post.']);
 
-    #[Test]
-    public function failsSimilarityCheckWithDuplicatePost(): void
-    {
-        $body = 'How do I configure routing in Pulsar?';
-        self::assertFalse($this->middleware->passesSimilarityCheck($body, $body));
+        $response = $middleware->process($request, $this->handler);
+
+        self::assertSame(200, $response->getStatusCode());
     }
 
     #[Test]
-    public function passesSimilarityCheckWhenNewBodyEmpty(): void
+    public function returnsFakeSuccessOnHoneypotFailure(): void
     {
-        self::assertTrue($this->middleware->passesSimilarityCheck('', 'Some recent post'));
+        $failResult = AntiSpamResult::fromCheckResults([
+            AntiSpamCheckResult::fail('honeypot', 50, 'Honeypot field filled'),
+        ]);
+
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $pipeline->method('evaluate')->willReturn($failResult);
+
+        $middleware = new ForumAntiAbuseMiddleware($pipeline);
+
+        $request = new ServerRequest('POST', new Uri(path: '/forum/post'))
+            ->withParsedBody(['body' => 'Spam post', '_hp_field' => 'bot-value']);
+
+        $response = $middleware->process($request, $this->handler);
+
+        // Honeypot failures return 200 to avoid tipping off bots
+        self::assertSame(200, $response->getStatusCode());
+        $body = (string) $response->getBody();
+        $decoded = json_decode($body, true);
+        self::assertIsArray($decoded);
+        self::assertSame('success', $decoded['status']);
     }
 
     #[Test]
-    public function passesSimilarityCheckWhenRecentBodyEmpty(): void
+    public function returnsUnprocessableEntityOnNonHoneypotFailure(): void
     {
-        self::assertTrue($this->middleware->passesSimilarityCheck('Some new post', ''));
+        $failResult = AntiSpamResult::fromCheckResults([
+            AntiSpamCheckResult::fail('link_density', 40, 'Too many links'),
+        ]);
+
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $pipeline->method('evaluate')->willReturn($failResult);
+
+        $middleware = new ForumAntiAbuseMiddleware($pipeline);
+
+        $request = new ServerRequest('POST', new Uri(path: '/forum/post'))
+            ->withParsedBody(['body' => 'https://spam.example.com https://spam2.example.com']);
+
+        $response = $middleware->process($request, $this->handler);
+
+        self::assertSame(422, $response->getStatusCode());
+        $body = (string) $response->getBody();
+        $decoded = json_decode($body, true);
+        self::assertIsArray($decoded);
+        self::assertArrayHasKey('error', $decoded);
+        self::assertSame('Unprocessable Entity', $decoded['error']);
     }
 
     #[Test]
-    public function similarityCheckNormalizesWhitespace(): void
+    public function returnsReasonFromFailedCheck(): void
     {
-        $body1 = "Hello   world\n\ttabs   here";
-        $body2 = 'Hello world tabs here';
+        $failResult = AntiSpamResult::fromCheckResults([
+            AntiSpamCheckResult::pass('honeypot'),
+            AntiSpamCheckResult::fail('duplicate', 35, 'Duplicate submission detected'),
+        ]);
 
-        // After normalization these should be very similar
-        self::assertFalse($this->middleware->passesSimilarityCheck($body1, $body2));
-    }
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $pipeline->method('evaluate')->willReturn($failResult);
 
-    #[Test]
-    public function similarityCheckRespectCustomThreshold(): void
-    {
-        $strict = new ForumAntiAbuseMiddleware(similarityThreshold: 50.0);
-        self::assertFalse($strict->passesSimilarityCheck(
-            'Hello world how are you?',
-            'Hello world how is it going?',
-        ));
-    }
+        $middleware = new ForumAntiAbuseMiddleware($pipeline);
 
-    // --- Honeypot checks ---
+        $request = new ServerRequest('POST', new Uri(path: '/forum/post'))
+            ->withParsedBody(['body' => 'Duplicate post content']);
 
-    #[Test]
-    public function passesHoneypotCheckWhenEmpty(): void
-    {
-        self::assertTrue($this->middleware->passesHoneypotCheck(''));
-    }
+        $response = $middleware->process($request, $this->handler);
 
-    #[Test]
-    public function failsHoneypotCheckWhenFilled(): void
-    {
-        self::assertFalse($this->middleware->passesHoneypotCheck('bot-filled-value'));
-    }
-
-    #[Test]
-    public function failsHoneypotCheckWithWhitespace(): void
-    {
-        self::assertFalse($this->middleware->passesHoneypotCheck(' '));
-    }
-
-    // --- Validate (composite) ---
-
-    #[Test]
-    public function validateReturnsEmptyArrayWhenAllPass(): void
-    {
-        $failures = $this->middleware->validate(
-            body: 'A perfectly normal forum post.',
-            honeypotValue: '',
-        );
-
-        self::assertSame([], $failures);
-    }
-
-    #[Test]
-    public function validateReturnsHoneypotFailure(): void
-    {
-        $failures = $this->middleware->validate(
-            body: 'Normal post.',
-            honeypotValue: 'bot-value',
-        );
-
-        self::assertContains('honeypot', $failures);
-    }
-
-    #[Test]
-    public function validateReturnsLinkDensityFailure(): void
-    {
-        $failures = $this->middleware->validate(
-            body: 'https://spam.example.com/long-url https://spam.example.com/another-long-url',
-            honeypotValue: '',
-        );
-
-        self::assertContains('link_density', $failures);
-    }
-
-    #[Test]
-    public function validateReturnsSimilarityFailure(): void
-    {
-        $failures = $this->middleware->validate(
-            body: 'This is my post content.',
-            honeypotValue: '',
-            recentBodies: ['This is my post content.'],
-        );
-
-        self::assertContains('similarity', $failures);
-    }
-
-    #[Test]
-    public function validateReturnsMultipleFailures(): void
-    {
-        $failures = $this->middleware->validate(
-            body: 'https://spam.example.com/long-url https://spam.example.com/another',
-            honeypotValue: 'bot',
-            recentBodies: ['https://spam.example.com/long-url https://spam.example.com/another'],
-        );
-
-        self::assertContains('honeypot', $failures);
-        self::assertContains('link_density', $failures);
-        self::assertContains('similarity', $failures);
-    }
-
-    #[Test]
-    public function validateStopsAtFirstSimilarityMatch(): void
-    {
-        $failures = $this->middleware->validate(
-            body: 'Duplicate post here',
-            honeypotValue: '',
-            recentBodies: ['Duplicate post here', 'Duplicate post here'],
-        );
-
-        $similarityCount = array_count_values($failures)['similarity'] ?? 0;
-        self::assertSame(1, $similarityCount);
-    }
-
-    #[Test]
-    public function validateWithEmptyRecentBodiesSkipsSimilarity(): void
-    {
-        $failures = $this->middleware->validate(
-            body: 'Some post content.',
-            honeypotValue: '',
-            recentBodies: [],
-        );
-
-        self::assertNotContains('similarity', $failures);
+        self::assertSame(422, $response->getStatusCode());
+        $body = (string) $response->getBody();
+        $decoded = json_decode($body, true);
+        self::assertIsArray($decoded);
+        self::assertSame('Duplicate submission detected', $decoded['message']);
     }
 }

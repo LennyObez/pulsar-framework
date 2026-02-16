@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Saga\Step;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Workflow\Storage\SagaStepDirection;
+use Pulsar\Saga\Step\SagaStepDirection;
 
 #[CoversClass(SagaStepDirection::class)]
 final class SagaStepDirectionTest extends TestCase

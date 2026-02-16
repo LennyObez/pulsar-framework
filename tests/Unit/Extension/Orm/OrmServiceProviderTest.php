@@ -54,7 +54,7 @@ final class OrmServiceProviderTest extends TestCase
         $provider = new OrmServiceProvider();
         $provides = $provider->provides();
 
-        self::assertCount(11, $provides);
+        self::assertCount(14, $provides);
     }
 
     #[Test]
@@ -77,7 +77,7 @@ final class OrmServiceProviderTest extends TestCase
         $boundIds = [];
 
         $container = $this->createMock(ContainerInterface::class);
-        $container->expects(self::exactly(11))
+        $container->expects(self::exactly(14))
             ->method('bind')
             ->willReturnCallback(function (string $id) use (&$boundIds): void {
                 $boundIds[] = $id;

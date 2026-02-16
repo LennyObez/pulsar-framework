@@ -57,7 +57,7 @@ final class ThemeSafeModeTest extends TestCase
         $path = $safeMode->getDefaultTemplatePath();
 
         self::assertStringContainsString('safe-mode', $path);
-        self::assertStringEndsWith('.pulsar.php', $path);
+        self::assertStringEndsWith('.pulse.php', $path);
     }
 
     #[Test]

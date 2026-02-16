@@ -355,7 +355,24 @@ final class ArchitectureRulesTest extends TestCase
                 // Extract extension name from path: extensions/{Name}/src
                 if (preg_match('/extensions[\\\\\/]([^\\\\\/]+)[\\\\\/]src$/', $extDir, $matches) === 1) {
                     $extName = $matches[1];
-                    $namespace = 'Pulsar\\\\Extension\\\\' . ucfirst($extName);
+
+                    // Convert directory name to PascalCase namespace segment:
+                    // social-sso -> SocialSso, oauth2 -> OAuth2, ai-governance -> AiGovernance
+                    $namespacePart = str_replace(' ', '', ucwords(str_replace('-', ' ', $extName)));
+
+                    // Special case: oauth2 -> OAuth2 (standard casing)
+                    $namespacePart = match ($namespacePart) {
+                        'Oauth2' => 'OAuth2',
+                        'Opentelemetry' => 'OpenTelemetry',
+                        'Webauthn' => 'WebAuthn',
+                        'ObservabilityExport' => 'ObservabilityExport',
+                        'SocialSso' => 'SocialSso',
+                        'AiGovernance' => 'AiGovernance',
+                        'McpServer' => 'McpServer',
+                        default => $namespacePart,
+                    };
+
+                    $namespace = 'Pulsar\\\\Extension\\\\' . $namespacePart;
 
                     if (!str_contains($deptracContent, $namespace)) {
                         $uncovered[] = $extName;

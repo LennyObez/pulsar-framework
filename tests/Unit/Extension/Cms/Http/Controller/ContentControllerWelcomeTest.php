@@ -74,7 +74,7 @@ final class ContentControllerWelcomeTest extends TestCase
     #[Test]
     public function welcome_page_template_file_exists_and_is_readable(): void
     {
-        $templatePath = dirname(__DIR__, 6) . '/extensions/cms/resources/views/welcome.pulsar.php';
+        $templatePath = dirname(__DIR__, 6) . '/extensions/cms/resources/views/welcome.pulse.php';
 
         self::assertFileExists($templatePath);
         self::assertTrue(is_readable($templatePath));
@@ -83,7 +83,7 @@ final class ContentControllerWelcomeTest extends TestCase
     #[Test]
     public function welcome_page_template_contains_expected_content(): void
     {
-        $templatePath = dirname(__DIR__, 6) . '/extensions/cms/resources/views/welcome.pulsar.php';
+        $templatePath = dirname(__DIR__, 6) . '/extensions/cms/resources/views/welcome.pulse.php';
         $html = file_get_contents($templatePath);
 
         self::assertIsString($html);

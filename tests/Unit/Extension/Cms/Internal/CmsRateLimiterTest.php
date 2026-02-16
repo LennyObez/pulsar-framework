@@ -7,17 +7,35 @@ namespace Pulsar\Tests\Unit\Extension\Cms\Internal;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Cache\Application\Lock\LockHandle;
+use Pulsar\Cache\Application\Lock\LockInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
 
 #[CoversClass(CmsRateLimiter::class)]
 final class CmsRateLimiterTest extends TestCase
 {
+    private LockInterface $lock;
+
+    protected function setUp(): void
+    {
+        $handle = new LockHandle(
+            resource: 'test',
+            token: 'tok',
+            acquiredAt: 1.0,
+            ttlSeconds: 60,
+        );
+
+        $this->lock = $this->createStub(LockInterface::class);
+        $this->lock->method('acquire')->willReturn($handle);
+        $this->lock->method('release')->willReturn(true);
+    }
+
     #[Test]
     public function attemptAllowsWithinLimit(): void
     {
         $cache = new InMemoryTaggedCache();
-        $limiter = new CmsRateLimiter($cache);
+        $limiter = new CmsRateLimiter($cache, $this->lock);
 
         // First attempt should be allowed
         self::assertTrue($limiter->attempt('test_op:user1', 5, 60));
@@ -27,7 +45,7 @@ final class CmsRateLimiterTest extends TestCase
     public function attemptBlocksWhenLimitExceeded(): void
     {
         $cache = new InMemoryTaggedCache();
-        $limiter = new CmsRateLimiter($cache);
+        $limiter = new CmsRateLimiter($cache, $this->lock);
 
         // Allow up to 2 attempts
         self::assertTrue($limiter->attempt('op:u1', 2, 60));
@@ -40,7 +58,7 @@ final class CmsRateLimiterTest extends TestCase
     public function attemptTracksDifferentKeysIndependently(): void
     {
         $cache = new InMemoryTaggedCache();
-        $limiter = new CmsRateLimiter($cache);
+        $limiter = new CmsRateLimiter($cache, $this->lock);
 
         self::assertTrue($limiter->attempt('op:user1', 1, 60));
         self::assertFalse($limiter->attempt('op:user1', 1, 60));

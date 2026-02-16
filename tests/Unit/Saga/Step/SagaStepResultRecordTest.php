@@ -8,9 +8,9 @@ use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Workflow\Storage\SagaStepDirection;
-use Pulsar\Workflow\Storage\SagaStepResult;
-use Pulsar\Workflow\Storage\SagaStepStatus;
+use Pulsar\Saga\Step\SagaStepDirection;
+use Pulsar\Saga\Step\SagaStepResult;
+use Pulsar\Saga\Step\SagaStepStatus;
 
 #[CoversClass(SagaStepResult::class)]
 final class SagaStepResultRecordTest extends TestCase

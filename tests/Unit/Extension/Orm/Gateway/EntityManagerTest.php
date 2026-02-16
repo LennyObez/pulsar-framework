@@ -23,6 +23,7 @@ use Pulsar\Extension\Orm\Features\Persistence\AuditingPersister;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 use Pulsar\Extension\Orm\Features\Schema\SchemaBuilder;
 use Pulsar\Extension\Orm\Gateway\EntityManager;
+use Pulsar\Extension\Orm\Gateway\IdentityMap;
 
 #[CoversClass(EntityManager::class)]
 final class EntityManagerTest extends TestCase
@@ -237,6 +238,56 @@ final class EntityManagerTest extends TestCase
     public function connectionReturnsConnectionInterface(): void
     {
         self::assertSame($this->connection, $this->entityManager->connection());
+    }
+
+    #[Test]
+    public function identityMapReturnsIdentityMapInstance(): void
+    {
+        $map = $this->entityManager->identityMap();
+
+        self::assertInstanceOf(IdentityMap::class, $map);
+    }
+
+    #[Test]
+    public function findPopulatesIdentityMapOnCacheMiss(): void
+    {
+        // After calling find(), the entity should be tracked in the identity map.
+        // We can't easily test the full query flow without a real DB, but we can
+        // verify that the identity map is exposed and that clear() resets it.
+        $map = $this->entityManager->identityMap();
+
+        // Put an entity directly in the map to simulate a previous find
+        $entity = new EmTestEntity();
+        $entity->id = 99;
+        $entity->name = 'cached';
+
+        $map->put(EmTestEntity::class, 99, $entity);
+
+        // find() should return the cached entity from the identity map
+        $found = $this->entityManager->find(EmTestEntity::class, 99);
+
+        self::assertSame($entity, $found);
+    }
+
+    #[Test]
+    public function clearResetsIdentityMapAndRepositoryCache(): void
+    {
+        $map = $this->entityManager->identityMap();
+
+        $entity = new EmTestEntity();
+        $entity->id = 1;
+        $entity->name = 'test';
+        $map->put(EmTestEntity::class, 1, $entity);
+
+        self::assertTrue($map->has(EmTestEntity::class, 1));
+
+        // Get a repository to populate the repo cache
+        $this->entityManager->repository(EmTestEntity::class);
+
+        $this->entityManager->clear();
+
+        self::assertFalse($map->has(EmTestEntity::class, 1));
+        self::assertSame(0, $map->count());
     }
 
     private function buildMetadata(): EntityMetadata

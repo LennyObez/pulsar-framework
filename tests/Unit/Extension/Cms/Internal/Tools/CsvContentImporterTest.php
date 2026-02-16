@@ -7,6 +7,8 @@ namespace Pulsar\Tests\Unit\Extension\Cms\Internal\Tools;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\Internal\Tools\CsvContentImporter;
 
 #[CoversClass(CsvContentImporter::class)]
@@ -16,7 +18,8 @@ final class CsvContentImporterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->importer = new CsvContentImporter();
+        $auditLogger = $this->createStub(AuditLoggerInterface::class);
+        $this->importer = new CsvContentImporter(new SafeHtmlPolicy($auditLogger));
     }
 
     #[Test]

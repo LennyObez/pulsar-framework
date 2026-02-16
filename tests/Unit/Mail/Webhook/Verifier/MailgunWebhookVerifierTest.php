@@ -156,4 +156,73 @@ final class MailgunWebhookVerifierTest extends TestCase
 
         self::assertFalse($verifier->verify($request));
     }
+
+    #[Test]
+    public function rejectsReplayedWebhookWithOldTimestamp(): void
+    {
+        $verifier = new MailgunWebhookVerifier(self::SIGNING_KEY);
+
+        // Timestamp from 20 minutes ago (exceeds 15-minute window)
+        $timestamp = (string) (time() - 1200);
+        $token = 'random-token';
+        $signature = hash_hmac('sha256', $timestamp . $token, self::SIGNING_KEY);
+
+        $payload = json_encode([
+            'signature' => [
+                'timestamp' => $timestamp,
+                'token' => $token,
+                'signature' => $signature,
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $request = new WebhookRequest($payload, [], '10.0.0.1', time(), 'mailgun');
+
+        self::assertFalse($verifier->verify($request));
+    }
+
+    #[Test]
+    public function rejectsWebhookWithFutureTimestamp(): void
+    {
+        $verifier = new MailgunWebhookVerifier(self::SIGNING_KEY);
+
+        // Timestamp from 20 minutes in the future (exceeds 15-minute window)
+        $timestamp = (string) (time() + 1200);
+        $token = 'random-token';
+        $signature = hash_hmac('sha256', $timestamp . $token, self::SIGNING_KEY);
+
+        $payload = json_encode([
+            'signature' => [
+                'timestamp' => $timestamp,
+                'token' => $token,
+                'signature' => $signature,
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $request = new WebhookRequest($payload, [], '10.0.0.1', time(), 'mailgun');
+
+        self::assertFalse($verifier->verify($request));
+    }
+
+    #[Test]
+    public function acceptsWebhookWithTimestampWithinWindow(): void
+    {
+        $verifier = new MailgunWebhookVerifier(self::SIGNING_KEY);
+
+        // Timestamp from 5 minutes ago (within 15-minute window)
+        $timestamp = (string) (time() - 300);
+        $token = 'random-token-within';
+        $signature = hash_hmac('sha256', $timestamp . $token, self::SIGNING_KEY);
+
+        $payload = json_encode([
+            'signature' => [
+                'timestamp' => $timestamp,
+                'token' => $token,
+                'signature' => $signature,
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $request = new WebhookRequest($payload, [], '10.0.0.1', time(), 'mailgun');
+
+        self::assertTrue($verifier->verify($request));
+    }
 }

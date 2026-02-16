@@ -55,15 +55,15 @@ final class StatusDetailTest extends TestCase
     public function fromArrayWithNonStringMessage(): void
     {
         $detail = StatusDetail::fromArray(['message' => 42]);
-        self::assertSame('42', $detail->message);
+        self::assertSame('', $detail->message);
     }
 
     #[Test]
     public function fromArrayWithNonNumericCode(): void
     {
         $detail = StatusDetail::fromArray(['code' => 'invalid']);
-        // (int) 'invalid' === 0, and GrpcStatus::from(0) === GrpcStatus::Ok
-        self::assertSame(GrpcStatus::Ok, $detail->code);
+        // Non-int code falls back to GrpcStatus::Unknown
+        self::assertSame(GrpcStatus::Unknown, $detail->code);
     }
 
     #[Test]

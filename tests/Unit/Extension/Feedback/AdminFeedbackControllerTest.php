@@ -378,7 +378,7 @@ final class AdminFeedbackControllerTest extends TestCase
         $queueDriver = $this->createMock(QueueDriverInterface::class);
         $queueDriver->expects(self::once())->method('push');
 
-        $controller = new FeedbackController($this->service, $this->repository, $queueDriver);
+        $controller = new FeedbackController($this->service, $this->repository, queueDriver: $queueDriver);
 
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getParsedBody')->willReturn(['github_repo' => 'org/repo']);

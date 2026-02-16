@@ -216,6 +216,70 @@ final class LogFormatterTest extends TestCase
         self::assertArrayHasKey('file', $serialized);
         self::assertArrayHasKey('line', $serialized);
         self::assertArrayHasKey('trace', $serialized);
+        // Trace must be an array of frames, not a raw string
+        self::assertIsArray($serialized['trace']);
+    }
+
+    #[Test]
+    public function formatSanitizesTraceFramesToPreventPiiLeak(): void
+    {
+        // Create an exception that will have real stack trace frames with arguments
+        $exception = new RuntimeException('test');
+
+        $entry = new LogEntry(
+            level: LogLevel::Error,
+            message: 'failure',
+            context: ['exception' => $exception],
+            channel: 'app',
+            timestamp: new DateTimeImmutable('now', new DateTimeZone('UTC')),
+        );
+
+        $result = $this->formatter->format($entry);
+        $data = json_decode(trim($result), true);
+
+        self::assertIsArray($data);
+        self::assertIsArray($data['context']);
+        $serialized = $data['context']['exception'];
+        self::assertIsArray($serialized);
+        self::assertIsArray($serialized['trace']);
+
+        // Verify no frame contains 'args' — arguments are stripped to prevent PII leaks
+        foreach ($serialized['trace'] as $frame) {
+            self::assertIsArray($frame);
+            self::assertArrayNotHasKey('args', $frame);
+        }
+    }
+
+    #[Test]
+    public function formatTraceFramesContainOnlySafeKeys(): void
+    {
+        $exception = new RuntimeException('test');
+
+        $entry = new LogEntry(
+            level: LogLevel::Error,
+            message: 'failure',
+            context: ['exception' => $exception],
+            channel: 'app',
+            timestamp: new DateTimeImmutable('now', new DateTimeZone('UTC')),
+        );
+
+        $result = $this->formatter->format($entry);
+        $data = json_decode(trim($result), true);
+
+        self::assertIsArray($data);
+        self::assertIsArray($data['context']);
+        self::assertIsArray($data['context']['exception']);
+        $trace = $data['context']['exception']['trace'];
+        self::assertIsArray($trace);
+
+        $allowedKeys = ['file', 'line', 'class', 'function', 'type'];
+
+        foreach ($trace as $frame) {
+            self::assertIsArray($frame);
+            foreach (array_keys($frame) as $key) {
+                self::assertContains($key, $allowedKeys, "Unexpected key '{$key}' in trace frame");
+            }
+        }
     }
 
     #[Test]
