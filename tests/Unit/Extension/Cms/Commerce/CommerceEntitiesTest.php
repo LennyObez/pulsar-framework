@@ -202,6 +202,7 @@ final class CommerceEntitiesTest extends TestCase
             displayName: 'Elena Martinez',
             billingAddress: ['line1' => '742 Evergreen Terrace', 'city' => 'Springfield', 'postalCode' => '62704', 'country' => 'US'],
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -223,6 +224,7 @@ final class CommerceEntitiesTest extends TestCase
             displayName: null,
             billingAddress: null,
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );

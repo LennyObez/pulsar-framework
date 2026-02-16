@@ -355,6 +355,20 @@ final class E2EThreadRepository implements ThreadRepositoryInterface
     }
 
     #[Override]
+    public function search(string $query, int $page = 1, int $perPage = 25, ?string $tenantId = null): PaginationResult
+    {
+        $items = array_values(array_filter(
+            $this->threads,
+            static fn(Thread $t) => str_contains($t->title, $query),
+        ));
+        $total = count($items);
+        $offset = ($page - 1) * $perPage;
+        $paged = array_slice($items, $offset, $perPage);
+
+        return new PaginationResult(items: $paged, total: $total, hasMore: ($offset + $perPage) < $total, perPage: $perPage);
+    }
+
+    #[Override]
     public function save(Thread $thread): void
     {
         $this->threads[$thread->id] = $thread;
@@ -557,6 +571,16 @@ final class E2EForumProfileRepository implements ForumProfileRepositoryInterface
             for ($i = 0; $i < $delta; $i++) {
                 $this->profiles[$profile->id] = $this->profiles[$profile->id]->incrementThreadCount();
             }
+        }
+    }
+
+    #[Override]
+    public function clearBanFlag(string $userId, ?string $tenantId = null): void
+    {
+        $profile = $this->findByUser($userId, $tenantId);
+
+        if ($profile !== null) {
+            $this->profiles[$profile->id] = $profile->unban();
         }
     }
 }

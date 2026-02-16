@@ -36,6 +36,7 @@ use Pulsar\Extension\Forum\Tag\TagRepositoryInterface;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 use Pulsar\Extension\Forum\Vote\PostVoteRepositoryInterface;
 use Pulsar\Extension\Forum\Vote\ThreadVoteRepositoryInterface;
+use Pulsar\Security\AntiSpam\AntiSpamPipelineInterface;
 
 #[CoversClass(ForumCoreServiceProvider::class)]
 final class ForumCoreServiceProviderTest extends TestCase
@@ -85,11 +86,13 @@ final class ForumCoreServiceProviderTest extends TestCase
             };
         });
 
+        $antiSpam = $this->createStub(AntiSpamPipelineInterface::class);
         $container->method('get')->willReturnCallback(
             static function (string $id) use (
                 &$instanceMap,
                 $connection,
                 $events,
+                $antiSpam,
                 $profiles,
                 $userBadges,
                 $posts,
@@ -122,6 +125,7 @@ final class ForumCoreServiceProviderTest extends TestCase
                     ThreadSubscriptionRepositoryInterface::class => $subscriptions,
                     UserBanRepositoryInterface::class => $userBans,
                     ForumModerationLogRepositoryInterface::class => $moderationLogs,
+                    AntiSpamPipelineInterface::class => $antiSpam,
                     CategoryRepositoryInterface::class => null,
                     default => null,
                 };

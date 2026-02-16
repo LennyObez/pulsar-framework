@@ -11,6 +11,7 @@ use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\CrossOriginConfig;
 use Pulsar\Config\CspConfig;
 use Pulsar\Config\HstsConfig;
+use Pulsar\Config\NelConfig;
 use Pulsar\Config\SecurityHeadersConfig;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
@@ -43,9 +44,12 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         );
     }
 
-    private function createForwardedHttpsRequest(): ServerRequest
+    private function createForwardedHttpsRequest(string $remoteAddr = '10.0.0.1'): ServerRequest
     {
-        return $this->createRequest(headers: ['X-Forwarded-Proto' => 'https']);
+        return $this->createRequest(
+            server: ['REMOTE_ADDR' => $remoteAddr],
+            headers: ['X-Forwarded-Proto' => 'https'],
+        );
     }
 
     private function textHandler(): RequestHandlerInterface
@@ -95,7 +99,10 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         self::assertSame('DENY', $response->getHeaderLine('X-Frame-Options'));
         self::assertSame('strict-origin-when-cross-origin', $response->getHeaderLine('Referrer-Policy'));
         self::assertSame('0', $response->getHeaderLine('X-XSS-Protection'));
-        self::assertSame('camera=(), microphone=(), geolocation=()', $response->getHeaderLine('Permissions-Policy'));
+        $permissionsPolicy = $response->getHeaderLine('Permissions-Policy');
+        self::assertStringContainsString('camera=()', $permissionsPolicy);
+        self::assertStringContainsString('microphone=()', $permissionsPolicy);
+        self::assertStringContainsString('geolocation=()', $permissionsPolicy);
     }
 
     #[Test]
@@ -186,21 +193,84 @@ final class SecurityHeadersMiddlewareTest extends TestCase
     }
 
     #[Test]
-    public function hstsEmittedWhenXForwardedProtoIsHttps(): void
+    public function hstsEmittedWhenXForwardedProtoIsHttpsFromTrustedProxy(): void
     {
         $config = new SecurityHeadersConfig(
             headers: [],
             hsts: new HstsConfig(enabled: true, maxAge: 63072000, includeSubDomains: true, preload: true),
         );
 
-        $middleware = new SecurityHeadersMiddleware($config);
+        $middleware = new SecurityHeadersMiddleware($config, trustedProxies: ['10.0.0.1']);
 
-        $response = $middleware->process($this->createForwardedHttpsRequest(), $this->textHandler());
+        $response = $middleware->process($this->createForwardedHttpsRequest('10.0.0.1'), $this->textHandler());
 
         self::assertSame(
             'max-age=63072000; includeSubDomains; preload',
             $response->getHeaderLine('Strict-Transport-Security'),
         );
+    }
+
+    #[Test]
+    public function xForwardedProtoIgnoredWithoutTrustedProxies(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            hsts: new HstsConfig(enabled: true, maxAge: 31536000),
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $response = $middleware->process($this->createForwardedHttpsRequest(), $this->textHandler());
+
+        self::assertSame('', $response->getHeaderLine('Strict-Transport-Security'));
+    }
+
+    #[Test]
+    public function xForwardedProtoIgnoredFromUntrustedIp(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            hsts: new HstsConfig(enabled: true, maxAge: 31536000),
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config, trustedProxies: ['10.0.0.1']);
+
+        $response = $middleware->process($this->createForwardedHttpsRequest('192.168.1.100'), $this->textHandler());
+
+        self::assertSame('', $response->getHeaderLine('Strict-Transport-Security'));
+    }
+
+    #[Test]
+    public function trustedProxyCidrRangeMatches(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            hsts: new HstsConfig(enabled: true, maxAge: 31536000, includeSubDomains: false),
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config, trustedProxies: ['10.0.0.0/24']);
+
+        $response = $middleware->process($this->createForwardedHttpsRequest('10.0.0.42'), $this->textHandler());
+
+        self::assertSame(
+            'max-age=31536000',
+            $response->getHeaderLine('Strict-Transport-Security'),
+        );
+    }
+
+    #[Test]
+    public function trustedProxyCidrRangeRejectsOutsideIp(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            hsts: new HstsConfig(enabled: true, maxAge: 31536000, includeSubDomains: false),
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config, trustedProxies: ['10.0.0.0/24']);
+
+        $response = $middleware->process($this->createForwardedHttpsRequest('10.0.1.1'), $this->textHandler());
+
+        self::assertSame('', $response->getHeaderLine('Strict-Transport-Security'));
     }
 
     #[Test]
@@ -283,5 +353,97 @@ final class SecurityHeadersMiddlewareTest extends TestCase
         self::assertSame('same-origin', $response->getHeaderLine('Cross-Origin-Opener-Policy'));
         self::assertSame('require-corp', $response->getHeaderLine('Cross-Origin-Embedder-Policy'));
         self::assertSame('same-origin', $response->getHeaderLine('Cross-Origin-Resource-Policy'));
+    }
+
+    #[Test]
+    public function xPermittedCrossDomainPoliciesIncludedByDefault(): void
+    {
+        $config = new SecurityHeadersConfig(headers: []);
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
+
+        self::assertSame('none', $response->getHeaderLine('X-Permitted-Cross-Domain-Policies'));
+    }
+
+    #[Test]
+    public function clearSiteDataNotEmittedWithoutAttribute(): void
+    {
+        $config = new SecurityHeadersConfig(headers: []);
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
+
+        self::assertSame('', $response->getHeaderLine('Clear-Site-Data'));
+    }
+
+    #[Test]
+    public function clearSiteDataEmittedWhenAttributeIsTrue(): void
+    {
+        $config = new SecurityHeadersConfig(headers: []);
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $request = $this->createRequest()->withAttribute(
+            SecurityHeadersMiddleware::CLEAR_SITE_DATA_ATTR,
+            true,
+        );
+
+        $response = $middleware->process($request, $this->textHandler());
+
+        self::assertSame('"cache", "cookies", "storage"', $response->getHeaderLine('Clear-Site-Data'));
+    }
+
+    #[Test]
+    public function clearSiteDataNotEmittedWhenAttributeIsFalse(): void
+    {
+        $config = new SecurityHeadersConfig(headers: []);
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $request = $this->createRequest()->withAttribute(
+            SecurityHeadersMiddleware::CLEAR_SITE_DATA_ATTR,
+            false,
+        );
+
+        $response = $middleware->process($request, $this->textHandler());
+
+        self::assertSame('', $response->getHeaderLine('Clear-Site-Data'));
+    }
+
+    #[Test]
+    public function nelHeadersEmittedWhenEnabled(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            nel: new NelConfig(enabled: true, reportTo: 'nel-group', maxAge: 3600),
+            nelEndpointUrl: 'https://example.com/nel',
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
+
+        $nel = $response->getHeaderLine('NEL');
+        self::assertNotEmpty($nel);
+        self::assertStringContainsString('nel-group', $nel);
+
+        $reportTo = $response->getHeaderLine('Report-To');
+        self::assertNotEmpty($reportTo);
+        self::assertStringContainsString('https://example.com/nel', $reportTo);
+    }
+
+    #[Test]
+    public function nelHeadersAbsentWhenDisabled(): void
+    {
+        $config = new SecurityHeadersConfig(
+            headers: [],
+            nel: new NelConfig(enabled: false),
+        );
+
+        $middleware = new SecurityHeadersMiddleware($config);
+
+        $response = $middleware->process($this->createRequest(), $this->textHandler());
+
+        self::assertSame('', $response->getHeaderLine('NEL'));
+        self::assertSame('', $response->getHeaderLine('Report-To'));
     }
 }

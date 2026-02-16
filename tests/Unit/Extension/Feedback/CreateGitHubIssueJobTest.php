@@ -13,6 +13,7 @@ use Pulsar\Extension\Feedback\Feedback;
 use Pulsar\Extension\Feedback\FeedbackCategory;
 use Pulsar\Extension\Feedback\FeedbackRepositoryInterface;
 use Pulsar\Extension\Feedback\Job\CreateGitHubIssueJob;
+use Pulsar\Http\Client\HttpClientInterface;
 
 use function count;
 use function mb_strlen;
@@ -143,7 +144,8 @@ final class CreateGitHubIssueJobTest extends TestCase
         $repo->method('findById')->willReturn(null);
         $repo->expects(self::never())->method('save');
 
-        $job = new CreateGitHubIssueJob($repo, 'missing-id', 'owner/repo');
+        $httpClient = $this->createStub(HttpClientInterface::class);
+        $job = new CreateGitHubIssueJob($repo, $httpClient, 'missing-id', 'owner/repo', 'test-token');
 
         $job->handle();
     }
@@ -158,7 +160,8 @@ final class CreateGitHubIssueJobTest extends TestCase
             $repo = $this->createStub(FeedbackRepositoryInterface::class);
             $repo->method('findById')->willReturn($feedback);
 
-            $job = new CreateGitHubIssueJob($repo, $feedback->id, 'owner/repo');
+            $httpClient = $this->createStub(HttpClientInterface::class);
+            $job = new CreateGitHubIssueJob($repo, $httpClient, $feedback->id, 'owner/repo', 'test-token');
 
             // proc_open will fail in test env but that's expected
             $job->handle();

@@ -9,34 +9,28 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\RequestHandlerInterface;
-use Pulsar\Extension\Cms\Comments\AntiAbuseHeuristics;
 use Pulsar\Extension\Cms\Http\Middleware\CommentAntiAbuseMiddleware;
 use Pulsar\Http\Message\ServerRequest;
-use Pulsar\Tests\Benchmark\Cms\Support\InMemoryTaggedCache;
+use Pulsar\Security\AntiSpam\AntiSpamCheckResult;
+use Pulsar\Security\AntiSpam\AntiSpamPipelineInterface;
+use Pulsar\Security\AntiSpam\AntiSpamResult;
 
 #[CoversClass(CommentAntiAbuseMiddleware::class)]
 final class CommentAntiAbuseMiddlewareTest extends TestCase
 {
-    private AntiAbuseHeuristics $heuristics;
-    private CommentAntiAbuseMiddleware $middleware;
-
-    protected function setUp(): void
-    {
-        $cache = new InMemoryTaggedCache();
-        $this->heuristics = new AntiAbuseHeuristics($cache);
-        $this->middleware = new CommentAntiAbuseMiddleware($this->heuristics);
-    }
-
     #[Test]
     public function processPassesThroughForNonArrayBody(): void
     {
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
+
         $request = new ServerRequest(method: 'GET', uri: '/comments');
         $handler = $this->createStub(RequestHandlerInterface::class);
         $response = $this->createStub(ResponseInterface::class);
         $response->method('getStatusCode')->willReturn(200);
         $handler->method('handle')->willReturn($response);
 
-        $result = $this->middleware->process($request, $handler);
+        $result = $middleware->process($request, $handler);
 
         self::assertSame(200, $result->getStatusCode());
     }
@@ -44,6 +38,9 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
     #[Test]
     public function processPassesThroughForMissingBodyField(): void
     {
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
+
         $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['name' => 'Test']);
 
@@ -52,7 +49,7 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
         $response->method('getStatusCode')->willReturn(200);
         $handler->method('handle')->willReturn($response);
 
-        $result = $this->middleware->process($request, $handler);
+        $result = $middleware->process($request, $handler);
 
         self::assertSame(200, $result->getStatusCode());
     }
@@ -60,6 +57,9 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
     #[Test]
     public function processPassesThroughForEmptyBody(): void
     {
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
+
         $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => '']);
 
@@ -68,63 +68,24 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
         $response->method('getStatusCode')->willReturn(200);
         $handler->method('handle')->willReturn($response);
 
-        $result = $this->middleware->process($request, $handler);
+        $result = $middleware->process($request, $handler);
 
         self::assertSame(200, $result->getStatusCode());
     }
 
     #[Test]
-    public function processRejects422WhenTooLong(): void
+    public function processPassesThroughWhenPipelinePasses(): void
     {
-        $middleware = new CommentAntiAbuseMiddleware($this->heuristics, maxLength: 10);
+        $passResult = AntiSpamResult::fromCheckResults([
+            AntiSpamCheckResult::pass('honeypot'),
+            AntiSpamCheckResult::pass('link_density'),
+        ]);
 
-        $request = new ServerRequest(method: 'POST', uri: '/comments')
-            ->withParsedBody(['body' => 'This comment exceeds the max length']);
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $pipeline->method('evaluate')->willReturn($passResult);
 
-        $handler = $this->createStub(RequestHandlerInterface::class);
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
 
-        $result = $middleware->process($request, $handler);
-
-        self::assertSame(422, $result->getStatusCode());
-        $body = (string) $result->getBody();
-        self::assertStringContainsString('maximum length', $body);
-    }
-
-    #[Test]
-    public function processRejects422ForExcessiveRepetition(): void
-    {
-        $request = new ServerRequest(method: 'POST', uri: '/comments')
-            ->withParsedBody(['body' => 'aaaaaaaaaa repeating']);
-
-        $handler = $this->createStub(RequestHandlerInterface::class);
-
-        $result = $this->middleware->process($request, $handler);
-
-        self::assertSame(422, $result->getStatusCode());
-        $body = (string) $result->getBody();
-        self::assertStringContainsString('repetition', $body);
-    }
-
-    #[Test]
-    public function processRejects422ForLinkSpam(): void
-    {
-        $middleware = new CommentAntiAbuseMiddleware($this->heuristics, maxLinks: 2);
-
-        $request = new ServerRequest(method: 'POST', uri: '/comments')
-            ->withParsedBody(['body' => 'Visit https://a.com https://b.com https://c.com']);
-
-        $handler = $this->createStub(RequestHandlerInterface::class);
-
-        $result = $middleware->process($request, $handler);
-
-        self::assertSame(422, $result->getStatusCode());
-        $body = (string) $result->getBody();
-        self::assertStringContainsString('links', $body);
-    }
-
-    #[Test]
-    public function processPassesThroughForValidComment(): void
-    {
         $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'Great article, thank you!']);
 
@@ -133,31 +94,88 @@ final class CommentAntiAbuseMiddlewareTest extends TestCase
         $response->method('getStatusCode')->willReturn(201);
         $handler->method('handle')->willReturn($response);
 
-        $result = $this->middleware->process($request, $handler);
+        $result = $middleware->process($request, $handler);
 
         self::assertSame(201, $result->getStatusCode());
     }
 
     #[Test]
-    public function processRejectsDuplicateSubmission(): void
+    public function processReturnsFakeSuccessOnHoneypotFailure(): void
     {
-        $validResponse = $this->createStub(ResponseInterface::class);
-        $validResponse->method('getStatusCode')->willReturn(201);
+        $failResult = AntiSpamResult::fromCheckResults([
+            AntiSpamCheckResult::fail('honeypot', 50, 'Honeypot field filled'),
+        ]);
+
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $pipeline->method('evaluate')->willReturn($failResult);
+
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
+
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
+            ->withParsedBody(['body' => 'Spam comment', '_hp_field' => 'bot-value']);
 
         $handler = $this->createStub(RequestHandlerInterface::class);
-        $handler->method('handle')->willReturn($validResponse);
+
+        $result = $middleware->process($request, $handler);
+
+        // Honeypot failures return 200 to avoid tipping off bots
+        self::assertSame(200, $result->getStatusCode());
+        $body = (string) $result->getBody();
+        $decoded = json_decode($body, true);
+        self::assertIsArray($decoded);
+        self::assertSame('success', $decoded['status']);
+    }
+
+    #[Test]
+    public function processRejects422OnNonHoneypotFailure(): void
+    {
+        $failResult = AntiSpamResult::fromCheckResults([
+            AntiSpamCheckResult::fail('link_density', 40, 'Too many links in submission'),
+        ]);
+
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $pipeline->method('evaluate')->willReturn($failResult);
+
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
+
+        $request = new ServerRequest(method: 'POST', uri: '/comments')
+            ->withParsedBody(['body' => 'https://spam.example.com https://spam2.example.com']);
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+
+        $result = $middleware->process($request, $handler);
+
+        self::assertSame(422, $result->getStatusCode());
+        $body = (string) $result->getBody();
+        $decoded = json_decode($body, true);
+        self::assertIsArray($decoded);
+        self::assertArrayHasKey('error', $decoded);
+    }
+
+    #[Test]
+    public function processIncludesReasonFromFailedCheck(): void
+    {
+        $failResult = AntiSpamResult::fromCheckResults([
+            AntiSpamCheckResult::pass('honeypot'),
+            AntiSpamCheckResult::fail('duplicate', 35, 'Duplicate submission detected'),
+        ]);
+
+        $pipeline = $this->createStub(AntiSpamPipelineInterface::class);
+        $pipeline->method('evaluate')->willReturn($failResult);
+
+        $middleware = new CommentAntiAbuseMiddleware($pipeline);
 
         $request = new ServerRequest(method: 'POST', uri: '/comments')
             ->withParsedBody(['body' => 'Exact same comment']);
 
-        // First submission succeeds
-        $result1 = $this->middleware->process($request, $handler);
-        self::assertSame(201, $result1->getStatusCode());
+        $handler = $this->createStub(RequestHandlerInterface::class);
 
-        // Second identical submission is rejected as duplicate
-        $result2 = $this->middleware->process($request, $handler);
-        self::assertSame(422, $result2->getStatusCode());
-        $body = (string) $result2->getBody();
-        self::assertStringContainsString('Duplicate', $body);
+        $result = $middleware->process($request, $handler);
+
+        self::assertSame(422, $result->getStatusCode());
+        $body = (string) $result->getBody();
+        $decoded = json_decode($body, true);
+        self::assertIsArray($decoded);
+        self::assertSame('Duplicate submission detected', $decoded['message']);
     }
 }

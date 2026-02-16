@@ -71,6 +71,12 @@ final class AdminCrudThroughputBench
             }
 
             #[Override]
+            public function findByImportId(string $importId): ?Content
+            {
+                return null;
+            }
+
+            #[Override]
             public function findByPath(string $locale, string $path, ?string $tenantId = null): Content
             {
                 return $this->content;

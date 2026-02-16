@@ -60,10 +60,8 @@ final class TemplateCompilerTest extends TestCase
     {
         $result = $this->compiler->compileSource('Hello, {{ $name }}!');
 
-        self::assertStringContainsString('htmlspecialchars', $result);
+        self::assertStringContainsString('ContextEscaper::html', $result);
         self::assertStringContainsString('$name', $result);
-        self::assertStringContainsString('ENT_QUOTES | ENT_SUBSTITUTE', $result);
-        self::assertStringContainsString("'UTF-8'", $result);
     }
 
     #[Test]
@@ -72,7 +70,7 @@ final class TemplateCompilerTest extends TestCase
         $result = $this->compiler->compileSource('Content: {!! $html !!}');
 
         self::assertStringContainsString('<?php echo $html; ?>', $result);
-        self::assertStringNotContainsString('htmlspecialchars', $result);
+        self::assertStringNotContainsString('ContextEscaper::html', $result);
     }
 
     #[Test]
@@ -100,7 +98,7 @@ final class TemplateCompilerTest extends TestCase
 
         self::assertStringContainsString('$title', $result);
         self::assertStringContainsString('$body', $result);
-        self::assertSame(2, substr_count($result, 'htmlspecialchars'));
+        self::assertSame(2, substr_count($result, 'ContextEscaper::html'));
     }
 
     #[Test]
@@ -199,7 +197,7 @@ final class TemplateCompilerTest extends TestCase
         $path = $this->compiler->resolve('layouts.main');
 
         self::assertStringContainsString('layouts', $path);
-        self::assertStringEndsWith('.pulsar.php', $path);
+        self::assertStringEndsWith('.pulse.php', $path);
     }
 
     #[Test]
@@ -299,7 +297,7 @@ final class TemplateCompilerTest extends TestCase
         $cache = new TemplateCache($this->cacheDir);
         $compiler = new TemplateCompiler($config, $cache);
 
-        $path = $secondDir . DIRECTORY_SEPARATOR . 'fallback.pulsar.php';
+        $path = $secondDir . DIRECTORY_SEPARATOR . 'fallback.pulse.php';
         file_put_contents($path, '<p>Fallback</p>');
 
         self::assertTrue($compiler->exists('fallback'));
@@ -322,7 +320,7 @@ final class TemplateCompilerTest extends TestCase
         // Place template in both paths
         $this->writeTemplate('shared', '<p>Primary</p>');
         file_put_contents(
-            $secondDir . DIRECTORY_SEPARATOR . 'shared.pulsar.php',
+            $secondDir . DIRECTORY_SEPARATOR . 'shared.pulse.php',
             '<p>Secondary</p>',
         );
 
@@ -349,14 +347,14 @@ final class TemplateCompilerTest extends TestCase
         $result = $this->compiler->compileSource($source);
 
         self::assertStringContainsString('<div>', $result);
-        self::assertSame(2, substr_count($result, 'htmlspecialchars'));
+        self::assertSame(2, substr_count($result, 'ContextEscaper::html'));
         self::assertStringContainsString('echo $safeHtml;', $result);
         self::assertStringNotContainsString('Page header', $result);
     }
 
     private function writeTemplate(string $name, string $content): void
     {
-        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulsar.php';
+        $relativePath = str_replace('.', DIRECTORY_SEPARATOR, $name) . '.pulse.php';
         $fullPath = $this->templateDir . DIRECTORY_SEPARATOR . $relativePath;
         $dir = dirname($fullPath);
 

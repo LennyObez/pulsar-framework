@@ -2,14 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Scheduler\Tenant;
+namespace Pulsar\Tests\Unit\Scheduler\Tenant;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Scheduler\Tenant\TenantScheduleTickResult;
 
+#[CoversClass(TenantScheduleTickResult::class)]
 final class TenantScheduleTickResultTest extends TestCase
 {
-    public function test_construction_and_accessors(): void
+    #[Test]
+    public function constructionAndAccessors(): void
     {
         $result = new TenantScheduleTickResult(
             tenantsProcessed: 5,

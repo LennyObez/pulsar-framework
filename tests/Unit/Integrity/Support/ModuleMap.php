@@ -49,6 +49,8 @@ final class ModuleMap
         'Pulsar\Core\Wiring\ViewWiring',
         'Pulsar\Console\Application',
         'Pulsar\Console\Command\BuildCommand',
+        'Pulsar\Extension\Cms\CmsSecurityIntegration',
+        'Pulsar\Core\MicroKernel',
     ];
 
     /**

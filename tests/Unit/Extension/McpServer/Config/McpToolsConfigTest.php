@@ -55,10 +55,11 @@ final class McpToolsConfigTest extends TestCase
     {
         $config = McpToolsConfig::fromArray([
             'max_output_bytes' => '512000',
-            'action_timeout' => '30',
+            'action_timeout' => 30,
         ]);
 
-        self::assertSame(512_000, $config->maxOutputBytes);
+        // max_output_bytes requires is_int() — string '512000' falls back to default 1_048_576
+        self::assertSame(1_048_576, $config->maxOutputBytes);
         self::assertSame(30, $config->actionTimeout);
     }
 

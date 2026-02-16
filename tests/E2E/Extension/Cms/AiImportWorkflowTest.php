@@ -238,6 +238,11 @@ final class AiImportWorkflowTest extends TestCase
                 return $this->importSiteDefinition($jsonContent, $dryRun);
             }
 
+            public function importUnifiedFile(string $jsonContent, bool $dryRun = true): ImportResult
+            {
+                return $this->importSiteDefinition($jsonContent, $dryRun);
+            }
+
             public function importSiteDefinition(string $jsonContent, bool $dryRun = true): ImportResult
             {
                 $def = SiteDefinition::fromJson($jsonContent);

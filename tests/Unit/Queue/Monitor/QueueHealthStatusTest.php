@@ -7,16 +7,16 @@ namespace Pulsar\Tests\Unit\Queue\Monitor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Queue\Monitor\HealthStatus;
+use Pulsar\Queue\Monitor\QueueHealthStatus;
 
-#[CoversClass(HealthStatus::class)]
-final class HealthStatusTest extends TestCase
+#[CoversClass(QueueHealthStatus::class)]
+final class QueueHealthStatusTest extends TestCase
 {
     #[Test]
     public function casesHaveExpectedValues(): void
     {
-        self::assertSame('healthy', HealthStatus::Healthy->value);
-        self::assertSame('degraded', HealthStatus::Degraded->value);
-        self::assertSame('unhealthy', HealthStatus::Unhealthy->value);
+        self::assertSame('healthy', QueueHealthStatus::Healthy->value);
+        self::assertSame('degraded', QueueHealthStatus::Degraded->value);
+        self::assertSame('unhealthy', QueueHealthStatus::Unhealthy->value);
     }
 }

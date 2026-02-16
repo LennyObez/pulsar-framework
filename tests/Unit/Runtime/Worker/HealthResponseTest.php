@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Runtime\RuntimeType;
 use Pulsar\Runtime\Worker\HealthResponse;
-use Pulsar\Runtime\Worker\HealthStatus;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
 use Pulsar\Runtime\Worker\WorkerInfo;
 use Pulsar\Runtime\Worker\WorkerState;
 
@@ -23,13 +23,13 @@ final class HealthResponseTest extends TestCase
     public function it_constructs_with_all_properties(): void
     {
         $response = new HealthResponse(
-            status: HealthStatus::Healthy,
+            status: WorkerHealthStatus::Healthy,
             requestCount: 100,
             memoryUsageMb: 64,
             uptimeSeconds: 3600,
         );
 
-        self::assertSame(HealthStatus::Healthy, $response->status);
+        self::assertSame(WorkerHealthStatus::Healthy, $response->status);
         self::assertSame(100, $response->requestCount);
         self::assertSame(64, $response->memoryUsageMb);
         self::assertSame(3600, $response->uptimeSeconds);
@@ -39,7 +39,7 @@ final class HealthResponseTest extends TestCase
     public function status_code_returns_200_for_healthy(): void
     {
         $response = new HealthResponse(
-            status: HealthStatus::Healthy,
+            status: WorkerHealthStatus::Healthy,
             requestCount: 0,
             memoryUsageMb: 0,
             uptimeSeconds: 0,
@@ -52,7 +52,7 @@ final class HealthResponseTest extends TestCase
     public function status_code_returns_503_for_draining(): void
     {
         $response = new HealthResponse(
-            status: HealthStatus::Draining,
+            status: WorkerHealthStatus::Draining,
             requestCount: 0,
             memoryUsageMb: 0,
             uptimeSeconds: 0,
@@ -65,7 +65,7 @@ final class HealthResponseTest extends TestCase
     public function status_code_returns_503_for_shutting_down(): void
     {
         $response = new HealthResponse(
-            status: HealthStatus::ShuttingDown,
+            status: WorkerHealthStatus::ShuttingDown,
             requestCount: 0,
             memoryUsageMb: 0,
             uptimeSeconds: 0,
@@ -78,7 +78,7 @@ final class HealthResponseTest extends TestCase
     public function to_json_returns_valid_json(): void
     {
         $response = new HealthResponse(
-            status: HealthStatus::Healthy,
+            status: WorkerHealthStatus::Healthy,
             requestCount: 42,
             memoryUsageMb: 128,
             uptimeSeconds: 7200,
@@ -99,7 +99,7 @@ final class HealthResponseTest extends TestCase
     public function to_json_includes_draining_status(): void
     {
         $response = new HealthResponse(
-            status: HealthStatus::Draining,
+            status: WorkerHealthStatus::Draining,
             requestCount: 1000,
             memoryUsageMb: 256,
             uptimeSeconds: 60,
@@ -127,7 +127,7 @@ final class HealthResponseTest extends TestCase
 
         $response = HealthResponse::fromWorkerInfo($info);
 
-        self::assertSame(HealthStatus::Healthy, $response->status);
+        self::assertSame(WorkerHealthStatus::Healthy, $response->status);
         self::assertSame(50, $response->requestCount);
         self::assertSame(64, $response->memoryUsageMb);
     }
@@ -146,7 +146,7 @@ final class HealthResponseTest extends TestCase
 
         $response = HealthResponse::fromWorkerInfo($info);
 
-        self::assertSame(HealthStatus::Healthy, $response->status);
+        self::assertSame(WorkerHealthStatus::Healthy, $response->status);
     }
 
     #[Test]
@@ -163,7 +163,7 @@ final class HealthResponseTest extends TestCase
 
         $response = HealthResponse::fromWorkerInfo($info);
 
-        self::assertSame(HealthStatus::Healthy, $response->status);
+        self::assertSame(WorkerHealthStatus::Healthy, $response->status);
     }
 
     #[Test]
@@ -180,7 +180,7 @@ final class HealthResponseTest extends TestCase
 
         $response = HealthResponse::fromWorkerInfo($info);
 
-        self::assertSame(HealthStatus::Draining, $response->status);
+        self::assertSame(WorkerHealthStatus::Draining, $response->status);
     }
 
     #[Test]
@@ -197,7 +197,7 @@ final class HealthResponseTest extends TestCase
 
         $response = HealthResponse::fromWorkerInfo($info);
 
-        self::assertSame(HealthStatus::ShuttingDown, $response->status);
+        self::assertSame(WorkerHealthStatus::ShuttingDown, $response->status);
     }
 
     #[Test]
@@ -214,7 +214,7 @@ final class HealthResponseTest extends TestCase
 
         $response = HealthResponse::fromWorkerInfo($info);
 
-        self::assertSame(HealthStatus::ShuttingDown, $response->status);
+        self::assertSame(WorkerHealthStatus::ShuttingDown, $response->status);
     }
 
     #[Test]

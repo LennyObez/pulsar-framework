@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\DomainConfig;
 use Pulsar\Http\Method;
 use Pulsar\Routing\MatchedRoute;
 use Pulsar\Routing\Route;
@@ -417,93 +418,126 @@ final class RouterTest extends TestCase
 
         $router->match(Method::GET, '/', 'other.example.com');
     }
-}
 
-#[CoversClass(MatchedRoute::class)]
-final class MatchedRouteTest extends TestCase
-{
-    #[Test]
-    public function parameterReturnsValueOrDefault(): void
-    {
-        $route = Route::get('/test/{id}', fn() => null, 'test');
-        $matched = new MatchedRoute($route, ['id' => '42']);
-
-        self::assertSame('42', $matched->parameter('id'));
-        self::assertNull($matched->parameter('missing'));
-        self::assertSame('default', $matched->parameter('missing', 'default'));
-    }
+    // --- Domain-Aware URL Generation ---
 
     #[Test]
-    public function getAttributesReturnsRouteAttributes(): void
+    public function urlWithDomainConfigGeneratesFullyQualifiedUrl(): void
     {
-        $route = new Route(
-            [Method::GET],
-            '/test',
-            fn() => null,
-            attributes: ['key' => 'value'],
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/threads/{id}',
+            handler: fn() => null,
+            name: 'forum.thread.show',
+            attributes: ['scope' => 'forum'],
+        ));
+
+        $domainConfig = new DomainConfig(
+            defaultDomain: 'example.com',
+            subdomains: ['forum' => ['forum']],
+            scheme: 'https',
         );
-        $matched = new MatchedRoute($route);
 
-        self::assertSame(['key' => 'value'], $matched->getAttributes());
+        $url = $router->url('forum.thread.show', ['id' => '1'], $domainConfig);
+
+        self::assertSame('https://forum.example.com/threads/1', $url);
     }
 
     #[Test]
-    public function getMiddlewareReturnsRouteMiddleware(): void
+    public function urlWithDomainConfigFallsBackToRelativePathWhenNoScopeAttribute(): void
     {
-        $route = new Route(
-            [Method::GET],
-            '/test',
-            fn() => null,
-            middleware: ['auth', 'log'],
+        $router = new Router();
+        $router->get('/dashboard', fn() => null, 'dashboard');
+
+        $domainConfig = new DomainConfig(
+            defaultDomain: 'example.com',
+            subdomains: ['forum' => ['forum']],
         );
-        $matched = new MatchedRoute($route);
 
-        self::assertSame(['auth', 'log'], $matched->getMiddleware());
+        $url = $router->url('dashboard', [], $domainConfig);
+
+        self::assertSame('/dashboard', $url);
     }
 
     #[Test]
-    public function hasParameterReturnsTrueWhenPresent(): void
+    public function urlWithDomainConfigFallsBackWhenScopeNotMapped(): void
     {
-        $route = Route::get('/test/{slug}', fn() => null, 'test');
-        $matched = new MatchedRoute($route, ['slug' => 'hello']);
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/settings',
+            handler: fn() => null,
+            name: 'settings',
+            attributes: ['scope' => 'unmapped-scope'],
+        ));
 
-        self::assertTrue($matched->hasParameter('slug'));
+        $domainConfig = new DomainConfig(
+            defaultDomain: 'example.com',
+            subdomains: ['forum' => ['forum']],
+        );
+
+        $url = $router->url('settings', [], $domainConfig);
+
+        self::assertSame('/settings', $url);
     }
 
     #[Test]
-    public function hasParameterReturnsFalseWhenMissing(): void
+    public function urlWithNullDomainConfigReturnsRelativePath(): void
     {
-        $route = Route::get('/test', fn() => null, 'test');
-        $matched = new MatchedRoute($route);
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/threads/{id}',
+            handler: fn() => null,
+            name: 'forum.thread.show',
+            attributes: ['scope' => 'forum'],
+        ));
 
-        self::assertFalse($matched->hasParameter('slug'));
+        $url = $router->url('forum.thread.show', ['id' => '1']);
+
+        self::assertSame('/threads/1', $url);
     }
 
     #[Test]
-    public function getHandlerDelegatesToRoute(): void
+    public function urlWithDomainConfigNoSubdomainMappingsReturnsRelative(): void
     {
-        $handler = static fn() => 'ok';
-        $route = new Route([Method::GET], '/test', $handler);
-        $matched = new MatchedRoute($route);
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/threads/{id}',
+            handler: fn() => null,
+            name: 'forum.thread.show',
+            attributes: ['scope' => 'forum'],
+        ));
 
-        self::assertSame($handler, $matched->getHandler());
+        $domainConfig = new DomainConfig(defaultDomain: 'example.com');
+
+        $url = $router->url('forum.thread.show', ['id' => '1'], $domainConfig);
+
+        self::assertSame('/threads/1', $url);
     }
 
     #[Test]
-    public function getNameDelegatesToRoute(): void
+    public function urlWithDomainConfigHttpScheme(): void
     {
-        $route = Route::get('/test', fn() => null, 'test.route');
-        $matched = new MatchedRoute($route);
+        $router = new Router();
+        $router->add(new Route(
+            methods: [Method::GET],
+            path: '/api/users',
+            handler: fn() => null,
+            name: 'api.users',
+            attributes: ['scope' => 'api'],
+        ));
 
-        self::assertSame('test.route', $matched->getName());
-    }
+        $domainConfig = new DomainConfig(
+            defaultDomain: 'example.com',
+            subdomains: ['api' => ['api']],
+            scheme: 'http',
+        );
 
-    #[Test]
-    public function getNameReturnsNullWhenUnset(): void
-    {
-        $route = new Route([Method::GET], '/test', fn() => null);
-        $matched = new MatchedRoute($route);
+        $url = $router->url('api.users', [], $domainConfig);
 
-        self::assertNull($matched->getName());
+        self::assertSame('http://api.example.com/api/users', $url);
     }
 }

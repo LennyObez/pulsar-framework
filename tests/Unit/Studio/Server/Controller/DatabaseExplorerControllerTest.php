@@ -7,14 +7,37 @@ namespace Pulsar\Tests\Unit\Studio\Server\Controller;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\I18nConfig;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Server\Controller\DatabaseExplorerController;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\I18n\CatalogInterface;
+use Pulsar\I18n\Translator;
 
 #[CoversClass(DatabaseExplorerController::class)]
 final class DatabaseExplorerControllerTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturn(null);
+        $catalog->method('has')->willReturn(false);
+        Translator::setGlobalInstance(new Translator($catalog, new I18nConfig(
+            defaultLocale: 'en',
+            supportedLocales: ['en'],
+            fallbackLocales: [],
+            catalogPath: null,
+            regulated: false,
+            maxSupportedLocales: 50,
+            strictMode: false,
+        )));
+    }
+
+    protected function tearDown(): void
+    {
+        Translator::resetGlobalInstance();
+    }
     private function createRequest(): ServerRequest
     {
         return new ServerRequest(
@@ -35,7 +58,9 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
         self::assertSame('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
-        self::assertStringContainsString('No database query events', (string) $response->getBody());
+        $body = (string) $response->getBody();
+        self::assertStringContainsString('data-page="database-explorer"', $body);
+        self::assertStringContainsString('&quot;events&quot;:[]', $body);
     }
 
     #[Test]
@@ -119,11 +144,8 @@ final class DatabaseExplorerControllerTest extends TestCase
         $response = $controller->handle($this->createRequest());
 
         $body = (string) $response->getBody();
-        self::assertStringContainsString('href="/studio"', $body);
-        self::assertStringContainsString('href="/studio/console"', $body);
-        self::assertStringContainsString('href="/studio/console/requests"', $body);
-        self::assertStringContainsString('href="/studio/console/logs"', $body);
-        self::assertStringContainsString('href="/studio/console/exceptions"', $body);
+        self::assertStringContainsString('data-page="database-explorer"', $body);
+        self::assertStringContainsString('/studio/assets/main.js', $body);
     }
 
     #[Test]
@@ -136,7 +158,7 @@ final class DatabaseExplorerControllerTest extends TestCase
 
         $response = $controller->handle($this->createRequest());
 
-        self::assertStringContainsString('href="/studio/console/database" class="active"', (string) $response->getBody());
+        self::assertStringContainsString('data-page="database-explorer"', (string) $response->getBody());
     }
 
     #[Test]
@@ -150,8 +172,8 @@ final class DatabaseExplorerControllerTest extends TestCase
         $response = $controller->handle($this->createRequest());
 
         $body = (string) $response->getBody();
-        self::assertStringContainsString('Back to console overview', $body);
-        self::assertStringContainsString('class="btn"', $body);
+        self::assertStringContainsString('data-page="database-explorer"', $body);
+        self::assertStringContainsString('pulsar-ui.css', $body);
     }
 
     #[Test]

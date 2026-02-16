@@ -16,6 +16,7 @@ use Pulsar\Queue\JobRecord;
 use Pulsar\Queue\JobRecordStatus;
 use Pulsar\Queue\QueueableInterface;
 use Pulsar\Queue\QueueDriverInterface;
+use Pulsar\Queue\Serialization\TypeRegistry;
 use Pulsar\Queue\Worker;
 use Pulsar\Queue\WorkerOptions;
 use Pulsar\Queue\WorkerStatus;
@@ -29,10 +30,16 @@ use function time;
 final class WorkerTest extends TestCase
 {
     private EnvelopeSerializer $serializer;
+    private TypeRegistry $typeRegistry;
 
     protected function setUp(): void
     {
         $this->serializer = new EnvelopeSerializer();
+        $this->typeRegistry = new TypeRegistry();
+        $this->typeRegistry->register(WorkerTestSuccessJob::class);
+        $this->typeRegistry->register(WorkerTestFailingJob::class);
+        $this->typeRegistry->register(WorkerTestNonQueueableJob::class);
+        $this->typeRegistry->register(WorkerTestContextCapture::class);
     }
 
     #[Test]
@@ -40,7 +47,7 @@ final class WorkerTest extends TestCase
     {
         $driver = $this->createStub(QueueDriverInterface::class);
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         self::assertSame(WorkerStatus::Stopped, $worker->status);
     }
@@ -64,7 +71,7 @@ final class WorkerTest extends TestCase
             ->with('job-001');
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $processed = $worker->processNextJob('default');
 
@@ -83,7 +90,7 @@ final class WorkerTest extends TestCase
             ->willReturn(null);
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $processed = $worker->processNextJob('default');
 
@@ -109,7 +116,7 @@ final class WorkerTest extends TestCase
             ->with('job-fail', self::stringContains('Intentional failure'));
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $processed = $worker->processNextJob('default');
 
@@ -141,7 +148,7 @@ final class WorkerTest extends TestCase
             ->with('job-retry');
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $processed = $worker->processNextJob('default');
 
@@ -173,7 +180,7 @@ final class WorkerTest extends TestCase
             ->with('job-bad-envelope', self::stringContains('Envelope deserialization failed'));
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
     }
@@ -191,10 +198,10 @@ final class WorkerTest extends TestCase
         $driver
             ->expects(self::once())
             ->method('reject')
-            ->with('job-bad-class', self::stringContains('serialize'));
+            ->with('job-bad-class', self::stringContains('not registered in the type allowlist'));
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
     }
@@ -215,7 +222,7 @@ final class WorkerTest extends TestCase
             ->with('job-not-q', self::stringContains('serialize'));
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
     }
@@ -225,7 +232,7 @@ final class WorkerTest extends TestCase
     {
         $driver = $this->createStub(QueueDriverInterface::class);
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $worker->stop();
 
@@ -245,7 +252,7 @@ final class WorkerTest extends TestCase
             ->method('acknowledge');
 
         $options = new WorkerOptions(maxJobs: 2, sleepMs: 1);
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $worker->run('default');
 
@@ -271,7 +278,7 @@ final class WorkerTest extends TestCase
             ));
 
         $options = new WorkerOptions(maxJobs: 1, sleepMs: 1);
-        $worker = new Worker($driver, $options, $logger);
+        $worker = new Worker($driver, $options, $logger, typeRegistry: $this->typeRegistry);
 
         $worker->run('default');
     }
@@ -294,7 +301,7 @@ final class WorkerTest extends TestCase
             ));
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options, $logger);
+        $worker = new Worker($driver, $options, $logger, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
     }
@@ -314,7 +321,7 @@ final class WorkerTest extends TestCase
             ->with(self::stringContains('failed'));
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options, $logger);
+        $worker = new Worker($driver, $options, $logger, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('default');
     }
@@ -330,7 +337,7 @@ final class WorkerTest extends TestCase
         $driver->method('pop')->willReturn($record);
 
         $options = new WorkerOptions();
-        $worker = new Worker($driver, $options);
+        $worker = new Worker($driver, $options, typeRegistry: $this->typeRegistry);
 
         $worker->processNextJob('reports');
 
@@ -339,6 +346,34 @@ final class WorkerTest extends TestCase
         self::assertSame('reports', WorkerTestContextCapture::$capturedContext->queue);
         self::assertSame(2, WorkerTestContextCapture::$capturedContext->attempt);
         self::assertSame(5, WorkerTestContextCapture::$capturedContext->maxAttempts);
+    }
+
+    #[Test]
+    public function it_rejects_job_when_type_registry_is_null(): void
+    {
+        $record = $this->makeRecord(
+            'job-no-registry',
+            'default',
+            WorkerTestSuccessJob::class,
+            attempt: 3,
+            maxAttempts: 3,
+        );
+
+        $driver = $this->createMock(QueueDriverInterface::class);
+        $driver
+            ->expects(self::once())
+            ->method('pop')
+            ->willReturn($record);
+        $driver
+            ->expects(self::once())
+            ->method('reject')
+            ->with('job-no-registry', self::stringContains('TypeRegistry is required'));
+
+        $options = new WorkerOptions();
+        // Explicitly pass null TypeRegistry — must throw
+        $worker = new Worker($driver, $options, typeRegistry: null);
+
+        $worker->processNextJob('default');
     }
 
     /**

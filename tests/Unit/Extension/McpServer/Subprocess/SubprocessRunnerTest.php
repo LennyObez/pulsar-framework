@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\McpServer\Subprocess;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -103,7 +104,7 @@ final class SubprocessRunnerTest extends TestCase
             redactionPipeline: $this->redactionPipeline,
         );
 
-        // cancel() sets internal flag — verify it does not throw
+        // cancel() sets internal flag and does not throw
         $runner->cancel();
 
         self::assertInstanceOf(SubprocessRunner::class, $runner);
@@ -200,5 +201,69 @@ final class SubprocessRunnerTest extends TestCase
 
         self::assertSame('[REDACTED]', $result->structuredContent['stdout']);
         self::assertSame('[REDACTED]', $result->structuredContent['stderr']);
+    }
+
+    // ------------------------------------------------------------------
+    // Cancellation contract tests
+    // ------------------------------------------------------------------
+
+    #[Test]
+    public function assertSameInstanceSucceedsForSameObject(): void
+    {
+        $runner = new SubprocessRunner(
+            projectRoot: sys_get_temp_dir(),
+            timeout: 10,
+            maxOutputBytes: 1_048_576,
+            redactionPipeline: $this->redactionPipeline,
+        );
+
+        // Passing itself should not throw
+        $runner->assertSameInstance($runner);
+
+        self::assertInstanceOf(SubprocessRunner::class, $runner);
+    }
+
+    #[Test]
+    public function assertSameInstanceThrowsForDifferentInstance(): void
+    {
+        $runner1 = new SubprocessRunner(
+            projectRoot: sys_get_temp_dir(),
+            timeout: 10,
+            maxOutputBytes: 1_048_576,
+            redactionPipeline: $this->redactionPipeline,
+        );
+
+        $runner2 = new SubprocessRunner(
+            projectRoot: sys_get_temp_dir(),
+            timeout: 10,
+            maxOutputBytes: 1_048_576,
+            redactionPipeline: $this->redactionPipeline,
+        );
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('same instance');
+
+        $runner1->assertSameInstance($runner2);
+    }
+
+    #[Test]
+    public function cancelMethodSetsFlagObservableBySubsequentRun(): void
+    {
+        $runner = new SubprocessRunner(
+            projectRoot: sys_get_temp_dir(),
+            timeout: 10,
+            maxOutputBytes: 1_048_576,
+            redactionPipeline: $this->redactionPipeline,
+        );
+
+        // run() resets the cancelled flag at the start, so pre-cancelling
+        // does not affect a subsequent run(). This verifies the reset
+        // contract: each run starts fresh.
+        $runner->cancel();
+
+        $result = $runner->run(['php', '-r', 'echo "ok";']);
+
+        self::assertFalse($result->structuredContent['wasCancelled']);
+        self::assertStringContainsString('ok', $result->textContent);
     }
 }

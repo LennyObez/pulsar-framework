@@ -161,7 +161,7 @@ final class ZipSlipProtectionTest extends TestCase
     {
         $zipPath = $this->createZipWithEntries([
             'theme.json' => '{"slug":"test"}',
-            'templates/article.pulsar.php' => '<?php // article template',
+            'templates/article.pulse.php' => '<?php // article template',
             'assets/style.css' => 'body { color: red; }',
         ]);
         $extractor = $this->createExtractor();
@@ -171,7 +171,7 @@ final class ZipSlipProtectionTest extends TestCase
         self::assertTrue($result->success);
         self::assertSame(3, $result->fileCount);
         self::assertTrue(file_exists($this->targetDir . '/theme.json'));
-        self::assertTrue(file_exists($this->targetDir . '/templates/article.pulsar.php'));
+        self::assertTrue(file_exists($this->targetDir . '/templates/article.pulse.php'));
         self::assertTrue(file_exists($this->targetDir . '/assets/style.css'));
     }
 

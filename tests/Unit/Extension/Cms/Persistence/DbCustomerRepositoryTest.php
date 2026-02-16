@@ -218,6 +218,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: 'Save Test',
             billingAddress: ['street' => '456 Oak Ave'],
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -259,6 +260,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: null,
             billingAddress: null,
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -294,6 +296,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: null,
             billingAddress: null,
             shippingAddress: null,
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -327,6 +330,7 @@ final class DbCustomerRepositoryTest extends TestCase
             displayName: null,
             billingAddress: ['city' => 'NYC'],
             shippingAddress: ['city' => 'LA'],
+            notes: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -384,6 +388,6 @@ final class DbCustomerRepositoryTest extends TestCase
      */
     private function createCustomerRow(array $data): Row
     {
-        return new Row($data);
+        return new Row(array_merge(['notes' => null], $data));
     }
 }

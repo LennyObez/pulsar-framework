@@ -90,6 +90,12 @@ final class LargeImportBench
             {
                 return $this->importBundle($jsonContent, $dryRun);
             }
+
+            #[Override]
+            public function importUnifiedFile(string $jsonContent, bool $dryRun = true): ImportResult
+            {
+                return $this->importBundle($jsonContent, $dryRun);
+            }
         };
     }
 

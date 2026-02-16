@@ -207,7 +207,7 @@ final class ConfigDtosTest extends TestCase
         $config = new MediaConfig();
 
         self::assertSame('local', $config->disk);
-        self::assertSame(10_485_760, $config->maxUploadSize);
+        self::assertSame(52_428_800, $config->maxUploadSize);
         self::assertContains('image/jpeg', $config->allowedMimeTypes);
         self::assertContains('jpg', $config->allowedExtensions);
         self::assertSame(16384, $config->maxImageWidth);
@@ -328,6 +328,8 @@ final class ConfigDtosTest extends TestCase
         self::assertTrue($config->enableStructuredData);
         self::assertTrue($config->enableMediaSitemap);
         self::assertSame('0 3 * * 0', $config->linkHealthCheckSchedule);
+        self::assertNull($config->googleSiteVerification);
+        self::assertNull($config->bingSiteVerification);
     }
 
     #[Test]
@@ -339,6 +341,8 @@ final class ConfigDtosTest extends TestCase
             'enable_structured_data' => false,
             'enable_media_sitemap' => false,
             'link_health_check_schedule' => '0 4 * * 1',
+            'google_site_verification' => 'google_code_abc',
+            'bing_site_verification' => 'bing_code_xyz',
         ]);
 
         self::assertSame('noindex, nofollow', $config->defaultRobots);
@@ -346,6 +350,29 @@ final class ConfigDtosTest extends TestCase
         self::assertFalse($config->enableStructuredData);
         self::assertFalse($config->enableMediaSitemap);
         self::assertSame('0 4 * * 1', $config->linkHealthCheckSchedule);
+        self::assertSame('google_code_abc', $config->googleSiteVerification);
+        self::assertSame('bing_code_xyz', $config->bingSiteVerification);
+    }
+
+    #[Test]
+    public function seoConfigFromArrayWithoutVerificationDefaultsToNull(): void
+    {
+        $config = SeoConfig::fromArray([]);
+
+        self::assertNull($config->googleSiteVerification);
+        self::assertNull($config->bingSiteVerification);
+    }
+
+    #[Test]
+    public function seoConfigFromArrayIgnoresNonStringVerification(): void
+    {
+        $config = SeoConfig::fromArray([
+            'google_site_verification' => 12345,
+            'bing_site_verification' => true,
+        ]);
+
+        self::assertNull($config->googleSiteVerification);
+        self::assertNull($config->bingSiteVerification);
     }
 
     // -- ThemesConfig ---------------------------------------------------------

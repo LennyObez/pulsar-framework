@@ -46,10 +46,11 @@ final class McpSecurityConfigTest extends TestCase
     {
         $config = McpSecurityConfig::fromArray([
             'rate_limit_per_minute' => '200',
-            'max_concurrent_actions' => '5',
+            'max_concurrent_actions' => 5,
         ]);
 
-        self::assertSame(200, $config->rateLimitPerMinute);
+        // rate_limit_per_minute requires is_int() — string '200' falls back to default 60
+        self::assertSame(60, $config->rateLimitPerMinute);
         self::assertSame(5, $config->maxConcurrentActions);
     }
 

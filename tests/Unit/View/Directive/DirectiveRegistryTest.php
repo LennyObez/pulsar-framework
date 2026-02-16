@@ -117,6 +117,7 @@ final class DirectiveRegistryTest extends TestCase
             'auth', 'endauth', 'guest', 'endguest', 'can', 'endcan',
             'csrf', 'method',
             'i18n',
+            'pagination',
             'php', 'endphp',
         ];
 

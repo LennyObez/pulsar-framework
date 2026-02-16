@@ -19,7 +19,7 @@ use Pulsar\Runtime\RequestResetRegistry;
 use Pulsar\Runtime\RequestSandbox;
 use Pulsar\Runtime\RuntimeStatus;
 use Pulsar\Runtime\RuntimeType;
-use Pulsar\Runtime\Worker\HealthStatus;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
 
 #[CoversClass(FrankenPhpRuntime::class)]
 final class FrankenPhpRuntimeTest extends TestCase
@@ -74,7 +74,7 @@ final class FrankenPhpRuntimeTest extends TestCase
     #[Test]
     public function health_status_is_shutting_down_when_stopped(): void
     {
-        self::assertSame(HealthStatus::ShuttingDown, $this->runtime->healthStatus());
+        self::assertSame(WorkerHealthStatus::ShuttingDown, $this->runtime->healthStatus());
     }
 
     #[Test]
@@ -82,7 +82,7 @@ final class FrankenPhpRuntimeTest extends TestCase
     {
         $this->runtime->reload();
 
-        self::assertSame(HealthStatus::Draining, $this->runtime->healthStatus());
+        self::assertSame(WorkerHealthStatus::Draining, $this->runtime->healthStatus());
     }
 
     #[Test]
@@ -146,6 +146,6 @@ final class FrankenPhpRuntimeTest extends TestCase
     {
         $this->runtime->stop();
 
-        self::assertSame(HealthStatus::ShuttingDown, $this->runtime->healthStatus());
+        self::assertSame(WorkerHealthStatus::ShuttingDown, $this->runtime->healthStatus());
     }
 }
