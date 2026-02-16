@@ -129,7 +129,7 @@ final readonly class UrlPrefixExtractor
             return false;
         }
 
-        // Mid-path: /foo/../bar — also catches root-leading /../bar
+        // Mid-path: /foo/../bar: also catches root-leading /../bar
         // Trailing: /foo/..
         // Relative: ../foo (no leading slash)
         return str_contains($path, '/../')

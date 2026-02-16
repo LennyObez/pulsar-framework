@@ -123,10 +123,10 @@ final class AstParser
 
             // Determine token type
             if ($matches[1][$i][0] !== '') {
-                // {{ expr }} — output token
+                // {{ expr }}: output token
                 $tokens[] = ['type' => 'output', 'value' => $matches[1][$i][0], 'tag' => ''];
             } else {
-                // @directive — directive token
+                // @directive: directive token
                 $tag = $matches[2][$i][0];
                 $expr = ($matches[3][$i][0] !== '') ? $matches[3][$i][0] : '';
                 $tokens[] = ['type' => 'directive', 'value' => $expr, 'tag' => $tag];

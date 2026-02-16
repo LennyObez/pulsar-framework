@@ -76,7 +76,7 @@ final class TemplateInheritance
      * Start a new section (called by @section).
      *
      * When called with a second argument (@section('name', 'content')), sets the
-     * section inline without starting output buffering — no @endsection needed.
+     * section inline without starting output buffering: no @endsection needed.
      */
     public function startSection(string $name, ?string $content = null): void
     {

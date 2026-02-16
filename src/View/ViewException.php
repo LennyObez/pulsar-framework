@@ -107,6 +107,29 @@ class ViewException extends RuntimeException
     }
 
     #[NoDiscard]
+    public static function sandboxViolation(string $template, string $symbol, string $kind): self
+    {
+        return new self(sprintf(
+            'Sandbox violation in template "%s": %s "%s" is not allowed',
+            $template,
+            $kind,
+            $symbol,
+        ));
+    }
+
+    #[NoDiscard]
+    public static function typedTemplateViolation(string $template, string $variable, string $expected, string $actual): self
+    {
+        return new self(sprintf(
+            'Type mismatch in template "%s": variable "$%s" expected %s, got %s',
+            $template,
+            $variable,
+            $expected,
+            $actual,
+        ));
+    }
+
+    #[NoDiscard]
     public static function circularInheritance(string $template, string $parent): self
     {
         return new self(sprintf(
