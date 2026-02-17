@@ -4,7 +4,6 @@
 
 version: '1.0'
 linter: jetbrains/qodana-php:2025.3
-bootstrap: composer install --no-interaction --ignore-platform-reqs
 profile:
   name: qodana.recommended
 include:
