@@ -15,5 +15,8 @@ parameters:
         - ../../vendor
     bootstrapFiles:
         - ../../scripts/boundary_check.php
+    scanFiles:
+        - stubs/AwsSqs.php
+        - stubs/GooglePubSub.php
     treatPhpDocTypesAsCertain: false
     reportUnmatchedIgnoredErrors: true

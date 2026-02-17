@@ -2500,7 +2500,142 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Queue\\Attribute\\AllowNonIdempotent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\EffectClassification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\Encrypted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\Idempotent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\NonIdempotent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\SideEffectFree": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Attribute\\SystemJob": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Batch\\BatchRepositoryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Batch\\JobBatch": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Batch\\PendingBatch": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Chain\\JobChain": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Queue\\DeadLetterQueue": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Envelope\\BackoffStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Envelope\\JobEnvelope": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\BatchCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\BatchFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\ChainCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\ChainFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\DlqJobDeleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\DlqJobInspected": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\DlqJobRetried": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\DlqJobStored": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\JobCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\JobDispatched": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\JobFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\JobRetried": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\NonIdempotentJobAllowed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Event\\QueueEvent": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -2530,6 +2665,41 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Queue\\Middleware\\JobMiddlewareInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\HealthStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\MetricsCollector": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\ProcessingTimeStats": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\QueueHealthCheck": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\QueueMonitor": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Monitor\\QueueMonitorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Queue\\QueueDriverInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -2551,6 +2721,26 @@
       "constants": []
     },
     "Pulsar\\Queue\\Retry\\RetryDecision": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Serialization\\SchemaVersionRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Serialization\\SerializerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Serialization\\TypeRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Queue\\Serialization\\VersionTransformerInterface": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -3788,9 +3978,29 @@
     "Pulsar\\Observability\\Log\\Compliance\\PciDssLogFormatter",
     "Pulsar\\Observability\\Log\\Compliance\\SoxLogFormatter",
     "Pulsar\\Observability\\Log\\Sink\\DeferredSink",
+    "Pulsar\\Queue\\Attribute\\EffectClassifier",
+    "Pulsar\\Queue\\Batch\\InMemoryBatchRepository",
+    "Pulsar\\Queue\\Driver\\AmqpDriver",
+    "Pulsar\\Queue\\Driver\\Config\\AmqpDriverConfig",
+    "Pulsar\\Queue\\Driver\\Config\\PubSubDriverConfig",
+    "Pulsar\\Queue\\Driver\\Config\\RedisDriverConfig",
+    "Pulsar\\Queue\\Driver\\Config\\SqsDriverConfig",
     "Pulsar\\Queue\\Driver\\DatabaseDriver",
     "Pulsar\\Queue\\Driver\\InMemoryDriver",
+    "Pulsar\\Queue\\Driver\\PubSubDriver",
+    "Pulsar\\Queue\\Driver\\RedisDriver",
+    "Pulsar\\Queue\\Driver\\SqsDriver",
     "Pulsar\\Queue\\Driver\\SyncDriver",
+    "Pulsar\\Queue\\Envelope\\EnvelopeSerializer",
+    "Pulsar\\Queue\\Middleware\\AeadPayloadEncryptor",
+    "Pulsar\\Queue\\Middleware\\EncryptPayload",
+    "Pulsar\\Queue\\Middleware\\EnforceEffectClassification",
+    "Pulsar\\Queue\\Middleware\\MiddlewarePipeline",
+    "Pulsar\\Queue\\Middleware\\PreventDuplicates",
+    "Pulsar\\Queue\\Middleware\\PropagateContext",
+    "Pulsar\\Queue\\Middleware\\RateLimit",
+    "Pulsar\\Queue\\Serialization\\JsonSerializer",
+    "Pulsar\\Queue\\Serialization\\MsgpackSerializer",
     "Pulsar\\Runtime\\Bridge\\PsrBridge",
     "Pulsar\\Runtime\\Fiber\\FiberScheduler",
     "Pulsar\\Runtime\\FrankenPhpRuntime",

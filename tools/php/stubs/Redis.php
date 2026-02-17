@@ -139,4 +139,110 @@ class Redis
      * @return int
      */
     public function sCard(string $key): int {}
+
+    /**
+     * @param string|list<string> $auth
+     * @return bool
+     */
+    public function auth(string|array $auth): bool {}
+
+    /**
+     * @param int $database
+     * @return bool
+     */
+    public function select(int $database): bool {}
+
+    /**
+     * @param string $key
+     * @param string ...$values
+     * @return int|false
+     */
+    public function rPush(string $key, string ...$values): int|false {}
+
+    /**
+     * @param string $srcKey
+     * @param string $dstKey
+     * @return string|false
+     */
+    public function rPopLPush(string $srcKey, string $dstKey): string|false {}
+
+    /**
+     * @param string $key
+     * @param float $score
+     * @param string $value
+     * @return int|false
+     */
+    public function zAdd(string $key, float $score, string $value): int|false {}
+
+    /**
+     * @param string $key
+     * @param string $start
+     * @param string $end
+     * @param array<string, mixed> $options
+     * @return list<string>
+     */
+    public function zRangeByScore(string $key, string $start, string $end, array $options = []): array {}
+
+    /**
+     * @param string $key
+     * @param string ...$members
+     * @return int
+     */
+    public function zRem(string $key, string ...$members): int {}
+
+    /**
+     * @param string $key
+     * @return int
+     */
+    public function zCard(string $key): int {}
+
+    /**
+     * @param string $key
+     * @param string $hashKey
+     * @param string $value
+     * @return int|false
+     */
+    public function hSet(string $key, string $hashKey, string $value): int|false {}
+
+    /**
+     * @param string $key
+     * @param string $hashKey
+     * @return string|false
+     */
+    public function hGet(string $key, string $hashKey): string|false {}
+
+    /**
+     * @param string $key
+     * @param string ...$hashKeys
+     * @return int|false
+     */
+    public function hDel(string $key, string ...$hashKeys): int|false {}
+
+    /**
+     * @param string $key
+     * @return array<string, string>
+     */
+    public function hGetAll(string $key): array {}
+
+    /**
+     * @param string $key
+     * @return int|false
+     */
+    public function lLen(string $key): int|false {}
+
+    /**
+     * @param string $key
+     * @param int $start
+     * @param int $end
+     * @return list<string>
+     */
+    public function lRange(string $key, int $start, int $end): array {}
+
+    /**
+     * @param string $key
+     * @param string $value
+     * @param int $count
+     * @return int|false
+     */
+    public function lRem(string $key, string $value, int $count): int|false {}
 }

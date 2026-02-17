@@ -24,6 +24,9 @@
         <file name="stubs/Redis.php"/>
         <file name="stubs/Memcached.php"/>
         <file name="stubs/PsySH.php"/>
+        <file name="stubs/Amqp.php"/>
+        <file name="stubs/AwsSqs.php"/>
+        <file name="stubs/GooglePubSub.php"/>
     </stubs>
 
     <issueHandlers>

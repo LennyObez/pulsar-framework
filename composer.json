@@ -38,8 +38,11 @@
     "ext-intl": "Required for ICU MessageFormat, number/date/currency formatting",
     "ext-memcached": "Required for Memcached cache driver",
     "ext-pcntl": "Required for queue worker signal handling (Unix only)",
-    "ext-redis": "Required for Redis cache driver",
+    "ext-amqp": "Required for AMQP queue driver (RabbitMQ)",
+    "ext-redis": "Required for Redis cache and queue drivers",
     "ext-sockets": "Required for persistent HTTP runtime (optional, guarded by runtime check)",
+    "aws/aws-sdk-php": "Required for Amazon SQS queue driver",
+    "google/cloud-pubsub": "Required for Google Cloud Pub/Sub queue driver",
     "nyholm/psr7": "Required for differential testing against PSR-7 reference implementation",
     "psy/psysh": "Required for the interactive REPL (pulsar shell)"
   },
