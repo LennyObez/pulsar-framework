@@ -36,4 +36,10 @@ final class PaymentException extends RuntimeException
     {
         return new self($message);
     }
+
+    #[NoDiscard]
+    public static function jwsVerificationFailed(string $reason): self
+    {
+        return new self(sprintf('JWS signature verification failed: %s', $reason));
+    }
 }

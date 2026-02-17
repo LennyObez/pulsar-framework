@@ -21,7 +21,7 @@ use Pulsar\Extension\Subscriptions\SubscriptionStatus;
  * Uses portable upserts (INSERT ... ON CONFLICT / ON DUPLICATE KEY) so
  * concurrent verifications for the same purchase token are safe.
  */
-#[Internal(reason: 'Raw-DB repository — use SubscriptionRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use SubscriptionRepositoryInterface for public API')]
 final readonly class DbSubscriptionRepository implements SubscriptionRepositoryInterface
 {
     private const string SQL_FIND_BY_USER = <<<'SQL'

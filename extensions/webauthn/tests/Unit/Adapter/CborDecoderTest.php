@@ -171,13 +171,13 @@ final class CborDecoderTest extends TestCase
     public function decodeNestedStructure(): void
     {
         // CBOR map {"fmt": "none", "attStmt": {}, "authData": <4 bytes>}
-        // a3                     -- map(3)
-        //   63 666d74            -- text(3) "fmt"
-        //   64 6e6f6e65          -- text(4) "none"
-        //   67 617474 53746d74   -- text(7) "attStmt"
-        //   a0                   -- map(0)
-        //   68 617574 68446174 61 -- text(8) "authData"
-        //   44 01020304          -- bytes(4)
+        // a3                    : map(3)
+        //   63 666d74           : text(3) "fmt"
+        //   64 6e6f6e65         : text(4) "none"
+        //   67 617474 53746d74  : text(7) "attStmt"
+        //   a0                  : map(0)
+        //   68 617574 68446174 61: text(8) "authData"
+        //   44 01020304         : bytes(4)
         $cbor = "\xa3"
             . "\x63" . 'fmt'
             . "\x64" . 'none'

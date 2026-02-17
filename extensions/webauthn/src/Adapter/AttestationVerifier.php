@@ -68,7 +68,7 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
     }
 
     /**
-     * Verify 'none' attestation — no attestation statement, unconditionally trusted.
+     * Verify 'none' attestation: no attestation statement, unconditionally trusted.
      *
      * @param array<string|int, mixed> $decoded
      */
@@ -90,7 +90,7 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
     }
 
     /**
-     * Verify 'packed' attestation — supports self-attestation and basic attestation.
+     * Verify 'packed' attestation: supports self-attestation and basic attestation.
      *
      * @param array<string|int, mixed> $decoded
      */
@@ -144,7 +144,7 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
             throw WebAuthnException::invalidAttestation('Cannot extract public key from attestation certificate');
         }
 
-        $opensslAlg = $this->coseAlgToOpenSsl($alg);
+        $opensslAlg = self::coseAlgToOpenSsl($alg);
         $valid = openssl_verify($signedData, $sig, $publicKey, $opensslAlg);
 
         if ($valid !== 1) {
@@ -181,7 +181,7 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
             throw WebAuthnException::invalidAttestation('Invalid credential public key for self-attestation');
         }
 
-        $opensslAlg = $this->coseAlgToOpenSsl($alg);
+        $opensslAlg = self::coseAlgToOpenSsl($alg);
         $valid = openssl_verify($signedData, $sig, $publicKey, $opensslAlg);
 
         if ($valid !== 1) {
@@ -272,7 +272,7 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
 
         // DER-encode as SubjectPublicKeyInfo for P-256
         $oid = "\x30\x13\x06\x07\x2A\x86\x48\xCE\x3D\x02\x01\x06\x08\x2A\x86\x48\xCE\x3D\x03\x01\x07";
-        $bitString = "\x03" . chr(strlen($ecPoint) + 1) . "\x00" . $ecPoint;
+        $bitString = "\x03" . chr((strlen($ecPoint) + 1) & 0xFF) . "\x00" . $ecPoint;
         $sequence = "\x30" . $this->derLength(strlen($oid) + strlen($bitString)) . $oid . $bitString;
 
         return "-----BEGIN PUBLIC KEY-----\n" . chunk_split(base64_encode($sequence), 64) . "-----END PUBLIC KEY-----\n";
@@ -318,11 +318,11 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
     private function derLength(int $length): string
     {
         if ($length < 0x80) {
-            return chr($length);
+            return chr($length & 0xFF);
         }
 
         if ($length < 0x100) {
-            return "\x81" . chr($length);
+            return "\x81" . chr($length & 0xFF);
         }
 
         return "\x82" . pack('n', $length);
@@ -362,7 +362,7 @@ final readonly class AttestationVerifier implements AttestationVerifierInterface
     /**
      * Map COSE algorithm identifier to OpenSSL algorithm constant.
      */
-    private function coseAlgToOpenSsl(int $alg): int
+    public static function coseAlgToOpenSsl(int $alg): int
     {
         return match ($alg) {
             -7, -257, -37 => OPENSSL_ALGO_SHA256,   // ES256, RS256, PS256

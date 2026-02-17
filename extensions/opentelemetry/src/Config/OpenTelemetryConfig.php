@@ -46,7 +46,7 @@ final readonly class OpenTelemetryConfig
      * @param OtlpMetricsConfig     $metrics          Metrics signal configuration
      * @param OtlpLogsConfig        $logs             Logs signal configuration
      * @param SamplerConfig         $sampler          Trace sampler configuration
-     * @param list<string>          $propagators      Context propagation formats (reserved — not yet wired to middleware)
+     * @param list<string>          $propagators      Context propagation formats (reserved; not yet wired to middleware)
      * @param BatchConfig           $batch            Batch exporter configuration
      * @param CardinalityConfig     $cardinality      Cardinality limiting configuration
      * @param bool                  $dualExport       Keeps existing span processor (e.g., Studio) active alongside OTLP export

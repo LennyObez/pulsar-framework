@@ -369,7 +369,7 @@ final class AttestationVerifierTest extends TestCase
             return "\xa0";
         }
 
-        $encoded = chr(0xa0 | min($count, 23));
+        $encoded = chr((0xa0 | min($count, 23)) & 0xFF);
 
         foreach ($map as $key => $value) {
             if (is_string($key)) {
@@ -377,17 +377,14 @@ final class AttestationVerifierTest extends TestCase
             } else {
                 if ($key >= 0) {
                     if ($key < 24) {
-                        $encoded .= chr($key);
+                        $encoded .= chr($key & 0xFF);
                     } else {
-                        $encoded .= "\x18" . chr($key);
+                        $encoded .= "\x18" . chr($key & 0xFF);
                     }
                 } else {
+                    // Negative CBOR keys: -1 encodes as 0x20, -2 as 0x21, etc.
                     $negVal = -1 - $key;
-                    if ($negVal < 24) {
-                        $encoded .= chr(0x20 | $negVal);
-                    } else {
-                        $encoded .= "\x38" . chr($negVal);
-                    }
+                    $encoded .= chr((0x20 | ($negVal & 0x1F)) & 0xFF);
                 }
             }
 
@@ -395,16 +392,13 @@ final class AttestationVerifierTest extends TestCase
                 $encoded .= $this->cborByteString($value);
             } elseif (is_int($value)) {
                 if ($value >= 0 && $value < 24) {
-                    $encoded .= chr($value);
+                    $encoded .= chr($value & 0xFF);
                 } elseif ($value >= 0) {
-                    $encoded .= "\x18" . chr($value);
+                    $encoded .= "\x18" . chr($value & 0xFF);
                 } else {
+                    // Negative CBOR values: -1 encodes as 0x20, -2 as 0x21, etc.
                     $negVal = -1 - $value;
-                    if ($negVal < 24) {
-                        $encoded .= chr(0x20 | $negVal);
-                    } else {
-                        $encoded .= "\x38" . chr($negVal);
-                    }
+                    $encoded .= chr((0x20 | ($negVal & 0x1F)) & 0xFF);
                 }
             } elseif (is_array($value)) {
                 $encoded .= $this->cborMap($value);

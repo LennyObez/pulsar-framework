@@ -41,7 +41,7 @@ interface AuthenticatorRepositoryInterface
     /**
      * Revoke (deactivate) an authenticator.
      *
-     * Does not delete the record — maintains audit trail.
+     * Does not delete the record; maintains audit trail.
      */
     public function revoke(string $credentialId): void;
 

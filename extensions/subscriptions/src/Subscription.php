@@ -13,7 +13,7 @@ use function random_bytes;
 /**
  * Subscription entity representing a user's in-app purchase subscription.
  *
- * Immutable — state transitions produce new instances via clone-with.
+ * Immutable: state transitions produce new instances via clone-with.
  * The purchase token is stored as a one-way hash; the raw receipt is
  * encrypted at rest and may be null once verification is complete.
  */

@@ -49,6 +49,7 @@ final class AuthenticationCeremonyTest extends TestCase
     private function makeCredential(
         string $id = 'cred-1',
         int $counter = 0,
+        int $algorithmId = -7,
     ): CredentialSource {
         return new CredentialSource(
             credentialId: $id,
@@ -60,6 +61,7 @@ final class AuthenticationCeremonyTest extends TestCase
             discoverable: true,
             aaguid: '00000000-0000-0000-0000-000000000000',
             createdAt: new DateTimeImmutable(),
+            algorithmId: $algorithmId,
         );
     }
 
@@ -73,11 +75,15 @@ final class AuthenticationCeremonyTest extends TestCase
         $options = $ceremony->generateOptions('user-1');
 
         self::assertNotEmpty($options->challenge);
-        self::assertSame('example.com', $options->publicKeyOptions['rpId']);
-        self::assertSame('preferred', $options->publicKeyOptions['userVerification']);
-        self::assertSame(60000, $options->publicKeyOptions['timeout']);
-        self::assertCount(2, $options->publicKeyOptions['allowCredentials']);
-        self::assertSame('public-key', $options->publicKeyOptions['allowCredentials'][0]['type']);
+        /** @var array<string, mixed> $pko */
+        $pko = $options->publicKeyOptions;
+        self::assertSame('example.com', $pko['rpId']);
+        self::assertSame('preferred', $pko['userVerification']);
+        self::assertSame(60000, $pko['timeout']);
+        /** @var list<array<string, mixed>> $allowCredentials */
+        $allowCredentials = $pko['allowCredentials'];
+        self::assertCount(2, $allowCredentials);
+        self::assertSame('public-key', $allowCredentials[0]['type']);
     }
 
     #[Test]
@@ -440,5 +446,29 @@ final class AuthenticationCeremonyTest extends TestCase
         // Will fail on client data validation, but proves it found the credential using 'id'
         $this->expectExceptionMessage('Invalid client data JSON');
         $ceremony->verify($credentialJson, 'challenge', 'user-1');
+    }
+
+    #[Test]
+    public function credentialSourceAlgorithmIdDefaultsToEs256(): void
+    {
+        $credential = $this->makeCredential();
+        self::assertSame(-7, $credential->algorithmId);
+    }
+
+    #[Test]
+    public function credentialSourceStoresCustomAlgorithmId(): void
+    {
+        $credential = $this->makeCredential(algorithmId: -257);
+        self::assertSame(-257, $credential->algorithmId);
+    }
+
+    #[Test]
+    public function unsupportedCoseAlgorithmThrowsOnMapping(): void
+    {
+        // Verify the coseAlgToOpenSsl static method throws for unknown algorithms
+        $this->expectException(WebAuthnException::class);
+        $this->expectExceptionMessage('Unsupported COSE algorithm');
+
+        \Pulsar\Extension\WebAuthn\Adapter\AttestationVerifier::coseAlgToOpenSsl(-99);
     }
 }

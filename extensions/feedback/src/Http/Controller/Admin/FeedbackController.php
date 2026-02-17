@@ -12,6 +12,7 @@ use Pulsar\Extension\Feedback\FeedbackRepositoryInterface;
 use Pulsar\Extension\Feedback\FeedbackStatus;
 use Pulsar\Extension\Feedback\Internal\FeedbackService;
 use Pulsar\Extension\Feedback\Job\CreateGitHubIssueJob;
+use Pulsar\Http\Client\HttpClientInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Queue\QueueDriverInterface;
 
@@ -26,17 +27,19 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Admin controller for feedback triage, response, and GitHub issue creation.
  */
-#[Internal(reason: 'Feedback admin controller — implementation detail')]
+#[Internal(reason: 'Feedback admin controller; implementation detail')]
 final readonly class FeedbackController
 {
     public function __construct(
         private FeedbackService $service,
         private FeedbackRepositoryInterface $repository,
+        private ?HttpClientInterface $httpClient = null,
+        private string $githubToken = '',
         private ?QueueDriverInterface $queueDriver = null,
     ) {}
 
     /**
-     * GET /admin/feedback — List all feedback with optional category/status filters.
+     * GET /admin/feedback: List all feedback with optional category/status filters.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -67,7 +70,7 @@ final readonly class FeedbackController
     }
 
     /**
-     * GET /admin/feedback/{id} — Show a single feedback item.
+     * GET /admin/feedback/{id}: Show a single feedback item.
      */
     public function show(ServerRequestInterface $request, string $id): Response
     {
@@ -83,7 +86,7 @@ final readonly class FeedbackController
     }
 
     /**
-     * PUT /admin/feedback/{id}/status — Update feedback status.
+     * PUT /admin/feedback/{id}/status: Update feedback status.
      *
      * Request body: { "status": "investigating" | "resolved" | "wont_fix" | "duplicate" }
      */
@@ -116,7 +119,7 @@ final readonly class FeedbackController
     }
 
     /**
-     * POST /admin/feedback/{id}/respond — Attach an admin response.
+     * POST /admin/feedback/{id}/respond: Attach an admin response.
      *
      * Request body: { "response": "string" }
      */
@@ -146,7 +149,7 @@ final readonly class FeedbackController
     }
 
     /**
-     * POST /admin/feedback/{id}/github-issue — Queue GitHub issue creation.
+     * POST /admin/feedback/{id}/github-issue: Queue GitHub issue creation.
      *
      * Request body: { "github_repo": "owner/repo" }
      */
@@ -188,8 +191,14 @@ final readonly class FeedbackController
                 CreateGitHubIssueJob::class,
                 $payload,
             );
-        } else {
-            $job = new CreateGitHubIssueJob($this->repository, $id, $githubRepo);
+        } elseif ($this->httpClient !== null && $this->githubToken !== '') {
+            $job = new CreateGitHubIssueJob(
+                $this->repository,
+                $this->httpClient,
+                $id,
+                $githubRepo,
+                $this->githubToken,
+            );
             $job->handle();
         }
 

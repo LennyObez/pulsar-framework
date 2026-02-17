@@ -26,7 +26,7 @@ use const ENT_QUOTES;
 /**
  * Admin controller for release CRUD operations and beta signup management.
  */
-#[Internal(reason: 'Release admin controller — implementation detail')]
+#[Internal(reason: 'Release admin controller; implementation detail')]
 final readonly class ReleaseController
 {
     public function __construct(
@@ -36,7 +36,7 @@ final readonly class ReleaseController
     ) {}
 
     /**
-     * GET /admin/releases — List all releases with optional filters.
+     * GET /admin/releases: List all releases with optional filters.
      */
     public function index(ServerRequestInterface $request): Response
     {
@@ -70,7 +70,7 @@ final readonly class ReleaseController
     }
 
     /**
-     * GET /admin/releases/create — Show create release form data (field metadata).
+     * GET /admin/releases/create: Show create release form data (field metadata).
      */
     public function create(ServerRequestInterface $request): Response
     {
@@ -95,7 +95,7 @@ final readonly class ReleaseController
     }
 
     /**
-     * POST /admin/releases — Create a new release.
+     * POST /admin/releases: Create a new release.
      */
     public function store(ServerRequestInterface $request): Response
     {
@@ -152,7 +152,7 @@ final readonly class ReleaseController
     }
 
     /**
-     * GET /admin/releases/{id} — Show a single release.
+     * GET /admin/releases/{id}: Show a single release.
      */
     public function edit(ServerRequestInterface $request, string $id): Response
     {
@@ -168,7 +168,7 @@ final readonly class ReleaseController
     }
 
     /**
-     * PUT /admin/releases/{id} — Update a release (mark stable, etc.).
+     * PUT /admin/releases/{id}: Update a release (mark stable, etc.).
      */
     public function update(ServerRequestInterface $request, string $id): Response
     {
@@ -203,7 +203,7 @@ final readonly class ReleaseController
     }
 
     /**
-     * GET /admin/releases/beta-signups — List all beta signups.
+     * GET /admin/releases/beta-signups: List all beta signups.
      */
     public function betaSignups(ServerRequestInterface $request): Response
     {

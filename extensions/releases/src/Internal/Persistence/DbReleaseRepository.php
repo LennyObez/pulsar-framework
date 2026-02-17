@@ -22,7 +22,7 @@ use function min;
 /**
  * Database-backed release repository using portable SQL (UpsertBuilder).
  */
-#[Internal(reason: 'Raw-DB repository — use ReleaseRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use ReleaseRepositoryInterface for public API')]
 final readonly class DbReleaseRepository implements ReleaseRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

@@ -15,6 +15,8 @@ use Pulsar\Extension\WebAuthn\Ceremony\RegistrationCeremony;
 use Pulsar\Extension\WebAuthn\Config\WebAuthnConfig;
 use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
 use Pulsar\Security\Audit\AuditEntry;
+use ReflectionMethod;
+use ReflectionParameter;
 
 use function chr;
 use function strlen;
@@ -58,14 +60,22 @@ final class RegistrationCeremonyTest extends TestCase
 
         self::assertNotEmpty($options->challenge);
         self::assertNotEmpty($options->publicKeyOptions);
-        self::assertSame('Test RP', $options->publicKeyOptions['rp']['name']);
-        self::assertSame('example.com', $options->publicKeyOptions['rp']['id']);
-        self::assertSame('John Doe', $options->publicKeyOptions['user']['name']);
-        self::assertSame('John Doe', $options->publicKeyOptions['user']['displayName']);
-        self::assertSame($options->challenge, $options->publicKeyOptions['challenge']);
-        self::assertSame(60000, $options->publicKeyOptions['timeout']);
-        self::assertSame('preferred', $options->publicKeyOptions['authenticatorSelection']['userVerification']);
-        self::assertSame('none', $options->publicKeyOptions['attestation']);
+        /** @var array<string, mixed> $pko */
+        $pko = $options->publicKeyOptions;
+        /** @var array<string, mixed> $rp */
+        $rp = $pko['rp'];
+        /** @var array<string, mixed> $user */
+        $user = $pko['user'];
+        /** @var array<string, mixed> $authSel */
+        $authSel = $pko['authenticatorSelection'];
+        self::assertSame('Test RP', $rp['name']);
+        self::assertSame('example.com', $rp['id']);
+        self::assertSame('John Doe', $user['name']);
+        self::assertSame('John Doe', $user['displayName']);
+        self::assertSame($options->challenge, $pko['challenge']);
+        self::assertSame(60000, $pko['timeout']);
+        self::assertSame('preferred', $authSel['userVerification']);
+        self::assertSame('none', $pko['attestation']);
     }
 
     #[Test]
@@ -75,8 +85,10 @@ final class RegistrationCeremonyTest extends TestCase
 
         $options = $ceremony->generateOptions('user-1', 'John Doe', ['cred-1', 'cred-2']);
 
-        self::assertCount(2, $options->publicKeyOptions['excludeCredentials']);
-        self::assertSame('public-key', $options->publicKeyOptions['excludeCredentials'][0]['type']);
+        /** @var list<array<string, mixed>> $excludeCredentials */
+        $excludeCredentials = $options->publicKeyOptions['excludeCredentials'];
+        self::assertCount(2, $excludeCredentials);
+        self::assertSame('public-key', $excludeCredentials[0]['type']);
     }
 
     #[Test]
@@ -86,10 +98,24 @@ final class RegistrationCeremonyTest extends TestCase
 
         $options = $ceremony->generateOptions('user-1', 'John Doe');
 
+        /** @var list<array<string, mixed>> $params */
         $params = $options->publicKeyOptions['pubKeyCredParams'];
         self::assertCount(2, $params);
         self::assertSame(-7, $params[0]['alg']); // ES256
         self::assertSame(-257, $params[1]['alg']); // RS256
+    }
+
+    #[Test]
+    public function verifyAcceptsServerProvidedUserId(): void
+    {
+        $ceremony = $this->createCeremony();
+
+        // The verify() method now requires a userId parameter
+        $ref = new ReflectionMethod($ceremony, 'verify');
+        $params = $ref->getParameters();
+
+        $paramNames = array_map(static fn(ReflectionParameter $p) => $p->getName(), $params);
+        self::assertContains('userId', $paramNames);
     }
 
     #[Test]
@@ -98,7 +124,7 @@ final class RegistrationCeremonyTest extends TestCase
         $ceremony = $this->createCeremony();
 
         $this->expectException(JsonException::class);
-        $ceremony->verify('not-json', 'challenge');
+        $ceremony->verify('not-json', 'challenge', 'server-user');
     }
 
     #[Test]
@@ -118,7 +144,7 @@ final class RegistrationCeremonyTest extends TestCase
         // The base64-encoded 'invalid-json' will decode but json_decode will fail
         $this->expectException(WebAuthnException::class);
         $this->expectExceptionMessage('Invalid client data JSON');
-        $ceremony->verify($credentialJson, 'challenge');
+        $ceremony->verify($credentialJson, 'challenge', 'user-1');
     }
 
     #[Test]
@@ -144,7 +170,7 @@ final class RegistrationCeremonyTest extends TestCase
 
         $this->expectException(WebAuthnException::class);
         $this->expectExceptionMessage("Expected type 'webauthn.create'");
-        $ceremony->verify($credentialJson, 'challenge');
+        $ceremony->verify($credentialJson, 'challenge', 'user-1');
     }
 
     #[Test]
@@ -170,7 +196,7 @@ final class RegistrationCeremonyTest extends TestCase
 
         $this->expectException(WebAuthnException::class);
         $this->expectExceptionMessage('invalid or expired');
-        $ceremony->verify($credentialJson, 'expected-challenge');
+        $ceremony->verify($credentialJson, 'expected-challenge', 'user-1');
     }
 
     #[Test]
@@ -196,7 +222,7 @@ final class RegistrationCeremonyTest extends TestCase
 
         $this->expectException(WebAuthnException::class);
         $this->expectExceptionMessage('Origin mismatch');
-        $ceremony->verify($credentialJson, 'test-challenge');
+        $ceremony->verify($credentialJson, 'test-challenge', 'user-1');
     }
 
     #[Test]
@@ -227,7 +253,7 @@ final class RegistrationCeremonyTest extends TestCase
 
         $this->expectException(WebAuthnException::class);
         $this->expectExceptionMessage('Authenticator data too short');
-        $ceremony->verify($credentialJson, 'test-challenge');
+        $ceremony->verify($credentialJson, 'test-challenge', 'user-1');
     }
 
     #[Test]
@@ -262,7 +288,7 @@ final class RegistrationCeremonyTest extends TestCase
 
         $this->expectException(WebAuthnException::class);
         $this->expectExceptionMessage('RP ID hash mismatch');
-        $ceremony->verify($credentialJson, 'test-challenge');
+        $ceremony->verify($credentialJson, 'test-challenge', 'user-1');
     }
 
     #[Test]
@@ -296,7 +322,7 @@ final class RegistrationCeremonyTest extends TestCase
 
         $this->expectException(WebAuthnException::class);
         $this->expectExceptionMessage('User presence flag not set');
-        $ceremony->verify($credentialJson, 'test-challenge');
+        $ceremony->verify($credentialJson, 'test-challenge', 'user-1');
     }
 
     #[Test]
@@ -342,7 +368,7 @@ final class RegistrationCeremonyTest extends TestCase
 
         $this->expectException(WebAuthnException::class);
         $this->expectExceptionMessage('User verification required but not performed');
-        $ceremony->verify($credentialJson, 'test-challenge');
+        $ceremony->verify($credentialJson, 'test-challenge', 'user-1');
     }
 
     #[Test]
@@ -376,7 +402,7 @@ final class RegistrationCeremonyTest extends TestCase
 
         $this->expectException(WebAuthnException::class);
         $this->expectExceptionMessage('Attested credential data flag not set');
-        $ceremony->verify($credentialJson, 'test-challenge');
+        $ceremony->verify($credentialJson, 'test-challenge', 'user-1');
     }
 
     private function buildMinimalAttObjCbor(string $authData): string

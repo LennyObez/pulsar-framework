@@ -103,7 +103,7 @@ final class OtlpExportIntegrationTest extends TestCase
 
         // Payload must be non-empty protobuf bytes
         self::assertNotEmpty($payload);
-        // Protobuf starts with a tag byte — field 1, wire type 2 (length-delimited)
+        // Protobuf starts with a tag byte: field 1, wire type 2 (length-delimited)
         self::assertSame(0x0A, ord($payload[0]), 'First byte should be tag for field 1, wire type 2');
 
         // Verify the span name 'http.request' appears in the serialized output

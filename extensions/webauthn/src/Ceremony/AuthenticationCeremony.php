@@ -6,6 +6,7 @@ namespace Pulsar\Extension\WebAuthn\Ceremony;
 
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Extension\WebAuthn\Adapter\AttestationVerifier;
 use Pulsar\Extension\WebAuthn\Config\WebAuthnConfig;
 use Pulsar\Extension\WebAuthn\Contract\CredentialRepositoryInterface;
 use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
@@ -286,6 +287,9 @@ final readonly class AuthenticationCeremony
 
     /**
      * Verify the assertion signature using the stored credential public key.
+     *
+     * Uses the credential's COSE algorithm ID to select the correct OpenSSL
+     * hash algorithm, rather than assuming SHA-256 for all key types.
      */
     private function verifySignature(
         string $authData,
@@ -302,16 +306,7 @@ final readonly class AuthenticationCeremony
             throw WebAuthnException::invalidAssertion('Cannot load credential public key');
         }
 
-        $keyDetails = openssl_pkey_get_details($publicKey);
-
-        if ($keyDetails === false) {
-            throw WebAuthnException::invalidAssertion('Cannot read credential public key details');
-        }
-
-        $algorithm = match ($keyDetails['type'] ?? -1) {
-            OPENSSL_KEYTYPE_EC, OPENSSL_KEYTYPE_RSA => OPENSSL_ALGO_SHA256,
-            default => throw WebAuthnException::invalidAssertion('Unsupported key type'),
-        };
+        $algorithm = AttestationVerifier::coseAlgToOpenSsl($credentialSource->algorithmId);
 
         $valid = openssl_verify($signedData, $signature, $publicKey, $algorithm);
 
