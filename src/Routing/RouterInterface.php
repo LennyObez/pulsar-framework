@@ -86,6 +86,14 @@ interface RouterInterface
     public function match(Method $method, string $path, ?string $host = null): MatchedRoute;
 
     /**
+     * Register an explicit parameter-to-model binding.
+     *
+     * @param class-string $modelClass
+     * @param class-string|null $resolverClass
+     */
+    public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self;
+
+    /**
      * Get all registered routes.
      *
      * @return list<Route>

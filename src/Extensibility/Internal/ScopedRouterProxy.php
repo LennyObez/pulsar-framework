@@ -132,6 +132,14 @@ final readonly class ScopedRouterProxy implements RouterInterface
     }
 
     #[Override]
+    public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self
+    {
+        $this->inner->model($parameter, $modelClass, $resolverClass);
+
+        return $this;
+    }
+
+    #[Override]
     public function count(): int
     {
         return $this->inner->count();

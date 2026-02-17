@@ -2830,6 +2830,46 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Routing\\Attribute\\PublicRoute": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\BindingMeta": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\Contract\\AuthorizationHookInterface": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\Contract\\ModelResolverPort": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\ModelBinder": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\ModelBindingConfig": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\ModelBindingException": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Routing\\Binding\\ResolutionContext": {
+      "since": "1.0.0-rc.11",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Routing\\MatchedRoute": {
       "since": "1.0.0",
       "methods": [],
@@ -4001,6 +4041,11 @@
     "Pulsar\\Queue\\Middleware\\RateLimit",
     "Pulsar\\Queue\\Serialization\\JsonSerializer",
     "Pulsar\\Queue\\Serialization\\MsgpackSerializer",
+    "Pulsar\\Routing\\Binding\\BindingResolver",
+    "Pulsar\\Routing\\Binding\\CompiledBindingMap",
+    "Pulsar\\Routing\\Binding\\ExplicitBinding",
+    "Pulsar\\Routing\\Binding\\ModelBindingMiddleware",
+    "Pulsar\\Routing\\Binding\\PolicyAuthorizationHook",
     "Pulsar\\Runtime\\Bridge\\PsrBridge",
     "Pulsar\\Runtime\\Fiber\\FiberScheduler",
     "Pulsar\\Runtime\\FrankenPhpRuntime",
