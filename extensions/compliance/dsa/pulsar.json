@@ -1,0 +1,22 @@
+{
+  "name": "pulsar/dsa",
+  "version": "1.0.0-rc.11",
+  "description": "EU Digital Services Act (Regulation 2022/2065) compliance extension for content moderation, transparency reporting, and notice-and-action mechanisms",
+  "trust_tier": "core",
+  "extension_class": "Pulsar\\Extension\\Dsa\\DsaExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "provides": {
+    "services": [
+      "DsaConfig",
+      "ModerationLog",
+      "AppealHandler",
+      "TransparencyReportGenerator",
+      "TrustedFlaggerRegistry",
+      "NoticeAndActionHandler"
+    ],
+    "routes": false,
+    "commands": []
+  }
+}

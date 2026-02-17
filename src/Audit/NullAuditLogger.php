@@ -1,0 +1,46 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Audit;
+
+use DateTimeImmutable;
+use Override;
+use Pulsar\Api\Api;
+use Pulsar\Security\Audit\AuditEntry;
+use Pulsar\Security\Audit\AuditEvent;
+use Pulsar\Security\Audit\AuditOutcome;
+
+/**
+ * No-op audit logger for environments without audit infrastructure.
+ *
+ * Used as a fallback when AuditLoggerInterface has no real implementation
+ * registered, allowing security-critical services like SafeHtmlPolicy to
+ * function without a full audit chain. Events are silently discarded.
+ */
+#[Api(since: '1.0.0')]
+final readonly class NullAuditLogger implements AuditLoggerInterface
+{
+    #[Override]
+    public function log(
+        AuditEvent $event,
+        AuditOutcome $outcome,
+        ?string $actor,
+        string $action,
+        string $resource = '',
+        array $metadata = [],
+    ): AuditEntry {
+        return new AuditEntry(
+            id: 'null',
+            event: $event,
+            outcome: $outcome,
+            actor: $actor ?? 'system',
+            action: $action,
+            resource: $resource,
+            timestamp: new DateTimeImmutable(),
+            metadata: $metadata,
+            previousHmac: '',
+            hmac: '',
+        );
+    }
+}
