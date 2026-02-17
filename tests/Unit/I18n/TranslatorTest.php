@@ -198,6 +198,50 @@ final class TranslatorTest extends TestCase
     /**
      * @param list<string> $fallbackLocales
      */
+    #[Test]
+    public function translateSplitsDotNotationIntoDomainAndKey(): void
+    {
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturnCallback(
+            static function (string $key, string $locale, string $domain): ?TranslationEntry {
+                if ($domain === 'navigation' && $key === 'home') {
+                    return new TranslationEntry(key: 'home', message: 'Home');
+                }
+
+                return null;
+            },
+        );
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        // "navigation.home" should split to domain=navigation, key=home
+        self::assertSame('Home', $translator->translate('navigation.home'));
+    }
+
+    #[Test]
+    public function translateDotNotationFallsBackToLiteralKey(): void
+    {
+        $callLog = [];
+        $catalog = $this->createStub(CatalogInterface::class);
+        $catalog->method('get')->willReturnCallback(
+            static function (string $key, string $locale, string $domain) use (&$callLog): ?TranslationEntry {
+                $callLog[] = "$domain.$key";
+                // Only match the literal key "config.app.name" in default domain
+                if ($domain === 'messages' && $key === 'config.app.name') {
+                    return new TranslationEntry(key: 'config.app.name', message: 'My App');
+                }
+
+                return null;
+            },
+        );
+
+        $translator = new Translator($catalog, $this->makeConfig());
+
+        // "config.app.name" first tries domain=config, key=app.name (miss),
+        // then falls back to literal key "config.app.name" in domain=messages (hit)
+        self::assertSame('My App', $translator->translate('config.app.name'));
+    }
+
     private function makeConfig(
         string $defaultLocale = 'en',
         array $fallbackLocales = ['en'],

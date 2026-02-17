@@ -44,12 +44,45 @@ final class Translator implements TranslatorInterface
         $targetLocale = $locale ?? $this->locale;
         $localeChain = $this->buildFallbackChain($targetLocale);
 
-        // Search through the chain
+        // Support dot-notation: "domain.key" splits to domain + key when the
+        // caller uses the default domain. This allows @t('messages.skip_to_content')
+        // to resolve as domain=messages, key=skip_to_content — matching the file-based
+        // catalog structure (resources/lang/{locale}/messages.php → ['skip_to_content']).
+        $resolvedKey = $key;
+        $resolvedDomain = $domain;
+
+        $dotPos = ($domain === 'messages') ? strpos($key, '.') : false;
+
+        if ($dotPos !== false) {
+            $candidateDomain = substr($key, 0, $dotPos);
+            $candidateKey = substr($key, $dotPos + 1);
+
+            // Only split if the candidate domain segment looks like a file name
+            // (all lowercase, no spaces) to avoid splitting actual keys like "error.404"
+            if ($candidateKey !== '' && preg_match('/^[a-z][a-z0-9_-]*$/', $candidateDomain) === 1) {
+                $resolvedDomain = $candidateDomain;
+                $resolvedKey = $candidateKey;
+            }
+        }
+
+        // Search through the locale fallback chain
         foreach ($localeChain as $candidateLocale) {
-            $entry = $this->catalog->get($key, $candidateLocale, $domain);
+            $entry = $this->catalog->get($resolvedKey, $candidateLocale, $resolvedDomain);
 
             if ($entry !== null) {
                 return $this->formatMessage($entry->message, $parameters, $candidateLocale);
+            }
+        }
+
+        // If dot-notation split didn't find a match, try the original key as-is
+        // in case the key literally contains dots (e.g., "config.app.name")
+        if ($resolvedKey !== $key) {
+            foreach ($localeChain as $candidateLocale) {
+                $entry = $this->catalog->get($key, $candidateLocale, $domain);
+
+                if ($entry !== null) {
+                    return $this->formatMessage($entry->message, $parameters, $candidateLocale);
+                }
             }
         }
 
