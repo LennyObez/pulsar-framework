@@ -627,6 +627,24 @@ final readonly class ContentController
             : ($translationObj->title ?? '');
         $metaDescription = $translationObj !== null ? $translationObj->metaDescription : '';
 
+        // Derive section from content path (first segment, e.g., "development" from "development/projects")
+        $contentPath = $translationObj !== null ? $translationObj->path : '';
+        $section = str_contains($contentPath, '/') ? strstr($contentPath, '/', true) : ($contentPath !== '' ? $contentPath : 'landing');
+
+        // Build hreflang as a simple locale => URL map for template use
+        $hreflangMap = [];
+
+        /** @var array<int, array{locale: string, url: string}> $hreflangEntries */
+        $hreflangEntries = $data['hreflang'] ?? [];
+
+        foreach ($hreflangEntries as $entry) {
+            if (isset($entry['locale'], $entry['url'])) {
+                $hreflangMap[$entry['locale']] = $entry['url'];
+            }
+        }
+
+        $canonicalUrl = $baseUrl . '/' . ltrim($contentPath, '/');
+
         return $renderEngine->render($templateName, [
             'content' => $content,
             'translation' => $translationObj,
@@ -634,7 +652,8 @@ final readonly class ContentController
             'renderedBlocks' => $renderedBlocks,
             'customFields' => $data['custom_fields'] ?? [],
             'breadcrumbs' => $data['breadcrumbs'] ?? [],
-            'hreflang' => $data['hreflang'] ?? [],
+            'hreflang' => $hreflangEntries,
+            'hreflangs' => $hreflangMap,
             'menuItems' => $menuItems,
             'seo' => $seoData,
             'config' => $this->config,
@@ -642,8 +661,12 @@ final readonly class ContentController
             'siteName' => $this->config->siteName,
             'metaTitle' => $metaTitle ?? '',
             'metaDescription' => $metaDescription,
+            'section' => $section,
+            'year' => (int) date('Y'),
             'baseUrl' => $baseUrl,
-            'canonicalUrl' => $baseUrl . '/' . ltrim($translationObj !== null ? $translationObj->path : '', '/'),
+            'currentUrl' => $canonicalUrl,
+            'canonicalUrl' => $canonicalUrl,
+            'ogImage' => $translationObj?->ogImageId !== null ? '/media/' . $translationObj->ogImageId : null,
             'jsonLd' => $seoData['jsonLd'] ?? '',
         ]);
     }
