@@ -35,6 +35,7 @@
             <directory>../../extensions/admin/src</directory>
             <directory>../../extensions/opentelemetry/src</directory>
             <directory>../../extensions/oauth2/src</directory>
+            <directory>../../extensions/form/src</directory>
             <directory>../../extensions/webauthn/src</directory>
         </include>
     </source>

@@ -63,6 +63,7 @@
       "Pulsar\\Extension\\Admin\\": "extensions/admin/src/",
       "Pulsar\\Extension\\OpenTelemetry\\": "extensions/opentelemetry/src/",
       "Pulsar\\Extension\\OAuth2\\": "extensions/oauth2/src/",
+      "Pulsar\\Extension\\Form\\": "extensions/form/src/",
       "Pulsar\\Extension\\WebAuthn\\": "extensions/webauthn/src/"
     }
   },

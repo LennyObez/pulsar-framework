@@ -10,6 +10,7 @@ parameters:
         - ../../extensions/psr7-bridge/src
         - ../../extensions/observability-export/src
         - ../../extensions/opentelemetry/src
+        - ../../extensions/form/src
         - ../../tests
     excludePaths:
         - ../../vendor

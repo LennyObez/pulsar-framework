@@ -901,6 +901,39 @@ deptrac:
             - type: layer
               value: OAuth2Domain
 
+    # --- Form Extension (Pulsar\\Extension\\Form) ---
+
+    # --- Form: public contracts ---
+    - name: FormContracts
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Contract\\
+
+    # --- Form: domain types (config, exceptions, fields, events) ---
+    - name: FormDomain
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Config\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Exception\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Field\\
+        - type: classLike
+          value: ^Pulsar\\Extension\\Form\\Event\\
+
+    # --- Form: internal implementation ---
+    - name: FormInternal
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Form\\
+          must_not:
+            - type: layer
+              value: FormContracts
+            - type: layer
+              value: FormDomain
+
     # --- WebAuthn Extension (Pulsar\\Extension\\Webauthn → WebAuthn) ---
 
     # --- WebAuthn: public contracts ---
@@ -1807,6 +1840,118 @@ deptrac:
       - Webhook
       - OAuth2Contracts
       - OAuth2Domain
+
+    FormContracts:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - FormDomain
+
+    FormDomain:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - FormContracts
+
+    FormInternal:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Webhook
+      - FormContracts
+      - FormDomain
 
     WebAuthnContracts:
       - CompositionRoot
