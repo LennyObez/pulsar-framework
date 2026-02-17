@@ -296,16 +296,17 @@ final class QueueManagerTest extends TestCase
     }
 
     #[Test]
-    public function it_throws_for_new_driver_types_without_injection(): void
+    public function it_lazily_resolves_driver_types_from_config(): void
     {
         foreach ([QueueDriverType::Redis, QueueDriverType::Amqp, QueueDriverType::Sqs, QueueDriverType::PubSub] as $driverType) {
             $config = new QueueConfig(driver: $driverType);
             $manager = new QueueManager($config);
 
             try {
-                $manager->driver();
-                self::fail('Expected QueueException for driver type: ' . $driverType->value);
+                $driver = $manager->driver();
+                self::assertInstanceOf(QueueDriverInterface::class, $driver);
             } catch (QueueException $e) {
+                // Driver throws when its required extension/package is not installed
                 self::assertTrue(str_contains($e->getMessage(), 'not configured'));
             }
         }
