@@ -1,6 +1,8 @@
 # Database layer
 
-Pulsar provides a thin, explicit database abstraction layer built on PDO. No query builder, no ORM - raw SQL with named bindings for maximum auditability in regulated domains.
+Pulsar provides a thin, explicit database abstraction layer built on PDO. No query builder, no ORM: raw SQL with named bindings for maximum auditability in regulated domains.
+
+**Named parameters only.** `PdoConnection` uses named placeholders (`:name`) exclusively. Positional placeholders (`?`) are not supported. All bindings arrays must be keyed by parameter name. This restriction simplifies query logging, cache-key construction, and audit output because every binding is self-describing.
 
 ## Configuration
 
@@ -55,6 +57,41 @@ Environment variables override file values for the active connection:
 ## Basic usage
 
 ### Querying
+
+`query()` returns a `Pulsar\Database\Result` object (not a raw array). The `Result` holds a list of `Pulsar\Database\Row` objects with typed accessors.
+
+```php
+$result = $connection->query(
+    'SELECT * FROM users WHERE status = :status',
+    ['status' => 'active'],
+);
+
+// Result API
+$result->first();        // ?Row, first row or null
+$result->firstOrFail();  // Row, first row or throws DatabaseException
+$result->toArray();      // list<Row>, same as $result->rows
+$result->map(fn(Row $r) => ...); // list<T>, transform each row
+$result->pluck('email'); // list<mixed>, single column values
+$result->count();        // int, via $result->rowCount
+$result->isEmpty();      // bool, true when no rows returned
+
+// Row API
+$row = $result->first();
+$row->get('name');                   // mixed, raw value (throws if column missing)
+$row->getOrDefault('name', 'anon'); // mixed, with fallback
+$row->getInt('id');                  // int, type-safe cast
+$row->getString('email');            // string
+$row->getBool('active');             // bool
+$row->getFloat('score');             // float
+$row->getNullableInt('parent_id');   // ?int
+$row->getNullableString('bio');      // ?string
+$row->getBinary('avatar');           // string, normalizes PostgreSQL bytea streams
+$row->has('column');                 // bool
+$row->columns();                     // list<string>, column names
+$row->toArray();                     // array<string, mixed>
+```
+
+Full example:
 
 ```php
 $result = $connection->query(
@@ -190,6 +227,30 @@ Database config is optional. If `config/database.php` does not exist:
 - Migration commands are not registered in the CLI.
 
 No breaking change for applications that don't use a database.
+
+## Schema builder
+
+The core `SchemaBuilder` provides a fluent DDL API for use inside migrations. It compiles `Blueprint` definitions into driver-specific DDL automatically.
+
+```php
+use Pulsar\Database\Schema\Blueprint;
+use Pulsar\Database\Schema\SchemaBuilder;
+
+$schema = SchemaBuilder::for($connection);
+
+$schema->create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('email', 191)->unique();
+    $table->string('name');
+    $table->boolean('active')->default(true);
+    $table->timestamps();
+});
+
+$schema->drop('temp_table');
+$schema->dropIfExists('temp_table');
+```
+
+See the [ORM extension docs](orm.md#schema-builder) for the full `TableBuilder` column reference. The core `SchemaBuilder` uses the same `Blueprint` type and supports the same column methods.
 
 ## Connection pooling
 

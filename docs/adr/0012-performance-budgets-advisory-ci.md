@@ -29,7 +29,7 @@ Define explicit performance budgets for framework-critical operations. Use a **h
 
 ### Enforcement model
 
-- **Budget definitions** live in `tools/php/performance-budgets.json` as machine-readable thresholds.
+- **Budget definitions** live in `tools/php/budgets.fpm.json` (FPM mode) and `tools/php/budgets.persistent.json` (persistent runtime) as machine-readable thresholds.
 - **PHPBench** runs benchmarks with 5 iterations, 1000 revolutions, and a 5% retry threshold.
 - **CI job** (`php-benchmark`) runs after `php-quality`, produces benchmark text output and JSON results.
 - **Artifacts** are retained for 14 days, enabling historical comparison across PRs.

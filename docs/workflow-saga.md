@@ -10,8 +10,8 @@ Pulsar provides two complementary modules for managing complex, multi-step proce
 
 The Workflow module (`Pulsar\Workflow`) provides state machine definitions with guard-protected transitions, optimistic locking, and append-only transition logs. It supports two modes:
 
-- **StateMachine** — single active state per instance (most common)
-- **Workflow** — multiple active states for parallel branches
+- **StateMachine**: single active state per instance (most common)
+- **Workflow**: multiple active states for parallel branches
 
 ### Defining a Workflow
 
@@ -63,8 +63,8 @@ $actor = new ActorContext(
 
 Built-in guards:
 
-- **`RoleGuard`** — checks actor roles against `required_roles` in transition metadata
-- **`ExpressionGuard`** — evaluates simple conditions on workflow context (`context:has`, `context:eq`, `context:neq`)
+- **`RoleGuard`**: checks actor roles against `required_roles` in transition metadata
+- **`ExpressionGuard`**: evaluates simple conditions on workflow context (`context:has`, `context:eq`, `context:neq`)
 
 Guard evaluation results (allow/deny with reason) are logged for audit compliance.
 
@@ -106,10 +106,10 @@ try {
 
 Every transition dispatches events through the Event module (Plan 01):
 
-- `WorkflowStartedEvent` — instance created
-- `TransitionAppliedEvent` — transition completed
-- `TransitionBlockedEvent` — guard denied the transition
-- `WorkflowCompletedEvent` — instance reached a final state
+- `WorkflowStartedEvent`: instance created
+- `TransitionAppliedEvent`: transition completed
+- `TransitionBlockedEvent`: guard denied the transition
+- `WorkflowCompletedEvent`: instance reached a final state
 
 ### Definition Versioning
 
@@ -142,7 +142,7 @@ $safe = $context->redactForExport(ClassificationLevel::Internal);
 Classification levels and encryption behavior:
 
 | Level      | Stored    | Exported | Encrypted at rest |
-| ---------- | --------- | -------- | ----------------- |
+| :--------- | :-------- | :------- | :---------------- |
 | Public     | Plaintext | Yes      | No                |
 | Internal   | Plaintext | No       | No                |
 | Restricted | Encrypted | No       | Yes (via Keyring) |
@@ -177,7 +177,7 @@ $dot = $exporter->exportWithInstance($definition, $instance);
 
 The Saga module (`Pulsar\Saga`) orchestrates multi-step processes with compensation semantics. When a step fails, previously completed steps are compensated in reverse order.
 
-Compensation is **not** rollback — each step declares explicit compensation actions with their own idempotency keys and retry policies.
+Compensation is **not** rollback: each step declares explicit compensation actions with their own idempotency keys and retry policies.
 
 ### Defining a Saga
 
@@ -238,9 +238,9 @@ Saga state is persisted after each step, enabling recovery after process restart
 
 Distributed sagas communicate via events, not synchronous RPC:
 
-- **`OutboxPort`** — durable event emission via transactional outbox (atomic with state changes)
-- **`CommandBusPort`** — dispatch commands to local or remote handlers
-- **`IntegrationEventBusPort`** — publish integration events (forbidden in saga step handlers)
+- **`OutboxPort`**: durable event emission via transactional outbox (atomic with state changes)
+- **`CommandBusPort`**: dispatch commands to local or remote handlers
+- **`IntegrationEventBusPort`**: publish integration events (forbidden in saga step handlers)
 
 **Outbox enforcement**: Direct injection of `IntegrationEventBusPort` in saga step handlers is forbidden:
 
@@ -249,11 +249,11 @@ Distributed sagas communicate via events, not synchronous RPC:
 
 ### Saga Events
 
-- `SagaStartedEvent` — saga execution begins
-- `SagaStepCompletedEvent` / `SagaStepFailedEvent` — per-step progress
-- `SagaCompensationStartedEvent` / `SagaCompensationCompletedEvent` — compensation lifecycle
-- `SagaCompletedEvent` / `SagaFailedEvent` — saga outcome
-- `IrreversibleSagaFailureEvent` — compliance event for irreversible failure
+- `SagaStartedEvent`: saga execution begins
+- `SagaStepCompletedEvent` / `SagaStepFailedEvent`: per-step progress
+- `SagaCompensationStartedEvent` / `SagaCompensationCompletedEvent`: compensation lifecycle
+- `SagaCompletedEvent` / `SagaFailedEvent`: saga outcome
+- `IrreversibleSagaFailureEvent`: compliance event for irreversible failure
 
 ## Regulated Workflow Templates
 
