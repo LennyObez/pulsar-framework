@@ -157,6 +157,27 @@ final class ConfigManager implements ConfigManagerInterface
             $this->repository->set($runtimeConfig);
         }
 
+        // Load cache config (optional — only if config/cache.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'cache.php')) {
+            $cacheData = $this->loadConfigFile('cache');
+            $cacheConfig = CacheConfig::fromArray($cacheData, $this->environment);
+            $this->repository->set($cacheConfig);
+        }
+
+        // Load mail config (optional — only if config/mail.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'mail.php')) {
+            $mailData = $this->loadConfigFile('mail');
+            $mailConfig = MailConfig::fromArray($mailData, $this->environment);
+            $this->repository->set($mailConfig);
+        }
+
+        // Load notification config (optional — only if config/notification.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'notification.php')) {
+            $notificationData = $this->loadConfigFile('notification');
+            $notificationConfig = NotificationConfig::fromArray($notificationData, $this->environment);
+            $this->repository->set($notificationConfig);
+        }
+
         // Studio config is NOT loaded here — it is loaded directly by Kernel::studioPreboot()
         // to avoid introducing a StudioConfig dependency in ConfigManager.
     }

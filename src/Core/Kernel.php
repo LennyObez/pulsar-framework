@@ -38,7 +38,9 @@ use Pulsar\Core\Wiring\I18nWiring;
 use Pulsar\Core\Wiring\IntegrityWiring;
 use Pulsar\Core\Wiring\IntrospectionWiring;
 use Pulsar\Core\Wiring\LoggingWiring;
+use Pulsar\Core\Wiring\MailWiring;
 use Pulsar\Core\Wiring\MetricsWiring;
+use Pulsar\Core\Wiring\NotificationWiring;
 use Pulsar\Core\Wiring\QueueWiring;
 use Pulsar\Core\Wiring\RequestContextWiring;
 use Pulsar\Core\Wiring\ResilienceWiring;
@@ -240,6 +242,8 @@ final class Kernel implements KernelInterface
                 new ResilienceWiring(),
                 new QueueWiring(),
                 new CacheWiring(),
+                new MailWiring(),
+                new NotificationWiring(),
                 new SupervisorWiring(),
                 new IntegrityWiring(),
                 new DeployWiring(),

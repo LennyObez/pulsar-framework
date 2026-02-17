@@ -495,7 +495,32 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Config\\MailConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\MailDriverType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\MailEncryptionPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Config\\MetricsConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\NotificationChannelType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\NotificationConfig": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -2350,6 +2375,246 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Mail\\Address": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Attachment": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Audit\\DeliveryStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Audit\\MailAuditRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Content": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Envelope": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Event\\MailEncryptionFallbackEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Event\\MailEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Event\\MailFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Event\\MailSent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Exception\\MailException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\MailManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\MailManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Mailable": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Message": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Security\\PhiDetectedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Security\\PhiScrubberInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\TransportInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\IpAllowlistInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookDeduplicationStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookEventType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookHandlerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookRequest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Mail\\Webhook\\WebhookVerifierInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\ConsentRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\ConsentSource": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\ConsentType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\LegalBasis": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\LegalBasisRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\NotificationClassification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\NotificationType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\PreferenceStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Consent\\UserPreferences": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\DatabaseNotificationStoreInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Event\\NotificationEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Event\\NotificationFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Event\\NotificationSent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Exception\\NotificationException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\NotifiableInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\Notification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\NotificationChannelInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\NotificationManager": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\NotificationManagerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\SlackMessage": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\SmsGatewayInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\SmsMessage": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Notification\\WebhookPayload": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\Context\\CorrelationContext": {
       "since": "1.0.0",
       "methods": [],
@@ -3934,7 +4199,9 @@
     "Pulsar\\Core\\Wiring\\IntegrityWiring",
     "Pulsar\\Core\\Wiring\\IntrospectionWiring",
     "Pulsar\\Core\\Wiring\\LoggingWiring",
+    "Pulsar\\Core\\Wiring\\MailWiring",
     "Pulsar\\Core\\Wiring\\MetricsWiring",
+    "Pulsar\\Core\\Wiring\\NotificationWiring",
     "Pulsar\\Core\\Wiring\\QueueWiring",
     "Pulsar\\Core\\Wiring\\RequestContextWiring",
     "Pulsar\\Core\\Wiring\\ResilienceWiring",
@@ -4012,6 +4279,41 @@
     "Pulsar\\Introspection\\Internal\\ConfigSchemaReflector",
     "Pulsar\\Introspection\\Internal\\CoreRuntimeProbe",
     "Pulsar\\Introspection\\Internal\\SnapshotFileReader",
+    "Pulsar\\Mail\\Audit\\MailAuditor",
+    "Pulsar\\Mail\\Job\\SendMailJob",
+    "Pulsar\\Mail\\Security\\PhiScrubber",
+    "Pulsar\\Mail\\Transport\\ArrayTransport",
+    "Pulsar\\Mail\\Transport\\Config\\MailgunTransportConfig",
+    "Pulsar\\Mail\\Transport\\Config\\PostmarkTransportConfig",
+    "Pulsar\\Mail\\Transport\\Config\\SendgridTransportConfig",
+    "Pulsar\\Mail\\Transport\\Config\\SesTransportConfig",
+    "Pulsar\\Mail\\Transport\\Config\\SmtpTransportConfig",
+    "Pulsar\\Mail\\Transport\\LogTransport",
+    "Pulsar\\Mail\\Transport\\MailHttpClientInterface",
+    "Pulsar\\Mail\\Transport\\MailHttpResponse",
+    "Pulsar\\Mail\\Transport\\MailgunTransport",
+    "Pulsar\\Mail\\Transport\\PostmarkTransport",
+    "Pulsar\\Mail\\Transport\\SendgridTransport",
+    "Pulsar\\Mail\\Transport\\SesTransport",
+    "Pulsar\\Mail\\Transport\\SmtpTransport",
+    "Pulsar\\Mail\\Webhook\\BounceHandler",
+    "Pulsar\\Mail\\Webhook\\ComplaintHandler",
+    "Pulsar\\Mail\\Webhook\\ConfigurableIpAllowlist",
+    "Pulsar\\Mail\\Webhook\\InMemoryDeduplicationStore",
+    "Pulsar\\Mail\\Webhook\\Verifier\\MailgunWebhookVerifier",
+    "Pulsar\\Mail\\Webhook\\Verifier\\PostmarkWebhookVerifier",
+    "Pulsar\\Mail\\Webhook\\Verifier\\SendgridWebhookVerifier",
+    "Pulsar\\Mail\\Webhook\\Verifier\\SesWebhookVerifier",
+    "Pulsar\\Mail\\Webhook\\WebhookHandler",
+    "Pulsar\\Notification\\Channel\\DatabaseChannel",
+    "Pulsar\\Notification\\Channel\\LogChannel",
+    "Pulsar\\Notification\\Channel\\MailChannel",
+    "Pulsar\\Notification\\Channel\\SlackChannel",
+    "Pulsar\\Notification\\Channel\\SmsChannel",
+    "Pulsar\\Notification\\Channel\\WebhookChannel",
+    "Pulsar\\Notification\\Consent\\NotificationClassificationRegistry",
+    "Pulsar\\Notification\\Job\\SendNotificationJob",
+    "Pulsar\\Notification\\NotificationHttpClientInterface",
     "Pulsar\\Observability\\Log\\Compliance\\ComplianceLogSink",
     "Pulsar\\Observability\\Log\\Compliance\\GdprLogFormatter",
     "Pulsar\\Observability\\Log\\Compliance\\HipaaLogFormatter",

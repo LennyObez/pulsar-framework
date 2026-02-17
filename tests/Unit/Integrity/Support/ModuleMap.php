@@ -43,6 +43,8 @@ final class ModuleMap
         'Pulsar\Core\Wiring\SupervisorWiring',
         'Pulsar\Core\Wiring\TenancyWiring',
         'Pulsar\Core\Wiring\TracingWiring',
+        'Pulsar\Core\Wiring\MailWiring',
+        'Pulsar\Core\Wiring\NotificationWiring',
         'Pulsar\Core\Wiring\ViewWiring',
         'Pulsar\Console\Application',
     ];

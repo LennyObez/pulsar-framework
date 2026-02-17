@@ -604,6 +604,38 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Webhook\\Internal\\
 
+    # --- Mail ---
+    - name: Mail
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Mail\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Mail\\Internal\\
+
+    - name: Mail_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Mail\\Internal\\
+
+    # --- Notification ---
+    - name: Notification
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Notification\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Notification\\Internal\\
+
+    - name: Notification_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Notification\\Internal\\
+
     # --- Introspection ---
     - name: Introspection
       collectors:
@@ -1005,6 +1037,10 @@ deptrac:
       - Supervisor_Internal
       - Tenancy
       - Tenancy_Internal
+      - Mail
+      - Mail_Internal
+      - Notification
+      - Notification_Internal
       - View
       - View_Internal
       - Webhook
@@ -1052,6 +1088,8 @@ deptrac:
       - Idempotency
       - Integrity
       - Introspection
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1099,6 +1137,8 @@ deptrac:
       - Idempotency
       - Integrity
       - Introspection
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1123,6 +1163,8 @@ deptrac:
     I18n: *public_deps
     Idempotency: *public_deps
     Integrity: *public_deps
+    Mail: *public_deps
+    Notification: *public_deps
     Observability: *public_deps
     Queue: *public_deps
     Resilience: *public_deps
@@ -1162,6 +1204,8 @@ deptrac:
       - Integrity
       - Introspection
       - Introspection_Internal
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1206,6 +1250,8 @@ deptrac:
     I18n_Internal: [I18n, Api, Support, Container, Config, Core, ErrorHandling]
     Idempotency_Internal: [Idempotency, Api, Support, Container, Config, Core, ErrorHandling]
     Integrity_Internal: [Integrity, Api, Support, Container, Config, Core, ErrorHandling]
+    Mail_Internal: [Mail, Api, Support, Container, Config, Core, ErrorHandling]
+    Notification_Internal: [Notification, Api, Support, Container, Config, Core, ErrorHandling]
     Observability_Internal: [Observability, Api, Support, Container, Config, Core, ErrorHandling]
     Queue_Internal: [Queue, Api, Support, Container, Config, Core, ErrorHandling]
     Resilience_Internal: [Resilience, Api, Support, Container, Config, Core, ErrorHandling]
@@ -1262,6 +1308,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1299,6 +1347,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1335,6 +1385,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1372,6 +1424,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1409,6 +1463,8 @@ deptrac:
       - Idempotency
       - Integrity
       - Introspection
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1447,6 +1503,8 @@ deptrac:
       - Idempotency
       - Integrity
       - Introspection
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1483,6 +1541,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1520,6 +1580,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1556,6 +1618,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1596,6 +1660,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1638,6 +1704,8 @@ deptrac:
       - Idempotency
       - Integrity
       - Introspection
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1686,6 +1754,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1723,6 +1793,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1759,6 +1831,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
@@ -1796,6 +1870,8 @@ deptrac:
       - FeatureFlag
       - Idempotency
       - Integrity
+      - Mail
+      - Notification
       - Observability
       - Queue
       - Resilience
