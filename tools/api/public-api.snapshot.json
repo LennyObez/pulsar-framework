@@ -30,6 +30,36 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Auth\\Authorization\\Event\\AuthenticationFailed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\AuthenticationSucceeded": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\AuthorizationDenied": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\AuthorizationGranted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\PrivilegeEscalated": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Auth\\Authorization\\Event\\StepUpAuthRequired": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Auth\\Authorization\\GateInterface": {
       "since": "1.0.0",
       "methods": [],
@@ -2355,6 +2385,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Observability\\Log\\Compliance\\ComplianceLogFormatter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Observability\\Log\\Exception\\LogException": {
       "since": "1.0.0",
       "methods": [],
@@ -2826,6 +2861,246 @@
       "constants": []
     },
     "Pulsar\\Security\\Audit\\ChainableAuditSinkInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\ComplianceEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\DataClassification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Aml\\CustomerVerified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Aml\\SanctionsChecked": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Aml\\SuspiciousActivityDetected": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Aml\\TransactionScreened": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Dora\\IctIncidentDetected": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Dora\\RecoveryInitiated": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Dora\\ResilienceTestCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Dora\\ThirdPartyRiskAssessed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\BreachDetected": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\BreachNotified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\ConsentGranted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\ConsentRevoked": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\DataAccessRequested": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\DataDeletionRequested": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\DataPortabilityRequested": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Gdpr\\DpiaCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\AuditReviewCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\BreachNotification": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\PhiAccessed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\PhiDisclosed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\PhiModified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Hipaa\\SecurityIncident": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\AccessControlChanged": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\CardDataAccessed": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\KeyRotated": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\PenetrationTestCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\PciDss\\VulnerabilityFound": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Sox\\AccessControlChanged": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Sox\\AuditTrailVerified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Sox\\ControlTestCompleted": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Event\\Sox\\FinancialDataModified": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Evidence\\EvidenceExportResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Evidence\\EvidenceExporterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Exception\\ComplianceException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\ForgetResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\ForgetServiceInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymLookupInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymMapping": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymizationServiceInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Retention\\RetentionPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Retention\\RetentionPurgeResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Retention\\RetentionSchedule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Snapshot\\BeforeAfterSnapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Snapshot\\ClassifiedField": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Snapshot\\Snapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Security\\Compliance\\Snapshot\\SnapshotCapture": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -3507,6 +3782,11 @@
     "Pulsar\\Introspection\\Internal\\ConfigSchemaReflector",
     "Pulsar\\Introspection\\Internal\\CoreRuntimeProbe",
     "Pulsar\\Introspection\\Internal\\SnapshotFileReader",
+    "Pulsar\\Observability\\Log\\Compliance\\ComplianceLogSink",
+    "Pulsar\\Observability\\Log\\Compliance\\GdprLogFormatter",
+    "Pulsar\\Observability\\Log\\Compliance\\HipaaLogFormatter",
+    "Pulsar\\Observability\\Log\\Compliance\\PciDssLogFormatter",
+    "Pulsar\\Observability\\Log\\Compliance\\SoxLogFormatter",
     "Pulsar\\Observability\\Log\\Sink\\DeferredSink",
     "Pulsar\\Queue\\Driver\\DatabaseDriver",
     "Pulsar\\Queue\\Driver\\InMemoryDriver",
@@ -3538,6 +3818,11 @@
     "Pulsar\\Runtime\\Worker\\WorkerContext",
     "Pulsar\\Runtime\\Worker\\WorkerInfo",
     "Pulsar\\Security\\Audit\\AuditChainVerifier",
+    "Pulsar\\Security\\Compliance\\Evidence\\InMemoryEvidenceExporter",
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\ForgetService",
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\InMemoryPseudonymLookup",
+    "Pulsar\\Security\\Compliance\\Pseudonymization\\PseudonymizationService",
+    "Pulsar\\Security\\Compliance\\Retention\\RetentionManager",
     "Pulsar\\Security\\Crypto\\EnvKeyRing",
     "Pulsar\\Security\\Crypto\\HmacService",
     "Pulsar\\Security\\Session\\Handler\\ArrayHandler",
