@@ -97,7 +97,7 @@ final class ComplianceEventTest extends TestCase
         self::assertStringContainsString('field_name', ComplianceException::missingClassification('field_name')->getMessage());
         self::assertStringContainsString('1', ComplianceException::invalidSchemaVersion(1, 2)->getMessage());
         self::assertStringContainsString('reason', ComplianceException::snapshotCaptureRefused('reason')->getMessage());
-        self::assertStringContainsString('id', ComplianceException::pseudonymNotFound('id')->getMessage());
+        self::assertStringContainsString('identifier', ComplianceException::pseudonymNotFound()->getMessage());
         self::assertStringContainsString('reason', ComplianceException::retentionPolicyViolation('reason')->getMessage());
         self::assertStringContainsString('reason', ComplianceException::evidenceExportFailed('reason')->getMessage());
     }

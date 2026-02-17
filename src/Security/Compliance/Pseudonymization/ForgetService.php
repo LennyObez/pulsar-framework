@@ -39,7 +39,7 @@ final class ForgetService implements ForgetServiceInterface
         $mapping = $this->lookup->findBySubjectId($subjectId);
 
         if ($mapping === null) {
-            throw ComplianceException::pseudonymNotFound($subjectId);
+            throw ComplianceException::pseudonymNotFound();
         }
 
         $pseudonym = $mapping->pseudonym;

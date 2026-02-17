@@ -7,8 +7,8 @@ namespace Pulsar\Observability\Log\Compliance;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Observability\Log\LogEntry;
+use Pulsar\Security\Crypto\Hmac;
 
-use function hash;
 use function is_string;
 use function strtolower;
 use function substr;
@@ -16,10 +16,9 @@ use function substr;
 /**
  * Pseudonymizes personal data fields in log entries for GDPR compliance.
  *
- * Replaces configured field values with SHA-256 based pseudonyms (truncated
- * to 16 hex characters). This provides consistent pseudonymization — the same
- * input always produces the same pseudonym — while making re-identification
- * computationally infeasible without the original values.
+ * Replaces configured field values with keyed HMAC-based pseudonyms (truncated
+ * to 16 hex characters). Uses BLAKE2b keyed hashing via the Hmac class to
+ * prevent brute-force re-identification of low-entropy identifiers.
  *
  * Supports controls for GDPR Article 4(5) pseudonymization requirements.
  */
@@ -40,10 +39,13 @@ final class GdprLogFormatter implements ComplianceLogFormatter
     ];
 
     /**
-     * @param list<string> $fields Field names to pseudonymize (case-insensitive matching)
+     * @param string      $hmacKey HMAC key for keyed pseudonymization (min 16 bytes)
+     * @param list<string> $fields  Field names to pseudonymize (case-insensitive matching)
      */
-    public function __construct(array $fields = self::DEFAULT_FIELDS)
-    {
+    public function __construct(
+        private readonly string $hmacKey,
+        array $fields = self::DEFAULT_FIELDS,
+    ) {
         $this->fieldsToMask = $fields;
     }
 
@@ -95,6 +97,6 @@ final class GdprLogFormatter implements ComplianceLogFormatter
 
     private function pseudonymize(string $value): string
     {
-        return 'pseudonym_' . substr(hash('sha256', $value), 0, 16);
+        return 'pseudonym_' . substr(Hmac::computeHex($value, $this->hmacKey), 0, 16);
     }
 }

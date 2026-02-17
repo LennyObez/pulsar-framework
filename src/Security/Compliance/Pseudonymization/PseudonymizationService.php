@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Compliance\Pseudonymization;
 
+use LogicException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
@@ -50,7 +51,7 @@ final class PseudonymizationService implements PseudonymizationServiceInterface
      */
     private const int PSEUDONYM_HEX_LENGTH = 32;
 
-    private readonly string $derivedKey;
+    private ?string $derivedKey;
 
     public function __construct(
         MasterKey $masterKey,
@@ -61,6 +62,33 @@ final class PseudonymizationService implements PseudonymizationServiceInterface
         $this->derivedKey = $masterKey->deriveSubKey(self::SUB_KEY_ID, self::CONTEXT);
     }
 
+    public function __destruct()
+    {
+        if ($this->derivedKey !== null) {
+            sodium_memzero($this->derivedKey);
+        }
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function __debugInfo(): array
+    {
+        return [
+            'derivedKey' => '[REDACTED]',
+            'lookup' => $this->lookup::class,
+            'encryptor' => $this->encryptor::class,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function __serialize(): array
+    {
+        throw new LogicException('PseudonymizationService must not be serialized — derived key material would leak.');
+    }
+
     #[Override]
     public function pseudonymize(string $subjectId): string
     {
@@ -68,6 +96,10 @@ final class PseudonymizationService implements PseudonymizationServiceInterface
 
         if ($existing !== null) {
             return $existing->pseudonym;
+        }
+
+        if ($this->derivedKey === null) {
+            throw new LogicException('PseudonymizationService has been destroyed and cannot pseudonymize.');
         }
 
         $salt = random_bytes(self::SALT_LENGTH);

@@ -7,8 +7,8 @@ namespace Pulsar\Observability\Log\Compliance;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Observability\Log\LogEntry;
+use Pulsar\Security\Crypto\Hmac;
 
-use function hash;
 use function in_array;
 use function is_string;
 use function strtolower;
@@ -19,7 +19,8 @@ use function substr;
  *
  * Detects Protected Health Information (PHI) categories in log context and
  * adds a `phi_access: true` flag. Patient identifiers are pseudonymized
- * using SHA-256 based hashing.
+ * using keyed BLAKE2b HMAC to prevent brute-force re-identification of
+ * low-entropy identifiers such as SSNs and patient IDs.
  *
  * Supports controls for HIPAA Privacy Rule (45 CFR 164.514) safe harbor
  * de-identification requirements.
@@ -58,6 +59,13 @@ final class HipaaLogFormatter implements ComplianceLogFormatter
         'health_plan_id',
     ];
 
+    /**
+     * @param string $hmacKey HMAC key for keyed pseudonymization (min 16 bytes)
+     */
+    public function __construct(
+        private readonly string $hmacKey,
+    ) {}
+
     #[Override]
     public function format(LogEntry $entry): LogEntry
     {
@@ -91,6 +99,6 @@ final class HipaaLogFormatter implements ComplianceLogFormatter
 
     private function pseudonymize(string $value): string
     {
-        return 'patient_' . substr(hash('sha256', $value), 0, 16);
+        return 'patient_' . substr(Hmac::computeHex($value, $this->hmacKey), 0, 16);
     }
 }

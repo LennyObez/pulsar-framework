@@ -6,8 +6,11 @@ namespace Pulsar\Security\Compliance\Pseudonymization;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use InvalidArgumentException;
 use NoDiscard;
 use Pulsar\Api\Api;
+
+use function is_string;
 
 /**
  * Immutable record representing a pseudonym-to-subject mapping.
@@ -44,16 +47,27 @@ final readonly class PseudonymMapping
     /**
      * Reconstruct a mapping from its array representation.
      *
-     * @param array<string, string> $data
+     * @param array<string, mixed> $data
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
+        $subjectId = $data['subject_id'] ?? null;
+        $pseudonym = $data['pseudonym'] ?? null;
+        $encryptedSalt = $data['encrypted_salt'] ?? null;
+        $createdAt = $data['created_at'] ?? null;
+
+        if (!is_string($subjectId) || !is_string($pseudonym) || !is_string($encryptedSalt) || !is_string($createdAt)) {
+            throw new InvalidArgumentException(
+                'PseudonymMapping::fromArray() requires subject_id, pseudonym, encrypted_salt, and created_at as strings.',
+            );
+        }
+
         return new self(
-            subjectId: $data['subject_id'],
-            pseudonym: $data['pseudonym'],
-            encryptedSalt: $data['encrypted_salt'],
-            createdAt: new DateTimeImmutable($data['created_at'], new DateTimeZone('UTC')),
+            subjectId: $subjectId,
+            pseudonym: $pseudonym,
+            encryptedSalt: $encryptedSalt,
+            createdAt: new DateTimeImmutable($createdAt, new DateTimeZone('UTC')),
         );
     }
 }

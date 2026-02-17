@@ -15,11 +15,13 @@ use Pulsar\Observability\Log\LogLevel;
 #[CoversClass(GdprLogFormatter::class)]
 final class GdprLogFormatterTest extends TestCase
 {
+    private const string TEST_HMAC_KEY = 'test-hmac-key-for-gdpr-log-formatter';
+
     private GdprLogFormatter $formatter;
 
     protected function setUp(): void
     {
-        $this->formatter = new GdprLogFormatter();
+        $this->formatter = new GdprLogFormatter(self::TEST_HMAC_KEY);
     }
 
     #[Test]
@@ -153,7 +155,7 @@ final class GdprLogFormatterTest extends TestCase
     #[Test]
     public function supportsCustomFieldList(): void
     {
-        $formatter = new GdprLogFormatter(['custom_field']);
+        $formatter = new GdprLogFormatter(self::TEST_HMAC_KEY, ['custom_field']);
         $entry = $this->createEntry([
             'custom_field' => 'sensitive-data',
             'user_id' => 'user-42',

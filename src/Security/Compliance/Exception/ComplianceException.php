@@ -33,9 +33,9 @@ class ComplianceException extends RuntimeException
     }
 
     #[NoDiscard]
-    public static function pseudonymNotFound(string $identifier): self
+    public static function pseudonymNotFound(): self
     {
-        return new self("Pseudonym not found for identifier '{$identifier}'.");
+        return new self('Pseudonym not found for the given identifier.');
     }
 
     #[NoDiscard]

@@ -15,11 +15,13 @@ use Pulsar\Observability\Log\LogLevel;
 #[CoversClass(HipaaLogFormatter::class)]
 final class HipaaLogFormatterTest extends TestCase
 {
+    private const string TEST_HMAC_KEY = 'test-hmac-key-for-hipaa-log-formatter';
+
     private HipaaLogFormatter $formatter;
 
     protected function setUp(): void
     {
-        $this->formatter = new HipaaLogFormatter();
+        $this->formatter = new HipaaLogFormatter(self::TEST_HMAC_KEY);
     }
 
     #[Test]
