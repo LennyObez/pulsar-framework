@@ -23,7 +23,7 @@ Execution model:
 
 Fibers are permitted only in two approved subsystems:
 
-1. **Studio context isolation** - `FiberScopedContextProvider` uses a `WeakMap<object, SplStack<CorrelationContext>>` keyed by Fiber identity to isolate observability context when third-party code or test harnesses create Fibers. When no Fiber is active (the normal case), all operations use a stable root key with zero Fiber overhead.
+1. **Fiber scheduling** - `FiberScheduler` manages concurrent Fiber execution with exception isolation and resource cleanup. Each Fiber runs independently; uncaught exceptions in one Fiber do not propagate to or crash other Fibers.
 2. **Persistent runtime connection multiplexing** - The `runtime:serve` command's `--concurrency N` flag uses Fibers for accepting multiple connections. Individual request handling within each Fiber remains sequential.
 
 Fibers are not used in request business logic, middleware, controllers, or extension code.
@@ -43,7 +43,7 @@ These restrictions are documented in `docs/async-model.md`. Enforcement is via c
 - **Deterministic execution.** Code runs in the order it appears. Stack traces are linear. Debugging follows standard PHP tooling.
 - **Predictable resource usage.** Memory, CPU, and connection pools scale linearly with request count, not with concurrent task count.
 - **Simpler mental model.** Developers reason about sequential code. No callback chains, no race conditions, no cancellation token propagation.
-- **Zero-cost Fiber path.** The WeakMap-based context isolation adds no overhead when Fibers are absent.
+- **Zero-cost Fiber path.** Fiber infrastructure adds no overhead when Fibers are not in use.
 
 ### Negative
 

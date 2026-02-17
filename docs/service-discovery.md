@@ -6,9 +6,9 @@ Pulsar provides a built-in service discovery and centralized configuration syste
 
 The service discovery module has three primary interfaces:
 
-- **`ServiceDiscoveryInterface`** — Read-side: discover and resolve service instances
-- **`ServiceRegistryInterface`** — Write-side: register, deregister, heartbeat, and health management
-- **`ConfigCenterInterface`** — Centralized key-value configuration with namespacing
+- **`ServiceDiscoveryInterface`**: Read-side: discover and resolve service instances
+- **`ServiceRegistryInterface`**: Write-side: register, deregister, heartbeat, and health management
+- **`ConfigCenterInterface`**: Centralized key-value configuration with namespacing
 
 ## Backends
 
@@ -36,9 +36,9 @@ return [
 
 The `InMemoryServiceRegistry` provides dynamic registration with:
 
-- **TTL-based expiration** — Services auto-expire if heartbeats stop
-- **Health status tracking** — Per-instance health status with event dispatch
-- **Event integration** — `ServiceRegistered`, `ServiceDeregistered`, `ServiceHealthChanged` events
+- **TTL-based expiration**: Services auto-expire if heartbeats stop
+- **Health status tracking**: Per-instance health status with event dispatch
+- **Event integration**: `ServiceRegistered`, `ServiceDeregistered`, `ServiceHealthChanged` events
 
 ```php
 $registry->register(new ServiceInstance(

@@ -278,12 +278,12 @@ example.com {
 
 The `--concurrency` flag (or `fiber_concurrency` config) controls how many connections the worker handles concurrently using PHP Fibers.
 
-| Setting       | Behavior                                                |
-| ------------- | ------------------------------------------------------- |
-| `0` (default) | Synchronous accept loop -- one request at a time        |
-| `1-32`        | Low concurrency -- good for CPU-bound workloads         |
-| `64-128`      | Moderate -- good for mixed I/O and CPU                  |
-| `256+`        | High -- for I/O-heavy workloads (API gateways, proxies) |
+| Setting       | Behavior                                              |
+| ------------- | ----------------------------------------------------- |
+| `0` (default) | Synchronous accept loop, one request at a time        |
+| `1-32`        | Low concurrency, good for CPU-bound workloads         |
+| `64-128`      | Moderate, good for mixed I/O and CPU                  |
+| `256+`        | High, for I/O-heavy workloads (API gateways, proxies) |
 
 Fibers provide I/O concurrency only. PHP remains single-threaded. Blocking database calls without async drivers do not benefit from higher concurrency. Monitor `runtime_active_fibers` and request latency to find the right setting.
 

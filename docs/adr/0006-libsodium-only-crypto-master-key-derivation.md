@@ -51,6 +51,14 @@ The `MasterKey` class manages derivation. Context strings must be exactly 8 byte
 
 - **TOTP verification** uses `hash_hmac('sha1', ...)` per RFC 6238, which mandates SHA-1 HMAC
 - **Password hashing** uses PHP's native `password_hash()` with `PASSWORD_ARGON2ID` rather than `sodium_crypto_pwhash_str()`
+- **FIPS 140-2 compatible cipher suite.** `AesGcmCipherSuite` uses `sodium_crypto_aead_aes256gcm_encrypt` / `sodium_crypto_aead_aes256gcm_decrypt` (libsodium's native AES-256-GCM with hardware AES-NI acceleration). This is FIPS-approved AES-256-GCM while remaining within the libsodium-only policy -- no ADR exception required. Full FIPS 140-2/140-3 compliance requires deploying PHP with a NIST-validated crypto provider (e.g., OpenSSL 3.x FIPS module).
+- **Protocol-mandated OpenSSL interoperability.** The following classes use OpenSSL or `hash_hmac` because external protocols or standards require specific algorithms that libsodium does not implement. These are the only approved exceptions beyond TOTP and password hashing:
+  - `SmimeEncryptor` -- X.509/PKCS#7 encryption for S/MIME email (RFC 8551), requires OpenSSL certificate operations
+  - `SendgridWebhookVerifier`, `SesWebhookVerifier`, `MailgunWebhookVerifier` -- verify webhook signatures using the algorithm dictated by each provider (ECDSA, SNS signature verification, HMAC-SHA-256 respectively)
+  - `HmacWebhookVerifier` -- generic HMAC-SHA-256 webhook signature verification for third-party integrations that mandate RFC 2104 HMAC
+  - `S3Signer` -- AWS Signature Version 4 (HMAC-SHA-256 based) for S3-compatible storage APIs
+  - WebAuthn extension -- FIDO2/WebAuthn attestation and assertion verification requires OpenSSL for COSE key parsing and ECDSA/RSA signature verification (FIDO Alliance specifications)
+  - OAuth2 extension -- JWT RS256/ES256 token verification requires OpenSSL for RSA and ECDSA public key operations (RFC 7518)
 
 ## Consequences
 
@@ -63,7 +71,7 @@ The `MasterKey` class manages derivation. Context strings must be exactly 8 byte
 
 ### Negative
 
-- **No algorithm flexibility.** Applications needing specific algorithms (RSA for JWT signing, AES-GCM for compliance mandates) must use external packages. Pulsar's crypto layer does not wrap or expose these.
+- **No algorithm flexibility.** The libsodium-only default means protocol-mandated interoperability (e.g., OpenSSL for JWT/WebAuthn, HMAC-SHA-256 for webhook verification) requires narrowly scoped exceptions documented above. General-purpose algorithm selection is not supported. FIPS-approved AES-256-GCM is available natively via libsodium without exception.
 - **Master key is a single point of failure.** If the master key is compromised, all derived keys are compromised. Mitigation: the key lives only in the environment, never in source code or config files.
 - **Libsodium availability.** While bundled since PHP 7.2, some minimal PHP installations may not have `ext-sodium` enabled. Pulsar requires it.
 

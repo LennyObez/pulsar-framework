@@ -40,30 +40,40 @@ interface ServiceWiringInterface
 
 ### Wiring classes
 
-Twenty wiring classes were extracted, each responsible for a single subsystem:
+Thirty wiring classes exist, each responsible for a single subsystem:
 
-| Wiring Class             | Subsystem             |
-| ------------------------ | --------------------- |
-| `ConfigWiring`           | Configuration loading |
-| `LoggingWiring`          | Logger + sinks        |
-| `TracingWiring`          | Tracing spans         |
-| `MetricsWiring`          | Metrics registry      |
-| `RequestContextWiring`   | Request context       |
-| `ErrorTrackingWiring`    | Error aggregation     |
-| `ExceptionHandlerWiring` | Exception handling    |
-| `SecurityWiring`         | Security services     |
-| `AuthWiring`             | Authentication        |
-| `DatabaseWiring`         | Database connections  |
-| `TenancyWiring`          | Multi-tenancy         |
-| `FeatureFlagWiring`      | Feature flags         |
-| `SchedulerWiring`        | Task scheduler        |
-| `ResilienceWiring`       | Circuit breakers      |
-| `QueueWiring`            | Job queues            |
-| `SupervisorWiring`       | Process supervisor    |
-| `IntegrityWiring`        | File integrity        |
-| `DeployWiring`           | Deploy readiness      |
-| `RuntimeWiring`          | Runtime configuration |
-| `DiagnosticsWiring`      | Diagnostics routes    |
+| Wiring Class             | Subsystem              |
+| ------------------------ | ---------------------- |
+| `ApiWiring`              | API route registration |
+| `AuthWiring`             | Authentication         |
+| `CacheWiring`            | Cache layer            |
+| `ConfigWiring`           | Configuration loading  |
+| `DatabaseWiring`         | Database connections   |
+| `DeployWiring`           | Deploy readiness       |
+| `DiagnosticsWiring`      | Diagnostics routes     |
+| `ErrorTrackingWiring`    | Error aggregation      |
+| `EventWiring`            | Event dispatcher       |
+| `ExceptionHandlerWiring` | Exception handling     |
+| `FeatureFlagWiring`      | Feature flags          |
+| `I18nWiring`             | Internationalization   |
+| `IntegrityWiring`        | File integrity         |
+| `IntrospectionWiring`    | Container inspection   |
+| `LoggingWiring`          | Logger + sinks         |
+| `MailWiring`             | Mail transport         |
+| `MetricsWiring`          | Metrics registry       |
+| `NotificationWiring`     | Notifications          |
+| `QueueWiring`            | Job queues             |
+| `RequestContextWiring`   | Request context        |
+| `ResilienceWiring`       | Circuit breakers       |
+| `RuntimeWiring`          | Runtime configuration  |
+| `SchedulerWiring`        | Task scheduler         |
+| `SecurityWiring`         | Security services      |
+| `ServiceDiscoveryWiring` | Service discovery      |
+| `StorageWiring`          | File storage           |
+| `SupervisorWiring`       | Process supervisor     |
+| `TenancyWiring`          | Multi-tenancy          |
+| `TracingWiring`          | Tracing spans          |
+| `ViewWiring`             | View/template engine   |
 
 ### Kernel boot sequence
 
@@ -105,7 +115,7 @@ Leave the Kernel as-is and rely on IDE folding/navigation. Rejected: 1,825 lines
 
 ### Negative
 
-- Twenty new files in `src/Core/Wiring/`.
+- Thirty files in `src/Core/Wiring/`.
 - Developers must understand the wiring interface to add new subsystems (low barrier - the pattern is simple).
 
 ### Neutral
@@ -119,7 +129,7 @@ None. The decomposition does not change any security behavior. All security-rela
 
 ## Performance impact
 
-None. The wiring classes are instantiated once during boot. The object allocation overhead (20 lightweight readonly objects) is negligible compared to the IO-bound operations they perform (config loading, SQLite connection, middleware registration).
+None. The wiring classes are instantiated once during boot. The object allocation overhead (30 lightweight readonly objects) is negligible compared to the IO-bound operations they perform (config loading, SQLite connection, middleware registration).
 
 ## Migration / rollback plan
 

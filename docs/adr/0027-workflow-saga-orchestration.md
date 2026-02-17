@@ -12,8 +12,8 @@ Spiral integrates Temporal for durable workflows. Symfony provides a Workflow co
 
 Pulsar needs two complementary abstractions:
 
-1. **Workflow engine** — state machine definitions with guard-protected transitions, optimistic locking, and append-only transition logs for auditability.
-2. **Saga orchestrator** — multi-step processes with forward/compensation actions, idempotency keys, retry policies, and irreversibility tracking. Communication via events and the transactional outbox pattern (no RPC, no two-phase commit).
+1. **Workflow engine**: state machine definitions with guard-protected transitions, optimistic locking, and append-only transition logs for auditability.
+2. **Saga orchestrator**: multi-step processes with forward/compensation actions, idempotency keys, retry policies, and irreversibility tracking. Communication via events and the transactional outbox pattern (no RPC, no two-phase commit).
 
 ## Decision
 
@@ -35,7 +35,7 @@ Saga compensation is fundamentally different from database rollback. Each step d
 
 ### Outbox-mandatory integration events
 
-Distributed sagas communicate via events, not synchronous RPC. State changes and outbox event writes happen atomically in the same database transaction. Direct publication to `IntegrationEventBusPort` is forbidden in saga step handlers — enforced at build time (PHPStan rule) and runtime (container guard). The outbox relay publishes events asynchronously after commit.
+Distributed sagas communicate via events, not synchronous RPC. State changes and outbox event writes happen atomically in the same database transaction. Direct publication to `IntegrationEventBusPort` is forbidden in saga step handlers: enforced at build time (PHPStan rule) and runtime (container guard). The outbox relay publishes events asynchronously after commit.
 
 ### Definition versioning
 
@@ -43,7 +43,7 @@ Every workflow/saga instance stores `definition_id` and `definition_version` at 
 
 ### Classified context storage with automatic encryption
 
-`workflow_instances.context` (JSON) supports field-level classification tags. The classification level drives encryption policy automatically — no separate opt-in:
+`workflow_instances.context` (JSON) supports field-level classification tags. The classification level drives encryption policy automatically: no separate opt-in:
 
 - **Public**: stored in plaintext, included in exports and logs
 - **Internal**: stored in plaintext, redacted from public exports
@@ -85,9 +85,9 @@ This table is append-only for forward execution. During compensation, new rows a
 
 - Two modules to maintain, but clear separation of concerns (state machine vs compensation orchestration)
 - Optimistic locking means callers must handle `ConcurrentTransitionException` (retry logic at call site)
-- Append-only transition log grows unboundedly — archival/compaction is the operator's responsibility
-- Outbox enforcement adds a PHPStan rule and optional runtime guard — marginal build-time cost
-- Definition versioning prevents automatic migration — operators must explicitly opt in for in-flight instance migration
+- Append-only transition log grows unboundedly: archival/compaction is the operator's responsibility
+- Outbox enforcement adds a PHPStan rule and optional runtime guard: marginal build-time cost
+- Definition versioning prevents automatic migration: operators must explicitly opt in for in-flight instance migration
 - Classified context adds validation overhead on every context write in regulated presets
 
 ## Alternatives considered
@@ -98,6 +98,6 @@ This table is append-only for forward execution. During compensation, new rows a
 - **Automatic definition migration**: Rejected. Unsafe in regulated domains where in-flight instances must complete on their original rules.
 - **Direct event publishing (no outbox)**: Rejected. Dual-write problem makes eventual consistency guarantees impossible without the outbox pattern.
 - **Saga step state in JSON context column**: Rejected. Step-level execution tracking (attempts, idempotency keys, compensation state) is structured relational data that benefits from indexing and querying. A dedicated `saga_step_results` table is cleaner than overloading the JSON context.
-- **Opt-in context encryption**: Rejected. Classification-driven automatic encryption is more secure — developers cannot forget to enable encryption for sensitive fields. The classification level IS the encryption policy.
+- **Opt-in context encryption**: Rejected. Classification-driven automatic encryption is more secure: developers cannot forget to enable encryption for sensitive fields. The classification level IS the encryption policy.
 - **Configurable compensation ordering**: Rejected. Reverse order is the universally accepted standard for saga compensation. Adding configurability introduces complexity with no demonstrated requirement.
 - **Queue-based timeout as default**: Rejected. Would add Plan 13 (Queue) as a hard dependency. The polling-based default is portable; queue-based implementations are available via the port interface.
