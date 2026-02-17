@@ -50,7 +50,7 @@ final class MailAuditorTest extends TestCase
     #[Test]
     public function it_creates_record_with_hmac_hashing(): void
     {
-        $hmac = $this->createMock(HmacInterface::class);
+        $hmac = $this->createStub(HmacInterface::class);
         $hmac->method('computeHex')
             ->willReturnCallback(fn(string $msg, string $key): string => 'hmac_' . strlen($msg));
 
@@ -99,7 +99,7 @@ final class MailAuditorTest extends TestCase
     #[Test]
     public function it_hashes_attachments(): void
     {
-        $hmac = $this->createMock(HmacInterface::class);
+        $hmac = $this->createStub(HmacInterface::class);
         $hmac->method('computeHex')
             ->willReturnCallback(fn(string $msg): string => 'hash_' . strlen($msg));
 
@@ -124,7 +124,7 @@ final class MailAuditorTest extends TestCase
     #[Test]
     public function it_does_not_store_raw_content(): void
     {
-        $hmac = $this->createMock(HmacInterface::class);
+        $hmac = $this->createStub(HmacInterface::class);
         $hmac->method('computeHex')->willReturn('hash_value');
 
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
@@ -148,7 +148,7 @@ final class MailAuditorTest extends TestCase
     #[Test]
     public function it_returns_null_body_hash_for_empty_body(): void
     {
-        $hmac = $this->createMock(HmacInterface::class);
+        $hmac = $this->createStub(HmacInterface::class);
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $auditor = new MailAuditor($hmac, $masterKey);
 

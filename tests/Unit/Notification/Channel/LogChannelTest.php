@@ -41,7 +41,7 @@ final class LogChannelTest extends TestCase
     #[Test]
     public function it_reports_log_channel_name(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
         $channel = new LogChannel($logger);
 
         self::assertSame(NotificationChannelType::Log->value, $channel->name());

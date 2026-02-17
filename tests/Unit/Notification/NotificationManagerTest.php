@@ -84,7 +84,7 @@ final class NotificationManagerTest extends TestCase
             $this->config,
             [],
             eventDispatcher: $dispatcher,
-            logger: $this->createMock(LoggerInterface::class),
+            logger: $this->createStub(LoggerInterface::class),
         );
 
         $manager->send($notifiable, $notification);
@@ -98,7 +98,7 @@ final class NotificationManagerTest extends TestCase
             ->method('dispatch')
             ->with(self::isInstanceOf(NotificationSent::class));
 
-        $channel = $this->createMock(NotificationChannelInterface::class);
+        $channel = $this->createStub(NotificationChannelInterface::class);
         $channel->method('name')->willReturn('mail');
 
         $notifiable = $this->createNotifiable('user-4');
@@ -168,7 +168,7 @@ final class NotificationManagerTest extends TestCase
 
         $manager = new NotificationManager(
             $this->config,
-            ['log' => $channel, 'mail' => $this->createMock(NotificationChannelInterface::class)],
+            ['log' => $channel, 'mail' => $this->createStub(NotificationChannelInterface::class)],
         );
 
         $manager->sendNow($notifiable, $notification, ['log']);

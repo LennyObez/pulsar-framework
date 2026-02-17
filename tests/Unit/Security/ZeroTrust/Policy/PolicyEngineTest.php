@@ -7,7 +7,6 @@ namespace Pulsar\Tests\Unit\Security\ZeroTrust\Policy;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Event\EventDispatcherInterface;
@@ -28,17 +27,17 @@ final class PolicyEngineTest extends TestCase
 {
     private DateTimeImmutable $now;
 
-    private EventDispatcherInterface&MockObject $eventDispatcher;
+    private EventDispatcherInterface $eventDispatcher;
 
     private AuditLoggerInterface $auditLogger;
 
     protected function setUp(): void
     {
         $this->now = new DateTimeImmutable();
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $this->auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $this->eventDispatcher = $this->createStub(EventDispatcherInterface::class);
+        $this->auditLogger = $this->createStub(AuditLoggerInterface::class);
 
-        $this->auditLogger->method('log')->willReturn($this->createMock(AuditEntry::class));
+        $this->auditLogger->method('log')->willReturn($this->createStub(AuditEntry::class));
     }
 
     #[Test]
@@ -368,7 +367,8 @@ final class PolicyEngineTest extends TestCase
     #[Test]
     public function eventDispatchedOnEvaluation(): void
     {
-        $this->eventDispatcher
+        $eventDispatcher = $this->createMock(EventDispatcherInterface::class);
+        $eventDispatcher
             ->expects(self::once())
             ->method('dispatch')
             ->with(self::callback(static function (mixed $event): bool {
@@ -388,7 +388,7 @@ final class PolicyEngineTest extends TestCase
                     onMatch: PolicyDecision::Grant,
                 ),
             ],
-            eventDispatcher: $this->eventDispatcher,
+            eventDispatcher: $eventDispatcher,
             auditLogger: $this->auditLogger,
         );
 
@@ -414,7 +414,7 @@ final class PolicyEngineTest extends TestCase
                         && $metadata['claim_count'] === 0;
                 }),
             )
-            ->willReturn($this->createMock(AuditEntry::class));
+            ->willReturn($this->createStub(AuditEntry::class));
 
         $engine = new PolicyEngine(
             rules: [
@@ -448,7 +448,7 @@ final class PolicyEngineTest extends TestCase
                 self::anything(),
                 self::anything(),
             )
-            ->willReturn($this->createMock(AuditEntry::class));
+            ->willReturn($this->createStub(AuditEntry::class));
 
         $engine = new PolicyEngine(
             rules: [],

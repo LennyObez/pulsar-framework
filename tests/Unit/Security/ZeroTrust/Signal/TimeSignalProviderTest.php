@@ -173,7 +173,7 @@ final class TimeSignalProviderTest extends TestCase
      */
     private function createContext(array $attributes = []): SignalContext
     {
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
 
         return new SignalContext(
             request: $request,

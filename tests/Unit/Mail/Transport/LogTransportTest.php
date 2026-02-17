@@ -51,7 +51,7 @@ final class LogTransportTest extends TestCase
     #[Test]
     public function it_reports_log_name(): void
     {
-        $logger = $this->createMock(LoggerInterface::class);
+        $logger = $this->createStub(LoggerInterface::class);
         $transport = new LogTransport($logger);
 
         self::assertSame('log', $transport->name());

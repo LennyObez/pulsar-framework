@@ -43,7 +43,7 @@ final class NotificationManagerIntegrationTest extends TestCase
         $mailChannel = new MailChannel($mailManager);
 
         $dispatchedEvents = [];
-        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher = $this->createStub(EventDispatcherInterface::class);
         $dispatcher->method('dispatch')
             ->willReturnCallback(function (object $event) use (&$dispatchedEvents): object {
                 $dispatchedEvents[] = $event;

@@ -193,7 +193,7 @@ final class NetworkSignalProviderTest extends TestCase
 
         $provider = new NetworkSignalProvider($intelligence);
 
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getServerParams')->willReturn([]);
 
         $context = new SignalContext(request: $request, identityId: 'user-1');
@@ -210,7 +210,7 @@ final class NetworkSignalProviderTest extends TestCase
 
     private function createContext(string $ip): SignalContext
     {
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getServerParams')->willReturn(['REMOTE_ADDR' => $ip]);
 
         return new SignalContext(request: $request, identityId: 'user-1');
@@ -218,7 +218,7 @@ final class NetworkSignalProviderTest extends TestCase
 
     private function intelligenceReturning(string $zone, bool $tor, bool $proxy): NetworkIntelligenceInterface
     {
-        $intelligence = $this->createMock(NetworkIntelligenceInterface::class);
+        $intelligence = $this->createStub(NetworkIntelligenceInterface::class);
         $intelligence->method('resolveZone')->willReturn($zone);
         $intelligence->method('isTorExitNode')->willReturn($tor);
         $intelligence->method('isKnownProxy')->willReturn($proxy);

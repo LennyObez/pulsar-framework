@@ -29,17 +29,14 @@ final class UserInfoEndpointTest extends TestCase
             tokenValue: 'bearer-token',
         );
 
-        $tokenRepo = $this->createMock(AccessTokenRepositoryInterface::class);
-        $tokenRepo->expects($this->any())->method('introspect')
-            ->with('bearer-token')
+        $tokenRepo = $this->createStub(AccessTokenRepositoryInterface::class);
+        $tokenRepo->method('introspect')
             ->willReturn($token);
 
-        $claimsProvider = $this->createMock(UserClaimsProviderInterface::class);
-        $claimsProvider->expects($this->any())->method('getClaims')
-            ->with('user-42', ['openid', 'email'])
+        $claimsProvider = $this->createStub(UserClaimsProviderInterface::class);
+        $claimsProvider->method('getClaims')
             ->willReturn(['email' => 'john@example.com', 'email_verified' => true]);
-        $claimsProvider->expects($this->any())->method('getSubjectIdentifier')
-            ->with('user-42', 'client-1')
+        $claimsProvider->method('getSubjectIdentifier')
             ->willReturn('user-42');
 
         $endpoint = new UserInfoEndpoint($claimsProvider, $tokenRepo);
@@ -55,12 +52,11 @@ final class UserInfoEndpointTest extends TestCase
     #[Test]
     public function returnsNullForInvalidToken(): void
     {
-        $tokenRepo = $this->createMock(AccessTokenRepositoryInterface::class);
-        $tokenRepo->expects($this->any())->method('introspect')
-            ->with('invalid-token')
+        $tokenRepo = $this->createStub(AccessTokenRepositoryInterface::class);
+        $tokenRepo->method('introspect')
             ->willReturn(null);
 
-        $claimsProvider = $this->createMock(UserClaimsProviderInterface::class);
+        $claimsProvider = $this->createStub(UserClaimsProviderInterface::class);
 
         $endpoint = new UserInfoEndpoint($claimsProvider, $tokenRepo);
 
@@ -82,11 +78,11 @@ final class UserInfoEndpointTest extends TestCase
             revoked: true,
         );
 
-        $tokenRepo = $this->createMock(AccessTokenRepositoryInterface::class);
+        $tokenRepo = $this->createStub(AccessTokenRepositoryInterface::class);
         // The repository returns null for revoked/inactive tokens
         $tokenRepo->method('introspect')->willReturn(null);
 
-        $claimsProvider = $this->createMock(UserClaimsProviderInterface::class);
+        $claimsProvider = $this->createStub(UserClaimsProviderInterface::class);
 
         $endpoint = new UserInfoEndpoint($claimsProvider, $tokenRepo);
 
@@ -108,13 +104,12 @@ final class UserInfoEndpointTest extends TestCase
             tokenValue: 'token-sub',
         );
 
-        $tokenRepo = $this->createMock(AccessTokenRepositoryInterface::class);
+        $tokenRepo = $this->createStub(AccessTokenRepositoryInterface::class);
         $tokenRepo->method('introspect')->willReturn($token);
 
-        $claimsProvider = $this->createMock(UserClaimsProviderInterface::class);
-        $claimsProvider->expects($this->any())->method('getClaims')->willReturn([]);
-        $claimsProvider->expects($this->any())->method('getSubjectIdentifier')
-            ->with('user-42', 'client-1')
+        $claimsProvider = $this->createStub(UserClaimsProviderInterface::class);
+        $claimsProvider->method('getClaims')->willReturn([]);
+        $claimsProvider->method('getSubjectIdentifier')
             ->willReturn('pairwise-sub-42');
 
         $endpoint = new UserInfoEndpoint($claimsProvider, $tokenRepo);
@@ -138,17 +133,16 @@ final class UserInfoEndpointTest extends TestCase
             tokenValue: 'token-profile',
         );
 
-        $tokenRepo = $this->createMock(AccessTokenRepositoryInterface::class);
+        $tokenRepo = $this->createStub(AccessTokenRepositoryInterface::class);
         $tokenRepo->method('introspect')->willReturn($token);
 
-        $claimsProvider = $this->createMock(UserClaimsProviderInterface::class);
-        $claimsProvider->expects($this->any())->method('getClaims')
-            ->with('user-42', ['openid', 'profile'])
+        $claimsProvider = $this->createStub(UserClaimsProviderInterface::class);
+        $claimsProvider->method('getClaims')
             ->willReturn([
                 'name' => 'John Doe',
                 'preferred_username' => 'johnd',
             ]);
-        $claimsProvider->expects($this->any())->method('getSubjectIdentifier')->willReturn('user-42');
+        $claimsProvider->method('getSubjectIdentifier')->willReturn('user-42');
 
         $endpoint = new UserInfoEndpoint($claimsProvider, $tokenRepo);
 

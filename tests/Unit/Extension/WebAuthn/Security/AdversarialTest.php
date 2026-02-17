@@ -7,7 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\WebAuthn\Security;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\WebAuthn\Adapter\AttestationVerifier;
@@ -34,8 +34,8 @@ use function chr;
 final class AdversarialTest extends TestCase
 {
     private WebAuthnConfig $config;
-    private CredentialRepositoryInterface&MockObject $credentialRepo;
-    private AuditLoggerInterface&MockObject $auditLogger;
+    private CredentialRepositoryInterface&Stub $credentialRepo;
+    private AuditLoggerInterface&Stub $auditLogger;
 
     protected function setUp(): void
     {
@@ -47,8 +47,8 @@ final class AdversarialTest extends TestCase
             attestation: 'direct',
         );
 
-        $this->credentialRepo = $this->createMock(CredentialRepositoryInterface::class);
-        $this->auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $this->credentialRepo = $this->createStub(CredentialRepositoryInterface::class);
+        $this->auditLogger = $this->createStub(AuditLoggerInterface::class);
     }
 
     // ========================================================================

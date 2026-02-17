@@ -74,7 +74,7 @@ final class LocationSignalProviderTest extends TestCase
     #[Test]
     public function unresolvedIpReturnsDegradedClaims(): void
     {
-        $resolver = $this->createMock(GeoLocationResolverInterface::class);
+        $resolver = $this->createStub(GeoLocationResolverInterface::class);
         $resolver->method('resolve')->willReturn(null);
 
         $provider = new LocationSignalProvider($resolver);
@@ -233,7 +233,7 @@ final class LocationSignalProviderTest extends TestCase
      */
     private function createContext(string $ip, array $attributes = []): SignalContext
     {
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getServerParams')->willReturn(['REMOTE_ADDR' => $ip]);
 
         return new SignalContext(
@@ -245,7 +245,7 @@ final class LocationSignalProviderTest extends TestCase
 
     private function resolverReturning(GeoLocation $location): GeoLocationResolverInterface
     {
-        $resolver = $this->createMock(GeoLocationResolverInterface::class);
+        $resolver = $this->createStub(GeoLocationResolverInterface::class);
         $resolver->method('resolve')->willReturn($location);
 
         return $resolver;

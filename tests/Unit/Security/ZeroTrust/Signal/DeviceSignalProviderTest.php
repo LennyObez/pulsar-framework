@@ -95,8 +95,8 @@ final class DeviceSignalProviderTest extends TestCase
             lastVerifiedAt: new DateTimeImmutable('-1 hour'),
         );
 
-        $registry = $this->createMock(DeviceRegistryInterface::class);
-        $registry->expects(self::any())->method('find')->with('dev-123')->willReturn($device);
+        $registry = $this->createStub(DeviceRegistryInterface::class);
+        $registry->method('find')->willReturn($device);
 
         $provider = new DeviceSignalProvider($registry);
         $context = $this->createContext(cookies: ['_pulsar_device_id' => 'dev-123']);
@@ -122,8 +122,8 @@ final class DeviceSignalProviderTest extends TestCase
             lastVerifiedAt: null,
         );
 
-        $registry = $this->createMock(DeviceRegistryInterface::class);
-        $registry->expects(self::any())->method('find')->with('dev-456')->willReturn($device);
+        $registry = $this->createStub(DeviceRegistryInterface::class);
+        $registry->method('find')->willReturn($device);
 
         $provider = new DeviceSignalProvider($registry);
         $context = $this->createContext(cookies: ['_pulsar_device_id' => 'dev-456']);
@@ -137,8 +137,8 @@ final class DeviceSignalProviderTest extends TestCase
     #[Test]
     public function unknownDeviceInRegistryDegradesCookie(): void
     {
-        $registry = $this->createMock(DeviceRegistryInterface::class);
-        $registry->expects(self::any())->method('find')->with('dev-unknown')->willReturn(null);
+        $registry = $this->createStub(DeviceRegistryInterface::class);
+        $registry->method('find')->willReturn(null);
 
         $provider = new DeviceSignalProvider($registry);
         $context = $this->createContext(cookies: ['_pulsar_device_id' => 'dev-unknown']);
@@ -163,8 +163,8 @@ final class DeviceSignalProviderTest extends TestCase
             lastVerifiedAt: new DateTimeImmutable(),
         );
 
-        $registry = $this->createMock(DeviceRegistryInterface::class);
-        $registry->expects(self::any())->method('find')->with('dev-attr')->willReturn($device);
+        $registry = $this->createStub(DeviceRegistryInterface::class);
+        $registry->method('find')->willReturn($device);
 
         $provider = new DeviceSignalProvider($registry);
         $context = $this->createContext(attributes: ['device_id' => 'dev-attr']);
@@ -201,7 +201,7 @@ final class DeviceSignalProviderTest extends TestCase
      */
     private function createContext(array $cookies = [], array $attributes = []): SignalContext
     {
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getCookieParams')->willReturn($cookies);
 
         return new SignalContext(

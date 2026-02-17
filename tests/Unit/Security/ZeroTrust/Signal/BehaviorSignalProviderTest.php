@@ -229,7 +229,7 @@ final class BehaviorSignalProviderTest extends TestCase
      */
     private function createContext(string $identityId, array $attributes = []): SignalContext
     {
-        $request = $this->createMock(ServerRequestInterface::class);
+        $request = $this->createStub(ServerRequestInterface::class);
 
         return new SignalContext(
             request: $request,
@@ -240,7 +240,7 @@ final class BehaviorSignalProviderTest extends TestCase
 
     private function baselineReturning(BehaviorBaseline $baseline): BehaviorBaselineInterface
     {
-        $provider = $this->createMock(BehaviorBaselineInterface::class);
+        $provider = $this->createStub(BehaviorBaselineInterface::class);
         $provider->method('getBaseline')->willReturn($baseline);
 
         return $provider;

@@ -21,7 +21,7 @@ final class JwtSignerTest extends TestCase
     {
         $this->signingKey = random_bytes(32);
 
-        $keyRing = $this->createMock(KeyRingInterface::class);
+        $keyRing = $this->createStub(KeyRingInterface::class);
         $keyRing->method('keyFor')
             ->willReturnCallback(fn(string $kid): ?string => match ($kid) {
                 'test_key' => $this->signingKey,

@@ -24,7 +24,7 @@ final class WebhookHandlerTest extends TestCase
     #[Test]
     public function it_rejects_invalid_signature(): void
     {
-        $verifier = $this->createMock(WebhookVerifierInterface::class);
+        $verifier = $this->createStub(WebhookVerifierInterface::class);
         $verifier->method('verify')->willReturn(false);
 
         $handler = new WebhookHandler($verifier, new InMemoryDeduplicationStore());
@@ -45,7 +45,7 @@ final class WebhookHandlerTest extends TestCase
     #[Test]
     public function it_accepts_valid_request(): void
     {
-        $verifier = $this->createMock(WebhookVerifierInterface::class);
+        $verifier = $this->createStub(WebhookVerifierInterface::class);
         $verifier->method('verify')->willReturn(true);
 
         $handler = new WebhookHandler($verifier, new InMemoryDeduplicationStore());
@@ -75,7 +75,7 @@ final class WebhookHandlerTest extends TestCase
     #[Test]
     public function it_deduplicates_events(): void
     {
-        $verifier = $this->createMock(WebhookVerifierInterface::class);
+        $verifier = $this->createStub(WebhookVerifierInterface::class);
         $verifier->method('verify')->willReturn(true);
 
         $dedup = new InMemoryDeduplicationStore();
@@ -107,7 +107,7 @@ final class WebhookHandlerTest extends TestCase
     #[Test]
     public function it_rejects_stale_timestamps(): void
     {
-        $verifier = $this->createMock(WebhookVerifierInterface::class);
+        $verifier = $this->createStub(WebhookVerifierInterface::class);
         $verifier->method('verify')->willReturn(true);
 
         $handler = new WebhookHandler(
@@ -132,7 +132,7 @@ final class WebhookHandlerTest extends TestCase
     #[Test]
     public function it_defaults_to_delivery_event_type(): void
     {
-        $verifier = $this->createMock(WebhookVerifierInterface::class);
+        $verifier = $this->createStub(WebhookVerifierInterface::class);
         $verifier->method('verify')->willReturn(true);
 
         $handler = new WebhookHandler($verifier, new InMemoryDeduplicationStore());

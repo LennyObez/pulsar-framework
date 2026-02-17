@@ -37,7 +37,7 @@ final class MailManagerIntegrationTest extends TestCase
         );
 
         $dispatchedEvents = [];
-        $dispatcher = $this->createMock(EventDispatcherInterface::class);
+        $dispatcher = $this->createStub(EventDispatcherInterface::class);
         $dispatcher->method('dispatch')
             ->willReturnCallback(function (object $event) use (&$dispatchedEvents): object {
                 $dispatchedEvents[] = $event;
@@ -45,7 +45,7 @@ final class MailManagerIntegrationTest extends TestCase
             });
 
         $auditLogged = false;
-        $auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $auditLogger = $this->createStub(AuditLoggerInterface::class);
         $auditLogger->method('log')
             ->willReturnCallback(function () use (&$auditLogged): AuditEntry {
                 $auditLogged = true;

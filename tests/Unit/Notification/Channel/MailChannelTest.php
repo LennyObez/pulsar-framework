@@ -68,7 +68,7 @@ final class MailChannelTest extends TestCase
     #[Test]
     public function it_wraps_mail_exceptions_in_notification_exception(): void
     {
-        $mailManager = $this->createMock(MailManagerInterface::class);
+        $mailManager = $this->createStub(MailManagerInterface::class);
         $mailManager->method('send')
             ->willThrowException(MailException::sendFailed('Transport error'));
 
@@ -86,7 +86,7 @@ final class MailChannelTest extends TestCase
     #[Test]
     public function it_reports_mail_channel_name(): void
     {
-        $mailManager = $this->createMock(MailManagerInterface::class);
+        $mailManager = $this->createStub(MailManagerInterface::class);
         $channel = new MailChannel($mailManager);
 
         self::assertSame(NotificationChannelType::Mail->value, $channel->name());

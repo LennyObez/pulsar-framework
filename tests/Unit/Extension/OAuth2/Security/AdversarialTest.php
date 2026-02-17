@@ -50,7 +50,7 @@ final class AdversarialTest extends TestCase
         $this->codeRepo = new InMemoryAuthorizationCodeRepository();
         $this->accessTokenRepo = new InMemoryAccessTokenRepository();
         $this->refreshTokenRepo = new InMemoryRefreshTokenRepository();
-        $this->auditLogger = $this->createMock(AuditLoggerInterface::class);
+        $this->auditLogger = $this->createStub(AuditLoggerInterface::class);
         $this->scopeRepo = $this->createScopeRepository();
 
         $this->authCodeGrant = new AuthorizationCodeGrant(
@@ -690,7 +690,7 @@ final class AdversarialTest extends TestCase
      */
     private function createTokenRequest(array $body): \Psr\Http\Message\ServerRequestInterface
     {
-        $request = $this->createMock(\Psr\Http\Message\ServerRequestInterface::class);
+        $request = $this->createStub(\Psr\Http\Message\ServerRequestInterface::class);
         $request->method('getParsedBody')->willReturn($body);
 
         return $request;
@@ -698,7 +698,7 @@ final class AdversarialTest extends TestCase
 
     private function createScopeRepository(): ScopeRepositoryInterface
     {
-        $repo = $this->createMock(ScopeRepositoryInterface::class);
+        $repo = $this->createStub(ScopeRepositoryInterface::class);
         $repo->method('resolveScopes')->willReturnCallback(
             static function (array $scopeIds): array {
                 /** @var list<string> $scopeIds */
