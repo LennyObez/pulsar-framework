@@ -110,6 +110,15 @@ final readonly class ScopedRouterProxy implements RouterInterface
     }
 
     #[Override]
+    public function group(string $prefix, callable $callback): self
+    {
+        $this->assertCanRegisterRoute($prefix);
+        $this->inner->group($this->prefixPath($prefix), $callback);
+
+        return $this;
+    }
+
+    #[Override]
     public function match(Method $method, string $path, ?string $host = null): MatchedRoute
     {
         return $this->inner->match($method, $path, $host);

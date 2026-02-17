@@ -164,6 +164,42 @@ final class Router implements RouterInterface
     }
 
     /**
+     * Register a group of routes under a common prefix.
+     *
+     * Creates a temporary router, passes it to the callback, then
+     * adds all registered routes with the prefix prepended to their paths.
+     *
+     * @param string   $prefix   The URL prefix for all routes in the group.
+     * @param callable $callback Receives a RouterInterface to register grouped routes.
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
+     */
+    public function group(string $prefix, callable $callback): self
+    {
+        $prefix = '/' . trim($prefix, '/');
+        $subRouter = new self();
+
+        $callback($subRouter);
+
+        foreach ($subRouter->routes as $route) {
+            $prefixedPath = $prefix . '/' . trim($route->path, '/');
+
+            $this->add(new Route(
+                methods: $route->methods,
+                path: $prefixedPath,
+                handler: $route->handler,
+                name: $route->name,
+                attributes: $route->attributes,
+                middleware: $route->middleware,
+                constraints: $route->constraints,
+                host: $route->host,
+            ));
+        }
+
+        return $this;
+    }
+
+    /**
      * Match a request path and method to a route.
      *
      * Uses a method-indexed lookup table on the hot path so that only
