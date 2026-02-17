@@ -620,6 +620,13 @@ final readonly class ContentController
         $renderEngine = $engine ?? $this->templateEngine;
         assert($renderEngine !== null);
 
+        // Convenience variables extracted from the translation object for direct
+        // template access (avoids $translation->metaTitle in every layout)
+        $metaTitle = $translationObj !== null && $translationObj->metaTitle !== ''
+            ? $translationObj->metaTitle
+            : ($translationObj->title ?? '');
+        $metaDescription = $translationObj !== null ? $translationObj->metaDescription : '';
+
         return $renderEngine->render($templateName, [
             'content' => $content,
             'translation' => $translationObj,
@@ -633,6 +640,8 @@ final readonly class ContentController
             'config' => $this->config,
             'locale' => $translationObj !== null ? $translationObj->locale : 'en',
             'siteName' => $this->config->siteName,
+            'metaTitle' => $metaTitle ?? '',
+            'metaDescription' => $metaDescription,
             'baseUrl' => $baseUrl,
             'canonicalUrl' => $baseUrl . '/' . ltrim($translationObj !== null ? $translationObj->path : '', '/'),
             'jsonLd' => $seoData['jsonLd'] ?? '',
