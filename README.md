@@ -41,16 +41,23 @@ Pulsar targets teams building **mission-critical applications** where you need:
 - **Security by default** (secure sessions, CSRF, headers, encryption, auditability)
 - **Regulated-domain readiness** (documentation mapping features to compliance controls)
 
-## Regulated industries focus
+## Compliance-ready controls
 
-Pulsar is designed for regulated domains such as:
+Pulsar provides framework-level controls for seven regulatory and standards frameworks. It does **not** claim certification — it provides secure defaults, audit infrastructure, and documented control mappings that reduce the work required for compliance certification.
 
-- Banking & payments (PSD2, PCI DSS, NIS2)
-- Legal & e-signature workflows (GDPR, eIDAS)
-- Medical & healthcare ecosystems (MDR, HL7/FHIR, ISO 13485)
+| Framework          | What Pulsar provides                                                                                                             | What the integrator must add                                                                           |
+| ------------------ | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **SOC 2**          | Audit logging with HMAC chain, RBAC, session management, observability, incident interfaces                                      | Organizational policies, personnel training, SOC 2 Type II audit engagement                            |
+| **HIPAA 2026**     | Encryption (at rest + in transit), MFA support, audit trails, access controls, incident reporting interfaces                     | BAA execution, PHI data handling procedures, workforce training, 72-hour restoration procedures        |
+| **ISO 27001:2022** | Annex A technological controls (A.8.x): authentication, logging, cryptography, access restriction, configuration management      | ISMS documentation, risk treatment plans, management review, internal audit program                    |
+| **GDPR**           | Consent management interfaces, data retention/purging interfaces, encryption, audit trails, `#[SensitiveParameter]` masking      | DPO appointment, DPIA execution, data processing agreements, breach notification procedures            |
+| **PCI DSS v4.0.1** | Tokenization, encryption, key management, session hardening, audit logging with retention, CSRF protection                       | QSA engagement, network segmentation, vulnerability scanning, PCI DSS SAQ/ROC                          |
+| **ISO 42001:2023** | AI model registry, impact assessments, explainability, data governance, lifecycle management, deployment gates, AI audit logging | AI policy documentation, model card content, production monitoring implementations, AIMS certification |
+| **NIS2**           | Cryptography, access controls, incident reporting, monitoring, resilience (circuit breaker, retry)                               | Risk management policies, supply chain security, incident notification to authorities                  |
 
-> Important: Pulsar does **not** claim certification by itself.
-> It provides secure defaults, auditability, and documentation that maps framework capabilities to compliance controls. Final compliance always depends on how each product is implemented and operated.
+> **ISO 42001:2023 differentiator**: Pulsar is the first PHP framework to ship AI Management System controls. The `pulsar/ai-governance` extension provides model registry, impact assessments, explainability interfaces, training data governance, and lifecycle management with deployment gates — all mapped to ISO 42001 clauses.
+
+**Additional frameworks** (PSD2, eIDAS, MDR, HL7/FHIR, ISO 13485) are covered through extensions and compliance event mappings. See [docs/compliance-matrix.md](docs/compliance-matrix.md) for the full control matrix.
 
 ## Core principles
 

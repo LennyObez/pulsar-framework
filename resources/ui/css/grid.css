@@ -841,3 +841,47 @@
 .col-end-13 {
   grid-column-end: 13;
 }
+
+/* ===========================================================================
+ * 6. Pulsar Smart Grid (auto-fit + minmax, per design charter)
+ *
+ * Intrinsically responsive — no breakpoint class chains needed.
+ * Override --grid-min and --grid-gap via inline custom properties:
+ *   <div class="pui-grid" style="--grid-min: 220px">
+ * =========================================================================== */
+
+.pui-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--grid-min, 280px), 1fr));
+  gap: var(--grid-gap, var(--space-4));
+}
+
+/* Explicit column layouts for when auto-fit is not appropriate */
+.pui-grid--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.pui-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.pui-grid--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.pui-grid--sidebar {
+  grid-template-columns: var(--sidebar-width) 1fr;
+}
+
+/* Collapse explicit grids to single column on small screens */
+@media (max-width: 639px) {
+  .pui-grid--2,
+  .pui-grid--3,
+  .pui-grid--4 {
+    grid-template-columns: 1fr;
+  }
+
+  .pui-grid--sidebar {
+    grid-template-columns: 1fr;
+  }
+}

@@ -19,7 +19,11 @@ return [
     |
     | Determines the cryptographic primitives used for encryption and HMAC.
     | Supported: "sodium" (default, XSalsa20-Poly1305 / BLAKE2b),
-    |            "aes-gcm" (AES-256-GCM / HMAC-SHA256, FIPS 140-2 compliant).
+    |            "aes-gcm" (AES-256-GCM / HMAC-SHA256, FIPS 140-2 compatible).
+    |
+    | FIPS 140-2 compatible — uses FIPS 140-2 approved algorithms. Achieves
+    | full FIPS 140-2 compliance when deployed with a NIST-validated OpenSSL
+    | FIPS provider. Use FipsValidator::verify() to confirm compliance.
     |
     */
     'cipher_suite' => 'sodium',
@@ -46,6 +50,7 @@ return [
         'gc_divisor' => 100,
         'cookie_max_payload_size' => 2048,
         'cookie_replay_window' => 86400,
+        'idle_timeout' => 900, // 15 minutes per PCI-DSS 8.2.8
 
         'validators' => [
             'user_agent' => [
@@ -102,7 +107,7 @@ return [
         // HTTP Strict Transport Security
         'hsts' => [
             'enabled' => true,
-            'max_age' => 31536000,
+            'max_age' => 63072000,
             'include_sub_domains' => true,
             'preload' => false,
         ],
@@ -113,6 +118,17 @@ return [
             'embedder_policy' => '',
             'resource_policy' => 'same-origin',
         ],
+
+        // Network Error Logging (NEL)
+        'nel' => [
+            'enabled' => false,
+            'report_to' => 'default',
+            'max_age' => 86400,
+            'include_subdomains' => false,
+            'success_fraction' => 0.0,
+            'failure_fraction' => 1.0,
+        ],
+        'nel_endpoint_url' => '',
     ],
 
     /*
@@ -131,6 +147,23 @@ return [
     'key_overrides' => [
         // 'encrypt_' => env('PULSAR_ENCRYPTION_KEY'),
         // 'audit___' => env('PULSAR_AUDIT_KEY'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tokenization (PCI-DSS Req 3.4)
+    |--------------------------------------------------------------------------
+    |
+    | Controls the tokenization subsystem used to render sensitive data
+    | (such as PANs) unreadable in storage.
+    |
+    | Supported stores: "memory" (dev/testing), "database" (production).
+    | When using "database", ensure the token_vault table exists.
+    |
+    */
+    'tokenization' => [
+        'store' => 'memory',
+        'table' => 'token_vault',
     ],
 
     /*
@@ -188,5 +221,27 @@ return [
             ],
             'super_roles' => ['admin'],
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Web Application Firewall (WAF)
+    |--------------------------------------------------------------------------
+    |
+    | OWASP Core Rule Set (CRS) compatible rules engine.
+    | Protects against SQLi, XSS, path traversal, command injection, and more.
+    |
+    | Paranoia levels (1-4, matching OWASP CRS convention):
+    |   1 — Core rules only (recommended for most applications)
+    |   2 — Additional rules with moderate false-positive risk
+    |   3 — Strict rules for high-security environments
+    |   4 — Paranoid mode (may require tuning to avoid false positives)
+    |
+    */
+    'waf' => [
+        'enabled' => false,
+        'paranoia_level' => 1,
+        'bypass_ips' => [],
+        'custom_rules_path' => null,
     ],
 ];

@@ -43,8 +43,9 @@
   animation: pui-toast-enter 200ms ease forwards;
 }
 
+/* Charter §7.7: 300ms fade-out */
 .pui-toast--exiting {
-  animation: pui-toast-exit 150ms ease forwards;
+  animation: pui-toast-exit 300ms ease forwards;
 }
 
 @keyframes pui-toast-enter {
@@ -144,4 +145,21 @@
 
 .pui-toast--info .pui-toast__icon {
   color: var(--color-info-500);
+}
+
+/* Charter §7.7: Colored left-border variants */
+.pui-toast--success {
+  border-inline-start: 3px solid var(--color-success-500);
+}
+
+.pui-toast--danger {
+  border-inline-start: 3px solid var(--color-danger-500);
+}
+
+.pui-toast--warning {
+  border-inline-start: 3px solid var(--color-warning-500);
+}
+
+.pui-toast--info {
+  border-inline-start: 3px solid var(--color-info-500);
 }

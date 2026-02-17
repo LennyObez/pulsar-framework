@@ -15,7 +15,22 @@ declare(strict_types=1);
  *   Built-in — php -S localhost:8000 -t public
  */
 
-require __DIR__ . '/../vendor/autoload.php';
+/*
+|--------------------------------------------------------------------------
+| Project Root
+|--------------------------------------------------------------------------
+|
+| Set PULSAR_BASE_PATH so that base_path(), storage_path(), and all other
+| path helpers resolve against the project root, not the web server's CWD.
+| This is critical when using `php -S localhost:8000 -t public` because
+| the CWD is set to public/, not the project root.
+|
+*/
+
+$basePath = dirname(__DIR__);
+putenv('PULSAR_BASE_PATH=' . $basePath);
+
+require $basePath . '/vendor/autoload.php';
 
 use Pulsar\Config\ConfigManager;
 use Pulsar\Core\Kernel;
@@ -32,21 +47,58 @@ use Pulsar\Extensibility\ExtensionBootstrap;
 |
 */
 
-$configManager = new ConfigManager(__DIR__ . '/../config');
+$configManager = new ConfigManager(
+    configPath: $basePath . '/config',
+    envFilePath: $basePath . '/.env',
+);
 
 /*
 |--------------------------------------------------------------------------
 | Extension Discovery
 |--------------------------------------------------------------------------
 |
-| Scan the extensions/ directory for pulsar.json manifests. Each extension
-| is validated, dependency-sorted, and registered into the kernel lifecycle.
-| The CMS, forum, analytics, and any other extensions boot automatically.
+| Discover extensions from the framework's bundled extensions directory
+| and the project's own extensions/ directory (if it exists).
+|
+| If config/app.php defines extensions.enabled, only those extensions
+| are loaded. Otherwise, all discovered extensions boot.
 |
 */
 
 $extensions = ExtensionBootstrap::create();
-$extensions->loadFromPaths([__DIR__ . '/../extensions']);
+
+// Build extension paths: framework extensions + project-local extensions
+$extensionPaths = [];
+$frameworkExtensions = $basePath . '/vendor/pulsar/framework/extensions';
+if (is_dir($frameworkExtensions)) {
+    $extensionPaths[] = $frameworkExtensions;
+}
+$projectExtensions = $basePath . '/extensions';
+if (is_dir($projectExtensions)) {
+    $extensionPaths[] = $projectExtensions;
+}
+// Fallback: running from within the framework repo itself
+if ($extensionPaths === [] && is_dir($basePath . '/extensions')) {
+    $extensionPaths[] = $basePath . '/extensions';
+}
+
+// Read extensions.enabled filter from app config
+$appConfigFile = $basePath . '/config/app.php';
+if (is_file($appConfigFile)) {
+    /** @var array<string, mixed>|mixed $appConfig */
+    $appConfig = require $appConfigFile;
+    if (is_array($appConfig)) {
+        /** @var array<string, mixed>|mixed $extConfig */
+        $extConfig = $appConfig['extensions'] ?? null;
+        if (is_array($extConfig) && isset($extConfig['enabled']) && is_array($extConfig['enabled'])) {
+            /** @var list<string> $enabled */
+            $enabled = $extConfig['enabled'];
+            $extensions->setEnabledFilter($enabled);
+        }
+    }
+}
+
+$extensions->loadFromPaths($extensionPaths);
 
 /*
 |--------------------------------------------------------------------------

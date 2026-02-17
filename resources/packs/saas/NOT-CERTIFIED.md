@@ -2,7 +2,7 @@
 
 ## This Pack Is NOT a Compliance Certification
 
-This control pack provides a **starting point** for building multi-tenant SaaS applications. It is **NOT** certified compliant with any regulation, standard, or security framework, including but not limited to:
+This scaffolding pack provides a **starting point** for building multi-tenant SaaS applications. It is **NOT** certified compliant with any regulation, standard, or security framework, including but not limited to:
 
 - **SOC 2** (Service Organization Control 2)
 - **GDPR** (General Data Protection Regulation)

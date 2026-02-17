@@ -2,7 +2,7 @@
 
 ## This Pack Is NOT a Compliance Certification
 
-This control pack provides a **starting point** for building legal practice management applications. It is **NOT** certified compliant with any regulation, standard, bar association rule, or legal industry requirement.
+This scaffolding pack provides a **starting point** for building legal practice management applications. It is **NOT** certified compliant with any regulation, standard, bar association rule, or legal industry requirement.
 
 ## What This Pack Provides
 

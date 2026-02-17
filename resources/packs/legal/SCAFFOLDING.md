@@ -1,4 +1,4 @@
-# Legal Control Pack — Controls Coverage
+# Legal Scaffolding Pack — Scaffolding Coverage
 
 This pack provides scaffolding that **supports controls for** common legal practice management requirements. It does **not** ensure, guarantee, or certify compliance with any regulation or bar association rule.
 

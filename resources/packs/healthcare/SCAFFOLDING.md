@@ -1,4 +1,4 @@
-# Healthcare Control Pack — Controls Coverage
+# Healthcare Scaffolding Pack — Scaffolding Coverage
 
 This pack provides scaffolding that **supports controls for** the following regulatory frameworks. It does **not** ensure, guarantee, or certify compliance with any regulation.
 

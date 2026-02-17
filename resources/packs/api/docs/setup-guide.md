@@ -2,7 +2,7 @@
 
 ## Overview
 
-The API control pack provides a starting point for API-only applications built on Pulsar. It includes middleware scaffolds, configuration stubs, and test templates for common API patterns.
+The API scaffolding pack provides a starting point for API-only applications built on Pulsar. It includes middleware scaffolds, configuration stubs, and test templates for common API patterns.
 
 ## Getting Started
 
@@ -33,7 +33,7 @@ my-api/
         Middleware/
           AuthMiddlewareTest.php
           RateLimitMiddlewareTest.php
-  CONTROLS.md            # Controls coverage report
+  SCAFFOLDING.md         # Scaffolding coverage report
   NOT-CERTIFIED.md       # Compliance disclaimer
 ```
 
@@ -53,4 +53,4 @@ composer test
 
 ## Next Steps
 
-See `CONTROLS.md` for controls coverage details and `NOT-CERTIFIED.md` for important disclaimers.
+See `SCAFFOLDING.md` for scaffolding coverage details and `NOT-CERTIFIED.md` for important disclaimers.

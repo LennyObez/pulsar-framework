@@ -12,8 +12,33 @@
         <testsuite name="Unit">
             <directory>../../tests/Unit</directory>
             <directory>../../extensions/opentelemetry/tests/Unit</directory>
+            <directory>../../extensions/observability/tests/Unit</directory>
             <directory>../../extensions/grpc/tests/Unit</directory>
             <directory>../../extensions/accessibility/tests/Unit</directory>
+            <directory>../../extensions/ai-governance/tests/Unit</directory>
+            <directory>../../extensions/cms/tests/Unit</directory>
+            <directory>../../extensions/social-sso/tests/Unit</directory>
+            <directory>../../extensions/analytics/tests/Unit</directory>
+            <directory>../../extensions/auth/tests/Unit</directory>
+            <directory>../../extensions/admin/tests/Unit</directory>
+            <directory>../../extensions/oauth2/tests/Unit</directory>
+            <directory>../../extensions/webauthn/tests/Unit</directory>
+            <directory>../../extensions/payments/tests/Unit</directory>
+            <directory>../../extensions/orm/tests/Unit</directory>
+            <directory>../../extensions/graphql/tests/Unit</directory>
+            <directory>../../extensions/mcp-server/tests/Unit</directory>
+            <directory>../../extensions/forum/tests/Unit</directory>
+            <directory>../../extensions/form/tests/Unit</directory>
+            <directory>../../extensions/example/tests/Unit</directory>
+            <directory>../../extensions/studio/tests/Unit</directory>
+            <directory>../../extensions/compliance/dora/tests/Unit</directory>
+            <directory>../../extensions/compliance/eidas/tests/Unit</directory>
+            <directory>../../extensions/compliance/fhir/tests/Unit</directory>
+            <directory>../../extensions/compliance/medical-devices/tests/Unit</directory>
+            <directory>../../extensions/compliance/psd2/tests/Unit</directory>
+            <directory>../../extensions/compliance/dsa/tests/Unit</directory>
+            <directory>../../extensions/compliance/data-act/tests/Unit</directory>
+            <directory>../../extensions/health-status/tests/Unit</directory>
         </testsuite>
         <testsuite name="Integration">
             <directory>../../tests/Integration</directory>
@@ -41,25 +66,34 @@
             <directory>../../extensions/payments/src</directory>
             <directory>../../extensions/psr7-bridge/src</directory>
             <directory>../../extensions/studio/src</directory>
-            <directory>../../extensions/observability-export/src</directory>
-            <directory>../../extensions/social-sso/src</directory>
             <directory>../../extensions/mcp-server/src</directory>
             <directory>../../extensions/orm/src</directory>
             <directory>../../extensions/admin/src</directory>
             <directory>../../extensions/opentelemetry/src</directory>
+            <directory>../../extensions/observability/src</directory>
+            <directory>../../extensions/observability-export/src</directory>
             <directory>../../extensions/oauth2/src</directory>
             <directory>../../extensions/form/src</directory>
             <directory>../../extensions/webauthn/src</directory>
+            <directory>../../extensions/social-sso/src</directory>
+            <directory>../../extensions/subscriptions/src</directory>
             <directory>../../extensions/cms/src</directory>
             <directory>../../extensions/graphql/src</directory>
             <directory>../../extensions/forum/src</directory>
             <directory>../../extensions/analytics/src</directory>
+            <directory>../../extensions/auth/src</directory>
             <directory>../../extensions/grpc/src</directory>
             <directory>../../extensions/accessibility/src</directory>
             <directory>../../extensions/devices/src</directory>
             <directory>../../extensions/feedback/src</directory>
             <directory>../../extensions/releases/src</directory>
-            <directory>../../extensions/subscriptions/src</directory>
+            <directory>../../extensions/ai-governance/src</directory>
+            <directory>../../extensions/compliance/dora/src</directory>
+            <directory>../../extensions/compliance/eidas/src</directory>
+            <directory>../../extensions/compliance/fhir/src</directory>
+            <directory>../../extensions/compliance/medical-devices/src</directory>
+            <directory>../../extensions/compliance/psd2/src</directory>
+            <directory>../../extensions/health-status/src</directory>
         </include>
     </source>
 </phpunit>

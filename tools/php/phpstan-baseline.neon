@@ -43,3 +43,16 @@ parameters:
 			count: 3
 			path: ../../src/Console/Repl/ShellCommand.php
 
+		-
+			message: '#^PHPDoc tag @var for variable \$(configClass|shellClass) contains unknown class Psy\\(Configuration|Shell)\.$#'
+			identifier: class.notFound
+			count: 2
+			path: ../../src/Console/Repl/ReplCommand.php
+
+		-
+			message: '#^Call to method (setScopeVariables|addInput|run)\(\) on an unknown class Psy\\Shell\.$#'
+			identifier: class.notFound
+			count: 3
+			path: ../../src/Console/Repl/ReplCommand.php
+
+

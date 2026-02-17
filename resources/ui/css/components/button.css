@@ -32,7 +32,7 @@
   outline-offset: 2px;
 }
 
-/* Primary */
+/* Charter §7.1: Primary — bg primary-600, hover -700, active -800 */
 .pui-btn--primary {
   color: #ffffff;
   background-color: var(--color-primary-600);
@@ -121,16 +121,16 @@
   border-color: var(--color-warning-700);
 }
 
-/* Outline */
+/* Charter §7.1: Outline — text and border primary-500 */
 .pui-btn--outline {
-  color: var(--color-primary-600);
+  color: var(--color-primary-500);
   background-color: transparent;
-  border-color: var(--color-primary-600);
+  border-color: var(--color-primary-500);
 }
 
 .pui-btn--outline:hover {
   color: #ffffff;
-  background-color: var(--color-primary-600);
+  background-color: var(--color-primary-500);
   text-decoration: none;
 }
 

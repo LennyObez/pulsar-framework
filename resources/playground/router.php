@@ -279,6 +279,57 @@ if (preg_match('#^/api/themes/([^/]+)$#', $requestUri, $matches)) {
 }
 
 // -------------------------------------------------------------------------
+// Preview Proxy — serve extension pages for same-origin CSS injection
+// -------------------------------------------------------------------------
+
+$previewTargets = [
+    'admin' => ['base' => 'http://127.0.0.1:8081', 'path' => '/admin/'],
+    'cms' => ['base' => 'http://127.0.0.1:8082', 'path' => '/admin/cms/'],
+    'studio' => ['base' => 'http://127.0.0.1:8585', 'path' => '/studio'],
+    'forum' => ['base' => 'http://127.0.0.1:8888', 'path' => '/'],
+];
+
+if (preg_match('#^/preview/(admin|cms|studio|forum)$#', $requestUri, $matches) && $method === 'GET') {
+    $target = $matches[1];
+    $baseUrl = $previewTargets[$target]['base'];
+    $targetPath = $previewTargets[$target]['path'];
+
+    $context = stream_context_create([
+        'http' => [
+            'timeout' => 5,
+            'ignore_errors' => true,
+        ],
+    ]);
+
+    $html = @file_get_contents($baseUrl . $targetPath, false, $context);
+
+    if ($html === false) {
+        header('Content-Type: text/html; charset=utf-8');
+        echo '<!DOCTYPE html><html><head><style>'
+            . 'body{font-family:system-ui;display:flex;align-items:center;justify-content:center;'
+            . 'height:100vh;margin:0;background:#f8f9fa;color:#495057;text-align:center}'
+            . '.msg{max-width:24rem}h2{margin-bottom:.5rem;font-size:1.25rem}'
+            . 'p{color:#868e96;font-size:.875rem}'
+            . 'code{background:#e9ecef;padding:.125rem .375rem;border-radius:.25rem;font-size:.8125rem}'
+            . '</style></head><body><div class="msg">'
+            . '<h2>' . ucfirst(htmlspecialchars($target)) . ' server unreachable</h2>'
+            . '<p>Start the dev server at <code>' . htmlspecialchars($baseUrl) . '</code> to preview.</p>'
+            . '</div></body></html>';
+        exit;
+    }
+
+    // Inject <base> for resource resolution + <style> for live CSS injection
+    $inject = '<base href="' . htmlspecialchars($baseUrl) . '/">' . "\n"
+        . '    <style id="custom-theme">/* Pulsar UI Playground — live CSS preview */</style>';
+
+    $html = preg_replace('/<head([^>]*)>/i', '<head$1>' . "\n    " . $inject, $html, 1);
+
+    header('Content-Type: text/html; charset=utf-8');
+    echo $html;
+    exit;
+}
+
+// -------------------------------------------------------------------------
 // Static File Serving
 // -------------------------------------------------------------------------
 

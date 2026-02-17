@@ -1,4 +1,4 @@
-# Banking Control Pack — Controls Coverage
+# Banking Scaffolding Pack — Scaffolding Coverage
 
 This pack provides scaffolding that **supports controls for** the following regulatory frameworks. It does **not** ensure, guarantee, or certify compliance with any regulation.
 

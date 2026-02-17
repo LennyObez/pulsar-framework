@@ -13,24 +13,23 @@
 }
 
 :root {
-  --pg-toolbar-height: 3rem;
-  --pg-editor-bg: #1e1e2e;
-  --pg-editor-text: #cdd6f4;
-  --pg-editor-border: #313244;
-  --pg-editor-gutter: #45475a;
-  --pg-editor-line-num: #6c7086;
-  --pg-editor-selection: rgba(137, 180, 250, 0.2);
-  --pg-toolbar-bg: #181825;
-  --pg-toolbar-border: #313244;
-  --pg-toolbar-text: #cdd6f4;
-  --pg-accent: #89b4fa;
-  --pg-accent-hover: #74c7ec;
-  --pg-danger: #f38ba8;
-  --pg-success: #a6e3a1;
+  --pg-toolbar-height: var(--navbar-height);
+  --pg-editor-bg: var(--color-gray-800);
+  --pg-editor-text: var(--color-gray-200);
+  --pg-editor-border: var(--color-gray-700);
+  --pg-editor-gutter: var(--color-gray-600);
+  --pg-editor-line-num: var(--color-gray-500);
+  --pg-editor-selection: rgb(0 57 203 / 0.2);
+  --pg-toolbar-bg: var(--color-gray-900);
+  --pg-toolbar-border: var(--color-gray-700);
+  --pg-toolbar-text: var(--color-gray-200);
+  --pg-accent: var(--ext-accent);
+  --pg-accent-hover: var(--ext-accent-hover);
+  --pg-danger: var(--color-danger-400);
+  --pg-success: var(--color-success-400);
   --pg-handle-width: 6px;
-  --pg-font-mono:
-    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
-  --pg-font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --pg-font-mono: var(--font-mono);
+  --pg-font-sans: var(--font-sans);
 }
 
 html,

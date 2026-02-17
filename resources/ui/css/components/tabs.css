@@ -8,9 +8,10 @@
   flex-direction: column;
 }
 
+/* Charter §7.9: gap --space-1 between tabs */
 .pui-tabs__list {
   display: flex;
-  gap: var(--space-0);
+  gap: var(--space-1);
   border-block-end: 2px solid var(--color-border);
   list-style: none;
   overflow-x: auto;
@@ -43,10 +44,11 @@
   border-block-end-color: var(--color-border-strong);
 }
 
+/* Charter §7.9: 2px solid primary-500 on active */
 .pui-tabs__tab[aria-selected='true'],
 .pui-tabs__tab--active {
-  color: var(--color-primary-600);
-  border-block-end-color: var(--color-primary-600);
+  color: var(--color-text);
+  border-block-end-color: var(--color-primary-500);
   font-weight: var(--font-semibold);
 }
 
@@ -87,8 +89,9 @@
   background-color: var(--color-bg-tertiary);
 }
 
+/* Charter §7.9: Pill active uses ext-accent */
 .pui-tabs--pills .pui-tabs__tab[aria-selected='true'],
 .pui-tabs--pills .pui-tabs__tab--active {
-  background-color: var(--color-primary-50);
-  color: var(--color-primary-700);
+  background-color: var(--ext-accent-dim);
+  color: var(--ext-accent);
 }

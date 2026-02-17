@@ -6,7 +6,7 @@ namespace App\Controller;
 
 use Pulsar\Core\Version;
 use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 /**
  * Example home controller for the hello-world application.

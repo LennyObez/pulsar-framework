@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Banking control pack provides a starting point for financial service applications built on Pulsar. It includes entity scaffolds, configuration stubs, and test templates for common banking domain objects.
+The Banking scaffolding pack provides a starting point for financial service applications built on Pulsar. It includes entity scaffolds, configuration stubs, and test templates for common banking domain objects.
 
 ## Getting Started
 
@@ -31,7 +31,7 @@ my-banking-app/
       Entity/
         TransactionTest.php
         PaymentFlowTest.php
-  CONTROLS.md            # Controls coverage report
+  SCAFFOLDING.md         # Scaffolding coverage report
   NOT-CERTIFIED.md       # Compliance disclaimer
 ```
 
@@ -63,4 +63,4 @@ composer test
 
 ## Next Steps
 
-See `CONTROLS.md` for a detailed mapping of which regulatory controls this pack supports scaffolding for, and `NOT-CERTIFIED.md` for important disclaimers about what this pack does and does not provide.
+See `SCAFFOLDING.md` for a detailed mapping of which regulatory requirements this pack provides scaffolding for, and `NOT-CERTIFIED.md` for important disclaimers about what this pack does and does not provide.

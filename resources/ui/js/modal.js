@@ -9,6 +9,8 @@
   const FOCUSABLE =
     'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+  var modalIdCounter = 0;
+
   function openModal(backdrop) {
     backdrop.hidden = false;
     backdrop.removeAttribute('aria-hidden');
@@ -16,6 +18,21 @@
 
     const modal = backdrop.querySelector('.pui-modal');
     if (modal) {
+      // Set ARIA dialog attributes for screen readers
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+
+      // Point aria-labelledby to the modal's heading if one exists
+      var heading = modal.querySelector(
+        '.pui-modal__title, h1, h2, h3, h4, h5, h6, [data-modal-title]',
+      );
+      if (heading) {
+        if (!heading.id) {
+          heading.id = 'pui-modal-title-' + ++modalIdCounter;
+        }
+        modal.setAttribute('aria-labelledby', heading.id);
+      }
+
       const firstFocusable = modal.querySelector(FOCUSABLE);
       if (firstFocusable) {
         firstFocusable.focus();

@@ -2,7 +2,7 @@
 
 ## This Pack Is NOT a Compliance Certification
 
-This control pack provides a **starting point** for building financial applications. It is **NOT** certified compliant with any regulation, standard, or framework, including but not limited to:
+This scaffolding pack provides a **starting point** for building financial applications. It is **NOT** certified compliant with any regulation, standard, or framework, including but not limited to:
 
 - **PCI-DSS** (Payment Card Industry Data Security Standard)
 - **PSD2** (Payment Services Directive 2)

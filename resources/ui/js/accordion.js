@@ -1,6 +1,6 @@
 /**
  * Pulsar UI — Accordion v1.0.0
- * Expand/collapse with animation.
+ * Expand/collapse with smooth CSS animation.
  * Works with native `<details>`/`<summary>` and custom markup.
  * Zero dependencies.
  */
@@ -11,6 +11,13 @@
     var triggers = Array.from(accordion.querySelectorAll('.pui-accordion__trigger'));
 
     triggers.forEach(function (trigger) {
+      // Remove hidden from body elements — CSS handles visibility via grid-template-rows
+      var contentId = trigger.getAttribute('aria-controls');
+      var body = contentId ? document.getElementById(contentId) : null;
+      if (body) {
+        body.removeAttribute('hidden');
+      }
+
       trigger.addEventListener('click', function (e) {
         e.preventDefault();
         toggleItem(accordion, trigger);
@@ -30,15 +37,10 @@
     if (!item) return;
 
     var isOpen = trigger.getAttribute('aria-expanded') === 'true';
-    var contentId = trigger.getAttribute('aria-controls');
-    var content = contentId ? document.getElementById(contentId) : null;
 
     if (isOpen) {
       // Close
       trigger.setAttribute('aria-expanded', 'false');
-      if (content) {
-        content.hidden = true;
-      }
       item.removeAttribute('open');
     } else {
       // Close others if single-expand mode
@@ -48,11 +50,6 @@
           .forEach(function (otherTrigger) {
             if (otherTrigger !== trigger) {
               otherTrigger.setAttribute('aria-expanded', 'false');
-              var otherId = otherTrigger.getAttribute('aria-controls');
-              var otherContent = otherId ? document.getElementById(otherId) : null;
-              if (otherContent) {
-                otherContent.hidden = true;
-              }
               var otherItem = otherTrigger.closest('.pui-accordion__item');
               if (otherItem) {
                 otherItem.removeAttribute('open');
@@ -63,9 +60,6 @@
 
       // Open
       trigger.setAttribute('aria-expanded', 'true');
-      if (content) {
-        content.hidden = false;
-      }
       item.setAttribute('open', '');
     }
   }
