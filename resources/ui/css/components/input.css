@@ -1,0 +1,78 @@
+/* Pulsar UI — Input Component v1.0.0
+ * Text inputs: text, email, password, number, date, search, tel, url.
+ */
+
+.pui-input {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  font-family: inherit;
+  line-height: var(--leading-normal);
+  color: var(--input-text);
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.pui-input::placeholder {
+  color: var(--input-placeholder);
+}
+
+.pui-input:hover {
+  border-color: var(--color-border-strong);
+}
+
+.pui-input:focus {
+  outline: none;
+  border-color: var(--input-border-focus);
+  box-shadow: 0 0 0 var(--input-ring-width) var(--input-ring-color);
+}
+
+.pui-input:disabled {
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.pui-input[readonly] {
+  background-color: var(--color-bg-secondary);
+}
+
+/* Sizes */
+.pui-input--sm {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-xs);
+}
+
+.pui-input--lg {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-base);
+}
+
+/* States */
+.pui-input--error {
+  border-color: var(--color-danger-500);
+}
+
+.pui-input--error:focus {
+  box-shadow: 0 0 0 var(--input-ring-width) var(--color-danger-200);
+}
+
+.pui-input--success {
+  border-color: var(--color-success-500);
+}
+
+.pui-input--success:focus {
+  box-shadow: 0 0 0 var(--input-ring-width) var(--color-success-200);
+}
+
+/* Textarea (shares input styles) */
+textarea.pui-input {
+  min-height: 5rem;
+  resize: vertical;
+}
