@@ -86,9 +86,9 @@ final class DirectiveRegistry
         $this->register(new SimpleDirective('else', '<?php else: ?>'));
         $this->register(new SimpleDirective('endif', '<?php endif; ?>'));
 
-        // Foreach
-        $this->register(new ControlFlowDirective('foreach', 'foreach'));
-        $this->register(new SimpleDirective('endforeach', '<?php endforeach; ?>'));
+        // Foreach (with $loop variable)
+        $this->register(new ForeachDirective());
+        $this->register(new EndForeachDirective());
 
         // For
         $this->register(new ControlFlowDirective('for', 'for'));
