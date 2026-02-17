@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Admin\Domain\ExportFormat;
 use Pulsar\Extension\Admin\Features\ExportResource\ExportResourceHandler;
 use Pulsar\Extension\Admin\Features\ExportResource\ExportResourceRequest;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function is_string;
@@ -25,16 +24,18 @@ final readonly class ExportController
         private ExportResourceHandler $handler,
     ) {}
 
-    public function export(Request $request, string $resource): Response
+    public function export(ServerRequestInterface $request, string $resource): Response
     {
-        $formatStr = $request->query('format');
+        $queryParams = $request->getQueryParams();
+
+        $formatStr = $queryParams['format'] ?? null;
         $format = is_string($formatStr) ? ExportFormat::tryFrom($formatStr) : null;
         if ($format === null) {
             $format = ExportFormat::Csv;
         }
 
         $filters = [];
-        $rawFilters = $request->query('filters');
+        $rawFilters = $queryParams['filters'] ?? null;
         if (is_string($rawFilters)) {
             /** @var array<string, mixed> $decoded */
             $decoded = json_decode($rawFilters, true) ?? [];
@@ -48,14 +49,14 @@ final readonly class ExportController
         ));
 
         return new Response(
-            body: $result->content,
-            status: ResponseStatus::OK,
-            headers: new HeaderBag([
+            statusCode: ResponseStatus::OK->value,
+            headers: [
                 'Content-Type' => $result->mimeType,
                 'Content-Disposition' => "attachment; filename=\"$result->filename\"",
                 'X-Evidence-Hash' => $result->evidenceHash,
                 'X-Export-Row-Count' => (string) $result->rowCount,
-            ]),
+            ],
+            body: $result->content,
         );
     }
 }

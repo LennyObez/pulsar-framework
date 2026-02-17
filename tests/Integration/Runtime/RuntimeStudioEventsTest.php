@@ -17,10 +17,8 @@ use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeSchedulerMetricPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerRecyclePayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\RuntimeWorkerStartPayload;
 use Pulsar\Extension\Studio\FiberScopedContextProvider;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Metrics\MetricRegistry;
@@ -71,16 +69,12 @@ final class RuntimeStudioEventsTest extends TestCase
     #[Test]
     public function it_emits_request_complete_event(): void
     {
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/api/users',
-            path: '/api/users',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
-        $response = new Response(body: '[]', status: ResponseStatus::OK);
+        $response = new Response(statusCode: ResponseStatus::OK->value, body: '[]');
 
         $this->collector->recordRequest($request, $response, 12.5, 1024);
 
@@ -148,13 +142,9 @@ final class RuntimeStudioEventsTest extends TestCase
     #[Test]
     public function it_increments_request_counter_on_record(): void
     {
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         $this->collector->recordRequest($request, new Response(), 5.0, 0);
@@ -178,13 +168,9 @@ final class RuntimeStudioEventsTest extends TestCase
     #[Test]
     public function it_tracks_slow_requests(): void
     {
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/slow',
-            path: '/slow',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         // Record a slow request (>1000ms)

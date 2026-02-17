@@ -7,14 +7,15 @@ namespace Pulsar\Tests\Integration\Tenancy;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Config\TenancyConfig;
 use Pulsar\Config\TenantDatabaseConfig;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManagerInterface;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Tenancy\Middleware\TenantResolutionMiddleware;
 use Pulsar\Tenancy\Resolver\HeaderTenantResolver;
 use Pulsar\Tenancy\Resolver\SubdomainTenantResolver;
@@ -51,27 +52,29 @@ final class TenantIsolationTest extends TestCase
         $context = new TenantContext();
         $middleware = new TenantResolutionMiddleware($resolver, $context, $config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(['X-Tenant-ID' => 'acme']),
-            body: '',
+            headers: ['X-Tenant-ID' => 'acme'],
         );
 
         $capturedRequest = null;
-        $response = $middleware->process($request, function (Request $req) use (&$capturedRequest): Response {
-            $capturedRequest = $req;
-            return new Response(body: 'ok');
-        });
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$capturedRequest): ResponseInterface {
+                $capturedRequest = $req;
+                return new Response(body: 'ok');
+            },
+        );
+
+        $response = $middleware->process($request, $handler);
 
         self::assertTrue($context->isResolved());
         self::assertSame('acme', $context->get()->id);
         self::assertSame('Acme Corp', $context->get()->name);
         self::assertSame(['plan' => 'enterprise'], $context->get()->metadata);
         self::assertNotNull($capturedRequest);
-        $tenant = $capturedRequest->attribute('_tenant');
+        $tenant = $capturedRequest->getAttribute('_tenant');
         self::assertInstanceOf(Tenant::class, $tenant);
         self::assertSame('acme', $tenant->id);
     }
@@ -93,16 +96,16 @@ final class TenantIsolationTest extends TestCase
         $context = new TenantContext();
         $middleware = new TenantResolutionMiddleware($resolver, $context, $config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/api/data',
-            path: '/api/data',
-            queryString: '',
-            headers: new HeaderBag(['X-Tenant-ID' => 'globex']),
-            body: '',
+            headers: ['X-Tenant-ID' => 'globex'],
         );
 
-        $middleware->process($request, static fn(Request $req): Response => new Response(body: 'ok'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(body: 'ok'));
+
+        $middleware->process($request, $handler);
 
         self::assertTrue($context->isResolved());
         self::assertSame('globex', $context->get()->id);
@@ -125,16 +128,16 @@ final class TenantIsolationTest extends TestCase
         $context = new TenantContext();
         $middleware = new TenantResolutionMiddleware($resolver, $context, $config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/dashboard',
-            path: '/dashboard',
-            queryString: '',
-            headers: new HeaderBag(['Host' => 'acme.example.com']),
-            body: '',
+            headers: ['Host' => 'acme.example.com'],
         );
 
-        $middleware->process($request, static fn(Request $req): Response => new Response(body: 'ok'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(body: 'ok'));
+
+        $middleware->process($request, $handler);
 
         self::assertTrue($context->isResolved());
         self::assertSame('acme', $context->get()->id);
@@ -160,16 +163,15 @@ final class TenantIsolationTest extends TestCase
         $middleware = new TenantResolutionMiddleware($resolver, $context, $config);
 
         // Request without any tenant header
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/home',
-            path: '/home',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
-        $middleware->process($request, static fn(Request $req): Response => new Response(body: 'ok'));
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(new Response(body: 'ok'));
+
+        $middleware->process($request, $handler);
 
         self::assertTrue($context->isResolved());
         self::assertSame('default-co', $context->get()->id);

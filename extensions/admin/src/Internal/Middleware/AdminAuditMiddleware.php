@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\ResponseStatus;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
@@ -29,19 +31,24 @@ final readonly class AdminAuditMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $response = $next($request);
+        $response = $handler->handle($request);
 
         /** @var IdentityInterface|null $identity */
-        $identity = $request->attribute('identity');
+        $identity = $request->getAttribute('identity');
         $actor = $identity?->id() ?? 'anonymous';
 
-        $event = $this->isMutation($request)
+        $method = $request->getMethod();
+        $path = $request->getUri()->getPath();
+
+        $event = $this->isMutation($method)
             ? AuditEvent::DataModification
             : AuditEvent::DataAccess;
 
-        $outcome = $response->status->isError()
+        $statusCode = $response->getStatusCode();
+        $status = ResponseStatus::tryFrom($statusCode);
+        $outcome = ($status !== null && $status->isError())
             ? AuditOutcome::Failure
             : AuditOutcome::Success;
 
@@ -49,20 +56,20 @@ final readonly class AdminAuditMiddleware implements MiddlewareInterface
             event: $event,
             outcome: $outcome,
             actor: $actor,
-            action: "admin.{$request->method->value}.$request->path",
-            resource: $request->path,
+            action: "admin.$method.$path",
+            resource: $path,
             metadata: [
-                'method' => $request->method->value,
-                'status' => $response->status->value,
-                'ip' => $request->server('REMOTE_ADDR'),
+                'method' => $method,
+                'status' => $statusCode,
+                'ip' => $request->getServerParams()['REMOTE_ADDR'] ?? null,
             ],
         );
 
         return $response;
     }
 
-    private function isMutation(Request $request): bool
+    private function isMutation(string $method): bool
     {
-        return in_array($request->method->value, ['POST', 'PUT', 'PATCH', 'DELETE'], true);
+        return in_array($method, ['POST', 'PUT', 'PATCH', 'DELETE'], true);
     }
 }

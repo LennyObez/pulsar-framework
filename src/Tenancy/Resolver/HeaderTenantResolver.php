@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Pulsar\Tenancy\Resolver;
 
 use Override;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Config\TenancyConfig;
-use Pulsar\Http\Request;
 use Pulsar\Tenancy\Tenant;
 use Pulsar\Tenancy\TenantResolverInterface;
 
@@ -20,11 +20,11 @@ readonly class HeaderTenantResolver implements TenantResolverInterface
     ) {}
 
     #[Override]
-    public function resolve(Request $request): ?Tenant
+    public function resolve(ServerRequestInterface $request): ?Tenant
     {
-        $tenantId = $request->header($this->config->headerName);
+        $tenantId = $request->getHeaderLine($this->config->headerName);
 
-        if ($tenantId === null || $tenantId === '') {
+        if ($tenantId === '') {
             return null;
         }
 

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Studio\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Config\StudioConfig;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 use function htmlspecialchars;
 use function implode;
@@ -27,7 +27,7 @@ final readonly class LandingController
         private ?EventStoreInterface $store = null,
     ) {}
 
-    public function handle(Request $_request): Response
+    public function handle(ServerRequestInterface $_request): Response
     {
         $eventCount = $this->store?->count() ?? 0;
         $sizeBytes = $this->store?->sizeInBytes() ?? 0;

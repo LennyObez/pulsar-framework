@@ -8,9 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\TenancyConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Tenancy\Resolver\SubdomainTenantResolver;
 use Pulsar\Tenancy\TenantResolverStrategy;
 
@@ -29,13 +27,10 @@ final class SubdomainTenantResolverTest extends TestCase
 
         $resolver = new SubdomainTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/dashboard',
-            path: '/dashboard',
-            queryString: '',
-            headers: new HeaderBag(['Host' => ['acme.example.com']]),
-            body: '',
+            headers: ['Host' => 'acme.example.com'],
         );
 
         $tenant = $resolver->resolve($request);
@@ -57,13 +52,10 @@ final class SubdomainTenantResolverTest extends TestCase
 
         $resolver = new SubdomainTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/dashboard',
-            path: '/dashboard',
-            queryString: '',
-            headers: new HeaderBag(['Host' => ['acme.other.com']]),
-            body: '',
+            headers: ['Host' => 'acme.other.com'],
         );
 
         self::assertNull($resolver->resolve($request));
@@ -81,13 +73,9 @@ final class SubdomainTenantResolverTest extends TestCase
 
         $resolver = new SubdomainTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/dashboard',
-            path: '/dashboard',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         self::assertNull($resolver->resolve($request));
@@ -105,13 +93,10 @@ final class SubdomainTenantResolverTest extends TestCase
 
         $resolver = new SubdomainTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/dashboard',
-            path: '/dashboard',
-            queryString: '',
-            headers: new HeaderBag(['Host' => ['acme.example.com:8080']]),
-            body: '',
+            headers: ['Host' => 'acme.example.com:8080'],
         );
 
         $tenant = $resolver->resolve($request);
