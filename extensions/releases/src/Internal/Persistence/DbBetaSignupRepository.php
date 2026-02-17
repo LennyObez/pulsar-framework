@@ -27,7 +27,7 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Database-backed beta signup repository using portable SQL (UpsertBuilder).
  */
-#[Internal(reason: 'Raw-DB repository — use BetaSignupRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use BetaSignupRepositoryInterface for public API')]
 final readonly class DbBetaSignupRepository implements BetaSignupRepositoryInterface
 {
     private const string SQL_FIND_BY_EMAIL = <<<'SQL'

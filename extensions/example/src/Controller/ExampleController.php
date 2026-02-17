@@ -20,7 +20,7 @@ final readonly class ExampleController
     /**
      * Index action - returns a simple greeting.
      */
-    /** @noinspection PhpUnusedParameterInspection — route handler contract */
+    /** @noinspection PhpUnusedParameterInspection: route handler contract */
     public function index(ServerRequestInterface $_request): Response
     {
         return Response::json([
@@ -32,7 +32,7 @@ final readonly class ExampleController
     /**
      * Info action - returns extension information.
      */
-    /** @noinspection PhpUnusedParameterInspection — route handler contract */
+    /** @noinspection PhpUnusedParameterInspection: route handler contract */
     public function info(ServerRequestInterface $_request): Response
     {
         return Response::json($this->exampleService->getInfo());
@@ -41,11 +41,13 @@ final readonly class ExampleController
     /**
      * Greet action - returns a personalized greeting.
      *
+     * @noinspection PhpUnusedParameterInspection: route handler contract
+     *
      * @param array<string, string> $params Route parameters
      */
-    /** @noinspection PhpUnusedParameterInspection — route handler contract */
-    public function greet(ServerRequestInterface $_request, array $params): Response
+    public function greet(ServerRequestInterface $_request, array $params = []): Response
     {
+        /** @var string $name */
         $name = $params['name'] ?? 'Guest';
 
         return Response::json([

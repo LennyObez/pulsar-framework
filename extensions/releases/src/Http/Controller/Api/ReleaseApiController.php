@@ -26,7 +26,7 @@ use const ENT_QUOTES;
  * Provides endpoints for retrieving the latest stable version per platform
  * and browsing the full release history with pagination.
  */
-#[Internal(reason: 'Release HTTP controller — implementation detail')]
+#[Internal(reason: 'Release HTTP controller; implementation detail')]
 final readonly class ReleaseApiController
 {
     public function __construct(
@@ -35,7 +35,7 @@ final readonly class ReleaseApiController
     ) {}
 
     /**
-     * GET /api/v1/version — Get the latest stable release for a platform.
+     * GET /api/v1/version: Get the latest stable release for a platform.
      *
      * Query params:
      * - platform: string (required, one of: android, ios, web)
@@ -72,7 +72,7 @@ final readonly class ReleaseApiController
     }
 
     /**
-     * GET /api/v1/releases — List releases with optional filters, paginated.
+     * GET /api/v1/releases: List releases with optional filters, paginated.
      *
      * Query params:
      * - page: int (default 1)

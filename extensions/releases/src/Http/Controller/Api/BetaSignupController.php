@@ -26,7 +26,7 @@ use const ENT_QUOTES;
  * Validates input, enforces rate limits, and registers new beta
  * participants via the release service.
  */
-#[Internal(reason: 'Beta signup HTTP controller — implementation detail')]
+#[Internal(reason: 'Beta signup HTTP controller; implementation detail')]
 final readonly class BetaSignupController
 {
     public function __construct(
@@ -34,7 +34,7 @@ final readonly class BetaSignupController
     ) {}
 
     /**
-     * POST /api/v1/beta/signup — Register for the beta program.
+     * POST /api/v1/beta/signup: Register for the beta program.
      *
      * Request body:
      * - email: string (required, valid email)

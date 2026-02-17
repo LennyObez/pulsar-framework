@@ -73,7 +73,7 @@ final readonly class AttributeAllowlist
     {
         if ($this->unknownTracker->track($key)) {
             $this->logger?->debug(sprintf(
-                'Unknown attribute key "%s" in scope "%s" — filtered out',
+                'Unknown attribute key "%s" in scope "%s": filtered out',
                 $key,
                 $scope,
             ));

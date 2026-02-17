@@ -20,7 +20,7 @@ use function is_string;
  * All endpoints require a valid Bearer token (enforced by SubscriptionTokenGuard).
  * The authenticated user_id is read from a request attribute.
  */
-#[Internal(reason: 'HTTP controller — implementation detail')]
+#[Internal(reason: 'HTTP controller; implementation detail')]
 final readonly class SubscriptionController
 {
     public function __construct(
@@ -53,7 +53,7 @@ final readonly class SubscriptionController
         $store = Store::tryFrom($storeValue);
 
         if ($store === null) {
-            return Response::json(['error' => 'Invalid store — expected "google" or "apple"'], 422);
+            return Response::json(['error' => 'Invalid store: expected "google" or "apple"'], 422);
         }
 
         if ($purchaseToken === '') {
@@ -136,7 +136,7 @@ final readonly class SubscriptionController
         $store = Store::tryFrom($storeValue);
 
         if ($store === null) {
-            return Response::json(['error' => 'Invalid store — expected "google" or "apple"'], 422);
+            return Response::json(['error' => 'Invalid store: expected "google" or "apple"'], 422);
         }
 
         if ($purchaseToken === '') {

@@ -19,7 +19,7 @@ use function usleep;
  * Generic batch exporter that queues items and flushes them in batches.
  *
  * Items are enqueued individually and flushed explicitly via flush() or
- * shutdown(). The queue is capped at maxQueueSize — when exceeded, the
+ * shutdown(). The queue is capped at maxQueueSize; when exceeded, the
  * oldest items are dropped.
  *
  * @template T

@@ -30,7 +30,7 @@ use const FILTER_VALIDATE_EMAIL;
  * - Version string length between 1 and 32 characters
  * - Release notes length between 1 and 50000 characters
  */
-#[Internal(reason: 'Release domain service — use ReleaseRepositoryInterface for public API')]
+#[Internal(reason: 'Release domain service; use ReleaseRepositoryInterface for public API')]
 final readonly class ReleaseService
 {
     private const int MAX_SIGNUPS_PER_DAY = 3;

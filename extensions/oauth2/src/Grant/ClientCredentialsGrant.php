@@ -9,6 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\OAuth2\Client\OAuthClient;
+use Pulsar\Extension\OAuth2\Config\OAuth2Config;
 use Pulsar\Extension\OAuth2\Contract\AccessTokenRepositoryInterface;
 use Pulsar\Extension\OAuth2\Contract\ScopeRepositoryInterface;
 use Pulsar\Extension\OAuth2\Exception\OAuth2Exception;
@@ -19,6 +20,7 @@ use Pulsar\Security\Audit\AuditOutcome;
 use function bin2hex;
 use function explode;
 use function is_array;
+use function is_string;
 use function random_bytes;
 
 /**
@@ -30,12 +32,11 @@ use function random_bytes;
 #[Internal(reason: 'Grant handler implementation; use via AuthorizationServerInterface')]
 final readonly class ClientCredentialsGrant implements GrantInterface
 {
-    private const int ACCESS_TOKEN_TTL = 3600;
-
     public function __construct(
         private AccessTokenRepositoryInterface $accessTokenRepository,
         private ScopeRepositoryInterface $scopeRepository,
         private AuditLoggerInterface $auditLogger,
+        private OAuth2Config $config = new OAuth2Config(),
     ) {}
 
     public function identifier(): string
@@ -56,8 +57,9 @@ final readonly class ClientCredentialsGrant implements GrantInterface
         $body = is_array($body) ? $body : [];
 
         // Parse requested scopes
-        $scopeString = $body['scope'] ?? '';
-        $requestedScopeIds = $scopeString !== '' ? explode(' ', (string) $scopeString) : [];
+        /** @var string $scopeString */
+        $scopeString = isset($body['scope']) && is_string($body['scope']) ? $body['scope'] : '';
+        $requestedScopeIds = $scopeString !== '' ? explode(' ', $scopeString) : [];
 
         // Resolve and validate scopes
         $resolvedScopes = $this->scopeRepository->resolveScopes(
@@ -75,12 +77,14 @@ final readonly class ClientCredentialsGrant implements GrantInterface
         $now = new DateTimeImmutable();
         $tokenValue = bin2hex(random_bytes(32));
 
+        $accessTokenTtl = $this->config->accessTokenTtl;
+
         $accessToken = new AccessToken(
             id: bin2hex(random_bytes(16)),
             clientId: $client->id,
             subjectId: $client->id,
             scopes: $scopeIds,
-            expiresAt: $now->modify('+' . self::ACCESS_TOKEN_TTL . ' seconds'),
+            expiresAt: $now->modify('+' . $accessTokenTtl . ' seconds'),
             issuedAt: $now,
             tokenValue: $tokenValue,
         );
@@ -102,7 +106,7 @@ final readonly class ClientCredentialsGrant implements GrantInterface
         return new TokenResponse(
             accessToken: $tokenValue,
             tokenType: 'Bearer',
-            expiresIn: self::ACCESS_TOKEN_TTL,
+            expiresIn: $accessTokenTtl,
             scopes: $scopeIds,
         );
     }

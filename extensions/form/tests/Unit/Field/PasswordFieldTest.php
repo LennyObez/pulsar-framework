@@ -22,7 +22,9 @@ final class PasswordFieldTest extends TestCase
         $field = new PasswordField('pw');
         $field->setValue('secret123');
 
-        self::assertNull($field->getValue());
+        // getValue() return type is `null`; passwords are never readable back.
+        $value = $field->getValue();
+        self::assertSame(null, $value);
     }
 
     #[Test]

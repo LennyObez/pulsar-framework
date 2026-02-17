@@ -6,6 +6,10 @@ namespace Pulsar\Extension\OAuth2\Config;
 
 use Pulsar\Api\Api;
 
+use function is_array;
+use function is_int;
+use function is_string;
+
 /**
  * Configuration for the OAuth2 authorization server.
  */
@@ -40,16 +44,32 @@ final readonly class OAuth2Config
      */
     public static function fromArray(array $data): self
     {
+        /** @var string $issuer */
+        $issuer = isset($data['issuer']) && is_string($data['issuer']) ? $data['issuer'] : '';
+        /** @var int $atTtl */
+        $atTtl = isset($data['access_token_ttl']) && is_int($data['access_token_ttl']) ? $data['access_token_ttl'] : 900;
+        /** @var int $rtTtl */
+        $rtTtl = isset($data['refresh_token_ttl']) && is_int($data['refresh_token_ttl']) ? $data['refresh_token_ttl'] : 2_592_000;
+        /** @var int $acTtl */
+        $acTtl = isset($data['authorization_code_ttl']) && is_int($data['authorization_code_ttl']) ? $data['authorization_code_ttl'] : 600;
+        $sigAlgsRaw = $data['signing_algorithms'] ?? null;
+        /** @var list<string> $sigAlgsList */
+        $sigAlgsList = is_array($sigAlgsRaw) ? array_values($sigAlgsRaw) : ['RS256', 'ES256'];
+        /** @var string $sigKeyId */
+        $sigKeyId = isset($data['signing_key_id']) && is_string($data['signing_key_id']) ? $data['signing_key_id'] : 'oauth_sign';
+        /** @var string $tokenFmt */
+        $tokenFmt = isset($data['token_format']) && is_string($data['token_format']) ? $data['token_format'] : 'reference';
+
         return new self(
-            issuer: (string) ($data['issuer'] ?? ''),
-            accessTokenTtl: (int) ($data['access_token_ttl'] ?? 900),
-            refreshTokenTtl: (int) ($data['refresh_token_ttl'] ?? 2_592_000),
-            authorizationCodeTtl: (int) ($data['authorization_code_ttl'] ?? 600),
+            issuer: $issuer,
+            accessTokenTtl: $atTtl,
+            refreshTokenTtl: $rtTtl,
+            authorizationCodeTtl: $acTtl,
             dynamicRegistration: (bool) ($data['dynamic_registration'] ?? false),
-            signingAlgorithms: (array) ($data['signing_algorithms'] ?? ['RS256', 'ES256']),
+            signingAlgorithms: $sigAlgsList,
             pairwiseSubjects: (bool) ($data['pairwise_subjects'] ?? false),
-            signingKeyId: (string) ($data['signing_key_id'] ?? 'oauth_sign'),
-            tokenFormat: (string) ($data['token_format'] ?? 'reference'),
+            signingKeyId: $sigKeyId,
+            tokenFormat: $tokenFmt,
         );
     }
 }

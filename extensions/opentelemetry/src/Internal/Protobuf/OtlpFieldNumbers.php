@@ -14,18 +14,18 @@ use Pulsar\Api\Internal;
 #[Internal(reason: 'Wire format constants for OTLP protobuf encoding')]
 final class OtlpFieldNumbers
 {
-    // -- ExportTraceServiceRequest --
+    //: ExportTraceServiceRequest --
     public const int RESOURCE_SPANS = 1;
 
-    // -- ResourceSpans --
+    //: ResourceSpans --
     public const int RS_RESOURCE = 1;
     public const int RS_SCOPE_SPANS = 2;
 
-    // -- ScopeSpans --
+    //: ScopeSpans --
     public const int SS_SCOPE = 1;
     public const int SS_SPANS = 2;
 
-    // -- Span --
+    //: Span --
     public const int SPAN_TRACE_ID = 1;
     public const int SPAN_SPAN_ID = 2;
     public const int SPAN_PARENT_SPAN_ID = 4;
@@ -36,39 +36,39 @@ final class OtlpFieldNumbers
     public const int SPAN_ATTRIBUTES = 9;
     public const int SPAN_STATUS = 15;
 
-    // -- Status --
+    //: Status --
     public const int STATUS_MESSAGE = 2;
     public const int STATUS_CODE = 3;
 
-    // -- KeyValue --
+    //: KeyValue --
     public const int KV_KEY = 1;
     public const int KV_VALUE = 2;
 
-    // -- AnyValue --
+    //: AnyValue --
     public const int AV_STRING = 1;
     public const int AV_INT = 3;
     public const int AV_DOUBLE = 4;
     public const int AV_BOOL = 2;
 
-    // -- Resource --
+    //: Resource --
     public const int RESOURCE_ATTRIBUTES = 1;
 
-    // -- InstrumentationScope --
+    //: InstrumentationScope --
     public const int SCOPE_NAME = 1;
     public const int SCOPE_VERSION = 2;
 
-    // -- ExportMetricsServiceRequest --
+    //: ExportMetricsServiceRequest --
     public const int RESOURCE_METRICS = 1;
 
-    // -- ResourceMetrics --
+    //: ResourceMetrics --
     public const int RM_RESOURCE = 1;
     public const int RM_SCOPE_METRICS = 2;
 
-    // -- ScopeMetrics --
+    //: ScopeMetrics --
     public const int SM_SCOPE = 1;
     public const int SM_METRICS = 2;
 
-    // -- Metric --
+    //: Metric --
     public const int METRIC_NAME = 1;
     public const int METRIC_DESCRIPTION = 2;
     public const int METRIC_UNIT = 3;
@@ -76,22 +76,22 @@ final class OtlpFieldNumbers
     public const int METRIC_SUM = 7;
     public const int METRIC_HISTOGRAM = 9;
 
-    // -- Gauge --
+    //: Gauge --
     public const int GAUGE_DATA_POINTS = 1;
 
-    // -- Sum --
+    //: Sum --
     public const int SUM_DATA_POINTS = 1;
     public const int SUM_AGGREGATION_TEMPORALITY = 2;
     public const int SUM_IS_MONOTONIC = 3;
 
-    // -- NumberDataPoint --
+    //: NumberDataPoint --
     public const int NDP_ATTRIBUTES = 7;
     public const int NDP_START_TIME_UNIX_NANO = 2;
     public const int NDP_TIME_UNIX_NANO = 3;
     public const int NDP_AS_DOUBLE = 4;
     public const int NDP_AS_INT = 6;
 
-    // -- HistogramDataPoint --
+    //: HistogramDataPoint --
     public const int HDP_TIME_UNIX_NANO = 3;
     public const int HDP_COUNT = 4;
     public const int HDP_SUM = 5;
@@ -99,18 +99,18 @@ final class OtlpFieldNumbers
     public const int HDP_EXPLICIT_BOUNDS = 7;
     public const int HDP_ATTRIBUTES = 9;
 
-    // -- ExportLogsServiceRequest --
+    //: ExportLogsServiceRequest --
     public const int RESOURCE_LOGS = 1;
 
-    // -- ResourceLogs --
+    //: ResourceLogs --
     public const int RL_RESOURCE = 1;
     public const int RL_SCOPE_LOGS = 2;
 
-    // -- ScopeLogs --
+    //: ScopeLogs --
     public const int SL_SCOPE = 1;
     public const int SL_LOG_RECORDS = 2;
 
-    // -- LogRecord --
+    //; LogRecord --
     public const int LR_TIME_UNIX_NANO = 1;
     public const int LR_SEVERITY_NUMBER = 2;
     public const int LR_BODY = 5;
@@ -119,19 +119,19 @@ final class OtlpFieldNumbers
     public const int LR_SPAN_ID = 10;
     public const int LR_SEVERITY_TEXT = 3;
 
-    // -- Aggregation Temporality --
+    //: Aggregation Temporality --
     public const int AGGREGATION_TEMPORALITY_CUMULATIVE = 2;
 
-    // -- Histogram --
+    //: Histogram --
     public const int HISTOGRAM_DATA_POINTS = 1;
 
-    // -- SpanKind --
+    //: SpanKind --
     public const int SPAN_KIND_INTERNAL = 1;
     public const int SPAN_KIND_CLIENT = 3;
     public const int SPAN_KIND_PRODUCER = 4;
     public const int SPAN_KIND_CONSUMER = 5;
 
-    // -- StatusCode --
+    //: StatusCode --
     public const int STATUS_CODE_UNSET = 0;
     public const int STATUS_CODE_OK = 1;
     public const int STATUS_CODE_ERROR = 2;

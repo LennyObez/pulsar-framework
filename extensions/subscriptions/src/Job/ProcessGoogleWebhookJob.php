@@ -20,7 +20,7 @@ use Throwable;
  * Defers the actual subscription status update to the SubscriptionService,
  * ensuring that webhook acknowledgement and processing are decoupled.
  */
-#[Internal(reason: 'Queue job — implementation detail')]
+#[Internal(reason: 'Queue job; implementation detail')]
 final readonly class ProcessGoogleWebhookJob implements QueueableInterface
 {
     public function __construct(

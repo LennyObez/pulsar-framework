@@ -19,7 +19,7 @@ use function is_string;
  * Manages cryptographically random, single-use resume tokens.
  *
  * Resume tokens allow users to continue a wizard later.
- * Single-use consumption uses CAS (Compare-And-Swap) semantics —
+ * Single-use consumption uses CAS (Compare-And-Swap) semantics --
  * atomic check + delete prevents race conditions.
  */
 #[Api(since: '1.0.0')]

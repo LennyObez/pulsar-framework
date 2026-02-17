@@ -21,7 +21,7 @@ use function max;
 /**
  * Database-backed webhook event repository.
  */
-#[Internal(reason: 'Raw-DB repository — use WebhookEventRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use WebhookEventRepositoryInterface for public API')]
 final readonly class DbWebhookEventRepository implements WebhookEventRepositoryInterface
 {
     private const string SQL_COUNT_BY_TYPE = <<<'SQL'

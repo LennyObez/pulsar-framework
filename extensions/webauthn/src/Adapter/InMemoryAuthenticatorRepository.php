@@ -11,7 +11,7 @@ use Pulsar\Extension\WebAuthn\Contract\AuthenticatorRepositoryInterface;
 /**
  * In-memory authenticator repository for testing and development.
  *
- * Not suitable for production use — records are lost on process termination.
+ * Not suitable for production use: records are lost on process termination.
  * Production applications should provide a persistent implementation
  * (database-backed) and bind it to AuthenticatorRepositoryInterface.
  */

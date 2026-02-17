@@ -36,7 +36,7 @@ use const JSON_THROW_ON_ERROR;
  *  - private_key_path: Path to the AuthKey .p8 file
  *  - environment: "production" or "sandbox"
  */
-#[Internal(reason: 'Store-specific verifier — use SubscriptionVerifierInterface')]
+#[Internal(reason: 'Store-specific verifier; use SubscriptionVerifierInterface')]
 final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
 {
     private const string PRODUCTION_URL = 'https://api.storekit.itunes.apple.com';
@@ -144,9 +144,8 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
                 return null;
             }
 
-            $signatureStr = is_string($signature) ? $signature : '';
-
-            return "$signingInput." . $this->base64UrlEncode($signatureStr);
+            /** @var string $signature */
+            return "$signingInput." . $this->base64UrlEncode($signature);
         } catch (Throwable) {
             return null;
         }
@@ -184,12 +183,13 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
     private function parseResponse(string $responseBody): VerificationResult
     {
         try {
-            /** @var array<string, mixed> $data */
             $data = json_decode($responseBody, true, 64, JSON_THROW_ON_ERROR);
 
             if (!is_array($data)) {
                 return VerificationResult::invalid();
             }
+
+            /** @var array<string, mixed> $data */
 
             /** @var list<array<string, mixed>> $subscriptionGroups */
             $subscriptionGroups = is_array($data['data'] ?? null) ? $data['data'] : [];
@@ -230,7 +230,7 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
                 : null;
 
             $expiresAt = $expiresDateMs !== null
-                ? new DateTimeImmutable()->setTimestamp((int) ($expiresDateMs / 1000))
+                ? new DateTimeImmutable()->setTimestamp(intdiv($expiresDateMs, 1000))
                 : null;
 
             $gracePeriodUntil = $status === 4 && $expiresAt !== null ? $expiresAt : null;
@@ -282,9 +282,9 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
                 return [];
             }
 
-            /** @var array<string, mixed> $decoded */
             $decoded = json_decode($payloadJson, true, 32, JSON_THROW_ON_ERROR);
 
+            /** @var array<string, mixed> $decoded */
             return is_array($decoded) ? $decoded : [];
         } catch (Throwable) {
             return [];

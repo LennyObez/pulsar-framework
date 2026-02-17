@@ -35,7 +35,7 @@ final readonly class OAuthClient
     /**
      * Check if a redirect URI is registered for this client.
      *
-     * Strict exact match — no wildcards.
+     * Strict exact match: no wildcards.
      */
     public function hasRedirectUri(string $uri): bool
     {

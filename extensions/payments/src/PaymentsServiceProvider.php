@@ -19,6 +19,8 @@ use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\SystemClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\NullProvider;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Provider\SimulatorProvider;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
+use Pulsar\Extension\Payments\Tax\DefaultTaxProvider;
+use Pulsar\Extension\Payments\Tax\TaxProviderInterface;
 use Pulsar\Extension\Payments\Webhook\WebhookProcessor;
 use Pulsar\Idempotency\IdempotencyStoreInterface;
 use Pulsar\Idempotency\InMemoryIdempotencyStore;
@@ -91,6 +93,9 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             };
         });
 
+        // Tax provider
+        $container->bind(TaxProviderInterface::class, DefaultTaxProvider::class);
+
         // Webhook verifier
         $container->bind(WebhookVerifierInterface::class, HmacWebhookVerifier::class);
 
@@ -119,6 +124,7 @@ final class PaymentsServiceProvider implements ServiceProviderInterface
             IdempotencyStoreInterface::class,
             WebhookEventLogInterface::class,
             WebhookVerifierInterface::class,
+            TaxProviderInterface::class,
             CreatePaymentIntentHandler::class,
             ProcessWebhookHandler::class,
             PaymentGateway::class,

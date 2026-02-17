@@ -21,7 +21,7 @@ use function mb_strlen;
  * - Description length between 10 and 5000 characters
  * - Maximum 10 submissions per user per day (rate limiting)
  */
-#[Internal(reason: 'Feedback domain service — use FeedbackRepositoryInterface for public API')]
+#[Internal(reason: 'Feedback domain service; use FeedbackRepositoryInterface for public API')]
 final readonly class FeedbackService
 {
     private const int MIN_DESCRIPTION_LENGTH = 10;

@@ -17,7 +17,7 @@ use Pulsar\Extension\OAuth2\Contract\UserClaimsProviderInterface;
  * All signing operations use Keyring-managed keys (Finding B).
  * JOSE operations are handled via the web-token/jwt-framework library adapter.
  */
-#[Internal(reason: 'Implementation detail — consumers use TokenIssuerInterface')]
+#[Internal(reason: 'Implementation detail; consumers use TokenIssuerInterface')]
 final readonly class IdTokenBuilder
 {
     public function __construct(

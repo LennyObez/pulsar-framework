@@ -9,6 +9,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\OAuth2\Client\OAuthClient;
+use Pulsar\Extension\OAuth2\Config\OAuth2Config;
 use Pulsar\Extension\OAuth2\Contract\AccessTokenRepositoryInterface;
 use Pulsar\Extension\OAuth2\Contract\RefreshTokenRepositoryInterface;
 use Pulsar\Extension\OAuth2\Exception\OAuth2Exception;
@@ -37,13 +38,11 @@ use function random_bytes;
 #[Internal(reason: 'Grant handler implementation; use via AuthorizationServerInterface')]
 final readonly class RefreshTokenGrant implements GrantInterface
 {
-    private const int ACCESS_TOKEN_TTL = 3600;
-    private const int REFRESH_TOKEN_TTL = 86400 * 30;
-
     public function __construct(
         private RefreshTokenRepositoryInterface $refreshTokenRepository,
         private AccessTokenRepositoryInterface $accessTokenRepository,
         private AuditLoggerInterface $auditLogger,
+        private OAuth2Config $config = new OAuth2Config(),
     ) {}
 
     public function identifier(): string
@@ -87,8 +86,9 @@ final readonly class RefreshTokenGrant implements GrantInterface
         }
 
         // Parse requested scopes (may narrow, but not expand)
-        $scopeString = $body['scope'] ?? '';
-        $requestedScopeIds = $scopeString !== '' ? explode(' ', (string) $scopeString) : $oldRefreshToken->scopes;
+        /** @var string $scopeString */
+        $scopeString = isset($body['scope']) && is_string($body['scope']) ? $body['scope'] : '';
+        $requestedScopeIds = $scopeString !== '' ? explode(' ', $scopeString) : $oldRefreshToken->scopes;
 
         // Ensure requested scopes are a subset of the original grant
         foreach ($requestedScopeIds as $scopeId) {
@@ -104,12 +104,15 @@ final readonly class RefreshTokenGrant implements GrantInterface
         $newAccessTokenValue = bin2hex(random_bytes(32));
         $newRefreshTokenValue = bin2hex(random_bytes(32));
 
+        $accessTokenTtl = $this->config->accessTokenTtl;
+        $refreshTokenTtl = $this->config->refreshTokenTtl;
+
         $accessToken = new AccessToken(
             id: bin2hex(random_bytes(16)),
             clientId: $client->id,
             subjectId: $oldRefreshToken->subjectId,
             scopes: $requestedScopeIds,
-            expiresAt: $now->modify('+' . self::ACCESS_TOKEN_TTL . ' seconds'),
+            expiresAt: $now->modify('+' . $accessTokenTtl . ' seconds'),
             issuedAt: $now,
             tokenValue: $newAccessTokenValue,
         );
@@ -121,7 +124,7 @@ final readonly class RefreshTokenGrant implements GrantInterface
             sessionId: $oldRefreshToken->sessionId,
             familyId: $oldRefreshToken->familyId,
             scopes: $requestedScopeIds,
-            expiresAt: $now->modify('+' . self::REFRESH_TOKEN_TTL . ' seconds'),
+            expiresAt: $now->modify('+' . $refreshTokenTtl . ' seconds'),
             issuedAt: $now,
             tokenValue: $newRefreshTokenValue,
         );
@@ -145,7 +148,7 @@ final readonly class RefreshTokenGrant implements GrantInterface
         return new TokenResponse(
             accessToken: $newAccessTokenValue,
             tokenType: 'Bearer',
-            expiresIn: self::ACCESS_TOKEN_TTL,
+            expiresIn: $accessTokenTtl,
             scopes: $requestedScopeIds,
             refreshToken: $newRefreshTokenValue,
         );

@@ -52,7 +52,7 @@ final class MimeSniffer
         'fLaC' => 'audio/flac',
         "\x1A\x45\xDF\xA3" => 'video/webm',
 
-        // Text (must be last — fallback)
+        // Text (must be last; fallback)
         '<?xml' => 'application/xml',
     ];
 
@@ -63,7 +63,7 @@ final class MimeSniffer
      */
     public function detect(string $filePath): string
     {
-        $header = file_get_contents($filePath, false, null, 0, 16);
+        $header = @file_get_contents($filePath, false, null, 0, 16);
 
         if ($header === false) {
             return 'application/octet-stream';

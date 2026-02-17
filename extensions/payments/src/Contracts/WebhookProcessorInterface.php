@@ -8,7 +8,7 @@ use Pulsar\Api\Api;
 use Pulsar\Http\Message\Response;
 
 /**
- * Webhook processor port — verifies, deduplicates, and dispatches webhook events.
+ * Webhook processor port: verifies, deduplicates, and dispatches webhook events.
  */
 #[Api(since: '1.0.0')]
 interface WebhookProcessorInterface

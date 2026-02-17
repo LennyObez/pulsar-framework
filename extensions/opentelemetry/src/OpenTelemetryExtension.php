@@ -63,7 +63,7 @@ use const DIRECTORY_SEPARATOR;
  * OpenTelemetry OTLP export extension.
  *
  * Bridges Pulsar's observability API (traces, metrics, logs) to OTLP wire format
- * for export to OpenTelemetry Collector. No OTel SDK dependency — manual protobuf
+ * for export to OpenTelemetry Collector. No OTel SDK dependency: manual protobuf
  * encoding with two transport options: HTTP/protobuf and gRPC.
  *
  * When disabled, registers no-op processors with zero overhead.

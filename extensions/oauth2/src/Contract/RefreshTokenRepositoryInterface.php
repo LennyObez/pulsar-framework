@@ -46,7 +46,7 @@ interface RefreshTokenRepositoryInterface
      * Revoke all refresh tokens in a token family.
      *
      * Called when replay is detected (a rotated-out token is reused).
-     * This is a breach indicator — the entire token chain is compromised.
+     * This is a breach indicator: the entire token chain is compromised.
      */
     public function revokeFamily(string $familyId): void;
 

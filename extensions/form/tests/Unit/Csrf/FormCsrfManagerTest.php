@@ -36,7 +36,7 @@ final class FormCsrfManagerTest extends TestCase
         $token = $manager->generate('login', '/login');
         $manager->validate($token, 'login', '/login');
 
-        // Token consumed — session key removed
+        // Token consumed: session key removed
         self::assertNull($session->get('_form_csrf_login'));
     }
 

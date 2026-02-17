@@ -29,7 +29,7 @@ use const JSON_THROW_ON_ERROR;
  *  - service_account_json: Path to the service account credentials file
  *  - api_base_url: Google API base URL (default: https://androidpublisher.googleapis.com)
  */
-#[Internal(reason: 'Store-specific verifier — use SubscriptionVerifierInterface')]
+#[Internal(reason: 'Store-specific verifier; use SubscriptionVerifierInterface')]
 final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
 {
     /**
@@ -131,8 +131,8 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
                 return null;
             }
 
-            $signatureStr = is_string($signature) ? $signature : '';
-            $jwt = "$signingInput." . base64_encode($signatureStr);
+            /** @var string $signature */
+            $jwt = "$signingInput." . base64_encode($signature);
 
             $postData = http_build_query([
                 'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
@@ -196,12 +196,13 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
     private function parseResponse(string $responseBody): VerificationResult
     {
         try {
-            /** @var array<string, mixed> $data */
             $data = json_decode($responseBody, true, 32, JSON_THROW_ON_ERROR);
 
             if (!is_array($data)) {
                 return VerificationResult::invalid();
             }
+
+            /** @var array<string, mixed> $data */
 
             // subscriptionState: SUBSCRIPTION_STATE_ACTIVE, etc.
             $state = is_string($data['subscriptionState'] ?? null) ? $data['subscriptionState'] : '';

@@ -19,7 +19,7 @@ use Pulsar\Extension\Releases\Internal\ReleaseService;
 /**
  * Binds release repositories, service, and HTTP controllers to the container.
  */
-#[Internal(reason: 'Release service wiring — use ReleaseRepositoryInterface for public API')]
+#[Internal(reason: 'Release service wiring; use ReleaseRepositoryInterface for public API')]
 final class ReleasesServiceProvider implements ServiceProviderInterface
 {
     #[Override]

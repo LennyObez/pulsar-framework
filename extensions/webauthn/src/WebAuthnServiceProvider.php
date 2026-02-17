@@ -42,10 +42,10 @@ final class WebAuthnServiceProvider implements ServiceProviderInterface
             return WebAuthnConfig::fromArray($configData);
         });
 
-        // Credential repository (in-memory default — apps override with persistent implementation)
+        // Credential repository (in-memory default; apps override with persistent implementation)
         $container->bind(CredentialRepositoryInterface::class, InMemoryCredentialRepository::class);
 
-        // Authenticator repository (in-memory default — apps override with persistent implementation)
+        // Authenticator repository (in-memory default; apps override with persistent implementation)
         $container->bind(AuthenticatorRepositoryInterface::class, InMemoryAuthenticatorRepository::class);
 
         // Attestation verifier
@@ -93,6 +93,7 @@ final class WebAuthnServiceProvider implements ServiceProviderInterface
         });
 
         $container->bind(WebAuthnServer::class, static function () use ($container): WebAuthnServer {
+            /** @var WebAuthnServer */
             return $container->get(WebAuthnServerInterface::class);
         });
     }

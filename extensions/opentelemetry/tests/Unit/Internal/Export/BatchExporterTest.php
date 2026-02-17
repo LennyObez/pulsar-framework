@@ -87,7 +87,7 @@ final class BatchExporterTest extends TestCase
         $exporter->enqueue('c');
         self::assertSame(3, $exporter->queueSize());
 
-        // Enqueue one more — should drop 'a'
+        // Enqueue one more: should drop 'a'
         $exporter->enqueue('d');
         self::assertSame(3, $exporter->queueSize());
 
@@ -142,7 +142,7 @@ final class BatchExporterTest extends TestCase
             maxQueueSize: 100,
         );
 
-        // Enqueue first 2 — triggers auto-flush
+        // Enqueue first 2: triggers auto-flush
         $exporter->enqueue('a');
         $exporter->enqueue('b');
         // That's 1 flush so far

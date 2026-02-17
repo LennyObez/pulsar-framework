@@ -36,7 +36,7 @@ use const SODIUM_CRYPTO_SECRETBOX_NONCEBYTES;
  * These endpoints are unauthenticated (called by store servers) but use
  * signature verification to ensure payload integrity.
  */
-#[Internal(reason: 'HTTP controller — implementation detail')]
+#[Internal(reason: 'HTTP controller; implementation detail')]
 final readonly class WebhookController
 {
     public function __construct(
@@ -89,7 +89,7 @@ final readonly class WebhookController
             : [];
 
         if ($subscriptionNotification === []) {
-            // Not a subscription notification — acknowledge without processing
+            // Not a subscription notification: acknowledge without processing
             return Response::json(['status' => 'ignored']);
         }
 
@@ -165,7 +165,7 @@ final readonly class WebhookController
             ? $this->decodeAppleJws($signedTransactionInfo)
             : null;
 
-        $originalTransactionId = is_string($transactionInfo['originalTransactionId'] ?? null)
+        $originalTransactionId = $transactionInfo !== null && is_string($transactionInfo['originalTransactionId'] ?? null)
             ? $transactionInfo['originalTransactionId']
             : '';
 

@@ -27,7 +27,7 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Database-backed feedback repository using portable SQL (UpsertBuilder).
  */
-#[Internal(reason: 'Raw-DB repository — use FeedbackRepositoryInterface for public API')]
+#[Internal(reason: 'Raw-DB repository; use FeedbackRepositoryInterface for public API')]
 final readonly class DbFeedbackRepository implements FeedbackRepositoryInterface
 {
     private const string SQL_FIND_BY_ID = <<<'SQL'

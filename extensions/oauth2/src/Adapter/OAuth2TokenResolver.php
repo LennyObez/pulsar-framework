@@ -13,13 +13,15 @@ use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Extension\OAuth2\Contract\AccessTokenRepositoryInterface;
 use Pulsar\Extension\OAuth2\Contract\UserClaimsProviderInterface;
 
+use function is_string;
+
 /**
  * OAuth2 bearer token resolver for the auth guard system.
  *
  * Resolves OAuth2 access tokens (reference or JWT) to Pulsar identities.
  * Integrates with the existing TokenGuard via TokenResolverInterface.
  */
-#[Internal(reason: 'Adapter implementation — use TokenResolverInterface')]
+#[Internal(reason: 'Adapter implementation; use TokenResolverInterface')]
 final readonly class OAuth2TokenResolver implements TokenResolverInterface
 {
     public function __construct(
@@ -41,7 +43,7 @@ final readonly class OAuth2TokenResolver implements TokenResolverInterface
 
         return new Identity(
             id: $accessToken->subjectId,
-            displayName: (string) ($claims['name'] ?? $claims['preferred_username'] ?? $accessToken->subjectId),
+            displayName: is_string($claims['name'] ?? null) ? $claims['name'] : (is_string($claims['preferred_username'] ?? null) ? $claims['preferred_username'] : $accessToken->subjectId),
             roles: [],
             twoFactorStatus: TwoFactorStatus::Disabled,
             attributes: [

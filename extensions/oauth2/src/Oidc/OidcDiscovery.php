@@ -12,7 +12,7 @@ use Pulsar\Api\Internal;
  * Serves the OpenID Provider Configuration at /.well-known/openid-configuration
  * per OpenID Connect Discovery 1.0.
  */
-#[Internal(reason: 'Implementation detail — use AuthorizationServerInterface')]
+#[Internal(reason: 'Implementation detail; use AuthorizationServerInterface')]
 final readonly class OidcDiscovery
 {
     public function __construct(
