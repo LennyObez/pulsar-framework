@@ -19,6 +19,7 @@ use Pulsar\Security\Compliance\Pseudonymization\ForgetService;
 use Pulsar\Security\Compliance\Pseudonymization\InMemoryPseudonymLookup;
 
 use function count;
+use function hash;
 
 /**
  * Stub audit logger for ForgetService tests.
@@ -82,8 +83,7 @@ final class ForgetServiceTest extends TestCase
 
         $result = $this->service->forget('user-forget');
 
-        self::assertSame('user-forget', $result->subjectId);
-        self::assertSame('pseudo-forget', $result->pseudonym);
+        self::assertSame(hash('sha256', 'pseudo-forget'), $result->confirmationHash);
         self::assertNull($this->lookup->findBySubjectId('user-forget'));
         self::assertNull($this->lookup->findByPseudonym('pseudo-forget'));
     }
@@ -98,7 +98,7 @@ final class ForgetServiceTest extends TestCase
     }
 
     #[Test]
-    public function forgetEmitsAuditEvent(): void
+    public function forgetEmitsAuditEventWithConfirmationHash(): void
     {
         $this->lookup->store('user-audit', 'pseudo-audit', 'enc-salt');
 
@@ -106,13 +106,27 @@ final class ForgetServiceTest extends TestCase
 
         self::assertCount(1, $this->auditLogger->calls);
 
+        $expectedHash = hash('sha256', 'pseudo-audit');
         $call = $this->auditLogger->calls[0];
         self::assertSame(AuditEvent::DataModification, $call['event']);
         self::assertSame(AuditOutcome::Success, $call['outcome']);
         self::assertNull($call['actor']);
         self::assertSame('pseudonym.forget', $call['action']);
-        self::assertSame('user-audit', $call['resource']);
-        self::assertSame(['pseudonym' => 'pseudo-audit'], $call['metadata']);
+        self::assertSame($expectedHash, $call['resource']);
+        self::assertSame(['confirmation_hash' => $expectedHash], $call['metadata']);
+    }
+
+    #[Test]
+    public function forgetAuditDoesNotContainRawPseudonymOrSubjectId(): void
+    {
+        $this->lookup->store('user-leak', 'pseudo-leak', 'enc-salt');
+
+        $this->service->forget('user-leak');
+
+        $call = $this->auditLogger->calls[0];
+        self::assertNotSame('user-leak', $call['resource']);
+        self::assertArrayNotHasKey('pseudonym', $call['metadata']);
+        self::assertArrayNotHasKey('subject_id', $call['metadata']);
     }
 
     #[Test]
@@ -148,5 +162,18 @@ final class ForgetServiceTest extends TestCase
 
         self::assertNotNull($this->lookup->findBySubjectId('user-keep'));
         self::assertNull($this->lookup->findBySubjectId('user-delete'));
+    }
+
+    #[Test]
+    public function forgetResultDoesNotContainSubjectIdOrPseudonym(): void
+    {
+        $this->lookup->store('user-no-leak', 'pseudo-no-leak', 'enc-salt');
+
+        $result = $this->service->forget('user-no-leak');
+        $array = $result->toArray();
+
+        self::assertArrayNotHasKey('subject_id', $array);
+        self::assertArrayNotHasKey('pseudonym', $array);
+        self::assertArrayHasKey('confirmation_hash', $array);
     }
 }

@@ -59,6 +59,7 @@ final class InMemoryEvidenceExporter implements EvidenceExporterInterface
             archiveId: $archiveId,
             recordCount: count($records),
             hashManifest: $hashManifest,
+            operatorIdentity: $operatorIdentity,
             exportedAt: new DateTimeImmutable('now', new DateTimeZone('UTC')),
             encrypted: false,
         );

@@ -13,6 +13,8 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Compliance\Exception\ComplianceException;
 
+use function hash;
+
 /**
  * Right-to-be-forgotten service for pseudonym mapping erasure.
  *
@@ -44,18 +46,19 @@ final class ForgetService implements ForgetServiceInterface
 
         $this->lookup->delete($subjectId);
 
+        $confirmationHash = hash('sha256', $pseudonym);
+
         $auditEntry = $this->auditLogger->log(
             event: AuditEvent::DataModification,
             outcome: AuditOutcome::Success,
             actor: null,
             action: 'pseudonym.forget',
-            resource: $subjectId,
-            metadata: ['pseudonym' => $pseudonym],
+            resource: $confirmationHash,
+            metadata: ['confirmation_hash' => $confirmationHash],
         );
 
         return new ForgetResult(
-            subjectId: $subjectId,
-            pseudonym: $pseudonym,
+            confirmationHash: $confirmationHash,
             forgottenAt: new DateTimeImmutable('now', new DateTimeZone('UTC')),
             auditEntryId: $auditEntry->id,
         );

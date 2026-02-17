@@ -8,11 +8,17 @@ use DateTimeImmutable;
 use NoDiscard;
 use Pulsar\Api\Api;
 
+use function array_values;
+use function str_replace;
+use function strtolower;
+
 /**
  * Collection of retention policies organized by regulation.
  *
  * Provides lookup by regulation name and ships with sensible defaults
- * for common regulatory frameworks.
+ * for common regulatory frameworks. Regulation identifiers are normalized
+ * (lowercased, hyphens replaced with underscores) so that both 'SOX'
+ * and 'sox', or 'PCI-DSS' and 'pci_dss', resolve to the same policy.
  */
 #[Api(since: '1.0.0')]
 readonly class RetentionSchedule
@@ -30,7 +36,7 @@ readonly class RetentionSchedule
         $indexed = [];
 
         foreach ($policies as $policy) {
-            $indexed[$policy->regulation] = $policy;
+            $indexed[self::normalizeRegulation($policy->regulation)] = $policy;
         }
 
         $this->policiesByRegulation = $indexed;
@@ -38,11 +44,14 @@ readonly class RetentionSchedule
 
     /**
      * Look up the retention policy for a given regulation.
+     *
+     * Regulation identifiers are normalized for case-insensitive,
+     * format-insensitive lookup (e.g. 'PCI-DSS' and 'pci_dss' both work).
      */
     #[NoDiscard]
     public function policyFor(string $regulation): ?RetentionPolicy
     {
-        return $this->policiesByRegulation[$regulation] ?? null;
+        return $this->policiesByRegulation[self::normalizeRegulation($regulation)] ?? null;
     }
 
     /**
@@ -121,5 +130,16 @@ readonly class RetentionSchedule
                 description: 'AML/KYC 4AMLD Article 40 — 5-year retention for transaction and identity records',
             ),
         ]);
+    }
+
+    /**
+     * Normalize a regulation identifier for consistent lookup.
+     *
+     * Lowercases and replaces hyphens with underscores so that
+     * 'PCI-DSS', 'pci-dss', and 'pci_dss' all resolve identically.
+     */
+    private static function normalizeRegulation(string $regulation): string
+    {
+        return strtolower(str_replace('-', '_', $regulation));
     }
 }

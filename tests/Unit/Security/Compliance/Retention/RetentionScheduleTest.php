@@ -146,6 +146,29 @@ final class RetentionScheduleTest extends TestCase
     }
 
     #[Test]
+    public function policyForIsCaseInsensitive(): void
+    {
+        $schedule = RetentionSchedule::default();
+
+        self::assertNotNull($schedule->policyFor('sox'));
+        self::assertNotNull($schedule->policyFor('SOX'));
+        self::assertNotNull($schedule->policyFor('Sox'));
+    }
+
+    #[Test]
+    public function policyForNormalizesHyphensToUnderscores(): void
+    {
+        $schedule = RetentionSchedule::default();
+
+        $pciFromHyphen = $schedule->policyFor('PCI-DSS');
+        $pciFromUnderscore = $schedule->policyFor('pci_dss');
+
+        self::assertNotNull($pciFromHyphen);
+        self::assertNotNull($pciFromUnderscore);
+        self::assertSame($pciFromHyphen->policyId, $pciFromUnderscore->policyId);
+    }
+
+    #[Test]
     public function laterPolicyOverridesEarlierForSameRegulation(): void
     {
         $v1 = new RetentionPolicy(

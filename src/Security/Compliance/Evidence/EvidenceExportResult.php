@@ -12,7 +12,8 @@ use Pulsar\Api\Api;
  * Result of an evidence export operation.
  *
  * Contains the archive identifier, record count, integrity hash manifest,
- * export timestamp, and whether the export was encrypted.
+ * operator identity (chain-of-custody), export timestamp, and whether
+ * the export was encrypted.
  */
 #[Api(since: '1.0.0')]
 readonly class EvidenceExportResult
@@ -21,6 +22,7 @@ readonly class EvidenceExportResult
         public string $archiveId,
         public int $recordCount,
         public string $hashManifest,
+        public string $operatorIdentity,
         public DateTimeImmutable $exportedAt,
         public bool $encrypted,
     ) {}
@@ -35,6 +37,7 @@ readonly class EvidenceExportResult
             'archive_id' => $this->archiveId,
             'record_count' => $this->recordCount,
             'hash_manifest' => $this->hashManifest,
+            'operator_identity' => $this->operatorIdentity,
             'exported_at' => $this->exportedAt->format('Y-m-d\TH:i:s.uP'),
             'encrypted' => $this->encrypted,
         ];

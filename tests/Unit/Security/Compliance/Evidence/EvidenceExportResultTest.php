@@ -22,6 +22,7 @@ final class EvidenceExportResultTest extends TestCase
             archiveId: 'archive-001',
             recordCount: 42,
             hashManifest: 'abc123def456',
+            operatorIdentity: 'admin@example.com',
             exportedAt: $exportedAt,
             encrypted: true,
         );
@@ -29,6 +30,7 @@ final class EvidenceExportResultTest extends TestCase
         self::assertSame('archive-001', $result->archiveId);
         self::assertSame(42, $result->recordCount);
         self::assertSame('abc123def456', $result->hashManifest);
+        self::assertSame('admin@example.com', $result->operatorIdentity);
         self::assertSame($exportedAt, $result->exportedAt);
         self::assertTrue($result->encrypted);
     }
@@ -42,6 +44,7 @@ final class EvidenceExportResultTest extends TestCase
             archiveId: 'archive-002',
             recordCount: 100,
             hashManifest: 'hash-manifest-value',
+            operatorIdentity: 'auditor',
             exportedAt: $exportedAt,
             encrypted: false,
         );
@@ -51,6 +54,7 @@ final class EvidenceExportResultTest extends TestCase
         self::assertSame('archive-002', $array['archive_id']);
         self::assertSame(100, $array['record_count']);
         self::assertSame('hash-manifest-value', $array['hash_manifest']);
+        self::assertSame('auditor', $array['operator_identity']);
         self::assertSame('2025-03-20T14:00:00.000000+00:00', $array['exported_at']);
         self::assertFalse($array['encrypted']);
     }
@@ -62,6 +66,7 @@ final class EvidenceExportResultTest extends TestCase
             archiveId: 'a',
             recordCount: 0,
             hashManifest: 'h',
+            operatorIdentity: 'op',
             exportedAt: new DateTimeImmutable(),
             encrypted: false,
         );
@@ -71,8 +76,9 @@ final class EvidenceExportResultTest extends TestCase
         self::assertArrayHasKey('archive_id', $array);
         self::assertArrayHasKey('record_count', $array);
         self::assertArrayHasKey('hash_manifest', $array);
+        self::assertArrayHasKey('operator_identity', $array);
         self::assertArrayHasKey('exported_at', $array);
         self::assertArrayHasKey('encrypted', $array);
-        self::assertCount(5, $array);
+        self::assertCount(6, $array);
     }
 }

@@ -89,6 +89,14 @@ final class InMemoryEvidenceExporterTest extends TestCase
     }
 
     #[Test]
+    public function exportPreservesOperatorIdentity(): void
+    {
+        $result = $this->exporter->export([], $this->policy, 'auditor@example.com');
+
+        self::assertSame('auditor@example.com', $result->operatorIdentity);
+    }
+
+    #[Test]
     public function exportSetsExportedAtTimestamp(): void
     {
         $before = new DateTimeImmutable();
