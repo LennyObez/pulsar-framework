@@ -1,4 +1,4 @@
-# API Control Pack — Controls Coverage
+# API Scaffolding Pack — Scaffolding Coverage
 
 This pack provides scaffolding that **supports controls for** common API security and operational requirements. It does **not** ensure, guarantee, or certify compliance with any security standard.
 

@@ -57,6 +57,10 @@
   var statusDot;
   /** @type {HTMLElement} */
   var statusText;
+  /** @type {HTMLSelectElement} */
+  var previewSource;
+  /** @type {HTMLElement} */
+  var previewTitle;
 
   // -----------------------------------------------------------------------
   // Helpers
@@ -369,6 +373,29 @@
   }
 
   // -----------------------------------------------------------------------
+  // Preview Source Switching
+  // -----------------------------------------------------------------------
+
+  var SOURCE_LABELS = {
+    '/preview/admin': 'Admin panel',
+    '/preview/cms': 'CMS dashboard',
+    '/catalog': 'Component catalog',
+    '/preview/forum': 'Forum',
+    '/preview/studio': 'Studio console',
+  };
+
+  /**
+   * Switch the preview iframe to a different source (catalog or extension page).
+   * @param {string} src  URL path for the iframe
+   */
+  function switchPreviewSource(src) {
+    iframe.src = src;
+    if (previewTitle) {
+      previewTitle.textContent = SOURCE_LABELS[src] || 'Preview';
+    }
+  }
+
+  // -----------------------------------------------------------------------
   // Responsive Preview
   // -----------------------------------------------------------------------
 
@@ -483,6 +510,8 @@
     dialogInput = document.getElementById('save-dialog-input');
     statusDot = document.querySelector('.pg-status__dot');
     statusText = document.getElementById('status-text');
+    previewSource = document.getElementById('preview-source');
+    previewTitle = document.querySelector('.pg-preview-pane__title');
 
     var editorTextarea = document.getElementById('editor-textarea');
     var editorHighlight = document.getElementById('editor-highlight');
@@ -512,6 +541,23 @@
       .then(function () {
         switchTheme('default');
       });
+
+    // Re-inject CSS whenever the iframe finishes loading a new page
+    iframe.addEventListener('load', function () {
+      try {
+        var css = PulsarEditor.getValue();
+        injectCSS(css);
+      } catch (_) {
+        // Cross-origin page — CSS injection unavailable
+      }
+    });
+
+    // Preview source selector
+    if (previewSource) {
+      previewSource.addEventListener('change', function () {
+        switchPreviewSource(previewSource.value);
+      });
+    }
 
     // Theme select change
     themeSelect.addEventListener('change', function () {

@@ -21,6 +21,7 @@
 @import 'components/stack.css';
 @import 'components/cluster.css';
 @import 'components/sidebar-layout.css';
+@import 'components/shell.css';
 
 /* Navigation Components */
 @import 'components/navbar.css';
@@ -66,6 +67,12 @@
 /* Media Components */
 @import 'components/avatar.css';
 @import 'components/figure.css';
+@import 'components/video-player.css';
+@import 'components/audio-player.css';
+@import 'components/pdf-viewer.css';
+
+/* i18n Components */
+@import 'components/region-selector.css';
 
 /* Misc Components */
 @import 'components/accordion.css';

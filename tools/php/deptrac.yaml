@@ -782,6 +782,246 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Introspection\\Internal\\
 
+    # --- Documentation ---
+    - name: Documentation
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Documentation\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Documentation\\Internal\\
+
+    - name: Documentation_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Documentation\\Internal\\
+
+    # --- Edge ---
+    - name: Edge
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Edge\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Edge\\Internal\\
+
+    - name: Edge_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Edge\\Internal\\
+
+    # --- Inertia ---
+    - name: Inertia
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Inertia\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Inertia\\Internal\\
+
+    - name: Inertia_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Inertia\\Internal\\
+
+    # --- Live ---
+    - name: Live
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Live\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Live\\Internal\\
+
+    - name: Live_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Live\\Internal\\
+
+    # --- Marketplace ---
+    - name: Marketplace
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Marketplace\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Marketplace\\Internal\\
+
+    - name: Marketplace_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Marketplace\\Internal\\
+
+    # --- Rendering ---
+    - name: Rendering
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Rendering\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Rendering\\Internal\\
+
+    - name: Rendering_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Rendering\\Internal\\
+
+    # --- SupplyChain ---
+    - name: SupplyChain
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\SupplyChain\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\SupplyChain\\Internal\\
+
+    - name: SupplyChain_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\SupplyChain\\Internal\\
+
+    # --- Ui ---
+    - name: Ui
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Ui\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Ui\\Internal\\
+
+    - name: Ui_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Ui\\Internal\\
+
+    # --- WebSocket ---
+    - name: WebSocket
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\WebSocket\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\WebSocket\\Internal\\
+
+    - name: WebSocket_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\WebSocket\\Internal\\
+
+    # --- AI ---
+    - name: AI
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\AI\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\AI\\Internal\\
+
+    - name: AI_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\AI\\Internal\\
+
+    # --- Broadcasting ---
+    - name: Broadcasting
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Broadcasting\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Broadcasting\\Internal\\
+
+    - name: Broadcasting_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Broadcasting\\Internal\\
+
+    # --- Cloud ---
+    - name: Cloud
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Cloud\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Cloud\\Internal\\
+
+    - name: Cloud_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Cloud\\Internal\\
+
+    # --- Dev ---
+    - name: Dev
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Dev\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Dev\\Internal\\
+
+    - name: Dev_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Dev\\Internal\\
+
+    # --- ImportExport ---
+    - name: ImportExport
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\ImportExport\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\ImportExport\\Internal\\
+
+    - name: ImportExport_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\ImportExport\\Internal\\
+
+    # --- Pagination ---
+    - name: Pagination
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Pagination\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Pagination\\Internal\\
+
+    - name: Pagination_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Pagination\\Internal\\
+
     # =================================================================
     # Extension Layers
     # =================================================================
@@ -831,13 +1071,13 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Psr7Bridge\\
 
-    # --- Observability Export Extension (Pulsar\\Extension\\Observability-export → ObservabilityExport) ---
+    # --- Observability Export Extension (Pulsar\\Extension\\ObservabilityExport) ---
     - name: ObservabilityExportExtension
       collectors:
         - type: classLike
           value: ^Pulsar\\Extension\\ObservabilityExport\\
 
-    # --- Social SSO Extension (Pulsar\\Extension\\Social-sso → SocialSso) ---
+    # --- Social SSO Extension (Pulsar\\Extension\\SocialSso) ---
 
     # --- Social SSO: public contracts ---
     - name: SocialSsoContracts
@@ -963,7 +1203,7 @@ deptrac:
             - type: layer
               value: AdminDomain
 
-    # --- OpenTelemetry Extension (Pulsar\\Extension\\Opentelemetry → OpenTelemetry) ---
+    # --- OpenTelemetry Extension (Pulsar\\Extension\\OpenTelemetry) ---
 
     # --- OpenTelemetry: public surface (excludes \Internal\ namespace) ---
     - name: OpenTelemetryExtension
@@ -982,7 +1222,7 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\OpenTelemetry\\Internal\\
 
-    # --- OAuth2 Extension (Pulsar\\Extension\\Oauth2 → OAuth2) ---
+    # --- OAuth2 Extension (Pulsar\\Extension\\OAuth2) ---
 
     # --- OAuth2: public contracts ---
     - name: OAuth2Contracts
@@ -1064,7 +1304,7 @@ deptrac:
             - type: layer
               value: FormDomain
 
-    # --- WebAuthn Extension (Pulsar\\Extension\\Webauthn → WebAuthn) ---
+    # --- WebAuthn Extension (Pulsar\\Extension\\WebAuthn) ---
 
     # --- WebAuthn: public contracts ---
     - name: WebAuthnContracts
@@ -1106,6 +1346,25 @@ deptrac:
               value: WebAuthnContracts
             - type: layer
               value: WebAuthnDomain
+
+    # --- Auth Extension (Pulsar\\Extension\\Auth) ---
+
+    # --- Auth: public surface (excludes \Internal\ namespace) ---
+    - name: AuthExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Auth\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Auth\\Internal\\
+
+    # --- Auth: internal implementation (\Internal\ only) ---
+    - name: AuthExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Auth\\Internal\\
 
     # --- CMS Extension (Pulsar\\Extension\\Cms) ---
 
@@ -1265,6 +1524,63 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Releases\\Internal\\
 
+    # --- Booking Extension (Pulsar\\Extension\\Booking) ---
+
+    # --- Booking: public surface (excludes \Internal\ namespace) ---
+    - name: BookingExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Booking\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Booking\\Internal\\
+
+    # --- Booking: internal implementation (\Internal\ only) ---
+    - name: BookingExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Booking\\Internal\\
+
+    # --- Messaging Extension (Pulsar\\Extension\\Messaging) ---
+
+    # --- Messaging: public surface (excludes \Internal\ namespace) ---
+    - name: MessagingExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Messaging\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Messaging\\Internal\\
+
+    # --- Messaging: internal implementation (\Internal\ only) ---
+    - name: MessagingExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Messaging\\Internal\\
+
+    # --- Tickets Extension (Pulsar\\Extension\\Tickets) ---
+
+    # --- Tickets: public surface (excludes \Internal\ namespace) ---
+    - name: TicketsExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Tickets\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Tickets\\Internal\\
+
+    # --- Tickets: internal implementation (\Internal\ only) ---
+    - name: TicketsExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Tickets\\Internal\\
+
     # --- Subscriptions Extension (Pulsar\\Extension\\Subscriptions) ---
 
     # --- Subscriptions: public surface (excludes \Internal\ namespace) ---
@@ -1283,6 +1599,120 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\Extension\\Subscriptions\\Internal\\
+
+    # --- AI Governance Extension (Pulsar\\Extension\\Ai-governance → AiGovernance) ---
+
+    # --- AiGovernance: public surface (excludes \Internal\ namespace) ---
+    - name: AiGovernanceExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\AiGovernance\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\AiGovernance\\Internal\\
+
+    # --- AiGovernance: internal implementation (\Internal\ only) ---
+    - name: AiGovernanceExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\AiGovernance\\Internal\\
+
+    # --- DORA Extension (Pulsar\\Extension\\Dora) ---
+
+    # --- Dora: public surface (excludes \Internal\ namespace) ---
+    - name: DoraExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Dora\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Dora\\Internal\\
+
+    # --- Dora: internal implementation (\Internal\ only) ---
+    - name: DoraExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Dora\\Internal\\
+
+    # --- eIDAS Extension (Pulsar\\Extension\\Eidas) ---
+
+    # --- Eidas: public surface (excludes \Internal\ namespace) ---
+    - name: EidasExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Eidas\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Eidas\\Internal\\
+
+    # --- Eidas: internal implementation (\Internal\ only) ---
+    - name: EidasExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Eidas\\Internal\\
+
+    # --- FHIR Extension (Pulsar\\Extension\\Fhir) ---
+
+    # --- Fhir: public surface (excludes \Internal\ namespace) ---
+    - name: FhirExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Fhir\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Fhir\\Internal\\
+
+    # --- Fhir: internal implementation (\Internal\ only) ---
+    - name: FhirExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Fhir\\Internal\\
+
+    # --- Medical Devices Extension (Pulsar\\Extension\\Medical-devices → MedicalDevices) ---
+
+    # --- MedicalDevices: public surface (excludes \Internal\ namespace) ---
+    - name: MedicalDevicesExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\MedicalDevices\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\MedicalDevices\\Internal\\
+
+    # --- MedicalDevices: internal implementation (\Internal\ only) ---
+    - name: MedicalDevicesExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\MedicalDevices\\Internal\\
+
+    # --- PSD2 Extension (Pulsar\\Extension\\Psd2) ---
+
+    # --- Psd2: public surface (excludes \Internal\ namespace) ---
+    - name: Psd2Extension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Psd2\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Psd2\\Internal\\
+
+    # --- Psd2: internal implementation (\Internal\ only) ---
+    - name: Psd2Extension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Psd2\\Internal\\
 
     # --- Example Extension ---
     - name: ExampleExtension
@@ -1313,22 +1743,34 @@ deptrac:
     # Composition Root — unrestricted (wires everything together)
     # -----------------------------------------------------------------
     CompositionRoot:
+      - AI
+      - AI_Internal
       - Api
       - Api_Internal
       - Support
       - Support_Internal
+      - Broadcasting
+      - Broadcasting_Internal
       - Container
       - Container_Internal
+      - Cloud
+      - Cloud_Internal
       - Compliance
       - Compliance_Internal
       - Config
       - Config_Internal
       - Core
       - Core_Internal
+      - Dev
+      - Dev_Internal
       - ErrorHandling
       - ErrorHandling_Internal
       - Http
       - Http_Internal
+      - ImportExport
+      - ImportExport_Internal
+      - Pagination
+      - Pagination_Internal
       - Routing
       - Routing_Internal
       - Console
@@ -1399,6 +1841,24 @@ deptrac:
       - Webhook_Internal
       - Workflow
       - Workflow_Internal
+      - Documentation
+      - Documentation_Internal
+      - Edge
+      - Edge_Internal
+      - Inertia
+      - Inertia_Internal
+      - Live
+      - Live_Internal
+      - Marketplace
+      - Marketplace_Internal
+      - Rendering
+      - Rendering_Internal
+      - SupplyChain
+      - SupplyChain_Internal
+      - Ui
+      - Ui_Internal
+      - WebSocket
+      - WebSocket_Internal
       - Introspection
       - Introspection_Internal
       # Extension layers (CompositionRoot wires these too)
@@ -1422,6 +1882,7 @@ deptrac:
     # -----------------------------------------------------------------
     Api: &public_deps
       - CompositionRoot
+      - AI
       - Api
       - Support
       - Container
@@ -1436,22 +1897,27 @@ deptrac:
       - Attribute
       - Audit
       - Auth
+      - Broadcasting
       - Build
       - Cache
+      - Cloud
       - Codegen
       - Context
       - Database
       - DataProtection
       - Deploy
+      - Dev
       - Event
       - FeatureFlag
       - I18n
       - Idempotency
+      - ImportExport
       - Integrity
       - Introspection
       - Mail
       - Notification
       - Observability
+      - Pagination
       - Queue
       - Resilience
       - Runtime
@@ -1466,6 +1932,85 @@ deptrac:
       - View
       - Webhook
       - Workflow
+      - Documentation
+      - Edge
+      - Inertia
+      - Live
+      - Marketplace
+      - Rendering
+      - SupplyChain
+      - Ui
+      - WebSocket
+      # Extension public layers (cross-extension dependencies)
+      - PaymentsContracts
+      - PaymentsDomain
+      - PaymentsInternal
+      - OrmContracts
+      - OrmDomain
+      - OrmInternal
+      - AdminContracts
+      - AdminDomain
+      - AdminInternal
+      - SocialSsoContracts
+      - SocialSsoDomain
+      - SocialSsoInternal
+      - McpServerContracts
+      - McpServerDomain
+      - McpServerInternal
+      - OAuth2Contracts
+      - OAuth2Domain
+      - OAuth2Internal
+      - FormContracts
+      - FormDomain
+      - FormInternal
+      - WebAuthnContracts
+      - WebAuthnDomain
+      - WebAuthnInternal
+      - OpenTelemetryExtension
+      - OpenTelemetryExtension_Internal
+      - CmsExtension
+      - CmsExtension_Internal
+      - StudioExtension
+      - AccessibilityExtension
+      - ObservabilityExportExtension
+      - Psr7BridgeExtension
+      - GrpcExtension
+      - GrpcExtension_Internal
+      - AnalyticsExtension
+      - AnalyticsExtension_Internal
+      - ForumExtension
+      - ForumExtension_Internal
+      - GraphqlExtension
+      - GraphqlExtension_Internal
+      - AuthExtension
+      - AuthExtension_Internal
+      - DevicesExtension
+      - DevicesExtension_Internal
+      - FeedbackExtension
+      - FeedbackExtension_Internal
+      - ReleasesExtension
+      - ReleasesExtension_Internal
+      - BookingExtension
+      - BookingExtension_Internal
+      - MessagingExtension
+      - MessagingExtension_Internal
+      - TicketsExtension
+      - TicketsExtension_Internal
+      - SubscriptionsExtension
+      - SubscriptionsExtension_Internal
+      - AiGovernanceExtension
+      - AiGovernanceExtension_Internal
+      - DoraExtension
+      - DoraExtension_Internal
+      - EidasExtension
+      - EidasExtension_Internal
+      - FhirExtension
+      - FhirExtension_Internal
+      - MedicalDevicesExtension
+      - MedicalDevicesExtension_Internal
+      - Psd2Extension
+      - Psd2Extension_Internal
+      - ExampleExtension
     Support: *public_deps
     Container: *public_deps
     Compliance: *public_deps
@@ -1518,25 +2063,93 @@ deptrac:
       - Testing
       - View
       - Webhook
+    AI: *public_deps
     Attribute: *public_deps
     Audit: *public_deps
     Auth: *public_deps
+    Broadcasting: *public_deps
     Build: *public_deps
     Cache: *public_deps
+    Cloud: *public_deps
     Codegen: *public_deps
     Concurrency: *public_deps
     Context: *public_deps
-    Database: *public_deps
+    Database:
+      - CompositionRoot
+      - AI
+      - Api
+      - Support
+      - Container
+      - Compliance
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Attribute
+      - Audit
+      - Auth
+      - Broadcasting
+      - Build
+      - Cache
+      - Cloud
+      - Codegen
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Dev
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - ImportExport
+      - Integrity
+      - Introspection
+      - Mail
+      - Notification
+      - Observability
+      - Pagination
+      - Queue
+      - Resilience
+      - Runtime
+      - Saga
+      - Scheduler
+      - Security
+      - ServiceDiscovery
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Testing
+      - View
+      - Webhook
+      - Workflow
+      - Documentation
+      - Edge
+      - Inertia
+      - Live
+      - Marketplace
+      - Rendering
+      - SupplyChain
+      - Ui
+      - WebSocket
+      - OrmContracts
+      - OrmDomain
     DataProtection: *public_deps
     Deploy: *public_deps
+    Dev: *public_deps
     Event: *public_deps
     FeatureFlag: *public_deps
     I18n: *public_deps
     Idempotency: *public_deps
+    ImportExport: *public_deps
     Integrity: *public_deps
     Mail: *public_deps
     Notification: *public_deps
     Observability: *public_deps
+    Pagination: *public_deps
     Queue: *public_deps
     Resilience: *public_deps
     Runtime: *public_deps
@@ -1595,6 +2208,72 @@ deptrac:
     View: *public_deps
     Webhook: *public_deps
     Workflow: *public_deps
+    Documentation: *public_deps
+    Edge: *public_deps
+    Inertia: *public_deps
+    # Live public layer depends on Admin extension (Live\Admin classes import Admin\Contracts + Admin\Domain)
+    Live:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Compliance
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Attribute
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Codegen
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - Integrity
+      - Introspection
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Saga
+      - Scheduler
+      - Security
+      - ServiceDiscovery
+      - Storage
+      - Supervisor
+      - Tenancy
+      - Testing
+      - View
+      - Webhook
+      - Workflow
+      - Documentation
+      - Edge
+      - Inertia
+      - Live
+      - Marketplace
+      - Rendering
+      - SupplyChain
+      - Ui
+      - WebSocket
+      - AdminContracts
+      - AdminDomain
+    Marketplace: *public_deps
+    Rendering: *public_deps
+    SupplyChain: *public_deps
+    Ui: *public_deps
+    WebSocket: *public_deps
     # Introspection public layer depends on its own internal (service facades inject internal implementations)
     Introspection:
       - CompositionRoot
@@ -1646,6 +2325,7 @@ deptrac:
     # another module's internal layer, and internal code cannot reach
     # Infrastructure or Feature peers directly.
     # -----------------------------------------------------------------
+    AI_Internal: [AI, Api, Support, Container, Config, Core, ErrorHandling]
     Api_Internal: [Api]
     Support_Internal: [Support, Api]
     Container_Internal: [Container, Api, Support, Config, Core, ErrorHandling]
@@ -1661,24 +2341,31 @@ deptrac:
       [Extensibility, Api, Support, Container, Config, Core, ErrorHandling, Routing, Http]
     Attribute_Internal: [Attribute, Api, Support, Container, Config, Core, ErrorHandling]
     Audit_Internal: [Audit, Api, Support, Container, Config, Core, ErrorHandling]
-    Auth_Internal: [Auth, Api, Support, Container, Config, Core, ErrorHandling]
+    Auth_Internal: [Auth, Api, Support, Container, Config, Core, ErrorHandling, Database, Security]
+    Broadcasting_Internal:
+      [Broadcasting, Api, Support, Container, Config, Core, ErrorHandling, Event]
     Build_Internal: [Build, Api, Support, Container, Config, Core, ErrorHandling]
     Cache_Internal: [Cache, Api, Support, Container, Config, Core, ErrorHandling]
+    Cloud_Internal: [Cloud, Api, Support, Container, Config, Core, ErrorHandling, Http, Security]
     Codegen_Internal:
       [Codegen, Api, Support, Container, Config, Core, ErrorHandling, Database, Console]
     Concurrency_Internal: [Concurrency, Api, Support, Container, Config, Core, ErrorHandling]
     Context_Internal: [Context, Api, Support, Container, Config, Core, ErrorHandling]
     Database_Internal: [Database, Api, Support, Container, Config, Core, ErrorHandling]
     DataProtection_Internal: [DataProtection, Api, Support, Container, Config, Core, ErrorHandling]
+    Dev_Internal: [Dev, Api, Support, Container, Config, Core, ErrorHandling, Console]
     Deploy_Internal: [Deploy, Api, Support, Container, Config, Core, ErrorHandling]
     Event_Internal: [Event, Api, Support, Container, Config, Core, ErrorHandling, Observability]
     FeatureFlag_Internal: [FeatureFlag, Api, Support, Container, Config, Core, ErrorHandling]
     I18n_Internal: [I18n, Api, Support, Container, Config, Core, ErrorHandling]
     Idempotency_Internal: [Idempotency, Api, Support, Container, Config, Core, ErrorHandling]
+    ImportExport_Internal:
+      [ImportExport, Api, Support, Container, Config, Core, ErrorHandling, Storage, Database]
     Integrity_Internal: [Integrity, Api, Support, Container, Config, Core, ErrorHandling]
     Mail_Internal: [Mail, Api, Support, Container, Config, Core, ErrorHandling]
     Notification_Internal: [Notification, Api, Support, Container, Config, Core, ErrorHandling]
     Observability_Internal: [Observability, Api, Support, Container, Config, Core, ErrorHandling]
+    Pagination_Internal: [Pagination, Api, Support, Container, Config, Core, ErrorHandling, Http]
     Queue_Internal: [Queue, Api, Support, Container, Config, Core, ErrorHandling]
     Resilience_Internal: [Resilience, Api, Support, Container, Config, Core, ErrorHandling]
     Runtime_Internal: [Runtime, Api, Support, Container, Config, Core, ErrorHandling]
@@ -1705,8 +2392,53 @@ deptrac:
         Audit,
         Database,
         Event,
+        Saga,
         Security,
       ]
+    Documentation_Internal: [Documentation, Api, Support, Container, Config, Core, ErrorHandling]
+    Edge_Internal: [Edge, Api, Support, Container, Config, Core, ErrorHandling, Http, Routing, View]
+    Inertia_Internal:
+      [Inertia, Api, Support, Container, Config, Core, ErrorHandling, Http, Routing, View]
+    Live_Internal:
+      [
+        Live,
+        Api,
+        Support,
+        Container,
+        Config,
+        Core,
+        ErrorHandling,
+        Http,
+        Routing,
+        View,
+        Auth,
+        WebSocket,
+        Security,
+        AdminContracts,
+        AdminDomain,
+      ]
+    Marketplace_Internal:
+      [
+        Marketplace,
+        Api,
+        Support,
+        Container,
+        Config,
+        Core,
+        ErrorHandling,
+        Http,
+        Routing,
+        Security,
+        Database,
+        Extensibility,
+      ]
+    Rendering_Internal:
+      [Rendering, Api, Support, Container, Config, Core, ErrorHandling, View, Http]
+    SupplyChain_Internal:
+      [SupplyChain, Api, Support, Container, Config, Core, ErrorHandling, Security, Integrity]
+    Ui_Internal: [Ui, Api, Support, Container, Config, Core, ErrorHandling, Http, View]
+    WebSocket_Internal:
+      [WebSocket, Api, Support, Container, Config, Core, ErrorHandling, Http, Routing, Auth, Event]
     # CoreRuntimeProbe introspects Container, ExtensionRegistry, Router (+ Http\Method), and Console Application (CompositionRoot)
     Introspection_Internal:
       [
@@ -1805,8 +2537,10 @@ deptrac:
       - Supervisor
       - Tenancy
       - Webhook
+      - ImportExport
       - PaymentsContracts
       - PaymentsDomain
+      - CmsExtension
 
     SocialSsoContracts:
       - CompositionRoot
@@ -2043,6 +2777,7 @@ deptrac:
       - Storage
       - Supervisor
       - Tenancy
+      - Pagination
       - Webhook
       - OrmContracts
       - OrmDomain
@@ -2181,11 +2916,13 @@ deptrac:
       - Config
       - Observability
 
-    CmsExtension:
+    CmsExtension: &ext_deps_cms
       - CompositionRoot
+      - AI
       - Api
       - Support
       - Container
+      - Compliance
       - Config
       - Core
       - ErrorHandling
@@ -2193,32 +2930,53 @@ deptrac:
       - Routing
       - Console
       - Extensibility
+      - Attribute
       - Audit
       - Auth
+      - Broadcasting
       - Build
       - Cache
+      - Cloud
+      - Codegen
       - Context
       - Database
       - DataProtection
       - Deploy
+      - Dev
       - Event
       - FeatureFlag
       - I18n
       - Idempotency
+      - ImportExport
       - Integrity
+      - Introspection
       - Mail
       - Notification
       - Observability
+      - Pagination
       - Queue
       - Resilience
       - Runtime
+      - Saga
       - Scheduler
       - Security
+      - ServiceDiscovery
       - Storage
       - Supervisor
       - Tenancy
+      - Testing
       - View
       - Webhook
+      - Workflow
+      - Documentation
+      - Edge
+      - Inertia
+      - Live
+      - Marketplace
+      - Rendering
+      - SupplyChain
+      - Ui
+      - WebSocket
       - StudioExtension
       - CmsExtension_Internal
 
@@ -2234,6 +2992,7 @@ deptrac:
       - Auth
       - Audit
       - Event
+      - ImportExport
       - Security
       - Http
       - Routing
@@ -2244,6 +3003,7 @@ deptrac:
       - Queue
       - Scheduler
       - Storage
+      - View
       - StudioExtension
 
     ObservabilityExportExtension: *public_deps
@@ -2295,6 +3055,10 @@ deptrac:
       - Mail
       - Queue
       - ReleasesExtension_Internal
+
+    BookingExtension: *public_deps
+    MessagingExtension: *public_deps
+    TicketsExtension: *public_deps
 
     SubscriptionsExtension:
       - CompositionRoot
@@ -2353,6 +3117,68 @@ deptrac:
       - Routing
       - Extensibility
 
+    BookingExtension_Internal:
+      - BookingExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Audit
+      - Auth
+      - Database
+      - Event
+      - Http
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Routing
+      - Scheduler
+      - Security
+      - PaymentsDomain
+
+    MessagingExtension_Internal:
+      - MessagingExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Audit
+      - Auth
+      - Database
+      - Event
+      - Http
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Routing
+      - Security
+
+    TicketsExtension_Internal:
+      - TicketsExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Audit
+      - Auth
+      - Database
+      - Event
+      - Http
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Routing
+      - Security
+
     SubscriptionsExtension_Internal:
       - SubscriptionsExtension
       - Api
@@ -2403,29 +3229,7 @@ deptrac:
       - Runtime
       - Security
 
-    AnalyticsExtension:
-      - CompositionRoot
-      - Api
-      - Support
-      - Container
-      - Config
-      - Core
-      - ErrorHandling
-      - Http
-      - Routing
-      - Console
-      - Extensibility
-      - Auth
-      - Cache
-      - Database
-      - Event
-      - I18n
-      - Observability
-      - Queue
-      - Scheduler
-      - Security
-      - View
-      - AnalyticsExtension_Internal
+    AnalyticsExtension: *public_deps
 
     AnalyticsExtension_Internal:
       - AnalyticsExtension
@@ -2438,6 +3242,7 @@ deptrac:
       - Auth
       - Cache
       - Database
+      - DataProtection
       - Event
       - Http
       - Routing
@@ -2500,28 +3305,7 @@ deptrac:
       - Routing
       - CmsExtension
 
-    ForumExtension:
-      - CompositionRoot
-      - Api
-      - Support
-      - Container
-      - Config
-      - Core
-      - ErrorHandling
-      - Http
-      - Routing
-      - Console
-      - Extensibility
-      - Auth
-      - Cache
-      - Database
-      - Event
-      - View
-      - AdminContracts
-      - AdminDomain
-      - AdminInternal
-      - CmsExtension
-      - ForumExtension_Internal
+    ForumExtension: *public_deps
 
     ForumExtension_Internal:
       - ForumExtension
@@ -2531,12 +3315,18 @@ deptrac:
       - Config
       - Core
       - ErrorHandling
+      - Audit
       - Auth
       - Cache
       - Database
       - Event
       - Http
+      - Mail
+      - Notification
+      - Observability
+      - Queue
       - Routing
+      - Security
       - View
 
     OAuth2Contracts:
@@ -2811,6 +3601,134 @@ deptrac:
       - Webhook
       - WebAuthnContracts
       - WebAuthnDomain
+
+    AiGovernanceExtension: *public_deps
+
+    AiGovernanceExtension_Internal:
+      - AiGovernanceExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Audit
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+      - Security
+      - Compliance
+
+    DoraExtension: *public_deps
+
+    DoraExtension_Internal:
+      - DoraExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+      - Security
+      - Compliance
+      - Resilience
+
+    EidasExtension: *public_deps
+
+    EidasExtension_Internal:
+      - EidasExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Audit
+      - Auth
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+      - Security
+
+    FhirExtension: *public_deps
+
+    FhirExtension_Internal:
+      - FhirExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Audit
+      - Auth
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+      - Security
+
+    MedicalDevicesExtension: *public_deps
+
+    MedicalDevicesExtension_Internal:
+      - MedicalDevicesExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Audit
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+      - Security
+      - Compliance
+
+    Psd2Extension: *public_deps
+
+    Psd2Extension_Internal:
+      - Psd2Extension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Audit
+      - Auth
+      - Database
+      - Http
+      - Routing
+      - Extensibility
+      - Security
+
+    # --- Auth Extension rulesets (were missing) ---
+    AuthExtension: *public_deps
+
+    AuthExtension_Internal:
+      - AuthExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Auth
+      - Audit
+      - Database
+      - Event
+      - Http
+      - Routing
+      - Security
+      - Mail
 
   analyser:
     types:

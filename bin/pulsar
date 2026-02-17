@@ -9,10 +9,14 @@ declare(strict_types=1);
  * This is the entry point for the Pulsar command-line interface.
  */
 
-// Find autoloader (supports both development and installed scenarios)
+// Find autoloader (supports development, installed, and symlinked scenarios)
+// When installed via Composer path symlink (junction on Windows), __DIR__ resolves
+// to the framework's own directory, not the project's. Use getcwd() first to find
+// the project's vendor/autoload.php, then fall back to __DIR__-relative paths.
 $autoloadPaths = [
+  getcwd() . '/vendor/autoload.php',       // Project root (works with symlinks)
   __DIR__ . '/../vendor/autoload.php',     // Development (in framework repo)
-  __DIR__ . '/../../../autoload.php',       // Installed as dependency
+  __DIR__ . '/../../../autoload.php',       // Installed as dependency (vendor/bin/)
 ];
 
 $autoloader = null;
@@ -87,17 +91,69 @@ use Pulsar\Console\Command\Remove\RemoveModuleCommand;
 use Pulsar\Console\Command\Remove\RemovePaymentFlowCommand;
 use Pulsar\Console\Command\Remove\RemovePortCommand;
 use Pulsar\Console\Command\Remove\RemoveWebhookHandlerCommand;
+use Pulsar\Console\Command\BuildCommand;
+use Pulsar\Console\Command\DbFreshCommand;
+use Pulsar\Console\Command\DbInspectCommand;
+use Pulsar\Console\Command\DbSeedCommand;
+use Pulsar\Console\Command\DebugConfigCommand;
+use Pulsar\Console\Command\DebugContainerCommand;
+use Pulsar\Console\Command\DebugRoutesCommand;
+use Pulsar\Console\Command\DoctorCommand;
+use Pulsar\Console\Command\ExtensionListCommand;
+use Pulsar\Console\Command\ExtensionValidateCommand;
+use Pulsar\Console\Command\HealthCheckCommand;
+use Pulsar\Console\Command\I18nExtractCommand;
+use Pulsar\Console\Command\I18nLintCommand;
+use Pulsar\Console\Command\IdeHelperCommand;
+use Pulsar\Console\Command\MaintenanceDisableCommand;
+use Pulsar\Console\Command\MaintenanceEnableCommand;
+use Pulsar\Console\Command\ReleaseCheckerInterface;
+use Pulsar\Console\Command\RepairCommand;
+use Pulsar\Console\Command\RoutesCacheCommand;
+use Pulsar\Console\Command\RuntimeReloadCommand;
+use Pulsar\Console\Command\RuntimeServeCommand;
+use Pulsar\Console\Command\ServeCommand;
+use Pulsar\Console\Command\RuntimeStatusCommand;
+use Pulsar\Console\Command\ScheduleRunCommand;
+use Pulsar\Console\Command\SchedulerListCommand;
+use Pulsar\Console\Command\SchedulerTickCommand;
+use Pulsar\Console\Command\SecretGetCommand;
+use Pulsar\Console\Command\SecretListCommand;
+use Pulsar\Console\Command\SecretSetCommand;
+use Pulsar\Console\Command\SelfUpdateCommand;
 use Pulsar\Console\Command\ShowContainerCommand;
 use Pulsar\Console\Command\ShowRoutesCommand;
+use Pulsar\Console\Command\StatusCommand;
 use Pulsar\Console\Command\SupervisorCheckCommand;
 use Pulsar\Console\Command\SupervisorStatusCommand;
+use Pulsar\Console\Command\TestChangedCommand;
 use Pulsar\Console\CommandInterface;
 use Pulsar\Supervisor\PreflightCheck\PreflightRunnerInterface;
 use Pulsar\Core\Kernel;
 use Pulsar\Database\ConnectionManager;
+use Pulsar\Database\Migration\MigrationPathResolver;
+use Pulsar\Database\Migration\MigrationPathResolverInterface;
 use Pulsar\Database\Migration\MigrationRepository;
 use Pulsar\Database\Migration\MigrationRunner;
+use Pulsar\Cache\RouteCache;
+use Pulsar\Config\ConfigRepository;
+use Pulsar\Config\RuntimeConfig;
+use Pulsar\Container\ContainerInterface;
+use Pulsar\Database\Introspection\DatabaseIntrospectorInterface;
+use Pulsar\Database\Seeder\SeederRunner;
 use Pulsar\Deploy\DeployCheck;
+use Pulsar\Deploy\MaintenanceMode;
+use Pulsar\Extensibility\ExtensionRegistry;
+use Pulsar\I18n\Extractor\TranslationExtractor;
+use Pulsar\I18n\Linter\TranslationLinter;
+use Pulsar\Resilience\HealthCheck\HealthCheckRunnerInterface;
+use Pulsar\Resilience\Repair\RepairRunnerInterface;
+use Pulsar\Routing\RouterInterface;
+use Pulsar\Runtime\RuntimeFactory;
+use Pulsar\Runtime\RuntimeResolver;
+use Pulsar\Scheduler\JobRegistry;
+use Pulsar\Scheduler\Scheduler;
+use Pulsar\Security\Vault\SecretVault;
 use Pulsar\Extensibility\ExtensionBootstrap;
 use Pulsar\Integrity\ManifestBuilder;
 use Pulsar\Integrity\ManifestBuilderInterface;
@@ -154,6 +210,37 @@ use Pulsar\Supervisor\Supervisor;
 use Pulsar\View\Command\PlaygroundServeCommand;
 use Pulsar\View\Command\ViewCompileCommand;
 
+// Resolve config directory: always prefer the project's config (via getcwd).
+// Fall back to the framework's config only when running from within the
+// framework repository itself (development mode). This prevents symlinked
+// installs from accidentally using the framework's config/database/.env.
+$projectRoot = getcwd() ?: __DIR__ . '/..';
+$configPath = $projectRoot . '/config';
+if (!is_dir($configPath)) {
+  // Only fall back to framework config when getcwd IS the framework dir
+  $frameworkConfig = __DIR__ . '/../config';
+  if (is_dir($frameworkConfig) && realpath($projectRoot) === realpath(__DIR__ . '/..')) {
+    $configPath = $frameworkConfig;
+  }
+  // Otherwise: no config dir found; ConfigManager will handle the error
+}
+
+// Read extensions.enabled from app config (if present) to filter extension loading
+$enabledExtensions = null;
+$appConfigFile = $configPath . DIRECTORY_SEPARATOR . 'app.php';
+if (is_file($appConfigFile)) {
+  /** @var array<string, mixed>|mixed $appConfig */
+  $appConfig = require $appConfigFile;
+  if (is_array($appConfig)) {
+    /** @var array<string, mixed>|mixed $extConfig */
+    $extConfig = $appConfig['extensions'] ?? null;
+    if (is_array($extConfig) && array_key_exists('enabled', $extConfig) && is_array($extConfig['enabled'])) {
+      /** @var list<string> $enabledExtensions */
+      $enabledExtensions = $extConfig['enabled'];
+    }
+  }
+}
+
 // Create kernel with optional extension support
 $extensionBootstrap = null;
 
@@ -166,6 +253,12 @@ $extensionPaths = [
 foreach ($extensionPaths as $path) {
   if (is_dir($path)) {
     $extensionBootstrap = ExtensionBootstrap::create();
+
+    // Apply enabled filter before loading (if configured)
+    if ($enabledExtensions !== null) {
+      $extensionBootstrap->setEnabledFilter($enabledExtensions);
+    }
+
     try {
       $extensionBootstrap->loadFromPaths([$path]);
     } catch (Throwable $e) {
@@ -176,20 +269,51 @@ foreach ($extensionPaths as $path) {
   }
 }
 
-// Resolve config directory
-$configPath = getcwd() . '/config';
-if (!is_dir($configPath)) {
-  $configPath = __DIR__ . '/../config';
-}
-
 $configManager = null;
-$basePath = $configPath !== null ? dirname($configPath) : getcwd();
+// basePath is ALWAYS the project root (never the framework directory)
+$basePath = $projectRoot;
 
 if (is_dir($configPath)) {
   $envFile = $basePath . DIRECTORY_SEPARATOR . '.env';
+
+  // Auto-generate .env with secure defaults if it does not exist.
+  // This ensures pulsar serve and all CLI commands work out of the box
+  // without manual configuration — the master key, APP_KEY, and SQLite
+  // database are ready to use immediately.
+  if (!is_file($envFile)) {
+    $generatedKey = bin2hex(random_bytes(32));
+    $generatedAppKey = 'base64:' . base64_encode(random_bytes(32));
+    $appName = basename($basePath);
+
+    $envContent = <<<ENV
+    APP_NAME={$appName}
+    APP_ENV=local
+    APP_DEBUG=true
+    APP_URL=http://localhost:8000
+
+    APP_KEY={$generatedAppKey}
+    PULSAR_MASTER_KEY={$generatedKey}
+
+    DB_CONNECTION=sqlite
+    DB_DATABASE=database/pulsar.sqlite
+    ENV;
+
+    // Dedent the heredoc content
+    $envContent = implode("\n", array_map('ltrim', explode("\n", $envContent))) . "\n";
+
+    file_put_contents($envFile, $envContent);
+    fwrite(STDERR, "Generated .env with secure defaults (SQLite, auto-generated keys).\n");
+
+    // Ensure the SQLite database directory exists
+    $dbDir = $basePath . DIRECTORY_SEPARATOR . 'database';
+    if (!is_dir($dbDir)) {
+      mkdir($dbDir, 0755, true);
+    }
+  }
+
   $configManager = new ConfigManager(
     configPath: $configPath,
-    envFilePath: is_file($envFile) ? $envFile : null,
+    envFilePath: $envFile,
   );
 }
 
@@ -248,6 +372,23 @@ $application->addCommands([
   new RemoveExtensionCommand(),
 ]);
 
+// Register kernel-dependent commands
+$application->addCommands([
+  new BuildCommand($kernel),
+  new DebugContainerCommand($kernel),
+  new StatusCommand($kernel),
+]);
+
+// Register no-constructor commands
+$application->addCommands([
+  new ExtensionValidateCommand(),
+  new RuntimeReloadCommand(),
+  new TestChangedCommand(null),
+]);
+
+// Register serve command (always available)
+$application->add(new ServeCommand($basePath));
+
 // Register optimize + key commands (always visible)
 $frameworkCache = $kernel->container()->has(FrameworkCache::class)
   ? $kernel->container()->get(FrameworkCache::class)
@@ -272,6 +413,126 @@ if ($kernel->container()->has(ProjectMetadataService::class)) {
     : new SensitiveDataScrubber();
   /** @var SensitiveDataScrubber $scrubber */
   $application->add(new MetadataExportCommand($metadataService, $scrubber));
+}
+
+// Register doctor command (optional database dependency)
+$doctorConnMgr = $kernel->container()->has(ConnectionManager::class)
+  ? $kernel->container()->get(ConnectionManager::class)
+  : null;
+/** @var ConnectionManager|null $doctorConnMgr */
+$application->add(new DoctorCommand($doctorConnMgr, $masterKeyHex ?: null, $basePath));
+
+// Register debug commands (only if their dependencies are available)
+if ($kernel->container()->has(ConfigRepository::class)) {
+  /** @var ConfigRepository $configRepository */
+  $configRepository = $kernel->container()->get(ConfigRepository::class);
+  $application->add(new DebugConfigCommand($configRepository, []));
+}
+
+if ($kernel->container()->has(RouterInterface::class)) {
+  /** @var RouterInterface $router */
+  $router = $kernel->container()->get(RouterInterface::class);
+  $application->add(new DebugRoutesCommand($router));
+
+  // Route cache command
+  if ($kernel->container()->has(RouteCache::class)) {
+    /** @var RouteCache $routeCache */
+    $routeCache = $kernel->container()->get(RouteCache::class);
+    $application->add(new RoutesCacheCommand($router, $routeCache, $basePath . '/storage/cache'));
+  }
+}
+
+// Register extension list command (only if registry is available)
+if ($kernel->container()->has(ExtensionRegistry::class)) {
+  /** @var ExtensionRegistry $extensionRegistry */
+  $extensionRegistry = $kernel->container()->get(ExtensionRegistry::class);
+  $application->add(new ExtensionListCommand($extensionRegistry));
+}
+
+// Register health check and repair commands
+if ($kernel->container()->has(HealthCheckRunnerInterface::class)) {
+  /** @var HealthCheckRunnerInterface $healthRunner */
+  $healthRunner = $kernel->container()->get(HealthCheckRunnerInterface::class);
+  $application->add(new HealthCheckCommand($healthRunner));
+}
+
+if ($kernel->container()->has(RepairRunnerInterface::class)) {
+  /** @var RepairRunnerInterface $repairRunner */
+  $repairRunner = $kernel->container()->get(RepairRunnerInterface::class);
+  $application->add(new RepairCommand($repairRunner));
+}
+
+// Register i18n commands
+if ($kernel->container()->has(TranslationExtractor::class)) {
+  /** @var TranslationExtractor $extractor */
+  $extractor = $kernel->container()->get(TranslationExtractor::class);
+  $application->add(new I18nExtractCommand($extractor, $basePath));
+}
+
+if ($kernel->container()->has(TranslationLinter::class)) {
+  /** @var TranslationLinter $linter */
+  $linter = $kernel->container()->get(TranslationLinter::class);
+  $application->add(new I18nLintCommand($linter));
+}
+
+// Register IDE helper command
+if ($kernel->container()->has(ContainerInterface::class)) {
+  $application->add(new IdeHelperCommand($kernel->container()));
+}
+
+// Register maintenance mode commands
+if ($kernel->container()->has(MaintenanceMode::class)) {
+  /** @var MaintenanceMode $maintenanceMode */
+  $maintenanceMode = $kernel->container()->get(MaintenanceMode::class);
+  $application->add(new MaintenanceEnableCommand($maintenanceMode));
+  $application->add(new MaintenanceDisableCommand($maintenanceMode));
+}
+
+// Register runtime commands
+if ($kernel->container()->has(RuntimeResolver::class)) {
+  /** @var RuntimeResolver $runtimeResolver */
+  $runtimeResolver = $kernel->container()->get(RuntimeResolver::class);
+  $application->add(new RuntimeStatusCommand($runtimeResolver));
+
+  if ($kernel->container()->has(RuntimeFactory::class)) {
+    /** @var RuntimeFactory $runtimeFactory */
+    $runtimeFactory = $kernel->container()->get(RuntimeFactory::class);
+    $runtimeConfig = $kernel->container()->has(RuntimeConfig::class)
+      ? $kernel->container()->get(RuntimeConfig::class)
+      : null;
+    /** @var RuntimeConfig|null $runtimeConfig */
+    $application->add(new RuntimeServeCommand($kernel, $runtimeFactory, $runtimeResolver, $runtimeConfig));
+  }
+}
+
+// Register scheduler commands
+if ($kernel->container()->has(Scheduler::class)) {
+  /** @var Scheduler $scheduler */
+  $scheduler = $kernel->container()->get(Scheduler::class);
+  $application->add(new ScheduleRunCommand($scheduler));
+  $application->add(new SchedulerTickCommand($scheduler));
+}
+
+if ($kernel->container()->has(JobRegistry::class)) {
+  /** @var JobRegistry $jobRegistry */
+  $jobRegistry = $kernel->container()->get(JobRegistry::class);
+  $application->add(new SchedulerListCommand($jobRegistry));
+}
+
+// Register secret vault commands
+if ($kernel->container()->has(SecretVault::class)) {
+  /** @var SecretVault $vault */
+  $vault = $kernel->container()->get(SecretVault::class);
+  $application->add(new SecretGetCommand($vault));
+  $application->add(new SecretListCommand($vault));
+  $application->add(new SecretSetCommand($vault));
+}
+
+// Register self-update command
+if ($kernel->container()->has(ReleaseCheckerInterface::class)) {
+  /** @var ReleaseCheckerInterface $releaseChecker */
+  $releaseChecker = $kernel->container()->get(ReleaseCheckerInterface::class);
+  $application->add(new SelfUpdateCommand($releaseChecker));
 }
 
 // Register queue commands (only if queue is configured)
@@ -349,7 +610,14 @@ if ($kernel->container()->has(ConnectionManager::class)) {
   /** @var ConnectionManager $connectionManager */
   $connectionManager = $kernel->container()->get(ConnectionManager::class);
 
-  $migrationRepo = new MigrationRepository($dbConfig->migrationsPath);
+  // Resolve migration paths from project config + extensions
+  $extRegistry = $kernel->container()->has(ExtensionRegistry::class)
+    ? $kernel->container()->get(ExtensionRegistry::class)
+    : null;
+  $pathResolver = new MigrationPathResolver($dbConfig, $extRegistry);
+  $kernel->container()->instance(MigrationPathResolverInterface::class, $pathResolver);
+
+  $migrationRepo = new MigrationRepository($pathResolver->resolve());
   $migrationRunner = new MigrationRunner(
     $connectionManager->connection(),
     $migrationRepo,
@@ -362,6 +630,27 @@ if ($kernel->container()->has(ConnectionManager::class)) {
     new MigrateStatusCommand($migrationRunner, $migrationRepo),
     new MigrateCreateCommand($dbConfig->migrationsPath),
   ]);
+
+  // Register db: commands (same database dependency guard)
+  if ($kernel->container()->has(DatabaseIntrospectorInterface::class)) {
+    /** @var DatabaseIntrospectorInterface $introspector */
+    $introspector = $kernel->container()->get(DatabaseIntrospectorInterface::class);
+    $application->add(new DbInspectCommand($introspector));
+    $application->add(new DbFreshCommand(
+      $connectionManager->connection(),
+      $introspector,
+      $migrationRunner,
+      $kernel->container()->has(SeederRunner::class)
+        ? $kernel->container()->get(SeederRunner::class)
+        : null,
+    ));
+  }
+
+  if ($kernel->container()->has(SeederRunner::class)) {
+    /** @var SeederRunner $seederRunner */
+    $seederRunner = $kernel->container()->get(SeederRunner::class);
+    $application->add(new DbSeedCommand($seederRunner));
+  }
 }
 
 // Register Studio commands (only if Studio is configured)
@@ -545,6 +834,27 @@ $application->add(new PlaygroundServeCommand($basePath));
       $replRedactor,
     )
   );
+}
+
+// Register import/export commands (only if registry is available)
+if ($kernel->container()->has(\Pulsar\ImportExport\ImportExportRegistry::class)) {
+  /** @var \Pulsar\ImportExport\ImportExportRegistry $importExportRegistry */
+  $importExportRegistry = $kernel->container()->get(\Pulsar\ImportExport\ImportExportRegistry::class);
+  $application->addCommands([
+    new \Pulsar\ImportExport\Command\ExportCommand($importExportRegistry),
+    new \Pulsar\ImportExport\Command\ImportCommand($importExportRegistry),
+  ]);
+}
+
+// Register supply-chain commands (always available; they validate prerequisites at runtime)
+if (class_exists(\Pulsar\SupplyChain\Command\VexCommand::class)) {
+  $application->addCommands([
+    new \Pulsar\SupplyChain\Command\VexCommand($basePath),
+    new \Pulsar\SupplyChain\Command\AuditPipelineCommand($basePath),
+    new \Pulsar\SupplyChain\Command\LicenseCheckCommand($basePath),
+    new \Pulsar\SupplyChain\Command\SignCommand($basePath),
+    new \Pulsar\SupplyChain\Command\VerifyCommand($basePath),
+  ]);
 }
 
 // Register extension commands

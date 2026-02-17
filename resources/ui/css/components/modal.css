@@ -40,7 +40,7 @@
   position: relative;
   z-index: var(--z-modal);
   width: 100%;
-  max-width: 32rem;
+  max-width: 40rem; /* 640px — Charter §7.8 */
   max-height: calc(100vh - var(--space-8));
   display: flex;
   flex-direction: column;
@@ -77,13 +77,13 @@
   }
 }
 
-/* Size variants */
+/* Size variants — Charter §7.8: 480px (sm), 640px (default), 800px (lg) */
 .pui-modal--sm {
-  max-width: 24rem;
+  max-width: 30rem; /* 480px */
 }
 
 .pui-modal--lg {
-  max-width: 48rem;
+  max-width: 50rem; /* 800px */
 }
 
 .pui-modal--xl {

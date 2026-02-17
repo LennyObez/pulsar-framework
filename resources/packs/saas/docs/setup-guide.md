@@ -2,7 +2,7 @@
 
 ## Overview
 
-The SaaS control pack provides a starting point for multi-tenant SaaS applications built on Pulsar. It includes entity scaffolds, configuration stubs, and test templates for common SaaS domain objects.
+The SaaS scaffolding pack provides a starting point for multi-tenant SaaS applications built on Pulsar. It includes entity scaffolds, configuration stubs, and test templates for common SaaS domain objects.
 
 ## Getting Started
 
@@ -31,7 +31,7 @@ my-saas-app/
       Entity/
         TenantTest.php
         SubscriptionTest.php
-  CONTROLS.md          # Controls coverage report
+  SCAFFOLDING.md       # Scaffolding coverage report
   NOT-CERTIFIED.md     # Compliance disclaimer
 ```
 
@@ -51,4 +51,4 @@ composer test
 
 ## Next Steps
 
-See `CONTROLS.md` for controls coverage details and `NOT-CERTIFIED.md` for important disclaimers.
+See `SCAFFOLDING.md` for scaffolding coverage details and `NOT-CERTIFIED.md` for important disclaimers.

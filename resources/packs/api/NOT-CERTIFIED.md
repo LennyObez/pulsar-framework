@@ -2,7 +2,7 @@
 
 ## This Pack Is NOT a Security Certification
 
-This control pack provides a **starting point** for building API-focused applications. It is **NOT** certified compliant with any security standard, including but not limited to:
+This scaffolding pack provides a **starting point** for building API-focused applications. It is **NOT** certified compliant with any security standard, including but not limited to:
 
 - **OWASP API Security Top 10**
 - **OAuth 2.0 / OpenID Connect** specifications

@@ -1,4 +1,4 @@
-# SaaS Control Pack — Controls Coverage
+# SaaS Scaffolding Pack — Scaffolding Coverage
 
 This pack provides scaffolding that **supports controls for** common multi-tenant SaaS application requirements. It does **not** ensure, guarantee, or certify compliance with any regulation or security standard.
 
