@@ -1,0 +1,24 @@
+{
+  "name": "pulsar/tickets",
+  "version": "1.0.0-rc.11",
+  "description": "Support ticket management with SLA enforcement, auto-assignment, and admin back-office for regulated domains",
+  "trust_tier": "core",
+  "extension_class": "Pulsar\\Extension\\Tickets\\TicketsExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "suggests": {
+    "pulsar/admin": ">=1.0.0-rc.10",
+    "pulsar/cms": ">=1.0.0-rc.11"
+  },
+  "provides": {
+    "services": [
+      "TicketRepositoryInterface",
+      "TicketCategoryRepositoryInterface",
+      "TicketMessageRepositoryInterface",
+      "TicketServiceInterface"
+    ],
+    "routes": true,
+    "migrations": ["database/migrations"]
+  }
+}

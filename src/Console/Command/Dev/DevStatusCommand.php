@@ -1,0 +1,42 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Console\Command\Dev;
+
+use Override;
+use Pulsar\Console\Command;
+use Pulsar\Console\ExitCode;
+use Pulsar\Console\InputInterface;
+use Pulsar\Console\OutputInterface;
+
+use function sprintf;
+
+/**
+ * Print the command to check Docker development environment status.
+ */
+final class DevStatusCommand extends Command
+{
+    public function __construct(
+        private readonly DevConfig $config,
+    ) {
+        parent::__construct();
+    }
+
+    #[Override]
+    protected function configure(): void
+    {
+        $this->name = 'dev:status';
+        $this->description = 'Show the command to check Docker development environment status';
+    }
+
+    #[Override]
+    public function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $output->writeln('To check the development environment status, run:');
+        $output->newLine();
+        $output->writeln(sprintf('  docker compose -p %s ps', $this->config->projectName));
+
+        return ExitCode::Success->value;
+    }
+}

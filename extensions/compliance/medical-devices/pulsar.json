@@ -1,0 +1,9 @@
+{
+  "name": "pulsar/medical-devices",
+  "version": "1.0.0",
+  "description": "EU MDR 2017/745 and ISO 13485 compliance tooling for medical device software",
+  "type": "extension_class",
+  "namespace": "Pulsar\\Extension\\MedicalDevices",
+  "extension_class": "Pulsar\\Extension\\MedicalDevices\\MedicalDevicesExtension",
+  "providers": ["Pulsar\\Extension\\MedicalDevices\\MedicalDevicesServiceProvider"]
+}

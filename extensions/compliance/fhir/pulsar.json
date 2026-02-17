@@ -1,0 +1,9 @@
+{
+  "name": "pulsar/fhir",
+  "version": "1.0.0",
+  "description": "HL7 FHIR R4/R5 resource types, REST API, terminology services, and SMART on FHIR",
+  "type": "extension_class",
+  "namespace": "Pulsar\\Extension\\Fhir",
+  "extension_class": "Pulsar\\Extension\\Fhir\\FhirExtension",
+  "providers": ["Pulsar\\Extension\\Fhir\\FhirServiceProvider"]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "pulsar/messaging",
+  "version": "1.0.0-rc.11",
+  "description": "End-to-end encrypted real-time messaging with WebRTC signaling for regulated, mission-critical domains",
+  "trust_tier": "core",
+  "extension_class": "Pulsar\\Extension\\Messaging\\MessagingExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "suggests": {
+    "pulsar/admin": ">=1.0.0-rc.10"
+  },
+  "provides": {
+    "services": [
+      "MessagingServiceInterface",
+      "ConversationRepositoryInterface",
+      "MessageRepositoryInterface",
+      "PresenceServiceInterface"
+    ],
+    "routes": true,
+    "migrations": ["database/migrations"]
+  }
+}

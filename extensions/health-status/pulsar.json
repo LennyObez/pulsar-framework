@@ -1,0 +1,15 @@
+{
+  "name": "pulsar/health-status",
+  "version": "1.0.0-rc.11",
+  "description": "Health status dashboard with history, incident detection, and GitHub integrity verification",
+  "trust_tier": "core",
+  "extension_class": "Pulsar\\Extension\\HealthStatus\\HealthStatusExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "provides": {
+    "services": ["HealthHistoryStoreInterface", "IncidentDetectorInterface"],
+    "routes": true,
+    "migrations": ["database/migrations"]
+  }
+}
