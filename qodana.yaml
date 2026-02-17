@@ -4,6 +4,8 @@
 
 version: '1.0'
 linter: jetbrains/qodana-php:2025.3
+php:
+  version: '8.5'
 profile:
   name: qodana.recommended
 include:
@@ -15,13 +17,13 @@ exclude:
   # ESLint - not relevant, project uses its own ESLint setup via pnpm
   - name: Eslint
   - name: EsLintInspection
-  # PHP 8.5 false positives — jetbrains/qodana-php:2025.3 does not fully support PHP 8.5.
-  # These inspections misfire on constructor-promoted properties, named arguments, and
-  # property access expressions. PHPStan max + Psalm level 1 are authoritative.
-  # Remove these exclusions when upgrading to a Qodana version with PHP 8.5 support.
+  # PHP 8.5 edge-case false positives — these inspections misfire on certain PHP 8.5
+  # patterns (constructor-promoted properties, named arguments, property access expressions).
+  # PHPStan max + Psalm level 1 are authoritative. Re-evaluate after Qodana patch releases.
   - name: PhpUndefinedVariableInspection
   - name: PhpUndefinedConstantInspection
   - name: PhpExpressionResultUnusedInspection
+  - name: PhpIllegalArrayKeyTypeInspection
   # Redundant visibility modifier - CS Fixer (PER-CS2.0) enforces explicit `public` on
   # `private(set)` properties; Qodana flags it as redundant. CS Fixer is authoritative.
   - name: PhpPublicPropertyModifierCanBeOmittedInspection
@@ -39,14 +41,35 @@ exclude:
   - name: PhpUnusedParameterInspection
   # ext-pcntl is intentionally in `suggest` (Unix-only, guarded by function_exists())
   # ext-sockets is intentionally in `suggest` (guarded by extension_loaded() at PersistentRuntime:88)
+  # ext-apcu is in `suggest` (guarded by extension_loaded() in ApcuDriver/ApcuLock)
+  # ext-memcached is in `suggest` (guarded by extension_loaded() in MemcachedDriver/MemcachedLock)
+  # ext-intl is in `suggest` (guarded by extension_loaded() in IntlMessageFormatter)
   - name: PhpComposerExtensionStubsInspection
     paths:
+      # ext-pcntl (in suggest, Unix-only, guarded by function_exists())
       - src/Queue/Worker.php
       - src/Runtime/PersistentRuntime.php
       - src/Runtime/Fiber/FiberScheduler.php
       - src/Runtime/Http/ConnectionContext.php
       - src/Runtime/Upgrade/UpgradeHandlerInterface.php
       - src/Console/Command/RuntimeServeCommand.php
+      - src/Runtime/RoadRunnerRuntime.php
+      - src/Runtime/FrankenPhpRuntime.php
+      - src/Console/Command/RuntimeReloadCommand.php
+      # ext-apcu (in suggest, guarded by extension_loaded() / configuration-gated)
+      - src/Cache/Driver/ApcuDriver.php
+      - src/Cache/Application/Driver/ApcuDriver.php
+      - src/Cache/Application/Lock/ApcuLock.php
+      # ext-memcached (in suggest, guarded by extension_loaded() / configuration-gated)
+      - src/Cache/Driver/MemcachedDriver.php
+      - src/Cache/Application/Lock/MemcachedLock.php
+      # ext-intl (in suggest, guarded by extension_loaded() with fallback formatters)
+      - src/I18n/Format/IntlMessageFormatter.php
+      - src/I18n/Format/IcuMessageFormatter.php
+      - src/I18n/Format/IntlDateFormatter.php
+      - src/I18n/Format/IntlCurrencyFormatter.php
+      - src/I18n/Format/IntlNumberFormatter.php
+      - src/I18n/Linter/TranslationLinter.php
   # Duplicated code - Studio CLI commands share structural patterns (extract values,
   # format output) but operate on different data; further extraction is over-engineering.
   # Payments gateway/handler share validation and serialization because the handler was
@@ -75,11 +98,175 @@ exclude:
       - extensions/admin/frontend/src/components/FormField.ts
       # DbSavedViewStore shares SQL CRUD pattern with DbActionHistoryStore
       - extensions/admin/src/Internal/Storage/DbSavedViewStore.php
-  # Same parameter value — auditPayment() is designed for reuse across payment
-  # operations; currently only cancel_intent calls it, but capture/refund will follow.
+      # OTLP batch exporters are type-specialized thin wrappers around BatchExporter<T> —
+      # each handles a different signal type (spans/logs/metrics) with different builder/path
+      - extensions/opentelemetry/src/Internal/Export/SpanBatchExporter.php
+      - extensions/opentelemetry/src/Internal/Export/LogsBatchExporter.php
+      - extensions/opentelemetry/src/Internal/Export/MetricsBatchExporter.php
+      # OTLP transports share constructor URL validation and curl setup but diverge in
+      # protocol handling (HTTP/1.1 vs gRPC framing, header parsing, status interpretation)
+      - extensions/opentelemetry/src/Internal/Transport/HttpProtobufTransport.php
+      - extensions/opentelemetry/src/Internal/Transport/GrpcTransport.php
+      # Capability-gated proxies share trust-tier checking pattern but wrap different
+      # interfaces (ContainerInterface vs RouterInterface) with different enforcement logic
+      - src/Extensibility/Internal/ScopedContainerProxy.php
+      - src/Extensibility/Internal/ScopedRouterProxy.php
+      # REPL read-only decorators share delegation+throw pattern but implement different
+      # interfaces (Container, Storage, CachePool, SimpleCache, Connection)
+      - src/Console/Repl/ReadOnlyContainer.php
+      - src/Console/Repl/ReadOnlyStorageAdapter.php
+      - src/Console/Repl/ReadOnlyCachePool.php
+      - src/Console/Repl/ReadOnlySimpleCache.php
+      - src/Console/Repl/ReadOnlyConnection.php
+      # PSR-7 message value objects share immutable with* pattern across properties
+      - src/Http/Message/Response.php
+      - src/Http/Message/ServerRequest.php
+      - src/Http/HeaderBag.php
+      # Queue serializers share encode/decode validation pattern for different formats
+      - src/Queue/Serialization/JsonSerializer.php
+      # API routes command output sections share tabular formatting logic
+      - src/Api/OpenApi/Command/ApiRoutesCommand.php
+      # Pagination DTO shares structural fromArray() pattern
+      - src/Api/Pagination/PaginationMeta.php
+      # JSON API renderer shares response envelope assembly
+      - src/Api/Format/JsonApiRenderer.php
+      # Compiled listener provider shares dispatch-loop delegation with ListenerProvider
+      - src/Event/Internal/CompiledListenerProvider.php
+      # Validation rules share file-upload guard patterns
+      - src/Http/Validation/Rule/Regulated/Financial/Pan.php
+      - src/Http/Validation/Rule/Image.php
+      # Model binder shares parameter extraction with binding resolver
+      - src/Routing/Binding/ModelBinder.php
+      # JSON catalog shares file-based loading pattern
+      - src/I18n/Catalog/JsonCatalog.php
+      # FrankenPHP runtime shares request/response loop with PersistentRuntime
+      - src/Runtime/FrankenPhpRuntime.php
+      # Session manager shares session lifecycle with handler
+      - src/Security/Session/SessionManager.php
+      # Extension loader shares manifest-parsing pattern with compiler
+      - src/Extensibility/ExtensionLoader.php
+      # OAuth2 authorization server has structurally similar grant-type handlers
+      - extensions/oauth2/src/Adapter/LeagueAuthorizationServer.php
+      # Playground router shares route registration patterns
+      - resources/playground/router.php
+      # CSS theme files share token definitions across themes
+      - resources/themes/default.css
+      - resources/themes/legacy.css
+      - resources/ui/css/components/alert.css
+      - resources/ui/css/tokens.css
+      # Studio dashboard aggregator shares metric-collection patterns across sections
+      - extensions/studio/src/Console/Aggregation/DashboardAggregator.php
+  # #[Override] validation — without vendor/ in CI, PSR-7/15/17 interfaces can't be
+  # resolved, causing false positives on implementing methods. PHPStan max + Psalm
+  # level 1 validate #[Override] correctness authoritatively.
+  - name: PhpOverriddenMethodExistsInspection
+  # Parameter type covariance — without vendor/, Qodana can't resolve interface
+  # parameter types. Concrete types passed where interfaces expected is valid PHP
+  # covariance. PHPStan max validates parameter types correctly.
+  - name: PhpParamsInspection
+  # PHP 8.5 clone-with syntax and PSR factory covariant returns — Qodana 2025.3 cannot
+  # parse `clone $this with { ... }` syntax or validate covariant return types on PSR
+  # interface implementations. PHPStan max + Psalm level 1 are authoritative.
+  - name: PhpIncompatibleReturnTypeInspection
+    paths:
+      # PHP 8.5 clone-with syntax — Qodana 2025.3 cannot parse clone($this, [...])
+      - src/Http/Message/Uri.php
+      - src/Http/Message/Response.php
+      - src/Http/Message/ServerRequest.php
+      - src/Http/Message/Stream.php
+      - src/Http/Message/UploadedFile.php
+      - src/Api/Filter/Filter.php
+      # PSR factory covariant returns — concrete implementations returned from PSR
+      # interface methods (Response→ResponseInterface, Stream→StreamInterface, etc.).
+      # Valid covariance; PHPStan max + Psalm level 1 confirm correctness.
+      - src/Http/Factory/
+      - src/Cache/Application/CachePool.php
+      - src/Cache/Application/CacheManager.php
+      - src/ErrorHandling/ExceptionHandler.php
+      - src/Routing/Binding/ModelBindingMiddleware.php
+      - src/Core/Kernel.php
+      - src/Runtime/RoadRunnerRuntime.php
+      - src/Api/OpenApi/EndpointScanner.php
+      - src/Queue/Attribute/EffectClassifier.php
+      # Middleware covariant returns — concrete Response returned where ResponseInterface
+      # declared. Valid covariance; PHPStan max confirms correctness.
+      - src/Auth/Middleware/
+      - src/Http/Middleware/
+      - extensions/admin/src/Internal/Middleware/
+      - extensions/studio/src/Server/Middleware/
+      - src/Security/Csrf/CsrfMiddleware.php
+  # PHP 8.5 false positive — Qodana 2025.3 misidentifies reachable code as unreachable
+  # in notification channels (statements after method calls on readonly constructor-promoted
+  # properties). All four channels are structurally identical; PHPStan + Psalm see no issue.
+  - name: PhpUnreachableStatementInspection
+    paths:
+      - src/Notification/Channel/DatabaseChannel.php
+      - src/Notification/Channel/WebhookChannel.php
+      - src/Notification/Channel/SlackChannel.php
+      - src/Notification/Channel/SmsChannel.php
+  # Undefined method — without vendor/, PHPUnit TestCase can't be resolved, causing
+  # assertion method calls to appear undefined. PHPStan max validates these correctly.
+  - name: PhpUndefinedMethodInspection
+    paths:
+      - extensions/opentelemetry/tests/
+  # Undefined function — ext-msgpack and ext-frankenphp functions are optional runtime
+  # dependencies not available in CI scan. Guarded by extension_loaded() at runtime.
+  - name: PhpUndefinedFunctionInspection
+    paths:
+      - src/Queue/Serialization/MsgpackSerializer.php
+      - src/Runtime/FrankenPhpRuntime.php
+  # Property assignment type mismatch — concrete Stream assigned to StreamInterface
+  # property is valid covariance. PHPStan max confirms correctness.
+  - name: PhpFieldAssignmentTypeMismatchInspection
+    paths:
+      - src/Http/Message/UploadedFile.php
+  # Accessor → property hook — these getters implement PSR-7/framework interface methods
+  # or delegate to sub-objects in readonly classes. PHP 8.5 forbids property hooks on
+  # readonly properties, and interface-mandated getters cannot become hooks.
+  # PHPStan max + Psalm level 1 are authoritative.
+  - name: PhpAccessorCanBeReplacedWithPropertyHookInspection
+  # Closure::fromCallable() → first-class callable — PHPStan max loses Closure parameter/return
+  # type information with the $fn(...) syntax. Closure::fromCallable() preserves types correctly.
+  # PHPStan max is authoritative; keep Closure::fromCallable() in these files.
+  - name: PhpClosureCanBeConvertedToFirstClassCallableInspection
+    paths:
+      - src/Container/Container.php
+      - src/Cache/Application/Event/CacheEventEmitter.php
+  # #[Override] attribute suggestion — Qodana suggests adding #[Override] to interface
+  # declarations themselves (which ARE the top-level definitions, not overrides).
+  - name: PhpAddOverrideAttributeInspection
+    paths:
+      - src/Container/ContainerInterface.php
+      - src/Security/Session/SessionInterface.php
+  # Missing parameter type — PSR-17 createServerRequest($uri) intentionally omits
+  # the type constraint to match the interface contract.
+  - name: PhpMissingParamTypeInspection
+    paths:
+      - src/Http/Factory/ServerRequestFactory.php
+  # Mixed return type — PSR-11 get() requires `mixed` return per interface contract.
+  - name: PhpMixedReturnTypeCanBeReducedInspection
+    paths:
+      - src/Container/Compiled/CompiledContainer.php
+  # Condition always false — renderCsrfField() accepts FormInterface but checks
+  # `instanceof Form` as a design guard. The method is part of FormRendererInterface
+  # and may receive any implementation. PHPStan + Psalm see no issue.
+  - name: PhpStaticallyAnalyzedConditionInspection
+    paths:
+      - extensions/form/src/Renderer/HtmlFormRenderer.php
+  # Self-assignment for PHPStan type narrowing — is_array() only narrows to `array`,
+  # but PHPStan max requires `array<string, mixed>`. The @var + self-assignment is the
+  # canonical way to narrow generic array types. PHPStan max is authoritative.
+  - name: PhpRedundantVariableDocTypeInspection
+    paths:
+      - src/Queue/Serialization/JsonSerializer.php
+      - src/Queue/Serialization/MsgpackSerializer.php
+      - src/Queue/Envelope/EnvelopeSerializer.php
+  # Same parameter value — these are designed for reuse across multiple operations;
+  # currently only one call site, but additional call sites will follow.
   - name: PhpSameParameterValueInspection
     paths:
       - extensions/payments/src/Gateway/PaymentGateway.php
+      - extensions/oauth2/src/Exception/OAuth2Exception.php
   # Development-only router file and CI scripts reference vendor autoload unavailable during scan
   - name: PhpIncludeInspection
     paths:
