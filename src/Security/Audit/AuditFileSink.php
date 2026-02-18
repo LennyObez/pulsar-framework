@@ -10,6 +10,7 @@ use Pulsar\Security\Exception\SecurityException;
 use Throwable;
 
 use function dirname;
+use function error_log;
 use function fclose;
 use function fflush;
 use function file_put_contents;
@@ -90,7 +91,15 @@ final class AuditFileSink implements ChainableAuditSinkInterface
      *
      * Uses backward seek to efficiently read only the last line without
      * scanning the entire file. Returns null for empty, missing, or
-     * corrupt files: never throws.
+     * corrupt files: never throws, per `ChainableAuditSinkInterface`
+     * contract — the caller re-seeds the chain on null.
+     *
+     * Silently returning null for a corrupt non-empty file would break
+     * the tamper-evidence guarantee of the chain (the next write would
+     * start a fresh chain instead of extending the broken one), so any
+     * unexpected exception is logged via `error_log()` before falling
+     * back to null. That gives operators a chance to react before the
+     * regulated audit backlog piles up (H-4 audit response).
      */
     #[Override]
     public function lastHmac(): ?string
@@ -145,7 +154,13 @@ final class AuditFileSink implements ChainableAuditSinkInterface
             }
 
             return $data['hmac'];
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            error_log(sprintf(
+                '[pulsar.AuditFileSink] lastHmac() failed for %s: %s — audit chain will be re-seeded.',
+                $this->logPath,
+                $e->getMessage(),
+            ));
+
             return null;
         }
     }
