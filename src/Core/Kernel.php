@@ -24,6 +24,7 @@ use Pulsar\Container\Container;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use Pulsar\Core\Wiring\ApiWiring;
 use Pulsar\Core\Wiring\AuthWiring;
 use Pulsar\Core\Wiring\CacheWiring;
 use Pulsar\Core\Wiring\ConfigWiring;
@@ -244,6 +245,7 @@ final class Kernel implements KernelInterface
                 new CacheWiring(),
                 new MailWiring(),
                 new NotificationWiring(),
+                new ApiWiring(),
                 new SupervisorWiring(),
                 new IntegrityWiring(),
                 new DeployWiring(),

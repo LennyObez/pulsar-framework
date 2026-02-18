@@ -178,6 +178,13 @@ final class ConfigManager implements ConfigManagerInterface
             $this->repository->set($notificationConfig);
         }
 
+        // Load API config (optional — only if config/api.php exists)
+        if ($this->configPath !== null && is_file($this->configPath . DIRECTORY_SEPARATOR . 'api.php')) {
+            $apiData = $this->loadConfigFile('api');
+            $apiConfig = ApiConfig::fromArray($apiData);
+            $this->repository->set($apiConfig);
+        }
+
         // Studio config is NOT loaded here — it is loaded directly by Kernel::studioPreboot()
         // to avoid introducing a StudioConfig dependency in ConfigManager.
     }

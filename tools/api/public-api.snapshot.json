@@ -5,7 +5,307 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Api\\Exception\\ApiException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\Filter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterExpression": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterOperator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterParser": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\FilterValueType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Filter\\QueryFilter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\HalRenderer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\JsonApiRenderer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\JsonRenderer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\ResponseContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Format\\ResponseRendererInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Api\\Internal": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Negotiation\\ContentNegotiator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\Attribute\\ApiDoc": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\Attribute\\ApiField": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\Attribute\\ApiParam": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\Attribute\\ApiResponse": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\EndpointMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\OpenApiConfig": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SchemaInferrer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SecuritySchemeDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SecuritySchemeType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SpecGenerator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\OpenApi\\SwaggerUiController": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\CursorPaginator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\KeysetPaginator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\OffsetPaginator": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginationLinks": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginationMeta": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginationRequest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Pagination\\PaginatorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\AbstractApiResource": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\ApiHidden": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\ApiResource": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\ClassificationTag": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\Expose": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\Filterable": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\Attribute\\Sortable": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\ComplexityLimits": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\ConditionalField": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\FieldAllowlist": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\FieldPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\RedactionRule": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\RedactionStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\ResourceCollection": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Resource\\ResourceMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Security\\ClearanceSnapshot": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Security\\FieldAuthorizationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Security\\FieldAuthorizer": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortDirection": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortExpression": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortParser": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Sort\\SortRegistry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Version\\ApiVersion": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Version\\ApiVersionResolver": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Api\\Version\\VersionStrategy": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -336,6 +636,11 @@
       "constants": []
     },
     "Pulsar\\Cache\\FrameworkCacheInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Config\\ApiConfig": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -676,6 +981,11 @@
       "constants": []
     },
     "Pulsar\\Console\\OutputInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Console\\Output\\TableFormatter": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -4102,6 +4412,10 @@
     }
   },
   "internal_classes": [
+    "Pulsar\\Api\\OpenApi\\EndpointScanner",
+    "Pulsar\\Api\\OpenApi\\OpenApiWiring",
+    "Pulsar\\Api\\Resource\\ResourceMetadataCache",
+    "Pulsar\\Api\\Security\\EntitySerializationGuard",
     "Pulsar\\Auth\\TwoFactor\\InMemoryRecoveryCodeStore",
     "Pulsar\\Auth\\TwoFactor\\InMemoryTotpReplayGuard",
     "Pulsar\\Auth\\TwoFactor\\InMemoryTotpSecretStore",
@@ -4185,6 +4499,7 @@
     "Pulsar\\Container\\TagDefinition",
     "Pulsar\\Core\\BootProfile",
     "Pulsar\\Core\\Kernel",
+    "Pulsar\\Core\\Wiring\\ApiWiring",
     "Pulsar\\Core\\Wiring\\AuthWiring",
     "Pulsar\\Core\\Wiring\\CacheWiring",
     "Pulsar\\Core\\Wiring\\ConfigWiring",

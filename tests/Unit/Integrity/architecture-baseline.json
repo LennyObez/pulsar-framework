@@ -27,5 +27,8 @@
   "Pulsar\\I18n\\Format\\MessageFormatterInterface": "I18nWiring composition root resolves formatter interface",
   "Pulsar\\I18n\\Locale\\LocaleMiddleware": "I18nWiring composition root registers locale middleware",
   "Pulsar\\I18n\\Locale\\LocaleNegotiator": "I18nWiring composition root wires locale negotiator",
-  "Pulsar\\I18n\\Translator": "I18nWiring composition root wires translator"
+  "Pulsar\\I18n\\Translator": "I18nWiring composition root wires translator",
+  "Pulsar\\Core\\Wiring\\ServiceWiringInterface": "OpenApiWiring composition root implements wiring interface",
+  "Pulsar\\Api\\Resource\\ResourceMetadataCache": "ApiWiring composition root wires resource metadata cache",
+  "Pulsar\\Api\\Security\\EntitySerializationGuard": "ApiWiring composition root wires entity serialization guard"
 }
