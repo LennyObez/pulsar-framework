@@ -9,6 +9,7 @@ use PDOException;
 use Pulsar\Api\Api;
 use Pulsar\Security\Exception\SecurityException;
 
+use function preg_match;
 use function sprintf;
 
 /**
@@ -23,10 +24,28 @@ final readonly class DatabaseTokenStore implements TokenStoreInterface
 {
     private const string DEFAULT_TABLE = 'token_vault';
 
+    /**
+     * SQL identifier pattern: letters, digits, underscores, 1-63 chars,
+     * must start with a letter or underscore. Matches PostgreSQL,
+     * MySQL, and SQLite identifier rules.
+     */
+    private const string TABLE_NAME_PATTERN = '/\A[A-Za-z_][A-Za-z0-9_]{0,62}\z/';
+
     public function __construct(
         private PDO $pdo,
         private string $table = self::DEFAULT_TABLE,
-    ) {}
+    ) {
+        // Validate the table name at construction time. The table name is
+        // interpolated directly into SQL via sprintf() in every query, so
+        // any characters outside the SQL identifier character set would
+        // permit SQL injection through a misconfigured dependency.
+        if (preg_match(self::TABLE_NAME_PATTERN, $this->table) !== 1) {
+            throw SecurityException::encryptionFailed(sprintf(
+                'Invalid token store table name %s: must match SQL identifier pattern',
+                var_export($this->table, true),
+            ));
+        }
+    }
 
     public function store(string $token, string $encryptedValue, string $context): void
     {
