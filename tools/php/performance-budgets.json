@@ -1,53 +1,180 @@
 {
-  "description": "Performance budgets for Pulsar Framework CI enforcement",
+  "description": "Performance budgets for Pulsar Framework CI enforcement (Tier A — hard gate, every PR)",
+  "version": "2.0.0",
   "budgets": {
     "container.instance_resolution": {
       "max_avg": "100 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Container::get for pre-registered instances (direct lookup)"
     },
     "container.singleton_cached": {
       "max_avg": "100 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Container::get for cached singletons"
     },
     "container.factory_resolution": {
       "max_avg": "1 millisecond",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Container::get for factory bindings (new instance each time)"
     },
     "router.static_10": {
       "max_avg": "5 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Router::match against 10 static routes"
     },
     "router.static_200": {
       "max_avg": "100 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Router::match against 200 static routes (worst case)"
     },
     "router.parameterized": {
       "max_avg": "200 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Router::match with parameter extraction"
     },
     "middleware.pipeline_5": {
       "max_avg": "10 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Middleware pipeline with 5 pass-through layers"
     },
     "request.creation": {
       "max_avg": "5 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Request object construction"
     },
     "response.creation": {
       "max_avg": "5 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Response object construction via static factory"
     },
     "validation.simple": {
       "max_avg": "50 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Validation of 5 fields with simple rules"
     },
     "kernel.dispatch": {
       "max_avg": "500 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Full kernel request dispatch cycle"
     },
     "authorization.gate_check": {
       "max_avg": "50 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
       "description": "Authorization gate check with policies"
+    },
+    "request.anonymous_json_api": {
+      "max_avg": "2 milliseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Full anonymous JSON API request (route -> middleware -> controller -> serialize -> respond)"
+    },
+    "request.authenticated_session": {
+      "max_avg": "3 milliseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Session-authenticated request (session load + verify + guard + authorize + respond)"
+    },
+    "request.authenticated_token": {
+      "max_avg": "2 milliseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Token-authenticated request (token resolve + verify + guard + authorize + respond)"
+    },
+    "request.with_audit": {
+      "max_avg": "4 milliseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Request with full audit trail (auth + audit log write + HMAC signing)"
+    },
+    "request.compliance_event": {
+      "max_avg": "5 milliseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Request that emits a compliance event (auth + audit + compliance event dispatch + log)"
+    },
+    "audit.log_write": {
+      "max_avg": "500 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Single audit log entry with HMAC chain verification"
+    },
+    "audit.chain_verify_128": {
+      "max_avg": "1 millisecond",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Verify last 128 entries in audit chain"
+    },
+    "crypto.encrypt.aead_1024b": {
+      "max_avg": "100 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "AEAD encryption of 1024-byte payload (XChaCha20-Poly1305, fixed key, fixed AAD)"
+    },
+    "crypto.envelope_encrypt": {
+      "max_avg": "200 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Full envelope encryption (KDF excluded, key wrap + AEAD)"
+    },
+    "crypto.hmac_sign": {
+      "max_avg": "50 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "HMAC-SHA256 signing of audit entry (BLAKE2b keyed hash)"
+    },
+    "crypto.kdf": {
+      "max_avg": "10 milliseconds",
+      "tier": "C",
+      "enforcement": "hard",
+      "description": "Key derivation function (Argon2id, standard params) — Tier C only, controlled runner"
+    },
+    "session.load_verify.memory": {
+      "max_avg": "500 microseconds",
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Load session from in-memory store + validate fingerprint"
+    },
+    "memory.peak_anonymous": {
+      "max_bytes": 2097152,
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Peak memory for anonymous JSON API request (< 2 MB)"
+    },
+    "memory.peak_authenticated": {
+      "max_bytes": 4194304,
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Peak memory for authenticated request with audit (< 4 MB)"
+    },
+    "memory.peak_compliance": {
+      "max_bytes": 6291456,
+      "tier": "A",
+      "enforcement": "hard",
+      "description": "Peak memory for compliance-event request (< 6 MB)"
+    },
+    "allocations.anonymous": {
+      "max_count": 500,
+      "tier": "A",
+      "enforcement": "advisory",
+      "description": "Object allocations for anonymous request (advisory, tracked for trends)"
+    },
+    "allocations.authenticated": {
+      "max_count": 1000,
+      "tier": "A",
+      "enforcement": "advisory",
+      "description": "Object allocations for authenticated request (advisory, tracked for trends)"
     }
   }
 }
