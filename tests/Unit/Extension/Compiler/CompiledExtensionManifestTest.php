@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Compiler\CompiledExtensionEntry;
 use Pulsar\Extension\Compiler\CompiledExtensionManifest;
 
+use function strlen;
+
 #[CoversClass(CompiledExtensionManifest::class)]
 #[CoversClass(CompiledExtensionEntry::class)]
 final class CompiledExtensionManifestTest extends TestCase

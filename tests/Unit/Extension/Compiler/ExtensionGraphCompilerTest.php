@@ -7,9 +7,9 @@ namespace Pulsar\Tests\Unit\Extension\Compiler;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Compiler\ExtensionGraphCompiler;
 use Pulsar\Extensibility\Exception\DependencyException;
 use Pulsar\Extensibility\ExtensionManifest;
+use Pulsar\Extension\Compiler\ExtensionGraphCompiler;
 
 use function bin2hex;
 use function file_put_contents;

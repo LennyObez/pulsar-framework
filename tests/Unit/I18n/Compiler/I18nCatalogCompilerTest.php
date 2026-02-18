@@ -17,6 +17,7 @@ use function json_encode;
 use function mkdir;
 use function random_bytes;
 use function scandir;
+use function strlen;
 use function unlink;
 
 use const DIRECTORY_SEPARATOR;
@@ -165,6 +166,7 @@ final class I18nCatalogCompilerTest extends TestCase
         self::assertSame(['errors', 'messages', 'validation'], $domainKeys);
     }
 
+    /** @param array<string, string> $translations */
     private function createJsonCatalog(string $locale, string $domain, array $translations): void
     {
         $localeDir = $this->catalogPath . DIRECTORY_SEPARATOR . $locale;
@@ -179,6 +181,7 @@ final class I18nCatalogCompilerTest extends TestCase
         );
     }
 
+    /** @param array<string, string> $translations */
     private function createPhpCatalog(string $locale, string $domain, array $translations): void
     {
         $localeDir = $this->catalogPath . DIRECTORY_SEPARATOR . $locale;

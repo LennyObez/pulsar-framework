@@ -28,7 +28,7 @@ tmp/
 # Node / tooling
 node_modules/
 dist/
-build/
+/build/
 coverage/
 .eslintcache
 .prettier-cache
