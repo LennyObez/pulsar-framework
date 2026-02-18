@@ -17,8 +17,10 @@ use function ip2long;
 use function is_string;
 use function str_contains;
 use function substr;
+use function trim;
 use function unpack;
 
+use const FILTER_FLAG_IPV6;
 use const FILTER_VALIDATE_IP;
 
 /**
@@ -42,11 +44,18 @@ final readonly class TrustedProxy
      *
      * If REMOTE_ADDR is a trusted proxy, walks X-Forwarded-For right-to-left
      * and returns the first untrusted IP. Otherwise returns REMOTE_ADDR.
+     *
+     * Every candidate is validated against `FILTER_VALIDATE_IP` before
+     * being returned, so downstream consumers (rate limiters, audit
+     * loggers) cannot be poisoned with malformed values like
+     * `"); DROP TABLE"` or huge user-supplied strings injected into
+     * `X-Forwarded-For` (MED-1 / CWE-20).
      */
     public function resolveClientIp(ServerRequestInterface $request): string
     {
         $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
         $remoteAddr = is_string($remoteAddr) ? $remoteAddr : '127.0.0.1';
+        $remoteAddr = $this->validIpOrFallback($remoteAddr, '127.0.0.1');
 
         if (!$this->isTrusted($remoteAddr)) {
             return $remoteAddr;
@@ -59,12 +68,31 @@ final readonly class TrustedProxy
 
         $ips = array_map(trim(...), explode(',', $forwarded));
         for ($i = count($ips) - 1; $i >= 0; $i--) {
-            if (!$this->isTrusted($ips[$i])) {
-                return $ips[$i];
+            $candidate = $ips[$i];
+
+            if (filter_var($candidate, FILTER_VALIDATE_IP) === false) {
+                // Malformed entry: skip without leaking it. An attacker
+                // who controls X-Forwarded-For cannot inject a poisoned
+                // value because the lookup falls through to REMOTE_ADDR.
+                continue;
+            }
+
+            if (!$this->isTrusted($candidate)) {
+                return $candidate;
             }
         }
 
         return $remoteAddr;
+    }
+
+    /**
+     * Return the candidate if it parses as a valid IP address, otherwise
+     * return the supplied fallback. Used at the boundary so the rest of
+     * the resolver can assume `REMOTE_ADDR` is well-formed.
+     */
+    private function validIpOrFallback(string $candidate, string $fallback): string
+    {
+        return filter_var($candidate, FILTER_VALIDATE_IP) !== false ? $candidate : $fallback;
     }
 
     private function isTrusted(string $ip): bool
