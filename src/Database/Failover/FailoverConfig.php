@@ -18,7 +18,11 @@ use Pulsar\Api\Api;
 final readonly class FailoverConfig
 {
     /**
+     * @param bool $enabled
+     * @param int $failureThreshold
+     * @param int $retryIntervalSeconds
      * @param 'dns'|'callback'|'config-reload' $strategy
+     * @param bool $complianceEventsEnabled
      */
     public function __construct(
         public bool $enabled = false,

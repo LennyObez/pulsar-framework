@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
+use function array_any;
 use function array_key_exists;
 use function file_exists;
 use function getimagesize;
@@ -45,10 +46,8 @@ readonly class Dimensions implements RuleInterface
             return $this->fail($field);
         }
 
-        foreach (['tmp_name', 'error', 'size', 'name', 'type'] as $key) {
-            if (!array_key_exists($key, $value)) {
-                return $this->fail($field);
-            }
+        if (array_any(['tmp_name', 'error', 'size', 'name', 'type'], static fn(string $key): bool => !array_key_exists($key, $value))) {
+            return $this->fail($field);
         }
 
         if ($value['error'] !== UPLOAD_ERR_OK) {

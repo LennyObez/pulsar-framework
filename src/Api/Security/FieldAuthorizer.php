@@ -38,10 +38,8 @@ final readonly class FieldAuthorizer
         }
 
         // Permission check — all required permissions must be present
-        foreach ($policy->requiredPermissions as $permission) {
-            if (!$clearance->hasPermission($permission)) {
-                return FieldAuthorizationResult::Denied;
-            }
+        if (array_any($policy->requiredPermissions, static fn(string $permission): bool => !$clearance->hasPermission($permission))) {
+            return FieldAuthorizationResult::Denied;
         }
 
         // Role check — any matching role grants access

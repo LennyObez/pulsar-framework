@@ -57,7 +57,6 @@ readonly class PassportNumber implements RuleInterface
     private function resolvePattern(string $country): string
     {
         return match ($country) {
-            'US' => '/^[A-Z]{1,2}\d{6,9}$/',
             'GB' => '/^\d{9}$/',
             'DE' => '/^[CFGHJKLMNPRTVWXYZ0-9]{9}$/',
             'CA' => '/^[A-Z]{2}\d{6}$/',

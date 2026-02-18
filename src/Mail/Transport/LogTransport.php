@@ -22,10 +22,10 @@ use function sprintf;
  * Writes message details to a PSR-3 logger instead of sending email.
  */
 #[Internal]
-final class LogTransport implements TransportInterface
+final readonly class LogTransport implements TransportInterface
 {
     public function __construct(
-        private readonly LoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {}
 
     public function send(Message $message): string

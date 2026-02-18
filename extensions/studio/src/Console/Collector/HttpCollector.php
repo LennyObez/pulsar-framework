@@ -141,11 +141,10 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
             }
         }
 
-        $body = $response !== null ? (string) $response->getBody() : '';
+        $body = (string) $response?->getBody();
 
         $responseRouteName = $request->getAttribute('_route_name');
-        $contentType = $response?->getHeaderLine('Content-Type');
-        $contentType = $contentType !== '' ? $contentType : null;
+        $contentType = $response?->getHeaderLine('Content-Type') ?: null;
 
         $responseBodyPreview = null;
         if ($body !== '' && $contentType !== null && $this->isTextualContentType($contentType)) {

@@ -31,11 +31,11 @@ use const JSON_THROW_ON_ERROR;
  * testable without network I/O.
  */
 #[Internal]
-final class PostmarkTransport implements TransportInterface
+final readonly class PostmarkTransport implements TransportInterface
 {
     public function __construct(
-        private readonly PostmarkTransportConfig $config,
-        private readonly MailHttpClientInterface $httpClient,
+        private PostmarkTransportConfig $config,
+        private MailHttpClientInterface $httpClient,
     ) {}
 
     public function send(Message $message): string

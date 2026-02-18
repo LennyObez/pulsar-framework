@@ -103,7 +103,7 @@ final class AstParser
     private function tokenize(string $source): array
     {
         // Match: {{ expr }} or @directive(expr) or @directive
-        $pattern = '/\{\{\s*(.+?)\s*\}\}|@(if|elseif|else|endif|foreach|endforeach|include|i18n)\b(?:\s*\(([^)]*)\))?/s';
+        $pattern = '/\{\{\s*(.+?)\s*}}|@(if|elseif|else|endif|foreach|endforeach|include|i18n)\b(?:\s*\(([^)]*)\))?/s';
 
         $matches = [];
         preg_match_all($pattern, $source, $matches, PREG_OFFSET_CAPTURE);
@@ -238,7 +238,7 @@ final class AstParser
      */
     private function validateNoDisallowedConstructs(string $source): void
     {
-        if (preg_match('/\{!!.*?!!\}/s', $source) === 1) {
+        if (preg_match('/\{!!.*?!!}/s', $source) === 1) {
             throw ViewException::rawOutputInUntrustedMode();
         }
 

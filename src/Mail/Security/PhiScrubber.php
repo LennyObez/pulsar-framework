@@ -31,8 +31,8 @@ final readonly class PhiScrubber implements PhiScrubberInterface
         '/\bMRN[\s#:_-]*\d{4,12}\b/i',             // Medical Record Number
         '/\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/', // US phone numbers
         '/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/', // Email addresses
-        '/\b(?:DOB|Date\s*of\s*Birth)[\s:]*\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/i', // DOB with label
-        '/\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}\b/',  // Date patterns (MM/DD/YYYY, DD-MM-YYYY)
+        '/\b(?:DOB|Date\s*of\s*Birth)[\s:]*\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}\b/i', // DOB with label
+        '/\b\d{1,2}[\/-]\d{1,2}[\/-]\d{4}\b/',  // Date patterns (MM/DD/YYYY, DD-MM-YYYY)
     ];
 
     /** @var list<string> */
@@ -62,12 +62,6 @@ final readonly class PhiScrubber implements PhiScrubberInterface
 
     public function containsPhi(string $value): bool
     {
-        foreach ($this->patterns as $pattern) {
-            if (preg_match($pattern, $value) === 1) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->patterns, static fn(string $pattern): bool => preg_match($pattern, $value) === 1);
     }
 }

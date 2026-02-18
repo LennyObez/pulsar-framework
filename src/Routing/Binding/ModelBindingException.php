@@ -23,7 +23,7 @@ final class ModelBindingException extends RuntimeException
     public static function modelNotFound(string $modelClass, string $keyName, string|int $keyValue): self
     {
         return new self(
-            sprintf('No [%s] found for [%s] = "%s"', $modelClass, $keyName, (string) $keyValue),
+            sprintf('No [%s] found for [%s] = "%s"', $modelClass, $keyName, $keyValue),
             404,
         );
     }
@@ -35,7 +35,7 @@ final class ModelBindingException extends RuntimeException
     public static function authorizationFailed(string $modelClass, string|int $keyValue): self
     {
         return new self(
-            sprintf('Authorization denied for [%s] with key "%s"', $modelClass, (string) $keyValue),
+            sprintf('Authorization denied for [%s] with key "%s"', $modelClass, $keyValue),
             403,
         );
     }

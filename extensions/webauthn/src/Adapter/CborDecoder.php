@@ -51,7 +51,7 @@ final class CborDecoder
             4 => $this->decodeArray($additionalInfo),
             5 => $this->decodeMap($additionalInfo),
             7 => $this->decodeSimple($additionalInfo),
-            default => throw WebAuthnException::invalidAttestation("CBOR: unsupported major type {$majorType}"),
+            default => throw WebAuthnException::invalidAttestation("CBOR: unsupported major type $majorType"),
         };
     }
 
@@ -123,7 +123,7 @@ final class CborDecoder
             25 => $this->decodeFloat16(),
             26 => $this->decodeFloat32(),
             27 => $this->decodeFloat64(),
-            default => throw WebAuthnException::invalidAttestation("CBOR: unsupported simple value {$additionalInfo}"),
+            default => throw WebAuthnException::invalidAttestation("CBOR: unsupported simple value $additionalInfo"),
         };
     }
 

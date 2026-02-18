@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Routing;
 
 use InvalidArgumentException;
-use NoDiscard;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
 use Pulsar\Routing\Binding\ExplicitBinding;
@@ -46,7 +45,7 @@ final class Router implements RouterInterface
      *
      * @var list<ExplicitBinding>
      */
-    private array $explicitBindings = [];
+    public private(set) array $explicitBindings = [];
 
     /**
      * Whether the router is locked (strict cache mode).
@@ -367,17 +366,6 @@ final class Router implements RouterInterface
         $this->explicitBindings[] = new ExplicitBinding($parameter, $modelClass, $resolverClass);
 
         return $this;
-    }
-
-    /**
-     * Get all registered explicit bindings.
-     *
-     * @return list<ExplicitBinding>
-     */
-    #[NoDiscard]
-    public function getExplicitBindings(): array
-    {
-        return $this->explicitBindings;
     }
 
     /**

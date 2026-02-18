@@ -108,7 +108,6 @@ final class AstInterpreter
             is_string($value) => $value,
             is_int($value), is_float($value) => (string) $value,
             is_bool($value) => $value ? '1' : '',
-            $value === null => '',
             default => '',
         };
         $escaped = htmlspecialchars($stringValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -242,7 +241,7 @@ final class AstInterpreter
 
         // Comparisons
         foreach (['===', '!==', '==', '!=', '>=', '<=', '>', '<'] as $op) {
-            $pos = strpos($expr, " {$op} ");
+            $pos = strpos($expr, " $op ");
 
             if ($pos !== false) {
                 $left = $this->resolveExpression(substr($expr, 0, $pos), $data);

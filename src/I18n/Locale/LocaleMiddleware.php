@@ -38,7 +38,7 @@ final readonly class LocaleMiddleware implements MiddlewareInterface
             $this->config->defaultLocale,
         );
 
-        $this->translator->setLocale($locale);
+        $this->translator->locale = $locale;
 
         $request = $request->withAttribute('_locale', $locale);
 

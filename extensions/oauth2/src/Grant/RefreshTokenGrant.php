@@ -11,7 +11,6 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\OAuth2\Client\OAuthClient;
 use Pulsar\Extension\OAuth2\Contract\AccessTokenRepositoryInterface;
 use Pulsar\Extension\OAuth2\Contract\RefreshTokenRepositoryInterface;
-use Pulsar\Extension\OAuth2\Contract\ScopeRepositoryInterface;
 use Pulsar\Extension\OAuth2\Exception\OAuth2Exception;
 use Pulsar\Extension\OAuth2\Token\AccessToken;
 use Pulsar\Extension\OAuth2\Token\InMemoryRefreshTokenRepository;
@@ -44,7 +43,6 @@ final readonly class RefreshTokenGrant implements GrantInterface
     public function __construct(
         private RefreshTokenRepositoryInterface $refreshTokenRepository,
         private AccessTokenRepositoryInterface $accessTokenRepository,
-        private ScopeRepositoryInterface $scopeRepository,
         private AuditLoggerInterface $auditLogger,
     ) {}
 
@@ -96,7 +94,7 @@ final readonly class RefreshTokenGrant implements GrantInterface
         foreach ($requestedScopeIds as $scopeId) {
             if (!in_array($scopeId, $oldRefreshToken->scopes, true)) {
                 throw OAuth2Exception::invalidScope(
-                    "Scope '{$scopeId}' was not included in the original grant",
+                    "Scope '$scopeId' was not included in the original grant",
                 );
             }
         }

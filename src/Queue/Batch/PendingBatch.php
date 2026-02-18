@@ -18,20 +18,20 @@ use Pulsar\Queue\QueueableInterface;
 final class PendingBatch
 {
     /** @var list<QueueableInterface> */
-    private array $jobs = [];
+    public private(set) array $jobs = [];
 
     /** @var list<Closure(JobBatch): void> */
-    private array $thenCallbacks = [];
+    public private(set) array $thenCallbacks = [];
 
     /** @var list<Closure(JobBatch): void> */
-    private array $catchCallbacks = [];
+    public private(set) array $catchCallbacks = [];
 
     /** @var list<Closure(JobBatch): void> */
-    private array $finallyCallbacks = [];
+    public private(set) array $finallyCallbacks = [];
 
-    private string $name = '';
+    public private(set) string $name = '';
 
-    private bool $allowFailures = false;
+    public private(set) bool $allowFailures = false;
 
     /**
      * Add a job to the batch.
@@ -111,45 +111,4 @@ final class PendingBatch
         return $this;
     }
 
-    /**
-     * @return list<QueueableInterface>
-     */
-    public function getJobs(): array
-    {
-        return $this->jobs;
-    }
-
-    /**
-     * @return list<Closure(JobBatch): void>
-     */
-    public function getThenCallbacks(): array
-    {
-        return $this->thenCallbacks;
-    }
-
-    /**
-     * @return list<Closure(JobBatch): void>
-     */
-    public function getCatchCallbacks(): array
-    {
-        return $this->catchCallbacks;
-    }
-
-    /**
-     * @return list<Closure(JobBatch): void>
-     */
-    public function getFinallyCallbacks(): array
-    {
-        return $this->finallyCallbacks;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function doesAllowFailures(): bool
-    {
-        return $this->allowFailures;
-    }
 }

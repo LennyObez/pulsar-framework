@@ -7,6 +7,7 @@ namespace Pulsar\Extension\OAuth2\Grant;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Extension\OAuth2\Client\OAuthClient;
+use Pulsar\Extension\OAuth2\Exception\OAuth2Exception;
 
 /**
  * Contract for an OAuth2 grant type handler.
@@ -25,7 +26,7 @@ interface GrantInterface
     /**
      * Handle a token request for this grant type.
      *
-     * @throws \Pulsar\Extension\OAuth2\Exception\OAuth2Exception On protocol errors
+     * @throws OAuth2Exception On protocol errors
      */
     public function handleTokenRequest(ServerRequestInterface $request, OAuthClient $client): TokenResponse;
 }

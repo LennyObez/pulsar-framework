@@ -52,11 +52,17 @@ use function str_repeat;
 #[CoversClass(TraceRequestBuilder::class)]
 final class OtlpExportIntegrationTest extends TestCase
 {
-    private RecordingTransport $transport = new RecordingTransport();
-    private ResourceInfo $resource = new ResourceInfo([
-        'service.name' => 'pulsar-test',
-        'service.version' => '1.0.0',
-    ]);
+    private RecordingTransport $transport;
+    private ResourceInfo $resource;
+
+    protected function setUp(): void
+    {
+        $this->transport = new RecordingTransport();
+        $this->resource = new ResourceInfo([
+            'service.name' => 'pulsar-test',
+            'service.version' => '1.0.0',
+        ]);
+    }
 
     // -----------------------------------------------------------------------
     // Trace round-trip
@@ -79,12 +85,12 @@ final class OtlpExportIntegrationTest extends TestCase
             spanId: self::hex($spanIdHex),
             parentSpanId: null,
             name: 'http.request',
-            kind: OtlpFieldNumbers::SPAN_KIND_INTERNAL,
             startTimeUnixNano: 1_000_000_000,
             endTimeUnixNano: 2_000_000_000,
             attributes: ['http.method' => 'GET', 'http.status_code' => 200],
             statusCode: OtlpFieldNumbers::STATUS_CODE_OK,
             statusMessage: '',
+            kind: OtlpFieldNumbers::SPAN_KIND_INTERNAL,
         );
 
         $exporter->enqueue($span);
@@ -134,12 +140,12 @@ final class OtlpExportIntegrationTest extends TestCase
                 spanId: self::hex(str_repeat('b' . $i, 8)),
                 parentSpanId: null,
                 name: 'span-' . $i,
-                kind: OtlpFieldNumbers::SPAN_KIND_INTERNAL,
                 startTimeUnixNano: 1_000_000_000,
                 endTimeUnixNano: 2_000_000_000,
                 attributes: [],
                 statusCode: OtlpFieldNumbers::STATUS_CODE_UNSET,
                 statusMessage: '',
+                kind: OtlpFieldNumbers::SPAN_KIND_INTERNAL,
             ));
         }
 
@@ -286,12 +292,12 @@ final class OtlpExportIntegrationTest extends TestCase
             spanId: self::hex($pulsarSpan->context->spanId->value),
             parentSpanId: null,
             name: $pulsarSpan->name,
-            kind: OtlpFieldNumbers::SPAN_KIND_INTERNAL,
             startTimeUnixNano: $pulsarSpan->startTime(),
             endTimeUnixNano: $endTime,
             attributes: $pulsarSpan->attributes(),
             statusCode: OtlpFieldNumbers::STATUS_CODE_OK,
             statusMessage: '',
+            kind: OtlpFieldNumbers::SPAN_KIND_INTERNAL,
         );
 
         $otlpExporter->enqueue($otlpSpan);
@@ -424,8 +430,8 @@ final class OtlpExportIntegrationTest extends TestCase
         $exporter->enqueue($this->createTestSpan('will-fail'));
         $exporter->flush();
 
-        // Transport was called (payload recorded) but failure didn't throw
-        self::assertCount(1, $failingTransport->payloads);
+        // Transport was called twice: initial send + 1 retry (retryable failure)
+        self::assertCount(2, $failingTransport->payloads);
         self::assertSame(0, $exporter->queueSize());
     }
 
@@ -440,7 +446,6 @@ final class OtlpExportIntegrationTest extends TestCase
             spanId: self::hex(str_repeat('cd', 8)),
             parentSpanId: null,
             name: $name,
-            kind: OtlpFieldNumbers::SPAN_KIND_INTERNAL,
             startTimeUnixNano: 1_000_000_000,
             endTimeUnixNano: 2_000_000_000,
             attributes: [],

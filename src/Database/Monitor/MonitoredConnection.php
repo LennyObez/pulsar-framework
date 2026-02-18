@@ -23,13 +23,13 @@ use function hrtime;
  * monitoring components.
  */
 #[Api(since: '1.0.0')]
-final class MonitoredConnection implements ConnectionInterface
+final readonly class MonitoredConnection implements ConnectionInterface
 {
     public function __construct(
-        private readonly ConnectionInterface $wrapped,
-        private readonly SqlLoggerInterface $sqlLogger,
-        private readonly SlowQueryDetectorInterface $slowQueryDetector,
-        private readonly ConnectionAuditorInterface $auditor,
+        private ConnectionInterface $wrapped,
+        private SqlLoggerInterface $sqlLogger,
+        private SlowQueryDetectorInterface $slowQueryDetector,
+        private ConnectionAuditorInterface $auditor,
     ) {
         $this->auditor->logConnect($this->wrapped->name(), $this->wrapped->driver());
     }

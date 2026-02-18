@@ -20,7 +20,8 @@ final class CacheItem implements CacheItemInterface
 {
     private mixed $value = null;
     private bool $isHit = false;
-    private ?DateTimeInterface $expiration = null;
+
+    public private(set) ?DateTimeInterface $expiration = null { get => $this->expiration; }
 
     public function __construct(
         private readonly string $key,
@@ -89,11 +90,4 @@ final class CacheItem implements CacheItemInterface
         return $this;
     }
 
-    /**
-     * Get the expiration time for internal use by CachePool.
-     */
-    public function getExpiration(): ?DateTimeInterface
-    {
-        return $this->expiration;
-    }
 }

@@ -103,7 +103,7 @@ final class DeviceProofVerifier
         // Mark nonce as used
         $this->usedNonces[$nonce] = $nonce;
 
-        return DeviceProofResult::verified($deviceId, 1.0);
+        return DeviceProofResult::verified($deviceId);
     }
 
     /**

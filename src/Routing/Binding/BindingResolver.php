@@ -24,14 +24,14 @@ use function substr;
  * which route parameters should be resolved as domain models.
  */
 #[Internal(reason: 'Implementation detail of the model binding pipeline')]
-final class BindingResolver
+final readonly class BindingResolver
 {
     /**
      * @param list<ExplicitBinding> $explicitBindings
      */
     public function __construct(
-        private readonly array $explicitBindings = [],
-        private readonly ?CompiledBindingMap $compiledMap = null,
+        private array $explicitBindings = [],
+        private ?CompiledBindingMap $compiledMap = null,
     ) {}
 
     /**

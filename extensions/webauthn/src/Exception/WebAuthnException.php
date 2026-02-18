@@ -27,17 +27,17 @@ final class WebAuthnException extends RuntimeException
 
     public static function invalidAttestation(string $detail): self
     {
-        return new self('invalid_attestation', "Attestation verification failed: {$detail}");
+        return new self('invalid_attestation', "Attestation verification failed: $detail");
     }
 
     public static function invalidAssertion(string $detail): self
     {
-        return new self('invalid_assertion', "Assertion verification failed: {$detail}");
+        return new self('invalid_assertion', "Assertion verification failed: $detail");
     }
 
     public static function disallowedFormat(string $format): self
     {
-        return new self('disallowed_format', "Attestation format '{$format}' is not allowed by policy");
+        return new self('disallowed_format', "Attestation format '$format' is not allowed by policy");
     }
 
     public static function cloneDetected(string $credentialId): self

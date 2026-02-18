@@ -234,7 +234,7 @@ final readonly class AuthenticationCeremony
         $type = $clientData['type'] ?? '';
 
         if ($type !== 'webauthn.get') {
-            throw WebAuthnException::invalidAssertion("Expected type 'webauthn.get', got '{$type}'");
+            throw WebAuthnException::invalidAssertion("Expected type 'webauthn.get', got '$type'");
         }
 
         /** @var string $challenge */
@@ -248,7 +248,7 @@ final readonly class AuthenticationCeremony
         $origin = $clientData['origin'] ?? '';
 
         if ($origin !== $this->config->origin) {
-            throw WebAuthnException::invalidAssertion("Origin mismatch: expected '{$this->config->origin}', got '{$origin}'");
+            throw WebAuthnException::invalidAssertion("Origin mismatch: expected '{$this->config->origin}', got '$origin'");
         }
     }
 
@@ -309,8 +309,7 @@ final readonly class AuthenticationCeremony
         }
 
         $algorithm = match ($keyDetails['type'] ?? -1) {
-            OPENSSL_KEYTYPE_EC => OPENSSL_ALGO_SHA256,
-            OPENSSL_KEYTYPE_RSA => OPENSSL_ALGO_SHA256,
+            OPENSSL_KEYTYPE_EC, OPENSSL_KEYTYPE_RSA => OPENSSL_ALGO_SHA256,
             default => throw WebAuthnException::invalidAssertion('Unsupported key type'),
         };
 

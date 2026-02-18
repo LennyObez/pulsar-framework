@@ -7,8 +7,6 @@ namespace Pulsar\Database\Routing;
 use NoDiscard;
 use Pulsar\Api\Api;
 
-use function is_int;
-
 /**
  * Configuration for read/write connection routing.
  *
@@ -46,7 +44,7 @@ final readonly class ReadWriteConfig
 
         /** @var string|int $rawSticky */
         $rawSticky = $data['sticky_duration'] ?? 'request';
-        $stickyDuration = is_int($rawSticky) ? $rawSticky : $rawSticky;
+        $stickyDuration = $rawSticky;
 
         return new self(
             readHosts: $readHosts,

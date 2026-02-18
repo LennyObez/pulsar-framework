@@ -47,10 +47,10 @@ use const ENT_QUOTES;
  * labels, error display, and focus management for error summaries.
  */
 #[Api(since: '1.0.0')]
-final class HtmlFormRenderer implements FormRendererInterface
+final readonly class HtmlFormRenderer implements FormRendererInterface
 {
     public function __construct(
-        private readonly RendererConfig $config,
+        private RendererConfig $config,
     ) {}
 
     #[Override]
@@ -179,7 +179,7 @@ final class HtmlFormRenderer implements FormRendererInterface
         $attrs = $this->buildFieldAttributes($field, $hasErrors);
         $value = $field->getValue();
 
-        if ($value !== null && (is_string($value) || is_int($value) || is_float($value))) {
+        if (is_string($value) || is_int($value) || is_float($value)) {
             $attrs['value'] = $this->esc((string) $value);
         }
 
@@ -397,7 +397,7 @@ final class HtmlFormRenderer implements FormRendererInterface
         if ($field->getType() === 'checkbox') {
             $attrs['value'] = '1';
 
-            if ((bool) $field->getValue()) {
+            if ($field->getValue()) {
                 $attrs['checked'] = 'checked';
             }
         }
@@ -645,13 +645,7 @@ final class HtmlFormRenderer implements FormRendererInterface
 
     private function formHasFileField(FormInterface $form): bool
     {
-        foreach ($form->getFields() as $field) {
-            if ($field instanceof FileField) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($form->getFields(), static fn(FieldInterface $field): bool => $field instanceof FileField);
     }
 
     private function esc(string $value): string

@@ -23,6 +23,7 @@ use Pulsar\Security\ZeroTrust\Policy\PolicyRule;
 use function array_filter;
 use function array_values;
 use function fnmatch;
+use function in_array;
 use function usort;
 
 /**
@@ -159,13 +160,7 @@ final readonly class PolicyEngine implements PolicyEngineInterface
             return false;
         }
 
-        foreach ($matchingClaims as $claim) {
-            if ($this->claimMeetsRequirement($claim, $requirement)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($matchingClaims, fn(Claim $claim): bool => $this->claimMeetsRequirement($claim, $requirement));
     }
 
     private function claimMeetsRequirement(Claim $claim, ClaimRequirement $requirement): bool
@@ -186,13 +181,7 @@ final readonly class PolicyEngine implements PolicyEngineInterface
      */
     private function isSourceAllowed(ClaimSource $source, array $allowedSources): bool
     {
-        foreach ($allowedSources as $allowed) {
-            if ($source === $allowed) {
-                return true;
-            }
-        }
-
-        return false;
+        return in_array($source, $allowedSources, true);
     }
 
     private function dispatchAndLog(PolicyEvaluationResult $result): void

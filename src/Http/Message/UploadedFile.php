@@ -86,7 +86,7 @@ class UploadedFile implements UploadedFileInterface
         }
 
         if ($this->file !== null) {
-            $this->stream = Stream::fromFile($this->file, 'r');
+            $this->stream = Stream::fromFile($this->file);
 
             return $this->stream;
         }

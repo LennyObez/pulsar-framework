@@ -57,10 +57,8 @@ final readonly class SensitivityMetadata
      */
     public function shouldCache(string $sql, array $bindings, array $tables): bool
     {
-        foreach ($tables as $table) {
-            if ($this->isTableSensitive($table)) {
-                return false;
-            }
+        if (array_any($tables, fn(string $table): bool => $this->isTableSensitive($table))) {
+            return false;
         }
 
         if ($this->isAuthorizationShaped($sql, $bindings)) {

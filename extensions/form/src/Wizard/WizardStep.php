@@ -11,14 +11,14 @@ use Pulsar\Extension\Form\Contract\FieldInterface;
  * Represents a single step in a multi-step wizard form.
  */
 #[Api(since: '1.0.0')]
-final class WizardStep
+final readonly class WizardStep
 {
     /**
      * @param array<string, FieldInterface> $fields
      */
     public function __construct(
-        public readonly int $index,
-        public readonly string $label,
-        public readonly array $fields,
+        public int $index,
+        public string $label,
+        public array $fields,
     ) {}
 }

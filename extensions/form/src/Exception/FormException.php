@@ -15,7 +15,7 @@ class FormException extends RuntimeException
 {
     public static function invalidField(string $name): self
     {
-        return new self("Field '{$name}' does not exist in this form");
+        return new self("Field '$name' does not exist in this form");
     }
 
     public static function alreadySubmitted(): self
@@ -30,6 +30,6 @@ class FormException extends RuntimeException
 
     public static function configurationError(string $message): self
     {
-        return new self("Form configuration error: {$message}");
+        return new self("Form configuration error: $message");
     }
 }

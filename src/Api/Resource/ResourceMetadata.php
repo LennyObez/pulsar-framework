@@ -143,15 +143,7 @@ final readonly class ResourceMetadata
     #[NoDiscard]
     public function filterableFields(): array
     {
-        $filterable = [];
-
-        foreach ($this->fieldPolicies as $name => $policy) {
-            if ($policy->filterable) {
-                $filterable[$name] = $policy;
-            }
-        }
-
-        return $filterable;
+        return array_filter($this->fieldPolicies, static fn(FieldPolicy $policy): bool => $policy->filterable);
     }
 
     /**
@@ -162,14 +154,6 @@ final readonly class ResourceMetadata
     #[NoDiscard]
     public function sortableFields(): array
     {
-        $sortable = [];
-
-        foreach ($this->fieldPolicies as $name => $policy) {
-            if ($policy->sortable) {
-                $sortable[$name] = $policy;
-            }
-        }
-
-        return $sortable;
+        return array_filter($this->fieldPolicies, static fn(FieldPolicy $policy): bool => $policy->sortable);
     }
 }

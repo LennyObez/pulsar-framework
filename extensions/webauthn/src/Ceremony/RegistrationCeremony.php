@@ -122,7 +122,7 @@ final readonly class RegistrationCeremony
             $clientDataJsonB64 = $response['clientDataJSON'] ?? '';
             $clientDataJson = $this->base64UrlDecode($clientDataJsonB64);
 
-            $this->verifyClientData($clientDataJson, $expectedChallenge, 'webauthn.create');
+            $this->verifyClientData($clientDataJson, $expectedChallenge);
 
             /** @var string $attestationObjectB64 */
             $attestationObjectB64 = $response['attestationObject'] ?? '';
@@ -135,7 +135,7 @@ final readonly class RegistrationCeremony
             /** @var string $authData */
             $authData = $attObj['authData'] ?? '';
 
-            $this->verifyAuthenticatorData($authData, true);
+            $this->verifyAuthenticatorData($authData);
 
             $attestationResult = $this->attestationVerifier->verify($format, $attestationObject, $clientDataJson);
 
@@ -178,7 +178,7 @@ final readonly class RegistrationCeremony
     /**
      * Verify the client data JSON (type, challenge, origin).
      */
-    private function verifyClientData(string $clientDataJson, string $expectedChallenge, string $expectedType): void
+    private function verifyClientData(string $clientDataJson, string $expectedChallenge): void
     {
         /** @var array<string, mixed>|null $clientData */
         $clientData = json_decode($clientDataJson, true, 16);
@@ -190,8 +190,8 @@ final readonly class RegistrationCeremony
         /** @var string $type */
         $type = $clientData['type'] ?? '';
 
-        if ($type !== $expectedType) {
-            throw WebAuthnException::invalidAttestation("Expected type '{$expectedType}', got '{$type}'");
+        if ($type !== 'webauthn.create') {
+            throw WebAuthnException::invalidAttestation("Expected type 'webauthn.create', got '$type'");
         }
 
         /** @var string $challenge */
@@ -205,14 +205,14 @@ final readonly class RegistrationCeremony
         $origin = $clientData['origin'] ?? '';
 
         if ($origin !== $this->config->origin) {
-            throw WebAuthnException::invalidAttestation("Origin mismatch: expected '{$this->config->origin}', got '{$origin}'");
+            throw WebAuthnException::invalidAttestation("Origin mismatch: expected '{$this->config->origin}', got '$origin'");
         }
     }
 
     /**
      * Verify the authenticator data flags.
      */
-    private function verifyAuthenticatorData(string $authData, bool $requireAttestedCredentialData): void
+    private function verifyAuthenticatorData(string $authData): void
     {
         if (strlen($authData) < 37) {
             throw WebAuthnException::invalidAttestation('Authenticator data too short');
@@ -240,12 +240,10 @@ final readonly class RegistrationCeremony
             }
         }
 
-        if ($requireAttestedCredentialData) {
-            $hasAttestedCredentialData = ($flags & 0x40) !== 0;
+        $hasAttestedCredentialData = ($flags & 0x40) !== 0;
 
-            if (!$hasAttestedCredentialData) {
-                throw WebAuthnException::invalidAttestation('Attested credential data flag not set');
-            }
+        if (!$hasAttestedCredentialData) {
+            throw WebAuthnException::invalidAttestation('Attested credential data flag not set');
         }
     }
 

@@ -50,7 +50,7 @@ final class CacheItemTest extends TestCase
 
         $result = $item->expiresAt($expiration);
 
-        self::assertSame($expiration, $item->getExpiration());
+        self::assertSame($expiration, $item->expiration);
         self::assertSame($item, $result);
     }
 
@@ -62,7 +62,7 @@ final class CacheItemTest extends TestCase
 
         $result = $item->expiresAfter(3600);
 
-        $expiration = $item->getExpiration();
+        $expiration = $item->expiration;
         self::assertNotNull($expiration);
         self::assertGreaterThanOrEqual($before->getTimestamp(), $expiration->getTimestamp());
         self::assertSame($item, $result);
@@ -76,7 +76,7 @@ final class CacheItemTest extends TestCase
 
         $item->expiresAfter(null);
 
-        self::assertNull($item->getExpiration());
+        self::assertNull($item->expiration);
     }
 
     #[Test]
@@ -93,7 +93,7 @@ final class CacheItemTest extends TestCase
         $expiration = new DateTimeImmutable('+2 hours');
         $item = CacheItem::hit('test-key', 'value', $expiration);
 
-        self::assertSame($expiration, $item->getExpiration());
+        self::assertSame($expiration, $item->expiration);
     }
 
     #[Test]
@@ -104,7 +104,7 @@ final class CacheItemTest extends TestCase
 
         $result = $item->expiresAfter(new DateInterval('PT1H'));
 
-        $expiration = $item->getExpiration();
+        $expiration = $item->expiration;
         self::assertNotNull($expiration);
         self::assertGreaterThanOrEqual($before->getTimestamp(), $expiration->getTimestamp());
         self::assertSame($item, $result);

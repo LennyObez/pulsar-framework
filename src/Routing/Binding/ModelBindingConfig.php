@@ -9,7 +9,6 @@ use Pulsar\Api\Api;
 
 use function in_array;
 use function is_array;
-use function is_bool;
 use function is_string;
 
 /**
@@ -43,7 +42,6 @@ readonly class ModelBindingConfig
     #[NoDiscard]
     public static function fromArray(array $data): self
     {
-        /** @var string $preset */
         $preset = isset($data['preset']) && is_string($data['preset']) ? $data['preset'] : 'standard';
 
         /** @var class-string|null $authorizationHook */
@@ -56,9 +54,7 @@ readonly class ModelBindingConfig
             ? $data['allowed_key_names']
             : ['id', 'uuid', 'slug'];
 
-        $compiledMode = isset($data['compiled_mode']) && is_bool($data['compiled_mode'])
-            ? $data['compiled_mode']
-            : false;
+        $compiledMode = ($data['compiled_mode'] ?? false) === true;
 
         return new self(
             preset: $preset,

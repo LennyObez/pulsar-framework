@@ -75,7 +75,7 @@ final class GrpcTransport implements OtlpTransportInterface
         $scheme = parse_url($endpoint, PHP_URL_SCHEME);
         $host = parse_url($endpoint, PHP_URL_HOST);
 
-        if (!is_string($scheme) || ($scheme !== 'http' && $scheme !== 'https')) {
+        if ($scheme !== 'http' && $scheme !== 'https') {
             throw new InvalidArgumentException(
                 sprintf('Invalid OTLP endpoint URL: scheme must be http or https, got "%s"', $endpoint),
             );

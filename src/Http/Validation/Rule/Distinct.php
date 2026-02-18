@@ -9,6 +9,7 @@ use Pulsar\Api\Api;
 use Pulsar\Http\Validation\RuleInterface;
 use Pulsar\Http\Validation\Violation;
 
+use function in_array;
 use function is_array;
 use function sprintf;
 
@@ -40,17 +41,15 @@ readonly class Distinct implements RuleInterface
         $unique = [];
 
         foreach ($value as $element) {
-            foreach ($unique as $existing) {
-                if ($element === $existing) {
-                    return new Violation(
-                        field: $field,
-                        message: $this->message !== '' ? $this->message : sprintf(
-                            'The %s field must not contain duplicate values.',
-                            $field,
-                        ),
-                        rule: $this->name(),
-                    );
-                }
+            if (in_array($element, $unique, true)) {
+                return new Violation(
+                    field: $field,
+                    message: $this->message !== '' ? $this->message : sprintf(
+                        'The %s field must not contain duplicate values.',
+                        $field,
+                    ),
+                    rule: $this->name(),
+                );
             }
 
             $unique[] = $element;

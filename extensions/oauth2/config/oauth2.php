@@ -10,7 +10,7 @@ declare(strict_types=1);
 return [
     // The issuer identifier (e.g., https://auth.example.com)
     // Must match the 'iss' claim in ID tokens
-    'issuer' => env('OAUTH2_ISSUER', ''),
+    'issuer' => getenv('OAUTH2_ISSUER') ?: '',
 
     // Access token lifetime in seconds (default: 15 minutes)
     'access_token_ttl' => 900,

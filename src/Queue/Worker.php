@@ -156,7 +156,7 @@ final class Worker
         try {
             $this->executionPipeline->process(
                 $envelope,
-                function (JobEnvelope $e): mixed {
+                function (JobEnvelope $e): null {
                     $this->executeJob($e);
 
                     return null;

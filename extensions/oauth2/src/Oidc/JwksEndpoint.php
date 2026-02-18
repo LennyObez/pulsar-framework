@@ -20,7 +20,6 @@ final readonly class JwksEndpoint
 {
     public function __construct(
         private KeyRingInterface $keyRing,
-        private OidcConfig $config,
     ) {}
 
     /**

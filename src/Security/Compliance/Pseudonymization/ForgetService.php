@@ -26,11 +26,11 @@ use function hash;
  * right-to-erasure requirements.
  */
 #[Internal(reason: 'Forget service implementation')]
-final class ForgetService implements ForgetServiceInterface
+final readonly class ForgetService implements ForgetServiceInterface
 {
     public function __construct(
-        private readonly PseudonymLookupInterface $lookup,
-        private readonly AuditLoggerInterface $auditLogger,
+        private PseudonymLookupInterface $lookup,
+        private AuditLoggerInterface $auditLogger,
     ) {}
 
     #[Override]

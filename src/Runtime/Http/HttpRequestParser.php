@@ -7,6 +7,7 @@ namespace Pulsar\Runtime\Http;
 use Pulsar\Api\Internal;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Method;
 use Pulsar\Http\ResponseStatus;
 use ValueError;
 
@@ -18,7 +19,6 @@ use function intval;
 use function is_string;
 use function ltrim;
 use function parse_str;
-use function rawurldecode;
 use function strlen;
 use function strpos;
 use function strtolower;
@@ -101,7 +101,7 @@ final class HttpRequestParser
         $method = strtoupper($methodStr);
 
         try {
-            \Pulsar\Http\Method::from($method);
+            Method::from($method);
         } catch (ValueError) {
             $ctx->readBuffer = '';
 
@@ -252,16 +252,12 @@ final class HttpRequestParser
         }
 
         // Parse URI components
-        $path = $uri;
         $queryString = '';
         $queryPos = strpos($uri, '?');
 
         if ($queryPos !== false) {
-            $path = substr($uri, 0, $queryPos);
             $queryString = substr($uri, $queryPos + 1);
         }
-
-        $path = rawurldecode($path);
 
         $queryParams = $this->parseQueryParams($queryString);
 
@@ -301,13 +297,7 @@ final class HttpRequestParser
     {
         $lower = strtolower($name);
 
-        foreach ($headers as $key => $value) {
-            if (strtolower($key) === $lower) {
-                return $value;
-            }
-        }
-
-        return null;
+        return array_find($headers, static fn(string $_value, string $key): bool => strtolower($key) === $lower);
     }
 
     /**

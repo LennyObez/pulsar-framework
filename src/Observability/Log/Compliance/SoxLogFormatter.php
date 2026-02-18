@@ -60,10 +60,8 @@ final class SoxLogFormatter implements ComplianceLogFormatter
     {
         $financialKeys = ['amount', 'balance', 'revenue', 'expense', 'ledger', 'account', 'transaction'];
 
-        foreach ($context as $key => $value) {
-            if (in_array(strtolower($key), $financialKeys, true)) {
-                return 'financial';
-            }
+        if (array_any($context, static fn(mixed $value, string $key): bool => in_array(strtolower($key), $financialKeys, true))) {
+            return 'financial';
         }
 
         if (array_key_exists('before', $context) || array_key_exists('after', $context)) {

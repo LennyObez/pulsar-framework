@@ -69,7 +69,7 @@ final class CollectionField implements FieldInterface
         if (is_array($value)) {
             $this->entries = [];
 
-            foreach ($value as $index => $entryValue) {
+            foreach ($value as $entryValue) {
                 $entry = ($this->prototype)();
                 $entry->setValue($entryValue);
                 $this->entries[] = $entry;

@@ -57,7 +57,7 @@ final readonly class SwaggerUiController
                 <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
                 <script>
                     SwaggerUIBundle({
-                        url: "{$specUrl}",
+                        url: "$specUrl",
                         dom_id: "#swagger-ui",
                         deepLinking: true,
                         presets: [

@@ -19,10 +19,10 @@ use function is_scalar;
  * and populates form fields from an existing DTO for editing scenarios.
  */
 #[Api(since: '1.0.0')]
-final class FormDataBinder
+final readonly class FormDataBinder
 {
     public function __construct(
-        private readonly PropertyAccessor $accessor,
+        private PropertyAccessor $accessor,
     ) {}
 
     /**

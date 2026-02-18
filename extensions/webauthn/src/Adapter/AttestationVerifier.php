@@ -22,7 +22,7 @@ use function strlen;
  * according to the configured format policy.
  */
 #[Internal(reason: 'WebAuthn adapter implementation')]
-final class AttestationVerifier implements AttestationVerifierInterface
+final readonly class AttestationVerifier implements AttestationVerifierInterface
 {
     /** @var list<string> */
     private readonly array $formats;
@@ -53,7 +53,7 @@ final class AttestationVerifier implements AttestationVerifierInterface
         return match ($format) {
             'none' => $this->verifyNone($decoded, $aaguid),
             'packed' => $this->verifyPacked($decoded, $clientDataJson, $aaguid),
-            default => throw WebAuthnException::invalidAttestation("Unsupported format: {$format}"),
+            default => throw WebAuthnException::invalidAttestation("Unsupported format: $format"),
         };
     }
 
@@ -365,16 +365,10 @@ final class AttestationVerifier implements AttestationVerifierInterface
     private function coseAlgToOpenSsl(int $alg): int
     {
         return match ($alg) {
-            -7 => OPENSSL_ALGO_SHA256,   // ES256
-            -35 => OPENSSL_ALGO_SHA384,  // ES384
-            -36 => OPENSSL_ALGO_SHA512,  // ES512
-            -257 => OPENSSL_ALGO_SHA256, // RS256
-            -258 => OPENSSL_ALGO_SHA384, // RS384
-            -259 => OPENSSL_ALGO_SHA512, // RS512
-            -37 => OPENSSL_ALGO_SHA256,  // PS256
-            -38 => OPENSSL_ALGO_SHA384,  // PS384
-            -39 => OPENSSL_ALGO_SHA512,  // PS512
-            default => throw WebAuthnException::invalidAttestation("Unsupported COSE algorithm: {$alg}"),
+            -7, -257, -37 => OPENSSL_ALGO_SHA256,   // ES256, RS256, PS256
+            -35, -258, -38 => OPENSSL_ALGO_SHA384,   // ES384, RS384, PS384
+            -36, -259, -39 => OPENSSL_ALGO_SHA512,   // ES512, RS512, PS512
+            default => throw WebAuthnException::invalidAttestation("Unsupported COSE algorithm: $alg"),
         };
     }
 

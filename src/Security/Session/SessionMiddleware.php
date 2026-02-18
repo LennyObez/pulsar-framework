@@ -19,11 +19,11 @@ use Pulsar\Security\Session\Flash\FlashBag;
  * after the downstream middleware pipeline has processed the request.
  */
 #[Api(since: '1.0.0')]
-final class SessionMiddleware implements MiddlewareInterface
+final readonly class SessionMiddleware implements MiddlewareInterface
 {
     public function __construct(
-        private readonly SessionManager $sessionManager,
-        private readonly FlashBag $flashBag,
+        private SessionManager $sessionManager,
+        private FlashBag $flashBag,
     ) {}
 
     #[Override]

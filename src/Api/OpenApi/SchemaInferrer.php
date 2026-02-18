@@ -281,7 +281,7 @@ final class SchemaInferrer
         }
 
         $backingType = $enumReflection->getBackingType();
-        $jsonType = ($backingType !== null && $backingType instanceof ReflectionNamedType && $backingType->getName() === 'int')
+        $jsonType = ($backingType instanceof ReflectionNamedType && $backingType->getName() === 'int')
             ? 'integer'
             : 'string';
 

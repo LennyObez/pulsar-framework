@@ -7,7 +7,6 @@ namespace Pulsar\Extension\OpenTelemetry\Cardinality;
 use Psr\Log\LoggerInterface;
 use Pulsar\Api\Api;
 
-use function array_flip;
 use function array_intersect_key;
 use function array_key_exists;
 use function array_map;

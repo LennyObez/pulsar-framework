@@ -47,7 +47,8 @@ final readonly class JsonSerializer implements SerializerInterface
         return json_encode($payload, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
-    public function deserialize(string $data, string $type): mixed
+    /** @return array<string, mixed> */
+    public function deserialize(string $data, string $type): array
     {
         $this->typeRegistry->assertAllowed($type);
 
@@ -57,7 +58,7 @@ final readonly class JsonSerializer implements SerializerInterface
             throw QueueException::serializationFailed($type);
         }
 
-        /** @var array<string, mixed> $decoded */
+        /** @var array<string, mixed> $decoded — PHPStan type narrowing (is_array only narrows to array) */
         $decoded = $decoded;
 
         /** @var int $payloadVersion */

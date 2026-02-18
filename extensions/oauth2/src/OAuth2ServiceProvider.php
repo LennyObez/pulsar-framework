@@ -92,7 +92,6 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
                 $container->get(AccessTokenRepositoryInterface::class),
                 $container->get(RefreshTokenRepositoryInterface::class),
                 $container->get(AuditLoggerInterface::class),
-                $container->get(OAuth2Config::class),
             );
         });
 
@@ -109,7 +108,6 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
                 $container->get(RefreshTokenRepositoryInterface::class),
                 $container->get(AccessTokenRepositoryInterface::class),
                 $container->get(AuditLoggerInterface::class),
-                $container->get(OAuth2Config::class),
             );
         });
 
@@ -137,7 +135,6 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
         $container->bind(JwksEndpoint::class, static function () use ($container): JwksEndpoint {
             return new JwksEndpoint(
                 $container->get(KeyRingInterface::class),
-                $container->get(OidcConfig::class),
             );
         });
 
@@ -145,7 +142,6 @@ final class OAuth2ServiceProvider implements ServiceProviderInterface
             return new IdTokenBuilder(
                 $container->get(OidcConfig::class),
                 $container->get(UserClaimsProviderInterface::class),
-                $container->get(KeyRingInterface::class),
                 $container->get(JwtSigner::class),
             );
         });

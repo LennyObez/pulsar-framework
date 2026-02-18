@@ -57,14 +57,12 @@ final class AdversarialTest extends TestCase
             codeRepository: $this->codeRepo,
             accessTokenRepository: $this->accessTokenRepo,
             refreshTokenRepository: $this->refreshTokenRepo,
-            scopeRepository: $this->scopeRepo,
             auditLogger: $this->auditLogger,
         );
 
         $this->refreshTokenGrant = new RefreshTokenGrant(
             refreshTokenRepository: $this->refreshTokenRepo,
             accessTokenRepository: $this->accessTokenRepo,
-            scopeRepository: $this->scopeRepo,
             auditLogger: $this->auditLogger,
         );
     }

@@ -141,13 +141,7 @@ final class CompiledListenerProvider implements ListenerProviderInterface, Liste
     {
         $matchingClasses = $this->resolveMatchingClasses($eventClass);
 
-        foreach ($matchingClasses as $class) {
-            if (isset($this->compiledMap[$class]) && $this->compiledMap[$class]['requiresEnvelope']) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($matchingClasses, fn(string $class): bool => isset($this->compiledMap[$class]) && $this->compiledMap[$class]['requiresEnvelope']);
     }
 
     /**

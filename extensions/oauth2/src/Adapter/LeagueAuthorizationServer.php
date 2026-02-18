@@ -107,7 +107,7 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
                 return $this->jsonResponse($e->toErrorResponse(), $e->httpStatusCode());
             }
 
-            return $this->jsonResponse([], 200);
+            return $this->jsonResponse([]);
         }
     }
 
@@ -214,7 +214,7 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
         // Validate client is authorized for this grant type
         if (!$client->hasGrantType($grantType)) {
             throw OAuth2Exception::unauthorizedClient(
-                "Client is not authorized for the '{$grantType}' grant type",
+                "Client is not authorized for the '$grantType' grant type",
             );
         }
 
@@ -256,6 +256,7 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
 
         // Token is not active or not found
         return $this->jsonResponse(['active' => false]);
+
     }
 
     private function processRevocationRequest(ServerRequestInterface $request): ResponseInterface
@@ -296,7 +297,7 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
         }
 
         // RFC 7009: Always return 200, even if token was not found
-        return $this->jsonResponse([], 200);
+        return $this->jsonResponse([]);
     }
 
     /**
@@ -330,7 +331,7 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
                     outcome: AuditOutcome::Failure,
                     actor: null,
                     action: 'oauth2.client.authentication_failed',
-                    resource: '',
+                    resource: 'oauth2.client',
                     metadata: ['reason' => 'Missing client_id'],
                 );
 
@@ -473,7 +474,7 @@ final readonly class LeagueAuthorizationServer implements AuthorizationServerInt
         $value = $params[$name] ?? null;
 
         if (!is_string($value) || $value === '') {
-            throw OAuth2Exception::invalidRequest("Missing required parameter: {$name}");
+            throw OAuth2Exception::invalidRequest("Missing required parameter: $name");
         }
 
         return $value;

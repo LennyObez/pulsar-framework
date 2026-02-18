@@ -91,9 +91,7 @@ final class TemplateCompiler
         $output = $this->compileRawEchos($output);
 
         // Phase 4: Compile escaped output {{ $expr }}
-        $output = $this->compileEscapedEchos($output);
-
-        return $output;
+        return $this->compileEscapedEchos($output);
     }
 
     /**
@@ -184,7 +182,7 @@ final class TemplateCompiler
     private function compileEscapedEchos(string $source): string
     {
         return (string) preg_replace_callback(
-            '/\{\{\s*(.+?)\s*\}\}/s',
+            '/\{\{\s*(.+?)\s*}}/s',
             static fn(array $matches): string => '<?php echo htmlspecialchars((string) (' . trim($matches[1]) . '), ENT_QUOTES | ENT_SUBSTITUTE, \'UTF-8\'); ?>',
             $source,
         );
@@ -196,7 +194,7 @@ final class TemplateCompiler
     private function compileRawEchos(string $source): string
     {
         return (string) preg_replace_callback(
-            '/\{!!\s*(.+?)\s*!!\}/s',
+            '/\{!!\s*(.+?)\s*!!}/s',
             static fn(array $matches): string => '<?php echo ' . trim($matches[1]) . '; ?>',
             $source,
         );
@@ -209,7 +207,7 @@ final class TemplateCompiler
      */
     private function compileComments(string $source): string
     {
-        return (string) preg_replace('/\{\{--.*?--\}\}/s', '', $source);
+        return (string) preg_replace('/\{\{--.*?--}}/s', '', $source);
     }
 
     /**

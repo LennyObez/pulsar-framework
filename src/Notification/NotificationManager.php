@@ -36,23 +36,23 @@ use function time;
  * Transactional notifications always bypass opt-out checks.
  */
 #[Api(since: '1.0.0')]
-final class NotificationManager implements NotificationManagerInterface
+final readonly class NotificationManager implements NotificationManagerInterface
 {
     /** @var array<string, NotificationChannelInterface> */
-    private readonly array $channels;
+    private array $channels;
 
     /**
      * @param array<string, NotificationChannelInterface> $channels Channel instances keyed by name
      */
     public function __construct(
-        private readonly NotificationConfig $config,
+        private NotificationConfig $config,
         array $channels,
-        private readonly ?EventDispatcherInterface $eventDispatcher = null,
-        private readonly ?AuditLoggerInterface $auditLogger = null,
-        private readonly ?LoggerInterface $logger = null,
-        private readonly ?NotificationClassificationRegistry $classificationRegistry = null,
-        private readonly ?PreferenceStoreInterface $preferenceStore = null,
-        private readonly ?LegalBasisRegistry $legalBasisRegistry = null,
+        private ?EventDispatcherInterface $eventDispatcher = null,
+        private ?AuditLoggerInterface $auditLogger = null,
+        private ?LoggerInterface $logger = null,
+        private ?NotificationClassificationRegistry $classificationRegistry = null,
+        private ?PreferenceStoreInterface $preferenceStore = null,
+        private ?LegalBasisRegistry $legalBasisRegistry = null,
     ) {
         $this->channels = $channels;
     }
@@ -294,11 +294,7 @@ final class NotificationManager implements NotificationManagerInterface
 
     private function resolveClassification(Notification $notification): ?NotificationClassification
     {
-        if ($this->classificationRegistry === null) {
-            return null;
-        }
-
-        return $this->classificationRegistry->classify($notification::class);
+        return $this->classificationRegistry?->classify($notification::class);
     }
 
     private function emitSent(string $notificationId, string $notifiableId, string $channel): void

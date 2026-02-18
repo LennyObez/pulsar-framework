@@ -54,7 +54,7 @@ readonly class Iban implements RuleInterface
 
     private function isValidIban(string $iban): bool
     {
-        $cleaned = mb_strtoupper((string) preg_replace('/[\s\-]/', '', $iban));
+        $cleaned = mb_strtoupper((string) preg_replace('/[\s-]/', '', $iban));
         $length = mb_strlen($cleaned);
 
         if ($length < 15 || $length > 34) {
@@ -85,7 +85,7 @@ readonly class Iban implements RuleInterface
             $char = mb_substr($rearranged, $i, 1);
 
             if (ctype_alpha($char)) {
-                $numeric .= (string) (ord($char) - ord('A') + 10);
+                $numeric .= (ord($char) - ord('A') + 10);
             } else {
                 $numeric .= $char;
             }

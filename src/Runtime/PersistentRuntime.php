@@ -334,7 +334,6 @@ final class PersistentRuntime implements ReloadableRuntimeInterface
                     $raw = $this->serializer->serialize(
                         $response,
                         requestMethod: $request->getMethod(),
-                        closeConnection: false,
                         addDateHeader: $this->config->addDateHeader,
                     );
                     $this->socketWrite($clientSocket, $raw);

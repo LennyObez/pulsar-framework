@@ -8,7 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function is_array;
-use function is_bool;
 use function is_int;
 use function is_string;
 
@@ -58,16 +57,12 @@ readonly class ViewConfig
         $rawCachePath = $data['cache_path'] ?? '';
         $cachePath = is_string($rawCachePath) ? $rawCachePath : '';
 
-        $autoEscape = isset($data['auto_escape']) && is_bool($data['auto_escape'])
-            ? $data['auto_escape']
-            : true;
+        $autoEscape = ($data['auto_escape'] ?? true) !== false;
 
         $rawTheme = $data['active_theme'] ?? 'default';
         $activeTheme = is_string($rawTheme) ? $rawTheme : 'default';
 
-        $phpDirectiveAllowed = isset($data['php_directive_allowed']) && is_bool($data['php_directive_allowed'])
-            ? $data['php_directive_allowed']
-            : false;
+        $phpDirectiveAllowed = ($data['php_directive_allowed'] ?? false) === true;
 
         $rawStepLimit = $data['sandbox_step_limit'] ?? 10_000;
         $sandboxStepLimit = is_int($rawStepLimit) && $rawStepLimit > 0 ? $rawStepLimit : 10_000;

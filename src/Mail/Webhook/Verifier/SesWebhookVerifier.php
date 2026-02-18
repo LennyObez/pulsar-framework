@@ -89,13 +89,10 @@ final readonly class SesWebhookVerifier implements WebhookVerifierInterface
 
         $host = $parsed['host'] ?? '';
 
-        foreach ($this->allowedCertHosts as $allowedHost) {
-            if ($host === $allowedHost || str_ends_with($host, '.' . $allowedHost)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            $this->allowedCertHosts,
+            static fn(string $allowedHost): bool => $host === $allowedHost || str_ends_with($host, '.' . $allowedHost),
+        );
     }
 
     /**

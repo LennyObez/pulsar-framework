@@ -60,7 +60,7 @@ final class CacheKeyValidator
     /**
      * Validate multiple cache keys.
      *
-     * @param array<mixed> $keys
+     * @param array<array-key, mixed> $keys
      *
      * @throws InvalidArgumentException If any key is invalid
      */

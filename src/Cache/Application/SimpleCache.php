@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Cache\Application;
 
 use DateInterval;
-use Psr\Cache\CacheItemInterface;
 use Psr\SimpleCache\CacheInterface;
 use Pulsar\Api\Api;
 
@@ -56,11 +55,9 @@ final readonly class SimpleCache implements CacheInterface
     public function getMultiple(iterable $keys, mixed $default = null): iterable
     {
         $keyList = $this->iterableToArray($keys);
-        $items = $this->pool->getItems($keyList);
         $result = [];
 
-        /** @var CacheItemInterface $item */
-        foreach ($items as $key => $item) {
+        foreach ($this->pool->getItems($keyList) as $key => $item) {
             $result[$key] = $item->isHit() ? $item->get() : $default;
         }
 

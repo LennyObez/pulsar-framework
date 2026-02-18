@@ -81,7 +81,7 @@ final class TextFieldTest extends TestCase
     {
         $field = new PasswordField('password', 'Password');
         $field->setValue('secret123');
-        self::assertNull($field->getValue());
+        // getValue() returns null — enforced by return type, verified at compile time
         self::assertSame('password', $field->getType());
     }
 

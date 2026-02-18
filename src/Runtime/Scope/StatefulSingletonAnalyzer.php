@@ -109,13 +109,7 @@ final readonly class StatefulSingletonAnalyzer
      */
     public function isCoreNamespace(string $className): bool
     {
-        foreach ($this->coreNamespaces as $prefix) {
-            if (str_starts_with($className, $prefix)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->coreNamespaces, static fn(string $prefix): bool => str_starts_with($className, $prefix));
     }
 
     /**

@@ -12,7 +12,6 @@ use Pulsar\Extension\OAuth2\Client\OAuthClient;
 use Pulsar\Extension\OAuth2\Contract\AccessTokenRepositoryInterface;
 use Pulsar\Extension\OAuth2\Contract\AuthorizationCodeRepositoryInterface;
 use Pulsar\Extension\OAuth2\Contract\RefreshTokenRepositoryInterface;
-use Pulsar\Extension\OAuth2\Contract\ScopeRepositoryInterface;
 use Pulsar\Extension\OAuth2\Exception\OAuth2Exception;
 use Pulsar\Extension\OAuth2\Token\AccessToken;
 use Pulsar\Extension\OAuth2\Token\AuthorizationCode;
@@ -46,7 +45,6 @@ final readonly class AuthorizationCodeGrant implements GrantInterface
         private AuthorizationCodeRepositoryInterface $codeRepository,
         private AccessTokenRepositoryInterface $accessTokenRepository,
         private RefreshTokenRepositoryInterface $refreshTokenRepository,
-        private ScopeRepositoryInterface $scopeRepository,
         private AuditLoggerInterface $auditLogger,
     ) {}
 
@@ -218,7 +216,7 @@ final readonly class AuthorizationCodeGrant implements GrantInterface
         $value = $body[$param] ?? null;
 
         if (!is_string($value) || $value === '') {
-            throw OAuth2Exception::invalidRequest("Missing required parameter: {$param}");
+            throw OAuth2Exception::invalidRequest("Missing required parameter: $param");
         }
 
         return $value;

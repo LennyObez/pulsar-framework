@@ -133,15 +133,11 @@ final class ArtifactIntegrityVerifier
      */
     private function canonicalize(BuildManifest $manifest): string
     {
-        $artifacts = [];
-
-        foreach ($manifest->artifacts as $key => $artifact) {
-            $artifacts[$key] = [
-                'path' => $artifact->path,
-                'hash' => $artifact->hash,
-                'size' => $artifact->size,
-            ];
-        }
+        $artifacts = array_map(static fn(ArtifactEntry $artifact): array => [
+            'path' => $artifact->path,
+            'hash' => $artifact->hash,
+            'size' => $artifact->size,
+        ], $manifest->artifacts);
 
         $data = [
             'version' => $manifest->version,

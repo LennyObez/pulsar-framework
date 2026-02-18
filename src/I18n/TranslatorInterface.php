@@ -25,15 +25,7 @@ interface TranslatorInterface
      */
     public function translate(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string;
 
-    /**
-     * Get the current locale.
-     */
-    public function getLocale(): string;
-
-    /**
-     * Set the current locale.
-     */
-    public function setLocale(string $locale): void;
+    public string $locale { get; set; }
 
     /**
      * Check if a translation key exists.

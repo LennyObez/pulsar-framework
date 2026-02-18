@@ -76,7 +76,7 @@ final class DatabaseHandler implements SessionHandlerInterface
     public function read(string $id): string
     {
         $stmt = $this->pdo->prepare(
-            "SELECT data FROM {$this->tableName} WHERE id = ?",
+            "SELECT data FROM $this->tableName WHERE id = ?",
         );
         $stmt->execute([$id]);
 
@@ -98,12 +98,12 @@ final class DatabaseHandler implements SessionHandlerInterface
             $this->pdo->beginTransaction();
 
             $deleteStmt = $this->pdo->prepare(
-                "DELETE FROM {$this->tableName} WHERE id = ?",
+                "DELETE FROM $this->tableName WHERE id = ?",
             );
             $deleteStmt->execute([$id]);
 
             $insertStmt = $this->pdo->prepare(
-                "INSERT INTO {$this->tableName} (id, user_id, data, ip_address, user_agent, last_activity, created_at)"
+                "INSERT INTO $this->tableName (id, user_id, data, ip_address, user_agent, last_activity, created_at)"
                 . ' VALUES (?, ?, ?, ?, ?, ?, ?)',
             );
             $insertStmt->execute([
@@ -132,7 +132,7 @@ final class DatabaseHandler implements SessionHandlerInterface
     public function destroy(string $id): bool
     {
         $stmt = $this->pdo->prepare(
-            "DELETE FROM {$this->tableName} WHERE id = ?",
+            "DELETE FROM $this->tableName WHERE id = ?",
         );
 
         return $stmt->execute([$id]);
@@ -144,7 +144,7 @@ final class DatabaseHandler implements SessionHandlerInterface
         $threshold = time() - $max_lifetime;
 
         $stmt = $this->pdo->prepare(
-            "DELETE FROM {$this->tableName} WHERE last_activity < ?",
+            "DELETE FROM $this->tableName WHERE last_activity < ?",
         );
         $stmt->execute([$threshold]);
 
@@ -175,7 +175,7 @@ final class DatabaseHandler implements SessionHandlerInterface
         $threshold = time() - $this->lifetime;
 
         $stmt = $this->pdo->prepare(
-            "SELECT COUNT(*) FROM {$this->tableName} WHERE user_id = ? AND last_activity >= ?",
+            "SELECT COUNT(*) FROM $this->tableName WHERE user_id = ? AND last_activity >= ?",
         );
         $stmt->execute([$userId, $threshold]);
 
@@ -191,7 +191,7 @@ final class DatabaseHandler implements SessionHandlerInterface
         $threshold = time() - $this->lifetime;
 
         $stmt = $this->pdo->prepare(
-            "SELECT id, last_activity, ip_address, user_agent, created_at FROM {$this->tableName}"
+            "SELECT id, last_activity, ip_address, user_agent, created_at FROM $this->tableName"
             . ' WHERE user_id = ? AND last_activity >= ? ORDER BY last_activity DESC',
         );
         $stmt->execute([$userId, $threshold]);
@@ -218,7 +218,7 @@ final class DatabaseHandler implements SessionHandlerInterface
     public function revokeSession(string $sessionId): bool
     {
         $stmt = $this->pdo->prepare(
-            "DELETE FROM {$this->tableName} WHERE id = ?",
+            "DELETE FROM $this->tableName WHERE id = ?",
         );
         $stmt->execute([$sessionId]);
 

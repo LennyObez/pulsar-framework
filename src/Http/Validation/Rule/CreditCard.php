@@ -50,7 +50,7 @@ readonly class CreditCard implements RuleInterface
 
     private function isValidLuhn(string $number): bool
     {
-        $cleaned = (string) preg_replace('/[\s\-]/', '', $number);
+        $cleaned = (string) preg_replace('/[\s-]/', '', $number);
         $length = mb_strlen($cleaned);
 
         if ($length < 13 || $length > 19) {

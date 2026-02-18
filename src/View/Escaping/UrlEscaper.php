@@ -39,7 +39,7 @@ final readonly class UrlEscaper implements EscaperInterface
         }
 
         // If it looks like an absolute URL (has scheme), encode only query/fragment parts
-        if (preg_match('#^[a-zA-Z][a-zA-Z0-9+\-.]*://#', $trimmed) === 1) {
+        if (preg_match('#^[a-zA-Z][a-zA-Z0-9+.-]*://#', $trimmed) === 1) {
             return $this->encodeUrl($trimmed);
         }
 
@@ -59,19 +59,16 @@ final readonly class UrlEscaper implements EscaperInterface
             . '\xC2[\xA0\xAD]|'                        // U+00A0 (NBSP) + U+00AD (soft hyphen)
             . '\xE2\x80[\x8B-\x8F\xA8\xA9\xAA\xAB]|' // U+200B-200F, U+2028-202B
             . '\xE2\x81[\xA0-\xAF]|'                   // U+2060-206F (invisible formatting)
-            . '\xEF\xBB\xBF/s',                        // U+FEFF (BOM)
+            . '\xEF\xBB\xBF/',                         // U+FEFF (BOM)
             '',
             $value,
         ) ?? $value;
         $lower = strtolower($normalized);
 
-        foreach (self::DANGEROUS_SCHEMES as $scheme) {
-            if (str_starts_with($lower, $scheme . ':')) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            self::DANGEROUS_SCHEMES,
+            static fn(string $scheme): bool => str_starts_with($lower, $scheme . ':'),
+        );
     }
 
     /**

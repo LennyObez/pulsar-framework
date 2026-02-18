@@ -38,11 +38,7 @@ final class JsonCacheSerializer implements CacheSerializerInterface
             );
         }
 
-        try {
-            return json_encode($value, self::ENCODE_FLAGS);
-        } catch (JsonException $e) {
-            throw CacheException::serializationFailed($e->getMessage(), $e);
-        }
+        return json_encode($value, self::ENCODE_FLAGS);
     }
 
     public function deserialize(string $data): mixed

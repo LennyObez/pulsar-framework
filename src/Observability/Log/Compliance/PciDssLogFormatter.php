@@ -32,7 +32,7 @@ final class PciDssLogFormatter implements ComplianceLogFormatter
      * Pattern to detect potential PAN numbers (13-19 digit sequences,
      * optionally separated by spaces or dashes).
      */
-    private const string PAN_PATTERN = '/\b(?:\d[ \-]*?){13,19}\b/';
+    private const string PAN_PATTERN = '/\b(?:\d[ -]*?){13,19}\b/';
 
     /**
      * Context keys that are always fully masked when present.

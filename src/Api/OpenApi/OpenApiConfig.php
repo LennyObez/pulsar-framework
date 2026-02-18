@@ -8,7 +8,6 @@ use NoDiscard;
 use Pulsar\Api\Api;
 
 use function is_array;
-use function is_bool;
 use function is_string;
 
 /**
@@ -73,9 +72,7 @@ readonly class OpenApiConfig
         $rawSwaggerRoute = $data['swagger_ui_route'] ?? '/api/docs';
         $swaggerUiRoute = is_string($rawSwaggerRoute) ? $rawSwaggerRoute : '/api/docs';
 
-        $swaggerUiEnabled = isset($data['swagger_ui_enabled']) && is_bool($data['swagger_ui_enabled'])
-            ? $data['swagger_ui_enabled']
-            : false;
+        $swaggerUiEnabled = ($data['swagger_ui_enabled'] ?? false) === true;
 
         return new self(
             title: self::stringOrDefault($data, 'title', 'Pulsar API'),

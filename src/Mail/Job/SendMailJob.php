@@ -17,14 +17,14 @@ use Pulsar\Queue\QueueableInterface;
  * Used for asynchronous mail delivery via the queue system.
  */
 #[Internal]
-final class SendMailJob implements QueueableInterface
+final readonly class SendMailJob implements QueueableInterface
 {
     public function __construct(
-        private readonly Mailable $mailable,
-        private readonly MailManagerInterface $mailManager,
-        private readonly string $queueName = 'mail',
-        private readonly int $maxAttemptCount = 3,
-        private readonly int $timeoutSeconds = 60,
+        private Mailable $mailable,
+        private MailManagerInterface $mailManager,
+        private string $queueName = 'mail',
+        private int $maxAttemptCount = 3,
+        private int $timeoutSeconds = 60,
     ) {}
 
     #[Override]

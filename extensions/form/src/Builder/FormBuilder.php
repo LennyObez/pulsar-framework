@@ -38,7 +38,7 @@ final class FormBuilder
     private string $id = '';
     private string $method = 'POST';
     private string $action = '';
-    private bool $csrfEnabled = true;
+    private bool $csrfEnabled;
 
     public function __construct(
         private readonly FormConfig $config,

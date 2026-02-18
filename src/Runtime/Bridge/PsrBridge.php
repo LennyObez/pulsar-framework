@@ -55,10 +55,10 @@ final readonly class PsrBridge implements PsrBridgeInterface
 
         // Build headers map (flatten multi-value headers with comma join)
         /** @var array<string, string> $headers */
-        $headers = [];
-        foreach ($psrRequest->getHeaders() as $name => $values) {
-            $headers[$name] = implode(', ', $values);
-        }
+        $headers = array_map(
+            static fn(array $values): string => implode(', ', $values),
+            $psrRequest->getHeaders(),
+        );
 
         $body = (string) $psrRequest->getBody();
         /** @var array<string, mixed> $cookies */
@@ -97,10 +97,10 @@ final readonly class PsrBridge implements PsrBridgeInterface
     #[Override]
     public function toPsrResponse(Response $pulsarResponse): ResponseInterface
     {
-        $headers = [];
-        foreach ($pulsarResponse->headers->toArray() as $name => $values) {
-            $headers[$name] = implode(', ', $values);
-        }
+        $headers = array_map(
+            static fn(array $values): string => implode(', ', $values),
+            $pulsarResponse->headers->toArray(),
+        );
 
         return ($this->responseFactory)(
             $pulsarResponse->status->value,

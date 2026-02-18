@@ -45,7 +45,7 @@ final readonly class PreventDuplicates implements JobMiddlewareInterface
         $resource = sprintf('queue:dedup:%s', $envelope->idempotencyKey);
 
         try {
-            $handle = $this->lock->acquire($resource, $this->ttlSeconds, 0);
+            $handle = $this->lock->acquire($resource, $this->ttlSeconds);
         } catch (LockAcquisitionException) {
             throw QueueException::duplicateJob($envelope->id, $envelope->idempotencyKey);
         }

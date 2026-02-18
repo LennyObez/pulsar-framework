@@ -29,7 +29,7 @@ use const JSON_UNESCAPED_UNICODE;
 #[Internal(reason: 'Envelope serialization is an implementation detail of the queue transport')]
 final readonly class EnvelopeSerializer
 {
-    private const REQUIRED_FIELDS = [
+    private const array REQUIRED_FIELDS = [
         'id',
         'jobClass',
         'payload',
@@ -93,7 +93,7 @@ final readonly class EnvelopeSerializer
             throw QueueException::invalidEnvelope('decoded value is not an object');
         }
 
-        /** @var array<string, mixed> $data */
+        /** @var array<string, mixed> $data — PHPStan type narrowing (is_array only narrows to array) */
         $data = $data;
 
         foreach (self::REQUIRED_FIELDS as $field) {
@@ -129,10 +129,10 @@ final readonly class EnvelopeSerializer
             tenantId: $this->nullableString($data, 'tenantId'),
             subjectId: $this->nullableString($data, 'subjectId'),
             batchId: $this->nullableString($data, 'batchId'),
-            chainIndex: $this->nullableInt($data, 'chainIndex'),
+            chainIndex: $this->nullableInt($data),
             attempt: $this->int($data, 'attempt'),
             dispatchedAt: $this->int($data, 'dispatchedAt'),
-            encrypted: $this->bool($data, 'encrypted'),
+            encrypted: $this->bool($data),
             metadata: $metadata,
         );
     }
@@ -188,17 +188,17 @@ final readonly class EnvelopeSerializer
      *
      * @throws QueueException
      */
-    private function nullableInt(array $data, string $field): ?int
+    private function nullableInt(array $data): ?int
     {
-        if (!array_key_exists($field, $data) || $data[$field] === null) {
+        if (!array_key_exists('chainIndex', $data) || $data['chainIndex'] === null) {
             return null;
         }
 
-        if (!is_int($data[$field])) {
-            throw QueueException::invalidEnvelope('field "' . $field . '" must be an integer or null');
+        if (!is_int($data['chainIndex'])) {
+            throw QueueException::invalidEnvelope('field "chainIndex" must be an integer or null');
         }
 
-        return $data[$field];
+        return $data['chainIndex'];
     }
 
     /**
@@ -206,12 +206,12 @@ final readonly class EnvelopeSerializer
      *
      * @throws QueueException
      */
-    private function bool(array $data, string $field): bool
+    private function bool(array $data): bool
     {
-        if (!is_bool($data[$field])) {
-            throw QueueException::invalidEnvelope('field "' . $field . '" must be a boolean');
+        if (!is_bool($data['encrypted'])) {
+            throw QueueException::invalidEnvelope('field "encrypted" must be a boolean');
         }
 
-        return $data[$field];
+        return $data['encrypted'];
     }
 }

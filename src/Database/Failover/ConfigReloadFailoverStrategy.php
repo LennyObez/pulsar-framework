@@ -29,10 +29,10 @@ final readonly class ConfigReloadFailoverStrategy implements FailoverStrategyInt
     {
         $config = ($this->configLoader)();
 
-        /** @var string|null */
+        /** @var string|null $host */
         $host = $config['host'] ?? null;
 
-        return $host !== null && $host !== '' ? $host : null;
+        return $host !== '' ? $host : null;
     }
 
     #[Override]

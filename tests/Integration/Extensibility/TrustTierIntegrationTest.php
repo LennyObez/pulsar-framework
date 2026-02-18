@@ -67,7 +67,7 @@ final class TrustTierIntegrationTest extends TestCase
         $trustedConfig = TrustedExtensionsConfig::fromArray([
             'pulsar/admin' => ['tier' => 'core'],
         ]);
-        $this->bootstrap->setTrustedExtensionsConfig($trustedConfig);
+        $this->bootstrap->trustedExtensionsConfig = $trustedConfig;
 
         $this->bootstrap->addExtension($extension, $manifest);
         $this->bootstrap->register($this->container);
@@ -119,7 +119,7 @@ final class TrustTierIntegrationTest extends TestCase
         $trustedConfig = TrustedExtensionsConfig::fromArray([
             'acme/ext' => ['tier' => 'community'],
         ]);
-        $this->bootstrap->setTrustedExtensionsConfig($trustedConfig);
+        $this->bootstrap->trustedExtensionsConfig = $trustedConfig;
 
         $this->bootstrap->addExtension($extension, $manifest);
 
@@ -138,7 +138,7 @@ final class TrustTierIntegrationTest extends TestCase
         $trustedConfig = TrustedExtensionsConfig::fromArray([
             'pulsar/core-ext' => ['tier' => 'core'],
         ]);
-        $this->bootstrap->setTrustedExtensionsConfig($trustedConfig);
+        $this->bootstrap->trustedExtensionsConfig = $trustedConfig;
 
         // Core extension — full access
         $coreExt = $this->createResolvingExtension('pulsar/core-ext', LoggerInterface::class);
@@ -191,7 +191,7 @@ final class TrustTierIntegrationTest extends TestCase
                 'additional_capabilities' => ['DatabaseRaw'],
             ],
         ]);
-        $this->bootstrap->setTrustedExtensionsConfig($trustedConfig);
+        $this->bootstrap->trustedExtensionsConfig = $trustedConfig;
 
         $this->bootstrap->addExtension($extension, $manifest);
         $this->bootstrap->register($this->container);
@@ -202,8 +202,8 @@ final class TrustTierIntegrationTest extends TestCase
 
     private function configurePolicy(): void
     {
-        $this->bootstrap->setCapabilityPolicy(CapabilityPolicy::defaults());
-        $this->bootstrap->setServiceRestrictionMap(ServiceRestrictionMap::defaults());
+        $this->bootstrap->capabilityPolicy = CapabilityPolicy::defaults();
+        $this->bootstrap->serviceRestrictionMap = ServiceRestrictionMap::defaults();
     }
 
     private function createManifest(string $name, string $trustTier): ExtensionManifest

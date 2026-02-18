@@ -178,8 +178,9 @@ final class BatchExporterTest extends TestCase
         $exporter->flush();
 
         // Should not throw; queue should still drain
+        // Transport is called twice: initial send + 1 retry (retryable failure)
         self::assertSame(0, $exporter->queueSize());
-        self::assertCount(1, $transport->sentPayloads);
+        self::assertCount(2, $transport->sentPayloads);
     }
 
     #[Test]

@@ -334,7 +334,7 @@ final class CachePool implements CacheItemPoolInterface
 
     private function resolveItemTtl(CacheItem $item): ?int
     {
-        $expiration = $item->getExpiration();
+        $expiration = $item->expiration;
 
         if ($expiration !== null) {
             $diff = $expiration->getTimestamp() - time();

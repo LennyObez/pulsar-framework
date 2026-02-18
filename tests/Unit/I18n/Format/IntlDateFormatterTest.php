@@ -19,8 +19,7 @@ final class IntlDateFormatterTest extends TestCase
     #[Test]
     public function formatsDate(): void
     {
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('getLocale')->willReturn('en_US');
+        $translator = $this->createFakeTranslator('en_US');
 
         $formatter = new IntlDateFormatter($translator);
 
@@ -34,8 +33,7 @@ final class IntlDateFormatterTest extends TestCase
     #[Test]
     public function usesOverrideLocale(): void
     {
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('getLocale')->willReturn('en_US');
+        $translator = $this->createFakeTranslator('en_US');
 
         $formatter = new IntlDateFormatter($translator);
 
@@ -44,5 +42,29 @@ final class IntlDateFormatterTest extends TestCase
 
         self::assertNotEmpty($result);
         self::assertStringContainsString('janv', $result);
+    }
+
+    /**
+     * PHPUnit stubs of PHP 8.5 interface property hooks are no-ops,
+     * so we use an anonymous class with a real property.
+     */
+    private function createFakeTranslator(string $locale): TranslatorInterface
+    {
+        $translator = new class implements TranslatorInterface {
+            public string $locale = '';
+
+            public function translate(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string
+            {
+                return $key;
+            }
+
+            public function has(string $key, ?string $locale = null, string $domain = 'messages'): bool
+            {
+                return false;
+            }
+        };
+        $translator->locale = $locale;
+
+        return $translator;
     }
 }

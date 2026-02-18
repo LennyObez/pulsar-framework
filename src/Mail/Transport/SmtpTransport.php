@@ -299,11 +299,11 @@ final class SmtpTransport implements TransportInterface
         return str_replace(["\r\n", "\r", "\n"], '', $value);
     }
 
-    private function sendCommand(string $command, string $expectedCode): string
+    private function sendCommand(string $command, string $expectedCode): void
     {
         $this->sendRaw($command . "\r\n");
 
-        return $this->readResponse($expectedCode);
+        $this->readResponse($expectedCode);
     }
 
     private function sendRaw(string $data): void
@@ -319,7 +319,7 @@ final class SmtpTransport implements TransportInterface
         }
     }
 
-    private function readResponse(string $expectedCode): string
+    private function readResponse(string $expectedCode): void
     {
         if ($this->socket === null) {
             throw MailException::driverError('smtp', 'Not connected');
@@ -348,8 +348,6 @@ final class SmtpTransport implements TransportInterface
                 sprintf('Expected %s, got: %s', $expectedCode, substr($response, 0, 128)),
             );
         }
-
-        return $response;
     }
 
     private function disconnect(): void

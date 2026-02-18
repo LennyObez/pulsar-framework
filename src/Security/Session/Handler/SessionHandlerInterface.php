@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Security\Session\Handler;
 
 use Pulsar\Api\Api;
+use Pulsar\Security\Exception\SecurityException;
 
 /**
  * Extended session handler contract for Pulsar's session management.
@@ -38,21 +39,21 @@ interface SessionHandlerInterface extends \SessionHandlerInterface
      *
      * @return list<array{id: string, last_activity: int, ip_address: string, user_agent: string, created_at: int}>
      *
-     * @throws \Pulsar\Security\Exception\SecurityException If the handler does not support session listing
+     * @throws SecurityException If the handler does not support session listing
      */
     public function listSessions(string $userId): array;
 
     /**
      * Revoke a specific session by ID.
      *
-     * @throws \Pulsar\Security\Exception\SecurityException If the handler does not support revocation
+     * @throws SecurityException If the handler does not support revocation
      */
     public function revokeSession(string $sessionId): bool;
 
     /**
      * Get the count of active sessions for a user.
      *
-     * @throws \Pulsar\Security\Exception\SecurityException If the handler does not support concurrency control
+     * @throws SecurityException If the handler does not support concurrency control
      */
     public function getActiveSessions(string $userId): int;
 }

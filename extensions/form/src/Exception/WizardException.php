@@ -24,12 +24,12 @@ final class WizardException extends FormException
 
     public static function stepReplay(int $step): self
     {
-        return new self("Step {$step} has already been completed and cannot be re-submitted");
+        return new self("Step $step has already been completed and cannot be re-submitted");
     }
 
     public static function invalidTransition(int $current, int $requested): self
     {
-        return new self("Cannot transition from step {$current} to step {$requested}");
+        return new self("Cannot transition from step $current to step $requested");
     }
 
     public static function decryptionFailed(): self

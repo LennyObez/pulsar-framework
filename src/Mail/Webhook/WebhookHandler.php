@@ -29,14 +29,14 @@ use const JSON_THROW_ON_ERROR;
  * 5. Audit log the event
  */
 #[Internal]
-final class WebhookHandler implements WebhookHandlerInterface
+final readonly class WebhookHandler implements WebhookHandlerInterface
 {
     public function __construct(
-        private readonly WebhookVerifierInterface $verifier,
-        private readonly WebhookDeduplicationStoreInterface $deduplicationStore,
-        private readonly ?AuditLoggerInterface $auditLogger = null,
-        private readonly int $replayWindowSeconds = 300,
-        private readonly ?string $tenantId = null,
+        private WebhookVerifierInterface $verifier,
+        private WebhookDeduplicationStoreInterface $deduplicationStore,
+        private ?AuditLoggerInterface $auditLogger = null,
+        private int $replayWindowSeconds = 300,
+        private ?string $tenantId = null,
     ) {}
 
     public function handle(WebhookRequest $request): WebhookResult

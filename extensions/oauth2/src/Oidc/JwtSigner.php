@@ -44,7 +44,7 @@ final readonly class JwtSigner
         $key = $this->keyRing->keyFor($keyId);
 
         if ($key === null) {
-            throw new RuntimeException("Signing key '{$keyId}' not found in Keyring");
+            throw new RuntimeException("Signing key '$keyId' not found in Keyring");
         }
 
         $header = [

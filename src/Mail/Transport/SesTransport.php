@@ -28,11 +28,11 @@ use const JSON_THROW_ON_ERROR;
  * testable without network I/O.
  */
 #[Internal]
-final class SesTransport implements TransportInterface
+final readonly class SesTransport implements TransportInterface
 {
     public function __construct(
-        private readonly SesTransportConfig $config,
-        private readonly MailHttpClientInterface $httpClient,
+        private SesTransportConfig $config,
+        private MailHttpClientInterface $httpClient,
     ) {}
 
     public function send(Message $message): string

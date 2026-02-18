@@ -16,7 +16,7 @@ use function sprintf;
 /**
  * Validates FHIR R4 resource ID format.
  *
- * FHIR resource IDs must match: [A-Za-z0-9\-.]{1,64}
+ * FHIR resource IDs must match: [A-Za-z0-9.-]{1,64}
  *
  * @see https://www.hl7.org/fhir/datatypes.html#id
  */
@@ -34,7 +34,7 @@ readonly class FhirResourceId implements RuleInterface
             return null;
         }
 
-        if (is_string($value) && preg_match('/^[A-Za-z0-9\-.]{1,64}$/', $value) === 1) {
+        if (is_string($value) && preg_match('/^[A-Za-z0-9.-]{1,64}$/', $value) === 1) {
             return null;
         }
 

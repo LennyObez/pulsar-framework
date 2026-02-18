@@ -37,7 +37,9 @@ use Pulsar\Security\Middleware\SecurityHeadersMiddleware;
 use Pulsar\Security\Session\Flash\FlashBag;
 use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\Handler\CookieHandler;
+use Pulsar\Security\Session\Handler\DatabaseHandler;
 use Pulsar\Security\Session\Handler\FileHandler;
+use Pulsar\Security\Session\Handler\RedisHandler;
 use Pulsar\Security\Session\Handler\SessionHandlerInterface;
 use Pulsar\Security\Session\Session;
 use Pulsar\Security\Session\SessionEncryption;
@@ -204,14 +206,14 @@ final readonly class SecurityWiring implements ServiceWiringInterface
 
         return match ($sessionConfig->handler) {
             'database' => $container->has(PDO::class)
-                ? new \Pulsar\Security\Session\Handler\DatabaseHandler(
+                ? new DatabaseHandler(
                     $container->get(PDO::class),
                     'sessions',
                     $sessionConfig->lifetime,
                 )
                 : new FileHandler(),
             'redis' => $container->has(Redis::class)
-                ? new \Pulsar\Security\Session\Handler\RedisHandler(
+                ? new RedisHandler(
                     $container->get(Redis::class),
                     $sessionConfig->lifetime,
                 )

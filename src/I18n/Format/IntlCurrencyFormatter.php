@@ -20,7 +20,7 @@ final readonly class IntlCurrencyFormatter implements CurrencyFormatterInterface
 
     public function format(float $amount, string $currency, ?string $locale = null): string
     {
-        $locale ??= $this->translator->getLocale();
+        $locale ??= $this->translator->locale;
         $formatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
         $result = $formatter->formatCurrency($amount, $currency);
 

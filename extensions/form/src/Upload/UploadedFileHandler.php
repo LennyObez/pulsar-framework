@@ -24,14 +24,14 @@ use function rename;
  * sanitizes filenames, and integrates with antivirus scanning.
  */
 #[Api(since: '1.0.0')]
-final class UploadedFileHandler
+final readonly class UploadedFileHandler
 {
     public function __construct(
-        private readonly UploadConfig $config,
-        private readonly MimeSniffer $mimeSniffer,
-        private readonly FilenameSanitizer $sanitizer,
-        private readonly ?AntivirusPort $antivirusPort = null,
-        private readonly ?LoggerInterface $logger = null,
+        private UploadConfig $config,
+        private MimeSniffer $mimeSniffer,
+        private FilenameSanitizer $sanitizer,
+        private ?AntivirusPort $antivirusPort = null,
+        private ?LoggerInterface $logger = null,
     ) {}
 
     /**

@@ -36,8 +36,21 @@ final class LocaleMiddlewareTest extends TestCase
         $negotiator = $this->createStub(LocaleNegotiatorInterface::class);
         $negotiator->method('negotiate')->willReturn('fr');
 
-        $translator = $this->createMock(TranslatorInterface::class);
-        $translator->expects(self::once())->method('setLocale')->with('fr');
+        // PHPUnit stubs of PHP 8.5 interface property hooks are no-ops,
+        // so we use an anonymous class with a real property.
+        $translator = new class implements TranslatorInterface {
+            public string $locale = '';
+
+            public function translate(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string
+            {
+                return $key;
+            }
+
+            public function has(string $key, ?string $locale = null, string $domain = 'messages'): bool
+            {
+                return false;
+            }
+        };
 
         $middleware = new LocaleMiddleware($negotiator, $config, $translator);
 
@@ -55,5 +68,6 @@ final class LocaleMiddlewareTest extends TestCase
         $middleware->process($request, $handler);
 
         self::assertSame('fr', $capturedLocale);
+        self::assertSame('fr', $translator->locale);
     }
 }

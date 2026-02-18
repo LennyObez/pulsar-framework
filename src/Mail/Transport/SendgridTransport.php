@@ -28,11 +28,11 @@ use const JSON_THROW_ON_ERROR;
  * testable without network I/O.
  */
 #[Internal]
-final class SendgridTransport implements TransportInterface
+final readonly class SendgridTransport implements TransportInterface
 {
     public function __construct(
-        private readonly SendgridTransportConfig $config,
-        private readonly MailHttpClientInterface $httpClient,
+        private SendgridTransportConfig $config,
+        private MailHttpClientInterface $httpClient,
     ) {}
 
     public function send(Message $message): string

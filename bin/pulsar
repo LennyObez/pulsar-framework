@@ -153,7 +153,6 @@ use Pulsar\Extension\Studio\StudioManager;
 use Pulsar\Supervisor\Supervisor;
 use Pulsar\View\Command\PlaygroundServeCommand;
 use Pulsar\View\Command\ViewCompileCommand;
-use Pulsar\View\ViewConfig;
 
 // Create kernel with optional extension support
 $extensionBootstrap = null;

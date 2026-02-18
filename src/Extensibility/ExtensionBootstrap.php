@@ -35,9 +35,9 @@ final class ExtensionBootstrap
 {
     public private(set) bool $registered = false;
     public private(set) bool $booted = false;
-    private ?CapabilityPolicy $capabilityPolicy = null;
-    private ?ServiceRestrictionMap $serviceRestrictionMap = null;
-    private ?TrustedExtensionsConfig $trustedExtensionsConfig = null;
+    public ?CapabilityPolicy $capabilityPolicy = null;
+    public ?ServiceRestrictionMap $serviceRestrictionMap = null;
+    public ?TrustedExtensionsConfig $trustedExtensionsConfig = null;
 
     public function __construct(
         public readonly ExtensionRegistry $registry,
@@ -51,34 +51,6 @@ final class ExtensionBootstrap
     public static function create(): self
     {
         return new self(new ExtensionRegistry(), new ExtensionLoader());
-    }
-
-    /**
-     * Configure capability enforcement for extensions.
-     *
-     * When set, extensions receive scoped container/router proxies
-     * based on their effective trust tier. When null (default),
-     * extensions receive full container/router access for backward compatibility.
-     */
-    public function setCapabilityPolicy(?CapabilityPolicy $policy): void
-    {
-        $this->capabilityPolicy = $policy;
-    }
-
-    /**
-     * Configure the service restriction map for deny-by-default enforcement.
-     */
-    public function setServiceRestrictionMap(?ServiceRestrictionMap $map): void
-    {
-        $this->serviceRestrictionMap = $map;
-    }
-
-    /**
-     * Configure the host-side trusted extensions allow-list.
-     */
-    public function setTrustedExtensionsConfig(?TrustedExtensionsConfig $config): void
-    {
-        $this->trustedExtensionsConfig = $config;
     }
 
     /**

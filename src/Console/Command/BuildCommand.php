@@ -21,6 +21,7 @@ use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Container\Compiled\ContainerCompiler;
+use Pulsar\Container\ServiceDefinition;
 use Pulsar\Core\KernelInterface;
 use Pulsar\Core\Version;
 use Pulsar\Event\Internal\EventMapCompiler;
@@ -150,7 +151,7 @@ final class BuildCommand extends Command
             $output->errorln('  ' . $error);
         }
 
-        $output->errorln('');
+        $output->errorln();
         $output->errorln('Run `pulsar build` to rebuild artifacts.');
 
         return ExitCode::Error->value;
@@ -181,7 +182,7 @@ final class BuildCommand extends Command
         $runtime = $runtimeValue === 'persistent' ? RuntimeType::Persistent : RuntimeType::Fpm;
 
         $output->writeln('Building production artifacts...');
-        $output->writeln('');
+        $output->writeln();
 
         $artifacts = [];
         $contentHashes = [];
@@ -269,7 +270,7 @@ final class BuildCommand extends Command
             // Clean up any tmp files on failure
             $this->cleanupTmpFiles();
 
-            $output->errorln('');
+            $output->errorln();
             $output->errorln('Build failed: ' . $e->getMessage());
 
             return ExitCode::Error->value;
@@ -284,7 +285,7 @@ final class BuildCommand extends Command
             $totalSize += $artifact->size;
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln(sprintf(
             'Build complete: %d artifact(s), %s total, %.1fms',
             count($artifacts),
@@ -345,7 +346,7 @@ final class BuildCommand extends Command
             return null;
         }
 
-        /** @var array<string, \Pulsar\Container\ServiceDefinition> $definitions */
+        /** @var array<string, ServiceDefinition> $definitions */
         $definitions = $container->getDefinitions();
 
         if ($definitions === []) {

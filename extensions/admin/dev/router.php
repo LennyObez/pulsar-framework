@@ -173,4 +173,4 @@ foreach ($response->getHeaders() as $name => $values) {
     }
 }
 
-echo (string) $response->getBody();
+echo $response->getBody();

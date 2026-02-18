@@ -86,13 +86,7 @@ final class GdprLogFormatter implements ComplianceLogFormatter
     {
         $lowerKey = strtolower($key);
 
-        foreach ($this->fieldsToMask as $field) {
-            if (strtolower($field) === $lowerKey) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->fieldsToMask, static fn(string $field): bool => strtolower($field) === $lowerKey);
     }
 
     private function pseudonymize(string $value): string

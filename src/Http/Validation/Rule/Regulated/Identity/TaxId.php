@@ -67,7 +67,7 @@ readonly class TaxId implements RuleInterface
             'DE' => '/^\d{11}$/',
             // France: Numero fiscal de reference (13 digits)
             'FR' => '/^\d{13}$/',
-            default => '/^[A-Za-z0-9\-]{5,20}$/',
+            default => '/^[A-Za-z0-9-]{5,20}$/',
         };
     }
 

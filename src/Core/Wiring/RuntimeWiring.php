@@ -92,7 +92,7 @@ final readonly class RuntimeWiring implements ServiceWiringInterface
         // Runtime resolver (auto-detects available runtimes)
         $environment = $container->has(Environment::class)
             ? $container->get(Environment::class)
-            : Environment::load(null);
+            : Environment::load();
 
         /** @var Environment $environment */
         $resolver = new RuntimeResolver($environment);

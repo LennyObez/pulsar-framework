@@ -111,6 +111,6 @@ final class FormCsrfManager
     {
         $sessionId = $this->session->id();
 
-        return hash('sha256', "{$sessionId}:{$formId}:{$action}:{$secret}");
+        return hash('sha256', "$sessionId:$formId:$action:$secret");
     }
 }

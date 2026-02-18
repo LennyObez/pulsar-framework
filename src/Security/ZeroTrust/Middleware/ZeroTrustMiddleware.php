@@ -20,6 +20,7 @@ use Pulsar\Security\ZeroTrust\Claim\ClaimSet;
 use Pulsar\Security\ZeroTrust\Event\PolicyDecisionEvent;
 use Pulsar\Security\ZeroTrust\Policy\PolicyDecision;
 use Pulsar\Security\ZeroTrust\Policy\PolicyEngineInterface;
+use Pulsar\Security\ZeroTrust\Policy\PolicyEvaluationResult;
 use Pulsar\Security\ZeroTrust\Signal\SignalContext;
 use Pulsar\Security\ZeroTrust\Signal\SignalProviderInterface;
 use Pulsar\Security\ZeroTrust\StepUp\Internal\StepUpManager;
@@ -131,7 +132,7 @@ final readonly class ZeroTrustMiddleware implements MiddlewareInterface
     private function handleStepUp(
         string $identityId,
         string $resource,
-        \Pulsar\Security\ZeroTrust\Policy\PolicyEvaluationResult $result,
+        PolicyEvaluationResult $result,
     ): ResponseInterface {
         $ruleName = $result->matchedRules !== [] ? $result->matchedRules[0]->name : 'unknown';
         $stepUpAction = $this->stepUpManager->handleStepUp(
@@ -141,9 +142,9 @@ final readonly class ZeroTrustMiddleware implements MiddlewareInterface
         );
 
         return match ($stepUpAction) {
-            StepUpAction::Redirect => $this->respondStepUpRequired($identityId, $resource),
-            StepUpAction::Deny => $this->handleDeny($identityId, $resource),
+            StepUpAction::Redirect,
             StepUpAction::Allow => $this->respondStepUpRequired($identityId, $resource),
+            StepUpAction::Deny => $this->handleDeny($identityId, $resource),
         };
     }
 

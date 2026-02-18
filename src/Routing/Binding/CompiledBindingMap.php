@@ -16,13 +16,13 @@ use function is_string;
  * optimize command and loaded from a cached PHP file.
  */
 #[Internal(reason: 'Cache artifact — built by optimize command')]
-final class CompiledBindingMap
+final readonly class CompiledBindingMap
 {
     /**
      * @param array<string, array<string, BindingMeta>> $map
      */
     public function __construct(
-        private readonly array $map,
+        private array $map,
     ) {}
 
     /**

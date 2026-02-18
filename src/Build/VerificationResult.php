@@ -6,6 +6,7 @@ namespace Pulsar\Build;
 
 use Pulsar\Api\Api;
 
+use function array_map;
 use function is_array;
 use function is_string;
 
@@ -52,11 +53,7 @@ final readonly class VerificationResult
      */
     public function toArray(): array
     {
-        $entries = [];
-
-        foreach ($this->entries as $key => $status) {
-            $entries[$key] = $status->value;
-        }
+        $entries = array_map(static fn(VerificationStatus $status): string => $status->value, $this->entries);
 
         return [
             'passed' => $this->passed,

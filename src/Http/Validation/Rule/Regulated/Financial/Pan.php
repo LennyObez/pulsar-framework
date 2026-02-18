@@ -60,7 +60,7 @@ readonly class Pan implements RuleInterface
 
     private function isValidPan(string $value): bool
     {
-        $cleaned = (string) preg_replace('/[\s\-]/', '', $value);
+        $cleaned = (string) preg_replace('/[\s-]/', '', $value);
 
         if (preg_match('/^\d{13,19}$/', $cleaned) !== 1) {
             return false;

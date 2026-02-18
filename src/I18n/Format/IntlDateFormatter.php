@@ -21,7 +21,7 @@ final readonly class IntlDateFormatter implements DateFormatterInterface
 
     public function format(DateTimeInterface $date, ?string $locale = null, int $dateType = PhpIntlDateFormatter::MEDIUM, int $timeType = PhpIntlDateFormatter::SHORT): string
     {
-        $locale ??= $this->translator->getLocale();
+        $locale ??= $this->translator->locale;
         $formatter = new PhpIntlDateFormatter($locale, $dateType, $timeType);
         $result = $formatter->format($date);
 

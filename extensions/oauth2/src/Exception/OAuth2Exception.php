@@ -44,7 +44,7 @@ final class OAuth2Exception extends RuntimeException
 
     public static function unsupportedGrantType(string $grantType): self
     {
-        return new self('unsupported_grant_type', "Grant type '{$grantType}' is not supported");
+        return new self('unsupported_grant_type', "Grant type '$grantType' is not supported");
     }
 
     public static function invalidScope(string $detail = 'The requested scope is invalid'): self

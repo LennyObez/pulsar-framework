@@ -91,11 +91,7 @@ final readonly class MailAuditor
      */
     private function deriveAuditKey(): ?string
     {
-        if ($this->masterKey === null) {
-            return null;
-        }
-
-        return $this->masterKey->deriveSubKey(
+        return $this->masterKey?->deriveSubKey(
             self::AUDIT_SUBKEY_ID,
             self::AUDIT_CONTEXT,
         );

@@ -22,10 +22,10 @@ use const EXTR_SKIP;
  * with extracted data variables. All output is HTML-escaped by default.
  */
 #[Internal(reason: 'Engine implementation detail; use TemplateEngineInterface')]
-final class TemplateEngine implements TemplateEngineInterface
+final readonly class TemplateEngine implements TemplateEngineInterface
 {
     public function __construct(
-        private readonly TemplateCompiler $compiler,
+        private TemplateCompiler $compiler,
     ) {}
 
     /**

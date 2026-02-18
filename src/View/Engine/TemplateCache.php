@@ -30,10 +30,10 @@ use const LOCK_EX;
  * cache entry, enabling deterministic builds.
  */
 #[Internal(reason: 'Cache management is an engine implementation detail')]
-final class TemplateCache
+final readonly class TemplateCache
 {
     public function __construct(
-        private readonly string $cachePath,
+        private string $cachePath,
     ) {}
 
     /**

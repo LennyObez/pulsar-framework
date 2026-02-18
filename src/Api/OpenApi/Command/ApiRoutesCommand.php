@@ -103,9 +103,6 @@ final class ApiRoutesCommand extends Command
         return ExitCode::Success->value;
     }
 
-    /**
-     * @param mixed $handler
-     */
     private function formatHandler(mixed $handler): string
     {
         if (is_string($handler)) {

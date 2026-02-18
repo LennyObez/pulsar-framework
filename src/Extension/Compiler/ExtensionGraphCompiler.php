@@ -255,7 +255,7 @@ final class ExtensionGraphCompiler
             return hash('sha256', '');
         }
 
-        return $this->hashDirectory($configDir, '*.php');
+        return $this->hashDirectory($configDir);
     }
 
     /**
@@ -271,26 +271,21 @@ final class ExtensionGraphCompiler
             return hash('sha256', '');
         }
 
-        return $this->hashDirectory($srcDir, '*.php');
+        return $this->hashDirectory($srcDir);
     }
 
     /**
-     * Hash all matching files in a directory tree deterministically.
+     * Hash all PHP files in a directory tree deterministically.
      *
      * Files are sorted by their normalized (forward-slash) paths before hashing
      * to ensure consistent output across platforms.
      */
-    private function hashDirectory(string $directory, string $pattern): string
+    private function hashDirectory(string $directory): string
     {
         $files = [];
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($directory),
         );
-
-        $extension = match ($pattern) {
-            '*.php' => 'php',
-            default => '',
-        };
 
         /** @var SplFileInfo $file */
         foreach ($iterator as $file) {
@@ -298,7 +293,7 @@ final class ExtensionGraphCompiler
                 continue;
             }
 
-            if ($extension !== '' && $file->getExtension() !== $extension) {
+            if ($file->getExtension() !== 'php') {
                 continue;
             }
 

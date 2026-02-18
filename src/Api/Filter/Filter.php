@@ -161,10 +161,7 @@ final class Filter
      */
     public function guard(string $role): self
     {
-        $clone = clone $this;
-        $clone->guardRole = $role;
-
-        return $clone;
+        return clone($this, ['guardRole' => $role]);
     }
 
     /**

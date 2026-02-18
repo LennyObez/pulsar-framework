@@ -56,7 +56,7 @@ readonly class Ssn implements RuleInterface
     private function isValidSsn(string $value): bool
     {
         // Strip dashes for uniform processing
-        $cleaned = (string) preg_replace('/\-/', '', $value);
+        $cleaned = (string) preg_replace('/-/', '', $value);
 
         if (preg_match('/^\d{9}$/', $cleaned) !== 1) {
             return false;

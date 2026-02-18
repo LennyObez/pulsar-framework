@@ -18,19 +18,19 @@ use Pulsar\Queue\QueueableInterface;
  * Used for asynchronous notification delivery via the queue system.
  */
 #[Internal]
-final class SendNotificationJob implements QueueableInterface
+final readonly class SendNotificationJob implements QueueableInterface
 {
     /**
      * @param list<string>|null $channels Specific channels to send through (null = use notification's via())
      */
     public function __construct(
-        private readonly NotifiableInterface $notifiable,
-        private readonly Notification $notification,
-        private readonly NotificationManagerInterface $notificationManager,
-        private readonly ?array $channels = null,
-        private readonly string $queueName = 'notifications',
-        private readonly int $maxAttemptCount = 3,
-        private readonly int $timeoutSeconds = 60,
+        private NotifiableInterface $notifiable,
+        private Notification $notification,
+        private NotificationManagerInterface $notificationManager,
+        private ?array $channels = null,
+        private string $queueName = 'notifications',
+        private int $maxAttemptCount = 3,
+        private int $timeoutSeconds = 60,
     ) {}
 
     #[Override]

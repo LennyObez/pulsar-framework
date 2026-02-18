@@ -32,7 +32,7 @@ final class PasswordField extends AbstractField
      * Password fields never expose their value for security.
      */
     #[Override]
-    public function getValue(): mixed
+    public function getValue(): null
     {
         return null;
     }

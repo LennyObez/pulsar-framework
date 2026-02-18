@@ -7,7 +7,9 @@
   "require": {
     "ext-ctype": "*",
     "ext-curl": "*",
+    "ext-fileinfo": "*",
     "ext-mbstring": "*",
+    "ext-openssl": "*",
     "ext-pdo": "*",
     "ext-simplexml": "*",
     "ext-sodium": "*",

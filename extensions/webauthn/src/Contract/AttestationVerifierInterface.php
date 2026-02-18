@@ -6,6 +6,7 @@ namespace Pulsar\Extension\WebAuthn\Contract;
 
 use Pulsar\Api\Api;
 use Pulsar\Extension\WebAuthn\Attestation\AttestationResult;
+use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
 
 /**
  * Attestation format verification contract.
@@ -27,7 +28,7 @@ interface AttestationVerifierInterface
      * @param string $clientDataJson The client data JSON bytes
      * @return AttestationResult The verification result with trust path info
      *
-     * @throws \Pulsar\Extension\WebAuthn\Exception\WebAuthnException If format is not allowed by policy
+     * @throws WebAuthnException If format is not allowed by policy
      */
     public function verify(
         string $format,

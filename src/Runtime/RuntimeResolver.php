@@ -18,16 +18,16 @@ use function function_exists;
  * Detection priority: FrankenPHP > RoadRunner > Persistent > FPM (fallback).
  */
 #[Api(since: '1.0.0-rc.11')]
-final class RuntimeResolver
+final readonly class RuntimeResolver
 {
     /** @var Closure(): bool */
-    private readonly Closure $frankenPhpDetector;
+    private Closure $frankenPhpDetector;
 
     /** @var Closure(): bool */
-    private readonly Closure $roadRunnerDetector;
+    private Closure $roadRunnerDetector;
 
     /** @var Closure(): bool */
-    private readonly Closure $socketsDetector;
+    private Closure $socketsDetector;
 
     /**
      * @param Closure(): bool|null $frankenPhpDetector Custom detector for FrankenPHP availability
@@ -35,7 +35,7 @@ final class RuntimeResolver
      * @param Closure(): bool|null $socketsDetector    Custom detector for sockets extension availability
      */
     public function __construct(
-        private readonly Environment $environment,
+        private Environment $environment,
         ?Closure $frankenPhpDetector = null,
         ?Closure $roadRunnerDetector = null,
         ?Closure $socketsDetector = null,

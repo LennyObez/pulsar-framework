@@ -183,9 +183,10 @@ abstract class AbstractApiResource
     /**
      * Serialize an array, recursively handling nested resources.
      *
-     * @param array<mixed> $items
+     * @param array<array-key, mixed> $items
      * @param array<string, RedactionRule> $redactionRules
-     * @return array<mixed>
+     *
+     * @return array<array-key, mixed>
      */
     private static function serializeArray(
         array $items,

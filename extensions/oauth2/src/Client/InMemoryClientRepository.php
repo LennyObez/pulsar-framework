@@ -60,7 +60,7 @@ final class InMemoryClientRepository implements ClientRepositoryInterface
     public function register(OAuthClient $client): void
     {
         if (isset($this->clients[$client->id])) {
-            throw OAuth2Exception::invalidRequest("Client '{$client->id}' already exists");
+            throw OAuth2Exception::invalidRequest("Client '$client->id' already exists");
         }
 
         $this->clients[$client->id] = $client;

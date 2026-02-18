@@ -6,6 +6,7 @@ namespace Pulsar\Extension\OAuth2\Contract;
 
 use Pulsar\Api\Api;
 use Pulsar\Extension\OAuth2\Client\OAuthClient;
+use Pulsar\Extension\OAuth2\Exception\OAuth2Exception;
 
 /**
  * Repository for OAuth2 client registration and lookup.
@@ -35,7 +36,7 @@ interface ClientRepositoryInterface
     /**
      * Register a new client.
      *
-     * @throws \Pulsar\Extension\OAuth2\Exception\OAuth2Exception If registration is disabled or client data is invalid
+     * @throws OAuth2Exception If registration is disabled or client data is invalid
      */
     public function register(OAuthClient $client): void;
 

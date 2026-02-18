@@ -172,9 +172,7 @@ final class PubSubDriver implements QueueDriverInterface
         $subscriptionName = $this->jobSubscriptions[$jobId];
         $subscription = $this->subscriptions[$subscriptionName] ?? null;
 
-        if ($subscription !== null) {
-            $subscription->acknowledge($this->pendingMessages[$jobId]);
-        }
+        $subscription?->acknowledge($this->pendingMessages[$jobId]);
 
         unset(
             $this->pendingMessages[$jobId],
@@ -193,9 +191,7 @@ final class PubSubDriver implements QueueDriverInterface
         $subscriptionName = $this->jobSubscriptions[$jobId];
         $subscription = $this->subscriptions[$subscriptionName] ?? null;
 
-        if ($subscription !== null) {
-            $subscription->modifyAckDeadline($this->pendingMessages[$jobId], 0);
-        }
+        $subscription?->modifyAckDeadline($this->pendingMessages[$jobId], 0);
 
         if (isset($this->knownJobs[$jobId])) {
             $existing = $this->knownJobs[$jobId];

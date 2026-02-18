@@ -38,13 +38,7 @@ final readonly class ConfigurableIpAllowlist implements IpAllowlistInterface
             return true;
         }
 
-        foreach ($ranges as $range) {
-            if (self::ipMatchesCidr($ip, $range)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($ranges, static fn(string $range): bool => self::ipMatchesCidr($ip, $range));
     }
 
     private static function ipMatchesCidr(string $ip, string $cidr): bool

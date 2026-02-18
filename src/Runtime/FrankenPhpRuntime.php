@@ -210,7 +210,7 @@ final class FrankenPhpRuntime implements ReloadableRuntimeInterface
             }
         }
 
-        echo (string) $response->getBody();
+        echo $response->getBody();
     }
 
     /**

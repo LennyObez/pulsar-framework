@@ -15,11 +15,11 @@ use Pulsar\View\ViewException;
  * Resource bounds prevent runaway execution.
  */
 #[Internal(reason: 'Sandbox engine is an implementation detail')]
-final class SandboxEngine
+final readonly class SandboxEngine
 {
-    private readonly AstParser $parser;
+    private AstParser $parser;
 
-    private readonly AstInterpreter $interpreter;
+    private AstInterpreter $interpreter;
 
     public function __construct(
         SandboxConfig $config,

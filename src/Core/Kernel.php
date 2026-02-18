@@ -12,6 +12,7 @@ use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Build\BuildArtifactLoader;
 use Pulsar\Build\BuildException;
+use Pulsar\Build\VerificationStatus;
 use Pulsar\Cache\CachedRoute;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\RouteHandlerType;
@@ -671,7 +672,7 @@ final class Kernel implements KernelInterface
                 $failed = [];
 
                 foreach ($result->entries as $key => $status) {
-                    if ($status !== \Pulsar\Build\VerificationStatus::Ok) {
+                    if ($status !== VerificationStatus::Ok) {
                         $failed[] = $key;
                     }
                 }

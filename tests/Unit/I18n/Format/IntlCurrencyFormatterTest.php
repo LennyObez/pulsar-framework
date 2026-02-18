@@ -18,8 +18,7 @@ final class IntlCurrencyFormatterTest extends TestCase
     #[Test]
     public function formatsCurrencyInUsd(): void
     {
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('getLocale')->willReturn('en_US');
+        $translator = $this->createFakeTranslator('en_US');
 
         $formatter = new IntlCurrencyFormatter($translator);
 
@@ -31,8 +30,7 @@ final class IntlCurrencyFormatterTest extends TestCase
     #[Test]
     public function formatsCurrencyInEur(): void
     {
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('getLocale')->willReturn('de_DE');
+        $translator = $this->createFakeTranslator('de_DE');
 
         $formatter = new IntlCurrencyFormatter($translator);
 
@@ -44,13 +42,36 @@ final class IntlCurrencyFormatterTest extends TestCase
     #[Test]
     public function usesOverrideLocale(): void
     {
-        $translator = $this->createStub(TranslatorInterface::class);
-        $translator->method('getLocale')->willReturn('en_US');
+        $translator = $this->createFakeTranslator('en_US');
 
         $formatter = new IntlCurrencyFormatter($translator);
 
         $result = $formatter->format(1234.56, 'EUR', 'fr_FR');
 
         self::assertNotEmpty($result);
+    }
+
+    /**
+     * PHPUnit stubs of PHP 8.5 interface property hooks are no-ops,
+     * so we use an anonymous class with a real property.
+     */
+    private function createFakeTranslator(string $locale): TranslatorInterface
+    {
+        $translator = new class implements TranslatorInterface {
+            public string $locale = '';
+
+            public function translate(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string
+            {
+                return $key;
+            }
+
+            public function has(string $key, ?string $locale = null, string $domain = 'messages'): bool
+            {
+                return false;
+            }
+        };
+        $translator->locale = $locale;
+
+        return $translator;
     }
 }

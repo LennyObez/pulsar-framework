@@ -130,11 +130,11 @@ final class TranslatorTest extends TestCase
 
         $translator = new Translator($catalog, $this->makeConfig());
 
-        self::assertSame('en', $translator->getLocale());
+        self::assertSame('en', $translator->locale);
 
-        $translator->setLocale('fr');
+        $translator->locale = 'fr';
 
-        self::assertSame('fr', $translator->getLocale());
+        self::assertSame('fr', $translator->locale);
     }
 
     #[Test]

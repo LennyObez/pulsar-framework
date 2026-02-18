@@ -41,7 +41,7 @@ final class SessionManager implements SessionInterface
     /** @var array<string, mixed> */
     private array $data = [];
 
-    private ?SessionMetadata $metadata = null;
+    public private(set) ?SessionMetadata $metadata = null { get => $this->metadata; }
 
     private ?SessionEncryption $encryption;
 
@@ -77,7 +77,7 @@ final class SessionManager implements SessionInterface
 
         if ($raw !== '' && $raw !== false) {
             $decrypted = $this->decryptIfEnabled($raw);
-            /** @var array{_pulsar_meta?: array<string, mixed>, data?: array<string, mixed>} $stored */
+            /** @var array{_pulsar_meta?: array<string, mixed>, data?: array<string, mixed>}|false $stored */
             $stored = @unserialize($decrypted, ['allowed_classes' => false]);
 
             if ($stored !== false) {
@@ -129,7 +129,7 @@ final class SessionManager implements SessionInterface
 
         if ($isExistingSession) {
             $decrypted = $this->decryptIfEnabled($raw);
-            /** @var array{_pulsar_meta?: array<string, mixed>, data?: array<string, mixed>} $stored */
+            /** @var array{_pulsar_meta?: array<string, mixed>, data?: array<string, mixed>}|false $stored */
             $stored = @unserialize($decrypted, ['allowed_classes' => false]);
 
             if ($stored !== false) {
@@ -253,15 +253,6 @@ final class SessionManager implements SessionInterface
         $this->ensureStarted();
 
         return $this->data;
-    }
-
-    /**
-     * Get the current session metadata.
-     */
-    #[NoDiscard]
-    public function getMetadata(): ?SessionMetadata
-    {
-        return $this->metadata;
     }
 
     /**

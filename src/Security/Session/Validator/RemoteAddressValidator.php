@@ -75,7 +75,7 @@ final readonly class RemoteAddressValidator implements SessionValidatorInterface
     private function buildMask(int $byteLength, int $prefixBits): string
     {
         $totalBits = $byteLength * 8;
-        $prefixBits = $prefixBits > $totalBits ? $totalBits : $prefixBits;
+        $prefixBits = min($prefixBits, $totalBits);
 
         $fullBytes = (int) ($prefixBits / 8);
         $remainingBits = $prefixBits % 8;

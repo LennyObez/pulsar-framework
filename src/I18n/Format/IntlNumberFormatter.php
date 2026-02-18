@@ -20,7 +20,7 @@ final readonly class IntlNumberFormatter implements NumberFormatterInterface
 
     public function format(int|float $number, ?string $locale = null): string
     {
-        $locale ??= $this->translator->getLocale();
+        $locale ??= $this->translator->locale;
         $formatter = new NumberFormatter($locale, NumberFormatter::DECIMAL);
         $result = $formatter->format($number);
 

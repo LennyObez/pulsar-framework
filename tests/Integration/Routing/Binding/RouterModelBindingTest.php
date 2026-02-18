@@ -22,7 +22,7 @@ final class RouterModelBindingTest extends TestCase
 
         $router->model('user', stdClass::class);
 
-        $bindings = $router->getExplicitBindings();
+        $bindings = $router->explicitBindings;
 
         self::assertCount(1, $bindings);
         self::assertSame('user', $bindings[0]->parameter);
@@ -37,14 +37,14 @@ final class RouterModelBindingTest extends TestCase
 
         $router->model('user', stdClass::class, stdClass::class);
 
-        $bindings = $router->getExplicitBindings();
+        $bindings = $router->explicitBindings;
 
         self::assertCount(1, $bindings);
         self::assertSame(stdClass::class, $bindings[0]->resolverClass);
     }
 
     #[Test]
-    public function getExplicitBindingsReturnsAllRegistered(): void
+    public function explicitBindingsReturnsAllRegistered(): void
     {
         $router = new Router();
 
@@ -52,7 +52,7 @@ final class RouterModelBindingTest extends TestCase
         $router->model('post', stdClass::class, stdClass::class);
         $router->model('comment', stdClass::class);
 
-        $bindings = $router->getExplicitBindings();
+        $bindings = $router->explicitBindings;
 
         self::assertCount(3, $bindings);
         self::assertSame('user', $bindings[0]->parameter);
@@ -71,10 +71,10 @@ final class RouterModelBindingTest extends TestCase
     }
 
     #[Test]
-    public function getExplicitBindingsReturnsEmptyByDefault(): void
+    public function explicitBindingsReturnsEmptyByDefault(): void
     {
         $router = new Router();
 
-        self::assertSame([], $router->getExplicitBindings());
+        self::assertSame([], $router->explicitBindings);
     }
 }

@@ -223,7 +223,7 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
 
-        $metadata = $manager->getMetadata();
+        $metadata = $manager->metadata;
 
         self::assertNotNull($metadata);
         self::assertGreaterThan(0, $metadata->createdAt);
@@ -405,11 +405,11 @@ final class SessionManagerTest extends TestCase
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
 
-        self::assertNull($manager->getMetadata()?->userId);
+        self::assertNull($manager->metadata?->userId);
 
         $manager->setUserId('user-42');
 
-        self::assertSame('user-42', $manager->getMetadata()?->userId);
+        self::assertSame('user-42', $manager->metadata?->userId);
     }
 
     #[Test]

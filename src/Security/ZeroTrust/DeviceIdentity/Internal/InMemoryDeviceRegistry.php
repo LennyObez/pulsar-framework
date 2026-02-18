@@ -122,7 +122,7 @@ final class InMemoryDeviceRegistry implements DeviceRegistryInterface
             metadata: $device->metadata,
         );
 
-        return DeviceProofResult::verified($deviceId, 1.0);
+        return DeviceProofResult::verified($deviceId);
     }
 
     public function revoke(string $deviceId): void
@@ -132,8 +132,6 @@ final class InMemoryDeviceRegistry implements DeviceRegistryInterface
 
     /**
      * Issue a challenge for a device. The challenge must be verified within the same session.
-     *
-     * @return string The challenge string (nonce + timestamp for replay safety)
      */
     public function issueChallenge(string $deviceId): ?string
     {

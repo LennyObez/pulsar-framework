@@ -209,13 +209,13 @@ if (preg_match('#^/api/themes/([^/]+)$#', $requestUri, $matches)) {
     $themeName = $matches[1];
 
     if (!isValidThemeName($themeName)) {
-        jsonError('Invalid theme name. Use alphanumeric characters and hyphens only.', 400);
+        jsonError('Invalid theme name. Use alphanumeric characters and hyphens only.');
     }
 
     $themePath = resolveThemePath($themesDir, $themeName);
 
     if ($themePath === null) {
-        jsonError('Invalid theme path.', 400);
+        jsonError('Invalid theme path.');
     }
 
     // GET — read theme
@@ -242,7 +242,7 @@ if (preg_match('#^/api/themes/([^/]+)$#', $requestUri, $matches)) {
         $data = json_decode($body, true);
 
         if (!is_array($data) || !isset($data['css']) || !is_string($data['css'])) {
-            jsonError('Request body must contain a "css" string field.', 400);
+            jsonError('Request body must contain a "css" string field.');
         }
 
         $written = file_put_contents($themePath, $data['css']);

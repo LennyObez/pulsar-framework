@@ -283,12 +283,12 @@
     var fullContent = PulsarEditor.getValue();
     var themeCSS = extractThemeOverrides(fullContent);
 
-    saveTheme(currentThemeName, themeCSS)
+    void saveTheme(currentThemeName, themeCSS)
       .then(function () {
         isDirty = false;
         updateStatus();
         showToast('Theme "' + currentThemeName + '" saved');
-        refreshThemeList();
+        void refreshThemeList();
       })
       .catch(function (err) {
         showToast(err.message, true);

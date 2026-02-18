@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Pulsar\Security\ZeroTrust\DeviceIdentity\Internal;
 
 use Pulsar\Api\Internal;
-use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\KeyRingInterface;
 use Pulsar\Security\ZeroTrust\DeviceIdentity\DeviceProofResult;
 
@@ -138,7 +137,7 @@ final readonly class WebAuthnAttestationVerifier
             return DeviceProofResult::failed('Origin mismatch');
         }
 
-        return DeviceProofResult::verified('', 1.0);
+        return DeviceProofResult::verified('');
     }
 
     /**
@@ -157,7 +156,7 @@ final readonly class WebAuthnAttestationVerifier
             return DeviceProofResult::failed('Authenticator data too short');
         }
 
-        return DeviceProofResult::verified('', 1.0);
+        return DeviceProofResult::verified('');
     }
 
     /**
@@ -190,10 +189,9 @@ final readonly class WebAuthnAttestationVerifier
         }
 
         // Verify the attestation certificate chain if present
-        if (isset($attStmt['x5c']) && is_array($attStmt['x5c'])) {
-            if ($attStmt['x5c'] === []) {
-                return DeviceProofResult::failed('Empty certificate chain');
-            }
+        $x5c = $attStmt['x5c'] ?? null;
+        if ($x5c === []) {
+            return DeviceProofResult::failed('Empty certificate chain');
         }
 
         return DeviceProofResult::verified('', self::CONFIDENCE_HIGH);

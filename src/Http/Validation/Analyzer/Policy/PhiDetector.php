@@ -59,7 +59,7 @@ readonly class PhiDetector implements PolicyAnalyzerInterface
         }
 
         // Phone number pattern
-        if (preg_match('/(?:\(\d{3}\)\s*\d{3}-\d{4}|\b\d{3}-\d{3}-\d{4}\b|\b\d{10}\b)/', $value) === 1) {
+        if (preg_match('/\(\d{3}\)\s*\d{3}-\d{4}|\b\d{3}-\d{3}-\d{4}\b|\b\d{10}\b/', $value) === 1) {
             $findings[] = new AnalyzerFinding(
                 severity: FindingSeverity::Warning,
                 confidence: 0.7,
@@ -70,7 +70,7 @@ readonly class PhiDetector implements PolicyAnalyzerInterface
         }
 
         // Email address pattern
-        if (preg_match('/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/', $value) === 1) {
+        if (preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $value) === 1) {
             $findings[] = new AnalyzerFinding(
                 severity: FindingSeverity::Warning,
                 confidence: 0.7,

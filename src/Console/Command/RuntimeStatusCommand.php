@@ -40,7 +40,7 @@ final class RuntimeStatusCommand extends Command
         $resolved = $this->resolver->resolve();
 
         $output->info('Runtime Status');
-        $output->writeln('');
+        $output->writeln();
 
         foreach (RuntimeType::cases() as $type) {
             $isAvailable = in_array($type, $available, true);
@@ -56,7 +56,7 @@ final class RuntimeStatusCommand extends Command
             ));
         }
 
-        $output->writeln('');
+        $output->writeln();
         $output->writeln(sprintf('Resolved runtime: %s', $resolved->value));
 
         return ExitCode::Success->value;

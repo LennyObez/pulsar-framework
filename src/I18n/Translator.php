@@ -21,7 +21,7 @@ use function in_array;
 #[Internal]
 final class Translator implements TranslatorInterface
 {
-    private string $locale;
+    public string $locale;
 
     private static ?self $globalInstance = null;
 
@@ -61,16 +61,6 @@ final class Translator implements TranslatorInterface
         }
 
         return $this->formatMessage($key, $parameters, $targetLocale);
-    }
-
-    public function getLocale(): string
-    {
-        return $this->locale;
-    }
-
-    public function setLocale(string $locale): void
-    {
-        $this->locale = $locale;
     }
 
     public function has(string $key, ?string $locale = null, string $domain = 'messages'): bool

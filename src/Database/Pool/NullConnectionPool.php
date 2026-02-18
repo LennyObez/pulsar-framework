@@ -17,10 +17,10 @@ use Pulsar\Database\PdoConnection;
  * immediately on checkin. No connection reuse occurs.
  */
 #[Api(since: '1.0.0')]
-final class NullConnectionPool implements ConnectionPoolInterface
+final readonly class NullConnectionPool implements ConnectionPoolInterface
 {
     public function __construct(
-        private readonly ConnectionConfig $connectionConfig,
+        private ConnectionConfig $connectionConfig,
     ) {}
 
     #[Override]

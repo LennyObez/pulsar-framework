@@ -33,10 +33,6 @@ final class QueryClassifier
     private static function classifyKeyword(string $normalized): QueryClassification
     {
         return match (true) {
-            str_starts_with($normalized, 'SELECT'),
-            str_starts_with($normalized, 'SHOW'),
-            str_starts_with($normalized, 'DESCRIBE'),
-            str_starts_with($normalized, 'EXPLAIN') => QueryClassification::Select,
             str_starts_with($normalized, 'INSERT') => QueryClassification::Insert,
             str_starts_with($normalized, 'UPDATE') => QueryClassification::Update,
             str_starts_with($normalized, 'DELETE') => QueryClassification::Delete,

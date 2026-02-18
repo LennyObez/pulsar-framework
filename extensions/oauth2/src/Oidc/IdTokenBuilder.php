@@ -7,7 +7,6 @@ namespace Pulsar\Extension\OAuth2\Oidc;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\OAuth2\Contract\UserClaimsProviderInterface;
-use Pulsar\Security\Crypto\KeyRingInterface;
 
 /**
  * Builds and signs OIDC ID tokens.
@@ -24,7 +23,6 @@ final readonly class IdTokenBuilder
     public function __construct(
         private OidcConfig $config,
         private UserClaimsProviderInterface $claimsProvider,
-        private KeyRingInterface $keyRing,
         private JwtSigner $jwtSigner,
     ) {}
 

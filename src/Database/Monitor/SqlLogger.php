@@ -77,7 +77,7 @@ final readonly class SqlLogger implements SqlLoggerInterface
      */
     private static function normalizeSql(string $sql): string
     {
-        if (str_contains($sql, '?') || (bool) preg_match('/:\w+/', $sql)) {
+        if (str_contains($sql, '?') || preg_match('/:\w+/', $sql) === 1) {
             return $sql;
         }
 

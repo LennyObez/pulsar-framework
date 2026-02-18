@@ -178,10 +178,7 @@ class Response implements ResponseInterface
             return $this;
         }
 
-        $new = clone $this;
-        $new->protocolVersion = $version;
-
-        return $new;
+        return clone($this, ['protocolVersion' => $version]);
     }
 
     /**
@@ -287,10 +284,7 @@ class Response implements ResponseInterface
     #[Override]
     public function withBody(StreamInterface $body): static
     {
-        $new = clone $this;
-        $new->body = $body;
-
-        return $new;
+        return clone($this, ['body' => $body]);
     }
 
     // ── PSR-7 ResponseInterface ─────────────────────────────────────────
@@ -305,11 +299,10 @@ class Response implements ResponseInterface
     #[Override]
     public function withStatus(int $code, string $reasonPhrase = ''): static
     {
-        $new = clone $this;
-        $new->statusCode = $code;
-        $new->reasonPhrase = $reasonPhrase !== '' ? $reasonPhrase : self::defaultReasonPhrase($code);
-
-        return $new;
+        return clone($this, [
+            'statusCode' => $code,
+            'reasonPhrase' => $reasonPhrase !== '' ? $reasonPhrase : self::defaultReasonPhrase($code),
+        ]);
     }
 
     #[Override]

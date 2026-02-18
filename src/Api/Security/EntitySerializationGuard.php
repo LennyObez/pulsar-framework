@@ -92,12 +92,6 @@ final readonly class EntitySerializationGuard
      */
     private function isEntity(string $class): bool
     {
-        foreach ($this->entityNamespacePatterns as $pattern) {
-            if (str_starts_with($class, $pattern)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->entityNamespacePatterns, static fn(string $pattern): bool => str_starts_with($class, $pattern));
     }
 }

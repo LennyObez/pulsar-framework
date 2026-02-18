@@ -14,17 +14,17 @@ use function is_string;
  * Encrypted wizard state holding step data and anti-replay counter.
  */
 #[Internal(reason: 'Wizard state is encrypted and not exposed to consumers')]
-final class WizardState
+final readonly class WizardState
 {
     /**
      * @param array<int, array<string, mixed>> $stepData Data collected per step
      */
     public function __construct(
-        public readonly string $wizardId,
-        public readonly int $currentStep,
-        public readonly int $stepCounter,
-        public readonly int $createdAt,
-        public readonly array $stepData,
+        public string $wizardId,
+        public int $currentStep,
+        public int $stepCounter,
+        public int $createdAt,
+        public array $stepData,
     ) {}
 
     /**

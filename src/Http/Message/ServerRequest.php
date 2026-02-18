@@ -10,6 +10,7 @@ use NoDiscard;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Message\UriInterface;
 use Pulsar\Api\Api;
 use stdClass;
@@ -80,7 +81,7 @@ class ServerRequest implements ServerRequestInterface
     /** @var array<string, mixed> */
     private array $queryParams;
 
-    /** @var array<\Psr\Http\Message\UploadedFileInterface> */
+    /** @var array<UploadedFileInterface> */
     private array $uploadedFiles;
 
     /** @var null|array<string, mixed>|object */
@@ -94,7 +95,7 @@ class ServerRequest implements ServerRequestInterface
      * @param array<string, mixed> $serverParams
      * @param array<string, mixed> $cookieParams
      * @param array<string, mixed> $queryParams
-     * @param array<\Psr\Http\Message\UploadedFileInterface> $uploadedFiles
+     * @param array<UploadedFileInterface> $uploadedFiles
      * @param null|array<string, mixed>|object $parsedBody
      * @param array<string, mixed> $attributes
      */
@@ -232,7 +233,7 @@ class ServerRequest implements ServerRequestInterface
         // Read body from php://input
         $body = Stream::fromFile('php://input', 'rb');
 
-        /** @var array<\Psr\Http\Message\UploadedFileInterface> $uploadedFiles */
+        /** @var array<UploadedFileInterface> $uploadedFiles */
         $uploadedFiles = self::normalizeFiles($fileData);
 
         return new self(
@@ -265,10 +266,7 @@ class ServerRequest implements ServerRequestInterface
             return $this;
         }
 
-        $new = clone $this;
-        $new->protocolVersion = $version;
-
-        return $new;
+        return clone($this, ['protocolVersion' => $version]);
     }
 
     /**
@@ -374,10 +372,7 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withBody(StreamInterface $body): static
     {
-        $new = clone $this;
-        $new->body = $body;
-
-        return $new;
+        return clone($this, ['body' => $body]);
     }
 
     // ── PSR-7 RequestInterface ──────────────────────────────────────────
@@ -408,10 +403,7 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withRequestTarget(string $requestTarget): static
     {
-        $new = clone $this;
-        $new->requestTarget = $requestTarget;
-
-        return $new;
+        return clone($this, ['requestTarget' => $requestTarget]);
     }
 
     #[Override]
@@ -424,10 +416,7 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withMethod(string $method): static
     {
-        $new = clone $this;
-        $new->method = $method;
-
-        return $new;
+        return clone($this, ['method' => $method]);
     }
 
     #[Override]
@@ -489,11 +478,8 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withCookieParams(array $cookies): static
     {
-        $new = clone $this;
         /** @var array<string, mixed> $cookies */
-        $new->cookieParams = $cookies;
-
-        return $new;
+        return clone($this, ['cookieParams' => $cookies]);
     }
 
     /**
@@ -512,15 +498,12 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withQueryParams(array $query): static
     {
-        $new = clone $this;
         /** @var array<string, mixed> $query */
-        $new->queryParams = $query;
-
-        return $new;
+        return clone($this, ['queryParams' => $query]);
     }
 
     /**
-     * @return array<\Psr\Http\Message\UploadedFileInterface>
+     * @return array<UploadedFileInterface>
      */
     #[Override]
     public function getUploadedFiles(): array
@@ -535,11 +518,8 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withUploadedFiles(array $uploadedFiles): static
     {
-        $new = clone $this;
-        /** @var array<\Psr\Http\Message\UploadedFileInterface> $uploadedFiles */
-        $new->uploadedFiles = $uploadedFiles;
-
-        return $new;
+        /** @var array<UploadedFileInterface> $uploadedFiles */
+        return clone($this, ['uploadedFiles' => $uploadedFiles]);
     }
 
     /**
@@ -556,17 +536,14 @@ class ServerRequest implements ServerRequestInterface
      */
     #[NoDiscard]
     #[Override]
-    public function withParsedBody($data): static
+    public function withParsedBody(mixed $data): static
     {
         if ($data !== null && !is_array($data) && !($data instanceof stdClass)) {
             throw new InvalidArgumentException('Parsed body must be array, object, or null.');
         }
 
-        $new = clone $this;
         /** @var null|array<string, mixed>|stdClass $data */
-        $new->parsedBody = $data;
-
-        return $new;
+        return clone($this, ['parsedBody' => $data]);
     }
 
     /**
@@ -865,10 +842,7 @@ class ServerRequest implements ServerRequestInterface
     #[NoDiscard]
     public function withAttributes(array $attributes): static
     {
-        $new = clone $this;
-        $new->attributes = [...$new->attributes, ...$attributes];
-
-        return $new;
+        return clone($this, ['attributes' => [...$this->attributes, ...$attributes]]);
     }
 
     // ── Private ─────────────────────────────────────────────────────────

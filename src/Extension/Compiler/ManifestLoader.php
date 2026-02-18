@@ -33,7 +33,6 @@ final class ManifestLoader
             throw new RuntimeException(sprintf("Compiled manifest not found at '%s'", $path));
         }
 
-        /** @var mixed $data */
         $data = require $path;
 
         if (!is_array($data)) {
