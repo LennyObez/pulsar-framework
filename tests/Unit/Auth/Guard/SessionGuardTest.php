@@ -11,9 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Auth\Guard\SessionGuard;
 use Pulsar\Auth\Identity\Identity;
 use Pulsar\Auth\Identity\TwoFactorStatus;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Security\Session\SessionInterface;
 
 #[CoversClass(SessionGuard::class)]
@@ -40,13 +38,9 @@ final class SessionGuardTest extends TestCase
     {
         $this->session->method('isStarted')->willReturn(false);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
         self::assertNull($this->guard->authenticate($request));
@@ -56,15 +50,11 @@ final class SessionGuardTest extends TestCase
     public function authenticateReturnsNullWhenNoIdentityInSession(): void
     {
         $this->session->method('isStarted')->willReturn(true);
-        $this->session->method('has')->with('_pulsar_identity')->willReturn(false);
+        $this->session->method('has')->willReturn(false);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
         self::assertNull($this->guard->authenticate($request));
@@ -82,16 +72,12 @@ final class SessionGuardTest extends TestCase
         ];
 
         $this->session->method('isStarted')->willReturn(true);
-        $this->session->method('has')->with('_pulsar_identity')->willReturn(true);
-        $this->session->method('get')->with('_pulsar_identity')->willReturn($identityData);
+        $this->session->method('has')->willReturn(true);
+        $this->session->method('get')->willReturn($identityData);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag([]),
-            body: '',
         );
 
         $identity = $this->guard->authenticate($request);
