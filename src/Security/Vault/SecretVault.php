@@ -169,11 +169,46 @@ final class SecretVault
             $exported,
         );
 
+        // Vault directory must be owner-only: the file it contains holds
+        // encrypted secrets (API keys, database credentials, PULSAR_MASTER_KEY).
+        // World/group-readable permissions on the containing directory enable
+        // local attackers to enumerate its contents even if the file itself
+        // is restricted.
         $dir = dirname($this->vaultPath);
+
         if (!is_dir($dir)) {
-            mkdir($dir, 0o755, true);
+            mkdir($dir, 0o700, true);
         }
 
-        file_put_contents($this->vaultPath, $content, LOCK_EX);
+        // Tighten directory permissions if a prior installation created it
+        // with looser permissions.
+        chmod($dir, 0o700);
+
+        // Atomic write: write to a temp file under the same directory
+        // (so the rename is an atomic filesystem operation on POSIX) then
+        // swap it into place. This prevents partial-write corruption if
+        // the process is killed mid-write.
+        $tempFile = tempnam($dir, '.vault-');
+
+        if ($tempFile === false) {
+            throw SecurityException::encryptionFailed('unable to create temporary vault file');
+        }
+
+        $bytesWritten = file_put_contents($tempFile, $content, LOCK_EX);
+
+        if ($bytesWritten === false) {
+            unlink($tempFile);
+
+            throw SecurityException::encryptionFailed('failed to write vault content');
+        }
+
+        // Owner-only read on the vault file
+        chmod($tempFile, 0o600);
+
+        if (!rename($tempFile, $this->vaultPath)) {
+            unlink($tempFile);
+
+            throw SecurityException::encryptionFailed('failed to swap vault file into place');
+        }
     }
 }
