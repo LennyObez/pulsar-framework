@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Security\Session;
 
+use JsonException;
 use NoDiscard;
 use Override;
 use Psr\Http\Message\ServerRequestInterface;
@@ -17,11 +18,16 @@ use Random\Randomizer;
 
 use function array_key_exists;
 use function bin2hex;
+use function is_array;
 use function is_string;
+use function json_decode;
+use function json_encode;
 use function preg_match;
-use function serialize;
 use function time;
-use function unserialize;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 /**
  * Central session orchestrator managing handlers, validators, and lifecycle.
@@ -77,15 +83,7 @@ final class SessionManager implements SessionInterface
 
         if ($raw !== '' && $raw !== false) {
             $decrypted = $this->decryptIfEnabled($raw);
-            /** @var array{_pulsar_meta?: array<string, mixed>, data?: array<string, mixed>}|false $stored */
-            $stored = @unserialize($decrypted, ['allowed_classes' => false]);
-
-            if ($stored !== false) {
-                $this->data = $stored['data'] ?? [];
-                $this->metadata = isset($stored[self::METADATA_KEY])
-                    ? SessionMetadata::fromArray($stored[self::METADATA_KEY])
-                    : null;
-            }
+            $this->loadStoredPayload($decrypted);
         }
 
         if ($this->metadata === null) {
@@ -129,15 +127,7 @@ final class SessionManager implements SessionInterface
 
         if ($isExistingSession) {
             $decrypted = $this->decryptIfEnabled($raw);
-            /** @var array{_pulsar_meta?: array<string, mixed>, data?: array<string, mixed>}|false $stored */
-            $stored = @unserialize($decrypted, ['allowed_classes' => false]);
-
-            if ($stored !== false) {
-                $this->data = $stored['data'] ?? [];
-                $this->metadata = isset($stored[self::METADATA_KEY])
-                    ? SessionMetadata::fromArray($stored[self::METADATA_KEY])
-                    : null;
-            }
+            $this->loadStoredPayload($decrypted);
         }
 
         $rawIp = $request->getServerParams()['REMOTE_ADDR'] ?? '';
@@ -299,6 +289,22 @@ final class SessionManager implements SessionInterface
 
     /**
      * Persist the current session data to the handler.
+     *
+     * Storage format is JSON. Pulsar 1.0.0-rc.12 switched away from PHP
+     * serialize() to eliminate the unserialize() attack surface (HIGH-4):
+     * if encryption is disabled and an attacker can write to the session
+     * storage location (e.g. shared temp dirs in multi-tenant hosting),
+     * a serialized payload could trigger nested-array DoS or
+     * `__PHP_Incomplete_Class` shenanigans even with `allowed_classes:false`.
+     * JSON cannot instantiate classes, has bounded depth, and is the
+     * recommended substitute per CWE-502.
+     *
+     * Session values must therefore be JSON-encodable (scalars, arrays,
+     * or `JsonSerializable` instances). Storing raw object instances
+     * will throw a `SecurityException` at save time so the application
+     * fails loudly instead of silently dropping data.
+     *
+     * @throws SecurityException If session data is not JSON-encodable.
      */
     public function save(): void
     {
@@ -311,10 +317,58 @@ final class SessionManager implements SessionInterface
             self::METADATA_KEY => $this->metadata?->toArray(),
         ];
 
-        $serialized = serialize($stored);
+        try {
+            $serialized = json_encode(
+                $stored,
+                JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+            );
+        } catch (JsonException $e) {
+            throw SecurityException::sessionEncodingFailed($e->getMessage());
+        }
+
         $payload = $this->encryptIfEnabled($serialized);
 
         $this->handler->write($this->sessionId, $payload);
+    }
+
+    /**
+     * Decode and apply a stored session payload.
+     *
+     * Silently discards malformed payloads (treats them as a fresh
+     * session) — this matches the previous unserialize-based behavior
+     * for graceful recovery from corrupted storage. The critical
+     * difference vs `unserialize()` is that JSON has zero code-execution
+     * attack surface: malformed input cannot construct objects or
+     * trigger magic methods.
+     */
+    private function loadStoredPayload(string $decrypted): void
+    {
+        if ($decrypted === '') {
+            return;
+        }
+
+        try {
+            $stored = json_decode($decrypted, true, 32, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return;
+        }
+
+        if (!is_array($stored)) {
+            return;
+        }
+
+        /** @var array<string, mixed> $sessionData */
+        $sessionData = is_array($stored['data'] ?? null) ? $stored['data'] : [];
+        $this->data = $sessionData;
+
+        /** @var array<string, mixed>|null $metadataArray */
+        $metadataArray = is_array($stored[self::METADATA_KEY] ?? null)
+            ? $stored[self::METADATA_KEY]
+            : null;
+
+        $this->metadata = $metadataArray !== null
+            ? SessionMetadata::fromArray($metadataArray)
+            : null;
     }
 
     /**
