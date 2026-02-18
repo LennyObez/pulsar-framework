@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use Pulsar\Api\Api;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
@@ -22,6 +23,7 @@ use function substr;
  * Each code is 16 hex characters (8 bytes of randomness) with optional
  * checksum group for typo detection.
  */
+#[Api(since: '1.0.0')]
 final readonly class RecoveryCodeGenerator
 {
     private Randomizer $randomizer;
