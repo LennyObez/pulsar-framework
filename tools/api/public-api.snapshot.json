@@ -505,6 +505,41 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Build\\ArtifactEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\ArtifactIntegrityVerifier": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\BuildException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\BuildManifest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\BuildMetadata": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\VerificationResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Build\\VerificationStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Cache\\Application\\CacheItem": {
       "since": "1.0.0",
       "methods": [],
@@ -1701,6 +1736,21 @@
       "constants": []
     },
     "Pulsar\\Extensibility\\TrustTier": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extension\\Compiler\\CompiledExtensionEntry": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extension\\Compiler\\CompiledExtensionManifest": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Extension\\Compiler\\ManifestLoader": {
       "since": "1.0.0",
       "methods": [],
       "constants": []
@@ -4421,6 +4471,8 @@
     "Pulsar\\Auth\\TwoFactor\\InMemoryTotpSecretStore",
     "Pulsar\\Auth\\TwoFactor\\RecoveryCodeHasher",
     "Pulsar\\Auth\\TwoFactor\\SqliteTotpReplayGuard",
+    "Pulsar\\Build\\BuildArtifactLoader",
+    "Pulsar\\Build\\PreloadGenerator",
     "Pulsar\\Cache\\Application\\CacheKeyValidator",
     "Pulsar\\Cache\\Application\\Driver\\AbstractCacheDriver",
     "Pulsar\\Cache\\Application\\Driver\\ApcuDriver",
@@ -4457,6 +4509,7 @@
     "Pulsar\\Config\\ConfigManager",
     "Pulsar\\Config\\ConfigOverrides",
     "Pulsar\\Console\\Application",
+    "Pulsar\\Console\\Command\\BuildCommand",
     "Pulsar\\Console\\Command\\CacheWarmupCommand",
     "Pulsar\\Console\\Command\\DebugContainerCommand",
     "Pulsar\\Console\\Command\\DeployCheckCommand",
@@ -4566,6 +4619,7 @@
     "Pulsar\\Event\\Internal\\StormGuard",
     "Pulsar\\Extensibility\\ExtensionLoader",
     "Pulsar\\Extensibility\\ExtensionRegistry",
+    "Pulsar\\Extension\\Compiler\\ExtensionGraphCompiler",
     "Pulsar\\Http\\Middleware\\CallableRequestHandler",
     "Pulsar\\Http\\Middleware\\MiddlewareHandler",
     "Pulsar\\Http\\Middleware\\MiddlewarePipeline",
@@ -4576,6 +4630,8 @@
     "Pulsar\\I18n\\Catalog\\ChainCatalog",
     "Pulsar\\I18n\\Catalog\\JsonCatalog",
     "Pulsar\\I18n\\Catalog\\PhpCatalog",
+    "Pulsar\\I18n\\Compiler\\CompiledCatalogIndex",
+    "Pulsar\\I18n\\Compiler\\I18nCatalogCompiler",
     "Pulsar\\I18n\\Extractor\\ExtractionResult",
     "Pulsar\\I18n\\Format\\FallbackMessageFormatter",
     "Pulsar\\I18n\\Format\\IcuMessageFormatter",

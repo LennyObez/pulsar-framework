@@ -10,6 +10,8 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface as PsrMiddlewareInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Build\BuildArtifactLoader;
+use Pulsar\Build\BuildException;
 use Pulsar\Cache\CachedRoute;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\RouteHandlerType;
@@ -69,6 +71,8 @@ use Pulsar\Routing\Route;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Routing\RoutingException;
+use Pulsar\Security\Crypto\HmacInterface;
+use Pulsar\Security\Crypto\KeyProviderInterface;
 use Random\Engine\Secure;
 use Random\Randomizer;
 use ReflectionException;
@@ -211,6 +215,9 @@ final class Kernel implements KernelInterface
         }
 
         $cacheLoadUs = (int) ((hrtime(true) - $cacheStart) / 1000);
+
+        // Build artifact verification (production mode)
+        $this->verifyBuildArtifacts($cacheLoaded);
 
         // Register shared Randomizer (CSPRNG) singleton
         $randomizer = new Randomizer(new Secure());
@@ -600,6 +607,93 @@ final class Kernel implements KernelInterface
         }
 
         return $routes;
+    }
+
+    /**
+     * Verify build artifacts in production mode.
+     *
+     * In production: fail fast if artifacts are missing, optionally verify integrity.
+     * In development: skip verification (artifacts may not exist).
+     *
+     * @throws BuildException If required artifacts are missing or integrity check fails
+     */
+    private function verifyBuildArtifacts(bool $cacheLoaded): void
+    {
+        $configPath = $this->configManager?->configPath();
+
+        if ($configPath === null) {
+            return;
+        }
+
+        $isProduction = $this->isProductionMode();
+
+        // Only enforce in production mode
+        if (!$isProduction) {
+            return;
+        }
+
+        $cacheDir = $configPath . DIRECTORY_SEPARATOR . '..' . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache';
+        $loader = new BuildArtifactLoader($cacheDir);
+
+        // Production mode: require build artifacts
+        if (!$loader->hasArtifacts()) {
+            throw BuildException::missingArtifacts(['build-manifest.json']);
+        }
+
+        // Optional integrity verification
+        if (BuildArtifactLoader::isVerificationEnabled()) {
+            $manifest = $loader->loadManifest();
+
+            if ($manifest === null) {
+                throw BuildException::missingArtifact('build-manifest.json');
+            }
+
+            // Verify signature FIRST (if present and crypto services available)
+            // This ensures the manifest itself is authentic before trusting its hashes
+            if ($manifest->signature !== null
+                && $this->container->has(HmacInterface::class)
+                && $this->container->has(KeyProviderInterface::class)
+            ) {
+                /** @var HmacInterface $hmac */
+                $hmac = $this->container->get(HmacInterface::class);
+                /** @var KeyProviderInterface $keyProvider */
+                $keyProvider = $this->container->get(KeyProviderInterface::class);
+
+                if (!$loader->verifySignature($manifest, $hmac, $keyProvider)) {
+                    throw BuildException::signatureVerificationFailed();
+                }
+            }
+
+            // Then verify artifact hashes against the (now-authenticated) manifest
+            $result = $loader->verifyIntegrity($manifest);
+
+            if ($result !== null && !$result->passed) {
+                $failed = [];
+
+                foreach ($result->entries as $key => $status) {
+                    if ($status !== \Pulsar\Build\VerificationStatus::Ok) {
+                        $failed[] = $key;
+                    }
+                }
+
+                throw BuildException::integrityCheckFailedMultiple($failed);
+            }
+        }
+    }
+
+    /**
+     * Determine if the application is running in production mode.
+     */
+    private function isProductionMode(): bool
+    {
+        try {
+            $env = $this->configManager?->environment();
+            $appEnv = $env?->get('APP_ENV') ?? 'production';
+
+            return $appEnv === 'production';
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**

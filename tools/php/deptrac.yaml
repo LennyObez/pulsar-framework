@@ -39,6 +39,8 @@ deptrac:
           value: ^Pulsar\\Core\\Wiring\\
         - type: classLike
           value: ^Pulsar\\Console\\Command\\OptimizeCommand$
+        - type: classLike
+          value: ^Pulsar\\Console\\Command\\BuildCommand$
 
     # =================================================================
     # Foundation Tier
@@ -251,6 +253,22 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\Audit\\Internal\\
+
+    # --- Build ---
+    - name: Build
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Build\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Build\\Internal\\
+
+    - name: Build_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Build\\Internal\\
 
     # --- Auth ---
     - name: Auth
@@ -1032,6 +1050,8 @@ deptrac:
       - Audit_Internal
       - Auth
       - Auth_Internal
+      - Build
+      - Build_Internal
       - Cache
       - Cache_Internal
       - Context
@@ -1110,6 +1130,7 @@ deptrac:
       - Attribute
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1159,6 +1180,7 @@ deptrac:
       - Attribute
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1186,6 +1208,7 @@ deptrac:
     Attribute: *public_deps
     Audit: *public_deps
     Auth: *public_deps
+    Build: *public_deps
     Cache: *public_deps
     Context: *public_deps
     Database: *public_deps
@@ -1225,6 +1248,7 @@ deptrac:
       - Attribute
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1273,6 +1297,7 @@ deptrac:
     Attribute_Internal: [Attribute, Api, Support, Container, Config, Core, ErrorHandling]
     Audit_Internal: [Audit, Api, Support, Container, Config, Core, ErrorHandling]
     Auth_Internal: [Auth, Api, Support, Container, Config, Core, ErrorHandling]
+    Build_Internal: [Build, Api, Support, Container, Config, Core, ErrorHandling]
     Cache_Internal: [Cache, Api, Support, Container, Config, Core, ErrorHandling]
     Context_Internal: [Context, Api, Support, Container, Config, Core, ErrorHandling]
     Database_Internal: [Database, Api, Support, Container, Config, Core, ErrorHandling]
@@ -1332,6 +1357,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1371,6 +1397,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1409,6 +1436,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1448,6 +1476,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1486,6 +1515,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1526,6 +1556,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1565,6 +1596,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1604,6 +1636,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1642,6 +1675,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1684,6 +1718,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1726,6 +1761,7 @@ deptrac:
       - Attribute
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1778,6 +1814,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1817,6 +1854,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1855,6 +1893,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1892,6 +1931,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1929,6 +1969,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -1967,6 +2008,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database
@@ -2006,6 +2048,7 @@ deptrac:
       - Extensibility
       - Audit
       - Auth
+      - Build
       - Cache
       - Context
       - Database

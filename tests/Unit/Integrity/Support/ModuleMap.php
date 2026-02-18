@@ -47,6 +47,7 @@ final class ModuleMap
         'Pulsar\Core\Wiring\NotificationWiring',
         'Pulsar\Core\Wiring\ViewWiring',
         'Pulsar\Console\Application',
+        'Pulsar\Console\Command\BuildCommand',
     ];
 
     /**
