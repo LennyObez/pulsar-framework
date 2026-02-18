@@ -14,8 +14,14 @@ use Pulsar\Security\Session\Handler\ArrayHandler;
 use Pulsar\Security\Session\SessionManager;
 use Pulsar\Security\Session\SessionMetadata;
 
-use function serialize;
+use function bin2hex;
+use function json_encode;
+use function random_bytes;
 use function time;
+
+use const JSON_THROW_ON_ERROR;
+use const JSON_UNESCAPED_SLASHES;
+use const JSON_UNESCAPED_UNICODE;
 
 #[CoversClass(SessionManager::class)]
 final class SessionIdleTimeoutTest extends TestCase
@@ -233,7 +239,13 @@ final class SessionIdleTimeoutTest extends TestCase
 
         $opened = $this->handler->open('', 'TEST_SESSION');
         self::assertTrue($opened, 'Session handler should open successfully');
-        $this->handler->write($sessionId, serialize($stored));
+
+        // Pulsar 1.0.0-rc.12 stores sessions as JSON, not PHP serialize(),
+        // to eliminate the unserialize() attack surface (HIGH-4 / CWE-502).
+        $this->handler->write($sessionId, json_encode(
+            $stored,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+        ));
 
         return $sessionId;
     }
