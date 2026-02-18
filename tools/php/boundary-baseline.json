@@ -1,4 +1,25 @@
 {
-  "generated": "2026-02-09T00:00:00+00:00",
-  "violations": []
+  "generated": "2026-02-18T09:39:43+00:00",
+  "violations": [
+    {
+      "file": "src/Api/OpenApi/OpenApiWiring.php",
+      "import": "Pulsar\\Config\\ConfigManager",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Api/OpenApi/OpenApiWiring.php",
+      "import": "Pulsar\\Core\\Wiring\\ServiceWiringInterface",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Api/OpenApi/OpenApiWiring.php",
+      "import": "Pulsar\\Http\\Middleware\\MiddlewarePipeline",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "src/Api/OpenApi/OpenApiWiring.php",
+      "import": "Pulsar\\Http\\Middleware\\MiddlewareRegistry",
+      "rule": "cross_module_non_api"
+    }
+  ]
 }
