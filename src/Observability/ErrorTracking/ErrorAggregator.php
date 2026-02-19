@@ -9,6 +9,8 @@ use Throwable;
 
 use function array_values;
 use function count;
+use function error_log;
+use function sprintf;
 use function usort;
 
 /**
@@ -51,7 +53,16 @@ final class ErrorAggregator implements ErrorAggregatorInterface
         foreach ($this->observers as $observer) {
             try {
                 $observer($event);
-            } catch (Throwable) {
+            } catch (Throwable $observerException) {
+                // Observer failures must not interfere with the
+                // capture path: an Aggregator that throws because
+                // one observer is broken would itself become a
+                // source of errors. Log via error_log() so the
+                // failure is still visible to operators (C-4).
+                error_log(sprintf(
+                    '[pulsar.ErrorAggregator] observer failed while handling captured error: %s',
+                    $observerException->getMessage(),
+                ));
             }
         }
     }

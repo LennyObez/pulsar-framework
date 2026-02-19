@@ -11,6 +11,8 @@ use Throwable;
 use function array_filter;
 use function array_values;
 use function count;
+use function error_log;
+use function sprintf;
 
 /**
  * In-memory log of feature flag evaluations.
@@ -33,7 +35,15 @@ final class FlagEvaluationLog implements FlagEvaluationLogInterface, ResettableI
         foreach ($this->observers as $observer) {
             try {
                 $observer($evaluation);
-            } catch (Throwable) {
+            } catch (Throwable $observerException) {
+                // Observer failures must not poison the recording
+                // path. Surface the error via error_log() instead of
+                // swallowing it silently (C-4).
+                error_log(sprintf(
+                    '[pulsar.FlagEvaluationLog] observer failed for flag "%s": %s',
+                    $evaluation->flagName,
+                    $observerException->getMessage(),
+                ));
             }
         }
     }
