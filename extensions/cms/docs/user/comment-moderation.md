@@ -44,15 +44,15 @@ Moderation decisions are final. Once a comment transitions from Pending to any o
 
 1. Navigate to **Admin > CMS > Content > {id}** and open the comments section, or view comments through the admin comment controller.
 2. The moderation queue shows all pending comments with:
-   - Author name and email (if provided)
-   - Comment body (sanitized)
-   - Associated content item
-   - Submission timestamp
-   - Parent comment (for replies)
+  - Author name and email (if provided)
+  - Comment body (sanitized)
+  - Associated content item
+  - Submission timestamp
+  - Parent comment (for replies)
 3. For each pending comment, choose an action:
-   - **Approve**: Makes the comment publicly visible
-   - **Reject**: Hides the comment with an optional reason
-   - **Mark as Spam**: Flags the comment as spam
+  - **Approve**: Makes the comment publicly visible
+  - **Reject**: Hides the comment with an optional reason
+  - **Mark as Spam**: Flags the comment as spam
 
 ### Audit Logging
 
@@ -258,6 +258,6 @@ These events can trigger notifications, webhooks, or custom integrations.
 
 ## Next Steps
 
-- [Content Management Guide](content-management.md) -- Setting comment policies per content
-- [Security Model](../security/security-model.md) -- Comment-related permissions
-- [Audit Events Reference](../security/audit-events.md) -- Comment audit trail
+- [Content Management Guide](content-management.md) - Setting comment policies per content
+- [Security Model](../security/security-model.md) - Comment-related permissions
+- [Audit Events Reference](../security/audit-events.md) - Comment audit trail

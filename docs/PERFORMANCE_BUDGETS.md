@@ -67,7 +67,7 @@ Configuration breakdown:
 - **revs**: 1000 -- Each iteration executes the benchmark 1000 revolutions for statistical stability.
 - **warmup**: 1 -- One warmup iteration is run before measurement to prime caches and JIT.
 - **retry_threshold**: 5 -- Benchmarks with >5% relative standard deviation are retried to filter noise.
-- **time_unit**: microseconds -- All results are reported in microseconds.
+- **time_unit**: microseconds - All results are reported in microseconds.
 - **assert**: Global assertion that all benchmarks complete under 10ms (individual budgets are tighter).
 
 ### Benchmark Assertions
@@ -86,7 +86,7 @@ If the assertion fails, PHPBench exits with a non-zero code, and the CI job fail
 
 ### CI Integration
 
-The benchmark suite runs as an **advisory** CI job — it does not block merges. Results appear in the PR job summary and are uploaded as a build artifact (14-day retention) for human review. If a budget assertion fails, the job reports the failure but the overall CI pipeline continues.
+The benchmark suite runs as an **advisory** CI job - it does not block merges. Results appear in the PR job summary and are uploaded as a build artifact (14-day retention) for human review. If a budget assertion fails, the job reports the failure but the overall CI pipeline continues.
 
 ```bash
 composer bench

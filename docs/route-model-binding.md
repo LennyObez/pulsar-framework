@@ -440,4 +440,4 @@ $models = $request->getAttribute('_bound_models');
 // ['user' => User, 'post' => Post, ...]
 ```
 
-In a controller with type-hinted parameters, models are injected automatically — no manual attribute access is needed.
+In a controller with type-hinted parameters, models are injected automatically - no manual attribute access is needed.

@@ -59,11 +59,11 @@ Each log entry is a single JSON line:
 
 Fields:
 
-- `timestamp` — ISO 8601 with microseconds, always UTC
-- `level` — PSR-3 level string
-- `channel` — logger channel name
-- `message` — interpolated message
-- `context` — optional, present only when non-empty
+- `timestamp` - ISO 8601 with microseconds, always UTC
+- `level` - PSR-3 level string
+- `channel` - logger channel name
+- `message` - interpolated message
+- `context` - optional, present only when non-empty
 
 ## Sinks
 

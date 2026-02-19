@@ -1,4 +1,4 @@
-# Compliance Event System -- Threat Model
+# Compliance Event System - Threat Model
 
 ## Assets
 
@@ -50,10 +50,10 @@
 
 - **Threat**: Sensitive data (PAN, PHI, personal identifiers) leaks through application logs.
 - **Mitigation**: The `ComplianceLogSink` applies regulation-specific formatters before any log entry reaches the underlying sink:
-  - `PciDssLogFormatter`: Irreversible PAN masking (Luhn-validated, last-4-only), CVV/expiry full masking
-  - `GdprLogFormatter`: SHA-256 pseudonymization of personal data fields
-  - `HipaaLogFormatter`: PHI detection with `phi_access` flagging, patient ID pseudonymization
-  - Optional full-entry encryption via `EncryptorInterface`
+ - `PciDssLogFormatter`: Irreversible PAN masking (Luhn-validated, last-4-only), CVV/expiry full masking
+ - `GdprLogFormatter`: SHA-256 pseudonymization of personal data fields
+ - `HipaaLogFormatter`: PHI detection with `phi_access` flagging, patient ID pseudonymization
+ - Optional full-entry encryption via `EncryptorInterface`
 - **Residual risk**: Low. Custom log sinks that bypass `ComplianceLogSink` would not benefit from these protections.
 
 ### Repudiation
@@ -62,9 +62,9 @@
 
 - **Threat**: An attacker creates or modifies evidence archives to present fabricated compliance evidence during an audit.
 - **Mitigation**:
-  - Every `EvidenceExportResult` includes a `hashManifest` (SHA-256 of JSON-serialized records).
-  - The `operatorIdentity` is recorded on every export operation, linking the archive to a specific human operator.
-  - The export operation itself is recorded in the tamper-evident audit chain.
+ - Every `EvidenceExportResult` includes a `hashManifest` (SHA-256 of JSON-serialized records).
+ - The `operatorIdentity` is recorded on every export operation, linking the archive to a specific human operator.
+ - The export operation itself is recorded in the tamper-evident audit chain.
 - **Residual risk**: Low. An attacker who controls both the archive and the hash storage could forge consistent pairs. Mitigated by storing hashes in the audit chain.
 
 **R2: Pseudonym deletion without accountability**
@@ -93,11 +93,11 @@
 
 - **Threat**: An attacker obtains the application master key, gaining the ability to derive all subkeys (encryption, audit HMAC, pseudonymization).
 - **Mitigation**:
-  - **KDF isolation**: Each purpose uses a distinct sub-key ID and 8-byte context, so compromise of one derived subkey does not reveal the master key or other subkeys.
-  - **Memory zeroing**: `MasterKey::__destruct()` calls `sodium_memzero()` on key material when the object is garbage collected.
-  - **Serialization prevention**: `MasterKey::__serialize()` and `__unserialize()` throw `SecurityException`, preventing key material from being serialized to caches, sessions, or logs.
-  - **Debug protection**: `MasterKey::__debugInfo()` returns `[REDACTED]` instead of key material.
-  - **Key rotation support**: `MasterKey` supports a previous key for rotation windows via `PULSAR_MASTER_KEY_PREVIOUS`, enabling seamless rotation without service disruption.
+ - **KDF isolation**: Each purpose uses a distinct sub-key ID and 8-byte context, so compromise of one derived subkey does not reveal the master key or other subkeys.
+ - **Memory zeroing**: `MasterKey::__destruct()` calls `sodium_memzero()` on key material when the object is garbage collected.
+ - **Serialization prevention**: `MasterKey::__serialize()` and `__unserialize()` throw `SecurityException`, preventing key material from being serialized to caches, sessions, or logs.
+ - **Debug protection**: `MasterKey::__debugInfo()` returns `[REDACTED]` instead of key material.
+ - **Key rotation support**: `MasterKey` supports a previous key for rotation windows via `PULSAR_MASTER_KEY_PREVIOUS`, enabling seamless rotation without service disruption.
 - **Residual risk**: Medium. The master key is loaded from the `PULSAR_MASTER_KEY` environment variable. Environment variable access controls are deployment-specific.
 
 **E2: Authorization bypass for compliance operations**

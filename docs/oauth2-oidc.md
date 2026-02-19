@@ -53,7 +53,7 @@ The extension automatically registers:
 
 ### Authorization Code with PKCE (RFC 7636)
 
-PKCE is **mandatory** — all authorization code requests must include a `code_challenge` with method `S256`. Plain method is rejected.
+PKCE is **mandatory** - all authorization code requests must include a `code_challenge` with method `S256`. Plain method is rejected.
 
 ```
 GET /oauth/authorize?
@@ -95,7 +95,7 @@ scope=api.read+api.write
 
 ### Refresh Token
 
-Refresh tokens use one-time rotation — each use issues a new refresh token and invalidates the old one:
+Refresh tokens use one-time rotation - each use issues a new refresh token and invalidates the old one:
 
 ```
 POST /oauth/token
@@ -125,12 +125,12 @@ All token values are hashed before storage. Token values are never stored in pla
 
 ID tokens contain the required OIDC claims:
 
-- `iss` — Issuer identifier
-- `sub` — Subject identifier
-- `aud` — Audience (client ID)
-- `exp` — Expiration time
-- `iat` — Issued at time
-- `nonce` — Nonce from authorization request (if provided)
+- `iss` - Issuer identifier
+- `sub` - Subject identifier
+- `aud` - Audience (client ID)
+- `exp` - Expiration time
+- `iat` - Issued at time
+- `nonce` - Nonce from authorization request (if provided)
 
 Plus scope-derived claims from the `UserClaimsProviderInterface`.
 
@@ -160,7 +160,7 @@ Disabled by default. Enabling requires explicit admin policy configuration, audi
 
 ### Keyring Integration
 
-All token signing uses Keyring-managed keys (ADR-0006). The JOSE library receives key material from the Keyring — it never manages keys independently.
+All token signing uses Keyring-managed keys (ADR-0006). The JOSE library receives key material from the Keyring - it never manages keys independently.
 
 ### Audit Trail
 
@@ -218,6 +218,6 @@ The extension follows the contract-first pattern (ADR-0025):
 
 ## Related
 
-- [WebAuthn/Passkeys](webauthn.md) — passwordless authentication
-- [Session Management](session-management.md) — session infrastructure
-- [ADR-0025](adr/0025-oauth2-oidc-webauthn-library-adapters.md) — library selection rationale
+- [WebAuthn/Passkeys](webauthn.md) - passwordless authentication
+- [Session Management](session-management.md) - session infrastructure
+- [ADR-0025](adr/0025-oauth2-oidc-webauthn-library-adapters.md) - library selection rationale

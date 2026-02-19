@@ -6,9 +6,9 @@ Pulsar includes a file integrity verification system that detects unauthorized f
 
 The integrity system works in three phases:
 
-1. **Build** — Scan configured paths, compute SHA-256 hashes, produce a manifest
-2. **Sign** (optional) — HMAC-BLAKE2b sign the manifest using a derived subkey
-3. **Verify** — Compare the stored manifest against the current filesystem
+1. **Build** - Scan configured paths, compute SHA-256 hashes, produce a manifest
+2. **Sign** (optional) - HMAC-BLAKE2b sign the manifest using a derived subkey
+3. **Verify** - Compare the stored manifest against the current filesystem
 
 This is designed for production environments where filesystem tampering must be detected (e.g., regulated industries, compliance requirements).
 
@@ -173,9 +173,9 @@ Include integrity verification in your deployment pipeline:
 ```yaml
 deploy:
   steps:
-    - run: php bin/pulsar integrity:verify --strict
-    - run: php bin/pulsar deploy:check --env=production --strict
-    - run: php bin/pulsar health:check
+   - run: php bin/pulsar integrity:verify --strict
+   - run: php bin/pulsar deploy:check --env=production --strict
+   - run: php bin/pulsar health:check
 ```
 
 ## Studio Guardian Integration

@@ -6,11 +6,11 @@ Pulsar provides a typed, rule-based validation system for request data. The syst
 
 The validation system consists of:
 
-- **Rules** — Small, focused classes that validate a single aspect of a value
-- **Validator** — Stateless service that runs rules against input data
-- **ValidationResult** — Immutable collection of violations
-- **ValidationException** — HTTP exception (422) carrying the validation result
-- **ValidationMiddleware** — Abstract middleware for route-level validation
+- **Rules** - Small, focused classes that validate a single aspect of a value
+- **Validator** - Stateless service that runs rules against input data
+- **ValidationResult** - Immutable collection of violations
+- **ValidationException** - HTTP exception (422) carrying the validation result
+- **ValidationMiddleware** - Abstract middleware for route-level validation
 
 ## Validator Usage
 

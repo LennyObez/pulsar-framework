@@ -72,7 +72,7 @@ First-party extensions maintained by the Pulsar team will be added here as the f
 
 ## Complete Documentation
 
-For the full extension development guide -- including advanced manifest options, capability declarations, lifecycle hooks, testing strategies, and publishing -- see [`docs/EXTENSIONS.md`](../docs/EXTENSIONS.md).
+For the full extension development guide - including advanced manifest options, capability declarations, lifecycle hooks, testing strategies, and publishing - see [`docs/EXTENSIONS.md`](../docs/EXTENSIONS.md).
 
 ## Guidelines
 

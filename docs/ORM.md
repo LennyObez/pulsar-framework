@@ -80,7 +80,7 @@ Maps the entity to a database table.
 
 | Parameter | Type      | Default | Description                   |
 | --------- | --------- | ------- | ----------------------------- |
-| `name`    | `string`  | —       | Table name                    |
+| `name`    | `string`  | -       | Table name                    |
 | `schema`  | `?string` | `null`  | Database schema (e.g., `crm`) |
 
 #### `#[Id]` (property-level)
@@ -112,8 +112,8 @@ Defines a relation to another entity.
 
 | Parameter         | Type           | Default | Description                                       |
 | ----------------- | -------------- | ------- | ------------------------------------------------- |
-| `type`            | `RelationType` | —       | `BelongsTo`, `HasOne`, `HasMany`, `BelongsToMany` |
-| `target`          | `class-string` | —       | Target entity class                               |
+| `type`            | `RelationType` | -       | `BelongsTo`, `HasOne`, `HasMany`, `BelongsToMany` |
+| `target`          | `class-string` | -       | Target entity class                               |
 | `foreignKey`      | `?string`      | `null`  | Foreign key column (owning side)                  |
 | `localKey`        | `?string`      | `null`  | Local key (default: primary key)                  |
 | `pivotTable`      | `?string`      | `null`  | Pivot table (BelongsToMany only)                  |
@@ -147,7 +147,7 @@ Embeds a value object's properties into the owning table.
 
 | Parameter | Type           | Default | Description                     |
 | --------- | -------------- | ------- | ------------------------------- |
-| `class`   | `class-string` | —       | Value object class              |
+| `class`   | `class-string` | -       | Value object class              |
 | `prefix`  | `string`       | `''`    | Column prefix for embedded cols |
 
 #### `#[CastUsing]` (property-level)
@@ -351,8 +351,8 @@ $compiled = $em->query(User::class)
     ->orderBy('name')
     ->toSql();
 
-// $compiled['sql'] — the parameterized SQL string
-// $compiled['bindings'] — the named binding values
+// $compiled['sql'] - the parameterized SQL string
+// $compiled['bindings'] - the named binding values
 ```
 
 ### Soft Delete Query Modifiers
@@ -407,7 +407,7 @@ Entities with a `#[Version]` column participate in optimistic locking. On update
 try {
     $em->update($user, $context);
 } catch (OptimisticLockException $e) {
-    // Another process modified this entity — reload and retry
+    // Another process modified this entity - reload and retry
 }
 ```
 
@@ -603,7 +603,7 @@ For equality lookups on encrypted data, configure a `#[BlindIndex]` alongside `#
 
 | Parameter    | Type     | Default | Description                            |
 | ------------ | -------- | ------- | -------------------------------------- |
-| `column`     | `string` | —       | Separate DB column for the blind index |
+| `column`     | `string` | -       | Separate DB column for the blind index |
 | `hashLength` | `int`    | `32`    | Truncated hash length in bytes         |
 
 The blind index column stores binary data. Use `Param::binary()` when querying:
@@ -653,7 +653,7 @@ Blind indexes enable equality search but have inherent trade-offs:
 4. Remove the old `sub_key_id` acceptance from the code.
 5. Audit log the rotation event with `MutationContext`.
 
-Subkey rotation does not require changing `PULSAR_MASTER_KEY` — only the derived subkey changes.
+Subkey rotation does not require changing `PULSAR_MASTER_KEY` - only the derived subkey changes.
 
 ## Tenancy
 

@@ -2,8 +2,8 @@
 
 Pulsar enforces architectural boundaries through two complementary tools:
 
-- **Deptrac** — structural namespace fences (extension isolation, core/extension wall)
-- **PHPUnit architecture tests** — attribute-aware boundary checks (`#[Api]`/`#[Internal]`)
+- **Deptrac** - structural namespace fences (extension isolation, core/extension wall)
+- **PHPUnit architecture tests** - attribute-aware boundary checks (`#[Api]`/`#[Internal]`)
 
 Both run as part of `composer qa` and CI. Violations fail the build.
 
@@ -46,7 +46,7 @@ When importing a class from another module, the target class must have the `#[Ap
 ```php
 namespace Pulsar\Extension\Studio\Command;
 
-use Pulsar\Cache\FrameworkCache; // FORBIDDEN — FrameworkCache is #[Internal]
+use Pulsar\Cache\FrameworkCache; // FORBIDDEN - FrameworkCache is #[Internal]
 ```
 
 **Fix options:**
@@ -134,7 +134,7 @@ To add to the baseline (last resort):
 
 1. Add the target FQCN as a key in the JSON file.
 2. Include a description explaining why the exception is necessary.
-3. Get code review approval — baselines should shrink over time, not grow.
+3. Get code review approval - baselines should shrink over time, not grow.
 
 ## Adding a New Extension
 
@@ -145,26 +145,26 @@ When adding a new extension to `extensions/`, you must update `tools/php/deptrac
 ```yaml
 - name: MyExtContracts
   collectors:
-    - type: classLike
+   - type: classLike
       value: ^Pulsar\\Extension\\MyExt\\Contracts\\
 
 - name: MyExtDomain
   collectors:
-    - type: classLike
+   - type: classLike
       value: ^Pulsar\\Extension\\MyExt\\Domain\\
-    - type: classLike
+   - type: classLike
       value: ^Pulsar\\Extension\\MyExt\\Exception\\
 
 - name: MyExtInternal
   collectors:
-    - type: bool
+   - type: bool
       must:
-        - type: classLike
+       - type: classLike
           value: ^Pulsar\\Extension\\MyExt\\
       must_not:
-        - type: layer
+       - type: layer
           value: MyExtContracts
-        - type: layer
+       - type: layer
           value: MyExtDomain
 ```
 
@@ -172,14 +172,14 @@ Add ruleset entries:
 
 ```yaml
 MyExtContracts:
-  - Core
-  - MyExtDomain
+ - Core
+ - MyExtDomain
 MyExtDomain:
-  - Core
+ - Core
 MyExtInternal:
-  - Core
-  - MyExtContracts
-  - MyExtDomain
+ - Core
+ - MyExtContracts
+ - MyExtDomain
 ```
 
 **Extension without Contracts split:**
@@ -187,13 +187,13 @@ MyExtInternal:
 ```yaml
 - name: MyExtension
   collectors:
-    - type: classLike
+   - type: classLike
       value: ^Pulsar\\Extension\\MyExt\\
 ```
 
 ```yaml
 MyExtension:
-  - Core
+ - Core
 ```
 
 The `deptrac_config_covers_all_extensions` test will fail CI if an extension is not covered.

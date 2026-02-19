@@ -135,7 +135,7 @@ Initially supports:
 - **`none`**: No attestation (default, suitable for most use cases)
 - **`packed`**: Self-attestation or attestation from a trusted CA
 
-Additional formats (fido-u2f, android-key, apple) can be added based on demand. The attestation policy is configurable — disallowed formats are rejected.
+Additional formats (fido-u2f, android-key, apple) can be added based on demand. The attestation policy is configurable - disallowed formats are rejected.
 
 ### Clone Detection
 
@@ -216,6 +216,6 @@ The extension follows the contract-first pattern (ADR-0025):
 
 ## Related
 
-- [OAuth2/OIDC](oauth2-oidc.md) — authorization server
-- [Session Management](session-management.md) — session infrastructure
-- [ADR-0025](adr/0025-oauth2-oidc-webauthn-library-adapters.md) — library selection rationale
+- [OAuth2/OIDC](oauth2-oidc.md) - authorization server
+- [Session Management](session-management.md) - session infrastructure
+- [ADR-0025](adr/0025-oauth2-oidc-webauthn-library-adapters.md) - library selection rationale

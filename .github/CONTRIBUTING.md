@@ -92,17 +92,17 @@ declare(strict_types=1);
 
 - HTML5 semantic markup only.
 - Accessibility is mandatory:
-  - keyboard support
-  - correct labels and focus behavior
-  - minimal, correct ARIA usage
+ - keyboard support
+ - correct labels and focus behavior
+ - minimal, correct ARIA usage
 
 ## Testing
 
 - Add tests for any new behavior.
 - Cover edge cases and failure paths (especially security-sensitive behavior).
 - Prefer deterministic tests:
-  - avoid real timeouts where possible
-  - control randomness with seeded generators
+ - avoid real timeouts where possible
+ - control randomness with seeded generators
 - Use integration tests when behavior depends on multiple components.
 
 ## Static analysis & formatting (mandatory)
@@ -110,18 +110,18 @@ declare(strict_types=1);
 Before opening a PR, the full gate must pass:
 
 - PHP static analysis:
-  - PHPStan
-  - Psalm
-  - Qodana inspections
+ - PHPStan
+ - Psalm
+ - Qodana inspections
 - PHP formatting:
-  - PHP-CS-Fixer
+ - PHP-CS-Fixer
 - JS/TS:
-  - TypeScript typecheck (if configured)
-  - ESLint (flat config)
-  - Prettier
+ - TypeScript typecheck (if configured)
+ - ESLint (flat config)
+ - Prettier
 - Security checks:
-  - dependency advisories
-  - secret scanning (never commit secrets)
+ - dependency advisories
+ - secret scanning (never commit secrets)
 
 If a tool requires baseline files (e.g., Qodana), keep baselines small and documented.
 

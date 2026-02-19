@@ -113,7 +113,7 @@ $kernel = new Kernel(configManager: new ConfigManager(
 ));
 ```
 
-When no `ConfigManager` is provided (e.g. in tests), exceptions propagate as before — full backward compatibility.
+When no `ConfigManager` is provided (e.g. in tests), exceptions propagate as before - full backward compatibility.
 
 ## Custom Renderers
 
