@@ -30,13 +30,12 @@ final readonly class PublishingStateMachine
 
         $now = new DateTimeImmutable();
 
-        return clone $content with {
+        return new Content(
+            id: $content->id,
+            tenantId: $content->tenantId,
+            contentType: $content->contentType,
+            authorId: $content->authorId,
             status: $target,
-            updatedAt: $now,
-            publishedAt: match ($target) {
-                PublishingStatus::Published => $content->publishedAt ?? $now,
-                default => $content->publishedAt,
-            },
             scheduledPublishAt: match ($target) {
                 PublishingStatus::Draft, PublishingStatus::Published => null,
                 default => $content->scheduledPublishAt,
@@ -45,6 +44,18 @@ final readonly class PublishingStateMachine
                 PublishingStatus::Draft => null,
                 default => $content->scheduledUnpublishAt,
             },
-        };
+            publishedAt: match ($target) {
+                PublishingStatus::Published => $content->publishedAt ?? $now,
+                default => $content->publishedAt,
+            },
+            createdAt: $content->createdAt,
+            updatedAt: $now,
+            deletedAt: $content->deletedAt,
+            template: $content->template,
+            parentId: $content->parentId,
+            sortOrder: $content->sortOrder,
+            commentPolicy: $content->commentPolicy,
+            dataClassification: $content->dataClassification,
+        );
     }
 }
