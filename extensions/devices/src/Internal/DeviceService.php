@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Devices\Internal;
 
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Devices\Exception\DeviceException;
 use Pulsar\Extension\Devices\Platform;
 use Pulsar\Extension\Devices\UserDevice;
 use Pulsar\Extension\Devices\UserDeviceRepositoryInterface;
-use RuntimeException;
 
 use function bin2hex;
 use function random_bytes;
@@ -46,7 +46,7 @@ final readonly class DeviceService
      *
      * @return array{device: UserDevice, token: string} The device entity and the raw token (shown once)
      *
-     * @throws RuntimeException If the user has reached the maximum device limit
+     * @throws DeviceException If the user has reached the maximum device limit
      */
     public function register(
         string $userId,
@@ -57,9 +57,7 @@ final readonly class DeviceService
         $count = $this->devices->countByUser($userId);
 
         if ($count >= $this->maxDevicesPerUser) {
-            throw new RuntimeException(
-                "Device limit reached: user $userId already has $count registered devices (max $this->maxDevicesPerUser)",
-            );
+            throw DeviceException::deviceLimitReached($userId, $count, $this->maxDevicesPerUser);
         }
 
         $rawToken = bin2hex(random_bytes(64));
@@ -86,16 +84,14 @@ final readonly class DeviceService
      *
      * @return array{device: UserDevice, token: string} The updated device and the new raw token
      *
-     * @throws RuntimeException If the device is not found or does not belong to the user
+     * @throws DeviceException If the device is not found or does not belong to the user
      */
     public function rotateToken(string $deviceId, string $userId): array
     {
         $device = $this->devices->findById($deviceId);
 
         if ($device === null || $device->userId !== $userId) {
-            throw new RuntimeException(
-                "Device $deviceId not found or does not belong to user $userId",
-            );
+            throw DeviceException::deviceNotFoundOrForbidden($deviceId, $userId);
         }
 
         $rawToken = bin2hex(random_bytes(64));
@@ -112,16 +108,14 @@ final readonly class DeviceService
      *
      * Verifies ownership before deletion to prevent unauthorized removal.
      *
-     * @throws RuntimeException If the device is not found or does not belong to the user
+     * @throws DeviceException If the device is not found or does not belong to the user
      */
     public function remove(string $deviceId, string $userId): void
     {
         $device = $this->devices->findById($deviceId);
 
         if ($device === null || $device->userId !== $userId) {
-            throw new RuntimeException(
-                "Device $deviceId not found or does not belong to user $userId",
-            );
+            throw DeviceException::deviceNotFoundOrForbidden($deviceId, $userId);
         }
 
         $this->devices->delete($deviceId);

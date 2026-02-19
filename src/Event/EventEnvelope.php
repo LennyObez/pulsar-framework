@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Event;
 
-use InvalidArgumentException;
 use JsonException;
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Event\Exception\EventException;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
@@ -119,7 +119,7 @@ final readonly class EventEnvelope
         $validEventType = is_string($eventType) ? $eventType : '';
 
         if ($validEventType === '') {
-            throw new InvalidArgumentException('EventEnvelope requires non-empty eventType');
+            throw EventException::missingEnvelopeField('eventType');
         }
 
         $scope = is_string($scopeRaw) ? (EventScope::tryFrom($scopeRaw) ?? EventScope::CrossModule) : EventScope::CrossModule;

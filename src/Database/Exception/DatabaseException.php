@@ -258,4 +258,17 @@ final class DatabaseException extends RuntimeException
             previous: $previous,
         );
     }
+
+    /**
+     * A query builder helper was invoked with an empty value list.
+     *
+     * Used by InListBuilder when callers pass `count = 0` or an empty
+     * `$values` array — this is always a programming error rather than
+     * a database failure.
+     */
+    #[NoDiscard]
+    public static function emptyValueList(string $builderMethod): self
+    {
+        return new self(sprintf('%s requires at least one value', $builderMethod));
+    }
 }

@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Workflow\Storage;
 
-use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Security\Crypto\EncryptorInterface;
+use Pulsar\Workflow\Exception\WorkflowException;
 use RuntimeException;
 use Throwable;
 
@@ -56,15 +56,12 @@ final readonly class ClassifiedContext
     /**
      * Get a field value.
      *
-     * @throws InvalidArgumentException If the field does not exist.
+     * @throws WorkflowException If the field does not exist.
      */
     public function get(string $key): mixed
     {
         if (!array_key_exists($key, $this->values)) {
-            throw new InvalidArgumentException(sprintf(
-                'Context field "%s" does not exist',
-                $key,
-            ));
+            throw WorkflowException::invalidClassifiedField($key, 'field does not exist');
         }
 
         return $this->values[$key];
@@ -81,15 +78,12 @@ final readonly class ClassifiedContext
     /**
      * Get the classification level of a field.
      *
-     * @throws InvalidArgumentException If the field does not exist.
+     * @throws WorkflowException If the field does not exist.
      */
     public function getClassification(string $key): ClassificationLevel
     {
         if (!array_key_exists($key, $this->classifications)) {
-            throw new InvalidArgumentException(sprintf(
-                'Context field "%s" does not exist',
-                $key,
-            ));
+            throw WorkflowException::invalidClassifiedField($key, 'field does not exist');
         }
 
         return $this->classifications[$key];

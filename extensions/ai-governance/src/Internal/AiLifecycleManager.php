@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\AiGovernance\Internal;
 
-use InvalidArgumentException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\AiGovernance\Contracts\AiAuditLoggerInterface;
@@ -15,7 +14,7 @@ use Pulsar\Extension\AiGovernance\Contracts\MonitoringHookInterface;
 use Pulsar\Extension\AiGovernance\Dto\AiModel;
 use Pulsar\Extension\AiGovernance\Enum\AiAuditEvent;
 use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
-use RuntimeException;
+use Pulsar\Extension\AiGovernance\Exception\AiGovernanceException;
 
 use function sprintf;
 
@@ -71,7 +70,7 @@ final class AiLifecycleManager implements AiLifecycleManagerInterface
         $model = $this->registry->get($modelId);
 
         if ($model === null) {
-            throw new InvalidArgumentException(sprintf('AI model "%s" not found in registry', $modelId));
+            throw AiGovernanceException::modelNotFound($modelId);
         }
 
         $gateResults = $this->evaluateGates($model);
@@ -92,11 +91,7 @@ final class AiLifecycleManager implements AiLifecycleManagerInterface
         }
 
         if ($failures !== []) {
-            throw new RuntimeException(sprintf(
-                'Deployment of model "%s" blocked by gate failures: %s',
-                $modelId,
-                implode('; ', $failures),
-            ));
+            throw AiGovernanceException::deploymentBlocked($modelId, $failures);
         }
 
         $deployed = $this->registry->transitionStatus($modelId, AiModelStatus::Production);
@@ -117,7 +112,7 @@ final class AiLifecycleManager implements AiLifecycleManagerInterface
         $model = $this->registry->get($modelId);
 
         if ($model === null) {
-            throw new InvalidArgumentException(sprintf('AI model "%s" not found in registry', $modelId));
+            throw AiGovernanceException::modelNotFound($modelId);
         }
 
         $results = [];
@@ -135,15 +130,14 @@ final class AiLifecycleManager implements AiLifecycleManagerInterface
         $model = $this->registry->get($modelId);
 
         if ($model === null) {
-            throw new InvalidArgumentException(sprintf('AI model "%s" not found in registry', $modelId));
+            throw AiGovernanceException::modelNotFound($modelId);
         }
 
         if ($model->status !== AiModelStatus::Production) {
-            throw new InvalidArgumentException(sprintf(
-                'Cannot rollback model "%s": current status is "%s", expected "production"',
+            throw AiGovernanceException::rollbackFromNonProduction(
                 $modelId,
                 $model->status->value,
-            ));
+            );
         }
 
         $rolledBack = $this->registry->transitionStatus($modelId, AiModelStatus::Staging);

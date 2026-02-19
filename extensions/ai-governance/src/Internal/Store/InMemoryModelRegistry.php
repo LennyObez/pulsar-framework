@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\AiGovernance\Internal\Store;
 
-use InvalidArgumentException;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\AiGovernance\Contracts\AiModelRegistryInterface;
 use Pulsar\Extension\AiGovernance\Dto\AiModel;
 use Pulsar\Extension\AiGovernance\Enum\AiModelRiskLevel;
 use Pulsar\Extension\AiGovernance\Enum\AiModelStatus;
+use Pulsar\Extension\AiGovernance\Exception\AiGovernanceException;
 
 use function array_filter;
 use function array_values;
 use function in_array;
-use function sprintf;
 
 /**
  * In-memory implementation of the AI model registry for development and testing.
@@ -56,18 +55,17 @@ final class InMemoryModelRegistry implements AiModelRegistryInterface
         $model = $this->models[$modelId] ?? null;
 
         if ($model === null) {
-            throw new InvalidArgumentException(sprintf('AI model "%s" not found in registry', $modelId));
+            throw AiGovernanceException::modelNotFound($modelId);
         }
 
         $allowedTransitions = self::VALID_TRANSITIONS[$model->status->value] ?? [];
 
         if (! in_array($newStatus->value, $allowedTransitions, true)) {
-            throw new InvalidArgumentException(sprintf(
-                'Invalid status transition for model "%s": %s → %s',
+            throw AiGovernanceException::invalidStatusTransition(
                 $modelId,
                 $model->status->value,
                 $newStatus->value,
-            ));
+            );
         }
 
         $this->previousStatuses[$modelId] = $model->status;
@@ -83,7 +81,7 @@ final class InMemoryModelRegistry implements AiModelRegistryInterface
         $model = $this->models[$modelId] ?? null;
 
         if ($model === null) {
-            throw new InvalidArgumentException(sprintf('AI model "%s" not found in registry', $modelId));
+            throw AiGovernanceException::modelNotFound($modelId);
         }
 
         $updated = $model->withRiskLevel($riskLevel);

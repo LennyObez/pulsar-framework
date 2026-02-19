@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Database\Portable;
 
-use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Database\Driver;
+use Pulsar\Database\Exception\DatabaseException;
 
 use function implode;
 use function sprintf;
@@ -31,7 +31,7 @@ final class InListBuilder
     public static function compile(Driver $driver, string $column, string $paramName, int $count): string
     {
         if ($count <= 0) {
-            throw new InvalidArgumentException('InListBuilder::compile() requires at least one value');
+            throw DatabaseException::emptyValueList('InListBuilder::compile()');
         }
 
         return match ($driver) {
@@ -55,7 +55,7 @@ final class InListBuilder
     public static function expandParams(Driver $driver, string $paramName, array $values): array
     {
         if ($values === []) {
-            throw new InvalidArgumentException('InListBuilder::expandParams() requires at least one value');
+            throw DatabaseException::emptyValueList('InListBuilder::expandParams()');
         }
 
         if ($driver === Driver::PostgreSQL) {
