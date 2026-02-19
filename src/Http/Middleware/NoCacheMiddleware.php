@@ -20,10 +20,23 @@ use function is_string;
  * Applies anti-caching headers to responses from handlers annotated with
  * #[NoCacheResponse]. Prevents sensitive data (PII, financial records)
  * from being cached by browsers or intermediate proxies.
+ *
+ * The attribute lookup is cached per `ClassName::methodName` key. Route
+ * handlers are resolved once at route registration and never change at
+ * runtime, so the cache is safe for the entire process lifetime and
+ * eliminates the per-request `ReflectionMethod` allocation (M-2
+ * audit response).
  */
 #[Api(since: '1.0.0')]
-final readonly class NoCacheMiddleware implements MiddlewareInterface
+final class NoCacheMiddleware implements MiddlewareInterface
 {
+    /**
+     * Per-handler lookup cache: `"Class::method"` => has-attribute bool.
+     *
+     * @var array<string, bool>
+     */
+    private static array $attributeCache = [];
+
     #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -63,24 +76,27 @@ final readonly class NoCacheMiddleware implements MiddlewareInterface
         return false;
     }
 
-    /**
-     * @param string $class
-     */
     private function hasNoCacheAttribute(string $class, string $method): bool
     {
+        $cacheKey = $class . '::' . $method;
+
+        if (isset(self::$attributeCache[$cacheKey])) {
+            return self::$attributeCache[$cacheKey];
+        }
+
         try {
             $ref = new ReflectionMethod($class, $method);
 
             if ($ref->getAttributes(NoCacheResponse::class) !== []) {
-                return true;
+                return self::$attributeCache[$cacheKey] = true;
             }
 
             // Check class-level attribute
             $classRef = $ref->getDeclaringClass();
 
-            return $classRef->getAttributes(NoCacheResponse::class) !== [];
+            return self::$attributeCache[$cacheKey] = $classRef->getAttributes(NoCacheResponse::class) !== [];
         } catch (ReflectionException) {
-            return false;
+            return self::$attributeCache[$cacheKey] = false;
         }
     }
 }

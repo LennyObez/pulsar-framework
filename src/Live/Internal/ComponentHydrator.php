@@ -24,10 +24,26 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Handles hydration (deserialize state → component) and
  * dehydration (component → serialized state) for live components.
+ *
+ * Reflection metadata is cached per concrete LiveComponent class on
+ * first use. Class structure cannot change at runtime, so the cache
+ * is stable for the entire process lifetime — this turns the hot
+ * hydrate/dehydrate paths from O(properties × attribute-parses) on
+ * every render into a single hash lookup. The previous M-2 audit
+ * finding flagged the per-call `new ReflectionClass()` as wasted
+ * work in render loops.
  */
 #[Internal]
-final readonly class ComponentHydrator
+final class ComponentHydrator
 {
+    /**
+     * Per-class metadata cache: fully qualified class name => list of
+     * tracked properties with their precomputed attribute settings.
+     *
+     * @var array<class-string<LiveComponent>, list<LivePropertyDescriptor>>
+     */
+    private static array $descriptorCache = [];
+
     /**
      * Extract the serializable state from a component.
      *
@@ -36,19 +52,10 @@ final readonly class ComponentHydrator
     public function dehydrate(LiveComponent $component): array
     {
         $state = [];
-        $reflection = new ReflectionClass($component);
 
-        foreach ($reflection->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            $attributes = $property->getAttributes(LiveProp::class);
-
-            if ($attributes === []) {
-                continue;
-            }
-
-            $name = $property->getName();
-            $value = $property->getValue($component);
-
-            $state[$name] = $this->serializeValue($value);
+        foreach ($this->describeComponent($component) as $descriptor) {
+            $value = $descriptor->property->getValue($component);
+            $state[$descriptor->name] = $this->serializeValue($value);
         }
 
         return $state;
@@ -61,33 +68,17 @@ final readonly class ComponentHydrator
      */
     public function hydrate(LiveComponent $component, array $state): void
     {
-        $reflection = new ReflectionClass($component);
-
-        foreach ($reflection->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            $attributes = $property->getAttributes(LiveProp::class);
-
-            if ($attributes === []) {
+        foreach ($this->describeComponent($component) as $descriptor) {
+            if (!$descriptor->writable) {
                 continue;
             }
 
-            $name = $property->getName();
-
-            if (!array_key_exists($name, $state)) {
+            if (!array_key_exists($descriptor->name, $state)) {
                 continue;
             }
 
-            /** @var LiveProp $liveProp */
-            $liveProp = $attributes[0]->newInstance();
-
-            // Only hydrate writable properties from client state
-            if (!$liveProp->writable) {
-                continue;
-            }
-
-            $type = $property->getType();
-            $typeName = $type instanceof ReflectionNamedType ? $type->getName() : 'mixed';
-            $value = $this->deserializeValue($state[$name], $typeName);
-            $property->setValue($component, $value);
+            $value = $this->deserializeValue($state[$descriptor->name], $descriptor->typeName);
+            $descriptor->property->setValue($component, $value);
         }
     }
 
@@ -99,12 +90,9 @@ final readonly class ComponentHydrator
     public function getTrackedPropertyNames(LiveComponent $component): array
     {
         $names = [];
-        $reflection = new ReflectionClass($component);
 
-        foreach ($reflection->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
-            if ($property->getAttributes(LiveProp::class) !== []) {
-                $names[] = $property->getName();
-            }
+        foreach ($this->describeComponent($component) as $descriptor) {
+            $names[] = $descriptor->name;
         }
 
         return $names;
@@ -118,7 +106,35 @@ final readonly class ComponentHydrator
     public function getWritablePropertyNames(LiveComponent $component): array
     {
         $names = [];
-        $reflection = new ReflectionClass($component);
+
+        foreach ($this->describeComponent($component) as $descriptor) {
+            if ($descriptor->writable) {
+                $names[] = $descriptor->name;
+            }
+        }
+
+        return $names;
+    }
+
+    /**
+     * Resolve (and cache) the descriptor list for a component class.
+     *
+     * Walks public properties exactly once per class and pre-computes
+     * `LiveProp` settings, declared type, and the `ReflectionProperty`
+     * accessor itself. Subsequent calls hit the static cache.
+     *
+     * @return list<LivePropertyDescriptor>
+     */
+    private function describeComponent(LiveComponent $component): array
+    {
+        $class = $component::class;
+
+        if (isset(self::$descriptorCache[$class])) {
+            return self::$descriptorCache[$class];
+        }
+
+        $reflection = new ReflectionClass($class);
+        $descriptors = [];
 
         foreach ($reflection->getProperties(ReflectionProperty::IS_PUBLIC) as $property) {
             $attributes = $property->getAttributes(LiveProp::class);
@@ -129,13 +145,20 @@ final readonly class ComponentHydrator
 
             /** @var LiveProp $liveProp */
             $liveProp = $attributes[0]->newInstance();
+            $type = $property->getType();
+            $typeName = $type instanceof ReflectionNamedType ? $type->getName() : 'mixed';
 
-            if ($liveProp->writable) {
-                $names[] = $property->getName();
-            }
+            $descriptors[] = new LivePropertyDescriptor(
+                name: $property->getName(),
+                property: $property,
+                writable: $liveProp->writable,
+                typeName: $typeName,
+            );
         }
 
-        return $names;
+        self::$descriptorCache[$class] = $descriptors;
+
+        return $descriptors;
     }
 
     private function serializeValue(mixed $value): mixed
