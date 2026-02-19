@@ -14,11 +14,13 @@ use Throwable;
 
 use function base64_encode;
 use function count;
+use function error_log;
 use function is_array;
 use function is_int;
 use function is_string;
 use function json_decode;
 use function json_encode;
+use function sprintf;
 use function time;
 
 use const JSON_THROW_ON_ERROR;
@@ -146,7 +148,18 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
 
             /** @var string $signature */
             return "$signingInput." . $this->base64UrlEncode($signature);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // JWT signing failure is a configuration error (bad private
+            // key, wrong key ID, expired certificate). The caller
+            // already treats null as "verification failed", but we
+            // must preserve operator visibility so the subscription
+            // verification path doesn't silently stop working after
+            // a key rotation. (H-2 audit response.)
+            error_log(sprintf(
+                '[pulsar.AppStoreVerifier] JWT signing failed: %s',
+                $e->getMessage(),
+            ));
+
             return null;
         }
     }
@@ -169,7 +182,17 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
             $response = file_get_contents($url, false, $context);
 
             return $response !== false ? $response : null;
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // HTTP transport errors (Apple API down, DNS failure,
+            // certificate expiry, timeout). Log before returning null
+            // so operators can distinguish API outages from real
+            // verification failures. (H-2 audit response.)
+            error_log(sprintf(
+                '[pulsar.AppStoreVerifier] App Store API request failed for %s: %s',
+                $url,
+                $e->getMessage(),
+            ));
+
             return null;
         }
     }
@@ -250,7 +273,15 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
                 productId: $productId,
                 autoRenewing: $autoRenewing,
             );
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // Response parsing failure is usually a schema change on
+            // Apple's side — operators need to know about it before the
+            // renewal backlog piles up. (H-2 audit response.)
+            error_log(sprintf(
+                '[pulsar.AppStoreVerifier] App Store response parsing failed: %s',
+                $e->getMessage(),
+            ));
+
             return VerificationResult::invalid();
         }
     }
@@ -286,7 +317,16 @@ final readonly class AppStoreVerifier implements SubscriptionVerifierInterface
 
             /** @var array<string, mixed> $decoded */
             return is_array($decoded) ? $decoded : [];
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // Signed payload decode failure: the claims cannot be
+            // trusted, so return an empty claim set (safe default),
+            // but log so a malformed JWS doesn't silently strip
+            // fields from a valid response.
+            error_log(sprintf(
+                '[pulsar.AppStoreVerifier] signed-payload decode failed: %s',
+                $e->getMessage(),
+            ));
+
             return [];
         }
     }
