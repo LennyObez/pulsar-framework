@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use Pulsar\Api\Api;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
 
 use function assert;
+use function chr;
 use function hash_hmac;
 use function intdiv;
 use function ord;
@@ -17,12 +19,15 @@ use function rawurlencode;
 use function sprintf;
 use function str_pad;
 use function strlen;
+use function strpos;
+use function strtoupper;
 use function substr;
 use function unpack;
 
 /**
  * TOTP (Time-Based One-Time Password) generator per RFC 6238.
  */
+#[Api(since: '1.0.0')]
 final readonly class TotpGenerator
 {
     private Randomizer $randomizer;
@@ -136,6 +141,16 @@ final readonly class TotpGenerator
     }
 
     /**
+     * Decode a Base32-encoded string back to binary.
+     *
+     * @return string|null The decoded binary string, or null if the input contains invalid characters
+     */
+    public function decodeSecretBase32(string $input): ?string
+    {
+        return self::base32Decode($input);
+    }
+
+    /**
      * RFC 4648 Base32 encoding (no padding).
      */
     private static function base32Encode(string $data): string
@@ -157,6 +172,36 @@ final readonly class TotpGenerator
 
         if ($bitsLeft > 0) {
             $result .= $alphabet[($buffer << (5 - $bitsLeft)) & 0x1F];
+        }
+
+        return $result;
+    }
+
+    /**
+     * RFC 4648 Base32 decoding.
+     */
+    private static function base32Decode(string $input): ?string
+    {
+        $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        $input = strtoupper($input);
+        $result = '';
+        $buffer = 0;
+        $bitsLeft = 0;
+
+        for ($i = 0; $i < strlen($input); $i++) {
+            $val = strpos($alphabet, $input[$i]);
+
+            if ($val === false) {
+                return null;
+            }
+
+            $buffer = ($buffer << 5) | $val;
+            $bitsLeft += 5;
+
+            if ($bitsLeft >= 8) {
+                $bitsLeft -= 8;
+                $result .= chr(($buffer >> $bitsLeft) & 0xFF);
+            }
         }
 
         return $result;
