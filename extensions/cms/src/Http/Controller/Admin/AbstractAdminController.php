@@ -21,27 +21,39 @@ use function method_exists;
 use function str_contains;
 
 /**
- * Content negotiation for admin controllers.
+ * Base class for CMS admin controllers.
  *
- * Returns HTML (via template engine) for browser requests,
- * JSON when Accept: application/json is requested.
- * Falls back to JSON when no template engine is available.
+ * Replaces the previous `RendersAdminView` trait with an explicit
+ * abstract base. The trait pattern relied on `@property` PHPDoc to
+ * declare `$templateEngine` / `$gate` on consumers, which left
+ * PHPStan reporting "only written" warnings on every concrete
+ * controller (38 controllers in the CMS extension at last count).
  *
- * Expects the using class to have:
- *  - `$this->templateEngine` (nullable TemplateEngineInterface)
- *  - `$this->gate` (GateInterface; for @can directive support)
+ * Promoting the dependencies into a real constructor:
  *
- * @property TemplateEngineInterface|null $templateEngine
- * @property GateInterface|null $gate
+ *   1. Eliminates the PHPDoc-only contract that PHPStan could not see.
+ *   2. Lets concrete controllers extend a single class instead of
+ *      mixing trait + manual property declaration.
+ *   3. Centralizes the auth helper construction so future changes
+ *      (e.g. step-up rules) only need to land in one place.
+ *
+ * Concrete controllers should call `parent::__construct()` from their
+ * own promoted constructor and may add their own `readonly` services
+ * after the inherited ones.
  */
-trait RendersAdminView
+abstract readonly class AbstractAdminController
 {
+    public function __construct(
+        protected ?TemplateEngineInterface $templateEngine = null,
+        protected ?GateInterface $gate = null,
+    ) {}
+
     /**
      * Respond with rendered HTML or JSON based on Accept header.
      *
      * @param array<string, mixed> $data
      */
-    private function respondWithView(
+    protected function respondWithView(
         ServerRequestInterface $request,
         string $template,
         array $data,
@@ -73,7 +85,7 @@ trait RendersAdminView
      *
      * @throws AuthenticationException If no authenticated identity is present
      */
-    private function requireIdentity(ServerRequestInterface $request): IdentityInterface
+    protected function requireIdentity(ServerRequestInterface $request): IdentityInterface
     {
         /** @var IdentityInterface|null $identity */
         $identity = $request->getAttribute('identity');
@@ -90,7 +102,7 @@ trait RendersAdminView
      *
      * @throws AuthorizationException If step-up has not been verified
      */
-    private function requireStepUp(ServerRequestInterface $request): void
+    protected function requireStepUp(ServerRequestInterface $request): void
     {
         $stepUp = $request->getAttribute('step_up_verified', false);
 
@@ -102,12 +114,17 @@ trait RendersAdminView
     /**
      * Authorize an identity against a specific permission.
      *
+     * Deny-by-default: when no authorization gate is wired, every admin
+     * permission check is rejected. The previous trait implementation
+     * silently allowed access in that case, which turned a misconfigured
+     * container into a privilege escalation vector (MED-3).
+     *
      * @throws AuthorizationException If the identity lacks the required permission
      */
-    private function authorize(IdentityInterface $identity, string $permission): void
+    protected function authorize(IdentityInterface $identity, string $permission): void
     {
         if ($this->gate === null) {
-            return;
+            throw AuthorizationException::permissionDenied($permission);
         }
 
         if ($this->gate->denies($identity, $permission)) {

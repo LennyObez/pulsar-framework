@@ -27,18 +27,18 @@ use function is_string;
  * Refund operations require step-up authentication.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class OrderController
+final readonly class OrderController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private OrderRepositoryInterface $orders,
         private OrderItemRepositoryInterface $orderItems,
         private OrderService $orderService,
         private OrderExportServiceInterface $exportService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {

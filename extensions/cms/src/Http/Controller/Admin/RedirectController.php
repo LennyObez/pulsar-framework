@@ -30,15 +30,15 @@ use function sprintf;
  * creation, deletion, bulk CSV import with dry-run, and CSV export.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class RedirectController
+final readonly class RedirectController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private RedirectManagerInterface $redirectManager,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List all redirects with pagination.

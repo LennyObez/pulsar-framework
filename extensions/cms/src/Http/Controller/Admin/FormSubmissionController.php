@@ -30,16 +30,16 @@ use function min;
  * and bulk delete operations.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class FormSubmissionController
+final readonly class FormSubmissionController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private FormSubmissionRepositoryInterface $repository,
         private FormSubmissionServiceInterface $formService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List form submissions with filtering.

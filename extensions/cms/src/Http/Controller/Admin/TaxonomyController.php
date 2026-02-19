@@ -19,16 +19,16 @@ use function is_string;
  * Admin controller for taxonomy and term management.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class TaxonomyController
+final readonly class TaxonomyController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private TaxonomyRepositoryInterface $taxonomyRepository,
-        private ?GateInterface $gate = null,
+        ?GateInterface $gate = null,
         private ?CmsConfig $config = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {

@@ -38,18 +38,18 @@ use function min;
  * AccountSectionProviders contribute tabs to the customer detail view.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class CustomerController
+final readonly class CustomerController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private CustomerRepositoryInterface $customerRepository,
         private AccountSectionRegistry $sectionRegistry,
         private ?OrderRepositoryInterface $orderRepository = null,
         private ?AuditLoggerInterface $auditLogger = null,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List all customers with search, role filter, and aggregate stats.

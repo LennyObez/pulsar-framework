@@ -22,18 +22,18 @@ use function is_string;
  * Admin controller for content revision history, diff, and restoration.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class RevisionController
+final readonly class RevisionController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private ContentRevisionRepositoryInterface $revisionRepository,
         private RevisionService $revisionService,
         private CmsConfig $config,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request, string $contentId): Response
     {

@@ -25,15 +25,15 @@ use function is_string;
  * code path, returning structured ImportResult with per-type counts.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class SiteDefinitionController
+final readonly class SiteDefinitionController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ImportExportServiceInterface $importExport,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function form(ServerRequestInterface $request): Response
     {

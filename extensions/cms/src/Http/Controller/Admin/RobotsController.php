@@ -19,19 +19,19 @@ use function is_string;
  * Allows viewing and editing the robots.txt content stored in CMS settings.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class RobotsController
+final readonly class RobotsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const string SETTINGS_GROUP = 'seo';
     private const string SETTINGS_KEY = 'robots_txt';
     private const string DEFAULT_ROBOTS = "User-agent: *\nAllow: /\n";
 
     public function __construct(
         private SettingsServiceInterface $settings,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Show the current robots.txt content.

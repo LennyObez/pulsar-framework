@@ -20,15 +20,15 @@ use function is_int;
 use function is_string;
 
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class ExperimentController
+final readonly class ExperimentController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ExperimentService $experimentService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {

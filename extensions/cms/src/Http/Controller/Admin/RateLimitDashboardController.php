@@ -27,10 +27,8 @@ use function round;
  * and allows inline editing of rate limit configuration stored in CMS settings.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class RateLimitDashboardController
+final readonly class RateLimitDashboardController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const string SETTINGS_GROUP = 'rate_limits';
 
     /**
@@ -50,10 +48,12 @@ final readonly class RateLimitDashboardController
 
     public function __construct(
         private SettingsServiceInterface $settings,
-        private ?GateInterface $gate = null,
+        ?GateInterface $gate = null,
         private ?MetricRegistry $metricRegistry = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Render the rate limiting dashboard.

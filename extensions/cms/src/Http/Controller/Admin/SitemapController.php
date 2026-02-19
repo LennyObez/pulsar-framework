@@ -24,15 +24,15 @@ use function simplexml_load_string;
  * and locale, and the ability to force regeneration.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class SitemapController
+final readonly class SitemapController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private SitemapGeneratorInterface $sitemapGenerator,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Preview sitemap entries grouped by type and locale with entry counts.

@@ -25,18 +25,18 @@ use function strlen;
  * Restore and delete operations require step-up authentication and a mandatory reason.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class BackupController
+final readonly class BackupController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int CREATE_RATE_LIMIT_PER_MINUTE = 1;
 
     public function __construct(
         private BackupServiceInterface $backupService,
         private ?CmsRateLimiter $rateLimiter,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {

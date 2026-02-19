@@ -31,18 +31,18 @@ use function unlink;
  * Dangerous operations (install, activate, delete) require step-up auth.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class ThemeController
+final readonly class ThemeController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int INSTALL_RATE_LIMIT_PER_MINUTE = 2;
 
     public function __construct(
         private ThemeManagerInterface $themeManager,
         private ?CmsRateLimiter $rateLimiter,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List all installed themes.

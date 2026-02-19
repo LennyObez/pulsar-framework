@@ -25,15 +25,15 @@ use function round;
  * top queries, zero-result queries, click-through rates, and totals.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class SearchAnalyticsController
+final readonly class SearchAnalyticsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private SearchServiceInterface $searchService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Display search analytics for a date range.
