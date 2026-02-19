@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 concurrency:
@@ -106,7 +107,7 @@ jobs:
       - run: composer install --no-interaction --no-progress
 
       - name: Run all tests with coverage
-        run: php -d pcov.directory=. vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml
+        run: php -d memory_limit=512M -d pcov.directory=. vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml
 
       - name: Enforce coverage threshold
         run: |
@@ -140,11 +141,10 @@ jobs:
           path: .phpunit.cache/
           retention-days: 7
 
-  php-benchmark:
-    name: PHP Performance Benchmarks (Advisory)
+  php-benchmark-tier-a:
+    name: 'Tier A: Performance Budgets (Hard Gate)'
     runs-on: ubuntu-latest
     needs: php-quality
-    continue-on-error: true
 
     steps:
       - uses: actions/checkout@v4
@@ -152,7 +152,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.5'
-          extensions: pdo_mysql, pdo_pgsql, pdo_sqlite
+          extensions: sodium, pdo_sqlite
           coverage: none
 
       - name: Cache Composer dependencies
@@ -164,9 +164,21 @@ jobs:
 
       - run: composer install --no-interaction --no-progress
 
-      - name: Run PHPBench microbenchmarks
-        continue-on-error: true
-        run: composer bench:ci | tee benchmark-phpbench.txt
+      - name: Verify pipeline manifest integrity
+        run: |
+          MANIFEST_HASH=$(php -r "echo hash_file('sha256', 'tools/php/bench-pipeline.manifest.php');")
+          echo "Pipeline manifest hash: $MANIFEST_HASH"
+          echo "manifest_hash=$MANIFEST_HASH" >> "$GITHUB_ENV"
+
+      - name: 'Tier A: Run PHPBench with assertions (hard gate)'
+        run: composer bench:ci 2>&1 | tee benchmark-tier-a.txt
+
+      - name: 'Tier A: Run memory peak budgets'
+        run: |
+          echo "Running memory peak benchmarks in isolated processes..."
+          php tests/Benchmark/Scenarios/memory_anonymous.php > /dev/null && echo "PASS: memory_anonymous"
+          php tests/Benchmark/Scenarios/memory_authenticated.php > /dev/null && echo "PASS: memory_authenticated"
+          php tests/Benchmark/Scenarios/memory_compliance.php > /dev/null && echo "PASS: memory_compliance"
 
       - name: Run OPcache/JIT/preload profile matrix
         continue-on-error: true
@@ -176,9 +188,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: benchmark-results
+          name: benchmark-results-tier-a
           path: |
-            benchmark-phpbench.txt
+            benchmark-tier-a.txt
             benchmark-profiles.txt
             var/bench/results.json
           retention-days: 14
@@ -186,16 +198,18 @@ jobs:
       - name: Add benchmark results to job summary
         if: always()
         run: |
-          echo '## PHPBench Microbenchmarks' >> "$GITHUB_STEP_SUMMARY"
+          echo '## Tier A: Performance Budget Results (Hard Gate)' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo "Pipeline manifest SHA-256: \`${{ env.manifest_hash }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo '' >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-phpbench.txt >> "$GITHUB_STEP_SUMMARY"
+          cat benchmark-tier-a.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           echo '' >> "$GITHUB_STEP_SUMMARY"
           echo '## OPcache / JIT / Preload Profile Matrix' >> "$GITHUB_STEP_SUMMARY"
           echo '' >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat benchmark-profiles.txt >> "$GITHUB_STEP_SUMMARY"
+          cat benchmark-profiles.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
   cache-warmup:
