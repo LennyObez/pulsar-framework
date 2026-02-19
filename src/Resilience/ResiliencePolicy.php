@@ -26,14 +26,14 @@ use function microtime;
  * Each layer is optional; only configured strategies are applied.
  */
 #[Api(since: '1.0.0')]
-final class ResiliencePolicy
+final readonly class ResiliencePolicy
 {
-    private ?RetryPolicy $retryPolicy = null;
-    private ?CircuitBreaker $circuitBreaker = null;
-    private ?int $timeoutMs = null;
-    private ?BulkheadLimiter $bulkhead = null;
-
-    private function __construct() {}
+    private function __construct(
+        private ?RetryPolicy $retryPolicy = null,
+        private ?CircuitBreaker $circuitBreaker = null,
+        private ?int $timeoutMs = null,
+        private ?BulkheadLimiter $bulkhead = null,
+    ) {}
 
     /**
      * Create a new empty resilience policy.
@@ -50,10 +50,7 @@ final class ResiliencePolicy
     #[NoDiscard]
     public function withRetry(RetryPolicy $retryPolicy): self
     {
-        $policy = clone $this;
-        $policy->retryPolicy = $retryPolicy;
-
-        return $policy;
+        return clone($this, ['retryPolicy' => $retryPolicy]);
     }
 
     /**
@@ -62,10 +59,7 @@ final class ResiliencePolicy
     #[NoDiscard]
     public function withCircuitBreaker(CircuitBreaker $circuitBreaker): self
     {
-        $policy = clone $this;
-        $policy->circuitBreaker = $circuitBreaker;
-
-        return $policy;
+        return clone($this, ['circuitBreaker' => $circuitBreaker]);
     }
 
     /**
@@ -74,10 +68,7 @@ final class ResiliencePolicy
     #[NoDiscard]
     public function withTimeout(int $timeoutMs): self
     {
-        $policy = clone $this;
-        $policy->timeoutMs = $timeoutMs;
-
-        return $policy;
+        return clone($this, ['timeoutMs' => $timeoutMs]);
     }
 
     /**
@@ -86,10 +77,7 @@ final class ResiliencePolicy
     #[NoDiscard]
     public function withBulkhead(BulkheadLimiter $bulkhead): self
     {
-        $policy = clone $this;
-        $policy->bulkhead = $bulkhead;
-
-        return $policy;
+        return clone($this, ['bulkhead' => $bulkhead]);
     }
 
     /**
