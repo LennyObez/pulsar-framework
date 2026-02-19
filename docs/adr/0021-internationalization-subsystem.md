@@ -93,6 +93,25 @@ The linter integrates with the console command system for CI pipeline execution:
 
 `I18nConfig` follows the readonly DTO pattern (ADR-0011) with properties: `defaultLocale`, `fallbackLocales`, `supportedLocales`, `strictMode`, `catalogPaths`, and formatter preferences.
 
+### URL-Prefix Locale Routing (Addendum)
+
+When `url_strategy` is set to `path_prefix`, a `LocalePrefixMiddleware` runs early in the HTTP pipeline. It extracts the locale from the first path segment (e.g., `/fr/about` → `fr`), strips the prefix, and sets `_locale`/`_locale_prefix` request attributes. This allows routes to be registered without locale prefixes — a single route definition serves all locales.
+
+Key components:
+
+| Component                    | Responsibility                                                           |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| `UrlPrefixExtractor`         | Extract, strip, and build locale path prefixes with security protections |
+| `LocalePrefixMiddleware`     | HTTP middleware — prefix detection, stripping, canonical redirect        |
+| `LocaleUrlGenerator`         | Build locale-prefixed URLs, alternate URLs, and hreflang link sets       |
+| `HreflangLink`               | Value object for `<link rel="alternate" hreflang="...">` tags            |
+| `LocaleUrlResolverInterface` | Extension point for translated slug resolution (e.g., CMS content)       |
+| `TemplateLocaleHelper`       | Template-facing helper with `current()`, `isRtl()`, `switchUrls()`       |
+
+**Canonical redirects**: When `canonical_redirect` is enabled (default), GET/HEAD requests to the default locale's prefix (e.g., `/en/about`) receive a 301 redirect to the unprefixed URL (`/about`), preserving the query string. This prevents duplicate content in search engine indexes.
+
+**Security**: The extractor validates locale segments (2–5 alphabetic characters), rejects path traversal patterns (`/../`, trailing `/..`, leading `../`), and collapses double slashes after prefix stripping to prevent protocol-relative open redirects.
+
 ## Alternatives Considered
 
 ### Third-party translation library
@@ -141,6 +160,7 @@ Rejected: `ext-intl` is not available in all deployment environments (minimal Do
 - `PhpCatalog` loads translation arrays on first access and caches them in memory. `JsonCatalog` deserializes JSON files on first access.
 - `IcuMessageFormatter` compiles ICU patterns on each call. For hot-path messages, applications should cache formatted output.
 - Locale negotiation adds one middleware layer per request - negligible compared to I/O-bound operations.
+- `LocalePrefixMiddleware` adds one regex-free string comparison per path segment - effectively zero overhead. Canonical redirect short-circuits before the router is reached.
 
 ## Migration / Rollback Plan
 

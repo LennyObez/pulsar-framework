@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\Content;
 use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
+use Pulsar\I18n\Locale\HreflangLink;
+use Pulsar\I18n\Locale\UrlPrefixExtractor;
+
+use function str_starts_with;
 
 /**
  * Generates hreflang alternate links for multilingual content.
@@ -22,7 +26,7 @@ final readonly class HreflangGenerator
 {
     public function __construct(
         private ContentTranslationRepositoryInterface $translationRepository,
-        private LocaleResolver $localeResolver,
+        private UrlPrefixExtractor $extractor,
     ) {}
 
     /**
@@ -60,7 +64,16 @@ final readonly class HreflangGenerator
             }
 
             $translation = $translationsByLocale[$locale];
-            $href = $this->localeResolver->buildPath($translation->path, $locale, $config);
+            $contentPath = str_starts_with($translation->path, '/')
+                ? $translation->path
+                : '/' . $translation->path;
+
+            $href = $this->extractor->buildPath(
+                $contentPath,
+                $locale,
+                $config->defaultLocale,
+                $config->defaultLocaleInUrl,
+            );
 
             $links[] = new HreflangLink(
                 locale: $locale,
