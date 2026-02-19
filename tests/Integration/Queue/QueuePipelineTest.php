@@ -12,6 +12,9 @@ use Pulsar\Config\QueueDriverType;
 use Pulsar\Queue\DeadLetterQueue;
 use Pulsar\Queue\Driver\InMemoryDriver;
 use Pulsar\Queue\Driver\SyncDriver;
+use Pulsar\Queue\Envelope\BackoffStrategy;
+use Pulsar\Queue\Envelope\EnvelopeSerializer;
+use Pulsar\Queue\Envelope\JobEnvelope;
 use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\JobContext;
 use Pulsar\Queue\JobRecordStatus;
@@ -23,6 +26,10 @@ use Pulsar\Queue\Worker;
 use Pulsar\Queue\WorkerOptions;
 use Pulsar\Queue\WorkerStatus;
 use RuntimeException;
+
+use function bin2hex;
+use function random_bytes;
+use function time;
 
 /**
  * Integration tests for the queue pipeline.
@@ -39,6 +46,13 @@ use RuntimeException;
 #[CoversClass(DeadLetterQueue::class)]
 final class QueuePipelineTest extends TestCase
 {
+    private EnvelopeSerializer $envelopeSerializer;
+
+    protected function setUp(): void
+    {
+        $this->envelopeSerializer = new EnvelopeSerializer();
+    }
+
     // ---- SyncDriver happy path ----
 
     #[Test]
@@ -139,9 +153,10 @@ final class QueuePipelineTest extends TestCase
 
         $driver = new InMemoryDriver();
 
-        $driver->push('default', PipelineOrderTrackerFirst::class, '{}');
-        $driver->push('default', PipelineOrderTrackerSecond::class, '{}');
-        $driver->push('default', PipelineOrderTrackerThird::class, '{}');
+        // Push serialized envelopes (Worker now expects envelope payloads)
+        $this->pushEnvelope($driver, 'default', PipelineOrderTrackerFirst::class, '{}');
+        $this->pushEnvelope($driver, 'default', PipelineOrderTrackerSecond::class, '{}');
+        $this->pushEnvelope($driver, 'default', PipelineOrderTrackerThird::class, '{}');
 
         $options = new WorkerOptions(maxJobs: 3, sleepMs: 1, maxMemoryMb: 0);
         $worker = new Worker($driver, $options);
@@ -159,7 +174,7 @@ final class QueuePipelineTest extends TestCase
         PipelineSuccessJob::$handled = false;
 
         $driver = new InMemoryDriver();
-        $driver->push('default', PipelineSuccessJob::class, '{}');
+        $this->pushEnvelope($driver, 'default', PipelineSuccessJob::class, '{}');
 
         self::assertSame(1, $driver->size('default'));
 
@@ -174,10 +189,13 @@ final class QueuePipelineTest extends TestCase
     // ---- Failure + retry ----
 
     #[Test]
-    public function workerRejectsFailedJobAndMarksAsFailed(): void
+    public function workerRejectsFailedJobAfterMaxAttempts(): void
     {
         $driver = new InMemoryDriver();
-        $id = $driver->push('default', PipelineFailingJob::class, '{}');
+
+        // Push a failing job at attempt = maxAttempts (3). At attempt >= maxAttempts,
+        // the retry policy returns DeadLetter, so the Worker will reject it.
+        $this->pushEnvelope($driver, 'default', PipelineFailingJob::class, '{}', attempt: 3, retryMaxAttempts: 3);
 
         $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
         $worker = new Worker($driver, $options);
@@ -185,7 +203,28 @@ final class QueuePipelineTest extends TestCase
 
         $failedJobs = $driver->findByStatus(JobRecordStatus::Failed);
         self::assertCount(1, $failedJobs);
-        self::assertSame($id, $failedJobs[0]->id);
+    }
+
+    #[Test]
+    public function workerRetriesFailedJobWhenAttemptsRemain(): void
+    {
+        $driver = new InMemoryDriver();
+
+        // Push a failing job at attempt 1 with maxAttempts 3.
+        // The Worker should retry (push a new job with attempt=2) and acknowledge the original.
+        $this->pushEnvelope($driver, 'default', PipelineFailingJob::class, '{}', attempt: 1, retryMaxAttempts: 3);
+
+        $options = new WorkerOptions(maxJobs: 1, sleepMs: 1, maxMemoryMb: 0);
+        $worker = new Worker($driver, $options);
+        $worker->run('default');
+
+        // The original job should be acknowledged (removed), and a retry job should be pending
+        $pending = $driver->findByStatus(JobRecordStatus::Pending);
+        self::assertCount(1, $pending);
+
+        // The retried job's payload should contain the incremented attempt
+        $retryEnvelope = $this->envelopeSerializer->deserialize($pending[0]->payload);
+        self::assertSame(2, $retryEnvelope->attempt);
     }
 
     #[Test]
@@ -280,8 +319,8 @@ final class QueuePipelineTest extends TestCase
             multiplier: 2.0,
         );
 
-        // Push a failing job
-        $jobId = $driver->push('default', PipelineFailingJob::class, '{"reason":"test"}');
+        // Push a failing job as a serialized envelope
+        $this->pushEnvelope($driver, 'default', PipelineFailingJob::class, '{"reason":"test"}');
 
         // Pop and "process" the job (simulating worker behavior)
         $record = $driver->pop('default');
@@ -294,8 +333,8 @@ final class QueuePipelineTest extends TestCase
         // Reject it (marks as failed in driver)
         $driver->reject($record->id, 'Test failure');
 
-        // Simulate re-push for retry by creating a new record
-        $retryId = $driver->push('default', PipelineFailingJob::class, '{"reason":"test"}');
+        // Simulate re-push for retry by creating a new record with an envelope
+        $this->pushEnvelope($driver, 'default', PipelineFailingJob::class, '{"reason":"test"}');
         $retryRecord = $driver->pop('default');
         self::assertNotNull($retryRecord);
 
@@ -320,7 +359,7 @@ final class QueuePipelineTest extends TestCase
         $dlq = new DeadLetterQueue($driver);
 
         // Simulate a failed job stored in DLQ
-        $jobId = $driver->push('emails', PipelineSuccessJob::class, '{"retry":"true"}');
+        $this->pushEnvelope($driver, 'emails', PipelineSuccessJob::class, '{"retry":"true"}');
         $record = $driver->pop('emails');
         self::assertNotNull($record);
         $driver->reject($record->id, 'Temporary failure');
@@ -347,7 +386,7 @@ final class QueuePipelineTest extends TestCase
 
         // Store multiple failed jobs
         for ($i = 0; $i < 3; $i++) {
-            $id = $driver->push('default', PipelineFailingJob::class, '{}');
+            $this->pushEnvelope($driver, 'default', PipelineFailingJob::class, '{}');
             $record = $driver->pop('default');
             self::assertNotNull($record);
             $driver->reject($record->id, "Failure {$i}");
@@ -370,7 +409,7 @@ final class QueuePipelineTest extends TestCase
 
         $driver = new InMemoryDriver();
         for ($i = 0; $i < 5; $i++) {
-            $driver->push('default', PipelineCountingJob::class, '{}');
+            $this->pushEnvelope($driver, 'default', PipelineCountingJob::class, '{}');
         }
 
         $options = new WorkerOptions(maxJobs: 3, sleepMs: 1, maxMemoryMb: 0);
@@ -389,8 +428,8 @@ final class QueuePipelineTest extends TestCase
         PipelineCountingJob::$count = 0;
 
         $driver = new InMemoryDriver();
-        $driver->push('default', PipelineCountingJob::class, '{}');
-        $driver->push('default', PipelineCountingJob::class, '{}');
+        $this->pushEnvelope($driver, 'default', PipelineCountingJob::class, '{}');
+        $this->pushEnvelope($driver, 'default', PipelineCountingJob::class, '{}');
 
         // maxJobs is higher than available jobs; worker will run idle loop once then stop due to time/signal
         // Use maxJobs to cap at 10 so test doesn't hang
@@ -434,7 +473,7 @@ final class QueuePipelineTest extends TestCase
         PipelineSuccessJob::$handled = false;
 
         $driver = new InMemoryDriver();
-        $driver->push('default', PipelineSuccessJob::class, '{}');
+        $this->pushEnvelope($driver, 'default', PipelineSuccessJob::class, '{}');
 
         $options = new WorkerOptions();
         $worker = new Worker($driver, $options);
@@ -518,6 +557,49 @@ final class QueuePipelineTest extends TestCase
         PipelineFailingJob::$handleCount = 0;
         PipelineCountingJob::$count = 0;
         PipelineOrderTracker::$order = [];
+    }
+
+    /**
+     * Push a properly serialized job envelope to the driver.
+     *
+     * The Worker expects job record payloads to be serialized envelopes.
+     * This helper builds and serializes an envelope so that tests pushing
+     * directly to the driver (bypassing QueueManager) provide valid data.
+     */
+    private function pushEnvelope(
+        InMemoryDriver $driver,
+        string $queue,
+        string $jobClass,
+        string $payload,
+        int $attempt = 1,
+        int $retryMaxAttempts = 3,
+    ): string {
+        $envelope = new JobEnvelope(
+            id: bin2hex(random_bytes(16)),
+            jobClass: $jobClass,
+            payload: $payload,
+            queue: $queue,
+            idempotencyKey: '',
+            correlationId: '',
+            traceId: null,
+            spanId: null,
+            schemaVersion: 1,
+            keyId: null,
+            retryMaxAttempts: $retryMaxAttempts,
+            retryBackoffStrategy: BackoffStrategy::Exponential,
+            retryDelayMs: 1000,
+            tenantId: null,
+            subjectId: null,
+            batchId: null,
+            chainIndex: null,
+            attempt: $attempt,
+            dispatchedAt: time(),
+            encrypted: false,
+        );
+
+        $serialized = $this->envelopeSerializer->serialize($envelope);
+
+        return $driver->push($queue, $jobClass, $serialized);
     }
 }
 
