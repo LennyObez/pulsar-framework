@@ -12,9 +12,11 @@ use Pulsar\Extension\Subscriptions\SubscriptionVerifierInterface;
 use Pulsar\Extension\Subscriptions\VerificationResult;
 use Throwable;
 
+use function error_log;
 use function is_array;
 use function is_string;
 use function json_decode;
+use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
 
@@ -160,7 +162,14 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
             $token = $tokenData['access_token'] ?? '';
 
             return $token !== '' ? $token : null;
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // OAuth2 token exchange failure: usually misconfigured
+            // service account JSON or clock skew. (H-3 audit response.)
+            error_log(sprintf(
+                '[pulsar.GooglePlayVerifier] OAuth2 token exchange failed: %s',
+                $e->getMessage(),
+            ));
+
             return null;
         }
     }
@@ -183,7 +192,13 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
             $response = file_get_contents($url, false, $context);
 
             return $response !== false ? $response : null;
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            error_log(sprintf(
+                '[pulsar.GooglePlayVerifier] Play Developer API request failed for %s: %s',
+                $url,
+                $e->getMessage(),
+            ));
+
             return null;
         }
     }
@@ -245,7 +260,12 @@ final readonly class GooglePlayVerifier implements SubscriptionVerifierInterface
                 productId: $productId,
                 autoRenewing: $autoRenewing,
             );
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            error_log(sprintf(
+                '[pulsar.GooglePlayVerifier] Play Developer response parsing failed: %s',
+                $e->getMessage(),
+            ));
+
             return VerificationResult::invalid();
         }
     }
