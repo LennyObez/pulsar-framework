@@ -38,6 +38,7 @@
             <directory>../../extensions/oauth2/src</directory>
             <directory>../../extensions/form/src</directory>
             <directory>../../extensions/webauthn/src</directory>
+            <directory>../../extensions/cms/src</directory>
         </include>
     </source>
 </phpunit>

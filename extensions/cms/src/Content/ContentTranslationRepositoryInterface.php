@@ -1,0 +1,37 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extension\Cms\Content;
+
+use Pulsar\Api\Api;
+
+/**
+ * Repository interface for content translations.
+ */
+#[Api(since: '1.0.0')]
+interface ContentTranslationRepositoryInterface
+{
+    public function findById(string $id): ?ContentTranslation;
+
+    /**
+     * Find all translations for a content item.
+     *
+     * @return list<ContentTranslation>
+     */
+    public function findByContentId(string $contentId): array;
+
+    /**
+     * Find translation for a specific content + locale combination.
+     */
+    public function findByContentAndLocale(string $contentId, string $locale): ?ContentTranslation;
+
+    /**
+     * Find translation by full path and locale.
+     */
+    public function findByPath(string $locale, string $path, ?string $tenantId = null): ?ContentTranslation;
+
+    public function save(ContentTranslation $translation): void;
+
+    public function delete(string $id): void;
+}

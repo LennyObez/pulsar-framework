@@ -995,6 +995,25 @@ deptrac:
             - type: layer
               value: WebAuthnDomain
 
+    # --- CMS Extension (Pulsar\\Extension\\Cms) ---
+
+    # --- CMS: public surface (excludes \Internal\ namespace) ---
+    - name: CmsExtension
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Cms\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Extension\\Cms\\Internal\\
+
+    # --- CMS: internal implementation (\Internal\ only) ---
+    - name: CmsExtension_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Cms\\Internal\\
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -1109,6 +1128,8 @@ deptrac:
       - AdminInternal
       - OpenTelemetryExtension
       - OpenTelemetryExtension_Internal
+      - CmsExtension
+      - CmsExtension_Internal
 
     # -----------------------------------------------------------------
     # Public Layers — all public layers may depend on all other public
@@ -1794,6 +1815,54 @@ deptrac:
       - Container
       - Config
       - Observability
+
+    CmsExtension:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - Integrity
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - View
+      - Webhook
+      - CmsExtension_Internal
+
+    CmsExtension_Internal:
+      - CmsExtension
+      - Api
+      - Support
+      - Container
+      - Config
+      - Database
 
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps
