@@ -10,15 +10,30 @@ use Pulsar\Live\LiveComponent;
 use ReflectionClass;
 use ReflectionMethod;
 
+use function array_keys;
+
 /**
  * Dispatches frontend actions to component methods.
  *
  * Validates that the target method is marked with #[LiveAction]
  * before invocation, preventing arbitrary method calls.
+ *
+ * Per-class action metadata (action name => ReflectionMethod) is
+ * cached in a static lookup. Component class structure is immutable
+ * at runtime so the cache survives the process lifetime, eliminating
+ * the per-dispatch `new ReflectionClass()` + attribute-scan overhead
+ * flagged by the M-2 audit finding.
  */
 #[Internal]
-final readonly class ActionDispatcher
+final class ActionDispatcher
 {
+    /**
+     * Per-class action name map: `componentClass => [actionName => ReflectionMethod]`.
+     *
+     * @var array<class-string<LiveComponent>, array<string, ReflectionMethod>>
+     */
+    private static array $actionCache = [];
+
     /**
      * Execute an action on a component.
      *
@@ -50,23 +65,7 @@ final readonly class ActionDispatcher
      */
     public function getActionNames(LiveComponent $component): array
     {
-        $names = [];
-        $reflection = new ReflectionClass($component);
-
-        foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-            $attributes = $method->getAttributes(LiveAction::class);
-
-            if ($attributes === []) {
-                continue;
-            }
-
-            /** @var LiveAction $liveAction */
-            $liveAction = $attributes[0]->newInstance();
-            $name = $liveAction->name !== '' ? $liveAction->name : $method->getName();
-            $names[] = $name;
-        }
-
-        return $names;
+        return array_keys(self::describeActions($component));
     }
 
     /**
@@ -74,12 +73,29 @@ final readonly class ActionDispatcher
      */
     public function hasAction(LiveComponent $component, string $actionName): bool
     {
-        return $this->resolveMethod($component, $actionName) !== null;
+        return isset(self::describeActions($component)[$actionName]);
     }
 
     private function resolveMethod(LiveComponent $component, string $actionName): ?ReflectionMethod
     {
-        $reflection = new ReflectionClass($component);
+        return self::describeActions($component)[$actionName] ?? null;
+    }
+
+    /**
+     * Resolve (and cache) the action map for a component class.
+     *
+     * @return array<string, ReflectionMethod>
+     */
+    private static function describeActions(LiveComponent $component): array
+    {
+        $class = $component::class;
+
+        if (isset(self::$actionCache[$class])) {
+            return self::$actionCache[$class];
+        }
+
+        $reflection = new ReflectionClass($class);
+        $actions = [];
 
         foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
             $attributes = $method->getAttributes(LiveAction::class);
@@ -91,13 +107,10 @@ final readonly class ActionDispatcher
             /** @var LiveAction $liveAction */
             $liveAction = $attributes[0]->newInstance();
             $name = $liveAction->name !== '' ? $liveAction->name : $method->getName();
-
-            if ($name === $actionName) {
-                return $method;
-            }
+            $actions[$name] = $method;
         }
 
-        return null;
+        return self::$actionCache[$class] = $actions;
     }
 
     /**
