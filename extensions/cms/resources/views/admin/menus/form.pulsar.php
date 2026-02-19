@@ -31,7 +31,7 @@
         @if (!isset($menu))
             <div class="cms-form-group">
                 <label for="menu-location" class="cms-form-group__label">Location <span class="cms-required" aria-label="required">*</span></label>
-                <select id="menu-location" name="location" class="cms-form-group__select" required>
+                <select id="menu-location" name="location" class="cms-form-group__select" required aria-required="true">
                     <option value="">Select location...</option>
                     <option value="primary">Primary Navigation</option>
                     <option value="footer">Footer</option>
@@ -58,7 +58,7 @@
                         <ul class="cms-menu-tree" data-cms-sortable-list data-cms-nestable>
                             @foreach ($menuItems as $itemIndex => $item)
                                 <li class="cms-menu-tree__item" style="padding-left: {{ ($item['depth'] ?? 0) * 1.5 }}rem" data-cms-menu-item="{{ $item['id'] ?? $itemIndex }}" draggable="true">
-                                    <div class="cms-menu-tree__handle" aria-label="Drag to reorder" role="button" tabindex="0">&#9776;</div>
+                                    <div class="cms-menu-tree__handle" aria-label="Drag to reorder" role="button" tabindex="0" aria-roledescription="sortable">&#9776;</div>
                                     <div class="cms-menu-tree__content">
                                         <input type="hidden" name="items[{{ $itemIndex }}][id]" value="{{ $item['id'] ?? '' }}">
                                         <input type="hidden" name="items[{{ $itemIndex }}][parent_id]" value="{{ $item['parent_id'] ?? '' }}">
@@ -73,6 +73,7 @@
                                                        value="{{ $item['label'] ?? '' }}"
                                                        class="cms-form-group__input"
                                                        required
+                                                       aria-required="true"
                                                        maxlength="200">
                                             </div>
 

@@ -103,11 +103,11 @@
             <table class="cms-table">
                 <thead class="cms-table__head">
                     <tr>
-                        <th class="cms-table__th">Entity Type</th>
-                        <th class="cms-table__th">Would Create</th>
-                        <th class="cms-table__th">Would Update</th>
-                        <th class="cms-table__th">Would Skip</th>
-                        <th class="cms-table__th">Warnings</th>
+                        <th class="cms-table__th" scope="col">Entity Type</th>
+                        <th class="cms-table__th" scope="col">Would Create</th>
+                        <th class="cms-table__th" scope="col">Would Update</th>
+                        <th class="cms-table__th" scope="col">Would Skip</th>
+                        <th class="cms-table__th" scope="col">Warnings</th>
                     </tr>
                 </thead>
                 <tbody class="cms-table__body" data-cms-site-import-results-body>

@@ -30,14 +30,14 @@
     <table class="cms-table">
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th">Field Key</th>
-                <th class="cms-table__th">Type</th>
-                <th class="cms-table__th">Required</th>
-                <th class="cms-table__th">Translatable</th>
-                <th class="cms-table__th">Searchable</th>
-                <th class="cms-table__th">Filterable</th>
-                <th class="cms-table__th">Sort Order</th>
-                <th class="cms-table__th">Actions</th>
+                <th class="cms-table__th" scope="col">Field Key</th>
+                <th class="cms-table__th" scope="col">Type</th>
+                <th class="cms-table__th" scope="col">Required</th>
+                <th class="cms-table__th" scope="col">Translatable</th>
+                <th class="cms-table__th" scope="col">Searchable</th>
+                <th class="cms-table__th" scope="col">Filterable</th>
+                <th class="cms-table__th" scope="col">Sort Order</th>
+                <th class="cms-table__th" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">
@@ -103,13 +103,14 @@
                                name="field_key"
                                class="cms-form-group__input"
                                required
+                               aria-required="true"
                                pattern="[a-z][a-z0-9_]*"
                                placeholder="e.g., featured_image">
                     </div>
 
                     <div class="cms-form-group">
                         <label for="new-field-type" class="cms-form-group__label">Field Type <span class="cms-required" aria-label="required">*</span></label>
-                        <select id="new-field-type" name="field_type" class="cms-form-group__select" required>
+                        <select id="new-field-type" name="field_type" class="cms-form-group__select" required aria-required="true">
                             <option value="">Select type...</option>
                             <option value="string">String</option>
                             <option value="int">Integer</option>

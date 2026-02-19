@@ -102,6 +102,7 @@
                                name="reason"
                                class="cms-form-group__input"
                                required
+                               aria-required="true"
                                minlength="5"
                                placeholder="Describe the changes you made">
                     </div>
@@ -126,11 +127,11 @@
         <table class="cms-table">
             <thead class="cms-table__head">
                 <tr>
-                    <th class="cms-table__th">Version</th>
-                    <th class="cms-table__th">Date</th>
-                    <th class="cms-table__th">Author</th>
-                    <th class="cms-table__th">Reason</th>
-                    <th class="cms-table__th">Actions</th>
+                    <th class="cms-table__th" scope="col">Version</th>
+                    <th class="cms-table__th" scope="col">Date</th>
+                    <th class="cms-table__th" scope="col">Author</th>
+                    <th class="cms-table__th" scope="col">Reason</th>
+                    <th class="cms-table__th" scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody class="cms-table__body">

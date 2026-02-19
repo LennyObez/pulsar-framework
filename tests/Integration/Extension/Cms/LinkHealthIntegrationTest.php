@@ -31,6 +31,7 @@ use function array_filter;
 use function array_slice;
 use function array_values;
 use function count;
+use function in_array;
 
 /**
  * Integration tests for the link health checker.
@@ -453,6 +454,24 @@ final class InMemoryLinkHealthContentRepository implements ContentRepositoryInte
         );
     }
 
+    public function findByIds(array $ids): array
+    {
+        $result = [];
+
+        foreach ($ids as $id) {
+            if (isset($this->contents[$id])) {
+                $result[$id] = $this->contents[$id];
+            }
+        }
+
+        return $result;
+    }
+
+    public function findAncestors(string $contentId, int $maxDepth = 20): array
+    {
+        return [];
+    }
+
     public function save(Content $content): void
     {
         $this->contents[$content->id] = $content;
@@ -509,6 +528,19 @@ final class InMemoryLinkHealthTranslationRepository implements ContentTranslatio
         return null;
     }
 
+    public function findByContentIds(array $contentIds): array
+    {
+        $grouped = [];
+
+        foreach ($this->translations as $t) {
+            if (in_array($t->contentId, $contentIds, true)) {
+                $grouped[$t->contentId][] = $t;
+            }
+        }
+
+        return $grouped;
+    }
+
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?ContentTranslation
     {
         return null;
@@ -533,6 +565,19 @@ final class InMemoryLinkHealthRepository implements LinkHealthRepositoryInterfac
             $this->checks,
             static fn(LinkHealthCheck $c) => $c->sourceContentId === $contentId && $c->sourceLocale === $locale,
         ));
+    }
+
+    public function findByContentIds(array $contentIds, string $locale): array
+    {
+        $grouped = [];
+
+        foreach ($this->checks as $check) {
+            if (in_array($check->sourceContentId, $contentIds, true) && $check->sourceLocale === $locale) {
+                $grouped[$check->sourceContentId][] = $check;
+            }
+        }
+
+        return $grouped;
     }
 
     public function findBroken(?string $tenantId = null, int $page = 1, int $perPage = 50): array

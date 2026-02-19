@@ -15,7 +15,7 @@
         <div class="cms-content-form__main">
             <div class="cms-form-group">
                 <label for="export-format" class="cms-form-group__label">Format <span class="cms-required" aria-label="required">*</span></label>
-                <select id="export-format" name="format" class="cms-form-group__select" required>
+                <select id="export-format" name="format" class="cms-form-group__select" required aria-required="true">
                     <option value="csv">CSV</option>
                     <option value="json">JSON</option>
                 </select>

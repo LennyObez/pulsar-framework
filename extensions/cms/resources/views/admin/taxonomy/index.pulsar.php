@@ -22,12 +22,12 @@
     <table class="cms-table">
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th">Name</th>
-                <th class="cms-table__th">Slug</th>
-                <th class="cms-table__th">Type</th>
-                <th class="cms-table__th">Terms</th>
-                <th class="cms-table__th">Created</th>
-                <th class="cms-table__th">Actions</th>
+                <th class="cms-table__th" scope="col">Name</th>
+                <th class="cms-table__th" scope="col">Slug</th>
+                <th class="cms-table__th" scope="col">Type</th>
+                <th class="cms-table__th" scope="col">Terms</th>
+                <th class="cms-table__th" scope="col">Created</th>
+                <th class="cms-table__th" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">

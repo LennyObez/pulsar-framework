@@ -45,6 +45,7 @@
                            value="{{ $translation['title'] ?? '' }}"
                            class="cms-form-group__input cms-form-group__input--title"
                            required
+                           aria-required="true"
                            maxlength="500"
                            data-cms-slug-source>
                 </div>
@@ -60,6 +61,7 @@
                                value="{{ $translation['slug'] ?? '' }}"
                                class="cms-form-group__input"
                                required
+                               aria-required="true"
                                maxlength="200"
                                pattern="[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
                                data-cms-slug-target>
@@ -97,8 +99,8 @@
                                     <div class="cms-blocks__content">
                                         <input type="hidden" name="blocks[{{ $blockIndex }}][type]" value="{{ $block['type'] ?? 'text' }}">
                                         <input type="hidden" name="blocks[{{ $blockIndex }}][sort_order]" value="{{ $block['sort_order'] ?? $blockIndex }}">
-                                        <label class="cms-form-group__label">{{ ucfirst($block['type'] ?? 'text') }} Block</label>
-                                        <textarea name="blocks[{{ $blockIndex }}][data]" class="cms-form-group__textarea" rows="4">{{ is_array($block['data'] ?? null) ? json_encode($block['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : ($block['data'] ?? '') }}</textarea>
+                                        <label for="block-data-{{ $blockIndex }}" class="cms-form-group__label">{{ ucfirst($block['type'] ?? 'text') }} Block</label>
+                                        <textarea id="block-data-{{ $blockIndex }}" name="blocks[{{ $blockIndex }}][data]" class="cms-form-group__textarea" rows="4">{{ is_array($block['data'] ?? null) ? json_encode($block['data'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : ($block['data'] ?? '') }}</textarea>
                                     </div>
                                     <button type="button" class="cms-btn cms-btn--sm cms-btn--danger cms-blocks__remove" data-cms-remove-block aria-label="Remove block">Remove</button>
                                 </div>

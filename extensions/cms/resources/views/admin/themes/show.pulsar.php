@@ -116,8 +116,8 @@
                         <table class="cms-table cms-table--compact">
                             <thead class="cms-table__head">
                                 <tr>
-                                    <th class="cms-table__th">Template</th>
-                                    <th class="cms-table__th">Content Type</th>
+                                    <th class="cms-table__th" scope="col">Template</th>
+                                    <th class="cms-table__th" scope="col">Content Type</th>
                                 </tr>
                             </thead>
                             <tbody class="cms-table__body">
@@ -141,8 +141,8 @@
                         <table class="cms-table cms-table--compact">
                             <thead class="cms-table__head">
                                 <tr>
-                                    <th class="cms-table__th">Name</th>
-                                    <th class="cms-table__th">Path</th>
+                                    <th class="cms-table__th" scope="col">Name</th>
+                                    <th class="cms-table__th" scope="col">Path</th>
                                 </tr>
                             </thead>
                             <tbody class="cms-table__body">
@@ -166,8 +166,8 @@
                         <table class="cms-table cms-table--compact">
                             <thead class="cms-table__head">
                                 <tr>
-                                    <th class="cms-table__th">Setting</th>
-                                    <th class="cms-table__th">Value</th>
+                                    <th class="cms-table__th" scope="col">Setting</th>
+                                    <th class="cms-table__th" scope="col">Value</th>
                                 </tr>
                             </thead>
                             <tbody class="cms-table__body">

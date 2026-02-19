@@ -31,6 +31,14 @@ interface ContentTranslationRepositoryInterface
      */
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?ContentTranslation;
 
+    /**
+     * Find all translations for multiple content items in a single query.
+     *
+     * @param list<string> $contentIds UUIDv7 content IDs
+     * @return array<string, list<ContentTranslation>> Keyed by content ID
+     */
+    public function findByContentIds(array $contentIds): array;
+
     public function save(ContentTranslation $translation): void;
 
     public function delete(string $id): void;

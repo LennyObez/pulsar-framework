@@ -17,12 +17,12 @@
     <table class="cms-table" data-cms-sortable-table>
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th cms-table__th--sortable" data-cms-sort="name">Name</th>
-                <th class="cms-table__th">Version</th>
-                <th class="cms-table__th">Capabilities</th>
-                <th class="cms-table__th">Status</th>
-                <th class="cms-table__th">Provenance</th>
-                <th class="cms-table__th">Actions</th>
+                <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="name">Name</th>
+                <th class="cms-table__th" scope="col">Version</th>
+                <th class="cms-table__th" scope="col">Capabilities</th>
+                <th class="cms-table__th" scope="col">Status</th>
+                <th class="cms-table__th" scope="col">Provenance</th>
+                <th class="cms-table__th" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">

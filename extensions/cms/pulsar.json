@@ -28,6 +28,6 @@
       "BreadcrumbGeneratorInterface"
     ],
     "routes": true,
-    "commands": []
+    "commands": ["Pulsar\\Extension\\Cms\\Command\\CmsServeCommand"]
   }
 }

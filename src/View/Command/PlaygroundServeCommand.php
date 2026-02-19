@@ -37,8 +37,8 @@ final class PlaygroundServeCommand extends Command
     #[Override]
     protected function configure(): void
     {
-        $this->name = 'ui:playground';
-        $this->description = 'Start the UI playground development server';
+        $this->name = 'playground:serve';
+        $this->description = 'Start the Playground development server';
         $this->addOption('port', 'Port to serve on', '-p', '8942');
         $this->addOption('host', 'Host to bind to', '-H', 'localhost');
     }

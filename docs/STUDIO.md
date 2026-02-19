@@ -218,7 +218,7 @@ In production mode, `ProductionSafetyMode` restricts access to sensitive endpoin
 | Command          | Description                           |
 | ---------------- | ------------------------------------- |
 | `studio:status`  | Show Studio status and storage stats  |
-| `studio:start`   | Start the Studio web server           |
+| `studio:serve`   | Start the Studio web server           |
 | `studio:open`    | Open Studio in the default browser    |
 | `studio:doctor`  | Run diagnostics (storage, port, keys) |
 | `studio:enable`  | Enable Studio                         |
@@ -298,7 +298,7 @@ php bin/pulsar studio:console:guardian:integrity:verify --strict --json
 Start the Studio server:
 
 ```bash
-php bin/pulsar studio:start
+php bin/pulsar studio:serve
 # → http://127.0.0.1:8585/studio
 ```
 

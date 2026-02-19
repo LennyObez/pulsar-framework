@@ -75,10 +75,10 @@
                     <table class="cms-table cms-table--compact">
                         <thead class="cms-table__head">
                             <tr>
-                                <th class="cms-table__th">Action</th>
-                                <th class="cms-table__th">Moderator</th>
-                                <th class="cms-table__th">Reason</th>
-                                <th class="cms-table__th">Date</th>
+                                <th class="cms-table__th" scope="col">Action</th>
+                                <th class="cms-table__th" scope="col">Moderator</th>
+                                <th class="cms-table__th" scope="col">Reason</th>
+                                <th class="cms-table__th" scope="col">Date</th>
                             </tr>
                         </thead>
                         <tbody class="cms-table__body">

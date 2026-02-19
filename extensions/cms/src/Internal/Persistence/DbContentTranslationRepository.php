@@ -10,6 +10,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 
+use function implode;
 use function json_decode;
 use function json_encode;
 
@@ -70,6 +71,12 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
             taxonomy_terms_text = EXCLUDED.taxonomy_terms_text
         SQL;
 
+    private const string SQL_FIND_BY_CONTENT_IDS = <<<'SQL'
+        SELECT * FROM cms_content_translations
+        WHERE content_id = ANY(:content_ids)
+        ORDER BY content_id, locale
+        SQL;
+
     private const string SQL_DELETE = <<<'SQL'
         DELETE FROM cms_content_translations WHERE id = :id
         SQL;
@@ -98,6 +105,28 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
         ]);
 
         return $result->map(self::hydrate(...));
+    }
+
+    public function findByContentIds(array $contentIds): array
+    {
+        if ($contentIds === []) {
+            return [];
+        }
+
+        $pgArray = '{' . implode(',', $contentIds) . '}';
+
+        $result = $this->connection->query(self::SQL_FIND_BY_CONTENT_IDS, [
+            'content_ids' => $pgArray,
+        ]);
+
+        $grouped = [];
+
+        foreach ($result->rows as $row) {
+            $translation = self::hydrate($row);
+            $grouped[$translation->contentId][] = $translation;
+        }
+
+        return $grouped;
     }
 
     public function findByContentAndLocale(string $contentId, string $locale): ?ContentTranslation

@@ -271,6 +271,16 @@ final class SitemapGeneratorTest extends TestCase
                 );
             }
 
+            public function findByIds(array $ids): array
+            {
+                return [];
+            }
+
+            public function findAncestors(string $contentId, int $maxDepth = 20): array
+            {
+                return [];
+            }
+
             public function save(Content $content): void {}
 
             public function delete(Content $content): void {}
@@ -303,6 +313,19 @@ final class SitemapGeneratorTest extends TestCase
             public function findByPath(string $locale, string $path, ?string $tenantId = null): ?ContentTranslation
             {
                 return null;
+            }
+
+            public function findByContentIds(array $contentIds): array
+            {
+                $grouped = [];
+
+                foreach ($contentIds as $id) {
+                    if (isset($this->map[$id])) {
+                        $grouped[$id] = $this->map[$id];
+                    }
+                }
+
+                return $grouped;
             }
 
             public function save(ContentTranslation $translation): void {}

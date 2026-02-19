@@ -17,6 +17,7 @@ use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 
 use function ceil;
+use function implode;
 use function max;
 
 #[Internal(reason: 'Raw-DB repository — use ContentRepositoryInterface for public API')]
@@ -88,6 +89,28 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
         UPDATE cms_contents
         SET deleted_at = :deleted_at, updated_at = :updated_at
         WHERE id = :id
+        SQL;
+
+    private const string SQL_FIND_BY_IDS = <<<'SQL'
+        SELECT c.*
+        FROM cms_contents c
+        WHERE c.id = ANY(:ids) AND c.deleted_at IS NULL
+        SQL;
+
+    private const string SQL_FIND_ANCESTORS = <<<'SQL'
+        WITH RECURSIVE ancestors AS (
+            SELECT c.*, 1 AS depth
+            FROM cms_contents c
+            WHERE c.id = (
+                SELECT parent_id FROM cms_contents WHERE id = :content_id AND deleted_at IS NULL
+            ) AND c.deleted_at IS NULL
+            UNION ALL
+            SELECT c.*, a.depth + 1
+            FROM cms_contents c
+            INNER JOIN ancestors a ON c.id = a.parent_id
+            WHERE c.deleted_at IS NULL AND a.depth < :max_depth
+        )
+        SELECT * FROM ancestors ORDER BY depth ASC
         SQL;
 
     private const string SQL_FIND_DESCENDANTS = <<<'SQL'
@@ -177,6 +200,38 @@ final readonly class DbContentRepository implements ContentRepositoryInterface
             currentPage: $page,
             lastPage: $lastPage,
         );
+    }
+
+    public function findByIds(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        $pgArray = '{' . implode(',', $ids) . '}';
+
+        $result = $this->connection->query(self::SQL_FIND_BY_IDS, [
+            'ids' => $pgArray,
+        ]);
+
+        $indexed = [];
+
+        foreach ($result->rows as $row) {
+            $content = self::hydrate($row);
+            $indexed[$content->id] = $content;
+        }
+
+        return $indexed;
+    }
+
+    public function findAncestors(string $contentId, int $maxDepth = 20): array
+    {
+        $result = $this->connection->query(self::SQL_FIND_ANCESTORS, [
+            'content_id' => $contentId,
+            'max_depth' => $maxDepth,
+        ]);
+
+        return $result->map(self::hydrate(...));
     }
 
     public function save(Content $content): void

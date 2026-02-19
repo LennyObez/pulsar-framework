@@ -16,6 +16,7 @@ use Pulsar\Extensibility\PostBootExtensionInterface;
 use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
+use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\Event\CmsReady;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BackupController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ContentController as AdminContentController;
@@ -44,10 +45,20 @@ use Pulsar\Extension\Cms\Http\Controller\CheckoutController;
 use Pulsar\Extension\Cms\Http\Controller\ContentController;
 use Pulsar\Extension\Cms\Http\Controller\DigitalDownloadController;
 use Pulsar\Extension\Cms\Http\Controller\WebhookController;
+use Pulsar\Extension\Cms\Internal\Studio\CmsAuditPanel;
+use Pulsar\Extension\Cms\Internal\Studio\CmsStudioModule;
+use Pulsar\Extension\Cms\Internal\Studio\ContentCacheInspectorPanel;
+use Pulsar\Extension\Cms\Internal\Studio\MediaProcessingQueuePanel;
+use Pulsar\Extension\Cms\Internal\Studio\SeoHealthReportPanel;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGenerator;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
+use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
+use Pulsar\Extension\Studio\Contracts\StudioModuleRegistryInterface;
+use Pulsar\Observability\Metrics\MetricRegistry;
+use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Routing\RouterInterface;
+use Pulsar\Security\Audit\AuditChainVerifier;
 
 use function is_array;
 use function is_file;
@@ -106,15 +117,64 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         // Bind BreadcrumbGeneratorInterface if dependencies are available
         if (
             !$container->has(BreadcrumbGeneratorInterface::class)
-            && $container->has(\Pulsar\Extension\Cms\Content\ContentRepositoryInterface::class)
+            && $container->has(ContentRepositoryInterface::class)
             && $container->has(\Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface::class)
         ) {
             $container->instance(BreadcrumbGeneratorInterface::class, new BreadcrumbGenerator(
-                $container->get(\Pulsar\Extension\Cms\Content\ContentRepositoryInterface::class),
+                $container->get(ContentRepositoryInterface::class),
                 $container->get(\Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface::class),
                 $container->get(CmsConfig::class),
             ));
         }
+
+        // Register as a Studio module when all required dependencies are available
+        $this->registerStudioModule($container);
+    }
+
+    private function registerStudioModule(ContainerInterface $container): void
+    {
+        if (!$container->has(StudioModuleRegistryInterface::class)) {
+            return;
+        }
+
+        if (
+            !$container->has(AuditChainVerifier::class)
+            || !$container->has(TaggedCacheInterface::class)
+            || !$container->has(MetricRegistry::class)
+            || !$container->has(QueueDriverInterface::class)
+            || !$container->has(LinkHealthServiceInterface::class)
+            || !$container->has(ContentRepositoryInterface::class)
+        ) {
+            return;
+        }
+
+        /** @var StudioModuleRegistryInterface $studioRegistry */
+        $studioRegistry = $container->get(StudioModuleRegistryInterface::class);
+
+        /** @var AuditChainVerifier $chainVerifier */
+        $chainVerifier = $container->get(AuditChainVerifier::class);
+
+        /** @var TaggedCacheInterface $taggedCache */
+        $taggedCache = $container->get(TaggedCacheInterface::class);
+
+        /** @var MetricRegistry $metricRegistry */
+        $metricRegistry = $container->get(MetricRegistry::class);
+
+        /** @var QueueDriverInterface $queueDriver */
+        $queueDriver = $container->get(QueueDriverInterface::class);
+
+        /** @var LinkHealthServiceInterface $linkHealthService */
+        $linkHealthService = $container->get(LinkHealthServiceInterface::class);
+
+        /** @var ContentRepositoryInterface $contentRepository */
+        $contentRepository = $container->get(ContentRepositoryInterface::class);
+
+        $studioRegistry->register(new CmsStudioModule(
+            auditPanel: new CmsAuditPanel($chainVerifier),
+            cachePanel: new ContentCacheInspectorPanel($taggedCache, $metricRegistry),
+            mediaPanel: new MediaProcessingQueuePanel($queueDriver),
+            seoPanel: new SeoHealthReportPanel($linkHealthService, $contentRepository),
+        ));
     }
 
     #[Override]

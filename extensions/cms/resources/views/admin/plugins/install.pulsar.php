@@ -57,8 +57,8 @@
                     <table class="cms-table cms-table--compact">
                         <thead class="cms-table__head">
                             <tr>
-                                <th class="cms-table__th">Capability</th>
-                                <th class="cms-table__th">Description</th>
+                                <th class="cms-table__th" scope="col">Capability</th>
+                                <th class="cms-table__th" scope="col">Description</th>
                             </tr>
                         </thead>
                         <tbody class="cms-table__body">
@@ -137,7 +137,8 @@
                                name="file"
                                class="cms-plugin-install__file-input"
                                accept=".zip,application/zip"
-                               required>
+                               required
+                               aria-required="true">
                         <div class="cms-plugin-install__dropzone-content">
                             <p class="cms-plugin-install__dropzone-text">Drag and drop a plugin archive here, or click to browse</p>
                             <p class="cms-form-group__hint">Upload a <code>.zip</code> archive containing the plugin package with a valid <code>pulsar.json</code> manifest.</p>

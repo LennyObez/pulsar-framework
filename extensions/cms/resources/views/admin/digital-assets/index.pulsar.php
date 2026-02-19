@@ -27,7 +27,8 @@
                            id="asset-file"
                            name="file"
                            class="cms-form-group__input"
-                           required>
+                           required
+                           aria-required="true">
                 </div>
 
                 <div class="cms-form-group">
@@ -50,11 +51,11 @@
     <table class="cms-table">
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th">Filename</th>
-                <th class="cms-table__th">Size</th>
-                <th class="cms-table__th">Hash</th>
-                <th class="cms-table__th">Max Downloads</th>
-                <th class="cms-table__th">Actions</th>
+                <th class="cms-table__th" scope="col">Filename</th>
+                <th class="cms-table__th" scope="col">Size</th>
+                <th class="cms-table__th" scope="col">Hash</th>
+                <th class="cms-table__th" scope="col">Max Downloads</th>
+                <th class="cms-table__th" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">

@@ -88,13 +88,13 @@ if ($__currentIndex === false) {
                 <table class="cms-table">
                     <thead class="cms-table__head">
                         <tr>
-                            <th class="cms-table__th">Product</th>
-                            <th class="cms-table__th">Variant</th>
-                            <th class="cms-table__th">Qty</th>
-                            <th class="cms-table__th">Unit Price</th>
-                            <th class="cms-table__th">Discount</th>
-                            <th class="cms-table__th">Tax</th>
-                            <th class="cms-table__th">Total</th>
+                            <th class="cms-table__th" scope="col">Product</th>
+                            <th class="cms-table__th" scope="col">Variant</th>
+                            <th class="cms-table__th" scope="col">Qty</th>
+                            <th class="cms-table__th" scope="col">Unit Price</th>
+                            <th class="cms-table__th" scope="col">Discount</th>
+                            <th class="cms-table__th" scope="col">Tax</th>
+                            <th class="cms-table__th" scope="col">Total</th>
                         </tr>
                     </thead>
                     <tbody class="cms-table__body">
@@ -168,7 +168,8 @@ if ($__currentIndex === false) {
                                    class="cms-form-group__input"
                                    min="1"
                                    max="{{ $order['total'] ?? 0 }}"
-                                   required>
+                                   required
+                                   aria-required="true">
                         </div>
 
                         <div class="cms-form-group">
@@ -178,6 +179,7 @@ if ($__currentIndex === false) {
                                       class="cms-form-group__textarea"
                                       rows="3"
                                       required
+                                      aria-required="true"
                                       minlength="5"></textarea>
                         </div>
 

@@ -61,11 +61,11 @@
         <table class="cms-table">
             <thead class="cms-table__head">
                 <tr>
-                    <th class="cms-table__th">Date</th>
-                    <th class="cms-table__th">Scope</th>
-                    <th class="cms-table__th">Size</th>
-                    <th class="cms-table__th">Hash</th>
-                    <th class="cms-table__th">Actions</th>
+                    <th class="cms-table__th" scope="col">Date</th>
+                    <th class="cms-table__th" scope="col">Scope</th>
+                    <th class="cms-table__th" scope="col">Size</th>
+                    <th class="cms-table__th" scope="col">Hash</th>
+                    <th class="cms-table__th" scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody class="cms-table__body">
@@ -160,7 +160,8 @@
                               class="cms-form-group__textarea"
                               rows="3"
                               minlength="10"
-                              required></textarea>
+                              required
+                              aria-required="true"></textarea>
                 </div>
             </div>
             <footer class="cms-modal__footer">

@@ -17,9 +17,9 @@ use Pulsar\Extension\Cms\Seo\LinkHealthCheck;
 use Pulsar\Extension\Cms\Seo\LinkHealthRepositoryInterface;
 use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
 
+use function array_map;
 use function array_unique;
 use function bin2hex;
-use function count;
 use function dechex;
 use function hexdec;
 use function in_array;
@@ -77,13 +77,38 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
                     tenantId: $tenantId,
                 );
 
+                // Batch-load translations for this page to avoid N+1
+                $contentIds = array_map(static fn(Content $c): string => $c->id, $paginatedContent->items);
+                $translationsByContentId = $this->translationRepository->findByContentIds($contentIds);
+
                 /** @var Content $content */
                 foreach ($paginatedContent->items as $content) {
-                    $checks = $this->checkContent($content, $locale);
-                    $results = [...$results, ...$checks];
-                    $totalChecked += count($checks);
+                    $translations = $translationsByContentId[$content->id] ?? [];
+                    $translation = null;
 
-                    foreach ($checks as $check) {
+                    foreach ($translations as $t) {
+                        if ($t->locale === $locale) {
+                            $translation = $t;
+
+                            break;
+                        }
+                    }
+
+                    if ($translation === null) {
+                        continue;
+                    }
+
+                    $urls = $this->extractUrls($translation->body);
+
+                    // Clear previous results for this content/locale
+                    $this->linkHealthRepository->deleteByContent($content->id, $locale);
+
+                    foreach ($urls as $url) {
+                        $check = $this->checkUrl($url, $content->id, $locale, $content->tenantId);
+                        $this->linkHealthRepository->save($check);
+                        $results[] = $check;
+                        $totalChecked++;
+
                         if ($check->isBroken) {
                             $brokenCount++;
                         }
@@ -139,8 +164,6 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
     public function getOrphanContent(?string $tenantId = null, int $page = 1, int $perPage = 50): array
     {
         // Orphan detection: find published content with no inbound internal links.
-        // This requires checking all published content for references to each page.
-        // Implemented as a simple scan of content without any inbound link health checks.
         $allPublished = $this->contentRepository->findPublished(
             locale: $this->config->defaultLocale,
             page: $page,
@@ -148,14 +171,19 @@ final readonly class LinkHealthChecker implements LinkHealthServiceInterface
             tenantId: $tenantId,
         );
 
+        // Batch-load link health records for all content items on this page
+        $contentIds = array_map(static fn(Content $c): string => $c->id, $allPublished->items);
+        $linkChecksByContentId = $this->linkHealthRepository->findByContentIds(
+            $contentIds,
+            $this->config->defaultLocale,
+        );
+
         $orphans = [];
 
         /** @var Content $content */
         foreach ($allPublished->items as $content) {
-            // Check if any other content links to this one
-            $inbound = $this->linkHealthRepository->findByContent($content->id, $this->config->defaultLocale);
+            $inbound = $linkChecksByContentId[$content->id] ?? [];
 
-            // If the content appears as a target in no link health records, it might be orphaned
             if ($inbound === []) {
                 $orphans[] = $content;
             }

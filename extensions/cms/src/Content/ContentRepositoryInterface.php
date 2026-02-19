@@ -28,6 +28,27 @@ interface ContentRepositoryInterface
         ?string $tenantId = null,
     ): PaginationResult;
 
+    /**
+     * Find multiple content items by their IDs in a single query.
+     *
+     * @param list<string> $ids UUIDv7 content IDs
+     * @return array<string, Content> Keyed by content ID
+     */
+    public function findByIds(array $ids): array;
+
+    /**
+     * Find the ancestor chain for a content item by walking parent_id
+     * references using a single recursive CTE query.
+     *
+     * Returns ancestors ordered from the immediate parent to the root.
+     * The content item itself is NOT included in the result.
+     *
+     * @param string $contentId UUIDv7
+     * @param int $maxDepth Maximum ancestor levels to traverse
+     * @return list<Content> Ancestors from nearest parent to root
+     */
+    public function findAncestors(string $contentId, int $maxDepth = 20): array;
+
     public function save(Content $content): void;
 
     public function delete(Content $content): void;

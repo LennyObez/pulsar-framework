@@ -174,6 +174,7 @@ final class CmsServiceProvider implements ServiceProviderInterface
         $this->bindRepositories($container);
         $this->bindServices($container);
         $this->registerPermissions($container);
+        $this->registerCommands($container);
     }
 
     /**
@@ -258,6 +259,7 @@ final class CmsServiceProvider implements ServiceProviderInterface
             ClientFingerprintResolver::class,
             CmsKeyManager::class,
             QrCodeEncoder::class,
+            Command\CmsServeCommand::class,
         ];
     }
 
@@ -270,69 +272,72 @@ final class CmsServiceProvider implements ServiceProviderInterface
         /** @var ConnectionInterface $connection */
         $connection = $container->get(ConnectionInterface::class);
 
+        /** @var string|null $tenantId */
+        $tenantId = null;
+
         $container->instance(
             ContentRepositoryInterface::class,
-            new DbContentRepository($connection),
+            new DbContentRepository($connection, $tenantId),
         );
 
         $container->instance(
             ContentTranslationRepositoryInterface::class,
-            new DbContentTranslationRepository($connection),
+            new DbContentTranslationRepository($connection, $tenantId),
         );
 
         $container->instance(
             ContentRevisionRepositoryInterface::class,
-            new DbContentRevisionRepository($connection),
+            new DbContentRevisionRepository($connection, $tenantId),
         );
 
         $container->instance(
             ContentBlockRepositoryInterface::class,
-            new DbContentBlockRepository($connection),
+            new DbContentBlockRepository($connection, $tenantId),
         );
 
         $container->instance(
             RedirectRepositoryInterface::class,
-            new DbRedirectRepository($connection),
+            new DbRedirectRepository($connection, $tenantId),
         );
 
         $container->instance(
             TaxonomyRepositoryInterface::class,
-            new DbTaxonomyRepository($connection),
+            new DbTaxonomyRepository($connection, $tenantId),
         );
 
         $container->instance(
             MenuRepositoryInterface::class,
-            new DbMenuRepository($connection),
+            new DbMenuRepository($connection, $tenantId),
         );
 
         $container->instance(
             FieldRegistryRepositoryInterface::class,
-            new DbFieldRegistryRepository($connection),
+            new DbFieldRegistryRepository($connection, $tenantId),
         );
 
         $container->instance(
             ContentEventStoreInterface::class,
-            new DbContentEventRepository($connection),
+            new DbContentEventRepository($connection, $tenantId),
         );
 
         $container->instance(
             ContentSnapshotServiceInterface::class,
-            new DbContentSnapshotRepository($connection),
+            new DbContentSnapshotRepository($connection, $tenantId),
         );
 
         $container->instance(
             DbSettingsRepository::class,
-            new DbSettingsRepository($connection),
+            new DbSettingsRepository($connection, $tenantId),
         );
 
         $container->instance(
             DbEditorialReviewRepository::class,
-            new DbEditorialReviewRepository($connection),
+            new DbEditorialReviewRepository($connection, $tenantId),
         );
 
         $container->instance(
             DbContentLockRepository::class,
-            new DbContentLockRepository($connection),
+            new DbContentLockRepository($connection, $tenantId),
         );
 
         $container->instance(
@@ -462,13 +467,14 @@ final class CmsServiceProvider implements ServiceProviderInterface
         $container->instance(
             MediaServiceInterface::class,
             new MediaService(
-                $config->media,
-                $mediaRepository,
                 $disk,
                 $imageProcessor,
                 $fileValidator,
-                $filenameSanitizer,
                 $svgSanitizer,
+                $mediaRepository,
+                $config->media,
+                $auditLogger,
+                $filenameSanitizer,
                 $pdfValidator,
                 $logger,
             ),
@@ -481,10 +487,12 @@ final class CmsServiceProvider implements ServiceProviderInterface
         /** @var ContentRepositoryInterface $contentRepository */
         $contentRepository = $container->get(ContentRepositoryInterface::class);
 
+        if (!$container->has(SafeHtmlPolicy::class) && $auditLogger !== null) {
+            $container->instance(SafeHtmlPolicy::class, new SafeHtmlPolicy($auditLogger));
+        }
+
         /** @var SafeHtmlPolicy $safeHtmlPolicy */
-        $safeHtmlPolicy = $container->has(SafeHtmlPolicy::class)
-            ? $container->get(SafeHtmlPolicy::class)
-            : new SafeHtmlPolicy();
+        $safeHtmlPolicy = $container->get(SafeHtmlPolicy::class);
 
         $commentBodyPolicy = new CommentBodyPolicy($safeHtmlPolicy);
 
@@ -919,6 +927,19 @@ final class CmsServiceProvider implements ServiceProviderInterface
                 }
             }
         }
+
+    }
+
+    private function registerCommands(ContainerInterface $container): void
+    {
+        $basePath = $container->has('app.base_path')
+            ? (string) $container->get('app.base_path')
+            : getcwd();
+
+        $container->instance(
+            Command\CmsServeCommand::class,
+            new Command\CmsServeCommand($basePath),
+        );
     }
 
     private function registerPermissions(ContainerInterface $container): void

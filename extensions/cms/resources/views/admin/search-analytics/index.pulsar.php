@@ -82,11 +82,11 @@
             <table class="cms-table">
                 <thead class="cms-table__head">
                     <tr>
-                        <th class="cms-table__th">#</th>
-                        <th class="cms-table__th">Query</th>
-                        <th class="cms-table__th cms-table__th--sortable" data-cms-sort="count">Searches</th>
-                        <th class="cms-table__th">Avg Results</th>
-                        <th class="cms-table__th">CTR</th>
+                        <th class="cms-table__th" scope="col">#</th>
+                        <th class="cms-table__th" scope="col">Query</th>
+                        <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="count">Searches</th>
+                        <th class="cms-table__th" scope="col">Avg Results</th>
+                        <th class="cms-table__th" scope="col">CTR</th>
                     </tr>
                 </thead>
                 <tbody class="cms-table__body">
@@ -117,9 +117,9 @@
             <table class="cms-table">
                 <thead class="cms-table__head">
                     <tr>
-                        <th class="cms-table__th">Query</th>
-                        <th class="cms-table__th cms-table__th--sortable" data-cms-sort="count">Count</th>
-                        <th class="cms-table__th">Last Searched</th>
+                        <th class="cms-table__th" scope="col">Query</th>
+                        <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="count">Count</th>
+                        <th class="cms-table__th" scope="col">Last Searched</th>
                     </tr>
                 </thead>
                 <tbody class="cms-table__body">

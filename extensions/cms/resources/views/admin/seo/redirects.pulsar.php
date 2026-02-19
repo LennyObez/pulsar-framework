@@ -28,7 +28,8 @@
                                name="from_path"
                                class="cms-form-group__input"
                                placeholder="/old-page"
-                               required>
+                               required
+                               aria-required="true">
                     </div>
                     <div class="cms-form-group">
                         <label for="to-path" class="cms-form-group__label">To Path</label>
@@ -37,7 +38,8 @@
                                name="to_path"
                                class="cms-form-group__input"
                                placeholder="/new-page"
-                               required>
+                               required
+                               aria-required="true">
                     </div>
                     <div class="cms-form-group">
                         <label for="status-code" class="cms-form-group__label">Status Code</label>
@@ -74,7 +76,8 @@
                                name="file"
                                class="cms-form-group__input"
                                accept=".csv,text/csv"
-                               required>
+                               required
+                               aria-required="true">
                         <p class="cms-form-group__hint">Format: from_path,to_path,status_code (one redirect per line)</p>
                     </div>
                     <div class="cms-form-group">
@@ -93,14 +96,14 @@
     <table class="cms-table">
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th">From Path</th>
-                <th class="cms-table__th">To Path</th>
-                <th class="cms-table__th">Status</th>
-                <th class="cms-table__th">Locale</th>
-                <th class="cms-table__th cms-table__th--sortable" data-cms-sort="hits">Hits</th>
-                <th class="cms-table__th">Last Hit</th>
-                <th class="cms-table__th cms-table__th--sortable" data-cms-sort="created_at">Created</th>
-                <th class="cms-table__th">Actions</th>
+                <th class="cms-table__th" scope="col">From Path</th>
+                <th class="cms-table__th" scope="col">To Path</th>
+                <th class="cms-table__th" scope="col">Status</th>
+                <th class="cms-table__th" scope="col">Locale</th>
+                <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="hits">Hits</th>
+                <th class="cms-table__th" scope="col">Last Hit</th>
+                <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="created_at">Created</th>
+                <th class="cms-table__th" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">

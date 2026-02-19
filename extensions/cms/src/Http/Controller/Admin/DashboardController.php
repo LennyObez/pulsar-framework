@@ -8,12 +8,14 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
+use Pulsar\Extension\Cms\Dashboard\DashboardService;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 use Pulsar\Extension\Cms\Workflow\EditorialWorkflowServiceInterface;
 use Pulsar\Http\Message\Response;
 use RuntimeException;
 
+use function array_keys;
+use function array_map;
 use function array_slice;
 use function count;
 
@@ -24,7 +26,7 @@ use function count;
 final readonly class DashboardController
 {
     public function __construct(
-        private ContentRepositoryInterface $contentRepository,
+        private DashboardService $dashboardService,
         private EditorialWorkflowServiceInterface $workflowService,
         private SettingsServiceInterface $settingsService,
         private GateInterface $gate,
@@ -38,21 +40,30 @@ final readonly class DashboardController
         $pendingReviews = $this->workflowService->getPendingReviews();
         $settings = $this->settingsService->getAll();
 
-        return Response::json([
-            'widgets' => [
-                'pending_reviews' => [
-                    'count' => count($pendingReviews),
-                    'items' => array_map(static fn($r) => [
-                        'id' => $r->id,
-                        'content_id' => $r->contentId,
-                        'requested_by' => $r->requestedBy,
-                        'created_at' => $r->createdAt->format('c'),
-                    ], array_slice($pendingReviews, 0, 5)),
-                ],
-                'site_settings' => [
-                    'groups' => array_keys($settings),
-                ],
+        $widgets = $this->dashboardService->collectWidgetData();
+
+        $widgets['pending_reviews'] = [
+            'data' => [
+                'count' => count($pendingReviews),
+                'items' => array_map(static fn($r) => [
+                    'id' => $r->id,
+                    'content_id' => $r->contentId,
+                    'requested_by' => $r->requestedBy,
+                    'created_at' => $r->createdAt->format('c'),
+                ], array_slice($pendingReviews, 0, 5)),
             ],
+            'template' => 'dashboard/widgets/pending-reviews',
+        ];
+
+        $widgets['site_settings'] = [
+            'data' => [
+                'groups' => array_keys($settings),
+            ],
+            'template' => 'dashboard/widgets/site-settings',
+        ];
+
+        return Response::json([
+            'widgets' => $widgets,
         ]);
     }
 

@@ -30,12 +30,13 @@
                            value="{{ $promotion['name'] ?? '' }}"
                            class="cms-form-group__input"
                            required
+                           aria-required="true"
                            maxlength="255">
                 </div>
 
                 <div class="cms-form-group">
                     <label for="promo-type" class="cms-form-group__label">Type <span class="cms-required" aria-label="required">*</span></label>
-                    <select id="promo-type" name="type" class="cms-form-group__select" required data-cms-promo-type>
+                    <select id="promo-type" name="type" class="cms-form-group__select" required aria-required="true" data-cms-promo-type>
                         <option value="">Select type...</option>
                         @foreach ($types ?? [] as $typeOption)
                             <option value="{{ $typeOption['value'] }}" @if (($promotion['type'] ?? '') === $typeOption['value']) selected @endif>{{ $typeOption['label'] }}</option>
@@ -51,6 +52,7 @@
                            value="{{ $promotion['value'] ?? '' }}"
                            class="cms-form-group__input"
                            required
+                           aria-required="true"
                            min="1">
                     <span class="cms-form-group__hint" data-cms-promo-value-hint>Enter the promotion value (percentage, fixed amount in minor units, or quantity for buy-X-get-Y).</span>
                 </div>

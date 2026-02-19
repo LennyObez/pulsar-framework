@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Pulsar\Extension\Studio\Command;
+namespace Pulsar\Extension\Admin\Command;
 
 use Override;
 use Pulsar\Api\Internal;
@@ -10,22 +10,23 @@ use Pulsar\Console\Command;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
-use Pulsar\Extension\Studio\Config\StudioConfig;
+use Pulsar\Extension\Admin\Config\AdminConfig;
 
-use function file_exists;
-use function is_dir;
 use function is_int;
 use function is_string;
 use function sprintf;
 
 /**
- * Starts the Studio development server.
+ * Starts the Admin panel development server.
+ *
+ * Bootstraps the full framework kernel so Admin routes, database,
+ * auth, and all extensions are available.
  */
 #[Internal]
-final class StudioStartCommand extends Command
+final class AdminServeCommand extends Command
 {
     public function __construct(
-        private readonly StudioConfig $config,
+        private readonly AdminConfig $config,
         private readonly string $basePath,
     ) {
         parent::__construct();
@@ -34,8 +35,8 @@ final class StudioStartCommand extends Command
     #[Override]
     protected function configure(): void
     {
-        $this->name = 'studio:start';
-        $this->description = 'Start the Studio development server';
+        $this->name = 'admin:serve';
+        $this->description = 'Start the Admin panel development server';
         $this->addOption('host', 'Host to bind to', 'H');
         $this->addOption('port', 'Port to listen on', 'p');
     }
@@ -44,35 +45,32 @@ final class StudioStartCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->config->enabled) {
-            $output->errorln('Studio is not enabled. Set enabled: true in config/studio.php');
+            $output->errorln('Admin panel is not enabled. Set enabled: true in config/admin.php');
+
             return ExitCode::Error->value;
         }
 
         $hostOption = $input->getOption('host');
         $host = $input->hasOption('host') && is_string($hostOption)
             ? $hostOption
-            : $this->config->server->host;
+            : '127.0.0.1';
 
         $portOption = $input->getOption('port');
         $port = $input->hasOption('port') && (is_int($portOption) || is_string($portOption))
             ? (int) $portOption
-            : $this->config->server->port;
+            : 8686;
 
-        $documentRoot = $this->basePath . '/' . $this->config->server->documentRoot;
+        $routerScript = $this->basePath . '/extensions/admin/dev/router.php';
+        if (!file_exists($routerScript)) {
+            $output->errorln(sprintf('Router script not found: %s', $routerScript));
 
-        if (!is_dir($documentRoot)) {
-            $output->errorln(sprintf('Document root does not exist: %s', $documentRoot));
             return ExitCode::Error->value;
         }
 
-        $routerScript = $this->basePath . '/extensions/studio/dev/router.php';
-        if (!file_exists($routerScript)) {
-            $routerScript = '';
-        }
+        $documentRoot = $this->basePath;
 
-        $output->info(sprintf('Starting Studio server on http://%s:%d', $host, $port));
-        $output->writeln(sprintf('  Document root: %s', $documentRoot));
-        $output->writeln(sprintf('  Storage:       %s', $this->config->storagePath));
+        $output->info(sprintf('Starting Admin panel on http://%s:%d%s', $host, $port, $this->config->routePrefix));
+        $output->writeln(sprintf('  Route prefix:  %s', $this->config->routePrefix));
         $output->newLine();
         $output->writeln('Press Ctrl+C to stop.');
         $output->newLine();
@@ -82,7 +80,7 @@ final class StudioStartCommand extends Command
             $host,
             $port,
             escapeshellarg($documentRoot),
-            $routerScript !== '' ? escapeshellarg($routerScript) : '',
+            escapeshellarg($routerScript),
         );
 
         passthru($command, $exitCode);

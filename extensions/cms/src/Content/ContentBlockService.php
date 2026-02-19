@@ -47,10 +47,12 @@ final readonly class ContentBlockService
         } else {
             $sortOrder = $position;
 
-            // Shift existing blocks at or after the insertion point
+            // Shift existing blocks at or after the insertion point (batch save)
+            $shifted = [];
+
             foreach ($existingBlocks as $block) {
                 if ($block->sortOrder >= $position) {
-                    $shifted = new ContentBlock(
+                    $shifted[] = new ContentBlock(
                         id: $block->id,
                         contentId: $block->contentId,
                         locale: $block->locale,
@@ -60,9 +62,10 @@ final readonly class ContentBlockService
                         createdAt: $block->createdAt,
                         updatedAt: new DateTimeImmutable(),
                     );
-                    $this->blockRepository->save($shifted);
                 }
             }
+
+            $this->blockRepository->saveAll($shifted);
         }
 
         $now = new DateTimeImmutable();
@@ -131,12 +134,13 @@ final readonly class ContentBlockService
 
         $this->blockRepository->delete($blockId);
 
-        // Compact sort order for remaining blocks
+        // Compact sort order for remaining blocks (batch save)
         $remainingBlocks = $this->blockRepository->findByContentAndLocale($block->contentId, $block->locale);
+        $toSave = [];
 
         foreach ($remainingBlocks as $index => $remaining) {
             if ($remaining->sortOrder !== $index) {
-                $reordered = new ContentBlock(
+                $toSave[] = new ContentBlock(
                     id: $remaining->id,
                     contentId: $remaining->contentId,
                     locale: $remaining->locale,
@@ -146,9 +150,10 @@ final readonly class ContentBlockService
                     createdAt: $remaining->createdAt,
                     updatedAt: new DateTimeImmutable(),
                 );
-                $this->blockRepository->save($reordered);
             }
         }
+
+        $this->blockRepository->saveAll($toSave);
     }
 
     /**
@@ -168,6 +173,8 @@ final readonly class ContentBlockService
             $blockMap[$block->id] = $block;
         }
 
+        $toSave = [];
+
         foreach ($orderedIds as $position => $blockId) {
             if (!isset($blockMap[$blockId])) {
                 continue;
@@ -176,7 +183,7 @@ final readonly class ContentBlockService
             $block = $blockMap[$blockId];
 
             if ($block->sortOrder !== $position) {
-                $reordered = new ContentBlock(
+                $toSave[] = new ContentBlock(
                     id: $block->id,
                     contentId: $block->contentId,
                     locale: $block->locale,
@@ -186,9 +193,10 @@ final readonly class ContentBlockService
                     createdAt: $block->createdAt,
                     updatedAt: new DateTimeImmutable(),
                 );
-                $this->blockRepository->save($reordered);
             }
         }
+
+        $this->blockRepository->saveAll($toSave);
     }
 
     private function generateId(): string

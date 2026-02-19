@@ -27,7 +27,7 @@ use function preg_match;
  * Standalone router for the Studio server.
  *
  * Matches incoming requests to Studio controllers.
- * Used by the `studio:start` command's built-in server.
+ * Used by the `studio:serve` command's built-in server.
  */
 #[Internal]
 final readonly class StudioRouter

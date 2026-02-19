@@ -526,6 +526,24 @@ final class InMemoryContentRepositoryForComments implements ContentRepositoryInt
         return new PaginationResult(items: [], total: 0, hasMore: false, perPage: $perPage);
     }
 
+    public function findByIds(array $ids): array
+    {
+        $result = [];
+
+        foreach ($ids as $id) {
+            if (isset($this->contents[$id])) {
+                $result[$id] = $this->contents[$id];
+            }
+        }
+
+        return $result;
+    }
+
+    public function findAncestors(string $contentId, int $maxDepth = 20): array
+    {
+        return [];
+    }
+
     public function save(Content $content): void
     {
         $this->contents[$content->id] = $content;

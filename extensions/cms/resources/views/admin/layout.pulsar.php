@@ -13,7 +13,8 @@
 <nav class="cms-sidebar" aria-label="CMS Navigation">
     <ul class="cms-sidebar__list">
         <li class="cms-sidebar__item">
-            <a href="/admin/cms" class="cms-sidebar__link @if (($activeSection ?? '') === 'dashboard') cms-sidebar__link--active @endif">
+            <a href="/admin/cms" class="cms-sidebar__link @if (($activeSection ?? '') === 'dashboard') cms-sidebar__link--active @endif"
+                @if (($activeSection ?? '') === 'dashboard') aria-current="page" @endif>
                 <span class="cms-sidebar__icon" aria-hidden="true">&#9632;</span>
                 Dashboard
             </a>
@@ -21,7 +22,8 @@
 
         @can('cms.content.view')
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/content" class="cms-sidebar__link @if (($activeSection ?? '') === 'content') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/content" class="cms-sidebar__link @if (($activeSection ?? '') === 'content') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'content') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#9997;</span>
                     Content
                 </a>
@@ -30,7 +32,8 @@
 
         @can('cms.taxonomy.view')
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/taxonomy" class="cms-sidebar__link @if (($activeSection ?? '') === 'taxonomy') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/taxonomy" class="cms-sidebar__link @if (($activeSection ?? '') === 'taxonomy') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'taxonomy') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#9733;</span>
                     Taxonomies
                 </a>
@@ -39,7 +42,8 @@
 
         @can('cms.menus.view')
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/menus" class="cms-sidebar__link @if (($activeSection ?? '') === 'menus') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/menus" class="cms-sidebar__link @if (($activeSection ?? '') === 'menus') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'menus') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#9776;</span>
                     Menus
                 </a>
@@ -48,11 +52,12 @@
 
         @can('cms.content.approve')
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/reviews" class="cms-sidebar__link @if (($activeSection ?? '') === 'reviews') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/reviews" class="cms-sidebar__link @if (($activeSection ?? '') === 'reviews') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'reviews') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#10003;</span>
                     Reviews
                     @if (($pendingReviewCount ?? 0) > 0)
-                        <span class="cms-sidebar__badge">{{ $pendingReviewCount }}</span>
+                        <span class="cms-sidebar__badge" aria-label="{{ $pendingReviewCount }} pending reviews">{{ $pendingReviewCount }}</span>
                     @endif
                 </a>
             </li>
@@ -60,7 +65,8 @@
 
         @can('cms.content.manage_fields')
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/fields/article" class="cms-sidebar__link @if (($activeSection ?? '') === 'fields') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/fields/article" class="cms-sidebar__link @if (($activeSection ?? '') === 'fields') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'fields') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#9881;</span>
                     Custom Fields
                 </a>
@@ -69,7 +75,8 @@
 
         @can('cms.media.view')
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/media" class="cms-sidebar__link @if (($activeSection ?? '') === 'media') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/media" class="cms-sidebar__link @if (($activeSection ?? '') === 'media') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'media') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#128247;</span>
                     Media
                 </a>
@@ -78,11 +85,12 @@
 
         @can('cms.comments.view')
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/comments" class="cms-sidebar__link @if (($activeSection ?? '') === 'comments') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/comments" class="cms-sidebar__link @if (($activeSection ?? '') === 'comments') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'comments') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#128172;</span>
                     Comments
                     @if (($pendingCommentCount ?? 0) > 0)
-                        <span class="cms-sidebar__badge">{{ $pendingCommentCount }}</span>
+                        <span class="cms-sidebar__badge" aria-label="{{ $pendingCommentCount }} pending comments">{{ $pendingCommentCount }}</span>
                     @endif
                 </a>
             </li>
@@ -90,7 +98,8 @@
 
         @can('cms.search.view_analytics')
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/search-analytics" class="cms-sidebar__link @if (($activeSection ?? '') === 'search-analytics') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/search-analytics" class="cms-sidebar__link @if (($activeSection ?? '') === 'search-analytics') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'search-analytics') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#128269;</span>
                     Search Analytics
                 </a>
@@ -102,25 +111,29 @@
                 <span class="cms-sidebar__heading">SEO</span>
             </li>
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/seo/redirects" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-redirects') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/seo/redirects" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-redirects') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'seo-redirects') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#8634;</span>
                     Redirects
                 </a>
             </li>
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/seo/link-health" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-link-health') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/seo/link-health" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-link-health') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'seo-link-health') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#128279;</span>
                     Link Health
                 </a>
             </li>
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/seo/sitemap" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-sitemap') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/seo/sitemap" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-sitemap') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'seo-sitemap') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#128506;</span>
                     Sitemap
                 </a>
             </li>
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/seo/robots" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-robots') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/seo/robots" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-robots') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'seo-robots') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#129302;</span>
                     Robots.txt
                 </a>
@@ -132,7 +145,8 @@
                 <span class="cms-sidebar__heading">Themes</span>
             </li>
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/themes" class="cms-sidebar__link @if (($activeSection ?? '') === 'themes') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/themes" class="cms-sidebar__link @if (($activeSection ?? '') === 'themes') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'themes') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#127912;</span>
                     Installed Themes
                 </a>
@@ -144,7 +158,8 @@
                 <span class="cms-sidebar__heading">Plugins</span>
             </li>
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/plugins" class="cms-sidebar__link @if (($activeSection ?? '') === 'plugins') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/plugins" class="cms-sidebar__link @if (($activeSection ?? '') === 'plugins') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'plugins') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#128268;</span>
                     Installed Plugins
                 </a>
@@ -156,7 +171,8 @@
                 <span class="cms-sidebar__heading">Users</span>
             </li>
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/users" class="cms-sidebar__link @if (($activeSection ?? '') === 'users') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/users" class="cms-sidebar__link @if (($activeSection ?? '') === 'users') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'users') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#128101;</span>
                     Manage Users
                 </a>
@@ -164,7 +180,8 @@
         @endcan
 
         <li class="cms-sidebar__item">
-            <a href="/admin/cms/2fa" class="cms-sidebar__link @if (($activeSection ?? '') === '2fa') cms-sidebar__link--active @endif">
+            <a href="/admin/cms/2fa" class="cms-sidebar__link @if (($activeSection ?? '') === '2fa') cms-sidebar__link--active @endif"
+                @if (($activeSection ?? '') === '2fa') aria-current="page" @endif>
                 <span class="cms-sidebar__icon" aria-hidden="true">&#128737;</span>
                 2FA Settings
             </a>
@@ -172,7 +189,8 @@
 
         @can('cms.settings.view')
             <li class="cms-sidebar__item">
-                <a href="/admin/cms/settings/general" class="cms-sidebar__link @if (($activeSection ?? '') === 'settings') cms-sidebar__link--active @endif">
+                <a href="/admin/cms/settings/general" class="cms-sidebar__link @if (($activeSection ?? '') === 'settings') cms-sidebar__link--active @endif"
+                    @if (($activeSection ?? '') === 'settings') aria-current="page" @endif>
                     <span class="cms-sidebar__icon" aria-hidden="true">&#9881;</span>
                     Settings
                 </a>

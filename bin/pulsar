@@ -140,7 +140,7 @@ use Pulsar\Extension\Studio\Command\StudioDoctorCommand;
 use Pulsar\Extension\Studio\Command\StudioDisableCommand;
 use Pulsar\Extension\Studio\Command\StudioEnableCommand;
 use Pulsar\Extension\Studio\Command\StudioOpenCommand;
-use Pulsar\Extension\Studio\Command\StudioStartCommand;
+use Pulsar\Extension\Studio\Command\StudioServeCommand;
 use Pulsar\Extension\Studio\Command\StudioStatusCommand;
 use Pulsar\Extension\Studio\Console\Aggregation\DashboardAggregator;
 use Pulsar\Extension\Studio\Console\Aggregation\TimelineBuilder;
@@ -377,7 +377,7 @@ if ($kernel->container()->has(StudioConfig::class)) {
 
     $application->addCommands([
         new StudioStatusCommand($studioConfig, $studioStore),
-        new StudioStartCommand($studioConfig, $basePath),
+        new StudioServeCommand($studioConfig, $basePath),
         new StudioOpenCommand($studioConfig),
         new StudioDoctorCommand($studioConfig, $basePath),
         new StudioEnableCommand($basePath),

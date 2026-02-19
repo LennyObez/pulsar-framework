@@ -20,10 +20,19 @@ final readonly class PublishingStateMachine
     /**
      * Transition content to the target publishing status.
      *
+     * @param string      $actorId          The ID of the user performing the transition
+     * @param string|null $reason           Optional reason for the transition (used in audit trail)
+     * @param bool        $editorialWorkflow Whether editorial workflow rules apply
+     *
      * @throws CmsException If the transition is not allowed from the current status
      */
-    public function transition(Content $content, PublishingStatus $target, bool $editorialWorkflow = false): Content
-    {
+    public function transition(
+        Content $content,
+        PublishingStatus $target,
+        string $actorId,
+        ?string $reason = null,
+        bool $editorialWorkflow = false,
+    ): Content {
         if (!$content->status->canTransitionTo($target, $editorialWorkflow)) {
             throw CmsException::invalidTransition($content->status->value, $target->value);
         }

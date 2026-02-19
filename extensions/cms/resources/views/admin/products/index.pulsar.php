@@ -42,12 +42,12 @@
     <table class="cms-table">
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th">Name</th>
-                <th class="cms-table__th">SKU</th>
-                <th class="cms-table__th">Price</th>
-                <th class="cms-table__th">Stock</th>
-                <th class="cms-table__th">Status</th>
-                <th class="cms-table__th">Actions</th>
+                <th class="cms-table__th" scope="col">Name</th>
+                <th class="cms-table__th" scope="col">SKU</th>
+                <th class="cms-table__th" scope="col">Price</th>
+                <th class="cms-table__th" scope="col">Stock</th>
+                <th class="cms-table__th" scope="col">Status</th>
+                <th class="cms-table__th" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">

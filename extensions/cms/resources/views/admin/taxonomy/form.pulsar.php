@@ -39,6 +39,7 @@
                            value="{{ $taxonomyTranslation['name'] ?? '' }}"
                            class="cms-form-group__input"
                            required
+                           aria-required="true"
                            maxlength="200">
                 </div>
 
@@ -50,6 +51,7 @@
                            value="{{ $taxonomy['slug'] ?? '' }}"
                            class="cms-form-group__input"
                            required
+                           aria-required="true"
                            maxlength="100"
                            pattern="[a-z0-9](?:[a-z0-9-]*[a-z0-9])?"
                            @if (isset($taxonomy)) readonly @endif>
@@ -98,6 +100,7 @@
                                name="term_name"
                                class="cms-form-group__input"
                                required
+                               aria-required="true"
                                maxlength="200"
                                placeholder="Enter term name">
                     </div>
@@ -138,7 +141,7 @@
                         <ul class="cms-term-tree__list" data-cms-sortable-list>
                             @foreach ($terms as $term)
                                 <li class="cms-term-tree__item" style="padding-left: {{ ($term['depth'] ?? 0) * 1.5 }}rem" data-cms-term-id="{{ $term['id'] }}" draggable="true">
-                                    <span class="cms-term-tree__handle" aria-label="Drag to reorder">&#9776;</span>
+                                    <span class="cms-term-tree__handle" role="button" tabindex="0" aria-label="Drag to reorder" aria-roledescription="sortable">&#9776;</span>
                                     <span class="cms-term-tree__name">{{ $term['name'] ?? '' }}</span>
                                     <span class="cms-term-tree__slug"><code>{{ $term['slug'] ?? '' }}</code></span>
                                     <div class="cms-term-tree__actions">

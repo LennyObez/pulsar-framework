@@ -94,6 +94,19 @@ final readonly class DbContentBlockRepository implements ContentBlockRepositoryI
         ]);
     }
 
+    public function saveAll(array $blocks): void
+    {
+        if ($blocks === []) {
+            return;
+        }
+
+        $this->connection->transaction(function () use ($blocks): void {
+            foreach ($blocks as $block) {
+                $this->save($block);
+            }
+        });
+    }
+
     public function delete(string $id): void
     {
         $this->connection->execute(self::SQL_DELETE, ['id' => $id]);

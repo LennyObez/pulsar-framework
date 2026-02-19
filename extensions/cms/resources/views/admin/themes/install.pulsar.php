@@ -85,7 +85,8 @@
                            name="file"
                            class="cms-form-group__input"
                            accept=".zip,application/zip"
-                           required>
+                           required
+                           aria-required="true">
                     <p class="cms-form-group__hint">Upload a <code>.zip</code> archive containing the theme package with a valid <code>theme.json</code> manifest.</p>
                 </div>
 

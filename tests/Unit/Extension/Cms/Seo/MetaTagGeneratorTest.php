@@ -374,6 +374,11 @@ final class MetaTagGeneratorTest extends TestCase
                 return null;
             }
 
+            public function findByContentIds(array $contentIds): array
+            {
+                return [];
+            }
+
             public function save(ContentTranslation $translation): void {}
 
             public function delete(string $id): void {}

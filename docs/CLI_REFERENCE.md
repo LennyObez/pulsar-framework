@@ -799,7 +799,7 @@ Studio provides observability and debugging commands. See [`docs/STUDIO.md`](STU
 | Command          | Description                           |
 | ---------------- | ------------------------------------- |
 | `studio:status`  | Show Studio status and storage stats  |
-| `studio:start`   | Start the Studio web server           |
+| `studio:serve`   | Start the Studio web server           |
 | `studio:open`    | Open Studio in the default browser    |
 | `studio:doctor`  | Run diagnostics (storage, port, keys) |
 | `studio:enable`  | Enable Studio                         |

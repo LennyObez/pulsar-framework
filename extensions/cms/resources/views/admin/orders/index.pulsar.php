@@ -66,16 +66,16 @@
     <table class="cms-table">
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th">Order #</th>
-                <th class="cms-table__th">Date</th>
-                <th class="cms-table__th">Customer</th>
-                <th class="cms-table__th">Subtotal</th>
-                <th class="cms-table__th">Tax</th>
-                <th class="cms-table__th">Discount</th>
-                <th class="cms-table__th">Total</th>
-                <th class="cms-table__th">Status</th>
-                <th class="cms-table__th">Payment</th>
-                <th class="cms-table__th">Actions</th>
+                <th class="cms-table__th" scope="col">Order #</th>
+                <th class="cms-table__th" scope="col">Date</th>
+                <th class="cms-table__th" scope="col">Customer</th>
+                <th class="cms-table__th" scope="col">Subtotal</th>
+                <th class="cms-table__th" scope="col">Tax</th>
+                <th class="cms-table__th" scope="col">Discount</th>
+                <th class="cms-table__th" scope="col">Total</th>
+                <th class="cms-table__th" scope="col">Status</th>
+                <th class="cms-table__th" scope="col">Payment</th>
+                <th class="cms-table__th" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">

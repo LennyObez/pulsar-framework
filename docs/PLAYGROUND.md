@@ -5,7 +5,7 @@ The Pulsar UI Playground is a local development tool for real-time CSS customiza
 ## Starting the Playground
 
 ```bash
-pulsar ui:playground
+pulsar playground:serve
 ```
 
 This starts a lightweight dev server on `http://localhost:8942`.
@@ -19,10 +19,10 @@ This starts a lightweight dev server on `http://localhost:8942`.
 
 ```bash
 # Custom port
-pulsar ui:playground --port 3000
+pulsar playground:serve --port 3000
 
 # Bind to all interfaces
-pulsar ui:playground --host 0.0.0.0
+pulsar playground:serve --host 0.0.0.0
 ```
 
 The playground is **disabled in production** (`APP_ENV=production`). Attempting to start it in production outputs an error and exits.

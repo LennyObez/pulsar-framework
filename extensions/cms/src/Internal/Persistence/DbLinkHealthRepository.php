@@ -11,6 +11,7 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Seo\LinkHealthCheck;
 use Pulsar\Extension\Cms\Seo\LinkHealthRepositoryInterface;
 
+use function implode;
 use function max;
 
 #[Internal(reason: 'Raw-DB repository — use LinkHealthRepositoryInterface for public API')]
@@ -25,6 +26,12 @@ final readonly class DbLinkHealthRepository implements LinkHealthRepositoryInter
     private const string SQL_FIND_BROKEN = <<<'SQL'
         SELECT * FROM cms_link_health_checks
         WHERE is_broken = true
+        SQL;
+
+    private const string SQL_FIND_BY_CONTENT_IDS = <<<'SQL'
+        SELECT * FROM cms_link_health_checks
+        WHERE source_content_id = ANY(:content_ids) AND source_locale = :locale
+        ORDER BY source_content_id, created_at DESC
         SQL;
 
     private const string SQL_INSERT = <<<'SQL'
@@ -59,6 +66,29 @@ final readonly class DbLinkHealthRepository implements LinkHealthRepositoryInter
         ]);
 
         return $result->map(self::hydrate(...));
+    }
+
+    public function findByContentIds(array $contentIds, string $locale): array
+    {
+        if ($contentIds === []) {
+            return [];
+        }
+
+        $pgArray = '{' . implode(',', $contentIds) . '}';
+
+        $result = $this->connection->query(self::SQL_FIND_BY_CONTENT_IDS, [
+            'content_ids' => $pgArray,
+            'locale' => $locale,
+        ]);
+
+        $grouped = [];
+
+        foreach ($result->rows as $row) {
+            $check = self::hydrate($row);
+            $grouped[$check->sourceContentId][] = $check;
+        }
+
+        return $grouped;
     }
 
     public function findBroken(?string $tenantId = null, int $page = 1, int $perPage = 50): array

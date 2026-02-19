@@ -87,16 +87,16 @@
         <table class="cms-table" data-cms-sortable-table>
             <thead class="cms-table__head">
                 <tr>
-                    <th class="cms-table__th cms-table__th--checkbox">
+                    <th class="cms-table__th cms-table__th--checkbox" scope="col">
                         <input type="checkbox" aria-label="Select all" data-cms-select-all>
                     </th>
-                    <th class="cms-table__th cms-table__th--sortable" data-cms-sort="title">Title</th>
-                    <th class="cms-table__th cms-table__th--sortable" data-cms-sort="type">Type</th>
-                    <th class="cms-table__th">Status</th>
-                    <th class="cms-table__th cms-table__th--sortable" data-cms-sort="author">Author</th>
-                    <th class="cms-table__th">Locale</th>
-                    <th class="cms-table__th cms-table__th--sortable" data-cms-sort="updated_at">Last Modified</th>
-                    <th class="cms-table__th">Actions</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="title">Title</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="type">Type</th>
+                    <th class="cms-table__th" scope="col">Status</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="author">Author</th>
+                    <th class="cms-table__th" scope="col">Locale</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="updated_at">Last Modified</th>
+                    <th class="cms-table__th" scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody class="cms-table__body">

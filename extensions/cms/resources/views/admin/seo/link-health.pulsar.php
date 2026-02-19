@@ -61,12 +61,12 @@
     <table class="cms-table">
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th">Source Content</th>
-                <th class="cms-table__th">Locale</th>
-                <th class="cms-table__th">Target URL</th>
-                <th class="cms-table__th">Status</th>
-                <th class="cms-table__th">HTTP Code</th>
-                <th class="cms-table__th cms-table__th--sortable" data-cms-sort="last_checked_at">Last Checked</th>
+                <th class="cms-table__th" scope="col">Source Content</th>
+                <th class="cms-table__th" scope="col">Locale</th>
+                <th class="cms-table__th" scope="col">Target URL</th>
+                <th class="cms-table__th" scope="col">Status</th>
+                <th class="cms-table__th" scope="col">HTTP Code</th>
+                <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="last_checked_at">Last Checked</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">

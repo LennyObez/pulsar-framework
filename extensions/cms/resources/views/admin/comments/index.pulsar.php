@@ -8,7 +8,7 @@
         <h1 class="cms-comment-moderation__title">
             Comment Moderation
             @if (($totalPending ?? 0) > 0)
-                <span class="cms-widget__badge">{{ $totalPending }} pending</span>
+                <span class="cms-widget__badge" aria-label="{{ $totalPending }} comments pending moderation">{{ $totalPending }} pending</span>
             @endif
         </h1>
         <a href="/admin/cms" class="cms-btn cms-btn--outline">Back to Dashboard</a>
@@ -34,7 +34,7 @@
                        aria-selected="{{ ($activeStatus ?? 'pending') === $tabValue ? 'true' : 'false' }}">
                         {{ $tabLabel }}
                         @if ($tabValue !== '' && isset($statusCounts[$tabValue]) && $statusCounts[$tabValue] > 0)
-                            <span class="cms-comment-moderation__tab-count">{{ $statusCounts[$tabValue] }}</span>
+                            <span class="cms-comment-moderation__tab-count" aria-label="{{ $statusCounts[$tabValue] }} {{ $tabLabel }}">{{ $statusCounts[$tabValue] }}</span>
                         @endif
                     </a>
                 </li>
@@ -87,15 +87,15 @@
         <table class="cms-table">
             <thead class="cms-table__head">
                 <tr>
-                    <th class="cms-table__th cms-table__th--checkbox">
+                    <th class="cms-table__th cms-table__th--checkbox" scope="col">
                         <input type="checkbox" aria-label="Select all" data-cms-select-all>
                     </th>
-                    <th class="cms-table__th">Author</th>
-                    <th class="cms-table__th">Comment</th>
-                    <th class="cms-table__th">Content</th>
-                    <th class="cms-table__th cms-table__th--sortable" data-cms-sort="created_at">Date</th>
-                    <th class="cms-table__th">Status</th>
-                    <th class="cms-table__th">Actions</th>
+                    <th class="cms-table__th" scope="col">Author</th>
+                    <th class="cms-table__th" scope="col">Comment</th>
+                    <th class="cms-table__th" scope="col">Content</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="created_at">Date</th>
+                    <th class="cms-table__th" scope="col">Status</th>
+                    <th class="cms-table__th" scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody class="cms-table__body">

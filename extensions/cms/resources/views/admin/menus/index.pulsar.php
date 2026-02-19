@@ -22,10 +22,10 @@
     <table class="cms-table">
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th">Location</th>
-                <th class="cms-table__th">Items</th>
-                <th class="cms-table__th">Created</th>
-                <th class="cms-table__th">Actions</th>
+                <th class="cms-table__th" scope="col">Location</th>
+                <th class="cms-table__th" scope="col">Items</th>
+                <th class="cms-table__th" scope="col">Created</th>
+                <th class="cms-table__th" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">

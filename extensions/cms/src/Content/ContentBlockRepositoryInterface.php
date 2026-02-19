@@ -23,6 +23,13 @@ interface ContentBlockRepositoryInterface
 
     public function save(ContentBlock $block): void;
 
+    /**
+     * Save multiple blocks in a single transaction.
+     *
+     * @param list<ContentBlock> $blocks
+     */
+    public function saveAll(array $blocks): void;
+
     public function delete(string $id): void;
 
     /**

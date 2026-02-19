@@ -27,6 +27,15 @@ interface LinkHealthRepositoryInterface
     public function findBroken(?string $tenantId = null, int $page = 1, int $perPage = 50): array;
 
     /**
+     * Find link health checks for multiple content items in a single query.
+     *
+     * @param list<string> $contentIds UUIDv7 content IDs
+     * @param string $locale BCP 47 locale code
+     * @return array<string, list<LinkHealthCheck>> Keyed by content ID
+     */
+    public function findByContentIds(array $contentIds, string $locale): array;
+
+    /**
      * Persist a link health check record.
      */
     public function save(LinkHealthCheck $check): void;

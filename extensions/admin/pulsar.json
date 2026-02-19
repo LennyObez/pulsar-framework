@@ -13,7 +13,7 @@
   "provides": {
     "services": ["AdminGateway", "ResourceRegistryInterface", "AdminConfig"],
     "routes": true,
-    "commands": ["Pulsar\\Extension\\Admin\\Command\\AdminStartCommand"]
+    "commands": ["Pulsar\\Extension\\Admin\\Command\\AdminServeCommand"]
   },
   "frontend": {
     "bundles": [

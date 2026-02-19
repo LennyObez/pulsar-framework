@@ -59,7 +59,7 @@ Tokens and component CSS APIs are versioned following semver. All components ref
 
 ### Playground
 
-A local dev server (`pulsar ui:playground`) providing a component catalog with a built-in CSS editor, real-time preview, and theme file management. Dev-only (disabled in production). Custom-built with vanilla HTML/CSS/JS -- no external editor dependencies.
+A local dev server (`pulsar playground:serve`) providing a component catalog with a built-in CSS editor, real-time preview, and theme file management. Dev-only (disabled in production). Custom-built with vanilla HTML/CSS/JS -- no external editor dependencies.
 
 ## Alternatives Considered
 

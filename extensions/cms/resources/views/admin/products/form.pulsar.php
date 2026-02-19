@@ -42,6 +42,7 @@
                            value="{{ $translation['name'] ?? '' }}"
                            class="cms-form-group__input"
                            required
+                           aria-required="true"
                            maxlength="255">
                 </div>
 
@@ -76,6 +77,7 @@
                                value="{{ $product['sku'] ?? '' }}"
                                class="cms-form-group__input"
                                required
+                               aria-required="true"
                                maxlength="100">
                     </div>
 
@@ -88,6 +90,7 @@
                                    value="{{ $product['price_amount'] ?? '' }}"
                                    class="cms-form-group__input"
                                    required
+                                   aria-required="true"
                                    min="0"
                                    step="1">
                             <span class="cms-input-group__addon">{{ strtoupper($product['price_currency'] ?? 'USD') }}</span>
@@ -103,6 +106,7 @@
                                value="{{ $product['price_currency'] ?? 'USD' }}"
                                class="cms-form-group__input"
                                required
+                               aria-required="true"
                                maxlength="3"
                                pattern="[A-Z]{3}"
                                placeholder="USD">
@@ -179,11 +183,11 @@
                             <table class="cms-table cms-table--compact">
                                 <thead class="cms-table__head">
                                     <tr>
-                                        <th class="cms-table__th">SKU Suffix</th>
-                                        <th class="cms-table__th">Price Modifier</th>
-                                        <th class="cms-table__th">Stock</th>
-                                        <th class="cms-table__th">Media</th>
-                                        <th class="cms-table__th">Active</th>
+                                        <th class="cms-table__th" scope="col">SKU Suffix</th>
+                                        <th class="cms-table__th" scope="col">Price Modifier</th>
+                                        <th class="cms-table__th" scope="col">Stock</th>
+                                        <th class="cms-table__th" scope="col">Media</th>
+                                        <th class="cms-table__th" scope="col">Active</th>
                                     </tr>
                                 </thead>
                                 <tbody class="cms-table__body">
@@ -193,34 +197,39 @@
                                                 <input type="text"
                                                        name="variants[{{ $varIndex }}][sku_suffix]"
                                                        value="{{ $variant['sku_suffix'] ?? '' }}"
-                                                       class="cms-form-group__input cms-form-group__input--sm">
+                                                       class="cms-form-group__input cms-form-group__input--sm"
+                                                       aria-label="SKU suffix for variant {{ $varIndex + 1 }}">
                                             </td>
                                             <td class="cms-table__td">
                                                 <input type="number"
                                                        name="variants[{{ $varIndex }}][price_modifier]"
                                                        value="{{ $variant['price_modifier'] ?? 0 }}"
                                                        class="cms-form-group__input cms-form-group__input--sm"
-                                                       step="1">
+                                                       step="1"
+                                                       aria-label="Price modifier for variant {{ $varIndex + 1 }}">
                                             </td>
                                             <td class="cms-table__td">
                                                 <input type="number"
                                                        name="variants[{{ $varIndex }}][stock]"
                                                        value="{{ $variant['stock'] ?? '' }}"
                                                        class="cms-form-group__input cms-form-group__input--sm"
-                                                       min="0">
+                                                       min="0"
+                                                       aria-label="Stock for variant {{ $varIndex + 1 }}">
                                             </td>
                                             <td class="cms-table__td">
                                                 <input type="text"
                                                        name="variants[{{ $varIndex }}][media]"
                                                        value="{{ $variant['media'] ?? '' }}"
                                                        class="cms-form-group__input cms-form-group__input--sm"
-                                                       placeholder="Media ID">
+                                                       placeholder="Media ID"
+                                                       aria-label="Media ID for variant {{ $varIndex + 1 }}">
                                             </td>
                                             <td class="cms-table__td">
                                                 <input type="checkbox"
                                                        name="variants[{{ $varIndex }}][active]"
                                                        value="1"
                                                        class="cms-form-group__checkbox"
+                                                       aria-label="Active status for variant {{ $varIndex + 1 }}"
                                                        @if ($variant['active'] ?? true) checked @endif>
                                             </td>
                                         </tr>

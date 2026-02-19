@@ -26,6 +26,7 @@ use function array_filter;
 use function array_slice;
 use function array_values;
 use function count;
+use function in_array;
 
 #[CoversClass(SitemapGenerator::class)]
 final class SitemapIntegrationTest extends TestCase
@@ -285,6 +286,24 @@ final class InMemorySitemapContentRepository implements ContentRepositoryInterfa
         );
     }
 
+    public function findByIds(array $ids): array
+    {
+        $result = [];
+
+        foreach ($ids as $id) {
+            if (isset($this->contents[$id])) {
+                $result[$id] = $this->contents[$id];
+            }
+        }
+
+        return $result;
+    }
+
+    public function findAncestors(string $contentId, int $maxDepth = 20): array
+    {
+        return [];
+    }
+
     public function save(Content $content): void
     {
         $this->contents[$content->id] = $content;
@@ -339,6 +358,19 @@ final class InMemorySitemapTranslationRepository implements ContentTranslationRe
         }
 
         return null;
+    }
+
+    public function findByContentIds(array $contentIds): array
+    {
+        $grouped = [];
+
+        foreach ($this->translations as $t) {
+            if (in_array($t->contentId, $contentIds, true)) {
+                $grouped[$t->contentId][] = $t;
+            }
+        }
+
+        return $grouped;
     }
 
     public function findByPath(string $locale, string $path, ?string $tenantId = null): ?ContentTranslation

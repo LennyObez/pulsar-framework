@@ -35,9 +35,9 @@
         <table class="cms-table">
             <thead class="cms-table__head">
                 <tr>
-                    <th class="cms-table__th">#</th>
-                    <th class="cms-table__th">Sitemap URL</th>
-                    <th class="cms-table__th">Last Modified</th>
+                    <th class="cms-table__th" scope="col">#</th>
+                    <th class="cms-table__th" scope="col">Sitemap URL</th>
+                    <th class="cms-table__th" scope="col">Last Modified</th>
                 </tr>
             </thead>
             <tbody class="cms-table__body">

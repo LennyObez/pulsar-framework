@@ -74,7 +74,7 @@
                     @method('PUT')
                     <div class="cms-form-group">
                         <label for="replace-file" class="cms-form-group__label">Select Replacement File</label>
-                        <input type="file" id="replace-file" name="file" class="cms-form-group__input" required>
+                        <input type="file" id="replace-file" name="file" class="cms-form-group__input" required aria-required="true">
                     </div>
                     <div class="cms-media-show__replace-actions">
                         <button type="submit" class="cms-btn cms-btn--primary">Upload Replacement</button>
@@ -199,10 +199,10 @@
                         <table class="cms-table cms-table--compact">
                             <thead class="cms-table__head">
                                 <tr>
-                                    <th class="cms-table__th">Variant</th>
-                                    <th class="cms-table__th">Format</th>
-                                    <th class="cms-table__th">Size</th>
-                                    <th class="cms-table__th">Dimensions</th>
+                                    <th class="cms-table__th" scope="col">Variant</th>
+                                    <th class="cms-table__th" scope="col">Format</th>
+                                    <th class="cms-table__th" scope="col">Size</th>
+                                    <th class="cms-table__th" scope="col">Dimensions</th>
                                 </tr>
                             </thead>
                             <tbody class="cms-table__body">

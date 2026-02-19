@@ -8,7 +8,7 @@
         <h1 class="cms-review-queue__title">
             Editorial Reviews
             @if (($totalPending ?? 0) > 0)
-                <span class="cms-widget__badge">{{ $totalPending }} pending</span>
+                <span class="cms-widget__badge" aria-label="{{ $totalPending }} pending reviews">{{ $totalPending }} pending</span>
             @endif
         </h1>
         <a href="/admin/cms/content" class="cms-btn cms-btn--outline">Back to Content</a>
@@ -17,13 +17,13 @@
     <table class="cms-table">
         <thead class="cms-table__head">
             <tr>
-                <th class="cms-table__th">Content</th>
-                <th class="cms-table__th">Locale</th>
-                <th class="cms-table__th">Requested By</th>
-                <th class="cms-table__th">Reviewer</th>
-                <th class="cms-table__th">Status</th>
-                <th class="cms-table__th">Submitted</th>
-                <th class="cms-table__th">Actions</th>
+                <th class="cms-table__th" scope="col">Content</th>
+                <th class="cms-table__th" scope="col">Locale</th>
+                <th class="cms-table__th" scope="col">Requested By</th>
+                <th class="cms-table__th" scope="col">Reviewer</th>
+                <th class="cms-table__th" scope="col">Status</th>
+                <th class="cms-table__th" scope="col">Submitted</th>
+                <th class="cms-table__th" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="cms-table__body">

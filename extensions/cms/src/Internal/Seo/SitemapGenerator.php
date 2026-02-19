@@ -12,6 +12,7 @@ use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentType;
 use Pulsar\Extension\Cms\Seo\SitemapGeneratorInterface;
 
+use function array_map;
 use function ceil;
 use function htmlspecialchars;
 use function implode;
@@ -78,9 +79,13 @@ final readonly class SitemapGenerator implements SitemapGeneratorInterface
         $priority = $seoConfig->sitemapPriority[$contentType] ?? 0.5;
         $entries = [];
 
+        // Batch-load all translations in a single query to avoid N+1
+        $contentIds = array_map(static fn(Content $c): string => $c->id, $result->items);
+        $translationsByContentId = $this->translationRepository->findByContentIds($contentIds);
+
         /** @var Content $content */
         foreach ($result->items as $content) {
-            $translations = $this->translationRepository->findByContentId($content->id);
+            $translations = $translationsByContentId[$content->id] ?? [];
 
             if ($translations === []) {
                 continue;

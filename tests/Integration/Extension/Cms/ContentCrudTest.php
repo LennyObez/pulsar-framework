@@ -18,6 +18,7 @@ use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 
 use function count;
+use function in_array;
 
 #[CoversClass(Content::class)]
 #[CoversClass(ContentTranslation::class)]
@@ -364,6 +365,40 @@ final class ContentCrudTest extends TestCase
                 );
             }
 
+            public function findByIds(array $ids): array
+            {
+                $result = [];
+
+                foreach ($ids as $id) {
+                    if (isset($this->contents[$id]) && !isset($this->deleted[$id])) {
+                        $result[$id] = $this->contents[$id];
+                    }
+                }
+
+                return $result;
+            }
+
+            public function findAncestors(string $contentId, int $maxDepth = 20): array
+            {
+                $ancestors = [];
+                $current = $this->contents[$contentId] ?? null;
+                $depth = 0;
+
+                while ($current !== null && $current->parentId !== null && $depth < $maxDepth) {
+                    $parent = $this->contents[$current->parentId] ?? null;
+
+                    if ($parent === null || isset($this->deleted[$parent->id])) {
+                        break;
+                    }
+
+                    $ancestors[] = $parent;
+                    $current = $parent;
+                    $depth++;
+                }
+
+                return $ancestors;
+            }
+
             public function save(Content $content): void
             {
                 $this->contents[$content->id] = $content;
@@ -427,6 +462,19 @@ final class ContentCrudTest extends TestCase
                 }
 
                 return null;
+            }
+
+            public function findByContentIds(array $contentIds): array
+            {
+                $grouped = [];
+
+                foreach ($this->translations as $t) {
+                    if (in_array($t->contentId, $contentIds, true)) {
+                        $grouped[$t->contentId][] = $t;
+                    }
+                }
+
+                return $grouped;
             }
 
             public function save(ContentTranslation $translation): void

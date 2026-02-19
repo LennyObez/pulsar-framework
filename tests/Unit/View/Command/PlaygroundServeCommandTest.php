@@ -17,7 +17,7 @@ final class PlaygroundServeCommandTest extends TestCase
     {
         $command = new PlaygroundServeCommand('/project');
 
-        self::assertSame('ui:playground', $command->name);
+        self::assertSame('playground:serve', $command->name);
         self::assertNotEmpty($command->description);
     }
 

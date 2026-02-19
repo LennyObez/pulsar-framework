@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Cms\Http\Controller;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
+use Pulsar\Auth\Identity\IdentityInterface;
+use Pulsar\Extension\Cms\Media\MediaAsset;
 use Pulsar\Extension\Cms\Media\MediaDiskInterface;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 use Pulsar\Extension\Cms\Media\MediaVisibility;
@@ -16,7 +18,7 @@ use Pulsar\Http\Message\Response;
  *
  * Serves media asset files (originals and derivatives) with appropriate
  * cache headers based on visibility. Public assets get long-lived immutable
- * caching; private assets get no-store.
+ * caching; private assets require authentication and get no-store.
  */
 #[Internal(reason: 'CMS HTTP controller — implementation detail')]
 final readonly class MediaController
@@ -48,6 +50,14 @@ final readonly class MediaController
             return Response::json(['error' => 'Media not found'], 404);
         }
 
+        if (!$this->canAccess($request, $asset)) {
+            return Response::json(['error' => 'Authentication required'], 403);
+        }
+
+        $cacheControl = $asset->visibility === MediaVisibility::Public
+            ? self::CACHE_DERIVATIVE
+            : self::CACHE_PRIVATE;
+
         $derivatives = $this->mediaRepository->findDerivatives($asset->id);
 
         foreach ($derivatives as $derivative) {
@@ -60,7 +70,7 @@ final readonly class MediaController
                     headers: [
                         'Content-Type' => $mimeType,
                         'Content-Length' => (string) $derivative->fileSize,
-                        'Cache-Control' => self::CACHE_DERIVATIVE,
+                        'Cache-Control' => $cacheControl,
                         'ETag' => '"' . $derivative->fileHash . '"',
                     ],
                     body: $contents,
@@ -87,6 +97,10 @@ final readonly class MediaController
             return Response::json(['error' => 'Media not found'], 404);
         }
 
+        if (!$this->canAccess($request, $asset)) {
+            return Response::json(['error' => 'Authentication required'], 403);
+        }
+
         $cacheControl = $asset->visibility === MediaVisibility::Public
             ? self::CACHE_ORIGINAL_PUBLIC
             : self::CACHE_PRIVATE;
@@ -103,6 +117,22 @@ final readonly class MediaController
             ],
             body: $contents,
         ));
+    }
+
+    /**
+     * Check whether the request is allowed to access the given asset.
+     * Public assets are accessible to everyone; private assets require authentication.
+     */
+    private function canAccess(ServerRequestInterface $request, MediaAsset $asset): bool
+    {
+        if ($asset->visibility === MediaVisibility::Public) {
+            return true;
+        }
+
+        /** @var IdentityInterface|null $identity */
+        $identity = $request->getAttribute('identity');
+
+        return $identity !== null && $identity->isAuthenticated();
     }
 
     private static function formatToMime(string $format): string

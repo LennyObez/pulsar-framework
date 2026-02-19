@@ -11,6 +11,8 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Content\Redirect;
 use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 
+use function max;
+
 #[Internal(reason: 'Raw-DB repository — use RedirectRepositoryInterface for public API')]
 final readonly class DbRedirectRepository implements RedirectRepositoryInterface
 {
@@ -37,10 +39,21 @@ final readonly class DbRedirectRepository implements RedirectRepositoryInterface
             reason = EXCLUDED.reason
         SQL;
 
+    private const string SQL_FIND_ALL = <<<'SQL'
+        SELECT * FROM cms_redirects
+        WHERE COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
+        ORDER BY created_at DESC
+        LIMIT :limit OFFSET :offset
+        SQL;
+
     private const string SQL_INCREMENT_HITS = <<<'SQL'
         UPDATE cms_redirects
         SET hits = hits + 1, last_hit_at = :last_hit_at
         WHERE id = :id
+        SQL;
+
+    private const string SQL_DELETE = <<<'SQL'
+        DELETE FROM cms_redirects WHERE id = :id
         SQL;
 
     public function __construct(
@@ -88,6 +101,33 @@ final readonly class DbRedirectRepository implements RedirectRepositoryInterface
         $this->connection->execute(self::SQL_INCREMENT_HITS, [
             'id' => $redirectId,
             'last_hit_at' => new DateTimeImmutable()->format('c'),
+        ]);
+    }
+
+    public function findAll(int $page = 1, int $perPage = 50, ?string $tenantId = null): array
+    {
+        $tenantKey = ($tenantId ?? $this->tenantId) ?? self::SENTINEL_TENANT;
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        $result = $this->connection->query(self::SQL_FIND_ALL, [
+            'tenant_key' => $tenantKey,
+            'limit' => $perPage,
+            'offset' => $offset,
+        ]);
+
+        $redirects = [];
+        foreach ($result->all() as $row) {
+            $redirects[] = self::hydrate($row);
+        }
+
+        return $redirects;
+    }
+
+    public function delete(string $redirectId): void
+    {
+        $this->connection->execute(self::SQL_DELETE, [
+            'id' => $redirectId,
         ]);
     }
 

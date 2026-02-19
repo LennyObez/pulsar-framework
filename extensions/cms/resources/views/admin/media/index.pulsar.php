@@ -150,17 +150,17 @@
         <table class="cms-table cms-media-list" data-cms-media-list hidden>
             <thead class="cms-table__head">
                 <tr>
-                    <th class="cms-table__th cms-table__th--checkbox">
+                    <th class="cms-table__th cms-table__th--checkbox" scope="col">
                         <input type="checkbox" aria-label="Select all" data-cms-select-all>
                     </th>
-                    <th class="cms-table__th">Preview</th>
-                    <th class="cms-table__th cms-table__th--sortable" data-cms-sort="filename">Filename</th>
-                    <th class="cms-table__th">Type</th>
-                    <th class="cms-table__th cms-table__th--sortable" data-cms-sort="size">Size</th>
-                    <th class="cms-table__th">Dimensions</th>
-                    <th class="cms-table__th">Derivatives</th>
-                    <th class="cms-table__th cms-table__th--sortable" data-cms-sort="uploaded_at">Uploaded</th>
-                    <th class="cms-table__th">Actions</th>
+                    <th class="cms-table__th" scope="col">Preview</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="filename">Filename</th>
+                    <th class="cms-table__th" scope="col">Type</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="size">Size</th>
+                    <th class="cms-table__th" scope="col">Dimensions</th>
+                    <th class="cms-table__th" scope="col">Derivatives</th>
+                    <th class="cms-table__th cms-table__th--sortable" scope="col" data-cms-sort="uploaded_at">Uploaded</th>
+                    <th class="cms-table__th" scope="col">Actions</th>
                 </tr>
             </thead>
             <tbody class="cms-table__body">
@@ -178,7 +178,7 @@
                         <td class="cms-table__td cms-table__td--preview">
                             @if (str_starts_with($item['mime_type'] ?? '', 'image/'))
                                 <img src="{{ $item['thumbnail_url'] ?? $item['url'] ?? '' }}"
-                                     alt="{{ $item['alt_text'] ?? '' }}"
+                                     alt="{{ $item['alt_text'] ?? $item['filename'] ?? '' }}"
                                      class="cms-media-list__thumb"
                                      loading="lazy">
                             @else
