@@ -25,26 +25,21 @@ use const JSON_UNESCAPED_UNICODE;
  * to avoid state leaking between requests.
  */
 #[Api(since: '1.0.0')]
-final class PendingRequest
+final readonly class PendingRequest
 {
-    /** @var array<string, string> */
-    private array $headers = [];
-
-    private ?string $body = null;
-
-    private ?string $contentType = null;
-
-    private ?float $timeout = null;
-
-    private ?int $retries = null;
-
-    private ?float $retryDelay = null;
-
-    /** @var array<string, string> */
-    private array $query = [];
-
+    /**
+     * @param array<string, string> $headers
+     * @param array<string, string> $query
+     */
     public function __construct(
-        private readonly HttpClientInterface $client,
+        private HttpClientInterface $client,
+        private array $headers = [],
+        private ?string $body = null,
+        private ?string $contentType = null,
+        private ?float $timeout = null,
+        private ?int $retries = null,
+        private ?float $retryDelay = null,
+        private array $query = [],
     ) {}
 
     /**
@@ -54,13 +49,7 @@ final class PendingRequest
      */
     public function withHeaders(array $headers): self
     {
-        $clone = clone $this;
-
-        foreach ($headers as $name => $value) {
-            $clone->headers[$name] = $value;
-        }
-
-        return $clone;
+        return clone($this, ['headers' => [...$this->headers, ...$headers]]);
     }
 
     /**
@@ -68,10 +57,7 @@ final class PendingRequest
      */
     public function withHeader(string $name, string $value): self
     {
-        $clone = clone $this;
-        $clone->headers[$name] = $value;
-
-        return $clone;
+        return clone($this, ['headers' => [...$this->headers, $name => $value]]);
     }
 
     /**
@@ -97,11 +83,10 @@ final class PendingRequest
      */
     public function withBody(string $body, string $contentType = 'application/octet-stream'): self
     {
-        $clone = clone $this;
-        $clone->body = $body;
-        $clone->contentType = $contentType;
-
-        return $clone;
+        return clone($this, [
+            'body' => $body,
+            'contentType' => $contentType,
+        ]);
     }
 
     /**
@@ -111,13 +96,13 @@ final class PendingRequest
      */
     public function asJson(mixed $data): self
     {
-        $clone = clone $this;
         $encoded = json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         assert(is_string($encoded));
-        $clone->body = $encoded;
-        $clone->contentType = 'application/json';
 
-        return $clone;
+        return clone($this, [
+            'body' => $encoded,
+            'contentType' => 'application/json',
+        ]);
     }
 
     /**
@@ -127,11 +112,10 @@ final class PendingRequest
      */
     public function asForm(array $data): self
     {
-        $clone = clone $this;
-        $clone->body = http_build_query($data);
-        $clone->contentType = 'application/x-www-form-urlencoded';
-
-        return $clone;
+        return clone($this, [
+            'body' => http_build_query($data),
+            'contentType' => 'application/x-www-form-urlencoded',
+        ]);
     }
 
     /**
@@ -139,10 +123,7 @@ final class PendingRequest
      */
     public function timeout(float $seconds): self
     {
-        $clone = clone $this;
-        $clone->timeout = $seconds;
-
-        return $clone;
+        return clone($this, ['timeout' => $seconds]);
     }
 
     /**
@@ -150,11 +131,10 @@ final class PendingRequest
      */
     public function retry(int $times, float $delay = 1.0): self
     {
-        $clone = clone $this;
-        $clone->retries = $times;
-        $clone->retryDelay = $delay;
-
-        return $clone;
+        return clone($this, [
+            'retries' => $times,
+            'retryDelay' => $delay,
+        ]);
     }
 
     /**
@@ -164,13 +144,7 @@ final class PendingRequest
      */
     public function withQuery(array $params): self
     {
-        $clone = clone $this;
-
-        foreach ($params as $key => $value) {
-            $clone->query[$key] = $value;
-        }
-
-        return $clone;
+        return clone($this, ['query' => [...$this->query, ...$params]]);
     }
 
     /**

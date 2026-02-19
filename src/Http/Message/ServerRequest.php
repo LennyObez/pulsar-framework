@@ -319,12 +319,11 @@ class ServerRequest implements ServerRequestInterface
         $values = is_array($value) ? $value : [$value];
         $lowered = strtolower($name);
 
-        $new = clone $this;
-        $new->headerNames[$lowered] = $name;
-        $new->headers[$lowered] = $values;
-        $new->headersCache = null;
-
-        return $new;
+        return clone($this, [
+            'headerNames' => [...$this->headerNames, $lowered => $name],
+            'headers' => [...$this->headers, $lowered => $values],
+            'headersCache' => null,
+        ]);
     }
 
     #[NoDiscard]
@@ -362,11 +361,15 @@ class ServerRequest implements ServerRequestInterface
             return $this;
         }
 
-        $new = clone $this;
-        unset($new->headers[$lowered], $new->headerNames[$lowered]);
-        $new->headersCache = null;
+        $headers = $this->headers;
+        $headerNames = $this->headerNames;
+        unset($headers[$lowered], $headerNames[$lowered]);
 
-        return $new;
+        return clone($this, [
+            'headers' => $headers,
+            'headerNames' => $headerNames,
+            'headersCache' => null,
+        ]);
     }
 
     #[Override]
@@ -436,26 +439,25 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withUri(UriInterface $uri, bool $preserveHost = false): static
     {
-        $new = clone $this;
-        $new->uri = $uri;
+        $shouldUpdateHostHeader = (!$preserveHost || !$this->hasHeader('Host')) && $uri->getHost() !== '';
 
-        if (!$preserveHost || !$this->hasHeader('Host')) {
-            $host = $uri->getHost();
-
-            if ($host !== '') {
-                $uriPort = $uri->getPort();
-
-                if ($uriPort !== null) {
-                    $host .= ':' . $uriPort;
-                }
-
-                $new->headerNames['host'] = 'Host';
-                $new->headers['host'] = [$host];
-                $new->headersCache = null;
-            }
+        if (!$shouldUpdateHostHeader) {
+            return clone($this, ['uri' => $uri]);
         }
 
-        return $new;
+        $host = $uri->getHost();
+        $uriPort = $uri->getPort();
+
+        if ($uriPort !== null) {
+            $host .= ':' . $uriPort;
+        }
+
+        return clone($this, [
+            'uri' => $uri,
+            'headerNames' => [...$this->headerNames, 'host' => 'Host'],
+            'headers' => [...$this->headers, 'host' => [$host]],
+            'headersCache' => null,
+        ]);
     }
 
     // ── PSR-7 ServerRequestInterface ────────────────────────────────────
@@ -572,10 +574,9 @@ class ServerRequest implements ServerRequestInterface
     #[Override]
     public function withAttribute(string $name, $value): static
     {
-        $new = clone $this;
-        $new->attributes[$name] = $value;
-
-        return $new;
+        return clone($this, [
+            'attributes' => [...$this->attributes, $name => $value],
+        ]);
     }
 
     #[NoDiscard]
@@ -586,10 +587,10 @@ class ServerRequest implements ServerRequestInterface
             return $this;
         }
 
-        $new = clone $this;
-        unset($new->attributes[$name]);
+        $attributes = $this->attributes;
+        unset($attributes[$name]);
 
-        return $new;
+        return clone($this, ['attributes' => $attributes]);
     }
 
     // ── Pulsar Convenience Methods ──────────────────────────────────────

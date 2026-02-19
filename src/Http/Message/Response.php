@@ -436,12 +436,11 @@ class Response implements ResponseInterface
         $values = is_array($value) ? $value : [$value];
         $lowered = strtolower($name);
 
-        $new = clone $this;
-        $new->headerNames[$lowered] = $name;
-        $new->headers[$lowered] = $values;
-        $new->headersCache = null;
-
-        return $new;
+        return clone($this, [
+            'headerNames' => [...$this->headerNames, $lowered => $name],
+            'headers' => [...$this->headers, $lowered => $values],
+            'headersCache' => null,
+        ]);
     }
 
     #[NoDiscard]
@@ -479,11 +478,15 @@ class Response implements ResponseInterface
             return $this;
         }
 
-        $new = clone $this;
-        unset($new->headers[$lowered], $new->headerNames[$lowered]);
-        $new->headersCache = null;
+        $headers = $this->headers;
+        $headerNames = $this->headerNames;
+        unset($headers[$lowered], $headerNames[$lowered]);
 
-        return $new;
+        return clone($this, [
+            'headers' => $headers,
+            'headerNames' => $headerNames,
+            'headersCache' => null,
+        ]);
     }
 
     #[Override]
