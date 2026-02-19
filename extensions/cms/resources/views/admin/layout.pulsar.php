@@ -1,6 +1,15 @@
 @extends('admin.layout')
 
 @section('sidebar')
+@if ($safeMode ?? false)
+    <div class="cms-safe-mode-banner" role="alert">
+        <span class="cms-safe-mode-banner__icon" aria-hidden="true">&#9888;</span>
+        <div class="cms-safe-mode-banner__content">
+            <strong class="cms-safe-mode-banner__title">Safe Mode Active</strong>
+            <p class="cms-safe-mode-banner__text">The active theme has been disabled due to an error. The default fallback theme is in use.</p>
+        </div>
+    </div>
+@endif
 <nav class="cms-sidebar" aria-label="CMS Navigation">
     <ul class="cms-sidebar__list">
         <li class="cms-sidebar__item">
@@ -84,6 +93,48 @@
                 <a href="/admin/cms/search-analytics" class="cms-sidebar__link @if (($activeSection ?? '') === 'search-analytics') cms-sidebar__link--active @endif">
                     <span class="cms-sidebar__icon" aria-hidden="true">&#128269;</span>
                     Search Analytics
+                </a>
+            </li>
+        @endcan
+
+        @can('cms.seo.view')
+            <li class="cms-sidebar__item cms-sidebar__item--heading">
+                <span class="cms-sidebar__heading">SEO</span>
+            </li>
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/seo/redirects" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-redirects') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#8634;</span>
+                    Redirects
+                </a>
+            </li>
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/seo/link-health" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-link-health') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#128279;</span>
+                    Link Health
+                </a>
+            </li>
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/seo/sitemap" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-sitemap') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#128506;</span>
+                    Sitemap
+                </a>
+            </li>
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/seo/robots" class="cms-sidebar__link @if (($activeSection ?? '') === 'seo-robots') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#129302;</span>
+                    Robots.txt
+                </a>
+            </li>
+        @endcan
+
+        @can('cms.themes.view')
+            <li class="cms-sidebar__item cms-sidebar__item--heading">
+                <span class="cms-sidebar__heading">Themes</span>
+            </li>
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/themes" class="cms-sidebar__link @if (($activeSection ?? '') === 'themes') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#127912;</span>
+                    Installed Themes
                 </a>
             </li>
         @endcan

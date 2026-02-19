@@ -26,4 +26,16 @@ interface RedirectRepositoryInterface
      * Increment the hit counter and update lastHitAt for a redirect.
      */
     public function incrementHits(string $redirectId): void;
+
+    /**
+     * List all redirects with pagination, optionally scoped by tenant.
+     *
+     * @return list<Redirect>
+     */
+    public function findAll(int $page = 1, int $perPage = 50, ?string $tenantId = null): array;
+
+    /**
+     * Delete a redirect by its ID.
+     */
+    public function delete(string $redirectId): void;
 }

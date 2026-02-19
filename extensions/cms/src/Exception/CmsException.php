@@ -137,4 +137,74 @@ class CmsException extends RuntimeException
     {
         return new self("Search service unavailable: {$reason}");
     }
+
+    public static function redirectNotFound(string $id): self
+    {
+        return new self("Redirect not found: {$id}");
+    }
+
+    public static function openRedirectBlocked(string $url): self
+    {
+        return new self("Open redirect blocked — unsafe target URL: {$url}");
+    }
+
+    public static function redirectChainDetected(string $fromPath): self
+    {
+        return new self("Redirect chain detected starting at: {$fromPath}");
+    }
+
+    public static function themeNotFound(string $id): self
+    {
+        return new self("Theme not found: {$id}");
+    }
+
+    public static function themeAlreadyActive(string $id): self
+    {
+        return new self("Theme is already active: {$id}");
+    }
+
+    public static function themeNotActive(string $id): self
+    {
+        return new self("Theme is not active: {$id}");
+    }
+
+    public static function themeIsActive(string $id): self
+    {
+        return new self("Cannot delete active theme: {$id}");
+    }
+
+    public static function themeManifestInvalid(string $reason): self
+    {
+        return new self("Invalid theme manifest: {$reason}");
+    }
+
+    public static function themeProvenanceFailed(string $reason): self
+    {
+        return new self("Theme provenance verification failed: {$reason}");
+    }
+
+    public static function themeExtractionFailed(string $reason): self
+    {
+        return new self("Theme archive extraction failed: {$reason}");
+    }
+
+    public static function themeArchiveTooLarge(int $size, int $maxSize): self
+    {
+        return new self("Theme archive size {$size} bytes exceeds maximum {$maxSize} bytes");
+    }
+
+    public static function themeFileCountExceeded(int $count, int $maxCount): self
+    {
+        return new self("Theme archive contains {$count} files, exceeding maximum of {$maxCount}");
+    }
+
+    public static function themeZipSlipDetected(string $entryName): self
+    {
+        return new self("Zip Slip path traversal detected in entry: {$entryName}");
+    }
+
+    public static function noPreviousTheme(): self
+    {
+        return new self('No previous theme available for rollback');
+    }
 }

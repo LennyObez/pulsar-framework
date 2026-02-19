@@ -11,6 +11,7 @@ use Pulsar\Extension\Cms\Config\MediaConfig;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Extension\Cms\Media\ImageProcessor;
 
+use function count;
 use function strlen;
 
 #[CoversClass(ImageProcessor::class)]
@@ -197,7 +198,7 @@ final class ImageProcessorTest extends TestCase
 
         // GD-created JPEGs may or may not have EXIF depending on the runtime;
         // the contract is that it returns an array (never throws)
-        self::assertIsArray($exif);
+        self::assertGreaterThanOrEqual(0, count($exif));
     }
 
     #[Test]
@@ -348,9 +349,9 @@ final class ImageProcessorTest extends TestCase
 
         for ($y = 0; $y < $height; $y++) {
             for ($x = 0; $x < $width; $x += 5) {
-                $r = (int) (255 * $x / $width);
-                $g = (int) (255 * $y / $height);
-                $b = (int) (255 * (($x + $y) % $width) / $width);
+                $r = min(255, max(0, (int) (255 * $x / $width)));
+                $g = min(255, max(0, (int) (255 * $y / $height)));
+                $b = min(255, max(0, (int) (255 * (($x + $y) % $width) / $width)));
                 $color = (int) imagecolorallocate($img, $r, $g, $b);
                 imagesetpixel($img, $x, $y, $color);
             }

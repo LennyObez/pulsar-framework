@@ -1862,7 +1862,12 @@ deptrac:
       - Support
       - Container
       - Config
+      - Core
+      - ErrorHandling
       - Database
+      - Audit
+      - Event
+      - Security
 
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps

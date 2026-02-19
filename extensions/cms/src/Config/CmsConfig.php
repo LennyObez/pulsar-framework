@@ -27,6 +27,8 @@ final readonly class CmsConfig
      * @param CmsCacheConfig $cache Caching configuration
      * @param MediaConfig $media Media upload and processing configuration
      * @param CommentsConfig $comments Comments system configuration
+     * @param SeoConfig $seo SEO and link health configuration
+     * @param ThemesConfig $themes Theme system configuration
      */
     public function __construct(
         public string $defaultLocale = 'en',
@@ -39,6 +41,8 @@ final readonly class CmsConfig
         public CmsCacheConfig $cache = new CmsCacheConfig(),
         public MediaConfig $media = new MediaConfig(),
         public CommentsConfig $comments = new CommentsConfig(),
+        public SeoConfig $seo = new SeoConfig(),
+        public ThemesConfig $themes = new ThemesConfig(),
     ) {}
 
     /**
@@ -57,6 +61,8 @@ final readonly class CmsConfig
             cache: CmsCacheConfig::fromArray((array) ($data['cache'] ?? [])),
             media: MediaConfig::fromArray((array) ($data['media'] ?? [])),
             comments: CommentsConfig::fromArray((array) ($data['comments'] ?? [])),
+            seo: SeoConfig::fromArray((array) ($data['seo'] ?? [])),
+            themes: ThemesConfig::fromArray((array) ($data['themes'] ?? [])),
         );
     }
 }

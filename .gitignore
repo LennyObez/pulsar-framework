@@ -22,6 +22,7 @@ Thumbs.db
 /bootstrap/cache/
 /storage/
 /var/
+/public/cms-assets/
 tmp/
 .cache/
 

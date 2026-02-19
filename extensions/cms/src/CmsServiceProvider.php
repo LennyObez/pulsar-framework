@@ -11,6 +11,7 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Auth\Authorization\RoleRegistryInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Cms\Comments\CommentBodyPolicy;
 use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
@@ -38,13 +39,28 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbContentSnapshotRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentTranslationRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbEditorialReviewRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbFieldRegistryRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbLinkHealthRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbMediaRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbMenuRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbRedirectRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbSearchAnalyticsRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbSettingsRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbTaxonomyRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbThemeRepository;
 use Pulsar\Extension\Cms\Internal\Search\SearchService;
+use Pulsar\Extension\Cms\Internal\Seo\ArticleStructuredDataGenerator;
+use Pulsar\Extension\Cms\Internal\Seo\FeedGenerator;
+use Pulsar\Extension\Cms\Internal\Seo\LinkHealthChecker;
+use Pulsar\Extension\Cms\Internal\Seo\RedirectManager;
+use Pulsar\Extension\Cms\Internal\Seo\RobotsTxtGenerator;
+use Pulsar\Extension\Cms\Internal\Seo\SeoService;
+use Pulsar\Extension\Cms\Internal\Seo\SitemapGenerator;
+use Pulsar\Extension\Cms\Internal\Seo\WebPageStructuredDataGenerator;
+use Pulsar\Extension\Cms\Internal\Themes\SafeArchiveExtractor;
+use Pulsar\Extension\Cms\Internal\Themes\ThemeAssetResolver;
+use Pulsar\Extension\Cms\Internal\Themes\ThemeManager;
+use Pulsar\Extension\Cms\Internal\Themes\ThemeManifestValidator;
+use Pulsar\Extension\Cms\Internal\Themes\ThemeProvenanceVerifier;
 use Pulsar\Extension\Cms\Media\ImageProcessor;
 use Pulsar\Extension\Cms\Media\ImageProcessorInterface;
 use Pulsar\Extension\Cms\Media\LocalDisk;
@@ -60,9 +76,22 @@ use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
 use Pulsar\Extension\Cms\Search\SearchServiceInterface;
+use Pulsar\Extension\Cms\Seo\FeedGeneratorInterface;
+use Pulsar\Extension\Cms\Seo\LinkHealthRepositoryInterface;
+use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
+use Pulsar\Extension\Cms\Seo\RedirectManagerInterface;
+use Pulsar\Extension\Cms\Seo\RobotsTxtGeneratorInterface;
+use Pulsar\Extension\Cms\Seo\SeoServiceInterface;
+use Pulsar\Extension\Cms\Seo\SitemapGeneratorInterface;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
+use Pulsar\Extension\Cms\Themes\ThemeArchiveExtractorInterface;
+use Pulsar\Extension\Cms\Themes\ThemeAssetResolverInterface;
+use Pulsar\Extension\Cms\Themes\ThemeManagerInterface;
+use Pulsar\Extension\Cms\Themes\ThemeManifestValidatorInterface;
+use Pulsar\Extension\Cms\Themes\ThemeProvenanceVerifierInterface;
+use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
 use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
 use Pulsar\Extension\Cms\Workflow\EditorialWorkflowServiceInterface;
 
@@ -109,6 +138,21 @@ final class CmsServiceProvider implements ServiceProviderInterface
             CommentServiceInterface::class,
             SearchServiceInterface::class,
             SearchAnalyticsRepositoryInterface::class,
+            // SEO
+            SeoServiceInterface::class,
+            SitemapGeneratorInterface::class,
+            RobotsTxtGeneratorInterface::class,
+            FeedGeneratorInterface::class,
+            RedirectManagerInterface::class,
+            LinkHealthServiceInterface::class,
+            LinkHealthRepositoryInterface::class,
+            // Themes
+            ThemeRepositoryInterface::class,
+            ThemeManagerInterface::class,
+            ThemeAssetResolverInterface::class,
+            ThemeManifestValidatorInterface::class,
+            ThemeProvenanceVerifierInterface::class,
+            ThemeArchiveExtractorInterface::class,
         ];
     }
 
@@ -199,6 +243,16 @@ final class CmsServiceProvider implements ServiceProviderInterface
         $analyticsRepo = new DbSearchAnalyticsRepository($connection);
         $container->instance(SearchAnalyticsRepositoryInterface::class, $analyticsRepo);
         $container->instance(DbSearchAnalyticsRepository::class, $analyticsRepo);
+
+        $container->instance(
+            LinkHealthRepositoryInterface::class,
+            new DbLinkHealthRepository($connection),
+        );
+
+        $container->instance(
+            ThemeRepositoryInterface::class,
+            new DbThemeRepository($connection),
+        );
     }
 
     private function bindServices(ContainerInterface $container): void
@@ -300,6 +354,100 @@ final class CmsServiceProvider implements ServiceProviderInterface
             SearchServiceInterface::class,
             new SearchService($connection, $analyticsRepository, $tenantId),
         );
+
+        /** @var ContentTranslationRepositoryInterface $translationRepository */
+        $translationRepository = $container->get(ContentTranslationRepositoryInterface::class);
+
+        // SEO stack
+        $container->instance(
+            SeoServiceInterface::class,
+            new SeoService(
+                $config,
+                $translationRepository,
+                [new ArticleStructuredDataGenerator(), new WebPageStructuredDataGenerator()],
+            ),
+        );
+
+        $container->instance(
+            SitemapGeneratorInterface::class,
+            new SitemapGenerator($contentRepository, $translationRepository, $config),
+        );
+
+        $container->instance(
+            RobotsTxtGeneratorInterface::class,
+            new RobotsTxtGenerator(),
+        );
+
+        $container->instance(
+            FeedGeneratorInterface::class,
+            new FeedGenerator($contentRepository, $translationRepository, $config),
+        );
+
+        /** @var RedirectRepositoryInterface $redirectRepository */
+        $redirectRepository = $container->get(RedirectRepositoryInterface::class);
+
+        $container->instance(
+            RedirectManagerInterface::class,
+            new RedirectManager($redirectRepository, $logger),
+        );
+
+        /** @var EventDispatcherInterface|null $eventDispatcher */
+        $eventDispatcher = $container->has(EventDispatcherInterface::class)
+            ? $container->get(EventDispatcherInterface::class)
+            : null;
+
+        if ($eventDispatcher !== null) {
+            /** @var LinkHealthRepositoryInterface $linkHealthRepository */
+            $linkHealthRepository = $container->get(LinkHealthRepositoryInterface::class);
+
+            $container->instance(
+                LinkHealthServiceInterface::class,
+                new LinkHealthChecker(
+                    $contentRepository,
+                    $translationRepository,
+                    $linkHealthRepository,
+                    $eventDispatcher,
+                    $logger,
+                    $config,
+                ),
+            );
+        }
+
+        // Theme stack
+        $themesConfig = $config->themes;
+
+        $manifestValidator = new ThemeManifestValidator();
+        $container->instance(ThemeManifestValidatorInterface::class, $manifestValidator);
+
+        $provenanceVerifier = new ThemeProvenanceVerifier($themesConfig, $logger);
+        $container->instance(ThemeProvenanceVerifierInterface::class, $provenanceVerifier);
+
+        $archiveExtractor = new SafeArchiveExtractor($themesConfig, $logger);
+        $container->instance(ThemeArchiveExtractorInterface::class, $archiveExtractor);
+
+        /** @var ThemeRepositoryInterface $themeRepository */
+        $themeRepository = $container->get(ThemeRepositoryInterface::class);
+
+        $container->instance(
+            ThemeAssetResolverInterface::class,
+            new ThemeAssetResolver($themeRepository, $themesConfig, $logger),
+        );
+
+        if ($eventDispatcher !== null) {
+            $container->instance(
+                ThemeManagerInterface::class,
+                new ThemeManager(
+                    $themeRepository,
+                    $manifestValidator,
+                    $provenanceVerifier,
+                    $archiveExtractor,
+                    $themesConfig,
+                    $eventDispatcher,
+                    $auditLogger,
+                    $logger,
+                ),
+            );
+        }
     }
 
     private function registerPermissions(ContainerInterface $container): void
