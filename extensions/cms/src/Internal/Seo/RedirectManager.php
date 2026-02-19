@@ -172,7 +172,7 @@ final readonly class RedirectManager implements RedirectManagerInterface
                 continue;
             }
 
-            $parts = str_getcsv($line);
+            $parts = str_getcsv($line, ',', '"', '');
 
             if (count($parts) < 2) {
                 $errors[] = sprintf('Line %d: insufficient columns', $lineNumber + 1);

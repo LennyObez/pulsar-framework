@@ -21,10 +21,15 @@ use Pulsar\Extension\Cms\Http\Controller\Admin\ContentController as AdminContent
 use Pulsar\Extension\Cms\Http\Controller\Admin\DashboardController as AdminDashboardController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\FieldController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\MenuController as AdminMenuController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\PluginController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ReviewController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\RevisionController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\SettingsController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\TaxonomyController as AdminTaxonomyController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\ThemeController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\ToolsController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\TwoFactorController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\UserController;
 use Pulsar\Extension\Cms\Http\Controller\ContentController;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGenerator;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
@@ -217,5 +222,38 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         // Settings
         $router->get("{$prefix}/settings/{group}", [SettingsController::class, 'show'], 'cms.admin.settings.show');
         $router->put("{$prefix}/settings/{group}", [SettingsController::class, 'update'], 'cms.admin.settings.update');
+
+        // Themes
+        $router->get("{$prefix}/themes", [ThemeController::class, 'index'], 'cms.admin.themes.index');
+        $router->post("{$prefix}/themes", [ThemeController::class, 'install'], 'cms.admin.themes.install');
+        $router->post("{$prefix}/themes/{id}/activate", [ThemeController::class, 'activate'], 'cms.admin.themes.activate');
+        $router->post("{$prefix}/themes/{id}/deactivate", [ThemeController::class, 'deactivate'], 'cms.admin.themes.deactivate');
+        $router->post("{$prefix}/themes/{id}/preview", [ThemeController::class, 'preview'], 'cms.admin.themes.preview');
+        $router->delete("{$prefix}/themes/{id}", [ThemeController::class, 'delete'], 'cms.admin.themes.delete');
+
+        // Plugins
+        $router->get("{$prefix}/plugins", [PluginController::class, 'index'], 'cms.admin.plugins.index');
+        $router->post("{$prefix}/plugins", [PluginController::class, 'install'], 'cms.admin.plugins.install');
+        $router->post("{$prefix}/plugins/{id}/toggle", [PluginController::class, 'toggle'], 'cms.admin.plugins.toggle');
+        $router->get("{$prefix}/plugins/{id}/settings", [PluginController::class, 'settings'], 'cms.admin.plugins.settings');
+        $router->put("{$prefix}/plugins/{id}/settings", [PluginController::class, 'updateSettings'], 'cms.admin.plugins.update_settings');
+        $router->delete("{$prefix}/plugins/{id}", [PluginController::class, 'delete'], 'cms.admin.plugins.delete');
+
+        // Users
+        $router->get("{$prefix}/users", [UserController::class, 'index'], 'cms.admin.users.index');
+        $router->get("{$prefix}/users/{id}", [UserController::class, 'show'], 'cms.admin.users.show');
+        $router->put("{$prefix}/users/{id}", [UserController::class, 'update'], 'cms.admin.users.update');
+        $router->post("{$prefix}/users/{id}/reset-2fa", [UserController::class, 'resetTwoFactor'], 'cms.admin.users.reset_2fa');
+
+        // GDPR Tools
+        $router->post("{$prefix}/tools/gdpr/export", [ToolsController::class, 'exportUserData'], 'cms.admin.tools.gdpr_export');
+        $router->post("{$prefix}/tools/gdpr/erase", [ToolsController::class, 'eraseUserData'], 'cms.admin.tools.gdpr_erase');
+
+        // Two-factor authentication
+        $router->post("{$prefix}/2fa/enroll", [TwoFactorController::class, 'enroll'], 'cms.admin.2fa.enroll');
+        $router->post("{$prefix}/2fa/confirm", [TwoFactorController::class, 'confirm'], 'cms.admin.2fa.confirm');
+        $router->post("{$prefix}/2fa/verify", [TwoFactorController::class, 'verify'], 'cms.admin.2fa.verify');
+        $router->post("{$prefix}/2fa/disable", [TwoFactorController::class, 'disable'], 'cms.admin.2fa.disable');
+        $router->post("{$prefix}/2fa/recovery-codes", [TwoFactorController::class, 'regenerateRecoveryCodes'], 'cms.admin.2fa.recovery_codes');
     }
 }

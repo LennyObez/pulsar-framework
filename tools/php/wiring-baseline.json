@@ -1,0 +1,457 @@
+{
+  "generated": "2026-02-19T13:01:35+00:00",
+  "unwired": [
+    {
+      "file": "src/Api/OpenApi/OpenApiWiring.php",
+      "fqcn": "Pulsar\\Api\\OpenApi\\OpenApiWiring"
+    },
+    {
+      "file": "src/Api/Resource/Attribute/ApiHidden.php",
+      "fqcn": "Pulsar\\Api\\Resource\\Attribute\\ApiHidden"
+    },
+    {
+      "file": "src/Api/Resource/ResourceCollection.php",
+      "fqcn": "Pulsar\\Api\\Resource\\ResourceCollection"
+    },
+    {
+      "file": "src/Container/Compiler/Pass/OptimizePass.php",
+      "fqcn": "Pulsar\\Container\\Compiler\\Pass\\OptimizePass"
+    },
+    {
+      "file": "src/Container/Compiler/Pass/ResolveTaggedIteratorPass.php",
+      "fqcn": "Pulsar\\Container\\Compiler\\Pass\\ResolveTaggedIteratorPass"
+    },
+    {
+      "file": "src/DataProtection/ConsentManagerInterface.php",
+      "fqcn": "Pulsar\\DataProtection\\ConsentManagerInterface"
+    },
+    {
+      "file": "src/DataProtection/DataPurgeInterface.php",
+      "fqcn": "Pulsar\\DataProtection\\DataPurgeInterface"
+    },
+    {
+      "file": "src/DataProtection/DefaultRetentionPolicy.php",
+      "fqcn": "Pulsar\\DataProtection\\DefaultRetentionPolicy"
+    },
+    {
+      "file": "src/Deploy/Runtime/FilesystemReader.php",
+      "fqcn": "Pulsar\\Deploy\\Runtime\\FilesystemReader"
+    },
+    {
+      "file": "src/Event/Contract/EventSerializer.php",
+      "fqcn": "Pulsar\\Event\\Contract\\EventSerializer"
+    },
+    {
+      "file": "src/Event/Contract/EventStorePort.php",
+      "fqcn": "Pulsar\\Event\\Contract\\EventStorePort"
+    },
+    {
+      "file": "src/Event/Contract/OutboxPort.php",
+      "fqcn": "Pulsar\\Event\\Contract\\OutboxPort"
+    },
+    {
+      "file": "extensions/admin/src/Contracts/ActionInterface.php",
+      "fqcn": "Pulsar\\Extension\\Admin\\Contracts\\ActionInterface"
+    },
+    {
+      "file": "extensions/cms/src/CmsExtension.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\CmsExtension"
+    },
+    {
+      "file": "extensions/cms/src/Comments/Event/CommentModerated.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Comments\\Event\\CommentModerated"
+    },
+    {
+      "file": "extensions/cms/src/Comments/Event/CommentSubmitted.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Comments\\Event\\CommentSubmitted"
+    },
+    {
+      "file": "extensions/cms/src/Content/ContentBlockService.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\ContentBlockService"
+    },
+    {
+      "file": "extensions/cms/src/Content/Event/ContentArchived.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\Event\\ContentArchived"
+    },
+    {
+      "file": "extensions/cms/src/Content/Event/ContentCreated.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\Event\\ContentCreated"
+    },
+    {
+      "file": "extensions/cms/src/Content/Event/ContentDeleted.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\Event\\ContentDeleted"
+    },
+    {
+      "file": "extensions/cms/src/Content/Event/ContentPublished.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\Event\\ContentPublished"
+    },
+    {
+      "file": "extensions/cms/src/Content/Event/ContentRestored.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\Event\\ContentRestored"
+    },
+    {
+      "file": "extensions/cms/src/Content/Event/ContentUpdated.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\Event\\ContentUpdated"
+    },
+    {
+      "file": "extensions/cms/src/Content/Event/RevisionCreated.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\Event\\RevisionCreated"
+    },
+    {
+      "file": "extensions/cms/src/Content/Event/SlugChanged.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\Event\\SlugChanged"
+    },
+    {
+      "file": "extensions/cms/src/Content/PathRecomputeResult.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\PathRecomputeResult"
+    },
+    {
+      "file": "extensions/cms/src/Content/RevisionDiff.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\RevisionDiff"
+    },
+    {
+      "file": "extensions/cms/src/Content/RevisionService.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Content\\RevisionService"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/Admin/CommentController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\Admin\\CommentController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/Admin/LinkHealthController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\Admin\\LinkHealthController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/Admin/MediaController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\Admin\\MediaController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/Admin/RedirectController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\Admin\\RedirectController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/Admin/SearchAnalyticsController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\Admin\\SearchAnalyticsController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/Admin/SitemapController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\Admin\\SitemapController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/CommentController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\CommentController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/FeedController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\FeedController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/MediaController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\MediaController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/SearchController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\SearchController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/SeoController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\SeoController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Controller/SitemapController.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Controller\\SitemapController"
+    },
+    {
+      "file": "extensions/cms/src/Http/Middleware/CmsLocaleMiddleware.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Middleware\\CmsLocaleMiddleware"
+    },
+    {
+      "file": "extensions/cms/src/Http/Middleware/CmsSeoHeadersMiddleware.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Middleware\\CmsSeoHeadersMiddleware"
+    },
+    {
+      "file": "extensions/cms/src/Http/Middleware/CmsSlugRedirectMiddleware.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Http\\Middleware\\CmsSlugRedirectMiddleware"
+    },
+    {
+      "file": "extensions/cms/src/I18n/LocaleAwareContentQuery.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\I18n\\LocaleAwareContentQuery"
+    },
+    {
+      "file": "extensions/cms/src/I18n/LocaleSlugResolver.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\I18n\\LocaleSlugResolver"
+    },
+    {
+      "file": "extensions/cms/src/Internal/Themes/ThemeSafeMode.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Internal\\Themes\\ThemeSafeMode"
+    },
+    {
+      "file": "extensions/cms/src/Seo/Event/SitemapRegenerated.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Seo\\Event\\SitemapRegenerated"
+    },
+    {
+      "file": "extensions/cms/src/Workflow/ContentLockService.php",
+      "fqcn": "Pulsar\\Extension\\Cms\\Workflow\\ContentLockService"
+    },
+    {
+      "file": "extensions/example/src/ExampleExtension.php",
+      "fqcn": "Pulsar\\Extension\\Example\\ExampleExtension"
+    },
+    {
+      "file": "extensions/form/src/Contract/ConsentStoreInterface.php",
+      "fqcn": "Pulsar\\Extension\\Form\\Contract\\ConsentStoreInterface"
+    },
+    {
+      "file": "extensions/form/src/Field/CollectionField.php",
+      "fqcn": "Pulsar\\Extension\\Form\\Field\\CollectionField"
+    },
+    {
+      "file": "extensions/form/src/Field/FieldsetField.php",
+      "fqcn": "Pulsar\\Extension\\Form\\Field\\FieldsetField"
+    },
+    {
+      "file": "extensions/form/src/FormExtension.php",
+      "fqcn": "Pulsar\\Extension\\Form\\FormExtension"
+    },
+    {
+      "file": "extensions/mcp-server/src/Console/McpServeCommand.php",
+      "fqcn": "Pulsar\\Extension\\McpServer\\Console\\McpServeCommand"
+    },
+    {
+      "file": "extensions/oauth2/src/Adapter/OAuth2TokenResolver.php",
+      "fqcn": "Pulsar\\Extension\\OAuth2\\Adapter\\OAuth2TokenResolver"
+    },
+    {
+      "file": "extensions/oauth2/src/Contract/TokenIssuerInterface.php",
+      "fqcn": "Pulsar\\Extension\\OAuth2\\Contract\\TokenIssuerInterface"
+    },
+    {
+      "file": "extensions/oauth2/src/OAuth2Extension.php",
+      "fqcn": "Pulsar\\Extension\\OAuth2\\OAuth2Extension"
+    },
+    {
+      "file": "extensions/opentelemetry/src/Internal/Exception/OpenTelemetryException.php",
+      "fqcn": "Pulsar\\Extension\\OpenTelemetry\\Internal\\Exception\\OpenTelemetryException"
+    },
+    {
+      "file": "extensions/opentelemetry/src/OpenTelemetryExtension.php",
+      "fqcn": "Pulsar\\Extension\\OpenTelemetry\\OpenTelemetryExtension"
+    },
+    {
+      "file": "extensions/opentelemetry/tests/Unit/Integration/OtlpExportIntegrationTest.php",
+      "fqcn": "Pulsar\\Extension\\OpenTelemetry\\Tests\\Unit\\Integration\\OtlpExportIntegrationTest"
+    },
+    {
+      "file": "extensions/opentelemetry/tests/Unit/Internal/Export/BatchExporterTest.php",
+      "fqcn": "Pulsar\\Extension\\OpenTelemetry\\Tests\\Unit\\Internal\\Export\\BatchExporterTest"
+    },
+    {
+      "file": "extensions/opentelemetry/tests/Unit/Internal/Transport/GrpcTransportTest.php",
+      "fqcn": "Pulsar\\Extension\\OpenTelemetry\\Tests\\Unit\\Internal\\Transport\\GrpcTransportTest"
+    },
+    {
+      "file": "extensions/opentelemetry/tests/Unit/Internal/Transport/HttpProtobufTransportTest.php",
+      "fqcn": "Pulsar\\Extension\\OpenTelemetry\\Tests\\Unit\\Internal\\Transport\\HttpProtobufTransportTest"
+    },
+    {
+      "file": "extensions/opentelemetry/tests/Unit/Internal/Transport/TransportResultTest.php",
+      "fqcn": "Pulsar\\Extension\\OpenTelemetry\\Tests\\Unit\\Internal\\Transport\\TransportResultTest"
+    },
+    {
+      "file": "extensions/orm/src/Attribute/ValueObject.php",
+      "fqcn": "Pulsar\\Extension\\Orm\\Attribute\\ValueObject"
+    },
+    {
+      "file": "extensions/orm/src/Features/Relation/JoinLoader.php",
+      "fqcn": "Pulsar\\Extension\\Orm\\Features\\Relation\\JoinLoader"
+    },
+    {
+      "file": "extensions/orm/src/Features/Relation/WithCountLoader.php",
+      "fqcn": "Pulsar\\Extension\\Orm\\Features\\Relation\\WithCountLoader"
+    },
+    {
+      "file": "extensions/orm/src/Internal/Compiler/MariaDbDialect.php",
+      "fqcn": "Pulsar\\Extension\\Orm\\Internal\\Compiler\\MariaDbDialect"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/Hook/CacheInstrumentationInterface.php",
+      "fqcn": "Pulsar\\Extension\\Studio\\Console\\Collector\\Hook\\CacheInstrumentationInterface"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/Hook/HttpClientInstrumentationInterface.php",
+      "fqcn": "Pulsar\\Extension\\Studio\\Console\\Collector\\Hook\\HttpClientInstrumentationInterface"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/Hook/JobInstrumentationInterface.php",
+      "fqcn": "Pulsar\\Extension\\Studio\\Console\\Collector\\Hook\\JobInstrumentationInterface"
+    },
+    {
+      "file": "extensions/studio/src/Console/Collector/Hook/NotificationInstrumentationInterface.php",
+      "fqcn": "Pulsar\\Extension\\Studio\\Console\\Collector\\Hook\\NotificationInstrumentationInterface"
+    },
+    {
+      "file": "extensions/studio/src/Console/Event/Payload/IntegrityCheckPayload.php",
+      "fqcn": "Pulsar\\Extension\\Studio\\Console\\Event\\Payload\\IntegrityCheckPayload"
+    },
+    {
+      "file": "extensions/studio/src/Console/Event/Payload/SupervisorPayload.php",
+      "fqcn": "Pulsar\\Extension\\Studio\\Console\\Event\\Payload\\SupervisorPayload"
+    },
+    {
+      "file": "extensions/studio/src/Console/Event/Payload/TenancyPayload.php",
+      "fqcn": "Pulsar\\Extension\\Studio\\Console\\Event\\Payload\\TenancyPayload"
+    },
+    {
+      "file": "extensions/webauthn/src/WebAuthnExtension.php",
+      "fqcn": "Pulsar\\Extension\\WebAuthn\\WebAuthnExtension"
+    },
+    {
+      "file": "src/Http/Factory/RequestFactory.php",
+      "fqcn": "Pulsar\\Http\\Factory\\RequestFactory"
+    },
+    {
+      "file": "src/Http/Factory/ServerRequestFactory.php",
+      "fqcn": "Pulsar\\Http\\Factory\\ServerRequestFactory"
+    },
+    {
+      "file": "src/Http/Factory/StreamFactory.php",
+      "fqcn": "Pulsar\\Http\\Factory\\StreamFactory"
+    },
+    {
+      "file": "src/Http/Factory/UploadedFileFactory.php",
+      "fqcn": "Pulsar\\Http\\Factory\\UploadedFileFactory"
+    },
+    {
+      "file": "src/Http/Factory/UriFactory.php",
+      "fqcn": "Pulsar\\Http\\Factory\\UriFactory"
+    },
+    {
+      "file": "src/Http/Middleware/LegacyMiddlewareAdapter.php",
+      "fqcn": "Pulsar\\Http\\Middleware\\LegacyMiddlewareAdapter"
+    },
+    {
+      "file": "src/Mail/Event/MailEncryptionFallbackEvent.php",
+      "fqcn": "Pulsar\\Mail\\Event\\MailEncryptionFallbackEvent"
+    },
+    {
+      "file": "src/Mail/Job/SendMailJob.php",
+      "fqcn": "Pulsar\\Mail\\Job\\SendMailJob"
+    },
+    {
+      "file": "src/Mail/Security/PhiDetectedEvent.php",
+      "fqcn": "Pulsar\\Mail\\Security\\PhiDetectedEvent"
+    },
+    {
+      "file": "src/Mail/Webhook/BounceHandler.php",
+      "fqcn": "Pulsar\\Mail\\Webhook\\BounceHandler"
+    },
+    {
+      "file": "src/Mail/Webhook/ComplaintHandler.php",
+      "fqcn": "Pulsar\\Mail\\Webhook\\ComplaintHandler"
+    },
+    {
+      "file": "src/Mail/Webhook/ConfigurableIpAllowlist.php",
+      "fqcn": "Pulsar\\Mail\\Webhook\\ConfigurableIpAllowlist"
+    },
+    {
+      "file": "src/Mail/Webhook/Verifier/MailgunWebhookVerifier.php",
+      "fqcn": "Pulsar\\Mail\\Webhook\\Verifier\\MailgunWebhookVerifier"
+    },
+    {
+      "file": "src/Mail/Webhook/Verifier/PostmarkWebhookVerifier.php",
+      "fqcn": "Pulsar\\Mail\\Webhook\\Verifier\\PostmarkWebhookVerifier"
+    },
+    {
+      "file": "src/Mail/Webhook/Verifier/SendgridWebhookVerifier.php",
+      "fqcn": "Pulsar\\Mail\\Webhook\\Verifier\\SendgridWebhookVerifier"
+    },
+    {
+      "file": "src/Mail/Webhook/Verifier/SesWebhookVerifier.php",
+      "fqcn": "Pulsar\\Mail\\Webhook\\Verifier\\SesWebhookVerifier"
+    },
+    {
+      "file": "src/Notification/Job/SendNotificationJob.php",
+      "fqcn": "Pulsar\\Notification\\Job\\SendNotificationJob"
+    },
+    {
+      "file": "src/Queue/Batch/InMemoryBatchRepository.php",
+      "fqcn": "Pulsar\\Queue\\Batch\\InMemoryBatchRepository"
+    },
+    {
+      "file": "src/Queue/Batch/PendingBatch.php",
+      "fqcn": "Pulsar\\Queue\\Batch\\PendingBatch"
+    },
+    {
+      "file": "src/Queue/Chain/JobChain.php",
+      "fqcn": "Pulsar\\Queue\\Chain\\JobChain"
+    },
+    {
+      "file": "src/Queue/Event/BatchCompleted.php",
+      "fqcn": "Pulsar\\Queue\\Event\\BatchCompleted"
+    },
+    {
+      "file": "src/Queue/Event/BatchFailed.php",
+      "fqcn": "Pulsar\\Queue\\Event\\BatchFailed"
+    },
+    {
+      "file": "src/Queue/Event/ChainCompleted.php",
+      "fqcn": "Pulsar\\Queue\\Event\\ChainCompleted"
+    },
+    {
+      "file": "src/Queue/Event/ChainFailed.php",
+      "fqcn": "Pulsar\\Queue\\Event\\ChainFailed"
+    },
+    {
+      "file": "src/Queue/Middleware/EncryptPayload.php",
+      "fqcn": "Pulsar\\Queue\\Middleware\\EncryptPayload"
+    },
+    {
+      "file": "src/Queue/Middleware/EnforceEffectClassification.php",
+      "fqcn": "Pulsar\\Queue\\Middleware\\EnforceEffectClassification"
+    },
+    {
+      "file": "src/Queue/Middleware/PreventDuplicates.php",
+      "fqcn": "Pulsar\\Queue\\Middleware\\PreventDuplicates"
+    },
+    {
+      "file": "src/Queue/Middleware/RateLimit.php",
+      "fqcn": "Pulsar\\Queue\\Middleware\\RateLimit"
+    },
+    {
+      "file": "src/Queue/Monitor/QueueMonitor.php",
+      "fqcn": "Pulsar\\Queue\\Monitor\\QueueMonitor"
+    },
+    {
+      "file": "src/Queue/Serialization/JsonSerializer.php",
+      "fqcn": "Pulsar\\Queue\\Serialization\\JsonSerializer"
+    },
+    {
+      "file": "src/Queue/Serialization/MsgpackSerializer.php",
+      "fqcn": "Pulsar\\Queue\\Serialization\\MsgpackSerializer"
+    },
+    {
+      "file": "src/Runtime/PersistentRuntimeFactory.php",
+      "fqcn": "Pulsar\\Runtime\\PersistentRuntimeFactory"
+    },
+    {
+      "file": "src/Security/Incident/IncidentReporterInterface.php",
+      "fqcn": "Pulsar\\Security\\Incident\\IncidentReporterInterface"
+    },
+    {
+      "file": "src/Security/ZeroTrust/Event/AnomalyDetectedEvent.php",
+      "fqcn": "Pulsar\\Security\\ZeroTrust\\Event\\AnomalyDetectedEvent"
+    },
+    {
+      "file": "src/Security/ZeroTrust/Event/SignalRetentionPolicyChangedEvent.php",
+      "fqcn": "Pulsar\\Security\\ZeroTrust\\Event\\SignalRetentionPolicyChangedEvent"
+    },
+    {
+      "file": "src/Supervisor/CachePurgeHookInterface.php",
+      "fqcn": "Pulsar\\Supervisor\\CachePurgeHookInterface"
+    },
+    {
+      "file": "src/Supervisor/ConnectionResetHookInterface.php",
+      "fqcn": "Pulsar\\Supervisor\\ConnectionResetHookInterface"
+    }
+  ]
+}

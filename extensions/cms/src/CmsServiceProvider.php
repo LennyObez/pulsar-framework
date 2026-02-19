@@ -29,6 +29,8 @@ use Pulsar\Extension\Cms\EventStore\ContentEventStoreInterface;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotServiceInterface;
 use Pulsar\Extension\Cms\FieldRegistry\ContentTypeRegistryInterface;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
+use Pulsar\Extension\Cms\Internal\Persistence\DbCmsPluginRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbCmsUserRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbCommentRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentBlockRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentEventRepository;
@@ -47,7 +49,15 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbSearchAnalyticsRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbSettingsRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbTaxonomyRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbThemeRepository;
+use Pulsar\Extension\Cms\Internal\Plugins\CmsPluginManager;
+use Pulsar\Extension\Cms\Internal\Plugins\HookExecutionEngine;
+use Pulsar\Extension\Cms\Internal\Plugins\PluginManifestValidator;
+use Pulsar\Extension\Cms\Internal\Plugins\PluginProvenanceVerifier;
 use Pulsar\Extension\Cms\Internal\Search\SearchService;
+use Pulsar\Extension\Cms\Internal\Security\ClientFingerprintResolver;
+use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
+use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
+use Pulsar\Extension\Cms\Internal\Security\SafeHttpClient;
 use Pulsar\Extension\Cms\Internal\Seo\ArticleStructuredDataGenerator;
 use Pulsar\Extension\Cms\Internal\Seo\FeedGenerator;
 use Pulsar\Extension\Cms\Internal\Seo\LinkHealthChecker;
@@ -61,6 +71,7 @@ use Pulsar\Extension\Cms\Internal\Themes\ThemeAssetResolver;
 use Pulsar\Extension\Cms\Internal\Themes\ThemeManager;
 use Pulsar\Extension\Cms\Internal\Themes\ThemeManifestValidator;
 use Pulsar\Extension\Cms\Internal\Themes\ThemeProvenanceVerifier;
+use Pulsar\Extension\Cms\Internal\Tools\ToolsService;
 use Pulsar\Extension\Cms\Media\ImageProcessor;
 use Pulsar\Extension\Cms\Media\ImageProcessorInterface;
 use Pulsar\Extension\Cms\Media\LocalDisk;
@@ -74,6 +85,11 @@ use Pulsar\Extension\Cms\Media\Security\PdfValidator;
 use Pulsar\Extension\Cms\Media\Security\SvgSanitizer;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
+use Pulsar\Extension\Cms\Plugins\CmsPluginManagerInterface;
+use Pulsar\Extension\Cms\Plugins\CmsPluginRepositoryInterface;
+use Pulsar\Extension\Cms\Plugins\HookRegistry;
+use Pulsar\Extension\Cms\Plugins\PluginManifestValidatorInterface;
+use Pulsar\Extension\Cms\Plugins\PluginProvenanceVerifierInterface;
 use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
 use Pulsar\Extension\Cms\Search\SearchServiceInterface;
 use Pulsar\Extension\Cms\Seo\FeedGeneratorInterface;
@@ -92,8 +108,11 @@ use Pulsar\Extension\Cms\Themes\ThemeManagerInterface;
 use Pulsar\Extension\Cms\Themes\ThemeManifestValidatorInterface;
 use Pulsar\Extension\Cms\Themes\ThemeProvenanceVerifierInterface;
 use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
+use Pulsar\Extension\Cms\Tools\ToolsServiceInterface;
+use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
 use Pulsar\Extension\Cms\Workflow\EditorialWorkflowServiceInterface;
+use Pulsar\Security\Crypto\MasterKey;
 
 /**
  * Registers all CMS services, repositories, and bindings.
@@ -153,6 +172,21 @@ final class CmsServiceProvider implements ServiceProviderInterface
             ThemeManifestValidatorInterface::class,
             ThemeProvenanceVerifierInterface::class,
             ThemeArchiveExtractorInterface::class,
+            // Plugins
+            CmsPluginRepositoryInterface::class,
+            CmsPluginManagerInterface::class,
+            PluginManifestValidatorInterface::class,
+            PluginProvenanceVerifierInterface::class,
+            HookRegistry::class,
+            // Users
+            CmsUserRepositoryInterface::class,
+            // Tools
+            ToolsServiceInterface::class,
+            // Security
+            SafeHttpClient::class,
+            ClientFingerprintResolver::class,
+            CmsKeyManager::class,
+            QrCodeEncoder::class,
         ];
     }
 
@@ -252,6 +286,16 @@ final class CmsServiceProvider implements ServiceProviderInterface
         $container->instance(
             ThemeRepositoryInterface::class,
             new DbThemeRepository($connection),
+        );
+
+        $container->instance(
+            CmsPluginRepositoryInterface::class,
+            new DbCmsPluginRepository($connection),
+        );
+
+        $container->instance(
+            CmsUserRepositoryInterface::class,
+            new DbCmsUserRepository($connection),
         );
     }
 
@@ -446,6 +490,72 @@ final class CmsServiceProvider implements ServiceProviderInterface
                     $auditLogger,
                     $logger,
                 ),
+            );
+        }
+
+        // Plugin stack
+        $securityConfig = $config->security;
+
+        $pluginManifestValidator = new PluginManifestValidator();
+        $container->instance(PluginManifestValidatorInterface::class, $pluginManifestValidator);
+
+        $pluginProvenanceVerifier = new PluginProvenanceVerifier($securityConfig, $logger);
+        $container->instance(PluginProvenanceVerifierInterface::class, $pluginProvenanceVerifier);
+
+        $hookRegistry = new HookRegistry();
+        $container->instance(HookRegistry::class, $hookRegistry);
+
+        $hookEngine = new HookExecutionEngine($hookRegistry, $auditLogger, $logger);
+        $container->instance(HookExecutionEngine::class, $hookEngine);
+
+        if ($eventDispatcher !== null) {
+            /** @var CmsPluginRepositoryInterface $pluginRepository */
+            $pluginRepository = $container->get(CmsPluginRepositoryInterface::class);
+
+            $container->instance(
+                CmsPluginManagerInterface::class,
+                new CmsPluginManager(
+                    $pluginRepository,
+                    $pluginManifestValidator,
+                    $pluginProvenanceVerifier,
+                    $archiveExtractor,
+                    $securityConfig,
+                    $container,
+                    $hookRegistry,
+                    $hookEngine,
+                    $eventDispatcher,
+                    $auditLogger,
+                    $logger,
+                ),
+            );
+        }
+
+        // Tools stack
+        $container->instance(
+            ToolsServiceInterface::class,
+            new ToolsService($connection, $auditLogger),
+        );
+
+        // Security stack
+        $container->instance(
+            SafeHttpClient::class,
+            new SafeHttpClient($securityConfig, $logger),
+        );
+
+        $container->instance(QrCodeEncoder::class, new QrCodeEncoder());
+
+        // CmsKeyManager (requires MasterKey)
+        if ($container->has(MasterKey::class)) {
+            /** @var MasterKey $masterKey */
+            $masterKey = $container->get(MasterKey::class);
+            $cmsKeyManager = new CmsKeyManager($masterKey);
+            $container->instance(CmsKeyManager::class, $cmsKeyManager);
+
+            // ClientFingerprintResolver uses a derived HMAC key
+            $hmacKey = $cmsKeyManager->previewKey();
+            $container->instance(
+                ClientFingerprintResolver::class,
+                new ClientFingerprintResolver($securityConfig, $hmacKey),
             );
         }
     }

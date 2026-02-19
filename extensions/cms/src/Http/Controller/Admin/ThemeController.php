@@ -17,6 +17,7 @@ use RuntimeException;
 
 use function array_map;
 use function is_string;
+use function strlen;
 use function sys_get_temp_dir;
 use function tempnam;
 
@@ -199,7 +200,13 @@ final readonly class ThemeController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Deleted by admin';
+        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+
+        if (strlen($reason) < 10) {
+            return Response::json([
+                'error' => 'A reason of at least 10 characters is required for theme deletion',
+            ], 400);
+        }
 
         try {
             $this->themeManager->delete($id, $identity->id(), $reason);

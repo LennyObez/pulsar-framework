@@ -1865,6 +1865,7 @@ deptrac:
       - Core
       - ErrorHandling
       - Database
+      - Auth
       - Audit
       - Event
       - Security

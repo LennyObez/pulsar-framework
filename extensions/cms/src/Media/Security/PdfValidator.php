@@ -40,6 +40,10 @@ final readonly class PdfValidator
      */
     public function validate(string $filePath): void
     {
+        if (!is_file($filePath) || !is_readable($filePath)) {
+            throw CmsException::invalidPdfFile();
+        }
+
         $handle = fopen($filePath, 'rb');
 
         if ($handle === false) {

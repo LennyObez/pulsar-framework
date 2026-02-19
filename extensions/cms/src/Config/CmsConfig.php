@@ -29,6 +29,7 @@ final readonly class CmsConfig
      * @param CommentsConfig $comments Comments system configuration
      * @param SeoConfig $seo SEO and link health configuration
      * @param ThemesConfig $themes Theme system configuration
+     * @param CmsSecurityConfig $security CMS security configuration
      */
     public function __construct(
         public string $defaultLocale = 'en',
@@ -43,6 +44,7 @@ final readonly class CmsConfig
         public CommentsConfig $comments = new CommentsConfig(),
         public SeoConfig $seo = new SeoConfig(),
         public ThemesConfig $themes = new ThemesConfig(),
+        public CmsSecurityConfig $security = new CmsSecurityConfig(),
     ) {}
 
     /**
@@ -63,6 +65,7 @@ final readonly class CmsConfig
             comments: CommentsConfig::fromArray((array) ($data['comments'] ?? [])),
             seo: SeoConfig::fromArray((array) ($data['seo'] ?? [])),
             themes: ThemesConfig::fromArray((array) ($data['themes'] ?? [])),
+            security: CmsSecurityConfig::fromArray((array) ($data['security'] ?? [])),
         );
     }
 }

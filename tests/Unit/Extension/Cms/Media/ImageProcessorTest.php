@@ -338,7 +338,7 @@ final class ImageProcessorTest extends TestCase
         imagefill($img, 0, 0, $color);
         $path = $this->tmpDir . '/source_' . bin2hex(random_bytes(4)) . '.jpg';
         imagejpeg($img, $path, 90);
-        imagedestroy($img);
+        unset($img);
 
         return $path;
     }
@@ -359,7 +359,7 @@ final class ImageProcessorTest extends TestCase
 
         $path = $this->tmpDir . '/gradient_' . bin2hex(random_bytes(4)) . '.jpg';
         imagejpeg($img, $path, 95);
-        imagedestroy($img);
+        unset($img);
 
         return $path;
     }
@@ -369,7 +369,7 @@ final class ImageProcessorTest extends TestCase
         $img = imagecreatetruecolor(max(1, $width), max(1, $height));
         $path = $this->tmpDir . '/source_' . bin2hex(random_bytes(4)) . '.png';
         imagepng($img, $path);
-        imagedestroy($img);
+        unset($img);
 
         return $path;
     }
@@ -379,7 +379,7 @@ final class ImageProcessorTest extends TestCase
         $img = imagecreatetruecolor(max(1, $width), max(1, $height));
         $path = $this->tmpDir . '/source_' . bin2hex(random_bytes(4)) . '.gif';
         imagegif($img, $path);
-        imagedestroy($img);
+        unset($img);
 
         return $path;
     }

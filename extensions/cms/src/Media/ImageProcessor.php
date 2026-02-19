@@ -19,7 +19,6 @@ use function imagecreatefromjpeg;
 use function imagecreatefrompng;
 use function imagecreatefromwebp;
 use function imagecreatetruecolor;
-use function imagedestroy;
 use function imagefill;
 use function imagegif;
 use function imagejpeg;
@@ -62,8 +61,6 @@ final readonly class ImageProcessor implements ImageProcessorInterface
         $destination = imagecreatetruecolor($width, $height);
 
         if ($destination === false) {
-            imagedestroy($source);
-
             throw CmsException::invalidImageFile();
         }
 
@@ -85,8 +82,7 @@ final readonly class ImageProcessor implements ImageProcessorInterface
         $outputPath = tempnam(sys_get_temp_dir(), 'pulsar_img_') . '.' . $format;
         $this->saveImage($destination, $outputPath, $format);
 
-        imagedestroy($source);
-        imagedestroy($destination);
+        unset($source, $destination);
 
         return $outputPath;
     }
@@ -104,8 +100,6 @@ final readonly class ImageProcessor implements ImageProcessorInterface
         $destination = imagecreatetruecolor($targetWidth, $targetHeight);
 
         if ($destination === false) {
-            imagedestroy($source);
-
             throw CmsException::invalidImageFile();
         }
 
@@ -116,8 +110,7 @@ final readonly class ImageProcessor implements ImageProcessorInterface
         imagewebp($destination, null, $this->config->webpQuality);
         $buffer = ob_get_clean();
 
-        imagedestroy($source);
-        imagedestroy($destination);
+        unset($source, $destination);
 
         if ($buffer === false || $buffer === '') {
             throw CmsException::invalidImageFile();
@@ -144,7 +137,7 @@ final readonly class ImageProcessor implements ImageProcessorInterface
         $outputPath = tempnam(sys_get_temp_dir(), 'pulsar_exif_') . '.jpg';
 
         imagejpeg($source, $outputPath, 95);
-        imagedestroy($source);
+        unset($source);
 
         return $outputPath;
     }

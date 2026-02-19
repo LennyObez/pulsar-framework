@@ -32,6 +32,7 @@ use function array_map;
 use function in_array;
 use function is_string;
 use function sprintf;
+use function strlen;
 
 /**
  * Admin controller for content management operations.
@@ -383,11 +384,22 @@ final readonly class ContentController
     {
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.content.delete');
+        $this->requireStepUp($request);
 
         $content = $this->contentRepository->findById($id);
 
         if ($content === null) {
             return Response::json(['error' => 'Content not found'], 404);
+        }
+
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+
+        if (strlen($reason) < 10) {
+            return Response::json([
+                'error' => 'A reason of at least 10 characters is required for content deletion',
+            ], 400);
         }
 
         $this->contentRepository->delete($content);
@@ -579,6 +591,15 @@ final readonly class ContentController
         $this->lockService->release($id, $identity->id());
 
         return Response::json(['content_id' => $id, 'status' => 'unlocked']);
+    }
+
+    private function requireStepUp(ServerRequestInterface $request): void
+    {
+        $stepUp = $request->getAttribute('step_up_verified', false);
+
+        if ($stepUp !== true) {
+            throw new RuntimeException('Step-up authentication required for this action');
+        }
     }
 
     private function requireIdentity(ServerRequestInterface $request): IdentityInterface

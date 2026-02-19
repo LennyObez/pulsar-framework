@@ -207,4 +207,69 @@ class CmsException extends RuntimeException
     {
         return new self('No previous theme available for rollback');
     }
+
+    public static function pluginNotFound(string $id): self
+    {
+        return new self("Plugin not found: {$id}");
+    }
+
+    public static function pluginAlreadyEnabled(string $id): self
+    {
+        return new self("Plugin is already enabled: {$id}");
+    }
+
+    public static function pluginNotEnabled(string $id): self
+    {
+        return new self("Plugin is not enabled: {$id}");
+    }
+
+    public static function pluginIsEnabled(string $id): self
+    {
+        return new self("Cannot delete enabled plugin: {$id}");
+    }
+
+    public static function pluginManifestInvalid(string $reason): self
+    {
+        return new self("Invalid plugin manifest: {$reason}");
+    }
+
+    public static function pluginProvenanceFailed(string $reason): self
+    {
+        return new self("Plugin provenance verification failed: {$reason}");
+    }
+
+    public static function pluginExtractionFailed(string $reason): self
+    {
+        return new self("Plugin archive extraction failed: {$reason}");
+    }
+
+    public static function ssrfBlocked(string $url, string $reason): self
+    {
+        return new self("SSRF protection blocked request to {$url}: {$reason}");
+    }
+
+    public static function twoFactorAlreadyEnabled(string $userId): self
+    {
+        return new self("Two-factor authentication is already enabled for user: {$userId}");
+    }
+
+    public static function twoFactorNotEnabled(string $userId): self
+    {
+        return new self("Two-factor authentication is not enabled for user: {$userId}");
+    }
+
+    public static function twoFactorInvalidCode(): self
+    {
+        return new self('Invalid two-factor authentication code');
+    }
+
+    public static function userNotFound(string $id): self
+    {
+        return new self("CMS user not found: {$id}");
+    }
+
+    public static function invalidCmsRole(string $role): self
+    {
+        return new self("Invalid CMS role: {$role}");
+    }
 }

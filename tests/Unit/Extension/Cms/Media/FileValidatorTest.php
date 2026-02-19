@@ -75,7 +75,7 @@ final class FileValidatorTest extends TestCase
             $img = imagecreatetruecolor(10, 10);
             $tmpPath = $this->tmpDir . '/valid.webp';
             imagewebp($img, $tmpPath);
-            imagedestroy($img);
+            unset($img);
 
             $this->validator->validate($tmpPath, 'test.webp', 'image/webp', (int) filesize($tmpPath));
             $this->addToAssertionCount(1);
@@ -92,7 +92,7 @@ final class FileValidatorTest extends TestCase
         $img = imagecreatetruecolor(10, 10);
         $path = $this->tmpDir . '/valid.gif';
         imagegif($img, $path);
-        imagedestroy($img);
+        unset($img);
 
         $this->validator->validate($path, 'anim.gif', 'image/gif', (int) filesize($path));
         $this->addToAssertionCount(1);
@@ -163,7 +163,7 @@ final class FileValidatorTest extends TestCase
         $img = imagecreatetruecolor(200, 200);
         $path = $this->tmpDir . '/big.jpg';
         imagejpeg($img, $path);
-        imagedestroy($img);
+        unset($img);
 
         $this->expectException(CmsException::class);
         $this->expectExceptionMessage('dimensions');
@@ -181,7 +181,7 @@ final class FileValidatorTest extends TestCase
         $img = imagecreatetruecolor(20, 20);
         $path = $this->tmpDir . '/bomb.jpg';
         imagejpeg($img, $path);
-        imagedestroy($img);
+        unset($img);
 
         $this->expectException(CmsException::class);
         $this->expectExceptionMessage('pixel count');
@@ -196,7 +196,7 @@ final class FileValidatorTest extends TestCase
         $img = imagecreatetruecolor(10, 10);
         $path = $this->tmpDir . '/evil.jpg';
         imagejpeg($img, $path);
-        imagedestroy($img);
+        unset($img);
 
         // Append PHP code to the JPEG
         file_put_contents($path, '<?php echo "hacked"; ?>', FILE_APPEND);
@@ -259,7 +259,7 @@ final class FileValidatorTest extends TestCase
         $img = imagecreatetruecolor(10, 10);
         $path ??= $this->tmpDir . '/valid.jpg';
         imagejpeg($img, $path);
-        imagedestroy($img);
+        unset($img);
 
         return $path;
     }
@@ -269,7 +269,7 @@ final class FileValidatorTest extends TestCase
         $img = imagecreatetruecolor(10, 10);
         $path ??= $this->tmpDir . '/valid.png';
         imagepng($img, $path);
-        imagedestroy($img);
+        unset($img);
 
         return $path;
     }

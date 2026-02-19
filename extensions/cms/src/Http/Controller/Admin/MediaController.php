@@ -21,6 +21,7 @@ use function array_map;
 use function is_string;
 use function max;
 use function min;
+use function strlen;
 
 /**
  * Admin controller for media asset management.
@@ -177,12 +178,15 @@ final readonly class MediaController
     }
 
     /**
-     * Soft-delete a media asset with a reason.
+     * Soft-delete a media asset with a mandatory reason.
+     *
+     * Requires step-up authentication.
      */
     public function delete(ServerRequestInterface $request, string $id): Response
     {
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.media.delete');
+        $this->requireStepUp($request);
 
         $asset = $this->mediaRepository->findById($id);
 
@@ -192,7 +196,13 @@ final readonly class MediaController
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
-        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : 'Deleted by admin';
+        $reason = is_string($body['reason'] ?? null) ? $body['reason'] : '';
+
+        if (strlen($reason) < 10) {
+            return Response::json([
+                'error' => 'A reason of at least 10 characters is required for media deletion',
+            ], 400);
+        }
 
         try {
             $this->mediaService->delete($id, $reason);
@@ -200,6 +210,15 @@ final readonly class MediaController
             return Response::json(['id' => $id, 'status' => 'deleted']);
         } catch (CmsException $e) {
             return Response::json(['error' => $e->getMessage()], 422);
+        }
+    }
+
+    private function requireStepUp(ServerRequestInterface $request): void
+    {
+        $stepUp = $request->getAttribute('step_up_verified', false);
+
+        if ($stepUp !== true) {
+            throw new RuntimeException('Step-up authentication required for this action');
         }
     }
 

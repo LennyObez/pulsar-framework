@@ -47,6 +47,7 @@ final readonly class SettingsController
     {
         $identity = $this->requireIdentity($request);
         $this->authorize($identity, 'cms.settings.manage');
+        $this->requireStepUp($request);
 
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
@@ -65,6 +66,15 @@ final readonly class SettingsController
             'status' => 'updated',
             'keys_updated' => count($settings),
         ]);
+    }
+
+    private function requireStepUp(ServerRequestInterface $request): void
+    {
+        $stepUp = $request->getAttribute('step_up_verified', false);
+
+        if ($stepUp !== true) {
+            throw new RuntimeException('Step-up authentication required for this action');
+        }
     }
 
     private function requireIdentity(ServerRequestInterface $request): IdentityInterface

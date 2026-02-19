@@ -98,6 +98,7 @@
       "@boundary:deptrac",
       "@boundary:custom"
     ],
+    "wiring:check": "php scripts/wiring_check.php",
     "qa": [
       "@cs:check",
       "@phpstan",

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use Pulsar\Api\Api;
 use Random\Engine\Secure;
 use Random\RandomException;
 use Random\Randomizer;
@@ -23,6 +24,7 @@ use function unpack;
 /**
  * TOTP (Time-Based One-Time Password) generator per RFC 6238.
  */
+#[Api(since: '1.0.0')]
 final readonly class TotpGenerator
 {
     private Randomizer $randomizer;

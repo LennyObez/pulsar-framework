@@ -139,6 +139,37 @@
             </li>
         @endcan
 
+        @can('cms.plugins.view')
+            <li class="cms-sidebar__item cms-sidebar__item--heading">
+                <span class="cms-sidebar__heading">Plugins</span>
+            </li>
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/plugins" class="cms-sidebar__link @if (($activeSection ?? '') === 'plugins') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#128268;</span>
+                    Installed Plugins
+                </a>
+            </li>
+        @endcan
+
+        @can('cms.users.view')
+            <li class="cms-sidebar__item cms-sidebar__item--heading">
+                <span class="cms-sidebar__heading">Users</span>
+            </li>
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/users" class="cms-sidebar__link @if (($activeSection ?? '') === 'users') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#128101;</span>
+                    Manage Users
+                </a>
+            </li>
+        @endcan
+
+        <li class="cms-sidebar__item">
+            <a href="/admin/cms/2fa" class="cms-sidebar__link @if (($activeSection ?? '') === '2fa') cms-sidebar__link--active @endif">
+                <span class="cms-sidebar__icon" aria-hidden="true">&#128737;</span>
+                2FA Settings
+            </a>
+        </li>
+
         @can('cms.settings.view')
             <li class="cms-sidebar__item">
                 <a href="/admin/cms/settings/general" class="cms-sidebar__link @if (($activeSection ?? '') === 'settings') cms-sidebar__link--active @endif">
