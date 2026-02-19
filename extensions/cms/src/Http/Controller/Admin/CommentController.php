@@ -30,16 +30,16 @@ use function min;
  * parent context and author stats, bulk moderation, and delete actions.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class CommentController
+final readonly class CommentController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private CommentRepositoryInterface $commentRepository,
         private CommentServiceInterface $commentService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List comments for moderation, filtered by status.

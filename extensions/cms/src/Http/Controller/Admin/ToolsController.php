@@ -21,15 +21,15 @@ use function strlen;
  * Export requires cms.tools.export; erasure requires cms.tools.gdpr.erase.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class ToolsController
+final readonly class ToolsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ToolsServiceInterface $toolsService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Export all CMS data for a given user (GDPR data portability).

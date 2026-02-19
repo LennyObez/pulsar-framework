@@ -22,15 +22,15 @@ use function is_string;
  * Admin controller for custom field definition management.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class FieldController
+final readonly class FieldController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private FieldRegistryRepositoryInterface $fieldRepository,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request, string $contentType): Response
     {

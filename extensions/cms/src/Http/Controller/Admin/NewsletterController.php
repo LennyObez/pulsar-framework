@@ -33,18 +33,18 @@ use function round;
  * and analytics views for the CMS admin panel.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class NewsletterController
+final readonly class NewsletterController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private NewsletterSubscriberRepositoryInterface $subscriberRepository,
         private NewsletterCampaignRepositoryInterface $campaignRepository,
         private NewsletterSendRepositoryInterface $sendRepository,
         private CampaignEditorServiceInterface $campaignEditorService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * GET /admin/cms/newsletter/subscribers: List subscribers with status filter.

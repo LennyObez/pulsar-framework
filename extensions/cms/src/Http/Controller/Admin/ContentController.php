@@ -40,10 +40,8 @@ use function strlen;
  * State-changing operations require CSRF token validation.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class ContentController
+final readonly class ContentController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
@@ -54,9 +52,11 @@ final readonly class ContentController
         private EditorialWorkflowServiceInterface $workflowService,
         private SafeHtmlPolicy $safeHtmlPolicy,
         private CmsConfig $config,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {

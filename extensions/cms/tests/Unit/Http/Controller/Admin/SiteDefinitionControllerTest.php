@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
+use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Cms\Http\Controller\Admin\SiteDefinitionController;
 use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
@@ -23,6 +24,23 @@ use const JSON_THROW_ON_ERROR;
 #[CoversClass(SiteDefinitionController::class)]
 final class SiteDefinitionControllerTest extends TestCase
 {
+    /**
+     * Build a permissive authorization gate for the controller under test.
+     *
+     * After the MED-3 fix, `AbstractAdminController::authorize()` is
+     * deny-by-default when no gate is wired — unit tests that exercise
+     * an authenticated admin path must therefore inject a gate explicitly
+     * rather than relying on the previous silent-allow behavior.
+     */
+    private function createPermissiveGate(): GateInterface
+    {
+        $gate = $this->createStub(GateInterface::class);
+        $gate->method('allows')->willReturn(true);
+        $gate->method('denies')->willReturn(false);
+
+        return $gate;
+    }
+
     #[Test]
     public function dryRunUsesUnifiedImportAndReturnsStructuredResult(): void
     {
@@ -41,7 +59,7 @@ final class SiteDefinitionControllerTest extends TestCase
             ->with(self::callback(static fn(mixed $v): bool => is_string($v)), true)
             ->willReturn($expectedResult);
 
-        $controller = new SiteDefinitionController($service);
+        $controller = new SiteDefinitionController($service, $this->createPermissiveGate());
 
         $body = json_encode([
             'version' => '1.0',
@@ -68,7 +86,7 @@ final class SiteDefinitionControllerTest extends TestCase
     public function dryRunReturnsErrorForMissingContent(): void
     {
         $service = $this->createStub(ImportExportServiceInterface::class);
-        $controller = new SiteDefinitionController($service);
+        $controller = new SiteDefinitionController($service, $this->createPermissiveGate());
 
         $request = $this->createRequestWithBody('');
         $response = $controller->dryRun($request);

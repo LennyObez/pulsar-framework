@@ -31,17 +31,17 @@ use function unlink;
  * Handles listing, uploading, and deleting downloadable files for digital products.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class DigitalAssetController
+final readonly class DigitalAssetController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private DigitalAssetRepositoryInterface $assets,
         private ProductRepositoryInterface $products,
         private MediaDiskInterface $disk,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request, string $productId): Response
     {

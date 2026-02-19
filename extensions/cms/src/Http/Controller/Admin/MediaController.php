@@ -31,16 +31,16 @@ use function strlen;
  * file upload via multipart form, asset detail with derivatives, and soft delete.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class MediaController
+final readonly class MediaController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private MediaRepositoryInterface $mediaRepository,
         private MediaServiceInterface $mediaService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List media assets with optional filters.

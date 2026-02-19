@@ -25,15 +25,15 @@ use function min;
  * a full link health check across all published content.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class LinkHealthController
+final readonly class LinkHealthController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private LinkHealthServiceInterface $linkHealthService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Display broken links report with pagination and filters.

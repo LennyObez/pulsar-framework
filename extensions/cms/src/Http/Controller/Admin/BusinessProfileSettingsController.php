@@ -24,10 +24,8 @@ use function is_string;
  * BusinessProfileConfig for consumption by all extensions.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class BusinessProfileSettingsController
+final readonly class BusinessProfileSettingsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     /** @var list<string> */
     private const array PROFILE_FIELDS = [
         'company_name',
@@ -56,9 +54,11 @@ final readonly class BusinessProfileSettingsController
     public function __construct(
         private SettingsServiceInterface $settingsService,
         private BusinessProfileProviderInterface $businessProfileProvider,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Display the business profile edit form.

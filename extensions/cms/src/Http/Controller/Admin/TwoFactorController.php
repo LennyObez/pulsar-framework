@@ -29,10 +29,8 @@ use function strlen;
  * All operations require step-up authentication and appropriate permissions.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class TwoFactorController
+final readonly class TwoFactorController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     private const int RATE_LIMIT_PER_MINUTE = 5;
 
     public function __construct(
@@ -42,9 +40,11 @@ final readonly class TwoFactorController
         private QrCodeEncoder $qrCodeEncoder,
         private ?CmsRateLimiter $rateLimiter,
         private ?AuditLoggerInterface $auditLogger,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * Return 2FA enrollment status for the current user.

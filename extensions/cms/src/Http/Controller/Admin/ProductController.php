@@ -27,15 +27,15 @@ use function is_string;
  * State-changing operations require CSRF token validation.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class ProductController
+final readonly class ProductController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ProductRepositoryInterface $products,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function index(ServerRequestInterface $request): Response
     {

@@ -28,18 +28,18 @@ use function strlen;
  * and rollback capabilities. All operations are versioned and auditable.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class LiveCssController
+final readonly class LiveCssController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private LiveCssServiceInterface $liveCss,
         private CssValidatorInterface $validator,
         private ThemeTokenResolverInterface $tokenResolver,
         private ThemeManagerInterface $themeManager,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function editor(ServerRequestInterface $request): Response
     {

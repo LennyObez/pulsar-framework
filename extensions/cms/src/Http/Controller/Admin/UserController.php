@@ -34,17 +34,17 @@ use function strlen;
  * Updates roles (with step-up) and resets 2FA.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class UserController
+final readonly class UserController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private CmsUserRepositoryInterface $userRepository,
         private ?AuditLoggerInterface $auditLogger,
         private ?AccountSectionRegistry $sectionRegistry = null,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     /**
      * List CMS users with role badges and 2FA status.

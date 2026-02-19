@@ -42,19 +42,19 @@ use const JSON_UNESCAPED_UNICODE;
  * Also supports Markdown and CSV export formats.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class ExportController
+final readonly class ExportController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private ImportExportServiceInterface $importExport,
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
         private ContentBlockRepositoryInterface $blockRepository,
-        private ?GateInterface $gate = null,
+        ?GateInterface $gate = null,
         private ?MediaBundleExporterInterface $mediaBundleExporter = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function form(ServerRequestInterface $request): Response
     {

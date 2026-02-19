@@ -19,15 +19,15 @@ use Pulsar\View\Engine\TemplateEngineInterface;
  * This controller provides read-only access for administrative review.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class InvoiceController
+final readonly class InvoiceController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private InvoiceServiceInterface $invoiceService,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function show(ServerRequestInterface $request, string $id): Response
     {

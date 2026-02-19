@@ -20,16 +20,16 @@ use function is_string;
  * Admin controller for CMS site settings management.
  */
 #[Internal(reason: 'CMS admin controller; implementation detail')]
-final readonly class SettingsController
+final readonly class SettingsController extends AbstractAdminController
 {
-    use RendersAdminView;
-
     public function __construct(
         private SettingsServiceInterface $settingsService,
         private CmsConfig $config,
-        private ?GateInterface $gate = null,
-        private ?TemplateEngineInterface $templateEngine = null,
-    ) {}
+        ?GateInterface $gate = null,
+        ?TemplateEngineInterface $templateEngine = null,
+    ) {
+        parent::__construct($templateEngine, $gate);
+    }
 
     public function show(ServerRequestInterface $request, string $group): Response
     {
