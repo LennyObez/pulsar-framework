@@ -892,13 +892,20 @@ final class ForumHighFindingsTest extends TestCase
             config: new ForumConfig(),
         );
 
-        // Act
-        $service->deletePost('post-1', 'moderator-42');
+        // Act — moderator deleting someone else's post: must pass isModerator=true
+        $service->deletePost('post-1', 'moderator-42', isModerator: true);
     }
 
     #[Test]
-    public function m3DeletePostDefaultsToAuthorWhenNoActorProvided(): void
+    public function m3DeletePostByAuthorRecordsAuthorActor(): void
     {
+        // MED-4 (2026-04-09): the original
+        // m3DeletePostDefaultsToAuthorWhenNoActorProvided test
+        // exercised the deletePost($id, '') default-actor path that
+        // was the security bug being fixed. The new contract
+        // requires every caller to identify itself; an author
+        // deleting their own post must therefore pass their own id.
+
         // Arrange
         $post = $this->makePost(authorId: 'original-author');
         $posts = $this->createStub(PostRepositoryInterface::class);
@@ -924,8 +931,62 @@ final class ForumHighFindingsTest extends TestCase
             config: new ForumConfig(),
         );
 
-        // Act
-        $service->deletePost('post-1');
+        // Act — author deletes their own post: no moderator flag needed.
+        $service->deletePost('post-1', 'original-author');
+    }
+
+    #[Test]
+    public function m3DeletePostRejectsEmptyActor(): void
+    {
+        // Regression guard for MED-4: passing an empty actor id MUST
+        // be refused. Previously this defaulted to the post author
+        // and let arbitrary callers delete arbitrary posts without
+        // ever proving who they were.
+        $post = $this->makePost(authorId: 'original-author');
+        $posts = $this->createStub(PostRepositoryInterface::class);
+        $posts->method('findById')->willReturn($post);
+
+        $service = new ForumService(
+            threads: $this->createStub(ThreadRepositoryInterface::class),
+            posts: $posts,
+            profiles: $this->createStub(ForumProfileRepositoryInterface::class),
+            reputationService: $this->createStub(ReputationServiceInterface::class),
+            badgeService: $this->createStub(BadgeServiceInterface::class),
+            events: $this->createStub(EventDispatcherInterface::class),
+            config: new ForumConfig(),
+        );
+
+        $this->expectException(\Pulsar\Extension\Forum\Exception\ForumException::class);
+        $this->expectExceptionMessage('without identifying actor');
+
+        $service->deletePost('post-1', '');
+    }
+
+    #[Test]
+    public function m3DeletePostByNonAuthorWithoutModeratorFlagIsRejected(): void
+    {
+        // MED-4 regression guard: a non-author caller cannot delete
+        // a post unless they explicitly pass isModerator=true. The
+        // controller layer is responsible for proving the moderator
+        // claim before forwarding the flag.
+        $post = $this->makePost(authorId: 'original-author');
+        $posts = $this->createStub(PostRepositoryInterface::class);
+        $posts->method('findById')->willReturn($post);
+
+        $service = new ForumService(
+            threads: $this->createStub(ThreadRepositoryInterface::class),
+            posts: $posts,
+            profiles: $this->createStub(ForumProfileRepositoryInterface::class),
+            reputationService: $this->createStub(ReputationServiceInterface::class),
+            badgeService: $this->createStub(BadgeServiceInterface::class),
+            events: $this->createStub(EventDispatcherInterface::class),
+            config: new ForumConfig(),
+        );
+
+        $this->expectException(\Pulsar\Extension\Forum\Exception\ForumException::class);
+        $this->expectExceptionMessage('non-author');
+
+        $service->deletePost('post-1', 'random-other-user');
     }
 
     #[Test]
@@ -955,8 +1016,8 @@ final class ForumHighFindingsTest extends TestCase
             config: new ForumConfig(),
         );
 
-        // Act
-        $service->deleteThread('thread-1', 'admin-99');
+        // Act — admin deleting someone else's thread: must pass isModerator=true.
+        $service->deleteThread('thread-1', 'admin-99', isModerator: true);
     }
 
     // -----------------------------------------------------------------------
