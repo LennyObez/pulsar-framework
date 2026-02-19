@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Tickets\Domain;
 
 use DateTimeImmutable;
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -61,10 +62,9 @@ final readonly class TicketCategory
 
     /**
      * Rename the category.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function rename(string $name, string $slug): self
+    #[NoDiscard]
+    public function rename(string $name, string $slug): static
     {
         return clone($this, [
             'name' => $name,
@@ -75,10 +75,9 @@ final readonly class TicketCategory
 
     /**
      * Update the description.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function describe(?string $description): self
+    #[NoDiscard]
+    public function describe(?string $description): static
     {
         return clone($this, [
             'description' => $description,
@@ -88,10 +87,9 @@ final readonly class TicketCategory
 
     /**
      * Move category under a different parent.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function reparent(?string $parentId): self
+    #[NoDiscard]
+    public function reparent(?string $parentId): static
     {
         return clone($this, [
             'parentId' => $parentId,
@@ -101,10 +99,9 @@ final readonly class TicketCategory
 
     /**
      * Update the sibling sort order.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function reorder(int $sortOrder): self
+    #[NoDiscard]
+    public function reorder(int $sortOrder): static
     {
         return clone($this, [
             'sortOrder' => $sortOrder,

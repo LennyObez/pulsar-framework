@@ -20,8 +20,6 @@ use function random_bytes;
  *
  * Supports EN 16931 e-invoicing with seller/buyer party information,
  * per-line tax breakdown, and structured payment terms.
- *
- * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
  */
 #[Api(since: '1.0.0')]
 final readonly class Invoice
@@ -99,7 +97,7 @@ final readonly class Invoice
      * Mark the invoice as paid.
      */
     #[NoDiscard]
-    public function markPaid(): self
+    public function markPaid(): static
     {
         return clone($this, [
             'status' => InvoiceStatus::Paid,
@@ -111,7 +109,7 @@ final readonly class Invoice
      * Mark the invoice as voided.
      */
     #[NoDiscard]
-    public function markVoided(): self
+    public function markVoided(): static
     {
         return clone($this, [
             'status' => InvoiceStatus::Voided,
@@ -122,7 +120,7 @@ final readonly class Invoice
      * Finalize the invoice (transition from draft to open).
      */
     #[NoDiscard]
-    public function finalize(): self
+    public function finalize(): static
     {
         return clone($this, [
             'status' => InvoiceStatus::Open,

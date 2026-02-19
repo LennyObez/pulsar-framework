@@ -73,11 +73,9 @@ final readonly class Cart
      *
      * If an item with the same productId already exists, its quantity is
      * incremented instead of creating a duplicate line.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function addItem(CartItem $item): self
+    public function addItem(CartItem $item): static
     {
         $existingIndex = $this->findItemIndexByProductId($item->productId);
 
@@ -104,11 +102,9 @@ final readonly class Cart
      * Remove an item by its cart-line ID.
      *
      * @param non-empty-string $itemId
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function removeItem(string $itemId): self
+    public function removeItem(string $itemId): static
     {
         $filtered = array_values(array_filter(
             $this->items,
@@ -126,11 +122,9 @@ final readonly class Cart
      *
      * @param non-empty-string $itemId
      * @param int<1, max> $quantity
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function updateQuantity(string $itemId, int $quantity): self
+    public function updateQuantity(string $itemId, int $quantity): static
     {
         $items = array_map(
             static fn(CartItem $i): CartItem => $i->id === $itemId
@@ -147,11 +141,9 @@ final readonly class Cart
 
     /**
      * Remove all items from the cart.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function clear(): self
+    public function clear(): static
     {
         return clone($this, [
             'items' => [],
@@ -162,11 +154,9 @@ final readonly class Cart
 
     /**
      * Apply a coupon code to the cart.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function withCoupon(string $couponCode): self
+    public function withCoupon(string $couponCode): static
     {
         return clone($this, [
             'couponCode' => $couponCode,
@@ -176,11 +166,9 @@ final readonly class Cart
 
     /**
      * Remove any applied coupon.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function withoutCoupon(): self
+    public function withoutCoupon(): static
     {
         return clone($this, [
             'couponCode' => null,
@@ -190,11 +178,9 @@ final readonly class Cart
 
     /**
      * Assign a user to a guest cart (used after login/registration).
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function assignUser(string $userId): self
+    public function assignUser(string $userId): static
     {
         return clone($this, [
             'userId' => $userId,
@@ -207,11 +193,9 @@ final readonly class Cart
      *
      * Items with matching productId have their quantities summed.
      * The source cart's coupon is preserved if this cart has none.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function merge(self $other): self
+    public function merge(self $other): static
     {
         $merged = $this;
 

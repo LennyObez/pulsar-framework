@@ -125,15 +125,13 @@ final readonly class Subscription
 
     /**
      * Transition to a new status.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
     public function withStatus(
         SubscriptionStatus $status,
         ?DateTimeImmutable $currentPeriodEnd = null,
         ?DateTimeImmutable $gracePeriodUntil = null,
-    ): self {
+    ): static {
         return clone($this, [
             'status' => $status,
             'currentPeriodEnd' => $currentPeriodEnd ?? $this->currentPeriodEnd,

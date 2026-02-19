@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Devices;
 
 use DateTimeImmutable;
+use NoDiscard;
 use Pulsar\Api\Api;
 
 use function bin2hex;
@@ -64,10 +65,9 @@ final readonly class UserDevice
 
     /**
      * Record the most recent authenticated access.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function updateLastSeen(): self
+    #[NoDiscard]
+    public function updateLastSeen(): static
     {
         return clone($this, [
             'lastSeenAt' => new DateTimeImmutable(),
@@ -76,10 +76,9 @@ final readonly class UserDevice
 
     /**
      * Replace the API token hash after a token rotation.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function rotateToken(string $newHash): self
+    #[NoDiscard]
+    public function rotateToken(string $newHash): static
     {
         return clone($this, [
             'apiTokenHash' => $newHash,
