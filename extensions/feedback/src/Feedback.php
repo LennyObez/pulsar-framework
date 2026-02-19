@@ -74,8 +74,6 @@ final readonly class Feedback
 
     /**
      * Transition to a new triage status.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function updateStatus(FeedbackStatus $status): self
     {
@@ -87,8 +85,6 @@ final readonly class Feedback
 
     /**
      * Attach an admin response visible to the submitting user.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function addAdminResponse(string $response): self
     {
@@ -100,8 +96,6 @@ final readonly class Feedback
 
     /**
      * Link this feedback to a GitHub issue for tracking.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     public function linkGitHubIssue(string $url): self
     {

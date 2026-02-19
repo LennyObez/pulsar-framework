@@ -18,8 +18,6 @@ use function random_bytes;
  * Represents a commercial proposal that can be accepted by the customer
  * and converted into a binding Invoice. Quote numbers follow the
  * pattern QTE-YYYY-NNNNNN for traceability.
- *
- * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
  */
 #[Api(since: '1.0.0')]
 final readonly class Quote
@@ -101,7 +99,7 @@ final readonly class Quote
      * Mark the quote as sent to the customer.
      */
     #[NoDiscard]
-    public function send(): self
+    public function send(): static
     {
         return clone($this, [
             'status' => QuoteStatus::Sent,
@@ -113,7 +111,7 @@ final readonly class Quote
      * Accept the quote. Only possible from Draft or Sent status.
      */
     #[NoDiscard]
-    public function accept(): self
+    public function accept(): static
     {
         return clone($this, [
             'status' => QuoteStatus::Accepted,
@@ -125,7 +123,7 @@ final readonly class Quote
      * Reject the quote.
      */
     #[NoDiscard]
-    public function reject(): self
+    public function reject(): static
     {
         return clone($this, [
             'status' => QuoteStatus::Rejected,
@@ -137,7 +135,7 @@ final readonly class Quote
      * Expire the quote (e.g., validUntil date has passed).
      */
     #[NoDiscard]
-    public function expire(): self
+    public function expire(): static
     {
         return clone($this, [
             'status' => QuoteStatus::Expired,

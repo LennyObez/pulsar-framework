@@ -46,10 +46,8 @@ final readonly class CartItem
      * Return a new CartItem with an updated quantity.
      *
      * @param int<1, max> $quantity
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function withQuantity(int $quantity): self
+    public function withQuantity(int $quantity): static
     {
         return clone($this, ['quantity' => $quantity]);
     }

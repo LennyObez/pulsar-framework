@@ -18,8 +18,6 @@ use function random_bytes;
  * Represents a legally compliant refund document that references
  * the original invoice. Credit note numbers follow the pattern
  * CN-YYYY-NNNNNN for sequential audit trails.
- *
- * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
  */
 #[Api(since: '1.0.0')]
 final readonly class CreditNote
@@ -122,7 +120,7 @@ final readonly class CreditNote
      * Issue the credit note, making it official.
      */
     #[NoDiscard]
-    public function issue(): self
+    public function issue(): static
     {
         return clone($this, [
             'status' => CreditNoteStatus::Issued,
@@ -134,7 +132,7 @@ final readonly class CreditNote
      * Mark the credit note as applied to the customer's balance.
      */
     #[NoDiscard]
-    public function apply(): self
+    public function apply(): static
     {
         return clone($this, [
             'status' => CreditNoteStatus::Applied,

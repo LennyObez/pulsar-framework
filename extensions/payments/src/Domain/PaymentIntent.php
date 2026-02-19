@@ -32,11 +32,9 @@ final readonly class PaymentIntent
      * Transition to a new status, validating the state machine.
      *
      * @throws PaymentException If the transition is invalid
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function transitionTo(PaymentIntentStatus $newStatus): self
+    public function transitionTo(PaymentIntentStatus $newStatus): static
     {
         if (!$this->status->canTransitionTo($newStatus)) {
             throw PaymentException::invalidTransition(

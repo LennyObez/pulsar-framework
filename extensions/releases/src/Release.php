@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Releases;
 
 use DateTimeImmutable;
+use NoDiscard;
 use Pulsar\Api\Api;
 
 use function bin2hex;
@@ -73,10 +74,9 @@ final readonly class Release
 
     /**
      * Mark this release as stable.
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
-    public function markStable(): self
+    #[NoDiscard]
+    public function markStable(): static
     {
         return clone($this, [
             'isStable' => true,

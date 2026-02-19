@@ -74,11 +74,9 @@ final readonly class Payment
      * Transition to a new status, validating the state machine.
      *
      * @throws PaymentException If the transition is invalid
-     *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement
      */
     #[NoDiscard]
-    public function transitionTo(PaymentStatus $newStatus, ?string $failureReason = null): self
+    public function transitionTo(PaymentStatus $newStatus, ?string $failureReason = null): static
     {
         if (!$this->status->canTransitionTo($newStatus)) {
             throw PaymentException::invalidTransition(
