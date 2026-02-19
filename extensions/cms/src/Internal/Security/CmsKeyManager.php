@@ -71,4 +71,19 @@ final readonly class CmsKeyManager
     {
         return $this->masterKey->deriveSubKey(14, 'cms_evid');
     }
+
+    /**
+     * Derive the API-key HMAC pepper.
+     *
+     * Used by CmsApiKeyMiddleware to compute the storage hash of incoming
+     * API keys. Domain-separated from every other CMS subkey via a unique
+     * SubkeyID + 8-byte context, so leaking the API key digest cannot
+     * cross-contaminate preview tokens, media URLs, etc.
+     *
+     * SubkeyID: 15, Context: 'cms_apik'
+     */
+    public function apiKeyHashKey(): string
+    {
+        return $this->masterKey->deriveSubKey(15, 'cms_apik');
+    }
 }
