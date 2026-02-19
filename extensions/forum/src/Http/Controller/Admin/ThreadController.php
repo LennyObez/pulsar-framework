@@ -190,7 +190,8 @@ final readonly class ThreadController
         $this->authorize($identity, 'forum.admin.threads.delete');
 
         try {
-            $this->forumService->deleteThread($id, $identity->id());
+            // Admin endpoint: bypass the author check (MED-4).
+            $this->forumService->deleteThread($id, $identity->id(), isModerator: true);
 
             return Response::json(['data' => ['id' => $id, 'status' => 'deleted']]);
         } catch (ForumException $e) {

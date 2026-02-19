@@ -218,12 +218,24 @@ final readonly class ForumService implements ForumServiceInterface
         return $post;
     }
 
-    public function deletePost(string $postId, string $deletedBy = ''): void
+    public function deletePost(string $postId, string $deletedBy, bool $isModerator = false): void
     {
         $post = $this->posts->findById($postId);
 
         if ($post === null) {
             throw ForumException::notFound('Post', $postId);
+        }
+
+        // MED-4 (2026-04-09): only the original author or a moderator
+        // may delete a post. The previous default-empty $deletedBy
+        // signature let any caller delete any post by omitting the
+        // argument, which masked privilege escalation in HTTP handlers.
+        if ($deletedBy === '') {
+            throw ForumException::unauthorized('delete post without identifying actor');
+        }
+
+        if ($deletedBy !== $post->authorId && !$isModerator) {
+            throw ForumException::unauthorized('delete post by non-author');
         }
 
         $this->posts->delete($post);
@@ -237,17 +249,26 @@ final readonly class ForumService implements ForumServiceInterface
         $this->events->dispatch(new PostDeleted(
             postId: $post->id,
             threadId: $post->threadId,
-            deletedBy: $deletedBy !== '' ? $deletedBy : $post->authorId,
+            deletedBy: $deletedBy,
             tenantId: $post->tenantId,
         ));
     }
 
-    public function deleteThread(string $threadId, string $deletedBy = ''): void
+    public function deleteThread(string $threadId, string $deletedBy, bool $isModerator = false): void
     {
         $thread = $this->threads->findById($threadId);
 
         if ($thread === null) {
             throw ForumException::notFound('Thread', $threadId);
+        }
+
+        // MED-4 sister fix: same author/moderator gate as deletePost.
+        if ($deletedBy === '') {
+            throw ForumException::unauthorized('delete thread without identifying actor');
+        }
+
+        if ($deletedBy !== $thread->authorId && !$isModerator) {
+            throw ForumException::unauthorized('delete thread by non-author');
         }
 
         $this->threads->delete($thread);
@@ -257,7 +278,7 @@ final readonly class ForumService implements ForumServiceInterface
 
         $this->events->dispatch(new ThreadDeleted(
             threadId: $thread->id,
-            deletedBy: $deletedBy !== '' ? $deletedBy : $thread->authorId,
+            deletedBy: $deletedBy,
             tenantId: $thread->tenantId,
         ));
     }

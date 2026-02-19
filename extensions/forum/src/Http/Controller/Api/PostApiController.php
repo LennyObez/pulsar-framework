@@ -183,7 +183,10 @@ final readonly class PostApiController
         }
 
         try {
-            $this->forumService->deletePost($id, $identity->id());
+            // The controller already validated $isOwner || $isModerator
+            // above, so forward the moderator flag to the service for
+            // its own author-check (defense in depth, MED-4).
+            $this->forumService->deletePost($id, $identity->id(), $isModerator);
 
             return Response::json(['data' => ['id' => $id, 'status' => 'deleted']]);
         } catch (ForumException $e) {
