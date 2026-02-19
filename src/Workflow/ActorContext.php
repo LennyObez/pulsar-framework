@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Workflow;
 
-use InvalidArgumentException;
 use Pulsar\Api\Api;
+use Pulsar\Workflow\Exception\WorkflowException;
 
 /**
  * Structured context identifying the actor performing a workflow transition.
@@ -23,7 +23,7 @@ final readonly class ActorContext
         public ?string $claimsSnapshotId = null,
     ) {
         if ($subjectId === '') {
-            throw new InvalidArgumentException('ActorContext subjectId must not be empty');
+            throw WorkflowException::emptyActorSubject();
         }
     }
 }

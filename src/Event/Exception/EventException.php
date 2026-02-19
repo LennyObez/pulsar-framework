@@ -77,4 +77,13 @@ final class EventException extends RuntimeException
             $reason,
         ));
     }
+
+    /**
+     * Required envelope field is missing or empty.
+     */
+    #[NoDiscard]
+    public static function missingEnvelopeField(string $field): self
+    {
+        return new self(sprintf('EventEnvelope requires non-empty %s', $field));
+    }
 }

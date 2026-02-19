@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Grpc\Manifest;
 
 use Pulsar\Api\Internal;
+use Pulsar\Extension\Grpc\Exception\GrpcException;
 use Pulsar\Extension\Grpc\Handler\ServiceHandlerInterface;
 use Pulsar\Extension\Grpc\Server\ServiceRegistryInterface;
-use RuntimeException;
 
 use function array_map;
 use function date;
@@ -15,7 +15,6 @@ use function dirname;
 use function file_put_contents;
 use function is_dir;
 use function mkdir;
-use function sprintf;
 
 /**
  * Compiles a service manifest from the service registry.
@@ -76,14 +75,14 @@ final class ManifestCompiler
         $dir = dirname($outputPath);
 
         if (!is_dir($dir) && !mkdir($dir, 0o755, true)) {
-            throw new RuntimeException(sprintf('Cannot create directory: %s', $dir));
+            throw GrpcException::cannotCreateDirectory($dir);
         }
 
         $content = $manifest->toPhpArray();
         $written = file_put_contents($outputPath, $content);
 
         if ($written === false) {
-            throw new RuntimeException(sprintf('Failed to write manifest to: %s', $outputPath));
+            throw GrpcException::failedToWriteManifest($outputPath);
         }
     }
 }

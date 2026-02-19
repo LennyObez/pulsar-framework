@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Grpc\Codegen;
 
 use Pulsar\Api\Internal;
-use RuntimeException;
+use Pulsar\Extension\Grpc\Exception\GrpcException;
 
 use function file_put_contents;
 use function implode;
@@ -150,7 +150,7 @@ final readonly class ServiceHandlerGenerator
         $filePath = $outputDir . '/' . $className . '.php';
 
         if (!is_dir($outputDir) && !mkdir($outputDir, 0o755, true)) {
-            throw new RuntimeException(sprintf('Cannot create output directory: %s', $outputDir));
+            throw GrpcException::cannotCreateOutputDirectory($outputDir);
         }
 
         $methodStubs = $this->generateMethodStubs($service->methods);
