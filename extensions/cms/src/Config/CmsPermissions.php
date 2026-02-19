@@ -72,6 +72,11 @@ final class CmsPermissions
     ];
 
     /** @var list<string> */
+    private const array ANALYTICS_PERMISSIONS = [
+        'cms.search.view_analytics',
+    ];
+
+    /** @var list<string> */
     private const array ADMIN_PERMISSIONS = [
         'cms.content.manage_fields',
         'cms.themes.view',
@@ -134,6 +139,11 @@ final class CmsPermissions
             ...self::SHOP_MANAGER_PERMISSIONS,
         ]));
 
+        $registry->register(self::buildRole('cms.analytics_viewer', [
+            ...self::VIEWER_PERMISSIONS,
+            ...self::ANALYTICS_PERMISSIONS,
+        ]));
+
         $registry->register(self::buildRole('cms.admin', [
             ...self::VIEWER_PERMISSIONS,
             ...self::CONTRIBUTOR_PERMISSIONS,
@@ -142,6 +152,7 @@ final class CmsPermissions
             ...self::MEDIA_MANAGER_PERMISSIONS,
             ...self::SEO_MANAGER_PERMISSIONS,
             ...self::SHOP_MANAGER_PERMISSIONS,
+            ...self::ANALYTICS_PERMISSIONS,
             ...self::ADMIN_PERMISSIONS,
         ]));
     }

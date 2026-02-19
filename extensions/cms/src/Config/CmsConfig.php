@@ -25,6 +25,8 @@ final readonly class CmsConfig
      * @param bool $atomicSnapshots Enable all-locale atomic content snapshots on publish
      * @param int $maxHierarchyDepth Maximum page nesting depth (cycle detection)
      * @param CmsCacheConfig $cache Caching configuration
+     * @param MediaConfig $media Media upload and processing configuration
+     * @param CommentsConfig $comments Comments system configuration
      */
     public function __construct(
         public string $defaultLocale = 'en',
@@ -35,6 +37,8 @@ final readonly class CmsConfig
         public bool $atomicSnapshots = false,
         public int $maxHierarchyDepth = 10,
         public CmsCacheConfig $cache = new CmsCacheConfig(),
+        public MediaConfig $media = new MediaConfig(),
+        public CommentsConfig $comments = new CommentsConfig(),
     ) {}
 
     /**
@@ -51,6 +55,8 @@ final readonly class CmsConfig
             atomicSnapshots: (bool) ($data['atomic_snapshots'] ?? false),
             maxHierarchyDepth: (int) ($data['max_hierarchy_depth'] ?? 10),
             cache: CmsCacheConfig::fromArray((array) ($data['cache'] ?? [])),
+            media: MediaConfig::fromArray((array) ($data['media'] ?? [])),
+            comments: CommentsConfig::fromArray((array) ($data['comments'] ?? [])),
         );
     }
 }

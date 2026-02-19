@@ -4,21 +4,31 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Cms;
 
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Auth\Authorization\RoleRegistryInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
+use Pulsar\Extension\Cms\Comments\CommentBodyPolicy;
+use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
+use Pulsar\Extension\Cms\Comments\CommentService;
+use Pulsar\Extension\Cms\Comments\CommentServiceInterface;
+use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Config\CmsPermissions;
 use Pulsar\Extension\Cms\Content\ContentBlockRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentRevisionRepositoryInterface;
 use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
+use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\EventStore\ContentEventStoreInterface;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotServiceInterface;
 use Pulsar\Extension\Cms\FieldRegistry\ContentTypeRegistryInterface;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
+use Pulsar\Extension\Cms\Internal\Persistence\DbCommentRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentBlockRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentEventRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentLockRepository;
@@ -28,12 +38,28 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbContentSnapshotRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentTranslationRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbEditorialReviewRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbFieldRegistryRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbMediaRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbMenuRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbRedirectRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbSearchAnalyticsRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbSettingsRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbTaxonomyRepository;
+use Pulsar\Extension\Cms\Internal\Search\SearchService;
+use Pulsar\Extension\Cms\Media\ImageProcessor;
+use Pulsar\Extension\Cms\Media\ImageProcessorInterface;
+use Pulsar\Extension\Cms\Media\LocalDisk;
+use Pulsar\Extension\Cms\Media\MediaDiskInterface;
+use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
+use Pulsar\Extension\Cms\Media\MediaService;
+use Pulsar\Extension\Cms\Media\MediaServiceInterface;
+use Pulsar\Extension\Cms\Media\Security\FilenameSanitizer;
+use Pulsar\Extension\Cms\Media\Security\FileValidator;
+use Pulsar\Extension\Cms\Media\Security\PdfValidator;
+use Pulsar\Extension\Cms\Media\Security\SvgSanitizer;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
+use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
+use Pulsar\Extension\Cms\Search\SearchServiceInterface;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
@@ -75,6 +101,14 @@ final class CmsServiceProvider implements ServiceProviderInterface
             EditorialWorkflowServiceInterface::class,
             BreadcrumbGeneratorInterface::class,
             ContentTypeRegistryInterface::class,
+            MediaRepositoryInterface::class,
+            MediaServiceInterface::class,
+            MediaDiskInterface::class,
+            ImageProcessorInterface::class,
+            CommentRepositoryInterface::class,
+            CommentServiceInterface::class,
+            SearchServiceInterface::class,
+            SearchAnalyticsRepositoryInterface::class,
         ];
     }
 
@@ -151,6 +185,20 @@ final class CmsServiceProvider implements ServiceProviderInterface
             DbContentLockRepository::class,
             new DbContentLockRepository($connection),
         );
+
+        $container->instance(
+            MediaRepositoryInterface::class,
+            new DbMediaRepository($connection),
+        );
+
+        $container->instance(
+            CommentRepositoryInterface::class,
+            new DbCommentRepository($connection),
+        );
+
+        $analyticsRepo = new DbSearchAnalyticsRepository($connection);
+        $container->instance(SearchAnalyticsRepositoryInterface::class, $analyticsRepo);
+        $container->instance(DbSearchAnalyticsRepository::class, $analyticsRepo);
     }
 
     private function bindServices(ContainerInterface $container): void
@@ -162,18 +210,96 @@ final class CmsServiceProvider implements ServiceProviderInterface
         /** @var ConnectionInterface $connection */
         $connection = $container->get(ConnectionInterface::class);
 
-        // SettingsServiceInterface needs explicit binding because it takes
-        // a ConnectionInterface and AuditLoggerInterface — not auto-wirable
-        // due to the optional $tenantId constructor parameter.
-        if ($container->has(\Pulsar\Audit\AuditLoggerInterface::class)) {
-            /** @var \Pulsar\Audit\AuditLoggerInterface $auditLogger */
-            $auditLogger = $container->get(\Pulsar\Audit\AuditLoggerInterface::class);
+        /** @var CmsConfig $config */
+        $config = $container->has(CmsConfig::class)
+            ? $container->get(CmsConfig::class)
+            : new CmsConfig();
 
+        /** @var AuditLoggerInterface|null $auditLogger */
+        $auditLogger = $container->has(AuditLoggerInterface::class)
+            ? $container->get(AuditLoggerInterface::class)
+            : null;
+
+        /** @var LoggerInterface $logger */
+        $logger = $container->has(LoggerInterface::class)
+            ? $container->get(LoggerInterface::class)
+            : new NullLogger();
+
+        // Settings service
+        if ($auditLogger !== null) {
             $container->instance(
                 SettingsServiceInterface::class,
                 new \Pulsar\Extension\Cms\Settings\SettingsService($connection, $auditLogger),
             );
         }
+
+        // Media stack
+        $disk = new LocalDisk($config->media->storagePath);
+        $container->instance(MediaDiskInterface::class, $disk);
+
+        $imageProcessor = new ImageProcessor($config->media);
+        $container->instance(ImageProcessorInterface::class, $imageProcessor);
+
+        $fileValidator = new FileValidator($config->media);
+        $filenameSanitizer = new FilenameSanitizer();
+        $svgSanitizer = new SvgSanitizer();
+        $pdfValidator = new PdfValidator();
+
+        /** @var MediaRepositoryInterface $mediaRepository */
+        $mediaRepository = $container->get(MediaRepositoryInterface::class);
+
+        $container->instance(
+            MediaServiceInterface::class,
+            new MediaService(
+                $config->media,
+                $mediaRepository,
+                $disk,
+                $imageProcessor,
+                $fileValidator,
+                $filenameSanitizer,
+                $svgSanitizer,
+                $pdfValidator,
+                $logger,
+            ),
+        );
+
+        // Comment stack
+        /** @var CommentRepositoryInterface $commentRepository */
+        $commentRepository = $container->get(CommentRepositoryInterface::class);
+
+        /** @var ContentRepositoryInterface $contentRepository */
+        $contentRepository = $container->get(ContentRepositoryInterface::class);
+
+        /** @var SafeHtmlPolicy $safeHtmlPolicy */
+        $safeHtmlPolicy = $container->has(SafeHtmlPolicy::class)
+            ? $container->get(SafeHtmlPolicy::class)
+            : new SafeHtmlPolicy();
+
+        $commentBodyPolicy = new CommentBodyPolicy($safeHtmlPolicy);
+
+        if ($auditLogger !== null) {
+            $container->instance(
+                CommentServiceInterface::class,
+                new CommentService(
+                    $commentRepository,
+                    $contentRepository,
+                    $commentBodyPolicy,
+                    $auditLogger,
+                ),
+            );
+        }
+
+        // Search stack
+        /** @var SearchAnalyticsRepositoryInterface $analyticsRepository */
+        $analyticsRepository = $container->get(SearchAnalyticsRepositoryInterface::class);
+
+        /** @var string|null $tenantId */
+        $tenantId = null;
+
+        $container->instance(
+            SearchServiceInterface::class,
+            new SearchService($connection, $analyticsRepository, $tenantId),
+        );
     }
 
     private function registerPermissions(ContainerInterface $container): void

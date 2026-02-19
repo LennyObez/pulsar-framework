@@ -58,6 +58,36 @@
             </li>
         @endcan
 
+        @can('cms.media.view')
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/media" class="cms-sidebar__link @if (($activeSection ?? '') === 'media') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#128247;</span>
+                    Media
+                </a>
+            </li>
+        @endcan
+
+        @can('cms.comments.view')
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/comments" class="cms-sidebar__link @if (($activeSection ?? '') === 'comments') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#128172;</span>
+                    Comments
+                    @if (($pendingCommentCount ?? 0) > 0)
+                        <span class="cms-sidebar__badge">{{ $pendingCommentCount }}</span>
+                    @endif
+                </a>
+            </li>
+        @endcan
+
+        @can('cms.search.view_analytics')
+            <li class="cms-sidebar__item">
+                <a href="/admin/cms/search-analytics" class="cms-sidebar__link @if (($activeSection ?? '') === 'search-analytics') cms-sidebar__link--active @endif">
+                    <span class="cms-sidebar__icon" aria-hidden="true">&#128269;</span>
+                    Search Analytics
+                </a>
+            </li>
+        @endcan
+
         @can('cms.settings.view')
             <li class="cms-sidebar__item">
                 <a href="/admin/cms/settings/general" class="cms-sidebar__link @if (($activeSection ?? '') === 'settings') cms-sidebar__link--active @endif">
