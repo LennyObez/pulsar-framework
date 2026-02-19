@@ -1869,6 +1869,7 @@ deptrac:
       - Audit
       - Event
       - Security
+      - Http
 
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps

@@ -244,7 +244,7 @@
     try {
       document.execCommand('copy');
       showCopyFeedback(btn, 'Copied!');
-    } catch (_e) {
+    } catch {
       showCopyFeedback(btn, 'Failed');
     }
 

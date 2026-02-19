@@ -283,8 +283,8 @@ final class PermissionMatrixTest extends TestCase
         self::assertTrue($admin->hasPermission('cms.plugins.manage'));
         self::assertTrue($admin->hasPermission('cms.settings.manage'));
         self::assertTrue($admin->hasPermission('cms.users.manage'));
-        self::assertTrue($admin->hasPermission('cms.tools.export'));
-        self::assertTrue($admin->hasPermission('cms.tools.import'));
+        self::assertTrue($admin->hasPermission('cms.export'));
+        self::assertTrue($admin->hasPermission('cms.import'));
         self::assertTrue($admin->hasPermission('cms.orders.manage'));
         self::assertTrue($admin->hasPermission('cms.search.view_analytics'));
         self::assertTrue($admin->hasPermission('cms.livecss.edit'));
@@ -321,7 +321,7 @@ final class PermissionMatrixTest extends TestCase
         $shopManager = $this->roles['cms.shop_manager'];
 
         self::assertTrue($shopManager->hasPermission('cms.orders.manage'));
-        self::assertTrue($shopManager->hasPermission('cms.products.manage'));
+        self::assertTrue($shopManager->hasPermission('cms.products.edit'));
         self::assertFalse($shopManager->hasPermission('cms.content.create'));
         self::assertFalse($shopManager->hasPermission('cms.content.publish'));
         self::assertFalse($shopManager->hasPermission('cms.themes.install'));

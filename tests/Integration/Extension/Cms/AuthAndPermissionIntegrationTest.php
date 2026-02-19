@@ -237,7 +237,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
         self::assertTrue($shop->hasPermission('cms.orders.manage'));
         self::assertTrue($shop->hasPermission('cms.orders.refund'));
         self::assertTrue($shop->hasPermission('cms.products.view'));
-        self::assertTrue($shop->hasPermission('cms.products.manage'));
+        self::assertTrue($shop->hasPermission('cms.products.edit'));
 
         self::assertFalse($shop->hasPermission('cms.content.publish'));
         self::assertFalse($shop->hasPermission('cms.users.manage'));

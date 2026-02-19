@@ -214,6 +214,10 @@ final readonly class SafeHtmlPolicy
         // Remove BiDi control characters: U+202A–U+202E, U+2066–U+2069
         $html = preg_replace('/[\x{202A}-\x{202E}\x{2066}-\x{2069}]/u', '', $html) ?? $html;
 
+        // Strip CDATA markers — not valid in HTML (only XML/XHTML); remove before DOM parsing
+        // so they cannot be reinterpreted as bogus comments by libxml
+        $html = str_replace(['<![CDATA[', ']]>'], '', $html);
+
         // Note: entity decoding is NOT applied to the full input here — doing so would
         // convert escaped markup (e.g. &lt;script&gt;) into live elements before DOM parsing.
         // Entity-encoded javascript: bypasses in URL attributes are handled in decodeUrl()

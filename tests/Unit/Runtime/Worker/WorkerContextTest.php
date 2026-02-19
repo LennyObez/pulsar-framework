@@ -196,7 +196,7 @@ final class WorkerContextTest extends TestCase
     public function it_recycles_when_max_requests_exceeded(): void
     {
         $ctx = new WorkerContext(RuntimeType::Persistent);
-        $config = new RuntimeConfig(maxRequests: 2);
+        $config = new RuntimeConfig(maxRequests: 2, memoryThresholdMb: 0, timeLimitSeconds: 0);
 
         $ctx->boot();
         $ctx->ready();

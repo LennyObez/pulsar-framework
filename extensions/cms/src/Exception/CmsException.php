@@ -248,6 +248,26 @@ class CmsException extends RuntimeException
         return new self("SSRF protection blocked request to {$url}: {$reason}");
     }
 
+    public static function backupNotFound(string $id): self
+    {
+        return new self("Backup not found: {$id}");
+    }
+
+    public static function backupTampered(string $id): self
+    {
+        return new self("Backup integrity check failed — hash mismatch for backup: {$id}");
+    }
+
+    public static function importSizeLimitExceeded(int $size, int $maxSize): self
+    {
+        return new self("Import file size {$size} bytes exceeds maximum of {$maxSize} bytes");
+    }
+
+    public static function invalidImportFormat(string $reason): self
+    {
+        return new self("Invalid import format: {$reason}");
+    }
+
     public static function twoFactorAlreadyEnabled(string $userId): self
     {
         return new self("Two-factor authentication is already enabled for user: {$userId}");
@@ -271,5 +291,65 @@ class CmsException extends RuntimeException
     public static function invalidCmsRole(string $role): self
     {
         return new self("Invalid CMS role: {$role}");
+    }
+
+    public static function orderNotFound(string $id): self
+    {
+        return new self("Order not found: {$id}");
+    }
+
+    public static function productNotFound(string $id): self
+    {
+        return new self("Product not found: {$id}");
+    }
+
+    public static function invoiceNotFound(string $id): self
+    {
+        return new self("Invoice not found: {$id}");
+    }
+
+    public static function promotionNotFound(string $id): self
+    {
+        return new self("Promotion not found: {$id}");
+    }
+
+    public static function insufficientStock(string $productId, int $requested, int $available): self
+    {
+        return new self("Insufficient stock for product {$productId}: requested {$requested}, available {$available}");
+    }
+
+    public static function cartValidationFailed(string $reason): self
+    {
+        return new self("Cart validation failed: {$reason}");
+    }
+
+    public static function paymentFailed(string $orderId, string $reason): self
+    {
+        return new self("Payment failed for order {$orderId}: {$reason}");
+    }
+
+    public static function refundExceedsTotal(int $refundAmount, int $orderTotal): self
+    {
+        return new self("Refund amount {$refundAmount} exceeds order total {$orderTotal}");
+    }
+
+    public static function downloadExpired(string $downloadId): self
+    {
+        return new self("Download entitlement expired: {$downloadId}");
+    }
+
+    public static function downloadLimitReached(string $downloadId): self
+    {
+        return new self("Download limit reached for entitlement: {$downloadId}");
+    }
+
+    public static function invalidWebhookSignature(): self
+    {
+        return new self('Invalid webhook signature');
+    }
+
+    public static function invalidCouponCode(string $code): self
+    {
+        return new self("Invalid or expired coupon code: {$code}");
     }
 }

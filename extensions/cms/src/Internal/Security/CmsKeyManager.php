@@ -51,4 +51,24 @@ final readonly class CmsKeyManager
     {
         return $this->masterKey->deriveSubKey(12, 'cms_xprt');
     }
+
+    /**
+     * Derive the download token signing key (e.g., for digital download HMAC tokens).
+     *
+     * SubkeyID: 13, Context: 'cms_dwnl'
+     */
+    public function downloadKey(): string
+    {
+        return $this->masterKey->deriveSubKey(13, 'cms_dwnl');
+    }
+
+    /**
+     * Derive the export evidence hash key (e.g., for order export integrity).
+     *
+     * SubkeyID: 14, Context: 'cms_evid'
+     */
+    public function evidenceKey(): string
+    {
+        return $this->masterKey->deriveSubKey(14, 'cms_evid');
+    }
 }

@@ -17,20 +17,33 @@ use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\Event\CmsReady;
+use Pulsar\Extension\Cms\Http\Controller\Admin\BackupController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ContentController as AdminContentController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\DashboardController as AdminDashboardController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\DigitalAssetController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\ExportController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\FieldController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\ImportController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\InvoiceController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\LiveCssController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\MenuController as AdminMenuController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\OrderController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\PluginController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\ProductController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\PromotionController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ReviewController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\RevisionController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\SettingsController;
+use Pulsar\Extension\Cms\Http\Controller\Admin\SiteDefinitionController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\TaxonomyController as AdminTaxonomyController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ThemeController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\ToolsController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\TwoFactorController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\UserController;
+use Pulsar\Extension\Cms\Http\Controller\CheckoutController;
 use Pulsar\Extension\Cms\Http\Controller\ContentController;
+use Pulsar\Extension\Cms\Http\Controller\DigitalDownloadController;
+use Pulsar\Extension\Cms\Http\Controller\WebhookController;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGenerator;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
@@ -150,6 +163,21 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
     private function registerPublicRoutes(RouterInterface $router, CmsConfig $config): void
     {
+        // Commerce public routes
+        if ($config->commerce !== null) {
+            foreach ($config->supportedLocales as $locale) {
+                $router->get("/{$locale}/checkout", [CheckoutController::class, 'show'], "cms.checkout.show.{$locale}");
+                $router->post("/{$locale}/checkout", [CheckoutController::class, 'process'], "cms.checkout.process.{$locale}");
+                $router->get("/{$locale}/checkout/success", [CheckoutController::class, 'success'], "cms.checkout.success.{$locale}");
+            }
+
+            // Digital download (token-based, locale-independent)
+            $router->get('/download/{token}', [DigitalDownloadController::class, 'download'], 'cms.download');
+
+            // Payment webhook endpoint
+            $router->post('/webhooks/cms-payment', [WebhookController::class, 'handle'], 'cms.webhook.payment');
+        }
+
         // Public content rendering — catch-all route for locale-prefixed and default paths
         // Locale-aware routing: /{locale}/{path} or /{path} for default locale
         foreach ($config->supportedLocales as $locale) {
@@ -255,5 +283,62 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->post("{$prefix}/2fa/verify", [TwoFactorController::class, 'verify'], 'cms.admin.2fa.verify');
         $router->post("{$prefix}/2fa/disable", [TwoFactorController::class, 'disable'], 'cms.admin.2fa.disable');
         $router->post("{$prefix}/2fa/recovery-codes", [TwoFactorController::class, 'regenerateRecoveryCodes'], 'cms.admin.2fa.recovery_codes');
+
+        // Products (commerce)
+        $router->get("{$prefix}/products", [ProductController::class, 'index'], 'cms.admin.products.index');
+        $router->get("{$prefix}/products/create", [ProductController::class, 'create'], 'cms.admin.products.create');
+        $router->post("{$prefix}/products", [ProductController::class, 'store'], 'cms.admin.products.store');
+        $router->get("{$prefix}/products/{id}/edit", [ProductController::class, 'edit'], 'cms.admin.products.edit');
+        $router->put("{$prefix}/products/{id}", [ProductController::class, 'update'], 'cms.admin.products.update');
+        $router->delete("{$prefix}/products/{id}", [ProductController::class, 'delete'], 'cms.admin.products.delete');
+
+        // Orders (commerce)
+        $router->get("{$prefix}/orders", [OrderController::class, 'index'], 'cms.admin.orders.index');
+        $router->get("{$prefix}/orders/{id}", [OrderController::class, 'show'], 'cms.admin.orders.show');
+        $router->post("{$prefix}/orders/{id}/refund", [OrderController::class, 'refund'], 'cms.admin.orders.refund');
+        $router->get("{$prefix}/orders/export", [OrderController::class, 'export'], 'cms.admin.orders.export');
+
+        // Promotions (commerce)
+        $router->get("{$prefix}/promotions", [PromotionController::class, 'index'], 'cms.admin.promotions.index');
+        $router->get("{$prefix}/promotions/create", [PromotionController::class, 'create'], 'cms.admin.promotions.create');
+        $router->post("{$prefix}/promotions", [PromotionController::class, 'store'], 'cms.admin.promotions.store');
+        $router->get("{$prefix}/promotions/{id}/edit", [PromotionController::class, 'edit'], 'cms.admin.promotions.edit');
+        $router->put("{$prefix}/promotions/{id}", [PromotionController::class, 'update'], 'cms.admin.promotions.update');
+        $router->delete("{$prefix}/promotions/{id}", [PromotionController::class, 'delete'], 'cms.admin.promotions.delete');
+
+        // Digital assets (commerce)
+        $router->get("{$prefix}/digital-assets", [DigitalAssetController::class, 'index'], 'cms.admin.digital_assets.index');
+        $router->post("{$prefix}/digital-assets", [DigitalAssetController::class, 'upload'], 'cms.admin.digital_assets.upload');
+        $router->delete("{$prefix}/digital-assets/{id}", [DigitalAssetController::class, 'delete'], 'cms.admin.digital_assets.delete');
+
+        // Invoices (commerce)
+        $router->get("{$prefix}/invoices/{id}", [InvoiceController::class, 'show'], 'cms.admin.invoices.show');
+        $router->get("{$prefix}/invoices/{id}/download", [InvoiceController::class, 'download'], 'cms.admin.invoices.download');
+
+        // Live CSS editor
+        $router->get("{$prefix}/live-css", [LiveCssController::class, 'editor'], 'cms.admin.livecss.editor');
+        $router->post("{$prefix}/live-css", [LiveCssController::class, 'save'], 'cms.admin.livecss.save');
+        $router->post("{$prefix}/live-css/{id}/rollback", [LiveCssController::class, 'rollback'], 'cms.admin.livecss.rollback');
+        $router->get("{$prefix}/live-css/history", [LiveCssController::class, 'history'], 'cms.admin.livecss.history');
+
+        // Export
+        $router->get("{$prefix}/export", [ExportController::class, 'form'], 'cms.admin.export.form');
+        $router->post("{$prefix}/export/download", [ExportController::class, 'download'], 'cms.admin.export.download');
+
+        // Import
+        $router->get("{$prefix}/import", [ImportController::class, 'form'], 'cms.admin.import.form');
+        $router->post("{$prefix}/import/dry-run", [ImportController::class, 'dryRun'], 'cms.admin.import.dry_run');
+        $router->post("{$prefix}/import/execute", [ImportController::class, 'execute'], 'cms.admin.import.execute');
+
+        // Site definition import
+        $router->get("{$prefix}/site-import", [SiteDefinitionController::class, 'form'], 'cms.admin.site_import.form');
+        $router->post("{$prefix}/site-import/dry-run", [SiteDefinitionController::class, 'dryRun'], 'cms.admin.site_import.dry_run');
+        $router->post("{$prefix}/site-import/execute", [SiteDefinitionController::class, 'execute'], 'cms.admin.site_import.execute');
+
+        // Backups
+        $router->get("{$prefix}/backups", [BackupController::class, 'index'], 'cms.admin.backups.index');
+        $router->post("{$prefix}/backups", [BackupController::class, 'create'], 'cms.admin.backups.create');
+        $router->post("{$prefix}/backups/{id}/restore", [BackupController::class, 'restore'], 'cms.admin.backups.restore');
+        $router->delete("{$prefix}/backups/{id}", [BackupController::class, 'delete'], 'cms.admin.backups.delete');
     }
 }

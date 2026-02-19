@@ -36,7 +36,7 @@ export default tseslint.config(
   },
   {
     files: ['**/*.js'],
-    ignores: ['resources/**/*.js'],
+    ignores: ['resources/**/*.js', 'extensions/**/resources/**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
@@ -50,7 +50,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['resources/**/*.js'],
+    files: ['resources/**/*.js', 'extensions/**/resources/**/*.js'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'script',

@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Cms\Config;
 
 use Pulsar\Api\Api;
+use Pulsar\Extension\Cms\Commerce\CommerceConfig;
+use Pulsar\Extension\Cms\LiveCss\LiveCssConfig;
+use Pulsar\Extension\Cms\Tools\ImportConfig;
 
 /**
  * Top-level CMS configuration DTO.
@@ -30,6 +33,9 @@ final readonly class CmsConfig
      * @param SeoConfig $seo SEO and link health configuration
      * @param ThemesConfig $themes Theme system configuration
      * @param CmsSecurityConfig $security CMS security configuration
+     * @param CommerceConfig|null $commerce Commerce subsystem configuration (null = disabled)
+     * @param LiveCssConfig $liveCss Live CSS editor configuration
+     * @param ImportConfig $import Import/export configuration
      */
     public function __construct(
         public string $defaultLocale = 'en',
@@ -45,6 +51,9 @@ final readonly class CmsConfig
         public SeoConfig $seo = new SeoConfig(),
         public ThemesConfig $themes = new ThemesConfig(),
         public CmsSecurityConfig $security = new CmsSecurityConfig(),
+        public ?CommerceConfig $commerce = null,
+        public LiveCssConfig $liveCss = new LiveCssConfig(),
+        public ImportConfig $import = new ImportConfig(),
     ) {}
 
     /**
@@ -66,6 +75,9 @@ final readonly class CmsConfig
             seo: SeoConfig::fromArray((array) ($data['seo'] ?? [])),
             themes: ThemesConfig::fromArray((array) ($data['themes'] ?? [])),
             security: CmsSecurityConfig::fromArray((array) ($data['security'] ?? [])),
+            commerce: isset($data['commerce']) ? CommerceConfig::fromArray((array) $data['commerce']) : null,
+            liveCss: LiveCssConfig::fromArray((array) ($data['live_css'] ?? [])),
+            import: ImportConfig::fromArray((array) ($data['import'] ?? [])),
         );
     }
 }

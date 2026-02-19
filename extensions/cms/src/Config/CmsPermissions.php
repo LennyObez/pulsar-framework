@@ -64,11 +64,19 @@ final class CmsPermissions
 
     /** @var list<string> */
     private const array SHOP_MANAGER_PERMISSIONS = [
+        'cms.products.view',
+        'cms.products.create',
+        'cms.products.edit',
+        'cms.products.delete',
         'cms.orders.view',
         'cms.orders.manage',
         'cms.orders.refund',
-        'cms.products.view',
-        'cms.products.manage',
+        'cms.orders.export',
+        'cms.promotions.view',
+        'cms.promotions.manage',
+        'cms.invoices.view',
+        'cms.invoices.download',
+        'cms.digital_assets.manage',
     ];
 
     /** @var list<string> */
@@ -91,12 +99,13 @@ final class CmsPermissions
         'cms.settings.manage',
         'cms.users.view',
         'cms.users.manage',
-        'cms.tools.export',
-        'cms.tools.import',
-        'cms.tools.backup',
-        'cms.tools.restore',
+        'cms.export',
+        'cms.import',
+        'cms.backup.create',
+        'cms.backup.restore',
         'cms.livecss.view',
         'cms.livecss.edit',
+        'cms.livecss.rollback',
     ];
 
     /**

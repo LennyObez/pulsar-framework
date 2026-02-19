@@ -17,6 +17,22 @@ use Pulsar\Extension\Cms\Comments\CommentBodyPolicy;
 use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
 use Pulsar\Extension\Cms\Comments\CommentService;
 use Pulsar\Extension\Cms\Comments\CommentServiceInterface;
+use Pulsar\Extension\Cms\Commerce\CheckoutServiceInterface;
+use Pulsar\Extension\Cms\Commerce\CommerceConfig;
+use Pulsar\Extension\Cms\Commerce\CouponRepositoryInterface;
+use Pulsar\Extension\Cms\Commerce\DigitalAssetRepositoryInterface;
+use Pulsar\Extension\Cms\Commerce\DigitalDeliveryServiceInterface;
+use Pulsar\Extension\Cms\Commerce\InvoiceRendererInterface;
+use Pulsar\Extension\Cms\Commerce\InvoiceRepositoryInterface;
+use Pulsar\Extension\Cms\Commerce\InvoiceServiceInterface;
+use Pulsar\Extension\Cms\Commerce\OrderExportServiceInterface;
+use Pulsar\Extension\Cms\Commerce\OrderItemRepositoryInterface;
+use Pulsar\Extension\Cms\Commerce\OrderRepositoryInterface;
+use Pulsar\Extension\Cms\Commerce\PaymentGateway;
+use Pulsar\Extension\Cms\Commerce\ProductRepositoryInterface;
+use Pulsar\Extension\Cms\Commerce\PromotionRepositoryInterface;
+use Pulsar\Extension\Cms\Commerce\PromotionServiceInterface;
+use Pulsar\Extension\Cms\Commerce\TaxCalculatorInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Config\CmsPermissions;
 use Pulsar\Extension\Cms\Content\ContentBlockRepositoryInterface;
@@ -29,6 +45,18 @@ use Pulsar\Extension\Cms\EventStore\ContentEventStoreInterface;
 use Pulsar\Extension\Cms\EventStore\ContentSnapshotServiceInterface;
 use Pulsar\Extension\Cms\FieldRegistry\ContentTypeRegistryInterface;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
+use Pulsar\Extension\Cms\Internal\Commerce\CheckoutService;
+use Pulsar\Extension\Cms\Internal\Commerce\DigitalDeliveryService;
+use Pulsar\Extension\Cms\Internal\Commerce\HtmlInvoiceRenderer;
+use Pulsar\Extension\Cms\Internal\Commerce\InvoiceService;
+use Pulsar\Extension\Cms\Internal\Commerce\OrderService;
+use Pulsar\Extension\Cms\Internal\Commerce\PromotionEngine;
+use Pulsar\Extension\Cms\Internal\Commerce\TaxCalculator;
+use Pulsar\Extension\Cms\Internal\Commerce\WebhookHandler;
+use Pulsar\Extension\Cms\Internal\LiveCss\CspHashComputer;
+use Pulsar\Extension\Cms\Internal\LiveCss\CssValidator;
+use Pulsar\Extension\Cms\Internal\LiveCss\LiveCssService;
+use Pulsar\Extension\Cms\Internal\LiveCss\ThemeTokenResolver;
 use Pulsar\Extension\Cms\Internal\Persistence\DbCmsPluginRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbCmsUserRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbCommentRepository;
@@ -39,11 +67,19 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbContentRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentRevisionRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentSnapshotRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbContentTranslationRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbCouponRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbCssOverrideRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbDigitalAssetRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbEditorialReviewRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbFieldRegistryRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbInvoiceRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbLinkHealthRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbMediaRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbMenuRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbOrderItemRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbOrderRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbProductRepository;
+use Pulsar\Extension\Cms\Internal\Persistence\DbPromotionRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbRedirectRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbSearchAnalyticsRepository;
 use Pulsar\Extension\Cms\Internal\Persistence\DbSettingsRepository;
@@ -71,7 +107,18 @@ use Pulsar\Extension\Cms\Internal\Themes\ThemeAssetResolver;
 use Pulsar\Extension\Cms\Internal\Themes\ThemeManager;
 use Pulsar\Extension\Cms\Internal\Themes\ThemeManifestValidator;
 use Pulsar\Extension\Cms\Internal\Themes\ThemeProvenanceVerifier;
+use Pulsar\Extension\Cms\Internal\Tools\BackupService;
+use Pulsar\Extension\Cms\Internal\Tools\ExportBundleGenerator;
+use Pulsar\Extension\Cms\Internal\Tools\ImportExportService;
+use Pulsar\Extension\Cms\Internal\Tools\ImportParser;
+use Pulsar\Extension\Cms\Internal\Tools\OrderExportService;
+use Pulsar\Extension\Cms\Internal\Tools\SiteDefinitionParser;
 use Pulsar\Extension\Cms\Internal\Tools\ToolsService;
+use Pulsar\Extension\Cms\LiveCss\CspHashComputerInterface;
+use Pulsar\Extension\Cms\LiveCss\CssOverrideRepositoryInterface;
+use Pulsar\Extension\Cms\LiveCss\CssValidatorInterface;
+use Pulsar\Extension\Cms\LiveCss\LiveCssServiceInterface;
+use Pulsar\Extension\Cms\LiveCss\ThemeTokenResolverInterface;
 use Pulsar\Extension\Cms\Media\ImageProcessor;
 use Pulsar\Extension\Cms\Media\ImageProcessorInterface;
 use Pulsar\Extension\Cms\Media\LocalDisk;
@@ -108,6 +155,8 @@ use Pulsar\Extension\Cms\Themes\ThemeManagerInterface;
 use Pulsar\Extension\Cms\Themes\ThemeManifestValidatorInterface;
 use Pulsar\Extension\Cms\Themes\ThemeProvenanceVerifierInterface;
 use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
+use Pulsar\Extension\Cms\Tools\BackupServiceInterface;
+use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
 use Pulsar\Extension\Cms\Tools\ToolsServiceInterface;
 use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
@@ -182,6 +231,28 @@ final class CmsServiceProvider implements ServiceProviderInterface
             CmsUserRepositoryInterface::class,
             // Tools
             ToolsServiceInterface::class,
+            ImportExportServiceInterface::class,
+            BackupServiceInterface::class,
+            // Live CSS
+            CssOverrideRepositoryInterface::class,
+            CssValidatorInterface::class,
+            CspHashComputerInterface::class,
+            ThemeTokenResolverInterface::class,
+            LiveCssServiceInterface::class,
+            // Commerce (conditional)
+            ProductRepositoryInterface::class,
+            OrderRepositoryInterface::class,
+            OrderItemRepositoryInterface::class,
+            PromotionRepositoryInterface::class,
+            DigitalAssetRepositoryInterface::class,
+            InvoiceRepositoryInterface::class,
+            CouponRepositoryInterface::class,
+            CheckoutServiceInterface::class,
+            InvoiceServiceInterface::class,
+            TaxCalculatorInterface::class,
+            DigitalDeliveryServiceInterface::class,
+            PromotionServiceInterface::class,
+            OrderExportServiceInterface::class,
             // Security
             SafeHttpClient::class,
             ClientFingerprintResolver::class,
@@ -296,6 +367,48 @@ final class CmsServiceProvider implements ServiceProviderInterface
         $container->instance(
             CmsUserRepositoryInterface::class,
             new DbCmsUserRepository($connection),
+        );
+
+        // Live CSS repository
+        $container->instance(
+            CssOverrideRepositoryInterface::class,
+            new DbCssOverrideRepository($connection),
+        );
+
+        // Commerce repositories
+        $container->instance(
+            ProductRepositoryInterface::class,
+            new DbProductRepository($connection),
+        );
+
+        $container->instance(
+            OrderRepositoryInterface::class,
+            new DbOrderRepository($connection),
+        );
+
+        $container->instance(
+            OrderItemRepositoryInterface::class,
+            new DbOrderItemRepository($connection),
+        );
+
+        $container->instance(
+            PromotionRepositoryInterface::class,
+            new DbPromotionRepository($connection),
+        );
+
+        $container->instance(
+            DigitalAssetRepositoryInterface::class,
+            new DbDigitalAssetRepository($connection),
+        );
+
+        $container->instance(
+            InvoiceRepositoryInterface::class,
+            new DbInvoiceRepository($connection),
+        );
+
+        $container->instance(
+            CouponRepositoryInterface::class,
+            new DbCouponRepository($connection),
         );
     }
 
@@ -530,7 +643,7 @@ final class CmsServiceProvider implements ServiceProviderInterface
             );
         }
 
-        // Tools stack
+        // Tools stack (GDPR)
         $container->instance(
             ToolsServiceInterface::class,
             new ToolsService($connection, $auditLogger),
@@ -557,6 +670,254 @@ final class CmsServiceProvider implements ServiceProviderInterface
                 ClientFingerprintResolver::class,
                 new ClientFingerprintResolver($securityConfig, $hmacKey),
             );
+        }
+
+        // Live CSS stack
+        $this->bindLiveCssServices($container, $themeRepository, $auditLogger);
+
+        // Import/Export/Backup stack
+        $this->bindImportExportServices(
+            $container,
+            $connection,
+            $config,
+            $contentRepository,
+            $translationRepository,
+            $redirectRepository,
+            $mediaRepository,
+            $disk,
+            $auditLogger,
+        );
+
+        // Commerce stack (conditional on config)
+        if ($config->commerce !== null) {
+            $this->bindCommerceServices($container, $connection, $config->commerce, $eventDispatcher, $auditLogger);
+        }
+    }
+
+    private function bindLiveCssServices(
+        ContainerInterface $container,
+        ThemeRepositoryInterface $themeRepository,
+        ?AuditLoggerInterface $auditLogger,
+    ): void {
+        $cssValidator = new CssValidator();
+        $container->instance(CssValidatorInterface::class, $cssValidator);
+
+        $cspHashComputer = new CspHashComputer();
+        $container->instance(CspHashComputerInterface::class, $cspHashComputer);
+
+        $themeTokenResolver = new ThemeTokenResolver($themeRepository);
+        $container->instance(ThemeTokenResolverInterface::class, $themeTokenResolver);
+
+        /** @var CssOverrideRepositoryInterface $cssOverrideRepository */
+        $cssOverrideRepository = $container->get(CssOverrideRepositoryInterface::class);
+
+        $container->instance(
+            LiveCssServiceInterface::class,
+            new LiveCssService($cssOverrideRepository, $cssValidator, $cspHashComputer, $auditLogger),
+        );
+    }
+
+    private function bindImportExportServices(
+        ContainerInterface $container,
+        ConnectionInterface $connection,
+        CmsConfig $config,
+        ContentRepositoryInterface $contentRepository,
+        ContentTranslationRepositoryInterface $translationRepository,
+        RedirectRepositoryInterface $redirectRepository,
+        MediaRepositoryInterface $mediaRepository,
+        MediaDiskInterface $disk,
+        ?AuditLoggerInterface $auditLogger,
+    ): void {
+        /** @var TaxonomyRepositoryInterface $taxonomyRepository */
+        $taxonomyRepository = $container->get(TaxonomyRepositoryInterface::class);
+
+        /** @var MenuRepositoryInterface $menuRepository */
+        $menuRepository = $container->get(MenuRepositoryInterface::class);
+
+        $importConfig = $config->import;
+
+        // Export bundle generator
+        $settingsService = $container->has(SettingsServiceInterface::class)
+            ? $container->get(SettingsServiceInterface::class)
+            : null;
+
+        if ($settingsService !== null) {
+            /** @var SettingsServiceInterface $settingsService */
+            $exportGenerator = new ExportBundleGenerator(
+                $contentRepository,
+                $taxonomyRepository,
+                $menuRepository,
+                $settingsService,
+                $mediaRepository,
+                $auditLogger,
+            );
+
+            $importParser = new ImportParser(
+                $contentRepository,
+                $taxonomyRepository,
+                $menuRepository,
+                $settingsService,
+                $importConfig,
+                $auditLogger,
+            );
+
+            /** @var TaxonomyServiceInterface $taxonomyService */
+            $taxonomyService = $container->has(TaxonomyServiceInterface::class)
+                ? $container->get(TaxonomyServiceInterface::class)
+                : null;
+
+            /** @var MediaServiceInterface $mediaService */
+            $mediaService = $container->get(MediaServiceInterface::class);
+
+            /** @var SitemapGeneratorInterface $sitemapGenerator */
+            $sitemapGenerator = $container->get(SitemapGeneratorInterface::class);
+
+            /** @var SafeHttpClient $httpClient */
+            $httpClient = $container->get(SafeHttpClient::class);
+
+            if ($taxonomyService !== null) {
+                $siteDefinitionParser = new SiteDefinitionParser(
+                    $contentRepository,
+                    $taxonomyService,
+                    $taxonomyRepository,
+                    $menuRepository,
+                    $mediaService,
+                    $settingsService,
+                    $redirectRepository,
+                    $sitemapGenerator,
+                    $httpClient,
+                    $importConfig,
+                    $auditLogger,
+                );
+
+                $container->instance(
+                    ImportExportServiceInterface::class,
+                    new ImportExportService($exportGenerator, $importParser, $siteDefinitionParser),
+                );
+            }
+        }
+
+        // Backup service
+        $container->instance(
+            BackupServiceInterface::class,
+            new BackupService($connection, $disk, $auditLogger),
+        );
+    }
+
+    private function bindCommerceServices(
+        ContainerInterface $container,
+        ConnectionInterface $connection,
+        CommerceConfig $commerceConfig,
+        ?EventDispatcherInterface $eventDispatcher,
+        ?AuditLoggerInterface $auditLogger,
+    ): void {
+        // Tax calculator
+        $taxCalculator = new TaxCalculator($commerceConfig);
+        $container->instance(TaxCalculatorInterface::class, $taxCalculator);
+
+        // Promotion engine
+        /** @var PromotionRepositoryInterface $promotionRepository */
+        $promotionRepository = $container->get(PromotionRepositoryInterface::class);
+
+        /** @var CouponRepositoryInterface $couponRepository */
+        $couponRepository = $container->get(CouponRepositoryInterface::class);
+
+        $promotionEngine = new PromotionEngine($promotionRepository, $couponRepository);
+        $container->instance(PromotionServiceInterface::class, $promotionEngine);
+
+        // Invoice renderer
+        $settingsService = $container->has(SettingsServiceInterface::class)
+            ? $container->get(SettingsServiceInterface::class)
+            : null;
+
+        /** @var SettingsServiceInterface|null $settingsService */
+        $invoiceRenderer = new HtmlInvoiceRenderer($settingsService);
+        $container->instance(InvoiceRendererInterface::class, $invoiceRenderer);
+
+        // Invoice service
+        /** @var OrderRepositoryInterface $orderRepository */
+        $orderRepository = $container->get(OrderRepositoryInterface::class);
+
+        /** @var OrderItemRepositoryInterface $orderItemRepository */
+        $orderItemRepository = $container->get(OrderItemRepositoryInterface::class);
+
+        /** @var InvoiceRepositoryInterface $invoiceRepository */
+        $invoiceRepository = $container->get(InvoiceRepositoryInterface::class);
+
+        $invoiceService = new InvoiceService($orderRepository, $orderItemRepository, $invoiceRepository, $invoiceRenderer);
+        $container->instance(InvoiceServiceInterface::class, $invoiceService);
+
+        // Digital delivery service (requires CmsKeyManager)
+        if ($container->has(CmsKeyManager::class)) {
+            /** @var CmsKeyManager $cmsKeyManager */
+            $cmsKeyManager = $container->get(CmsKeyManager::class);
+
+            /** @var DigitalAssetRepositoryInterface $digitalAssetRepository */
+            $digitalAssetRepository = $container->get(DigitalAssetRepositoryInterface::class);
+
+            /** @var ProductRepositoryInterface $productRepository */
+            $productRepository = $container->get(ProductRepositoryInterface::class);
+
+            $digitalDelivery = new DigitalDeliveryService(
+                $digitalAssetRepository,
+                $orderItemRepository,
+                $productRepository,
+                $cmsKeyManager,
+                $connection,
+                $commerceConfig,
+                $auditLogger,
+            );
+            $container->instance(DigitalDeliveryServiceInterface::class, $digitalDelivery);
+
+            // Order export service
+            $container->instance(
+                OrderExportServiceInterface::class,
+                new OrderExportService($orderRepository, $orderItemRepository, $auditLogger),
+            );
+
+            // Checkout service (requires EventDispatcher)
+            if ($eventDispatcher !== null) {
+                /** @var PaymentGateway|null $paymentGateway */
+                $paymentGateway = $container->has(PaymentGateway::class)
+                    ? $container->get(PaymentGateway::class)
+                    : null;
+
+                $checkoutService = new CheckoutService(
+                    $productRepository,
+                    $orderRepository,
+                    $orderItemRepository,
+                    $promotionEngine,
+                    $taxCalculator,
+                    $invoiceService,
+                    $digitalDelivery,
+                    $connection,
+                    $commerceConfig,
+                    $eventDispatcher,
+                    $paymentGateway,
+                    $auditLogger,
+                );
+                $container->instance(CheckoutServiceInterface::class, $checkoutService);
+
+                // Order service (internal, used by webhook handler)
+                $orderService = new OrderService(
+                    $orderRepository,
+                    $invoiceService,
+                    $digitalDelivery,
+                    $connection,
+                    $eventDispatcher,
+                    $paymentGateway,
+                    $auditLogger,
+                );
+                $container->instance(OrderService::class, $orderService);
+
+                // Webhook handler (requires PaymentGateway)
+                if ($paymentGateway !== null) {
+                    $container->instance(
+                        WebhookHandler::class,
+                        new WebhookHandler($orderService, $orderRepository, $paymentGateway, $auditLogger),
+                    );
+                }
+            }
         }
     }
 
