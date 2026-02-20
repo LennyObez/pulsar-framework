@@ -59,7 +59,9 @@ final class InboundDispatcher
 
         $handler = $this->resolveHandler($route->handler);
 
-        $terminal = static fn(WebSocketConnection $c, WebSocketFrame $f): void => $handler->onMessage($c, $f);
+        $terminal = static function (WebSocketConnection $c, WebSocketFrame $f) use ($handler): void {
+            $handler->onMessage($c, $f);
+        };
         $pipeline = $this->buildPipeline($route->middleware, $terminal);
 
         try {
