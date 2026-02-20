@@ -32,8 +32,6 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
 {
     private bool $running = false;
 
-    private ?object $server = null;
-
     /**
      * @param string $certChain  PEM-encoded server certificate chain (for TLS)
      * @param string $privateKey PEM-encoded server private key (for TLS)
@@ -53,7 +51,6 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
         }
 
         $server = new GrpcServer([]);
-        $this->server = $server;
 
         $address = $host . ':' . $port;
 
@@ -87,15 +84,14 @@ final class GrpcExtensionAdapter implements GrpcTransportAdapterInterface
     #[Override]
     public function shutdown(): void
     {
+        // Setting `$this->running = false` causes the event loop in
+        // listen() to exit on the next iteration. When listen() returns,
+        // its local \Grpc\Server variable goes out of scope; the C-level
+        // `grpc_server_destroy` runs from the extension's internal
+        // destructor and drains in-flight RPCs + closes the HTTP/2
+        // listener. PECL's \Grpc\Server does not expose an explicit
+        // shutdown method.
         $this->running = false;
-
-        // The grpc PECL extension's \Grpc\Server does not expose an
-        // explicit shutdown method; releasing the last PHP reference
-        // triggers the C-level `grpc_server_destroy` in the extension's
-        // internal destructor, which drains in-flight RPCs and closes
-        // the HTTP/2 listener. Setting the field to null is therefore
-        // the idiomatic way to stop the server.
-        $this->server = null;
     }
 
     #[Override]
