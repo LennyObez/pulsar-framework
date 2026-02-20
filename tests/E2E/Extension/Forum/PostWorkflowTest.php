@@ -84,8 +84,8 @@ final class PostWorkflowTest extends TestCase
         self::assertNotNull($solutionPost);
         self::assertTrue($solutionPost->isSolution);
 
-        // Step 5: Delete the post
-        $stack->forumService->deletePost($post->id);
+        // Step 5: Delete the post (author deletes own post; not a moderator action)
+        $stack->forumService->deletePost($post->id, 'user-bob');
         $deleted = $stack->posts->findById($post->id);
         self::assertNull($deleted, 'Deleted post should not be retrievable');
     }
