@@ -99,7 +99,8 @@ final readonly class EventEnvelope
     /**
      * @param array<string, mixed> $data
      *
-     * @throws JsonException|InvalidArgumentException
+     * @throws JsonException
+     * @throws EventException When a required envelope field (event_type, etc.) is missing or empty.
      */
     #[NoDiscard]
     public static function fromArray(array $data): self
