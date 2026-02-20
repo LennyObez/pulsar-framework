@@ -161,7 +161,16 @@ final readonly class GoogleCalendarSync implements GoogleCalendarSyncInterface
             throw BookingException::calendarSyncFailed('Service account key path not configured');
         }
 
-        $keyFileContents = @file_get_contents($this->config->serviceAccountKeyPath);
+        // Check existence and readability before reading. Avoids the
+        // need for `@` error suppression while still surfacing actionable
+        // error messages on permission/missing-file failures.
+        if (!is_file($this->config->serviceAccountKeyPath) || !is_readable($this->config->serviceAccountKeyPath)) {
+            throw BookingException::calendarSyncFailed(
+                'Service account key file is missing or not readable: ' . $this->config->serviceAccountKeyPath,
+            );
+        }
+
+        $keyFileContents = file_get_contents($this->config->serviceAccountKeyPath);
 
         if ($keyFileContents === false) {
             throw BookingException::calendarSyncFailed('Cannot read service account key file');

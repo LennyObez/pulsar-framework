@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Deploy\Middleware;
 
+use Override;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -35,6 +36,7 @@ final readonly class MaintenanceModeMiddleware implements MiddlewareInterface
         private StreamFactoryInterface $streamFactory,
     ) {}
 
+    #[Override]
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if (!$this->maintenanceMode->isActive()) {
