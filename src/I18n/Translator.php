@@ -21,7 +21,12 @@ use function in_array;
 #[Internal]
 final class Translator implements TranslatorInterface
 {
+    private const int MAX_CHAIN_CACHE_SIZE = 200;
+
     public string $locale;
+
+    /** @var array<string, list<string>> */
+    private array $fallbackChainCache = [];
 
     private static ?self $globalInstance = null;
 
@@ -36,15 +41,7 @@ final class Translator implements TranslatorInterface
     public function translate(string $key, array $parameters = [], ?string $locale = null, string $domain = 'messages'): string
     {
         $targetLocale = $locale ?? $this->locale;
-
-        // Build full fallback chain
-        $localeChain = Locale::parse($targetLocale)->fallbackChain();
-
-        foreach ($this->config->fallbackLocales as $fallback) {
-            if (!in_array($fallback, $localeChain, true)) {
-                $localeChain[] = $fallback;
-            }
-        }
+        $localeChain = $this->buildFallbackChain($targetLocale);
 
         // Search through the chain
         foreach ($localeChain as $candidateLocale) {
@@ -66,14 +63,7 @@ final class Translator implements TranslatorInterface
     public function has(string $key, ?string $locale = null, string $domain = 'messages'): bool
     {
         $targetLocale = $locale ?? $this->locale;
-
-        $localeChain = Locale::parse($targetLocale)->fallbackChain();
-
-        foreach ($this->config->fallbackLocales as $fallback) {
-            if (!in_array($fallback, $localeChain, true)) {
-                $localeChain[] = $fallback;
-            }
-        }
+        $localeChain = $this->buildFallbackChain($targetLocale);
 
         return array_any($localeChain, fn(string $candidateLocale): bool => $this->catalog->has($key, $candidateLocale, $domain));
     }
@@ -102,6 +92,35 @@ final class Translator implements TranslatorInterface
     public static function resetGlobalInstance(): void
     {
         self::$globalInstance = null;
+    }
+
+    /**
+     * Build and cache the full fallback chain for a locale.
+     *
+     * @return list<string>
+     */
+    private function buildFallbackChain(string $targetLocale): array
+    {
+        if (isset($this->fallbackChainCache[$targetLocale])) {
+            return $this->fallbackChainCache[$targetLocale];
+        }
+
+        $localeChain = Locale::parse($targetLocale)->fallbackChain();
+
+        foreach ($this->config->fallbackLocales as $fallback) {
+            if (!in_array($fallback, $localeChain, true)) {
+                $localeChain[] = $fallback;
+            }
+        }
+
+        // Evict oldest entries when cache is full
+        if (\count($this->fallbackChainCache) >= self::MAX_CHAIN_CACHE_SIZE) {
+            \array_shift($this->fallbackChainCache);
+        }
+
+        $this->fallbackChainCache[$targetLocale] = $localeChain;
+
+        return $localeChain;
     }
 
     /**

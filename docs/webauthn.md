@@ -18,7 +18,7 @@ Register in your `pulsar.json`:
 }
 ```
 
-## Quick Start
+## Quick start
 
 ### Configuration
 
@@ -37,7 +37,7 @@ return [
 ];
 ```
 
-### Registered Endpoints
+### Registered endpoints
 
 | Endpoint                               | Method | Description                     |
 | -------------------------------------- | ------ | ------------------------------- |
@@ -49,9 +49,9 @@ return [
 | `/webauthn/authenticators/{id}/rename` | PUT    | Rename an authenticator         |
 | `/webauthn/authenticators/{id}`        | DELETE | Revoke an authenticator         |
 
-## Registration Ceremony
+## Registration ceremony
 
-### 1. Request Registration Options
+### 1. Request registration options
 
 ```javascript
 const response = await fetch('/webauthn/register/options', {
@@ -62,7 +62,7 @@ const response = await fetch('/webauthn/register/options', {
 const options = await response.json();
 ```
 
-### 2. Create Credential (Browser)
+### 2. Create credential (browser)
 
 ```javascript
 const credential = await navigator.credentials.create({
@@ -70,7 +70,7 @@ const credential = await navigator.credentials.create({
 });
 ```
 
-### 3. Verify Registration
+### 3. Verify registration
 
 ```javascript
 const result = await fetch('/webauthn/register/verify', {
@@ -83,9 +83,9 @@ const result = await fetch('/webauthn/register/verify', {
 });
 ```
 
-## Authentication Ceremony
+## Authentication ceremony
 
-### 1. Request Authentication Options
+### 1. Request authentication options
 
 ```javascript
 const response = await fetch('/webauthn/authenticate/options', {
@@ -96,7 +96,7 @@ const response = await fetch('/webauthn/authenticate/options', {
 const options = await response.json();
 ```
 
-### 2. Get Assertion (Browser)
+### 2. Get assertion (browser)
 
 ```javascript
 const assertion = await navigator.credentials.get({
@@ -104,7 +104,7 @@ const assertion = await navigator.credentials.get({
 });
 ```
 
-### 3. Verify Authentication
+### 3. Verify authentication
 
 ```javascript
 const result = await fetch('/webauthn/authenticate/verify', {
@@ -117,18 +117,18 @@ const result = await fetch('/webauthn/authenticate/verify', {
 });
 ```
 
-## Supported Features
+## Supported features
 
-### Authenticator Types
+### Authenticator types
 
 - **Platform authenticators**: Touch ID, Windows Hello, Face ID (built into the device)
 - **Cross-platform authenticators**: Security keys via USB, NFC, or BLE
 
-### Passkeys (Resident Credentials)
+### Passkeys (resident credentials)
 
 Discoverable credentials that don't require a username. The authenticator stores the user handle and can be used for passwordless login.
 
-### Attestation Formats
+### Attestation formats
 
 Initially supports:
 
@@ -137,11 +137,11 @@ Initially supports:
 
 Additional formats (fido-u2f, android-key, apple) can be added based on demand. The attestation policy is configurable - disallowed formats are rejected.
 
-### Clone Detection
+### Clone detection
 
 The signature counter is validated on each authentication. If the counter does not increase (indicating a cloned authenticator), the ceremony is rejected and a security event is emitted.
 
-## Authenticator Management
+## Authenticator management
 
 Users can manage their registered authenticators:
 
@@ -159,7 +159,7 @@ WebAuthn integrates with Pulsar's existing two-factor authentication system as a
 
 ## Security
 
-### Challenge Binding
+### Challenge binding
 
 Challenges are:
 
@@ -168,7 +168,7 @@ Challenges are:
 - Time-limited (configurable TTL, default 5 minutes)
 - Bound to the relying party ID and origin
 
-### Audit Trail
+### Audit trail
 
 All WebAuthn events are logged via the tamper-evident audit chain:
 
@@ -177,13 +177,13 @@ All WebAuthn events are logged via the tamper-evident audit chain:
 - Clone detection events
 - Authenticator revocation
 
-### Keyring Integration
+### Keyring integration
 
 Cryptographic operations use Keyring-managed keys (ADR-0006).
 
 ## Extending
 
-### Custom Credential Storage
+### Custom credential storage
 
 Replace the in-memory repository with a persistent implementation:
 
@@ -194,7 +194,7 @@ $container->bind(
 );
 ```
 
-### Custom Authenticator Repository
+### Custom authenticator repository
 
 ```php
 $container->bind(

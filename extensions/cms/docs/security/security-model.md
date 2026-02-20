@@ -1,8 +1,8 @@
-# CMS Security Model
+# CMS security model
 
 This document describes the complete security model for Pulsar CMS, including roles and permissions, step-up authentication, two-factor authentication, Content Security Policy, safe HTML policy, upload security, and audit logging.
 
-## Role-Based Access Control
+## Role-based access control
 
 Pulsar CMS defines a hierarchical role system with fine-grained permissions. Roles are registered with the framework's `RoleRegistryInterface` during extension boot.
 
@@ -20,9 +20,9 @@ Pulsar CMS defines a hierarchical role system with fine-grained permissions. Rol
 | `cms.analytics_viewer` | Search analytics access            | Marketing/analytics team          |
 | `cms.admin`            | Full CMS administration            | Site administrators               |
 
-### Permission Matrix
+### Permission matrix
 
-#### Content Permissions
+#### Content permissions
 
 | Permission                  | Viewer | Contributor | Reviewer | Editor | Admin |
 | --------------------------- | ------ | ----------- | -------- | ------ | ----- |
@@ -40,7 +40,7 @@ Pulsar CMS defines a hierarchical role system with fine-grained permissions. Rol
 | `cms.content.force_unlock`  | --     | --          | --       | Yes    | Yes   |
 | `cms.content.manage_fields` | --     | --          | --       | --     | Yes   |
 
-#### Taxonomy & Navigation Permissions
+#### Taxonomy & navigation permissions
 
 | Permission            | Contributor | Editor | Admin |
 | --------------------- | ----------- | ------ | ----- |
@@ -49,7 +49,7 @@ Pulsar CMS defines a hierarchical role system with fine-grained permissions. Rol
 | `cms.menus.view`      | Yes         | Yes    | Yes   |
 | `cms.menus.manage`    | --          | Yes    | Yes   |
 
-#### Media Permissions
+#### Media permissions
 
 | Permission         | Contributor | Media Manager | Admin |
 | ------------------ | ----------- | ------------- | ----- |
@@ -57,21 +57,21 @@ Pulsar CMS defines a hierarchical role system with fine-grained permissions. Rol
 | `cms.media.upload` | --          | Yes           | Yes   |
 | `cms.media.delete` | --          | Yes           | Yes   |
 
-#### Comment Permissions
+#### Comment permissions
 
 | Permission              | Contributor | Editor | Admin |
 | ----------------------- | ----------- | ------ | ----- |
 | `cms.comments.view`     | Yes         | Yes    | Yes   |
 | `cms.comments.moderate` | --          | Yes    | Yes   |
 
-#### SEO Permissions
+#### SEO permissions
 
 | Permission       | SEO Manager | Admin |
 | ---------------- | ----------- | ----- |
 | `cms.seo.view`   | Yes         | Yes   |
 | `cms.seo.manage` | Yes         | Yes   |
 
-#### Commerce Permissions
+#### Commerce permissions
 
 | Permission                  | Shop Manager | Admin |
 | --------------------------- | ------------ | ----- |
@@ -89,13 +89,13 @@ Pulsar CMS defines a hierarchical role system with fine-grained permissions. Rol
 | `cms.invoices.download`     | Yes          | Yes   |
 | `cms.digital_assets.manage` | Yes          | Yes   |
 
-#### Analytics Permissions
+#### Analytics permissions
 
 | Permission                  | Analytics Viewer | Admin |
 | --------------------------- | ---------------- | ----- |
 | `cms.search.view_analytics` | Yes              | Yes   |
 
-#### Administration Permissions (Admin Only)
+#### Administration permissions (admin only)
 
 | Permission             | Description                          |
 | ---------------------- | ------------------------------------ |
@@ -119,11 +119,11 @@ Pulsar CMS defines a hierarchical role system with fine-grained permissions. Rol
 | `cms.livecss.edit`     | Edit and save CSS overrides          |
 | `cms.livecss.rollback` | Roll back CSS versions               |
 
-## Step-Up Authentication
+## Step-up authentication
 
 Step-up authentication provides an additional verification layer for sensitive operations within an already-authenticated session.
 
-### How It Works
+### How it works
 
 1. User performs a sensitive action (2FA management, settings change, etc.).
 2. The system checks for a valid step-up token in the request attributes.
@@ -139,7 +139,7 @@ Step-up authentication provides an additional verification layer for sensitive o
 ],
 ```
 
-### Protected Operations
+### Protected operations
 
 All operations that require step-up authentication:
 
@@ -148,11 +148,11 @@ All operations that require step-up authentication:
 - User 2FA reset
 - Security settings changes
 
-## Two-Factor Authentication
+## Two-factor authentication
 
 See the [2FA Setup Guide](../user/2fa-setup.md) for user-facing instructions.
 
-### Technical Implementation
+### Technical implementation
 
 - **Algorithm**: HMAC-SHA1 TOTP per RFC 6238
 - **Secret**: 160-bit random secret, Base32-encoded for display
@@ -161,15 +161,15 @@ See the [2FA Setup Guide](../user/2fa-setup.md) for user-facing instructions.
 - **QR encoding**: SVG-based QR code generation (no external dependencies)
 - **Recovery codes**: 8 cryptographically random codes per generation
 
-### Audit Trail
+### Audit trail
 
 Every 2FA operation is logged. See [Audit Events Reference](audit-events.md) for the complete list.
 
-## Content Security Policy (CSP)
+## Content security policy (CSP)
 
 Pulsar CMS enforces a strict Content Security Policy.
 
-### Default Policy
+### Default policy
 
 ```
 default-src 'self';
@@ -183,19 +183,19 @@ base-uri 'self';
 form-action 'self';
 ```
 
-### Live CSS Integration
+### Live CSS integration
 
 The Live CSS system uses CSP hash-based allowlisting. Each saved CSS override produces a SHA-256 hash that is added to the `style-src` directive. This avoids the security weakness of `'unsafe-inline'`.
 
-### External Fonts
+### External fonts
 
 When `live_css.allow_external_fonts` is `true`, the `font-src` directive is extended to allow the specified origins.
 
-## Safe HTML Policy
+## Safe HTML policy
 
 All user-authored HTML is processed through the `SafeHtmlPolicy`, a 7-step sanitization pipeline.
 
-### Sanitization Steps
+### Sanitization steps
 
 1. **Input canonicalization**: UTF-8 conversion, null byte removal, BiDi control character stripping, CDATA marker removal
 2. **DOM parsing**: Safe parsing with `LIBXML_NONET | LIBXML_NOERROR`
@@ -205,24 +205,24 @@ All user-authored HTML is processed through the `SafeHtmlPolicy`, a 7-step sanit
 6. **Dangerous construct removal**: Event handlers (`on*`), `style` attributes, `data-*` attributes, `srcset`, `formaction`
 7. **Final validation**: Regex scan for `javascript:`, `vbscript:`, `expression()`, `<script>`, `<svg>`, `<math>`
 
-### Allowed Schemes
+### Allowed schemes
 
 | Context     | Allowed Schemes                                                 |
 | ----------- | --------------------------------------------------------------- |
 | `<a href>`  | `http`, `https`, `mailto`, relative URLs                        |
 | `<img src>` | `https`, relative `/media/` paths, `data:` (images under 32 KB) |
 
-### Comment Sanitization
+### Comment sanitization
 
 Comments use a strict subset: only `p`, `br`, `strong`, `em`, `a`, `code`, `blockquote`, `pre`.
 
-### Bypass Detection
+### Bypass detection
 
 If the final regex scan detects dangerous patterns after sanitization, the entire input is escaped to plaintext and a security event is audit-logged.
 
-## Upload Security
+## Upload security
 
-### File Validation
+### File validation
 
 All uploads are validated by the `FileValidator`:
 
@@ -231,7 +231,7 @@ All uploads are validated by the `FileValidator`:
 - File size limits
 - Image dimension limits (width, height, total pixels)
 
-### SVG Sanitization
+### SVG sanitization
 
 SVG files are processed by the `SvgSanitizer`:
 
@@ -240,7 +240,7 @@ SVG files are processed by the `SvgSanitizer`:
 - External resource reference stripping
 - Structural validation
 
-### PDF Validation
+### PDF validation
 
 PDF files are processed by the `PdfValidator`:
 
@@ -248,7 +248,7 @@ PDF files are processed by the `PdfValidator`:
 - JavaScript detection and rejection
 - Structural validation
 
-### Filename Sanitization
+### Filename sanitization
 
 The `FilenameSanitizer` processes all uploaded filenames:
 
@@ -257,15 +257,15 @@ The `FilenameSanitizer` processes all uploaded filenames:
 - Lowercase normalization
 - Unique suffix generation
 
-### EXIF Stripping
+### EXIF stripping
 
 By default, EXIF metadata is stripped from uploaded images to prevent PII leakage (GPS coordinates, camera identifiers, etc.).
 
-## SSRF Protection
+## SSRF protection
 
 Outbound HTTP requests from the CMS (link health checks, oEmbed, media downloads) use the `SafeHttpClient` with SSRF protection.
 
-### Blocked Networks
+### Blocked networks
 
 By default, the following IP ranges are blocked for outbound requests:
 
@@ -277,7 +277,7 @@ By default, the following IP ranges are blocked for outbound requests:
 - `198.18.0.0/15` (benchmarking)
 - `::1/128`, `fc00::/7`, `fe80::/10` (IPv6 equivalents)
 
-### Request Limits
+### Request limits
 
 | Setting           | Default    | Description                 |
 | ----------------- | ---------- | --------------------------- |
@@ -287,7 +287,7 @@ By default, the following IP ranges are blocked for outbound requests:
 | Total timeout     | 15 seconds | Full request timeout        |
 | Max response size | 10 MB      | Response body size limit    |
 
-## Client Fingerprinting
+## Client fingerprinting
 
 The `ClientFingerprintResolver` creates client fingerprints for rate limiting and anti-abuse:
 
@@ -296,7 +296,7 @@ The `ClientFingerprintResolver` creates client fingerprints for rate limiting an
 - Cloudflare mode support (CF-Connecting-IP header)
 - Configurable header names for reverse proxy setups
 
-## Plugin Security Sandbox
+## Plugin security sandbox
 
 Plugins operate within a restricted sandbox:
 
@@ -306,7 +306,7 @@ Plugins operate within a restricted sandbox:
 - **Signature verification**: Optional Ed25519 signature enforcement for plugin archives
 - **Integrity checks**: Boot-time file integrity verification
 
-## Audit Logging
+## Audit logging
 
 All security-relevant operations are recorded in the audit log. Each entry includes:
 
@@ -321,7 +321,7 @@ All security-relevant operations are recorded in the audit log. Each entry inclu
 
 See the [Audit Events Reference](audit-events.md) for the complete taxonomy.
 
-## Next Steps
+## Next steps
 
 - [Threat Model](threat-model.md) - Attack surface analysis and mitigations
 - [Audit Events Reference](audit-events.md) - Complete audit event taxonomy

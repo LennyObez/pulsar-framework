@@ -34,7 +34,7 @@ Extensions are explicitly prohibited from:
 - Using `Fiber::suspend()` to yield across framework boundaries.
 - Assuming any particular Fiber execution context.
 
-These restrictions are documented in `docs/ASYNC_MODEL.md`. Enforcement is via code review and architecture tests; runtime guardrails are a future consideration.
+These restrictions are documented in `docs/async-model.md`. Enforcement is via code review and architecture tests; runtime guardrails are a future consideration.
 
 ## Consequences
 

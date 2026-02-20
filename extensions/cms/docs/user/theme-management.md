@@ -1,4 +1,4 @@
-# Theme Management Guide
+# Theme management guide
 
 This guide covers installing, previewing, activating, and managing themes in Pulsar CMS, including safe mode, provenance verification, and rollback capabilities.
 
@@ -6,11 +6,11 @@ This guide covers installing, previewing, activating, and managing themes in Pul
 
 Themes control the visual presentation of your CMS site. Pulsar CMS supports a secure theme system with signature verification, preview mode, safe mode fallback, and provenance tracking.
 
-## Theme Structure
+## Theme structure
 
 Every theme is a directory containing a `theme.json` manifest and template files.
 
-### Theme Manifest (theme.json)
+### Theme manifest (theme.json)
 
 ```json
 {
@@ -36,7 +36,7 @@ Every theme is a directory containing a `theme.json` manifest and template files
 }
 ```
 
-### Manifest Fields
+### Manifest fields
 
 | Field                     | Required | Description                                     |
 | ------------------------- | -------- | ----------------------------------------------- |
@@ -54,9 +54,9 @@ Every theme is a directory containing a `theme.json` manifest and template files
 | `settings`                | No       | Theme-specific configurable settings            |
 | `assets`                  | No       | Asset path mapping                              |
 
-## Installing a Theme
+## Installing a theme
 
-### Via Admin Panel
+### Via admin panel
 
 <!-- Screenshot: Theme installation upload form -->
 
@@ -64,10 +64,12 @@ Every theme is a directory containing a `theme.json` manifest and template files
 2. Click **Install New Theme**.
 3. Upload a theme archive (`.zip` file).
 4. The system validates the archive:
-  - Archive size limit: 50 MB (configurable via `themes.max_archive_size`)
-  - File count limit: 10,000 files (configurable via `themes.max_file_count`)
-  - Manifest validation: checks `theme.json` for required fields
-  - Signature verification (if `themes.require_signed_themes` is enabled)
+
+- Archive size limit: 50 MB (configurable via `themes.max_archive_size`)
+- File count limit: 10,000 files (configurable via `themes.max_file_count`)
+- Manifest validation: checks `theme.json` for required fields
+- Signature verification (if `themes.require_signed_themes` is enabled)
+
 5. After validation, the theme appears in the installed themes list.
 
 ### Via API
@@ -79,7 +81,7 @@ Content-Type: multipart/form-data
 file: [theme-archive.zip]
 ```
 
-### Archive Security
+### Archive security
 
 The `SafeArchiveExtractor` processes all theme archives with these protections:
 
@@ -88,11 +90,11 @@ The `SafeArchiveExtractor` processes all theme archives with these protections:
 - **Size verification**: Total extracted size is bounded
 - **File count limits**: Prevents zip bombs with excessive file counts
 
-## Theme Signature Verification
+## Theme signature verification
 
 For regulated environments, themes can require cryptographic signatures.
 
-### How It Works
+### How it works
 
 1. Theme authors sign their archive with an Ed25519 private key.
 2. The CMS verifies the signature against configured trusted public keys.
@@ -111,7 +113,7 @@ For regulated environments, themes can require cryptographic signatures.
 ],
 ```
 
-### Provenance Badges
+### Provenance badges
 
 <!-- Screenshot: Theme list with provenance badges -->
 
@@ -123,18 +125,18 @@ Each installed theme displays a provenance badge:
 | **Unverified** | No signature present or verification not required |
 | **Tampered**   | Signature verification failed (do not activate)   |
 
-## Preview Mode
+## Preview mode
 
 Preview mode lets you test a theme before making it live.
 
-### Starting a Preview
+### Starting a preview
 
 1. In the theme list at **Admin > CMS > Themes**, click **Preview** on an installed theme.
 2. A preview session is created with a unique session token.
 3. You are redirected to the site rendered with the preview theme.
 4. Only your session sees the preview; other visitors see the active theme.
 
-### Preview Session
+### Preview session
 
 The `PreviewSession` tracks:
 
@@ -142,7 +144,7 @@ The `PreviewSession` tracks:
 - The user who initiated the preview
 - An expiration timestamp (preview sessions are time-limited)
 
-### Ending a Preview
+### Ending a preview
 
 - Click **End Preview** in the admin bar.
 - Or let the session expire naturally.
@@ -152,7 +154,7 @@ The `PreviewSession` tracks:
 POST /admin/cms/themes/{id}/preview
 ```
 
-## Activating a Theme
+## Activating a theme
 
 After reviewing a theme in preview mode:
 
@@ -166,7 +168,7 @@ The theme becomes immediately active for all visitors.
 POST /admin/cms/themes/{id}/activate
 ```
 
-### Deactivating a Theme
+### Deactivating a theme
 
 ```
 POST /admin/cms/themes/{id}/deactivate
@@ -184,18 +186,18 @@ If an activated theme causes issues:
 
 The CMS tracks which theme was previously active, enabling quick rollback. If you cannot access the admin panel due to a broken theme, use Safe Mode.
 
-## Safe Mode
+## Safe mode
 
 Safe mode disables the active theme and renders pages with a minimal, built-in fallback template.
 
-### When Safe Mode Activates
+### When safe mode activates
 
 The `ThemeSafeMode` component activates automatically when:
 
 - The active theme's template files are missing or corrupted
 - A critical rendering error occurs during page generation
 
-### Manual Safe Mode
+### Manual safe mode
 
 Administrators can also enter safe mode manually to troubleshoot theme issues. Once in safe mode, you can:
 
@@ -204,7 +206,7 @@ Administrators can also enter safe mode manually to troubleshoot theme issues. O
 3. Activate a working theme.
 4. Exit safe mode.
 
-## Theme Inheritance
+## Theme inheritance
 
 Themes can extend a parent theme using the `parent_theme` field in the manifest:
 
@@ -223,9 +225,9 @@ Child themes:
 - Can add new templates and assets
 - Must specify a valid, installed parent theme slug
 
-## Theme Assets
+## Theme assets
 
-### Asset Deploy Modes
+### Asset deploy modes
 
 Theme assets (CSS, JS, images) are deployed to the public web directory:
 
@@ -242,7 +244,7 @@ Configure in `config/cms.php`:
 ],
 ```
 
-### Asset Resolution
+### Asset resolution
 
 The `ThemeAssetResolver` maps logical asset names from the manifest to public URLs:
 
@@ -251,7 +253,7 @@ theme.json: "assets": { "style": "assets/css/main.css" }
 Public URL: /themes/corporate-clean/assets/css/main.css
 ```
 
-## Integrity Checks
+## Integrity checks
 
 When `integrity_check_on_boot` is enabled (default: `true`), the CMS verifies theme files on every application boot:
 
@@ -261,7 +263,7 @@ When `integrity_check_on_boot` is enabled (default: `true`), the CMS verifies th
 
 This protects against unauthorized file modifications on the server.
 
-## Deleting a Theme
+## Deleting a theme
 
 1. Navigate to **Admin > CMS > Themes** (`/admin/cms/themes`).
 2. Click **Delete** on an inactive theme.
@@ -282,7 +284,7 @@ DELETE /admin/cms/themes/{id}
 | `cms.themes.manage`  | Admin | Activate, deactivate, preview themes |
 | `cms.themes.delete`  | Admin | Delete installed themes              |
 
-## Configuration Reference
+## Configuration reference
 
 | Key                              | Type     | Default                | Description                       |
 | -------------------------------- | -------- | ---------------------- | --------------------------------- |
@@ -294,7 +296,7 @@ DELETE /admin/cms/themes/{id}
 | `themes.max_archive_size`        | int      | `52428800`             | Max archive size in bytes (50 MB) |
 | `themes.max_file_count`          | int      | `10000`                | Max files per archive             |
 
-## Next Steps
+## Next steps
 
 - [Live CSS Guide](live-css-guide.md) - Customizing theme styles without editing files
 - [Plugin Management](plugin-management.md) - Installing and managing CMS plugins

@@ -4,7 +4,7 @@ Route model binding automatically resolves route parameters into domain model in
 
 ## Architecture
 
-### Key Components
+### Key components
 
 | Class                        | Namespace                         | Purpose                                                  |
 | ---------------------------- | --------------------------------- | -------------------------------------------------------- |
@@ -21,7 +21,7 @@ Route model binding automatically resolves route parameters into domain model in
 | `PublicRoute`                | `Pulsar\Routing\Attribute`        | Attribute to exempt a route from mandatory authorization |
 | `ModelBindingException`      | `Pulsar\Routing\Binding`          | Exception type for binding failures                      |
 
-### Request Pipeline
+### Request pipeline
 
 ```
 Request → AuthN Middleware → Router → ModelBindingMiddleware → Controller
@@ -37,7 +37,7 @@ The middleware runs after authentication and routing but before the controller. 
 
 ---
 
-## Implicit Binding
+## Implicit binding
 
 Type-hinted controller parameters are automatically resolved when their name matches a route parameter:
 
@@ -56,7 +56,7 @@ Parameters with scalar types (`string`, `int`, etc.) or framework types (`Reques
 
 ---
 
-## Explicit Binding
+## Explicit binding
 
 Register explicit parameter-to-model mappings via `Router::model()`. Explicit bindings always override implicit resolution:
 
@@ -72,7 +72,7 @@ This is useful when the route parameter name does not match the controller type 
 
 ---
 
-## Custom Keys
+## Custom keys
 
 By default, models are resolved by their `id` column. Use the `{param:key}` syntax in route paths to resolve by a different column:
 
@@ -85,7 +85,7 @@ public function show(User $user): ResponseInterface
 }
 ```
 
-### Allowed Key Names
+### Allowed key names
 
 For security, only allowlisted key names are permitted. The default allowlist is `['id', 'uuid', 'slug']`. Configure this in `ModelBindingConfig`:
 
@@ -99,7 +99,7 @@ Using an unlisted key name results in a 400 Bad Request response.
 
 ---
 
-## Scoped Bindings
+## Scoped bindings
 
 Scoped bindings resolve a child model within the context of its parent relationship. This ensures that the child actually belongs to the parent:
 
@@ -129,7 +129,7 @@ If the child model does not exist within the parent relationship, a 404 response
 
 ---
 
-## Soft-Deleted Models
+## Soft-deleted models
 
 The `ResolutionContext::$includeTrashed` property controls whether soft-deleted models are included in resolution. By default, soft-deleted models are excluded:
 
@@ -149,7 +149,7 @@ Resolver implementations should check `$context->includeTrashed` and adjust thei
 
 ---
 
-## Tenant-Scoped Resolution
+## Tenant-scoped resolution
 
 When a `TenantContext` is available and a tenant has been resolved for the current request, the tenant ID is automatically passed to the resolver via `ResolutionContext::$tenantId`:
 
@@ -179,7 +179,7 @@ This integrates with Pulsar's multi-tenancy system. The `ModelBindingMiddleware`
 
 Route model binding integrates with Pulsar's authorization system. After a model is resolved, the `AuthorizationHookInterface` checks whether the authenticated identity is permitted to access it.
 
-### Regulated Presets
+### Regulated presets
 
 When `ModelBindingConfig::$preset` is set to a regulated preset (`banking`, `healthcare`, or `legal`), authorization is **mandatory** on every bound model:
 
@@ -188,7 +188,7 @@ When `ModelBindingConfig::$preset` is set to a regulated preset (`banking`, `hea
 - **Missing policy**: Hard error. Every model must have a configured authorization policy.
 - **`withoutAuthorization()` bypass**: Forbidden unless `#[PublicRoute]` is present on the handler.
 
-### Permissive Preset (Standard)
+### Permissive preset (standard)
 
 With the default `standard` preset, authorization is opt-in:
 
@@ -196,7 +196,7 @@ With the default `standard` preset, authorization is opt-in:
 - **Authorization denied**: Returns 403 Forbidden.
 - **`withoutAuthorization()` bypass**: Allowed without restriction.
 
-### Default Authorization Hook
+### Default authorization hook
 
 The `PolicyAuthorizationHook` delegates to the Gate with a `view` permission and the resolved model as context:
 
@@ -222,7 +222,7 @@ final readonly class PolicyAuthorizationHook implements AuthorizationHookInterfa
 }
 ```
 
-### Audit Logging
+### Audit logging
 
 Authorization denials are recorded via `AuditLoggerInterface` when configured:
 
@@ -236,7 +236,7 @@ Authorization denials are recorded via `AuditLoggerInterface` when configured:
 
 ---
 
-## `#[PublicRoute]` Attribute
+## `#[PublicRoute]` attribute
 
 The `#[PublicRoute]` attribute marks a route handler as intentionally exempt from model binding authorization. It can be applied at the method or class level:
 
@@ -256,9 +256,9 @@ In regulated presets, `#[PublicRoute]` is the **only** way to bypass authorizati
 
 ---
 
-## Compiled Binding Metadata
+## Compiled binding metadata
 
-### Production Mode
+### Production mode
 
 In production, enable `compiledMode` to load binding metadata from a pre-built `CompiledBindingMap`. This eliminates per-request reflection:
 
@@ -274,13 +274,13 @@ The compiled map is a PHP array keyed by route name, with each entry containing 
 php bin/pulsar optimize
 ```
 
-### Development Mode
+### Development mode
 
 In development (the default), binding metadata is resolved on-the-fly via reflection on controller type hints. This requires no build step but incurs a small per-request overhead.
 
 ---
 
-## Custom Resolvers
+## Custom resolvers
 
 Implement `ModelResolverPort` to customize how models are resolved from route parameters:
 
@@ -324,7 +324,7 @@ The custom resolver is resolved from the container, so it supports constructor i
 
 ---
 
-## Strict Key Coercion
+## Strict key coercion
 
 Route parameter values are strictly validated against the declared key type. Non-integer values for integer-typed parameters result in an immediate 404 response with no loose coercion:
 
@@ -368,7 +368,7 @@ readonly class ModelBindingConfig
 | `allowed_key_names`  | `list<string>`  | `['id', 'uuid', 'slug']` | Allowlist for custom key names in `{param:key}` syntax             |
 | `compiled_mode`      | `bool`          | `false`                  | Use pre-compiled binding map (zero reflection)                     |
 
-### Example Configuration
+### Example configuration
 
 ```php
 // config/model_binding.php
@@ -409,7 +409,7 @@ The `ModelBindingMiddleware` builds this context automatically from the current 
 
 ---
 
-## Error Handling
+## Error handling
 
 All binding failures throw `ModelBindingException`, which carries an HTTP status code. The middleware translates these into appropriate HTTP responses:
 
@@ -427,7 +427,7 @@ The middleware returns JSON responses when the request `Accept` header contains 
 
 ---
 
-## Accessing Resolved Models
+## Accessing resolved models
 
 After the middleware runs, resolved models are available on the request as attributes:
 

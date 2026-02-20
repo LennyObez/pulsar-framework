@@ -1,12 +1,12 @@
 (function () {
   try {
-    if (navigator.doNotTrack === "1") return;
+    if (navigator.doNotTrack === '1') return;
 
     const s = document.currentScript as HTMLScriptElement | null;
     if (!s) return;
 
-    const id = s.getAttribute("data-site");
-    const api = s.getAttribute("data-api");
+    const id = s.getAttribute('data-site');
+    const api = s.getAttribute('data-api');
     if (!id || !api) return;
 
     const send: PlsrSendFn = (p: PlsrPayload): void => {
@@ -16,9 +16,9 @@
           navigator.sendBeacon(api, body);
         } else {
           fetch(api, {
-            method: "POST",
+            method: 'POST',
             body,
-            headers: { "Content-Type": "application/json" },
+            headers: { 'Content-Type': 'application/json' },
             keepalive: true,
           });
         }
@@ -29,7 +29,7 @@
 
     const pv = (): void => {
       send({
-        type: "pageview",
+        type: 'pageview',
         site: id,
         url: location.href,
         referrer: document.referrer,
@@ -44,7 +44,7 @@
         revenue?: number,
       ): void {
         const p: PlsrPayload = {
-          type: "event",
+          type: 'event',
           site: id,
           event_name: name,
           url: location.href,
@@ -64,15 +64,15 @@
 
     pv();
 
-    const ext = s.getAttribute("data-extensions");
+    const ext = s.getAttribute('data-extensions');
     if (ext) {
-      const base = s.src.substring(0, s.src.lastIndexOf("/") + 1);
-      ext.split(",").forEach((name: string) => {
+      const base = s.src.substring(0, s.src.lastIndexOf('/') + 1);
+      ext.split(',').forEach((name: string) => {
         const n = name.trim();
         if (n) {
-          const el = document.createElement("script");
+          const el = document.createElement('script');
           el.async = true;
-          el.src = base + "extensions/" + n + ".js";
+          el.src = base + 'extensions/' + n + '.js';
           document.head.appendChild(el);
         }
       });

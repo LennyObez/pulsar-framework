@@ -10,7 +10,7 @@ Pulsar requires a dependency injection container that can be used across all mod
 
 Existing solutions couple frameworks to external libraries, limit lifetime control to singleton/transient, or rely on runtime auto-discovery (annotation scanning on every request). For a framework targeting regulated, mission-critical domains, the container must be deterministic, auditable, and fast - with compile-time optimization as the default production path.
 
-## Decision Drivers
+## Decision drivers
 
 1. **Zero third-party runtime**: The container is the composition root - external dependencies here propagate everywhere.
 2. **Multi-tenant support**: Banking and healthcare applications require tenant-isolated service instances with strict scope boundaries.
@@ -22,7 +22,7 @@ Existing solutions couple frameworks to external libraries, limit lifetime contr
 
 Implement `src/Container/` as a self-contained DI module with the following architecture:
 
-### Container Core
+### Container core
 
 `Container` implements both PSR-11 (`ContainerInterface`) and `AdvancedContainerInterface`. The minimal PSR-11 surface is stable for extension authors; the advanced interface exposes tags, scopes, decorators, and compilation for framework internals.
 
@@ -37,7 +37,7 @@ interface AdvancedContainerInterface extends ContainerInterface
 }
 ```
 
-### Service Lifetimes
+### Service lifetimes
 
 | Lifetime       | Behavior                                   | Eviction                             |
 | -------------- | ------------------------------------------ | ------------------------------------ |
@@ -48,7 +48,7 @@ interface AdvancedContainerInterface extends ContainerInterface
 
 Scoped lifetimes are managed by `ScopeManager`, which enforces scope widening rules - a `RequestScope` service cannot depend on a `TenantScope` service, preventing accidental tenant data leakage.
 
-### Contextual Bindings
+### Contextual bindings
 
 ```php
 $container->when(PaymentController::class)
@@ -58,11 +58,11 @@ $container->when(PaymentController::class)
 
 Contextual bindings are checked during autowiring before falling back to the global binding map. This enables polymorphic resolution without service locator patterns.
 
-### Lazy Proxy Generation
+### Lazy proxy generation
 
 `LazyServiceFactory` uses `ReflectionClass::newLazyProxy()` (PHP 8.4+) to create ghost objects that defer construction until first property or method access. Services opt in via the `lazy` flag on `ServiceDefinition`. No code generation or cache files - native PHP lazy objects.
 
-### Compiler Pass Pipeline
+### Compiler pass pipeline
 
 `ContainerBuilder` + `PassRunner` process `ServiceDefinition` instances before the container is frozen:
 
@@ -74,11 +74,11 @@ Contextual bindings are checked during autowiring before falling back to the glo
 | `ValidateLifetimesPass`     | Detects scope widening violations at build time                    |
 | `OptimizePass`              | Strips metadata not needed at runtime                              |
 
-### Resolution Hints Cache
+### Resolution hints cache
 
 In production, `resolutionHints` - a pre-computed map of `class-string → constructor parameter types` - bypasses reflection entirely. Hints are fallible: if a hint fails at resolution time, the container silently falls back to reflection. This makes cache invalidation safe - stale hints degrade to slower resolution, never to errors.
 
-## Alternatives Considered
+## Alternatives considered
 
 ### Third-party DI container
 
@@ -113,7 +113,7 @@ Rejected: prohibitive DX cost. Every new constructor parameter requires updating
 - `ScopeManager` is injected at Kernel boot and null in test/simple usage - scoped lifetimes silently degrade to transient when no scope manager is present
 - Deferred providers are resolved on first `get()` - provider registration order does not affect resolution correctness
 
-## Security Impact
+## Security impact
 
 The container holds references to all application services, including security-sensitive ones (crypto keys, audit loggers, auth guards). Mitigations:
 
@@ -122,13 +122,13 @@ The container holds references to all application services, including security-s
 - Scope enforcement prevents tenant data leakage through `ScopeWideningException`
 - `#[Internal]` on `Container` class - extensions depend on the interface, not the implementation
 
-## Performance Impact
+## Performance impact
 
 - **Cold start**: Reflection-based autowiring runs once per service. Compiler passes are O(n) in definition count.
 - **Warm start (production)**: Resolution hints bypass reflection entirely. `get()` for singletons is a single array lookup after first resolution.
 - **Memory**: Singleton instances are cached for process lifetime. Scoped instances are evicted at scope boundaries. Transient instances are not cached.
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 Additive change - introduces `src/Container/` as a new core module. To roll back: revert to the previous minimal container implementation. No data migrations required. All container bindings are defined in code (wiring classes), not persisted.
 

@@ -1,4 +1,4 @@
-# Media Library Guide
+# Media library guide
 
 This guide covers uploading, managing, and serving media assets in Pulsar CMS, including image processing, derivative generation, SVG and PDF handling, and CDN configuration.
 
@@ -6,9 +6,9 @@ This guide covers uploading, managing, and serving media assets in Pulsar CMS, i
 
 The Pulsar CMS media library provides secure file management with automatic image optimization, format conversion, and locale-aware alt text. All uploads pass through validation, sanitization, and malware scanning before storage.
 
-## Uploading Media
+## Uploading media
 
-### Via Admin Panel
+### Via admin panel
 
 <!-- Screenshot: Media library upload interface -->
 
@@ -17,7 +17,7 @@ The Pulsar CMS media library provides secure file management with automatic imag
 3. Select one or more files from your computer.
 4. The system validates each file and reports any rejections.
 
-### Accepted File Types
+### Accepted file types
 
 | Format | MIME Type         | Extensions      | Notes                         |
 | ------ | ----------------- | --------------- | ----------------------------- |
@@ -29,7 +29,7 @@ The Pulsar CMS media library provides secure file management with automatic imag
 | SVG    | `image/svg+xml`   | `.svg`          | Vector graphics (sanitized)   |
 | PDF    | `application/pdf` | `.pdf`          | Documents (validated)         |
 
-### Upload Limits
+### Upload limits
 
 | Setting              | Default        | Config Key               |
 | -------------------- | -------------- | ------------------------ |
@@ -40,11 +40,11 @@ The Pulsar CMS media library provides secure file management with automatic imag
 
 These limits prevent decompression bombs and excessive memory usage during processing.
 
-## Image Derivatives
+## Image derivatives
 
 When you upload a raster image (JPEG, PNG, GIF), the CMS automatically generates optimized derivatives.
 
-### WebP Derivatives
+### WebP derivatives
 
 WebP derivatives are always generated for uploaded images:
 
@@ -52,7 +52,7 @@ WebP derivatives are always generated for uploaded images:
 - **Purpose**: Smaller file sizes with comparable visual quality
 - **Serving**: Automatically served to browsers that support WebP via content negotiation
 
-### AVIF Derivatives
+### AVIF derivatives
 
 AVIF derivatives provide even better compression:
 
@@ -60,7 +60,7 @@ AVIF derivatives provide even better compression:
 - **Enabled by default**: Control via `media.avif_enabled`
 - **Serving**: Served to browsers with AVIF support
 
-### How Derivatives Work
+### How derivatives work
 
 When a browser requests an image, the CMS checks the `Accept` header and serves the best available format:
 
@@ -70,11 +70,11 @@ When a browser requests an image, the CMS checks the `Accept` header and serves 
 
 This transparent optimization reduces bandwidth without any changes to your HTML.
 
-## SVG Handling
+## SVG handling
 
 SVG files receive special security treatment because they can contain executable code.
 
-### SVG Sanitization
+### SVG sanitization
 
 The `SvgSanitizer` processes all SVG uploads:
 
@@ -85,13 +85,13 @@ The `SvgSanitizer` processes all SVG uploads:
 
 SVG files are stored in their sanitized form. The original unsanitized file is never persisted.
 
-### SVG Limitations
+### SVG limitations
 
 - No automatic derivative generation (SVGs are resolution-independent)
 - No pixel dimension validation (vector format)
 - Maximum file size still applies
 
-## PDF Handling
+## PDF handling
 
 PDF uploads are validated by the `PdfValidator`:
 
@@ -102,21 +102,23 @@ PDF uploads are validated by the `PdfValidator`:
 
 PDFs are stored as-is after validation. No thumbnail generation is performed.
 
-## Alt Text and Locale-Aware Metadata
+## Alt text and locale-aware metadata
 
 Each media asset supports locale-specific alt text and metadata.
 
-### Setting Alt Text
+### Setting alt text
 
 1. Click on a media asset in the library.
 2. For each locale, enter:
-  - **Alt text**: Descriptive text for accessibility (screen readers)
-  - **Title**: Optional hover text
+
+- **Alt text**: Descriptive text for accessibility (screen readers)
+- **Title**: Optional hover text
+
 3. Save the metadata.
 
 Alt text is essential for accessibility compliance. Search engines also use it for image indexing.
 
-### Per-Locale Alt Text
+### Per-locale alt text
 
 In a multi-locale site, each translation can have its own alt text:
 
@@ -128,7 +130,7 @@ In a multi-locale site, each translation can have its own alt text:
 
 The correct alt text is automatically served based on the content's locale context.
 
-## Media Visibility
+## Media visibility
 
 Each media asset has a visibility setting:
 
@@ -139,7 +141,7 @@ Each media asset has a visibility setting:
 
 Private media assets are served through an authenticated endpoint that validates the user's session before delivering the file.
 
-## Filename Sanitization
+## Filename sanitization
 
 All uploaded filenames are processed by the `FilenameSanitizer`:
 
@@ -151,7 +153,7 @@ All uploaded filenames are processed by the `FilenameSanitizer`:
 
 For example: `My Photo (Final).JPG` becomes `my-photo-final-a1b2c3d4.jpg`.
 
-## EXIF Data
+## EXIF data
 
 By default, EXIF metadata is stripped from uploaded images for privacy. EXIF can contain GPS coordinates, camera serial numbers, and other sensitive information.
 
@@ -165,9 +167,9 @@ To preserve EXIF data (for professional photography sites):
 
 When EXIF is stripped, only the image orientation data is preserved to ensure correct display.
 
-## Storage Configuration
+## Storage configuration
 
-### Local Disk
+### Local disk
 
 The default storage uses the local filesystem:
 
@@ -180,7 +182,7 @@ The default storage uses the local filesystem:
 
 Files are organized in subdirectories by date: `storage/cms/media/2026/02/filename.jpg`.
 
-### CDN Configuration
+### CDN configuration
 
 To serve media through a CDN:
 
@@ -200,21 +202,21 @@ The CMS generates cache-busting URLs using content hashes, so CDN caching works 
 
 ## Troubleshooting
 
-### Upload Rejected: File Too Large
+### Upload rejected: file too large
 
 Increase `media.max_upload_size` in `config/cms.php`. Also check your PHP `upload_max_filesize` and `post_max_size` directives.
 
-### Upload Rejected: Invalid MIME Type
+### Upload rejected: invalid MIME type
 
 The CMS validates MIME types using file content detection, not just the file extension. Ensure the file is a genuine image or PDF, not a renamed file.
 
-### Derivatives Not Generated
+### Derivatives not generated
 
 - Check that the GD or Imagick PHP extension is installed.
 - For AVIF, ensure your image library supports AVIF encoding.
 - Check storage directory permissions.
 
-## Next Steps
+## Next steps
 
 - [Content Management Guide](content-management.md) - Embedding media in content
 - [SEO Guide](seo-guide.md) - Image alt text and media sitemaps

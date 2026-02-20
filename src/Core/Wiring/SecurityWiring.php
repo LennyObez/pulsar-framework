@@ -10,6 +10,7 @@ use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Cache\FrameworkCacheInterface;
 use Pulsar\Config\ConfigManager;
+use Pulsar\Config\Environment;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Config\SecurityConfig;
 use Pulsar\Container\ContainerInterface;
@@ -21,9 +22,13 @@ use Pulsar\Security\Audit\AuditChainVerifier;
 use Pulsar\Security\Audit\AuditFileSink;
 use Pulsar\Security\Audit\AuditLogger;
 use Pulsar\Security\Audit\AuditSinkInterface;
+use Pulsar\Security\Crypto\AesGcmCipherSuite;
+use Pulsar\Security\Crypto\CipherSuiteInterface;
+use Pulsar\Security\Crypto\CompositeKeyProvider;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\EnvKeyRing;
+use Pulsar\Security\Crypto\SodiumCipherSuite;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\KeyProviderInterface;
@@ -56,6 +61,8 @@ use SodiumException;
 
 use function dirname;
 use function is_array;
+use function sodium_hex2bin;
+use function strlen;
 
 #[Internal]
 final readonly class SecurityWiring implements ServiceWiringInterface
@@ -89,9 +96,19 @@ final readonly class SecurityWiring implements ServiceWiringInterface
                     ($previousKeyHex !== null && $previousKeyHex !== '') ? $previousKeyHex : null,
                 );
                 $container->instance(MasterKey::class, $masterKey);
-                $container->instance(KeyProviderInterface::class, $masterKey);
 
-                $encryptor = Encryptor::fromMasterKey($masterKey);
+                // Build key provider — use CompositeKeyProvider if overrides are present
+                $keyProvider = $this->buildKeyProvider($masterKey, $environment);
+                $container->instance(KeyProviderInterface::class, $keyProvider);
+                if ($keyProvider instanceof CompositeKeyProvider) {
+                    $container->instance(CompositeKeyProvider::class, $keyProvider);
+                }
+
+                // Cipher suite selection from config
+                $cipherSuite = $this->buildCipherSuite($securityConfig->cipherSuite);
+                $container->instance(CipherSuiteInterface::class, $cipherSuite);
+
+                $encryptor = Encryptor::fromMasterKey($masterKey, $cipherSuite);
                 $container->instance(Encryptor::class, $encryptor);
                 $container->instance(EncryptorInterface::class, $encryptor);
 
@@ -263,5 +280,50 @@ final readonly class SecurityWiring implements ServiceWiringInterface
         }
 
         return $validators;
+    }
+
+    private function buildCipherSuite(string $name): CipherSuiteInterface
+    {
+        return match ($name) {
+            'aes-gcm' => new AesGcmCipherSuite(),
+            default => new SodiumCipherSuite(),
+        };
+    }
+
+    /**
+     * Build the key provider, wrapping MasterKey in CompositeKeyProvider if overrides exist.
+     *
+     * Supported environment variables for per-subsystem key overrides:
+     * - PULSAR_ENCRYPTION_KEY (context: encrypt_)
+     * - PULSAR_AUDIT_KEY (context: audit___)
+     *
+     * Each must be a hex-encoded raw key of the correct length for its subsystem.
+     */
+    private function buildKeyProvider(MasterKey $masterKey, Environment $environment): KeyProviderInterface
+    {
+        /** @var array<string, string> $overrideEnvMap context => env var name */
+        $overrideEnvMap = [
+            'encrypt_' => 'PULSAR_ENCRYPTION_KEY',
+            'audit___' => 'PULSAR_AUDIT_KEY',
+        ];
+
+        /** @var array<string, string> $overrides */
+        $overrides = [];
+
+        foreach ($overrideEnvMap as $context => $envVar) {
+            $hex = $environment->get($envVar);
+            if ($hex !== null && $hex !== '') {
+                $raw = sodium_hex2bin($hex);
+                if (strlen($raw) > 0) {
+                    $overrides[$context] = $raw;
+                }
+            }
+        }
+
+        if ($overrides === []) {
+            return $masterKey;
+        }
+
+        return new CompositeKeyProvider($masterKey, $overrides);
     }
 }

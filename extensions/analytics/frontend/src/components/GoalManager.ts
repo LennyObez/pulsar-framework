@@ -1,11 +1,12 @@
-import { createGoal, deleteGoal, fetchGoals, updateGoal } from "../api";
-import type { Goal } from "../types";
+import { createGoal, deleteGoal, fetchGoals, updateGoal } from '../api';
+import type { Goal } from '../types';
 
 export async function renderGoalManager(container: HTMLElement, siteId: string): Promise<void> {
   const { data: goals } = await fetchGoals(siteId);
 
   if (goals.length === 0) {
-    container.innerHTML = '<p class="goals-empty">No goals configured. Create one to start tracking conversions.</p>';
+    container.innerHTML =
+      '<p class="goals-empty">No goals configured. Create one to start tracking conversions.</p>';
     return;
   }
 
@@ -25,7 +26,7 @@ export async function renderGoalManager(container: HTMLElement, siteId: string):
             (g) => `
           <tr data-goal-id="${g.id}">
             <td>${escapeHtml(g.name)}</td>
-            <td>${g.goal_type === "page_visit" ? "Page Visit" : "Custom Event"}</td>
+            <td>${g.goal_type === 'page_visit' ? 'Page Visit' : 'Custom Event'}</td>
             <td><code>${escapeHtml(g.target_value)}</code></td>
             <td>
               <button class="btn btn-sm goal-edit" data-id="${g.id}">Edit</button>
@@ -34,15 +35,15 @@ export async function renderGoalManager(container: HTMLElement, siteId: string):
           </tr>
         `,
           )
-          .join("")}
+          .join('')}
       </tbody>
     </table>
   `;
 
-  container.querySelectorAll<HTMLButtonElement>(".goal-delete").forEach((btn) => {
-    btn.addEventListener("click", async () => {
+  container.querySelectorAll<HTMLButtonElement>('.goal-delete').forEach((btn) => {
+    btn.addEventListener('click', async () => {
       const id = btn.dataset.id!;
-      if (confirm("Delete this goal?")) {
+      if (confirm('Delete this goal?')) {
         await deleteGoal(id);
         await renderGoalManager(container, siteId);
       }
@@ -51,7 +52,7 @@ export async function renderGoalManager(container: HTMLElement, siteId: string):
 }
 
 function escapeHtml(str: string): string {
-  const div = document.createElement("div");
+  const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
 }

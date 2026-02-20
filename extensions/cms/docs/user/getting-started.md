@@ -1,4 +1,4 @@
-# Getting Started with Pulsar CMS
+# Getting started with Pulsar CMS
 
 This guide walks you through installing and configuring the Pulsar CMS extension, creating your first content, and publishing it to your site.
 
@@ -9,7 +9,7 @@ This guide walks you through installing and configuring the Pulsar CMS extension
 - Composer installed
 - A supported database (PostgreSQL recommended)
 
-## Step 1: Install the CMS Extension
+## Step 1: install the CMS extension
 
 The CMS extension ships with the Pulsar framework. Enable it by registering it in your application's extension configuration.
 
@@ -27,7 +27,7 @@ return [
 ];
 ```
 
-## Step 2: Create the Configuration File
+## Step 2: create the configuration file
 
 Create `config/cms.php` in your project's configuration directory:
 
@@ -79,7 +79,7 @@ return [
 ];
 ```
 
-### Configuration Reference
+### Configuration reference
 
 | Key                     | Type     | Default  | Description                                       |
 | ----------------------- | -------- | -------- | ------------------------------------------------- |
@@ -91,7 +91,7 @@ return [
 | `atomic_snapshots`      | bool     | `false`  | Enable atomic content snapshots on publish        |
 | `max_hierarchy_depth`   | int      | `10`     | Maximum page nesting depth                        |
 
-## Step 3: Run Migrations
+## Step 3: run migrations
 
 Run the CMS database migrations to create the required tables:
 
@@ -101,7 +101,7 @@ php bin/pulsar migrate
 
 This creates all CMS tables including content, revisions, content blocks, taxonomies, menus, media, comments, redirects, themes, plugins, settings, and more.
 
-## Step 4: Access the Admin Panel
+## Step 4: access the admin panel
 
 Navigate to the CMS admin dashboard at:
 
@@ -111,23 +111,27 @@ https://your-site.com/admin/cms
 
 You must be authenticated with an account that has the `cms.admin` or `cms.contributor` role. See the [Security Model](../security/security-model.md) for role details.
 
-## Step 5: Create Your First Content
+## Step 5: create your first content
 
 1. Navigate to **Admin > CMS > Content** (`/admin/cms/content`).
 2. Click **Create New**.
 3. Fill in the required fields:
-  - **Content type**: Select `article` or `page`.
-  - **Title**: Enter your article or page title.
-  - **Slug**: Auto-generated from the title, or set a custom URL slug.
-  - **Body**: Write your content using the editor. HTML is sanitized through the SafeHtmlPolicy.
+
+- **Content type**: Select `article` or `page`.
+- **Title**: Enter your article or page title.
+- **Slug**: Auto-generated from the title, or set a custom URL slug.
+- **Body**: Write your content using the editor. HTML is sanitized through the SafeHtmlPolicy.
+
 4. Set optional fields:
-  - **Template**: Override the theme template for this content.
-  - **Parent page**: For pages, choose a parent to create hierarchy.
-  - **Comment policy**: Choose `inherit`, `open`, or `closed`.
-  - **Data classification**: Set to `public`, `internal`, or `confidential`.
+
+- **Template**: Override the theme template for this content.
+- **Parent page**: For pages, choose a parent to create hierarchy.
+- **Comment policy**: Choose `inherit`, `open`, or `closed`.
+- **Data classification**: Set to `public`, `internal`, or `confidential`.
+
 5. Click **Save as Draft**.
 
-## Step 6: Publish Your Content
+## Step 6: publish your content
 
 From the content detail page (`/admin/cms/content/{id}`):
 
@@ -135,7 +139,7 @@ From the content detail page (`/admin/cms/content/{id}`):
 2. Click **Publish** to make it live immediately.
 3. Alternatively, click **Schedule** to set a future publication date.
 
-### Publishing Workflow States
+### Publishing workflow states
 
 | Status    | Description                                                         |
 | --------- | ------------------------------------------------------------------- |
@@ -146,7 +150,7 @@ From the content detail page (`/admin/cms/content/{id}`):
 | Published | Live and publicly visible                                           |
 | Archived  | Removed from public view, preserved for records                     |
 
-### Standard Mode
+### Standard mode
 
 In standard mode (`editorial_workflow: false`), content transitions directly:
 
@@ -157,7 +161,7 @@ Published --> Archived
 Archived --> Draft
 ```
 
-### Editorial Workflow Mode
+### Editorial workflow mode
 
 When `editorial_workflow: true`, content passes through review:
 
@@ -167,7 +171,7 @@ Draft --> In Review --> Draft (rejected)
 Approved --> Scheduled --> Published
 ```
 
-## Step 7: View Your Published Content
+## Step 7: view your published content
 
 Your published content is accessible at:
 
@@ -179,7 +183,7 @@ For example, if your article has the slug `hello-world`:
 - English (default): `https://your-site.com/hello-world`
 - French: `https://your-site.com/fr/bonjour-le-monde`
 
-## Multi-Locale Setup
+## Multi-locale setup
 
 To serve content in multiple languages, update your configuration:
 
@@ -191,7 +195,7 @@ To serve content in multiple languages, update your configuration:
 
 Then add translations for each content item at **Admin > CMS > Content > {id} > Translations**.
 
-## Enabling Regulated Features
+## Enabling regulated features
 
 For regulated environments (banking, healthcare, legal), enable the full compliance stack:
 
@@ -203,7 +207,7 @@ For regulated environments (banking, healthcare, legal), enable the full complia
 
 These features ensure a complete audit trail and prevent unauthorized content changes.
 
-## Next Steps
+## Next steps
 
 - [Content Management Guide](content-management.md) - Detailed content editing and workflow
 - [Media Library Guide](media-library.md) - Uploading and managing media assets
