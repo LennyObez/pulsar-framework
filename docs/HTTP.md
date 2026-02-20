@@ -15,24 +15,24 @@ For interoperability with PSR-7/PSR-15 libraries, Pulsar ships a first-party bri
 
 ## Request
 
-`Pulsar\Http\Request` is a `readonly class` representing an incoming HTTP request.
+Controllers should type-hint `Pulsar\Http\Message\ServerRequest` (the concrete class), **not** the PSR-7 `Psr\Http\Message\ServerRequestInterface`. The concrete class provides Pulsar-specific convenience methods (`json()`, `query()`, `post()`, `input()`, `all()`, `wantsJson()`, etc.) that are not part of the PSR-7 interface.
 
-### Properties
+```php
+use Pulsar\Http\Message\ServerRequest;
+use Pulsar\Http\Message\Response;
 
-| Property          | Type                   | Description               |
-| ----------------- | ---------------------- | ------------------------- |
-| `method`          | `Method`               | HTTP method enum          |
-| `uri`             | `string`               | Full request URI          |
-| `path`            | `string`               | URL path component        |
-| `queryString`     | `string`               | Raw query string          |
-| `headers`         | `HeaderBag`            | Case-insensitive headers  |
-| `body`            | `string`               | Raw request body          |
-| `query`           | `array<string, mixed>` | Parsed GET parameters     |
-| `post`            | `array<string, mixed>` | Parsed POST parameters    |
-| `cookies`         | `array<string, mixed>` | Cookie data               |
-| `server`          | `array<string, mixed>` | Server variables          |
-| `attributes`      | `array<string, mixed>` | Custom request attributes |
-| `protocolVersion` | `string`               | HTTP protocol version     |
+class UserController
+{
+    public function show(ServerRequest $request, string $id): Response
+    {
+        $page = $request->query('page', '1');
+        $data = $request->json();
+        // ...
+    }
+}
+```
+
+If you type-hint `ServerRequestInterface`, you lose access to Pulsar helpers and must use PSR-7 methods (`getQueryParams()`, `getParsedBody()`, etc.) directly.
 
 ### Parameter access
 
@@ -108,6 +108,23 @@ Response::redirect($url, $status);           // Location header redirect
 Response::noContent();                        // 204 No Content
 Response::validationError($violations);       // 422 JSON validation error
 ```
+
+### Template rendering
+
+`Response::view()` renders a Pulse template into an HTML response. It accepts either an explicit `TemplateEngineInterface` instance or uses the static engine configured during kernel boot (via `ViewWiring`).
+
+```php
+// Using the static engine (most common in controllers)
+return Response::view('pages.about', ['title' => 'About Us']);
+
+// With a custom status code
+return Response::view('errors.not-found', ['message' => 'Page missing'], 404);
+
+// Explicit engine injection (for tests or non-standard setups)
+return Response::view($engine, 'pages.about', ['title' => 'About Us'], 200);
+```
+
+If no template engine has been configured and you call `Response::view()` with a string template name, a `RuntimeException` is thrown. Register `ViewWiring` during bootstrap or call `Response::setTemplateEngine()` manually.
 
 ### Validation error response
 

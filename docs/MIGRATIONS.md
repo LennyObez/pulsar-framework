@@ -18,6 +18,9 @@ declare(strict_types=1);
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Migration\MigrationInterface;
 
+// Either namespace works. The short form is an alias for the canonical one:
+//   Pulsar\Database\MigrationInterface          (alias)
+//   Pulsar\Database\Migration\MigrationInterface (canonical)
 return new class implements MigrationInterface {
     public function up(ConnectionInterface $connection): void
     {
@@ -40,11 +43,45 @@ return new class implements MigrationInterface {
 
 ## Filename convention
 
+Three formats are accepted:
+
+**Compact timestamp** (recommended for projects):
+
 ```
 {YYYYMMDDHHMMSS}_description_snake_case.php
 ```
 
-The 14-digit timestamp is the migration version. Migrations are applied in version order (ascending).
+Example: `20260203153000_create_users_table.php`
+
+**Separated timestamp** (Laravel-compatible):
+
+```
+{YYYY}_{MM}_{DD}_{HHMMSS}_description_snake_case.php
+```
+
+Example: `2026_02_03_153000_create_users_table.php`
+
+**Sequential** (used by extensions):
+
+```
+{NNN}_description_snake_case.php
+```
+
+Example: `001_create_widgets_table.php`
+
+Timestamp formats are recommended for application projects because they avoid ordering conflicts when multiple developers create migrations concurrently. The sequential format is used by framework extensions where migration order is fixed at release time.
+
+### Version extraction and sorting
+
+All three formats produce a 14-digit version string used for ordering:
+
+- **Compact**: digits are used directly (`20260203153000`)
+- **Separated**: segments are concatenated (`2026_02_03_153000` becomes `20260203153000`)
+- **Sequential**: zero-padded to 14 digits (`001` becomes `00000000000001`)
+
+The migration runner extracts the version with a regex: compact files match `^(\d{14})_`, separated files match `^(\d{4})_(\d{2})_(\d{2})_(\d{6})_`, sequential files match `^(\d{1,14})_`. Files matching none of these patterns are silently skipped.
+
+Migrations are applied in ascending version order. Do not mix timestamp and sequential formats within a single migration directory.
 
 ## Running migrations
 
