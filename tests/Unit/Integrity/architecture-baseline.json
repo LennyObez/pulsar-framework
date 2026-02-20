@@ -34,5 +34,8 @@
   "Pulsar\\I18n\\Translator": "I18nWiring composition root wires translator",
   "Pulsar\\Core\\Wiring\\ServiceWiringInterface": "OpenApiWiring composition root implements wiring interface",
   "Pulsar\\Api\\Resource\\ResourceMetadataCache": "ApiWiring composition root wires resource metadata cache",
-  "Pulsar\\Api\\Security\\EntitySerializationGuard": "ApiWiring composition root wires entity serialization guard"
+  "Pulsar\\Api\\Security\\EntitySerializationGuard": "ApiWiring composition root wires entity serialization guard",
+  "Pulsar\\Scheduler\\JobRegistryInterface": "Analytics extension registers scheduled jobs via composition root pattern",
+  "Pulsar\\Cache\\Application\\CacheDriverInterface": "Analytics extension uses cache for rate limiting (composition root)",
+  "Pulsar\\Extension\\Analytics\\Migration\\AnalyticsDdl": "Analytics migrations use shared DDL adapter within same extension"
 }
