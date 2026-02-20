@@ -46,13 +46,20 @@ final class EntityHydrator implements EntityHydratorInterface
         $this->typeCaster = new TypeCaster();
     }
 
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $entityClass
+     *
+     * @return T
+     */
     #[Override]
     public function hydrate(string $entityClass, Row $row): object
     {
         $metadata = $this->metadataRegistry->get($entityClass);
         $reflectionData = self::reflectionFor($entityClass);
 
-        /** @var object $entity */
+        /** @var T $entity */
         $entity = $reflectionData['reflection']->newInstanceWithoutConstructor();
         $properties = $reflectionData['properties'];
 
@@ -91,6 +98,14 @@ final class EntityHydrator implements EntityHydratorInterface
         return $entity;
     }
 
+    /**
+     * @template T of object
+     *
+     * @param class-string<T> $entityClass
+     * @param list<Row>       $rows
+     *
+     * @return list<T>
+     */
     #[Override]
     public function hydrateAll(string $entityClass, array $rows): array
     {

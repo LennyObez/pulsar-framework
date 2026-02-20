@@ -111,8 +111,12 @@ final class UuidV7
         }
 
         $hex = self::stripHyphens($uuid);
-        // First 12 hex chars = 48 bits = unix_ts_ms.
-        return hexdec(substr($hex, 0, 12));
+
+        // First 12 hex chars = 48 bits = unix_ts_ms. The 48-bit value
+        // always fits in PHP_INT_MAX on 64-bit platforms (which Pulsar
+        // requires); `hexdec()` returns `int|float` for the 32-bit
+        // overflow case that does not apply here.
+        return (int) hexdec(substr($hex, 0, 12));
     }
 
     /**
@@ -143,8 +147,10 @@ final class UuidV7
         $bytes = '';
 
         for ($i = 0; $i < 32; $i += 2) {
-            $byte = hexdec(substr($hex, $i, 2));
-            $bytes .= chr($byte);
+            // 2 hex chars decode to a single byte (0-255), well within
+            // both PHP int range and `chr()`'s expected `int<0, 255>`.
+            $byte = (int) hexdec(substr($hex, $i, 2));
+            $bytes .= chr($byte & 0xFF);
         }
 
         return $bytes;

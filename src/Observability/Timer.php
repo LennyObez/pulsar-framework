@@ -171,7 +171,16 @@ final class Timer
         return array_sum($this->marks);
     }
 
-    private static function nsToMs(int $nanoseconds): float
+    /**
+     * Convert a nanosecond duration to milliseconds.
+     *
+     * Accepts `int|float` because `hrtime(true)` returns `float` on 32-bit
+     * platforms where the int range is too small to hold the timestamp.
+     * On 64-bit platforms (where Pulsar runs in production) the value is
+     * always `int`; the union keeps the static analyser honest about the
+     * 32-bit fallback path.
+     */
+    private static function nsToMs(int|float $nanoseconds): float
     {
         return $nanoseconds / 1_000_000.0;
     }
