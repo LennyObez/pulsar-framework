@@ -99,14 +99,55 @@ final class TemplateCompiler
         // Phase 1: Strip comment blocks {{-- comment --}} (before echo compilation)
         $output = $this->compileComments($output);
 
-        // Phase 2: Compile directives (registered by the directive system)
+        // Phase 2: Rewrite directives used inside {{ }} / {!! !!} expression
+        // contexts to their function-call equivalents. Directives compile to
+        // PHP echo statements which cannot be nested inside another echo
+        // statement. Inside an expression, @t('key') must become t('key')
+        // so the host expression can consume it as an inline expression.
+        $output = $this->rewriteExpressionDirectives($output);
+
+        // Phase 3: Compile directives (registered by the directive system)
         $output = $this->compileDirectives($output, $templateName);
 
-        // Phase 3: Compile raw (unescaped) output {!! $expr !!}
+        // Phase 4: Compile raw (unescaped) output {!! $expr !!}
         $output = $this->compileRawEchos($output);
 
-        // Phase 4: Compile escaped output {{ $expr }}
+        // Phase 5: Compile escaped output {{ $expr }}
         return $this->compileEscapedEchos($output);
+    }
+
+    /**
+     * Rewrite directives embedded inside {{ }} and {!! !!} expression
+     * contexts to function calls, so the host expression compiles cleanly.
+     *
+     * Only directives that have a matching global helper function
+     * (t, tRaw, trans, __) are rewritten. Other directives left alone
+     * will still produce a compile-time error, surfacing the misuse.
+     */
+    private function rewriteExpressionDirectives(string $source): string
+    {
+        $directivesWithFunctionEquivalent = ['t', 'tRaw', 'trans', '__'];
+        $pattern = '/\{(!!|\{)\s*(.*?)\s*(!!|\})\}/s';
+
+        return (string) preg_replace_callback(
+            $pattern,
+            static function (array $matches) use ($directivesWithFunctionEquivalent): string {
+                $open = $matches[1];
+                $body = $matches[2];
+                $close = $matches[3];
+
+                foreach ($directivesWithFunctionEquivalent as $name) {
+                    $body = preg_replace(
+                        '/@(' . preg_quote($name, '/') . ')\s*\(/',
+                        '$1(',
+                        $body,
+                    ) ?? $body;
+                }
+
+                return '{' . $open . ' ' . $body . ' ' . $close . '}';
+            },
+            $source,
+        );
     }
 
     /**
