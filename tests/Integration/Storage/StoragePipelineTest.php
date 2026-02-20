@@ -15,6 +15,8 @@ use Pulsar\Storage\StorageException;
 use Pulsar\Storage\StorageManager;
 use Pulsar\Storage\StorageMetadata;
 
+use function strlen;
+
 #[CoversClass(InMemoryStorageAdapter::class)]
 #[CoversClass(StorageManager::class)]
 final class StoragePipelineTest extends TestCase

@@ -20,4 +20,8 @@ interface PlsrApi {
   ext: (fn: (send: PlsrSendFn, site: string) => void) => void;
 }
 
-declare var plsr: PlsrApi;
+declare const plsr: PlsrApi;
+
+interface Window {
+  plsr: PlsrApi;
+}

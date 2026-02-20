@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Integration\Extension\Forum\Http;
 
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Extension\Forum\Config\ForumConfig;
 use Pulsar\Extension\Forum\Content\MarkdownRendererInterface;
-use Pulsar\Extension\Forum\Domain\ThreadStatus;
 use Pulsar\Extension\Forum\Domain\ThreadType;
 use Pulsar\Extension\Forum\Http\Controller\Api\ThreadApiController;
 use Pulsar\Extension\Forum\Service\ForumServiceInterface;
@@ -22,7 +21,6 @@ use Pulsar\Extension\Forum\Subscription\ThreadSubscriptionRepositoryInterface;
 use Pulsar\Extension\Forum\Thread\Thread;
 use Pulsar\Extension\Forum\Thread\ThreadRepositoryInterface;
 use Pulsar\Http\Message\ServerRequest;
-use Pulsar\Api\Pagination\PaginationResult;
 
 #[CoversClass(ThreadApiController::class)]
 final class ThreadApiControllerTest extends TestCase
@@ -63,6 +61,7 @@ final class ThreadApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('thread-001', $data['data']['id']);
         self::assertSame('Test Thread', $data['data']['title']);
     }
@@ -108,6 +107,7 @@ final class ThreadApiControllerTest extends TestCase
         self::assertSame(422, $response->getStatusCode());
         $data = $this->decodeBody($response);
         self::assertSame('Validation failed', $data['error']);
+        self::assertIsArray($data['details']);
         self::assertArrayHasKey('title', $data['details']);
         self::assertArrayHasKey('slug', $data['details']);
         self::assertArrayHasKey('category_id', $data['details']);
@@ -152,6 +152,7 @@ final class ThreadApiControllerTest extends TestCase
 
         self::assertSame(201, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('thread-new', $data['data']['id']);
     }
 
@@ -235,6 +236,7 @@ final class ThreadApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertSame('deleted', $data['data']['status']);
     }
 
@@ -261,6 +263,7 @@ final class ThreadApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertCount(2, $data['data']);
         self::assertSame('2', $response->getHeaderLine('X-Total-Count'));
     }
@@ -282,6 +285,7 @@ final class ThreadApiControllerTest extends TestCase
 
         self::assertSame(201, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertTrue($data['data']['subscribed']);
     }
 
@@ -300,6 +304,7 @@ final class ThreadApiControllerTest extends TestCase
 
         self::assertSame(200, $response->getStatusCode());
         $data = $this->decodeBody($response);
+        self::assertIsArray($data['data']);
         self::assertFalse($data['data']['subscribed']);
     }
 

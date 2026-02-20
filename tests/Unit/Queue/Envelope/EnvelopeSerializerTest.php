@@ -12,6 +12,9 @@ use Pulsar\Queue\Envelope\EnvelopeSerializer;
 use Pulsar\Queue\Envelope\JobEnvelope;
 use Pulsar\Queue\Exception\QueueException;
 
+use function assert;
+use function is_string;
+
 #[CoversClass(EnvelopeSerializer::class)]
 final class EnvelopeSerializerTest extends TestCase
 {
@@ -61,6 +64,7 @@ final class EnvelopeSerializerTest extends TestCase
         $json = $this->serializer->serialize($envelope);
 
         self::assertJson($json);
+        /** @var array<string, mixed> $decoded */
         $decoded = json_decode($json, true);
         self::assertSame('job-001', $decoded['id']);
     }
@@ -107,6 +111,7 @@ final class EnvelopeSerializerTest extends TestCase
     public function deserializeThrowsForMissingRequiredField(): void
     {
         $json = json_encode(['id' => 'j1']);
+        assert(is_string($json));
 
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('missing required field');
@@ -123,7 +128,7 @@ final class EnvelopeSerializerTest extends TestCase
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('unknown backoff strategy');
 
-        $this->serializer->deserialize(json_encode($data));
+        $this->serializer->deserialize(self::jsonEncode($data));
     }
 
     #[Test]
@@ -144,7 +149,7 @@ final class EnvelopeSerializerTest extends TestCase
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('must be a string');
 
-        $this->serializer->deserialize(json_encode($data));
+        $this->serializer->deserialize(self::jsonEncode($data));
     }
 
     #[Test]
@@ -156,7 +161,7 @@ final class EnvelopeSerializerTest extends TestCase
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('must be an integer');
 
-        $this->serializer->deserialize(json_encode($data));
+        $this->serializer->deserialize(self::jsonEncode($data));
     }
 
     #[Test]
@@ -168,7 +173,7 @@ final class EnvelopeSerializerTest extends TestCase
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('must be a boolean');
 
-        $this->serializer->deserialize(json_encode($data));
+        $this->serializer->deserialize(self::jsonEncode($data));
     }
 
     #[Test]
@@ -177,7 +182,7 @@ final class EnvelopeSerializerTest extends TestCase
         $data = $this->createFullData();
         $data['metadata'] = ['key' => 'value', 'nested' => ['a' => 1]];
 
-        $envelope = $this->serializer->deserialize(json_encode($data));
+        $envelope = $this->serializer->deserialize(self::jsonEncode($data));
 
         self::assertSame('value', $envelope->metadata['key']);
     }
@@ -188,7 +193,7 @@ final class EnvelopeSerializerTest extends TestCase
         $data = $this->createFullData();
         unset($data['metadata']);
 
-        $envelope = $this->serializer->deserialize(json_encode($data));
+        $envelope = $this->serializer->deserialize(self::jsonEncode($data));
 
         self::assertSame([], $envelope->metadata);
     }
@@ -202,7 +207,7 @@ final class EnvelopeSerializerTest extends TestCase
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('must be a string or null');
 
-        $this->serializer->deserialize(json_encode($data));
+        $this->serializer->deserialize(self::jsonEncode($data));
     }
 
     #[Test]
@@ -214,7 +219,7 @@ final class EnvelopeSerializerTest extends TestCase
         $this->expectException(QueueException::class);
         $this->expectExceptionMessage('must be an integer or null');
 
-        $this->serializer->deserialize(json_encode($data));
+        $this->serializer->deserialize(self::jsonEncode($data));
     }
 
     /**
@@ -245,6 +250,13 @@ final class EnvelopeSerializerTest extends TestCase
             'encrypted' => false,
             'metadata' => [],
         ];
+    }
+
+    private static function jsonEncode(mixed $data): string
+    {
+        $json = json_encode($data);
+        assert(is_string($json));
+        return $json;
     }
 
     private function createEnvelope(): JobEnvelope

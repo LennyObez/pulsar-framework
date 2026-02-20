@@ -9,11 +9,8 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
 use Pulsar\Extension\Studio\Console\Event\EventEnvelope;
-use Pulsar\Extension\Studio\Exception\StudioException;
 use Pulsar\Security\Crypto\HmacInterface;
 
-use function array_fill;
-use function count;
 use function hash;
 use function implode;
 use function is_array;
@@ -27,13 +24,13 @@ use function sprintf;
  * PostgreSQL/MySQL, and BEGIN IMMEDIATE for SQLite fallback.
  */
 #[Internal]
-final class DatabaseEventStore implements EventStoreInterface
+final readonly class DatabaseEventStore implements EventStoreInterface
 {
     public function __construct(
-        private readonly ConnectionInterface $connection,
-        private readonly string $tableName = 'studio_events',
-        private readonly string $chainTableName = 'studio_chain',
-        private readonly ?HmacInterface $hmac = null,
+        private ConnectionInterface $connection,
+        private string $tableName = 'studio_events',
+        private string $chainTableName = 'studio_chain',
+        private ?HmacInterface $hmac = null,
     ) {}
 
     #[Override]
@@ -239,9 +236,9 @@ final class DatabaseEventStore implements EventStoreInterface
     public function deleteByPayloadKey(string $eventType, string $jsonPath, string $value): int
     {
         $jsonExtract = match ($this->connection->driver()) {
-            Driver::SQLite => sprintf('json_extract(payload_json, :path)'),
-            Driver::PostgreSQL => sprintf("payload_json::jsonb #>> :path"),
-            Driver::MySQL => sprintf('JSON_UNQUOTE(JSON_EXTRACT(payload_json, :path))'),
+            Driver::SQLite => 'json_extract(payload_json, :path)',
+            Driver::PostgreSQL => 'payload_json::jsonb #>> :path',
+            Driver::MySQL => 'JSON_UNQUOTE(JSON_EXTRACT(payload_json, :path))',
         };
 
         return $this->connection->execute(

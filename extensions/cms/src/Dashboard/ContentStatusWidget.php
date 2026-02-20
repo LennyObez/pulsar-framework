@@ -27,7 +27,7 @@ final readonly class ContentStatusWidget implements DashboardWidgetInterface
     public function getData(): array
     {
         $counts = $this->statusQuery->countByStatus($this->tenantId);
-        $trend = $this->statusQuery->getDailyCreationTrend(days: 14, tenantId: $this->tenantId);
+        $trend = $this->statusQuery->getDailyCreationTrend(tenantId: $this->tenantId);
 
         return [
             'counts' => $counts,

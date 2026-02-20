@@ -7,13 +7,15 @@ namespace Pulsar\Extension\Cms\Http\Controller;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Commerce\CheckoutServiceInterface;
-use Pulsar\Extension\Cms\Commerce\ProductRepositoryInterface;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Http\Message\Response;
 
 use function array_map;
+use function filter_var;
 use function is_array;
 use function is_string;
+
+use const FILTER_VALIDATE_EMAIL;
 
 /**
  * Public-facing checkout controller.
@@ -26,7 +28,6 @@ final readonly class CheckoutController
 {
     public function __construct(
         private CheckoutServiceInterface $checkout,
-        private ProductRepositoryInterface $products,
     ) {}
 
     public function show(ServerRequestInterface $request): Response

@@ -8,10 +8,11 @@ use DateTimeImmutable;
 use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Analytics\Contracts\PageViewRepositoryInterface;
-use Pulsar\Extension\Analytics\Contracts\StatsServiceInterface;
 use Pulsar\Http\Message\Response;
 
 use function sprintf;
+use function str_contains;
+use function str_replace;
 
 /**
  * CSV export API endpoint.
@@ -20,7 +21,6 @@ use function sprintf;
 final readonly class ExportController
 {
     public function __construct(
-        private StatsServiceInterface $statsService,
         private PageViewRepositoryInterface $pageViewRepository,
     ) {}
 
@@ -61,7 +61,6 @@ final readonly class ExportController
         $filename = sprintf('analytics-export-%s-%s.csv', $from->format('Y-m-d'), $to->format('Y-m-d'));
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => 'text/csv; charset=utf-8',
                 'Content-Disposition' => 'attachment; filename="' . $filename . '"',

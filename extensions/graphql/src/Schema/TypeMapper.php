@@ -22,7 +22,6 @@ final readonly class TypeMapper
             'int', 'integer' => 'Int',
             'float', 'double', 'decimal' => 'Float',
             'bool', 'boolean' => 'Boolean',
-            'datetime', 'date', 'json', 'text', 'string' => 'String',
             default => 'String',
         };
     }

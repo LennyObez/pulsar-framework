@@ -128,7 +128,7 @@ final readonly class ContentController
         if ($translation === null) {
             // Show a styled welcome page for the root path
             if ($contentPath === '') {
-                return Response::html($this->renderWelcomePage(), 200);
+                return Response::html($this->renderWelcomePage());
             }
 
             return Response::json(
@@ -335,13 +335,9 @@ final readonly class ContentController
     ): string {
         /** @var array<string, mixed> $translation */
         $translation = $data['translation'] ?? [];
-        /** @var string $title */
         $title = htmlspecialchars((string) ($translation['title'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        /** @var string $body */
         $body = $this->safeHtmlPolicy->sanitize((string) ($translation['body'] ?? ''));
-        /** @var string $metaTitle */
         $metaTitle = htmlspecialchars((string) ($translation['meta_title'] ?? $title), ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        /** @var string $metaDescription */
         $metaDescription = htmlspecialchars((string) ($translation['meta_description'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         // Build hreflang link tags

@@ -71,6 +71,8 @@ final class DbCustomerRepositoryTest extends TestCase
         self::assertSame('user-001', $found->userId);
         self::assertSame('alice@example.com', $found->email);
         self::assertSame('Alice', $found->displayName);
+        self::assertIsArray($found->billingAddress);
+        self::assertArrayHasKey('street', $found->billingAddress);
         self::assertSame('123 Main St', $found->billingAddress['street']);
         self::assertNull($found->shippingAddress);
     }
@@ -175,7 +177,11 @@ final class DbCustomerRepositoryTest extends TestCase
         self::assertNotNull($found);
         self::assertSame('updated@example.com', $found->email);
         self::assertSame('Updated Name', $found->displayName);
+        self::assertIsArray($found->billingAddress);
+        self::assertArrayHasKey('street', $found->billingAddress);
         self::assertSame('456 Oak Ave', $found->billingAddress['street']);
+        self::assertIsArray($found->shippingAddress);
+        self::assertArrayHasKey('street', $found->shippingAddress);
         self::assertSame('789 Pine Rd', $found->shippingAddress['street']);
     }
 
@@ -209,7 +215,11 @@ final class DbCustomerRepositoryTest extends TestCase
 
         $found = $this->repository->findById('cust-addr');
         self::assertNotNull($found);
+        self::assertIsArray($found->billingAddress);
+        self::assertArrayHasKey('street', $found->billingAddress);
         self::assertSame('100 Business Blvd', $found->billingAddress['street']);
+        self::assertIsArray($found->shippingAddress);
+        self::assertArrayHasKey('street', $found->shippingAddress);
         self::assertSame('200 Shipping Lane', $found->shippingAddress['street']);
     }
 

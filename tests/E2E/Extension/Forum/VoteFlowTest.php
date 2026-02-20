@@ -12,7 +12,6 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Forum\Config\ForumConfig;
 use Pulsar\Extension\Forum\Domain\ThreadType;
 use Pulsar\Extension\Forum\Domain\VoteDirection;
-use Pulsar\Extension\Forum\Event\VoteCast;
 use Pulsar\Extension\Forum\Event\VoteRemoved;
 use Pulsar\Extension\Forum\Exception\ForumException;
 use Pulsar\Extension\Forum\Internal\Service\ForumService;

@@ -46,7 +46,7 @@ final readonly class RequestExplorerController
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <title>HTTP Requests - Pulsar Studio</title>
+                <title>HTTP requests - Pulsar Studio</title>
                 <link rel="stylesheet" href="/studio/assets/studio.css">
             </head>
             <body>

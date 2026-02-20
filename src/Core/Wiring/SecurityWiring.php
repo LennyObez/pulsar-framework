@@ -28,12 +28,12 @@ use Pulsar\Security\Crypto\CompositeKeyProvider;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\EncryptorInterface;
 use Pulsar\Security\Crypto\EnvKeyRing;
-use Pulsar\Security\Crypto\SodiumCipherSuite;
 use Pulsar\Security\Crypto\HmacInterface;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\KeyProviderInterface;
 use Pulsar\Security\Crypto\KeyRingInterface;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Crypto\SodiumCipherSuite;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
 use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
@@ -62,7 +62,6 @@ use SodiumException;
 use function dirname;
 use function is_array;
 use function sodium_hex2bin;
-use function strlen;
 
 #[Internal]
 final readonly class SecurityWiring implements ServiceWiringInterface
@@ -314,7 +313,7 @@ final readonly class SecurityWiring implements ServiceWiringInterface
             $hex = $environment->get($envVar);
             if ($hex !== null && $hex !== '') {
                 $raw = sodium_hex2bin($hex);
-                if (strlen($raw) > 0) {
+                if ($raw !== '') {
                     $overrides[$context] = $raw;
                 }
             }

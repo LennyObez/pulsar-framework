@@ -44,8 +44,7 @@ enum PublishingStatus: string
                 default => false,
             },
             self::Approved => match ($target) {
-                self::Published, self::Scheduled => $editorialWorkflow,
-                self::Draft => $editorialWorkflow,
+                self::Published, self::Scheduled, self::Draft => $editorialWorkflow,
                 default => false,
             },
             self::Scheduled => match ($target) {

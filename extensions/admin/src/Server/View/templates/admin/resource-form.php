@@ -78,7 +78,7 @@ $method = $mode === 'create' ? 'POST' : 'PUT';
 
         <div class="admin-form__actions">
             <button type="submit" class="admin-btn admin-btn--primary">
-                <?= $e($mode === 'create' ? 'Create' : 'Save Changes') ?>
+                <?= $e($mode === 'create' ? 'Create' : 'Save changes') ?>
             </button>
         </div>
     </form>

@@ -15,6 +15,13 @@ use Pulsar\Config\Exception\ConfigException;
 #[CoversClass(ConfigRepository::class)]
 final class ConfigRepositoryTest extends TestCase
 {
+    /** @return class-string */
+    private static function classString(string $name): string
+    {
+        /** @var class-string */
+        return $name;
+    }
+
     #[Test]
     public function storesAndRetrievesByClass(): void
     {
@@ -120,7 +127,7 @@ final class ConfigRepositoryTest extends TestCase
     {
         $repo = new ConfigRepository();
 
-        self::assertFalse($repo->has('NonExistent\Config\Class'));
+        self::assertFalse($repo->has(self::classString('NonExistent\Config\Class')));
     }
 
     #[Test]

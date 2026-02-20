@@ -6,14 +6,14 @@ Pulsar uses PHPUnit 13 for unit, integration, and E2E tests, Infection for mutat
 
 Six PHPUnit test suites are defined in `tools/php/phpunit.xml`:
 
-| Suite       | Directory                        | Purpose                                              |
-| ----------- | -------------------------------- | ---------------------------------------------------- |
-| Unit        | `tests/Unit/`                    | Isolated class-level tests with no external I/O      |
-| Integration | `tests/Integration/`             | Multi-component tests with real config, container, kernel boot |
-| E2E         | `tests/E2E/`                     | Full request lifecycle from kernel boot to response  |
-| Fuzz        | `tests/Fuzz/`                    | Randomized input testing for parsers, routers, and templates |
-| Chaos       | `tests/Chaos/`                   | Failure injection testing for database, cache, and load scenarios |
-| Property    | `tests/Property/`                | Property-based tests verifying invariants like crypto roundtrips and serialization idempotency |
+| Suite       | Directory            | Purpose                                                                                        |
+| ----------- | -------------------- | ---------------------------------------------------------------------------------------------- |
+| Unit        | `tests/Unit/`        | Isolated class-level tests with no external I/O                                                |
+| Integration | `tests/Integration/` | Multi-component tests with real config, container, kernel boot                                 |
+| E2E         | `tests/E2E/`         | Full request lifecycle from kernel boot to response                                            |
+| Fuzz        | `tests/Fuzz/`        | Randomized input testing for parsers, routers, and templates                                   |
+| Chaos       | `tests/Chaos/`       | Failure injection testing for database, cache, and load scenarios                              |
+| Property    | `tests/Property/`    | Property-based tests verifying invariants like crypto roundtrips and serialization idempotency |
 
 A separate suite, `tests/Benchmark/`, uses PHPBench (not PHPUnit) for performance testing. Mutation testing uses Infection (not PHPUnit) to verify test quality.
 
@@ -119,17 +119,17 @@ tests/
 
 ### Naming conventions
 
-| Element         | Convention                                     | Example                                   |
-| --------------- | ---------------------------------------------- | ----------------------------------------- |
-| Test class      | `<ClassName>Test`                              | `PasswordHasherTest`                      |
-| Integration     | `<Feature>IntegrationTest`                     | `KernelStudioIntegrationTest`             |
-| E2E             | `<Subject>FlowTest` or `<Subject>Test`         | `AuthFlowTest`, `FullRequestLifecycleTest` |
-| Benchmark       | `<Subject>Bench`                               | `RouterBench`, `KernelBench`              |
-| Fuzz test       | `<Subject>FuzzTest`                            | `HttpRequestFuzzTest`, `RouteFuzzTest`    |
-| Chaos test      | `<Subject>FailureTest` or `<Subject>Test`      | `DatabaseFailureTest`, `HighLoadTest`     |
-| Property test   | `<Subject>Test`                                | `CryptoRoundtripTest`, `RouterSymmetryTest` |
-| Test method     | `<verb><what><condition>` (camelCase)           | `hashReturnsNonEmptyStringDifferentFromInput` |
-| Data provider   | `<descriptiveName>Provider`                    | `roundTripProvider`                       |
+| Element       | Convention                                | Example                                       |
+| ------------- | ----------------------------------------- | --------------------------------------------- |
+| Test class    | `<ClassName>Test`                         | `PasswordHasherTest`                          |
+| Integration   | `<Feature>IntegrationTest`                | `KernelStudioIntegrationTest`                 |
+| E2E           | `<Subject>FlowTest` or `<Subject>Test`    | `AuthFlowTest`, `FullRequestLifecycleTest`    |
+| Benchmark     | `<Subject>Bench`                          | `RouterBench`, `KernelBench`                  |
+| Fuzz test     | `<Subject>FuzzTest`                       | `HttpRequestFuzzTest`, `RouteFuzzTest`        |
+| Chaos test    | `<Subject>FailureTest` or `<Subject>Test` | `DatabaseFailureTest`, `HighLoadTest`         |
+| Property test | `<Subject>Test`                           | `CryptoRoundtripTest`, `RouterSymmetryTest`   |
+| Test method   | `<verb><what><condition>` (camelCase)     | `hashReturnsNonEmptyStringDifferentFromInput` |
+| Data provider | `<descriptiveName>Provider`               | `roundTripProvider`                           |
 
 ### Required attributes
 
@@ -353,28 +353,28 @@ final class SomeApiTest extends TestCase
 
 Available assertions:
 
-| Method                       | Purpose                                        |
-| ---------------------------- | ---------------------------------------------- |
-| `assertHasApiAttribute()`    | Verify class has `#[Api]` attribute             |
-| `assertHasInternalAttribute()` | Verify class has `#[Internal]` attribute      |
-| `assertMethodSignature()`    | Verify method parameter and return types        |
-| `assertEnumCases()`          | Verify enum has expected cases                  |
+| Method                         | Purpose                                  |
+| ------------------------------ | ---------------------------------------- |
+| `assertHasApiAttribute()`      | Verify class has `#[Api]` attribute      |
+| `assertHasInternalAttribute()` | Verify class has `#[Internal]` attribute |
+| `assertMethodSignature()`      | Verify method parameter and return types |
+| `assertEnumCases()`            | Verify enum has expected cases           |
 
 ### Benchmark support classes
 
 Located at `tests/Benchmark/Support/`:
 
-| Class                       | Purpose                                          |
-| --------------------------- | ------------------------------------------------ |
-| `BenchmarkPipelineFactory`  | Creates instrumented middleware pipelines         |
-| `StubAuthManager`           | In-memory auth manager for benchmark isolation    |
-| `StubGuard`                 | Guard stub with configurable test identity        |
-| `StubTokenResolver`         | Token resolver returning canned results           |
-| `NullCache`                 | No-op cache implementation                        |
-| `InMemoryAuditSink`         | In-memory audit log storage                       |
-| `PassThroughMiddleware`     | Middleware that passes through without processing |
-| `ManifestValidator`         | Pipeline manifest integrity checker               |
-| `MemoryProfileRunner`       | Memory profiling utility for memory budgets       |
+| Class                      | Purpose                                           |
+| -------------------------- | ------------------------------------------------- |
+| `BenchmarkPipelineFactory` | Creates instrumented middleware pipelines         |
+| `StubAuthManager`          | In-memory auth manager for benchmark isolation    |
+| `StubGuard`                | Guard stub with configurable test identity        |
+| `StubTokenResolver`        | Token resolver returning canned results           |
+| `NullCache`                | No-op cache implementation                        |
+| `InMemoryAuditSink`        | In-memory audit log storage                       |
+| `PassThroughMiddleware`    | Middleware that passes through without processing |
+| `ManifestValidator`        | Pipeline manifest integrity checker               |
+| `MemoryProfileRunner`      | Memory profiling utility for memory budgets       |
 
 ### Integrity support classes
 
@@ -452,28 +452,28 @@ Key patterns:
 
 Defined in `tools/php/performance-budgets.json`. Tier A budgets are CI-enforced hard gates:
 
-| Budget                           | Threshold         | Description                              |
-| -------------------------------- | ----------------- | ---------------------------------------- |
-| `container.instance_resolution`  | < 100 us          | Direct lookup for pre-registered instance |
-| `router.static_10`              | < 5 us            | Match against 10 static routes           |
-| `router.static_200`             | < 100 us          | Match against 200 static routes          |
-| `router.parameterized`          | < 200 us          | Match with parameter extraction          |
-| `middleware.pipeline_5`          | < 10 us           | 5-layer pass-through pipeline            |
-| `request.creation`              | < 5 us            | Request object construction              |
-| `kernel.dispatch`               | < 500 us          | Full dispatch cycle                      |
-| `request.anonymous_json_api`    | < 2 ms            | Full anonymous JSON API request          |
-| `request.authenticated_session` | < 3 ms            | Session-authenticated request            |
-| `request.with_audit`            | < 4 ms            | Request with full audit trail            |
-| `audit.log_write`               | < 500 us          | Single audit entry with HMAC chain       |
-| `crypto.encrypt.aead_1024b`     | < 100 us          | AEAD encryption of 1024-byte payload     |
+| Budget                          | Threshold | Description                               |
+| ------------------------------- | --------- | ----------------------------------------- |
+| `container.instance_resolution` | < 100 us  | Direct lookup for pre-registered instance |
+| `router.static_10`              | < 5 us    | Match against 10 static routes            |
+| `router.static_200`             | < 100 us  | Match against 200 static routes           |
+| `router.parameterized`          | < 200 us  | Match with parameter extraction           |
+| `middleware.pipeline_5`         | < 10 us   | 5-layer pass-through pipeline             |
+| `request.creation`              | < 5 us    | Request object construction               |
+| `kernel.dispatch`               | < 500 us  | Full dispatch cycle                       |
+| `request.anonymous_json_api`    | < 2 ms    | Full anonymous JSON API request           |
+| `request.authenticated_session` | < 3 ms    | Session-authenticated request             |
+| `request.with_audit`            | < 4 ms    | Request with full audit trail             |
+| `audit.log_write`               | < 500 us  | Single audit entry with HMAC chain        |
+| `crypto.encrypt.aead_1024b`     | < 100 us  | AEAD encryption of 1024-byte payload      |
 
 Memory budgets:
 
-| Budget                        | Threshold | Description                         |
-| ----------------------------- | --------- | ----------------------------------- |
-| `memory.peak_anonymous`       | < 2 MB    | Anonymous JSON API request          |
-| `memory.peak_authenticated`   | < 4 MB    | Authenticated request with audit    |
-| `memory.peak_compliance`      | < 6 MB    | Compliance event request            |
+| Budget                      | Threshold | Description                      |
+| --------------------------- | --------- | -------------------------------- |
+| `memory.peak_anonymous`     | < 2 MB    | Anonymous JSON API request       |
+| `memory.peak_authenticated` | < 4 MB    | Authenticated request with audit |
+| `memory.peak_compliance`    | < 6 MB    | Compliance event request         |
 
 For the full list, see `tools/php/performance-budgets.json`. For the ADR explaining the enforcement model, see `docs/adr/0012-performance-budgets-advisory-ci.md`.
 
@@ -535,14 +535,14 @@ PHPBench assertions in `#[Assert]` attributes fail the CI pipeline if a performa
 
 The CI pipeline runs on every pull request and push to `main`:
 
-| Job                     | Gates                                        | Blocking |
-| ----------------------- | -------------------------------------------- | -------- |
-| `php-quality`           | CS-Fixer, PHPStan, Psalm, Deptrac, audit     | Yes      |
-| `php-tests`             | Unit + Integration + E2E, 70% coverage       | Yes      |
-| `php-benchmark-tier-a`  | PHPBench assertions, memory budgets           | Yes      |
-| `cache-warmup`          | Smoke test for optimize/optimize:clear        | Yes      |
-| `adr-check`             | Architecture governance (PR only)             | Yes      |
-| `js`                    | ESLint, Prettier, TypeScript, Vitest          | Yes      |
+| Job                    | Gates                                    | Blocking |
+| ---------------------- | ---------------------------------------- | -------- |
+| `php-quality`          | CS-Fixer, PHPStan, Psalm, Deptrac, audit | Yes      |
+| `php-tests`            | Unit + Integration + E2E, 70% coverage   | Yes      |
+| `php-benchmark-tier-a` | PHPBench assertions, memory budgets      | Yes      |
+| `cache-warmup`         | Smoke test for optimize/optimize:clear   | Yes      |
+| `adr-check`            | Architecture governance (PR only)        | Yes      |
+| `js`                   | ESLint, Prettier, TypeScript, Vitest     | Yes      |
 
 All jobs must pass for a PR to be mergeable.
 

@@ -22,7 +22,6 @@ final class UuidGenerator
 {
     public static function v7(): string
     {
-        /** @var float $timestamp */
         $timestamp = microtime(true);
         $time = (int) ($timestamp * 1000.0);
         $hex = str_pad(dechex($time), 12, '0', STR_PAD_LEFT);

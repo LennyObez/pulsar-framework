@@ -20,7 +20,7 @@ $detailFields = array_filter($resource->fields(), static fn($f): bool => $f->vis
 <div class="admin-resource-view">
     <div class="admin-toolbar">
         <div class="admin-toolbar__actions">
-            <a href="/admin/resources/<?= $e($resource->name()) ?>" class="admin-btn admin-btn--secondary">Back to List</a>
+            <a href="/admin/resources/<?= $e($resource->name()) ?>" class="admin-btn admin-btn--secondary">Back to list</a>
             <?php if (in_array(ResourceOperation::Update, $resource->operations(), true)): ?>
             <a href="/admin/resources/<?= $e($resource->name()) ?>/<?= $e($id) ?>/edit" class="admin-btn admin-btn--primary">Edit</a>
             <?php endif; ?>

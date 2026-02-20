@@ -39,13 +39,6 @@ use const JSON_THROW_ON_ERROR;
 #[Internal(reason: 'Order export internals — use OrderExportServiceInterface')]
 final readonly class OrderExportService implements OrderExportServiceInterface
 {
-    /** PII field names that are redacted when includePii is false. */
-    private const array PII_FIELDS = [
-        'customer_email',
-        'billing_address',
-        'shipping_address',
-    ];
-
     public function __construct(
         private OrderRepositoryInterface $orderRepository,
         private OrderItemRepositoryInterface $orderItemRepository,

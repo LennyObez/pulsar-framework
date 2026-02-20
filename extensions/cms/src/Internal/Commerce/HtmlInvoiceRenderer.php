@@ -161,7 +161,7 @@ final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface
 
     private function formatAmount(int $minorUnits, string $currency): string
     {
-        $major = number_format($minorUnits / 100, 2, '.', ',');
+        $major = number_format($minorUnits / 100, 2);
 
         return $currency . ' ' . $major;
     }

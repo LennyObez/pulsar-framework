@@ -10,7 +10,6 @@ use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Extension\Cms\Comments\Comment;
 use Pulsar\Extension\Cms\Comments\CommentRepositoryInterface;
 use Pulsar\Extension\Cms\Comments\CommentServiceInterface;
-use Pulsar\Extension\Cms\Comments\ModerationStatus;
 use Pulsar\Extension\Cms\Exception\CmsException;
 use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
@@ -57,18 +56,10 @@ final readonly class CommentController
         /** @var string|null $tenantId */
         $tenantId = $request->getAttribute('tenant_id');
 
-        $status = ModerationStatus::tryFrom($statusFilter);
-
-        if ($statusFilter === 'pending' || $status === ModerationStatus::Pending) {
-            $result = $this->commentRepository->findPendingModeration($tenantId, $page, $perPage);
-        } else {
-            // For non-pending filters, use findByContent with a null contentId approach
-            // or extend the repository. For now, use findPendingModeration as the primary queue.
-            $result = $this->commentRepository->findPendingModeration($tenantId, $page, $perPage);
-        }
+        $result = $this->commentRepository->findPendingModeration($tenantId, $page, $perPage);
 
         $data = [
-            'data' => array_map(static fn(Comment $c) => [
+            'comments' => array_map(static fn(Comment $c) => [
                 'id' => $c->id,
                 'content_id' => $c->contentId,
                 'author_id' => $c->authorId,

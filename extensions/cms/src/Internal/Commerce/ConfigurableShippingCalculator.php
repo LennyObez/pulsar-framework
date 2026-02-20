@@ -100,13 +100,7 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
      */
     private function allDigital(array $items): bool
     {
-        foreach ($items as $item) {
-            if (!$item['digital']) {
-                return false;
-            }
-        }
-
-        return true;
+        return array_all($items, static fn(array $item): bool => (bool) $item['digital']);
     }
 
     /**
@@ -142,19 +136,19 @@ final readonly class ConfigurableShippingCalculator implements ShippingCalculato
     private function findRate(ShippingMethod $method, string $country): ?ShippingRateConfig
     {
         // First: exact country match for the requested method
-        foreach ($this->config->shippingRates as $rate) {
-            if ($rate->method === $method && $rate->countryCodes !== [] && in_array($country, $rate->countryCodes, true)) {
-                return $rate;
-            }
+        $exact = array_find(
+            $this->config->shippingRates,
+            static fn(ShippingRateConfig $rate): bool => $rate->method === $method && $rate->countryCodes !== [] && in_array($country, $rate->countryCodes, true),
+        );
+
+        if ($exact !== null) {
+            return $exact;
         }
 
         // Second: wildcard (empty country list) for the requested method
-        foreach ($this->config->shippingRates as $rate) {
-            if ($rate->method === $method && $rate->countryCodes === []) {
-                return $rate;
-            }
-        }
-
-        return null;
+        return array_find(
+            $this->config->shippingRates,
+            static fn(ShippingRateConfig $rate): bool => $rate->method === $method && $rate->countryCodes === [],
+        );
     }
 }

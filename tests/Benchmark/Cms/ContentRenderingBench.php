@@ -28,11 +28,11 @@ use Pulsar\Extension\Cms\FieldRegistry\ContentTypeField;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
 use Pulsar\Extension\Cms\Http\Controller\ContentController;
 use Pulsar\Extension\Cms\I18n\HreflangGenerator;
-use Pulsar\Extension\Cms\I18n\LocaleResolver;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbItem;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\Security\Crypto\MasterKey;
 use Pulsar\Tests\Benchmark\Cms\Support\CmsBenchmarkFactory;
 use Pulsar\Tests\Benchmark\Cms\Support\NullAuditLogger;
@@ -278,8 +278,8 @@ final class ContentRenderingBench
             supportedLocales: ['en', 'fr', 'de'],
         );
 
-        $localeResolver = new LocaleResolver();
-        $hreflangGen = new HreflangGenerator($translationRepo, $localeResolver);
+        $extractor = new UrlPrefixExtractor();
+        $hreflangGen = new HreflangGenerator($translationRepo, $extractor);
 
         $keyManager = new CmsKeyManager(MasterKey::fromHex(str_repeat('ab', 32)));
 

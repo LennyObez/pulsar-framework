@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
-use Pulsar\Auth\Authorization\Permission;
 use Pulsar\Auth\Authorization\Role;
 use Pulsar\Auth\Authorization\RoleRegistryInterface;
 use Pulsar\Extension\Cms\Config\CmsPermissions;

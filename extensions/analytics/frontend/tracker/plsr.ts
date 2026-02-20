@@ -22,7 +22,7 @@
             keepalive: true,
           });
         }
-      } catch (_) {
+      } catch {
         // silent
       }
     };
@@ -56,7 +56,7 @@
       ext(fn: (send: PlsrSendFn, site: string) => void): void {
         try {
           fn(send, id);
-        } catch (_) {
+        } catch {
           // silent
         }
       },
@@ -77,7 +77,7 @@
         }
       });
     }
-  } catch (_) {
+  } catch {
     // silent
   }
 })();

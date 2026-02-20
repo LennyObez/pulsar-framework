@@ -213,7 +213,7 @@ final class DbRedirectRepositoryTest extends TestCase
         $this->repository->save($redirect);
 
         $this->connection->execute(
-            "UPDATE cms_redirects SET deleted_at = :deleted_at WHERE id = :id",
+            'UPDATE cms_redirects SET deleted_at = :deleted_at WHERE id = :id',
             ['deleted_at' => $old->format('c'), 'id' => 'rd-purge'],
         );
 

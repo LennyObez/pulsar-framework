@@ -13,6 +13,8 @@ use Pulsar\Cache\Application\Lock\LockHandle;
 use Pulsar\Database\Driver;
 use Pulsar\Database\PdoConnection;
 
+use function count;
+
 #[CoversClass(DatabaseLock::class)]
 final class DatabaseLockTest extends TestCase
 {

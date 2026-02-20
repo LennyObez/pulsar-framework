@@ -174,13 +174,17 @@ export class AwarenessOverlay {
 
   /** Get a stable color for a user ID. */
   private getColorForUser(userId: string): string {
-    let color = this.userColorMap.get(userId);
+    const existing = this.userColorMap.get(userId);
 
-    if (color === undefined) {
-      color = COLLABORATOR_COLORS[this.nextColorIndex % COLLABORATOR_COLORS.length];
-      this.nextColorIndex++;
-      this.userColorMap.set(userId, color);
+    if (existing !== undefined) {
+      return existing;
     }
+
+    const color =
+      COLLABORATOR_COLORS[this.nextColorIndex % COLLABORATOR_COLORS.length] ??
+      COLLABORATOR_COLORS[0]!;
+    this.nextColorIndex++;
+    this.userColorMap.set(userId, color);
 
     return color;
   }
@@ -192,13 +196,15 @@ export class AwarenessOverlay {
     }
 
     const parts = value.split(':');
+    const rawLine = parts[0];
+    const rawColumn = parts[1];
 
-    if (parts.length !== 2) {
+    if (parts.length !== 2 || rawLine === undefined || rawColumn === undefined) {
       return null;
     }
 
-    const line = parseInt(parts[0], 10);
-    const column = parseInt(parts[1], 10);
+    const line = parseInt(rawLine, 10);
+    const column = parseInt(rawColumn, 10);
 
     if (isNaN(line) || isNaN(column)) {
       return null;

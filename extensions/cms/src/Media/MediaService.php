@@ -19,15 +19,24 @@ use Pulsar\Extension\Cms\Support\UuidGenerator;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
+use function array_keys;
 use function array_map;
 use function bin2hex;
 use function count;
 use function date;
+use function file_exists;
+use function file_get_contents;
+use function file_put_contents;
+use function getimagesize;
+use function pathinfo;
 use function sodium_crypto_generichash;
 use function sprintf;
 use function str_starts_with;
 use function strlen;
 use function substr;
+use function sys_get_temp_dir;
+use function tempnam;
+use function unlink;
 
 /**
  * Core media service orchestrating upload, derivative generation, and retrieval.
@@ -40,7 +49,7 @@ final readonly class MediaService implements MediaServiceInterface
      *
      * @var array<string, int>
      */
-    private const DERIVATIVE_VARIANTS = [
+    private const array DERIVATIVE_VARIANTS = [
         'thumb_480' => 480,
         'medium_960' => 960,
         'large_1920' => 1920,
@@ -52,7 +61,7 @@ final readonly class MediaService implements MediaServiceInterface
      *
      * @var list<string>
      */
-    private const DERIVATIVE_FORMATS = ['webp'];
+    private const array DERIVATIVE_FORMATS = ['webp'];
 
     public function __construct(
         private MediaDiskInterface $disk,

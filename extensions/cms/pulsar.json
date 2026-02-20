@@ -8,10 +8,10 @@
     "min_version": "1.0.0-rc.11"
   },
   "requires": {
-    "pulsar/admin": ">=1.0.0-rc.10",
     "pulsar/studio": ">=1.0.0-rc.10"
   },
   "suggests": {
+    "pulsar/admin": ">=1.0.0-rc.10",
     "pulsar/orm": ">=1.0.0-rc.10",
     "pulsar/payments": ">=1.0.0-rc.10"
   },
@@ -28,6 +28,9 @@
       "BreadcrumbGeneratorInterface"
     ],
     "routes": true,
-    "commands": ["Pulsar\\Extension\\Cms\\Command\\CmsServeCommand"]
+    "commands": [
+      "Pulsar\\Extension\\Cms\\Command\\CmsServeCommand",
+      "Pulsar\\Extension\\Cms\\Command\\CmsPublishScheduledCommand"
+    ]
   }
 }

@@ -50,7 +50,6 @@ final readonly class InvoiceController
             $html = $this->invoiceService->getInvoiceHtml($id);
 
             return new Response(
-                statusCode: 200,
                 headers: [
                     'Content-Type' => 'text/html; charset=utf-8',
                     'Content-Disposition' => "attachment; filename=\"invoice-{$id}.html\"",

@@ -25,7 +25,11 @@ require $dir . '/vendor/autoload.php';
 use Pulsar\Cache\FrameworkCache;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Core\Kernel;
+use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Migration\MigrationInterface;
 use Pulsar\Extensibility\ExtensionBootstrap;
+use Pulsar\Extension\Cms\Commerce\CommerceConfig;
+use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Security\Crypto\HmacService;
 use Pulsar\Security\Crypto\MasterKey;
@@ -114,6 +118,12 @@ $kernel = new Kernel(
     configManager: $configManager,
 );
 
+// Ensure a PULSAR_MASTER_KEY is available for dev (required by crypto service chains).
+// If none is set in the environment or .env, generate a random one for this dev session.
+if (getenv('PULSAR_MASTER_KEY') === false || getenv('PULSAR_MASTER_KEY') === '') {
+    putenv('PULSAR_MASTER_KEY=' . bin2hex(random_bytes(32)));
+}
+
 // Pre-boot FrameworkCache if master key is available
 $masterKeyHex = getenv('PULSAR_MASTER_KEY');
 if ($masterKeyHex !== false && $masterKeyHex !== '' && $configManager !== null) {
@@ -127,6 +137,14 @@ if ($masterKeyHex !== false && $masterKeyHex !== '' && $configManager !== null) 
     }
 }
 
+// Pre-register CmsConfig with all sub-modules enabled for dev.
+$kernel->container()->instance(CmsConfig::class, new CmsConfig(
+    editorialWorkflow: true,
+    eventSourcing: true,
+    atomicSnapshots: true,
+    commerce: new CommerceConfig(),
+));
+
 try {
     $kernel->boot();
 } catch (Throwable $e) {
@@ -134,6 +152,87 @@ try {
     echo 'Kernel boot failed: ' . $e->getMessage();
 
     return;
+}
+
+// Auto-migrate all extension tables if a database is configured but schema is missing.
+// This ensures zero-configuration dev experience: `admin:serve` works immediately
+// without requiring a manual `migrate:run` step.
+$container = $kernel->container();
+if ($container->has(ConnectionInterface::class)) {
+    /** @var ConnectionInterface $dbConnection */
+    $dbConnection = $container->get(ConnectionInterface::class);
+
+    $markerFile = $dir . '/storage/.admin-schema-ready';
+    if (!file_exists($markerFile)) {
+        // Create auth_users table (framework auth table required by admin user management)
+        try {
+            $dbConnection->execute(<<<'SQL'
+                CREATE TABLE IF NOT EXISTS auth_users (
+                    id VARCHAR(36) NOT NULL PRIMARY KEY,
+                    tenant_id VARCHAR(36) DEFAULT NULL,
+                    display_name VARCHAR(200) NOT NULL DEFAULT '',
+                    email VARCHAR(320) DEFAULT NULL,
+                    roles TEXT NOT NULL DEFAULT '[]',
+                    two_factor_status VARCHAR(20) NOT NULL DEFAULT 'disabled',
+                    last_active_at TEXT DEFAULT NULL,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    is_locked INTEGER NOT NULL DEFAULT 0
+                )
+                SQL);
+        } catch (Throwable $authMigrationError) {
+            error_log('[Admin Dev] auth_users table creation failed: ' . $authMigrationError->getMessage());
+        }
+
+        // Run migrations from all extensions
+        $extensionMigrationDirs = glob($dir . '/extensions/*/src/Migration');
+        $totalMigrations = 0;
+
+        if ($extensionMigrationDirs !== false) {
+            foreach ($extensionMigrationDirs as $migrationDir) {
+                $migrationFiles = scandir($migrationDir);
+                if ($migrationFiles === false) {
+                    continue;
+                }
+
+                sort($migrationFiles);
+
+                foreach ($migrationFiles as $migrationFile) {
+                    if (!str_ends_with($migrationFile, '.php')) {
+                        continue;
+                    }
+
+                    // Skip DDL aggregate files (e.g. CmsDdl.php, ForumDdl.php)
+                    if (str_ends_with($migrationFile, 'Ddl.php')) {
+                        continue;
+                    }
+
+                    /** @var MigrationInterface $migration */
+                    $migration = require $migrationDir . '/' . $migrationFile;
+
+                    if (!$migration instanceof MigrationInterface) {
+                        continue;
+                    }
+
+                    try {
+                        $migration->up($dbConnection);
+                        $totalMigrations++;
+                    } catch (Throwable $migrationError) {
+                        error_log('[Admin Dev] Migration ' . $migrationFile . ' failed: ' . $migrationError->getMessage());
+                    }
+                }
+            }
+        }
+
+        if ($totalMigrations > 0) {
+            error_log('[Admin Dev] Auto-migrated database schema (' . $totalMigrations . ' migrations)');
+        }
+
+        $storageDir = $dir . '/storage';
+        if (!is_dir($storageDir)) {
+            @mkdir($storageDir, 0o755, true);
+        }
+        @file_put_contents($markerFile, date('c'));
+    }
 }
 
 // Build Request from PHP globals

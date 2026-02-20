@@ -17,5 +17,13 @@
     "verbatimModuleSyntax": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "vendor", "dist", "coverage", "bootstrap/cache"]
+  "exclude": [
+    "node_modules",
+    "vendor",
+    "dist",
+    "coverage",
+    "bootstrap/cache",
+    "extensions/*/frontend",
+    "extensions/*/frontend/tracker"
+  ]
 }

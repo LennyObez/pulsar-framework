@@ -76,7 +76,7 @@ final readonly class TrackingService implements TrackingServiceInterface
         $now = new DateTimeImmutable();
 
         $key = $this->keyManager->visitorKey();
-        $todayDay = $this->keyManager->utcDayNumber(0);
+        $todayDay = $this->keyManager->utcDayNumber();
         $visitorId = VisitorId::generate($ip, $userAgent, $key, $todayDay);
 
         $yesterdayDay = $this->keyManager->utcDayNumber(1);
@@ -150,7 +150,7 @@ final readonly class TrackingService implements TrackingServiceInterface
         $now = new DateTimeImmutable();
 
         $key = $this->keyManager->visitorKey();
-        $todayDay = $this->keyManager->utcDayNumber(0);
+        $todayDay = $this->keyManager->utcDayNumber();
         $visitorId = VisitorId::generate($ip, $userAgent, $key, $todayDay);
         $url = (string) ($payload['url'] ?? '');
 
