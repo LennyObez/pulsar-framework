@@ -279,6 +279,28 @@ php bin/pulsar new my-app --preset=api --env=production
 
 Creates a project directory with application scaffolding, configuration files, a secure `.env` with generated keys, and a `composer.json` pre-configured for the selected preset.
 
+### Interactive REPL
+
+#### `shell`
+
+Start an interactive PHP REPL with framework context. Requires [PsySH](https://psysh.org/) (`composer require --dev psy/psysh`). See [`docs/REPL.md`](REPL.md) for full details.
+
+```bash
+php bin/pulsar shell
+php bin/pulsar shell --no-safe-mode
+php bin/pulsar shell --i-know-what-im-doing --no-audit
+```
+
+| Option                   | Short | Description                                               |
+| ------------------------ | ----- | --------------------------------------------------------- |
+| `--no-safe-mode`         | --    | Disable safe mode (allow database writes, queue dispatch) |
+| `--i-know-what-im-doing` | --    | Required for production REPL access                       |
+| `--no-audit`             | --    | Disable audit logging for this session                    |
+
+Starts a PsySH shell with `$container` (the DI container) and `$redactor` (the `SecretRedactor`, when available) in scope. Safe mode is enabled by default, wrapping database connections, queue drivers, storage adapters, and cache backends with read-only decorators.
+
+The REPL is **disabled by default** in all environments. Enable it with `REPL_ENABLED=true` in your `.env` file. CI environments are always blocked. Production requires both `REPL_ENABLED=true` and the `--i-know-what-im-doing` flag.
+
 ### Optimization
 
 #### `optimize`
@@ -777,7 +799,7 @@ Studio provides observability and debugging commands. See [`docs/STUDIO.md`](STU
 | Command          | Description                           |
 | ---------------- | ------------------------------------- |
 | `studio:status`  | Show Studio status and storage stats  |
-| `studio:start`   | Start the Studio web server           |
+| `studio:serve`   | Start the Studio web server           |
 | `studio:open`    | Open Studio in the default browser    |
 | `studio:doctor`  | Run diagnostics (storage, port, keys) |
 | `studio:enable`  | Enable Studio                         |
