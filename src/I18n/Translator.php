@@ -12,6 +12,7 @@ use Pulsar\I18n\Format\MessageFormatterInterface;
 
 use function count;
 use function in_array;
+use function is_scalar;
 
 /**
  * Main translator implementation.

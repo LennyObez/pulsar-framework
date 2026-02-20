@@ -15,6 +15,8 @@ use Pulsar\Observability\Log\LogEntry;
 use Pulsar\Observability\Log\LogSinkInterface;
 use Throwable;
 
+use function sprintf;
+
 /**
  * Log sink that forwards log entries to Studio as events.
  *
@@ -52,8 +54,15 @@ final class LogCollector implements LogSinkInterface, CollectorInterface
 
         try {
             ($this->emit)($event, $context);
-        } catch (Throwable) {
+        } catch (Throwable $e) {
+            // Studio collectors must never crash the host application:
+            // log emission is best-effort. Tracking the failure on stderr
+            // surfaces collector regressions during dev/CI without
+            // interrupting the user-facing request that triggered the log.
+            fwrite(STDERR, sprintf(
+                "[studio.LogCollector] failed to emit log event: %s\n",
+                $e->getMessage(),
+            ));
         }
     }
-
 }

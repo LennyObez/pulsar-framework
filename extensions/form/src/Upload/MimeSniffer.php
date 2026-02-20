@@ -63,7 +63,14 @@ final class MimeSniffer
      */
     public function detect(string $filePath): string
     {
-        $header = @file_get_contents($filePath, false, null, 0, 16);
+        // Validate the file exists before reading. Returning the default
+        // MIME type for missing files is the documented contract; validating
+        // up-front avoids the need for `@` error suppression on the read.
+        if (!is_file($filePath) || !is_readable($filePath)) {
+            return 'application/octet-stream';
+        }
+
+        $header = file_get_contents($filePath, false, null, 0, 16);
 
         if ($header === false) {
             return 'application/octet-stream';

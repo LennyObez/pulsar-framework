@@ -41,7 +41,6 @@ use function in_array;
 use function is_string;
 use function json_encode;
 use function ltrim;
-use function preg_match;
 use function rtrim;
 use function str_contains;
 use function str_starts_with;

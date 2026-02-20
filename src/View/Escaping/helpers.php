@@ -7,6 +7,26 @@ use Pulsar\View\Escaping\CssEscaper;
 use Pulsar\View\Escaping\JsEscaper;
 use Pulsar\View\Escaping\UrlEscaper;
 
+/*
+ * Per-helper static memoization rationale (M-4 audit response):
+ *
+ * Each escaper is `final readonly` with no instance state. The
+ * `static $escaper` cache inside each helper below is therefore not
+ * "global state" in the harmful sense:
+ *
+ *   1. PHP request lifetimes are isolated; the static resets between
+ *      FPM/CGI requests and is collected by Pulsar's Resettable hook
+ *      in persistent runtimes.
+ *   2. Readonly fields cannot mutate, so two callers cannot observe
+ *      a different escaper depending on call order.
+ *   3. The cache exists only to avoid repeated allocation of value
+ *      objects in hot view rendering loops.
+ *
+ * Removing the cache would re-instantiate the escapers on every
+ * `{{ url($x) }}` render, which is wasted work for zero security
+ * or testability benefit.
+ */
+
 if (!function_exists('url')) {
     /**
      * Escape a value for URL context (href/src attributes).
