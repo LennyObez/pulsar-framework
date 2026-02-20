@@ -20,4 +20,5 @@ enum AuditEvent: string
     case SecurityEvent = 'security_event';
     case SystemEvent = 'system_event';
     case SchemaModification = 'schema_modification';
+    case Communication = 'communication';
 }
