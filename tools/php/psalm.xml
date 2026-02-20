@@ -63,119 +63,102 @@
     </stubs>
 
     <issueHandlers>
-        <!-- Allow mixed types for reflection-based DI and request handling -->
-        <MixedAssignment errorLevel="suppress"/>
-        <MixedMethodCall errorLevel="suppress"/>
-        <MixedArgument errorLevel="suppress"/>
-        <MixedReturnStatement errorLevel="suppress"/>
-        <MixedOperand errorLevel="suppress"/>
-        <MixedArrayAccess errorLevel="suppress"/>
-        <MixedArrayOffset errorLevel="suppress"/>
-        <MixedReturnTypeCoercion errorLevel="suppress"/>
-        <MixedArgumentTypeCoercion errorLevel="suppress"/>
-        <MixedPropertyFetch errorLevel="suppress"/>
+        <!--
+            Zero-tolerance policy (tech-debt TD-001).
+            Every remaining suppression below must fall in one of three categories:
+              (A) Psalm 6.x parser/analyser bug with documented upstream link and
+                  expected resolution in a later Psalm version.
+              (B) Protocol or PSR interface shape that Psalm legitimately cannot
+                  derive (e.g. named-argument mismatch forced by interface stability).
+              (C) Single-file narrow suppression for a specific edge case.
+            Broad Mixed*/Unused*/ClassMustBeFinal blanket suppressions have been
+            removed 2026-04-23. The 357 -> (n) error counts surfaced will be
+            burnt down per-file.
+        -->
 
-        <!-- Readonly classes are designed for extension in a framework -->
-        <ClassMustBeFinal errorLevel="suppress"/>
-
-        <!-- False positives for enum value comparisons -->
-        <RedundantCondition errorLevel="suppress"/>
-
-        <!-- Allow array_values on lists for type coercion -->
-        <RedundantFunctionCallGivenDocblockType errorLevel="suppress"/>
-
-        <!-- Interface methods overriding PSR interfaces don't need #[Override] -->
+        <!-- (A) Psalm 6.x does not fully support PHP 8.5 #[Override] on
+             methods implementing interface contracts. PHPStan max is authoritative
+             for override validation. Re-evaluate after Psalm 7 stable.
+             Upstream: https://github.com/vimeo/psalm/issues (tracked locally in tech-debt.md TD-001c) -->
+        <InvalidAttribute errorLevel="suppress"/>
         <MissingOverrideAttribute errorLevel="suppress"/>
 
-        <!-- Psalm 6.x does not fully support PHP 8.5 #[Override] attribute on
-             methods implementing interface contracts. PHPStan max is authoritative
-             for override validation. Re-evaluate after Psalm 7 stable. -->
-        <InvalidAttribute errorLevel="suppress"/>
-
-        <!-- Psalm 6.x strict binary operand mode flags int + float operations
+        <!-- (A) Psalm 6.x strict binary-operand mode flags int+float operations
              that are valid in PHP 8.5. PHPStan max is authoritative. -->
         <InvalidOperand errorLevel="suppress"/>
 
-        <!-- Psalm 6.x misparses PHP 8.5 clone-with and pipe operator expressions,
+        <!-- (A) Psalm 6.x misparses PHP 8.5 clone-with and pipe operator expressions,
              reporting undefined variables for valid syntax constructs. -->
         <UndefinedGlobalVariable errorLevel="suppress"/>
 
-        <!-- Redundant function calls flagged by Psalm where the call serves
-             as explicit type coercion (e.g., array_values for list type) -->
+        <!-- (A) Psalm 6.x reports redundant calls that actually serve as explicit
+             type coercion (e.g., array_values for list<T> type).
+             Will be tightened to per-file once Psalm 7 ships. -->
         <RedundantFunctionCall errorLevel="suppress"/>
+        <RedundantFunctionCallGivenDocblockType errorLevel="suppress"/>
 
-        <!-- Psalm flags property initializations that are guaranteed by readonly
-             constructor promotion as redundant -->
+        <!-- (A) Psalm 6.x + readonly constructor-promotion false positives -->
         <RedundantPropertyInitializationCheck errorLevel="suppress"/>
 
-        <!-- Allow type coercion for docblock types -->
+        <!-- (A) Enum value comparisons are flagged redundant by Psalm 6.x -->
+        <RedundantCondition errorLevel="suppress"/>
         <RedundantConditionGivenDocblockType errorLevel="suppress"/>
-        <ArgumentTypeCoercion errorLevel="suppress"/>
 
-        <!-- File operations can return false -->
-        <RiskyTruthyFalsyComparison errorLevel="suppress"/>
+        <!-- (A) Psalm 7 beta does not yet support PHP 8.5 clone() function syntax
+             which preserves the type of $this. PHPStan max is authoritative. -->
+        <MoreSpecificReturnType errorLevel="suppress"/>
+        <LessSpecificReturnStatement errorLevel="suppress"/>
 
-        <!-- Framework classes/methods are consumed by downstream projects,
-             not internally — Psalm can't trace those callers -->
-        <PossiblyUnusedMethod errorLevel="suppress"/>
-        <PossiblyUnusedProperty errorLevel="suppress"/>
-        <UnusedClass errorLevel="suppress"/>
-        <PossiblyUnusedReturnValue errorLevel="suppress"/>
-
-        <!-- Psalm 7 infers types better, making many @var annotations redundant -->
+        <!-- (A) Psalm 6.x: "@var redundant" with modern inference -->
         <UnnecessaryVarAnnotation errorLevel="suppress"/>
 
-        <!-- Redundant casts that were necessary for older Psalm versions -->
+        <!-- (A) Casts required by older Psalm — keep until 7.0 stable -->
         <RedundantCastGivenDocblockType errorLevel="suppress"/>
 
-        <!-- Framework methods implement interfaces — params are part of the contract
-             even when not used in every implementation -->
-        <UnusedParam errorLevel="suppress"/>
-        <PossiblyUnusedParam errorLevel="suppress"/>
-        <UnusedClosureParam errorLevel="suppress"/>
-        <UnusedForeachValue errorLevel="suppress"/>
-
-        <!-- Framework constructors/methods are called by DI container or consumers -->
-        <UnusedConstructor errorLevel="suppress"/>
-        <UnusedMethod errorLevel="suppress"/>
-
-        <!-- PHP 8.x named argument compatibility — implementations may use
-             different parameter names than their interfaces -->
+        <!-- (B) PSR interface implementations may use different parameter names
+             than the interface — required for named-argument ABI stability. -->
         <ParamNameMismatch errorLevel="suppress"/>
 
-        <!-- Related to purity analysis we already suppress -->
-        <ImpureMethodCall errorLevel="suppress"/>
-
-        <!-- Psalm 7 taint analysis false positive: checking for formula injection
-             characters in CSV export is intentional, not a vulnerability -->
-        <InvalidLiteralArgument errorLevel="suppress"/>
-
-        <!-- Implementation types more specific than interface — valid in PHP 8.5
-             with covariant/contravariant support -->
+        <!-- (B) Covariant/contravariant parameter types in PHP 8.5 implementations
+             are wider than Psalm 6 can track. -->
         <MoreSpecificImplementedParamType errorLevel="suppress"/>
 
-        <!-- Dynamic includes in templates — structural limitation -->
+        <!-- (B) Dynamic includes in templates — structural limitation of any
+             static analyser. -->
         <UnresolvableInclude errorLevel="suppress"/>
 
-        <!-- Psalm 6.15 does not yet recognize PHP 8.4 virtual property hooks
-             (get-only computed properties with no backing store) -->
+        <!-- (B) File operation returns can legitimately be falsy (fopen, fread,
+             file_get_contents). These are narrow-enough that suppression is
+             justified; per-call try/catch wrapping would obscure error paths. -->
+        <RiskyTruthyFalsyComparison errorLevel="suppress"/>
+
+        <!-- (B) Explicit type coercion at value-object construction is the
+             standard "parse, don't validate" pattern. -->
+        <ArgumentTypeCoercion errorLevel="suppress"/>
+
+        <!-- (C) Psalm 6.15 does not yet recognize PHP 8.4 virtual property hooks
+             (get-only computed properties with no backing store). -->
         <PropertyNotSetInConstructor>
             <errorLevel type="suppress">
                 <file name="../../src/Console/Input/ArrayInput.php"/>
             </errorLevel>
         </PropertyNotSetInConstructor>
 
-        <!-- Psalm 7 beta does not yet support PHP 8.5 clone() function syntax
-             which preserves the type of $this. PHPStan max is authoritative. -->
-        <MoreSpecificReturnType errorLevel="suppress"/>
-        <LessSpecificReturnStatement errorLevel="suppress"/>
-
-        <!-- Psalm false positive: ReflectionNamedType::getName() returns string,
-             comparison with 'self'/'static'/'parent' is valid runtime check -->
+        <!-- (C) Psalm false positive: ReflectionNamedType::getName() returns string,
+             comparison with 'self'/'static'/'parent' is a valid runtime check. -->
         <TypeDoesNotContainType>
             <errorLevel type="suppress">
                 <file name="../../src/Container/Compiler/Pass/OptimizePass.php"/>
             </errorLevel>
         </TypeDoesNotContainType>
+
+        <!-- (C) Intentional literal for formula-injection defense in CSV export
+             (taint-analysis false positive). -->
+        <InvalidLiteralArgument>
+            <errorLevel type="suppress">
+                <directory name="../../src/ImportExport"/>
+                <directory name="../../extensions/cms/src/ImportExport"/>
+            </errorLevel>
+        </InvalidLiteralArgument>
     </issueHandlers>
 </psalm>
