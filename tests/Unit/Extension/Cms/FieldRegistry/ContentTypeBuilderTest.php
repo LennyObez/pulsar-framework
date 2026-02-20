@@ -16,7 +16,7 @@ use Pulsar\Extension\Cms\FieldRegistry\FieldType;
 final class ContentTypeBuilderTest extends TestCase
 {
     #[Test]
-    public function test_build_returns_content_type_definition(): void
+    public function buildReturnsContentTypeDefinition(): void
     {
         $builder = new ContentTypeBuilder('project');
         $definition = $builder
@@ -32,7 +32,7 @@ final class ContentTypeBuilderTest extends TestCase
     }
 
     #[Test]
-    public function test_fluent_api_chains_correctly(): void
+    public function fluentApiChainsCorrectly(): void
     {
         $builder = new ContentTypeBuilder('recipe');
         $result = $builder->label('Recipe')->icon('utensils');
@@ -41,7 +41,7 @@ final class ContentTypeBuilderTest extends TestCase
     }
 
     #[Test]
-    public function test_field_adds_field_to_definition(): void
+    public function fieldAddsFieldToDefinition(): void
     {
         $definition = new ContentTypeBuilder('product')
             ->label('Product')
@@ -63,7 +63,7 @@ final class ContentTypeBuilderTest extends TestCase
     }
 
     #[Test]
-    public function test_all_14_field_types_register_correctly(): void
+    public function all14FieldTypesRegisterCorrectly(): void
     {
         $builder = new ContentTypeBuilder('mega');
         $builder->label('Mega Type')->icon('star');
@@ -88,7 +88,7 @@ final class ContentTypeBuilderTest extends TestCase
     }
 
     #[Test]
-    public function test_field_sort_order_auto_increments(): void
+    public function fieldSortOrderAutoIncrements(): void
     {
         $definition = new ContentTypeBuilder('test')
             ->label('Test')
@@ -104,7 +104,7 @@ final class ContentTypeBuilderTest extends TestCase
     }
 
     #[Test]
-    public function test_field_options_are_set_correctly(): void
+    public function fieldOptionsAreSetCorrectly(): void
     {
         $definition = new ContentTypeBuilder('article')
             ->label('Article')
@@ -135,7 +135,7 @@ final class ContentTypeBuilderTest extends TestCase
     }
 
     #[Test]
-    public function test_field_content_type_matches_builder_type(): void
+    public function fieldContentTypeMatchesBuilderType(): void
     {
         $definition = new ContentTypeBuilder('custom')
             ->label('Custom')
@@ -147,7 +147,7 @@ final class ContentTypeBuilderTest extends TestCase
     }
 
     #[Test]
-    public function test_build_with_no_label_or_icon(): void
+    public function buildWithNoLabelOrIcon(): void
     {
         $definition = new ContentTypeBuilder('bare')->build();
 

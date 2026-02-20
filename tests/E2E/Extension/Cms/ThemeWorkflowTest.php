@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -21,11 +22,12 @@ use function str_contains;
 /**
  * E2E: Theme workflow — upload -> provenance -> install -> preview -> activate -> rollback.
  */
+#[CoversClass(ThemeManifest::class)]
 #[Group('e2e-cms')]
 final class ThemeWorkflowTest extends TestCase
 {
     #[Test]
-    public function test_full_theme_lifecycle(): void
+    public function fullThemeLifecycle(): void
     {
         // Step 1: Parse theme manifest from uploaded archive
         $manifest = ThemeManifest::fromArray([

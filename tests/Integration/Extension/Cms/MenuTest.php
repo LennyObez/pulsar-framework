@@ -38,7 +38,7 @@ final class MenuTest extends TestCase
     }
 
     #[Test]
-    public function test_create_menu_with_items(): void
+    public function createMenuWithItems(): void
     {
         $menu = new Menu(
             id: 'menu-001',
@@ -97,7 +97,7 @@ final class MenuTest extends TestCase
     }
 
     #[Test]
-    public function test_menu_tree_structure_assembly(): void
+    public function menuTreeStructureAssembly(): void
     {
         $menu = new Menu(
             id: 'menu-002',
@@ -171,7 +171,7 @@ final class MenuTest extends TestCase
     }
 
     #[Test]
-    public function test_breadcrumb_generation_for_nested_content(): void
+    public function breadcrumbGenerationForNestedContent(): void
     {
         // Create a 3-level content hierarchy: Home > Docs > Getting Started
         $contentRepo = $this->createStub(ContentRepositoryInterface::class);

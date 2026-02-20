@@ -24,7 +24,7 @@ final class EventConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_defaults(): void
+    public function defaults(): void
     {
         $config = new EventConfig();
 
@@ -35,7 +35,7 @@ final class EventConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_with_all_values(): void
+    public function fromArrayWithAllValues(): void
     {
         $env = Environment::load();
         $config = EventConfig::fromArray([
@@ -54,7 +54,7 @@ final class EventConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_with_empty_array_uses_defaults(): void
+    public function fromArrayWithEmptyArrayUsesDefaults(): void
     {
         $env = Environment::load();
         $config = EventConfig::fromArray([], $env);
@@ -64,7 +64,7 @@ final class EventConfigTest extends TestCase
     }
 
     #[Test]
-    public function test_env_var_overrides_array_value(): void
+    public function envVarOverridesArrayValue(): void
     {
         putenv('EVENT_ENABLED=false');
         $env = Environment::load();

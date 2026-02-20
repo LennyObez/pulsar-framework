@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Database\Monitor;
 
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
@@ -14,7 +15,9 @@ use Pulsar\Database\Monitor\MonitoredConnection;
 use Pulsar\Database\Monitor\SlowQueryDetectorInterface;
 use Pulsar\Database\Monitor\SqlLoggerInterface;
 use Pulsar\Database\Result;
+use PHPUnit\Framework\Attributes\Test;
 
+#[CoversClass(MonitoredConnection::class)]
 final class MonitoredConnectionTest extends TestCase
 {
     private ConnectionInterface&MockObject $inner;
@@ -46,7 +49,8 @@ final class MonitoredConnectionTest extends TestCase
     }
 
     #[AllowMockObjectsWithoutExpectations]
-    public function test_query_logs_sql_and_checks_slow(): void
+    #[Test]
+    public function queryLogsSqlAndChecksSlow(): void
     {
         $result = Result::fromArrays([['id' => 1]]);
         $this->inner->method('query')->willReturn($result);
@@ -70,7 +74,8 @@ final class MonitoredConnectionTest extends TestCase
     }
 
     #[AllowMockObjectsWithoutExpectations]
-    public function test_execute_logs_sql_and_checks_slow(): void
+    #[Test]
+    public function executeLogsSqlAndChecksSlow(): void
     {
         $this->inner->method('execute')->willReturn(3);
 
@@ -94,7 +99,8 @@ final class MonitoredConnectionTest extends TestCase
     }
 
     #[AllowMockObjectsWithoutExpectations]
-    public function test_disconnect_logs_disconnection(): void
+    #[Test]
+    public function disconnectLogsDisconnection(): void
     {
         $this->auditor->expects($this->once())
             ->method('logDisconnect')
@@ -106,19 +112,22 @@ final class MonitoredConnectionTest extends TestCase
     }
 
     #[AllowMockObjectsWithoutExpectations]
-    public function test_delegates_name(): void
+    #[Test]
+    public function delegatesName(): void
     {
         $this->assertSame('test', $this->connection->name());
     }
 
     #[AllowMockObjectsWithoutExpectations]
-    public function test_delegates_driver(): void
+    #[Test]
+    public function delegatesDriver(): void
     {
         $this->assertSame(Driver::SQLite, $this->connection->driver());
     }
 
     #[AllowMockObjectsWithoutExpectations]
-    public function test_delegates_in_transaction(): void
+    #[Test]
+    public function delegatesInTransaction(): void
     {
         $this->inner->method('inTransaction')->willReturn(true);
 

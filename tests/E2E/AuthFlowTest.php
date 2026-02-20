@@ -211,6 +211,76 @@ final class AuthFlowTest extends TestCase
     }
 
     #[Test]
+    public function securityContextIsAttachedToRequestAndContainsIdentity(): void
+    {
+        $authManager = new AuthFlowTestAuthManager($this->sessionStore);
+        $gate = new AuthFlowTestGate();
+
+        $this->sessionStore->login('user-ctx', 'ContextUser');
+
+        $capturedContext = null;
+
+        $this->processRequest(
+            $this->createRequest('GET', '/api/me'),
+            $authManager,
+            $gate,
+            $this->createHandler(function (ServerRequestInterface $req) use (&$capturedContext): ResponseInterface {
+                $capturedContext = $req->getAttribute('_security_context');
+                return Response::text('ok');
+            }),
+        );
+
+        self::assertInstanceOf(SecurityContext::class, $capturedContext);
+        self::assertSame('user-ctx', $capturedContext->identity()->id());
+        self::assertSame('ContextUser', $capturedContext->identity()->displayName());
+        self::assertTrue($capturedContext->identity()->isAuthenticated());
+    }
+
+    #[Test]
+    public function multipleUsersInSequenceHaveIsolatedSessions(): void
+    {
+        $authManager = new AuthFlowTestAuthManager($this->sessionStore);
+        $gate = new AuthFlowTestGate();
+
+        // Alice's request
+        $this->sessionStore->login('alice-01', 'Alice');
+        $aliceId = null;
+
+        $this->processRequest(
+            $this->createRequest('GET', '/profile'),
+            $authManager,
+            $gate,
+            $this->createHandler(function (ServerRequestInterface $req) use (&$aliceId): ResponseInterface {
+                /** @var SecurityContext|null $ctx */
+                $ctx = $req->getAttribute('_security_context');
+                $aliceId = $ctx?->identity()->id();
+                return Response::text('ok');
+            }),
+        );
+
+        // Switch to Bob's session
+        $this->sessionStore->logout();
+        $this->sessionStore->login('bob-02', 'Bob');
+        $bobId = null;
+
+        $this->processRequest(
+            $this->createRequest('GET', '/profile'),
+            $authManager,
+            $gate,
+            $this->createHandler(function (ServerRequestInterface $req) use (&$bobId): ResponseInterface {
+                /** @var SecurityContext|null $ctx */
+                $ctx = $req->getAttribute('_security_context');
+                $bobId = $ctx?->identity()->id();
+                return Response::text('ok');
+            }),
+        );
+
+        self::assertSame('alice-01', $aliceId, 'Alice should see her own session');
+        self::assertSame('bob-02', $bobId, 'Bob should see his own session');
+        self::assertNotSame($aliceId, $bobId, 'Sessions must not bleed across users');
+    }
+
+    #[Test]
     public function reRequestAfterLogoutReturns401(): void
     {
         $authManager = new AuthFlowTestAuthManager($this->sessionStore);

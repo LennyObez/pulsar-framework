@@ -19,7 +19,7 @@ final class OrderStatusStateMachineTest extends TestCase
 
     #[Test]
     #[DataProvider('validTransitionsProvider')]
-    public function test_can_transition_valid_pair(OrderStatus $from, OrderStatus $to): void
+    public function canTransitionValidPair(OrderStatus $from, OrderStatus $to): void
     {
         self::assertTrue(OrderStatusStateMachine::canTransition($from, $to));
     }
@@ -44,7 +44,7 @@ final class OrderStatusStateMachineTest extends TestCase
 
     #[Test]
     #[DataProvider('invalidTransitionsProvider')]
-    public function test_cannot_transition_invalid_pair(OrderStatus $from, OrderStatus $to): void
+    public function cannotTransitionInvalidPair(OrderStatus $from, OrderStatus $to): void
     {
         self::assertFalse(OrderStatusStateMachine::canTransition($from, $to));
     }
@@ -71,7 +71,7 @@ final class OrderStatusStateMachineTest extends TestCase
 
     #[Test]
     #[DataProvider('allStatusesProvider')]
-    public function test_cannot_transition_to_self(OrderStatus $status): void
+    public function cannotTransitionToSelf(OrderStatus $status): void
     {
         self::assertFalse(OrderStatusStateMachine::canTransition($status, $status));
     }
@@ -90,7 +90,7 @@ final class OrderStatusStateMachineTest extends TestCase
 
     #[Test]
     #[DataProvider('terminalToAnyProvider')]
-    public function test_terminal_states_cannot_transition(OrderStatus $terminal, OrderStatus $target): void
+    public function terminalStatesCannotTransition(OrderStatus $terminal, OrderStatus $target): void
     {
         self::assertFalse(OrderStatusStateMachine::canTransition($terminal, $target));
     }
@@ -116,7 +116,7 @@ final class OrderStatusStateMachineTest extends TestCase
     // ── transition() — returns new status on success ────────────────
 
     #[Test]
-    public function test_transition_returns_new_status(): void
+    public function transitionReturnsNewStatus(): void
     {
         $result = OrderStatusStateMachine::transition(OrderStatus::Cart, OrderStatus::PendingPayment);
 
@@ -126,7 +126,7 @@ final class OrderStatusStateMachineTest extends TestCase
     // ── transition() — throws on invalid transition ─────────────────
 
     #[Test]
-    public function test_transition_throws_on_invalid(): void
+    public function transitionThrowsOnInvalid(): void
     {
         $this->expectException(CmsException::class);
         $this->expectExceptionMessage("Invalid status transition from 'cart' to 'fulfilled'");
@@ -135,7 +135,7 @@ final class OrderStatusStateMachineTest extends TestCase
     }
 
     #[Test]
-    public function test_transition_throws_for_terminal_state(): void
+    public function transitionThrowsForTerminalState(): void
     {
         $this->expectException(CmsException::class);
 
@@ -146,7 +146,7 @@ final class OrderStatusStateMachineTest extends TestCase
 
     #[Test]
     #[DataProvider('cancellableStatusesProvider')]
-    public function test_cancelled_reachable_from_non_terminal(OrderStatus $from): void
+    public function cancelledReachableFromNonTerminal(OrderStatus $from): void
     {
         self::assertTrue(OrderStatusStateMachine::canTransition($from, OrderStatus::Cancelled));
     }
@@ -165,7 +165,7 @@ final class OrderStatusStateMachineTest extends TestCase
     // ── Refunded only from Fulfilled ────────────────────────────────
 
     #[Test]
-    public function test_refunded_only_from_fulfilled(): void
+    public function refundedOnlyFromFulfilled(): void
     {
         self::assertTrue(OrderStatusStateMachine::canTransition(OrderStatus::Fulfilled, OrderStatus::Refunded));
 

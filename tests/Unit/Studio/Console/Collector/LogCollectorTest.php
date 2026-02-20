@@ -213,18 +213,20 @@ final class LogCollectorTest extends TestCase
     public function writeSilentlySwallowsEmitExceptions(): void
     {
         $contextProvider = $this->createContextProvider(null);
+        $emitAttempts = 0;
         $collector = new LogCollector(
             contextProvider: $contextProvider,
-            emit: function (ConsoleEvent $event, ?CorrelationContext $context): void {
+            emit: function (ConsoleEvent $event, ?CorrelationContext $context) use (&$emitAttempts): void {
+                $emitAttempts++;
                 throw new RuntimeException('Emit failed');
             },
         );
         $entry = $this->createLogEntry();
 
-        // Should not throw - verification is that we reach the end without exception
-        $this->expectNotToPerformAssertions();
-
         $collector->write($entry);
+
+        // Emit was attempted (not skipped), and the exception was swallowed silently
+        self::assertSame(1, $emitAttempts);
     }
 
     #[Test]

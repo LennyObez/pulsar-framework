@@ -193,18 +193,20 @@ final class ExceptionCollectorTest extends TestCase
     public function handleErrorSilentlySwallowsEmitExceptions(): void
     {
         $contextProvider = $this->createContextProvider(null);
+        $emitAttempts = 0;
         $collector = new ExceptionCollector(
             contextProvider: $contextProvider,
-            emit: function (ConsoleEvent $event, ?CorrelationContext $context): void {
+            emit: function (ConsoleEvent $event, ?CorrelationContext $context) use (&$emitAttempts): void {
+                $emitAttempts++;
                 throw new RuntimeException('Emit failed');
             },
         );
         $errorEvent = $this->createErrorEvent();
 
-        // Should not throw - verification is that we reach the end without exception
-        $this->expectNotToPerformAssertions();
-
         $collector->handleError($errorEvent);
+
+        // Emit was attempted (not skipped), and the exception was swallowed silently
+        self::assertSame(1, $emitAttempts);
     }
 
     #[Test]

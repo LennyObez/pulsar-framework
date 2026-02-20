@@ -14,7 +14,7 @@ use ReflectionClass;
 final class BreadcrumbItemTest extends TestCase
 {
     #[Test]
-    public function test_construction(): void
+    public function construction(): void
     {
         $item = new BreadcrumbItem(
             label: 'Home',
@@ -28,7 +28,7 @@ final class BreadcrumbItemTest extends TestCase
     }
 
     #[Test]
-    public function test_current_page_item(): void
+    public function currentPageItem(): void
     {
         $item = new BreadcrumbItem(
             label: 'Getting Started',
@@ -40,7 +40,7 @@ final class BreadcrumbItemTest extends TestCase
     }
 
     #[Test]
-    public function test_root_page_single_item(): void
+    public function rootPageSingleItem(): void
     {
         $trail = [
             new BreadcrumbItem(label: 'Home', url: '/', isCurrent: true),
@@ -52,7 +52,7 @@ final class BreadcrumbItemTest extends TestCase
     }
 
     #[Test]
-    public function test_nested_page_full_trail(): void
+    public function nestedPageFullTrail(): void
     {
         $trail = [
             new BreadcrumbItem(label: 'Home', url: '/', isCurrent: false),
@@ -70,7 +70,7 @@ final class BreadcrumbItemTest extends TestCase
     }
 
     #[Test]
-    public function test_is_readonly_class(): void
+    public function isReadonlyClass(): void
     {
         $reflection = new ReflectionClass(BreadcrumbItem::class);
         self::assertTrue($reflection->isReadOnly());

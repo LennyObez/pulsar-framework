@@ -18,7 +18,7 @@ use Pulsar\Queue\QueueDriverInterface;
 final class MediaProcessingQueuePanelTest extends TestCase
 {
     #[Test]
-    public function test_get_pending_returns_only_media_queue_jobs(): void
+    public function getPendingReturnsOnlyMediaQueueJobs(): void
     {
         $mediaJob = new JobRecord(
             id: 'job-1',
@@ -60,7 +60,7 @@ final class MediaProcessingQueuePanelTest extends TestCase
     }
 
     #[Test]
-    public function test_get_completed_maps_completed_at(): void
+    public function getCompletedMapsCompletedAt(): void
     {
         $job = new JobRecord(
             id: 'job-3',
@@ -89,7 +89,7 @@ final class MediaProcessingQueuePanelTest extends TestCase
     }
 
     #[Test]
-    public function test_get_failed_maps_failed_at(): void
+    public function getFailedMapsFailedAt(): void
     {
         $job = new JobRecord(
             id: 'job-4',
@@ -119,7 +119,7 @@ final class MediaProcessingQueuePanelTest extends TestCase
     }
 
     #[Test]
-    public function test_pending_count_returns_queue_size(): void
+    public function pendingCountReturnsQueueSize(): void
     {
         $driver = $this->createMock(QueueDriverInterface::class);
         $driver->expects(self::once())
@@ -133,7 +133,7 @@ final class MediaProcessingQueuePanelTest extends TestCase
     }
 
     #[Test]
-    public function test_handles_empty_payload_gracefully(): void
+    public function handlesEmptyPayloadGracefully(): void
     {
         $job = new JobRecord(
             id: 'job-5',
@@ -162,7 +162,7 @@ final class MediaProcessingQueuePanelTest extends TestCase
     }
 
     #[Test]
-    public function test_handles_invalid_json_payload_gracefully(): void
+    public function handlesInvalidJsonPayloadGracefully(): void
     {
         $job = new JobRecord(
             id: 'job-6',
@@ -190,7 +190,7 @@ final class MediaProcessingQueuePanelTest extends TestCase
     }
 
     #[Test]
-    public function test_returns_empty_list_when_no_media_jobs(): void
+    public function returnsEmptyListWhenNoMediaJobs(): void
     {
         $driver = $this->createStub(QueueDriverInterface::class);
         $driver->method('findByStatus')->willReturn([]);

@@ -47,7 +47,7 @@ final class ZipSlipProtectionTest extends TestCase
     // -- Path traversal: entry with '..' rejected -----------------------------
 
     #[Test]
-    public function test_entry_with_dotdot_rejected(): void
+    public function entryWithDotdotRejected(): void
     {
         $zipPath = $this->createZipWithEntries(['../outside.txt' => 'evil content']);
         $extractor = $this->createExtractor();
@@ -57,7 +57,7 @@ final class ZipSlipProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_entry_with_nested_dotdot_rejected(): void
+    public function entryWithNestedDotdotRejected(): void
     {
         $zipPath = $this->createZipWithEntries(['templates/../../../etc/passwd' => 'root']);
         $extractor = $this->createExtractor();
@@ -69,7 +69,7 @@ final class ZipSlipProtectionTest extends TestCase
     // -- Absolute path entries rejected ---------------------------------------
 
     #[Test]
-    public function test_entry_starting_with_slash_rejected(): void
+    public function entryStartingWithSlashRejected(): void
     {
         $zipPath = $this->createZipWithEntries(['/etc/passwd' => 'root']);
         $extractor = $this->createExtractor();
@@ -79,7 +79,7 @@ final class ZipSlipProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_entry_starting_with_backslash_rejected(): void
+    public function entryStartingWithBackslashRejected(): void
     {
         $zipPath = $this->createZipWithEntries(['\\windows\\system32\\evil.dll' => 'evil']);
         $extractor = $this->createExtractor();
@@ -91,7 +91,7 @@ final class ZipSlipProtectionTest extends TestCase
     // -- Null bytes in filenames rejected --------------------------------------
 
     #[Test]
-    public function test_entry_with_null_bytes_rejected(): void
+    public function entryWithNullBytesRejected(): void
     {
         // ZipArchive strips null bytes from entry names on most platforms,
         // so we verify the check exists by testing the str_contains guard
@@ -112,7 +112,7 @@ final class ZipSlipProtectionTest extends TestCase
     // -- Backslash path separators rejected -----------------------------------
 
     #[Test]
-    public function test_entry_with_backslash_path_rejected(): void
+    public function entryWithBackslashPathRejected(): void
     {
         $zipPath = $this->createZipWithEntries(['templates\\evil.php' => 'code']);
         $extractor = $this->createExtractor();
@@ -124,7 +124,7 @@ final class ZipSlipProtectionTest extends TestCase
     // -- Archive size limit ---------------------------------------------------
 
     #[Test]
-    public function test_archive_over_size_limit_rejected(): void
+    public function archiveOverSizeLimitRejected(): void
     {
         // Create a real zip archive that will exceed 100 byte limit
         $zipPath = $this->createZipWithEntries(['file.txt' => str_repeat('a', 200)]);
@@ -138,7 +138,7 @@ final class ZipSlipProtectionTest extends TestCase
     // -- File count limit -----------------------------------------------------
 
     #[Test]
-    public function test_archive_over_file_count_rejected(): void
+    public function archiveOverFileCountRejected(): void
     {
         $entries = [];
 
@@ -157,7 +157,7 @@ final class ZipSlipProtectionTest extends TestCase
     // -- Valid archive extracts successfully -----------------------------------
 
     #[Test]
-    public function test_valid_archive_extracts_successfully(): void
+    public function validArchiveExtractsSuccessfully(): void
     {
         $zipPath = $this->createZipWithEntries([
             'theme.json' => '{"slug":"test"}',
@@ -176,7 +176,7 @@ final class ZipSlipProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_valid_archive_preserves_content(): void
+    public function validArchivePreservesContent(): void
     {
         $zipPath = $this->createZipWithEntries([
             'config.json' => '{"key":"value"}',
@@ -191,7 +191,7 @@ final class ZipSlipProtectionTest extends TestCase
     // -- Nonexistent archive --------------------------------------------------
 
     #[Test]
-    public function test_nonexistent_archive_throws(): void
+    public function nonexistentArchiveThrows(): void
     {
         $extractor = $this->createExtractor();
 
@@ -202,7 +202,7 @@ final class ZipSlipProtectionTest extends TestCase
     // -- Directory entries handled correctly -----------------------------------
 
     #[Test]
-    public function test_directory_entries_created_correctly(): void
+    public function directoryEntriesCreatedCorrectly(): void
     {
         $zip = new ZipArchive();
         $zipPath = $this->tmpDir . '/dirs.zip';

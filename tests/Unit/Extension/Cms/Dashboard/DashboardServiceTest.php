@@ -14,7 +14,7 @@ use Pulsar\Extension\Cms\Dashboard\DashboardWidgetInterface;
 final class DashboardServiceTest extends TestCase
 {
     #[Test]
-    public function test_collect_widget_data_returns_empty_for_no_widgets(): void
+    public function collectWidgetDataReturnsEmptyForNoWidgets(): void
     {
         $service = new DashboardService([]);
 
@@ -22,7 +22,7 @@ final class DashboardServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_collect_widget_data_aggregates_all_widgets(): void
+    public function collectWidgetDataAggregatesAllWidgets(): void
     {
         $widget1 = $this->createWidgetMock('widget_a', ['value' => 1], 'template/a');
         $widget2 = $this->createWidgetMock('widget_b', ['value' => 2], 'template/b');
@@ -40,7 +40,7 @@ final class DashboardServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_get_widget_data_returns_data_for_existing_widget(): void
+    public function getWidgetDataReturnsDataForExistingWidget(): void
     {
         $widget = $this->createWidgetMock('my_widget', ['key' => 'val'], 'tpl/mine');
 
@@ -53,7 +53,7 @@ final class DashboardServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_get_widget_data_returns_null_for_unknown_widget(): void
+    public function getWidgetDataReturnsNullForUnknownWidget(): void
     {
         $service = new DashboardService([]);
 
@@ -61,7 +61,7 @@ final class DashboardServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_get_widget_names_returns_all_registered_names(): void
+    public function getWidgetNamesReturnsAllRegisteredNames(): void
     {
         $widget1 = $this->createWidgetMock('alpha', [], '');
         $widget2 = $this->createWidgetMock('beta', [], '');
@@ -73,7 +73,7 @@ final class DashboardServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_get_widget_names_returns_empty_for_no_widgets(): void
+    public function getWidgetNamesReturnsEmptyForNoWidgets(): void
     {
         $service = new DashboardService([]);
 
@@ -81,7 +81,7 @@ final class DashboardServiceTest extends TestCase
     }
 
     #[Test]
-    public function test_collect_widget_data_calls_get_data_on_each_widget(): void
+    public function collectWidgetDataCallsGetDataOnEachWidget(): void
     {
         $widget = $this->createMock(DashboardWidgetInterface::class);
         $widget->method('getName')->willReturn('test');

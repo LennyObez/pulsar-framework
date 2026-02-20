@@ -194,8 +194,6 @@ final class StatefulSingletonAnalyzerTest extends TestCase
     #[Test]
     public function report_does_not_throw_for_non_core_violations_in_strict_mode(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $analyzer = new StatefulSingletonAnalyzer(strict: true);
 
         $violation = new \Pulsar\Runtime\Scope\StatefulSingletonViolation(
@@ -206,6 +204,9 @@ final class StatefulSingletonAnalyzerTest extends TestCase
         );
 
         $analyzer->report([$violation]);
+
+        // Non-core violations must not throw even in strict mode
+        self::assertFalse($analyzer->isCoreNamespace('App\\External\\Service'));
     }
 
     #[Test]

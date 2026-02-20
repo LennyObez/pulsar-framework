@@ -61,4 +61,49 @@ final class PublishingConfigTest extends TestCase
         self::assertTrue($config->rssEnabled);
         self::assertFalse($config->staticSiteEnabled);
     }
+
+    // ---- Boundary / negative tests ----
+
+    #[Test]
+    public function defaults_and_from_array_empty_are_identical(): void
+    {
+        $direct = new PublishingConfig();
+        $fromEmpty = PublishingConfig::fromArray([]);
+
+        self::assertSame($direct->rssEnabled, $fromEmpty->rssEnabled);
+        self::assertSame($direct->staticSiteEnabled, $fromEmpty->staticSiteEnabled);
+        self::assertSame($direct->staticSiteOutputPath, $fromEmpty->staticSiteOutputPath);
+        self::assertSame($direct->rssFeedPath, $fromEmpty->rssFeedPath);
+    }
+
+    #[Test]
+    public function enabling_rss_does_not_affect_static_site(): void
+    {
+        $config = PublishingConfig::fromArray(['rss_enabled' => true]);
+
+        self::assertTrue($config->rssEnabled);
+        self::assertFalse($config->staticSiteEnabled, 'static site must not be implicitly enabled');
+    }
+
+    #[Test]
+    public function custom_output_path_is_preserved_verbatim(): void
+    {
+        $path = '/srv/www/output-2024';
+        $config = PublishingConfig::fromArray(['static_site_output_path' => $path]);
+
+        self::assertSame($path, $config->staticSiteOutputPath);
+    }
+
+    #[Test]
+    public function unknown_keys_in_array_are_ignored(): void
+    {
+        $config = PublishingConfig::fromArray([
+            'rss_enabled' => true,
+            'nonexistent_key' => 'should_be_ignored',
+        ]);
+
+        self::assertTrue($config->rssEnabled);
+        // Default path is unchanged despite unknown key
+        self::assertSame('./public/feed.xml', $config->rssFeedPath);
+    }
 }

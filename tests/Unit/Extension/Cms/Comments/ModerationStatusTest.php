@@ -17,7 +17,7 @@ final class ModerationStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('validTransitionsProvider')]
-    public function test_can_transition_from_pending(ModerationStatus $target): void
+    public function canTransitionFromPending(ModerationStatus $target): void
     {
         self::assertTrue(ModerationStatus::Pending->canTransitionTo($target));
     }
@@ -36,7 +36,7 @@ final class ModerationStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('invalidTransitionsProvider')]
-    public function test_cannot_transition_from_non_pending(ModerationStatus $from, ModerationStatus $to): void
+    public function cannotTransitionFromNonPending(ModerationStatus $from, ModerationStatus $to): void
     {
         self::assertFalse($from->canTransitionTo($to));
     }
@@ -63,7 +63,7 @@ final class ModerationStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('allStatusesProvider')]
-    public function test_cannot_transition_to_self(ModerationStatus $status): void
+    public function cannotTransitionToSelf(ModerationStatus $status): void
     {
         self::assertFalse($status->canTransitionTo($status));
     }
@@ -82,7 +82,7 @@ final class ModerationStatusTest extends TestCase
 
     #[Test]
     #[DataProvider('labelProvider')]
-    public function test_label_returns_human_readable_string(ModerationStatus $status, string $expectedLabel): void
+    public function labelReturnsHumanReadableString(ModerationStatus $status, string $expectedLabel): void
     {
         self::assertSame($expectedLabel, $status->label());
     }
@@ -101,7 +101,7 @@ final class ModerationStatusTest extends TestCase
     // -- Backed enum values match database values -------------------------
 
     #[Test]
-    public function test_backed_values_match_database_values(): void
+    public function backedValuesMatchDatabaseValues(): void
     {
         self::assertSame('pending', ModerationStatus::Pending->value);
         self::assertSame('approved', ModerationStatus::Approved->value);
@@ -110,7 +110,7 @@ final class ModerationStatusTest extends TestCase
     }
 
     #[Test]
-    public function test_from_valid_value_returns_correct_case(): void
+    public function fromValidValueReturnsCorrectCase(): void
     {
         self::assertSame(ModerationStatus::Pending, ModerationStatus::from('pending'));
         self::assertSame(ModerationStatus::Approved, ModerationStatus::from('approved'));
@@ -119,14 +119,14 @@ final class ModerationStatusTest extends TestCase
     }
 
     #[Test]
-    public function test_try_from_invalid_value_returns_null(): void
+    public function tryFromInvalidValueReturnsNull(): void
     {
         self::assertNull(ModerationStatus::tryFrom('flagged'));
         self::assertNull(ModerationStatus::tryFrom(''));
     }
 
     #[Test]
-    public function test_cases_returns_four_statuses(): void
+    public function casesReturnsFourStatuses(): void
     {
         self::assertCount(4, ModerationStatus::cases());
     }

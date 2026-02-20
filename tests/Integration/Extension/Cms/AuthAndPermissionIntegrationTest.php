@@ -64,7 +64,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     // -- Admin routes with correct role → allowed ---------------------------
 
     #[Test]
-    public function test_admin_can_access_settings(): void
+    public function adminCanAccessSettings(): void
     {
         $admin = $this->roles['cms.admin'];
 
@@ -73,7 +73,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_admin_can_manage_plugins(): void
+    public function adminCanManagePlugins(): void
     {
         $admin = $this->roles['cms.admin'];
 
@@ -84,7 +84,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_admin_can_manage_themes(): void
+    public function adminCanManageThemes(): void
     {
         $admin = $this->roles['cms.admin'];
 
@@ -95,7 +95,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_admin_can_manage_users(): void
+    public function adminCanManageUsers(): void
     {
         $admin = $this->roles['cms.admin'];
 
@@ -104,7 +104,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_can_publish_content(): void
+    public function editorCanPublishContent(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -115,7 +115,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     // -- Admin routes with wrong role → denied ------------------------------
 
     #[Test]
-    public function test_contributor_denied_settings_access(): void
+    public function contributorDeniedSettingsAccess(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -124,7 +124,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_viewer_denied_all_admin_routes(): void
+    public function viewerDeniedAllAdminRoutes(): void
     {
         $viewer = $this->roles['cms.viewer'];
 
@@ -137,7 +137,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_denied_plugin_install(): void
+    public function editorDeniedPluginInstall(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -146,7 +146,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_denied_theme_install(): void
+    public function editorDeniedThemeInstall(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -155,7 +155,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_denied_user_management(): void
+    public function editorDeniedUserManagement(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -166,7 +166,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     // -- Step-up required routes: gate simulation ---------------------------
 
     #[Test]
-    public function test_step_up_attribute_required_for_sensitive_actions(): void
+    public function stepUpAttributeRequiredForSensitiveActions(): void
     {
         // Simulate a request without step-up verification
         $request = $this->createStub(ServerRequestInterface::class);
@@ -181,7 +181,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_step_up_verified_allows_sensitive_actions(): void
+    public function stepUpVerifiedAllowsSensitiveActions(): void
     {
         $request = $this->createStub(ServerRequestInterface::class);
         $request->method('getAttribute')
@@ -197,7 +197,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     // -- Cross-role boundary checks -----------------------------------------
 
     #[Test]
-    public function test_media_manager_denied_content_operations(): void
+    public function mediaManagerDeniedContentOperations(): void
     {
         $mediaManager = $this->roles['cms.media_manager'];
 
@@ -216,7 +216,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_seo_manager_denied_content_and_admin_operations(): void
+    public function seoManagerDeniedContentAndAdminOperations(): void
     {
         $seo = $this->roles['cms.seo_manager'];
 
@@ -229,7 +229,7 @@ final class AuthAndPermissionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_shop_manager_scoped_to_commerce(): void
+    public function shopManagerScopedToCommerce(): void
     {
         $shop = $this->roles['cms.shop_manager'];
 

@@ -26,8 +26,9 @@ final class IntlDateFormatterTest extends TestCase
         $date = new DateTimeImmutable('2025-01-15 14:30:00');
         $result = $formatter->format($date);
 
-        self::assertNotEmpty($result);
+        // en_US MEDIUM/SHORT: "Jan 15, 2025, 2:30 PM"
         self::assertStringContainsString('Jan', $result);
+        self::assertStringContainsString('2025', $result);
     }
 
     #[Test]
@@ -40,8 +41,9 @@ final class IntlDateFormatterTest extends TestCase
         $date = new DateTimeImmutable('2025-01-15 14:30:00');
         $result = $formatter->format($date, 'fr_FR');
 
-        self::assertNotEmpty($result);
+        // fr_FR MEDIUM/SHORT: "15 janv. 2025, 14:30"
         self::assertStringContainsString('janv', $result);
+        self::assertStringContainsString('2025', $result);
     }
 
     /**

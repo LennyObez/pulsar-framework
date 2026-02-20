@@ -40,7 +40,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_start_initializes_session(): void
+    public function startInitializesSession(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 
@@ -53,7 +53,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_get_set_has_remove_operations(): void
+    public function getSetHasRemoveOperations(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -68,7 +68,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_all_returns_all_data(): void
+    public function allReturnsAllData(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -85,7 +85,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_get_returns_default_when_key_missing(): void
+    public function getReturnsDefaultWhenKeyMissing(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -95,7 +95,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_get_throws_when_not_started(): void
+    public function getThrowsWhenNotStarted(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 
@@ -106,7 +106,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_set_throws_when_not_started(): void
+    public function setThrowsWhenNotStarted(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 
@@ -117,7 +117,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_has_throws_when_not_started(): void
+    public function hasThrowsWhenNotStarted(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 
@@ -128,7 +128,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_remove_throws_when_not_started(): void
+    public function removeThrowsWhenNotStarted(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 
@@ -139,7 +139,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_all_throws_when_not_started(): void
+    public function allThrowsWhenNotStarted(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 
@@ -150,7 +150,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_regenerate_throws_when_not_started(): void
+    public function regenerateThrowsWhenNotStarted(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 
@@ -161,7 +161,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_regenerate_changes_id_preserves_data(): void
+    public function regenerateChangesIdPreservesData(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -177,7 +177,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_destroy_clears_everything(): void
+    public function destroyClearsEverything(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -192,7 +192,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_save_persists_data_to_handler(): void
+    public function savePersistsDataToHandler(): void
     {
         $handler = new ArrayHandler();
         $manager = new SessionManager($handler, $this->config);
@@ -218,7 +218,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_metadata_tracking(): void
+    public function metadataTracking(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -231,7 +231,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_start_is_idempotent(): void
+    public function startIsIdempotent(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -246,7 +246,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_start_with_request_applies_validators(): void
+    public function startWithRequestAppliesValidators(): void
     {
         $validator = new UserAgentValidator('strict');
         $manager = new SessionManager($this->handler, $this->config, [$validator]);
@@ -280,7 +280,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_start_with_request_fails_validation(): void
+    public function startWithRequestFailsValidation(): void
     {
         $validator = new UserAgentValidator('strict');
         $manager = new SessionManager($this->handler, $this->config, [$validator]);
@@ -314,7 +314,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_concurrent_session_limit_enforcement(): void
+    public function concurrentSessionLimitEnforcement(): void
     {
         // Use DatabaseHandler which supports concurrency control
         $pdo = new PDO('sqlite::memory:');
@@ -360,7 +360,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_concurrent_session_limit_passes_under_limit(): void
+    public function concurrentSessionLimitPassesUnderLimit(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -400,7 +400,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_set_user_id_updates_metadata(): void
+    public function setUserIdUpdatesMetadata(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -413,7 +413,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_fixation_protection_regenerate_changes_id(): void
+    public function fixationProtectionRegenerateChangesId(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -436,7 +436,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_close_saves_and_closes_handler(): void
+    public function closeSavesAndClosesHandler(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
         $manager->start();
@@ -451,7 +451,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_gc_delegates_to_handler(): void
+    public function gcDelegatesToHandler(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 
@@ -462,7 +462,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_get_handler_returns_handler(): void
+    public function getHandlerReturnsHandler(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 
@@ -470,7 +470,7 @@ final class SessionManagerTest extends TestCase
     }
 
     #[Test]
-    public function test_get_config_returns_config(): void
+    public function getConfigReturnsConfig(): void
     {
         $manager = new SessionManager($this->handler, $this->config);
 

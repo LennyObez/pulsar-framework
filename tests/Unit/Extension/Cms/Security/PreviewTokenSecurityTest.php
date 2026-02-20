@@ -22,7 +22,7 @@ use function strlen;
 final class PreviewTokenSecurityTest extends TestCase
 {
     #[Test]
-    public function test_preview_token_has_sufficient_entropy(): void
+    public function previewTokenHasSufficientEntropy(): void
     {
         // 32 random bytes = 64 hex characters = 256 bits of entropy
         $session = new PreviewSession(
@@ -38,7 +38,7 @@ final class PreviewTokenSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_preview_session_expires_correctly(): void
+    public function previewSessionExpiresCorrectly(): void
     {
         $session = new PreviewSession(
             themeId: 'theme-1',
@@ -51,7 +51,7 @@ final class PreviewTokenSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_preview_session_not_expired_when_active(): void
+    public function previewSessionNotExpiredWhenActive(): void
     {
         $session = new PreviewSession(
             themeId: 'theme-1',
@@ -64,7 +64,7 @@ final class PreviewTokenSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_different_preview_sessions_have_unique_tokens(): void
+    public function differentPreviewSessionsHaveUniqueTokens(): void
     {
         $tokens = [];
 
@@ -76,7 +76,7 @@ final class PreviewTokenSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_preview_session_boundary_expiry(): void
+    public function previewSessionBoundaryExpiry(): void
     {
         // Session that expires "now" should be treated as expired
         $session = new PreviewSession(
@@ -91,7 +91,7 @@ final class PreviewTokenSecurityTest extends TestCase
     }
 
     #[Test]
-    public function test_preview_token_is_hex_not_base64(): void
+    public function previewTokenIsHexNotBase64(): void
     {
         // Hex encoding ensures URL-safe tokens without padding chars
         $token = bin2hex(random_bytes(32));

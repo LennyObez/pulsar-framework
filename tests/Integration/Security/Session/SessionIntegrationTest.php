@@ -38,7 +38,7 @@ use function sodium_bin2hex;
 final class SessionIntegrationTest extends TestCase
 {
     #[Test]
-    public function test_handler_capability_matrix_array(): void
+    public function handlerCapabilityMatrixArray(): void
     {
         $handler = new ArrayHandler();
 
@@ -48,7 +48,7 @@ final class SessionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_handler_capability_matrix_file(): void
+    public function handlerCapabilityMatrixFile(): void
     {
         $handler = new FileHandler();
 
@@ -58,7 +58,7 @@ final class SessionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_handler_capability_matrix_database(): void
+    public function handlerCapabilityMatrixDatabase(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $handler = new DatabaseHandler($pdo);
@@ -69,7 +69,7 @@ final class SessionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_handler_capability_matrix_cookie(): void
+    public function handlerCapabilityMatrixCookie(): void
     {
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $encryption = SessionEncryption::fromMasterKey($masterKey);
@@ -90,7 +90,7 @@ final class SessionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_session_manager_with_array_handler_and_validators(): void
+    public function sessionManagerWithArrayHandlerAndValidators(): void
     {
         $handler = new ArrayHandler();
         $config = new SessionConfig(
@@ -140,7 +140,7 @@ final class SessionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_flash_message_persistence_across_simulated_requests(): void
+    public function flashMessagePersistenceAcrossSimulatedRequests(): void
     {
         $handler = new ArrayHandler();
         $config = new SessionConfig(
@@ -189,7 +189,7 @@ final class SessionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_session_manager_with_database_handler_full_lifecycle(): void
+    public function sessionManagerWithDatabaseHandlerFullLifecycle(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -242,7 +242,7 @@ final class SessionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_middleware_full_request_cycle(): void
+    public function middlewareFullRequestCycle(): void
     {
         $handler = new ArrayHandler();
         $config = new SessionConfig(
@@ -297,7 +297,7 @@ final class SessionIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_encrypted_session_roundtrip_with_manager(): void
+    public function encryptedSessionRoundtripWithManager(): void
     {
         $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
         $encryption = SessionEncryption::fromMasterKey($masterKey);

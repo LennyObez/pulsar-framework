@@ -21,7 +21,7 @@ use function strlen;
 final class EventEnvelopeTest extends TestCase
 {
     #[Test]
-    public function test_wrap_creates_envelope_with_computed_hash(): void
+    public function wrapCreatesEnvelopeWithComputedHash(): void
     {
         $metadata = $this->createMetadata();
         $randomizer = new Randomizer(new Xoshiro256StarStar(42));
@@ -43,7 +43,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function test_payload_hash_is_deterministic(): void
+    public function payloadHashIsDeterministic(): void
     {
         $metadata = $this->createMetadata();
         $r1 = new Randomizer(new Xoshiro256StarStar(1));
@@ -58,7 +58,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function test_payload_hash_ignores_key_insertion_order(): void
+    public function payloadHashIgnoresKeyInsertionOrder(): void
     {
         $metadata = $this->createMetadata();
         $r1 = new Randomizer(new Xoshiro256StarStar(1));
@@ -71,7 +71,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function test_payload_hash_recursively_sorts_nested_keys(): void
+    public function payloadHashRecursivelySortsNestedKeys(): void
     {
         $metadata = $this->createMetadata();
         $r1 = new Randomizer(new Xoshiro256StarStar(1));
@@ -84,7 +84,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function test_different_event_types_produce_different_hashes(): void
+    public function differentEventTypesProduceDifferentHashes(): void
     {
         $metadata = $this->createMetadata();
         $payload = ['key' => 'value'];
@@ -98,7 +98,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function test_different_schema_versions_produce_different_hashes(): void
+    public function differentSchemaVersionsProduceDifferentHashes(): void
     {
         $metadata = $this->createMetadata();
         $payload = ['key' => 'value'];
@@ -112,7 +112,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function test_toArray_fromArray_roundtrip(): void
+    public function toArrayFromArrayRoundtrip(): void
     {
         $metadata = $this->createMetadata();
         $randomizer = new Randomizer(new Xoshiro256StarStar(42));
@@ -137,7 +137,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function test_toArray_uses_snake_case_keys(): void
+    public function toArrayUsesSnakeCaseKeys(): void
     {
         $metadata = $this->createMetadata();
         $envelope = EventEnvelope::wrap('test', 1, [], $metadata);
@@ -151,7 +151,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_recomputes_payload_hash(): void
+    public function fromArrayRecomputesPayloadHash(): void
     {
         $metadata = $this->createMetadata();
         $original = EventEnvelope::wrap(
@@ -175,7 +175,7 @@ final class EventEnvelopeTest extends TestCase
     }
 
     #[Test]
-    public function test_fromArray_throws_on_empty_eventType(): void
+    public function fromArrayThrowsOnEmptyEventType(): void
     {
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessageMatches('/non-empty eventType/');

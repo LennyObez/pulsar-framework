@@ -18,7 +18,7 @@ use Pulsar\Security\Audit\AuditOutcome;
 final class RecentActivityWidgetTest extends TestCase
 {
     #[Test]
-    public function test_get_name_returns_recent_activity(): void
+    public function getNameReturnsRecentActivity(): void
     {
         $query = $this->createStub(AuditQueryInterface::class);
         $widget = new RecentActivityWidget($query);
@@ -27,7 +27,7 @@ final class RecentActivityWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_template_returns_expected_path(): void
+    public function getTemplateReturnsExpectedPath(): void
     {
         $query = $this->createStub(AuditQueryInterface::class);
         $widget = new RecentActivityWidget($query);
@@ -36,7 +36,7 @@ final class RecentActivityWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_returns_empty_entries_when_none(): void
+    public function getDataReturnsEmptyEntriesWhenNone(): void
     {
         $query = $this->createStub(AuditQueryInterface::class);
         $query->method('getRecent')->willReturn([]);
@@ -48,7 +48,7 @@ final class RecentActivityWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_maps_audit_entries_to_serialized_format(): void
+    public function getDataMapsAuditEntriesToSerializedFormat(): void
     {
         $timestamp = new DateTimeImmutable('2026-02-19T12:00:00+00:00');
         $entry = new AuditEntry(
@@ -86,7 +86,7 @@ final class RecentActivityWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_queries_with_cms_action_prefix(): void
+    public function getDataQueriesWithCmsActionPrefix(): void
     {
         $query = $this->createMock(AuditQueryInterface::class);
         $query->expects(self::once())

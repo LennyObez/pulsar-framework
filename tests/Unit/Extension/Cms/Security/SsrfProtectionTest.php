@@ -46,7 +46,7 @@ final class SsrfProtectionTest extends TestCase
     // -- IPv4 private ranges blocked -----------------------------------------
 
     #[Test]
-    public function test_blocks_loopback_127_0_0_1(): void
+    public function blocksLoopback127001(): void
     {
         $client = $this->createClient();
 
@@ -57,7 +57,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_rfc1918_10_0_0_1(): void
+    public function blocksRfc191810001(): void
     {
         $client = $this->createClient();
 
@@ -68,7 +68,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_rfc1918_172_16_0_1(): void
+    public function blocksRfc19181721601(): void
     {
         $client = $this->createClient();
 
@@ -79,7 +79,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_rfc1918_192_168_1_1(): void
+    public function blocksRfc191819216811(): void
     {
         $client = $this->createClient();
 
@@ -90,7 +90,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_cloud_metadata_169_254_169_254(): void
+    public function blocksCloudMetadata169254169254(): void
     {
         $client = $this->createClient();
 
@@ -103,7 +103,7 @@ final class SsrfProtectionTest extends TestCase
     // -- IPv6 private ranges blocked -----------------------------------------
 
     #[Test]
-    public function test_blocks_ipv6_loopback(): void
+    public function blocksIpv6Loopback(): void
     {
         $client = $this->createClient();
 
@@ -114,7 +114,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_ipv6_unique_local(): void
+    public function blocksIpv6UniqueLocal(): void
     {
         $client = $this->createClient();
 
@@ -125,7 +125,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_ipv6_link_local(): void
+    public function blocksIpv6LinkLocal(): void
     {
         $client = $this->createClient();
 
@@ -138,7 +138,7 @@ final class SsrfProtectionTest extends TestCase
     // -- IPv4-mapped IPv6 re-check -------------------------------------------
 
     #[Test]
-    public function test_blocks_ipv4_mapped_ipv6_loopback(): void
+    public function blocksIpv4MappedIpv6Loopback(): void
     {
         $client = $this->createClient();
 
@@ -149,7 +149,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_ipv4_mapped_ipv6_private(): void
+    public function blocksIpv4MappedIpv6Private(): void
     {
         $client = $this->createClient();
 
@@ -162,7 +162,7 @@ final class SsrfProtectionTest extends TestCase
     // -- Port restrictions ---------------------------------------------------
 
     #[Test]
-    public function test_blocks_non_allowed_port_8080(): void
+    public function blocksNonAllowedPort8080(): void
     {
         $client = $this->createClient();
 
@@ -173,7 +173,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_allows_port_443(): void
+    public function allowsPort443(): void
     {
         $client = $this->createClient();
 
@@ -191,7 +191,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_allows_port_80(): void
+    public function allowsPort80(): void
     {
         $client = $this->createClient();
 
@@ -205,7 +205,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_port_22(): void
+    public function blocksPort22(): void
     {
         $client = $this->createClient();
 
@@ -218,7 +218,7 @@ final class SsrfProtectionTest extends TestCase
     // -- Metadata hostname blocked -------------------------------------------
 
     #[Test]
-    public function test_blocks_metadata_google_internal(): void
+    public function blocksMetadataGoogleInternal(): void
     {
         $client = $this->createClient();
 
@@ -231,7 +231,7 @@ final class SsrfProtectionTest extends TestCase
     // -- Max redirect limit --------------------------------------------------
 
     #[Test]
-    public function test_max_redirect_limit(): void
+    public function maxRedirectLimit(): void
     {
         // The maxRedirects config is set to 3. We can verify the config is respected.
         // In a unit test context, we can only verify the config is wired correctly.
@@ -241,7 +241,7 @@ final class SsrfProtectionTest extends TestCase
     // -- SSRF disabled mode --------------------------------------------------
 
     #[Test]
-    public function test_ssrf_disabled_skips_validation(): void
+    public function ssrfDisabledSkipsValidation(): void
     {
         $config = new CmsSecurityConfig(ssrfEnabled: false);
         $client = new SafeHttpClient($config, new NullLogger());
@@ -261,7 +261,7 @@ final class SsrfProtectionTest extends TestCase
     // -- Additional blocked IPs via config -----------------------------------
 
     #[Test]
-    public function test_additional_blocked_ips(): void
+    public function additionalBlockedIps(): void
     {
         $config = new CmsSecurityConfig(
             ssrfEnabled: true,
@@ -278,7 +278,7 @@ final class SsrfProtectionTest extends TestCase
     // -- Empty URL hostname --------------------------------------------------
 
     #[Test]
-    public function test_blocks_empty_hostname(): void
+    public function blocksEmptyHostname(): void
     {
         $client = $this->createClient();
 
@@ -290,7 +290,7 @@ final class SsrfProtectionTest extends TestCase
     // -- Other private ranges -------------------------------------------------
 
     #[Test]
-    public function test_blocks_0_0_0_0(): void
+    public function blocks0000(): void
     {
         $client = $this->createClient();
 
@@ -301,7 +301,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_100_64_0_1_cgnat(): void
+    public function blocks1006401Cgnat(): void
     {
         $client = $this->createClient();
 
@@ -312,7 +312,7 @@ final class SsrfProtectionTest extends TestCase
     }
 
     #[Test]
-    public function test_blocks_198_18_0_1_benchmark(): void
+    public function blocks1981801Benchmark(): void
     {
         $client = $this->createClient();
 

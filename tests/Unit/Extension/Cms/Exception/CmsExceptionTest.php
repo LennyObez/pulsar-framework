@@ -14,7 +14,7 @@ use RuntimeException;
 final class CmsExceptionTest extends TestCase
 {
     #[Test]
-    public function test_content_not_found(): void
+    public function contentNotFound(): void
     {
         $e = CmsException::contentNotFound('abc-123');
         self::assertInstanceOf(CmsException::class, $e);
@@ -22,7 +22,7 @@ final class CmsExceptionTest extends TestCase
     }
 
     #[Test]
-    public function test_translation_not_found(): void
+    public function translationNotFound(): void
     {
         $e = CmsException::translationNotFound('abc-123', 'fr');
         self::assertStringContainsString('abc-123', $e->getMessage());
@@ -30,7 +30,7 @@ final class CmsExceptionTest extends TestCase
     }
 
     #[Test]
-    public function test_invalid_transition(): void
+    public function invalidTransition(): void
     {
         $e = CmsException::invalidTransition('draft', 'archived');
         self::assertStringContainsString('draft', $e->getMessage());
@@ -38,21 +38,21 @@ final class CmsExceptionTest extends TestCase
     }
 
     #[Test]
-    public function test_circular_parent_reference(): void
+    public function circularParentReference(): void
     {
         $e = CmsException::circularParentReference();
         self::assertStringContainsString('Circular parent reference', $e->getMessage());
     }
 
     #[Test]
-    public function test_max_depth_exceeded(): void
+    public function maxDepthExceeded(): void
     {
         $e = CmsException::maxDepthExceeded(10);
         self::assertStringContainsString('10', $e->getMessage());
     }
 
     #[Test]
-    public function test_content_locked(): void
+    public function contentLocked(): void
     {
         $e = CmsException::contentLocked('content-id', 'user-id');
         self::assertStringContainsString('content-id', $e->getMessage());
@@ -60,7 +60,7 @@ final class CmsExceptionTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_conflict(): void
+    public function slugConflict(): void
     {
         $e = CmsException::slugConflict('hello-world', 'en');
         self::assertStringContainsString('hello-world', $e->getMessage());
@@ -68,21 +68,21 @@ final class CmsExceptionTest extends TestCase
     }
 
     #[Test]
-    public function test_invalid_slug(): void
+    public function invalidSlug(): void
     {
         $e = CmsException::invalidSlug('BAD SLUG!');
         self::assertStringContainsString('BAD SLUG!', $e->getMessage());
     }
 
     #[Test]
-    public function test_sanitizer_bypass_detected(): void
+    public function sanitizerBypassDetected(): void
     {
         $e = CmsException::sanitizerBypassDetected();
         self::assertStringContainsString('bypass', $e->getMessage());
     }
 
     #[Test]
-    public function test_extends_runtime_exception(): void
+    public function extendsRuntimeException(): void
     {
         $e = CmsException::contentNotFound('x');
         self::assertInstanceOf(RuntimeException::class, $e);

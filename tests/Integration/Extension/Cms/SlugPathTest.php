@@ -17,7 +17,7 @@ use Pulsar\Extension\Cms\Exception\CmsException;
 final class SlugPathTest extends TestCase
 {
     #[Test]
-    public function test_slug_generation_from_title(): void
+    public function slugGenerationFromTitle(): void
     {
         // Slugs are pre-computed before persistence. Verify the slug validation logic.
         self::assertTrue(ContentTranslation::isValidSlug('hello-world'));
@@ -36,7 +36,7 @@ final class SlugPathTest extends TestCase
     }
 
     #[Test]
-    public function test_slug_uniqueness_enforcement(): void
+    public function slugUniquenessEnforcement(): void
     {
         // In-memory store to test uniqueness logic at the integration level
         $store = new InMemoryTranslationStore();
@@ -66,7 +66,7 @@ final class SlugPathTest extends TestCase
     }
 
     #[Test]
-    public function test_path_computation_with_parent(): void
+    public function pathComputationWithParent(): void
     {
         $parentSlug = 'docs';
         $childSlug = 'getting-started';
@@ -92,7 +92,7 @@ final class SlugPathTest extends TestCase
     }
 
     #[Test]
-    public function test_path_recomputation_on_parent_change(): void
+    public function pathRecomputationOnParentChange(): void
     {
         // Simulate parent change: old parent was "docs", new parent is "guides"
         $oldPath = 'docs/getting-started';
@@ -119,7 +119,7 @@ final class SlugPathTest extends TestCase
     }
 
     #[Test]
-    public function test_cycle_detection_prevents_circular_hierarchy(): void
+    public function cycleDetectionPreventsCircularHierarchy(): void
     {
         // Cycle detection is enforced at the service layer.
         // Test that the exception is available and properly formed.
@@ -136,7 +136,7 @@ final class SlugPathTest extends TestCase
     }
 
     #[Test]
-    public function test_max_depth_enforcement(): void
+    public function maxDepthEnforcement(): void
     {
         $maxDepth = 10;
 

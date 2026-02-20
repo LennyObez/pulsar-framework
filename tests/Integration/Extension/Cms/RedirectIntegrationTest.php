@@ -32,7 +32,7 @@ final class RedirectIntegrationTest extends TestCase
     // -- Redirect resolution --------------------------------------------------
 
     #[Test]
-    public function test_redirect_resolution_returns_301(): void
+    public function redirectResolutionReturns301(): void
     {
         $redirect = $this->manager->create(
             fromPath: '/old-page',
@@ -50,7 +50,7 @@ final class RedirectIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_redirect_resolution_returns_308(): void
+    public function redirectResolutionReturns308(): void
     {
         $this->manager->create(
             fromPath: '/api/v1',
@@ -69,7 +69,7 @@ final class RedirectIntegrationTest extends TestCase
     // -- Chain collapse -------------------------------------------------------
 
     #[Test]
-    public function test_chain_collapse_follows_full_chain(): void
+    public function chainCollapseFollowsFullChain(): void
     {
         $this->manager->create('/step-1', '/step-2', 301, 'user-001', 'First move');
         $this->manager->create('/step-2', '/step-3', 301, 'user-001', 'Second move');
@@ -83,7 +83,7 @@ final class RedirectIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_chain_collapse_preserves_original_status_code(): void
+    public function chainCollapsePreservesOriginalStatusCode(): void
     {
         $this->manager->create('/old', '/mid', 308, 'user-001', 'Move A');
         $this->manager->create('/mid', '/new', 301, 'user-001', 'Move B');
@@ -98,7 +98,7 @@ final class RedirectIntegrationTest extends TestCase
     // -- Slug change creates redirect -----------------------------------------
 
     #[Test]
-    public function test_slug_change_creates_redirect_with_persisted_record(): void
+    public function slugChangeCreatesRedirectWithPersistedRecord(): void
     {
         $redirect = $this->manager->create(
             fromPath: '/blog/old-slug',
@@ -117,7 +117,7 @@ final class RedirectIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_multiple_slug_changes_chain_collapse(): void
+    public function multipleSlugChangesChainCollapse(): void
     {
         // Simulate: article slug changed twice: old -> mid -> new
         $this->manager->create('/articles/old-title', '/articles/mid-title', 301, 'user-001', 'Slug change 1');
@@ -132,7 +132,7 @@ final class RedirectIntegrationTest extends TestCase
     // -- Bulk CSV import ------------------------------------------------------
 
     #[Test]
-    public function test_bulk_csv_import_creates_multiple_redirects(): void
+    public function bulkCsvImportCreatesMultipleRedirects(): void
     {
         $csv = "/old-1,/new-1,301\n/old-2,/new-2,308\n/old-3,/new-3,301";
 
@@ -147,7 +147,7 @@ final class RedirectIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_bulk_csv_import_mixed_valid_and_invalid(): void
+    public function bulkCsvImportMixedValidAndInvalid(): void
     {
         $csv = "/valid,/new-valid,301\n/evil,javascript:alert(1),301\n/also-valid,/new-also,308";
 
@@ -164,7 +164,7 @@ final class RedirectIntegrationTest extends TestCase
     // -- Open redirect protection in integration context ----------------------
 
     #[Test]
-    public function test_open_redirect_protection_blocks_unsafe_in_create(): void
+    public function openRedirectProtectionBlocksUnsafeInCreate(): void
     {
         $this->expectException(CmsException::class);
         $this->manager->create('/old', '//evil.com', 301, 'user-001', 'test');
@@ -173,7 +173,7 @@ final class RedirectIntegrationTest extends TestCase
     // -- Resolve returns null for nonexistent path ----------------------------
 
     #[Test]
-    public function test_resolve_nonexistent_returns_null(): void
+    public function resolveNonexistentReturnsNull(): void
     {
         self::assertNull($this->manager->resolve('/nonexistent'));
     }
@@ -181,7 +181,7 @@ final class RedirectIntegrationTest extends TestCase
     // -- Hit tracking ---------------------------------------------------------
 
     #[Test]
-    public function test_resolve_increments_hit_counter(): void
+    public function resolveIncrementsHitCounter(): void
     {
         $redirect = $this->manager->create('/tracked', '/dest', 301, 'user-001', 'test');
 
@@ -194,7 +194,7 @@ final class RedirectIntegrationTest extends TestCase
     // -- Delete ---------------------------------------------------------------
 
     #[Test]
-    public function test_delete_removes_redirect(): void
+    public function deleteRemovesRedirect(): void
     {
         $redirect = $this->manager->create('/deletable', '/target', 301, 'user-001', 'test');
 

@@ -46,43 +46,43 @@ final class CmsStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function test_implements_studio_module_interface(): void
+    public function implementsStudioModuleInterface(): void
     {
         self::assertInstanceOf(StudioModuleInterface::class, $this->module);
     }
 
     #[Test]
-    public function test_module_id_is_cms(): void
+    public function moduleIdIsCms(): void
     {
         self::assertSame('cms', $this->module->moduleId());
     }
 
     #[Test]
-    public function test_label_returns_cms(): void
+    public function labelReturnsCms(): void
     {
         self::assertSame('CMS', $this->module->label());
     }
 
     #[Test]
-    public function test_icon_returns_valid_icon_name(): void
+    public function iconReturnsValidIconName(): void
     {
         self::assertSame('file-text', $this->module->icon());
     }
 
     #[Test]
-    public function test_route_prefix(): void
+    public function routePrefix(): void
     {
         self::assertSame('/studio/cms', $this->module->routePrefix());
     }
 
     #[Test]
-    public function test_nav_order(): void
+    public function navOrder(): void
     {
         self::assertSame(60, $this->module->navOrder());
     }
 
     #[Test]
-    public function test_nav_entries_returns_four_entries(): void
+    public function navEntriesReturnsFourEntries(): void
     {
         $entries = $this->module->navEntries();
 
@@ -91,7 +91,7 @@ final class CmsStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function test_nav_entries_contain_audit_trail(): void
+    public function navEntriesContainAuditTrail(): void
     {
         $entries = $this->module->navEntries();
 
@@ -101,7 +101,7 @@ final class CmsStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function test_nav_entries_contain_content_cache(): void
+    public function navEntriesContainContentCache(): void
     {
         $entries = $this->module->navEntries();
 
@@ -111,7 +111,7 @@ final class CmsStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function test_nav_entries_contain_media_queue(): void
+    public function navEntriesContainMediaQueue(): void
     {
         $entries = $this->module->navEntries();
 
@@ -121,7 +121,7 @@ final class CmsStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function test_nav_entries_contain_seo_health(): void
+    public function navEntriesContainSeoHealth(): void
     {
         $entries = $this->module->navEntries();
 
@@ -131,7 +131,7 @@ final class CmsStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function test_nav_entries_are_ordered_sequentially(): void
+    public function navEntriesAreOrderedSequentially(): void
     {
         $entries = $this->module->navEntries();
 
@@ -141,7 +141,7 @@ final class CmsStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function test_can_register_with_studio_registry(): void
+    public function canRegisterWithStudioRegistry(): void
     {
         $registry = new StudioModuleRegistry();
         $registry->register($this->module);
@@ -150,7 +150,7 @@ final class CmsStudioModuleTest extends TestCase
     }
 
     #[Test]
-    public function test_panel_accessors_return_correct_instances(): void
+    public function panelAccessorsReturnCorrectInstances(): void
     {
         self::assertInstanceOf(CmsAuditPanel::class, $this->module->auditPanel());
         self::assertInstanceOf(ContentCacheInspectorPanel::class, $this->module->cachePanel());

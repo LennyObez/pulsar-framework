@@ -6,6 +6,7 @@ namespace Pulsar\Tests\Integration\Extension\Cms\VerificationMatrix;
 
 use DateTimeImmutable;
 use Override;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -25,11 +26,13 @@ use Pulsar\Extension\Cms\Security\ClientFingerprint;
 use Pulsar\Extension\Cms\Themes\ProvenanceResult;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\Stream;
+use Pulsar\Config\CsrfConfig;
 use Pulsar\Security\Audit\AuditEntry;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Security\Csrf\CsrfMiddleware;
 use Pulsar\Security\Csrf\CsrfTokenManager;
+use Pulsar\Security\Session\SessionInterface;
 
 use function bin2hex;
 use function class_exists;
@@ -38,6 +41,7 @@ use function file_put_contents;
 use function json_decode;
 use function sodium_crypto_generichash;
 use function str_contains;
+use function str_starts_with;
 use function sys_get_temp_dir;
 use function tempnam;
 use function unlink;
@@ -47,6 +51,7 @@ use function unlink;
  *
  * Validates each security control defined in the CMS security plan.
  */
+#[CoversClass(CsrfMiddleware::class)]
 #[Group('verification-matrix')]
 final class SecurityVerificationTest extends TestCase
 {
@@ -56,17 +61,73 @@ final class SecurityVerificationTest extends TestCase
      * Verifies that the framework provides CSRF token management and middleware.
      */
     #[Test]
-    public function test_s1_csrf_protection_present(): void
+    public function s1CsrfProtectionPresent(): void
     {
         self::assertTrue(class_exists(CsrfTokenManager::class), 'CsrfTokenManager class must exist');
         self::assertTrue(class_exists(CsrfMiddleware::class), 'CsrfMiddleware class must exist');
     }
 
     /**
+     * S1 behavioral: Token generate → validate → rotate lifecycle.
+     *
+     * Exercises CsrfTokenManager directly:
+     *  - generate() stores and returns a hex token
+     *  - validate() returns true for the stored token, false for a tampered token
+     *  - rotate() issues a new token and invalidates the previous one
+     */
+    #[Test]
+    public function s1CsrfTokenLifecycle(): void
+    {
+        /** @var array<string, mixed> $sessionStore */
+        $sessionStore = [];
+
+        $session = $this->createStub(SessionInterface::class);
+        $session->method('set')->willReturnCallback(
+            static function (string $key, mixed $value) use (&$sessionStore): void {
+                $sessionStore[$key] = $value;
+            },
+        );
+        $session->method('get')->willReturnCallback(
+            static function (string $key) use (&$sessionStore): mixed {
+                return $sessionStore[$key] ?? null;
+            },
+        );
+
+        $config = new CsrfConfig(
+            enabled: true,
+            tokenLength: 32,
+            headerName: 'X-CSRF-Token',
+            formFieldName: '_csrf_token',
+        );
+        $manager = new CsrfTokenManager($session, $config);
+
+        // generate() must return a non-empty hex token
+        $token = $manager->generate();
+        self::assertNotEmpty($token);
+        self::assertMatchesRegularExpression('/^[0-9a-f]+$/i', $token);
+
+        // validate() accepts the generated token
+        self::assertTrue($manager->validate($token));
+
+        // validate() rejects a tampered token
+        self::assertFalse($manager->validate($token . 'X'));
+
+        // rotate() issues a new token
+        $rotated = $manager->rotate();
+        self::assertNotEmpty($rotated);
+
+        // old token must be invalid after rotation
+        self::assertFalse($manager->validate($token));
+
+        // new token must be valid after rotation
+        self::assertTrue($manager->validate($rotated));
+    }
+
+    /**
      * S2: Comment body HTML sanitized — script tags stripped.
      */
     #[Test]
-    public function test_s2_comment_xss_sanitization(): void
+    public function s2CommentXssSanitization(): void
     {
         $auditLogger = $this->createAuditLogger();
         $policy = new SafeHtmlPolicy($auditLogger);
@@ -83,7 +144,7 @@ final class SecurityVerificationTest extends TestCase
      * S3: Content body HTML sanitized — event handlers and javascript: URIs stripped.
      */
     #[Test]
-    public function test_s3_content_body_sanitization(): void
+    public function s3ContentBodySanitization(): void
     {
         $auditLogger = $this->createAuditLogger();
         $policy = new SafeHtmlPolicy($auditLogger);
@@ -99,7 +160,7 @@ final class SecurityVerificationTest extends TestCase
      * S4: Comment rate limiting enforced.
      */
     #[Test]
-    public function test_s4_comment_rate_limiting(): void
+    public function s4CommentRateLimiting(): void
     {
         $cache = new VerificationTaggedCache();
         $middleware = new CommentRateLimitMiddleware($cache, rateLimitPerMinute: 2);
@@ -119,7 +180,7 @@ final class SecurityVerificationTest extends TestCase
      * S5: Honeypot field traps bots with fake success.
      */
     #[Test]
-    public function test_s5_honeypot_traps_bots(): void
+    public function s5HoneypotTrapsBots(): void
     {
         $auditLogger = $this->createAuditLogger();
         $middleware = new CommentHoneypotMiddleware($auditLogger);
@@ -142,7 +203,7 @@ final class SecurityVerificationTest extends TestCase
      * S6: Duplicate comment detection via anti-abuse heuristics.
      */
     #[Test]
-    public function test_s6_duplicate_comment_detection(): void
+    public function s6DuplicateCommentDetection(): void
     {
         $cache = new VerificationTaggedCache();
         $heuristics = new AntiAbuseHeuristics($cache);
@@ -161,7 +222,7 @@ final class SecurityVerificationTest extends TestCase
      * S7: Excessive link detection in comments.
      */
     #[Test]
-    public function test_s7_excessive_links_rejected(): void
+    public function s7ExcessiveLinksRejected(): void
     {
         $cache = new VerificationTaggedCache();
         $heuristics = new AntiAbuseHeuristics($cache);
@@ -184,7 +245,7 @@ final class SecurityVerificationTest extends TestCase
      * provides SSRF blocking factory method.
      */
     #[Test]
-    public function test_s8_ssrf_protection_blocks_private_ips(): void
+    public function s8SsrfProtectionBlocksPrivateIps(): void
     {
         // SafeHttpClient is Internal — verify it exists
         self::assertTrue(
@@ -201,7 +262,7 @@ final class SecurityVerificationTest extends TestCase
      * S9: SVG sanitization strips embedded scripts.
      */
     #[Test]
-    public function test_s9_svg_sanitization(): void
+    public function s9SvgSanitization(): void
     {
         $sanitizer = new SvgSanitizer();
 
@@ -213,30 +274,51 @@ final class SecurityVerificationTest extends TestCase
     }
 
     /**
-     * S10: MIME type validation — FileValidator exists and CmsException provides mismatch factory.
+     * S10: MIME type validation — FileValidator rejects disallowed extensions and
+     * CmsException provides the mimeTypeMismatch/magicByteMismatch factory methods.
      */
     #[Test]
-    public function test_s10_mime_type_mismatch_rejected(): void
+    public function s10MimeTypeMismatchRejected(): void
     {
-        self::assertTrue(
-            class_exists(\Pulsar\Extension\Cms\Media\Security\FileValidator::class),
-            'FileValidator must exist for MIME validation',
+        // CmsException factories must produce the correct exception type
+        $mismatch = CmsException::mimeTypeMismatch('image/png', 'image/jpeg');
+        self::assertInstanceOf(CmsException::class, $mismatch);
+
+        $magicMismatch = CmsException::magicByteMismatch('image/jpeg');
+        self::assertInstanceOf(CmsException::class, $magicMismatch);
+
+        // FileValidator must reject a disallowed extension before inspecting magic bytes
+        $config = new \Pulsar\Extension\Cms\Config\MediaConfig(
+            allowedExtensions: ['jpg', 'png'],
+            allowedMimeTypes: ['image/jpeg', 'image/png'],
         );
+        $validator = new \Pulsar\Extension\Cms\Media\Security\FileValidator($config);
 
-        // CmsException::mimeTypeMismatch() factory should exist
-        $exception = CmsException::mimeTypeMismatch('image/png', 'image/jpeg');
-        self::assertInstanceOf(CmsException::class, $exception);
+        $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_s10_');
+        self::assertNotFalse($tempFile);
 
-        // CmsException::magicByteMismatch() factory should exist
-        $exception = CmsException::magicByteMismatch('image/jpeg');
-        self::assertInstanceOf(CmsException::class, $exception);
+        try {
+            file_put_contents($tempFile, 'fake content');
+
+            $this->expectException(CmsException::class);
+            $validator->validate(
+                filePath: $tempFile,
+                originalFilename: 'upload.exe',       // disallowed extension
+                declaredMimeType: 'application/octet-stream',
+                fileSize: 12,
+            );
+        } finally {
+            if (file_exists($tempFile)) {
+                unlink($tempFile);
+            }
+        }
     }
 
     /**
      * S11: PDF JavaScript stripping — PdfValidator rejects PDFs with JS.
      */
     #[Test]
-    public function test_s11_pdf_javascript_stripped(): void
+    public function s11PdfJavascriptStripped(): void
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_s11_');
         self::assertNotFalse($tempFile);
@@ -262,7 +344,7 @@ final class SecurityVerificationTest extends TestCase
      * Verifies ProvenanceResult correctly models verification states.
      */
     #[Test]
-    public function test_s12_theme_provenance_verification(): void
+    public function s12ThemeProvenanceVerification(): void
     {
         // Verified provenance
         $verified = ProvenanceResult::verified();
@@ -286,20 +368,41 @@ final class SecurityVerificationTest extends TestCase
 
     /**
      * S13: Zip slip protection in theme extraction.
+     *
+     * Exercises CmsException::themeZipSlipDetected() factory: verifies the factory
+     * produces a CmsException and includes the malicious path in the exception message.
+     * Multiple traversal patterns are tested to confirm the behavior is consistent.
      */
     #[Test]
-    public function test_s13_zip_slip_protection(): void
+    public function s13ZipSlipProtection(): void
     {
         self::assertTrue(class_exists(\Pulsar\Extension\Cms\Internal\Themes\SafeArchiveExtractor::class));
 
+        // The factory must produce a CmsException referencing the malicious path
         $exception = CmsException::themeZipSlipDetected('../etc/passwd');
         self::assertInstanceOf(CmsException::class, $exception);
+        self::assertStringContainsString('../etc/passwd', $exception->getMessage());
 
-        $isTraversal = static fn(string $path): bool => str_contains($path, '..');
-        self::assertTrue($isTraversal('../../../etc/passwd'));
-        self::assertTrue($isTraversal('theme/../../secret.php'));
-        self::assertFalse($isTraversal('theme/css/style.css'));
-        self::assertFalse($isTraversal('assets/images/logo.png'));
+        // All path-traversal patterns must produce exceptions with path references
+        $maliciousPaths = [
+            '../../../etc/passwd',
+            'theme/../../secret.php',
+            '/absolute/path',
+            'safe/../../../escape.php',
+        ];
+
+        foreach ($maliciousPaths as $path) {
+            $ex = CmsException::themeZipSlipDetected($path);
+            self::assertInstanceOf(CmsException::class, $ex);
+            self::assertStringContainsString($path, $ex->getMessage(), "Path '{$path}' must appear in exception message");
+        }
+
+        // Safe paths must not contain traversal components
+        $safePaths = ['theme/css/style.css', 'assets/images/logo.png', 'index.html'];
+        foreach ($safePaths as $safePath) {
+            self::assertFalse(str_contains($safePath, '..'), "'{$safePath}' must not contain '..'");
+            self::assertFalse(str_starts_with($safePath, '/'), "'{$safePath}' must not be absolute");
+        }
     }
 
     /**
@@ -308,7 +411,7 @@ final class SecurityVerificationTest extends TestCase
      * Verifies the AuditEntry DTO supports HMAC chain linking via previousHmac/hmac fields.
      */
     #[Test]
-    public function test_s14_audit_chain_integrity(): void
+    public function s14AuditChainIntegrity(): void
     {
         $entry1 = new AuditEntry(
             id: 'audit-001',
@@ -346,7 +449,7 @@ final class SecurityVerificationTest extends TestCase
      * S15: Client fingerprint — privacy-preserving hashed identification.
      */
     #[Test]
-    public function test_s15_client_fingerprint_hashing(): void
+    public function s15ClientFingerprintHashing(): void
     {
         self::assertTrue(class_exists(ClientFingerprint::class));
 
@@ -378,7 +481,7 @@ final class SecurityVerificationTest extends TestCase
      * Verifies CmsUser has roles and CmsException provides role-related factories.
      */
     #[Test]
-    public function test_s16_privilege_escalation_prevented(): void
+    public function s16PrivilegeEscalationPrevented(): void
     {
         self::assertTrue(class_exists(\Pulsar\Extension\Cms\Users\CmsUser::class));
 
@@ -391,7 +494,7 @@ final class SecurityVerificationTest extends TestCase
      * S17: 2FA enforcement — TwoFactorManager and TOTP infrastructure exist.
      */
     #[Test]
-    public function test_s17_two_factor_enforcement(): void
+    public function s17TwoFactorEnforcement(): void
     {
         self::assertTrue(class_exists(\Pulsar\Auth\TwoFactor\TwoFactorManager::class));
         self::assertTrue(class_exists(\Pulsar\Auth\TwoFactor\TotpGenerator::class));

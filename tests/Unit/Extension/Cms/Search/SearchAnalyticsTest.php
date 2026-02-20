@@ -16,7 +16,7 @@ final class SearchAnalyticsTest extends TestCase
     // -- Construction with zero results -----------------------------------
 
     #[Test]
-    public function test_zero_result_query_recorded_correctly(): void
+    public function zeroResultQueryRecordedCorrectly(): void
     {
         $analytics = new SearchAnalytics(
             topQueries: [],
@@ -36,7 +36,7 @@ final class SearchAnalyticsTest extends TestCase
     // -- Click-through recording ------------------------------------------
 
     #[Test]
-    public function test_click_through_data_stored(): void
+    public function clickThroughDataStored(): void
     {
         $analytics = new SearchAnalytics(
             topQueries: [],
@@ -57,7 +57,7 @@ final class SearchAnalyticsTest extends TestCase
     // -- Query hash consistency -------------------------------------------
 
     #[Test]
-    public function test_query_hash_computed_consistently(): void
+    public function queryHashComputedConsistently(): void
     {
         $hash1 = sodium_crypto_generichash('test query');
         $hash2 = sodium_crypto_generichash('test query');
@@ -66,7 +66,7 @@ final class SearchAnalyticsTest extends TestCase
     }
 
     #[Test]
-    public function test_different_queries_produce_different_hashes(): void
+    public function differentQueriesProduceDifferentHashes(): void
     {
         $hash1 = sodium_crypto_generichash('query one');
         $hash2 = sodium_crypto_generichash('query two');
@@ -77,7 +77,7 @@ final class SearchAnalyticsTest extends TestCase
     // -- Popular query aggregation ----------------------------------------
 
     #[Test]
-    public function test_popular_queries_ordered_by_count(): void
+    public function popularQueriesOrderedByCount(): void
     {
         $topQueries = [
             ['query_text' => 'most popular', 'count' => 100, 'avg_results' => 15.5, 'ctr' => 0.3],
@@ -105,7 +105,7 @@ final class SearchAnalyticsTest extends TestCase
     // -- Totals -----------------------------------------------------------
 
     #[Test]
-    public function test_total_searches_and_unique_queries(): void
+    public function totalSearchesAndUniqueQueries(): void
     {
         $analytics = new SearchAnalytics(
             topQueries: [],
@@ -122,7 +122,7 @@ final class SearchAnalyticsTest extends TestCase
     // -- Readonly class ---------------------------------------------------
 
     #[Test]
-    public function test_search_analytics_is_readonly(): void
+    public function searchAnalyticsIsReadonly(): void
     {
         $reflection = new ReflectionClass(SearchAnalytics::class);
         self::assertTrue($reflection->isReadOnly());
@@ -131,7 +131,7 @@ final class SearchAnalyticsTest extends TestCase
     // -- Empty analytics --------------------------------------------------
 
     #[Test]
-    public function test_empty_analytics(): void
+    public function emptyAnalytics(): void
     {
         $analytics = new SearchAnalytics(
             topQueries: [],

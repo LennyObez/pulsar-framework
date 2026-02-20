@@ -14,7 +14,7 @@ use RuntimeException;
 final class EventExceptionTest extends TestCase
 {
     #[Test]
-    public function test_stormDetected_creates_exception_with_details(): void
+    public function stormDetectedCreatesExceptionWithDetails(): void
     {
         $e = EventException::stormDetected('App\\Event\\OrderCreated', 33, 32);
 
@@ -25,7 +25,7 @@ final class EventExceptionTest extends TestCase
     }
 
     #[Test]
-    public function test_loopDetected_creates_exception_with_count(): void
+    public function loopDetectedCreatesExceptionWithCount(): void
     {
         $e = EventException::loopDetected('App\\Event\\OrderCreated', 3, 3);
 
@@ -34,7 +34,7 @@ final class EventExceptionTest extends TestCase
     }
 
     #[Test]
-    public function test_envelopeRequired_creates_exception_with_class_name(): void
+    public function envelopeRequiredCreatesExceptionWithClassName(): void
     {
         $e = EventException::envelopeRequired('App\\Event\\AuditEvent');
 
@@ -43,7 +43,7 @@ final class EventExceptionTest extends TestCase
     }
 
     #[Test]
-    public function test_invalidListener_creates_exception_with_reason(): void
+    public function invalidListenerCreatesExceptionWithReason(): void
     {
         $e = EventException::invalidListener('method not found');
 
@@ -51,7 +51,7 @@ final class EventExceptionTest extends TestCase
     }
 
     #[Test]
-    public function test_invalidEventClassName_creates_exception_with_details(): void
+    public function invalidEventClassNameCreatesExceptionWithDetails(): void
     {
         $e = EventException::invalidEventClassName('Bad@Class', 'contains @ character');
 

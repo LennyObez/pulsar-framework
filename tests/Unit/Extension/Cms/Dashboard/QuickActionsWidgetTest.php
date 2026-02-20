@@ -13,7 +13,7 @@ use Pulsar\Extension\Cms\Dashboard\QuickActionsWidget;
 final class QuickActionsWidgetTest extends TestCase
 {
     #[Test]
-    public function test_get_name_returns_quick_actions(): void
+    public function getNameReturnsQuickActions(): void
     {
         $widget = new QuickActionsWidget();
 
@@ -21,7 +21,7 @@ final class QuickActionsWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_template_returns_expected_path(): void
+    public function getTemplateReturnsExpectedPath(): void
     {
         $widget = new QuickActionsWidget();
 
@@ -29,7 +29,7 @@ final class QuickActionsWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_returns_four_actions(): void
+    public function getDataReturnsFourActions(): void
     {
         $widget = new QuickActionsWidget();
         $data = $widget->getData();
@@ -39,7 +39,7 @@ final class QuickActionsWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_contains_new_article_action(): void
+    public function getDataContainsNewArticleAction(): void
     {
         $widget = new QuickActionsWidget();
         $data = $widget->getData();
@@ -50,7 +50,7 @@ final class QuickActionsWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_contains_new_page_action(): void
+    public function getDataContainsNewPageAction(): void
     {
         $widget = new QuickActionsWidget();
         $data = $widget->getData();
@@ -61,7 +61,7 @@ final class QuickActionsWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_contains_upload_media_action(): void
+    public function getDataContainsUploadMediaAction(): void
     {
         $widget = new QuickActionsWidget();
         $data = $widget->getData();
@@ -72,7 +72,7 @@ final class QuickActionsWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_contains_view_site_action(): void
+    public function getDataContainsViewSiteAction(): void
     {
         $widget = new QuickActionsWidget();
         $data = $widget->getData();
@@ -83,7 +83,7 @@ final class QuickActionsWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_view_site_uses_custom_url(): void
+    public function viewSiteUsesCustomUrl(): void
     {
         $widget = new QuickActionsWidget('https://example.com');
         $data = $widget->getData();
@@ -105,7 +105,7 @@ final class QuickActionsWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_each_action_has_label_url_and_icon(): void
+    public function eachActionHasLabelUrlAndIcon(): void
     {
         $widget = new QuickActionsWidget();
         $data = $widget->getData();

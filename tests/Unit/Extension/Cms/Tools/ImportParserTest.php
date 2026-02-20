@@ -23,7 +23,7 @@ final class ImportParserTest extends TestCase
     // ── Schema validation: invalid JSON rejected ────────────────────
 
     #[Test]
-    public function test_invalid_json_rejected(): void
+    public function invalidJsonRejected(): void
     {
         $service = $this->createImportExportService();
 
@@ -36,7 +36,7 @@ final class ImportParserTest extends TestCase
     // ── Dry-run returns counts without persisting ───────────────────
 
     #[Test]
-    public function test_dry_run_returns_counts(): void
+    public function dryRunReturnsCounts(): void
     {
         $service = $this->createImportExportService();
 
@@ -61,7 +61,7 @@ final class ImportParserTest extends TestCase
     // ── Entity type recognition ─────────────────────────────────────
 
     #[Test]
-    public function test_entity_type_recognition(): void
+    public function entityTypeRecognition(): void
     {
         $service = $this->createImportExportService();
 
@@ -81,7 +81,7 @@ final class ImportParserTest extends TestCase
     // ── ImportResult toArray ────────────────────────────────────────
 
     #[Test]
-    public function test_import_result_to_array(): void
+    public function importResultToArray(): void
     {
         $result = new ImportResult(
             created: ['content' => 3, 'taxonomies' => 1],
