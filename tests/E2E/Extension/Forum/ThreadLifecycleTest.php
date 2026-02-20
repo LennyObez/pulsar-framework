@@ -190,7 +190,8 @@ final class ThreadLifecycleTest extends TestCase
             userAgentHash: 'uahash-del',
         );
 
-        $stack->forumService->deleteThread($thread->id);
+        // Author deletes own thread; not a moderator action.
+        $stack->forumService->deleteThread($thread->id, 'user-alice');
 
         $reloaded = $stack->threads->findById($thread->id);
         self::assertNull($reloaded, 'Deleted thread should not be retrievable');
