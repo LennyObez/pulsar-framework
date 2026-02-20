@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Driver;
+use Pulsar\Extension\Orm\Contracts\RowQueryBuilderInterface;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
 
 /**
@@ -34,7 +35,7 @@ final class SelectBuilderOrWhereBindingsTest extends TestCase
         $compiled = $builder
             ->from('users')
             ->where('status', 'active')
-            ->orWhere(static function (SelectBuilder $q): void {
+            ->orWhere(static function (RowQueryBuilderInterface $q): void {
                 $q->where('role', 'admin');
             })
             ->toSql();
@@ -54,7 +55,7 @@ final class SelectBuilderOrWhereBindingsTest extends TestCase
             ->from('orders')
             ->where('status', 'paid')
             ->where('currency', 'USD')
-            ->orWhere(static function (SelectBuilder $q): void {
+            ->orWhere(static function (RowQueryBuilderInterface $q): void {
                 $q->where('priority', 'high');
                 $q->where('region', 'EU');
             })
@@ -76,7 +77,7 @@ final class SelectBuilderOrWhereBindingsTest extends TestCase
         $compiled = $builder
             ->from('users')
             ->where('status', 'active')
-            ->orWhere(static function (SelectBuilder $q): void {
+            ->orWhere(static function (RowQueryBuilderInterface $q): void {
                 // Empty callback adds no conditions
             })
             ->toSql();
@@ -93,10 +94,10 @@ final class SelectBuilderOrWhereBindingsTest extends TestCase
         $compiled = $builder
             ->from('users')
             ->where('a', 1)
-            ->orWhere(static function (SelectBuilder $q): void {
+            ->orWhere(static function (RowQueryBuilderInterface $q): void {
                 $q->where('b', 2);
             })
-            ->orWhere(static function (SelectBuilder $q): void {
+            ->orWhere(static function (RowQueryBuilderInterface $q): void {
                 $q->where('c', 3);
             })
             ->toSql();
