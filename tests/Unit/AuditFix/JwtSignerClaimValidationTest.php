@@ -33,7 +33,9 @@ final class JwtSignerClaimValidationTest extends TestCase
         self::assertNotFalse($keyRes, 'Failed to generate RSA key for test');
 
         $pem = '';
-        openssl_pkey_export($keyRes, $pem);
+        $exported = openssl_pkey_export($keyRes, $pem);
+        self::assertTrue($exported, 'openssl_pkey_export failed');
+        self::assertIsString($pem, 'openssl_pkey_export should populate $pem with the PEM-encoded key');
         $this->privateKeyPem = $pem;
 
         $this->config = new OidcConfig(
