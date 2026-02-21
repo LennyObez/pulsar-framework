@@ -27,7 +27,6 @@ final class HealthStatusRoutesMiddlewareTest extends TestCase
         /** @var list<Route> $registeredRoutes */
         $registeredRoutes = [];
 
-        /** @var RouterInterface $router */
         $router = $this->createStub(RouterInterface::class);
         $router->method('add')->willReturnCallback(
             static function (Route $route) use (&$registeredRoutes, $router): RouterInterface {
