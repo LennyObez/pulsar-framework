@@ -55,7 +55,11 @@ final class DsarPackagerTest extends TestCase
         $zip->close();
 
         self::assertIsString($manifest);
+
+        /** @var array{request_id: string, subject_id: string, sources: list<array{name: string}>} $decoded */
         $decoded = json_decode($manifest, true);
+
+        self::assertIsArray($decoded);
         self::assertSame('pkg-2', $decoded['request_id']);
         self::assertSame('sub-pkg-2', $decoded['subject_id']);
         self::assertCount(1, $decoded['sources']);
@@ -82,7 +86,11 @@ final class DsarPackagerTest extends TestCase
         $zip->close();
 
         self::assertIsString($data);
+
+        /** @var list<array{email: string, name: string}> $decoded */
         $decoded = json_decode($data, true);
+
+        self::assertIsArray($decoded);
         self::assertCount(1, $decoded);
         self::assertSame('Bob', $decoded[0]['name']);
     }
@@ -132,7 +140,13 @@ final class DsarPackagerTest extends TestCase
         // Empty data set should not have a data file
         self::assertFalse($zip->getFromName('data/analytics/events.json'));
 
-        $manifest = json_decode($zip->getFromName('manifest.json'), true);
+        $manifestJson = $zip->getFromName('manifest.json');
+        self::assertIsString($manifestJson);
+
+        /** @var array{sources: list<array{record_count: int}>} $manifest */
+        $manifest = json_decode($manifestJson, true);
+
+        self::assertIsArray($manifest);
         self::assertCount(3, $manifest['sources']);
         self::assertSame(0, $manifest['sources'][2]['record_count']);
 
@@ -190,9 +204,15 @@ final class DsarPackagerTest extends TestCase
 
         $zip = new ZipArchive();
         $zip->open($path);
-        $manifest = json_decode($zip->getFromName('manifest.json'), true);
+        $manifestJson = $zip->getFromName('manifest.json');
         $zip->close();
 
+        self::assertIsString($manifestJson);
+
+        /** @var array{sources: list<array{record_count: int, attachment_count: int}>} $manifest */
+        $manifest = json_decode($manifestJson, true);
+
+        self::assertIsArray($manifest);
         self::assertSame(1, $manifest['sources'][0]['record_count']);
         self::assertSame(2, $manifest['sources'][0]['attachment_count']);
     }
