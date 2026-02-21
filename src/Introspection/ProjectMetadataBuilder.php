@@ -177,7 +177,7 @@ final class ProjectMetadataBuilder
     {
         $key = strtolower(trim($key));
 
-        return preg_replace('/[^a-z0-9_.\-]/', '', $key) ?? '';
+        return preg_replace('/[^a-z0-9_.-]/', '', $key) ?? '';
     }
 
     /**

@@ -6,14 +6,15 @@ namespace Pulsar\Extension\Studio\Console\Collector;
 
 use Closure;
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\HttpRequestPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\HttpResponsePayload;
 use Pulsar\Extension\Studio\FiberScopedContextProvider;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Tracing\TraceId;
 use Random\Engine\Secure;
@@ -59,10 +60,10 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
      * @throws Throwable
      */
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         if (!$this->enabled) {
-            return $next($request);
+            return $handler->handle($request);
         }
 
         $context = new CorrelationContext(
@@ -79,7 +80,7 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         try {
             $this->emitRequest($request, $context);
 
-            $response = $next($request);
+            $response = $handler->handle($request);
 
             $durationMs = (microtime(true) - $startTime) * 1000.0;
             $this->emitResponse($response, $request, $durationMs, $context);
@@ -95,26 +96,31 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         }
     }
 
-    private function emitRequest(Request $request, CorrelationContext $context): void
+    private function emitRequest(ServerRequestInterface $request, CorrelationContext $context): void
     {
-        $headers = array_map(static fn(array $values): string => $values[0] ?? '', $request->headers->toArray());
+        /** @var array<string, string> $headers */
+        $headers = array_map(static fn(array $values): string => $values[0] ?? '', $request->getHeaders());
 
-        $remoteAddr = $request->server('REMOTE_ADDR');
-        $routeName = $request->attribute('_route_name');
+        $remoteAddr = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+        $routeName = $request->getAttribute('_route_name');
 
-        $bodyPreview = $request->body !== '' ? substr($request->body, 0, 2048) : null;
+        $bodyContents = (string) $request->getBody();
+        $bodyPreview = $bodyContents !== '' ? substr($bodyContents, 0, 2048) : null;
+
+        $uri = $request->getUri();
+        $contentLength = $request->getHeaderLine('Content-Length');
 
         $event = new HttpRequestPayload(
-            method: $request->method->value,
-            uri: $request->uri,
-            path: $request->path,
+            method: $request->getMethod(),
+            uri: (string) $uri,
+            path: $uri->getPath(),
             headers: $headers,
             clientIp: is_string($remoteAddr) ? $remoteAddr : null,
-            userAgent: $request->header('User-Agent'),
-            contentType: $request->header('Content-Type'),
-            contentLength: $request->header('Content-Length') !== null ? (int) $request->header('Content-Length') : null,
+            userAgent: $request->getHeaderLine('User-Agent') !== '' ? $request->getHeaderLine('User-Agent') : null,
+            contentType: $request->getHeaderLine('Content-Type') !== '' ? $request->getHeaderLine('Content-Type') : null,
+            contentLength: $contentLength !== '' ? (int) $contentLength : null,
             routeName: is_string($routeName) ? $routeName : null,
-            queryString: $request->queryString !== '' ? $request->queryString : null,
+            queryString: $uri->getQuery() !== '' ? $uri->getQuery() : null,
             bodyPreview: $bodyPreview,
         );
 
@@ -124,27 +130,28 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         }
     }
 
-    private function emitResponse(?Response $response, Request $request, float $durationMs, CorrelationContext $context): void
+    private function emitResponse(?ResponseInterface $response, ServerRequestInterface $request, float $durationMs, CorrelationContext $context): void
     {
-        $statusCode = $response?->status->value ?? 500;
+        $statusCode = $response?->getStatusCode() ?? 500;
 
         $headers = [];
         if ($response !== null) {
-            foreach ($response->headers->toArray() as $name => $values) {
+            foreach ($response->getHeaders() as $name => $values) {
                 $headers[$name] = $values[0] ?? '';
             }
         }
 
-        $body = $response !== null ? $response->body : '';
+        $body = (string) $response?->getBody();
 
-        $responseRouteName = $request->attribute('_route_name');
-        $contentType = $response?->headers->first('Content-Type');
+        $responseRouteName = $request->getAttribute('_route_name');
+        $contentType = $response?->getHeaderLine('Content-Type') ?: null;
 
         $responseBodyPreview = null;
         if ($body !== '' && $contentType !== null && $this->isTextualContentType($contentType)) {
             $responseBodyPreview = substr($body, 0, 1024);
         }
 
+        /** @var array<string, string> $headers */
         $event = new HttpResponsePayload(
             statusCode: $statusCode,
             durationMs: $durationMs,
@@ -161,9 +168,9 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
         }
     }
 
-    private function extractTraceId(Request $request): ?string
+    private function extractTraceId(ServerRequestInterface $request): ?string
     {
-        $traceContext = $request->attribute('_trace_context');
+        $traceContext = $request->getAttribute('_trace_context');
 
         if ($traceContext instanceof TraceId) {
             return $traceContext->value;
@@ -181,9 +188,9 @@ final class HttpCollector implements MiddlewareInterface, CollectorInterface
             || str_contains($contentType, '+xml');
     }
 
-    private function extractSpanId(Request $request): ?string
+    private function extractSpanId(ServerRequestInterface $request): ?string
     {
-        $spanId = $request->attribute('_span_id');
+        $spanId = $request->getAttribute('_span_id');
 
         if (is_string($spanId)) {
             return $spanId;

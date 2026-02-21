@@ -15,16 +15,27 @@
         <directory name="../../extensions/payments/src"/>
         <directory name="../../extensions/psr7-bridge/src"/>
         <directory name="../../extensions/observability-export/src"/>
+        <directory name="../../extensions/form/src"/>
         <ignoreFiles>
             <directory name="../../vendor"/>
         </ignoreFiles>
     </projectFiles>
+
+    <stubs>
+        <file name="stubs/Redis.php"/>
+        <file name="stubs/Memcached.php"/>
+        <file name="stubs/PsySH.php"/>
+        <file name="stubs/Amqp.php"/>
+        <file name="stubs/AwsSqs.php"/>
+        <file name="stubs/GooglePubSub.php"/>
+    </stubs>
 
     <issueHandlers>
         <!-- Allow mixed types for reflection-based DI and request handling -->
         <MixedAssignment errorLevel="suppress"/>
         <MixedMethodCall errorLevel="suppress"/>
         <MixedArgument errorLevel="suppress"/>
+        <MixedReturnStatement errorLevel="suppress"/>
 
         <!-- Readonly classes are designed for extension in a framework -->
         <ClassMustBeFinal errorLevel="suppress"/>
@@ -52,5 +63,30 @@
                 <file name="../../src/Console/Input/ArrayInput.php"/>
             </errorLevel>
         </PropertyNotSetInConstructor>
+
+        <!-- Psalm 6.15 does not yet support PHP 8.5 clone() function syntax
+             which preserves the type of $this. PHPStan max is authoritative. -->
+        <MoreSpecificReturnType>
+            <errorLevel type="suppress">
+                <file name="../../src/Http/Message/Response.php"/>
+                <file name="../../src/Http/Message/ServerRequest.php"/>
+                <file name="../../src/Api/Filter/Filter.php"/>
+            </errorLevel>
+        </MoreSpecificReturnType>
+        <LessSpecificReturnStatement>
+            <errorLevel type="suppress">
+                <file name="../../src/Http/Message/Response.php"/>
+                <file name="../../src/Http/Message/ServerRequest.php"/>
+                <file name="../../src/Api/Filter/Filter.php"/>
+            </errorLevel>
+        </LessSpecificReturnStatement>
+
+        <!-- Psalm false positive: ReflectionNamedType::getName() returns string,
+             comparison with 'self'/'static'/'parent' is valid runtime check -->
+        <TypeDoesNotContainType>
+            <errorLevel type="suppress">
+                <file name="../../src/Container/Compiler/Pass/OptimizePass.php"/>
+            </errorLevel>
+        </TypeDoesNotContainType>
     </issueHandlers>
 </psalm>

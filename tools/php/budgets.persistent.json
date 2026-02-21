@@ -1,0 +1,39 @@
+{
+  "description": "Performance budgets for persistent runtimes (RoadRunner, FrankenPHP — warm container, amortized bootstrap)",
+  "runtime": "persistent",
+  "inherits": "performance-budgets.json",
+  "overrides": {
+    "request.anonymous_json_api": {
+      "max_avg": "1 millisecond",
+      "description": "Full anonymous JSON API request — warm container, no bootstrap cost"
+    },
+    "request.authenticated_session": {
+      "max_avg": "2 milliseconds",
+      "description": "Session-authenticated request — warm container + session load"
+    },
+    "request.authenticated_token": {
+      "max_avg": "1.5 milliseconds",
+      "description": "Token-authenticated request — warm container + token resolve"
+    },
+    "request.with_audit": {
+      "max_avg": "3 milliseconds",
+      "description": "Request with full audit trail — warm container + auth + audit"
+    },
+    "request.compliance_event": {
+      "max_avg": "4 milliseconds",
+      "description": "Request with compliance event — warm container + auth + audit + compliance"
+    },
+    "memory.peak_anonymous": {
+      "max_bytes": 1572864,
+      "description": "Peak memory for anonymous JSON API request — persistent runtime (< 1.5 MB, no bootstrap)"
+    },
+    "memory.peak_authenticated": {
+      "max_bytes": 3145728,
+      "description": "Peak memory for authenticated request — persistent runtime (< 3 MB)"
+    },
+    "memory.peak_compliance": {
+      "max_bytes": 5242880,
+      "description": "Peak memory for compliance-event request — persistent runtime (< 5 MB)"
+    }
+  }
+}
