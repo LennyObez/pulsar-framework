@@ -124,6 +124,14 @@ final class ContentControllerHomepageFallbackTest extends TestCase
             excerpt: null,
             metaTitle: 'Home',
             metaDescription: 'Welcome',
+            ogImageId: null,
+            robots: null,
+            structuredDataOverrides: null,
+            readingTimeMinutes: null,
+            bodyPlaintext: 'Welcome home',
+            headingsText: '',
+            customFieldsText: '',
+            taxonomyTermsText: '',
         );
     }
 

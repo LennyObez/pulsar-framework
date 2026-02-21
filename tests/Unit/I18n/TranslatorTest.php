@@ -195,9 +195,6 @@ final class TranslatorTest extends TestCase
         self::assertSame('Error occurred', $translator->translate('error.generic', domain: 'errors'));
     }
 
-    /**
-     * @param list<string> $fallbackLocales
-     */
     #[Test]
     public function translateReplacesColonPlaceholders(): void
     {
@@ -255,6 +252,9 @@ final class TranslatorTest extends TestCase
         self::assertSame('My App', $translator->translate('config.app.name'));
     }
 
+    /**
+     * @param list<string> $fallbackLocales
+     */
     private function makeConfig(
         string $defaultLocale = 'en',
         array $fallbackLocales = ['en'],
