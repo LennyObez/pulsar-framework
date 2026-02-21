@@ -30,12 +30,12 @@ final readonly class FilterCondition
      */
     public static function fromArray(array $data): self
     {
-        $rawField = $data['field'] ?? '';
-        $rawOp = $data['operator'] ?? 'eq';
+        $field = isset($data['field']) && is_string($data['field']) ? $data['field'] : '';
+        $operator = isset($data['operator']) && is_string($data['operator']) ? $data['operator'] : 'eq';
 
         return new self(
-            field: is_string($rawField) ? $rawField : '',
-            operator: FilterOperator::from(is_string($rawOp) ? $rawOp : 'eq'),
+            field: $field,
+            operator: FilterOperator::from($operator),
             value: $data['value'] ?? null,
         );
     }
