@@ -130,6 +130,7 @@ final readonly class LandmarkStructureValidator implements ValidatorInterface
 
             $labels = [];
 
+            /** @var DOMNode $element */
             foreach ($elements as $element) {
                 if (!$element instanceof DOMElement) {
                     continue;
@@ -196,6 +197,10 @@ final readonly class LandmarkStructureValidator implements ValidatorInterface
         $tag = '<' . $element->nodeName;
 
         $attributes = $element->attributes;
+
+        if ($attributes === null) {
+            return $tag . '>';
+        }
 
         /** @var DOMAttr $attr */
         foreach ($attributes as $attr) {
