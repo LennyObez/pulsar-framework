@@ -14,12 +14,17 @@ use Pulsar\Extension\Accessibility\Audit\ManualChecklistGenerator;
 use Pulsar\Extension\Accessibility\Command\AccessibilityAuditCommand;
 use Pulsar\Routing\RouterInterface;
 
+use function is_string;
+
 /**
  * Accessibility extension for WCAG 2.1 AA compliance tooling.
  *
  * Provides composable helpers, static validators, contrast checking,
  * and audit reporting. All components are opt-in building blocks --
  * no middleware blindly injects ARIA into arbitrary HTML.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class AccessibilityExtension implements ExtensionInterface
@@ -76,7 +81,7 @@ final readonly class AccessibilityExtension implements ExtensionInterface
         if ($container->has('app.environment')) {
             $env = $container->get('app.environment');
 
-            return $env !== 'production' && $env !== 'prod';
+            return is_string($env) && $env !== 'production' && $env !== 'prod';
         }
 
         return false;

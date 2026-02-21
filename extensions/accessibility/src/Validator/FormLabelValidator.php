@@ -106,6 +106,7 @@ final readonly class FormLabelValidator implements ValidatorInterface
             // Group by name attribute
             $groups = [];
 
+            /** @var DOMNode $input */
             foreach ($inputs as $input) {
                 if (!$input instanceof DOMElement) {
                     continue;
@@ -131,7 +132,7 @@ final readonly class FormLabelValidator implements ValidatorInterface
                     continue;
                 }
 
-                if ($firstInput->getAttribute('role') === 'group' || $this->hasGroupRole($firstInput, $xpath)) {
+                if ($firstInput->getAttribute('role') === 'group' || $this->hasGroupRole($firstInput)) {
                     continue;
                 }
 
@@ -199,7 +200,7 @@ final readonly class FormLabelValidator implements ValidatorInterface
         return false;
     }
 
-    private function hasGroupRole(DOMElement $element, DOMXPath $xpath): bool
+    private function hasGroupRole(DOMElement $element): bool
     {
         $parent = $element->parentNode;
 

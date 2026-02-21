@@ -37,8 +37,8 @@ final readonly class HeadingHierarchyValidator implements ValidatorInterface
         $h1Count = 0;
         $previousLevel = 0;
 
+        /** @var DOMNode $heading */
         foreach ($headings as $heading) {
-            /** @var DOMNode $heading */
             $level = (int) substr($heading->nodeName, 1);
             $snippet = $this->getOuterHtml($heading);
             $line = $heading->getLineNo();
