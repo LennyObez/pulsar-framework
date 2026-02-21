@@ -339,7 +339,8 @@ final class ForumServiceTest extends TestCase
 
         $service = $this->makeService(threads: $threads, posts: $posts, profiles: $profiles, events: $events);
 
-        $service->deletePost('post-1');
+        // Author deletes own post; not a moderator action (MED-4 signature).
+        $service->deletePost('post-1', 'author-1');
     }
 
     #[Test]
@@ -352,7 +353,7 @@ final class ForumServiceTest extends TestCase
         $this->expectException(ForumException::class);
         $this->expectExceptionMessage('Post not found');
 
-        $service->deletePost('missing');
+        $service->deletePost('missing', 'author-1');
     }
 
     #[Test]
@@ -380,7 +381,8 @@ final class ForumServiceTest extends TestCase
 
         $service = $this->makeService(threads: $threads, profiles: $profiles, events: $events);
 
-        $service->deleteThread('thread-1');
+        // Author deletes own thread; not a moderator action (MED-4 signature).
+        $service->deleteThread('thread-1', 'author-1');
     }
 
     #[Test]
@@ -392,7 +394,7 @@ final class ForumServiceTest extends TestCase
 
         $this->expectException(ForumException::class);
 
-        $service->deleteThread('missing');
+        $service->deleteThread('missing', 'author-1');
     }
 
     #[Test]
