@@ -235,7 +235,10 @@ final class SignCommandTest extends TestCase
         self::assertTrue($manifestExists, 'Manifest file should be created');
         self::assertIsString($manifestContent);
 
+        /** @var array{signatures: array<int, mixed>} $decoded */
         $decoded = json_decode($manifestContent, true, 16, JSON_THROW_ON_ERROR);
+
+        self::assertIsArray($decoded);
         self::assertArrayHasKey('signatures', $decoded);
         self::assertCount(1, $decoded['signatures']);
     }
