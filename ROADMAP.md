@@ -1,4 +1,4 @@
-# Pulsar Roadmap (SemVer)
+# Pulsar roadmap
 
 ## Principles
 
@@ -6,179 +6,120 @@
 - Core stays small; everything else is an extension.
 - Each milestone ships with: docs + tests + benchmarks + upgrade notes (when needed).
 
-## Version Plan
+## Version plan
 
-### 0.0.1 — Tooling & Repo Foundation (LOCK-IN)
-
-Deliverables:
+### 0.0.1 - Tooling and repo foundation
 
 - Repository structure, docs skeleton
 - CI workflows (PHP + TS) + quality gate scripts
-- Toolchain configured:
-  - PHP: PHPUnit, PHPStan, Psalm, PHP-CS-Fixer, Rector, Qodana
-  - TS: TypeScript, ESLint (flat config), Prettier, Vitest
+- Toolchain: PHPUnit, PHPStan, Psalm, PHP-CS-Fixer, Rector, Qodana, TypeScript, ESLint, Prettier, Vitest
 - `scripts/qa.sh` as single entrypoint
-  Exit criteria:
-- CI green
-- `./scripts/qa.sh` runs everything locally
 
-### 0.1.0 — Core Runtime MVP (Hello World)
-
-Deliverables:
+### 0.1.0 - Core runtime MVP
 
 - Kernel lifecycle
 - PSR-11 compatible container (MVP)
-- Router MVP (static routes, groups, middleware pipeline MVP)
-- Minimal HTTP abstraction or PSR-7 adoption decision
+- Router MVP (static routes, groups, middleware pipeline)
+- Minimal HTTP abstraction
 - Example app in `examples/hello-world`
-  Exit criteria:
-- Example app runs
-- Unit tests + benchmark harness placeholder (real baselines start 0.2)
 
-### 0.2.0 — DX + Extension System MVP (EARLY)
+### 0.2.0 - DX + extension system MVP
 
-Deliverables:
-
-- `bin/pulsar` CLI:
-  - init, scaffold module/extension, show routes, diagnostics
+- `bin/pulsar` CLI: init, scaffold module/extension, show routes, diagnostics
 - Extension manifest `pulsar.json` + discovery + lifecycle
-- Deterministic boot pipeline (register → boot)
-  Exit criteria:
-- A first-party extension can register DI bindings + routes + commands
+- Deterministic boot pipeline (register, boot)
 
-### 0.3.0 — Config, Caching, Errors (Production Shape)
-
-Deliverables:
+### 0.3.0 - Config, caching, errors
 
 - Typed config system + env loading
 - Cache layer and bootstrap cache priming
 - Error handling modes: dev vs prod, safe error pages
-- Logging baseline (structured)
-  Exit criteria:
-- No “magic” config; everything type-safe and discoverable
+- Structured logging baseline
 
-### 0.4.0 — HTTP & Routing Advanced
+### 0.4.0 - HTTP and routing advanced
 
-Deliverables:
+- Middleware finalized: named groups, aliases, MiddlewareRegistry
+- Request validation system (typed): Validator, 11 built-in rules, ValidationMiddleware
+- Route constraints, host-based routing
+- Rate-limit MVP: fixed-window in-memory RateLimiter + RateLimitMiddleware
 
-- Middleware finalized: named groups, aliases, MiddlewareRegistry ✓
-- Request convenience methods: `all()`, `input()`, `json()`, `wantsJson()` ✓
-- Request validation system (typed): Validator, 11 built-in rules, ValidationMiddleware ✓
-- JSON content-negotiation in ExceptionHandler ✓
-- Response::validationError() factory (422 JSON) ✓
-- Route constraints: per-parameter regex patterns enforced during matching ✓
-- Host-based routing: exact or parameterized host matching on routes and groups ✓
-- Rate-limit MVP: fixed-window in-memory RateLimiter + RateLimitMiddleware (429 + Retry-After) ✓
-  Exit criteria:
-- Routing and validation benchmarks with stored baselines
+### 0.5.0 - Observability suite v1
 
-### 0.5.0 — Observability Suite v1 (In-house)
-
-Deliverables:
-
-- Metrics collector + exporters (Prometheus format allowed as output)
+- Metrics collector + OpenMetrics exporter
 - Tracing core (spans + context)
 - Error grouping/reporting
-- Local report viewer UI
-  Exit criteria:
-- Example app produces logs/metrics/traces and viewable report
+- Diagnostics route
 
-### 0.6.0 — Security Baseline v1 ✅
+### 0.6.0 - Security baseline v1
 
-Deliverables:
+- Session hardening + CSRF + secure headers defaults
+- Crypto/key management primitives (libsodium)
+- Audit logging subsystem (HMAC-chained tamper-evident entries)
 
-- Session hardening + CSRF + secure headers defaults ✓
-- Crypto/key management primitives (libsodium: HMAC, KDF, secretbox) ✓
-- Audit logging subsystem (HMAC-chained tamper-evident entries) ✓
-- SecurityConfig DTO + SessionConfig + CsrfConfig + SecurityHeadersConfig ✓
-- SecurityException with factory methods for all security errors ✓
-- Kernel integration: createSecurityServices() in boot pipeline ✓
-  Exit criteria:
-- Security checklist documented + tested
+### 0.7.0 - Data layer v1
 
-### 0.7.0 — Data Layer v1 ✅
+- PDO-based database abstraction with typed bindings
+- ConnectionManager for multi-connection management
+- Transaction API with savepoint-based nesting
+- Migration system with batch-based tracking
+- CI: MySQL 8.0 + PostgreSQL 16 services for integration tests
 
-Deliverables:
+### 0.8.0 - AuthN/AuthZ v1
 
-- PDO-based ConnectionInterface with lazy initialization + typed bindings ✓
-- ConnectionManager for multi-connection management ✓
-- Driver enum (MySQL, PostgreSQL, SQLite) with DSN builder ✓
-- Typed Row/Result value objects with getInt(), getString(), getBool(), etc. ✓
-- Transaction API with savepoint-based nesting ✓
-- Statement wrapper for reusable prepared statements ✓
-- DatabaseException with static factory methods ✓
-- DatabaseConfig + ConnectionConfig DTOs with env overrides ✓
-- MigrationRunner with batch-based tracking, runPending, rollback, reset ✓
-- MigrationRepository for file discovery (timestamp-versioned anonymous classes) ✓
-- Console commands: migrate:run, migrate:rollback, migrate:status, migrate:create ✓
-- Kernel integration: optional database services in boot pipeline ✓
-- CI: MySQL 8.0 + PostgreSQL 16 services for integration tests ✓
-  Exit criteria:
-- Integration tests with real DB in CI
+- Authentication with Argon2id, session guards, remember-me tokens
+- RBAC/ABAC authorization
+- 2FA baseline with TOTP and recovery codes
+- Password reset and email verification flows
 
-### 0.8.0 — AuthN/AuthZ v1
+### 0.9.0 - Enterprise features v1
 
-Deliverables:
+- Multi-tenancy with pluggable resolvers and database isolation
+- Feature flags with boolean, percentage, and contextual evaluation
+- Job scheduler with cron parsing and tick-based execution
+- Self-healing: retry policies, circuit breakers, health checks, repair system
 
-- Users, sessions, password reset, email verification
-- RBAC/ABAC strategy (explicit)
-- 2FA baseline
-  Exit criteria:
-- Threat model docs for auth + tests
+### 1.0.0-rc.1 - Stabilization
 
-### 0.9.0 — Enterprise Features v1 ✅
+- `#[Api]` and `#[Internal]` attributes for public API boundary enforcement
+- PHPBench performance benchmark suite with budget assertions
+- 4 E2E test suites
+- 6 documentation files (install, extensions, cli-reference, upgrade, public-api, performance-budgets)
+- Coverage threshold raised to 70%
 
-Deliverables:
+### 1.0.0-rc.2 through rc.11 - Hardening
 
-- Multi-tenancy with pluggable resolvers (header, subdomain, path) and DB isolation ✓
-- Feature flags with boolean, percentage, and contextual evaluation ✓
-- Job scheduler with cron parsing and tick-based execution ✓
-- Self-healing: retry policies, circuit breakers, health checks, repair system ✓
-- Console commands: scheduler:tick, scheduler:list, health:check, health:repair ✓
-- Kernel integration for all four enterprise services ✓
-  Exit criteria:
-- All enterprise primitives tested and documented
+- rc.2: OpenMetrics rename, public API snapshot system
+- rc.3: Pulsar Studio observability subsystem
+- rc.4: Static analysis cleanup (319 Qodana issues resolved)
+- rc.5: PHP 8.x feature matrix, JIT/preloading deploy checks, benchmark dashboard, key:generate
+- rc.6: Persistent HTTP runtime
+- rc.7: Payments extension (modular monolith), architecture rules enforcement
+- rc.8: CLI scaffolding (7 make:\* commands), ADR governance, boundary enforcement, boot profiler
+- rc.9: Boundary violations resolved, post-audit remediation (12 phases), social SSO, key rotation, compliance matrix
+- rc.10: MCP server, ORM, Admin extension
+- rc.11: DI container, application cache (PSR-6/PSR-16), i18n, OpenTelemetry, zero-trust architecture, OAuth2/WebAuthn, queue system, mail/notifications, form extension, API tooling, CMS extension, PHPUnit 13
 
-### 1.0.0-rc.1 — Stabilization ✅
+### 1.0.0 - First stable release
 
-Deliverables:
+Remaining work before GA:
 
-- `#[Api]` and `#[Internal]` attributes for public API boundary enforcement ✓
-- 16 API compatibility test suites (170+ annotated public types, 142 tests, 551 assertions) ✓
-- PHPBench performance benchmark suite (7 benchmark files, 35 subjects) with budget assertions ✓
-- Performance budgets CI job (`php-benchmark`) enforcing regression detection ✓
-- 4 E2E test files (FullRequestLifecycle, BootPipeline, SecurityPipeline, ObservabilityPipeline) ✓
-- 6 documentation files: INSTALL.md, EXTENSIONS.md, CLI_REFERENCE.md, UPGRADE.md, PUBLIC_API.md, PERFORMANCE_BUDGETS.md ✓
-- Coverage threshold raised from 55% to 70% ✓
-- 161 source files annotated with API boundary attributes ✓
-  Exit criteria:
-- Public API frozen, performance budgets enforced, documentation complete
+- Final security audit pass
+- Release notes and upgrade guide from rc.11
+- Long-term maintenance plan and supported versions policy
+- Performance baseline documentation for production deployments
+- All documentation reviewed for accuracy against final codebase
 
-### 1.0.0 — First Stable Release
-
-Deliverables:
-
-- All acceptance criteria in PRD satisfied
-- Release notes + security policy + long-term maintenance plan
-
-## Commit Message Convention
+## Commit message convention
 
 Use Conventional Commits:
 
-- feat(scope): ...
-- fix(scope): ...
-- perf(scope): ...
-- refactor(scope): ...
-- docs(scope): ...
-- test(scope): ...
-- chore(scope): ...
+- feat(scope): new feature
+- fix(scope): bug fix
+- perf(scope): performance improvement
+- refactor(scope): code restructuring
+- docs(scope): documentation
+- test(scope): test additions/changes
+- chore(scope): maintenance
+- security(scope): security-related changes
 
 Scope examples: core, router, container, http, console, dx, ext, security, observability, ci, tooling, docs.
-
-## Required Commit Output (for Claude)
-
-For each commit step Claude proposes:
-
-- Commit summary (1 line)
-- Commit description (bullet list)
-- SemVer bump suggestion (patch/minor/major)

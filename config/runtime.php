@@ -146,4 +146,44 @@ return [
     |
     */
     'add_date_header' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Driver
+    |--------------------------------------------------------------------------
+    |
+    | Runtime driver to use. Set to "auto" for automatic detection, or
+    | choose explicitly: "fpm", "persistent", "frankenphp", "roadrunner".
+    |
+    | Auto-detection priority: frankenphp > roadrunner > persistent > fpm.
+    |
+    | Env override: RUNTIME_DRIVER
+    |
+    */
+    'driver' => 'auto',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Drain Timeout (seconds)
+    |--------------------------------------------------------------------------
+    |
+    | Maximum time to wait for in-flight requests to complete during a
+    | graceful reload or shutdown. After this timeout, remaining requests
+    | are forcefully terminated.
+    |
+    | Env override: RUNTIME_DRAIN_TIMEOUT_SECONDS
+    |
+    */
+    'drain_timeout_seconds' => 30,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Health Endpoint
+    |--------------------------------------------------------------------------
+    |
+    | Enable the built-in /_health endpoint for load-balancer probes.
+    | Disable if your infrastructure uses a custom health-check path.
+    |
+    */
+    'health_endpoint' => true,
 ];

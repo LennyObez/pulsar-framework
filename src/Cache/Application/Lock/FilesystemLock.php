@@ -1,0 +1,185 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Cache\Application\Lock;
+
+use Pulsar\Api\Internal;
+use Pulsar\Cache\Application\Exception\LockAcquisitionException;
+use Random\Engine\Secure;
+use Random\Randomizer;
+
+use function bin2hex;
+use function fclose;
+use function flock;
+use function fopen;
+use function fread;
+use function fseek;
+use function ftell;
+use function ftruncate;
+use function fwrite;
+use function hash;
+use function hash_equals;
+use function is_dir;
+use function is_file;
+use function json_decode;
+use function json_encode;
+use function microtime;
+use function mkdir;
+use function unlink;
+use function usleep;
+
+use const JSON_THROW_ON_ERROR;
+use const LOCK_EX;
+use const LOCK_NB;
+use const LOCK_UN;
+use const SEEK_END;
+
+/**
+ * Filesystem-based lock using flock().
+ */
+#[Internal]
+final class FilesystemLock implements LockInterface
+{
+    /** @var array<string, resource> */
+    private array $handles = [];
+
+    private readonly Randomizer $randomizer;
+
+    public function __construct(
+        private readonly string $directory,
+    ) {
+        $this->randomizer = new Randomizer(new Secure());
+
+        if (!is_dir($this->directory)) {
+            mkdir($this->directory, 0o700, true);
+        }
+    }
+
+    public function acquire(string $resource, int $ttlSeconds = 30, int $timeoutMs = 0): LockHandle
+    {
+        $path = $this->lockPath($resource);
+        $deadlineNs = hrtime(true) + ($timeoutMs * 1_000_000);
+
+        do {
+            $handle = fopen($path, 'c+');
+
+            if ($handle === false) {
+                throw LockAcquisitionException::unavailable($resource, 'Unable to open lock file');
+            }
+
+            if (flock($handle, LOCK_EX | LOCK_NB)) {
+                $token = bin2hex($this->randomizer->getBytes(16));
+                $metadata = json_encode([
+                    'token' => $token,
+                    'expiresAt' => microtime(true) + (float) $ttlSeconds,
+                ], JSON_THROW_ON_ERROR);
+
+                ftruncate($handle, 0);
+                fseek($handle, 0);
+                fwrite($handle, $metadata);
+
+                $this->handles[$resource] = $handle;
+
+                return new LockHandle(
+                    resource: $resource,
+                    token: $token,
+                    acquiredAt: microtime(true),
+                    ttlSeconds: $ttlSeconds,
+                );
+            }
+
+            fclose($handle);
+
+            if ($timeoutMs === 0) {
+                throw LockAcquisitionException::timeout($resource, $timeoutMs);
+            }
+
+            usleep(10_000);
+        } while (hrtime(true) < $deadlineNs);
+
+        throw LockAcquisitionException::timeout($resource, $timeoutMs);
+    }
+
+    public function release(LockHandle $handle): bool
+    {
+        $path = $this->lockPath($handle->resource);
+
+        if (!isset($this->handles[$handle->resource])) {
+            return false;
+        }
+
+        $fileHandle = $this->handles[$handle->resource];
+        $metadata = $this->readMetadata($fileHandle);
+
+        if ($metadata === null || !hash_equals($metadata['token'], $handle->token)) {
+            return false;
+        }
+
+        flock($fileHandle, LOCK_UN);
+        fclose($fileHandle);
+        unset($this->handles[$handle->resource]);
+
+        if (is_file($path)) {
+            @unlink($path);
+        }
+
+        return true;
+    }
+
+    public function refresh(LockHandle $handle, int $ttlSeconds = 30): bool
+    {
+        if (!isset($this->handles[$handle->resource])) {
+            return false;
+        }
+
+        $fileHandle = $this->handles[$handle->resource];
+        $metadata = $this->readMetadata($fileHandle);
+
+        if ($metadata === null || !hash_equals($metadata['token'], $handle->token)) {
+            return false;
+        }
+
+        $updated = json_encode([
+            'token' => $handle->token,
+            'expiresAt' => microtime(true) + (float) $ttlSeconds,
+        ], JSON_THROW_ON_ERROR);
+
+        ftruncate($fileHandle, 0);
+        fseek($fileHandle, 0);
+        fwrite($fileHandle, $updated);
+
+        return true;
+    }
+
+    private function lockPath(string $resource): string
+    {
+        return $this->directory . '/' . hash('sha256', $resource) . '.lock';
+    }
+
+    /**
+     * @param resource $handle
+     * @return array{token: string, expiresAt: float}|null
+     */
+    private function readMetadata(mixed $handle): ?array
+    {
+        fseek($handle, 0, SEEK_END);
+        $size = ftell($handle);
+
+        if ($size === false || $size <= 0) {
+            return null;
+        }
+
+        fseek($handle, 0);
+        $contents = fread($handle, $size);
+
+        if ($contents === false || $contents === '') {
+            return null;
+        }
+
+        /** @var array{token: string, expiresAt: float}|null $data */
+        $data = json_decode($contents, true);
+
+        return $data;
+    }
+}

@@ -1,0 +1,36 @@
+{
+  "name": "pulsar/cms",
+  "version": "1.0.0-rc.11",
+  "description": "First-class CMS extension for regulated domains: content management, taxonomy, navigation, editorial workflow, custom fields, and full-page caching",
+  "trust_tier": "core",
+  "extension_class": "Pulsar\\Extension\\Cms\\CmsExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "requires": {
+    "pulsar/studio": ">=1.0.0-rc.10"
+  },
+  "suggests": {
+    "pulsar/admin": ">=1.0.0-rc.10",
+    "pulsar/orm": ">=1.0.0-rc.10",
+    "pulsar/payments": ">=1.0.0-rc.10"
+  },
+  "provides": {
+    "services": [
+      "ContentServiceInterface",
+      "TaxonomyServiceInterface",
+      "MenuRepositoryInterface",
+      "SettingsServiceInterface",
+      "ContentTypeRegistryInterface",
+      "EditorialWorkflowServiceInterface",
+      "ContentLockServiceInterface",
+      "SafeHtmlPolicy",
+      "BreadcrumbGeneratorInterface"
+    ],
+    "routes": true,
+    "commands": [
+      "Pulsar\\Extension\\Cms\\Command\\CmsServeCommand",
+      "Pulsar\\Extension\\Cms\\Command\\CmsPublishScheduledCommand"
+    ]
+  }
+}

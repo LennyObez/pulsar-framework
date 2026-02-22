@@ -184,7 +184,10 @@ final readonly class CoreRuntimeProbe
      * Format a route handler for safe display: Class::method or string representation.
      * Never exposes file paths or closure source locations.
      */
-    private static function formatHandler(mixed $handler): string
+    /**
+     * @param array{0: class-string, 1: string}|callable|class-string $handler
+     */
+    private static function formatHandler(array|string|callable $handler): string
     {
         if (is_string($handler)) {
             return $handler;

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth\TwoFactor;
 
+use Pulsar\Api\Api;
 use SensitiveParameter;
 
 use function hash_equals;
@@ -14,6 +15,7 @@ use function intdiv;
  *
  * Returns the accepted time step on success for replay guard keying and diagnostics.
  */
+#[Api(since: '1.0.0')]
 final readonly class TotpVerifier
 {
     public function __construct(

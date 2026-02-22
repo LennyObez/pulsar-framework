@@ -8,25 +8,20 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\ErrorHandling\DevelopmentRenderer;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use RuntimeException;
 
 #[CoversClass(DevelopmentRenderer::class)]
 final class DevelopmentRendererTest extends TestCase
 {
-    private function createRequest(string $path = '/'): Request
+    private function createRequest(string $path = '/'): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: $path,
-            path: $path,
-            queryString: 'foo=bar',
-            headers: new HeaderBag(['X-Test' => 'value']),
-            body: '',
-            query: ['foo' => 'bar'],
+            headers: ['X-Test' => 'value'],
+            queryParams: ['foo' => 'bar'],
         );
     }
 
@@ -142,17 +137,14 @@ final class DevelopmentRendererTest extends TestCase
         $renderer = new DevelopmentRenderer();
         $exception = new RuntimeException('test');
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag([
+            headers: [
                 'Authorization' => 'Bearer secret-token-123',
                 'Content-Type' => 'application/json',
                 'Cookie' => 'session=abc123',
-            ]),
-            body: '',
+            ],
         );
 
         $html = $renderer->render($exception, $request, ResponseStatus::InternalServerError);

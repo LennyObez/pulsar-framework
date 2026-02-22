@@ -8,9 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\TenancyConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Tenancy\Resolver\HeaderTenantResolver;
 use Pulsar\Tenancy\TenantResolverStrategy;
 
@@ -29,13 +27,10 @@ final class HeaderTenantResolverTest extends TestCase
 
         $resolver = new HeaderTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(['X-Tenant-ID' => ['acme']]),
-            body: '',
+            headers: ['X-Tenant-ID' => 'acme'],
         );
 
         $tenant = $resolver->resolve($request);
@@ -57,13 +52,9 @@ final class HeaderTenantResolverTest extends TestCase
 
         $resolver = new HeaderTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         self::assertNull($resolver->resolve($request));
@@ -81,13 +72,10 @@ final class HeaderTenantResolverTest extends TestCase
 
         $resolver = new HeaderTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/test',
-            path: '/test',
-            queryString: '',
-            headers: new HeaderBag(['X-Tenant-ID' => ['unknown']]),
-            body: '',
+            headers: ['X-Tenant-ID' => 'unknown'],
         );
 
         self::assertNull($resolver->resolve($request));

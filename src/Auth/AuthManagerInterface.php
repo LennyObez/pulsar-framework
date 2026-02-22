@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Pulsar\Auth;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
 use Pulsar\Auth\Guard\GuardInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
-use Pulsar\Http\Request;
 
 /**
  * Contract for the authentication manager.
@@ -22,7 +22,7 @@ interface AuthManagerInterface
      *
      * Returns AnonymousIdentity if no guard can authenticate.
      */
-    public function authenticate(Request $request): IdentityInterface;
+    public function authenticate(ServerRequestInterface $request): IdentityInterface;
 
     /**
      * Get a specific guard by name.

@@ -20,7 +20,7 @@ use Pulsar\Database\Schema\DdlCompiler;
 use Pulsar\Database\Schema\SchemaCapabilities;
 use Pulsar\Database\Schema\SchemaManager;
 use Pulsar\Extension\Admin\AdminServiceProvider;
-use Pulsar\Extension\Admin\Command\AdminStartCommand;
+use Pulsar\Extension\Admin\Command\AdminServeCommand;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Contracts\ResourceMutatorInterface;
 use Pulsar\Extension\Admin\Contracts\ResourceQueryInterface;
@@ -577,16 +577,16 @@ final class AdminServiceProviderTest extends TestCase
     // ---------------------------------------------------------------
 
     #[Test]
-    public function registerBindsAdminStartCommandWithDefaultBasePath(): void
+    public function registerBindsAdminServeCommandWithDefaultBasePath(): void
     {
         $this->provider->register($this->container);
 
-        $command = $this->container->get(AdminStartCommand::class);
-        self::assertInstanceOf(AdminStartCommand::class, $command);
+        $command = $this->container->get(AdminServeCommand::class);
+        self::assertInstanceOf(AdminServeCommand::class, $command);
     }
 
     #[Test]
-    public function registerBindsAdminStartCommandWithCustomBasePath(): void
+    public function registerBindsAdminServeCommandWithCustomBasePath(): void
     {
         $container = new ScalarCapableContainer();
         $connection = $this->createStub(ConnectionInterface::class);
@@ -600,8 +600,8 @@ final class AdminServiceProviderTest extends TestCase
 
         $this->provider->register($container);
 
-        $command = $container->get(AdminStartCommand::class);
-        self::assertInstanceOf(AdminStartCommand::class, $command);
+        $command = $container->get(AdminServeCommand::class);
+        self::assertInstanceOf(AdminServeCommand::class, $command);
     }
 
     // ---------------------------------------------------------------
@@ -880,7 +880,7 @@ final class AdminServiceProviderTest extends TestCase
             AdminCspMiddleware::class,
             AdminRateLimitMiddleware::class,
             AdminAuditMiddleware::class,
-            AdminStartCommand::class,
+            AdminServeCommand::class,
             SchemaCapabilities::class,
             DdlCompiler::class,
             SchemaManager::class,

@@ -7,13 +7,14 @@ namespace Pulsar\Tests\Integration\Kernel;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Container\Container;
 use Pulsar\Core\Kernel;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Routing\Router;
 use Pulsar\Routing\RoutingException;
@@ -22,16 +23,12 @@ use Pulsar\Routing\RoutingException;
 final class RequestHandlingTest extends TestCase
 {
     private function createRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $path = '/',
-    ): Request {
-        return new Request(
+    ): ServerRequest {
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 
@@ -43,8 +40,8 @@ final class RequestHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest());
 
-        self::assertSame('Hello, World!', $response->body);
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame('Hello, World!', (string) $response->getBody());
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -55,8 +52,8 @@ final class RequestHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest());
 
-        self::assertSame('<h1>Hello</h1>', $response->body);
-        self::assertSame('text/html; charset=utf-8', $response->headers->first('Content-Type'));
+        self::assertSame('<h1>Hello</h1>', (string) $response->getBody());
+        self::assertSame('text/html; charset=utf-8', $response->getHeaderLine('Content-Type'));
     }
 
     #[Test]
@@ -67,7 +64,7 @@ final class RequestHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest());
 
-        self::assertSame('controller response', $response->body);
+        self::assertSame('controller response', (string) $response->getBody());
     }
 
     #[Test]
@@ -78,7 +75,7 @@ final class RequestHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest());
 
-        self::assertSame('invokable response', $response->body);
+        self::assertSame('invokable response', (string) $response->getBody());
     }
 
     #[Test]
@@ -93,21 +90,21 @@ final class RequestHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest());
 
-        self::assertSame('controller response', $response->body);
+        self::assertSame('controller response', (string) $response->getBody());
     }
 
     #[Test]
     public function kernelPassesRouteParametersToHandler(): void
     {
         $kernel = new Kernel();
-        $kernel->router()->get('/users/{id}', function (Request $request, array $params) {
+        $kernel->router()->get('/users/{id}', function (ServerRequestInterface $request, array $params) {
             return Response::json(['id' => $params['id']]);
         });
 
         $request = $this->createRequest(path: '/users/42');
         $response = $kernel->handle($request);
 
-        self::assertStringContainsString('"id":"42"', $response->body);
+        self::assertStringContainsString('"id":"42"', (string) $response->getBody());
     }
 
     #[Test]
@@ -116,8 +113,8 @@ final class RequestHandlingTest extends TestCase
         $kernel = new Kernel();
         $receivedId = null;
 
-        $kernel->router()->get('/users/{id}', function (Request $request) use (&$receivedId) {
-            $receivedId = $request->attribute('id');
+        $kernel->router()->get('/users/{id}', function (ServerRequestInterface $request) use (&$receivedId) {
+            $receivedId = $request->getAttribute('id');
             return Response::text('ok');
         });
 
@@ -143,7 +140,7 @@ final class RequestHandlingTest extends TestCase
         $kernel->router()->get('/test', fn() => Response::text('ok'));
 
         $this->expectException(RoutingException::class);
-        $kernel->handle($this->createRequest(Method::POST, '/test'));
+        $kernel->handle($this->createRequest('POST', '/test'));
     }
 
     #[Test]
@@ -155,7 +152,7 @@ final class RequestHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest());
 
-        self::assertSame('true', $response->headers->first('X-Global'));
+        self::assertSame('true', $response->getHeaderLine('X-Global'));
     }
 
     #[Test]
@@ -168,8 +165,8 @@ final class RequestHandlingTest extends TestCase
 
         $response = $kernel->handle($this->createRequest());
 
-        self::assertSame('1', $response->headers->first('X-First'));
-        self::assertSame('2', $response->headers->first('X-Second'));
+        self::assertSame('1', $response->getHeaderLine('X-First'));
+        self::assertSame('2', $response->getHeaderLine('X-Second'));
     }
 
     #[Test]
@@ -227,7 +224,7 @@ class TestController
     /**
      * @param array<string, string> $params
      */
-    public function index(Request $request, array $params): Response
+    public function index(ServerRequestInterface $request, array $params): Response
     {
         return Response::text('controller response');
     }
@@ -238,7 +235,7 @@ class InvokableController
     /**
      * @param array<string, string> $params
      */
-    public function __invoke(Request $request, array $params): Response
+    public function __invoke(ServerRequestInterface $request, array $params): Response
     {
         return Response::text('invokable response');
     }
@@ -251,9 +248,9 @@ class AddHeaderMiddleware implements MiddlewareInterface
         private readonly string $value,
     ) {}
 
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $response = $next($request);
+        $response = $handler->handle($request);
         return $response->withHeader($this->name, $this->value);
     }
 }

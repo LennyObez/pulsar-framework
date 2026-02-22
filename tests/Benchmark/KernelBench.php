@@ -10,11 +10,10 @@ use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Subject;
 use PhpBench\Attributes\Warmup;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Core\Kernel;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 
 /**
  * Benchmarks for full kernel request dispatch cycle.
@@ -26,18 +25,14 @@ use Pulsar\Http\Response;
 #[Warmup(1)]
 final class KernelBench
 {
-    private Request $request;
+    private ServerRequestInterface $request;
     private Kernel $bootedKernel;
 
     public function setUpRequest(): void
     {
-        $this->request = new Request(
-            method: Method::GET,
+        $this->request = new ServerRequest(
+            method: 'GET',
             uri: '/bench',
-            path: '/bench',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
     }
 

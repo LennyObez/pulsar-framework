@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Admin\Server\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\MutationContext;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Features\BulkAction\BulkActionHandler;
 use Pulsar\Extension\Admin\Features\BulkAction\BulkActionRequest;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 
 use function is_array;
@@ -25,18 +25,21 @@ final readonly class BulkActionController
         private BulkActionHandler $handler,
     ) {}
 
-    public function execute(Request $request, string $resource): Response
+    public function execute(ServerRequestInterface $request, string $resource): Response
     {
         /** @var IdentityInterface|null $identity */
-        $identity = $request->attribute('identity');
+        $identity = $request->getAttribute('identity');
         $actor = $identity?->id() ?? 'anonymous';
 
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
         /** @var string $action */
-        $action = $request->input('action', '') ?? '';
+        $action = $body['action'] ?? '';
         /** @var list<string> $ids */
-        $ids = $request->input('ids', []) ?? [];
+        $ids = $body['ids'] ?? [];
         /** @var array<string, mixed> $parameters */
-        $parameters = $request->input('parameters', []) ?? [];
+        $parameters = $body['parameters'] ?? [];
 
         if (!is_array($ids)) {
             $ids = [];
@@ -60,7 +63,7 @@ final readonly class BulkActionController
 
         return Response::json(
             ['success' => $result->result->success, 'message' => $result->result->message, 'data' => $result->result->metadata],
-            $result->result->success ? ResponseStatus::OK : ResponseStatus::UnprocessableEntity,
+            $result->result->success ? ResponseStatus::OK->value : ResponseStatus::UnprocessableEntity->value,
         );
     }
 }

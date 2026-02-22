@@ -1,0 +1,20 @@
+{
+  $schema: 'vendor/infection/infection/resources/schema.json',
+  source: {
+    directories: ['src/Auth', 'src/Security', 'src/Extension/OAuth2', 'src/Extension/WebAuthn'],
+  },
+  logs: {
+    text: 'build/infection/infection.log',
+    summary: 'build/infection/summary.log',
+  },
+  mutators: {
+    '@default': true,
+    TrueValue: { ignoreSourceCodeByRegex: ['.*@infection-ignore.*'] },
+    FalseValue: { ignoreSourceCodeByRegex: ['.*@infection-ignore.*'] },
+  },
+  phpUnit: {
+    configDir: 'tools/php',
+  },
+  timeout: 30,
+  tmpDir: 'build/infection',
+}

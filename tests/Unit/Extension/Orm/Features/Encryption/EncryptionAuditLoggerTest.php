@@ -72,28 +72,29 @@ final class EncryptionAuditLoggerTest extends TestCase
     #[Test]
     public function logEncryptHandlesNullAuditLogger(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $logger = new EncryptionAuditLogger(null);
         $logger->logEncrypt('User', 'email', 'admin');
+
+        // Null audit logger must not throw; the object remains intact
+        self::assertInstanceOf(EncryptionAuditLogger::class, $logger);
     }
 
     #[Test]
     public function logDecryptHandlesNullAuditLogger(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $logger = new EncryptionAuditLogger(null);
         $logger->logDecrypt('User', 'email', 'admin');
+
+        self::assertInstanceOf(EncryptionAuditLogger::class, $logger);
     }
 
     #[Test]
     public function logBlindIndexLookupHandlesNullAuditLogger(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $logger = new EncryptionAuditLogger(null);
         $logger->logBlindIndexLookup('User', 'email', 'admin');
+
+        self::assertInstanceOf(EncryptionAuditLogger::class, $logger);
     }
 
     #[Test]

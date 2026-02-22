@@ -18,7 +18,7 @@ final readonly class RecoveryCodeSet
 {
     /**
      * @param string $setId Unique identifier for this code set (128-bit hex)
-     * @param list<string> $codeHashes HMAC-BLAKE2b hashes of each code
+     * @param list<string> $codeHashes keyed BLAKE2b hashes of each code
      * @param list<int> $usedIndices Indices of consumed codes
      * @param int $algorithmVersion 1 = 32-bit legacy, 2 = 64-bit
      * @param int $createdAt Unix timestamp of creation
