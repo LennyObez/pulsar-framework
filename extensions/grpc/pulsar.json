@@ -1,0 +1,21 @@
+{
+  "name": "pulsar/grpc",
+  "version": "1.0.0-rc.11",
+  "description": "gRPC server support with interceptor pipeline, mTLS, and streaming",
+  "trust_tier": "core",
+  "extension_class": "Pulsar\\Extension\\Grpc\\GrpcExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "requires": {
+    "pulsar/runtime": ">=1.0.0-rc.11"
+  },
+  "provides": {
+    "services": ["GrpcServer", "ServiceRegistryInterface", "GrpcTransportAdapterInterface"],
+    "routes": false,
+    "commands": [
+      "Pulsar\\Extension\\Grpc\\Command\\ServeCommand",
+      "Pulsar\\Extension\\Grpc\\Command\\GenerateCommand"
+    ]
+  }
+}

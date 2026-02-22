@@ -20,6 +20,36 @@
       "file": "src/Api/OpenApi/OpenApiWiring.php",
       "import": "Pulsar\\Http\\Middleware\\MiddlewareRegistry",
       "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Codegen/OutputValidatorTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Codegen\\OutputValidator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Codegen/ProtocRunnerTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Codegen\\ProtocRunner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Codegen/ProtocVersionPinnerTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Codegen\\ProtocVersionPinner",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Codegen/ServiceHandlerGeneratorTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Codegen\\ServiceHandlerGenerator",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Manifest/ManifestCompilerTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Manifest\\ManifestCompiler",
+      "rule": "cross_module_non_api"
+    },
+    {
+      "file": "extensions/grpc/tests/Unit/Manifest/ManifestCompilerTest.php",
+      "import": "Pulsar\\Extension\\Grpc\\Server\\ServiceRegistry",
+      "rule": "cross_module_non_api"
     }
   ]
 }
