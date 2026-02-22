@@ -3690,6 +3690,131 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Saga\\Event\\IrreversibleSagaFailureEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Event\\SagaCompensationCompletedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Event\\SagaCompensationStartedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Event\\SagaCompletedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Event\\SagaFailedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Event\\SagaStartedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Event\\SagaStepCompletedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Event\\SagaStepFailedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Exception\\CompensationFailedException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Exception\\ForbiddenInjectionException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Exception\\IrreversibleStepException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Exception\\SagaException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Port\\CommandBusPort": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Port\\IntegrationEventBusPort": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Port\\OutboxPort": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\SagaDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\SagaDefinitionBuilder": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\SagaOrchestratorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\SagaState": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\SagaStateStorageInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\SagaStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Step\\BackoffStrategy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Step\\RetryPolicy": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Step\\SagaStep": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Saga\\Step\\StepResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Scheduler\\CronFields": {
       "since": "1.0.0",
       "methods": [],
@@ -4554,6 +4679,211 @@
       "since": "1.0.0",
       "methods": [],
       "constants": []
+    },
+    "Pulsar\\Workflow\\ActorContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Definition\\DefinitionBuilder": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Definition\\StateDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Definition\\StateType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Definition\\TransitionDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Definition\\Versioning\\DefinitionMigratorInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Definition\\Versioning\\DefinitionVersion": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Definition\\Versioning\\DefinitionVersionRegistryInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Definition\\WorkflowDefinition": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Definition\\WorkflowType": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Engine\\WorkflowEngineInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Event\\TransitionAppliedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Event\\TransitionBlockedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Event\\WorkflowCompletedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Event\\WorkflowStartedEvent": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Exception\\ConcurrentTransitionException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Exception\\WorkflowException": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Guard\\ExpressionGuard": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Guard\\GuardResolverInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Guard\\GuardResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Guard\\RoleGuard": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Guard\\TransitionGuardInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Listener\\TransitionListenerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\ClassificationLevel": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\ClassifiedContext": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\SagaStepDirection": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\SagaStepResult": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\SagaStepResultStorageInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\SagaStepStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\TransitionLogInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\TransitionRecord": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\WorkflowInstance": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\WorkflowInstanceStatus": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Storage\\WorkflowStorageInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Template\\ApprovalWorkflow": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Template\\AuditWorkflow": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Template\\ComplianceReviewWorkflow": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Template\\EscalationWorkflow": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Timeout\\TimeoutHandlerInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Visualization\\DotGraphExporter": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
+    "Pulsar\\Workflow\\Visualization\\DotGraphExporterInterface": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
     }
   },
   "internal_classes": [
@@ -4841,6 +5171,9 @@
     "Pulsar\\Runtime\\Worker\\HealthResponse",
     "Pulsar\\Runtime\\Worker\\WorkerContext",
     "Pulsar\\Runtime\\Worker\\WorkerInfo",
+    "Pulsar\\Saga\\Internal\\SagaContainerGuard",
+    "Pulsar\\Saga\\Internal\\SagaOrchestrator",
+    "Pulsar\\Saga\\Internal\\StepBuilder",
     "Pulsar\\Security\\Compliance\\Evidence\\InMemoryEvidenceExporter",
     "Pulsar\\Security\\Compliance\\Pseudonymization\\ForgetService",
     "Pulsar\\Security\\Compliance\\Pseudonymization\\InMemoryPseudonymLookup",
@@ -4909,6 +5242,11 @@
     "Pulsar\\View\\Sandbox\\AstParser",
     "Pulsar\\View\\Sandbox\\SandboxConfig",
     "Pulsar\\View\\Sandbox\\SandboxEngine",
-    "Pulsar\\View\\Sandbox\\TranslationCallback"
+    "Pulsar\\View\\Sandbox\\TranslationCallback",
+    "Pulsar\\Workflow\\Internal\\Engine\\WorkflowEngine",
+    "Pulsar\\Workflow\\Internal\\Storage\\DatabaseSagaStepResultStorage",
+    "Pulsar\\Workflow\\Internal\\Storage\\DatabaseTransitionLog",
+    "Pulsar\\Workflow\\Internal\\Storage\\DatabaseWorkflowStorage",
+    "Pulsar\\Workflow\\Internal\\Timeout\\PollingTimeoutHandler"
   ]
 }
