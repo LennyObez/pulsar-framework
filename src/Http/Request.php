@@ -203,11 +203,31 @@ readonly class Request
     /**
      * Merge all input sources: query + post + json (json > post > query precedence).
      *
+     * Results are memoized per-instance via a WeakMap so that repeated calls
+     * from input(), has(), filled(), only(), except() do not rebuild the array.
+     *
      * @return array<string, mixed>
      */
     public function all(): array
     {
-        return [...$this->query, ...$this->post, ...$this->json()];
+        /** @var WeakMap<self, array<string, mixed>>|null $cache */
+        static $cache = null;
+
+        if ($cache === null) {
+            /** @var WeakMap<self, array<string, mixed>> $map */
+            $map = new WeakMap();
+            $cache = $map;
+        }
+
+        if (isset($cache[$this])) {
+            /** @var array<string, mixed> */
+            return $cache[$this];
+        }
+
+        $result = [...$this->query, ...$this->post, ...$this->json()];
+        $cache[$this] = $result;
+
+        return $result;
     }
 
     /**

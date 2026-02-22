@@ -10,10 +10,8 @@ use Pulsar\Api\Api;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 
+use function array_keys;
 use function array_map;
-use function array_merge;
-use function array_unique;
-use function array_values;
 use function is_array;
 
 /**
@@ -56,11 +54,16 @@ final readonly class QueryCache implements QueryCacheInterface
             /** @var mixed $existing */
             $existing = $this->cache->get($tagKey);
 
-            /** @var list<string> $keys */
-            $keys = is_array($existing) ? $existing : [];
-            $keys[] = $key;
+            /** @var list<string> $existingKeys */
+            $existingKeys = is_array($existing) ? $existing : [];
 
-            $this->cache->set($tagKey, array_values(array_unique($keys)));
+            $set = [];
+            foreach ($existingKeys as $k) {
+                $set[$k] = true;
+            }
+            $set[$key] = true;
+
+            $this->cache->set($tagKey, array_keys($set));
         }
     }
 
@@ -77,13 +80,15 @@ final readonly class QueryCache implements QueryCacheInterface
 
             if (is_array($existing)) {
                 /** @var list<string> $existing */
-                $keysToDelete = array_merge($keysToDelete, $existing);
+                foreach ($existing as $k) {
+                    $keysToDelete[$k] = true;
+                }
             }
 
             $this->cache->delete($tagKey);
         }
 
-        foreach (array_unique($keysToDelete) as $key) {
+        foreach (array_keys($keysToDelete) as $key) {
             $this->cache->delete($key);
         }
     }

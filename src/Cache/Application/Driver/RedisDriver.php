@@ -8,9 +8,8 @@ use Pulsar\Api\Internal;
 use Redis;
 use Throwable;
 
-use function array_combine;
+use function array_fill_keys;
 use function array_keys;
-use function array_map;
 use function is_array;
 use function is_string;
 
@@ -48,7 +47,7 @@ final class RedisDriver extends AbstractCacheDriver
 
         /** @psalm-suppress TypeDoesNotContainType — ext-redis mget() can return false on connection failure */
         if (!is_array($values)) {
-            return array_combine($keys, array_map(static fn(string $_): null => null, $keys));
+            return array_fill_keys($keys, null);
         }
 
         $result = [];

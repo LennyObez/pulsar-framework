@@ -7,6 +7,7 @@ namespace Pulsar\Extension\OAuth2\Oidc;
 use Pulsar\Api\Internal;
 
 use function array_key_exists;
+use function array_keys;
 
 /**
  * Maps OIDC scopes to their corresponding claim names.
@@ -45,15 +46,17 @@ final class ScopeClaimsMapper
      */
     public static function claimsForScopes(array $scopes): array
     {
-        $claims = [];
+        $seen = [];
 
         foreach ($scopes as $scope) {
             if (isset(self::SCOPE_CLAIMS[$scope])) {
-                $claims = array_merge($claims, self::SCOPE_CLAIMS[$scope]);
+                foreach (self::SCOPE_CLAIMS[$scope] as $claim) {
+                    $seen[$claim] = true;
+                }
             }
         }
 
-        return array_values(array_unique($claims));
+        return array_keys($seen);
     }
 
     /**
