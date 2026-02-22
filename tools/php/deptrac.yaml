@@ -526,6 +526,22 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Runtime\\Internal\\
 
+    # --- Saga ---
+    - name: Saga
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Saga\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Saga\\Internal\\
+
+    - name: Saga_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Saga\\Internal\\
+
     # --- Scheduler ---
     - name: Scheduler
       collectors:
@@ -621,6 +637,22 @@ deptrac:
       collectors:
         - type: classLike
           value: ^Pulsar\\View\\Internal\\
+
+    # --- Workflow ---
+    - name: Workflow
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: ^Pulsar\\Workflow\\
+          must_not:
+            - type: classLike
+              value: ^Pulsar\\Workflow\\Internal\\
+
+    - name: Workflow_Internal
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Workflow\\Internal\\
 
     # --- Webhook ---
     - name: Webhook
@@ -1106,6 +1138,12 @@ deptrac:
         - type: classLike
           value: ^Pulsar\\Extension\\Analytics\\Internal\\
 
+    # --- Accessibility Extension (Pulsar\\Extension\\Accessibility) ---
+    - name: AccessibilityExtension
+      collectors:
+        - type: classLike
+          value: ^Pulsar\\Extension\\Accessibility\\
+
     # --- Example Extension ---
     - name: ExampleExtension
       collectors:
@@ -1191,6 +1229,8 @@ deptrac:
       - Resilience_Internal
       - Runtime
       - Runtime_Internal
+      - Saga
+      - Saga_Internal
       - Scheduler
       - Scheduler_Internal
       - Security
@@ -1209,6 +1249,8 @@ deptrac:
       - View_Internal
       - Webhook
       - Webhook_Internal
+      - Workflow
+      - Workflow_Internal
       - Introspection
       - Introspection_Internal
       # Extension layers (CompositionRoot wires these too)
@@ -1263,6 +1305,7 @@ deptrac:
       - Queue
       - Resilience
       - Runtime
+      - Saga
       - Scheduler
       - Security
       - Storage
@@ -1270,6 +1313,7 @@ deptrac:
       - Tenancy
       - View
       - Webhook
+      - Workflow
     Support: *public_deps
     Container: *public_deps
     Config: *public_deps
@@ -1341,6 +1385,50 @@ deptrac:
     Queue: *public_deps
     Resilience: *public_deps
     Runtime: *public_deps
+    # Saga public layer depends on its own internal (SagaDefinitionBuilder → StepBuilder)
+    Saga:
+      - CompositionRoot
+      - Api
+      - Support
+      - Container
+      - Config
+      - Core
+      - ErrorHandling
+      - Http
+      - Routing
+      - Console
+      - Extensibility
+      - Attribute
+      - Audit
+      - Auth
+      - Build
+      - Cache
+      - Context
+      - Database
+      - DataProtection
+      - Deploy
+      - Event
+      - FeatureFlag
+      - I18n
+      - Idempotency
+      - Integrity
+      - Introspection
+      - Mail
+      - Notification
+      - Observability
+      - Queue
+      - Resilience
+      - Runtime
+      - Saga
+      - Saga_Internal
+      - Scheduler
+      - Security
+      - Storage
+      - Supervisor
+      - Tenancy
+      - View
+      - Webhook
+      - Workflow
     Scheduler: *public_deps
     Security: *public_deps
     Storage: *public_deps
@@ -1348,6 +1436,7 @@ deptrac:
     Tenancy: *public_deps
     View: *public_deps
     Webhook: *public_deps
+    Workflow: *public_deps
     # Introspection public layer depends on its own internal (service facades inject internal implementations)
     Introspection:
       - CompositionRoot
@@ -1431,6 +1520,7 @@ deptrac:
     Queue_Internal: [Queue, Api, Support, Container, Config, Core, ErrorHandling]
     Resilience_Internal: [Resilience, Api, Support, Container, Config, Core, ErrorHandling]
     Runtime_Internal: [Runtime, Api, Support, Container, Config, Core, ErrorHandling]
+    Saga_Internal: [Saga, Api, Support, Container, Config, Core, ErrorHandling, Event, Workflow]
     Scheduler_Internal: [Scheduler, Api, Support, Container, Config, Core, ErrorHandling]
     Security_Internal: [Security, Api, Support, Container, Config, Core, ErrorHandling]
     Storage_Internal: [Storage, Api, Support, Container, Config, Core, ErrorHandling]
@@ -1438,6 +1528,20 @@ deptrac:
     Tenancy_Internal: [Tenancy, Api, Support, Container, Config, Core, ErrorHandling]
     View_Internal: [View, Api, Support, Container, Config, Core, ErrorHandling]
     Webhook_Internal: [Webhook, Api, Support, Container, Config, Core, ErrorHandling]
+    Workflow_Internal:
+      [
+        Workflow,
+        Api,
+        Support,
+        Container,
+        Config,
+        Core,
+        ErrorHandling,
+        Audit,
+        Database,
+        Event,
+        Security,
+      ]
     # CoreRuntimeProbe introspects Container, ExtensionRegistry, Router (+ Http\Method), and Console Application (CompositionRoot)
     Introspection_Internal:
       [
@@ -1980,6 +2084,7 @@ deptrac:
     ObservabilityExportExtension: *public_deps
     Psr7BridgeExtension: *public_deps
     StudioExtension: *public_deps
+    AccessibilityExtension: *public_deps
     ExampleExtension: *public_deps
 
     GrpcExtension:

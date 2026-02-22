@@ -1,0 +1,82 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extension\Accessibility;
+
+use Override;
+use Pulsar\Api\Api;
+use Pulsar\Container\ContainerInterface;
+use Pulsar\Extensibility\ExtensionInterface;
+use Pulsar\Extensibility\ServiceProviderInterface;
+use Pulsar\Extension\Accessibility\Command\AccessibilityAuditCommand;
+use Pulsar\Routing\RouterInterface;
+
+/**
+ * Accessibility extension for WCAG 2.1 AA compliance tooling.
+ *
+ * Provides composable helpers, static validators, contrast checking,
+ * and audit reporting. All components are opt-in building blocks —
+ * no middleware blindly injects ARIA into arbitrary HTML.
+ */
+#[Api(since: '1.0.0')]
+final readonly class AccessibilityExtension implements ExtensionInterface
+{
+    #[Override]
+    public function name(): string
+    {
+        return 'pulsar/accessibility';
+    }
+
+    #[Override]
+    public function register(ContainerInterface $container): void
+    {
+        // Service provider handles all bindings
+    }
+
+    #[Override]
+    public function boot(ContainerInterface $container, RouterInterface $router): void
+    {
+        // a11y:audit is dev/CI only — never registered in production
+        if ($this->isDevMode($container)) {
+            $container->bind(
+                AccessibilityAuditCommand::class,
+                static function () use ($container): AccessibilityAuditCommand {
+                    /** @var \Pulsar\Extension\Accessibility\Audit\AccessibilityAuditor $auditor */
+                    $auditor = $container->get(\Pulsar\Extension\Accessibility\Audit\AccessibilityAuditor::class);
+
+                    /** @var \Pulsar\Extension\Accessibility\Audit\ManualChecklistGenerator $checklist */
+                    $checklist = $container->get(\Pulsar\Extension\Accessibility\Audit\ManualChecklistGenerator::class);
+
+                    return new AccessibilityAuditCommand($auditor, $checklist);
+                },
+            );
+        }
+    }
+
+    /**
+     * @return list<class-string<ServiceProviderInterface>>
+     */
+    #[Override]
+    public function providers(): array
+    {
+        return [
+            AccessibilityServiceProvider::class,
+        ];
+    }
+
+    private function isDevMode(ContainerInterface $container): bool
+    {
+        if ($container->has('app.debug')) {
+            return (bool) $container->get('app.debug');
+        }
+
+        if ($container->has('app.environment')) {
+            $env = $container->get('app.environment');
+
+            return $env !== 'production' && $env !== 'prod';
+        }
+
+        return false;
+    }
+}

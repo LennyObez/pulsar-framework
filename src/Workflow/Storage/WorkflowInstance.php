@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Workflow\Storage;
 
 use DateTimeImmutable;
+use NoDiscard;
 use Pulsar\Api\Api;
 
 /**
@@ -33,6 +34,7 @@ final readonly class WorkflowInstance
     /**
      * Create a new instance with an updated state and incremented version.
      */
+    #[NoDiscard]
     public function withState(string $newState, int $newVersion): self
     {
         return clone($this, [
@@ -44,6 +46,7 @@ final readonly class WorkflowInstance
     /**
      * Create a new instance with an updated status.
      */
+    #[NoDiscard]
     public function withStatus(WorkflowInstanceStatus $status): self
     {
         return clone($this, [
@@ -54,6 +57,7 @@ final readonly class WorkflowInstance
     /**
      * Create a new instance marked as completed.
      */
+    #[NoDiscard]
     public function withCompleted(DateTimeImmutable $completedAt): self
     {
         return clone($this, [
@@ -65,6 +69,7 @@ final readonly class WorkflowInstance
     /**
      * Create a new instance with a timeout deadline.
      */
+    #[NoDiscard]
     public function withTimeout(?DateTimeImmutable $timeoutAt): self
     {
         return clone($this, [

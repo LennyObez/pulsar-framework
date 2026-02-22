@@ -1,0 +1,23 @@
+{
+  "name": "pulsar/accessibility",
+  "version": "1.0.0-rc.11",
+  "description": "WCAG 2.1 AA accessibility helpers, validators, contrast checking, and audit tooling for regulated domains",
+  "trust_tier": "core",
+  "extension_class": "Pulsar\\Extension\\Accessibility\\AccessibilityExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "provides": {
+    "services": [
+      "AccessibilityAuditor",
+      "DesignTokenContrastChecker",
+      "SkipNavigation",
+      "LandmarkRegion",
+      "LiveRegion",
+      "FocusManager",
+      "ManualChecklistGenerator"
+    ],
+    "routes": false,
+    "commands": ["a11y:audit"]
+  }
+}
