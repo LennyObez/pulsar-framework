@@ -20,6 +20,9 @@ use function is_string;
  *
  * Resolves OAuth2 access tokens (reference or JWT) to Pulsar identities.
  * Integrates with the existing TokenGuard via TokenResolverInterface.
+ *
+ * @psalm-api Wired into the TokenGuard chain via the auth service
+ *            provider; never instantiated by name.
  */
 #[Internal(reason: 'Adapter implementation; use TokenResolverInterface')]
 final readonly class OAuth2TokenResolver implements TokenResolverInterface

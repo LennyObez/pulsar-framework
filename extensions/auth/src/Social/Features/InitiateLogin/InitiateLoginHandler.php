@@ -17,6 +17,9 @@ use Pulsar\Extension\Auth\Social\Internal\Session\SessionOAuthStateManager;
  *
  * Generates CSRF state, optional PKCE challenge and OIDC nonce,
  * then builds the authorization URL via the provider adapter.
+ *
+ * @psalm-api Resolved from the DI container by the social login
+ *            controller; never instantiated by name.
  */
 final readonly class InitiateLoginHandler
 {
