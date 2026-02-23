@@ -77,6 +77,9 @@ use const DIRECTORY_SEPARATOR;
  *
  * When OTLP is disabled, registers no-op processors with zero overhead.
  * JSON Lines exporters are always available when configured.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class ObservabilityExtension implements ExtensionInterface, PreBootExtensionInterface, PostBootExtensionInterface
