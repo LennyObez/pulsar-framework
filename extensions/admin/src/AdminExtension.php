@@ -45,6 +45,9 @@ use const DIRECTORY_SEPARATOR;
  * export with evidence hashing, dashboard widgets, and saved views.
  * Enabled by default in local/dev. In staging/production, requires
  * explicit environment variables.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final readonly class AdminExtension implements ExtensionInterface, PreBootExtensionInterface
 {
@@ -70,7 +73,11 @@ final readonly class AdminExtension implements ExtensionInterface, PreBootExtens
             $configPath = $configManager->configPath();
 
             if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'admin.php')) {
-                /** @psalm-suppress UnresolvableInclude */
+                /**
+                 * @psalm-suppress UnresolvableInclude
+                 *
+                 * @var mixed $adminData
+                 */
                 $adminData = require $configPath . DIRECTORY_SEPARATOR . 'admin.php';
 
                 if (is_array($adminData)) {

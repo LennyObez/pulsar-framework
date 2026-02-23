@@ -61,6 +61,9 @@ use const DIRECTORY_SEPARATOR;
  *
  * Provides page view tracking, session management, custom events, goals,
  * and multi-site analytics without cookies: fully GDPR/ePrivacy compliant.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class AnalyticsExtension implements
@@ -88,6 +91,7 @@ final readonly class AnalyticsExtension implements
             $configPath = $configManager->configPath();
 
             if ($configPath !== null && is_file($configPath . DIRECTORY_SEPARATOR . 'analytics.php')) {
+                /** @var mixed $data */
                 $data = require $configPath . DIRECTORY_SEPARATOR . 'analytics.php';
 
                 if (is_array($data)) {
