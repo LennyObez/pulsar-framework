@@ -631,3 +631,216 @@ A scheduled CI workflow (`.github/workflows/dependency-audit.yml`) runs `compose
 - Use `allowWeakParameters: true` for password hashing in tests (avoids 100ms+ Argon2id per hash)
 - Use in-memory drivers (`SyncDriver`, `InMemoryDriver`, `:memory:` SQLite) over real databases
 - Keep benchmark setup lightweight; measure only the hot path
+
+## Pulsar Testing Utilities
+
+The `Pulsar\Testing` module provides framework-specific test helpers: fakes, assertions, HTTP testing, model factories, database testing, and deterministic time control. All utilities live in `src/Testing/` and integrate with PHPUnit.
+
+### TestCase base class
+
+Extend `Pulsar\Testing\TestCase` instead of PHPUnit's `TestCase` for automatic fake management:
+
+```php
+use Pulsar\Testing\TestCase;
+
+class OrderServiceTest extends TestCase
+{
+    public function testOrderCreation(): void
+    {
+        $events = $this->fakeEvents();
+        $mail = $this->fakeMail();
+
+        // ... trigger order creation ...
+
+        $events->assertDispatched(OrderCreated::class);
+        $mail->assertSentTo('customer@example.com', OrderConfirmation::class);
+    }
+}
+```
+
+Fakes are automatically reset after each test — no manual cleanup needed. All fakes are scoped to the test instance (no shared static state), making them parallel-safe.
+
+### Fakes
+
+Fakes replace framework services with in-memory test doubles that record operations for assertion. Each fake provides domain-specific assertion methods with detailed failure messages showing expected vs actual state.
+
+**Event fake** (`EventFake` implements `EventDispatcherInterface`):
+
+```php
+$events = $this->fakeEvents();
+$events->assertDispatched(OrderCreated::class);
+$events->assertDispatched(OrderCreated::class, 2); // exact count
+$events->assertNotDispatched(OrderCancelled::class);
+$events->assertNothingDispatched();
+$events->assertDispatchedWith(OrderCreated::class, fn($e) => $e->orderId === '123');
+$events->assertEnvelopeDispatched('order.created');
+```
+
+**Queue fake** (`QueueFake` implements `QueueDriverInterface`):
+
+```php
+$queue = $this->fakeQueue();
+$queue->assertPushed('App\Jobs\SendEmail');
+$queue->assertPushedOn('notifications', 'App\Jobs\Notify');
+$queue->assertNotPushed('App\Jobs\ProcessReport');
+$queue->assertNothingPushed();
+```
+
+**Mail fake** (`MailFake` implements `MailManagerInterface`):
+
+```php
+$mail = $this->fakeMail();
+$mail->assertSent(WelcomeEmail::class);
+$mail->assertSentTo('user@example.com', WelcomeEmail::class);
+$mail->assertNotSent(PasswordReset::class);
+$mail->assertNothingSent();
+```
+
+**Notification fake** (`NotificationFake` implements `NotificationManagerInterface`):
+
+```php
+$notifications = $this->fakeNotifications();
+$notifications->assertSent(InvoicePaid::class);
+$notifications->assertSentTo($user, InvoicePaid::class);
+$notifications->assertNothingSent();
+```
+
+**Cache fake** (`CacheFake` implements `CacheDriverInterface`):
+
+```php
+$cache = $this->fakeCache();
+$cache->assertHas('user:1:profile');
+$cache->assertMissing('deleted-key');
+$cache->assertValue('config:theme', 'dark');
+$cache->assertOperation('set', 'user:1:profile');
+$cache->assertEmpty();
+```
+
+**Storage fake** (`StorageFake` implements `StorageAdapterInterface`):
+
+```php
+$storage = $this->fakeStorage();
+$storage->assertExists('uploads/photo.jpg');
+$storage->assertMissing('deleted.txt');
+$storage->assertContent('config.json', '{"key":"value"}');
+$storage->assertCount(3, 'uploads/');
+$storage->assertEmpty();
+```
+
+### TestClock
+
+Freeze or advance time deterministically. Inject `ClockInterface` into services that need time awareness:
+
+```php
+use Pulsar\Testing\Clock\TestClock;
+
+$clock = TestClock::frozen();                    // freeze at current time
+$clock = TestClock::at('2024-01-15 10:00:00');   // freeze at specific time
+$clock->advance(seconds: 30);
+$clock->advance(minutes: 5, hours: 1);
+$clock->rewind(days: 1);
+$clock->setTo(new DateTimeImmutable('2025-06-01'));
+```
+
+### HTTP testing
+
+Build PSR-7 server requests and assert on responses:
+
+```php
+use Pulsar\Testing\Http\TestRequestBuilder;
+use Pulsar\Testing\Http\TestResponse;
+
+// Build requests
+$request = TestRequestBuilder::post('/api/users')
+    ->withJson(['name' => 'John'])
+    ->withToken('bearer-token')
+    ->build();
+
+// Assert responses
+$response = new TestResponse($psr7Response);
+$response->assertOk()
+    ->assertJson()
+    ->assertJsonFragment(['status' => 'ok'])
+    ->assertJsonPath('data.user.name', 'Alice')
+    ->assertHeader('Content-Type', 'application/json; charset=utf-8');
+```
+
+### Model factories
+
+```php
+use Pulsar\Testing\Factory\Factory;
+use Pulsar\Testing\Factory\Sequence;
+
+class UserFactory extends Factory
+{
+    protected function definition(): array
+    {
+        return ['name' => 'John', 'email' => 'john@test.com', 'role' => 'user'];
+    }
+
+    public function admin(): static
+    {
+        return $this->state(['role' => 'admin']);
+    }
+}
+
+$user = UserFactory::new()->admin()->make();
+$users = UserFactory::new()
+    ->sequence('email', new Sequence(fn(int $i) => "user-{$i}@test.com"))
+    ->count(5)
+    ->make();
+```
+
+### Database testing
+
+```php
+use Pulsar\Testing\Database\DatabaseTransactions;
+use Pulsar\Testing\Database\DatabaseAssertions;
+
+class OrderTest extends TestCase
+{
+    use DatabaseTransactions, DatabaseAssertions;
+
+    protected function getConnection(): PDO { /* ... */ }
+    protected function getDatabaseConnection(): PDO { return $this->getConnection(); }
+
+    public function testOrderIsPersisted(): void
+    {
+        $this->assertDatabaseHas('orders', ['customer_id' => '123', 'status' => 'pending']);
+        $this->assertDatabaseMissing('orders', ['status' => 'cancelled']);
+        $this->assertDatabaseCount('orders', 5);
+    }
+}
+```
+
+### Module architecture
+
+```
+src/Testing/
+├── TestCase.php              # Base test case with fake management
+├── Concern/
+│   └── ResetsTestState.php   # Auto-reset trait for fakes
+├── Clock/
+│   ├── ClockInterface.php    # Injectable clock contract
+│   └── TestClock.php         # Deterministic time control
+├── Fake/
+│   ├── EventFake.php         # Event dispatcher fake
+│   ├── QueueFake.php         # Queue driver fake
+│   ├── MailFake.php          # Mail manager fake
+│   ├── NotificationFake.php  # Notification manager fake
+│   ├── CacheFake.php         # Cache driver fake
+│   └── StorageFake.php       # Storage adapter fake
+├── Http/
+│   ├── TestResponse.php      # Response wrapper with assertions
+│   └── TestRequestBuilder.php # Fluent request builder
+├── Factory/
+│   ├── Factory.php           # Base factory class
+│   ├── Sequence.php          # Sequential value generator
+│   └── FactoryMap.php        # Entity-to-factory map
+├── Database/
+│   ├── RefreshDatabase.php   # Migrate + rollback trait
+│   ├── DatabaseTransactions.php # Transaction wrapping trait
+│   └── DatabaseAssertions.php # DB assertion methods
+└── Browser/
+    └── BrowserTestCase.php   # Browser testing scaffold
+```
