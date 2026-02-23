@@ -17,6 +17,9 @@ use Pulsar\Routing\RouterInterface;
  *
  * Provides FHIR resource types, a RESTful API, terminology services,
  * SMART on FHIR scope enforcement, and audit event export capabilities.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class FhirExtension implements ExtensionInterface

@@ -19,6 +19,9 @@ use Pulsar\Routing\RouterInterface;
  * and lifecycle management with deployment gates and monitoring hooks.
  *
  * This is the first PHP framework to implement ISO 42001 AI governance controls.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class AiGovernanceExtension implements ExtensionInterface

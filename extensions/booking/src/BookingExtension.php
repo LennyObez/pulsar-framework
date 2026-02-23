@@ -22,6 +22,9 @@ use Pulsar\Routing\RouterInterface;
  *
  * Provides appointment booking, reminders (email + SMS), deposit collection
  * via Payments integration, and Google Calendar synchronization.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class BookingExtension implements ExtensionInterface, PostBootExtensionInterface
 {

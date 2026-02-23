@@ -17,6 +17,9 @@ use Pulsar\Routing\RouterInterface;
  * Provides ICT risk management, incident management, digital operational
  * resilience testing, third-party ICT risk management, and cyber threat
  * information sharing capabilities for financial entities.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class DoraExtension implements ExtensionInterface

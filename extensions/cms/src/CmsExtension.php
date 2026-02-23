@@ -133,6 +133,9 @@ use const DIRECTORY_SEPARATOR;
  * Provides content management, taxonomy, navigation, editorial workflow,
  * custom fields, content locking, event sourcing, atomic snapshots,
  * safe HTML sanitization, and full-page caching with tag-based invalidation.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class CmsExtension implements ExtensionInterface, PreBootExtensionInterface, PostBootExtensionInterface
