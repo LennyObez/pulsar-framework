@@ -325,6 +325,7 @@ final readonly class AdminServiceProvider implements ServiceProviderInterface
             $basePath = getcwd() ?: '.';
 
             if ($container->has('app.base_path')) {
+                /** @var mixed $basePathValue */
                 $basePathValue = $container->get('app.base_path');
 
                 if (is_string($basePathValue)) {
