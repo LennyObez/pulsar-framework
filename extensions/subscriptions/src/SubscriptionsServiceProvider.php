@@ -170,6 +170,7 @@ final class SubscriptionsServiceProvider implements ServiceProviderInterface
     private function resolveEncryptionKey(ContainerInterface $container): string
     {
         if ($container->has('subscriptions.webhook.encryption_key')) {
+            /** @var mixed $key */
             $key = $container->get('subscriptions.webhook.encryption_key');
 
             if (is_string($key) && $key !== '') {
