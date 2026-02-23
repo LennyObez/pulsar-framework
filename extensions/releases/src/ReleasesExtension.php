@@ -21,6 +21,9 @@ use Pulsar\Routing\RouterInterface;
  * browsing paginated release history, and registering for the beta program.
  * Includes an admin panel for CRUD operations on releases and viewing beta
  * signup lists.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class ReleasesExtension implements ExtensionInterface

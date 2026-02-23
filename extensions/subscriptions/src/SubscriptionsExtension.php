@@ -19,6 +19,9 @@ use Pulsar\Routing\RouterInterface;
  * Provides server-side subscription verification for Google Play and Apple
  * App Store, webhook processing for real-time notifications, and a REST API
  * for mobile clients to verify, query, and restore subscriptions.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class SubscriptionsExtension implements ExtensionInterface

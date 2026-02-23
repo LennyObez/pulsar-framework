@@ -31,6 +31,9 @@ use const DIRECTORY_SEPARATOR;
  * Provides ticket submission, status tracking, agent assignment,
  * SLA enforcement, and admin back-office. Designed for regulated,
  * mission-critical support workflows.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class TicketsExtension implements ExtensionInterface, PreBootExtensionInterface

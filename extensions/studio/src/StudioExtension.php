@@ -72,6 +72,9 @@ use const DIRECTORY_SEPARATOR;
  * - preBoot: loads config, creates storage, redaction, evidence chain
  * - boot: registers Studio web UI routes
  * - postBoot: wires collectors into final service bindings
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class StudioExtension implements ExtensionInterface, PreBootExtensionInterface, PostBootExtensionInterface
 {

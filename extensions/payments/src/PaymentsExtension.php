@@ -29,6 +29,9 @@ use Pulsar\Routing\RouterInterface;
  * (Stripe, PayPal, SEPA, App Store, Google Play).
  *
  * Merges the former pulsar/payments and pulsar/subscriptions extensions.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class PaymentsExtension implements ExtensionInterface, PostBootExtensionInterface
 {
