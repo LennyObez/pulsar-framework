@@ -10,6 +10,9 @@ use Pulsar\Api\Api;
  * Provider-agnostic interface for LLM completions.
  *
  * Implementations connect to specific LLM APIs (OpenAI, Anthropic, etc.).
+ *
+ * @psalm-api Implemented by user-land providers and resolved through
+ *            the DI container under tag pulsar.cms.llm-providers.
  */
 #[Api(since: '1.0.0')]
 interface LlmProviderInterface
