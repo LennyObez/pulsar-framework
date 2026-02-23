@@ -16,6 +16,9 @@ use Pulsar\Routing\RouterInterface;
  * Provides electronic signatures, seals, qualified timestamps,
  * registered delivery, and assurance level enforcement per
  * eIDAS Regulation (EU No 910/2014).
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class EidasExtension implements ExtensionInterface

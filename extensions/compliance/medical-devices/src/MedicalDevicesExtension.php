@@ -17,6 +17,9 @@ use Pulsar\Routing\RouterInterface;
  * Provides UDI management, post-market surveillance, vigilance reporting,
  * clinical investigation tracking, design controls, risk management (ISO 14971),
  * and CAPA (Corrective and Preventive Actions).
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class MedicalDevicesExtension implements ExtensionInterface

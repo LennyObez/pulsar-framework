@@ -17,6 +17,9 @@ use Pulsar\Routing\RouterInterface;
  * passwordless authentication into a single cohesive extension.
  *
  * Replaces: pulsar/social-sso, pulsar/oauth2, pulsar/webauthn
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class AuthExtension implements ExtensionInterface
 {
