@@ -8,6 +8,9 @@ use Pulsar\Api\Internal;
 
 /**
  * All CMS-specific permissions used for authorization checks.
+ *
+ * @psalm-api Cases are referenced by string value through the gate
+ *            policies, never by `CmsPermission::Foo` from framework code.
  */
 #[Internal(reason: 'CMS authorization; implementation detail')]
 enum CmsPermission: string

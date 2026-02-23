@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Built-in block patterns for common page layouts.
+ *
+ * @psalm-api Registered via CorePatterns::register() from the cms
+ *            BlockEditor service provider; not new'd by name.
  */
 #[Api(since: '1.0.0')]
 final class CorePatterns
