@@ -40,6 +40,9 @@ use const JSON_THROW_ON_ERROR;
  *
  * Usage:
  *   pulsar cms:theme:install /path/to/my-theme
+ *
+ * @psalm-api Resolved by the console application from the DI
+ *            container, registered under `cms:theme:install`.
  */
 #[Internal]
 final class ThemeInstallCommand extends Command

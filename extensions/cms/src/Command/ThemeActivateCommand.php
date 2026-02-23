@@ -24,6 +24,9 @@ use function sprintf;
  *
  * Usage:
  *   pulsar cms:theme:activate my-theme-slug
+ *
+ * @psalm-api Resolved by the console application from the DI
+ *            container, registered under `cms:theme:activate`.
  */
 #[Internal]
 final class ThemeActivateCommand extends Command
