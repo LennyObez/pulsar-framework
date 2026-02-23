@@ -17,6 +17,9 @@ use Pulsar\Routing\RouterInterface;
  * Provides gRPC service hosting with interceptor pipeline, mTLS,
  * streaming, health checks, and server reflection. Requires a
  * persistent runtime (RoadRunner or FrankenPHP): incompatible with PHP-FPM.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class GrpcExtension implements ExtensionInterface

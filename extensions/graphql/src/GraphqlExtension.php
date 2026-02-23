@@ -17,6 +17,9 @@ use Pulsar\Routing\RouterInterface;
  *
  * Provides a read-only GraphQL endpoint for querying content,
  * taxonomies, and media assets.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class GraphqlExtension implements ExtensionInterface

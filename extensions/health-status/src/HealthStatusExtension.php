@@ -47,6 +47,9 @@ use const DIRECTORY_SEPARATOR;
  *
  * Provides health check history, incident detection, and an operational
  * dashboard for monitoring system health over time.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class HealthStatusExtension implements ExtensionInterface, PostBootExtensionInterface

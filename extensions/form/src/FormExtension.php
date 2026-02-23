@@ -15,6 +15,9 @@ use Pulsar\Routing\RouterInterface;
  *
  * Provides form construction, CSRF protection, validation binding,
  * regulated consent fields, file upload handling, and multi-step wizards.
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final readonly class FormExtension implements ExtensionInterface
 {

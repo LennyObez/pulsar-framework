@@ -46,6 +46,9 @@ use const DIRECTORY_SEPARATOR;
 /**
  * MCP server extension: exposes project metadata and developer tools
  * to AI assistants via the Model Context Protocol (JSON-RPC 2.0 over stdio).
+ *
+ * @psalm-api Loaded by the framework's ExtensionLoader at boot time
+ *            via the pulsar.json manifest, never instantiated by name.
  */
 final class McpServerExtension implements ExtensionInterface, PreBootExtensionInterface
 {
