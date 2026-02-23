@@ -17,6 +17,9 @@ use function sprintf;
  *
  * Extracted from middleware to allow unit testing of each heuristic
  * independently from the HTTP layer.
+ *
+ * @psalm-api Resolved from the DI container by the comment submission
+ *            middleware; not new'd by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class AntiAbuseHeuristics
