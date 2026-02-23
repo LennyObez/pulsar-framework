@@ -19,6 +19,9 @@ use function is_string;
  *
  * Takes a FilterGroup (from the visual filter builder UI) and
  * produces parameterized SQL with named bindings.
+ *
+ * @psalm-api Resolved from the DI container by admin list/search
+ *            controllers; never instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class FilterCompiler
