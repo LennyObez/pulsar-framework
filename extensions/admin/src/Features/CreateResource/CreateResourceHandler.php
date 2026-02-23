@@ -73,6 +73,7 @@ final readonly class CreateResourceHandler
             if (!$field->editable) {
                 continue;
             }
+            /** @var mixed $value */
             $value = $data[$field->name] ?? null;
             foreach ($field->rules as $rule) {
                 $error = $rule->validate($value, $field->label);

@@ -322,10 +322,15 @@ final readonly class AdminServiceProvider implements ServiceProviderInterface
         $container->bind(AdminServeCommand::class, static function () use ($container): AdminServeCommand {
             /** @var AdminConfig $config */
             $config = $container->get(AdminConfig::class);
-            $basePathValue = $container->has('app.base_path')
-                ? $container->get('app.base_path')
-                : null;
-            $basePath = is_string($basePathValue) ? $basePathValue : (getcwd() ?: '.');
+            $basePath = getcwd() ?: '.';
+
+            if ($container->has('app.base_path')) {
+                $basePathValue = $container->get('app.base_path');
+
+                if (is_string($basePathValue)) {
+                    $basePath = $basePathValue;
+                }
+            }
 
             return new AdminServeCommand($config, $basePath);
         });
