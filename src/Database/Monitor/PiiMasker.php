@@ -25,10 +25,9 @@ final readonly class PiiMasker
     /**
      * @param list<string> $piiColumns
      */
-    public function __construct(
-        private array $piiColumns,
-    ) {
-        $this->normalizedColumns = array_map(strtolower(...), $this->piiColumns);
+    public function __construct(array $piiColumns)
+    {
+        $this->normalizedColumns = array_map(strtolower(...), $piiColumns);
     }
 
     /**

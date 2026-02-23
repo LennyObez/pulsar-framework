@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Message;
 
+use InvalidArgumentException;
 use NoDiscard;
 use Override;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use Pulsar\Api\Api;
 use Pulsar\Http\ResponseStatus;
+use Pulsar\Http\SafeRedirect;
 
 use function implode;
 use function is_array;
 use function is_string;
 use function json_encode;
-use function ksort;
 use function strtolower;
 
 use const JSON_THROW_ON_ERROR;
@@ -49,6 +50,9 @@ class Response implements ResponseInterface
 
     private string $reasonPhrase;
 
+    /** @var array<string, list<string>>|null */
+    private ?array $headersCache = null;
+
     /**
      * @param array<string, string|list<string>> $headers
      */
@@ -61,7 +65,7 @@ class Response implements ResponseInterface
     ) {
         $this->statusCode = $statusCode;
         $this->reasonPhrase = $reasonPhrase !== '' ? $reasonPhrase : self::defaultReasonPhrase($statusCode);
-        $this->body = is_string($body) ? Stream::create($body) : $body;
+        $this->body = is_string($body) ? new StringStream($body) : $body;
         $this->protocolVersion = $protocolVersion;
 
         $this->headers = [];
@@ -72,8 +76,6 @@ class Response implements ResponseInterface
             $this->headerNames[$lowered] = $name;
             $this->headers[$lowered] = is_array($value) ? $value : [$value];
         }
-
-        ksort($this->headers);
     }
 
     // ── Pulsar Convenience Factories ────────────────────────────────────
@@ -127,10 +129,22 @@ class Response implements ResponseInterface
 
     /**
      * Create a redirect response.
+     *
+     * The URL is validated to prevent open redirects. Relative paths starting
+     * with "/" are always allowed. Absolute URLs must use http/https and match
+     * the provided allowed-hosts list.
+     *
+     * @param string       $url          Redirect target URL
+     * @param int          $status       HTTP status code (default 302)
+     * @param list<string> $allowedHosts Allowed hosts for absolute URLs
+     *
+     * @throws InvalidArgumentException If the URL is unsafe for redirection
      */
     #[NoDiscard]
-    public static function redirect(string $url, int $status = 302): self
+    public static function redirect(string $url, int $status = 302, array $allowedHosts = []): self
     {
+        SafeRedirect::validate($url, $allowedHosts);
+
         return new self(
             statusCode: $status,
             headers: ['Location' => $url],
@@ -189,13 +203,17 @@ class Response implements ResponseInterface
     #[Override]
     public function getHeaders(): array
     {
+        if ($this->headersCache !== null) {
+            return $this->headersCache;
+        }
+
         $result = [];
 
         foreach ($this->headers as $lowered => $values) {
             $result[$this->headerNames[$lowered]] = $values;
         }
 
-        return $result;
+        return $this->headersCache = $result;
     }
 
     #[Override]
@@ -232,7 +250,7 @@ class Response implements ResponseInterface
         $new = clone $this;
         $new->headerNames[$lowered] = $name;
         $new->headers[$lowered] = $values;
-        ksort($new->headers);
+        $new->headersCache = null;
 
         return $new;
     }
@@ -246,6 +264,7 @@ class Response implements ResponseInterface
         $lowered = strtolower($name);
 
         $new = clone $this;
+        $new->headersCache = null;
 
         if (isset($new->headers[$lowered])) {
             /** @var list<string> $merged */
@@ -254,7 +273,6 @@ class Response implements ResponseInterface
         } else {
             $new->headerNames[$lowered] = $name;
             $new->headers[$lowered] = $values;
-            ksort($new->headers);
         }
 
         return $new;
@@ -272,6 +290,7 @@ class Response implements ResponseInterface
 
         $new = clone $this;
         unset($new->headers[$lowered], $new->headerNames[$lowered]);
+        $new->headersCache = null;
 
         return $new;
     }

@@ -39,6 +39,14 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
 
     private ?PsrRequestHandlerInterface $fallbackHandler = null;
 
+    /**
+     * Cached middleware chain for the current fallback handler.
+     *
+     * Built on first handle() call and reused for subsequent requests.
+     * Invalidated when middleware stack or fallback handler changes.
+     */
+    private ?PsrRequestHandlerInterface $cachedChain = null;
+
     public function __construct(
         private readonly ?ContainerInterface $container = null,
     ) {}
@@ -54,6 +62,7 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     {
         $this->middleware[] = $middleware;
         $this->resolvedMiddleware = null;
+        $this->cachedChain = null;
 
         return $this;
     }
@@ -63,7 +72,10 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
      */
     public function process(ServerRequestInterface $request, PsrRequestHandlerInterface $handler): ResponseInterface
     {
-        $this->fallbackHandler = $handler;
+        if ($this->fallbackHandler !== $handler) {
+            $this->fallbackHandler = $handler;
+            $this->cachedChain = null;
+        }
 
         return $this->handle($request);
     }
@@ -80,9 +92,9 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
             throw new RuntimeException('No fallback handler set. Call process() or setHandler() first.');
         }
 
-        $pipeline = $this->createPipeline($this->fallbackHandler);
+        $chain = $this->cachedChain ??= $this->createPipeline($this->fallbackHandler);
 
-        return $pipeline->handle($request);
+        return $chain->handle($request);
     }
 
     /**
@@ -91,6 +103,7 @@ final class MiddlewarePipeline implements MiddlewarePipelineInterface, PsrReques
     public function setHandler(PsrRequestHandlerInterface $handler): void
     {
         $this->fallbackHandler = $handler;
+        $this->cachedChain = null;
     }
 
     /**

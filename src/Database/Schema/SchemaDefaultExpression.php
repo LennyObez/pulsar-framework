@@ -21,4 +21,6 @@ enum SchemaDefaultExpression: string
     case True = 'TRUE';
     case False = 'FALSE';
     case Null = 'NULL';
+    case PostgresUuid = 'gen_random_uuid()';
+    case MysqlUuid = '(UUID())';
 }

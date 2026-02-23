@@ -96,8 +96,8 @@
     "bin/pulsar"
   ],
   "scripts": {
-    "test": "phpunit -c tools/php/phpunit.xml",
-    "test:coverage": "phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml --coverage-html coverage/html",
+    "test": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off vendor/bin/phpunit -c tools/php/phpunit.xml",
+    "test:coverage": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off vendor/bin/phpunit -c tools/php/phpunit.xml --coverage-clover coverage/clover.xml --coverage-html coverage/html",
     "phpstan": "php -d memory_limit=1G vendor/bin/phpstan analyse -c tools/php/phpstan.neon",
     "psalm": "psalm -c tools/php/psalm.xml",
     "cs:check": "php-cs-fixer fix --dry-run --diff",
@@ -116,9 +116,9 @@
     ],
     "wiring:check": "php scripts/wiring_check.php",
     "mutation": "infection --threads=4 --min-msi=80 --min-covered-msi=90",
-    "fuzz": "phpunit -c tools/php/phpunit.xml --group fuzz",
-    "chaos": "phpunit -c tools/php/phpunit.xml --group chaos",
-    "property": "phpunit -c tools/php/phpunit.xml --group property",
+    "fuzz": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off vendor/bin/phpunit -c tools/php/phpunit.xml --group fuzz",
+    "chaos": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off vendor/bin/phpunit -c tools/php/phpunit.xml --group chaos",
+    "property": "php -d opcache.enable_cli=1 -d opcache.memory_consumption=256 -d opcache.jit=off vendor/bin/phpunit -c tools/php/phpunit.xml --group property",
     "qa": [
       "@cs:check",
       "@phpstan",

@@ -33,15 +33,25 @@ readonly class Uri implements UriInterface
         'ftps' => 990,
     ];
 
+    private string $encodedPath;
+
+    private string $encodedQuery;
+
+    private string $encodedFragment;
+
     public function __construct(
         private string $scheme = '',
         private string $userInfo = '',
         private string $host = '',
         private ?int $port = null,
-        private string $path = '',
-        private string $query = '',
-        private string $fragment = '',
-    ) {}
+        string $path = '',
+        string $query = '',
+        string $fragment = '',
+    ) {
+        $this->encodedPath = self::encodePath($path);
+        $this->encodedQuery = self::encodeQueryOrFragment($query);
+        $this->encodedFragment = self::encodeQueryOrFragment($fragment);
+    }
 
     /**
      * Parse a URI string into a Uri instance.
@@ -143,21 +153,21 @@ readonly class Uri implements UriInterface
     #[NoDiscard]
     public function getPath(): string
     {
-        return self::encodePath($this->path);
+        return $this->encodedPath;
     }
 
     #[Override]
     #[NoDiscard]
     public function getQuery(): string
     {
-        return self::encodeQueryOrFragment($this->query);
+        return $this->encodedQuery;
     }
 
     #[Override]
     #[NoDiscard]
     public function getFragment(): string
     {
-        return self::encodeQueryOrFragment($this->fragment);
+        return $this->encodedFragment;
     }
 
     #[Override]
@@ -203,21 +213,27 @@ readonly class Uri implements UriInterface
     #[NoDiscard]
     public function withPath(string $path): UriInterface
     {
-        return clone($this, ['path' => $path]);
+        return clone($this, [
+            'encodedPath' => self::encodePath($path),
+        ]);
     }
 
     #[Override]
     #[NoDiscard]
     public function withQuery(string $query): UriInterface
     {
-        return clone($this, ['query' => $query]);
+        return clone($this, [
+            'encodedQuery' => self::encodeQueryOrFragment($query),
+        ]);
     }
 
     #[Override]
     #[NoDiscard]
     public function withFragment(string $fragment): UriInterface
     {
-        return clone($this, ['fragment' => $fragment]);
+        return clone($this, [
+            'encodedFragment' => self::encodeQueryOrFragment($fragment),
+        ]);
     }
 
     #[Override]

@@ -23,8 +23,6 @@ use ReflectionNamedType;
 use Throwable;
 
 use function array_keys;
-use function array_pop;
-use function in_array;
 use function is_callable;
 use function is_object;
 use function is_string;
@@ -56,7 +54,7 @@ final class Container implements AdvancedContainerInterface
     /**
      * IDs currently being resolved (for circular dependency detection).
      *
-     * @var list<string>
+     * @var array<string, true>
      */
     private array $resolving = [];
 
@@ -309,12 +307,12 @@ final class Container implements AdvancedContainerInterface
 
     private function resolve(string $id): object
     {
-        // Circular dependency detection
-        if (in_array($id, $this->resolving, true)) {
-            throw ContainerException::circularDependency($id, $this->resolving);
+        // Circular dependency detection — O(1) via associative array
+        if (isset($this->resolving[$id])) {
+            throw ContainerException::circularDependency($id, array_keys($this->resolving));
         }
 
-        $this->resolving[] = $id;
+        $this->resolving[$id] = true;
 
         try {
             $definition = $this->definitions[$id];
@@ -359,7 +357,7 @@ final class Container implements AdvancedContainerInterface
 
             return $instance;
         } finally {
-            array_pop($this->resolving);
+            unset($this->resolving[$id]);
         }
     }
 
