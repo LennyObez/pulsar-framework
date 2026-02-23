@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a new order is created.
+ *
+ * @psalm-api Event class — dispatched by the order workflow through
+ *            the EventDispatcher.
  */
 #[Api(since: '1.0.0')]
 final readonly class OrderCreated
