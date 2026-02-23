@@ -36,6 +36,9 @@ use const PATHINFO_EXTENSION;
  *   3. Auto-detect: inspects root keys to route to the correct handler
  *
  * Defaults to dry-run mode unless --execute is passed.
+ *
+ * @psalm-api Resolved by the console application from the DI
+ *            container, registered under the `cms:import` signature.
  */
 #[Internal]
 final class CmsImportCommand extends Command

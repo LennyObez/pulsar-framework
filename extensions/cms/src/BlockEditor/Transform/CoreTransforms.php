@@ -14,6 +14,9 @@ use function is_string;
  *
  * Registers standard transforms: Heading <-> Paragraph, List <-> Paragraph,
  * Quote <-> Paragraph, preserving content during conversion.
+ *
+ * @psalm-api Registered via static `register()` from the cms BlockEditor
+ *            service provider; not new'd by name.
  */
 #[Api(since: '1.0.0')]
 final class CoreTransforms

@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Built-in block variations for core block types.
+ *
+ * @psalm-api Registered via static `register()` from the cms BlockEditor
+ *            service provider; not new'd by name.
  */
 #[Api(since: '1.0.0')]
 final class CoreVariations
