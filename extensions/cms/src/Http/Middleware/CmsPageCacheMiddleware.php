@@ -42,6 +42,9 @@ use const JSON_THROW_ON_ERROR;
  * - Authenticated admin users (any cms.* role)
  * - Non-GET/HEAD methods
  * - _nocache query parameter present
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
 #[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
