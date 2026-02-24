@@ -26,6 +26,8 @@ use function ltrim;
  *
  * When a translation is not found in the requested locale, optionally
  * falls back to the default locale translation (configurable).
+ *
+ * @psalm-api Resolved by content middleware from the DI container; not new'd.
  */
 #[Internal(reason: 'CMS i18n slug resolution; implementation detail')]
 final readonly class LocaleSlugResolver

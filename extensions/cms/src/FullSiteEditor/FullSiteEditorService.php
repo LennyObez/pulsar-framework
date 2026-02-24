@@ -19,6 +19,8 @@ use function trim;
  *
  * This service coordinates between the template part repository and global
  * styles repository, providing validation and slug normalization.
+ *
+ * @psalm-api Resolved by FSE controllers from the DI container; not new'd.
  */
 #[Api(since: '1.0.0')]
 final readonly class FullSiteEditorService
