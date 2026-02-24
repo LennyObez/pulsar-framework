@@ -32,6 +32,9 @@ use function trim;
  *   1. Admin submits field definitions via the GUI
  *   2. SchemaBuilder validates and constructs a ContentTypeDefinition
  *   3. The definition is persisted through the ContentTypeRegistryInterface
+ *
+ * @psalm-api Resolved by the SchemaBuilder admin controller from the
+ *            DI container; not new'd by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class SchemaBuilder
