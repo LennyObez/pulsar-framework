@@ -7,6 +7,8 @@ namespace Pulsar\Extension\Cms\BlockEditor\CoreBlocks;
 use Override;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\BlockEditor\BlockTypeInterface;
+use Pulsar\Extension\Cms\Media\MediaAsset;
+use Pulsar\Extension\Cms\Media\ResponsiveImageRenderer;
 
 use function htmlspecialchars;
 use function is_array;
@@ -18,6 +20,10 @@ use const ENT_QUOTES;
 #[Internal]
 final readonly class GalleryBlock implements BlockTypeInterface
 {
+    public function __construct(
+        private ?ResponsiveImageRenderer $responsiveRenderer = null,
+    ) {}
+
     #[Override]
     public function type(): string
     {
@@ -51,7 +57,7 @@ final readonly class GalleryBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{src: string, alt: string, caption?: string}> $images */
+        /** @var list<mixed> $images */
         $images = $data['images'] ?? [];
         $columns = (int) ($data['columns'] ?? 3);
 
@@ -59,7 +65,7 @@ final readonly class GalleryBlock implements BlockTypeInterface
             $columns = 3;
         }
 
-        $html = "<div class=\"gallery\" style=\"display:grid;grid-template-columns:repeat({$columns},1fr);gap:1rem\">";
+        $html = "<div class=\"gallery\" data-gallery style=\"display:grid;grid-template-columns:repeat({$columns},1fr);gap:1rem\">";
 
         foreach ($images as $image) {
             if (!is_array($image)) {
@@ -69,8 +75,22 @@ final readonly class GalleryBlock implements BlockTypeInterface
             $src = htmlspecialchars((string) ($image['src'] ?? ''), ENT_QUOTES, 'UTF-8');
             $alt = htmlspecialchars((string) ($image['alt'] ?? ''), ENT_QUOTES, 'UTF-8');
             $caption = $image['caption'] ?? null;
+            $category = $image['category'] ?? null;
 
-            $html .= "<figure><img src=\"{$src}\" alt=\"{$alt}\">";
+            /** @var MediaAsset|null $asset */
+            $asset = $image['_asset'] ?? null;
+            /** @var list<\Pulsar\Extension\Cms\Media\ImageVariant> $variants */
+            $variants = $image['_variants'] ?? [];
+
+            $categoryAttr = is_string($category) ? ' data-category="' . htmlspecialchars($category, ENT_QUOTES, 'UTF-8') . '"' : '';
+
+            $html .= "<figure{$categoryAttr}>";
+
+            if ($this->responsiveRenderer !== null && $asset instanceof MediaAsset && $variants !== []) {
+                $html .= $this->responsiveRenderer->render($asset, $variants);
+            } else {
+                $html .= "<img src=\"{$src}\" alt=\"{$alt}\" loading=\"lazy\">";
+            }
 
             if (is_string($caption) && $caption !== '') {
                 $html .= '<figcaption>' . htmlspecialchars($caption, ENT_QUOTES, 'UTF-8') . '</figcaption>';

@@ -69,7 +69,7 @@ final readonly class BlockRenderer
      * Used by composite blocks (e.g., ColumnsBlock) that need to render
      * nested blocks from raw data arrays without fabricating identity fields.
      *
-     * @param list<array{blockType: string, data: array<string, mixed>}> $blocks
+     * @param list<mixed> $blocks
      */
     public function renderRawBlocks(array $blocks): string
     {

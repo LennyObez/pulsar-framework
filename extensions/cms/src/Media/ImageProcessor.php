@@ -48,8 +48,8 @@ final readonly class ImageProcessor implements ImageProcessorInterface
 
         // Calculate dimensions maintaining aspect ratio
         if ($height === null) {
-            $ratio = $sourceWidth / $sourceHeight;
-            $height = (int) ceil($width / $ratio);
+            $ratio = (float) $sourceWidth / (float) $sourceHeight;
+            $height = (int) ceil((float) $width / $ratio);
         }
 
         // Don't upscale
@@ -79,7 +79,7 @@ final readonly class ImageProcessor implements ImageProcessorInterface
 
         imagecopyresampled($destination, $source, 0, 0, 0, 0, $width, $height, $sourceWidth, $sourceHeight);
 
-        $outputPath = tempnam(sys_get_temp_dir(), 'pulsar_img_') . '.' . $format;
+        $outputPath = (string) tempnam(sys_get_temp_dir(), 'pulsar_img_') . '.' . $format;
         $this->saveImage($destination, $outputPath, $format);
 
         unset($source, $destination);
@@ -95,7 +95,7 @@ final readonly class ImageProcessor implements ImageProcessorInterface
 
         // Resize to 20px wide, proportional height
         $targetWidth = 20;
-        $targetHeight = (int) ceil(20 * $sourceHeight / $sourceWidth);
+        $targetHeight = (int) ceil(20.0 * (float) $sourceHeight / (float) $sourceWidth);
 
         $destination = imagecreatetruecolor($targetWidth, $targetHeight);
 
@@ -127,6 +127,7 @@ final readonly class ImageProcessor implements ImageProcessorInterface
             return [];
         }
 
+        /** @var array<string, mixed> $data */
         return $data;
     }
 
@@ -134,7 +135,7 @@ final readonly class ImageProcessor implements ImageProcessorInterface
     {
         // GD re-encode inherently strips EXIF data
         $source = $this->loadImage($sourcePath);
-        $outputPath = tempnam(sys_get_temp_dir(), 'pulsar_exif_') . '.jpg';
+        $outputPath = (string) tempnam(sys_get_temp_dir(), 'pulsar_exif_') . '.jpg';
 
         imagejpeg($source, $outputPath, 95);
         unset($source);
