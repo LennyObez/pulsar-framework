@@ -13,20 +13,29 @@ use Pulsar\Codegen\Template\TemplateVariable;
 final class TemplateVariableTest extends TestCase
 {
     #[Test]
-    public function constructorSetsProperties(): void
-    {
-        $variable = new TemplateVariable('entityName', 'BlogPost');
-
-        self::assertSame('entityName', $variable->name);
-        self::assertSame('BlogPost', $variable->value);
-    }
-
-    #[Test]
     public function emptyValuesAreAllowed(): void
     {
         $variable = new TemplateVariable('', '');
 
         self::assertSame('', $variable->name);
         self::assertSame('', $variable->value);
+    }
+
+    #[Test]
+    public function specialCharactersInValueArePreserved(): void
+    {
+        $variable = new TemplateVariable('className', 'App\\Models\\User<T>');
+
+        self::assertSame('App\\Models\\User<T>', $variable->value);
+    }
+
+    #[Test]
+    public function twoVariablesWithSameNameAreDistinctObjects(): void
+    {
+        $a = new TemplateVariable('namespace', 'App\\Models');
+        $b = new TemplateVariable('namespace', 'App\\Services');
+
+        self::assertSame($a->name, $b->name);
+        self::assertNotSame($a->value, $b->value);
     }
 }

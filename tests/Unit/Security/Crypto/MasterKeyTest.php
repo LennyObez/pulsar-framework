@@ -272,4 +272,26 @@ final class MasterKeyTest extends TestCase
 
         self::assertSame('[NONE]', $debug['previousRawKey']);
     }
+
+    #[Test]
+    public function unserializationIsForbidden(): void
+    {
+        $masterKey = MasterKey::fromHex($this->validHex);
+
+        $this->expectException(SecurityException::class);
+        $this->expectExceptionMessage('Serialization of MasterKey is forbidden');
+
+        $masterKey->__unserialize([]);
+    }
+
+    #[Test]
+    public function normalizeContextRejectsWrongLength(): void
+    {
+        $masterKey = MasterKey::fromHex($this->validHex);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('exactly 8 bytes');
+
+        $masterKey->deriveSubKey(1, 'toolong_ctx');
+    }
 }

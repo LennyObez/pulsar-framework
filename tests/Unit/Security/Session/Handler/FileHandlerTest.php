@@ -177,4 +177,31 @@ final class FileHandlerTest extends TestCase
 
         self::assertSame('updated', $this->handler->read('session-1'));
     }
+
+    #[Test]
+    public function readWriteDestroyLifecycle(): void
+    {
+        // Read non-existent session
+        self::assertSame('', $this->handler->read('nonexistent'));
+
+        // Write
+        self::assertTrue($this->handler->write('test-id', 'session data'));
+
+        // Read back
+        self::assertSame('session data', $this->handler->read('test-id'));
+
+        // Destroy
+        self::assertTrue($this->handler->destroy('test-id'));
+        self::assertSame('', $this->handler->read('test-id'));
+    }
+
+    #[Test]
+    public function gcReturnsZeroWhenNoExpiredFiles(): void
+    {
+        $this->handler->write('active', 'data');
+
+        $deleted = $this->handler->gc(3600);
+
+        self::assertSame(0, $deleted);
+    }
 }

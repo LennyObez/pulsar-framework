@@ -51,41 +51,41 @@ final class SagaContainerGuardTest extends TestCase
     #[Test]
     public function test_allows_OutboxPort_for_saga_step_handler(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $guard = new SagaContainerGuard(enabled: true);
 
         $guard->assertAllowed(OutboxPort::class, 'App\\Saga\\Step\\ChargePaymentHandler');
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function test_allows_CommandBusPort_for_saga_step_handler(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $guard = new SagaContainerGuard(enabled: true);
 
         $guard->assertAllowed(CommandBusPort::class, 'App\\Saga\\Step\\ChargePaymentHandler');
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function test_allows_IntegrationEventBusPort_for_non_saga_handler(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $guard = new SagaContainerGuard(enabled: true);
 
         $guard->assertAllowed(IntegrationEventBusPort::class, 'App\\Controller\\WebhookController');
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function test_allows_everything_when_disabled(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $guard = new SagaContainerGuard(enabled: false);
 
         $guard->assertAllowed(IntegrationEventBusPort::class, 'App\\Saga\\Step\\ChargePaymentHandler');
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -96,13 +96,11 @@ final class SagaContainerGuardTest extends TestCase
 
         if ($shouldBlock) {
             $this->expectException(ForbiddenInjectionException::class);
+        } else {
+            $this->expectNotToPerformAssertions();
         }
 
         $guard->assertAllowed(IntegrationEventBusPort::class, $className);
-
-        if (!$shouldBlock) {
-            $this->addToAssertionCount(1);
-        }
     }
 
     /**

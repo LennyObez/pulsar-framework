@@ -44,15 +44,18 @@ final class PdfValidatorTest extends TestCase
     #[Test]
     public function validPdfPasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $path = $this->createPdf('%PDF-1.4 this is clean content without any dangerous patterns');
 
         $this->validator->validate($path);
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validPdfWithStandardObjectsPasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $content = '%PDF-1.7' . "\n" .
             '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj' . "\n" .
             '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj';
@@ -60,7 +63,6 @@ final class PdfValidatorTest extends TestCase
         $path = $this->createPdf($content);
 
         $this->validator->validate($path);
-        $this->addToAssertionCount(1);
     }
 
     // -- Wrong magic bytes ------------------------------------------------
@@ -112,6 +114,8 @@ final class PdfValidatorTest extends TestCase
     #[Test]
     public function pdfWithNoJsPatternsPasses(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $content = '%PDF-1.4' . "\n" .
             '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj' . "\n" .
             '2 0 obj << /Type /Pages /Kids [] /Count 0 >> endobj' . "\n" .
@@ -122,7 +126,6 @@ final class PdfValidatorTest extends TestCase
         $path = $this->createPdf($content);
 
         $this->validator->validate($path);
-        $this->addToAssertionCount(1);
     }
 
     // -- Non-existent file ------------------------------------------------

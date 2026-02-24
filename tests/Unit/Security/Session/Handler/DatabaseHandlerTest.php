@@ -212,4 +212,22 @@ final class DatabaseHandlerTest extends TestCase
         self::assertSame('192.168.1.1', $row['ip_address']);
         self::assertSame('Mozilla/5.0', $row['user_agent']);
     }
+
+    #[Test]
+    public function writeFailsOnPDOExceptionRollsBack(): void
+    {
+        // Use a fresh PDO that will fail on INSERT due to missing table
+        $badPdo = new PDO('sqlite::memory:');
+        $badPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        // Create table without required columns to cause write failure
+        $badPdo->exec('CREATE TABLE sessions (id VARCHAR(128) PRIMARY KEY)');
+
+        $handler = new DatabaseHandler($badPdo, 'sessions', 3600);
+        self::assertTrue($handler->open('', ''));
+        $handler->setSessionContext('s1', 'u1', '10.0.0.1', 'Agent');
+
+        // write should catch PDOException and return false
+        $result = $handler->write('s1', 'data');
+        self::assertFalse($result);
+    }
 }

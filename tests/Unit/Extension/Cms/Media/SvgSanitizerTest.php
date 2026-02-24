@@ -356,9 +356,10 @@ final class SvgSanitizerTest extends TestCase
             $result = $this->sanitizer->sanitize('<svg xmlns="http://www.w3.org/2000/svg"><foreignObject width="100" height="100"><div xmlns="http://www.w3.org/1999/xhtml">text</div></foreignObject></svg>');
             // If it parses, foreignObject should be removed
             self::assertStringNotContainsString('foreignobject', strtolower($result));
-        } catch (CmsException) {
-            // If it can't parse, that's also acceptable
-            $this->addToAssertionCount(1);
+        } catch (CmsException $e) {
+            // If it can't parse, that's also acceptable — the sanitizer
+            // correctly rejected malformed mixed-namespace SVG content
+            self::assertInstanceOf(CmsException::class, $e);
         }
     }
 

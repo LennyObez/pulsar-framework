@@ -14,30 +14,43 @@ use Pulsar\Codegen\FieldDefinition;
 final class EntityDefinitionTest extends TestCase
 {
     #[Test]
-    public function constructorSetsAllProperties(): void
-    {
-        $fields = [
-            new FieldDefinition('id', 'int', primary: true),
-            new FieldDefinition('name', 'string'),
-        ];
-
-        $entity = new EntityDefinition(
-            name: 'User',
-            namespace: 'App\\Models',
-            fields: $fields,
-        );
-
-        self::assertSame('User', $entity->name);
-        self::assertSame('App\\Models', $entity->namespace);
-        self::assertCount(2, $entity->fields);
-        self::assertSame('id', $entity->fields[0]->name);
-    }
-
-    #[Test]
     public function fieldsDefaultToEmpty(): void
     {
         $entity = new EntityDefinition(name: 'Post', namespace: 'App\\Models');
 
         self::assertSame([], $entity->fields);
+    }
+
+    #[Test]
+    public function fieldDefinitionsAreAccessibleByIndex(): void
+    {
+        $fields = [
+            new FieldDefinition('id', 'int', primary: true),
+            new FieldDefinition('title', 'string'),
+            new FieldDefinition('body', 'string', nullable: true),
+        ];
+
+        $entity = new EntityDefinition(
+            name: 'Post',
+            namespace: 'App\\Models',
+            fields: $fields,
+        );
+
+        self::assertCount(3, $entity->fields);
+        self::assertSame('id', $entity->fields[0]->name);
+        self::assertTrue($entity->fields[0]->primary);
+        self::assertSame('body', $entity->fields[2]->name);
+        self::assertTrue($entity->fields[2]->nullable);
+    }
+
+    #[Test]
+    public function entityWithBackslashNamespace(): void
+    {
+        $entity = new EntityDefinition(
+            name: 'Invoice',
+            namespace: 'App\\Billing\\Models',
+        );
+
+        self::assertSame('App\\Billing\\Models', $entity->namespace);
     }
 }

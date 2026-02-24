@@ -8,10 +8,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Extension\Cms\Internal\LiveCss\CssValidator;
 use Pulsar\Extension\Cms\LiveCss\CssValidationResult;
 use Pulsar\Extension\Cms\LiveCss\CssValidatorInterface;
 
 #[CoversClass(CssValidationResult::class)]
+#[CoversClass(CssValidator::class)]
 final class CssValidatorTest extends TestCase
 {
     // ── Rejects @import ─────────────────────────────────────────────
@@ -150,40 +152,66 @@ final class CssValidatorTest extends TestCase
         yield 'javascript with spaces' => ['body { background: url( javascript : alert(1) ); }'];
     }
 
+    // ── Size limit ─────────────────────────────────────────────────
+
+    #[Test]
+    public function rejectsOversizedInput(): void
+    {
+        $result = $this->createValidator()->validate(str_repeat('a', 524_289));
+
+        self::assertFalse($result->isValid);
+        self::assertStringContainsString('512 KB', $result->errors[0]);
+        self::assertSame('', $result->sanitizedCss);
+    }
+
+    // ── @charset ─────────────────────────────────────────────────────
+
+    #[Test]
+    public function rejectsAtCharset(): void
+    {
+        $result = $this->createValidator()->validate('@charset "UTF-8";');
+
+        self::assertFalse($result->isValid);
+        self::assertStringContainsString('@charset', $result->errors[0]);
+    }
+
+    // ── vbscript: ────────────────────────────────────────────────────
+
+    #[Test]
+    public function rejectsVbscript(): void
+    {
+        $result = $this->createValidator()->validate('body { background: url(vbscript:run); }');
+
+        self::assertFalse($result->isValid);
+    }
+
+    // ── Sanitized CSS output ─────────────────────────────────────────
+
+    #[Test]
+    public function sanitizedCssRemovesBadLinesKeepsGood(): void
+    {
+        $css = "body { color: red; }\n@import url(\"evil.css\");\np { margin: 0; }";
+        $result = $this->createValidator()->validate($css);
+
+        self::assertFalse($result->isValid);
+        self::assertStringContainsString('body { color: red; }', $result->sanitizedCss);
+        self::assertStringContainsString('p { margin: 0; }', $result->sanitizedCss);
+        self::assertStringNotContainsString('@import', $result->sanitizedCss);
+    }
+
+    // ── Null byte stripping ──────────────────────────────────────────
+
+    #[Test]
+    public function stripsNullBytes(): void
+    {
+        $css = "body { width: ex\x00pression(1); }";
+        $result = $this->createValidator()->validate($css);
+
+        self::assertFalse($result->isValid);
+    }
+
     private function createValidator(): CssValidatorInterface
     {
-        return new class implements CssValidatorInterface {
-            /** @var list<string> */
-            private const array BLOCKED_PATTERNS = [
-                '/@import\b/i',
-                '/expression\s*\(/i',
-                '/ex\s*\/\*.*?\*\/\s*pression\s*\(/is',
-                '/\\\\65\s*xpression\s*\(/i',
-                '/url\s*\(\s*["\']?\s*https?:/i',
-                '/url\s*\(\s*["\']?\s*\/\//i',
-                '/url\s*\(\s*["\']?\s*data:/i',
-                '/url\s*\(\s*["\']?\s*javascript\s*:/i',
-                '/-moz-binding\s*:/i',
-                '/behavior\s*:/i',
-                '/-o-link\s*:/i',
-            ];
-
-            public function validate(string $cssContent): CssValidationResult
-            {
-                $errors = [];
-
-                foreach (self::BLOCKED_PATTERNS as $pattern) {
-                    if (preg_match($pattern, $cssContent)) {
-                        $errors[] = "Blocked pattern detected: {$pattern}";
-                    }
-                }
-
-                return new CssValidationResult(
-                    isValid: $errors === [],
-                    errors: $errors,
-                    sanitizedCss: $errors === [] ? $cssContent : '',
-                );
-            }
-        };
+        return new CssValidator();
     }
 }

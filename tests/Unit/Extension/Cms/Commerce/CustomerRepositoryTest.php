@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Database\Result;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Customer;
@@ -49,6 +50,7 @@ final class CustomerRepositoryTest extends TestCase
         ])]);
 
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $connection->method('query')->willReturn($result);
 
         $repo = new DbCustomerRepository($connection);
@@ -84,6 +86,7 @@ final class CustomerRepositoryTest extends TestCase
         ])]);
 
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $connection->method('query')->willReturn($result);
 
         $repo = new DbCustomerRepository($connection);
@@ -114,6 +117,7 @@ final class CustomerRepositoryTest extends TestCase
         ])]);
 
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $connection->method('query')->willReturn($result);
 
         $repo = new DbCustomerRepository($connection);
@@ -131,6 +135,7 @@ final class CustomerRepositoryTest extends TestCase
         $result = new Result([]);
 
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $connection->method('query')->willReturn($result);
 
         $repo = new DbCustomerRepository($connection);
@@ -161,6 +166,7 @@ final class CustomerRepositoryTest extends TestCase
     public function interface_is_implemented(): void
     {
         $connection = $this->createStub(ConnectionInterface::class);
+        $connection->method('driver')->willReturn(Driver::MySQL);
         $repo = new DbCustomerRepository($connection);
 
         self::assertInstanceOf(CustomerRepositoryInterface::class, $repo);

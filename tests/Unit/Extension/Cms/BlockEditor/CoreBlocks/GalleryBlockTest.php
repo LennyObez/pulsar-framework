@@ -38,8 +38,8 @@ final class GalleryBlockTest extends TestCase
 
         self::assertStringContainsString('class="gallery"', $html);
         self::assertStringContainsString('grid-template-columns:repeat(2,1fr)', $html);
-        self::assertStringContainsString('<img src="/a.jpg" alt="Image A">', $html);
-        self::assertStringContainsString('<img src="/b.jpg" alt="Image B">', $html);
+        self::assertStringContainsString('<img src="/a.jpg" alt="Image A" loading="lazy">', $html);
+        self::assertStringContainsString('<img src="/b.jpg" alt="Image B" loading="lazy">', $html);
     }
 
     #[Test]

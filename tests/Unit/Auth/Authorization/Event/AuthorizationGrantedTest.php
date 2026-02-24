@@ -16,27 +16,57 @@ use function strlen;
 final class AuthorizationGrantedTest extends TestCase
 {
     #[Test]
-    public function constructionSetsAllProperties(): void
+    public function fromArrayDefaultsMissingFieldsToEmptyStrings(): void
     {
-        $now = new DateTimeImmutable();
+        $event = AuthorizationGranted::fromArray([]);
+
+        self::assertSame('', $event->identityId);
+        self::assertSame('', $event->permission);
+        self::assertNull($event->resource);
+        self::assertSame('', $event->grantReason);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function fromArrayIgnoresNonStringValues(): void
+    {
+        $event = AuthorizationGranted::fromArray([
+            'identity_id' => 42,
+            'permission' => true,
+            'resource' => ['array'],
+            'grant_reason' => null,
+            'correlation_id' => 3.14,
+            'nonce' => false,
+        ]);
+
+        self::assertSame('', $event->identityId);
+        self::assertSame('', $event->permission);
+        self::assertNull($event->resource);
+        self::assertSame('', $event->grantReason);
+        self::assertSame('', $event->correlationId);
+        self::assertSame('', $event->nonce);
+    }
+
+    #[Test]
+    public function toArrayIncludesSchemaVersion(): void
+    {
+        $now = new DateTimeImmutable('2025-06-15T10:30:00.000000+00:00');
 
         $event = new AuthorizationGranted(
             identityId: 'user-1',
             permission: 'posts.create',
             resource: 'post-42',
             grantReason: 'RBAC',
-            correlationId: 'corr-1',
-            nonce: 'abc123',
+            correlationId: 'c-1',
+            nonce: 'n-1',
             occurredAt: $now,
         );
 
-        self::assertSame('user-1', $event->identityId);
-        self::assertSame('posts.create', $event->permission);
-        self::assertSame('post-42', $event->resource);
-        self::assertSame('RBAC', $event->grantReason);
-        self::assertSame('corr-1', $event->correlationId);
-        self::assertSame('abc123', $event->nonce);
-        self::assertSame($now, $event->occurredAt);
+        $array = $event->toArray();
+
+        self::assertSame(1, $array['schema_version']);
+        self::assertSame('post-42', $array['resource']);
     }
 
     #[Test]

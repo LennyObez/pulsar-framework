@@ -15,31 +15,6 @@ use Pulsar\DataProtection\DefaultRetentionPolicy;
 final class DefaultRetentionPolicyTest extends TestCase
 {
     #[Test]
-    public function constructorSetsProperties(): void
-    {
-        $policy = new DefaultRetentionPolicy(
-            category: 'audit_logs',
-            retentionDays: 2555,
-            legalBasis: 'SOX 7-year requirement',
-        );
-
-        self::assertSame('audit_logs', $policy->category());
-        self::assertSame(2555, $policy->retentionDays());
-        self::assertSame('SOX 7-year requirement', $policy->legalBasis());
-    }
-
-    #[Test]
-    public function constructorDefaultsLegalBasisToEmptyString(): void
-    {
-        $policy = new DefaultRetentionPolicy(
-            category: 'sessions',
-            retentionDays: 30,
-        );
-
-        self::assertSame('', $policy->legalBasis());
-    }
-
-    #[Test]
     public function fromArrayCreatesFromFullData(): void
     {
         $policy = DefaultRetentionPolicy::fromArray([

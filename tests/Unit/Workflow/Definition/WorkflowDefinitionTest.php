@@ -210,11 +210,11 @@ final class WorkflowDefinitionTest extends TestCase
     #[Test]
     public function test_validate_passes_for_valid_definition(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $definition = $this->buildSimpleDefinition();
 
         $definition->validate();
-
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -382,6 +382,8 @@ final class WorkflowDefinitionTest extends TestCase
     #[Test]
     public function test_validate_passes_with_multiple_paths_to_final(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $definition = new WorkflowDefinition(
             name: 'ok',
             states: [
@@ -399,8 +401,6 @@ final class WorkflowDefinitionTest extends TestCase
         );
 
         $definition->validate();
-
-        $this->addToAssertionCount(1);
     }
 
     private function buildSimpleDefinition(): WorkflowDefinition

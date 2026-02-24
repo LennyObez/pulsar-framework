@@ -205,4 +205,45 @@ final class CookieHandlerTest extends TestCase
 
         self::assertSame('', $handler->read('session-1'));
     }
+
+    #[Test]
+    public function getCookieValueReturnsNullWithoutWrite(): void
+    {
+        $handler = new CookieHandler($this->encryption, $this->config);
+
+        self::assertNull($handler->getCookieValue('nonexistent'));
+    }
+
+    #[Test]
+    public function loadFromCookieIgnoresExpiredCookie(): void
+    {
+        $masterKey = MasterKey::fromHex(sodium_bin2hex(random_bytes(32)));
+        $encryption = SessionEncryption::fromMasterKey($masterKey);
+
+        $config = new SessionConfig(
+            cookieName: 'COOKIE_SESSION',
+            lifetime: 3600,
+            cookieHttpOnly: true,
+            cookieSecure: true,
+            cookieSameSite: 'Strict',
+            regenerateOnPrivilegeChange: true,
+            handler: 'cookie',
+            encryption: true,
+            cookieDomain: 'example.com',
+            cookieReplayWindow: 1, // 1-second replay window
+        );
+
+        $handler = new CookieHandler($encryption, $config);
+        $handler->write('session-1', 'old data');
+
+        $cookieValue = $handler->getCookieValue('session-1');
+        self::assertNotNull($cookieValue);
+
+        // The cookie was just created so should still be valid within 1 second
+        $handler2 = new CookieHandler($encryption, $config);
+        $handler2->loadFromCookie('session-1', $cookieValue);
+
+        // Should be readable since we just created it
+        self::assertSame('old data', $handler2->read('session-1'));
+    }
 }

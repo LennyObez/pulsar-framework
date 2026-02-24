@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Codegen;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Codegen\FieldDefinition;
@@ -13,23 +14,7 @@ use Pulsar\Codegen\FieldDefinition;
 final class FieldDefinitionTest extends TestCase
 {
     #[Test]
-    public function constructorSetsAllProperties(): void
-    {
-        $field = new FieldDefinition(
-            name: 'email',
-            type: 'string',
-            nullable: true,
-            primary: false,
-        );
-
-        self::assertSame('email', $field->name);
-        self::assertSame('string', $field->type);
-        self::assertTrue($field->nullable);
-        self::assertFalse($field->primary);
-    }
-
-    #[Test]
-    public function defaultValues(): void
+    public function defaultsNullableAndPrimaryToFalse(): void
     {
         $field = new FieldDefinition(name: 'id', type: 'int');
 
@@ -37,11 +22,29 @@ final class FieldDefinitionTest extends TestCase
         self::assertFalse($field->primary);
     }
 
-    #[Test]
-    public function primaryFieldCanBeSet(): void
+    /**
+     * @return iterable<string, array{bool, bool}>
+     */
+    public static function flagCombinationsProvider(): iterable
     {
-        $field = new FieldDefinition(name: 'id', type: 'int', primary: true);
+        yield 'nullable only' => [true, false];
+        yield 'primary only' => [false, true];
+        yield 'both flags' => [true, true];
+        yield 'neither flag' => [false, false];
+    }
 
-        self::assertTrue($field->primary);
+    #[Test]
+    #[DataProvider('flagCombinationsProvider')]
+    public function flagCombinationsArePreserved(bool $nullable, bool $primary): void
+    {
+        $field = new FieldDefinition(
+            name: 'field',
+            type: 'string',
+            nullable: $nullable,
+            primary: $primary,
+        );
+
+        self::assertSame($nullable, $field->nullable);
+        self::assertSame($primary, $field->primary);
     }
 }

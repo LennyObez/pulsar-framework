@@ -55,16 +55,14 @@ final class DbOrderRepositoryTest extends TestCase
     #[Test]
     public function update_status_executes_on_valid_transition(): void
     {
+        $this->expectNotToPerformAssertions();
+
         $this->db->method('query')->willReturn(new Result([
             self::orderRow(OrderStatus::Cart),
         ]));
         $this->db->method('execute')->willReturn(1);
 
         $this->repository->updateStatus('order-1', OrderStatus::PendingPayment);
-
-        // No exception means success — the state machine accepted the transition
-        // and the UPDATE was executed
-        $this->addToAssertionCount(1);
     }
 
     private static function orderRow(OrderStatus $status): Row
