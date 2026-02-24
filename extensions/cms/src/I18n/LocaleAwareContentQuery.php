@@ -19,6 +19,8 @@ use function in_array;
  * when a translation is not available in the requested locale, optionally
  * falls back to the default locale. Also provides locale availability
  * introspection for admin UI locale tab support.
+ *
+ * @psalm-api Resolved by content controllers from the DI container; not new'd.
  */
 #[Internal(reason: 'CMS i18n query helper; implementation detail')]
 final readonly class LocaleAwareContentQuery
