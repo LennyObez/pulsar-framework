@@ -6,8 +6,7 @@ namespace Pulsar\Extension\Cms\Taxonomy;
 
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
-
-use function array_values;
+use Pulsar\Database\Driver;
 
 /**
  * Database-backed taxonomy service managing content-term associations.
@@ -18,10 +17,15 @@ use function array_values;
 #[Internal(reason: 'Use TaxonomyServiceInterface for public API')]
 final readonly class TaxonomyService implements TaxonomyServiceInterface
 {
-    private const string SQL_ATTACH = <<<'SQL'
+    private const string SQL_ATTACH_PG = <<<'SQL'
         INSERT INTO cms_content_taxonomy_terms (content_id, term_id)
         VALUES (:content_id, :term_id)
         ON CONFLICT (content_id, term_id) DO NOTHING
+        SQL;
+
+    private const string SQL_ATTACH_MYSQL = <<<'SQL'
+        INSERT IGNORE INTO cms_content_taxonomy_terms (content_id, term_id)
+        VALUES (:content_id, :term_id)
         SQL;
 
     private const string SQL_DETACH = <<<'SQL'
@@ -35,15 +39,15 @@ final readonly class TaxonomyService implements TaxonomyServiceInterface
 
     public function attachTerms(string $contentId, array $termIds): void
     {
-        $termIds = array_values($termIds);
-
         if ($termIds === []) {
             return;
         }
 
-        $this->connection->transaction(function (ConnectionInterface $conn) use ($contentId, $termIds): void {
+        $sql = $this->attachSql();
+
+        $this->connection->transaction(function (ConnectionInterface $conn) use ($sql, $contentId, $termIds): void {
             foreach ($termIds as $termId) {
-                $conn->execute(self::SQL_ATTACH, [
+                $conn->execute($sql, [
                     'content_id' => $contentId,
                     'term_id' => $termId,
                 ]);
@@ -53,8 +57,6 @@ final readonly class TaxonomyService implements TaxonomyServiceInterface
 
     public function detachTerms(string $contentId, array $termIds): void
     {
-        $termIds = array_values($termIds);
-
         if ($termIds === []) {
             return;
         }
@@ -71,15 +73,15 @@ final readonly class TaxonomyService implements TaxonomyServiceInterface
 
     public function bulkTag(array $contentIds, string $termId): void
     {
-        $contentIds = array_values($contentIds);
-
         if ($contentIds === []) {
             return;
         }
 
-        $this->connection->transaction(function (ConnectionInterface $conn) use ($contentIds, $termId): void {
+        $sql = $this->attachSql();
+
+        $this->connection->transaction(function (ConnectionInterface $conn) use ($sql, $contentIds, $termId): void {
             foreach ($contentIds as $contentId) {
-                $conn->execute(self::SQL_ATTACH, [
+                $conn->execute($sql, [
                     'content_id' => $contentId,
                     'term_id' => $termId,
                 ]);
@@ -89,8 +91,6 @@ final readonly class TaxonomyService implements TaxonomyServiceInterface
 
     public function bulkUntag(array $contentIds, string $termId): void
     {
-        $contentIds = array_values($contentIds);
-
         if ($contentIds === []) {
             return;
         }
@@ -103,5 +103,13 @@ final readonly class TaxonomyService implements TaxonomyServiceInterface
                 ]);
             }
         });
+    }
+
+    private function attachSql(): string
+    {
+        return match ($this->connection->driver()) {
+            Driver::MySQL => self::SQL_ATTACH_MYSQL,
+            Driver::PostgreSQL, Driver::SQLite => self::SQL_ATTACH_PG,
+        };
     }
 }

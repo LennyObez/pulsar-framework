@@ -37,4 +37,9 @@ interface TaxonomyRepositoryInterface
      * @param list<TaxonomyTermTranslation> $translations
      */
     public function saveTerm(TaxonomyTerm $term, array $translations): void;
+
+    /**
+     * Update a term's parent ID for hierarchy preservation during import.
+     */
+    public function updateTermParent(string $termId, string $parentId): void;
 }

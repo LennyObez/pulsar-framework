@@ -14,6 +14,7 @@ use Pulsar\Extension\Cms\Commerce\OrderRepositoryInterface;
 use Pulsar\Extension\Cms\Commerce\OrderStatus;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
+use RuntimeException;
 
 use function array_map;
 use function bin2hex;
@@ -51,6 +52,10 @@ final readonly class OrderExportService implements OrderExportServiceInterface
 
         $stream = fopen('php://temp', 'r+');
 
+        if ($stream === false) {
+            throw new RuntimeException('Failed to open temporary stream for CSV export');
+        }
+
         // CSV header
         fputcsv($stream, [
             'order_number',
@@ -87,7 +92,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
         }
 
         rewind($stream);
-        $csv = stream_get_contents($stream);
+        $csv = (string) stream_get_contents($stream);
         fclose($stream);
 
         $this->auditLogger?->log(
@@ -226,7 +231,7 @@ final readonly class OrderExportService implements OrderExportServiceInterface
      */
     private function formatMinorUnits(int $amount): string
     {
-        return number_format($amount / 100, 2, '.', '');
+        return number_format((float) $amount / 100.0, 2, '.', '');
     }
 
     /**
