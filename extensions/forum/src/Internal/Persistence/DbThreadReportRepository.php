@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Domain\ReportStatus;
 use Pulsar\Extension\Forum\Report\ThreadReport;
@@ -20,6 +21,8 @@ use function min;
 #[Internal(reason: 'Raw-DB repository — use ThreadReportRepositoryInterface for public API')]
 final readonly class DbThreadReportRepository implements ThreadReportRepositoryInterface
 {
+    private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
+
     private const string SQL_FIND_BY_ID = <<<'SQL'
         SELECT r.*
         FROM forum_thread_reports r
@@ -47,14 +50,14 @@ final readonly class DbThreadReportRepository implements ThreadReportRepositoryI
         SELECT COUNT(*) AS total
         FROM forum_thread_reports r
         WHERE r.status = :status
-            AND r.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(r.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const string SQL_FIND_BY_STATUS = <<<'SQL'
         SELECT r.*
         FROM forum_thread_reports r
         WHERE r.status = :status
-            AND r.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(r.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         ORDER BY r.created_at ASC
         LIMIT :limit OFFSET :offset
         SQL;
@@ -65,22 +68,15 @@ final readonly class DbThreadReportRepository implements ThreadReportRepositoryI
         WHERE r.thread_id = :thread_id AND r.status = 'pending'
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO forum_thread_reports (
-            id, tenant_id, thread_id, reporter_id, reason,
-            status, moderator_id, moderator_note,
-            created_at, reviewed_at
-        ) VALUES (
-            :id, :tenant_id, :thread_id, :reporter_id, :reason,
-            :status, :moderator_id, :moderator_note,
-            :created_at, :reviewed_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            status = EXCLUDED.status,
-            moderator_id = EXCLUDED.moderator_id,
-            moderator_note = EXCLUDED.moderator_note,
-            reviewed_at = EXCLUDED.reviewed_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'thread_id', 'reporter_id', 'reason',
+        'status', 'moderator_id', 'moderator_note',
+        'created_at', 'reviewed_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'status', 'moderator_id', 'moderator_note', 'reviewed_at',
+    ];
 
     private const string SQL_DELETE = <<<'SQL'
         DELETE FROM forum_thread_reports WHERE id = :id
@@ -136,17 +132,17 @@ final readonly class DbThreadReportRepository implements ThreadReportRepositoryI
         $page = max(1, $page);
         $perPage = max(1, min(100, $perPage));
         $offset = ($page - 1) * $perPage;
-        $effectiveTenantId = $tenantId ?? $this->tenantId;
+        $tenantKey = $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT;
 
         $countResult = $this->connection->query(self::SQL_COUNT_BY_STATUS, [
             'status' => $status->value,
-            'tenant_id' => $effectiveTenantId,
+            'tenant_key' => $tenantKey,
         ]);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
         $dataResult = $this->connection->query(self::SQL_FIND_BY_STATUS, [
             'status' => $status->value,
-            'tenant_id' => $effectiveTenantId,
+            'tenant_key' => $tenantKey,
             'limit' => $perPage,
             'offset' => $offset,
         ]);
@@ -174,7 +170,15 @@ final readonly class DbThreadReportRepository implements ThreadReportRepositoryI
 
     public function save(ThreadReport $report): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'forum_thread_reports',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $report->id,
             'tenant_id' => $report->tenantId,
             'thread_id' => $report->threadId,

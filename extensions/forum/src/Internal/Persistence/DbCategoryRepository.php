@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Forum\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Forum\Category\Category;
 use Pulsar\Extension\Forum\Category\CategoryRepositoryInterface;
@@ -14,6 +15,8 @@ use Pulsar\Extension\Forum\Category\CategoryRepositoryInterface;
 #[Internal(reason: 'Raw-DB repository — use CategoryRepositoryInterface for public API')]
 final readonly class DbCategoryRepository implements CategoryRepositoryInterface
 {
+    private const string SENTINEL_TENANT = '00000000-0000-0000-0000-000000000000';
+
     private const string SQL_FIND_BY_ID = <<<'SQL'
         SELECT c.*
         FROM forum_categories c
@@ -24,14 +27,14 @@ final readonly class DbCategoryRepository implements CategoryRepositoryInterface
         SELECT c.*
         FROM forum_categories c
         WHERE c.slug = :slug
-            AND c.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         SQL;
 
     private const string SQL_FIND_ROOTS = <<<'SQL'
         SELECT c.*
         FROM forum_categories c
         WHERE c.parent_id IS NULL
-            AND c.tenant_id IS NOT DISTINCT FROM :tenant_id
+            AND COALESCE(c.tenant_id, '00000000-0000-0000-0000-000000000000') = :tenant_key
         ORDER BY c.sort_order ASC
         SQL;
 
@@ -42,21 +45,14 @@ final readonly class DbCategoryRepository implements CategoryRepositoryInterface
         ORDER BY c.sort_order ASC
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO forum_categories (
-            id, tenant_id, parent_id, slug, sort_order,
-            is_locked, created_at, updated_at
-        ) VALUES (
-            :id, :tenant_id, :parent_id, :slug, :sort_order,
-            :is_locked, :created_at, :updated_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            parent_id = EXCLUDED.parent_id,
-            slug = EXCLUDED.slug,
-            sort_order = EXCLUDED.sort_order,
-            is_locked = EXCLUDED.is_locked,
-            updated_at = EXCLUDED.updated_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'parent_id', 'slug', 'sort_order',
+        'is_locked', 'created_at', 'updated_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'parent_id', 'slug', 'sort_order', 'is_locked', 'updated_at',
+    ];
 
     private const string SQL_DELETE = <<<'SQL'
         DELETE FROM forum_categories WHERE id = :id
@@ -83,7 +79,7 @@ final readonly class DbCategoryRepository implements CategoryRepositoryInterface
     {
         $result = $this->connection->query(self::SQL_FIND_BY_SLUG, [
             'slug' => $slug,
-            'tenant_id' => $tenantId ?? $this->tenantId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
         $row = $result->first();
 
@@ -97,7 +93,7 @@ final readonly class DbCategoryRepository implements CategoryRepositoryInterface
     public function findRoots(?string $tenantId = null): array
     {
         $result = $this->connection->query(self::SQL_FIND_ROOTS, [
-            'tenant_id' => $tenantId ?? $this->tenantId,
+            'tenant_key' => $tenantId ?? $this->tenantId ?? self::SENTINEL_TENANT,
         ]);
 
         return $result->map(self::hydrate(...));
@@ -114,7 +110,15 @@ final readonly class DbCategoryRepository implements CategoryRepositoryInterface
 
     public function save(Category $category): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'forum_categories',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $category->id,
             'tenant_id' => $category->tenantId,
             'parent_id' => $category->parentId,

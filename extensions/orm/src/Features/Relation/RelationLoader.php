@@ -12,11 +12,12 @@ use Pulsar\Extension\Orm\Domain\FetchPlan;
 use Pulsar\Extension\Orm\Domain\RelationMetadata;
 use Pulsar\Extension\Orm\Domain\RelationType;
 use Pulsar\Extension\Orm\Features\Query\SelectBuilder;
-use ReflectionClass;
+use ReflectionProperty;
 
 use function array_map;
 use function array_unique;
 use function array_values;
+use function count;
 
 /**
  * Loads entity relations based on a FetchPlan.
@@ -89,28 +90,27 @@ final readonly class RelationLoader
         $builder->forEntity($relation->targetEntity, $targetMetadata, $this->hydrator);
         $builder->whereIn($relation->localKey, $foreignKeys);
 
+        /** @var list<object> $related */
         $related = $builder->getEntities();
 
         // Index by local key
         $indexed = [];
-        foreach ($related as $entity) {
-            $ref = new ReflectionClass($entity);
-            $prop = $ref->getProperty($targetMetadata->primaryKey->propertyName);
-            $key = (string) $prop->getValue($entity);
-            $indexed[$key] = $entity;
+        foreach ($related as $relatedEntity) {
+            $prop = new ReflectionProperty($relatedEntity, $targetMetadata->primaryKey->propertyName);
+            $key = (string) $prop->getValue($relatedEntity);
+            $indexed[$key] = $relatedEntity;
         }
 
         // Assign to parent entities
         foreach ($entities as $entity) {
-            $ref = new ReflectionClass($entity);
-            $fkProp = $ref->getProperty($relation->foreignKey);
+            $fkProp = new ReflectionProperty($entity, $relation->foreignKey);
             $fkValue = (string) $fkProp->getValue($entity);
-            $relProp = $ref->getProperty($relation->propertyName);
+            $relProp = new ReflectionProperty($entity, $relation->propertyName);
             $relProp->setValue($entity, $indexed[$fkValue] ?? null);
         }
 
         // Load nested relations
-        if ($nestedPlan !== null && $related !== []) {
+        if ($nestedPlan !== null && count($related) > 0) {
             $this->loadRelations($related, $nestedPlan);
         }
     }
@@ -131,31 +131,30 @@ final readonly class RelationLoader
         $builder->forEntity($relation->targetEntity, $targetMetadata, $this->hydrator);
         $builder->whereIn($relation->foreignKey, $localKeys);
 
+        /** @var list<object> $related */
         $related = $builder->getEntities();
 
         // Index by foreign key
         $indexed = [];
-        foreach ($related as $entity) {
-            $ref = new ReflectionClass($entity);
+        foreach ($related as $relatedEntity) {
             $fkCol = $targetMetadata->columnByName($relation->foreignKey);
             if ($fkCol !== null) {
-                $prop = $ref->getProperty($fkCol->propertyName);
-                $key = (string) $prop->getValue($entity);
-                $indexed[$key] = $entity;
+                $prop = new ReflectionProperty($relatedEntity, $fkCol->propertyName);
+                $key = (string) $prop->getValue($relatedEntity);
+                $indexed[$key] = $relatedEntity;
             }
         }
 
         // Assign to parent entities
         $parentMetadata = $this->metadataRegistry->get($entities[0]::class);
         foreach ($entities as $entity) {
-            $ref = new ReflectionClass($entity);
-            $pkProp = $ref->getProperty($parentMetadata->primaryKey->propertyName);
+            $pkProp = new ReflectionProperty($entity, $parentMetadata->primaryKey->propertyName);
             $pkValue = (string) $pkProp->getValue($entity);
-            $relProp = $ref->getProperty($relation->propertyName);
+            $relProp = new ReflectionProperty($entity, $relation->propertyName);
             $relProp->setValue($entity, $indexed[$pkValue] ?? null);
         }
 
-        if ($nestedPlan !== null && $related !== []) {
+        if ($nestedPlan !== null && count($related) > 0) {
             $this->loadRelations($related, $nestedPlan);
         }
     }
@@ -176,32 +175,31 @@ final readonly class RelationLoader
         $builder->forEntity($relation->targetEntity, $targetMetadata, $this->hydrator);
         $builder->whereIn($relation->foreignKey, $localKeys);
 
+        /** @var list<object> $related */
         $related = $builder->getEntities();
 
         // Group by foreign key
         /** @var array<string, list<object>> $grouped */
         $grouped = [];
-        foreach ($related as $entity) {
-            $ref = new ReflectionClass($entity);
+        foreach ($related as $relatedEntity) {
             $fkCol = $targetMetadata->columnByName($relation->foreignKey);
             if ($fkCol !== null) {
-                $prop = $ref->getProperty($fkCol->propertyName);
-                $key = (string) $prop->getValue($entity);
-                $grouped[$key][] = $entity;
+                $prop = new ReflectionProperty($relatedEntity, $fkCol->propertyName);
+                $key = (string) $prop->getValue($relatedEntity);
+                $grouped[$key][] = $relatedEntity;
             }
         }
 
         // Assign to parent entities
         $parentMetadata = $this->metadataRegistry->get($entities[0]::class);
         foreach ($entities as $entity) {
-            $ref = new ReflectionClass($entity);
-            $pkProp = $ref->getProperty($parentMetadata->primaryKey->propertyName);
+            $pkProp = new ReflectionProperty($entity, $parentMetadata->primaryKey->propertyName);
             $pkValue = (string) $pkProp->getValue($entity);
-            $relProp = $ref->getProperty($relation->propertyName);
+            $relProp = new ReflectionProperty($entity, $relation->propertyName);
             $relProp->setValue($entity, $grouped[$pkValue] ?? []);
         }
 
-        if ($nestedPlan !== null && $related !== []) {
+        if ($nestedPlan !== null && count($related) > 0) {
             $this->loadRelations($related, $nestedPlan);
         }
     }
@@ -241,8 +239,7 @@ final readonly class RelationLoader
         if ($allRelatedIds === []) {
             // No related entities found — set empty arrays
             foreach ($entities as $entity) {
-                $ref = new ReflectionClass($entity);
-                $relProp = $ref->getProperty($relation->propertyName);
+                $relProp = new ReflectionProperty($entity, $relation->propertyName);
                 $relProp->setValue($entity, []);
             }
 
@@ -254,24 +251,23 @@ final readonly class RelationLoader
         $relatedBuilder = new SelectBuilder($this->connection);
         $relatedBuilder->forEntity($relation->targetEntity, $targetMetadata, $this->hydrator);
         $relatedBuilder->whereIn($targetMetadata->primaryKey->columnName, $allRelatedIds);
+        /** @var list<object> $allRelated */
         $allRelated = $relatedBuilder->getEntities();
 
         // Index by PK
         $relatedIndex = [];
-        foreach ($allRelated as $entity) {
-            $ref = new ReflectionClass($entity);
-            $prop = $ref->getProperty($targetMetadata->primaryKey->propertyName);
-            $key = (string) $prop->getValue($entity);
-            $relatedIndex[$key] = $entity;
+        foreach ($allRelated as $relatedEntity) {
+            $prop = new ReflectionProperty($relatedEntity, $targetMetadata->primaryKey->propertyName);
+            $key = (string) $prop->getValue($relatedEntity);
+            $relatedIndex[$key] = $relatedEntity;
         }
 
         // Assign to parent entities
         $parentMetadata = $this->metadataRegistry->get($entities[0]::class);
         foreach ($entities as $entity) {
-            $ref = new ReflectionClass($entity);
-            $pkProp = $ref->getProperty($parentMetadata->primaryKey->propertyName);
+            $pkProp = new ReflectionProperty($entity, $parentMetadata->primaryKey->propertyName);
             $pkValue = (string) $pkProp->getValue($entity);
-            $relProp = $ref->getProperty($relation->propertyName);
+            $relProp = new ReflectionProperty($entity, $relation->propertyName);
 
             $relatedForParent = [];
             foreach ($pivotMap[$pkValue] ?? [] as $relatedId) {
@@ -282,7 +278,7 @@ final readonly class RelationLoader
             $relProp->setValue($entity, $relatedForParent);
         }
 
-        if ($nestedPlan !== null && $allRelated !== []) {
+        if ($nestedPlan !== null && count($allRelated) > 0) {
             $this->loadRelations($allRelated, $nestedPlan);
         }
     }
@@ -302,9 +298,7 @@ final readonly class RelationLoader
 
         return array_values(array_unique(array_map(
             static function (object $entity) use ($pkProp): mixed {
-                $ref = new ReflectionClass($entity);
-
-                return $ref->getProperty($pkProp)->getValue($entity);
+                return new ReflectionProperty($entity, $pkProp)->getValue($entity);
             },
             $entities,
         )));
@@ -318,9 +312,7 @@ final readonly class RelationLoader
     {
         return array_map(
             static function (object $entity) use ($propertyName): mixed {
-                $ref = new ReflectionClass($entity);
-
-                return $ref->getProperty($propertyName)->getValue($entity);
+                return new ReflectionProperty($entity, $propertyName)->getValue($entity);
             },
             $entities,
         );

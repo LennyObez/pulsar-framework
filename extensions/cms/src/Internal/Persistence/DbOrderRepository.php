@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Commerce\Order;
 use Pulsar\Extension\Cms\Commerce\OrderRepositoryInterface;
@@ -36,36 +37,19 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
         SELECT * FROM cms_orders WHERE order_number = :order_number
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_orders (
-            id, tenant_id, order_number, customer_id, customer_email, status,
-            subtotal, tax_amount, discount_amount, shipping_amount, shipping_method,
-            total, amount_refunded, currency,
-            payment_intent_id, payment_status, billing_address, shipping_address,
-            notes, data_classification, created_at, updated_at
-        ) VALUES (
-            :id, :tenant_id, :order_number, :customer_id, :customer_email, :status,
-            :subtotal, :tax_amount, :discount_amount, :shipping_amount, :shipping_method,
-            :total, :amount_refunded, :currency,
-            :payment_intent_id, :payment_status, :billing_address, :shipping_address,
-            :notes, :data_classification, :created_at, :updated_at
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            status = EXCLUDED.status,
-            subtotal = EXCLUDED.subtotal,
-            tax_amount = EXCLUDED.tax_amount,
-            discount_amount = EXCLUDED.discount_amount,
-            shipping_amount = EXCLUDED.shipping_amount,
-            shipping_method = EXCLUDED.shipping_method,
-            total = EXCLUDED.total,
-            amount_refunded = EXCLUDED.amount_refunded,
-            payment_intent_id = EXCLUDED.payment_intent_id,
-            payment_status = EXCLUDED.payment_status,
-            billing_address = EXCLUDED.billing_address,
-            shipping_address = EXCLUDED.shipping_address,
-            notes = EXCLUDED.notes,
-            updated_at = EXCLUDED.updated_at
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'order_number', 'customer_id', 'customer_email', 'status',
+        'subtotal', 'tax_amount', 'discount_amount', 'shipping_amount', 'shipping_method',
+        'total', 'amount_refunded', 'currency',
+        'payment_intent_id', 'payment_status', 'billing_address', 'shipping_address',
+        'notes', 'data_classification', 'created_at', 'updated_at',
+    ];
+
+    private const array UPSERT_UPDATE = [
+        'status', 'subtotal', 'tax_amount', 'discount_amount', 'shipping_amount',
+        'shipping_method', 'total', 'amount_refunded', 'payment_intent_id',
+        'payment_status', 'billing_address', 'shipping_address', 'notes', 'updated_at',
+    ];
 
     private const string SQL_FIND_BY_CUSTOMER = <<<'SQL'
         SELECT * FROM cms_orders
@@ -85,7 +69,15 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
 
     public function findById(string $id): ?Order
     {
-        $row = $this->db->query(self::SQL_FIND_BY_ID, ['id' => $id])->first();
+        $sql = self::SQL_FIND_BY_ID;
+        $bindings = ['id' => $id];
+
+        if ($this->tenantId !== null) {
+            $sql .= ' AND tenant_id = :tenant_id';
+            $bindings['tenant_id'] = $this->tenantId;
+        }
+
+        $row = $this->db->query($sql, $bindings)->first();
 
         return $row !== null ? self::hydrate($row) : null;
     }
@@ -148,7 +140,15 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
 
     public function save(Order $order): void
     {
-        $this->db->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->db->driver(),
+            'cms_orders',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->db->execute($sql, [
             'id' => $order->id,
             'tenant_id' => $order->tenantId,
             'order_number' => $order->orderNumber,
@@ -184,11 +184,19 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
 
         OrderStatusStateMachine::transition($order->status, $status);
 
-        $this->db->execute(self::SQL_UPDATE_STATUS, [
+        $sql = self::SQL_UPDATE_STATUS;
+        $bindings = [
             'id' => $id,
             'new_status' => $status->value,
             'now' => new DateTimeImmutable()->format('c'),
-        ]);
+        ];
+
+        if ($this->tenantId !== null) {
+            $sql .= ' AND tenant_id = :tenant_id';
+            $bindings['tenant_id'] = $this->tenantId;
+        }
+
+        $this->db->execute($sql, $bindings);
     }
 
     public function findByCustomer(string $customerId, int $page = 1, int $perPage = 20): array
@@ -220,8 +228,8 @@ final readonly class DbOrderRepository implements OrderRepositoryInterface
             taxAmount: $row->getInt('tax_amount'),
             discountAmount: $row->getInt('discount_amount'),
             shippingAmount: $row->getInt('shipping_amount'),
-            shippingMethod: $row->getNullableString('shipping_method') !== null
-                ? ShippingMethod::from($row->getNullableString('shipping_method'))
+            shippingMethod: ($shippingMethodStr = $row->getNullableString('shipping_method')) !== null
+                ? ShippingMethod::from($shippingMethodStr)
                 : null,
             total: $row->getInt('total'),
             amountRefunded: $row->getInt('amount_refunded'),

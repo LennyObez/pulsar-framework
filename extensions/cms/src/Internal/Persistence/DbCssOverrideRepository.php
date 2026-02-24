@@ -7,6 +7,7 @@ namespace Pulsar\Extension\Cms\Internal\Persistence;
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Portable\UpsertBuilder;
 use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\LiveCss\CssOverride;
 use Pulsar\Extension\Cms\LiveCss\CssOverrideRepositoryInterface;
@@ -54,17 +55,12 @@ final readonly class DbCssOverrideRepository implements CssOverrideRepositoryInt
         WHERE theme_id = :theme_id AND tenant_key = :tenant_key
         SQL;
 
-    private const string SQL_UPSERT = <<<'SQL'
-        INSERT INTO cms_css_overrides (
-            id, tenant_id, tenant_key, theme_id, version, css_content, css_hash,
-            token_overrides, is_active, created_at, created_by, reason
-        ) VALUES (
-            :id, :tenant_id, :tenant_key, :theme_id, :version, :css_content, :css_hash,
-            :token_overrides, :is_active, :created_at, :created_by, :reason
-        )
-        ON CONFLICT (id) DO UPDATE SET
-            is_active = EXCLUDED.is_active
-        SQL;
+    private const array UPSERT_COLUMNS = [
+        'id', 'tenant_id', 'tenant_key', 'theme_id', 'version', 'css_content', 'css_hash',
+        'token_overrides', 'is_active', 'created_at', 'created_by', 'reason',
+    ];
+
+    private const array UPSERT_UPDATE = ['is_active'];
 
     private const string SQL_DEACTIVATE_ALL = <<<'SQL'
         UPDATE cms_css_overrides
@@ -137,7 +133,15 @@ final readonly class DbCssOverrideRepository implements CssOverrideRepositoryInt
 
     public function save(CssOverride $override): void
     {
-        $this->connection->execute(self::SQL_UPSERT, [
+        $sql = UpsertBuilder::compile(
+            $this->connection->driver(),
+            'cms_css_overrides',
+            self::UPSERT_COLUMNS,
+            ['id'],
+            self::UPSERT_UPDATE,
+        );
+
+        $this->connection->execute($sql, [
             'id' => $override->id,
             'tenant_id' => $override->tenantId,
             'tenant_key' => $override->tenantId ?? self::TENANT_SENTINEL,

@@ -24,6 +24,9 @@ final readonly class RawExpression
         public array $bindings = [],
     ) {}
 
+    /**
+     * @param array<string, mixed> $bindings
+     */
     #[NoDiscard]
     public static function of(string $sql, array $bindings = []): self
     {
