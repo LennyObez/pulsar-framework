@@ -10,6 +10,8 @@ use Pulsar\Api\Internal;
  * Dashboard widget providing quick action links for common CMS operations.
  *
  * Renders "New Article", "New Page", "Upload Media", and "View Site" links.
+ *
+ * @psalm-api Resolved by the admin DashboardWidget registry; not new'd by name.
  */
 #[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class QuickActionsWidget implements DashboardWidgetInterface

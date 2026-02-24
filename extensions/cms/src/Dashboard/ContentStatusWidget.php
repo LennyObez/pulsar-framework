@@ -10,6 +10,8 @@ use function array_sum;
 
 /**
  * Dashboard widget showing content counts by publishing status with sparkline trend data.
+ *
+ * @psalm-api Resolved by the admin DashboardWidget registry; not new'd by name.
  */
 #[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class ContentStatusWidget implements DashboardWidgetInterface

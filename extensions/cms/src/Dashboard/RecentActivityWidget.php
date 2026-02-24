@@ -12,6 +12,8 @@ use function array_map;
  * Dashboard widget showing the last 10 audit events filtered to CMS actions.
  *
  * Displays content published, comment moderated, theme changed, and similar events.
+ *
+ * @psalm-api Resolved by the admin DashboardWidget registry; not new'd by name.
  */
 #[Internal(reason: 'CMS dashboard widget; implementation detail')]
 final readonly class RecentActivityWidget implements DashboardWidgetInterface
