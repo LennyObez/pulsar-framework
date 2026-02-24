@@ -10,6 +10,9 @@ use Pulsar\Extension\Cms\AI\PromptTemplateRegistry;
 
 /**
  * Registers the default CMS prompt templates for the AI content assistant.
+ *
+ * @psalm-api Static utility invoked by name (CmsPromptTemplates::registerDefaults)
+ *            from the CMS service provider during boot.
  */
 #[Internal]
 final class CmsPromptTemplates

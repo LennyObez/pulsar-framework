@@ -11,6 +11,10 @@ use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 
 use function sprintf;
 
+/**
+ * @psalm-api Caching decorator wrapping the underlying SettingsServiceInterface
+ *            implementation; bound by the CMS service provider, not instantiated by name.
+ */
 #[Internal(reason: 'Caching decorator for settings; use SettingsServiceInterface')]
 final readonly class CachedSettingsService implements SettingsServiceInterface
 {

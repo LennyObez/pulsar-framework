@@ -20,6 +20,9 @@ use function substr;
  *
  * Uses hash(visitorId + experimentId) to consistently assign the same
  * visitor to the same variant across requests.
+ *
+ * @psalm-api Resolved from the DI container and injected into ExperimentService;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'A/B test implementation detail')]
 final readonly class TrafficSplitter

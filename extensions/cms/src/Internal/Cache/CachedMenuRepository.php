@@ -13,6 +13,10 @@ use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 
 use function sprintf;
 
+/**
+ * @psalm-api Caching decorator wrapping the underlying MenuRepositoryInterface
+ *            implementation; bound by the CMS service provider, not instantiated by name.
+ */
 #[Internal(reason: 'Caching decorator for menus; use MenuRepositoryInterface')]
 final readonly class CachedMenuRepository implements MenuRepositoryInterface
 {
