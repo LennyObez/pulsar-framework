@@ -262,7 +262,7 @@ If your CMS deployment serves users across jurisdictions:
 
 ## Next Steps
 
-- [Security Model](security-model.md) -- Security controls supporting compliance
-- [Audit Events Reference](audit-events.md) -- Complete audit event taxonomy
-- [Threat Model](threat-model.md) -- Risk assessment
-- [Import/Export Guide](../user/import-export-guide.md) -- PII handling in exports
+- [Security Model](security-model.md) - Security controls supporting compliance
+- [Audit Events Reference](audit-events.md) - Complete audit event taxonomy
+- [Threat Model](threat-model.md) - Risk assessment
+- [Import/Export Guide](../user/import-export-guide.md) - PII handling in exports

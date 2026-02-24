@@ -65,7 +65,7 @@ The admin panel uses session-based authentication via `SessionGuard`. Every requ
 
 ### MFA Requirement
 
-When `security.require_2fa` is `true` (the default), the admin middleware rejects users who have not completed multi-factor authentication. This is enforced at the middleware level — no admin routes are accessible without MFA.
+When `security.require_2fa` is `true` (the default), the admin middleware rejects users who have not completed multi-factor authentication. This is enforced at the middleware level - no admin routes are accessible without MFA.
 
 ### Step-Up Re-authentication
 
@@ -83,7 +83,7 @@ The admin panel should be gated by environment. In production, combine with a re
 
 ### CIDR Allowlist
 
-Configure allowed IP ranges at the infrastructure level (reverse proxy, load balancer). The admin middleware does not implement IP filtering directly — this is intentionally delegated to the network layer for defense in depth.
+Configure allowed IP ranges at the infrastructure level (reverse proxy, load balancer). The admin middleware does not implement IP filtering directly - this is intentionally delegated to the network layer for defense in depth.
 
 ### Content Security Policy (CSP)
 
@@ -255,9 +255,9 @@ Fields control how data appears in the admin interface.
 
 | Property           | Type                   | Default | Description                       |
 | ------------------ | ---------------------- | ------- | --------------------------------- |
-| `name`             | `string`               | —       | Database column / property name   |
-| `type`             | `FieldType`            | —       | Display and validation type       |
-| `label`            | `string`               | —       | Human-readable label              |
+| `name`             | `string`               | -       | Database column / property name   |
+| `type`             | `FieldType`            | -       | Display and validation type       |
+| `label`            | `string`               | -       | Human-readable label              |
 | `sortable`         | `bool`                 | `false` | Show sort controls on list view   |
 | `filterable`       | `bool`                 | `false` | Show filter controls on list view |
 | `searchable`       | `bool`                 | `false` | Include in global search          |
@@ -294,14 +294,14 @@ Fields control how data appears in the admin interface.
 
 | Rule         | Parameter | Description                     |
 | ------------ | --------- | ------------------------------- |
-| `required`   | —         | Value must not be null or empty |
+| `required`   | -         | Value must not be null or empty |
 | `min_length` | `int`     | Minimum string length           |
 | `max_length` | `int`     | Maximum string length           |
 | `min`        | `number`  | Minimum numeric value           |
 | `max`        | `number`  | Maximum numeric value           |
 | `pattern`    | `string`  | Regex pattern                   |
-| `email`      | —         | Must be a valid email address   |
-| `url`        | —         | Must be a valid URL             |
+| `email`      | -         | Must be a valid email address   |
+| `url`        | -         | Must be a valid URL             |
 
 ## Policy System
 
@@ -401,7 +401,7 @@ public function bulkActions(): array
 - The resource must include `ResourceOperation::BulkAction` in its `operations()`.
 - Each bulk action is authorized against `admin.resources.manage`.
 - Destructive actions require user confirmation in the UI when `requireConfirmation` is `true`.
-- Execution is transactional — either all records are affected or none.
+- Execution is transactional - either all records are affected or none.
 - An audit entry is written for the batch with `action: "bulk.{actionName}"`.
 
 ## Global Search
@@ -525,7 +525,7 @@ For production deployments:
 
 - Prefer the `db` storage driver to share state across application instances.
 - The `sqlite` driver stores data in a local file and is not suitable for horizontally scaled deployments.
-- Action history grows over time — implement a retention policy or archival job for long-running applications.
+- Action history grows over time - implement a retention policy or archival job for long-running applications.
 
 ## Audit Log Integrity
 

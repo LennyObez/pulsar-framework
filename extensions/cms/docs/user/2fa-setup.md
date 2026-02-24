@@ -244,6 +244,6 @@ Re-enter your password when prompted. Step-up sessions expire after the configur
 
 ## Next Steps
 
-- [Security Model](../security/security-model.md) -- Complete security architecture
-- [Audit Events Reference](../security/audit-events.md) -- All audit-logged events
-- [Settings Reference](settings-reference.md) -- Security configuration options
+- [Security Model](../security/security-model.md) - Complete security architecture
+- [Audit Events Reference](../security/audit-events.md) - All audit-logged events
+- [Settings Reference](settings-reference.md) - Security configuration options

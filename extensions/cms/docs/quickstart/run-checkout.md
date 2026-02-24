@@ -31,11 +31,11 @@ Restart your application to apply the configuration. The CMS registers all comme
 1. Navigate to **Admin > CMS > Products** (`/admin/cms/products`).
 2. Click **Create New Product** (`/admin/cms/products/create`).
 3. Fill in the form:
-   - **SKU**: `DEMO-WIDGET-001`
-   - **Price**: `2999` (29.99 EUR in minor units/cents)
-   - **Currency**: `EUR`
-   - **Stock Quantity**: `100`
-   - **Digital**: No (leave unchecked for a physical product)
+  - **SKU**: `DEMO-WIDGET-001`
+  - **Price**: `2999` (29.99 EUR in minor units/cents)
+  - **Currency**: `EUR`
+  - **Stock Quantity**: `100`
+  - **Digital**: No (leave unchecked for a physical product)
 4. Click **Save**.
 
 <!-- Screenshot: Product creation form -->
@@ -75,9 +75,9 @@ The checkout page shows:
 
 1. Add the product to the cart.
 2. Fill in the checkout form:
-   - Customer name and email
-   - Billing address
-   - Payment details (use test card details for your payment gateway simulator)
+  - Customer name and email
+  - Billing address
+  - Payment details (use test card details for your payment gateway simulator)
 3. Click **Complete Purchase**.
 
 ```
@@ -176,6 +176,6 @@ You have completed a full checkout cycle: product creation, checkout, payment, o
 
 ## Next Steps
 
-- [Commerce Guide](../user/commerce-guide.md) -- Variants, promotions, digital products, and tax configuration
-- [Import/Export Guide](../user/import-export-guide.md) -- Exporting order data
-- [Compliance Guide](../security/compliance-guide.md) -- Financial record retention
+- [Commerce Guide](../user/commerce-guide.md) - Variants, promotions, digital products, and tax configuration
+- [Import/Export Guide](../user/import-export-guide.md) - Exporting order data
+- [Compliance Guide](../security/compliance-guide.md) - Financial record retention

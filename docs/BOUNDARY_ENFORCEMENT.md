@@ -2,8 +2,8 @@
 
 Automated enforcement of module boundaries to prevent architectural erosion. Two complementary tools work together:
 
-- **Deptrac** — structural namespace fences (`\Internal\` cross-module, extension isolation, composition root whitelist)
-- **Custom script** — semantic API surface enforcement (cross-module imports must target `#[Api]` classes)
+- **Deptrac** - structural namespace fences (`\Internal\` cross-module, extension isolation, composition root whitelist)
+- **Custom script** - semantic API surface enforcement (cross-module imports must target `#[Api]` classes)
 
 ## Boundary Rules
 
@@ -41,15 +41,15 @@ src/Auth/
 When an `Internal/` class implements a public interface, wire it in the composition root:
 
 ```php
-// In Kernel or service provider (composition root — exempt)
+// In Kernel or service provider (composition root - exempt)
 $container->bind(AuthManagerInterface::class, Internal\AuthManager::class);
 ```
 
-Consumer code depends on the interface only — never on the `Internal\` class directly.
+Consumer code depends on the interface only - never on the `Internal\` class directly.
 
 ## The `#[Api]` Targeting Rule
 
-Cross-module imports must target classes marked with `#[Api]`. This is stricter than "avoid `#[Internal]`" — it also catches unmarked classes that are internal by default.
+Cross-module imports must target classes marked with `#[Api]`. This is stricter than "avoid `#[Internal]`" - it also catches unmarked classes that are internal by default.
 
 ### Staged enforcement
 
@@ -57,13 +57,13 @@ Cross-module imports must target classes marked with `#[Api]`. This is stricter 
 | ------------------------ | -------- | ------------------------------------------- |
 | Extensions (always)      | ERROR    | Extensions must only use public API surface |
 | New/changed files (diff) | ERROR    | New code must respect boundaries from day 1 |
-| Legacy core files        | WARNING  | Transitional — ratchet via baseline         |
+| Legacy core files        | WARNING  | Transitional - ratchet via baseline         |
 
 ### How `#[Api]` lookup works
 
-1. **Snapshot** — loads `tools/api/public-api.snapshot.json` (fast, deterministic)
-2. **Reflection** — fallback for classes not in the snapshot
-3. **Unresolvable** — returns null, violation skipped (no false positives)
+1. **Snapshot** - loads `tools/api/public-api.snapshot.json` (fast, deterministic)
+2. **Reflection** - fallback for classes not in the snapshot
+3. **Unresolvable** - returns null, violation skipped (no false positives)
 
 ## Composition Root Whitelist
 
@@ -119,9 +119,9 @@ Checklist when adding a new module under `src/`:
 
 1. **Pick a tier** (Foundation, CoreTier, Infrastructure, or Feature)
 2. **Add to `tools/php/deptrac.yaml`**:
-   - Public layer with bool collector (include `^Pulsar\\{Module}\\`, exclude `\\Internal\\`)
-   - Internal layer with classLike collector (`^Pulsar\\{Module}\\Internal\\`)
-   - Add both layers to the rulesets section
+  - Public layer with bool collector (include `^Pulsar\\{Module}\\`, exclude `\\Internal\\`)
+  - Internal layer with classLike collector (`^Pulsar\\{Module}\\Internal\\`)
+  - Add both layers to the rulesets section
 3. **Create `Internal/` subdirectory** if the module has implementation details
 4. **Mark public API** with `#[Api]` attribute
 5. **Run** `composer api:snapshot` to update the API snapshot
@@ -134,7 +134,7 @@ The baseline file (`tools/php/boundary-baseline.json`) tracks known legacy viola
 1. Pick a violation to fix
 2. Either add `#[Api]` to the target class or refactor the import
 3. Remove the entry from the baseline
-4. Run `composer boundary:check` — the violation is now enforced
+4. Run `composer boundary:check` - the violation is now enforced
 5. Commit both the code fix and the baseline update
 
 To regenerate the baseline from scratch:

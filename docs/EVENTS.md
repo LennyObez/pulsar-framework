@@ -24,7 +24,7 @@ Pulsar provides a PSR-14 compatible event dispatcher with envelope-based dispatc
 ```php
 use Pulsar\Event\EventDispatcherInterface;
 
-// Plain PSR-14 dispatch — any object is an event
+// Plain PSR-14 dispatch - any object is an event
 $dispatcher->dispatch(new UserRegistered($userId));
 ```
 
@@ -136,7 +136,7 @@ $result = $dispatcher->dispatchEnvelope($envelope);
 
 ### Payload Hash Integrity
 
-The `payloadHash` is computed from `eventType`, `schemaVersion`, and recursively key-sorted JSON payload. The `originModule` and `scope` fields are **not** included in the hash — they are routing metadata, not semantic payload.
+The `payloadHash` is computed from `eventType`, `schemaVersion`, and recursively key-sorted JSON payload. The `originModule` and `scope` fields are **not** included in the hash - they are routing metadata, not semantic payload.
 
 ```php
 // Verify integrity after deserialization
@@ -187,7 +187,7 @@ The total dispatch chain depth is capped at `max_depth` (default 32). Any dispat
 
 When `loop_detection` is enabled, the dispatcher tracks every event class dispatched within the current chain. If the same event class appears `max_repeats_per_event` times (default 3), it throws `EventException::loopDetected()`.
 
-This is count-based, not adjacency-based — re-entrant dispatch of the same event type is allowed up to the threshold.
+This is count-based, not adjacency-based - re-entrant dispatch of the same event type is allowed up to the threshold.
 
 ### Per-Event Overrides
 
@@ -218,9 +218,9 @@ Scope is observable via `$envelope->scope` and emitted in metrics. It enables co
 
 Listeners are sorted by:
 
-1. **Priority** (descending — higher numbers run first)
-2. **Registration sequence** (ascending — first registered wins ties)
-3. **FQCN** (alphabetical — deterministic tie-breaking)
+1. **Priority** (descending - higher numbers run first)
+2. **Registration sequence** (ascending - first registered wins ties)
+3. **FQCN** (alphabetical - deterministic tie-breaking)
 
 ```php
 // Runs first (priority 20)
@@ -288,7 +288,7 @@ See [OpenTelemetry Integration](OPENTELEMETRY.md) for distributed tracing of eve
 
 ## Extension Ports (Interface-Only)
 
-Three port interfaces define extension points for persistence and serialization adapters. These are interface-only contracts — no built-in implementations ship with the framework:
+Three port interfaces define extension points for persistence and serialization adapters. These are interface-only contracts - no built-in implementations ship with the framework:
 
 | Port              | Pattern              | Methods                                         |
 | ----------------- | -------------------- | ----------------------------------------------- |
@@ -304,7 +304,7 @@ All types under `src/Event/` (except `Internal/`) carry `#[Api(since: '1.0.0')]`
 
 ### Internal Implementation (`src/Event/Internal/`)
 
-All concrete implementations live under `src/Event/Internal/` and carry `#[Internal]`. They must not be imported by extensions or application code — wire through the container.
+All concrete implementations live under `src/Event/Internal/` and carry `#[Internal]`. They must not be imported by extensions or application code - wire through the container.
 
 | Class                      | Responsibility                                         |
 | -------------------------- | ------------------------------------------------------ |

@@ -98,13 +98,13 @@ Both extensions declare `"trust_tier": "core"` in their manifests (ADR-0023) sin
 
 Libraries never manage keys independently. Pulsar's adapter layer bridges library key interfaces to `KeyRingInterface`:
 
-- **OAuth2 token signing:** The JOSE library's `JWKSet` is populated from `KeyRingInterface::all()` at boot time. The adapter converts Keyring's raw key bytes into JWK format. Key rotation is handled by Keyring — the adapter re-reads keys on each signing operation.
+- **OAuth2 token signing:** The JOSE library's `JWKSet` is populated from `KeyRingInterface::all()` at boot time. The adapter converts Keyring's raw key bytes into JWK format. Key rotation is handled by Keyring - the adapter re-reads keys on each signing operation.
 - **WebAuthn challenges:** Challenge nonces are generated via `random_bytes()` (libsodium-backed on PHP 8.5). HMAC operations for challenge binding use Keyring-derived subkeys.
 - **JWKS endpoint:** Public keys are derived from Keyring-managed private keys and served as a JWK Set at `/.well-known/jwks.json`.
 
 The Keyring sub-key derivation context for OAuth2/OIDC signing:
 
-- `pulsar__oauth_sign` — JWT signing key (RSA/EC private key material)
+- `pulsar__oauth_sign` - JWT signing key (RSA/EC private key material)
 
 ### Replay-Safety and Audit (Finding D)
 
@@ -135,8 +135,8 @@ OAuth2 authorization code flow uses `SessionManager` for:
 
 Two new guards integrate with `AuthManagerInterface`:
 
-- **`OAuth2Guard`** — Validates bearer tokens (reference or JWT) from `Authorization: Bearer` headers. Resolves to `IdentityInterface` via token introspection.
-- **`WebAuthnGuard`** — Validates WebAuthn assertion results during authentication ceremonies. Works with `SessionGuard` for session binding post-authentication.
+- **`OAuth2Guard`** - Validates bearer tokens (reference or JWT) from `Authorization: Bearer` headers. Resolves to `IdentityInterface` via token introspection.
+- **`WebAuthnGuard`** - Validates WebAuthn assertion results during authentication ceremonies. Works with `SessionGuard` for session binding post-authentication.
 
 ### Token Storage Model
 
@@ -184,7 +184,7 @@ Packaging OAuth2 and WebAuthn in one extension. Rejected: they serve different u
 
 ## Field Report
 
-_Placeholder — to be filled after operational experience._
+_Placeholder - to be filled after operational experience._
 
 ## Security Impact
 
@@ -215,7 +215,7 @@ Significant expansion of the framework's security surface:
 1. Remove extensions from `pulsar.json`.
 2. Remove extension packages via Composer.
 3. Drop migration tables (token, client, credential storage).
-4. No impact on core framework — extensions are fully self-contained.
+4. No impact on core framework - extensions are fully self-contained.
 
 ## Links
 

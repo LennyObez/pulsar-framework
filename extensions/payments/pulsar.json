@@ -1,11 +1,11 @@
 {
   "name": "pulsar/payments",
-  "version": "1.0.0-rc.10",
+  "version": "1.0.0-rc.11",
   "description": "Vendor-agnostic payment processing extension with idempotency enforcement and webhook verification",
   "trust_tier": "core",
   "extension_class": "Pulsar\\Extension\\Payments\\PaymentsExtension",
   "pulsar": {
-    "min_version": "1.0.0-rc.6"
+    "min_version": "1.0.0-rc.11"
   },
   "provides": {
     "services": [

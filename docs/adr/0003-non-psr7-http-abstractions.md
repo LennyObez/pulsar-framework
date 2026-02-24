@@ -13,7 +13,7 @@ PSR-7 was designed for PHP 5.x–7.x. Its API carries historical baggage:
 - `StreamInterface` for response bodies adds complexity rarely needed in framework internals.
 - Immutability is enforced by convention (`with*()` cloning) rather than by the language. PSR-7 objects can be subclassed with mutable state.
 - Message factory interfaces (`PSR-17`) add another layer of indirection.
-- HTTP methods and status codes are stringly typed — no enum support.
+- HTTP methods and status codes are stringly typed - no enum support.
 
 PHP 8.2+ `readonly class` provides compile-time immutability guarantees that PSR-7 cannot offer.
 
@@ -23,11 +23,11 @@ Pulsar uses its own HTTP abstractions (`Pulsar\Http\Request`, `Pulsar\Http\Respo
 
 Key design choices:
 
-- **`readonly class`** — compile-time immutability, no `with*()` cloning ceremony.
-- **Backed enums** — `Method` and `ResponseStatus` are string/int-backed enums with domain methods (e.g., `ResponseStatus::isSuccessful()`, `Method::isSafe()`).
-- **No StreamInterface** — response bodies are strings. Streaming responses use a dedicated `StreamedResponse` path.
-- **Zero external dependencies** — no `psr/http-message`, no `psr/http-factory`, no `psr/http-server-handler`.
-- **Unified input** — `Request::all()` merges JSON body, POST, and query with clear precedence rules.
+- **`readonly class`** - compile-time immutability, no `with*()` cloning ceremony.
+- **Backed enums** - `Method` and `ResponseStatus` are string/int-backed enums with domain methods (e.g., `ResponseStatus::isSuccessful()`, `Method::isSafe()`).
+- **No StreamInterface** - response bodies are strings. Streaming responses use a dedicated `StreamedResponse` path.
+- **Zero external dependencies** - no `psr/http-message`, no `psr/http-factory`, no `psr/http-server-handler`.
+- **Unified input** - `Request::all()` merges JSON body, POST, and query with clear precedence rules.
 
 ## Consequences
 
@@ -47,4 +47,4 @@ Key design choices:
 ### Neutral
 
 - **PSR-7 bridge will be an extension.** Consistent with ADR-0004 (extension-first architecture), a future extension will provide bidirectional adapters (`Request → ServerRequestInterface`, `ResponseInterface → Response`) and a PSR-15 middleware adapter. This is not planned for 1.0.0 but is architecturally straightforward.
-- **`Request::all()` precedence is fixed.** Merge order is: JSON body > POST > query. This is documented in `docs/HTTP.md` and enforced by tests. The order is a stable API contract — changing it would be a breaking change.
+- **`Request::all()` precedence is fixed.** Merge order is: JSON body > POST > query. This is documented in `docs/HTTP.md` and enforced by tests. The order is a stable API contract - changing it would be a breaking change.

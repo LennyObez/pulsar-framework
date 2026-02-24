@@ -32,7 +32,7 @@ The CMS is registered as a Pulsar extension via `CmsExtension`, which implements
 ```
 ExtensionInterface       -- name(), register(), boot(), providers()
 PreBootExtensionInterface  -- preBoot()
-PostBootExtensionInterface -- postBoot()
+PostBootExtensionInterface - postBoot()
 ```
 
 Source: `extensions/cms/src/CmsExtension.php`
@@ -146,7 +146,7 @@ Each transition is validated by `PublishingStatus::canTransitionTo()`, which enc
 1. **Creation** -- Admin creates a `Content` entity (aggregate root) and one or more `ContentTranslation` records (per-locale title, slug, body, SEO metadata).
 2. **Field values** -- Custom field values are stored via `FieldRegistryRepositoryInterface` using typed columns (`value_string`, `value_int`, `value_float`, `value_bool`, `value_datetime`, `value_json`).
 3. **Revision tracking** -- Every save creates a `ContentRevision` with diffable snapshots.
-4. **Event sourcing** (optional) -- When enabled, each mutation appends a `ContentEvent` to the event store.
+4. **Event sourcing** (optional) - When enabled, each mutation appends a `ContentEvent` to the event store.
 5. **Publishing** -- Content transitions to `Published` status. Atomic snapshots (optional) capture all-locale state.
 6. **Cache** -- Tag-based cache invalidation ensures published content is served from cache with instant invalidation on updates.
 7. **Rendering** -- Public requests hit the `ContentController`, which resolves content by locale and path, applies the active theme's template, and returns the rendered page.

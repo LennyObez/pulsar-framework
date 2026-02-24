@@ -1,8 +1,8 @@
-# Upgrade Guide: 0.x to 1.0.0-rc.8
+# Upgrade Guide: 0.x to 1.0.0-rc.11
 
-This guide covers the migration path from Pulsar 0.x (pre-alpha/alpha) to 1.0.0-rc.8. The RC series marks the release candidate phase with a formal public API surface and semver guarantees.
+This guide covers the migration path from Pulsar 0.x (pre-alpha/alpha) to 1.0.0-rc.11. The RC series marks the release candidate phase with a formal public API surface and semver guarantees.
 
-## What 1.0.0-rc.8 Means
+## What 1.0.0-rc.11 Means
 
 This is a release candidate. The public API is frozen and covered by semantic versioning guarantees. No breaking changes will be introduced between rc.8 and the final 1.0.0 release unless a critical defect is discovered.
 
@@ -43,7 +43,7 @@ The following are not covered by semver and may change in minor releases:
 
 ### Namespace Changes
 
-No namespaces were renamed in 1.0.0-rc.8. All classes remain under the `Pulsar\` root namespace. If you are upgrading from 0.2.x or earlier, the following namespaces were added in the 0.3.0-0.9.0 series:
+No namespaces were renamed in 1.0.0-rc.11. All classes remain under the `Pulsar\` root namespace. If you are upgrading from 0.2.x or earlier, the following namespaces were added in the 0.3.0-0.9.0 series:
 
 - `Pulsar\Api` -- API stability attributes (added in 1.0.0).
 - `Pulsar\Auth` -- Authentication, authorization, identity, 2FA (added in 0.8.0).
@@ -104,7 +104,7 @@ Existing manifests without these fields continue to work.
 ### 1. Update Composer Dependency
 
 ```bash
-composer require pulsar/framework:^1.0.0-rc.8
+composer require pulsar/framework:^1.0.0-rc.11
 ```
 
 ### 2. Audit Internal Dependencies
@@ -182,7 +182,7 @@ PHPStan (level max) and Psalm (error level 1) may flag new issues from stricter 
 
 ## Deprecation Notices
 
-No formal deprecations exist in 1.0.0-rc.8. The `#[Api]` / `#[Internal]` boundary replaces the informal "probably stable" / "probably internal" convention used in 0.x.
+No formal deprecations exist in 1.0.0-rc.11. The `#[Api]` / `#[Internal]` boundary replaces the informal "probably stable" / "probably internal" convention used in 0.x.
 
 Classes that were commonly used in 0.x but are now marked `#[Internal]` should be treated as deprecated for external use. These include `Kernel`, `Version`, and `ConfigManager`. Use the public API surface documented in [PUBLIC_API.md](PUBLIC_API.md) instead.
 

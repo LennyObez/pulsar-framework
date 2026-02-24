@@ -184,8 +184,8 @@ extensions/{name}/
 
 Every `remove:*` command supports these flags:
 
-- `--force` — skip the interactive confirmation prompt
-- `--dry-run` — list files that would be removed without deleting anything
+- `--force` - skip the interactive confirmation prompt
+- `--dry-run` - list files that would be removed without deleting anything
 
 ### `remove:module`
 
@@ -260,7 +260,7 @@ All generated code follows these conventions:
 - **Contracts/** (plural) for public API interfaces marked with `#[Api]`
 - **Internal/Infrastructure/** for implementation details
 - **Controller/** (singular) for HTTP controllers
-- Constructor injection only — no service locators
+- Constructor injection only - no service locators
 - Readonly DTOs with `fromArray()` factories for configuration
 - Exception classes with static factory methods
 - ServiceProviders bind interface to implementation

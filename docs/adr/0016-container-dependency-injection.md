@@ -8,11 +8,11 @@ Accepted
 
 Pulsar requires a dependency injection container that can be used across all modules without introducing a third-party runtime dependency. The container must support multiple service lifetimes (singleton, transient, request-scoped, tenant-scoped), contextual bindings for polymorphic resolution, lazy proxy generation for deferred instantiation, decorator chains for cross-cutting concerns, and a compiler pass pipeline for build-time optimization.
 
-Existing solutions couple frameworks to external libraries, limit lifetime control to singleton/transient, or rely on runtime auto-discovery (annotation scanning on every request). For a framework targeting regulated, mission-critical domains, the container must be deterministic, auditable, and fast — with compile-time optimization as the default production path.
+Existing solutions couple frameworks to external libraries, limit lifetime control to singleton/transient, or rely on runtime auto-discovery (annotation scanning on every request). For a framework targeting regulated, mission-critical domains, the container must be deterministic, auditable, and fast - with compile-time optimization as the default production path.
 
 ## Decision Drivers
 
-1. **Zero third-party runtime**: The container is the composition root — external dependencies here propagate everywhere.
+1. **Zero third-party runtime**: The container is the composition root - external dependencies here propagate everywhere.
 2. **Multi-tenant support**: Banking and healthcare applications require tenant-isolated service instances with strict scope boundaries.
 3. **Compile-time optimization**: Production deployments must skip reflection by using cached resolution hints.
 4. **Explicit wiring**: No magic auto-discovery. All bindings are explicit or registered through deferred providers.
@@ -46,7 +46,7 @@ interface AdvancedContainerInterface extends ContainerInterface
 | `RequestScope` | One instance per HTTP request              | `endRequestScope()` between requests |
 | `TenantScope`  | One instance per tenant context            | `endTenantScope()` on tenant switch  |
 
-Scoped lifetimes are managed by `ScopeManager`, which enforces scope widening rules — a `RequestScope` service cannot depend on a `TenantScope` service, preventing accidental tenant data leakage.
+Scoped lifetimes are managed by `ScopeManager`, which enforces scope widening rules - a `RequestScope` service cannot depend on a `TenantScope` service, preventing accidental tenant data leakage.
 
 ### Contextual Bindings
 
@@ -60,7 +60,7 @@ Contextual bindings are checked during autowiring before falling back to the glo
 
 ### Lazy Proxy Generation
 
-`LazyServiceFactory` uses `ReflectionClass::newLazyProxy()` (PHP 8.4+) to create ghost objects that defer construction until first property or method access. Services opt in via the `lazy` flag on `ServiceDefinition`. No code generation or cache files — native PHP lazy objects.
+`LazyServiceFactory` uses `ReflectionClass::newLazyProxy()` (PHP 8.4+) to create ghost objects that defer construction until first property or method access. Services opt in via the `lazy` flag on `ServiceDefinition`. No code generation or cache files - native PHP lazy objects.
 
 ### Compiler Pass Pipeline
 
@@ -76,7 +76,7 @@ Contextual bindings are checked during autowiring before falling back to the glo
 
 ### Resolution Hints Cache
 
-In production, `resolutionHints` — a pre-computed map of `class-string → constructor parameter types` — bypasses reflection entirely. Hints are fallible: if a hint fails at resolution time, the container silently falls back to reflection. This makes cache invalidation safe — stale hints degrade to slower resolution, never to errors.
+In production, `resolutionHints` - a pre-computed map of `class-string → constructor parameter types` - bypasses reflection entirely. Hints are fallible: if a hint fails at resolution time, the container silently falls back to reflection. This makes cache invalidation safe - stale hints degrade to slower resolution, never to errors.
 
 ## Alternatives Considered
 
@@ -105,22 +105,22 @@ Rejected: prohibitive DX cost. Every new constructor parameter requires updating
 ### Negative
 
 - Custom container requires maintaining PSR-11 compliance and edge-case handling internally
-- Lazy proxy generation depends on PHP 8.4+ `ReflectionClass::newLazyProxy()` — no fallback for older runtimes
-- Compiler pass ordering is implicit (array order) — passes must be registered in dependency order
+- Lazy proxy generation depends on PHP 8.4+ `ReflectionClass::newLazyProxy()` - no fallback for older runtimes
+- Compiler pass ordering is implicit (array order) - passes must be registered in dependency order
 
 ### Neutral
 
-- `ScopeManager` is injected at Kernel boot and null in test/simple usage — scoped lifetimes silently degrade to transient when no scope manager is present
-- Deferred providers are resolved on first `get()` — provider registration order does not affect resolution correctness
+- `ScopeManager` is injected at Kernel boot and null in test/simple usage - scoped lifetimes silently degrade to transient when no scope manager is present
+- Deferred providers are resolved on first `get()` - provider registration order does not affect resolution correctness
 
 ## Security Impact
 
 The container holds references to all application services, including security-sensitive ones (crypto keys, audit loggers, auth guards). Mitigations:
 
 - `ReadOnlyContainer` proxy (used by REPL safe mode, ADR-0022) prevents runtime binding mutation
-- No service locator access from user-facing code — constructor injection only
+- No service locator access from user-facing code - constructor injection only
 - Scope enforcement prevents tenant data leakage through `ScopeWideningException`
-- `#[Internal]` on `Container` class — extensions depend on the interface, not the implementation
+- `#[Internal]` on `Container` class - extensions depend on the interface, not the implementation
 
 ## Performance Impact
 
@@ -130,7 +130,7 @@ The container holds references to all application services, including security-s
 
 ## Migration / Rollback Plan
 
-Additive change — introduces `src/Container/` as a new core module. To roll back: revert to the previous minimal container implementation. No data migrations required. All container bindings are defined in code (wiring classes), not persisted.
+Additive change - introduces `src/Container/` as a new core module. To roll back: revert to the previous minimal container implementation. No data migrations required. All container bindings are defined in code (wiring classes), not persisted.
 
 ## Links
 

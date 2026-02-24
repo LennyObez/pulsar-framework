@@ -118,12 +118,12 @@ services:
   app:
     build: .
     ports:
-      - '80:80'
-      - '443:443'
-      - '443:443/udp'
+     - '80:80'
+     - '443:443'
+     - '443:443/udp'
     volumes:
-      - caddy_data:/data
-      - caddy_config:/config
+     - caddy_data:/data
+     - caddy_config:/config
     environment:
       APP_ENV: production
       APP_DEBUG: 'false'
@@ -239,14 +239,14 @@ Caddy exposes Prometheus metrics at `localhost:2019/metrics` by default. Combine
 ```yaml
 # prometheus.yml scrape config
 scrape_configs:
-  - job_name: 'caddy'
+ - job_name: 'caddy'
     static_configs:
-      - targets: ['localhost:2019']
+     - targets: ['localhost:2019']
 
-  - job_name: 'pulsar-health'
+ - job_name: 'pulsar-health'
     metrics_path: '/_health'
     static_configs:
-      - targets: ['localhost:443']
+     - targets: ['localhost:443']
     scheme: https
 ```
 

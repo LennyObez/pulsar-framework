@@ -132,23 +132,23 @@ Pulsar registers runtime metrics in `MetricRegistry`. These are available throug
 # prometheus.yml
 scrape_configs:
   # Pulsar health endpoint (per-worker)
-  - job_name: 'pulsar'
+ - job_name: 'pulsar'
     metrics_path: '/_health'
     static_configs:
-      - targets:
-          - 'app-1:8080'
-          - 'app-2:8080'
-          - 'app-3:8080'
+     - targets:
+         - 'app-1:8080'
+         - 'app-2:8080'
+         - 'app-3:8080'
 
   # RoadRunner native metrics (if using RoadRunner)
-  - job_name: 'roadrunner'
+ - job_name: 'roadrunner'
     static_configs:
-      - targets: ['localhost:2112']
+     - targets: ['localhost:2112']
 
   # Caddy metrics (if using FrankenPHP or Caddy reverse proxy)
-  - job_name: 'caddy'
+ - job_name: 'caddy'
     static_configs:
-      - targets: ['localhost:2019']
+     - targets: ['localhost:2019']
 ```
 
 ### Alerting Rules
@@ -156,10 +156,10 @@ scrape_configs:
 ```yaml
 # alerts.yml
 groups:
-  - name: pulsar_runtime
+ - name: pulsar_runtime
     rules:
       # Worker memory approaching threshold
-      - alert: PulsarWorkerHighMemory
+     - alert: PulsarWorkerHighMemory
         expr: pulsar_health_memory_mb > 200
         for: 5m
         labels:
@@ -168,7 +168,7 @@ groups:
           summary: 'Pulsar worker memory high ({{ $value }}MB)'
 
       # Worker draining (about to recycle)
-      - alert: PulsarWorkerDraining
+     - alert: PulsarWorkerDraining
         expr: pulsar_health_status != 1
         for: 1m
         labels:
@@ -177,7 +177,7 @@ groups:
           summary: 'Pulsar worker is draining'
 
       # No healthy workers
-      - alert: PulsarNoHealthyWorkers
+     - alert: PulsarNoHealthyWorkers
         expr: count(pulsar_health_status == 1) == 0
         for: 30s
         labels:
@@ -231,7 +231,7 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-    - name: pulsar
+   - name: pulsar
       livenessProbe:
         httpGet:
           path: /_health

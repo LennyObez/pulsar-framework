@@ -9,7 +9,7 @@ Accepted
 PHP applications typically depend on external cryptography packages (`defuse/php-encryption`, `paragonie/halite`, `phpseclib`) or use low-level OpenSSL bindings directly. These approaches introduce:
 
 - **Dependency risk.** External packages must be tracked for CVEs, version-constrained, and audited. Supply chain attacks on crypto libraries have severe consequences.
-- **Algorithm choice complexity.** OpenSSL exposes dozens of cipher suites. Developers must choose correctly — and many don't.
+- **Algorithm choice complexity.** OpenSSL exposes dozens of cipher suites. Developers must choose correctly - and many don't.
 - **Key management fragmentation.** Each subsystem (sessions, CSRF, encryption, audit) often manages its own key material, leading to key sprawl and inconsistent rotation.
 
 PHP 7.2+ bundles libsodium (`ext-sodium`) as a core extension. Libsodium provides a small, opinionated API with safe defaults: XSalsa20-Poly1305 for authenticated encryption, BLAKE2b for hashing, X25519 for key exchange, and Argon2id for password hashing.
@@ -29,10 +29,10 @@ All cryptographic operations in Pulsar use PHP's bundled libsodium. No external 
 
 A single 32-byte master key is provided via the `PULSAR_MASTER_KEY` environment variable. All subsystem keys are derived from this master key using KDF with domain-separated contexts:
 
-- `pulsar__encryption` — general-purpose encryption
-- `pulsar__csrf_hmac` — CSRF token generation
-- `pulsar__audit_hmac` — audit log chain integrity
-- `pulsar__cache_hmac` — cache entry verification
+- `pulsar__encryption` - general-purpose encryption
+- `pulsar__csrf_hmac` - CSRF token generation
+- `pulsar__audit_hmac` - audit log chain integrity
+- `pulsar__cache_hmac` - cache entry verification
 
 The `MasterKey` class manages derivation. Subkeys are derived on demand and cached in memory for the request lifetime.
 
@@ -42,7 +42,7 @@ The `MasterKey` class manages derivation. Subkeys are derived on demand and cach
 
 - **Zero external crypto dependencies.** No packages to audit, no supply chain risk for cryptographic primitives.
 - **Safe defaults only.** Libsodium's API makes it hard to misuse: nonces are generated automatically, authentication is mandatory, and weak algorithms are not available.
-- **Single key to manage.** One environment variable, one rotation procedure. Subkeys are derived deterministically — rotating the master key rotates everything.
+- **Single key to manage.** One environment variable, one rotation procedure. Subkeys are derived deterministically - rotating the master key rotates everything.
 - **Domain separation.** Even if one subkey is compromised (e.g., via a cache side channel), other subsystems remain protected. Different KDF contexts produce cryptographically independent keys.
 
 ### Negative

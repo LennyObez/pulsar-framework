@@ -64,12 +64,12 @@ The current contract surface does not provide a mechanism to bind authentication
 
 **Current status: Gap (by design)**
 
-The OAuth2 and WebAuthn contracts do not include exemption logic. This is architecturally appropriate -- exemption decisions are business-logic concerns that belong in the deploying application, not in the authentication framework.
+The OAuth2 and WebAuthn contracts do not include exemption logic. This is architecturally appropriate - exemption decisions are business-logic concerns that belong in the deploying application, not in the authentication framework.
 
 **Recommendation:**
 
 1. Document that SCA exemptions are the responsibility of the deploying payment service provider.
-2. Ensure that the authorization flow supports conditional SCA -- the `handleAuthorizationRequest` method should allow the application layer to bypass second-factor authentication when an exemption applies. Currently the flow is opaque (single `ServerRequestInterface` in, `ResponseInterface` out), so the application needs a hook to signal "SCA not required for this transaction."
+2. Ensure that the authorization flow supports conditional SCA - the `handleAuthorizationRequest` method should allow the application layer to bypass second-factor authentication when an exemption applies. Currently the flow is opaque (single `ServerRequestInterface` in, `ResponseInterface` out), so the application needs a hook to signal "SCA not required for this transaction."
 3. Consider adding an `ScaExemptionReason` enum or a `bypass_sca` context flag to the authorization request processing, so that exemption decisions are audit-logged alongside the authentication event.
 
 ---
@@ -95,7 +95,7 @@ The attestation trust level is not the same as the eIDAS identity assurance leve
 **Recommendation:**
 
 1. Consider adding an `IdentityAssuranceLevel` enum (`Low`, `Substantial`, `High`) to the contract surface, or at minimum document the mapping between `AttestationTrustLevel` + `userVerified` + authenticator metadata and eIDAS levels.
-2. Document that eIDAS identity assurance is a deployment-time configuration concern -- the framework provides the building blocks (attestation verification, user verification signals), but the deploying organization must define the assurance level mapping based on their identity proofing process.
+2. Document that eIDAS identity assurance is a deployment-time configuration concern - the framework provides the building blocks (attestation verification, user verification signals), but the deploying organization must define the assurance level mapping based on their identity proofing process.
 
 ### 2.2 Cross-Border Interoperability
 
@@ -155,7 +155,7 @@ Pulsar provides controls that support granular consent through the `ConsentRepos
 **Current status: Compliant**
 
 - `UserClaimsProviderInterface::getClaims(subjectId, scopes)` returns claims filtered by granted scopes (line 33). Only claims mapped to consented scopes are included.
-- OIDC standard scope-to-claim mappings enforce data minimization by design -- requesting `openid` alone yields only the `sub` claim; additional claims require explicit scope grants.
+- OIDC standard scope-to-claim mappings enforce data minimization by design - requesting `openid` alone yields only the `sub` claim; additional claims require explicit scope grants.
 - Pairwise subject identifiers (via `getSubjectIdentifier(userId, clientId)`) prevent cross-client user tracking, which supports data minimization across relying parties.
 
 ### 3.4 Consent Timestamping and Auditability (GDPR Art. 7(1))
@@ -356,4 +356,4 @@ Pulsar's OAuth2/OIDC and WebAuthn extensions provide a strong foundation for dep
 
 The primary gap is PSD2 dynamic linking for payment transactions, which requires transaction-specific data binding in the authentication ceremony. This is a high-priority item for banking use cases but does not affect non-payment deployments.
 
-The remaining gaps are addressable through targeted contract additions (5 methods/fields) and documentation. None of the gaps represent architectural deficiencies -- they are incremental improvements to an already-sound design.
+The remaining gaps are addressable through targeted contract additions (5 methods/fields) and documentation. None of the gaps represent architectural deficiencies - they are incremental improvements to an already-sound design.

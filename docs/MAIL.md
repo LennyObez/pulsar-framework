@@ -330,7 +330,7 @@ $transport->flush();
 
 ## See Also
 
-- [`NOTIFICATION.md`](NOTIFICATION.md) -- Notification system (uses mail as a channel)
-- [`COMPLIANCE.md`](COMPLIANCE.md) -- Compliance framework
-- [`AUDIT_LOGGING.md`](AUDIT_LOGGING.md) -- Audit logging
-- [`EVENTS.md`](EVENTS.md) -- Event system
+- [`NOTIFICATION.md`](NOTIFICATION.md) - Notification system (uses mail as a channel)
+- [`COMPLIANCE.md`](COMPLIANCE.md) - Compliance framework
+- [`AUDIT_LOGGING.md`](AUDIT_LOGGING.md) - Audit logging
+- [`EVENTS.md`](EVENTS.md) - Event system

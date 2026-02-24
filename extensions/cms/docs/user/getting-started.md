@@ -116,15 +116,15 @@ You must be authenticated with an account that has the `cms.admin` or `cms.contr
 1. Navigate to **Admin > CMS > Content** (`/admin/cms/content`).
 2. Click **Create New**.
 3. Fill in the required fields:
-   - **Content type**: Select `article` or `page`.
-   - **Title**: Enter your article or page title.
-   - **Slug**: Auto-generated from the title, or set a custom URL slug.
-   - **Body**: Write your content using the editor. HTML is sanitized through the SafeHtmlPolicy.
+  - **Content type**: Select `article` or `page`.
+  - **Title**: Enter your article or page title.
+  - **Slug**: Auto-generated from the title, or set a custom URL slug.
+  - **Body**: Write your content using the editor. HTML is sanitized through the SafeHtmlPolicy.
 4. Set optional fields:
-   - **Template**: Override the theme template for this content.
-   - **Parent page**: For pages, choose a parent to create hierarchy.
-   - **Comment policy**: Choose `inherit`, `open`, or `closed`.
-   - **Data classification**: Set to `public`, `internal`, or `confidential`.
+  - **Template**: Override the theme template for this content.
+  - **Parent page**: For pages, choose a parent to create hierarchy.
+  - **Comment policy**: Choose `inherit`, `open`, or `closed`.
+  - **Data classification**: Set to `public`, `internal`, or `confidential`.
 5. Click **Save as Draft**.
 
 ## Step 6: Publish Your Content
@@ -205,8 +205,8 @@ These features ensure a complete audit trail and prevent unauthorized content ch
 
 ## Next Steps
 
-- [Content Management Guide](content-management.md) -- Detailed content editing and workflow
-- [Media Library Guide](media-library.md) -- Uploading and managing media assets
-- [Theme Management](theme-management.md) -- Installing and customizing themes
-- [Settings Reference](settings-reference.md) -- Complete configuration reference
-- [Security Model](../security/security-model.md) -- Roles, permissions, and security features
+- [Content Management Guide](content-management.md) - Detailed content editing and workflow
+- [Media Library Guide](media-library.md) - Uploading and managing media assets
+- [Theme Management](theme-management.md) - Installing and customizing themes
+- [Settings Reference](settings-reference.md) - Complete configuration reference
+- [Security Model](../security/security-model.md) - Roles, permissions, and security features

@@ -64,10 +64,10 @@ Every theme is a directory containing a `theme.json` manifest and template files
 2. Click **Install New Theme**.
 3. Upload a theme archive (`.zip` file).
 4. The system validates the archive:
-   - Archive size limit: 50 MB (configurable via `themes.max_archive_size`)
-   - File count limit: 10,000 files (configurable via `themes.max_file_count`)
-   - Manifest validation: checks `theme.json` for required fields
-   - Signature verification (if `themes.require_signed_themes` is enabled)
+  - Archive size limit: 50 MB (configurable via `themes.max_archive_size`)
+  - File count limit: 10,000 files (configurable via `themes.max_file_count`)
+  - Manifest validation: checks `theme.json` for required fields
+  - Signature verification (if `themes.require_signed_themes` is enabled)
 5. After validation, the theme appears in the installed themes list.
 
 ### Via API
@@ -296,6 +296,6 @@ DELETE /admin/cms/themes/{id}
 
 ## Next Steps
 
-- [Live CSS Guide](live-css-guide.md) -- Customizing theme styles without editing files
-- [Plugin Management](plugin-management.md) -- Installing and managing CMS plugins
-- [Settings Reference](settings-reference.md) -- All theme configuration options
+- [Live CSS Guide](live-css-guide.md) - Customizing theme styles without editing files
+- [Plugin Management](plugin-management.md) - Installing and managing CMS plugins
+- [Settings Reference](settings-reference.md) - All theme configuration options

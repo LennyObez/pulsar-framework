@@ -315,6 +315,6 @@ Fields with `filterable: true` can be queried directly via their typed database 
 
 ## Related Documentation
 
-- [Plugin Development Guide](plugin-development.md) -- How plugins register content types
-- [Hook Reference](hook-reference.md) -- Content lifecycle hooks for custom types
-- [Architecture Overview](architecture.md) -- FieldRegistry module boundaries
+- [Plugin Development Guide](plugin-development.md) - How plugins register content types
+- [Hook Reference](hook-reference.md) - Content lifecycle hooks for custom types
+- [Architecture Overview](architecture.md) - FieldRegistry module boundaries

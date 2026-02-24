@@ -90,9 +90,9 @@ Navigate to **Admin > CMS > Import** (`/admin/cms/import`).
 
 1. Upload an export bundle JSON file.
 2. The system validates the file:
-   - Maximum import size: 50 MB (configurable via `import.max_import_size_bytes`)
-   - JSON structure validation
-   - Version compatibility check
+  - Maximum import size: 50 MB (configurable via `import.max_import_size_bytes`)
+  - JSON structure validation
+  - Version compatibility check
 3. Choose import mode.
 
 ### Dry Run
@@ -399,6 +399,6 @@ This anonymizes or deletes all personally identifiable data for the specified us
 
 ## Next Steps
 
-- [Settings Reference](settings-reference.md) -- Import/export configuration
-- [Compliance Guide](../security/compliance-guide.md) -- GDPR and data handling
-- [Security Model](../security/security-model.md) -- Permissions for import/export
+- [Settings Reference](settings-reference.md) - Import/export configuration
+- [Compliance Guide](../security/compliance-guide.md) - GDPR and data handling
+- [Security Model](../security/security-model.md) - Permissions for import/export

@@ -98,7 +98,7 @@ In production mode (`APP_ENV=production`), the Kernel:
 
 ### Atomic Writes
 
-Every artifact is written to a `*.tmp` file first, then atomically renamed to its final path. The build manifest is written last, after all artifacts are finalized. If `pulsar build` is interrupted mid-write, no partial state is left behind — the previous artifact set remains intact.
+Every artifact is written to a `*.tmp` file first, then atomically renamed to its final path. The build manifest is written last, after all artifacts are finalized. If `pulsar build` is interrupted mid-write, no partial state is left behind - the previous artifact set remains intact.
 
 ## Development Mode
 

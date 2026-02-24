@@ -23,14 +23,14 @@ Adopt a **Modular Monolith** architecture using **Vertical Slices** for business
 
 Each extension follows a standardized directory structure:
 
-- **`Contracts/`** — Public port interfaces marked with `#[Api]`. This is the extension's public contract.
-- **`Domain/`** — Value objects, entities, and enums. Public types marked with `#[Api]`.
-- **`Config/`** — Configuration DTOs. Public types marked with `#[Api]`.
-- **`Exception/`** — Exception classes. Public types marked with `#[Api]`.
-- **`Features/`** — Vertical slices. Each slice contains a Handler, Request DTO, and Result DTO. Internal by default.
-- **`Internal/Infrastructure/`** — Adapter implementations of port interfaces. Marked with `#[Internal]`.
-- **`Internal/Support/`** — Internal utilities. Marked with `#[Internal]`.
-- **`Gateway/`** — Public orchestrator facades that delegate to slices. "Gateway" in this context means "use-case facade" (not a payment/API gateway). It is the entry point that external consumers call, delegating internally to one or more slice handlers.
+- **`Contracts/`** - Public port interfaces marked with `#[Api]`. This is the extension's public contract.
+- **`Domain/`** - Value objects, entities, and enums. Public types marked with `#[Api]`.
+- **`Config/`** - Configuration DTOs. Public types marked with `#[Api]`.
+- **`Exception/`** - Exception classes. Public types marked with `#[Api]`.
+- **`Features/`** - Vertical slices. Each slice contains a Handler, Request DTO, and Result DTO. Internal by default.
+- **`Internal/Infrastructure/`** - Adapter implementations of port interfaces. Marked with `#[Internal]`.
+- **`Internal/Support/`** - Internal utilities. Marked with `#[Internal]`.
+- **`Gateway/`** - Public orchestrator facades that delegate to slices. "Gateway" in this context means "use-case facade" (not a payment/API gateway). It is the entry point that external consumers call, delegating internally to one or more slice handlers.
 
 ### Visibility Model
 
