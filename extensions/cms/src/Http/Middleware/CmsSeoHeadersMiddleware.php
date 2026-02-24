@@ -19,6 +19,9 @@ use function is_string;
  *
  * Applies X-Robots-Tag, Link (canonical), and content language headers
  * based on the CMS configuration and the current request context.
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
 #[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CmsSeoHeadersMiddleware implements MiddlewareInterface

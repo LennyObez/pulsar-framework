@@ -20,6 +20,9 @@ use function str_contains;
  * Adds Link response headers with rel="alternate" pointing to RSS and Atom
  * feeds so that browsers and feed readers can auto-discover available feeds.
  * Only applies to HTML responses (Content-Type: text/html).
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
 #[Internal(reason: 'CMS HTTP middleware; implementation detail')]
 final readonly class FeedDiscoveryMiddleware implements MiddlewareInterface

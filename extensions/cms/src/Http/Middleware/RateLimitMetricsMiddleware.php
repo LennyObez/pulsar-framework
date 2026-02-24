@@ -24,6 +24,9 @@ use function is_string;
  * keyed by the hashed client IP for the admin dashboard's "Top IPs" view.
  *
  * Gracefully handles a missing MetricRegistry by passing through without recording.
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
 #[Internal(reason: 'CMS HTTP middleware; implementation detail')]
 final readonly class RateLimitMetricsMiddleware implements MiddlewareInterface

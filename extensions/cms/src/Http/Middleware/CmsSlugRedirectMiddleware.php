@@ -18,6 +18,9 @@ use Pulsar\Http\Middleware\MiddlewareInterface;
  *
  * If a matching redirect is found for the current path, returns an
  * HTTP redirect response (301 or 308) and increments the hit counter.
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
 #[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CmsSlugRedirectMiddleware implements MiddlewareInterface

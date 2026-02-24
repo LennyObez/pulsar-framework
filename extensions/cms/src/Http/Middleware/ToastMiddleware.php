@@ -30,6 +30,9 @@ use const JSON_UNESCAPED_UNICODE;
  * them into the X-CMS-Toast response header for client-side rendering.
  *
  * Limits: at most 10 toasts per response, each message truncated to 500 characters.
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
 #[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class ToastMiddleware implements MiddlewareInterface

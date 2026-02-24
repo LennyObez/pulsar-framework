@@ -28,6 +28,9 @@ use function time;
  * to prevent trivial bypass.
  *
  * Returns 429 Too Many Requests with Retry-After header when exceeded.
+ *
+ * @psalm-api Registered with the router middleware pipeline by the
+ *            CmsCoreServiceProvider; not new'd by name.
  */
 #[Internal(reason: 'CMS middleware; not a public API surface')]
 final readonly class CommentRateLimitMiddleware implements MiddlewareInterface
