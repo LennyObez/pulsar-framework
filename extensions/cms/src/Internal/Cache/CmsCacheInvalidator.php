@@ -7,6 +7,10 @@ namespace Pulsar\Extension\Cms\Internal\Cache;
 use Pulsar\Api\Internal;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 
+/**
+ * @psalm-api Resolved from the DI container by content lifecycle event listeners
+ *            and admin controllers; not instantiated by name.
+ */
 #[Internal(reason: 'CMS cache invalidation')]
 final readonly class CmsCacheInvalidator
 {
