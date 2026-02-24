@@ -154,10 +154,10 @@ Coupons are a specific type of promotion with a customer-entered code:
 1. Create a promotion with a `code` field.
 2. Customers enter the code at checkout.
 3. The `PromotionEngine` validates the coupon:
-   - Code must match an active promotion
-   - Promotion must be within its date range
-   - Usage limits must not be exceeded
-   - Minimum order amount must be met
+  - Code must match an active promotion
+  - Promotion must be within its date range
+  - Usage limits must not be exceeded
+  - Minimum order amount must be met
 4. The discount is applied to the cart.
 
 ### Promotion Validation
@@ -201,11 +201,11 @@ Terminal statuses (no further transitions): `Refunded`, `Cancelled`.
 1. Navigate to **Admin > CMS > Orders** (`/admin/cms/orders`).
 2. The order list shows all orders with status, total, customer, and date.
 3. Click an order to view details (`/admin/cms/orders/{id}`):
-   - Order items with quantities and prices
-   - Payment status and gateway reference
-   - Shipping information
-   - Tax breakdown
-   - Associated invoice
+  - Order items with quantities and prices
+  - Payment status and gateway reference
+  - Shipping information
+  - Tax breakdown
+  - Associated invoice
 
 ### Exporting Orders
 
@@ -249,12 +249,12 @@ Invoices are generated automatically when an order is confirmed. The `InvoiceSer
 
 1. Navigate to **Admin > CMS > Invoices > {id}** (`/admin/cms/invoices/{id}`).
 2. View the invoice details including:
-   - Invoice number
-   - Order reference
-   - Line items with prices and quantities
-   - Tax breakdown
-   - Total amount
-   - Payment status
+  - Invoice number
+  - Order reference
+  - Line items with prices and quantities
+  - Tax breakdown
+  - Total amount
+  - Payment status
 
 ### Downloading Invoices
 
@@ -368,10 +368,10 @@ The checkout is locale-aware:
 2. The `CheckoutController` displays the cart summary and payment form.
 3. Customer submits payment details.
 4. The `CheckoutService` orchestrates:
-   - Cart validation (`CartValidationResult`)
-   - Tax calculation
-   - Promotion/coupon application
-   - Payment gateway interaction
+  - Cart validation (`CartValidationResult`)
+  - Tax calculation
+  - Promotion/coupon application
+  - Payment gateway interaction
 5. On success, the order transitions to `Confirmed`.
 6. Customer is redirected to the success page.
 
@@ -435,6 +435,6 @@ The `WebhookHandler` processes these notifications, updating order and payment s
 
 ## Next Steps
 
-- [Import/Export Guide](import-export-guide.md) -- Exporting order data
-- [Settings Reference](settings-reference.md) -- Commerce configuration details
-- [Compliance Guide](../security/compliance-guide.md) -- Financial record retention
+- [Import/Export Guide](import-export-guide.md) - Exporting order data
+- [Settings Reference](settings-reference.md) - Commerce configuration details
+- [Compliance Guide](../security/compliance-guide.md) - Financial record retention

@@ -110,8 +110,8 @@ Each media asset supports locale-specific alt text and metadata.
 
 1. Click on a media asset in the library.
 2. For each locale, enter:
-   - **Alt text**: Descriptive text for accessibility (screen readers)
-   - **Title**: Optional hover text
+  - **Alt text**: Descriptive text for accessibility (screen readers)
+  - **Title**: Optional hover text
 3. Save the metadata.
 
 Alt text is essential for accessibility compliance. Search engines also use it for image indexing.
@@ -216,6 +216,6 @@ The CMS validates MIME types using file content detection, not just the file ext
 
 ## Next Steps
 
-- [Content Management Guide](content-management.md) -- Embedding media in content
-- [SEO Guide](seo-guide.md) -- Image alt text and media sitemaps
-- [Settings Reference](settings-reference.md) -- All media configuration options
+- [Content Management Guide](content-management.md) - Embedding media in content
+- [SEO Guide](seo-guide.md) - Image alt text and media sitemaps
+- [Settings Reference](settings-reference.md) - All media configuration options

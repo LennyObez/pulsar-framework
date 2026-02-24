@@ -6,10 +6,10 @@ Pulsar provides a tamper-evident audit logging subsystem separate from general a
 
 General logging (`Pulsar\Observability\Log\Logger`) records operational events: errors, warnings, debug information. Audit logging records **who did what, when, and why** for compliance and forensic purposes. The two have different:
 
-- **Schemas** — audit entries have structured fields (actor, action, resource, outcome)
-- **Integrity guarantees** — audit entries are HMAC-chained; tampering with any entry invalidates all subsequent entries
-- **Retention policies** — audit logs are typically retained longer and may have legal requirements
-- **Access controls** — audit logs should be write-once, append-only
+- **Schemas** - audit entries have structured fields (actor, action, resource, outcome)
+- **Integrity guarantees** - audit entries are HMAC-chained; tampering with any entry invalidates all subsequent entries
+- **Retention policies** - audit logs are typically retained longer and may have legal requirements
+- **Access controls** - audit logs should be write-once, append-only
 
 ## Architecture
 
@@ -195,7 +195,7 @@ To verify the entire audit log, replay entries in order:
 
 1. Compute the seed HMAC
 2. For each entry, verify its HMAC against the expected `previousHmac`
-3. If any entry fails, the chain is broken at that point — indicating tampering
+3. If any entry fails, the chain is broken at that point - indicating tampering
 
 ## AuditEntry
 
@@ -271,9 +271,9 @@ $auditLogger = new AuditLogger(
 
 1. On construction, computes the seed HMAC: `Hmac::computeHex('PULSAR_AUDIT_SEED', auditKey)`
 2. On each `log()` call:
-   - Creates an `AuditEntry` with the current `previousHmac`
-   - Writes the entry to the sink
-   - Updates `previousHmac` to the new entry's HMAC
+  - Creates an `AuditEntry` with the current `previousHmac`
+  - Writes the entry to the sink
+  - Updates `previousHmac` to the new entry's HMAC
 3. The chain is maintained in memory for the lifetime of the `AuditLogger` instance
 
 ## Kernel Registration

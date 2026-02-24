@@ -323,6 +323,6 @@ See the [Audit Events Reference](audit-events.md) for the complete taxonomy.
 
 ## Next Steps
 
-- [Threat Model](threat-model.md) -- Attack surface analysis and mitigations
-- [Audit Events Reference](audit-events.md) -- Complete audit event taxonomy
-- [Compliance Guide](compliance-guide.md) -- GDPR and regulatory compliance
+- [Threat Model](threat-model.md) - Attack surface analysis and mitigations
+- [Audit Events Reference](audit-events.md) - Complete audit event taxonomy
+- [Compliance Guide](compliance-guide.md) - GDPR and regulatory compliance

@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Pulsar needs an event dispatch system that supports PSR-14 interoperability, priority-ordered listeners, compiled listener maps for production performance, module-scoped dispatch for boundary enforcement, storm protection against cascading dispatch loops, and metadata envelopes for audit trails — all without polluting domain event DTOs with infrastructure concerns.
+Pulsar needs an event dispatch system that supports PSR-14 interoperability, priority-ordered listeners, compiled listener maps for production performance, module-scoped dispatch for boundary enforcement, storm protection against cascading dispatch loops, and metadata envelopes for audit trails - all without polluting domain event DTOs with infrastructure concerns.
 
 In regulated domains, events carry compliance significance: security-sensitive actions must be auditable, event storms must be detectable before they exhaust resources, and module boundaries must be respected to maintain architectural integrity.
 
@@ -41,7 +41,7 @@ Two implementations serve different runtime modes:
 | `ListenerProvider`         | Development | Dynamic registration via `addListener()`/`addSubscriber()`. Priority-sorted on dispatch.      |
 | `CompiledListenerProvider` | Production  | Read-only. Loads from a pre-sorted compiled map. Registration methods throw `EventException`. |
 
-`CompiledListenerProvider` also implements `ListenerMetadataProviderInterface`, exposing pre-resolved metadata: envelope requirements (`#[RequiresEnvelope]`), storm overrides (`#[StormOverride]`), and listener module IDs — all computed at build time by `EventMapCompiler`.
+`CompiledListenerProvider` also implements `ListenerMetadataProviderInterface`, exposing pre-resolved metadata: envelope requirements (`#[RequiresEnvelope]`), storm overrides (`#[StormOverride]`), and listener module IDs - all computed at build time by `EventMapCompiler`.
 
 Listener resolution supports class hierarchy: dispatching a `UserCreatedEvent` also triggers listeners registered for parent classes and implemented interfaces.
 
@@ -103,7 +103,7 @@ Rejected: mediator centralizes all handler resolution in a single class, making 
 
 ### Direct method calls (no event system)
 
-Rejected: creates tight coupling between modules. Event-driven architecture enables loose coupling, audit trails, and extensibility — all critical for regulated domains where modules must remain independently deployable and auditable.
+Rejected: creates tight coupling between modules. Event-driven architecture enables loose coupling, audit trails, and extensibility - all critical for regulated domains where modules must remain independently deployable and auditable.
 
 ## Consequences
 
@@ -123,8 +123,8 @@ Rejected: creates tight coupling between modules. Event-driven architecture enab
 
 ### Neutral
 
-- Storm guard state is per-process — in persistent worker mode (ADR-0010), the guard resets between requests via `reset()`
-- `EventMapCompiler` runs at build time and outputs a PHP array — no file format migration concerns
+- Storm guard state is per-process - in persistent worker mode (ADR-0010), the guard resets between requests via `reset()`
+- `EventMapCompiler` runs at build time and outputs a PHP array - no file format migration concerns
 
 ## Security Impact
 
@@ -142,7 +142,7 @@ Rejected: creates tight coupling between modules. Event-driven architecture enab
 
 ## Migration / Rollback Plan
 
-Additive change — introduces `src/Event/` as a new core module. To roll back: remove the module and inline direct method calls at dispatch sites. Event store data (if any) is application-owned and unaffected by framework rollback.
+Additive change - introduces `src/Event/` as a new core module. To roll back: remove the module and inline direct method calls at dispatch sites. Event store data (if any) is application-owned and unaffected by framework rollback.
 
 ## Links
 

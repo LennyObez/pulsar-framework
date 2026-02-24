@@ -8,11 +8,11 @@ Pulsar provides a hybrid RBAC + ABAC authorization system through the Gate. Role
 
 The Gate evaluates authorization in five steps:
 
-1. **Super-role bypass** — Roles in the configured `super_roles` list are always allowed.
-2. **ABAC explicit deny** — Any policy returning `false` immediately denies access.
-3. **RBAC check** — Role-to-permission matching via the `RoleRegistry`.
-4. **ABAC explicit allow** — Any policy returning `true` grants access (even without RBAC match).
-5. **Default deny** — No match results in denial.
+1. **Super-role bypass** - Roles in the configured `super_roles` list are always allowed.
+2. **ABAC explicit deny** - Any policy returning `false` immediately denies access.
+3. **RBAC check** - Role-to-permission matching via the `RoleRegistry`.
+4. **ABAC explicit allow** - Any policy returning `true` grants access (even without RBAC match).
+5. **Default deny** - No match results in denial.
 
 Explicit deny always wins. A policy returning `false` overrides RBAC permissions.
 
@@ -83,7 +83,7 @@ Permissions support wildcard patterns:
 
 | Pattern        | Matches                          | Does Not Match |
 | -------------- | -------------------------------- | -------------- |
-| `*`            | Everything                       | —              |
+| `*`            | Everything                       | -              |
 | `content.*`    | `content.view`, `content.create` | `users.view`   |
 | `content.view` | `content.view`                   | `content.edit` |
 
@@ -213,7 +213,7 @@ Super roles bypass all RBAC and ABAC checks:
 $gate = new Gate($registry, superRoles: ['superadmin']);
 
 $super = new Identity(id: 's-1', displayName: 'Super', roles: ['superadmin']);
-$gate->allows($super, 'anything');  // true — always
+$gate->allows($super, 'anything');  // true - always
 ```
 
 ## ABAC Policies
@@ -289,7 +289,7 @@ final readonly class LockedResourcePolicy implements PolicyInterface
     {
         // Deny edits to locked resources regardless of RBAC
         if ($context->permission === 'content.edit' && $context->resource === '/locked-article') {
-            return false; // Explicit deny — overrides RBAC
+            return false; // Explicit deny - overrides RBAC
         }
 
         return null;
@@ -337,7 +337,7 @@ $route = new Route(
 );
 ```
 
-Multiple permissions can be required — all must be granted:
+Multiple permissions can be required - all must be granted:
 
 ```php
 $route = new Route(
@@ -388,10 +388,10 @@ The Kernel registers these middleware aliases:
 ### Common Route Patterns
 
 ```php
-// Public route — no middleware needed
+// Public route - no middleware needed
 new Route([Method::GET], '/public', $handler);
 
-// Authenticated only — no specific permission
+// Authenticated only - no specific permission
 new Route([Method::GET], '/profile', $handler, middleware: ['auth']);
 
 // Authenticated + specific permission

@@ -378,6 +378,6 @@ $callbacks = $hookRegistry->getCallbacks('content.published');
 
 ## Related Documentation
 
-- [Plugin Development Guide](plugin-development.md) -- How to register hooks in a plugin
-- [Architecture Overview](architecture.md) -- Event dispatch and plugin sandboxing
-- [Content Type API](content-type-api.md) -- Content lifecycle and custom types
+- [Plugin Development Guide](plugin-development.md) - How to register hooks in a plugin
+- [Architecture Overview](architecture.md) - Event dispatch and plugin sandboxing
+- [Content Type API](content-type-api.md) - Content lifecycle and custom types

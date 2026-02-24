@@ -118,12 +118,12 @@ Pipeline:
 
 Components:
 
-- `Environment` — loads and merges env vars from OS + `.env` file
-- `EnvironmentMode` — backed enum (`Local`, `Staging`, `Production`) with debug defaults
-- `AppConfig` / `ObservabilityConfig` — readonly DTOs with `fromArray()` factories
-- `ConfigRepository` — typed store keyed by class name
-- `ConfigManager` — orchestrator that runs the full pipeline
-- `ConfigLoaderInterface` — extension point for custom config DTOs
+- `Environment` - loads and merges env vars from OS + `.env` file
+- `EnvironmentMode` - backed enum (`Local`, `Staging`, `Production`) with debug defaults
+- `AppConfig` / `ObservabilityConfig` - readonly DTOs with `fromArray()` factories
+- `ConfigRepository` - typed store keyed by class name
+- `ConfigManager` - orchestrator that runs the full pipeline
+- `ConfigLoaderInterface` - extension point for custom config DTOs
 
 ### Error Handling (`src/ErrorHandling/`)
 
@@ -133,10 +133,10 @@ Flow: Exception → resolve HTTP status → resolve headers → log with context
 
 Components:
 
-- `ExceptionHandler` — central handler resolving status, headers, logging, and rendering
-- `HttpException` / `HttpExceptionInterface` — exceptions that map to specific HTTP status codes
-- `DevelopmentRenderer` — detailed HTML with trace, request details, previous exceptions (debug=true)
-- `ProductionRenderer` — safe generic HTML, no sensitive info exposed (debug=false)
+- `ExceptionHandler` - central handler resolving status, headers, logging, and rendering
+- `HttpException` / `HttpExceptionInterface` - exceptions that map to specific HTTP status codes
+- `DevelopmentRenderer` - detailed HTML with trace, request details, previous exceptions (debug=true)
+- `ProductionRenderer` - safe generic HTML, no sensitive info exposed (debug=false)
 
 Status resolution:
 
@@ -168,13 +168,13 @@ PSR-3 compliant structured logging with JSON lines output.
 
 Components:
 
-- `Logger` — implements `Psr\Log\LoggerInterface` with level threshold filtering
-- `LogLevel` — backed string enum with numeric severity (0=emergency..7=debug) and `meetsThreshold()`
-- `LogEntry` — readonly value object with UTC timestamp, level, message, context, channel
-- `LogFormatter` — JSON line formatter with PSR-3 `{placeholder}` interpolation and `Throwable` serialization
-- `LogSinkInterface` — output destination contract
-- `FileSink` — appends JSON lines to file, creates directories, uses `LOCK_EX`
-- `StreamSink` — writes JSON lines to PHP streams (`php://stderr`, etc.)
+- `Logger` - implements `Psr\Log\LoggerInterface` with level threshold filtering
+- `LogLevel` - backed string enum with numeric severity (0=emergency..7=debug) and `meetsThreshold()`
+- `LogEntry` - readonly value object with UTC timestamp, level, message, context, channel
+- `LogFormatter` - JSON line formatter with PSR-3 `{placeholder}` interpolation and `Throwable` serialization
+- `LogSinkInterface` - output destination contract
+- `FileSink` - appends JSON lines to file, creates directories, uses `LOCK_EX`
+- `StreamSink` - writes JSON lines to PHP streams (`php://stderr`, etc.)
 
 Design decisions:
 
@@ -233,15 +233,15 @@ Pulsar uses a PHP attribute-based system to explicitly mark API surface boundari
 
 ### Stability Attributes
 
-- `#[Api]` (`src/Api/Api.php`) -- marks a class, method, or interface as part of the **public API**. These symbols are covered by semantic versioning guarantees: breaking changes require a major version bump.
-- `#[Internal]` (`src/Api/Internal.php`) -- marks a symbol as **framework-internal**. Internal symbols may change or be removed in any release without notice. Extension authors and application code must not depend on internal symbols.
+- `#[Api]` (`src/Api/Api.php`) - marks a class, method, or interface as part of the **public API**. These symbols are covered by semantic versioning guarantees: breaking changes require a major version bump.
+- `#[Internal]` (`src/Api/Internal.php`) - marks a symbol as **framework-internal**. Internal symbols may change or be removed in any release without notice. Extension authors and application code must not depend on internal symbols.
 
 ### Semver Guarantees
 
 Only symbols annotated with `#[Api]` are covered by semver. Specifically:
 
-- **Patch releases** (1.0.x) -- bug fixes only, no API changes.
-- **Minor releases** (1.x.0) -- new `#[Api]` symbols may be added; existing ones are never removed or changed incompatibly.
+- **Patch releases** (1.0.x) - bug fixes only, no API changes.
+- **Minor releases** (1.x.0) - new `#[Api]` symbols may be added; existing ones are never removed or changed incompatibly.
 - **Major releases** (x.0.0) -- `#[Api]` symbols may be removed or changed.
 
 Symbols without either attribute are treated as internal by default.
@@ -270,12 +270,12 @@ Architecture:
 
 Components:
 
-- `StudioManager` — central orchestrator for event ingestion with sampling
-- `FiberScopedContextProvider` — fiber-safe correlation context via `WeakMap` per Fiber
-- `SqliteEventStore` — SQLite storage with WAL mode and write contention retry
-- `HashChain` / `EvidenceVerifier` — cryptographic integrity verification
-- `StudioServer` / `StudioRouter` — PHP built-in server with SSE support
-- `StudioAccessGate` — environment-aware access control (local/staging/production)
+- `StudioManager` - central orchestrator for event ingestion with sampling
+- `FiberScopedContextProvider` - fiber-safe correlation context via `WeakMap` per Fiber
+- `SqliteEventStore` - SQLite storage with WAL mode and write contention retry
+- `HashChain` / `EvidenceVerifier` - cryptographic integrity verification
+- `StudioServer` / `StudioRouter` - PHP built-in server with SSE support
+- `StudioAccessGate` - environment-aware access control (local/staging/production)
 
 #### Concurrency Model
 
@@ -310,7 +310,7 @@ Retention enforcement (`RetentionEnforcer`) deletes old events and their chain l
 
 ### Concurrency Model
 
-Pulsar is synchronous by design. The framework processes one request at a time per worker, with no event loop, hidden scheduler, or implicit parallelism. Fibers are used in exactly one place -- Studio's `FiberScopedContextProvider` -- for correlation context isolation across Fiber boundaries via a `WeakMap` keyed by Fiber identity. When no Fiber is active, all context operations fall back to a root key with zero overhead.
+Pulsar is synchronous by design. The framework processes one request at a time per worker, with no event loop, hidden scheduler, or implicit parallelism. Fibers are used in exactly one place - Studio's `FiberScopedContextProvider` -- for correlation context isolation across Fiber boundaries via a `WeakMap` keyed by Fiber identity. When no Fiber is active, all context operations fall back to a root key with zero overhead.
 
 For full details on Fiber usage, extension constraints, and framework guarantees, see [`docs/ASYNC_MODEL.md`](ASYNC_MODEL.md).
 
@@ -324,15 +324,15 @@ Asynchronous job processing with pluggable drivers.
 
 Components:
 
-- `QueueManager` — central orchestrator for job dispatch and queue state queries
-- `Worker` — long-running process that polls a queue, executes jobs, and handles graceful shutdown
-- `WorkerOptions` — configurable limits (max jobs, memory, timeout, sleep interval)
-- `QueueDriverInterface` — pluggable backend contract
-- `SyncDriver` — executes jobs immediately in the same process (local/testing)
-- `InMemoryDriver` — in-memory FIFO queue (testing)
-- `DatabaseDriver` — persistent queue backed by a database table (production)
-- `QueueRetryPolicy` — configurable retry with exponential backoff and max attempts
-- `DeadLetterQueue` — stores permanently failed jobs for inspection and manual retry
+- `QueueManager` - central orchestrator for job dispatch and queue state queries
+- `Worker` - long-running process that polls a queue, executes jobs, and handles graceful shutdown
+- `WorkerOptions` - configurable limits (max jobs, memory, timeout, sleep interval)
+- `QueueDriverInterface` - pluggable backend contract
+- `SyncDriver` - executes jobs immediately in the same process (local/testing)
+- `InMemoryDriver` - in-memory FIFO queue (testing)
+- `DatabaseDriver` - persistent queue backed by a database table (production)
+- `QueueRetryPolicy` - configurable retry with exponential backoff and max attempts
+- `DeadLetterQueue` - stores permanently failed jobs for inspection and manual retry
 
 Worker lifecycle:
 
@@ -354,18 +354,18 @@ Process health monitoring and automated recovery.
 
 Components:
 
-- `Supervisor` — central orchestrator for worker lifecycle evaluation
-- `WorkerRecyclePolicy` — threshold-based recycling (request count, memory, uptime)
-- `StuckJobDetector` / `StuckJobPolicy` — detects jobs that exceed expected execution time
-- `PreflightRunner` — pre-start health checks (e.g., database connectivity, disk space)
-- `InvariantRunner` — runtime invariant checks during worker execution
+- `Supervisor` - central orchestrator for worker lifecycle evaluation
+- `WorkerRecyclePolicy` - threshold-based recycling (request count, memory, uptime)
+- `StuckJobDetector` / `StuckJobPolicy` - detects jobs that exceed expected execution time
+- `PreflightRunner` - pre-start health checks (e.g., database connectivity, disk space)
+- `InvariantRunner` - runtime invariant checks during worker execution
 
 Key operations:
 
-- `shouldRecycle()` — evaluates if a worker should be recycled based on configured thresholds; returns a `RecycleRecord` with the reason and recommended action
-- `detectStuckJobs()` — queries the queue driver for jobs exceeding the stuck timeout
-- `recoverStuckJobs()` — dead-letters stuck jobs and returns healing actions
-- `runPreflightChecks()` / `runInvariantChecks()` — executes registered check lists
+- `shouldRecycle()` - evaluates if a worker should be recycled based on configured thresholds; returns a `RecycleRecord` with the reason and recommended action
+- `detectStuckJobs()` - queries the queue driver for jobs exceeding the stuck timeout
+- `recoverStuckJobs()` - dead-letters stuck jobs and returns healing actions
+- `runPreflightChecks()` / `runInvariantChecks()` - executes registered check lists
 
 Configuration via `config/supervisor.php`.
 
@@ -375,10 +375,10 @@ Filesystem integrity verification using cryptographic manifests.
 
 Components:
 
-- `ManifestBuilder` — scans configured paths, computes SHA-256 hashes, produces an `IntegrityManifest`
-- `ManifestVerifier` — compares a stored manifest against the current filesystem; reports modified, missing, and added files
-- `ManifestSigner` — HMAC-BLAKE2b signing and verification using a derived subkey (subKeyId=6, context=`integ_sg`)
-- `IntegrityPolicy` — resolved policy from configuration (enforcement mode)
+- `ManifestBuilder` - scans configured paths, computes SHA-256 hashes, produces an `IntegrityManifest`
+- `ManifestVerifier` - compares a stored manifest against the current filesystem; reports modified, missing, and added files
+- `ManifestSigner` - HMAC-BLAKE2b signing and verification using a derived subkey (subKeyId=6, context=`integ_sg`)
+- `IntegrityPolicy` - resolved policy from configuration (enforcement mode)
 
 Verification flow:
 
@@ -399,10 +399,10 @@ Pre-deployment readiness validation.
 
 Components:
 
-- `DeployCheck` — orchestrator that runs all registered checks against a target environment
-- `DeployCheckInterface` — contract for individual checks (`getName()`, `getDescription()`, `check()`)
-- `CheckResult` — result DTO with severity level and actionable recommendations
-- `DeployReport` — aggregated report with pass/warning/error counts
+- `DeployCheck` - orchestrator that runs all registered checks against a target environment
+- `DeployCheckInterface` - contract for individual checks (`getName()`, `getDescription()`, `check()`)
+- `CheckResult` - result DTO with severity level and actionable recommendations
+- `DeployReport` - aggregated report with pass/warning/error counts
 
 Deploy checks validate environment-specific requirements before deployment (e.g., config completeness, cache state, security settings). Checks can target specific environments (`local`, `staging`, `production`).
 
@@ -414,13 +414,13 @@ Build-time cache system for configuration, routes, and container bindings.
 
 Components:
 
-- `FrameworkCache` — top-level orchestrator for warm/clear/load operations
-- `ConfigCache` — serializes `ConfigRepository` with optional encryption
-- `RouteCache` — serializes compiled route tables
-- `ContainerCache` — serializes container bindings
-- `CacheIntegrity` — HMAC signing and atomic file writes
-- `CacheManifest` — HMAC-signed manifest with deterministic invalidation keys
-- `CacheLock` — `flock()`-based write lock for concurrent safety
+- `FrameworkCache` - top-level orchestrator for warm/clear/load operations
+- `ConfigCache` - serializes `ConfigRepository` with optional encryption
+- `RouteCache` - serializes compiled route tables
+- `ContainerCache` - serializes container bindings
+- `CacheIntegrity` - HMAC signing and atomic file writes
+- `CacheManifest` - HMAC-signed manifest with deterministic invalidation keys
+- `CacheLock` - `flock()`-based write lock for concurrent safety
 
 Cache-aware boot path:
 

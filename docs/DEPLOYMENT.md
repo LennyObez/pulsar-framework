@@ -39,7 +39,7 @@ php bin/pulsar optimize:clear
 
 When framework caches are present, the Kernel boot path skips file-based config parsing and loads the pre-built `ConfigRepository` directly from cache. This eliminates config file I/O and PHP array merging on every request.
 
-The boot pipeline detects cached data automatically — no code changes are needed. See [`docs/CACHING.md`](CACHING.md) for details on boot profiling, cache validation, and metrics.
+The boot pipeline detects cached data automatically - no code changes are needed. See [`docs/CACHING.md`](CACHING.md) for details on boot profiling, cache validation, and metrics.
 
 ## Deploy Checks
 
@@ -266,7 +266,7 @@ Preloading loads PHP classes into shared memory at server start, eliminating per
 
 3. **Restart** the web server (preloading takes effect at startup).
 
-The generated file uses absolute paths and is fully deterministic — running `preload:dump` twice on the same codebase produces byte-for-byte identical output.
+The generated file uses absolute paths and is fully deterministic - running `preload:dump` twice on the same codebase produces byte-for-byte identical output.
 
 ### Security
 

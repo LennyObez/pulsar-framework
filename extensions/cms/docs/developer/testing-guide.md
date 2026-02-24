@@ -704,6 +704,6 @@ composer test
 
 ## Related Documentation
 
-- [Architecture Overview](architecture.md) -- Module structure and dependencies
-- [Plugin Development Guide](plugin-development.md) -- Plugin contract for testing
-- [Content Type API](content-type-api.md) -- Field types and validation for test data
+- [Architecture Overview](architecture.md) - Module structure and dependencies
+- [Plugin Development Guide](plugin-development.md) - Plugin contract for testing
+- [Content Type API](content-type-api.md) - Field types and validation for test data

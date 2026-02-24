@@ -217,9 +217,9 @@ Each step is validated before proceeding. If an error occurs, previously importe
 
 1. Navigate to **Admin > CMS > Content** (`/admin/cms/content`).
 2. Verify all 3 content items are present:
-   - About Us (page)
-   - Contact (page)
-   - Welcome to Acme (article)
+  - About Us (page)
+  - Contact (page)
+  - Welcome to Acme (article)
 3. Open each item and confirm translations are correct for both `en` and `fr`.
 
 <!-- Screenshot: Content list showing imported items -->
@@ -263,6 +263,6 @@ Your site is bootstrapped with content, taxonomies, menus, and translations from
 
 ## Next Steps
 
-- [Import/Export Guide](../user/import-export-guide.md) -- Full import/export documentation
-- [Content Management Guide](../user/content-management.md) -- Editing imported content
-- [Settings Reference](../user/settings-reference.md) -- All configuration options
+- [Import/Export Guide](../user/import-export-guide.md) - Full import/export documentation
+- [Content Management Guide](../user/content-management.md) - Editing imported content
+- [Settings Reference](../user/settings-reference.md) - All configuration options

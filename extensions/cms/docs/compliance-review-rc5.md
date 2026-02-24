@@ -1,4 +1,4 @@
-# CMS Commerce Module — Legal & Compliance Review (RC.11 Phase 5)
+# CMS Commerce Module - Legal & Compliance Review (RC.11 Phase 5)
 
 **Reviewer:** Legal & Compliance Specialist
 **Date:** 2026-02-19
@@ -16,8 +16,8 @@ The `TaxCalculator` uses `CommerceConfig.taxRates` with per-`tax_category` rate 
 **Assessment: Adequate with recommendations.**
 
 - **Correct:** Rate lookup by `(tax_category, billing_country)` is the standard approach for B2C EU VAT.
-- **Correct:** Fallback to zero tax when no matching rate exists is acceptable for non-EU sales, but the `taxRequired: true` flag that rejects checkout without a matching rate is essential for EU sellers — document this as mandatory for EU-based operators.
-- **Gap: No tax jurisdiction date-effectiveness.** Tax rates change over time (e.g., Germany temporarily reduced VAT from 19% to 16% in 2020). The current `TaxRateConfig` has no `effective_from` / `effective_until` dates. Orders placed during rate transitions would use whatever rate is configured at checkout time, which is correct for new orders, but historical orders must store the applied rate at time of purchase (addressed in OrderItem — see below). **Recommendation:** Add `effective_from: ?DateTimeImmutable` and `effective_until: ?DateTimeImmutable` to `TaxRateConfig` for operators who need to pre-configure upcoming rate changes. This is not a blocker but is a significant DX improvement for EU operators.
+- **Correct:** Fallback to zero tax when no matching rate exists is acceptable for non-EU sales, but the `taxRequired: true` flag that rejects checkout without a matching rate is essential for EU sellers - document this as mandatory for EU-based operators.
+- **Gap: No tax jurisdiction date-effectiveness.** Tax rates change over time (e.g., Germany temporarily reduced VAT from 19% to 16% in 2020). The current `TaxRateConfig` has no `effective_from` / `effective_until` dates. Orders placed during rate transitions would use whatever rate is configured at checkout time, which is correct for new orders, but historical orders must store the applied rate at time of purchase (addressed in OrderItem - see below). **Recommendation:** Add `effective_from: ?DateTimeImmutable` and `effective_until: ?DateTimeImmutable` to `TaxRateConfig` for operators who need to pre-configure upcoming rate changes. This is not a blocker but is a significant DX improvement for EU operators.
 
 ### 1.2 EU VAT Reverse Charge
 
@@ -36,7 +36,7 @@ Per-country VAT number format validation (checksum algorithms) is specified. Thi
 **Assessment: Adequate for RC.**
 
 - The format-level validation is sufficient as a first gate.
-- Document clearly that format validation does NOT confirm active registration — operators selling B2B cross-border must implement VIES verification to safely apply zero-rating.
+- Document clearly that format validation does NOT confirm active registration - operators selling B2B cross-border must implement VIES verification to safely apply zero-rating.
 
 ### 1.4 Rounding Strategy
 
@@ -49,7 +49,7 @@ Per-country VAT number format validation (checksum algorithms) is specified. Thi
 - **Recommendation:** The `TaxCalculator` implementation MUST:
   1. Compute tax per `OrderItem`: `tax = round(unitPrice * quantity * rate)` (round half-up to nearest minor unit).
   2. Sum item-level taxes to derive `Order.taxAmount`.
-  3. Never compute order tax as `round(subtotal * rate)` — this produces rounding discrepancies that fail EU tax authority audits.
+  3. Never compute order tax as `round(subtotal * rate)` - this produces rounding discrepancies that fail EU tax authority audits.
   4. Document the rounding strategy in a code comment at the calculation site.
 
 ### 1.5 Tax Reporting Data Completeness
@@ -76,7 +76,7 @@ EU VAT invoices must contain specific mandatory fields. Review against the `Invo
 | Date of supply (if different)        | **Missing**                               | Should default to `issuedAt` but must be specifiable for pre-paid/post-delivery scenarios |
 | Seller VAT identification number     | **Missing from Invoice**                  | Must come from site/tenant configuration                                                  |
 | Seller name and address              | **Missing from Invoice**                  | Must come from site/tenant configuration                                                  |
-| Buyer name and address               | Available via `Order.billingAddress`      | Correct — resolved through order join                                                     |
+| Buyer name and address               | Available via `Order.billingAddress`      | Correct - resolved through order join                                                     |
 | Buyer VAT number (if reverse charge) | **Missing from Order**                    | See Section 1.2                                                                           |
 | Description of goods/services        | Available via `OrderItem.productSnapshot` | Correct                                                                                   |
 | Quantity per item                    | Available via `OrderItem.quantity`        | Correct                                                                                   |
@@ -92,11 +92,11 @@ EU VAT invoices must contain specific mandatory fields. Review against the `Invo
 
 **Recommendations:**
 
-1. Add to `CmsConfig` or `CommerceConfig`: `sellerName`, `sellerAddress`, `sellerVatNumber`, `sellerRegistrationNumber` — these are mandatory on every invoice.
+1. Add to `CmsConfig` or `CommerceConfig`: `sellerName`, `sellerAddress`, `sellerVatNumber`, `sellerRegistrationNumber` - these are mandatory on every invoice.
 2. Add to `Order`: `?string $vatNumber`, `bool $reverseCharge`.
 3. Add to `OrderItem` or its `productSnapshot`: `taxRate` (decimal), `taxLabel` (string).
 4. The invoice template (HTML or PDF) must render ALL of the above fields. The `HtmlInvoiceRenderer` template should be reviewed against this checklist.
-5. For reverse charge invoices, the template must include the text "Reverse charge — VAT to be accounted for by the recipient" (or equivalent in the invoice locale).
+5. For reverse charge invoices, the template must include the text "Reverse charge - VAT to be accounted for by the recipient" (or equivalent in the invoice locale).
 
 ### 2.2 Sequential Immutable Numbering
 
@@ -134,7 +134,7 @@ EU jurisdictions require financial record retention between 6-10 years:
 | Belgium      | 7 years (Code TVA Article 60)                                  |
 | Spain        | 4 years (Ley General Tributaria), 6 years (Codigo de Comercio) |
 
-**Assessment:** The "never delete" policy for financial records (plan Section I.5) exceeds all jurisdiction requirements. This is the correct approach — infinite retention for financial records is simpler and safer than per-jurisdiction TTLs.
+**Assessment:** The "never delete" policy for financial records (plan Section I.5) exceeds all jurisdiction requirements. This is the correct approach - infinite retention for financial records is simpler and safer than per-jurisdiction TTLs.
 
 **Recommendation:** Document the retention policy explicitly in a `CommerceConfig.financialRecordRetentionPolicy` constant or config value, even if the value is "permanent." This provides operators with auditable evidence that a retention policy exists and has been configured.
 
@@ -146,20 +146,20 @@ EU jurisdictions require financial record retention between 6-10 years:
 
 **Assessment: Correct and compliant.**
 
-The plan states: "Financial records (orders, invoices, payment events) follow a 'never delete' policy — soft delete only, with audit trail."
+The plan states: "Financial records (orders, invoices, payment events) follow a 'never delete' policy - soft delete only, with audit trail."
 
 This aligns with:
 
 - EU VAT Directive Article 244: member states must ensure storage of invoices for the retention period.
 - National accounting laws (see Section 2.4 table).
-- PCI DSS Requirement 3.1: retain cardholder data only as long as needed — but the CMS does NOT store card data (delegated to `pulsar/payments`), so this is not applicable.
+- PCI DSS Requirement 3.1: retain cardholder data only as long as needed - but the CMS does NOT store card data (delegated to `pulsar/payments`), so this is not applicable.
 
 ### 3.2 Soft Delete Implementation
 
 **Assessment: Needs explicit implementation.**
 
 - The `Order` entity is `readonly` and lacks a `deleted_at` field. The plan mentions soft delete but the entity schema (Section B.1) does not include `deleted_at` or `is_deleted` on orders/invoices.
-- **Recommendation:** For financial records, soft delete should be implemented at the repository level (query filter), not as a column. Financial records should genuinely never be soft-deleted either — the "never delete" policy should mean exactly that. Admin can archive/close orders but never delete them. The `OrderStatus::Cancelled` state is sufficient for orders that should not be fulfilled.
+- **Recommendation:** For financial records, soft delete should be implemented at the repository level (query filter), not as a column. Financial records should genuinely never be soft-deleted either - the "never delete" policy should mean exactly that. Admin can archive/close orders but never delete them. The `OrderStatus::Cancelled` state is sufficient for orders that should not be fulfilled.
 - **Recommendation:** Add a database-level trigger or application check that prevents `DELETE` statements on `cms_orders`, `cms_order_items`, and `cms_invoices`. A `BEFORE DELETE` trigger that raises an exception is a robust safety net.
 
 ### 3.3 Audit Trail Completeness
@@ -176,11 +176,11 @@ The audit events table (plan Section I.5) covers:
 
 **Gap:** The following financial operations should also generate audit events:
 
-- `cms.order.status_changed` — every status transition (not just creation)
-- `cms.order.cancelled` — with reason and cancelled_by
-- `cms.invoice.credit_note_generated` — when credit notes are implemented
-- `cms.order.exported` — when order data is exported (accounting export)
-- `cms.order.pii_accessed` — when decrypted PII fields are accessed by admin
+- `cms.order.status_changed` - every status transition (not just creation)
+- `cms.order.cancelled` - with reason and cancelled_by
+- `cms.invoice.credit_note_generated` - when credit notes are implemented
+- `cms.order.exported` - when order data is exported (accounting export)
+- `cms.order.pii_accessed` - when decrypted PII fields are accessed by admin
 
 **Recommendation:** Add these audit events to the specification and mark all financial audit events as "permanent" retention.
 
@@ -210,8 +210,8 @@ The `Order` entity correctly defaults `dataClassification` to `DataClassificatio
 
 **Recommendation:** Ensure the encryption implementation:
 
-1. Uses authenticated encryption (AEAD) — the plan's crypto policy specifies XChaCha20-Poly1305, which is correct.
-2. Encrypts individual fields, not the entire row — this allows queries on non-PII columns without decryption.
+1. Uses authenticated encryption (AEAD) - the plan's crypto policy specifies XChaCha20-Poly1305, which is correct.
+2. Encrypts individual fields, not the entire row - this allows queries on non-PII columns without decryption.
 3. Stores a key version identifier with encrypted data to support key rotation.
 4. Logs every decryption as an audit event for PII access monitoring.
 
@@ -229,13 +229,13 @@ The plan (Section G.8, GDPR) specifies:
 
 1. **Pseudonymization must be irreversible.** The email hash should use a keyed hash (HMAC) with a key that is destroyed after the pseudonymization batch completes, OR use a one-way hash with a per-erasure salt that is not stored. Simply hashing with SHA-256 without a key is reversible via rainbow tables for common email addresses.
 2. **All PII fields must be covered.** Beyond email and addresses, check for PII in:
-   - `Order.notes` (admin notes may contain customer names/details — redact)
-   - `OrderItem.productSnapshot` (if it contains customer-specific data like personalization — redact)
-   - `Invoice.pdfStoragePath` (the stored PDF/HTML contains customer PII — the file must be regenerated with redacted data or deleted with a note in the audit trail)
+  - `Order.notes` (admin notes may contain customer names/details - redact)
+  - `OrderItem.productSnapshot` (if it contains customer-specific data like personalization - redact)
+  - `Invoice.pdfStoragePath` (the stored PDF/HTML contains customer PII - the file must be regenerated with redacted data or deleted with a note in the audit trail)
 3. **Cross-reference with comments.** If the same customer left comments, the comment PII erasure must run as part of the same operation. The `ToolsServiceInterface::eraseUserData(userId, reason)` should handle this atomically.
 4. **Response timeline.** GDPR Article 12(3) requires response within one month. Document this SLA for operators.
 
-### 4.3 Data Export (GDPR Article 20 — Portability)
+### 4.3 Data Export (GDPR Article 20 - Portability)
 
 **Assessment: Adequate design.**
 
@@ -252,7 +252,7 @@ The plan (Section G.8, GDPR) specifies:
 
 **Assessment: Correct.**
 
-- `Order` is always `DataClassification::Pii` — hardcoded in `Order::create()`.
+- `Order` is always `DataClassification::Pii` - hardcoded in `Order::create()`.
 - `Invoice` is always `DataClassification::Pii`.
 - `Comment` is always `DataClassification::Pii`.
 - Classification drives encryption-at-rest, access logging, and export behavior.

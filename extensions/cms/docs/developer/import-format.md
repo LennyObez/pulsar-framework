@@ -568,6 +568,6 @@ The `ImportConfig` controls default behavior:
 
 ## Related Documentation
 
-- [API Endpoint Reference](api-reference.md) -- Import/export endpoints
-- [Architecture Overview](architecture.md) -- Tools module and processing pipeline
-- [Content Type API](content-type-api.md) -- Custom content type definitions
+- [API Endpoint Reference](api-reference.md) - Import/export endpoints
+- [Architecture Overview](architecture.md) - Tools module and processing pipeline
+- [Content Type API](content-type-api.md) - Custom content type definitions

@@ -75,7 +75,7 @@ Threat model, secure defaults, and deployment guidance for Pulsar's authenticati
 **Production guardrail:** When in-memory stores (`InMemoryTotpSecretStore`, `InMemoryRecoveryCodeStore`, `InMemoryTotpReplayGuard`) are active and `two_factor.allowInMemory` is `false`, the framework emits a `WARNING` log at boot:
 
 ```
-In-memory 2FA store [InMemoryTotpSecretStore] is active — data will not persist across restarts. Bind a persistent implementation.
+In-memory 2FA store [InMemoryTotpSecretStore] is active - data will not persist across restarts. Bind a persistent implementation.
 ```
 
 This is intentionally loud. Set `two_factor.allowInMemory: true` only when you explicitly accept the risk.
@@ -103,11 +103,11 @@ Same defaults as production (security by default). Exceptions:
 ### Setup Flow
 
 1. Call `beginSetup()` with the authenticated identity. Returns:
-   - `secret` — raw binary secret (display only once)
-   - `secret_base32` — Base32-encoded for manual entry
-   - `provisioning_uri` — QR code URI (`otpauth://totp/...`)
-   - `recovery_codes` — plaintext codes (display only once, never again)
-   - `recovery_code_set` — `RecoveryCodeSet` with hashed codes for storage
+  - `secret` - raw binary secret (display only once)
+  - `secret_base32` - Base32-encoded for manual entry
+  - `provisioning_uri` - QR code URI (`otpauth://totp/...`)
+  - `recovery_codes` - plaintext codes (display only once, never again)
+  - `recovery_code_set` - `RecoveryCodeSet` with hashed codes for storage
 2. User scans QR code in their authenticator app
 3. User enters a TOTP code to confirm setup
 4. Call `confirmSetup()` with the identity ID, secret, and code
@@ -121,10 +121,10 @@ Same defaults as production (security by default). Exceptions:
 3. The verifier checks the code against the current and adjacent time steps
 4. The replay guard rejects previously-accepted `(identityId, purpose, timeStep)` tuples
 5. `Verify2faResult` contains:
-   - `verified` — boolean success/failure
-   - `reason` — `Valid`, `InvalidCode`, `Replayed`, `Expired`, `NotEnrolled`, `RateLimited`
-   - `purpose` — `Login`, `Setup`, `StepUp`
-   - `acceptedTimeStep` — the accepted time step (null on failure)
+  - `verified` - boolean success/failure
+  - `reason` - `Valid`, `InvalidCode`, `Replayed`, `Expired`, `NotEnrolled`, `RateLimited`
+  - `purpose` - `Login`, `Setup`, `StepUp`
+  - `acceptedTimeStep` - the accepted time step (null on failure)
 6. On success, the session is regenerated (privilege escalation defense)
 
 ### Recovery Code Storage
@@ -180,11 +180,11 @@ All OAuth flows use PKCE with S256. The `plain` method is not supported. PKCE ve
 
 The `JwksIdTokenVerifier` enforces strict rules:
 
-1. **`alg: "none"` is rejected unconditionally** — unsigned tokens are never accepted
-2. **Unsupported algorithms are rejected** — only RS256 and ES256 are supported
+1. **`alg: "none"` is rejected unconditionally** - unsigned tokens are never accepted
+2. **Unsupported algorithms are rejected** - only RS256 and ES256 are supported
 3. **`kid` handling**: Required when JWKS has multiple keys; single-key JWKS without `kid` uses that key
 4. **`aud` handling**: Must include `clientId`; when multi-valued, `azp` must be present and equal `clientId`
-5. **`jwksUri` must use HTTPS** — validated at config time in `ProviderConfig::fromArray()`
+5. **`jwksUri` must use HTTPS** - validated at config time in `ProviderConfig::fromArray()`
 6. **Clock skew**: Applied to `exp`, `iat`, and `nbf` (default: 120 seconds)
 7. **JWKS caching**: In-memory cache with rotation on unknown `kid`
 
@@ -231,7 +231,7 @@ Step-up re-authentication protects sensitive operations (password changes, payme
    ```php
    StepUpMiddleware::markStepUpAuthenticated($session, $identityId);
    ```
-5. The session key is scoped per identity — user A's step-up does not apply to user B
+5. The session key is scoped per identity - user A's step-up does not apply to user B
 
 ### Response Format
 
