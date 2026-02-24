@@ -14,6 +14,9 @@ use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
  *
  * Provides a minimal default template so the site remains functional while
  * the administrator resolves theme issues.
+ *
+ * @psalm-api Resolved from the DI container by the theme rendering pipeline;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'CMS internal; theme safe mode handler')]
 final readonly class ThemeSafeMode

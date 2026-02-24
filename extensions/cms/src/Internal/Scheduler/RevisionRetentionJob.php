@@ -25,6 +25,9 @@ use function sprintf;
  * Runs daily at 3 AM UTC. Deletes old revisions according to the configured
  * policy (max count per content, max age, with options to preserve published
  * and first revisions).
+ *
+ * @psalm-api Registered with the framework scheduler by name; the scheduler
+ *            invokes the JobInterface contract on the configured cadence.
  */
 #[Internal(reason: 'CMS revision retention enforcement')]
 final readonly class RevisionRetentionJob implements JobInterface

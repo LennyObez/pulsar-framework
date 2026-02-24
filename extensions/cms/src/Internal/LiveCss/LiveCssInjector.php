@@ -14,6 +14,9 @@ use function trim;
 /**
  * Generates inline style blocks from CSS overrides and computes
  * matching CSP directives.
+ *
+ * @psalm-api Resolved from the DI container by the template rendering pipeline;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'Internal utility for template rendering')]
 final readonly class LiveCssInjector

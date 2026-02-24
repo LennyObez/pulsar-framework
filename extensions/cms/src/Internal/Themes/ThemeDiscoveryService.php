@@ -33,6 +33,9 @@ use const JSON_THROW_ON_ERROR;
  * Called during CMS extension boot to keep the installed themes table
  * synchronized with the filesystem. Existing themes (matched by slug)
  * are left untouched.
+ *
+ * @psalm-api Resolved from the DI container by the CMS boot routine;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'CMS internal; theme auto-discovery')]
 final readonly class ThemeDiscoveryService
