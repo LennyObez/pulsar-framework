@@ -14,6 +14,9 @@ use Pulsar\Database\Seeder\SeederInterface;
  * Creates "1.0" as the current stable version and "master" as the
  * development version. Uses INSERT with the cms_doc_versions table schema
  * from DbDocVersionRepository.
+ *
+ * @psalm-api Discovered + run by the SeederRunner from the seeders
+ *            directory; not new'd by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class DocVersionSeeder implements SeederInterface
