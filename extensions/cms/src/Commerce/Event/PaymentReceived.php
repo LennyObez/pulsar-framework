@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a payment is successfully processed for an order.
+ *
+ * @psalm-api Event class — dispatched by the payment workflow
+ *            through the EventDispatcher.
  */
 #[Api(since: '1.0.0')]
 final readonly class PaymentReceived

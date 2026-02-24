@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a refund is processed for an order.
+ *
+ * @psalm-api Event class — dispatched by the refund workflow
+ *            through the EventDispatcher.
  */
 #[Api(since: '1.0.0')]
 final readonly class RefundProcessed
