@@ -13,6 +13,9 @@ use Pulsar\Database\Row;
  *
  * Groups doc pages by their "section" custom field and sorts within
  * each section by the "order" custom field value.
+ *
+ * @psalm-api Resolved by the docs sidebar template helper from the
+ *            DI container; not new'd by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class DocSidebarGenerator
