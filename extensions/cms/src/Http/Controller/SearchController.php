@@ -23,6 +23,9 @@ use function trim;
  *
  * Handles search queries from the frontend, returns ranked results
  * with suggestions for zero-result queries.
+ *
+ * @psalm-api Bound to a route by the CMS service provider; resolved
+ *            from the DI container by the router.
  */
 #[Internal(reason: 'CMS HTTP controller; implementation detail')]
 final readonly class SearchController
