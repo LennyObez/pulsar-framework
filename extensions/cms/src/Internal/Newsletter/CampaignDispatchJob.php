@@ -27,6 +27,9 @@ use function str_replace;
  * Creates NewsletterSend records for each confirmed subscriber matching the
  * campaign's locale and tenant, sends each email, and updates the send record
  * statuses. After all sends are processed, marks the campaign as Sent.
+ *
+ * @psalm-api Instantiated by the queue worker after deserializing job payloads;
+ *            entry point invoked by the QueueableInterface contract.
  */
 #[Internal(reason: 'Queue job; implementation detail')]
 final readonly class CampaignDispatchJob implements QueueableInterface
