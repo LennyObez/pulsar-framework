@@ -27,6 +27,9 @@ use function sprintf;
  * Captures the complete state of a content item (all translations, blocks,
  * and taxonomy term bindings) as a single immutable record with an evidence hash.
  * Used in governance-grade environments to prove exact state at publish time.
+ *
+ * @psalm-api Resolved by content service for governance-grade snapshots;
+ *            not new'd by name.
  */
 #[Internal]
 final readonly class ContentSnapshotService implements ContentSnapshotServiceInterface

@@ -15,6 +15,8 @@ use function trim;
 use const PREG_SET_ORDER;
 
 /**
+ * @psalm-api Resolved by the docs page renderer from the DI container.
+ *
  * Extracts a table of contents from rendered HTML headings.
  *
  * Scans for H2 and H3 elements, using their `id` attribute as the
