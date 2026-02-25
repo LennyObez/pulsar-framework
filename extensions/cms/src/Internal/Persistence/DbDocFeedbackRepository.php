@@ -16,6 +16,10 @@ use Pulsar\Extension\Cms\Docs\DocFeedbackRepositoryInterface;
 use function ceil;
 use function max;
 
+/**
+ * @psalm-api Bound to DocFeedbackRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use DocFeedbackRepositoryInterface for public API')]
 final readonly class DbDocFeedbackRepository implements DocFeedbackRepositoryInterface
 {

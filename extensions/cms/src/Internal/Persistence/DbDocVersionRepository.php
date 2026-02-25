@@ -8,6 +8,10 @@ use Pulsar\Api\Internal;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\Row;
 
+/**
+ * @psalm-api Resolved from the DI container by DocVersionService; not
+ *            instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; used internally by DocVersionService')]
 final readonly class DbDocVersionRepository
 {

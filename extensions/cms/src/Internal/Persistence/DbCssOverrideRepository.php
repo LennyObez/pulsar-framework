@@ -20,6 +20,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Database-backed repository for CSS override persistence.
+ *
+ * @psalm-api Bound to CssOverrideRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Raw-DB repository; use CssOverrideRepositoryInterface for public API')]
 final readonly class DbCssOverrideRepository implements CssOverrideRepositoryInterface
