@@ -14,6 +14,9 @@ use Pulsar\Extension\Cms\Commerce\ApiKeyRepositoryInterface;
 
 /**
  * Database-backed API key repository.
+ *
+ * @psalm-api Bound to ApiKeyRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ApiKeyRepositoryInterface for public API')]
 final readonly class DbApiKeyRepository implements ApiKeyRepositoryInterface

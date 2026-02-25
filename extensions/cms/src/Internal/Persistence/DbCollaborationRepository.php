@@ -14,6 +14,10 @@ use Pulsar\Extension\Cms\Collaboration\CollaborationRepositoryInterface;
 use Pulsar\Extension\Cms\Collaboration\CollaborationSession;
 use Pulsar\Extension\Cms\Collaboration\CrdtDocument;
 
+/**
+ * @psalm-api Bound to CollaborationRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use CollaborationRepositoryInterface for public API')]
 final readonly class DbCollaborationRepository implements CollaborationRepositoryInterface
 {

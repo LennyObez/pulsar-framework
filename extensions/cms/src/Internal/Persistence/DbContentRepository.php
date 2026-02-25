@@ -29,6 +29,10 @@ use function preg_match;
 use function range;
 use function sprintf;
 
+/**
+ * @psalm-api Bound to ContentRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use ContentRepositoryInterface for public API')]
 final readonly class DbContentRepository implements ContentRepositoryInterface
 {
