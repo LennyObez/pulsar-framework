@@ -95,7 +95,7 @@ final readonly class ActionHistoryController
      */
     private function renderView(string $title, array $templateData): string
     {
-        $content = 'activity';
+        extract(['title' => $title, 'content' => 'activity', 'templateData' => $templateData]);
         ob_start();
         include __DIR__ . '/../View/templates/admin/layout.php';
 

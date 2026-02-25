@@ -72,12 +72,16 @@ final readonly class SavedViewsController
             $sort = [];
         }
 
+        /** @var array<string, mixed> $validFilters */
+        $validFilters = $filters;
+        /** @var array<string, string> $validSort */
+        $validSort = $sort;
         $view = new SavedView(
             id: bin2hex(random_bytes(16)),
             resourceName: $resource,
             label: $label,
-            filters: $filters,
-            sort: $sort,
+            filters: $validFilters,
+            sort: $validSort,
             perPage: $perPage,
             createdBy: $actor,
             isDefault: $isDefault,

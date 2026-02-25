@@ -69,7 +69,7 @@ final readonly class SocialLinksBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{platform: string, url: string}> $links */
+        /** @var list<mixed> $links */
         $links = $data['links'] ?? [];
         $style = is_string($data['style'] ?? null) ? $data['style'] : 'both';
         $size = is_string($data['size'] ?? null) ? $data['size'] : 'md';

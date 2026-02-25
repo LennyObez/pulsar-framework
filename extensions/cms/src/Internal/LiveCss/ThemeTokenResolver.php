@@ -52,7 +52,6 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
         /** @var array<string, mixed> $manifestData */
         $manifestData = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
 
-        /** @var list<array<string, mixed>> $tokenDefs */
         $tokenDefs = $manifestData['editable_tokens'] ?? [];
 
         if (!is_array($tokenDefs)) {
@@ -66,13 +65,18 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
                 continue;
             }
 
+            /** @var array<string, mixed> $def */
+            $rawConstraints = $def['constraints'] ?? [];
+            /** @var array<string, mixed> $constraintsArray */
+            $constraintsArray = is_array($rawConstraints) ? $rawConstraints : [];
+
             $tokens[] = new ThemeToken(
                 name: (string) $def['name'],
                 type: (string) $def['type'],
                 default: (string) ($def['default'] ?? ''),
                 label: (string) ($def['label'] ?? $def['name']),
                 group: (string) ($def['group'] ?? 'General'),
-                constraints: is_array($def['constraints'] ?? null) ? $def['constraints'] : [],
+                constraints: $constraintsArray,
             );
         }
 

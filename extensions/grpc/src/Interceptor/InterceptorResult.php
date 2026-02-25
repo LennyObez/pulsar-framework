@@ -31,6 +31,8 @@ final readonly class InterceptorResult
 
     /**
      * Create a successful result with the given response payload.
+     *
+     * @param array<string, list<string>> $trailers
      */
     public static function ok(string $payload, array $trailers = []): self
     {

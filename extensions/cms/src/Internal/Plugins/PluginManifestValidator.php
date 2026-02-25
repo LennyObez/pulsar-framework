@@ -12,7 +12,6 @@ use Pulsar\Extension\Cms\Themes\ValidationResult;
 
 use function array_column;
 use function in_array;
-use function is_string;
 use function preg_match;
 use function sprintf;
 use function strlen;
@@ -66,14 +65,14 @@ final readonly class PluginManifestValidator implements PluginManifestValidatorI
         $validCapabilities = array_column(PluginCapability::cases(), 'value');
 
         foreach ($manifest->capabilities as $capability) {
-            if (!is_string($capability) || !in_array($capability, $validCapabilities, true)) {
+            if (!in_array($capability, $validCapabilities, true)) {
                 $errors[] = sprintf('Unknown capability: "%s"', $capability);
             }
         }
 
         // Validate dependency version constraints
         foreach ($manifest->dependencies as $depSlug => $constraint) {
-            if (!is_string($constraint) || preg_match(self::VERSION_CONSTRAINT_PATTERN, $constraint) !== 1) {
+            if (preg_match(self::VERSION_CONSTRAINT_PATTERN, $constraint) !== 1) {
                 $errors[] = sprintf('Invalid version constraint for dependency "%s": "%s"', $depSlug, $constraint);
             }
         }

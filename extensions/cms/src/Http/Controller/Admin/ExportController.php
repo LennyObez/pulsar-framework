@@ -15,11 +15,18 @@ use Pulsar\Extension\Cms\Internal\Tools\CsvContentExporter;
 use Pulsar\Extension\Cms\Internal\Tools\MarkdownExporter;
 use Pulsar\Extension\Cms\Tools\ExportOptions;
 use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
+use Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
+use function fclose;
+use function filesize;
+use function fopen;
 use function is_array;
 use function json_encode;
+use function stream_get_contents;
+use function strlen;
+use function unlink;
 
 use const JSON_THROW_ON_ERROR;
 use const JSON_UNESCAPED_SLASHES;
@@ -43,6 +50,7 @@ final readonly class ExportController
         private ContentRepositoryInterface $contentRepository,
         private ContentTranslationRepositoryInterface $translationRepository,
         private ContentBlockRepositoryInterface $blockRepository,
+        private ?MediaBundleExporterInterface $mediaBundleExporter = null,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
 
@@ -52,12 +60,123 @@ final readonly class ExportController
         $this->authorize($identity, 'cms.tools.export');
 
         return $this->respondWithView($request, 'admin.tools.export', [
-            'scopes' => ['content', 'taxonomies', 'menus', 'settings', 'media_refs'],
+            'scopes' => [
+                'content',
+                'taxonomies',
+                'menus',
+                'settings',
+                'media_refs',
+                'comments',
+                'users',
+                'media_files',
+                'configuration',
+            ],
             'options' => [
                 'include_pii' => false,
                 'locales' => null,
             ],
+            'supports_zip' => $this->mediaBundleExporter !== null,
         ]);
+    }
+
+    public function selectiveForm(ServerRequestInterface $request): Response
+    {
+        $identity = $this->requireIdentity($request);
+        $this->authorize($identity, 'cms.tools.export');
+
+        return $this->respondWithView($request, 'admin.tools.export', [
+            'scopes' => [
+                'content',
+                'taxonomies',
+                'menus',
+                'settings',
+                'media_refs',
+                'comments',
+                'users',
+                'media_files',
+                'configuration',
+            ],
+            'options' => [
+                'include_pii' => false,
+                'locales' => null,
+            ],
+            'supports_zip' => $this->mediaBundleExporter !== null,
+            'selective' => true,
+        ]);
+    }
+
+    public function zipDownload(ServerRequestInterface $request): Response
+    {
+        $identity = $this->requireIdentity($request);
+        $this->authorize($identity, 'cms.tools.export');
+
+        if ($this->mediaBundleExporter === null) {
+            return Response::json(['error' => 'ZIP export is not available'], 501);
+        }
+
+        /** @var array<string, mixed> $body */
+        $body = (array) ($request->getParsedBody() ?? []);
+
+        /** @var list<string> $scope */
+        $scope = is_array($body['scope'] ?? null) ? $body['scope'] : [];
+
+        if ($scope === []) {
+            return Response::json(['error' => 'At least one export scope is required'], 400);
+        }
+
+        /** @var string|null $tenantId */
+        $tenantId = $request->getAttribute('tenant_id');
+
+        try {
+            /** @var list<string>|null $locales */
+            $locales = is_array($body['locales'] ?? null) ? $body['locales'] : null;
+
+            /** @var list<string>|null $contentTypes */
+            $contentTypes = is_array($body['content_types'] ?? null) ? $body['content_types'] : null;
+
+            $options = ExportOptions::fromArray([
+                'scope' => $scope,
+                'locales' => $locales,
+                'include_pii' => (bool) ($body['include_pii'] ?? false),
+                'tenant_id' => $tenantId,
+                'content_types' => $contentTypes,
+                'date_from' => isset($body['date_from']) && $body['date_from'] !== '' ? (string) $body['date_from'] : null,
+                'date_to' => isset($body['date_to']) && $body['date_to'] !== '' ? (string) $body['date_to'] : null,
+                'status' => isset($body['status']) && $body['status'] !== '' ? (string) $body['status'] : null,
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return Response::json(['error' => $e->getMessage()], 400);
+        }
+
+        if ($options->includePii) {
+            $this->requireStepUp($request);
+        }
+
+        $zipPath = $this->mediaBundleExporter->exportZip($options);
+        $size = filesize($zipPath);
+
+        // Stream the ZIP file to avoid loading the entire archive into memory.
+        // This is important for large exports with many media files.
+        $stream = fopen($zipPath, 'rb');
+
+        if ($stream === false) {
+            unlink($zipPath);
+
+            return Response::json(['error' => 'Failed to read export file'], 500);
+        }
+
+        $body = stream_get_contents($stream);
+        fclose($stream);
+        unlink($zipPath);
+
+        return new Response(
+            headers: [
+                'Content-Type' => 'application/zip',
+                'Content-Disposition' => 'attachment; filename="cms-export.zip"',
+                'Content-Length' => (string) ($size ?: strlen((string) $body)),
+            ],
+            body: (string) $body,
+        );
     }
 
     public function download(ServerRequestInterface $request): Response
@@ -79,14 +198,20 @@ final readonly class ExportController
         $tenantId = $request->getAttribute('tenant_id');
 
         try {
+            /** @var list<string>|null $locales */
+            $locales = is_array($body['locales'] ?? null) ? $body['locales'] : null;
             $options = ExportOptions::fromArray([
                 'scope' => $scope,
-                'locales' => is_array($body['locales'] ?? null) ? $body['locales'] : null,
+                'locales' => $locales,
                 'include_pii' => (bool) ($body['include_pii'] ?? false),
                 'tenant_id' => $tenantId,
             ]);
         } catch (InvalidArgumentException $e) {
             return Response::json(['error' => $e->getMessage()], 400);
+        }
+
+        if ($options->includePii) {
+            $this->requireStepUp($request);
         }
 
         $bundle = $this->importExport->exportBundle($options);
@@ -116,9 +241,6 @@ final readonly class ExportController
 
         /** @var string|null $contentType */
         $contentType = $params['content_type'] ?? null;
-
-        /** @var string|null $status */
-        $status = $params['status'] ?? null;
 
         $result = $this->contentRepository->findPublished(
             locale: $locale,

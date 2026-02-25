@@ -58,7 +58,7 @@ final readonly class PricingTableBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{name: string, price: string, features: list<string>, ctaText: string, ctaUrl: string}> $plans */
+        /** @var list<mixed> $plans */
         $plans = $data['plans'] ?? [];
         $highlighted = $data['highlighted'] ?? null;
 

@@ -1,7 +1,7 @@
 <?php
 
 declare(strict_types=1);
-$content = <<<'HTML'
+extract(['content' => <<<'HTML'
     <div class="analytics-dashboard">
         <header class="analytics-header">
             <div class="analytics-header__realtime">
@@ -44,5 +44,5 @@ $content = <<<'HTML'
             </section>
         </div>
     </div>
-    HTML;
+    HTML]);
 require __DIR__ . '/layout.php';

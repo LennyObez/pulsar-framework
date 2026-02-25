@@ -135,12 +135,12 @@ final class GrpcServer implements GrpcServerInterface
         $amount = (float) substr($value, 0, -1);
 
         $seconds = match ($unit) {
-            'H' => $amount * 3600,
-            'M' => $amount * 60,
+            'H' => $amount * 3600.0,
+            'M' => $amount * 60.0,
             'S' => $amount,
-            'm' => $amount / 1_000,
-            'u' => $amount / 1_000_000,
-            'n' => $amount / 1_000_000_000,
+            'm' => $amount / 1_000.0,
+            'u' => $amount / 1_000_000.0,
+            'n' => $amount / 1_000_000_000.0,
             default => null,
         };
 

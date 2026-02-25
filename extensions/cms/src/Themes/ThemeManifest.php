@@ -6,6 +6,8 @@ namespace Pulsar\Extension\Cms\Themes;
 
 use Pulsar\Api\Api;
 
+use function is_array;
+
 /**
  * Parsed theme manifest (theme.json) with all declared metadata.
  */
@@ -58,10 +60,67 @@ final readonly class ThemeManifest
             license: isset($data['license']) ? (string) $data['license'] : null,
             pulsarVersionConstraint: isset($data['pulsar_version']) ? (string) $data['pulsar_version'] : null,
             parentTheme: isset($data['parent_theme']) ? (string) $data['parent_theme'] : null,
-            regions: (array) ($data['regions'] ?? []),
-            supportedContentTypes: (array) ($data['supported_content_types'] ?? []),
-            settings: (array) ($data['settings'] ?? []),
-            assets: (array) ($data['assets'] ?? []),
+            regions: self::toStringList($data['regions'] ?? []),
+            supportedContentTypes: self::toStringList($data['supported_content_types'] ?? []),
+            settings: self::toStringKeyedArray($data['settings'] ?? []),
+            assets: self::toStringMap($data['assets'] ?? []),
         );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function toStringList(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $item) {
+            $result[] = (string) $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function toStringMap(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $key => $item) {
+            $result[(string) $key] = (string) $item;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function toStringKeyedArray(mixed $value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+
+        /** @var mixed $item */
+        foreach ($value as $key => $item) {
+            $result[(string) $key] = $item;
+        }
+
+        return $result;
     }
 }

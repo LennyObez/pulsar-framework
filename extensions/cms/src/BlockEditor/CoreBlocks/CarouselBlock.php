@@ -52,7 +52,7 @@ final readonly class CarouselBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{imageUrl: string, alt: string, caption?: string}> $slides */
+        /** @var list<mixed> $slides */
         $slides = $data['slides'] ?? [];
         $autoplay = ($data['autoplay'] ?? false) === true ? 'true' : 'false';
         $interval = (int) ($data['interval'] ?? 5000);

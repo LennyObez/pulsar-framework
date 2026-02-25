@@ -22,15 +22,23 @@ final readonly class ActionResult
         public array $metadata = [],
     ) {}
 
+    /**
+     * @param array<string, mixed> $metadata
+     */
     #[NoDiscard]
     public static function success(string $message, array $metadata = []): self
     {
+        /** @var array<string, mixed> $metadata */
         return new self(success: true, message: $message, metadata: $metadata);
     }
 
+    /**
+     * @param array<string, mixed> $metadata
+     */
     #[NoDiscard]
     public static function failure(string $message, array $metadata = []): self
     {
+        /** @var array<string, mixed> $metadata */
         return new self(success: false, message: $message, metadata: $metadata);
     }
 }

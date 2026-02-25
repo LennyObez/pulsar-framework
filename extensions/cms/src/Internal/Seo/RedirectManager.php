@@ -250,6 +250,11 @@ final readonly class RedirectManager implements RedirectManagerInterface
         // Block URLs that look like scheme:payload but bypassed parse_url
         if (preg_match('/^[a-z][a-z0-9+.\-]*:/i', $decoded) === 1) {
             $colonPos = strpos($decoded, ':');
+
+            if ($colonPos === false) {
+                return;
+            }
+
             $candidateScheme = strtolower(substr($decoded, 0, $colonPos));
 
             if (!in_array($candidateScheme, ['http', 'https'], true)) {

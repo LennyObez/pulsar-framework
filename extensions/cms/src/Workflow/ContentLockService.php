@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Database\ConnectionInterface;
+use Pulsar\Database\Driver;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 
@@ -25,6 +26,27 @@ final readonly class ContentLockService implements ContentLockServiceInterface
 {
     private const int LOCK_TTL_MINUTES = 30;
 
+    private const string SQL_ACQUIRE_PG = <<<'SQL'
+        INSERT INTO cms_content_locks (content_id, locked_by, locked_at, expires_at, locale)
+        VALUES (:content_id, :user_id, :locked_at, :expires_at, :locale)
+        ON CONFLICT (content_id) DO UPDATE
+            SET locked_by = EXCLUDED.locked_by,
+                locked_at = EXCLUDED.locked_at,
+                expires_at = EXCLUDED.expires_at,
+                locale = EXCLUDED.locale
+            WHERE cms_content_locks.expires_at < :now
+        SQL;
+
+    private const string SQL_ACQUIRE_MYSQL = <<<'SQL'
+        INSERT INTO cms_content_locks (content_id, locked_by, locked_at, expires_at, locale)
+        VALUES (:content_id, :user_id, :locked_at, :expires_at, :locale)
+        ON DUPLICATE KEY UPDATE
+            locked_by = IF(expires_at < :now, VALUES(locked_by), locked_by),
+            locked_at = IF(expires_at < :now, VALUES(locked_at), locked_at),
+            expires_at = IF(expires_at < :now, VALUES(expires_at), expires_at),
+            locale = IF(expires_at < :now, VALUES(locale), locale)
+        SQL;
+
     public function __construct(
         private ConnectionInterface $db,
         private AuditLoggerInterface $auditLogger,
@@ -35,17 +57,13 @@ final readonly class ContentLockService implements ContentLockServiceInterface
         $now = new DateTimeImmutable();
         $expiresAt = $now->modify('+' . self::LOCK_TTL_MINUTES . ' minutes');
 
+        $sql = match ($this->db->driver()) {
+            Driver::MySQL => self::SQL_ACQUIRE_MYSQL,
+            Driver::PostgreSQL, Driver::SQLite => self::SQL_ACQUIRE_PG,
+        };
+
         $affected = $this->db->execute(
-            <<<'SQL'
-                INSERT INTO cms_content_locks (content_id, locked_by, locked_at, expires_at, locale)
-                VALUES (:content_id, :user_id, :locked_at, :expires_at, :locale)
-                ON CONFLICT (content_id) DO UPDATE
-                    SET locked_by = EXCLUDED.locked_by,
-                        locked_at = EXCLUDED.locked_at,
-                        expires_at = EXCLUDED.expires_at,
-                        locale = EXCLUDED.locale
-                    WHERE cms_content_locks.expires_at < :now
-                SQL,
+            $sql,
             [
                 'content_id' => $contentId,
                 'user_id' => $userId,
@@ -187,6 +205,11 @@ final readonly class ContentLockService implements ContentLockServiceInterface
 
     public function cleanupExpired(): int
     {
-        return $this->db->execute('DELETE FROM cms_content_locks WHERE expires_at < NOW()');
+        $now = new DateTimeImmutable();
+
+        return $this->db->execute(
+            'DELETE FROM cms_content_locks WHERE expires_at < :now',
+            ['now' => $now->format('c')],
+        );
     }
 }

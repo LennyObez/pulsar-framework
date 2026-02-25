@@ -15,14 +15,14 @@ interface CheckoutServiceInterface
     /**
      * Validate cart items — verify products exist, are active, have sufficient stock, and prices are current.
      *
-     * @param list<array{productId: string, quantity: int, unitPrice: int}> $cartItems
+     * @param list<array{productId: string, quantity: int, unitPrice: int, variantId?: string|null}> $cartItems
      */
     public function validateCart(array $cartItems): CartValidationResult;
 
     /**
      * Create an order from validated cart items.
      *
-     * @param list<array{productId: string, quantity: int, unitPrice: int}> $cartItems
+     * @param list<array{productId: string, quantity: int, unitPrice: int, variantId?: string|null}> $cartItems
      * @param array{line1: string, line2?: string, city: string, region?: string, postalCode: string, country: string} $billingAddress
      * @param array{line1: string, line2?: string, city: string, region?: string, postalCode: string, country: string}|null $shippingAddress
      */

@@ -39,7 +39,7 @@ final class ManifestCompiler
             $handler = null;
 
             // Resolve handler class from the first method's full name
-            foreach ($methods as $methodName => $descriptor) {
+            foreach ($methods as $descriptor) {
                 $handler = $registry->resolveHandler($descriptor->fullName);
 
                 break;

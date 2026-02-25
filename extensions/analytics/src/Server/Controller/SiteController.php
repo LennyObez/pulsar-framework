@@ -44,6 +44,7 @@ final readonly class SiteController
         $domain = (string) ($body['domain'] ?? '');
         $name = (string) ($body['name'] ?? '');
         $timezone = (string) ($body['timezone'] ?? 'UTC');
+        /** @var array<string, mixed> $settings */
         $settings = (array) ($body['settings'] ?? []);
 
         if ($domain === '' || $name === '') {
@@ -90,6 +91,7 @@ final readonly class SiteController
         $domain = (string) ($body['domain'] ?? '');
         $name = (string) ($body['name'] ?? '');
         $timezone = (string) ($body['timezone'] ?? 'UTC');
+        /** @var array<string, mixed> $settings */
         $settings = (array) ($body['settings'] ?? []);
 
         if ($domain === '' || $name === '') {

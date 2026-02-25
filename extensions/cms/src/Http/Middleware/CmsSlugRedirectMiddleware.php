@@ -68,21 +68,27 @@ final readonly class CmsSlugRedirectMiddleware implements MiddlewareInterface
 
         $targetUrl = $redirect->toPath;
 
-        // If the target is a relative path, prepend the scheme and host from the current request
+        // If the target is a relative path, normalize to a root-relative URL
         if (!str_starts_with($targetUrl, 'http://') && !str_starts_with($targetUrl, 'https://')) {
-            $uri = $request->getUri();
-            $targetUrl = $uri->getScheme() . '://' . $uri->getHost() . '/' . ltrim($targetUrl, '/');
+            $targetUrl = '/' . ltrim($targetUrl, '/');
         } else {
             // Absolute URL — validate that the host matches the current request to prevent open redirects
             $targetHost = parse_url($targetUrl, PHP_URL_HOST);
             $requestHost = $request->getUri()->getHost();
 
-            if ($targetHost !== null && strtolower($targetHost) !== strtolower($requestHost)) {
+            if ($targetHost !== false && $targetHost !== null && strtolower($targetHost) !== strtolower($requestHost)) {
                 // External redirect blocked — fall through to next handler
                 return $handler->handle($request);
             }
         }
 
-        return Response::redirect($targetUrl, $statusCode);
+        $allowedHosts = [];
+        $requestHost = $request->getUri()->getHost();
+
+        if ($requestHost !== '') {
+            $allowedHosts[] = $requestHost;
+        }
+
+        return Response::redirect($targetUrl, $statusCode, $allowedHosts);
     }
 }

@@ -54,7 +54,7 @@ final readonly class ButtonGroupBlock implements BlockTypeInterface
     #[Override]
     public function render(array $data): string
     {
-        /** @var list<array{text: string, url: string}> $buttons */
+        /** @var list<mixed> $buttons */
         $buttons = $data['buttons'] ?? [];
 
         $alignment = $data['alignment'] ?? null;

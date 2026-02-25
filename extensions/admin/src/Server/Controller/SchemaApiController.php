@@ -245,7 +245,6 @@ final readonly class SchemaApiController
         /** @var array<string, mixed> $body */
         $body = (array) ($request->getParsedBody() ?? []);
 
-        /** @var string $reason */
         $reason = $body['reason'] ?? '';
 
         if (!is_string($reason) || mb_strlen($reason) < 5) {

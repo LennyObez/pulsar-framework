@@ -28,7 +28,7 @@ final readonly class BotFilterMiddleware implements MiddlewareInterface
         $headers = [];
 
         foreach ($request->getHeaders() as $name => $values) {
-            $headers[strtolower($name)] = $values[0] ?? '';
+            $headers[strtolower((string) $name)] = $values[0] ?? '';
         }
 
         if ($this->botDetector->isBot($userAgent, $headers)) {

@@ -53,7 +53,7 @@ final readonly class TableBlock implements BlockTypeInterface
         /** @var list<string> $headers */
         $headers = $data['headers'] ?? [];
 
-        /** @var list<list<string>> $rows */
+        /** @var list<mixed> $rows */
         $rows = $data['rows'] ?? [];
         $hasHeaderRow = (bool) ($data['hasHeaderRow'] ?? true);
 

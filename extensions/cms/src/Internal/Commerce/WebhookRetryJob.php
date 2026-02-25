@@ -16,7 +16,6 @@ use Throwable;
 
 use function json_encode;
 use function min;
-use function pow;
 use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
@@ -115,7 +114,7 @@ final readonly class WebhookRetryJob implements QueueableInterface
      */
     public static function calculateDelay(int $retryCount): int
     {
-        return min((int) pow(2, $retryCount) * self::BASE_DELAY_SECONDS, self::MAX_BACKOFF_SECONDS);
+        return min((1 << $retryCount) * self::BASE_DELAY_SECONDS, self::MAX_BACKOFF_SECONDS);
     }
 
     /**

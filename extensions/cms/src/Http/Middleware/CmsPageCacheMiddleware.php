@@ -121,7 +121,7 @@ final readonly class CmsPageCacheMiddleware implements MiddlewareInterface
 
         $path = ltrim($request->getUri()->getPath(), '/');
 
-        return sprintf('cms_page:%s:%s:%s', $tenantId, $locale, hash('xxh3', $path));
+        return sprintf('cms_page:%s:%s:%s', (string) $tenantId, $locale, hash('xxh3', $path));
     }
 
     private function storeResponse(string $cacheKey, ResponseInterface $response, ServerRequestInterface $request): void
