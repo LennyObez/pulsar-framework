@@ -25,6 +25,9 @@ use const JSON_THROW_ON_ERROR;
  *
  * When a queue driver is available, channel execution is dispatched
  * asynchronously. Otherwise, channels are invoked synchronously.
+ *
+ * @psalm-api Bound to PublishingOrchestratorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Triggered by PublishingStateMachine; not a public API')]
 final readonly class PublishingOrchestrator implements PublishingOrchestratorInterface

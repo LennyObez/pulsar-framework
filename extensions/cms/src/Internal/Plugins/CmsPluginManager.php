@@ -69,6 +69,10 @@ use const JSON_THROW_ON_ERROR;
  * Reuses SafeArchiveExtractor for Zip Slip protection. Tracks plugin failures
  * with a circuit breaker that auto-disables after 10 failures in 5 minutes.
  */
+/**
+ * @psalm-api Bound to CmsPluginManagerInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Use CmsPluginManagerInterface for public API')]
 final readonly class CmsPluginManager implements CmsPluginManagerInterface
 {

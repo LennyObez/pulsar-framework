@@ -19,6 +19,9 @@ use Throwable;
  *
  * On publish, regenerates the RSS feed file and writes it to the
  * configured public-accessible path via the media disk.
+ *
+ * @psalm-api Registered with the ChannelRegistry by the CMS service provider;
+ *            invoked via PublishingChannelInterface, not instantiated by name.
  */
 #[Internal(reason: 'Use PublishingChannelInterface for public API')]
 final readonly class RssChannel implements PublishingChannelInterface

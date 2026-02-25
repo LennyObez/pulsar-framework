@@ -19,6 +19,9 @@ use function trim;
 
 /**
  * Validates plugin manifests against required fields and format constraints.
+ *
+ * @psalm-api Bound to PluginManifestValidatorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use PluginManifestValidatorInterface for public API')]
 final readonly class PluginManifestValidator implements PluginManifestValidatorInterface
