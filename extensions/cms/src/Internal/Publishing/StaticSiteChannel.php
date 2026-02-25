@@ -16,8 +16,10 @@ use function is_dir;
 use function is_file;
 use function ltrim;
 use function mkdir;
+use function realpath;
 use function rtrim;
 use function sprintf;
+use function str_starts_with;
 use function unlink;
 
 use const DIRECTORY_SEPARATOR;
@@ -85,7 +87,7 @@ final readonly class StaticSiteChannel implements PublishingChannelInterface
         try {
             $filePath = $this->resolveFilePath($translation);
 
-            if (is_file($filePath)) {
+            if (is_file($filePath) && $this->isInsideOutputRoot($filePath)) {
                 unlink($filePath);
             }
 
@@ -93,6 +95,25 @@ final readonly class StaticSiteChannel implements PublishingChannelInterface
         } catch (Throwable $e) {
             return PublishResult::failure($this->name(), $e->getMessage());
         }
+    }
+
+    /**
+     * Defence-in-depth: confirm the resolved file path resolves inside the
+     * configured output root before deletion. Guards against tampered or
+     * malformed translation paths escaping the static export directory.
+     */
+    private function isInsideOutputRoot(string $filePath): bool
+    {
+        $rootReal = realpath($this->outputPath);
+        $fileReal = realpath($filePath);
+
+        if ($rootReal === false || $fileReal === false) {
+            return false;
+        }
+
+        $rootWithSep = rtrim($rootReal, '/\\') . DIRECTORY_SEPARATOR;
+
+        return str_starts_with($fileReal, $rootWithSep);
     }
 
     private function resolveFilePath(ContentTranslation $translation): string
