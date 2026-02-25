@@ -32,6 +32,9 @@ use function str_replace;
 /**
  * Processes form submissions with CSRF validation, spam detection,
  * evidence hashing, email notification, and metric emission.
+ *
+ * @psalm-api Bound to FormSubmissionServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Form submission service; use FormSubmissionServiceInterface for public API')]
 final readonly class FormSubmissionService implements FormSubmissionServiceInterface

@@ -16,6 +16,9 @@ use function is_string;
 
 /**
  * Detects spam by rate-limiting submissions per IP address.
+ *
+ * @psalm-api Aggregated by SpamScorer through the SpamDetectorInterface contract;
+ *            resolved from the DI container, not instantiated by name.
  */
 #[Internal(reason: 'Spam detector; use SpamDetectorInterface')]
 final readonly class RateLimitDetector implements SpamDetectorInterface

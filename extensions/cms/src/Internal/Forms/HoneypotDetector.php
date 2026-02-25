@@ -17,6 +17,9 @@ use function trim;
  *
  * Bots typically fill all form fields, including hidden ones.
  * Legitimate users never see or interact with the honeypot field.
+ *
+ * @psalm-api Aggregated by SpamScorer through the SpamDetectorInterface contract;
+ *            resolved from the DI container, not instantiated by name.
  */
 #[Internal(reason: 'Spam detector; use SpamDetectorInterface')]
 final readonly class HoneypotDetector implements SpamDetectorInterface

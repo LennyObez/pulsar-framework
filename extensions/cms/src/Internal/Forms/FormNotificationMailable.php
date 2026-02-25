@@ -22,6 +22,9 @@ use const ENT_QUOTES;
 
 /**
  * Email notification sent when a new form submission is received.
+ *
+ * @psalm-api Instantiated by FormSubmissionService when a submission is accepted;
+ *            entry point invoked by the MailManager via the Mailable contract.
  */
 #[Internal(reason: 'Form notification mailable; implementation detail')]
 final class FormNotificationMailable extends Mailable

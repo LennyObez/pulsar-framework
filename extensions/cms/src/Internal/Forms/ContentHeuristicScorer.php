@@ -21,6 +21,9 @@ use function trim;
  *
  * Checks for: excessive URLs, repeated characters, all-caps text,
  * and empty required fields.
+ *
+ * @psalm-api Aggregated by SpamScorer through the SpamDetectorInterface contract;
+ *            resolved from the DI container, not instantiated by name.
  */
 #[Internal(reason: 'Spam detector; use SpamDetectorInterface')]
 final readonly class ContentHeuristicScorer implements SpamDetectorInterface
