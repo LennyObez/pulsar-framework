@@ -10,6 +10,10 @@ use Pulsar\Extension\Cms\Internal\Persistence\DbDocVersionRepository;
 
 use function array_map;
 
+/**
+ * @psalm-api Bound to DocVersionServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Internal implementation; use DocVersionServiceInterface for public API')]
 final readonly class DocVersionService implements DocVersionServiceInterface
 {

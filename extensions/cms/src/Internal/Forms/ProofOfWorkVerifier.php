@@ -18,6 +18,9 @@ use function str_starts_with;
  *
  * The client must find a nonce such that SHA-256(challenge + nonce)
  * starts with a configurable prefix (default: "0000").
+ *
+ * @psalm-api Aggregated by SpamScorer through the SpamDetectorInterface contract;
+ *            resolved from the DI container, not instantiated by name.
  */
 #[Internal(reason: 'Spam detector; use SpamDetectorInterface')]
 final readonly class ProofOfWorkVerifier implements SpamDetectorInterface

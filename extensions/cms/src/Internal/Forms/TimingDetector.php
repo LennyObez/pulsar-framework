@@ -17,6 +17,9 @@ use function time;
  *
  * Human users need at least a few seconds to fill a form.
  * Bots typically submit instantly.
+ *
+ * @psalm-api Aggregated by SpamScorer through the SpamDetectorInterface contract;
+ *            resolved from the DI container, not instantiated by name.
  */
 #[Internal(reason: 'Spam detector; use SpamDetectorInterface')]
 final readonly class TimingDetector implements SpamDetectorInterface
