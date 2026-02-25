@@ -28,6 +28,9 @@ use const DIRECTORY_SEPARATOR;
  * On publish, renders content to a static HTML file at
  * {outputPath}/{locale}/{path}/index.html.
  * On unpublish, removes the generated file.
+ *
+ * @psalm-api Registered with the ChannelRegistry by the CMS service provider;
+ *            invoked via PublishingChannelInterface, not instantiated by name.
  */
 #[Internal(reason: 'Use PublishingChannelInterface for public API')]
 final readonly class StaticSiteChannel implements PublishingChannelInterface

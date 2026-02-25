@@ -25,6 +25,9 @@ use function substr;
 /**
  * Executes registered hooks with guardrails: output buffering, memory limits,
  * circuit breaker integration, and per-callback error isolation.
+ *
+ * @psalm-api Resolved from the DI container by CmsPluginManager; not
+ *            instantiated by name.
  */
 #[Internal(reason: 'Hook execution internals; not a public API')]
 final class HookExecutionEngine
