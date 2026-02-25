@@ -19,11 +19,15 @@ use ZipArchive;
 
 use function array_sum;
 use function count;
+use function explode;
 use function file_exists;
 use function file_put_contents;
+use function in_array;
 use function is_array;
 use function is_string;
 use function json_decode;
+use function preg_match;
+use function str_contains;
 use function strlen;
 use function substr;
 use function sys_get_temp_dir;
@@ -74,6 +78,32 @@ final readonly class MediaBundleImporter
     private function isZipContent(string $content): bool
     {
         return strlen($content) >= 4 && substr($content, 0, 4) === self::ZIP_SIGNATURE;
+    }
+
+    /**
+     * Validate that a path from an untrusted bundle manifest stays within
+     * the media root.
+     *
+     * Rejects: empty paths, null bytes, absolute POSIX paths, Windows drive
+     * letters and UNC roots, backslashes, and any `.` or `..` segments.
+     */
+    private function isSafeRelativePath(string $path): bool
+    {
+        if ($path === '' || str_contains($path, "\0") || str_contains($path, '\\')) {
+            return false;
+        }
+
+        if ($path[0] === '/' || preg_match('#^[A-Za-z]:#', $path) === 1) {
+            return false;
+        }
+
+        foreach (explode('/', $path) as $segment) {
+            if ($segment === '' || in_array($segment, ['.', '..'], true)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -161,6 +191,13 @@ final readonly class MediaBundleImporter
 
                     if ($filename === null || $storagePath === null) {
                         $mediaSkipped++;
+
+                        continue;
+                    }
+
+                    if (!$this->isSafeRelativePath($filename) || !$this->isSafeRelativePath($storagePath)) {
+                        $mediaFailed++;
+                        $mediaErrors[] = "media:$filename: rejected unsafe path";
 
                         continue;
                     }
