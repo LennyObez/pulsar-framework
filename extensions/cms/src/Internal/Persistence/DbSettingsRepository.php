@@ -20,6 +20,10 @@ use function sprintf;
 
 use const JSON_THROW_ON_ERROR;
 
+/**
+ * @psalm-api Resolved from the DI container by SettingsService; not instantiated
+ *            by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use SettingsServiceInterface for public API')]
 final readonly class DbSettingsRepository
 {

@@ -14,6 +14,10 @@ use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 
 use function max;
 
+/**
+ * @psalm-api Bound to RedirectRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use RedirectRepositoryInterface for public API')]
 final readonly class DbRedirectRepository implements RedirectRepositoryInterface
 {

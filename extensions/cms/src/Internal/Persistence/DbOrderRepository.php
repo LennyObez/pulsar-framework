@@ -26,6 +26,10 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Database-backed order repository with state machine validation on status updates.
  */
+/**
+ * @psalm-api Bound to OrderRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Use OrderRepositoryInterface for public API')]
 final readonly class DbOrderRepository implements OrderRepositoryInterface
 {
