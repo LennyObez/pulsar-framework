@@ -23,6 +23,10 @@ use function max;
  * Supports batch inserts for efficient campaign dispatch where thousands
  * of send records are created simultaneously.
  */
+/**
+ * @psalm-api Bound to NewsletterSendRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use NewsletterSendRepositoryInterface for public API')]
 final readonly class DbNewsletterSendRepository implements NewsletterSendRepositoryInterface
 {

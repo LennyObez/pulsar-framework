@@ -14,6 +14,10 @@ use Pulsar\Extension\Cms\Navigation\MenuItem;
 use Pulsar\Extension\Cms\Navigation\MenuItemResolved;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
 
+/**
+ * @psalm-api Bound to MenuRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use MenuRepositoryInterface for public API')]
 final readonly class DbMenuRepository implements MenuRepositoryInterface
 {

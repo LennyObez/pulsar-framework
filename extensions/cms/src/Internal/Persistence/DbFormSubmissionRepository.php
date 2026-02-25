@@ -21,6 +21,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Database-backed form submission repository.
+ *
+ * @psalm-api Bound to FormSubmissionRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Raw-DB repository; use FormSubmissionRepositoryInterface for public API')]
 final readonly class DbFormSubmissionRepository implements FormSubmissionRepositoryInterface
