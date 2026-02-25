@@ -15,6 +15,9 @@ use Pulsar\Extension\Cms\Commerce\DigitalDownload;
 
 /**
  * Database-backed digital asset and download entitlement repository.
+ *
+ * @psalm-api Bound to DigitalAssetRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use DigitalAssetRepositoryInterface for public API')]
 final readonly class DbDigitalAssetRepository implements DigitalAssetRepositoryInterface

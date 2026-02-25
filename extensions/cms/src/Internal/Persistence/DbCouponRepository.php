@@ -14,6 +14,9 @@ use Pulsar\Extension\Cms\Commerce\CouponRepositoryInterface;
 
 /**
  * Database-backed coupon repository with case-insensitive lookup.
+ *
+ * @psalm-api Bound to CouponRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CouponRepositoryInterface for public API')]
 final readonly class DbCouponRepository implements CouponRepositoryInterface
