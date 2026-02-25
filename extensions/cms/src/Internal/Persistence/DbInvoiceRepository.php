@@ -17,6 +17,9 @@ use function sprintf;
 
 /**
  * Database-backed invoice repository with sequential numbering.
+ *
+ * @psalm-api Bound to InvoiceRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use InvoiceRepositoryInterface for public API')]
 final readonly class DbInvoiceRepository implements InvoiceRepositoryInterface

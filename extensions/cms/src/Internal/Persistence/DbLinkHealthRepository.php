@@ -16,6 +16,10 @@ use Pulsar\Extension\Cms\Seo\LinkHealthRepositoryInterface;
 use function count;
 use function max;
 
+/**
+ * @psalm-api Bound to LinkHealthRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use LinkHealthRepositoryInterface for public API')]
 final readonly class DbLinkHealthRepository implements LinkHealthRepositoryInterface
 {

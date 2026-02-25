@@ -16,6 +16,10 @@ use Pulsar\Extension\Cms\ABTest\ExperimentRepositoryInterface;
 use Pulsar\Extension\Cms\ABTest\ExperimentStatus;
 use Pulsar\Extension\Cms\ABTest\ExperimentVariant;
 
+/**
+ * @psalm-api Bound to ExperimentRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use ExperimentRepositoryInterface for public API')]
 final readonly class DbExperimentRepository implements ExperimentRepositoryInterface
 {
