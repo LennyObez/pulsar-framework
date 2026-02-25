@@ -18,6 +18,9 @@ use function sprintf;
 
 /**
  * Database-backed product repository with tenant scoping.
+ *
+ * @psalm-api Bound to ProductRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ProductRepositoryInterface for public API')]
 final readonly class DbProductRepository implements ProductRepositoryInterface

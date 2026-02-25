@@ -12,6 +12,10 @@ use Pulsar\Database\Row;
 use Pulsar\Extension\Cms\Themes\InstalledTheme;
 use Pulsar\Extension\Cms\Themes\ThemeRepositoryInterface;
 
+/**
+ * @psalm-api Bound to ThemeRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use ThemeRepositoryInterface for public API')]
 final readonly class DbThemeRepository implements ThemeRepositoryInterface
 {
