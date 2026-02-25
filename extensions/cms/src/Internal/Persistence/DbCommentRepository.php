@@ -18,6 +18,10 @@ use Pulsar\Extension\Cms\Content\DataClassification;
 use function ceil;
 use function max;
 
+/**
+ * @psalm-api Bound to CommentRepositoryInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Raw-DB repository; use CommentRepositoryInterface for public API')]
 final readonly class DbCommentRepository implements CommentRepositoryInterface
 {
