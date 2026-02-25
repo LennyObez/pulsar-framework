@@ -15,7 +15,7 @@ final class FieldTypeTest extends TestCase
 {
     #[Test]
     #[DataProvider('valueColumnMappingProvider')]
-    public function test_value_column_returns_correct_column(FieldType $type, string $expectedColumn): void
+    public function valueColumnReturnsCorrectColumn(FieldType $type, string $expectedColumn): void
     {
         self::assertSame($expectedColumn, $type->valueColumn());
     }
@@ -42,13 +42,13 @@ final class FieldTypeTest extends TestCase
     }
 
     #[Test]
-    public function test_all_14_field_types_exist(): void
+    public function all14FieldTypesExist(): void
     {
         self::assertCount(14, FieldType::cases());
     }
 
     #[Test]
-    public function test_all_field_types_have_string_backing_values(): void
+    public function allFieldTypesHaveStringBackingValues(): void
     {
         foreach (FieldType::cases() as $type) {
             self::assertNotEmpty($type->value);
@@ -56,7 +56,7 @@ final class FieldTypeTest extends TestCase
     }
 
     #[Test]
-    public function test_from_valid_value(): void
+    public function fromValidValue(): void
     {
         self::assertSame(FieldType::String, FieldType::from('string'));
         self::assertSame(FieldType::Json, FieldType::from('json'));
@@ -64,7 +64,7 @@ final class FieldTypeTest extends TestCase
     }
 
     #[Test]
-    public function test_try_from_invalid_value_returns_null(): void
+    public function tryFromInvalidValueReturnsNull(): void
     {
         self::assertNull(FieldType::tryFrom('nonexistent'));
     }

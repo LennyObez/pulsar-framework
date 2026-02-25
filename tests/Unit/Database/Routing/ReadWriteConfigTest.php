@@ -7,11 +7,13 @@ namespace Pulsar\Tests\Unit\Database\Routing;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Routing\ReadWriteConfig;
+use PHPUnit\Framework\Attributes\Test;
 
 #[CoversClass(ReadWriteConfig::class)]
 final class ReadWriteConfigTest extends TestCase
 {
-    public function test_from_array_with_defaults(): void
+    #[Test]
+    public function fromArrayWithDefaults(): void
     {
         $config = ReadWriteConfig::fromArray([]);
 
@@ -21,7 +23,8 @@ final class ReadWriteConfigTest extends TestCase
         self::assertFalse($config->enabled);
     }
 
-    public function test_from_array_with_custom_values(): void
+    #[Test]
+    public function fromArrayWithCustomValues(): void
     {
         $config = ReadWriteConfig::fromArray([
             'read_hosts' => ['replica-1', 'replica-2'],
@@ -36,7 +39,8 @@ final class ReadWriteConfigTest extends TestCase
         self::assertTrue($config->enabled);
     }
 
-    public function test_from_array_with_request_scoped_sticky_duration(): void
+    #[Test]
+    public function fromArrayWithRequestScopedStickyDuration(): void
     {
         $config = ReadWriteConfig::fromArray([
             'sticky_duration' => 'request',
@@ -45,7 +49,8 @@ final class ReadWriteConfigTest extends TestCase
         self::assertSame('request', $config->stickyDuration);
     }
 
-    public function test_constructor_sets_properties(): void
+    #[Test]
+    public function constructorSetsProperties(): void
     {
         $config = new ReadWriteConfig(
             readHosts: ['replica-a'],

@@ -75,7 +75,7 @@ final class PrivilegeEscalationTest extends TestCase
     // -- Contributor cannot publish ------------------------------------------
 
     #[Test]
-    public function test_contributor_cannot_publish_content(): void
+    public function contributorCannotPublishContent(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -83,7 +83,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_contributor_cannot_archive_content(): void
+    public function contributorCannotArchiveContent(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -91,7 +91,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_contributor_cannot_delete_content(): void
+    public function contributorCannotDeleteContent(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -101,7 +101,7 @@ final class PrivilegeEscalationTest extends TestCase
     // -- Viewer cannot access admin routes ----------------------------------
 
     #[Test]
-    public function test_viewer_cannot_access_dashboard(): void
+    public function viewerCannotAccessDashboard(): void
     {
         $viewer = $this->roles['cms.viewer'];
 
@@ -109,7 +109,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_viewer_cannot_view_content(): void
+    public function viewerCannotViewContent(): void
     {
         $viewer = $this->roles['cms.viewer'];
 
@@ -117,7 +117,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_viewer_cannot_manage_users(): void
+    public function viewerCannotManageUsers(): void
     {
         $viewer = $this->roles['cms.viewer'];
 
@@ -125,7 +125,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_viewer_cannot_install_plugins(): void
+    public function viewerCannotInstallPlugins(): void
     {
         $viewer = $this->roles['cms.viewer'];
 
@@ -135,7 +135,7 @@ final class PrivilegeEscalationTest extends TestCase
     // -- Editor cannot install themes ---------------------------------------
 
     #[Test]
-    public function test_editor_cannot_install_themes(): void
+    public function editorCannotInstallThemes(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -143,7 +143,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_cannot_manage_themes(): void
+    public function editorCannotManageThemes(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -151,7 +151,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_editor_cannot_delete_themes(): void
+    public function editorCannotDeleteThemes(): void
     {
         $editor = $this->roles['cms.editor'];
 
@@ -161,7 +161,7 @@ final class PrivilegeEscalationTest extends TestCase
     // -- Gate denies → controller rejects -----------------------------------
 
     #[Test]
-    public function test_gate_denies_permission_throws_exception(): void
+    public function gateDeniesPermissionThrowsException(): void
     {
         $gate = $this->createStub(GateInterface::class);
         $gate->method('denies')->willReturn(true);
@@ -200,7 +200,7 @@ final class PrivilegeEscalationTest extends TestCase
     // -- Cross-role boundary enforcement ------------------------------------
 
     #[Test]
-    public function test_media_manager_cannot_manage_content(): void
+    public function mediaManagerCannotManageContent(): void
     {
         $mediaManager = $this->roles['cms.media_manager'];
 
@@ -211,7 +211,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_seo_manager_cannot_manage_plugins(): void
+    public function seoManagerCannotManagePlugins(): void
     {
         $seo = $this->roles['cms.seo_manager'];
 
@@ -221,7 +221,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_shop_manager_cannot_manage_themes(): void
+    public function shopManagerCannotManageThemes(): void
     {
         $shop = $this->roles['cms.shop_manager'];
 
@@ -231,7 +231,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_analytics_viewer_has_minimal_permissions(): void
+    public function analyticsViewerHasMinimalPermissions(): void
     {
         $analytics = $this->roles['cms.analytics_viewer'];
 
@@ -251,7 +251,7 @@ final class PrivilegeEscalationTest extends TestCase
     // -- No wildcard permissions for any role --------------------------------
 
     #[Test]
-    public function test_no_role_has_wildcard_permission(): void
+    public function noRoleHasWildcardPermission(): void
     {
         foreach ($this->roles as $roleName => $role) {
             foreach ($role->permissions as $permission) {
@@ -267,7 +267,7 @@ final class PrivilegeEscalationTest extends TestCase
     // -- Contributor cannot escalate to reviewer/editor permissions ----------
 
     #[Test]
-    public function test_contributor_cannot_approve_content(): void
+    public function contributorCannotApproveContent(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -275,7 +275,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_contributor_cannot_force_unlock(): void
+    public function contributorCannotForceUnlock(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -283,7 +283,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_contributor_cannot_moderate_comments(): void
+    public function contributorCannotModerateComments(): void
     {
         $contributor = $this->roles['cms.contributor'];
 
@@ -293,7 +293,7 @@ final class PrivilegeEscalationTest extends TestCase
     // -- Reviewer cannot escalate to editor permissions --------------------
 
     #[Test]
-    public function test_reviewer_cannot_edit_all_content(): void
+    public function reviewerCannotEditAllContent(): void
     {
         $reviewer = $this->roles['cms.reviewer'];
 
@@ -301,7 +301,7 @@ final class PrivilegeEscalationTest extends TestCase
     }
 
     #[Test]
-    public function test_reviewer_cannot_restore_content(): void
+    public function reviewerCannotRestoreContent(): void
     {
         $reviewer = $this->roles['cms.reviewer'];
 

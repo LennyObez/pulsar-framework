@@ -32,11 +32,12 @@ final class AdminExtensionTest extends TestCase
     #[Test]
     public function registerDoesNotThrow(): void
     {
-        $this->expectNotToPerformAssertions();
-
         $container = $this->createStub(ContainerInterface::class);
 
         $this->extension->register($container);
+
+        // register() is a no-op; the extension should still be in its initial state
+        self::assertSame('pulsar/admin', $this->extension->name());
     }
 
     #[Test]

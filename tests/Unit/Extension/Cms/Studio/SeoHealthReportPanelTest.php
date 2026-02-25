@@ -24,7 +24,7 @@ use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
 final class SeoHealthReportPanelTest extends TestCase
 {
     #[Test]
-    public function test_generate_report_with_broken_links(): void
+    public function generateReportWithBrokenLinks(): void
     {
         $brokenLink = new LinkHealthCheck(
             id: 'lhc-1',
@@ -56,7 +56,7 @@ final class SeoHealthReportPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_generate_report_with_orphan_content(): void
+    public function generateReportWithOrphanContent(): void
     {
         $orphan = new Content(
             id: 'content-orphan',
@@ -94,7 +94,7 @@ final class SeoHealthReportPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_generate_report_includes_sitemap_status(): void
+    public function generateReportIncludesSitemapStatus(): void
     {
         $linkHealth = $this->createStub(LinkHealthServiceInterface::class);
         $linkHealth->method('getBrokenLinks')->willReturn([]);
@@ -118,7 +118,7 @@ final class SeoHealthReportPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_generate_report_with_tenant_scope(): void
+    public function generateReportWithTenantScope(): void
     {
         $linkHealth = $this->createMock(LinkHealthServiceInterface::class);
         $linkHealth->expects(self::once())
@@ -141,7 +141,7 @@ final class SeoHealthReportPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_broken_link_count_shortcut(): void
+    public function brokenLinkCountShortcut(): void
     {
         $brokenLinks = [
             new LinkHealthCheck('1', null, 'c1', 'en', 'https://a.com', true, false, 404, new DateTimeImmutable(), new DateTimeImmutable()),
@@ -159,7 +159,7 @@ final class SeoHealthReportPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_orphan_content_count_shortcut(): void
+    public function orphanContentCountShortcut(): void
     {
         $orphan = new Content(
             id: 'orphan-1',
@@ -192,7 +192,7 @@ final class SeoHealthReportPanelTest extends TestCase
     }
 
     #[Test]
-    public function test_generate_report_empty_state(): void
+    public function generateReportEmptyState(): void
     {
         $linkHealth = $this->createStub(LinkHealthServiceInterface::class);
         $linkHealth->method('getBrokenLinks')->willReturn([]);

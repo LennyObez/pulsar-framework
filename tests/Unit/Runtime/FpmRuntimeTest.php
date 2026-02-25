@@ -66,7 +66,9 @@ final class FpmRuntimeTest extends TestCase
 
         $response = new Response(statusCode: 200, body: 'ok');
 
-        $this->expectNotToPerformAssertions();
         $runtime->afterRequest($request, $response);
+
+        // FPM provides process-level isolation; afterRequest() must not mutate runtime status
+        self::assertSame(RuntimeStatus::Stopped, $runtime->status());
     }
 }

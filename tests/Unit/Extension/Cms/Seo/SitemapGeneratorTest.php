@@ -30,7 +30,7 @@ final class SitemapGeneratorTest extends TestCase
     // -- Index XML -------------------------------------------------------------
 
     #[Test]
-    public function test_index_has_correct_sitemapindex_root_element(): void
+    public function indexHasCorrectSitemapindexRootElement(): void
     {
         $generator = $this->createGenerator(publishedCounts: ['article' => 1, 'page' => 1]);
 
@@ -44,7 +44,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_index_contains_sitemap_entries_for_each_type(): void
+    public function indexContainsSitemapEntriesForEachType(): void
     {
         $generator = $this->createGenerator(publishedCounts: ['article' => 1, 'page' => 1]);
 
@@ -55,7 +55,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_index_strips_trailing_slash_from_base_url(): void
+    public function indexStripsTrailingSlashFromBaseUrl(): void
     {
         $generator = $this->createGenerator(publishedCounts: ['article' => 0, 'page' => 0]);
 
@@ -68,7 +68,7 @@ final class SitemapGeneratorTest extends TestCase
     // -- Segment XML ----------------------------------------------------------
 
     #[Test]
-    public function test_segment_has_correct_urlset_with_namespaces(): void
+    public function segmentHasCorrectUrlsetWithNamespaces(): void
     {
         $content = $this->createContent(ContentType::Article);
         $translations = [$this->createTranslation(locale: 'en', path: 'en/hello')];
@@ -88,7 +88,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_url_has_loc_lastmod_changefreq_priority(): void
+    public function segmentUrlHasLocLastmodChangefreqPriority(): void
     {
         $content = $this->createContent(ContentType::Article);
         $translations = [$this->createTranslation(locale: 'en', path: 'en/hello')];
@@ -106,7 +106,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_hreflang_for_each_locale_variant(): void
+    public function segmentHreflangForEachLocaleVariant(): void
     {
         $content = $this->createContent(ContentType::Article);
         $enTrans = $this->createTranslation(locale: 'en', path: 'en/hello');
@@ -123,7 +123,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_includes_x_default_hreflang(): void
+    public function segmentIncludesXDefaultHreflang(): void
     {
         $content = $this->createContent(ContentType::Article);
         $enTrans = $this->createTranslation(locale: 'en', path: 'en/hello');
@@ -138,7 +138,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_empty_type_produces_valid_empty_sitemap(): void
+    public function emptyTypeProducesValidEmptySitemap(): void
     {
         $generator = $this->createGenerator(publishedItems: []);
 
@@ -152,7 +152,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_skips_content_with_no_translations(): void
+    public function segmentSkipsContentWithNoTranslations(): void
     {
         $content = $this->createContent(ContentType::Article);
         $generator = $this->createGenerator(
@@ -166,7 +166,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_index_pagination_at_50000_urls(): void
+    public function indexPaginationAt50000Urls(): void
     {
         // 60000 articles should produce 2 pages (50000 + 10000)
         $generator = $this->createGenerator(publishedCounts: ['article' => 60_000, 'page' => 0]);
@@ -179,7 +179,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_xml_is_well_formed(): void
+    public function segmentXmlIsWellFormed(): void
     {
         $content = $this->createContent(ContentType::Page);
         $translation = $this->createTranslation(
@@ -199,7 +199,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_uses_configured_changefreq_and_priority(): void
+    public function segmentUsesConfiguredChangefreqAndPriority(): void
     {
         $content = $this->createContent(ContentType::Page);
         $translations = [$this->createTranslation(locale: 'en', path: 'en/about')];
@@ -219,7 +219,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_excludes_noindex_content(): void
+    public function segmentExcludesNoindexContent(): void
     {
         $content = $this->createContent(ContentType::Article);
         $noindexTranslation = $this->createTranslation(locale: 'en', path: 'en/private', robots: 'noindex, follow');
@@ -235,7 +235,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_excludes_noindex_case_insensitive(): void
+    public function segmentExcludesNoindexCaseInsensitive(): void
     {
         $content = $this->createContent(ContentType::Article);
         $noindexTranslation = $this->createTranslation(locale: 'en', path: 'en/hidden', robots: 'NOINDEX, NOFOLLOW');
@@ -250,7 +250,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_includes_content_without_robots_directive(): void
+    public function segmentIncludesContentWithoutRobotsDirective(): void
     {
         $content = $this->createContent(ContentType::Article);
         $normalTranslation = $this->createTranslation(locale: 'en', path: 'en/normal');
@@ -266,7 +266,7 @@ final class SitemapGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function test_segment_includes_content_with_index_follow_robots(): void
+    public function segmentIncludesContentWithIndexFollowRobots(): void
     {
         $content = $this->createContent(ContentType::Article);
         $indexTranslation = $this->createTranslation(locale: 'en', path: 'en/public', robots: 'index, follow');

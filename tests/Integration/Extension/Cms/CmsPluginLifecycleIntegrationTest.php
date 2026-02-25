@@ -39,7 +39,7 @@ final class CmsPluginLifecycleIntegrationTest extends TestCase
     // -- Full lifecycle: register → hook fires → disable --------------------
 
     #[Test]
-    public function test_full_plugin_lifecycle_hook_fires(): void
+    public function fullPluginLifecycleHookFires(): void
     {
         $fireCount = 0;
 
@@ -61,7 +61,7 @@ final class CmsPluginLifecycleIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_multiple_plugins_register_same_hook_point(): void
+    public function multiplePluginsRegisterSameHookPoint(): void
     {
         $order = [];
 
@@ -86,7 +86,7 @@ final class CmsPluginLifecycleIntegrationTest extends TestCase
     // -- Circuit breaker trip and auto-disable ------------------------------
 
     #[Test]
-    public function test_circuit_breaker_trip_stops_hook_execution(): void
+    public function circuitBreakerTripStopsHookExecution(): void
     {
         $callCount = 0;
 
@@ -109,7 +109,7 @@ final class CmsPluginLifecycleIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_circuit_breaker_only_affects_the_failing_plugin(): void
+    public function circuitBreakerOnlyAffectsTheFailingPlugin(): void
     {
         $healthyCount = 0;
 
@@ -138,7 +138,7 @@ final class CmsPluginLifecycleIntegrationTest extends TestCase
     // -- Error isolation with output buffering ------------------------------
 
     #[Test]
-    public function test_error_isolation_with_output_buffering(): void
+    public function errorIsolationWithOutputBuffering(): void
     {
         $secondHookCalled = false;
 
@@ -164,7 +164,7 @@ final class CmsPluginLifecycleIntegrationTest extends TestCase
     // -- Hook points management ---------------------------------------------
 
     #[Test]
-    public function test_hook_registry_tracks_hook_points(): void
+    public function hookRegistryTracksHookPoints(): void
     {
         $this->hookRegistry->register('init', static function () {}, 10, 'p1');
         $this->hookRegistry->register('shutdown', static function () {}, 10, 'p2');
@@ -177,7 +177,7 @@ final class CmsPluginLifecycleIntegrationTest extends TestCase
     }
 
     #[Test]
-    public function test_unregistered_hook_point_has_no_callbacks(): void
+    public function unregisteredHookPointHasNoCallbacks(): void
     {
         self::assertFalse($this->hookRegistry->has('nonexistent'));
         self::assertSame([], $this->hookRegistry->getCallbacks('nonexistent'));
@@ -186,7 +186,7 @@ final class CmsPluginLifecycleIntegrationTest extends TestCase
     // -- Arguments pass-through in lifecycle --------------------------------
 
     #[Test]
-    public function test_hook_receives_content_data(): void
+    public function hookReceivesContentData(): void
     {
         $receivedTitle = '';
 
@@ -202,7 +202,7 @@ final class CmsPluginLifecycleIntegrationTest extends TestCase
     // -- Mixed success/failure in same hook point ---------------------------
 
     #[Test]
-    public function test_mixed_success_and_failure_hooks(): void
+    public function mixedSuccessAndFailureHooks(): void
     {
         $results = [];
 

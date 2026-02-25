@@ -14,7 +14,7 @@ use Pulsar\Extension\Cms\Dashboard\ContentStatusWidget;
 final class ContentStatusWidgetTest extends TestCase
 {
     #[Test]
-    public function test_get_name_returns_content_status(): void
+    public function getNameReturnsContentStatus(): void
     {
         $query = $this->createStub(ContentStatusQueryInterface::class);
         $widget = new ContentStatusWidget($query);
@@ -23,7 +23,7 @@ final class ContentStatusWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_template_returns_expected_path(): void
+    public function getTemplateReturnsExpectedPath(): void
     {
         $query = $this->createStub(ContentStatusQueryInterface::class);
         $widget = new ContentStatusWidget($query);
@@ -32,7 +32,7 @@ final class ContentStatusWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_returns_counts_sparkline_and_total(): void
+    public function getDataReturnsCountsSparklineAndTotal(): void
     {
         $statusCounts = [
             'draft' => 5,
@@ -65,7 +65,7 @@ final class ContentStatusWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_passes_tenant_id(): void
+    public function getDataPassesTenantId(): void
     {
         $tenantId = '01912345-6789-7abc-8def-000000000001';
 
@@ -84,7 +84,7 @@ final class ContentStatusWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_with_empty_counts_returns_zero_total(): void
+    public function getDataWithEmptyCountsReturnsZeroTotal(): void
     {
         $query = $this->createStub(ContentStatusQueryInterface::class);
         $query->method('countByStatus')->willReturn([]);
@@ -99,7 +99,7 @@ final class ContentStatusWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_implements_dashboard_widget_interface(): void
+    public function implementsDashboardWidgetInterface(): void
     {
         $query = $this->createStub(ContentStatusQueryInterface::class);
         $widget = new ContentStatusWidget($query);

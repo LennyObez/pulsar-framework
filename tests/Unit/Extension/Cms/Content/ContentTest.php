@@ -25,7 +25,7 @@ final class ContentTest extends TestCase
     // ── Construction / factory ────────────────────────────────────────
 
     #[Test]
-    public function test_create_returns_draft_content(): void
+    public function createReturnsDraftContent(): void
     {
         $content = Content::create(
             id: self::CONTENT_ID,
@@ -50,7 +50,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_create_with_all_optional_parameters(): void
+    public function createWithAllOptionalParameters(): void
     {
         $content = Content::create(
             id: self::CONTENT_ID,
@@ -74,7 +74,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_create_sets_created_at_and_updated_at(): void
+    public function createSetsCreatedAtAndUpdatedAt(): void
     {
         $before = new DateTimeImmutable();
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
@@ -88,7 +88,7 @@ final class ContentTest extends TestCase
     // ── Immutable state transitions ──────────────────────────────────
 
     #[Test]
-    public function test_publish_returns_new_instance_with_published_status(): void
+    public function publishReturnsNewInstanceWithPublishedStatus(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
         $published = $content->publish();
@@ -100,7 +100,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_publish_preserves_original_published_at(): void
+    public function publishPreservesOriginalPublishedAt(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
         $first = $content->publish();
@@ -113,7 +113,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_archive_returns_archived_content(): void
+    public function archiveReturnsArchivedContent(): void
     {
         $published = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID)->publish();
         $archived = $published->archive();
@@ -122,7 +122,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_restore_returns_draft_content(): void
+    public function restoreReturnsDraftContent(): void
     {
         $archived = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID)
             ->publish()
@@ -133,7 +133,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_schedule_returns_scheduled_content(): void
+    public function scheduleReturnsScheduledContent(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
         $publishAt = new DateTimeImmutable('+1 day');
@@ -144,7 +144,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_submit_for_review_transitions_to_in_review(): void
+    public function submitForReviewTransitionsToInReview(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
         $inReview = $content->submitForReview();
@@ -153,7 +153,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_approve_transitions_to_approved(): void
+    public function approveTransitionsToApproved(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
         $approved = $content->submitForReview()->approve();
@@ -162,7 +162,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_reject_transitions_to_draft(): void
+    public function rejectTransitionsToDraft(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
         $rejected = $content->submitForReview()->reject();
@@ -173,7 +173,7 @@ final class ContentTest extends TestCase
     // ── Invalid transitions throw CmsException ──────────────────────
 
     #[Test]
-    public function test_publish_from_archived_throws(): void
+    public function publishFromArchivedThrows(): void
     {
         $archived = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID)
             ->publish()
@@ -184,7 +184,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_archive_from_draft_throws(): void
+    public function archiveFromDraftThrows(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
 
@@ -193,7 +193,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_restore_from_draft_throws(): void
+    public function restoreFromDraftThrows(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
 
@@ -204,7 +204,7 @@ final class ContentTest extends TestCase
     // ── setParent ────────────────────────────────────────────────────
 
     #[Test]
-    public function test_set_parent_returns_new_instance(): void
+    public function setParentReturnsNewInstance(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Page, self::AUTHOR_ID);
         $parentId = '01912345-0000-7abc-8def-000000000099';
@@ -216,7 +216,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_set_parent_null_clears_parent(): void
+    public function setParentNullClearsParent(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Page, self::AUTHOR_ID, parentId: 'some-parent');
         $orphaned = $content->setParent(null);
@@ -227,7 +227,7 @@ final class ContentTest extends TestCase
     // ── Convenience methods ──────────────────────────────────────────
 
     #[Test]
-    public function test_is_published(): void
+    public function isPublished(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
         self::assertFalse($content->isPublished());
@@ -237,7 +237,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_is_draft(): void
+    public function isDraft(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
         self::assertTrue($content->isDraft());
@@ -247,7 +247,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_is_deleted(): void
+    public function isDeleted(): void
     {
         $now = new DateTimeImmutable();
         $content = new Content(
@@ -274,7 +274,7 @@ final class ContentTest extends TestCase
     }
 
     #[Test]
-    public function test_is_not_deleted_when_deleted_at_null(): void
+    public function isNotDeletedWhenDeletedAtNull(): void
     {
         $content = Content::create(self::CONTENT_ID, ContentType::Article, self::AUTHOR_ID);
         self::assertFalse($content->isDeleted());
@@ -283,7 +283,7 @@ final class ContentTest extends TestCase
     // ── Immutability (readonly class) ────────────────────────────────
 
     #[Test]
-    public function test_content_is_readonly(): void
+    public function contentIsReadonly(): void
     {
         $reflection = new ReflectionClass(Content::class);
         self::assertTrue($reflection->isReadOnly());

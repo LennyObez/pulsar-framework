@@ -28,7 +28,7 @@ final class ContentRevisionTest extends TestCase
     }
 
     #[Test]
-    public function test_from_translation_creates_revision(): void
+    public function fromTranslationCreatesRevision(): void
     {
         $translation = new ContentTranslation(
             id: 'tr-001',
@@ -75,7 +75,7 @@ final class ContentRevisionTest extends TestCase
     }
 
     #[Test]
-    public function test_from_translation_with_null_reason(): void
+    public function fromTranslationWithNullReason(): void
     {
         $translation = new ContentTranslation(
             id: 'tr-002',
@@ -114,7 +114,7 @@ final class ContentRevisionTest extends TestCase
     // ── Evidence hash computation ────────────────────────────────────
 
     #[Test]
-    public function test_compute_evidence_hash_returns_blake2b(): void
+    public function computeEvidenceHashReturnsBlake2b(): void
     {
         $hash = ContentRevision::computeEvidenceHash(
             'Title',
@@ -131,7 +131,7 @@ final class ContentRevisionTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_evidence_hash_deterministic(): void
+    public function computeEvidenceHashDeterministic(): void
     {
         $hash1 = ContentRevision::computeEvidenceHash('T', 's', 'b', null, null, null);
         $hash2 = ContentRevision::computeEvidenceHash('T', 's', 'b', null, null, null);
@@ -140,7 +140,7 @@ final class ContentRevisionTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_evidence_hash_changes_with_different_title(): void
+    public function computeEvidenceHashChangesWithDifferentTitle(): void
     {
         $hash1 = ContentRevision::computeEvidenceHash('Title A', 's', 'b', null, null, null);
         $hash2 = ContentRevision::computeEvidenceHash('Title B', 's', 'b', null, null, null);
@@ -149,7 +149,7 @@ final class ContentRevisionTest extends TestCase
     }
 
     #[Test]
-    public function test_compute_evidence_hash_changes_with_different_body(): void
+    public function computeEvidenceHashChangesWithDifferentBody(): void
     {
         $hash1 = ContentRevision::computeEvidenceHash('T', 's', '<p>A</p>', null, null, null);
         $hash2 = ContentRevision::computeEvidenceHash('T', 's', '<p>B</p>', null, null, null);
@@ -158,7 +158,7 @@ final class ContentRevisionTest extends TestCase
     }
 
     #[Test]
-    public function test_from_translation_evidence_hash_matches_manual(): void
+    public function fromTranslationEvidenceHashMatchesManual(): void
     {
         $translation = new ContentTranslation(
             id: 'tr-003',
@@ -196,7 +196,7 @@ final class ContentRevisionTest extends TestCase
     }
 
     #[Test]
-    public function test_content_revision_is_readonly(): void
+    public function contentRevisionIsReadonly(): void
     {
         $reflection = new ReflectionClass(ContentRevision::class);
         self::assertTrue($reflection->isReadOnly());

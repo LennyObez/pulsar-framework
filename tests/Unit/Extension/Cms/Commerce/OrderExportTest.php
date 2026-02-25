@@ -83,7 +83,7 @@ final class OrderExportTest extends TestCase
     // ── CSV format ──────────────────────────────────────────────────
 
     #[Test]
-    public function test_csv_export_contains_headers_and_data(): void
+    public function csvExportContainsHeadersAndData(): void
     {
         $service = $this->createExportService();
 
@@ -100,7 +100,7 @@ final class OrderExportTest extends TestCase
     // ── JSON format with PII redacted ───────────────────────────────
 
     #[Test]
-    public function test_json_export_pii_redacted(): void
+    public function jsonExportPiiRedacted(): void
     {
         $service = $this->createExportService();
 
@@ -118,7 +118,7 @@ final class OrderExportTest extends TestCase
     }
 
     #[Test]
-    public function test_json_export_pii_included(): void
+    public function jsonExportPiiIncluded(): void
     {
         $service = $this->createExportService();
 
@@ -134,7 +134,7 @@ final class OrderExportTest extends TestCase
     // ── Date filter ─────────────────────────────────────────────────
 
     #[Test]
-    public function test_date_filter(): void
+    public function dateFilter(): void
     {
         $service = $this->createExportService();
 

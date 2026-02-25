@@ -16,7 +16,7 @@ use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
 final class SeoHealthWidgetTest extends TestCase
 {
     #[Test]
-    public function test_get_name_returns_seo_health(): void
+    public function getNameReturnsSeoHealth(): void
     {
         $service = $this->createStub(LinkHealthServiceInterface::class);
         $widget = new SeoHealthWidget($service);
@@ -25,7 +25,7 @@ final class SeoHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_template_returns_expected_path(): void
+    public function getTemplateReturnsExpectedPath(): void
     {
         $service = $this->createStub(LinkHealthServiceInterface::class);
         $widget = new SeoHealthWidget($service);
@@ -34,7 +34,7 @@ final class SeoHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_healthy_when_no_broken_links_and_sitemap_enabled(): void
+    public function getDataHealthyWhenNoBrokenLinksAndSitemapEnabled(): void
     {
         $service = $this->createStub(LinkHealthServiceInterface::class);
         $service->method('getBrokenLinks')->willReturn([]);
@@ -50,7 +50,7 @@ final class SeoHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_degraded_when_few_broken_links(): void
+    public function getDataDegradedWhenFewBrokenLinks(): void
     {
         $brokenLinks = [];
         for ($i = 0; $i < 5; $i++) {
@@ -68,7 +68,7 @@ final class SeoHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_unhealthy_when_many_broken_links(): void
+    public function getDataUnhealthyWhenManyBrokenLinks(): void
     {
         $brokenLinks = [];
         for ($i = 0; $i < 15; $i++) {
@@ -86,7 +86,7 @@ final class SeoHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_unhealthy_when_sitemap_disabled(): void
+    public function getDataUnhealthyWhenSitemapDisabled(): void
     {
         $service = $this->createStub(LinkHealthServiceInterface::class);
         $service->method('getBrokenLinks')->willReturn([]);
@@ -98,7 +98,7 @@ final class SeoHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_null_sitemap_generation_when_not_set(): void
+    public function getDataNullSitemapGenerationWhenNotSet(): void
     {
         $service = $this->createStub(LinkHealthServiceInterface::class);
         $service->method('getBrokenLinks')->willReturn([]);
@@ -110,7 +110,7 @@ final class SeoHealthWidgetTest extends TestCase
     }
 
     #[Test]
-    public function test_get_data_passes_tenant_id(): void
+    public function getDataPassesTenantId(): void
     {
         $tenantId = '01912345-6789-7abc-8def-000000000001';
 

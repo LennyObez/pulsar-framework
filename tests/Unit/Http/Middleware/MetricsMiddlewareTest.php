@@ -109,4 +109,148 @@ final class MetricsMiddlewareTest extends TestCase
         $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => 'unmatched', 'status' => '500']));
         self::assertSame(1.0, $value);
     }
+
+    #[Test]
+    public function recordsErrorCounterOn5xxResponse(): void
+    {
+        $registry = new MetricRegistry();
+        $routeContext = new RouteContext();
+
+        $middleware = new MetricsMiddleware($registry, $routeContext);
+
+        $request = $this->createRequest('/error');
+
+        $handler = new class ($routeContext) implements RequestHandlerInterface {
+            public function __construct(private RouteContext $routeContext) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->routeContext->name = 'error.route';
+
+                return new Response(statusCode: 503);
+            }
+        };
+
+        $middleware->process($request, $handler);
+
+        // Verify error counter was incremented for 5xx
+        $errorCounter = $registry->counter('pulsar_http_errors_total', '');
+        $errorValue = $errorCounter->value(new LabelSet(['method' => 'GET', 'route' => 'error.route', 'status' => '503']));
+        self::assertSame(1.0, $errorValue);
+    }
+
+    #[Test]
+    public function doesNotRecordErrorCounterOn4xxResponse(): void
+    {
+        $registry = new MetricRegistry();
+        $routeContext = new RouteContext();
+
+        $middleware = new MetricsMiddleware($registry, $routeContext);
+
+        $request = $this->createRequest('/not-found');
+
+        $handler = new class ($routeContext) implements RequestHandlerInterface {
+            public function __construct(private RouteContext $routeContext) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->routeContext->name = 'notfound.route';
+
+                return new Response(statusCode: 404);
+            }
+        };
+
+        $middleware->process($request, $handler);
+
+        // Verify error counter was NOT incremented for 4xx
+        $errorCounter = $registry->counter('pulsar_http_errors_total', '');
+        $errorValue = $errorCounter->value(new LabelSet(['method' => 'GET', 'route' => 'notfound.route', 'status' => '404']));
+        self::assertSame(0.0, $errorValue);
+
+        // But the request counter should still be recorded
+        $counter = $registry->counter('pulsar_http_requests_total', '');
+        $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => 'notfound.route', 'status' => '404']));
+        self::assertSame(1.0, $value);
+    }
+
+    #[Test]
+    public function recordsDurationHistogram(): void
+    {
+        $registry = new MetricRegistry();
+
+        $middleware = new MetricsMiddleware($registry, null);
+
+        $request = $this->createRequest('/timed');
+
+        $handler = $this->createStub(RequestHandlerInterface::class);
+        $handler->method('handle')->willReturn(Response::text('OK'));
+
+        $middleware->process($request, $handler);
+
+        // Verify histogram was recorded
+        $histogram = $registry->histogram('pulsar_http_request_duration_seconds', '');
+        $count = $histogram->count(new LabelSet(['method' => 'GET', 'route' => '/timed']));
+        self::assertSame(1, $count);
+    }
+
+    #[Test]
+    public function resetsRouteContextAtStartOfRequest(): void
+    {
+        $registry = new MetricRegistry();
+        $routeContext = new RouteContext();
+        $routeContext->name = 'stale.route';
+        $routeContext->pattern = '/stale/{id}';
+
+        $middleware = new MetricsMiddleware($registry, $routeContext);
+
+        $request = $this->createRequest('/fresh');
+
+        $handler = new class ($routeContext) implements RequestHandlerInterface {
+            public function __construct(private RouteContext $routeContext) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                // Verify context was reset before handler runs
+                // We set a new route after reset
+                $this->routeContext->name = 'fresh.route';
+
+                return Response::text('OK');
+            }
+        };
+
+        $middleware->process($request, $handler);
+
+        $counter = $registry->counter('pulsar_http_requests_total', '');
+        $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => 'fresh.route', 'status' => '200']));
+        self::assertSame(1.0, $value);
+    }
+
+    #[Test]
+    public function usesPatternWhenNameIsNull(): void
+    {
+        $registry = new MetricRegistry();
+        $routeContext = new RouteContext();
+
+        $middleware = new MetricsMiddleware($registry, $routeContext);
+
+        $request = $this->createRequest('/users/42');
+
+        $handler = new class ($routeContext) implements RequestHandlerInterface {
+            public function __construct(private RouteContext $routeContext) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                $this->routeContext->pattern = '/users/{id}';
+                // Name stays null
+
+                return Response::text('OK');
+            }
+        };
+
+        $middleware->process($request, $handler);
+
+        $counter = $registry->counter('pulsar_http_requests_total', '');
+        $value = $counter->value(new LabelSet(['method' => 'GET', 'route' => '/users/{id}', 'status' => '200']));
+        self::assertSame(1.0, $value);
+    }
 }

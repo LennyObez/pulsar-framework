@@ -18,7 +18,7 @@ final class CssValidatorTest extends TestCase
 
     #[Test]
     #[DataProvider('importProvider')]
-    public function test_rejects_at_import(string $css): void
+    public function rejectsAtImport(string $css): void
     {
         $validator = $this->createValidator();
         $result = $validator->validate($css);
@@ -40,7 +40,7 @@ final class CssValidatorTest extends TestCase
     // ── Rejects expression() ────────────────────────────────────────
 
     #[Test]
-    public function test_rejects_expression(): void
+    public function rejectsExpression(): void
     {
         $result = $this->createValidator()->validate('body { width: expression(document.body.clientWidth); }');
 
@@ -51,7 +51,7 @@ final class CssValidatorTest extends TestCase
 
     #[Test]
     #[DataProvider('externalUrlProvider')]
-    public function test_rejects_external_url(string $css): void
+    public function rejectsExternalUrl(string $css): void
     {
         $result = $this->createValidator()->validate($css);
 
@@ -72,7 +72,7 @@ final class CssValidatorTest extends TestCase
     // ── Rejects javascript: in values ───────────────────────────────
 
     #[Test]
-    public function test_rejects_javascript_in_values(): void
+    public function rejectsJavascriptInValues(): void
     {
         $result = $this->createValidator()->validate('body { background: url(javascript:alert(1)); }');
 
@@ -83,7 +83,7 @@ final class CssValidatorTest extends TestCase
 
     #[Test]
     #[DataProvider('dangerousPropertyProvider')]
-    public function test_rejects_dangerous_properties(string $css): void
+    public function rejectsDangerousProperties(string $css): void
     {
         $result = $this->createValidator()->validate($css);
 
@@ -104,7 +104,7 @@ final class CssValidatorTest extends TestCase
 
     #[Test]
     #[DataProvider('validCssProvider')]
-    public function test_accepts_valid_css(string $css): void
+    public function acceptsValidCss(string $css): void
     {
         $result = $this->createValidator()->validate($css);
 
@@ -130,7 +130,7 @@ final class CssValidatorTest extends TestCase
 
     #[Test]
     #[DataProvider('bypassAttemptProvider')]
-    public function test_rejects_bypass_attempts(string $css): void
+    public function rejectsBypassAttempts(string $css): void
     {
         $result = $this->createValidator()->validate($css);
 

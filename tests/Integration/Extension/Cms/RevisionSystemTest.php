@@ -29,7 +29,7 @@ final class RevisionSystemTest extends TestCase
     }
 
     #[Test]
-    public function test_create_revision_on_content_update(): void
+    public function createRevisionOnContentUpdate(): void
     {
         $translation = ContentTranslation::create(
             id: 'trans-001',
@@ -74,7 +74,7 @@ final class RevisionSystemTest extends TestCase
     }
 
     #[Test]
-    public function test_revision_evidence_hash_is_correct(): void
+    public function revisionEvidenceHashIsCorrect(): void
     {
         $translation = ContentTranslation::create(
             id: 'trans-002',
@@ -109,7 +109,7 @@ final class RevisionSystemTest extends TestCase
     }
 
     #[Test]
-    public function test_restore_revision_creates_new_revision_and_updates_content(): void
+    public function restoreRevisionCreatesNewRevisionAndUpdatesContent(): void
     {
         // Create initial revision
         $originalTranslation = ContentTranslation::create(
@@ -186,7 +186,7 @@ final class RevisionSystemTest extends TestCase
     }
 
     #[Test]
-    public function test_revision_number_auto_increments(): void
+    public function revisionNumberAutoIncrements(): void
     {
         $translation = ContentTranslation::create(
             id: 'trans-004',

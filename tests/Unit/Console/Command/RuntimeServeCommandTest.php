@@ -213,4 +213,145 @@ final class RuntimeServeCommandTest extends TestCase
         // Default resolution should include the runtime type name in output
         self::assertStringContainsString('runtime on 127.0.0.1:8080', $output->buffer);
     }
+
+    #[Test]
+    public function hostnameWithoutPublicFails(): void
+    {
+        $runtime = $this->createStub(RuntimeInterface::class);
+        $factory = $this->createFactory($runtime);
+        $config = new RuntimeConfig(host: 'my-server.local', port: 8080);
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(
+            new ArrayInput('runtime:serve', [], ['runtime' => 'fpm']),
+            $output,
+        );
+
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringContainsString('--public', $output->errorBuffer);
+        self::assertStringContainsString('hostname resolution', $output->errorBuffer);
+    }
+
+    #[Test]
+    public function localhostIsAllowedWithoutPublicFlag(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $runtime = $this->createStub(RuntimeInterface::class);
+        $factory = $this->createFactory($runtime);
+        $config = new RuntimeConfig(host: 'localhost', port: 8080);
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('runtime:serve'), $output);
+
+        self::assertSame(ExitCode::Success->value, $exit);
+    }
+
+    #[Test]
+    public function ipv6LoopbackIsAllowed(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $runtime = $this->createStub(RuntimeInterface::class);
+        $factory = $this->createFactory($runtime);
+        $config = new RuntimeConfig(host: '::1', port: 8080);
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('runtime:serve'), $output);
+
+        self::assertSame(ExitCode::Success->value, $exit);
+    }
+
+    #[Test]
+    public function portAboveRangeReturnsError(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $runtime = $this->createStub(RuntimeInterface::class);
+        $factory = $this->createFactory($runtime);
+        $config = new RuntimeConfig(host: '127.0.0.1', port: 70000);
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('runtime:serve'), $output);
+
+        self::assertSame(ExitCode::Error->value, $exit);
+        self::assertStringContainsString('Invalid port', $output->errorBuffer);
+    }
+
+    #[Test]
+    public function cliPortOptionOverridesConfig(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $runtime = $this->createStub(RuntimeInterface::class);
+        $factory = $this->createFactory($runtime);
+        $config = new RuntimeConfig(host: '127.0.0.1', port: 3000);
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(
+            new ArrayInput('runtime:serve', [], ['port' => '9090']),
+            $output,
+        );
+
+        self::assertSame(ExitCode::Success->value, $exit);
+        self::assertStringContainsString('127.0.0.1:9090', $output->buffer);
+    }
+
+    #[Test]
+    public function concurrencyDisplaysAsSync(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $runtime = $this->createStub(RuntimeInterface::class);
+        $factory = $this->createFactory($runtime);
+        $config = new RuntimeConfig(host: '127.0.0.1', port: 8080, fiberConcurrency: 0);
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('runtime:serve'), $output);
+
+        self::assertSame(ExitCode::Success->value, $exit);
+        self::assertStringContainsString('concurrency: sync', $output->buffer);
+    }
+
+    #[Test]
+    public function concurrencyDisplaysNumericValue(): void
+    {
+        if (!extension_loaded('sockets')) {
+            self::markTestSkipped('ext-sockets required');
+        }
+
+        $runtime = $this->createStub(RuntimeInterface::class);
+        $factory = $this->createFactory($runtime);
+        $config = new RuntimeConfig(host: '127.0.0.1', port: 8080, fiberConcurrency: 16);
+
+        $command = new RuntimeServeCommand($this->kernel, $factory, $this->resolver, $config);
+        $output = new BufferedOutput();
+
+        $exit = $command->execute(new ArrayInput('runtime:serve'), $output);
+
+        self::assertSame(ExitCode::Success->value, $exit);
+        self::assertStringContainsString('concurrency: 16', $output->buffer);
+    }
 }

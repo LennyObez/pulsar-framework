@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tests\E2E\Extension\Cms;
 
 use DateTimeImmutable;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -27,11 +28,12 @@ use function strlen;
 /**
  * E2E: Backup and restore — create backup -> delete content -> restore -> verify integrity.
  */
+#[CoversClass(Backup::class)]
 #[Group('e2e-cms')]
 final class BackupRestoreTest extends TestCase
 {
     #[Test]
-    public function test_full_backup_and_restore_lifecycle(): void
+    public function fullBackupAndRestoreLifecycle(): void
     {
         $contentStore = new E2EBackupContentStore();
         $service = new E2EBackupService($contentStore);
@@ -101,7 +103,7 @@ final class BackupRestoreTest extends TestCase
     }
 
     #[Test]
-    public function test_backup_list_and_delete(): void
+    public function backupListAndDelete(): void
     {
         $contentStore = new E2EBackupContentStore();
         $service = new E2EBackupService($contentStore);
@@ -122,7 +124,7 @@ final class BackupRestoreTest extends TestCase
     }
 
     #[Test]
-    public function test_restore_nonexistent_backup_throws(): void
+    public function restoreNonexistentBackupThrows(): void
     {
         $contentStore = new E2EBackupContentStore();
         $service = new E2EBackupService($contentStore);
@@ -132,7 +134,7 @@ final class BackupRestoreTest extends TestCase
     }
 
     #[Test]
-    public function test_tampered_backup_rejected(): void
+    public function tamperedBackupRejected(): void
     {
         $contentStore = new E2EBackupContentStore();
         $service = new E2EBackupService($contentStore);
@@ -154,7 +156,7 @@ final class BackupRestoreTest extends TestCase
     }
 
     #[Test]
-    public function test_backup_scope_from_array(): void
+    public function backupScopeFromArray(): void
     {
         $scope = BackupScope::fromArray([
             'include_content' => true,

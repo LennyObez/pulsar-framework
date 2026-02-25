@@ -35,7 +35,7 @@ final class PluginGuardrailsTest extends TestCase
     // -- Exception isolation -------------------------------------------------
 
     #[Test]
-    public function test_hook_exception_does_not_propagate(): void
+    public function hookExceptionDoesNotPropagate(): void
     {
         $called = false;
 
@@ -55,7 +55,7 @@ final class PluginGuardrailsTest extends TestCase
     }
 
     #[Test]
-    public function test_hook_exception_is_logged(): void
+    public function hookExceptionIsLogged(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $hookRegistry = new HookRegistry();
@@ -85,7 +85,7 @@ final class PluginGuardrailsTest extends TestCase
     // -- Output buffering ----------------------------------------------------
 
     #[Test]
-    public function test_output_from_hooks_is_captured(): void
+    public function outputFromHooksIsCaptured(): void
     {
         $this->hookRegistry->register('render', static function () {
             echo 'stray output from plugin';
@@ -102,7 +102,7 @@ final class PluginGuardrailsTest extends TestCase
     // -- Circuit breaker: trips after threshold ------------------------------
 
     #[Test]
-    public function test_circuit_breaker_trips_after_10_failures(): void
+    public function circuitBreakerTripsAfter10Failures(): void
     {
         // Register a hook that always fails
         $this->hookRegistry->register('tick', static function () {
@@ -121,7 +121,7 @@ final class PluginGuardrailsTest extends TestCase
     }
 
     #[Test]
-    public function test_circuit_breaker_auto_disables_plugin(): void
+    public function circuitBreakerAutoDisablesPlugin(): void
     {
         $executionCount = 0;
 
@@ -147,7 +147,7 @@ final class PluginGuardrailsTest extends TestCase
     }
 
     #[Test]
-    public function test_circuit_broken_plugin_appears_in_list(): void
+    public function circuitBrokenPluginAppearsInList(): void
     {
         $this->hookRegistry->register('tick', static function () {
             throw new RuntimeException('fail');
@@ -164,7 +164,7 @@ final class PluginGuardrailsTest extends TestCase
     // -- Successful hooks don't trigger circuit breaker ----------------------
 
     #[Test]
-    public function test_successful_hooks_do_not_trigger_circuit_breaker(): void
+    public function successfulHooksDoNotTriggerCircuitBreaker(): void
     {
         $this->hookRegistry->register('success_hook', static function () {
             // Successful execution — no exception
@@ -181,7 +181,7 @@ final class PluginGuardrailsTest extends TestCase
     }
 
     #[Test]
-    public function test_circuit_breaker_not_tripped_below_threshold(): void
+    public function circuitBreakerNotTrippedBelowThreshold(): void
     {
         $this->hookRegistry->register('partial_fail', static function () {
             throw new RuntimeException('fail');
@@ -201,7 +201,7 @@ final class PluginGuardrailsTest extends TestCase
     // -- Multiple plugins: one broken, others unaffected ----------------------
 
     #[Test]
-    public function test_circuit_breaker_only_affects_failing_plugin(): void
+    public function circuitBreakerOnlyAffectsFailingPlugin(): void
     {
         $goodCount = 0;
 
@@ -230,7 +230,7 @@ final class PluginGuardrailsTest extends TestCase
     // -- No hooks registered for a hook point --------------------------------
 
     #[Test]
-    public function test_execute_with_no_registered_hooks(): void
+    public function executeWithNoRegisteredHooks(): void
     {
         // Should not throw or produce errors
         $this->engine->execute('nonexistent_hook');
@@ -242,7 +242,7 @@ final class PluginGuardrailsTest extends TestCase
     // -- Memory tracking logging ---------------------------------------------
 
     #[Test]
-    public function test_memory_excessive_growth_is_logged(): void
+    public function memoryExcessiveGrowthIsLogged(): void
     {
         // We can verify the engine tracks memory by registering a hook that allocates memory.
         // The exact threshold (32MB) is hard to trigger in tests, but we verify the engine
@@ -261,7 +261,7 @@ final class PluginGuardrailsTest extends TestCase
     // -- Hook arguments are passed through -----------------------------------
 
     #[Test]
-    public function test_hook_receives_arguments(): void
+    public function hookReceivesArguments(): void
     {
         $receivedArgs = [];
 
