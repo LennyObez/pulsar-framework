@@ -36,11 +36,16 @@ final readonly class SeoConfig
      */
     public static function fromArray(array $data): self
     {
+        /** @var array<string, string> $changefreq */
+        $changefreq = (array) ($data['sitemap_changefreq'] ?? ['article' => 'weekly', 'page' => 'monthly']);
+        /** @var array<string, float> $priority */
+        $priority = (array) ($data['sitemap_priority'] ?? ['page' => 0.8, 'article' => 0.6]);
+
         return new self(
             defaultRobots: (string) ($data['default_robots'] ?? 'index, follow'),
             titleSuffix: (string) ($data['title_suffix'] ?? ''),
-            sitemapChangefreq: (array) ($data['sitemap_changefreq'] ?? ['article' => 'weekly', 'page' => 'monthly']),
-            sitemapPriority: (array) ($data['sitemap_priority'] ?? ['page' => 0.8, 'article' => 0.6]),
+            sitemapChangefreq: $changefreq,
+            sitemapPriority: $priority,
             enableStructuredData: (bool) ($data['enable_structured_data'] ?? true),
             enableMediaSitemap: (bool) ($data['enable_media_sitemap'] ?? true),
             linkHealthCheckSchedule: (string) ($data['link_health_check_schedule'] ?? '0 3 * * 0'),
