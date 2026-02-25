@@ -27,6 +27,9 @@ use function count;
  * Enforces status-based constraints: only draft campaigns can be edited,
  * only draft campaigns can be scheduled, only scheduled campaigns can
  * be cancelled, and only draft or cancelled campaigns can be deleted.
+ *
+ * @psalm-api Bound to CampaignEditorServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CampaignEditorServiceInterface for public API')]
 final readonly class CampaignEditorService implements CampaignEditorServiceInterface

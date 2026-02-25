@@ -18,6 +18,9 @@ use function is_string;
  *
  * Encapsulates the repeated parse/validate pattern used across all
  * AI controller endpoints to reduce boilerplate.
+ *
+ * @psalm-api Resolved from the DI container by AI controllers; not
+ *            instantiated by name.
  */
 #[Internal]
 final readonly class AiRequestParser
