@@ -28,6 +28,9 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Handles incoming payment provider webhooks for asynchronous payment events.
+ *
+ * @psalm-api Resolved from the DI container by the public webhook controller;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'Internal webhook processing; not part of public API')]
 final readonly class WebhookHandler

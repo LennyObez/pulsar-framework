@@ -25,6 +25,9 @@ use const JSON_THROW_ON_ERROR;
  *
  * Delay formula: min(2^retryCount * 60, 3600) seconds.
  * After maxRetries is exceeded, the event is logged and discarded.
+ *
+ * @psalm-api Instantiated by the queue worker after deserializing job payloads;
+ *            entry point invoked by the QueueableInterface contract.
  */
 #[Internal(reason: 'Internal webhook retry mechanism; not part of public API')]
 final readonly class WebhookRetryJob implements QueueableInterface

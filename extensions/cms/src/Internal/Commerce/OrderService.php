@@ -24,6 +24,9 @@ use function sprintf;
 
 /**
  * Order lifecycle management: payment confirmation, failure, refunds, and fulfillment.
+ *
+ * @psalm-api Resolved from the DI container by admin controllers and webhook
+ *            handlers; not instantiated by name.
  */
 #[Internal(reason: 'Order lifecycle service; not part of public API')]
 final readonly class OrderService
