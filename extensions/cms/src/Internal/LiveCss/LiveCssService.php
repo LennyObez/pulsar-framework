@@ -18,6 +18,9 @@ use Pulsar\Security\Audit\AuditOutcome;
 
 /**
  * Live CSS override lifecycle: validate, version, persist, and audit.
+ *
+ * @psalm-api Bound to LiveCssServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use LiveCssServiceInterface for public API')]
 final readonly class LiveCssService implements LiveCssServiceInterface

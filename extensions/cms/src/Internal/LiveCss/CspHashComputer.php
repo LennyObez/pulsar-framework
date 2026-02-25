@@ -12,6 +12,9 @@ use function hash;
 
 /**
  * Computes SHA-256 hashes for CSP style-src directives.
+ *
+ * @psalm-api Bound to CspHashComputerInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CspHashComputerInterface for public API')]
 final readonly class CspHashComputer implements CspHashComputerInterface

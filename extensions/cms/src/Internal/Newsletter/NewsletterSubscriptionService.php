@@ -28,6 +28,9 @@ use function sodium_crypto_generichash;
  * hashes it with BLAKE2b, stores the hash, and sends a confirmation email
  * containing the raw token. The confirm method re-hashes the received token
  * and matches it against the stored hash.
+ *
+ * @psalm-api Bound to NewsletterSubscriptionServiceInterface in the CMS service
+ *            provider; resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use NewsletterSubscriptionServiceInterface for public API')]
 final readonly class NewsletterSubscriptionService implements NewsletterSubscriptionServiceInterface
