@@ -1,4 +1,4 @@
-# Comment Moderation Guide
+# Comment moderation guide
 
 This guide covers the Pulsar CMS comment system, including moderation workflows, anti-abuse protections, rate limiting, and comment policies.
 
@@ -6,7 +6,7 @@ This guide covers the Pulsar CMS comment system, including moderation workflows,
 
 Pulsar CMS includes a full-featured commenting system with moderation controls designed for regulated environments. All comments pass through sanitization and anti-abuse checks before reaching moderators.
 
-## Comment Lifecycle
+## Comment lifecycle
 
 ```
 Visitor submits comment
@@ -25,7 +25,7 @@ Pending moderation queue
     +--> Spam      (hidden, preserved for audit)
 ```
 
-## Moderation Statuses
+## Moderation statuses
 
 | Status       | Description               | Publicly Visible |
 | ------------ | ------------------------- | ---------------- |
@@ -36,25 +36,28 @@ Pending moderation queue
 
 Moderation decisions are final. Once a comment transitions from Pending to any other status, no further transitions are allowed. This immutability ensures a clear audit trail.
 
-## Moderating Comments
+## Moderating comments
 
-### Via Admin Panel
+### Via admin panel
 
 <!-- Screenshot: Comment moderation queue -->
 
 1. Navigate to **Admin > CMS > Content > {id}** and open the comments section, or view comments through the admin comment controller.
 2. The moderation queue shows all pending comments with:
-  - Author name and email (if provided)
-  - Comment body (sanitized)
-  - Associated content item
-  - Submission timestamp
-  - Parent comment (for replies)
-3. For each pending comment, choose an action:
-  - **Approve**: Makes the comment publicly visible
-  - **Reject**: Hides the comment with an optional reason
-  - **Mark as Spam**: Flags the comment as spam
 
-### Audit Logging
+- Author name and email (if provided)
+- Comment body (sanitized)
+- Associated content item
+- Submission timestamp
+- Parent comment (for replies)
+
+3. For each pending comment, choose an action:
+
+- **Approve**: Makes the comment publicly visible
+- **Reject**: Hides the comment with an optional reason
+- **Mark as Spam**: Flags the comment as spam
+
+### Audit logging
 
 Every moderation action is recorded in the audit log:
 
@@ -63,7 +66,7 @@ Every moderation action is recorded in the audit log:
 - **Subject**: `comment:{id}`
 - **Evidence**: Previous status, new status, content ID
 
-## Comment Policies
+## Comment policies
 
 Each content item has a comment policy that controls whether comments are accepted:
 
@@ -75,7 +78,7 @@ Each content item has a comment policy that controls whether comments are accept
 
 Set the comment policy when creating or editing content at **Admin > CMS > Content > {id}**.
 
-### Site-Wide Setting
+### Site-wide setting
 
 The global comment toggle is controlled in `config/cms.php`:
 
@@ -87,7 +90,7 @@ The global comment toggle is controlled in `config/cms.php`:
 
 When `enabled` is `false`, no comments are accepted anywhere on the site, regardless of individual content policies.
 
-## Guest Comments
+## Guest comments
 
 By default, unauthenticated visitors can submit comments:
 
@@ -100,7 +103,7 @@ By default, unauthenticated visitors can submit comments:
 
 When `guest_comments_allowed` is `false`, only authenticated users can comment.
 
-## Auto-Approval
+## Auto-approval
 
 Authenticated users' comments can be auto-approved:
 
@@ -112,9 +115,9 @@ Authenticated users' comments can be auto-approved:
 
 When enabled, comments from logged-in users bypass the moderation queue and are immediately visible. This is disabled by default for regulated environments.
 
-## Comment Body Rules
+## Comment body rules
 
-### Character Limit
+### Character limit
 
 ```php
 'comments' => [
@@ -122,7 +125,7 @@ When enabled, comments from logged-in users bypass the moderation queue and are 
 ],
 ```
 
-### Link Limit
+### Link limit
 
 ```php
 'comments' => [
@@ -132,7 +135,7 @@ When enabled, comments from logged-in users bypass the moderation queue and are 
 
 Comments exceeding the link limit are flagged for review. Excessive links are a common spam indicator.
 
-### HTML Sanitization
+### HTML sanitization
 
 Comment bodies are sanitized using the **strict comment subset** of the SafeHtmlPolicy:
 
@@ -149,7 +152,7 @@ Comment bodies are sanitized using the **strict comment subset** of the SafeHtml
 
 All other HTML elements are unwrapped (their text content is preserved). Links receive `rel="noopener noreferrer"` for security.
 
-### Nesting Depth
+### Nesting depth
 
 ```php
 'comments' => [
@@ -159,7 +162,7 @@ All other HTML elements are unwrapped (their text content is preserved). Links r
 
 Replies beyond the maximum nesting depth are attached to the deepest allowed parent.
 
-## Edit Window
+## Edit window
 
 Authors can edit their own comments within a configurable time window:
 
@@ -171,11 +174,11 @@ Authors can edit their own comments within a configurable time window:
 
 After the window expires, comments are immutable. Edits within the window are audit-logged.
 
-## Anti-Abuse Protections
+## Anti-abuse protections
 
 Pulsar CMS includes multiple layers of automated anti-abuse measures.
 
-### Rate Limiting
+### Rate limiting
 
 Rate limits prevent comment flooding:
 
@@ -188,7 +191,7 @@ Rate limits prevent comment flooding:
 
 When a user exceeds the rate limit, subsequent comment submissions are rejected with a `429 Too Many Requests` response. The `CommentRateLimitMiddleware` enforces these limits.
 
-### Honeypot Field
+### Honeypot field
 
 The honeypot technique detects automated bots:
 
@@ -211,7 +214,7 @@ The honeypot trigger is audit-logged as a security event:
 - **Type**: Security Event
 - **Outcome**: Denied
 
-### Anti-Abuse Heuristics
+### Anti-abuse heuristics
 
 The `AntiAbuseHeuristics` engine applies additional checks:
 
@@ -222,7 +225,7 @@ The `AntiAbuseHeuristics` engine applies additional checks:
 
 Comments flagged by heuristics are placed in the pending queue for manual review.
 
-## Comment Events
+## Comment events
 
 The comment system dispatches events that can be consumed by other parts of the application:
 
@@ -240,7 +243,7 @@ These events can trigger notifications, webhooks, or custom integrations.
 | `cms.comments.view`     | Contributor+ | View comments on content          |
 | `cms.comments.moderate` | Editor+      | Approve, reject, or flag comments |
 
-## Configuration Reference
+## Configuration reference
 
 | Key                                   | Type   | Default         | Description                            |
 | ------------------------------------- | ------ | --------------- | -------------------------------------- |
@@ -256,7 +259,7 @@ These events can trigger notifications, webhooks, or custom integrations.
 | `comments.max_links_per_comment`      | int    | `3`             | Maximum links per comment              |
 | `comments.honeypot_field_name`        | string | `'website_url'` | Hidden honeypot field name             |
 
-## Next Steps
+## Next steps
 
 - [Content Management Guide](content-management.md) - Setting comment policies per content
 - [Security Model](../security/security-model.md) - Comment-related permissions

@@ -1,8 +1,8 @@
-# CMS Plugin Development Guide
+# CMS plugin development guide
 
 This guide covers the complete plugin development lifecycle for the Pulsar CMS, from manifest creation through packaging and distribution.
 
-## Plugin Directory Structure
+## Plugin directory structure
 
 A plugin is a ZIP archive containing:
 
@@ -17,11 +17,11 @@ my-plugin/
       ContentHooks.php     # Hook callback implementations
 ```
 
-## Plugin Manifest (`plugin.json`)
+## Plugin manifest (`plugin.json`)
 
 The manifest declares all plugin metadata. It is parsed into a `PluginManifest` DTO via `PluginManifest::fromArray()`.
 
-### Required Fields
+### Required fields
 
 | Field          | Type   | Description                                                                                                              |
 | -------------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
@@ -29,7 +29,7 @@ The manifest declares all plugin metadata. It is parsed into a `PluginManifest` 
 | `display_name` | string | Human-readable plugin name. Alternative key: `name`.                                                                     |
 | `version`      | string | SemVer version string (e.g., `1.0.0`). Pattern: `^\d+\.\d+\.\d+(?:-[\w.]+)?(?:\+[\w.]+)?$`                               |
 
-### Optional Fields
+### Optional fields
 
 | Field            | Type   | Description                                                                      |
 | ---------------- | ------ | -------------------------------------------------------------------------------- |
@@ -43,7 +43,7 @@ The manifest declares all plugin metadata. It is parsed into a `PluginManifest` 
 | `entry_point`    | string | Fully qualified class name implementing `CmsPluginInterface`.                    |
 | `settings`       | object | Plugin-specific configurable settings (key-value pairs).                         |
 
-### Example Manifest
+### Example manifest
 
 ```json
 {
@@ -65,7 +65,7 @@ The manifest declares all plugin metadata. It is parsed into a `PluginManifest` 
 }
 ```
 
-## The `CmsPluginInterface` Contract
+## The `CmsPluginInterface` contract
 
 Every plugin must implement `Pulsar\Extension\Cms\Plugins\CmsPluginInterface`:
 
@@ -240,11 +240,11 @@ $logger = $context->container()->get(LoggerInterface::class);
 
 Get the plugin's slug identifier.
 
-## Scoped Container Proxy
+## Scoped container proxy
 
 The `ScopedContainerProxy` limits which services a plugin can resolve. This prevents plugins from accessing sensitive framework internals.
 
-### Allowed Services
+### Allowed services
 
 | Service Interface                                         | Purpose             |
 | --------------------------------------------------------- | ------------------- |
@@ -255,7 +255,7 @@ The `ScopedContainerProxy` limits which services a plugin can resolve. This prev
 | `Pulsar\Extension\Cms\Media\MediaRepositoryInterface`     | Media asset queries |
 | `Pulsar\Extension\Cms\Settings\SettingsServiceInterface`  | CMS settings access |
 
-### Denied Services
+### Denied services
 
 Any service not in the allowed list throws a `RuntimeException`:
 
@@ -271,11 +271,11 @@ Explicitly denied categories include:
 - All `Internal\` namespaced classes
 - `ConnectionInterface` (no direct database access)
 
-## Capability System
+## Capability system
 
 Plugins declare capabilities in their manifest to indicate what they provide. The CMS uses these declarations for dependency resolution and admin UI.
 
-### Available Capabilities
+### Available capabilities
 
 | Capability     | Value           | Description                           |
 | -------------- | --------------- | ------------------------------------- |
@@ -298,9 +298,9 @@ public function capabilities(): array
 }
 ```
 
-## Hook System
+## Hook system
 
-### Registering Hooks
+### Registering hooks
 
 Register hooks in `boot()` using `registerHook()`:
 
@@ -312,11 +312,11 @@ public function boot(CmsPluginContext $context): void
 }
 ```
 
-### Execution Order
+### Execution order
 
 Hooks are executed in ascending priority order (lower values execute first). When multiple plugins register callbacks for the same hook point at the same priority, they execute in registration order.
 
-### Hook Points
+### Hook points
 
 See the [Hook Reference](hook-reference.md) for all available hook points and their callback signatures.
 
@@ -324,7 +324,7 @@ See the [Hook Reference](hook-reference.md) for all available hook points and th
 
 The CMS enforces strict guardrails on plugin execution to protect system stability:
 
-### Memory Limits
+### Memory limits
 
 Each hook callback is monitored for memory consumption. If a single callback allocates more than **32 MB** of memory, the failure is recorded and logged:
 
@@ -332,7 +332,7 @@ Each hook callback is monitored for memory consumption. If a single callback all
 Hook callback from plugin "my-plugin" used 35651584 bytes (limit: 33554432)
 ```
 
-### Circuit Breaker
+### Circuit breaker
 
 The circuit breaker tracks failures per plugin within a sliding window:
 
@@ -344,15 +344,15 @@ The circuit breaker tracks failures per plugin within a sliding window:
 
 When a plugin accumulates 10 failures within 5 minutes, the circuit breaker trips and all hook callbacks from that plugin are skipped until the application restarts. This is logged as a critical event and recorded in the audit log.
 
-### Output Buffering
+### Output buffering
 
 All hook callbacks execute inside an output buffer (`ob_start()`/`ob_end_clean()`). Any output produced by a callback (echo, print, var_dump) is captured and discarded. Hooks must not produce output; they should modify state or return values.
 
-### Error Isolation
+### Error isolation
 
 Exceptions thrown by hook callbacks are caught, logged, and counted toward the circuit breaker threshold. They do not propagate to the caller, ensuring one plugin's failure cannot crash another plugin or the CMS itself.
 
-## Plugin Lifecycle
+## Plugin lifecycle
 
 ### Installation
 
@@ -370,14 +370,14 @@ The `CmsPluginManagerInterface::install()` method handles the full installation 
 4. File storage in the configured plugins directory
 5. Database record creation with manifest hash and package hash
 
-### Enable/Disable
+### Enable/disable
 
 ```php
 $manager->enable($pluginId, $enabledBy);   // PluginEnabled event
 $manager->disable($pluginId, $disabledBy); // PluginDisabled event
 ```
 
-### Boot Order
+### Boot order
 
 When the application boots, `CmsPluginManagerInterface::bootAll()` loads all enabled plugins in dependency-resolved order:
 
@@ -395,7 +395,7 @@ $manager->delete($pluginId, $deletedBy, $reason); // PluginDeleted event
 
 Only disabled plugins can be deleted. Attempting to delete an enabled plugin throws `CmsException`.
 
-## Provenance Verification
+## Provenance verification
 
 Plugin packages can optionally require cryptographic signatures for supply-chain security.
 
@@ -414,7 +414,7 @@ return [
 ];
 ```
 
-### Verification Levels
+### Verification levels
 
 | Setting                         | Behavior                                                                                     |
 | ------------------------------- | -------------------------------------------------------------------------------------------- |
@@ -422,7 +422,7 @@ return [
 | `require_signed_plugins: true`  | Packages must have a valid Ed25519 signature matching a trusted public key                   |
 | `integrity_check_on_boot: true` | File hashes are verified against the recorded `manifestHash` and `packageHash` on every boot |
 
-## Complete Minimal Plugin Example
+## Complete minimal plugin example
 
 ### `plugin.json`
 
@@ -494,7 +494,7 @@ Renders as:
 Welcome to our site! <span class="greeting">Hello, Developer!</span>
 ```
 
-## Related Documentation
+## Related documentation
 
 - [Hook Reference](hook-reference.md) - All available hook points and callback signatures
 - [Content Type API](content-type-api.md) - Defining custom content types programmatically

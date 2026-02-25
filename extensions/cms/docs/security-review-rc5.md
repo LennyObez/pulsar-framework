@@ -1,4 +1,6 @@
-# CMS Phase 4 Security Review (RC5)
+# CMS phase 4 security review (RC5)
+
+> **Deprecation notice (RC.11):** This review was conducted against RC5. The findings have been addressed in subsequent releases. Verify current status against the source files listed in the "Files modified" section before relying on this document.
 
 Scope: CSS validator, CSP hash computation, PII handling, digital download tokens, webhook security, refund security, checkout security.
 
@@ -10,7 +12,7 @@ Scope: CSS validator, CSP hash computation, PII handling, digital download token
 
 ## Findings
 
-### 1. CSS Validator: Missing `@charset` block, whitespace bypass, null byte evasion
+### 1. CSS validator: missing `@charset` block, whitespace bypass, null byte evasion
 
 **Severity:** Medium
 **File:** `extensions/cms/src/Internal/LiveCss/CssValidator.php`
@@ -35,7 +37,7 @@ Scope: CSS validator, CSP hash computation, PII handling, digital download token
 
 ---
 
-### 2. CSP Hash Computer: No issues
+### 2. CSP hash computer: no issues
 
 **Severity:** None
 **File:** `extensions/cms/src/Internal/LiveCss/CspHashComputer.php`
@@ -44,7 +46,7 @@ The implementation correctly uses `hash('sha256', $content, true)` with binary o
 
 ---
 
-### 3. PII Redaction: Missing `billing_address` and `shipping_address`
+### 3. PII redaction: missing `billing_address` and `shipping_address`
 
 **Severity:** High
 **File:** `extensions/cms/src/Internal/Tools/ExportBundleGenerator.php`
@@ -55,7 +57,7 @@ The implementation correctly uses `hash('sha256', $content, true)` with binary o
 
 ---
 
-### 4. Backup Service: Timing-unsafe hash comparison
+### 4. Backup service: timing-unsafe hash comparison
 
 **Severity:** Low
 **File:** `extensions/cms/src/Internal/Tools/BackupService.php`
@@ -68,7 +70,7 @@ The implementation correctly uses `hash('sha256', $content, true)` with binary o
 
 ---
 
-### 5. Digital Delivery: TOCTOU race condition on download count
+### 5. Digital delivery: TOCTOU race condition on download count
 
 **Severity:** High
 **File:** `extensions/cms/src/Internal/Commerce/DigitalDeliveryService.php`
@@ -85,7 +87,7 @@ The SQL `WHERE downloads_remaining > 0` clause makes the decrement atomic, but o
 
 ---
 
-### 6. Refund Over-spend: No cumulative refund tracking
+### 6. Refund over-spend: no cumulative refund tracking
 
 **Severity:** Critical
 **File:** `extensions/cms/src/Internal/Commerce/OrderService.php`
@@ -110,7 +112,7 @@ The SQL `WHERE downloads_remaining > 0` clause makes the decrement atomic, but o
 
 ---
 
-### 7. Webhook Handler: Correctly idempotent
+### 7. Webhook handler: correctly idempotent
 
 **Severity:** None
 **File:** `extensions/cms/src/Internal/Commerce/WebhookHandler.php`
@@ -124,7 +126,7 @@ No issues found.
 
 ---
 
-### 8. Checkout Security: Correctly implemented
+### 8. Checkout security: correctly implemented
 
 **Severity:** None
 **File:** `extensions/cms/src/Internal/Commerce/CheckoutService.php`
@@ -138,7 +140,7 @@ No issues found.
 
 ---
 
-## Files Modified
+## Files modified
 
 | File                                                                   | Change                                                                |
 | ---------------------------------------------------------------------- | --------------------------------------------------------------------- |

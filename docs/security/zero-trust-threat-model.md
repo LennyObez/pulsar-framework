@@ -4,7 +4,7 @@
 
 Zero-trust claims, policy decisions, device identities, trust scores, and signal data. The zero-trust module controls whether requests are granted, denied, or require step-up authentication. Compromise of any component can lead to unauthorized access, privilege escalation, or denial of service.
 
-## Threat Actors
+## Threat actors
 
 | Actor                       | Capability                                       | Motivation                                      |
 | --------------------------- | ------------------------------------------------ | ----------------------------------------------- |
@@ -15,9 +15,9 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 | Insider threat              | Application or infrastructure access             | Data exfiltration, policy manipulation          |
 | Compromised device          | Valid device credentials, attestation history    | Impersonate legitimate device after compromise  |
 
-## Attack Vectors and Mitigations
+## Attack vectors and mitigations
 
-### 1. Claim Forgery
+### 1. Claim forgery
 
 **Attack**: Attacker injects fabricated claims into the ClaimSet, bypassing signal providers entirely. For example, directly constructing a Claim with `confidence: 1.0` and `source: DeviceSignal` without actual device verification.
 
@@ -30,7 +30,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Low. Requires compromise of the signal provider pipeline itself.
 
-### 2. Source Spoofing
+### 2. Source spoofing
 
 **Attack**: Attacker manipulates the `ClaimSource` tag on claims to make them appear from a trusted source (e.g., tagging a network-derived claim as `DeviceSignal` to satisfy a policy requiring device claims).
 
@@ -43,7 +43,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Low. Requires DI container compromise or malicious extension registration.
 
-### 3. Confidence Manipulation
+### 3. Confidence manipulation
 
 **Attack**: Attacker influences signal inputs to artificially inflate confidence scores. For example, replaying known-good device fingerprints to achieve `confidence: 1.0` on device claims.
 
@@ -57,7 +57,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Medium. Depends on signal provider implementation quality. Code review of signal providers is critical.
 
-### 4. Policy Bypass
+### 4. Policy bypass
 
 **Attack**: Attacker finds resource patterns or action strings that do not match any policy rule, defaulting to an overly permissive fallback.
 
@@ -70,7 +70,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Low. Requires misconfiguration of policy rules. Mitigated by configuration validation.
 
-### 5. Device Impersonation
+### 5. Device impersonation
 
 **Attack**: Attacker clones or replays device attestation data to impersonate a registered device. This includes extracting the device public key or replaying a previous attestation assertion.
 
@@ -84,7 +84,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Medium. Depends on attestation implementation strength. WebAuthn attestation with hardware-backed keys significantly reduces risk.
 
-### 6. Replay Attacks
+### 6. Replay attacks
 
 **Attack**: Attacker captures a valid policy evaluation context (claims, resource, action) and replays it to gain access at a later time or from a different context.
 
@@ -97,7 +97,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Low. Time-bounded claims and per-request context binding prevent meaningful replay.
 
-### 7. Step-Up Loop Exploitation
+### 7. Step-up loop exploitation
 
 **Attack**: Attacker repeatedly triggers step-up authentication to either brute-force a secondary factor or cause denial of service by locking out legitimate users.
 
@@ -112,7 +112,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Low. Rate limiting and lockout effectively prevent brute-force. Denial-of-service risk exists if an attacker can trigger lockout on behalf of a victim (requires session compromise).
 
-### 8. Cross-Session Claim Leakage
+### 8. Cross-session claim leakage
 
 **Attack**: Claims from one session leak into another session's evaluation, potentially granting elevated privileges based on a different user's trust posture.
 
@@ -125,7 +125,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Negligible. Stateless evaluation design prevents cross-contamination by construction.
 
-### 9. Signal Retention Privacy Violation
+### 9. Signal retention privacy violation
 
 **Attack**: Retained signal data (IP addresses, device fingerprints, behavioral patterns) is accessed by unauthorized parties or retained beyond regulatory limits.
 
@@ -139,7 +139,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Low. Depends on proper configuration of retention policies and correct pseudonymizer implementation.
 
-### 10. Trust Score Gaming
+### 10. Trust score gaming
 
 **Attack**: Attacker systematically probes which claims contribute most to the trust score and focuses on artificially inflating those specific claims while ignoring others.
 
@@ -153,9 +153,9 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Residual Risk**: Medium. Sophisticated attackers with knowledge of weight configuration could optimize claim inflation. Defense in depth through multiple signal requirements mitigates this.
 
-## Abuse Case Scenarios
+## Abuse case scenarios
 
-### Scenario A: Compromised Employee Device
+### Scenario A: compromised employee device
 
 **Situation**: An employee's laptop is compromised with malware that can read browser state and session cookies.
 
@@ -168,7 +168,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Expected Outcome**: `PolicyDecision::StepUp` - requires re-authentication via a channel the malware cannot access (e.g., mobile push notification). `AnomalyDetectedEvent` dispatched with `anomalyType: "location_jump"`.
 
-### Scenario B: Privilege Escalation via Policy Gap
+### Scenario B: privilege escalation via policy gap
 
 **Situation**: An application defines policy rules for `/admin/*` requiring high-confidence device and network claims, but a new admin endpoint `/api/admin/export` does not match the `/admin/*` pattern.
 
@@ -179,7 +179,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Expected Outcome**: `PolicyDecision::Deny` - unmatched resources default to deny. `PolicyDecisionEvent` logs the attempt with zero matched rules, enabling detection of the policy gap during security review.
 
-### Scenario C: Step-Up Brute Force
+### Scenario C: step-up brute force
 
 **Situation**: Attacker has compromised a user's primary credentials and attempts to brute-force the step-up authentication (e.g., TOTP code).
 
@@ -192,7 +192,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Expected Outcome**: Identity locked out for 900 seconds (default). Security team alerted via event listener. Legitimate user can contact support for lockout reset.
 
-### Scenario D: Signal Provider Compromise
+### Scenario D: signal provider compromise
 
 **Situation**: A custom signal provider extension contains a vulnerability that allows arbitrary claim injection.
 
@@ -204,7 +204,7 @@ Zero-trust claims, policy decisions, device identities, trust scores, and signal
 
 **Expected Outcome**: Defense in depth applies. Policy rules with `allowedSources` reject claims from unexpected sources. Anomaly detection flags the sudden confidence spike. Multiple signal providers cross-validate - a single compromised provider cannot satisfy rules requiring claims from different sources.
 
-### Scenario E: Data Retention Compliance Audit
+### Scenario E: data retention compliance audit
 
 **Situation**: A regulatory audit (GDPR, HIPAA) requires demonstrating that signal data is retained only as long as legally justified.
 

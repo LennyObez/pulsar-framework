@@ -1,8 +1,8 @@
-# Theme Development Guide
+# Theme development guide
 
 This guide covers everything needed to build, package, and distribute themes for the Pulsar CMS.
 
-## Theme Directory Structure
+## Theme directory structure
 
 A theme is a ZIP archive containing the following directory structure:
 
@@ -23,11 +23,11 @@ my-theme/
   tokens.json         # Editable CSS custom properties (optional)
 ```
 
-## Theme Manifest (`theme.json`)
+## Theme manifest (`theme.json`)
 
 The manifest declares all theme metadata. It is parsed into a `ThemeManifest` DTO.
 
-### Required Fields
+### Required fields
 
 | Field          | Type   | Description                                                                                                                    |
 | -------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -35,7 +35,7 @@ The manifest declares all theme metadata. It is parsed into a `ThemeManifest` DT
 | `display_name` | string | Human-readable theme name shown in the admin panel. Alternative key: `name`.                                                   |
 | `version`      | string | SemVer version string (e.g., `1.0.0`, `2.1.3-beta.1`).                                                                         |
 
-### Optional Fields
+### Optional fields
 
 | Field                     | Type   | Description                                                                        |
 | ------------------------- | ------ | ---------------------------------------------------------------------------------- |
@@ -50,7 +50,7 @@ The manifest declares all theme metadata. It is parsed into a `ThemeManifest` DT
 | `settings`                | object | Theme-specific configurable settings (key-value pairs).                            |
 | `assets`                  | object | Asset path mapping: logical name to relative file path.                            |
 
-### Example Manifest
+### Example manifest
 
 ```json
 {
@@ -78,7 +78,7 @@ The manifest declares all theme metadata. It is parsed into a `ThemeManifest` DT
 }
 ```
 
-## Manifest Validation
+## Manifest validation
 
 The `ThemeManifestValidatorInterface` validates manifests against these rules:
 
@@ -94,7 +94,7 @@ The `ThemeManifestValidatorInterface` validates manifests against these rules:
 - Missing `author_name` -- recommended for attribution
 - Missing `license` -- recommended for compliance
 
-## Template Conventions
+## Template conventions
 
 Themes provide templates for each content type. The template file name must match the content type's machine identifier:
 
@@ -104,15 +104,15 @@ Themes provide templates for each content type. The template file name must matc
 
 Custom content types registered by plugins also need corresponding template files. If a content type has no matching template, the CMS falls back to the parent theme (if declared) or the default rendering.
 
-### Template Override via Content
+### Template override via content
 
 Individual content items can override the theme template using the `template` field on the `Content` entity. When set (e.g., `"landing-page"`), the CMS looks for `templates/landing-page.html` in the active theme before falling back to the content type template.
 
-## Editable Tokens (CSS Custom Properties)
+## Editable tokens (CSS custom properties)
 
 Themes can expose CSS custom properties that editors can modify through the Live CSS editor without touching theme source files.
 
-### Defining Tokens
+### Defining tokens
 
 Create a `tokens.json` file in the theme root:
 
@@ -147,7 +147,7 @@ Create a `tokens.json` file in the theme root:
 }
 ```
 
-### Token Types
+### Token types
 
 | Type        | Description       | Example Values                                       |
 | ----------- | ----------------- | ---------------------------------------------------- |
@@ -155,7 +155,7 @@ Create a `tokens.json` file in the theme root:
 | `font`      | Font family stack | `Inter, sans-serif`                                  |
 | `dimension` | CSS length value  | `8px`, `1rem`, `1200px`                              |
 
-### Using Tokens in CSS
+### Using tokens in CSS
 
 Reference tokens as CSS custom properties in your theme stylesheet:
 
@@ -195,9 +195,9 @@ When an editor saves token overrides through the Live CSS editor, the CMS genera
 
 The `ThemeTokenResolverInterface` resolves available tokens from the active theme, and `LiveCssServiceInterface` manages the override lifecycle with full version history.
 
-## Asset Packaging
+## Asset packaging
 
-### Directory Structure
+### Directory structure
 
 Place all static assets under the `assets/` directory:
 
@@ -215,14 +215,14 @@ assets/
     custom-font.woff2
 ```
 
-### Asset Resolution
+### Asset resolution
 
 The `ThemeAssetResolverInterface` resolves logical asset names (declared in `theme.json` under `assets`) to their physical paths within the theme's storage directory. The resolution respects the `assetDeployMode` setting:
 
 - **`copy`** (default) - Assets are copied to the public web directory during installation.
 - **`symlink`** -- Assets are symlinked from the theme storage to the public web directory.
 
-### CSS Bundling
+### CSS bundling
 
 Theme stylesheets should be self-contained. Use CSS `@import` statements for modular organization:
 
@@ -236,9 +236,9 @@ Theme stylesheets should be self-contained. Use CSS `@import` statements for mod
 
 Theme scripts are loaded after the page content. Use standard DOM APIs or the Pulsar JavaScript utilities provided by the framework.
 
-## Safety Contracts
+## Safety contracts
 
-### What Themes Can Do
+### What themes can do
 
 - Provide HTML templates for content rendering
 - Define CSS stylesheets and JavaScript
@@ -247,7 +247,7 @@ Theme scripts are loaded after the page content. Use standard DOM APIs or the Pu
 - Inherit from a parent theme
 - Include static assets (images, fonts, icons)
 
-### What Themes Cannot Do
+### What themes cannot do
 
 - Execute server-side PHP code
 - Access the database directly
@@ -256,7 +256,7 @@ Theme scripts are loaded after the page content. Use standard DOM APIs or the Pu
 - Include executable binaries
 - Make outbound network requests
 
-### Trust Tiers
+### Trust tiers
 
 | Tier         | Requirement                         | Protections                                                                            |
 | ------------ | ----------------------------------- | -------------------------------------------------------------------------------------- |
@@ -280,7 +280,7 @@ return [
 ];
 ```
 
-## Theme Lifecycle
+## Theme lifecycle
 
 ### Installation
 
@@ -324,7 +324,7 @@ delete(themeId) --> Verify theme is not active --> Soft-delete record
 
 Active themes cannot be deleted. Deactivate first, then delete.
 
-## Complete Minimal Theme Example
+## Complete minimal theme example
 
 ### `theme.json`
 
@@ -417,7 +417,7 @@ footer {
 }
 ```
 
-## Related Documentation
+## Related documentation
 
 - [Plugin Development Guide](plugin-development.md) - Plugins can register custom content types that themes must template
 - [Content Type API](content-type-api.md) - Field definitions drive admin form generation

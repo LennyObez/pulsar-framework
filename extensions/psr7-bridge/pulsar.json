@@ -8,9 +8,7 @@
     "min_version": "1.0.0-rc.11"
   },
   "provides": {
-    "services": [
-      "Psr15MiddlewareAdapter"
-    ],
+    "services": ["Psr15MiddlewareAdapter"],
     "routes": false,
     "commands": []
   }

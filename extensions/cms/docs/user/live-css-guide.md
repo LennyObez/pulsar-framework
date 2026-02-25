@@ -1,4 +1,4 @@
-# Live CSS Editor Guide
+# Live CSS editor guide
 
 This guide covers the Pulsar CMS Live CSS editor, including editing theme tokens, writing custom CSS, previewing changes, saving with audit reasons, rollback, and CSP considerations.
 
@@ -6,21 +6,22 @@ This guide covers the Pulsar CMS Live CSS editor, including editing theme tokens
 
 The Live CSS editor allows administrators to customize the site's appearance without editing theme files directly. Changes are stored as CSS overrides in the database, versioned with reasons, and served to visitors with appropriate Content Security Policy (CSP) hashes.
 
-## Accessing the Live CSS Editor
+## Accessing the live CSS editor
 
 <!-- Screenshot: Live CSS editor interface -->
 
 1. Navigate to **Admin > CMS > Live CSS** (`/admin/cms/live-css`).
 2. The editor opens with:
-  - The current active CSS override (if any)
-  - A list of available theme tokens
-  - A live preview panel
 
-## Theme Tokens
+- The current active CSS override (if any)
+- A list of available theme tokens
+- A live preview panel
+
+## Theme tokens
 
 Theme tokens are CSS custom properties defined by the active theme. They provide a structured way to customize the theme's appearance.
 
-### Available Tokens
+### Available tokens
 
 The `ThemeTokenResolver` reads tokens from the active theme's manifest settings. Common tokens include:
 
@@ -33,18 +34,18 @@ The `ThemeTokenResolver` reads tokens from the active theme's manifest settings.
 | `--border-radius`   | `4px`                      | Default border radius  |
 | `--spacing-unit`    | `8px`                      | Base spacing unit      |
 
-### Editing Tokens
+### Editing tokens
 
 1. In the Live CSS editor, locate the **Theme Tokens** panel.
 2. Modify token values using the provided inputs.
 3. The preview updates in real time.
 4. Token changes are compiled into CSS custom property overrides.
 
-## Writing Custom CSS
+## Writing custom CSS
 
 Beyond theme tokens, you can write arbitrary custom CSS in the editor.
 
-### Editor Features
+### Editor features
 
 The CSS editor provides:
 
@@ -70,7 +71,7 @@ The CSS editor provides:
 }
 ```
 
-### CSS Validation
+### CSS validation
 
 The `CssValidator` checks all CSS before saving:
 
@@ -80,7 +81,7 @@ The `CssValidator` checks all CSS before saving:
 - `@import` rules are blocked to prevent external stylesheet injection
 - External font loading via `@font-face` is controlled by configuration
 
-### Size Limit
+### Size limit
 
 The maximum CSS content length is configurable:
 
@@ -92,7 +93,7 @@ The maximum CSS content length is configurable:
 
 ## Preview
 
-### Live Preview
+### Live preview
 
 As you type in the CSS editor, the preview panel updates in real time:
 
@@ -100,13 +101,13 @@ As you type in the CSS editor, the preview panel updates in real time:
 2. Your CSS changes are injected into the preview frame.
 3. Changes in the preview do not affect the live site until you save.
 
-### Full-Page Preview
+### Full-page preview
 
 Click **Full Preview** to open a new browser tab showing the entire site with your proposed changes applied. This preview is scoped to your session only.
 
-## Saving Changes
+## Saving changes
 
-### Save with Reason
+### Save with reason
 
 When saving CSS changes, you must provide a reason:
 
@@ -118,7 +119,7 @@ When saving CSS changes, you must provide a reason:
 
 The reason is stored with the CSS override record for audit purposes.
 
-### CSS Override Record
+### CSS override record
 
 Each saved override creates a `CssOverride` record:
 
@@ -131,9 +132,9 @@ Each saved override creates a `CssOverride` record:
 | Created At  | Timestamp                               |
 | Active      | Whether this override is currently live |
 
-## Version History
+## Version history
 
-### Viewing History
+### Viewing history
 
 Navigate to **Admin > CMS > Live CSS > History** (`/admin/cms/live-css/history`).
 
@@ -144,13 +145,13 @@ The history shows all saved CSS overrides with:
 - Timestamp
 - Whether the override is currently active
 
-### Comparing Versions
+### Comparing versions
 
 Select two versions to see a diff of the CSS changes between them.
 
 ## Rollback
 
-### Rolling Back to a Previous Version
+### Rolling back to a previous version
 
 1. Navigate to **Admin > CMS > Live CSS > History**.
 2. Find the version you want to restore.
@@ -163,7 +164,7 @@ POST /admin/cms/live-css/{id}/rollback
 
 The selected version becomes the active override, and a new history entry is created recording the rollback action.
 
-### Removing All Overrides
+### Removing all overrides
 
 To remove all custom CSS and revert to the pure theme styles:
 
@@ -171,13 +172,13 @@ To remove all custom CSS and revert to the pure theme styles:
 2. Clear all CSS content.
 3. Save with a reason (e.g., "Reverted to default theme styles").
 
-## CSP Considerations
+## CSP considerations
 
-### Content Security Policy
+### Content security policy
 
 Pulsar CMS enforces a Content Security Policy (CSP) that restricts inline styles. The Live CSS system integrates with CSP through hash-based allowlisting.
 
-### How CSP Hashes Work
+### How CSP hashes work
 
 The `CspHashComputer` generates SHA-256 hashes of the active CSS override:
 
@@ -191,13 +192,13 @@ This approach:
 - Each CSS version has a unique hash
 - Old hashes are automatically invalidated when CSS changes
 
-### CSP Header Example
+### CSP header example
 
 ```
 Content-Security-Policy: style-src 'self' 'sha256-abc123...' ...
 ```
 
-### External Fonts
+### External fonts
 
 By default, external font loading is blocked for security:
 
@@ -209,7 +210,7 @@ By default, external font loading is blocked for security:
 
 When enabled, `@font-face` rules with external URLs (HTTPS only) are permitted. The CSP `font-src` directive is updated accordingly.
 
-## CSS Injection into Pages
+## CSS injection into pages
 
 The `LiveCssInjector` handles serving the active CSS to visitors:
 
@@ -218,7 +219,7 @@ The `LiveCssInjector` handles serving the active CSS to visitors:
 3. The corresponding CSP hash is added to the response headers.
 4. The CSS is cached for performance (invalidated when the override changes).
 
-## Configuration Reference
+## Configuration reference
 
 | Key                             | Type | Default  | Description                         |
 | ------------------------------- | ---- | -------- | ----------------------------------- |
@@ -234,7 +235,7 @@ The `LiveCssInjector` handles serving the active CSS to visitors:
 | `cms.livecss.edit`     | Admin | Edit and save CSS overrides        |
 | `cms.livecss.rollback` | Admin | Roll back to previous CSS versions |
 
-## API Reference
+## API reference
 
 | Method | Route                               | Description             |
 | ------ | ----------------------------------- | ----------------------- |
@@ -243,7 +244,7 @@ The `LiveCssInjector` handles serving the active CSS to visitors:
 | POST   | `/admin/cms/live-css/{id}/rollback` | Rollback to a version   |
 | GET    | `/admin/cms/live-css/history`       | View version history    |
 
-## Next Steps
+## Next steps
 
 - [Theme Management](theme-management.md) - Understanding theme tokens and structure
 - [Settings Reference](settings-reference.md) - Live CSS configuration

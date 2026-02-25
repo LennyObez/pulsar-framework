@@ -12,7 +12,7 @@ The `TwoFactorManagerInterface` lacked an `identityId` parameter on `verifyCode(
 
 These gaps are unacceptable for regulated domains (banking, healthcare, legal) where Pulsar is deployed.
 
-## Decision Drivers
+## Decision drivers
 
 1. Replay prevention must be identity-scoped and purpose-scoped
 2. Recovery code consumption must be atomic (race-safe)
@@ -26,7 +26,7 @@ Break `TwoFactorManagerInterface` to require `string $identityId` on `verifyCode
 
 Wire defaults in `AuthWiring`: in-memory stores for development with a `WARNING` log when active in production (suppressed by `two_factor.allowInMemory: true`).
 
-## Alternatives Considered
+## Alternatives considered
 
 ### Keep `verifyCode()` without `identityId`
 
@@ -59,15 +59,15 @@ A generic event system would not guarantee the structured format (actor, action,
 
 - In-memory stores remain the default for development; production requires explicit binding of persistent implementations
 
-## Security Impact
+## Security impact
 
-Addresses TOTP replay, recovery code race conditions, TOTP secret exposure at rest, cross-identity AEAD replay, and missing audit trail. See `docs/AUTH_SECURITY.md` for the full threat model.
+Addresses TOTP replay, recovery code race conditions, TOTP secret exposure at rest, cross-identity AEAD replay, and missing audit trail. See the "Appendix: security threat model" section of `docs/authentication.md` for the full threat model.
 
-## Performance Impact
+## Performance impact
 
 None on the hot path. Replay guard lookups and recovery code store operations are bounded by the 2FA verification flow (not per-request). AEAD encryption/decryption uses libsodium primitives (sub-microsecond).
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 **Adoption**: Update all `verifyCode()` and `confirmSetup()` call sites to pass `$identityId`. Bind persistent `TotpSecretStoreInterface`, `RecoveryCodeStoreInterface`, and `TotpReplayGuardInterface` implementations for production. The deprecated `verifyCodeWithSecret()` method provides a migration path for callers that manage secrets externally.
 
@@ -76,7 +76,7 @@ None on the hot path. Replay guard lookups and recovery code store operations ar
 ## Links
 
 - PR #31: feat(security): harden 2FA + add social SSO extension + auth security docs
-- `docs/AUTH_SECURITY.md`: Threat model and deployment guidance
+- `docs/authentication.md` (appendix): Threat model and deployment guidance
 - ADR-0006: libsodium-only crypto, master key derivation
 - ADR-0008: HMAC-chained tamper-evident audit logging
 - ADR-0014: Kernel service wiring decomposition

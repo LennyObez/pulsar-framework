@@ -83,7 +83,7 @@
 - `#[Api]` and `#[Internal]` attributes for public API boundary enforcement
 - PHPBench performance benchmark suite with budget assertions
 - 4 E2E test suites
-- 6 documentation files (INSTALL, EXTENSIONS, CLI_REFERENCE, UPGRADE, PUBLIC_API, PERFORMANCE_BUDGETS)
+- 6 documentation files (install, extensions, cli-reference, upgrade, public-api, performance-budgets)
 - Coverage threshold raised to 70%
 
 ### 1.0.0-rc.2 through rc.11 - Hardening
@@ -94,7 +94,7 @@
 - rc.5: PHP 8.x feature matrix, JIT/preloading deploy checks, benchmark dashboard, key:generate
 - rc.6: Persistent HTTP runtime
 - rc.7: Payments extension (modular monolith), architecture rules enforcement
-- rc.8: CLI scaffolding (7 make:* commands), ADR governance, boundary enforcement, boot profiler
+- rc.8: CLI scaffolding (7 make:\* commands), ADR governance, boundary enforcement, boot profiler
 - rc.9: Boundary violations resolved, post-audit remediation (12 phases), social SSO, key rotation, compliance matrix
 - rc.10: MCP server, ORM, Admin extension
 - rc.11: DI container, application cache (PSR-6/PSR-16), i18n, OpenTelemetry, zero-trust architecture, OAuth2/WebAuthn, queue system, mail/notifications, form extension, API tooling, CMS extension, PHPUnit 13

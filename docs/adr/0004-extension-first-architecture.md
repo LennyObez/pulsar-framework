@@ -46,7 +46,7 @@ Key design choices:
 
 - **Scaffold command available.** `php bin/pulsar make:extension` generates the boilerplate directory structure and manifest, reducing the ceremony cost.
 
-## Field Report
+## Field report
 
 _Optional. Document operational experience that validates or challenges this decision. Add entries as they accumulate._
 

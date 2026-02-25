@@ -19,6 +19,7 @@ use function strlen;
  * HMAC wrapper using libsodium's BLAKE2b (sodium_crypto_generichash).
  *
  * Provides keyed hashing for integrity verification and tamper detection.
+ * Supports an optional CipherSuiteInterface for pluggable MAC algorithms.
  */
 #[Api(since: '1.0.0')]
 final class Hmac
@@ -38,11 +39,17 @@ final class Hmac
     /**
      * Compute a keyed BLAKE2b hash and return as hex string.
      *
+     * When a cipher suite is provided, delegates to its hmacHex method.
+     *
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function computeHex(string $message, string $key): string
+    public static function computeHex(string $message, string $key, ?CipherSuiteInterface $cipherSuite = null): string
     {
+        if ($cipherSuite !== null) {
+            return $cipherSuite->hmacHex($message, $key);
+        }
+
         self::validateKey($key);
 
         $raw = sodium_crypto_generichash($message, $key, self::HASH_LENGTH);
@@ -53,11 +60,17 @@ final class Hmac
     /**
      * Compute a keyed BLAKE2b hash and return raw bytes.
      *
+     * When a cipher suite is provided, delegates to its hmac method.
+     *
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function compute(string $message, string $key): string
+    public static function compute(string $message, string $key, ?CipherSuiteInterface $cipherSuite = null): string
     {
+        if ($cipherSuite !== null) {
+            return $cipherSuite->hmac($message, $key);
+        }
+
         self::validateKey($key);
 
         return sodium_crypto_generichash($message, $key, self::HASH_LENGTH);
@@ -67,13 +80,14 @@ final class Hmac
      * Verify a hex-encoded HMAC against a message and key.
      *
      * Uses constant-time comparison to prevent timing attacks.
+     * When a cipher suite is provided, uses its hmacHex for computation.
      *
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function verifyHex(string $message, string $expectedHex, string $key): bool
+    public static function verifyHex(string $message, string $expectedHex, string $key, ?CipherSuiteInterface $cipherSuite = null): bool
     {
-        $computedHex = self::computeHex($message, $key);
+        $computedHex = self::computeHex($message, $key, $cipherSuite);
 
         return hash_equals($expectedHex, $computedHex);
     }
@@ -82,13 +96,14 @@ final class Hmac
      * Verify raw HMAC bytes against a message and key.
      *
      * Uses constant-time comparison to prevent timing attacks.
+     * When a cipher suite is provided, uses its hmac for computation.
      *
      * @throws SodiumException
      */
     #[NoDiscard]
-    public static function verify(string $message, string $expected, string $key): bool
+    public static function verify(string $message, string $expected, string $key, ?CipherSuiteInterface $cipherSuite = null): bool
     {
-        $computed = self::compute($message, $key);
+        $computed = self::compute($message, $key, $cipherSuite);
 
         return hash_equals($expected, $computed);
     }

@@ -1,6 +1,6 @@
-# CI Pipeline and ADR Governance
+# CI pipeline and ADR governance
 
-## CI Pipeline Overview
+## CI pipeline overview
 
 The CI workflow (`.github/workflows/ci.yml`) runs on every push and pull request. It consists of the following jobs:
 
@@ -34,7 +34,7 @@ push/PR
 └── js
 ```
 
-## Running Checks Locally
+## Running checks locally
 
 Run the full PHP quality gate:
 
@@ -56,7 +56,7 @@ composer test            # PHPUnit test suite
 If PHPStan runs out of memory:
 
 ```bash
-php -d memory_limit=512M vendor/bin/phpstan analyse -c tools/php/phpstan.neon
+php -d memory_limit=1G vendor/bin/phpstan analyse -c tools/php/phpstan.neon
 ```
 
 JS/TS checks:
@@ -69,7 +69,7 @@ pnpm typecheck           # TypeScript --noEmit
 pnpm test                # Vitest
 ```
 
-## ADR Governance
+## ADR governance
 
 ### What is an ADR?
 

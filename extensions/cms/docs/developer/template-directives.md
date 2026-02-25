@@ -1,10 +1,10 @@
-# Template Directive Reference
+# Template directive reference
 
 The Pulsar CMS provides template-level rendering services through its public API classes. These services are injected into the template rendering context by the `ContentController` and are available to all theme templates.
 
-## Content Rendering
+## Content rendering
 
-### Content Fields
+### Content fields
 
 Content fields from `ContentTranslation` are available as template variables:
 
@@ -18,7 +18,7 @@ Content fields from `ContentTranslation` are available as template variables:
 | `locale`       | `ContentTranslation::$locale`             | BCP 47 locale code                                    |
 | `reading_time` | `ContentTranslation::$readingTimeMinutes` | Estimated reading time in minutes                     |
 
-### Content Metadata
+### Content metadata
 
 | Variable              | Source                         | Description                                               |
 | --------------------- | ------------------------------ | --------------------------------------------------------- |
@@ -33,7 +33,7 @@ Content fields from `ContentTranslation` are available as template variables:
 | `comment_policy`      | `Content::$commentPolicy`      | Comment policy (`open`, `moderated`, `closed`, `inherit`) |
 | `data_classification` | `Content::$dataClassification` | Data classification level                                 |
 
-### Example: Article Template
+### Example: article template
 
 ```html
 <article>
@@ -46,7 +46,7 @@ Content fields from `ContentTranslation` are available as template variables:
 </article>
 ```
 
-## SEO Meta Tags
+## SEO meta tags
 
 The `SeoServiceInterface` generates meta tags as a `MetaTagCollection` that renders to HTML.
 
@@ -62,7 +62,7 @@ Generates a complete set of SEO meta tags including:
 - Twitter Card tags (`twitter:card`, `twitter:title`, `twitter:description`)
 - Hreflang alternate links (for multi-locale content)
 
-### Usage in Templates
+### Usage in templates
 
 ```html
 <head>
@@ -70,7 +70,7 @@ Generates a complete set of SEO meta tags including:
 </head>
 ```
 
-### Generated Output Example
+### Generated output example
 
 ```html
 <title>Getting Started with Pulsar | Acme Corp</title>
@@ -86,7 +86,7 @@ Generates a complete set of SEO meta tags including:
 <link rel="alternate" hreflang="fr" href="https://example.com/fr/docs/demarrage" />
 ```
 
-### SEO Fields on ContentTranslation
+### SEO fields on contenttranslation
 
 Per-locale SEO overrides are stored on `ContentTranslation`:
 
@@ -98,7 +98,7 @@ Per-locale SEO overrides are stored on `ContentTranslation`:
 | `robots`                  | --         | Robots directive override (e.g., `noindex, nofollow`) |
 | `structuredDataOverrides` | JSON       | Per-page JSON-LD overrides                            |
 
-## Structured Data (JSON-LD)
+## Structured data (JSON-LD)
 
 The `SeoServiceInterface` generates JSON-LD structured data via `JsonLdCollection`.
 
@@ -106,7 +106,7 @@ The `SeoServiceInterface` generates JSON-LD structured data via `JsonLdCollectio
 
 Renders all structured data items as a single `<script type="application/ld+json">` block. When multiple items exist, they are wrapped in a `@graph` container.
 
-### Usage in Templates
+### Usage in templates
 
 ```html
 <head>
@@ -114,7 +114,7 @@ Renders all structured data items as a single `<script type="application/ld+json
 </head>
 ```
 
-### Generated Output Example
+### Generated output example
 
 For an article:
 
@@ -132,7 +132,7 @@ For an article:
 </script>
 ```
 
-### Supported Structured Data Types
+### Supported structured data types
 
 The CMS includes two built-in generators:
 
@@ -141,7 +141,7 @@ The CMS includes two built-in generators:
 | `ArticleStructuredDataGenerator` | `Article`       | Articles, blog posts   |
 | `WebPageStructuredDataGenerator` | `WebPage`       | Pages, general content |
 
-## Breadcrumb Navigation
+## Breadcrumb navigation
 
 The `BreadcrumbGeneratorInterface` generates breadcrumb trails based on content hierarchy.
 
@@ -149,7 +149,7 @@ The `BreadcrumbGeneratorInterface` generates breadcrumb trails based on content 
 
 Returns an ordered list of `BreadcrumbItem` objects from the site root to the current page.
 
-### `BreadcrumbItem` Properties
+### `BreadcrumbItem` properties
 
 | Property    | Type   | Description                     |
 | ----------- | ------ | ------------------------------- |
@@ -157,7 +157,7 @@ Returns an ordered list of `BreadcrumbItem` objects from the site root to the cu
 | `url`       | string | URL the breadcrumb links to     |
 | `isCurrent` | bool   | Whether this is the active page |
 
-### Usage in Templates
+### Usage in templates
 
 ```html
 <nav aria-label="Breadcrumb">
@@ -207,11 +207,11 @@ The `SeoServiceInterface::generateBreadcrumbJsonLd()` method generates Schema.or
 </script>
 ```
 
-## Navigation Menus
+## Navigation menus
 
 Menus are defined by location (e.g., `primary`, `footer`, `sidebar`) and contain translated menu items.
 
-### Menu Properties
+### Menu properties
 
 | Property    | Type              | Description              |
 | ----------- | ----------------- | ------------------------ |
@@ -220,7 +220,7 @@ Menus are defined by location (e.g., `primary`, `footer`, `sidebar`) and contain
 | `location`  | string            | Menu location identifier |
 | `createdAt` | DateTimeImmutable | Creation timestamp       |
 
-### MenuItem Properties
+### Menuitem properties
 
 | Property       | Type        | Description                                |
 | -------------- | ----------- | ------------------------------------------ |
@@ -233,7 +233,7 @@ Menus are defined by location (e.g., `primary`, `footer`, `sidebar`) and contain
 | `sortOrder`    | int         | Display order                              |
 | `cssClass`     | string/null | Custom CSS class                           |
 
-### Usage in Templates
+### Usage in templates
 
 ```html
 <nav>
@@ -256,18 +256,18 @@ Menus are defined by location (e.g., `primary`, `footer`, `sidebar`) and contain
 </nav>
 ```
 
-## Live CSS Injection
+## Live CSS injection
 
 The Live CSS system generates inline `<style>` blocks that override theme CSS custom properties.
 
-### How It Works
+### How it works
 
 1. The `ThemeTokenResolverInterface` reads editable tokens from the active theme's `tokens.json`
 2. The `LiveCssServiceInterface` retrieves the current `CssOverride` for the active theme
 3. The `LiveCssInjector` generates a `<style>` block combining token overrides and custom CSS
 4. The `CspHashComputerInterface` computes a SHA-256 hash for CSP compliance
 
-### Generated Style Block
+### Generated style block
 
 ```html
 <style>
@@ -281,7 +281,7 @@ The Live CSS system generates inline `<style>` blocks that override theme CSS cu
 </style>
 ```
 
-### CSP Integration
+### CSP integration
 
 The style block's SHA-256 hash is used to generate a Content Security Policy directive:
 
@@ -291,7 +291,7 @@ style-src 'self' 'sha256-<base64-hash>'
 
 This allows the inline style to load without requiring `unsafe-inline` in the CSP.
 
-### Usage in Templates
+### Usage in templates
 
 ```html
 <head>
@@ -300,11 +300,11 @@ This allows the inline style to load without requiring `unsafe-inline` in the CS
 </head>
 ```
 
-## Media Assets
+## Media assets
 
 Media assets managed through the `MediaServiceInterface` include automatic derivative generation.
 
-### Image Derivatives
+### Image derivatives
 
 The `ImageProcessorInterface` generates optimized derivatives:
 
@@ -313,7 +313,7 @@ The `ImageProcessorInterface` generates optimized derivatives:
 | WebP   | 80 (configurable) | Primary optimized format       |
 | AVIF   | 60 (configurable) | Next-gen format (when enabled) |
 
-### Usage in Templates
+### Usage in templates
 
 ```html
 <picture>
@@ -329,11 +329,11 @@ The `ImageProcessorInterface` generates optimized derivatives:
 </picture>
 ```
 
-## Fragment Caching
+## Fragment caching
 
 Content fragments can be cached using Pulsar's tag-based cache system:
 
-### Usage in Templates
+### Usage in templates
 
 ```html
 {% cache 'sidebar-widgets' tags=['widgets', 'content-type:article'] ttl=3600 %}
@@ -350,7 +350,7 @@ Cache tags enable targeted invalidation:
 - `content-type:{type}` -- Invalidated when any content of that type changes
 - `widgets` -- Invalidated when widget configuration changes
 
-## Related Documentation
+## Related documentation
 
 - [Theme Development Guide](theme-development.md) - Building themes that use these directives
 - [Architecture Overview](architecture.md) - Cache invalidation flow

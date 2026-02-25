@@ -8,10 +8,13 @@ use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\Content\Content;
 use Pulsar\Extension\Cms\Content\ContentTranslation;
 
+use function array_map;
 use function fclose;
 use function fopen;
 use function fputcsv;
+use function is_string;
 use function rewind;
+use function str_contains;
 use function stream_get_contents;
 
 /**
@@ -60,22 +63,25 @@ final readonly class CsvContentExporter
             $content = $item['content'];
             $translation = $item['translation'];
 
-            fputcsv($stream, [
-                $content->id,
-                $content->contentType->value,
-                $content->status->value,
-                $translation->locale,
-                $translation->title,
-                $translation->slugSegment,
-                $translation->path,
-                $translation->body,
-                $translation->excerpt ?? '',
-                $translation->metaTitle ?? '',
-                $translation->metaDescription ?? '',
-                $content->authorId,
-                $content->createdAt->format('c'),
-                $content->publishedAt?->format('c') ?? '',
-            ], escape: '\\');
+            fputcsv($stream, array_map(
+                $this->sanitizeFormulaInjection(...),
+                [
+                    $content->id,
+                    $content->contentType->value,
+                    $content->status->value,
+                    $translation->locale,
+                    $translation->title,
+                    $translation->slugSegment,
+                    $translation->path,
+                    $translation->body,
+                    $translation->excerpt ?? '',
+                    $translation->metaTitle ?? '',
+                    $translation->metaDescription ?? '',
+                    $content->authorId,
+                    $content->createdAt->format('c'),
+                    $content->publishedAt?->format('c') ?? '',
+                ],
+            ), escape: '\\');
         }
 
         rewind($stream);
@@ -83,5 +89,17 @@ final readonly class CsvContentExporter
         fclose($stream);
 
         return $csv !== false ? $csv : '';
+    }
+
+    /**
+     * Prevent CSV formula injection by prefixing dangerous leading characters.
+     */
+    private function sanitizeFormulaInjection(string $value): string
+    {
+        if ($value !== '' && is_string($value) && str_contains("=+-@\t\r", $value[0])) {
+            return "\t" . $value;
+        }
+
+        return $value;
     }
 }

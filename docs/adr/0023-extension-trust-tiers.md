@@ -16,7 +16,7 @@ Pulsar targets regulated domains - banking, healthcare, legal - where the supply
 
 Compliance frameworks (SOX, HIPAA, PCI-DSS) require demonstrable controls over third-party code access to sensitive operations. An all-or-nothing model cannot satisfy these requirements.
 
-## Decision Drivers
+## Decision drivers
 
 1. **Compliance.** Regulated domains require auditable access controls over third-party code interacting with secrets, PII, and financial data.
 2. **Defense-in-depth.** A single compromised extension should not cascade into full system compromise.
@@ -28,7 +28,7 @@ Compliance frameworks (SOX, HIPAA, PCI-DSS) require demonstrable controls over t
 
 Introduce a four-tier trust model with capability-gated proxies for container and router access.
 
-### Trust Tiers
+### Trust tiers
 
 | Tier        | Intent                               | Resolution             |
 | ----------- | ------------------------------------ | ---------------------- |
@@ -37,7 +37,7 @@ Introduce a four-tier trust model with capability-gated proxies for container an
 | `Community` | Unaudited third-party extensions     | Default for unknown    |
 | `Untrusted` | Experimental or sandboxed extensions | Host policy allow-list |
 
-### Requested vs. Effective Tier
+### Requested vs. effective tier
 
 Extensions declare a `requested_trust_tier` in `pulsar.json` - this is **metadata only**, not a security boundary. The **effective tier** is resolved by the host application via `TrustedExtensionsConfig`:
 
@@ -50,7 +50,7 @@ Effective tier = min(requested, allowed) = "community"
 
 If an extension is not in the host's allow-list, its effective tier defaults to `Community`. This ensures the host always controls the trust boundary.
 
-### Capability Model
+### Capability model
 
 Each tier grants a deterministic set of capabilities:
 
@@ -75,7 +75,7 @@ Each tier grants a deterministic set of capabilities:
 
 The host can grant additional per-extension capabilities via `TrustedExtensionsConfig` (e.g., grant a specific community extension `DatabaseRaw`).
 
-### Enforcement Points
+### Enforcement points
 
 **Container access** - `ScopedContainerProxy` wraps `ContainerInterface`:
 
@@ -99,7 +99,7 @@ The host can grant additional per-extension capabilities via `TrustedExtensionsC
 
 **Bootstrap integration** - `ExtensionBootstrap` resolves effective tiers and wraps container/router per extension during `register()` and `boot()` phases. When no policy is configured (null), the container and router are passed unwrapped for full backward compatibility.
 
-### Error Model
+### Error model
 
 `CapabilityDeniedException` provides deterministic, actionable error messages:
 
@@ -113,7 +113,7 @@ or grant the specific capability:
   'acme/analytics' => ['additional_capabilities' => ['CryptoKeyAccess']]
 ```
 
-## Alternatives Considered
+## Alternatives considered
 
 ### Runtime sandboxing (process isolation)
 
@@ -155,11 +155,11 @@ Rejected: poor DX, audit nightmare, does not scale.
 - **First-party extensions unaffected.** All first-party extensions are tagged as `Core` in their manifests and the default host config.
 - **Performance overhead is negligible.** Map lookup + capability check is O(1). Core tier bypasses the proxy entirely.
 
-## Field Report
+## Field report
 
 _Placeholder - to be filled after operational experience._
 
-## Security Impact
+## Security impact
 
 Significant reduction in attack surface for third-party extensions:
 
@@ -170,13 +170,13 @@ Significant reduction in attack surface for third-party extensions:
 - **SSRF/exfiltration:** `NetworkEgress` capability restricts HTTP client access for Community/Untrusted.
 - **Environment leakage:** `EnvRead` prevents community extensions from reading environment variables (which may contain secrets).
 
-## Performance Impact
+## Performance impact
 
 Minimal. For Core-tier extensions: zero overhead (proxy bypassed). For other tiers: one `isset()` lookup in the restriction map + one `in_array()` check in the capability policy per `get()` call. Both are O(1) operations. The overhead is negligible compared to the service resolution and autoloading costs.
 
 No impact on hot-path performance - capability checks happen during bootstrap (`register`/`boot` phases), not during request handling.
 
-## Migration / Rollback Plan
+## Migration / rollback plan
 
 **Adoption (gradual):**
 

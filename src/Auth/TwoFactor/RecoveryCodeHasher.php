@@ -14,7 +14,7 @@ use function str_replace;
 use function strtoupper;
 
 /**
- * Hashes recovery codes using HMAC-BLAKE2b with a derived key.
+ * Hashes recovery codes using keyed BLAKE2b with a derived key.
  *
  * Canonicalizes input (uppercase, strip dashes/spaces) before hashing
  * for consistent matching regardless of user input formatting.

@@ -6,9 +6,9 @@ import type {
   RealtimeData,
   Site,
   TimeseriesPoint,
-} from "./types";
+} from './types';
 
-const BASE = "/plsr/api/v1";
+const BASE = '/plsr/api/v1';
 
 async function get<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(path, window.location.origin);
@@ -22,8 +22,8 @@ async function get<T>(path: string, params: Record<string, string> = {}): Promis
 
 async function post<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const res = await fetch(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -32,8 +32,8 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<T> 
 
 async function put<T>(path: string, body: Record<string, unknown>): Promise<T> {
   const res = await fetch(path, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
@@ -41,7 +41,7 @@ async function put<T>(path: string, body: Record<string, unknown>): Promise<T> {
 }
 
 async function del(path: string): Promise<void> {
-  const res = await fetch(path, { method: "DELETE" });
+  const res = await fetch(path, { method: 'DELETE' });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
 }
 
@@ -61,8 +61,8 @@ export function fetchAggregate(
 export function fetchTimeseries(
   siteId: string,
   range: DateRange,
-  metric = "visitors",
-  interval = "day",
+  metric = 'visitors',
+  interval = 'day',
 ): Promise<{ data: TimeseriesPoint[] }> {
   return get(`${BASE}/stats/timeseries`, {
     site_id: siteId,
@@ -96,7 +96,7 @@ export function fetchSites(): Promise<{ data: Site[] }> {
   return get(`${BASE}/sites`);
 }
 
-export function createSite(data: Omit<Site, "id" | "tracking_id" | "created_at">): Promise<Site> {
+export function createSite(data: Omit<Site, 'id' | 'tracking_id' | 'created_at'>): Promise<Site> {
   return post(`${BASE}/sites`, data as Record<string, unknown>);
 }
 
@@ -112,13 +112,13 @@ export function fetchGoals(siteId: string): Promise<{ data: Goal[] }> {
   return get(`${BASE}/goals`, { site_id: siteId });
 }
 
-export function createGoal(data: Omit<Goal, "id" | "created_at">): Promise<Goal> {
+export function createGoal(data: Omit<Goal, 'id' | 'created_at'>): Promise<Goal> {
   return post(`${BASE}/goals`, data as Record<string, unknown>);
 }
 
 export function updateGoal(
   id: string,
-  data: Pick<Goal, "name" | "goal_type" | "target_value">,
+  data: Pick<Goal, 'name' | 'goal_type' | 'target_value'>,
 ): Promise<Goal> {
   return put(`${BASE}/goals/${id}`, data as Record<string, unknown>);
 }

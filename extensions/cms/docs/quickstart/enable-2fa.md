@@ -1,4 +1,4 @@
-# Quickstart: Enable Two-Factor Authentication
+# Quickstart: enable two-factor authentication
 
 **Estimated time: 3 minutes**
 
@@ -9,7 +9,7 @@ This quickstart walks you through enabling TOTP-based two-factor authentication 
 - A CMS admin account
 - An authenticator app installed on your device (Google Authenticator, Authy, 1Password, or any TOTP app)
 
-## Step 1: Navigate to 2FA Enrollment
+## Step 1: navigate to 2FA enrollment
 
 Log in to the CMS admin panel at `/admin/cms`.
 
@@ -21,7 +21,7 @@ POST /admin/cms/2fa/enroll
 
 <!-- Screenshot: 2FA enrollment page with QR code -->
 
-## Step 2: Scan the QR Code
+## Step 2: scan the QR code
 
 1. Open your authenticator app.
 2. Tap **Add Account** (or the **+** button).
@@ -32,7 +32,7 @@ Your authenticator app now shows a new entry labeled **PulsarCMS** with a 6-digi
 
 If you cannot scan the QR code, tap **Enter Manually** and type the Base32 secret shown below the QR code.
 
-## Step 3: Verify Your Setup
+## Step 3: verify your setup
 
 1. Read the current 6-digit code from your authenticator app.
 2. Enter it in the **Verification Code** field.
@@ -50,7 +50,7 @@ Content-Type: application/json
 
 If the code is valid, you see a success message: **"Two-factor authentication has been enabled."**
 
-## Step 4: Save Your Recovery Codes
+## Step 4: save your recovery codes
 
 The enrollment response includes 8 recovery codes. These are single-use backup codes for when you cannot access your authenticator app.
 
@@ -81,7 +81,7 @@ Your account is now protected with two-factor authentication. On your next login
 
 **Lost authenticator:** Use one of your recovery codes to log in, then re-enroll with a new device.
 
-## Next Steps
+## Next steps
 
 - [2FA Setup Guide](../user/2fa-setup.md) - Managing 2FA, recovery codes, and disabling
 - [Security Model](../security/security-model.md) - Understanding step-up authentication

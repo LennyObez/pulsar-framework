@@ -8,11 +8,7 @@
     "min_version": "1.0.0-rc.11"
   },
   "provides": {
-    "services": [
-      "SpanExporter",
-      "MetricsExporter",
-      "ErrorExporter"
-    ],
+    "services": ["SpanExporter", "MetricsExporter", "ErrorExporter"],
     "routes": false,
     "commands": []
   }

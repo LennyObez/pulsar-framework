@@ -1,8 +1,8 @@
-# Content Type API
+# Content type API
 
 The CMS provides a content type registry for defining custom content types with typed field definitions. Plugins use this API to extend the CMS with domain-specific content structures, and the admin UI auto-generates forms based on field definitions.
 
-## Built-in Content Types
+## Built-in content types
 
 The CMS ships with two built-in content types defined in the `ContentType` enum:
 
@@ -112,7 +112,7 @@ final readonly class ContentTypeField
 }
 ```
 
-### Properties Reference
+### Properties reference
 
 | Property          | Type      | Description                                                                                                                                                             |
 | ----------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -129,7 +129,7 @@ final readonly class ContentTypeField
 | `defaultValue`    | mixed     | Default value used when no explicit value is provided during content creation.                                                                                          |
 | `sortOrder`       | int       | Display order in the auto-generated admin form. Lower values appear first.                                                                                              |
 
-## Field Types
+## Field types
 
 The `FieldType` enum defines 14 typed field types. Each maps to a specific database value column for proper indexing:
 
@@ -150,7 +150,7 @@ The `FieldType` enum defines 14 typed field types. Each maps to a specific datab
 | `Url`      | `url`       | `value_string`   | URL string                                                             |
 | `Email`    | `email`     | `value_string`   | Email address string                                                   |
 
-### Storage Strategy
+### Storage strategy
 
 Only the matching column is populated for each field value; all other columns remain `NULL`. This enables type-safe indexing and querying:
 
@@ -160,11 +160,11 @@ FieldType::String --> value_string = "hello", value_int = NULL, value_json = NUL
 FieldType::Json   --> value_json = '{"key":"val"}', value_string = NULL, value_int = NULL, ...
 ```
 
-## Validation Rules
+## Validation rules
 
 The `validationRules` array on `ContentTypeField` accepts key-value pairs for field-level validation. The available rules depend on the field type:
 
-### String/Url/Email Fields
+### String/url/email fields
 
 | Rule         | Type   | Description                                     |
 | ------------ | ------ | ----------------------------------------------- |
@@ -172,36 +172,36 @@ The `validationRules` array on `ContentTypeField` accepts key-value pairs for fi
 | `max_length` | int    | Maximum string length                           |
 | `pattern`    | string | Regular expression pattern the value must match |
 
-### Int/Float Fields
+### Int/float fields
 
 | Rule  | Type      | Description           |
 | ----- | --------- | --------------------- |
 | `min` | int/float | Minimum allowed value |
 | `max` | int/float | Maximum allowed value |
 
-### Enum Fields
+### Enum fields
 
 | Rule      | Type | Description                   |
 | --------- | ---- | ----------------------------- |
 | `options` | list | List of allowed string values |
 
-### Date/DateTime Fields
+### Date/datetime fields
 
 | Rule       | Type   | Description                      |
 | ---------- | ------ | -------------------------------- |
 | `min_date` | string | Earliest allowed date (ISO 8601) |
 | `max_date` | string | Latest allowed date (ISO 8601)   |
 
-### Media Fields
+### Media fields
 
 | Rule            | Type | Description                                              |
 | --------------- | ---- | -------------------------------------------------------- |
 | `allowed_types` | list | Allowed MIME types (e.g., `["image/jpeg", "image/png"]`) |
 | `max_size`      | int  | Maximum file size in bytes                               |
 
-## Defining Custom Content Types
+## Defining custom content types
 
-### From a Plugin
+### From a plugin
 
 Plugins register content types in their `register()` method via `CmsPluginContext`:
 
@@ -290,7 +290,7 @@ public function register(CmsPluginContext $context): void
 }
 ```
 
-### Admin Form Auto-Generation
+### Admin form auto-generation
 
 When a content type is registered, the admin UI automatically generates an edit form based on the field definitions:
 
@@ -300,7 +300,7 @@ When a content type is registered, the admin UI automatically generates an edit 
 - `sortable` fields appear in the admin list sort dropdown
 - Field type determines the form input widget (text input, number input, select dropdown, date picker, media picker, rich text editor, color picker, etc.)
 
-## Querying by Custom Field Values
+## Querying by custom field values
 
 Custom field values are stored in typed columns, enabling efficient database queries:
 
@@ -313,7 +313,7 @@ Fields with `searchable: true` have their values concatenated into the `customFi
 
 Fields with `filterable: true` can be queried directly via their typed database column for the admin list filter UI.
 
-## Related Documentation
+## Related documentation
 
 - [Plugin Development Guide](plugin-development.md) - How plugins register content types
 - [Hook Reference](hook-reference.md) - Content lifecycle hooks for custom types

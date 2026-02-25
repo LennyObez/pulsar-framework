@@ -32,6 +32,8 @@ use Pulsar\Extension\Studio\Console\Evidence\EvidenceVerifier;
 use Pulsar\Extension\Studio\Console\Redaction\RedactionPipeline;
 use Pulsar\Extension\Studio\Console\Retention\RetentionEnforcer;
 use Pulsar\Extension\Studio\Console\Retention\RetentionPolicy;
+use Pulsar\Extension\Studio\Console\Storage\BufferedEventStore;
+use Pulsar\Extension\Studio\Console\Storage\DatabaseEventStore;
 use Pulsar\Extension\Studio\Console\Storage\EncryptedEventStore;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Console\Storage\SqliteEventStore;
@@ -131,28 +133,44 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             }
         }
 
-        // Create SQLite event store
+        // Create event store based on configured backend
         /** @var HmacInterface $hmacForStore */
         $hmacForStore = $container->get(HmacInterface::class);
 
-        $sqliteStore = new SqliteEventStore(
-            $studioConfig->storagePath,
-            $container->has(MetricRegistry::class)
-                ? $container->get(MetricRegistry::class)
-                : null,
-            $hmacForStore,
-        );
-        /** @var MetricRegistry|null $_ Psalm hint */
-        $container->instance(SqliteEventStore::class, $sqliteStore);
+        $metricRegistryForStore = $container->has(MetricRegistry::class)
+            ? $container->get(MetricRegistry::class)
+            : null;
+        /** @var MetricRegistry|null $metricRegistryForStore */
+
+        /** @var EventStoreInterface $baseStore */
+        $baseStore = match ($studioConfig->storeBackend) {
+            'database' => $this->createDatabaseStore($container, $hmacForStore),
+            'buffered' => $this->createBufferedStore($container, $hmacForStore),
+            default => new SqliteEventStore($studioConfig->storagePath, $metricRegistryForStore, $hmacForStore),
+        };
+
+        // Register SQLite store for backward compatibility when using sqlite backend
+        if ($baseStore instanceof SqliteEventStore) {
+            $container->instance(SqliteEventStore::class, $baseStore);
+        }
+        if ($baseStore instanceof BufferedEventStore) {
+            $container->instance(BufferedEventStore::class, $baseStore);
+        }
+        if ($baseStore instanceof DatabaseEventStore) {
+            $container->instance(DatabaseEventStore::class, $baseStore);
+        }
 
         // Optionally wrap with encryption (requires KeyProvider for key derivation)
-        $store = $sqliteStore;
+        $store = $baseStore;
         $isEncrypted = false;
         $hasDecryptionKey = false;
         $chainMacKey = null;
         $archiveMacKey = null;
 
-        if ($container->has(KeyProviderInterface::class) && $container->has(EncryptorInterface::class)) {
+        if ($baseStore instanceof SqliteEventStore
+            && $container->has(KeyProviderInterface::class)
+            && $container->has(EncryptorInterface::class)
+        ) {
             /** @var MasterKey $masterKey */
             $masterKey = $container->get(KeyProviderInterface::class);
             $hasDecryptionKey = true;
@@ -161,10 +179,20 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
             /** @var EncryptorInterface $baseEncryptor */
             $baseEncryptor = $container->get(EncryptorInterface::class);
             $studioEncryptor = $baseEncryptor->withDerivedKey($masterKey, 3, 'stud_enc');
-            $encryptedStore = new EncryptedEventStore($sqliteStore, $studioEncryptor);
+            $encryptedStore = new EncryptedEventStore($baseStore, $studioEncryptor);
             $store = $encryptedStore;
             $isEncrypted = true;
             $container->instance(EncryptedEventStore::class, $encryptedStore);
+
+            // Archive MAC key — subkey 4
+            $archiveMacKey = $masterKey->deriveSubKey(4, 'stud_mac');
+
+            // Chain MAC key — subkey 5
+            $chainMacKey = $masterKey->deriveSubKey(5, 'stud_chn');
+        } elseif ($container->has(KeyProviderInterface::class)) {
+            /** @var MasterKey $masterKey */
+            $masterKey = $container->get(KeyProviderInterface::class);
+            $hasDecryptionKey = true;
 
             // Archive MAC key — subkey 4
             $archiveMacKey = $masterKey->deriveSubKey(4, 'stud_mac');
@@ -398,5 +426,21 @@ final class StudioExtension implements ExtensionInterface, PreBootExtensionInter
     public function providers(): array
     {
         return [];
+    }
+
+    private function createDatabaseStore(ContainerInterface $container, HmacInterface $hmac): DatabaseEventStore
+    {
+        /** @var ConnectionManagerInterface $connectionManager */
+        $connectionManager = $container->get(ConnectionManagerInterface::class);
+
+        return new DatabaseEventStore($connectionManager->connection(), hmac: $hmac);
+    }
+
+    private function createBufferedStore(ContainerInterface $container, HmacInterface $hmac): BufferedEventStore
+    {
+        $databaseStore = $this->createDatabaseStore($container, $hmac);
+        $container->instance(DatabaseEventStore::class, $databaseStore);
+
+        return new BufferedEventStore($databaseStore);
     }
 }
