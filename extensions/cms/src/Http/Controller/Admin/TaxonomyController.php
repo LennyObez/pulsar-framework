@@ -9,10 +9,10 @@ use Pulsar\Api\Internal;
 use Pulsar\Auth\Authorization\GateInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
-use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
+use function array_map;
 use function is_string;
 
 /**
@@ -25,7 +25,6 @@ final readonly class TaxonomyController
 
     public function __construct(
         private TaxonomyRepositoryInterface $taxonomyRepository,
-        private ?TaxonomyServiceInterface $taxonomyService = null,
         private ?GateInterface $gate = null,
         private ?CmsConfig $config = null,
         private ?TemplateEngineInterface $templateEngine = null,

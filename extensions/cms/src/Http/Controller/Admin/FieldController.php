@@ -38,7 +38,7 @@ final readonly class FieldController
         $fields = $this->fieldRepository->findFieldsByContentType($contentType);
 
         $data = [
-            'content_type' => $contentType,
+            'contentType' => $contentType,
             'fields' => array_map(static fn(ContentTypeField $f) => [
                 'id' => $f->id,
                 'field_key' => $f->fieldKey,

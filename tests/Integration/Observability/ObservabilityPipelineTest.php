@@ -8,16 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Observability\Metrics\Counter;
+use Pulsar\Observability\Metrics\Exception\MetricsException;
 use Pulsar\Observability\Metrics\Gauge;
 use Pulsar\Observability\Metrics\Histogram;
 use Pulsar\Observability\Metrics\LabelSet;
 use Pulsar\Observability\Metrics\MetricRegistry;
-use Pulsar\Observability\Metrics\Exception\MetricsException;
 use Pulsar\Observability\Tracing\InMemorySpanCollector;
 use Pulsar\Observability\Tracing\Span;
 use Pulsar\Observability\Tracing\SpanStatus;
 use Pulsar\Observability\Tracing\TraceContext;
-use Pulsar\Observability\Tracing\TraceId;
 
 #[CoversClass(Counter::class)]
 #[CoversClass(Gauge::class)]
@@ -323,7 +322,9 @@ final class ObservabilityPipelineTest extends TestCase
 
         // Record histogram for request duration
         $histogram = $registry->histogram('http.request.duration');
-        $histogram->observe($requestSpan->durationSeconds(), new LabelSet(['route' => '/api/orders']));
+        $duration = $requestSpan->durationSeconds();
+        self::assertNotNull($duration);
+        $histogram->observe($duration, new LabelSet(['route' => '/api/orders']));
 
         // Verify everything was recorded
         self::assertSame(

@@ -19,10 +19,12 @@ use Pulsar\Extensibility\PreBootExtensionInterface;
 use Pulsar\Extensibility\ServiceProviderInterface;
 use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
+use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Content\Event\CmsReady;
 use Pulsar\Extension\Cms\Content\Event\CommentReceived;
 use Pulsar\Extension\Cms\Content\Event\ContentPublished;
 use Pulsar\Extension\Cms\Content\Event\ReviewRequested;
+use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\Http\Controller\Admin\AssetController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BackupController;
 use Pulsar\Extension\Cms\Http\Controller\Admin\BulkOperationsController;
@@ -92,6 +94,7 @@ use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Routing\RouterInterface;
 use Pulsar\Scheduler\JobRegistry;
 use Pulsar\Security\Audit\AuditChainVerifier;
+use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 
 use function is_array;
 use function is_file;
@@ -152,11 +155,11 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         if (
             !$container->has(BreadcrumbGeneratorInterface::class)
             && $container->has(ContentRepositoryInterface::class)
-            && $container->has(\Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface::class)
+            && $container->has(ContentTranslationRepositoryInterface::class)
         ) {
             $container->instance(BreadcrumbGeneratorInterface::class, new BreadcrumbGenerator(
                 $container->get(ContentRepositoryInterface::class),
-                $container->get(\Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface::class),
+                $container->get(ContentTranslationRepositoryInterface::class),
                 $container->get(CmsConfig::class),
             ));
         }
@@ -200,14 +203,11 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         /** @var LinkHealthServiceInterface $linkHealthService */
         $linkHealthService = $container->get(LinkHealthServiceInterface::class);
 
-        /** @var ContentRepositoryInterface $contentRepository */
-        $contentRepository = $container->get(ContentRepositoryInterface::class);
-
         $studioRegistry->register(new CmsStudioModule(
             auditPanel: new CmsAuditPanel($chainVerifier),
             cachePanel: new ContentCacheInspectorPanel($taggedCache, $metricRegistry),
             mediaPanel: new MediaProcessingQueuePanel($queueDriver),
-            seoPanel: new SeoHealthReportPanel($linkHealthService, $contentRepository),
+            seoPanel: new SeoHealthReportPanel($linkHealthService),
         ));
     }
 
@@ -220,7 +220,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $this->registerCoreBlockTypes($container);
         $this->registerApiRoutes($router, $config);
         $this->registerPublicRoutes($router, $config);
-        $this->registerAdminRoutes($router);
+        $this->registerAdminRoutes($router, $container);
     }
 
     private function registerCoreBlockTypes(ContainerInterface $container): void
@@ -246,9 +246,9 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         // Layout & Structure
         $registry->register(new BlockEditor\CoreBlocks\SeparatorBlock());
         $registry->register(new BlockEditor\CoreBlocks\SpacerBlock());
-        if ($container->has(\Pulsar\Extension\Cms\Content\SafeHtmlPolicy::class)) {
-            /** @var \Pulsar\Extension\Cms\Content\SafeHtmlPolicy $safeHtmlPolicy */
-            $safeHtmlPolicy = $container->get(\Pulsar\Extension\Cms\Content\SafeHtmlPolicy::class);
+        if ($container->has(SafeHtmlPolicy::class)) {
+            /** @var SafeHtmlPolicy $safeHtmlPolicy */
+            $safeHtmlPolicy = $container->get(SafeHtmlPolicy::class);
             $registry->register(new BlockEditor\CoreBlocks\HtmlBlock($safeHtmlPolicy));
         }
         $registry->register(new BlockEditor\CoreBlocks\ButtonGroupBlock());
@@ -275,9 +275,9 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         // Commerce & Social
         $registry->register(new BlockEditor\CoreBlocks\PricingTableBlock());
         $registry->register(new BlockEditor\CoreBlocks\SocialLinksBlock());
-        if ($container->has(\Pulsar\Security\Csrf\CsrfTokenManagerInterface::class)) {
-            /** @var \Pulsar\Security\Csrf\CsrfTokenManagerInterface $csrfManager */
-            $csrfManager = $container->get(\Pulsar\Security\Csrf\CsrfTokenManagerInterface::class);
+        if ($container->has(CsrfTokenManagerInterface::class)) {
+            /** @var CsrfTokenManagerInterface $csrfManager */
+            $csrfManager = $container->get(CsrfTokenManagerInterface::class);
             $registry->register(new BlockEditor\CoreBlocks\ContactFormBlock($csrfManager));
         }
 
@@ -424,7 +424,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         }
     }
 
-    private function registerAdminRoutes(RouterInterface $router): void
+    private function registerAdminRoutes(RouterInterface $router, ContainerInterface $container): void
     {
         $prefix = '/admin/cms';
 
@@ -502,15 +502,18 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
         // Settings
         $router->get("{$prefix}/settings/{group}", [SettingsController::class, 'show'], 'cms.admin.settings.show');
+        $router->post("{$prefix}/settings/{group}", [SettingsController::class, 'update'], 'cms.admin.settings.update_post');
         $router->put("{$prefix}/settings/{group}", [SettingsController::class, 'update'], 'cms.admin.settings.update');
 
-        // Themes
-        $router->get("{$prefix}/themes", [ThemeController::class, 'index'], 'cms.admin.themes.index');
-        $router->post("{$prefix}/themes", [ThemeController::class, 'install'], 'cms.admin.themes.install');
-        $router->post("{$prefix}/themes/{id}/activate", [ThemeController::class, 'activate'], 'cms.admin.themes.activate');
-        $router->post("{$prefix}/themes/{id}/deactivate", [ThemeController::class, 'deactivate'], 'cms.admin.themes.deactivate');
-        $router->post("{$prefix}/themes/{id}/preview", [ThemeController::class, 'preview'], 'cms.admin.themes.preview');
-        $router->delete("{$prefix}/themes/{id}", [ThemeController::class, 'delete'], 'cms.admin.themes.delete');
+        // Themes (conditional — requires ThemeManagerInterface to be bound)
+        if ($container->has(ThemeController::class)) {
+            $router->get("{$prefix}/themes", [ThemeController::class, 'index'], 'cms.admin.themes.index');
+            $router->post("{$prefix}/themes", [ThemeController::class, 'install'], 'cms.admin.themes.install');
+            $router->post("{$prefix}/themes/{id}/activate", [ThemeController::class, 'activate'], 'cms.admin.themes.activate');
+            $router->post("{$prefix}/themes/{id}/deactivate", [ThemeController::class, 'deactivate'], 'cms.admin.themes.deactivate');
+            $router->post("{$prefix}/themes/{id}/preview", [ThemeController::class, 'preview'], 'cms.admin.themes.preview');
+            $router->delete("{$prefix}/themes/{id}", [ThemeController::class, 'delete'], 'cms.admin.themes.delete');
+        }
 
         // Plugins
         $router->get("{$prefix}/plugins", [PluginController::class, 'index'], 'cms.admin.plugins.index');
@@ -554,6 +557,7 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
 
         // Two-factor authentication
         $router->get("{$prefix}/2fa", [TwoFactorController::class, 'status'], 'cms.admin.2fa.status');
+        $router->get("{$prefix}/2fa/enroll", [TwoFactorController::class, 'enroll'], 'cms.admin.2fa.enroll_form');
         $router->post("{$prefix}/2fa/enroll", [TwoFactorController::class, 'enroll'], 'cms.admin.2fa.enroll');
         $router->post("{$prefix}/2fa/confirm", [TwoFactorController::class, 'confirm'], 'cms.admin.2fa.confirm');
         $router->post("{$prefix}/2fa/verify", [TwoFactorController::class, 'verify'], 'cms.admin.2fa.verify');
@@ -591,11 +595,13 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->get("{$prefix}/invoices/{id}", [InvoiceController::class, 'show'], 'cms.admin.invoices.show');
         $router->get("{$prefix}/invoices/{id}/download", [InvoiceController::class, 'download'], 'cms.admin.invoices.download');
 
-        // Live CSS editor
-        $router->get("{$prefix}/live-css", [LiveCssController::class, 'editor'], 'cms.admin.livecss.editor');
-        $router->post("{$prefix}/live-css", [LiveCssController::class, 'save'], 'cms.admin.livecss.save');
-        $router->post("{$prefix}/live-css/{id}/rollback", [LiveCssController::class, 'rollback'], 'cms.admin.livecss.rollback');
-        $router->get("{$prefix}/live-css/history", [LiveCssController::class, 'history'], 'cms.admin.livecss.history');
+        // Live CSS editor (conditional — requires ThemeManagerInterface to be bound)
+        if ($container->has(LiveCssController::class)) {
+            $router->get("{$prefix}/live-css", [LiveCssController::class, 'editor'], 'cms.admin.livecss.editor');
+            $router->post("{$prefix}/live-css", [LiveCssController::class, 'save'], 'cms.admin.livecss.save');
+            $router->post("{$prefix}/live-css/{id}/rollback", [LiveCssController::class, 'rollback'], 'cms.admin.livecss.rollback');
+            $router->get("{$prefix}/live-css/history", [LiveCssController::class, 'history'], 'cms.admin.livecss.history');
+        }
 
         // Export
         $router->get("{$prefix}/export", [ExportController::class, 'form'], 'cms.admin.export.form');
@@ -609,11 +615,17 @@ final readonly class CmsExtension implements ExtensionInterface, PreBootExtensio
         $router->post("{$prefix}/import/execute", [ImportController::class, 'execute'], 'cms.admin.import.execute');
         $router->post("{$prefix}/import/markdown", [ImportController::class, 'markdownImport'], 'cms.admin.import.markdown');
         $router->post("{$prefix}/import/csv", [ImportController::class, 'csvImport'], 'cms.admin.import.csv');
+        // Import routes under tools/ prefix (used by admin UI forms)
+        $router->post("{$prefix}/tools/import/dry-run", [ImportController::class, 'dryRun'], 'cms.admin.tools.import.dry_run');
+        $router->post("{$prefix}/tools/import/execute", [ImportController::class, 'execute'], 'cms.admin.tools.import.execute');
 
         // Site definition import
         $router->get("{$prefix}/site-import", [SiteDefinitionController::class, 'form'], 'cms.admin.site_import.form');
         $router->post("{$prefix}/site-import/dry-run", [SiteDefinitionController::class, 'dryRun'], 'cms.admin.site_import.dry_run');
         $router->post("{$prefix}/site-import/execute", [SiteDefinitionController::class, 'execute'], 'cms.admin.site_import.execute');
+        // Site import routes under tools/ prefix (used by admin UI forms)
+        $router->post("{$prefix}/tools/site-import/dry-run", [SiteDefinitionController::class, 'dryRun'], 'cms.admin.tools.site_import.dry_run');
+        $router->post("{$prefix}/tools/site-import/execute", [SiteDefinitionController::class, 'execute'], 'cms.admin.tools.site_import.execute');
 
         // A/B Testing (experiments)
         $router->get("{$prefix}/experiments", [ExperimentController::class, 'index'], 'cms.admin.experiments.index');

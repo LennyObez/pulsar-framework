@@ -17,10 +17,10 @@ use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
 use Pulsar\Extension\Cms\Http\Controller\ContentController;
 use Pulsar\Extension\Cms\I18n\HreflangGenerator;
-use Pulsar\Extension\Cms\I18n\LocaleResolver;
 use Pulsar\Extension\Cms\Internal\Security\CmsKeyManager;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Http\Message\ServerRequest;
+use Pulsar\I18n\Locale\UrlPrefixExtractor;
 use Pulsar\Security\Crypto\MasterKey;
 
 use function dirname;
@@ -47,7 +47,7 @@ final class ContentControllerWelcomeTest extends TestCase
 
         $hreflangGenerator = new HreflangGenerator(
             $this->createStub(ContentTranslationRepositoryInterface::class),
-            new LocaleResolver(),
+            new UrlPrefixExtractor(),
         );
 
         $config = new CmsConfig(

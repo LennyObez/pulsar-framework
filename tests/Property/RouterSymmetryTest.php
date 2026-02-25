@@ -19,13 +19,24 @@ use Pulsar\Routing\Router;
 #[Group('property')]
 final class RouterSymmetryTest extends TestCase
 {
+    /**
+     * Wraps a plain handler string as class-string for PHPStan.
+     *
+     * @return class-string
+     */
+    private static function handler(string $name): string
+    {
+        /** @var class-string */
+        return $name;
+    }
+
     #[Test]
     public function urlGenerationAndMatchingAreSymmetric(): void
     {
         $router = new Router();
-        $router->get('/users/{id}', 'UserController', 'user.show');
-        $router->get('/posts/{postId}/comments/{commentId}', 'CommentController', 'post.comment.show');
-        $router->get('/api/v{version}/resources/{id}', 'ApiController', 'api.resource');
+        $router->get('/users/{id}', self::handler('UserController'), 'user.show');
+        $router->get('/posts/{postId}/comments/{commentId}', self::handler('CommentController'), 'post.comment.show');
+        $router->get('/api/v{version}/resources/{id}', self::handler('ApiController'), 'api.resource');
 
         $testCases = [
             ['user.show', ['id' => '42'], Method::GET],
@@ -74,7 +85,7 @@ final class RouterSymmetryTest extends TestCase
         ];
 
         foreach ($staticPaths as $path => $name) {
-            $router->get($path, 'Controller', $name);
+            $router->get($path, self::handler('Controller'), $name);
         }
 
         foreach ($staticPaths as $path => $name) {
@@ -93,8 +104,8 @@ final class RouterSymmetryTest extends TestCase
     {
         $router = new Router();
         // Register both the with-page and without-page variants to test optional params
-        $router->get('/articles/{slug}', 'ArticleController', 'article.list');
-        $router->get('/articles/{slug}/{page}', 'ArticleController', 'article.show');
+        $router->get('/articles/{slug}', self::handler('ArticleController'), 'article.list');
+        $router->get('/articles/{slug}/{page}', self::handler('ArticleController'), 'article.show');
 
         // With page parameter
         $urlWithPage = $router->url('article.show', ['slug' => 'my-article', 'page' => '2']);
@@ -119,9 +130,9 @@ final class RouterSymmetryTest extends TestCase
     {
         $router = new Router();
         $router->group('/api/v1', function (Router $r): void {
-            $r->get('/users', 'UserController', 'api.users.index');
-            $r->get('/users/{id}', 'UserController', 'api.users.show');
-            $r->post('/users', 'UserController', 'api.users.create');
+            $r->get('/users', self::handler('UserController'), 'api.users.index');
+            $r->get('/users/{id}', self::handler('UserController'), 'api.users.show');
+            $r->post('/users', self::handler('UserController'), 'api.users.create');
         });
 
         // Match prefixed routes
@@ -147,7 +158,7 @@ final class RouterSymmetryTest extends TestCase
         $router->add(new Route(
             methods: [Method::GET],
             path: '/orders/{id}',
-            handler: 'OrderController',
+            handler: self::handler('OrderController'),
             name: 'order.show',
             constraints: ['id' => '\d+'],
         ));
@@ -166,11 +177,11 @@ final class RouterSymmetryTest extends TestCase
     public function allHttpMethodsRouteCorrectly(): void
     {
         $router = new Router();
-        $router->get('/resource', 'Controller@index', 'resource.index');
-        $router->post('/resource', 'Controller@create', 'resource.create');
-        $router->put('/resource/{id}', 'Controller@update', 'resource.update');
-        $router->patch('/resource/{id}', 'Controller@patch', 'resource.patch');
-        $router->delete('/resource/{id}', 'Controller@delete', 'resource.delete');
+        $router->get('/resource', self::handler('Controller@index'), 'resource.index');
+        $router->post('/resource', self::handler('Controller@create'), 'resource.create');
+        $router->put('/resource/{id}', self::handler('Controller@update'), 'resource.update');
+        $router->patch('/resource/{id}', self::handler('Controller@patch'), 'resource.patch');
+        $router->delete('/resource/{id}', self::handler('Controller@delete'), 'resource.delete');
 
         // Each method matches the correct route
         self::assertSame('resource.index', $router->match(Method::GET, '/resource')->getName());
@@ -189,7 +200,7 @@ final class RouterSymmetryTest extends TestCase
         for ($i = 0; $i < 50; $i++) {
             $name = "route.{$i}";
             $routeNames[] = $name;
-            $router->get("/path-{$i}", "Controller{$i}", $name);
+            $router->get("/path-{$i}", self::handler("Controller{$i}"), $name);
         }
 
         foreach ($routeNames as $name) {
@@ -208,7 +219,7 @@ final class RouterSymmetryTest extends TestCase
         self::assertSame(0, $router->count());
 
         for ($i = 1; $i <= 20; $i++) {
-            $router->get("/route-{$i}", "Controller{$i}");
+            $router->get("/route-{$i}", self::handler("Controller{$i}"));
             self::assertSame($i, $router->count());
         }
     }
@@ -220,7 +231,7 @@ final class RouterSymmetryTest extends TestCase
         $router->add(new Route(
             methods: [Method::GET],
             path: '/dashboard',
-            handler: 'DashboardController',
+            handler: self::handler('DashboardController'),
             name: 'tenant.dashboard',
             host: '{tenant}.example.com',
         ));

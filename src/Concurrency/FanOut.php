@@ -52,7 +52,9 @@ final class FanOut
 
         $deadlineNs = hrtime(true) + ($timeoutMs * 1_000_000);
 
-        /** @var array<int|string, Fiber<null, null, mixed, null>> $fibers */
+        /** @var array<int|string, Fiber<mixed, mixed, mixed, mixed>> $fibers
+         * @psalm-suppress TooManyTemplateParams Psalm 5.x doesn't support Fiber generics
+         */
         $fibers = [];
 
         /** @var array<int|string, FanOutResult> $results */
@@ -111,31 +113,17 @@ final class FanOut
                     continue;
                 }
 
-                if ($fiber->isSuspended()) {
-                    try {
-                        $fiber->resume();
-                    } catch (Throwable $e) {
-                        $results[$key] = new FanOutResult(
-                            success: false,
-                            error: $e,
-                        );
-                        unset($fibers[$key]);
-                    }
+                if (!$fiber->isSuspended()) {
+                    continue;
                 }
 
-                // Check if fiber just terminated after resume
-                if (isset($fibers[$key]) && $fiber->isTerminated()) {
-                    try {
-                        $results[$key] = new FanOutResult(
-                            success: true,
-                            value: $fiber->getReturn(),
-                        );
-                    } catch (Throwable $e) {
-                        $results[$key] = new FanOutResult(
-                            success: false,
-                            error: $e,
-                        );
-                    }
+                try {
+                    $fiber->resume();
+                } catch (Throwable $e) {
+                    $results[$key] = new FanOutResult(
+                        success: false,
+                        error: $e,
+                    );
                     unset($fibers[$key]);
                 }
             }
@@ -143,7 +131,7 @@ final class FanOut
 
         // Preserve original key order
         $ordered = [];
-        foreach ($tasks as $key => $_) {
+        foreach (array_keys($tasks) as $key) {
             if (array_key_exists($key, $results)) {
                 $ordered[$key] = $results[$key];
             }

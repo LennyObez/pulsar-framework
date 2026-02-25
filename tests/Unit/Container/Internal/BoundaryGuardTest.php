@@ -10,10 +10,19 @@ use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Container\Internal\BoundaryGuard;
+use RuntimeException;
+use stdClass;
 
 #[CoversClass(BoundaryGuard::class)]
 final class BoundaryGuardTest extends TestCase
 {
+    /** @return class-string */
+    private static function classString(string $name): string
+    {
+        /** @var class-string */
+        return $name;
+    }
+
     #[Test]
     public function it_delegates_has_to_inner_container(): void
     {
@@ -29,7 +38,7 @@ final class BoundaryGuardTest extends TestCase
     #[Test]
     public function it_delegates_get_to_inner_container(): void
     {
-        $service = new \stdClass();
+        $service = new stdClass();
         $inner = $this->createStub(ContainerInterface::class);
         $inner->method('get')->willReturn($service);
         $logger = $this->createStub(LoggerInterface::class);
@@ -47,13 +56,13 @@ final class BoundaryGuardTest extends TestCase
         $logger = $this->createStub(LoggerInterface::class);
 
         $guard = new BoundaryGuard($inner, $logger);
-        $guard->bind('id', 'ConcreteClass');
+        $guard->bind('id', self::classString('ConcreteClass'));
     }
 
     #[Test]
     public function it_delegates_instance_to_inner_container(): void
     {
-        $instance = new \stdClass();
+        $instance = new stdClass();
         $inner = $this->createMock(ContainerInterface::class);
         $inner->expects(self::once())->method('instance')->with('id', $instance);
         $logger = $this->createStub(LoggerInterface::class);
@@ -109,7 +118,7 @@ final class BoundaryGuardTest extends TestCase
     #[Test]
     public function it_allows_non_pulsar_namespace_services_without_checks(): void
     {
-        $service = new \stdClass();
+        $service = new stdClass();
         $inner = $this->createStub(ContainerInterface::class);
         $inner->method('get')->willReturn($service);
         $logger = $this->createStub(LoggerInterface::class);
@@ -128,9 +137,10 @@ final class BoundaryGuardTest extends TestCase
 
         $guard = new BoundaryGuard($inner, $logger, throwOnViolation: true);
 
-        // Since we're calling from a test class (not Pulsar namespace),
-        // no violation is triggered — this verifies the guard doesn't crash
-        $inner->method('get')->willReturn(new \stdClass());
-        self::assertInstanceOf(\stdClass::class, $guard->get('Pulsar\\Auth\\Internal\\TokenHasher'));
+        // Resolving an \Internal\ class from a different module throws
+        $inner->method('get')->willReturn(new stdClass());
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Boundary violation');
+        (void) $guard->get('Pulsar\\Auth\\Internal\\TokenHasher');
     }
 }

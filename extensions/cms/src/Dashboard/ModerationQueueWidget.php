@@ -34,7 +34,6 @@ final readonly class ModerationQueueWidget implements DashboardWidgetInterface
     {
         $pending = $this->commentRepository->findPendingModeration(
             tenantId: $this->tenantId,
-            page: 1,
             perPage: 100,
         );
 

@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Cms\Internal\Studio;
 
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
-use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Internal\Studio\Dto\SeoHealthReport;
 use Pulsar\Extension\Cms\Seo\LinkHealthServiceInterface;
 
@@ -24,7 +23,6 @@ final readonly class SeoHealthReportPanel
 {
     public function __construct(
         private LinkHealthServiceInterface $linkHealthService,
-        private ContentRepositoryInterface $contentRepository,
     ) {}
 
     /**

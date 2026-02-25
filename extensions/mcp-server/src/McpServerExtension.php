@@ -175,6 +175,12 @@ final class McpServerExtension implements ExtensionInterface, PreBootExtensionIn
         // Stdio transport
         $transport = new StdioTransport();
         $container->instance(StdioTransport::class, $transport);
+
+        // Command (resolvable from manifest-driven registration)
+        $container->instance(
+            Console\McpServeCommand::class,
+            new Console\McpServeCommand($messageHandler, $transport, $accessGate),
+        );
     }
 
     public function boot(ContainerInterface $container, RouterInterface $router): void

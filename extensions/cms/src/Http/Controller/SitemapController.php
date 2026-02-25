@@ -25,7 +25,6 @@ final readonly class SitemapController
         $xml = $this->sitemapGenerator->generateIndex($baseUrl);
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => 'application/xml; charset=utf-8',
                 'Cache-Control' => 'public, max-age=3600',
@@ -40,7 +39,6 @@ final readonly class SitemapController
         $xml = $this->sitemapGenerator->generateForType($contentType, $baseUrl, $page);
 
         return new Response(
-            statusCode: 200,
             headers: [
                 'Content-Type' => 'application/xml; charset=utf-8',
                 'Cache-Control' => 'public, max-age=3600',

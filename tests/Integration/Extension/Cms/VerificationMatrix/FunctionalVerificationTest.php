@@ -24,7 +24,6 @@ use Pulsar\Extension\Cms\Themes\ThemeManifest;
 use Pulsar\Extension\Cms\Tools\ExportBundle;
 use Pulsar\Extension\Cms\Tools\SiteDefinition;
 use Pulsar\Extension\Cms\Workflow\ContentLock;
-use ReflectionClass;
 
 use function base64_encode;
 use function hash;

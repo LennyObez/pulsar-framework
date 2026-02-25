@@ -171,12 +171,18 @@ final class ForumProfileTest extends TestCase
     {
         $now = new DateTimeImmutable();
         $profile = new ForumProfile(
-            id: 'p-001', tenantId: null, userId: 'u-001',
-            reputationScore: 0, postCount: 0, threadCount: 0,
-            isBanned: true, banReason: 'Temp',
+            id: 'p-001',
+            tenantId: null,
+            userId: 'u-001',
+            reputationScore: 0,
+            postCount: 0,
+            threadCount: 0,
+            isBanned: true,
+            banReason: 'Temp',
             bannedAt: $now->modify('-2 days'),
             banExpiresAt: $now->modify('-1 day'),
-            createdAt: $now, updatedAt: $now,
+            createdAt: $now,
+            updatedAt: $now,
         );
         self::assertTrue($profile->isBanExpired());
     }
@@ -186,11 +192,18 @@ final class ForumProfileTest extends TestCase
     {
         $now = new DateTimeImmutable();
         $profile = new ForumProfile(
-            id: 'p-001', tenantId: null, userId: 'u-001',
-            reputationScore: 0, postCount: 0, threadCount: 0,
-            isBanned: true, banReason: 'Temp',
-            bannedAt: $now, banExpiresAt: $now->modify('+7 days'),
-            createdAt: $now, updatedAt: $now,
+            id: 'p-001',
+            tenantId: null,
+            userId: 'u-001',
+            reputationScore: 0,
+            postCount: 0,
+            threadCount: 0,
+            isBanned: true,
+            banReason: 'Temp',
+            bannedAt: $now,
+            banExpiresAt: $now->modify('+7 days'),
+            createdAt: $now,
+            updatedAt: $now,
         );
         self::assertFalse($profile->isBanExpired());
     }

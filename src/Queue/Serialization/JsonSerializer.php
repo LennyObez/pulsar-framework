@@ -58,11 +58,11 @@ final readonly class JsonSerializer implements SerializerInterface
             throw QueueException::serializationFailed($type);
         }
 
-        /** @var array<string, mixed> $decoded — PHPStan type narrowing (is_array only narrows to array) */
-        $decoded = $decoded;
+        /** @var array<string, mixed> $typed */
+        $typed = $decoded;
 
         /** @var int $payloadVersion */
-        $payloadVersion = $decoded['_schema_version'] ?? 1;
+        $payloadVersion = $typed['_schema_version'] ?? 1;
         $currentVersion = $this->schemaRegistry->currentVersion($type);
 
         if ($payloadVersion !== $currentVersion) {
@@ -70,10 +70,10 @@ final readonly class JsonSerializer implements SerializerInterface
                 throw QueueException::incompatibleSchemaVersion($type, $payloadVersion, $currentVersion);
             }
 
-            $decoded = $this->migratePayload($type, $decoded, $payloadVersion, $currentVersion);
+            $typed = $this->migratePayload($type, $typed, $payloadVersion, $currentVersion);
         }
 
-        return $decoded;
+        return $typed;
     }
 
     public function contentType(): string

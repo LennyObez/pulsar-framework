@@ -12,9 +12,6 @@ use Pulsar\Api\Api;
 #[Api(since: '1.0.0')]
 final readonly class ReviewRequested
 {
-    /**
-     * @param list<string> $reviewerIds Assigned reviewer user IDs (empty = unassigned)
-     */
     public function __construct(
         public string $contentId,
         public string $requesterId,

@@ -6,6 +6,7 @@ namespace Pulsar\Tests\Unit\Database\Monitor;
 
 use PHPUnit\Framework\Attributes\AllowMockObjectsWithoutExpectations;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Database\ConnectionInterface;
@@ -15,7 +16,6 @@ use Pulsar\Database\Monitor\MonitoredConnection;
 use Pulsar\Database\Monitor\SlowQueryDetectorInterface;
 use Pulsar\Database\Monitor\SqlLoggerInterface;
 use Pulsar\Database\Result;
-use PHPUnit\Framework\Attributes\Test;
 
 #[CoversClass(MonitoredConnection::class)]
 final class MonitoredConnectionTest extends TestCase

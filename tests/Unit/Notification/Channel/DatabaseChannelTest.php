@@ -14,6 +14,8 @@ use Pulsar\Notification\NotifiableInterface;
 use Pulsar\Notification\Notification;
 use RuntimeException;
 
+use function is_string;
+
 #[CoversClass(DatabaseChannel::class)]
 final class DatabaseChannelTest extends TestCase
 {
@@ -23,7 +25,7 @@ final class DatabaseChannelTest extends TestCase
         $store = $this->createMock(DatabaseNotificationStoreInterface::class);
         $store->expects(self::once())
             ->method('store')
-            ->with('user-001', self::callback(static fn (mixed $v): bool => \is_string($v)), ['type' => 'welcome']);
+            ->with('user-001', self::callback(static fn(mixed $v): bool => is_string($v)), ['type' => 'welcome']);
 
         $notifiable = $this->createStub(NotifiableInterface::class);
         $notifiable->method('getNotifiableId')->willReturn('user-001');

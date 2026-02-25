@@ -13,7 +13,19 @@ use DOMNode;
 use DOMProcessingInstruction;
 use Pulsar\Api\Api;
 
+use function array_reverse;
+use function html_entity_decode;
+use function htmlspecialchars;
 use function in_array;
+use function iterator_to_array;
+use function preg_match;
+use function preg_replace;
+use function str_replace;
+use function str_starts_with;
+use function strtolower;
+use function substr;
+use function trim;
+use function urldecode;
 
 /**
  * Allowlist-based HTML sanitizer for forum post bodies.
@@ -32,7 +44,7 @@ final readonly class ForumBodyPolicy
      *
      * @var array<string, list<string>>
      */
-    private const ELEMENT_ATTRIBUTES = [
+    private const array ELEMENT_ATTRIBUTES = [
         'p' => [],
         'br' => [],
         'h2' => [],
@@ -212,12 +224,7 @@ final readonly class ForumBodyPolicy
 
             $allowedAttrs = self::ELEMENT_ATTRIBUTES[$tagName];
             $toRemove = [];
-
             $attributes = $element->attributes;
-
-            if ($attributes === null) {
-                continue;
-            }
 
             /** @var DOMAttr $attr */
             foreach (iterator_to_array($attributes) as $attr) {
@@ -391,13 +398,7 @@ final readonly class ForumBodyPolicy
             '/<\s*\/?\s*embed[\s>]/i',
         ];
 
-        foreach ($patterns as $pattern) {
-            if (preg_match($pattern, $html)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($patterns, static fn(string $pattern): bool => preg_match($pattern, $html) === 1);
     }
 
     private function escapeToPlaintext(string $input): string

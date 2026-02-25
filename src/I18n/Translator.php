@@ -10,6 +10,7 @@ use Pulsar\I18n\Exception\I18nException;
 use Pulsar\I18n\Exception\MissingTranslationException;
 use Pulsar\I18n\Format\MessageFormatterInterface;
 
+use function count;
 use function in_array;
 
 /**
@@ -114,8 +115,8 @@ final class Translator implements TranslatorInterface
         }
 
         // Evict oldest entries when cache is full
-        if (\count($this->fallbackChainCache) >= self::MAX_CHAIN_CACHE_SIZE) {
-            \array_shift($this->fallbackChainCache);
+        if (count($this->fallbackChainCache) >= self::MAX_CHAIN_CACHE_SIZE) {
+            array_shift($this->fallbackChainCache);
         }
 
         $this->fallbackChainCache[$targetLocale] = $localeChain;

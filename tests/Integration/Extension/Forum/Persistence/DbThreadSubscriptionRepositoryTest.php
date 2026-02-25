@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Integration\Extension\Forum\Persistence;
 
-use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;

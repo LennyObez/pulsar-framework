@@ -13,7 +13,6 @@ use Pulsar\Container\ContainerInterface;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Extension\Cms\Config\CmsSecurityConfig;
 use Pulsar\Extension\Cms\Exception\CmsException;
-use Pulsar\Extension\Cms\Internal\Themes\SafeArchiveExtractor;
 use Pulsar\Extension\Cms\Plugins\CmsPluginContext;
 use Pulsar\Extension\Cms\Plugins\CmsPluginInterface;
 use Pulsar\Extension\Cms\Plugins\CmsPluginManagerInterface;
@@ -493,14 +492,14 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
         }
 
         // 2. Check if class is already autoloadable
-        if (!class_exists($manifest->entryPoint, true)) {
+        if (!class_exists($manifest->entryPoint)) {
             // 3. Try PSR-4 autoload from manifest
             if ($manifest->autoload !== null && isset($manifest->autoload['psr-4'])) {
                 $this->registerPsr4Autoloader($plugin->storagePath, $manifest->autoload['psr-4']);
             }
 
             // 4. Fallback: direct file require
-            if (!class_exists($manifest->entryPoint, true)) {
+            if (!class_exists($manifest->entryPoint)) {
                 $classFile = $plugin->storagePath . '/src/' . str_replace('\\', '/', $manifest->entryPoint) . '.php';
 
                 if (file_exists($classFile)) {

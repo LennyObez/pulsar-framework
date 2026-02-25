@@ -56,10 +56,25 @@ return new class implements MigrationInterface {
             CREATE INDEX IF NOT EXISTS idx_post_report_status
                 ON forum_post_reports (status, created_at DESC)
             SQL);
+
+        // Unified view used by ForumReportResource for admin panel listing
+        $connection->execute(<<<'SQL'
+            CREATE VIEW IF NOT EXISTS forum_reports AS
+            SELECT id, tenant_id, 'thread' AS target_type, thread_id AS target_id,
+                   reporter_id, reason, status, reviewed_by AS moderator_id,
+                   resolution_note AS moderator_note, updated_at AS reviewed_at, created_at
+            FROM forum_thread_reports
+            UNION ALL
+            SELECT id, tenant_id, 'post' AS target_type, post_id AS target_id,
+                   reporter_id, reason, status, reviewed_by AS moderator_id,
+                   resolution_note AS moderator_note, updated_at AS reviewed_at, created_at
+            FROM forum_post_reports
+            SQL);
     }
 
     public function down(ConnectionInterface $connection): void
     {
+        $connection->execute('DROP VIEW IF EXISTS forum_reports');
         $connection->execute('DROP TABLE IF EXISTS forum_post_reports');
         $connection->execute('DROP TABLE IF EXISTS forum_thread_reports');
     }

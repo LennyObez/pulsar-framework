@@ -25,7 +25,7 @@ use function strlen;
 final readonly class AttestationVerifier implements AttestationVerifierInterface
 {
     /** @var list<string> */
-    private readonly array $formats;
+    private array $formats;
 
     /**
      * @param list<string> $allowedFormats

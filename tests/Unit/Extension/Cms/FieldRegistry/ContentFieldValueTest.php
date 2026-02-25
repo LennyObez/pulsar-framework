@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\FieldRegistry\ContentFieldValue;
+use ReflectionClass;
 
 #[CoversClass(ContentFieldValue::class)]
 final class ContentFieldValueTest extends TestCase
@@ -297,7 +298,7 @@ final class ContentFieldValueTest extends TestCase
             valueJson: null,
         );
 
-        $reflection = new \ReflectionClass($value);
+        $reflection = new ReflectionClass($value);
         self::assertTrue($reflection->isReadOnly());
     }
 }

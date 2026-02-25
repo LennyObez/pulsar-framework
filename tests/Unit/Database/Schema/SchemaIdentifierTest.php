@@ -18,20 +18,20 @@ final class SchemaIdentifierTest extends TestCase
     public function validTableNamePasses(): void
     {
         SchemaIdentifier::validateTable('users');
-        self::assertTrue(true, 'users accepted');
+        $this->addToAssertionCount(1);
         SchemaIdentifier::validateTable('_internal');
-        self::assertTrue(true, '_internal accepted');
+        $this->addToAssertionCount(1);
         SchemaIdentifier::validateTable('my_table_123');
-        self::assertTrue(true, 'my_table_123 accepted');
+        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validColumnNamePasses(): void
     {
         SchemaIdentifier::validateColumn('email');
-        self::assertTrue(true, 'email accepted');
+        $this->addToAssertionCount(1);
         SchemaIdentifier::validateColumn('first_name');
-        self::assertTrue(true, 'first_name accepted');
+        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -96,13 +96,13 @@ final class SchemaIdentifierTest extends TestCase
     public function validateIndexWorks(): void
     {
         SchemaIdentifier::validateIndex('idx_users_email');
-        self::assertTrue(true, 'idx_users_email accepted');
+        $this->addToAssertionCount(1);
     }
 
     #[Test]
     public function validateForeignKeyWorks(): void
     {
         SchemaIdentifier::validateForeignKey('fk_orders_user_id');
-        self::assertTrue(true, 'fk_orders_user_id accepted');
+        $this->addToAssertionCount(1);
     }
 }

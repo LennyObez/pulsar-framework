@@ -43,7 +43,6 @@ final readonly class DbContentEventRepository implements ContentEventStoreInterf
 
     public function __construct(
         private ConnectionInterface $connection,
-        private ?string $tenantId,
     ) {}
 
     public function append(ContentEvent $event): void

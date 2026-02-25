@@ -29,6 +29,13 @@ use const JSON_THROW_ON_ERROR;
 #[Group('property')]
 final class SerializationIdempotencyTest extends TestCase
 {
+    /** @return class-string */
+    private static function handler(string $name): string
+    {
+        /** @var class-string */
+        return $name;
+    }
+
     #[Test]
     public function uriToStringParseRoundtripIsIdempotent(): void
     {
@@ -169,7 +176,7 @@ final class SerializationIdempotencyTest extends TestCase
         $route = new Route(
             methods: [Method::GET],
             path: '/users/{userId}/posts/{postId}',
-            handler: 'PostController',
+            handler: self::handler('PostController'),
             name: 'user.post.show',
         );
 
@@ -236,7 +243,7 @@ final class SerializationIdempotencyTest extends TestCase
         $route = new Route(
             methods: [Method::GET, Method::HEAD],
             path: '/api/{version}/users/{id}',
-            handler: 'UserController',
+            handler: self::handler('UserController'),
             name: 'api.user.show',
             attributes: ['auth' => true, 'rate_limit' => 100],
             middleware: ['auth', 'throttle'],

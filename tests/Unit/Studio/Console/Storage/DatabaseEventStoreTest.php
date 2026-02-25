@@ -495,34 +495,34 @@ final class DatabaseEventStoreTest extends TestCase
     private function createSchema(ConnectionInterface $connection): void
     {
         $connection->execute(<<<'SQL'
-            CREATE TABLE IF NOT EXISTS studio_events (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                event_id TEXT NOT NULL UNIQUE,
-                event_type TEXT NOT NULL,
-                schema_version INTEGER NOT NULL DEFAULT 1,
-                timestamp_us INTEGER NOT NULL,
-                request_id TEXT,
-                trace_id TEXT,
-                span_id TEXT,
-                job_id TEXT,
-                app_env TEXT NOT NULL,
-                hostname TEXT NOT NULL,
-                tenant_hash TEXT,
-                payload_json TEXT NOT NULL,
-                payload_hash TEXT NOT NULL,
-                ciphertext_hash TEXT
-            )
-        SQL);
+                CREATE TABLE IF NOT EXISTS studio_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    event_id TEXT NOT NULL UNIQUE,
+                    event_type TEXT NOT NULL,
+                    schema_version INTEGER NOT NULL DEFAULT 1,
+                    timestamp_us INTEGER NOT NULL,
+                    request_id TEXT,
+                    trace_id TEXT,
+                    span_id TEXT,
+                    job_id TEXT,
+                    app_env TEXT NOT NULL,
+                    hostname TEXT NOT NULL,
+                    tenant_hash TEXT,
+                    payload_json TEXT NOT NULL,
+                    payload_hash TEXT NOT NULL,
+                    ciphertext_hash TEXT
+                )
+            SQL);
 
         $connection->execute(<<<'SQL'
-            CREATE TABLE IF NOT EXISTS studio_chain (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                event_id TEXT NOT NULL UNIQUE REFERENCES studio_events(event_id) ON DELETE CASCADE,
-                previous_hash TEXT NOT NULL,
-                current_hash TEXT NOT NULL,
-                link_mac TEXT
-            )
-        SQL);
+                CREATE TABLE IF NOT EXISTS studio_chain (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    event_id TEXT NOT NULL UNIQUE REFERENCES studio_events(event_id) ON DELETE CASCADE,
+                    previous_hash TEXT NOT NULL,
+                    current_hash TEXT NOT NULL,
+                    link_mac TEXT
+                )
+            SQL);
 
         $connection->execute('CREATE INDEX IF NOT EXISTS idx_events_ts ON studio_events(timestamp_us DESC)');
         $connection->execute('CREATE INDEX IF NOT EXISTS idx_events_type ON studio_events(event_type)');

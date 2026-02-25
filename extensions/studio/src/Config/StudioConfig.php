@@ -11,7 +11,6 @@ use Pulsar\Config\Environment;
 use function in_array;
 use function is_float;
 use function is_int;
-use function is_string;
 
 /**
  * Typed configuration DTO for config/studio.php.
@@ -49,7 +48,7 @@ readonly class StudioConfig
 
         $storeBackendEnv = $environment->get('STUDIO_STORE_BACKEND');
         $storeBackendRaw = $storeBackendEnv ?? ($data['store'] ?? 'sqlite');
-        $storeBackend = is_string($storeBackendRaw) && in_array($storeBackendRaw, ['sqlite', 'database', 'buffered'], true)
+        $storeBackend = in_array($storeBackendRaw, ['sqlite', 'database', 'buffered'], true)
             ? $storeBackendRaw
             : 'sqlite';
 

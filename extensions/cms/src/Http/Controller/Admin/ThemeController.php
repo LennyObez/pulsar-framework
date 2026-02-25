@@ -16,10 +16,12 @@ use Pulsar\Http\Message\Response;
 use Pulsar\View\Engine\TemplateEngineInterface;
 
 use function array_map;
+use function file_exists;
 use function is_string;
 use function strlen;
 use function sys_get_temp_dir;
 use function tempnam;
+use function unlink;
 
 /**
  * Admin controller for theme management.
@@ -37,7 +39,7 @@ final readonly class ThemeController
 
     public function __construct(
         private ThemeManagerInterface $themeManager,
-        private CmsRateLimiter $rateLimiter,
+        private ?CmsRateLimiter $rateLimiter,
         private GateInterface $gate,
         private ?TemplateEngineInterface $templateEngine = null,
     ) {}
@@ -55,7 +57,7 @@ final readonly class ThemeController
         $themes = $this->themeManager->getInstalled($tenantId);
 
         $data = [
-            'data' => array_map(static fn(InstalledTheme $t) => [
+            'themes' => array_map(static fn(InstalledTheme $t) => [
                 'id' => $t->id,
                 'slug' => $t->slug,
                 'display_name' => $t->displayName,
@@ -87,7 +89,7 @@ final readonly class ThemeController
         $this->authorize($identity, 'cms.themes.install');
         $this->requireStepUp($request);
 
-        if (!$this->rateLimiter->attempt('theme_install:' . $identity->id(), self::INSTALL_RATE_LIMIT_PER_MINUTE)) {
+        if ($this->rateLimiter !== null && !$this->rateLimiter->attempt('theme_install:' . $identity->id(), self::INSTALL_RATE_LIMIT_PER_MINUTE)) {
             return Response::json(['error' => 'Too many requests'], 429);
         }
 

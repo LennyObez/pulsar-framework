@@ -65,7 +65,7 @@ final readonly class ProductController
         $products = $this->products->listProducts($filters, $page, $perPage);
 
         return $this->respondWithView($request, 'admin.products.index', [
-            'data' => array_map(static fn(Product $p) => [
+            'products' => array_map(static fn(Product $p) => [
                 'id' => $p->id,
                 'sku' => $p->sku,
                 'status' => $p->status->value,

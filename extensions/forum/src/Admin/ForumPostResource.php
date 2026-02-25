@@ -61,8 +61,8 @@ final readonly class ForumPostResource implements DataResourceInterface
                 name: 'thread_id',
                 type: FieldType::Relation,
                 label: 'Thread',
-                relationResource: 'forum_threads',
                 editable: false,
+                relationResource: 'forum_threads',
             ),
             new FieldDefinition(
                 name: 'parent_id',

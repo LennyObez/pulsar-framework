@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Cache\Application\TaggedCacheInterface;
-use Pulsar\Extension\Cms\Content\ContentRepositoryInterface;
 use Pulsar\Extension\Cms\Internal\Studio\CmsAuditPanel;
 use Pulsar\Extension\Cms\Internal\Studio\CmsStudioModule;
 use Pulsar\Extension\Cms\Internal\Studio\ContentCacheInspectorPanel;
@@ -35,13 +34,12 @@ final class CmsStudioModuleTest extends TestCase
         $metricRegistry = new MetricRegistry();
         $queueDriver = $this->createStub(QueueDriverInterface::class);
         $linkHealthService = $this->createStub(LinkHealthServiceInterface::class);
-        $contentRepository = $this->createStub(ContentRepositoryInterface::class);
 
         $this->module = new CmsStudioModule(
             auditPanel: new CmsAuditPanel(new AuditChainVerifier($keyRing)),
             cachePanel: new ContentCacheInspectorPanel($taggedCache, $metricRegistry),
             mediaPanel: new MediaProcessingQueuePanel($queueDriver),
-            seoPanel: new SeoHealthReportPanel($linkHealthService, $contentRepository),
+            seoPanel: new SeoHealthReportPanel($linkHealthService),
         );
     }
 
@@ -95,7 +93,7 @@ final class CmsStudioModuleTest extends TestCase
     {
         $entries = $this->module->navEntries();
 
-        self::assertSame('Audit Trail', $entries[0]->label);
+        self::assertSame('Audit trail', $entries[0]->label);
         self::assertSame('/studio/cms/audit', $entries[0]->href);
         self::assertSame('shield', $entries[0]->icon);
     }
@@ -105,7 +103,7 @@ final class CmsStudioModuleTest extends TestCase
     {
         $entries = $this->module->navEntries();
 
-        self::assertSame('Content Cache', $entries[1]->label);
+        self::assertSame('Content cache', $entries[1]->label);
         self::assertSame('/studio/cms/cache', $entries[1]->href);
         self::assertSame('database', $entries[1]->icon);
     }
@@ -115,7 +113,7 @@ final class CmsStudioModuleTest extends TestCase
     {
         $entries = $this->module->navEntries();
 
-        self::assertSame('Media Queue', $entries[2]->label);
+        self::assertSame('Media queue', $entries[2]->label);
         self::assertSame('/studio/cms/media-queue', $entries[2]->href);
         self::assertSame('image', $entries[2]->icon);
     }
@@ -125,7 +123,7 @@ final class CmsStudioModuleTest extends TestCase
     {
         $entries = $this->module->navEntries();
 
-        self::assertSame('SEO Health', $entries[3]->label);
+        self::assertSame('SEO health', $entries[3]->label);
         self::assertSame('/studio/cms/seo', $entries[3]->href);
         self::assertSame('search', $entries[3]->icon);
     }

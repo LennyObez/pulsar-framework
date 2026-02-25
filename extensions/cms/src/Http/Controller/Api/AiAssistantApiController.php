@@ -9,7 +9,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Cms\AI\ContentAssistant;
 use Pulsar\Extension\Cms\AI\LlmResponse;
-use Pulsar\Extension\Cms\Config\CmsConfig;
 use Pulsar\Extension\Cms\Internal\Http\AiRequestParser;
 use Pulsar\Extension\Cms\Seo\SerpPreview;
 use Pulsar\Http\Message\Response;
@@ -30,7 +29,6 @@ final readonly class AiAssistantApiController
 {
     public function __construct(
         private ContentAssistant $assistant,
-        private CmsConfig $config,
         private AiRequestParser $parser,
     ) {}
 

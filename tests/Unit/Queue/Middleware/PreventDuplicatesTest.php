@@ -14,6 +14,7 @@ use Pulsar\Queue\Envelope\BackoffStrategy;
 use Pulsar\Queue\Envelope\JobEnvelope;
 use Pulsar\Queue\Exception\QueueException;
 use Pulsar\Queue\Middleware\PreventDuplicates;
+use RuntimeException;
 
 #[CoversClass(PreventDuplicates::class)]
 final class PreventDuplicatesTest extends TestCase
@@ -80,9 +81,9 @@ final class PreventDuplicatesTest extends TestCase
 
         try {
             $middleware->handle($envelope, static function (JobEnvelope $e): never {
-                throw new \RuntimeException('job failed');
+                throw new RuntimeException('job failed');
             });
-        } catch (\RuntimeException) {
+        } catch (RuntimeException) {
             // Expected — lock release still called
         }
     }

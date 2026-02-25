@@ -9,6 +9,8 @@ use Pulsar\Extension\Analytics\Domain\DeviceInfo;
 use Pulsar\Extension\Analytics\Domain\DeviceType;
 
 use function preg_match;
+use function str_contains;
+use function str_replace;
 
 /**
  * Lightweight regex-based user agent parser.
@@ -59,28 +61,28 @@ final readonly class UserAgentParser
         // Samsung Internet must be checked before Chrome (contains "Chrome").
         // Chrome must be checked before Safari (Chrome UA contains "Safari").
 
-        if (preg_match('/SamsungBrowser\/(\d+[\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/SamsungBrowser\/(\d+[.\d]*)/', $ua, $m) === 1) {
             return ['Samsung Internet', $m[1]];
         }
 
-        if (preg_match('/Edg(?:e|A|iOS)?\/(\d+[\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/Edg(?:e|A|iOS)?\/(\d+[.\d]*)/', $ua, $m) === 1) {
             return ['Edge', $m[1]];
         }
 
-        if (preg_match('/OPR\/(\d+[\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/OPR\/(\d+[.\d]*)/', $ua, $m) === 1) {
             return ['Opera', $m[1]];
         }
 
-        if (preg_match('/(?:Firefox|FxiOS)\/(\d+[\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/(?:Firefox|FxiOS)\/(\d+[.\d]*)/', $ua, $m) === 1) {
             return ['Firefox', $m[1]];
         }
 
         // Chrome must be before Safari — Chrome includes "Safari" in its UA
-        if (preg_match('/(?:Chrome|CriOS)\/(\d+[\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/(?:Chrome|CriOS)\/(\d+[.\d]*)/', $ua, $m) === 1) {
             return ['Chrome', $m[1]];
         }
 
-        if (preg_match('/Version\/(\d+[\.\d]*).*Safari/', $ua, $m) === 1) {
+        if (preg_match('/Version\/(\d+[.\d]*).*Safari/', $ua, $m) === 1) {
             return ['Safari', $m[1]];
         }
 
@@ -100,26 +102,26 @@ final readonly class UserAgentParser
     private function detectOs(string $ua): array
     {
         // iOS detection (must be before macOS — iPad can spoof desktop Safari)
-        if (preg_match('/(?:iPhone|iPod).*OS (\d+[_\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/(?:iPhone|iPod).*OS (\d+[_.\d]*)/', $ua, $m) === 1) {
             return ['iOS', str_replace('_', '.', $m[1])];
         }
 
-        if (preg_match('/iPad.*OS (\d+[_\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/iPad.*OS (\d+[_.\d]*)/', $ua, $m) === 1) {
             return ['iOS', str_replace('_', '.', $m[1])];
         }
 
         // Android
-        if (preg_match('/Android (\d+[\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/Android (\d+[.\d]*)/', $ua, $m) === 1) {
             return ['Android', $m[1]];
         }
 
         // Windows
-        if (preg_match('/Windows NT (\d+[\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/Windows NT (\d+[.\d]*)/', $ua, $m) === 1) {
             return ['Windows', $this->mapWindowsVersion($m[1])];
         }
 
         // macOS
-        if (preg_match('/Mac OS X (\d+[_\.\d]*)/', $ua, $m) === 1) {
+        if (preg_match('/Mac OS X (\d+[_.\d]*)/', $ua, $m) === 1) {
             return ['macOS', str_replace('_', '.', $m[1])];
         }
 

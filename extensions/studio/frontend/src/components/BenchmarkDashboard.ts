@@ -15,7 +15,7 @@ export function renderBenchmarkDashboard(container: HTMLElement, payload: unknow
     ${renderNav()}
     <div class="dashboard">
       <div class="dashboard-header">
-        <h1>Benchmark Dashboard</h1>
+        <h1>Benchmark dashboard</h1>
         <p>Performance benchmarks across configurations</p>
       </div>
       ${renderActionBar()}
@@ -39,7 +39,7 @@ function renderEmptyState(container: HTMLElement): void {
     <div class="dashboard">
       ${renderActionBar()}
       <div class="empty-state">
-        <h2>No Benchmark Data</h2>
+        <h2>No benchmark data</h2>
         <p>No benchmark data yet. Click <strong>Run Benchmarks</strong> or run:</p>
         <pre><code>php bin/pulsar studio:console:bench</code></pre>
         <a href="/studio" class="btn">Back to Studio</a>
@@ -192,7 +192,7 @@ function renderProfileCharts(profiles: BenchmarkProfile[]): string {
 
   return `
     <div class="card">
-      <h3>Profile Comparison</h3>
+      <h3>Profile comparison</h3>
       <div class="chart-legend">${legend}</div>
       <div class="chart-grid">${charts}</div>
     </div>
@@ -250,7 +250,7 @@ function renderProfileTable(
 
   return `
     <div class="card">
-      <h3>${heading ?? 'Latest Profile Comparison'}</h3>
+      <h3>${heading ?? 'Latest profile comparison'}</h3>
       <table class="data-table">
         <thead>
           <tr>
@@ -297,7 +297,7 @@ function renderRunHistory(runs: BenchmarkRun[]): string {
 
   return `
     <div class="card">
-      <h3>Run History</h3>
+      <h3>Run history</h3>
       <table class="data-table">
         <thead>
           <tr>
