@@ -48,6 +48,9 @@ use function sprintf;
 /**
  * Checkout flow orchestrator handling cart validation, order creation,
  * stock reservation, and payment processing.
+ *
+ * @psalm-api Bound to CheckoutServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CheckoutServiceInterface for public API')]
 final readonly class CheckoutService implements CheckoutServiceInterface

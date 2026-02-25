@@ -24,6 +24,9 @@ use const ENT_QUOTES;
  *
  * Seller information is sourced from the centralized BusinessProfile when available,
  * with fallback to CMS SettingsService for backward compatibility.
+ *
+ * @psalm-api Bound to InvoiceRendererInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use InvoiceRendererInterface for public API')]
 final readonly class HtmlInvoiceRenderer implements InvoiceRendererInterface

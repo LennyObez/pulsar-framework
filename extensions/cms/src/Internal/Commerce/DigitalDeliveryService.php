@@ -25,6 +25,9 @@ use function sprintf;
 
 /**
  * Manages digital product download entitlements with HMAC-signed tokens.
+ *
+ * @psalm-api Bound to DigitalDeliveryServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use DigitalDeliveryServiceInterface for public API')]
 final readonly class DigitalDeliveryService implements DigitalDeliveryServiceInterface
