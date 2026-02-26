@@ -7,6 +7,10 @@ namespace Pulsar\Extension\Cms\ABTest;
 use DateTimeImmutable;
 use Pulsar\Api\Api;
 
+/**
+ * @psalm-api Public DTO returned from ExperimentRepositoryInterface and consumed
+ *            by user-land code; class-level marker for findUnusedCode analysis.
+ */
 #[Api(since: '1.0.0')]
 final readonly class ConversionEvent
 {
