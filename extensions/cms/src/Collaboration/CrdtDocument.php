@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * The state vector is stored as base64-encoded binary. The actual CRDT merge
  * happens client-side in Yjs; the server stores the latest full snapshot.
+ *
+ * @psalm-api Public DTO returned from CollaborationRepositoryInterface; consumed
+ *            by CollaborationService and the Yjs sync endpoints.
  */
 #[Api(since: '1.0.0')]
 final readonly class CrdtDocument

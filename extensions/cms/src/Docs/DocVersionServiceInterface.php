@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Service interface for managing documentation versions.
+ *
+ * @psalm-api Public binding contract; implemented by DocVersionService and
+ *            consumed by docs admin controllers.
  */
 #[Api(since: '1.0.0')]
 interface DocVersionServiceInterface
