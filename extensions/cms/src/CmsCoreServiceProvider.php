@@ -30,6 +30,7 @@ use Pulsar\Extension\Cms\Content\ContentTranslationRepositoryInterface;
 use Pulsar\Extension\Cms\Content\RedirectRepositoryInterface;
 use Pulsar\Extension\Cms\Content\RevisionService;
 use Pulsar\Extension\Cms\Content\SafeHtmlPolicy;
+use Pulsar\Extension\Cms\Docs\DocVersionServiceInterface;
 use Pulsar\Extension\Cms\FieldRegistry\FieldRegistryRepositoryInterface;
 use Pulsar\Extension\Cms\Forms\FormSubmissionRepositoryInterface;
 use Pulsar\Extension\Cms\Forms\FormSubmissionServiceInterface;
@@ -48,6 +49,7 @@ use Pulsar\Extension\Cms\Internal\Cache\CachedMenuRepository;
 use Pulsar\Extension\Cms\Internal\Cache\CachedSettingsService;
 use Pulsar\Extension\Cms\Internal\Cache\CmsCacheInvalidator;
 use Pulsar\Extension\Cms\Internal\Collaboration\CollaborationService as CollaborationServiceImpl;
+use Pulsar\Extension\Cms\Internal\Docs\DocVersionService;
 use Pulsar\Extension\Cms\Internal\Forms\ContentHeuristicScorer;
 use Pulsar\Extension\Cms\Internal\Forms\FormSubmissionService;
 use Pulsar\Extension\Cms\Internal\Forms\HoneypotDetector;
@@ -55,7 +57,10 @@ use Pulsar\Extension\Cms\Internal\Forms\ProofOfWorkVerifier;
 use Pulsar\Extension\Cms\Internal\Forms\RateLimitDetector;
 use Pulsar\Extension\Cms\Internal\Forms\TimingDetector;
 use Pulsar\Extension\Cms\Internal\Http\AiRequestParser;
+use Pulsar\Extension\Cms\Internal\Newsletter\CampaignEditorService;
+use Pulsar\Extension\Cms\Internal\Newsletter\NewsletterSubscriptionService;
 use Pulsar\Extension\Cms\Internal\Notification\CmsNotificationDispatcher;
+use Pulsar\Extension\Cms\Internal\Persistence\DbDocVersionRepository;
 use Pulsar\Extension\Cms\Internal\Publishing\PublishingOrchestrator;
 use Pulsar\Extension\Cms\Internal\Publishing\RssChannel;
 use Pulsar\Extension\Cms\Internal\Publishing\StaticSiteChannel;
@@ -98,6 +103,10 @@ use Pulsar\Extension\Cms\Media\Security\SvgSanitizer;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGenerator;
 use Pulsar\Extension\Cms\Navigation\BreadcrumbGeneratorInterface;
 use Pulsar\Extension\Cms\Navigation\MenuRepositoryInterface;
+use Pulsar\Extension\Cms\Newsletter\CampaignEditorServiceInterface;
+use Pulsar\Extension\Cms\Newsletter\NewsletterCampaignRepositoryInterface;
+use Pulsar\Extension\Cms\Newsletter\NewsletterSubscriberRepositoryInterface;
+use Pulsar\Extension\Cms\Newsletter\NewsletterSubscriptionServiceInterface;
 use Pulsar\Extension\Cms\Publishing\ChannelRegistry;
 use Pulsar\Extension\Cms\Search\SearchAnalyticsRepositoryInterface;
 use Pulsar\Extension\Cms\Search\SearchServiceInterface;
@@ -113,12 +122,12 @@ use Pulsar\Extension\Cms\Settings\SettingsServiceInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyService;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
-use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Extension\Cms\Tools\BackupServiceInterface;
 use Pulsar\Extension\Cms\Tools\ImportAnalyzer;
 use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
 use Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface;
 use Pulsar\Extension\Cms\Tools\ToolsServiceInterface;
+use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Extension\Cms\Workflow\ContentLockService;
 use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
 use Pulsar\Extension\Cms\Workflow\EditorialWorkflowService;
@@ -545,6 +554,12 @@ final readonly class CmsCoreServiceProvider
         // Form submission pipeline
         $this->bindFormSubmissionServices($container, $config, $logger);
 
+        // Newsletter stack
+        $this->bindNewsletterServices($container, $auditLogger);
+
+        // Documentation services
+        $this->bindDocServices($container);
+
         // Responsive image renderer
         $container->instance(
             \Pulsar\Extension\Cms\Media\ResponsiveImageRenderer::class,
@@ -893,5 +908,53 @@ final readonly class CmsCoreServiceProvider
                 new PublicFormSubmissionController($formService),
             );
         }
+    }
+
+    private function bindNewsletterServices(
+        ContainerInterface $container,
+        ?AuditLoggerInterface $auditLogger,
+    ): void {
+        if (
+            $auditLogger === null
+            || !$container->has(NewsletterSubscriberRepositoryInterface::class)
+            || !$container->has(NewsletterCampaignRepositoryInterface::class)
+            || !$container->has(\Pulsar\Mail\MailManagerInterface::class)
+        ) {
+            return;
+        }
+
+        /** @var NewsletterSubscriberRepositoryInterface $subscriberRepo */
+        $subscriberRepo = $container->get(NewsletterSubscriberRepositoryInterface::class);
+
+        /** @var NewsletterCampaignRepositoryInterface $campaignRepo */
+        $campaignRepo = $container->get(NewsletterCampaignRepositoryInterface::class);
+
+        /** @var \Pulsar\Mail\MailManagerInterface $mailManager */
+        $mailManager = $container->get(\Pulsar\Mail\MailManagerInterface::class);
+
+        $container->instance(
+            NewsletterSubscriptionServiceInterface::class,
+            new NewsletterSubscriptionService($subscriberRepo, $mailManager, $auditLogger),
+        );
+
+        $container->instance(
+            CampaignEditorServiceInterface::class,
+            new CampaignEditorService($campaignRepo, $subscriberRepo, $mailManager, $auditLogger),
+        );
+    }
+
+    private function bindDocServices(ContainerInterface $container): void
+    {
+        if (!$container->has(DbDocVersionRepository::class)) {
+            return;
+        }
+
+        /** @var DbDocVersionRepository $docVersionRepo */
+        $docVersionRepo = $container->get(DbDocVersionRepository::class);
+
+        $container->instance(
+            DocVersionServiceInterface::class,
+            new DocVersionService($docVersionRepo),
+        );
     }
 }
