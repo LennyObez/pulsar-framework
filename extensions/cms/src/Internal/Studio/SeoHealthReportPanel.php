@@ -17,6 +17,9 @@ use function count;
  * Displays broken links (count + list), orphan content (published content
  * with no taxonomy terms and no menu links), and sitemap status (last
  * generation time, entry count, any errors).
+ *
+ * @psalm-api Resolved from the DI container by CmsStudioModule; not
+ *            instantiated by name.
  */
 #[Internal]
 final readonly class SeoHealthReportPanel

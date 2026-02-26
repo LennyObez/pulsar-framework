@@ -23,6 +23,10 @@ use function str_starts_with;
 /**
  * Resolves theme assets and templates to filesystem paths with path traversal protection.
  */
+/**
+ * @psalm-api Bound to ThemeAssetResolverInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Use ThemeAssetResolverInterface for public API')]
 final readonly class ThemeAssetResolver implements ThemeAssetResolverInterface
 {

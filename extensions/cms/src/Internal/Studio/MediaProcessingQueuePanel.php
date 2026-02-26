@@ -23,6 +23,9 @@ use const JSON_THROW_ON_ERROR;
  * Shows pending and completed derivative generation jobs from the
  * queue system, including job status, media asset reference,
  * derivative type, and timing information.
+ *
+ * @psalm-api Resolved from the DI container by CmsStudioModule; not
+ *            instantiated by name.
  */
 #[Internal]
 final readonly class MediaProcessingQueuePanel
