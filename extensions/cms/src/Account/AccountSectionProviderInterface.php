@@ -14,6 +14,9 @@ use Pulsar\Api\Api;
  *
  * Example: The Forum extension registers "Forum Activity" and "Badges" tabs.
  * Example: The Payments extension registers "Orders", "Invoices", and "Payment Methods" tabs.
+ *
+ * @psalm-api Public extension contract; implementations are tagged with
+ *            cms.account.section_provider and aggregated by AccountSectionRegistry.
  */
 #[Api(since: '1.0.0')]
 interface AccountSectionProviderInterface

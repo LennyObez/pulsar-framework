@@ -17,6 +17,9 @@ use Pulsar\Http\Message\Response;
  * Provides identity extraction and permission checking against the
  * framework's GateInterface. Controllers using this trait must
  * declare a `$gate` property of type GateInterface.
+ *
+ * @psalm-api Mixed into CMS API controllers; methods invoked through inheritance,
+ *            never by external name lookup.
  */
 #[Internal(reason: 'CMS API authorization trait; implementation detail')]
 trait RequiresAuthorization

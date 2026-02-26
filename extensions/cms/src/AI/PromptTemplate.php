@@ -12,6 +12,9 @@ use function str_replace;
  * Immutable prompt template with named placeholders for LLM prompts.
  *
  * Placeholders use `{name}` syntax and are replaced during rendering.
+ *
+ * @psalm-api Public DTO registered with PromptTemplateRegistry; consumed by
+ *            ContentAssistant and extension code.
  */
 #[Api(since: '1.0.0')]
 final readonly class PromptTemplate

@@ -13,6 +13,9 @@ use function usort;
  *
  * The CMS account controllers use this registry to collect sections from all
  * active extensions (Forum, Payments, etc.) and render them as tabs.
+ *
+ * @psalm-api Public registry resolved from the DI container by AccountController
+ *            and admin customer-detail templates; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class AccountSectionRegistry
