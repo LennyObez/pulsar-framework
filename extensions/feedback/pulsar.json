@@ -1,0 +1,9 @@
+{
+  "name": "pulsar/feedback",
+  "version": "1.0.0",
+  "description": "User feedback collection with admin triage and GitHub integration",
+  "type": "extension",
+  "namespace": "Pulsar\\Extension\\Feedback",
+  "extension": "Pulsar\\Extension\\Feedback\\FeedbackExtension",
+  "providers": ["Pulsar\\Extension\\Feedback\\FeedbackServiceProvider"]
+}
