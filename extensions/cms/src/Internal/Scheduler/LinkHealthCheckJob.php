@@ -22,6 +22,9 @@ use function sprintf;
  *
  * Executes daily at 3 AM UTC to detect broken links, missing images,
  * and orphaned internal references.
+ *
+ * @psalm-api Registered with the scheduler by the CMS service provider;
+ *            invoked through JobInterface, not instantiated by name.
  */
 #[Internal(reason: 'CMS scheduled link health check')]
 final readonly class LinkHealthCheckJob implements JobInterface

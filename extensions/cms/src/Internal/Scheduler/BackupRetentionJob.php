@@ -22,6 +22,9 @@ use function sprintf;
  *
  * Runs weekly on Sundays at 2 AM UTC. Deletes backups older than
  * the configured retention period (default 30 days).
+ *
+ * @psalm-api Registered with the scheduler by the CMS service provider;
+ *            invoked through JobInterface, not instantiated by name.
  */
 #[Internal(reason: 'CMS backup retention enforcement')]
 final readonly class BackupRetentionJob implements JobInterface
