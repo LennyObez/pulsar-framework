@@ -153,11 +153,9 @@ final class CsrfTokenManagerTest extends TestCase
 
         if ($storedToken === null) {
             $session->method('get')
-                ->with('_csrf_token')
                 ->willReturn(null);
         } else {
             $session->method('get')
-                ->with('_csrf_token')
                 ->willReturn($storedToken === 'default' ? null : $storedToken);
         }
 

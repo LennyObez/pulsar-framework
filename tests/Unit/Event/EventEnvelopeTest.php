@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Event;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -147,6 +148,45 @@ final class EventEnvelopeTest extends TestCase
         self::assertArrayHasKey('event_type', $array);
         self::assertArrayHasKey('schema_version', $array);
         self::assertArrayHasKey('payload_hash', $array);
+    }
+
+    #[Test]
+    public function fromArrayRecomputesPayloadHash(): void
+    {
+        $metadata = $this->createMetadata();
+        $original = EventEnvelope::wrap(
+            eventType: 'order.created',
+            schemaVersion: 1,
+            payload: ['order_id' => 'abc-123'],
+            metadata: $metadata,
+        );
+
+        $array = $original->toArray();
+        $correctHash = $array['payload_hash'];
+
+        // Tamper with the payload hash
+        $array['payload_hash'] = 'tampered_hash_value_that_should_be_overwritten';
+
+        $restored = EventEnvelope::fromArray($array);
+
+        // fromArray recomputes the hash — tampered value should be ignored
+        self::assertSame($correctHash, $restored->payloadHash);
+        self::assertNotSame('tampered_hash_value_that_should_be_overwritten', $restored->payloadHash);
+    }
+
+    #[Test]
+    public function fromArrayThrowsOnEmptyEventType(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/non-empty eventType/');
+
+        (void) EventEnvelope::fromArray([
+            'event_id' => 'abc',
+            'event_type' => '',
+            'schema_version' => 1,
+            'payload' => [],
+            'metadata' => [],
+        ]);
     }
 
     private function createMetadata(): EventMetadata

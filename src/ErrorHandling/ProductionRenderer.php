@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\ErrorHandling;
 
 use Override;
-use Pulsar\Http\Request;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Http\ResponseStatus;
 use Throwable;
 
@@ -21,7 +21,7 @@ use function sprintf;
 final class ProductionRenderer implements ExceptionRendererInterface
 {
     #[Override]
-    public function render(Throwable $exception, Request $request, ResponseStatus $status): string
+    public function render(Throwable $exception, ServerRequestInterface $request, ResponseStatus $status): string
     {
         $statusCode = $status->value;
         $title = sprintf('%d %s', $statusCode, $this->escape($status->reasonPhrase()));

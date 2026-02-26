@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Tenancy;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Api;
-use Pulsar\Http\Request;
 
 /**
  * Interface for resolving the current tenant from an HTTP request.
@@ -18,5 +18,5 @@ interface TenantResolverInterface
      *
      * Returns null if no tenant can be determined.
      */
-    public function resolve(Request $request): ?Tenant;
+    public function resolve(ServerRequestInterface $request): ?Tenant;
 }

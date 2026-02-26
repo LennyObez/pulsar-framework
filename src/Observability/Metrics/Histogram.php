@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Pulsar\Observability\Metrics;
 
+use Pulsar\Api\Api;
+
 use function count;
 use function sort;
 
@@ -17,6 +19,7 @@ use const SORT_NUMERIC;
  * Bucket keys are the string representation of boundary floats. PHP may
  * auto-cast integer-like numeric strings (e.g. '1', '10') to int keys.
  */
+#[Api(since: '1.0.0')]
 final class Histogram
 {
     /** @var list<float> Sorted upper-bound bucket boundaries */

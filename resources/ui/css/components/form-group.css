@@ -1,0 +1,37 @@
+/* Pulsar UI — Form Group Component v1.0.0
+ * Form group with label, input, help text, and error message.
+ */
+
+.pui-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1-5);
+}
+
+.pui-form-group__label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--color-text);
+}
+
+.pui-form-group__required {
+  color: var(--color-danger-500);
+  margin-inline-start: var(--space-0-5);
+}
+
+.pui-form-group__help {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.pui-form-group__error {
+  font-size: var(--text-xs);
+  color: var(--color-danger-600);
+  font-weight: var(--font-medium);
+}
+
+/* Error state — turns label and border red */
+.pui-form-group--error .pui-form-group__label {
+  color: var(--color-danger-600);
+}

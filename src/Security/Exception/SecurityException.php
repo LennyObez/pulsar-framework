@@ -113,4 +113,49 @@ final class SecurityException extends RuntimeException
     {
         return new self(sprintf('Serialization of %s is forbidden — key material must not leave process memory', $class));
     }
+
+    /**
+     * Session validation failed for a specific validator.
+     */
+    #[NoDiscard]
+    public static function sessionValidationFailed(string $validator): self
+    {
+        return new self(sprintf('Session validation failed: %s', $validator));
+    }
+
+    /**
+     * Concurrent session limit exceeded.
+     */
+    #[NoDiscard]
+    public static function sessionConcurrencyExceeded(int $max): self
+    {
+        return new self(sprintf('Concurrent session limit exceeded: maximum %d active sessions allowed', $max));
+    }
+
+    /**
+     * Handler does not support the requested capability.
+     */
+    #[NoDiscard]
+    public static function sessionHandlerNotSupported(string $capability, string $handler): self
+    {
+        return new self(sprintf('Session handler "%s" does not support %s', $handler, $capability));
+    }
+
+    /**
+     * Session encryption operation failed.
+     */
+    #[NoDiscard]
+    public static function sessionEncryptionFailed(string $reason): self
+    {
+        return new self(sprintf('Session encryption failed: %s', $reason));
+    }
+
+    /**
+     * Session payload exceeds size limit.
+     */
+    #[NoDiscard]
+    public static function sessionPayloadTooLarge(int $size, int $max): self
+    {
+        return new self(sprintf('Session payload size %d bytes exceeds maximum of %d bytes', $size, $max));
+    }
 }

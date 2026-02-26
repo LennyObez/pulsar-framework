@@ -45,4 +45,10 @@ final class AuthorizationException extends RuntimeException
     {
         return new self('Two-factor authentication verification is required');
     }
+
+    #[NoDiscard]
+    public static function stepUpRequired(): self
+    {
+        return new self('Step-up authentication is required for this action');
+    }
 }

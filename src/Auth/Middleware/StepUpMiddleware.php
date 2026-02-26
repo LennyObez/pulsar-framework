@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Pulsar\Auth\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\SecurityContext;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Security\Session\SessionInterface;
+
+use function str_contains;
 
 /**
  * Route-level middleware requiring step-up authentication for sensitive operations.
@@ -28,10 +32,10 @@ final readonly class StepUpMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         /** @var SecurityContext|null $securityContext */
-        $securityContext = $request->attribute('_security_context');
+        $securityContext = $request->getAttribute('_security_context');
 
         if ($securityContext === null) {
             return $this->forbiddenResponse($request);
@@ -59,7 +63,7 @@ final readonly class StepUpMiddleware implements MiddlewareInterface
             return $this->forbiddenResponse($request);
         }
 
-        return $next($request);
+        return $handler->handle($request);
     }
 
     /**
@@ -71,18 +75,18 @@ final readonly class StepUpMiddleware implements MiddlewareInterface
         $session->set($sessionKey, time());
     }
 
-    private function forbiddenResponse(Request $request): Response
+    private function forbiddenResponse(ServerRequestInterface $request): ResponseInterface
     {
-        if ($request->wantsJson()) {
+        if (str_contains($request->getHeaderLine('Accept'), 'application/json')) {
             return Response::json(
                 ['error' => 'Step-up authentication required', 'status' => 403],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 
         return new Response(
+            statusCode: ResponseStatus::Forbidden->value,
             body: 'Step-up authentication required',
-            status: ResponseStatus::Forbidden,
         );
     }
 }

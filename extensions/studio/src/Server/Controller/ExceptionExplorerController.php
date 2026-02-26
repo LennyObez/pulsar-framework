@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Studio\Server\Controller;
 
 use JsonException;
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Studio\Console\Storage\EventStoreInterface;
 use Pulsar\Extension\Studio\Security\ProductionSafetyMode;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 use function htmlspecialchars;
 use function json_encode;
@@ -32,7 +32,7 @@ final readonly class ExceptionExplorerController
     /**
      * @throws JsonException
      */
-    public function handle(Request $_request): Response
+    public function handle(ServerRequestInterface $_request): Response
     {
         $events = $this->store->query(
             ['event_type' => ['exception']],

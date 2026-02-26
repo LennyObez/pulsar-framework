@@ -1,0 +1,23 @@
+{
+  "name": "pulsar/analytics",
+  "version": "1.0.0-rc.11",
+  "description": "Privacy-focused, self-hosted web analytics — page views, sessions, custom events, goals, and multi-site support without cookies",
+  "trust_tier": "core",
+  "extension_class": "Pulsar\\Extension\\Analytics\\AnalyticsExtension",
+  "pulsar": {
+    "min_version": "1.0.0-rc.11"
+  },
+  "requires": {},
+  "suggests": {
+    "pulsar/admin": ">=1.0.0-rc.10"
+  },
+  "provides": {
+    "services": [
+      "TrackingServiceInterface",
+      "StatsServiceInterface",
+      "GoalServiceInterface",
+      "SiteServiceInterface"
+    ],
+    "routes": true
+  }
+}

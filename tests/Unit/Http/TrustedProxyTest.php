@@ -7,9 +7,7 @@ namespace Pulsar\Tests\Unit\Http;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\TrustedProxy;
 
 #[CoversClass(TrustedProxy::class)]
@@ -88,18 +86,15 @@ final class TrustedProxyTest extends TestCase
         self::assertSame('10.0.0.1', $proxy->resolveClientIp($request));
     }
 
-    private function makeRequest(string $remoteAddr, ?string $forwardedFor = null): Request
+    private function makeRequest(string $remoteAddr, ?string $forwardedFor = null): ServerRequest
     {
         $headers = $forwardedFor !== null ? ['X-Forwarded-For' => $forwardedFor] : [];
 
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/',
-            path: '/',
-            queryString: '',
-            headers: new HeaderBag($headers),
-            body: '',
-            server: ['REMOTE_ADDR' => $remoteAddr],
+            headers: $headers,
+            serverParams: ['REMOTE_ADDR' => $remoteAddr],
         );
     }
 }

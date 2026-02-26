@@ -21,15 +21,15 @@ final class AdminAccessGateTest extends TestCase
     #[Test]
     public function assertCanAccessAllowsWhenPolicyReturnsTrue(): void
     {
-        $policy = $this->createStub(PolicyInterface::class);
-        $policy->method('evaluate')->willReturn(true);
+        /** @var PolicyInterface&MockObject $policy */
+        $policy = $this->createMock(PolicyInterface::class);
+        $policy->expects(self::once())->method('evaluate')->willReturn(true);
         $identity = $this->createStub(IdentityInterface::class);
 
         $gate = new AdminAccessGate($policy);
 
-        // Should not throw
+        // Should not throw — policy was consulted exactly once
         $gate->assertCanAccess($identity);
-        $this->addToAssertionCount(1);
     }
 
     #[Test]
@@ -64,14 +64,15 @@ final class AdminAccessGateTest extends TestCase
     #[Test]
     public function assertCanPerformAllowsWhenPolicyReturnsTrue(): void
     {
-        $policy = $this->createStub(PolicyInterface::class);
-        $policy->method('evaluate')->willReturn(true);
+        /** @var PolicyInterface&MockObject $policy */
+        $policy = $this->createMock(PolicyInterface::class);
+        $policy->expects(self::once())->method('evaluate')->willReturn(true);
         $identity = $this->createStub(IdentityInterface::class);
 
         $gate = new AdminAccessGate($policy);
 
+        // Should not throw — policy was consulted exactly once
         $gate->assertCanPerform($identity, 'users', ResourceOperation::List);
-        $this->addToAssertionCount(1);
     }
 
     #[Test]

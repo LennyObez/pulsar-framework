@@ -1,0 +1,39 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Pulsar\Extension\Cms\Publishing;
+
+use Pulsar\Api\Api;
+
+/**
+ * Result of a publish or unpublish operation on a single channel.
+ */
+#[Api(since: '1.0.0')]
+final readonly class PublishResult
+{
+    public function __construct(
+        public bool $success,
+        public string $channelName,
+        public ?string $externalUrl = null,
+        public ?string $errorMessage = null,
+    ) {}
+
+    public static function success(string $channelName, ?string $externalUrl = null): self
+    {
+        return new self(
+            success: true,
+            channelName: $channelName,
+            externalUrl: $externalUrl,
+        );
+    }
+
+    public static function failure(string $channelName, string $error): self
+    {
+        return new self(
+            success: false,
+            channelName: $channelName,
+            errorMessage: $error,
+        );
+    }
+}

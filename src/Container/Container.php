@@ -4,33 +4,47 @@ declare(strict_types=1);
 
 namespace Pulsar\Container;
 
+use Closure;
 use NoDiscard;
 use Override;
+use Pulsar\Container\Compiler\ContainerBuilder;
+use Pulsar\Container\Compiler\Pass\ValidateLifetimesPass;
+use Pulsar\Container\Compiler\PassRunner;
+use Pulsar\Container\Decorator\DecoratorChain;
 use Pulsar\Container\Exception\ContainerException;
 use Pulsar\Container\Exception\NotFoundException;
+use Pulsar\Container\Lazy\LazyServiceFactory;
+use Pulsar\Container\Provider\DeferredProviderRegistry;
+use Pulsar\Container\Provider\DeferredServiceProviderInterface;
+use Pulsar\Container\Scope\ScopeManager;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionNamedType;
 use Throwable;
 
+use function array_keys;
+use function array_pop;
 use function in_array;
 use function is_callable;
 use function is_object;
+use function is_string;
 use function sprintf;
 
 /**
  * Array-based dependency injection container.
  *
- * Implements PSR-11 and provides singleton/factory binding support.
+ * Implements PSR-11 and provides singleton/factory binding support,
+ * service tags, contextual bindings, scoped lifetimes, lazy proxies,
+ * decorator chains, deferred providers, and compiler pass support.
  */
-final class Container implements ContainerInterface
+final class Container implements AdvancedContainerInterface
 {
     /**
-     * Registered bindings.
+     * Service definitions indexed by ID.
      *
-     * @var array<string, array{concrete: callable|class-string, type: BindingType}>
+     * @var array<string, ServiceDefinition>
      */
-    private array $bindings = [];
+    private array $definitions = [];
 
     /**
      * Resolved singleton instances.
@@ -56,6 +70,32 @@ final class Container implements ContainerInterface
     }
 
     /**
+     * Contextual bindings: consumer → abstract → concrete.
+     *
+     * @var array<string, array<string, callable|class-string>>
+     */
+    private array $contextualBindings = [];
+
+    private ?ScopeManager $scopeManager = null;
+    private ?DeferredProviderRegistry $deferredProviders = null;
+
+    /**
+     * Set the scope manager (injected at Kernel boot, null in test/simple usage).
+     */
+    public function setScopeManager(ScopeManager $scopeManager): void
+    {
+        $this->scopeManager = $scopeManager;
+    }
+
+    /**
+     * Set the deferred provider registry.
+     */
+    public function setDeferredProviderRegistry(DeferredProviderRegistry $registry): void
+    {
+        $this->deferredProviders = $registry;
+    }
+
+    /**
      * Load optimization hints from cache.
      *
      * Hints are fallible — if a hint fails at resolution time,
@@ -73,10 +113,20 @@ final class Container implements ContainerInterface
     #[Override]
     public function bind(string $id, callable|string $concrete, BindingType $type = BindingType::Singleton): void
     {
-        $this->bindings[$id] = [
-            'concrete' => $concrete,
-            'type' => $type,
-        ];
+        $this->bindWithLifetime($id, $concrete, $type->toLifetime());
+    }
+
+    #[Override]
+    public function bindWithLifetime(string $id, callable|string $concrete, Lifetime $lifetime = Lifetime::Singleton): void
+    {
+        /** @var class-string|Closure $normalized */
+        $normalized = is_string($concrete) ? $concrete : Closure::fromCallable($concrete);
+
+        $this->definitions[$id] = new ServiceDefinition(
+            id: $id,
+            concrete: $normalized,
+            lifetime: $lifetime,
+        );
 
         // Clear any cached instance if rebinding
         unset($this->instances[$id]);
@@ -91,7 +141,9 @@ final class Container implements ContainerInterface
     #[Override]
     public function has(string $id): bool
     {
-        return isset($this->bindings[$id]) || isset($this->instances[$id]);
+        return isset($this->definitions[$id])
+            || isset($this->instances[$id])
+            || ($this->deferredProviders !== null && $this->deferredProviders->has($id));
     }
 
     /**
@@ -109,11 +161,121 @@ final class Container implements ContainerInterface
         }
 
         // Check for binding
-        if (!isset($this->bindings[$id])) {
-            throw NotFoundException::forId($id);
+        if (isset($this->definitions[$id])) {
+            return $this->resolve($id);
         }
 
-        return $this->resolve($id);
+        // Check deferred providers before giving up
+        if ($this->deferredProviders !== null && $this->deferredProviders->has($id)) {
+            $this->deferredProviders->resolve($id, $this);
+
+            return $this->resolveAfterDeferredRegistration($id);
+        }
+
+        throw NotFoundException::forId($id);
+    }
+
+    #[Override]
+    public function tag(string $id, string $tagName, int $priority = 0, array $attributes = []): void
+    {
+        if (!isset($this->definitions[$id])) {
+            throw ContainerException::unresolvable($id, 'Cannot tag unregistered service');
+        }
+
+        $this->definitions[$id] = $this->definitions[$id]->withTags(
+            new TagDefinition($tagName, $priority, $attributes),
+        );
+    }
+
+    #[Override]
+    public function getTaggedServiceIds(string $tag): array
+    {
+        return Tag\TagCollector::collectIds($tag, $this->definitions);
+    }
+
+    #[Override]
+    public function decorate(string $id, string|callable $decorator, int $priority = 0): void
+    {
+        if (!isset($this->definitions[$id])) {
+            throw ContainerException::unresolvable($id, 'Cannot decorate unregistered service');
+        }
+
+        /** @var class-string|Closure $normalizedDecorator */
+        $normalizedDecorator = is_string($decorator) ? $decorator : Closure::fromCallable($decorator);
+
+        $this->definitions[$id] = $this->definitions[$id]->withDecorators(
+            new DecoratorDefinition($normalizedDecorator, $priority),
+        );
+
+        // Clear cached instance so decoration applies on next resolution
+        unset($this->instances[$id]);
+    }
+
+    #[Override]
+    public function when(string $consumer): ContextualBindingBuilder
+    {
+        return new ContextualBindingBuilder($consumer, $this);
+    }
+
+    /**
+     * Store a contextual binding (called by ContextualBindingBuilder).
+     *
+     * @param string $consumer Consumer class FQCN
+     * @param string $abstract Abstract type being resolved
+     * @param callable|class-string $concrete Concrete implementation
+     */
+    #[Override]
+    public function addContextualBinding(string $consumer, string $abstract, callable|string $concrete): void
+    {
+        $this->contextualBindings[$consumer][$abstract] = $concrete;
+    }
+
+    #[Override]
+    public function beginRequestScope(): void
+    {
+        $this->scopeManager?->beginScope(Lifetime::RequestScope);
+    }
+
+    #[Override]
+    public function endRequestScope(): void
+    {
+        $this->scopeManager?->endScope(Lifetime::RequestScope);
+    }
+
+    #[Override]
+    public function beginTenantScope(string $tenantId): void
+    {
+        $this->scopeManager?->beginScope(Lifetime::TenantScope, $tenantId);
+    }
+
+    #[Override]
+    public function endTenantScope(): void
+    {
+        $this->scopeManager?->endScope(Lifetime::TenantScope);
+    }
+
+    #[Override]
+    public function processCompilerPasses(PassRunner $runner): void
+    {
+        $builder = new ContainerBuilder();
+
+        foreach ($this->definitions as $id => $definition) {
+            $builder->setDefinition($id, $definition);
+        }
+
+        $runner->run($builder);
+
+        // Re-import processed definitions
+        $this->definitions = [];
+        foreach ($builder->allDefinitions() as $id => $definition) {
+            $this->definitions[$id] = $definition;
+        }
+    }
+
+    #[Override]
+    public function getDefinitions(): array
+    {
+        return $this->definitions;
     }
 
     /**
@@ -122,6 +284,29 @@ final class Container implements ContainerInterface
      * @throws ContainerException
      * @throws ReflectionException If class reflection fails during autowiring
      */
+    /**
+     * Resolve after deferred provider registration.
+     *
+     * Extracted to its own method so Psalm flow analysis doesn't carry
+     * the earlier isset() narrowing into this scope.
+     *
+     * @throws NotFoundException
+     * @throws ContainerException
+     * @throws ReflectionException
+     */
+    private function resolveAfterDeferredRegistration(string $id): mixed
+    {
+        if (isset($this->instances[$id])) {
+            return $this->instances[$id];
+        }
+
+        if (isset($this->definitions[$id])) {
+            return $this->resolve($id);
+        }
+
+        throw NotFoundException::forId($id);
+    }
+
     private function resolve(string $id): object
     {
         // Circular dependency detection
@@ -132,13 +317,26 @@ final class Container implements ContainerInterface
         $this->resolving[] = $id;
 
         try {
-            $binding = $this->bindings[$id];
-            $concrete = $binding['concrete'];
+            $definition = $this->definitions[$id];
+            $concrete = $definition->concrete;
+            $lifetime = $definition->lifetime;
 
-            // Resolve the concrete implementation
-            $instance = is_callable($concrete)
-                ? $concrete($this)
-                : $this->build($concrete);
+            // Check scoped instance cache
+            if (($lifetime === Lifetime::RequestScope || $lifetime === Lifetime::TenantScope) && $this->scopeManager !== null) {
+                $scopedInstance = $this->scopeManager->getScopedInstance($id, $lifetime);
+                if ($scopedInstance !== null) {
+                    return $scopedInstance;
+                }
+            }
+
+            // Build the instance — lazy proxy wrapping if flagged
+            if ($definition->lazy) {
+                $instance = LazyServiceFactory::create($id, $concrete, $this);
+            } elseif ($concrete instanceof Closure) {
+                $instance = $concrete($this);
+            } else {
+                $instance = $this->build($concrete);
+            }
 
             if (!is_object($instance)) {
                 throw ContainerException::unresolvable(
@@ -147,10 +345,17 @@ final class Container implements ContainerInterface
                 );
             }
 
-            // Cache singleton instances
-            if ($binding['type'] === BindingType::Singleton) {
-                $this->instances[$id] = $instance;
+            // Apply decorator chain
+            if ($definition->decorators !== []) {
+                $instance = DecoratorChain::resolve($instance, $definition->decorators, $this);
             }
+
+            // Cache based on lifetime
+            match ($lifetime) {
+                Lifetime::Singleton => $this->instances[$id] = $instance,
+                Lifetime::RequestScope, Lifetime::TenantScope => $this->scopeManager?->setScopedInstance($id, $lifetime, $instance),
+                Lifetime::Transient => null,
+            };
 
             return $instance;
         } finally {
@@ -275,6 +480,13 @@ final class Container implements ContainerInterface
 
             $dependencyClass = $type->getName();
 
+            // Check contextual bindings first
+            $resolvedContextual = $this->resolveContextual($className, $dependencyClass);
+            if ($resolvedContextual !== null) {
+                $dependencies[] = $resolvedContextual;
+                continue;
+            }
+
             try {
                 $dependencies[] = $this->get($dependencyClass);
             } catch (NotFoundException) {
@@ -298,6 +510,36 @@ final class Container implements ContainerInterface
         return new $className(...$dependencies);
     }
 
+    /**
+     * Resolve a contextual binding for a consumer + abstract pair.
+     *
+     * @return object|null The resolved instance, or null if no contextual binding exists
+     *
+     * @throws ContainerException
+     * @throws ReflectionException
+     */
+    private function resolveContextual(string $consumer, string $abstract): ?object
+    {
+        if (!isset($this->contextualBindings[$consumer][$abstract])) {
+            return null;
+        }
+
+        $concrete = $this->contextualBindings[$consumer][$abstract];
+
+        if (is_callable($concrete)) {
+            /** @var object */
+            return $concrete($this);
+        }
+
+        if (isset($this->definitions[$concrete]) || isset($this->instances[$concrete])) {
+            /** @var object */
+            return $this->get($concrete);
+        }
+
+        /** @var class-string $concrete */
+        return $this->build($concrete);
+    }
+
     #[Override]
     public function forgetInstance(string $id): void
     {
@@ -314,7 +556,7 @@ final class Container implements ContainerInterface
     public function getBindings(): array
     {
         /** @var list<string> */
-        return array_keys($this->bindings);
+        return array_keys($this->definitions);
     }
 
     /**
@@ -330,4 +572,26 @@ final class Container implements ContainerInterface
         return array_keys($this->instances);
     }
 
+    #[Override]
+    public function validateScopeGraph(): void
+    {
+        $builder = new ContainerBuilder();
+
+        foreach ($this->definitions as $id => $definition) {
+            $builder->setDefinition($id, $definition);
+        }
+
+        $pass = new ValidateLifetimesPass();
+        $pass->process($builder);
+    }
+
+    #[Override]
+    public function registerDeferredProvider(DeferredServiceProviderInterface $provider): void
+    {
+        if ($this->deferredProviders === null) {
+            $this->deferredProviders = new DeferredProviderRegistry();
+        }
+
+        $this->deferredProviders->register($provider);
+    }
 }

@@ -1,0 +1,89 @@
+name: 'Tier B: Nightly Performance Benchmarks'
+
+on:
+  schedule:
+    - cron: '0 3 * * *' # 3 AM UTC daily
+  workflow_dispatch:
+
+concurrency:
+  group: benchmark-nightly
+  cancel-in-progress: true
+
+jobs:
+  tier-b-benchmarks:
+    name: 'Tier B: Nightly Benchmarks (Real Backends)'
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 3
+
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: pulsar_bench
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 3
+
+    env:
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      DB_HOST: 127.0.0.1
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      DB_DATABASE: pulsar_bench
+      PULSAR_MASTER_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: sodium, redis, pdo_pgsql, pdo_sqlite
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - run: composer install --no-interaction --no-progress
+
+      - name: 'Tier B: Run all benchmarks (broader tolerance)'
+        continue-on-error: true
+        run: composer bench:ci 2>&1 | tee benchmark-tier-b.txt
+
+      - name: 'Tier B: Run memory peak benchmarks'
+        continue-on-error: true
+        run: |
+          echo "Running memory peak benchmarks..."
+          php tests/Benchmark/Scenarios/memory_anonymous.php
+          php tests/Benchmark/Scenarios/memory_authenticated.php
+          php tests/Benchmark/Scenarios/memory_compliance.php
+
+      - name: Upload Tier B results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-tier-b-${{ github.run_number }}
+          path: |
+            benchmark-tier-b.txt
+            var/bench/results.json
+          retention-days: 30
+
+      - name: Add results to job summary
+        if: always()
+        run: |
+          echo '## Tier B: Nightly Benchmark Results' >> "$GITHUB_STEP_SUMMARY"
+          echo '' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat benchmark-tier-b.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
