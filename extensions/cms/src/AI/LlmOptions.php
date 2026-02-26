@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Options passed to an LLM provider for completion requests.
+ *
+ * @psalm-api Public DTO consumed by AI clients and extension code; class-level
+ *            marker for findUnusedCode analysis.
  */
 #[Api(since: '1.0.0')]
 final readonly class LlmOptions

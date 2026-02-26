@@ -10,6 +10,9 @@ use function is_string;
 
 /**
  * Immutable DTO representing a response from an LLM provider.
+ *
+ * @psalm-api Public DTO returned from LLM clients; consumed by user-land code
+ *            and admin templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class LlmResponse
