@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Notification dispatched when content is submitted for editorial review.
+ *
+ * @psalm-api Constructed by CmsNotificationDispatcher and dispatched through
+ *            the framework notification manager.
  */
 #[Api(since: '1.0.0')]
 final readonly class ReviewRequestNotification implements CmsNotificationInterface
