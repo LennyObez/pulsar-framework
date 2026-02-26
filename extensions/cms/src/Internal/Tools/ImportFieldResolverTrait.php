@@ -14,6 +14,9 @@ use function is_string;
  * Normalizes field aliases (slug vs slug_segment, author vs author_id)
  * and provides consistent translation slug resolution used by both
  * SiteDefinitionParser and ImportParser.
+ *
+ * @psalm-api Mixed into SiteDefinitionParser and ImportParser; methods
+ *            invoked through inheritance, never by external name lookup.
  */
 #[Internal(reason: 'Import/export internals; shared helper trait')]
 trait ImportFieldResolverTrait

@@ -39,6 +39,10 @@ use const SODIUM_CRYPTO_GENERICHASH_BYTES;
  *  - media/{filename}: actual media files from storage
  */
 #[Internal(reason: 'Media bundle export internals; use MediaBundleExporterInterface')]
+/**
+ * @psalm-api Bound to MediaBundleExporterInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class MediaBundleExporter implements MediaBundleExporterInterface
 {
     private const string SCHEMA_VERSION = '1.0.0';

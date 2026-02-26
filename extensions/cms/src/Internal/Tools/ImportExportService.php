@@ -29,6 +29,10 @@ use const JSON_THROW_ON_ERROR;
  * and the central ImportExportRegistry for extension delegation.
  */
 #[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Bound to ImportExportServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class ImportExportService implements ImportExportServiceInterface
 {
     /** @var list<string> Extension section keys that delegate to ImportExportRegistry providers */

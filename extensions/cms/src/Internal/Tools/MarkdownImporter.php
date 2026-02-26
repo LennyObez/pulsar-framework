@@ -28,6 +28,10 @@ use const PREG_SET_ORDER;
  * use `---` as a document separator (on its own line between documents).
  */
 #[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            controllers; not instantiated by name.
+ */
 final readonly class MarkdownImporter
 {
     /**

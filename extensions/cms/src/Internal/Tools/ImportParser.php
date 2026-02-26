@@ -59,6 +59,10 @@ use const JSON_ERROR_NONE;
  * duplicate resolution policies, and locale filtering.
  */
 #[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by MediaBundleImporter and
+ *            ImportExportService; not instantiated by name.
+ */
 final readonly class ImportParser
 {
     use ImportFieldResolverTrait;
