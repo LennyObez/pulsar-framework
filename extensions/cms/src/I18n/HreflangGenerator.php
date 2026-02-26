@@ -20,6 +20,9 @@ use function str_starts_with;
  * value object suitable for rendering as `<link rel="alternate">` tags in the
  * HTML head section. Also produces an `x-default` entry pointing to the
  * default locale version.
+ *
+ * @psalm-api Public service resolved from the DI container by content
+ *            controllers; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class HreflangGenerator

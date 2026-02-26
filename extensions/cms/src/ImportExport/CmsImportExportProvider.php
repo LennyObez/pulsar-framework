@@ -24,6 +24,10 @@ use function array_values;
  * and configuration data.
  */
 #[Internal(reason: 'Wired in CmsExtension::postBoot()')]
+/**
+ * @psalm-api Registered with the framework ImportExportRegistry; consumed
+ *            through ImportExportProviderInterface, not instantiated by name.
+ */
 final readonly class CmsImportExportProvider implements ImportExportProviderInterface
 {
     private const array ENTITY_TYPE_MAP = [
