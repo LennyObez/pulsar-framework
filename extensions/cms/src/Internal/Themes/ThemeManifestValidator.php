@@ -16,6 +16,9 @@ use function trim;
 
 /**
  * Validates theme manifests against required fields and format constraints.
+ *
+ * @psalm-api Bound to ThemeManifestValidatorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use ThemeManifestValidatorInterface for public API')]
 final readonly class ThemeManifestValidator implements ThemeManifestValidatorInterface

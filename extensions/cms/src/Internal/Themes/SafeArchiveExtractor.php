@@ -33,6 +33,10 @@ use function str_starts_with;
  * - realpath() resolution to ensure the extracted path stays within the target directory
  * - Maximum archive size and file count enforcement from ThemesConfig
  */
+/**
+ * @psalm-api Bound to ThemeArchiveExtractorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Use ThemeArchiveExtractorInterface for public API')]
 final readonly class SafeArchiveExtractor implements ThemeArchiveExtractorInterface
 {

@@ -51,6 +51,10 @@ use const JSON_THROW_ON_ERROR;
 /**
  * Theme lifecycle manager handling install, activate, deactivate, delete, preview, and rollback.
  */
+/**
+ * @psalm-api Bound to ThemeManagerInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Use ThemeManagerInterface for public API')]
 final readonly class ThemeManager implements ThemeManagerInterface
 {
