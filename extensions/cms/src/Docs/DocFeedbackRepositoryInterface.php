@@ -9,6 +9,9 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for documentation page feedback.
+ *
+ * @psalm-api Public binding contract; implemented by DbDocFeedbackRepository
+ *            and consumed by docs controllers.
  */
 #[Api(since: '1.0.0')]
 interface DocFeedbackRepositoryInterface
