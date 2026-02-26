@@ -23,6 +23,9 @@ use function str_starts_with;
  * Provides a filtered view of audit entries relevant to the CMS
  * (actions prefixed with "cms."), with support for filtering by
  * event type and date range. Includes chain verification capability.
+ *
+ * @psalm-api Resolved from the DI container by CmsStudioModule; not
+ *            instantiated by name.
  */
 #[Internal]
 final readonly class CmsAuditPanel
