@@ -14,6 +14,9 @@ use Pulsar\Security\Crypto\MasterKey;
  * Uses subkey IDs 10-12 to avoid collision with core IDs 1-5.
  *
  * Context strings are exactly 8 bytes per libsodium KDF requirements.
+ *
+ * @psalm-api Resolved from the DI container by services that need to derive
+ *            HMAC keys; not instantiated by name.
  */
 #[Internal(reason: 'CMS security internals; use via service binding')]
 final readonly class CmsKeyManager

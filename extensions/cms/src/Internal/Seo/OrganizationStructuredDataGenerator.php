@@ -17,6 +17,9 @@ use function rtrim;
  *
  * This generator only activates for the root page (path = '' or '/') so
  * the Organization schema appears once on the site, per Google's recommendation.
+ *
+ * @psalm-api Aggregated by SeoService through the StructuredDataGeneratorInterface
+ *            contract; resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use StructuredDataGeneratorInterface for public API')]
 final readonly class OrganizationStructuredDataGenerator implements StructuredDataGeneratorInterface

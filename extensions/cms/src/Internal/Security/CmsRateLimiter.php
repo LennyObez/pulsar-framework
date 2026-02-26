@@ -22,6 +22,10 @@ use function time;
  *
  * Returns false when the limit is exceeded, true when the attempt is allowed.
  */
+/**
+ * @psalm-api Resolved from the DI container by middleware enforcing per-action
+ *            rate limits; not instantiated by name.
+ */
 #[Internal(reason: 'CMS rate limiting helper; not part of public API')]
 final readonly class CmsRateLimiter
 {
