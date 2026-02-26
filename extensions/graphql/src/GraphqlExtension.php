@@ -40,11 +40,8 @@ final readonly class GraphqlExtension implements ExtensionInterface
             return;
         }
 
-        /** @var GraphqlController $controller */
-        $controller = $container->get(GraphqlController::class);
-
-        $router->post('/graphql', [$controller, 'execute'], 'graphql.execute');
-        $router->get('/graphql', [$controller, 'introspect'], 'graphql.introspect');
+        $router->post('/graphql', [GraphqlController::class, 'execute'], 'graphql.execute');
+        $router->get('/graphql', [GraphqlController::class, 'introspect'], 'graphql.introspect');
     }
 
     /**
