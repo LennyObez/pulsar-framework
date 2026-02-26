@@ -38,6 +38,10 @@ use function usort;
 /**
  * MySQL FULLTEXT search with composite ranking (MATCH AGAINST + recency + taxonomy boost).
  */
+/**
+ * @psalm-api Returned by SearchServiceFactory::create() when the active driver
+ *            is MySQL; not instantiated by name outside the factory.
+ */
 #[Internal(reason: 'Use SearchServiceInterface for public API')]
 final readonly class MysqlSearchService implements SearchServiceInterface
 {

@@ -38,6 +38,10 @@ use function usort;
 /**
  * SQLite FTS5 full-text search with composite ranking (bm25 + recency + taxonomy boost).
  */
+/**
+ * @psalm-api Returned by SearchServiceFactory::create() when the active driver
+ *            is SQLite; not instantiated by name outside the factory.
+ */
 #[Internal(reason: 'Use SearchServiceInterface for public API')]
 final readonly class SqliteSearchService implements SearchServiceInterface
 {

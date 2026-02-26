@@ -39,6 +39,10 @@ use function usort;
 /**
  * PostgreSQL full-text search with composite ranking (tsvector + recency + taxonomy boost).
  */
+/**
+ * @psalm-api Returned by SearchServiceFactory::create() when the active driver
+ *            is PostgreSQL; not instantiated by name outside the factory.
+ */
 #[Internal(reason: 'Use SearchServiceInterface for public API')]
 readonly class PostgresSearchService implements SearchServiceInterface
 {
