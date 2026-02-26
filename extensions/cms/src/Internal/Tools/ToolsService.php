@@ -20,6 +20,10 @@ use function count;
  * Provides data export and PII erasure for CMS-managed user data.
  * All operations are logged to the audit trail.
  */
+/**
+ * @psalm-api Bound to ToolsServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'GDPR tools implementation; use ToolsServiceInterface')]
 final readonly class ToolsService implements ToolsServiceInterface
 {
