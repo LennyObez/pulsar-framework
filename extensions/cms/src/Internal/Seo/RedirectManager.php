@@ -32,6 +32,10 @@ use const PHP_URL_SCHEME;
  * Redirect manager with chain collapse, open redirect protection, and CSV bulk import.
  */
 #[Internal(reason: 'Use RedirectManagerInterface for public API')]
+/**
+ * @psalm-api Bound to RedirectManagerInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class RedirectManager implements RedirectManagerInterface
 {
     /** Maximum redirect chain depth to prevent infinite loops. */

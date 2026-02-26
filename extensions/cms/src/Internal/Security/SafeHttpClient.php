@@ -43,6 +43,10 @@ use const PHP_URL_SCHEME;
  * Uses DNS pre-resolution to prevent DNS rebinding attacks.
  */
 #[Internal(reason: 'CMS security internals; use via service binding')]
+/**
+ * @psalm-api Resolved from the DI container by webhook delivery and outbound
+ *            HTTP services; not instantiated by name.
+ */
 final readonly class SafeHttpClient
 {
     /** Cloud metadata endpoints explicitly blocked regardless of CIDR. */

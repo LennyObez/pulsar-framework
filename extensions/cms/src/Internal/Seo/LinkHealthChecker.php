@@ -30,6 +30,10 @@ use const PREG_SET_ORDER;
  * Checks link health by extracting URLs from content bodies and verifying HTTP responses.
  */
 #[Internal(reason: 'Use LinkHealthServiceInterface for public API')]
+/**
+ * @psalm-api Bound to LinkHealthServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class LinkHealthChecker implements LinkHealthServiceInterface
 {
     /** Total timeout for link checks (seconds). */

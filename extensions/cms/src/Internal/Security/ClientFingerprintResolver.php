@@ -38,6 +38,10 @@ use const FILTER_VALIDATE_IP;
  * All hashes use BLAKE2b (keyed) via Pulsar's Hmac class.
  */
 #[Internal(reason: 'CMS security internals; use via service binding')]
+/**
+ * @psalm-api Resolved from the DI container by middleware that derives the
+ *            client fingerprint; not instantiated by name.
+ */
 final readonly class ClientFingerprintResolver
 {
     public function __construct(
