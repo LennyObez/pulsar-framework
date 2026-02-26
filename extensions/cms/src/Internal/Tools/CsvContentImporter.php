@@ -23,6 +23,10 @@ use function rewind;
  * Maps each row into content and translation data arrays.
  */
 #[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            controllers; not instantiated by name.
+ */
 final readonly class CsvContentImporter
 {
     public function __construct(

@@ -27,6 +27,10 @@ use const JSON_UNESCAPED_UNICODE;
  * sections delimited by HTML comments.
  */
 #[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            controllers; not instantiated by name.
+ */
 final readonly class MarkdownExporter
 {
     /**
