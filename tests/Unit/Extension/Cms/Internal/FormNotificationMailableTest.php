@@ -11,6 +11,9 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Forms\FormSubmission;
 use Pulsar\Extension\Cms\Internal\Forms\FormNotificationMailable;
 
+use function assert;
+use function is_string;
+
 #[CoversClass(FormNotificationMailable::class)]
 final class FormNotificationMailableTest extends TestCase
 {

@@ -11,6 +11,7 @@ use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 use function array_sum;
 use function count;
 use function is_array;
+use function is_string;
 
 /**
  * Analyzes an import bundle to detect duplicates, count entities,

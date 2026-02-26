@@ -13,6 +13,7 @@ use Pulsar\Security\ZeroTrust\DeviceIdentity\Internal\DeviceProofVerifier;
 
 use function random_bytes;
 use function str_repeat;
+use function strlen;
 use function time;
 
 #[CoversClass(DeviceProofVerifier::class)]

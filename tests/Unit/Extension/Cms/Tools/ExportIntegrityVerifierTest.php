@@ -9,6 +9,8 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Cms\Tools\ExportIntegrityVerifier;
 
+use function strlen;
+
 #[CoversClass(ExportIntegrityVerifier::class)]
 final class ExportIntegrityVerifierTest extends TestCase
 {

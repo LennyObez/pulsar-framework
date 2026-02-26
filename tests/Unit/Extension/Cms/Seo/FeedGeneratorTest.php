@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Extension\Cms\Seo;
 use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Extension\Cms\Config\CmsConfig;
@@ -20,7 +21,6 @@ use Pulsar\Extension\Cms\Content\ContentType;
 use Pulsar\Extension\Cms\Content\DataClassification;
 use Pulsar\Extension\Cms\Content\PublishingStatus;
 use Pulsar\Extension\Cms\Internal\Seo\FeedGenerator;
-use PHPUnit\Framework\MockObject\Stub;
 
 #[CoversClass(FeedGenerator::class)]
 final class FeedGeneratorTest extends TestCase

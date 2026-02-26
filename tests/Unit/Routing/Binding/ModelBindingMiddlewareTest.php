@@ -9,6 +9,7 @@ use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -36,7 +37,6 @@ use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
 use Pulsar\Tenancy\Tenant;
 use Pulsar\Tenancy\TenantContext;
-use PHPUnit\Framework\MockObject\Stub;
 use stdClass;
 
 #[CoversClass(ModelBindingMiddleware::class)]

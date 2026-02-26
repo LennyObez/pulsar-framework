@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\SocialSso\Domain;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\SocialSso\Domain\JwkKey;
+use ReflectionClass;
 
 use function base64_encode;
 use function openssl_pkey_get_details;
@@ -372,7 +374,7 @@ final class JwkKeyComprehensiveTest extends TestCase
             'P-256' => 32,
             'P-384' => 48,
             'P-521' => 66,
-            default => throw new \InvalidArgumentException("Unsupported curve: $crv"),
+            default => throw new InvalidArgumentException("Unsupported curve: $crv"),
         };
 
         $jwk = new JwkKey(kty: 'EC', parameters: [
@@ -408,7 +410,7 @@ final class JwkKeyComprehensiveTest extends TestCase
     #[Test]
     public function jwkKeyIsReadonly(): void
     {
-        $ref = new \ReflectionClass(JwkKey::class);
+        $ref = new ReflectionClass(JwkKey::class);
         self::assertTrue($ref->isReadOnly());
     }
 }

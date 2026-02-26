@@ -5,20 +5,15 @@ declare(strict_types=1);
 namespace Pulsar\Tests\Unit\Extension\Webauthn\Ceremony;
 
 use DateTimeImmutable;
+use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Audit\AuditLoggerInterface;
-use Pulsar\Extension\WebAuthn\Adapter\AttestationVerifier;
 use Pulsar\Extension\WebAuthn\Adapter\CborDecoder;
-use Pulsar\Extension\WebAuthn\Attestation\AttestationResult;
-use Pulsar\Extension\WebAuthn\Attestation\AttestationTrustLevel;
 use Pulsar\Extension\WebAuthn\Ceremony\RegistrationCeremony;
 use Pulsar\Extension\WebAuthn\Ceremony\RegistrationOptions;
-use Pulsar\Extension\WebAuthn\Ceremony\RegistrationResult;
 use Pulsar\Extension\WebAuthn\Config\WebAuthnConfig;
 use Pulsar\Extension\WebAuthn\Contract\AttestationVerifierInterface;
 use Pulsar\Extension\WebAuthn\Contract\CredentialRepositoryInterface;
@@ -26,6 +21,15 @@ use Pulsar\Extension\WebAuthn\Exception\WebAuthnException;
 use Pulsar\Extension\WebAuthn\PublicKey\CredentialSource;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
+
+use function assert;
+use function chr;
+use function count;
+use function is_array;
+use function is_int;
+use function is_scalar;
+use function is_string;
+use function strlen;
 
 #[CoversClass(RegistrationCeremony::class)]
 final class RegistrationCeremonyTest extends TestCase
@@ -287,7 +291,7 @@ final class RegistrationCeremonyTest extends TestCase
     #[Test]
     public function verifyThrowsOnInvalidJson(): void
     {
-        $this->expectException(\JsonException::class);
+        $this->expectException(JsonException::class);
 
         $this->ceremony->verify('not-valid-json{{{', 'challenge');
     }

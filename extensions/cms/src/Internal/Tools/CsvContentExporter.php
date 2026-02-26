@@ -56,7 +56,7 @@ final readonly class CsvContentExporter
             return '';
         }
 
-        fputcsv($stream, self::COLUMNS);
+        fputcsv($stream, self::COLUMNS, escape: '');
 
         foreach ($items as $item) {
             $content = $item['content'];
@@ -80,7 +80,7 @@ final readonly class CsvContentExporter
                     $content->createdAt->format('c'),
                     $content->publishedAt?->format('c') ?? '',
                 ],
-            ));
+            ), escape: '');
         }
 
         rewind($stream);

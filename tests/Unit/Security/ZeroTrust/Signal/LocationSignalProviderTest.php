@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Security\ZeroTrust\Signal;
 
+use DateTimeImmutable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -71,7 +72,7 @@ final class LocationSignalProviderTest extends TestCase
         $claims = $provider->evaluate($this->createContext('1.2.3.4'));
 
         foreach ($claims as $claim) {
-            self::assertGreaterThan(new \DateTimeImmutable('-1 minute'), $claim->timestamp);
+            self::assertGreaterThan(new DateTimeImmutable('-1 minute'), $claim->timestamp);
         }
     }
 

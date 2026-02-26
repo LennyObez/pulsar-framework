@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\McpServer\Exception\McpException;
 use Pulsar\Extension\McpServer\Internal\Security\ParamValidator;
 
-use function file_exists;
+use function assert;
 use function file_put_contents;
 use function is_dir;
 use function mkdir;

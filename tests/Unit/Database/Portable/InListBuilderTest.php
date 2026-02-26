@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Database\Driver;
 use Pulsar\Database\Portable\InListBuilder;
 
+use function count;
+
 #[CoversClass(InListBuilder::class)]
 final class InListBuilderTest extends TestCase
 {
