@@ -40,7 +40,6 @@ final class SavedViewsHandlerTest extends TestCase
         );
 
         $this->store->method('listForResource')
-            ->with('users')
             ->willReturn([$view]);
 
         $request = new SavedViewsRequest(
@@ -68,7 +67,7 @@ final class SavedViewsHandlerTest extends TestCase
             createdBy: 'admin',
         );
 
-        $this->store->method('find')->with('v1')->willReturn($view);
+        $this->store->method('find')->willReturn($view);
 
         $request = new SavedViewsRequest(
             operation: 'get',
@@ -85,7 +84,7 @@ final class SavedViewsHandlerTest extends TestCase
     #[Test]
     public function getReturnsNotFoundWhenViewMissing(): void
     {
-        $this->store->method('find')->with('nonexistent')->willReturn(null);
+        $this->store->method('find')->willReturn(null);
 
         $request = new SavedViewsRequest(
             operation: 'get',
@@ -175,7 +174,6 @@ final class SavedViewsHandlerTest extends TestCase
     public function listReturnsEmptyArrayForUnknownResource(): void
     {
         $this->store->method('listForResource')
-            ->with('nonexistent')
             ->willReturn([]);
 
         $request = new SavedViewsRequest(

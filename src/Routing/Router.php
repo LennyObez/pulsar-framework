@@ -7,6 +7,7 @@ namespace Pulsar\Routing;
 use InvalidArgumentException;
 use Pulsar\Api\Api;
 use Pulsar\Http\Method;
+use Pulsar\Routing\Binding\ExplicitBinding;
 
 use function count;
 use function in_array;
@@ -40,6 +41,23 @@ final class Router implements RouterInterface
     private array $routesByMethod = [];
 
     /**
+     * O(1) hash map for static routes (no dynamic segments).
+     *
+     * Indexed by HTTP method then normalized path, enabling constant-time
+     * lookups for routes without parameters — the most common case.
+     *
+     * @var array<string, array<string, Route>>
+     */
+    private array $staticRoutes = [];
+
+    /**
+     * Explicit parameter-to-model bindings registered via model().
+     *
+     * @var list<ExplicitBinding>
+     */
+    public private(set) array $explicitBindings = [];
+
+    /**
      * Whether the router is locked (strict cache mode).
      * When locked, addRoute() throws RoutingException::routerLocked().
      */
@@ -68,12 +86,20 @@ final class Router implements RouterInterface
     }
 
     /**
-     * Add a route to the method-indexed lookup table.
+     * Add a route to the method-indexed and static lookup tables.
      */
     private function indexRouteByMethod(Route $route): void
     {
         foreach ($route->methods as $method) {
             $this->routesByMethod[$method->value][] = $route;
+        }
+
+        // Index static routes (no dynamic segments) for O(1) lookup
+        if ($route->compiledPattern === null && $route->host === null) {
+            $normalizedPath = '/' . trim($route->path, '/');
+            foreach ($route->methods as $method) {
+                $this->staticRoutes[$method->value][$normalizedPath] = $route;
+            }
         }
     }
 
@@ -164,6 +190,42 @@ final class Router implements RouterInterface
     }
 
     /**
+     * Register a group of routes under a common prefix.
+     *
+     * Creates a temporary router, passes it to the callback, then
+     * adds all registered routes with the prefix prepended to their paths.
+     *
+     * @param string   $prefix   The URL prefix for all routes in the group.
+     * @param callable $callback Receives a RouterInterface to register grouped routes.
+     *
+     * @throws RoutingException If the router is locked in strict cache mode
+     */
+    public function group(string $prefix, callable $callback): self
+    {
+        $prefix = '/' . trim($prefix, '/');
+        $subRouter = new self();
+
+        $callback($subRouter);
+
+        foreach ($subRouter->routes as $route) {
+            $prefixedPath = $prefix . '/' . trim($route->path, '/');
+
+            $this->add(new Route(
+                methods: $route->methods,
+                path: $prefixedPath,
+                handler: $route->handler,
+                name: $route->name,
+                attributes: $route->attributes,
+                middleware: $route->middleware,
+                constraints: $route->constraints,
+                host: $route->host,
+            ));
+        }
+
+        return $this;
+    }
+
+    /**
      * Match a request path and method to a route.
      *
      * Uses a method-indexed lookup table on the hot path so that only
@@ -178,6 +240,13 @@ final class Router implements RouterInterface
      */
     public function match(Method $method, string $path, ?string $host = null): MatchedRoute
     {
+        $normalizedPath = '/' . trim($path, '/');
+
+        // Fast path: O(1) lookup for static routes without host constraints
+        if ($host === null && isset($this->staticRoutes[$method->value][$normalizedPath])) {
+            return new MatchedRoute($this->staticRoutes[$method->value][$normalizedPath], []);
+        }
+
         // Hot path: only scan routes that accept the requested method
         $candidates = $this->routesByMethod[$method->value] ?? [];
 
@@ -306,6 +375,22 @@ final class Router implements RouterInterface
     public function lock(): void
     {
         $this->locked = true;
+    }
+
+    /**
+     * Register an explicit parameter-to-model binding.
+     *
+     * When the model binding middleware resolves route parameters, explicit
+     * bindings take precedence over implicit type-hint resolution.
+     *
+     * @param class-string $modelClass
+     * @param class-string|null $resolverClass
+     */
+    public function model(string $parameter, string $modelClass, ?string $resolverClass = null): self
+    {
+        $this->explicitBindings[] = new ExplicitBinding($parameter, $modelClass, $resolverClass);
+
+        return $this;
     }
 
     /**

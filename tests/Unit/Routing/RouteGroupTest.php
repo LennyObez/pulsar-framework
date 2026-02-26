@@ -15,27 +15,27 @@ use Pulsar\Routing\RouteGroup;
 final class RouteGroupTest extends TestCase
 {
     #[Test]
-    public function getPrefixReturnsPrefix(): void
+    public function prefixPropertyReturnsPrefix(): void
     {
         $group = new RouteGroup(prefix: '/api');
 
-        self::assertSame('/api', $group->getPrefix());
+        self::assertSame('/api', $group->prefix);
     }
 
     #[Test]
-    public function getMiddlewareReturnsMiddleware(): void
+    public function middlewarePropertyReturnsMiddleware(): void
     {
         $group = new RouteGroup(middleware: ['auth', 'throttle']);
 
-        self::assertSame(['auth', 'throttle'], $group->getMiddleware());
+        self::assertSame(['auth', 'throttle'], $group->middleware);
     }
 
     #[Test]
-    public function getAttributesReturnsAttributes(): void
+    public function attributesPropertyReturnsAttributes(): void
     {
         $group = new RouteGroup(attributes: ['version' => 'v1']);
 
-        self::assertSame(['version' => 'v1'], $group->getAttributes());
+        self::assertSame(['version' => 'v1'], $group->attributes);
     }
 
     #[Test]

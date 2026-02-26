@@ -7,28 +7,37 @@ namespace Pulsar\Tests\Unit\Extension\Admin\Internal\Middleware;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Internal\Middleware\AdminCspMiddleware;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 
 use function strlen;
 
 #[CoversClass(AdminCspMiddleware::class)]
 final class AdminCspMiddlewareTest extends TestCase
 {
-    private static function makeRequest(): Request
+    private static function makeRequest(): ServerRequest
     {
-        return new Request(
-            method: Method::GET,
+        return new ServerRequest(
+            method: 'GET',
             uri: '/admin/dashboard',
-            path: '/admin/dashboard',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
+    }
+
+    private static function makeHandler(Response $response): RequestHandlerInterface
+    {
+        return new class ($response) implements RequestHandlerInterface {
+            public function __construct(private readonly Response $response) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->response;
+            }
+        };
     }
 
     #[Test]
@@ -40,12 +49,12 @@ final class AdminCspMiddlewareTest extends TestCase
         ]);
         $middleware = new AdminCspMiddleware($config);
 
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
+        $handler = self::makeHandler(new Response(body: 'ok'));
 
-        $response = $middleware->process(self::makeRequest(), $next);
+        $response = $middleware->process(self::makeRequest(), $handler);
 
-        $csp = $response->headers->first('Content-Security-Policy');
-        self::assertNotNull($csp);
+        $csp = $response->getHeaderLine('Content-Security-Policy');
+        self::assertNotEmpty($csp);
         self::assertStringContainsString("'nonce-", $csp);
         self::assertStringContainsString("default-src 'self'", $csp);
         self::assertStringContainsString("frame-ancestors 'none'", $csp);
@@ -60,12 +69,12 @@ final class AdminCspMiddlewareTest extends TestCase
         ]);
         $middleware = new AdminCspMiddleware($config);
 
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
+        $handler = self::makeHandler(new Response(body: 'ok'));
 
-        $response = $middleware->process(self::makeRequest(), $next);
+        $response = $middleware->process(self::makeRequest(), $handler);
 
-        $csp = $response->headers->first('Content-Security-Policy');
-        self::assertNotNull($csp);
+        $csp = $response->getHeaderLine('Content-Security-Policy');
+        self::assertNotEmpty($csp);
         self::assertStringContainsString("script-src 'self'", $csp);
         self::assertStringNotContainsString('nonce-', $csp);
     }
@@ -80,12 +89,15 @@ final class AdminCspMiddlewareTest extends TestCase
         $middleware = new AdminCspMiddleware($config);
 
         $receivedNonce = null;
-        $next = static function (Request $r) use (&$receivedNonce): Response {
-            $receivedNonce = $r->attribute('csp_nonce');
-            return new Response(body: 'ok');
-        };
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$receivedNonce): ResponseInterface {
+                $receivedNonce = $req->getAttribute('csp_nonce');
+                return new Response(body: 'ok');
+            },
+        );
 
-        $middleware->process(self::makeRequest(), $next);
+        $middleware->process(self::makeRequest(), $handler);
 
         self::assertNotNull($receivedNonce);
         self::assertIsString($receivedNonce);
@@ -102,12 +114,15 @@ final class AdminCspMiddlewareTest extends TestCase
         $middleware = new AdminCspMiddleware($config);
 
         $receivedNonce = null;
-        $next = static function (Request $r) use (&$receivedNonce): Response {
-            $receivedNonce = $r->attribute('csp_nonce');
-            return new Response(body: 'ok');
-        };
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->once())->method('handle')->willReturnCallback(
+            function (ServerRequestInterface $req) use (&$receivedNonce): ResponseInterface {
+                $receivedNonce = $req->getAttribute('csp_nonce');
+                return new Response(body: 'ok');
+            },
+        );
 
-        $middleware->process(self::makeRequest(), $next);
+        $middleware->process(self::makeRequest(), $handler);
 
         self::assertNull($receivedNonce);
     }
@@ -121,12 +136,12 @@ final class AdminCspMiddlewareTest extends TestCase
         ]);
         $middleware = new AdminCspMiddleware($config);
 
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
+        $handler = self::makeHandler(new Response(body: 'ok'));
 
-        $response = $middleware->process(self::makeRequest(), $next);
+        $response = $middleware->process(self::makeRequest(), $handler);
 
-        $csp = $response->headers->first('Content-Security-Policy');
-        self::assertNotNull($csp);
+        $csp = $response->getHeaderLine('Content-Security-Policy');
+        self::assertNotEmpty($csp);
         self::assertStringContainsString("style-src 'self' 'unsafe-inline'", $csp);
     }
 
@@ -139,12 +154,12 @@ final class AdminCspMiddlewareTest extends TestCase
         ]);
         $middleware = new AdminCspMiddleware($config);
 
-        $next = static fn(Request $r): Response => new Response(body: 'ok');
+        $handler = self::makeHandler(new Response(body: 'ok'));
 
-        $response = $middleware->process(self::makeRequest(), $next);
+        $response = $middleware->process(self::makeRequest(), $handler);
 
-        $csp = $response->headers->first('Content-Security-Policy');
-        self::assertNotNull($csp);
+        $csp = $response->getHeaderLine('Content-Security-Policy');
+        self::assertNotEmpty($csp);
         self::assertStringContainsString("base-uri 'self'", $csp);
         self::assertStringContainsString("form-action 'self'", $csp);
     }

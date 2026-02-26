@@ -7,21 +7,23 @@ namespace Pulsar\Tests\Unit\Extension\Studio\Console\Collector;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Extension\Studio\Console\Collector\HttpCollector;
 use Pulsar\Extension\Studio\Console\Event\ConsoleEvent;
 use Pulsar\Extension\Studio\Console\Event\Payload\HttpRequestPayload;
 use Pulsar\Extension\Studio\Console\Event\Payload\HttpResponsePayload;
 use Pulsar\Extension\Studio\FiberScopedContextProvider;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Context\CorrelationContext;
 use Pulsar\Observability\Tracing\TraceId;
 use Random\Engine\Mt19937;
 use Random\Randomizer;
 use RuntimeException;
+use Throwable;
 
 #[CoversClass(HttpCollector::class)]
 final class HttpCollectorTest extends TestCase
@@ -37,29 +39,49 @@ final class HttpCollectorTest extends TestCase
 
     /**
      * @param array<string, list<string>|string> $headers
-     * @param array<string, mixed> $server
+     * @param array<string, mixed> $serverParams
      * @param array<string, mixed> $attributes
      */
     private function makeRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $uri = '/test',
-        string $path = '/test',
-        string $queryString = '',
         string $body = '',
         array $headers = [],
-        array $server = [],
+        array $serverParams = [],
         array $attributes = [],
-    ): Request {
-        return new Request(
+    ): ServerRequest {
+        return new ServerRequest(
             method: $method,
             uri: $uri,
-            path: $path,
-            queryString: $queryString,
-            headers: new HeaderBag($headers),
+            headers: $headers,
             body: $body,
-            server: $server,
+            serverParams: $serverParams,
             attributes: $attributes,
         );
+    }
+
+    private function makeHandler(Response $response): RequestHandlerInterface
+    {
+        return new class ($response) implements RequestHandlerInterface {
+            public function __construct(private readonly Response $response) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return $this->response;
+            }
+        };
+    }
+
+    private function makeThrowingHandler(Throwable $exception): RequestHandlerInterface
+    {
+        return new class ($exception) implements RequestHandlerInterface {
+            public function __construct(private readonly Throwable $exception) {}
+
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                throw $this->exception;
+            }
+        };
     }
 
     #[Test]
@@ -73,27 +95,25 @@ final class HttpCollectorTest extends TestCase
         $collector = new HttpCollector($this->contextProvider, $emit, $this->randomizer);
 
         $request = $this->makeRequest(
-            method: Method::POST,
+            method: 'POST',
             uri: '/api/users?page=1',
-            path: '/api/users',
-            queryString: 'page=1',
             body: '{"name":"Alice"}',
             headers: [
                 'Content-Type' => 'application/json',
                 'Content-Length' => '16',
                 'User-Agent' => 'TestAgent/1.0',
             ],
-            server: ['REMOTE_ADDR' => '192.168.1.1'],
+            serverParams: ['REMOTE_ADDR' => '192.168.1.1'],
             attributes: ['_route_name' => 'api.users.create'],
         );
 
         $expectedResponse = new Response(
             body: '{"id":1}',
-            status: ResponseStatus::Created,
-            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            statusCode: ResponseStatus::Created->value,
+            headers: ['Content-Type' => 'application/json'],
         );
 
-        $response = $collector->process($request, fn() => $expectedResponse);
+        $response = $collector->process($request, $this->makeHandler($expectedResponse));
 
         self::assertSame($expectedResponse, $response);
         self::assertCount(2, $events);
@@ -132,7 +152,7 @@ final class HttpCollectorTest extends TestCase
         $request = $this->makeRequest();
         $expectedResponse = new Response();
 
-        $response = $collector->process($request, fn() => $expectedResponse);
+        $response = $collector->process($request, $this->makeHandler($expectedResponse));
 
         self::assertSame($expectedResponse, $response);
         self::assertCount(0, $events);
@@ -152,9 +172,7 @@ final class HttpCollectorTest extends TestCase
         $exception = new RuntimeException('Something went wrong');
 
         try {
-            $collector->process($request, function () use ($exception): never {
-                throw $exception;
-            });
+            $collector->process($request, $this->makeThrowingHandler($exception));
             self::fail('Expected exception to be rethrown');
         } catch (RuntimeException $e) {
             self::assertSame($exception, $e);
@@ -185,7 +203,7 @@ final class HttpCollectorTest extends TestCase
             '_span_id' => 'span-abc-123',
         ]);
 
-        $collector->process($request, fn() => new Response());
+        $collector->process($request, $this->makeHandler(new Response()));
 
         self::assertNotEmpty($capturedContexts);
         self::assertNotNull($capturedContexts[0]);
@@ -207,7 +225,7 @@ final class HttpCollectorTest extends TestCase
             '_span_id' => 42,
         ]);
 
-        $collector->process($request, fn() => new Response());
+        $collector->process($request, $this->makeHandler(new Response()));
 
         self::assertNotEmpty($capturedContexts);
         self::assertNotNull($capturedContexts[0]);
@@ -226,7 +244,7 @@ final class HttpCollectorTest extends TestCase
 
         $request = $this->makeRequest();
 
-        $collector->process($request, fn() => new Response());
+        $collector->process($request, $this->makeHandler(new Response()));
 
         self::assertNotEmpty($capturedContexts);
         self::assertNotNull($capturedContexts[0]);
@@ -246,11 +264,11 @@ final class HttpCollectorTest extends TestCase
         $request = $this->makeRequest();
         $response = new Response(
             body: '{"data":"value"}',
-            status: ResponseStatus::OK,
-            headers: new HeaderBag(['Content-Type' => 'application/json']),
+            statusCode: ResponseStatus::OK->value,
+            headers: ['Content-Type' => 'application/json'],
         );
 
-        $collector->process($request, fn() => $response);
+        $collector->process($request, $this->makeHandler($response));
 
         self::assertInstanceOf(HttpResponsePayload::class, $events[1]);
         self::assertSame('{"data":"value"}', $events[1]->bodyPreview);
@@ -269,11 +287,11 @@ final class HttpCollectorTest extends TestCase
         $request = $this->makeRequest();
         $response = new Response(
             body: "\x00\x01\x02\x03",
-            status: ResponseStatus::OK,
-            headers: new HeaderBag(['Content-Type' => 'application/octet-stream']),
+            statusCode: ResponseStatus::OK->value,
+            headers: ['Content-Type' => 'application/octet-stream'],
         );
 
-        $collector->process($request, fn() => $response);
+        $collector->process($request, $this->makeHandler($response));
 
         self::assertInstanceOf(HttpResponsePayload::class, $events[1]);
         self::assertNull($events[1]->bodyPreview);
@@ -290,7 +308,7 @@ final class HttpCollectorTest extends TestCase
         $collector = new HttpCollector($this->contextProvider, $emit, $this->randomizer);
 
         $request = $this->makeRequest(body: '');
-        $collector->process($request, fn() => new Response());
+        $collector->process($request, $this->makeHandler(new Response()));
 
         self::assertInstanceOf(HttpRequestPayload::class, $events[0]);
         self::assertNull($events[0]->bodyPreview);
@@ -307,7 +325,7 @@ final class HttpCollectorTest extends TestCase
         $collector = new HttpCollector($this->contextProvider, $emit, $this->randomizer);
 
         $request = $this->makeRequest();
-        $collector->process($request, fn() => new Response());
+        $collector->process($request, $this->makeHandler(new Response()));
 
         self::assertInstanceOf(HttpRequestPayload::class, $events[0]);
         self::assertNull($events[0]->clientIp);
@@ -323,8 +341,8 @@ final class HttpCollectorTest extends TestCase
 
         $collector = new HttpCollector($this->contextProvider, $emit, $this->randomizer);
 
-        $request = $this->makeRequest(queryString: '');
-        $collector->process($request, fn() => new Response());
+        $request = $this->makeRequest();
+        $collector->process($request, $this->makeHandler(new Response()));
 
         self::assertInstanceOf(HttpRequestPayload::class, $events[0]);
         self::assertNull($events[0]->queryString);
@@ -342,7 +360,7 @@ final class HttpCollectorTest extends TestCase
         $collector = new HttpCollector($this->contextProvider, $emit, $this->randomizer);
 
         $request = $this->makeRequest();
-        $response = $collector->process($request, fn() => new Response());
+        $response = $collector->process($request, $this->makeHandler(new Response()));
 
         self::assertInstanceOf(Response::class, $response);
         self::assertSame(2, $callCount);
@@ -361,11 +379,11 @@ final class HttpCollectorTest extends TestCase
         $request = $this->makeRequest();
         $response = new Response(
             body: '<root>test</root>',
-            status: ResponseStatus::OK,
-            headers: new HeaderBag(['Content-Type' => 'application/xml']),
+            statusCode: ResponseStatus::OK->value,
+            headers: ['Content-Type' => 'application/xml'],
         );
 
-        $collector->process($request, fn() => $response);
+        $collector->process($request, $this->makeHandler($response));
 
         self::assertInstanceOf(HttpResponsePayload::class, $events[1]);
         self::assertSame('<root>test</root>', $events[1]->bodyPreview);
@@ -384,11 +402,11 @@ final class HttpCollectorTest extends TestCase
         $request = $this->makeRequest();
         $response = new Response(
             body: 'Hello world',
-            status: ResponseStatus::OK,
-            headers: new HeaderBag(['Content-Type' => 'text/plain']),
+            statusCode: ResponseStatus::OK->value,
+            headers: ['Content-Type' => 'text/plain'],
         );
 
-        $collector->process($request, fn() => $response);
+        $collector->process($request, $this->makeHandler($response));
 
         self::assertInstanceOf(HttpResponsePayload::class, $events[1]);
         self::assertSame('Hello world', $events[1]->bodyPreview);
@@ -408,7 +426,7 @@ final class HttpCollectorTest extends TestCase
             '_trace_context' => 'not-a-TraceId-object',
         ]);
 
-        $collector->process($request, fn() => new Response());
+        $collector->process($request, $this->makeHandler(new Response()));
 
         self::assertNotNull($capturedContexts[0]);
         self::assertNull($capturedContexts[0]->traceId);
@@ -425,7 +443,7 @@ final class HttpCollectorTest extends TestCase
         $collector = new HttpCollector($this->contextProvider, $emit, $this->randomizer);
 
         $request = $this->makeRequest(attributes: ['_route_name' => 42]);
-        $collector->process($request, fn() => new Response());
+        $collector->process($request, $this->makeHandler(new Response()));
 
         self::assertInstanceOf(HttpRequestPayload::class, $events[0]);
         self::assertNull($events[0]->routeName);

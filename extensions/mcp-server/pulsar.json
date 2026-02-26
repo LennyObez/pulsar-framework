@@ -1,14 +1,15 @@
 {
   "name": "pulsar/mcp-server",
-  "version": "1.0.0-rc.9",
+  "version": "1.0.0-rc.11",
   "description": "MCP server for AI-assisted development tooling",
+  "trust_tier": "core",
   "extension_class": "Pulsar\\Extension\\McpServer\\McpServerExtension",
   "pulsar": {
-    "min_version": "1.0.0-rc.9"
+    "min_version": "1.0.0-rc.11"
   },
   "provides": {
     "services": ["McpToolRegistryInterface"],
     "routes": false,
-    "commands": ["mcp:serve"]
+    "commands": ["Pulsar\\Extension\\McpServer\\Console\\McpServeCommand"]
   }
 }

@@ -21,16 +21,16 @@ Build a complete first-party observability suite with no external vendor depende
 
 ### Components
 
-- **Structured logging** (`Pulsar\Observability\Log\Logger`) — PSR-3-compatible logger with structured context, configurable channels and severity levels.
-- **Metrics collection** (`Pulsar\Observability\Metrics\MetricRegistry`) — Counter, Gauge, and Histogram metric types with dimensional labels via `LabelSet`. Create-or-return semantics prevent duplicate metrics.
-- **Distributed tracing** (`Pulsar\Observability\Tracing\`) — Spans with context propagation, parent-child relationships, and timing.
-- **Error tracking** — First-party error grouping and reporting with environment-aware rendering (development vs. production).
-- **Audit logging** (`Pulsar\Security\Audit\AuditLogger`) — Separate from general logging, with HMAC-chained integrity (see ADR-0008).
-- **Studio dashboard** — Built-in developer console for viewing events, traces, and metrics during development.
+- **Structured logging** (`Pulsar\Observability\Log\Logger`) - PSR-3-compatible logger with structured context, configurable channels and severity levels.
+- **Metrics collection** (`Pulsar\Observability\Metrics\MetricRegistry`) - Counter, Gauge, and Histogram metric types with dimensional labels via `LabelSet`. Create-or-return semantics prevent duplicate metrics.
+- **Distributed tracing** (`Pulsar\Observability\Tracing\`) - Spans with context propagation, parent-child relationships, and timing.
+- **Error tracking** - First-party error grouping and reporting with environment-aware rendering (development vs. production).
+- **Audit logging** (`Pulsar\Security\Audit\AuditLogger`) - Separate from general logging, with HMAC-chained integrity (see ADR-0008).
+- **Studio dashboard** - Built-in developer console for viewing events, traces, and metrics during development.
 
 ### Export strategy
 
-The framework collects and stores observability data using its own APIs. Export to external systems is handled by optional, standards-based exporters (e.g., OpenMetrics exposition format for metrics). Exporters are extensions — they are not part of the core observability API.
+The framework collects and stores observability data using its own APIs. Export to external systems is handled by optional, standards-based exporters (e.g., OpenMetrics exposition format for metrics). Exporters are extensions - they are not part of the core observability API.
 
 ### Scope commitment
 

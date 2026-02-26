@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace Pulsar\Extension\Admin\Internal\Middleware;
 
 use Override;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Auth\Identity\TwoFactorStatus;
 use Pulsar\Extension\Admin\Config\AdminConfig;
 use Pulsar\Extension\Admin\Exception\AdminAccessDeniedException;
 use Pulsar\Extension\Admin\Internal\Security\AdminAccessGate;
+use Pulsar\Http\Message\Response;
 use Pulsar\Http\Middleware\MiddlewareInterface;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
 use Pulsar\Http\ResponseStatus;
 
 /**
@@ -28,15 +30,15 @@ final readonly class AdminAuthMiddleware implements MiddlewareInterface
     ) {}
 
     #[Override]
-    public function process(Request $request, callable $next): Response
+    public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         /** @var IdentityInterface|null $identity */
-        $identity = $request->attribute('identity');
+        $identity = $request->getAttribute('identity');
 
         if ($identity === null || !$identity->isAuthenticated()) {
             return Response::json(
                 ['error' => 'Authentication required'],
-                ResponseStatus::Unauthorized,
+                ResponseStatus::Unauthorized->value,
             );
         }
 
@@ -45,7 +47,7 @@ final readonly class AdminAuthMiddleware implements MiddlewareInterface
             if ($twoFaStatus !== TwoFactorStatus::Verified) {
                 return Response::json(
                     ['error' => 'Two-factor authentication required for admin access'],
-                    ResponseStatus::Forbidden,
+                    ResponseStatus::Forbidden->value,
                 );
             }
         }
@@ -55,10 +57,10 @@ final readonly class AdminAuthMiddleware implements MiddlewareInterface
         } catch (AdminAccessDeniedException $e) {
             return Response::json(
                 ['error' => $e->getMessage()],
-                ResponseStatus::Forbidden,
+                ResponseStatus::Forbidden->value,
             );
         }
 
-        return $next($request);
+        return $handler->handle($request);
     }
 }

@@ -19,9 +19,7 @@ use Pulsar\Extension\Payments\Features\ProcessWebhook\ProcessWebhookHandler;
 use Pulsar\Extension\Payments\Features\ProcessWebhook\WebhookController;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Clock\FixedClock;
 use Pulsar\Extension\Payments\Internal\Infrastructure\Webhook\HmacWebhookVerifier;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Webhook\InMemoryWebhookEventLog;
@@ -61,18 +59,16 @@ final class WebhookControllerTest extends TestCase
 
         $controller = new WebhookController($processHandler, $config);
 
-        $request = new Request(
-            method: Method::POST,
+        $request = new ServerRequest(
+            method: 'POST',
             uri: '/webhooks/payments',
-            path: '/webhooks/payments',
-            queryString: '',
-            headers: new HeaderBag(['X-Payments-Signature' => $signatureHeader]),
+            headers: ['X-Payments-Signature' => $signatureHeader],
             body: $body,
         );
 
         $response = $controller->handle($request);
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
         self::assertTrue($webhookHandler->called);
     }
 
@@ -96,18 +92,15 @@ final class WebhookControllerTest extends TestCase
 
         $controller = new WebhookController($processHandler, $config);
 
-        $request = new Request(
-            method: Method::POST,
+        $request = new ServerRequest(
+            method: 'POST',
             uri: '/webhooks/payments',
-            path: '/webhooks/payments',
-            queryString: '',
-            headers: new HeaderBag([]),
             body: '{}',
         );
 
         $response = $controller->handle($request);
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
     }
 
     private function createConfig(string $secret): PaymentsConfig

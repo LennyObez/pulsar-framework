@@ -40,31 +40,48 @@ final class CacheLockTest extends TestCase
     #[Test]
     public function acquireAndReleaseCompleteWithoutError(): void
     {
-        $this->expectNotToPerformAssertions();
+        $lockFile = $this->tempDir . DIRECTORY_SEPARATOR . '.lock';
 
         $lock = new CacheLock($this->tempDir);
         $lock->acquire();
+
+        self::assertFileExists($lockFile, 'Lock file should exist after acquire');
+
         $lock->release();
+
+        // After release a new lock can be acquired, confirming the lock cycle completed
+        $lock2 = new CacheLock($this->tempDir);
+        $lock2->acquire();
+        self::assertFileExists($lockFile, 'Lock file should be re-creatable after release');
+        $lock2->release();
     }
 
     #[Test]
     public function releaseWithoutAcquireIsNoOp(): void
     {
-        $this->expectNotToPerformAssertions();
+        $lockFile = $this->tempDir . DIRECTORY_SEPARATOR . '.lock';
 
         $lock = new CacheLock($this->tempDir);
         $lock->release();
+
+        self::assertFileDoesNotExist($lockFile, 'No lock file should exist when release called without acquire');
     }
 
     #[Test]
     public function releaseCanBeCalledMultipleTimesSafely(): void
     {
-        $this->expectNotToPerformAssertions();
+        $lockFile = $this->tempDir . DIRECTORY_SEPARATOR . '.lock';
 
         $lock = new CacheLock($this->tempDir);
         $lock->acquire();
         $lock->release();
-        $lock->release();
+        $lock->release(); // second release must not throw
+
+        // A fresh lock can be acquired, proving the double-release left a clean state
+        $lock2 = new CacheLock($this->tempDir);
+        $lock2->acquire();
+        self::assertFileExists($lockFile, 'Lock file should be acquirable after double release');
+        $lock2->release();
     }
 
     #[Test]
@@ -104,14 +121,16 @@ final class CacheLockTest extends TestCase
     #[Test]
     public function lockCanBeReacquiredAfterRelease(): void
     {
-        $this->expectNotToPerformAssertions();
+        $lockFile = $this->tempDir . DIRECTORY_SEPARATOR . '.lock';
 
         $lock = new CacheLock($this->tempDir);
 
         $lock->acquire();
+        self::assertFileExists($lockFile, 'Lock file should exist after first acquire');
         $lock->release();
 
         $lock->acquire();
+        self::assertFileExists($lockFile, 'Lock file should exist after second acquire');
         $lock->release();
     }
 

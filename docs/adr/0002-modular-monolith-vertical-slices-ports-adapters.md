@@ -19,27 +19,27 @@ Key observations:
 
 Adopt a **Modular Monolith** architecture using **Vertical Slices** for business logic and **Ports/Adapters** for infrastructure isolation.
 
-### Directory Conventions
+### Directory conventions
 
 Each extension follows a standardized directory structure:
 
-- **`Contracts/`** — Public port interfaces marked with `#[Api]`. This is the extension's public contract.
-- **`Domain/`** — Value objects, entities, and enums. Public types marked with `#[Api]`.
-- **`Config/`** — Configuration DTOs. Public types marked with `#[Api]`.
-- **`Exception/`** — Exception classes. Public types marked with `#[Api]`.
-- **`Features/`** — Vertical slices. Each slice contains a Handler, Request DTO, and Result DTO. Internal by default.
-- **`Internal/Infrastructure/`** — Adapter implementations of port interfaces. Marked with `#[Internal]`.
-- **`Internal/Support/`** — Internal utilities. Marked with `#[Internal]`.
-- **`Gateway/`** — Public orchestrator facades that delegate to slices. "Gateway" in this context means "use-case facade" (not a payment/API gateway). It is the entry point that external consumers call, delegating internally to one or more slice handlers.
+- **`Contracts/`** - Public port interfaces marked with `#[Api]`. This is the extension's public contract.
+- **`Domain/`** - Value objects, entities, and enums. Public types marked with `#[Api]`.
+- **`Config/`** - Configuration DTOs. Public types marked with `#[Api]`.
+- **`Exception/`** - Exception classes. Public types marked with `#[Api]`.
+- **`Features/`** - Vertical slices. Each slice contains a Handler, Request DTO, and Result DTO. Internal by default.
+- **`Internal/Infrastructure/`** - Adapter implementations of port interfaces. Marked with `#[Internal]`.
+- **`Internal/Support/`** - Internal utilities. Marked with `#[Internal]`.
+- **`Gateway/`** - Public orchestrator facades that delegate to slices. "Gateway" in this context means "use-case facade" (not a payment/API gateway). It is the entry point that external consumers call, delegating internally to one or more slice handlers.
 
-### Visibility Model
+### Visibility model
 
 - Types marked with `#[Api]` are part of the public contract and follow SemVer stability guarantees.
 - Types without `#[Api]` are internal by default and may change without notice.
 - Types marked with `#[Internal]` are explicitly private implementation details.
 - External consumers must only depend on `Contracts/` interfaces, `Domain/` types, and `Config/` DTOs (which are also `#[Api]`-marked and semver-stable).
 
-### Vertical Slice Structure
+### Vertical slice structure
 
 Each use case with cross-cutting orchestration (idempotency, metrics, audit, provider calls) is extracted into a self-contained slice:
 
@@ -52,7 +52,7 @@ Features/<UseCaseName>/
 
 Gateways delegate to slice handlers, providing backward-compatible method signatures.
 
-### Port/Adapter Separation
+### Port/adapter separation
 
 Interfaces in `Contracts/` define what the module needs (ports). Implementations in `Internal/Infrastructure/` provide concrete adapters. The service provider resolves adapters based on configuration.
 
@@ -77,7 +77,7 @@ Interfaces in `Contracts/` define what the module needs (ports). Implementations
 - **No hierarchical dispatch.** This decision formally documents that Pulsar uses single-level dispatch. This is a hard constraint, not a limitation.
 - **Slice granularity is a judgment call.** Simple reads and trivial delegations can remain on orchestrators. The threshold is cross-cutting concerns. Examples of when to extract a slice: (1) a payment charge flow that coordinates idempotency checks, provider API calls, metrics emission, and audit logging; (2) a user registration flow that validates input, hashes credentials, sends a welcome email, and emits domain events. A simple "get user by ID" lookup does not warrant a slice.
 
-## Migration Notes
+## Migration notes
 
 The Payments extension is the first extension to adopt this architecture and serves as the reference implementation. Other extensions should follow the same patterns when they are next modified.
 

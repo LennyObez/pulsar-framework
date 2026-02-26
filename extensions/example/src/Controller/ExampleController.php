@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Example\Controller;
 
+use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Extension\Example\ExampleService;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
 
 /**
  * Example controller demonstrating route handling with DI.
@@ -21,7 +21,7 @@ final readonly class ExampleController
      * Index action - returns a simple greeting.
      */
     /** @noinspection PhpUnusedParameterInspection — route handler contract */
-    public function index(Request $_request): Response
+    public function index(ServerRequestInterface $_request): Response
     {
         return Response::json([
             'message' => $this->exampleService->getGreeting(),
@@ -33,7 +33,7 @@ final readonly class ExampleController
      * Info action - returns extension information.
      */
     /** @noinspection PhpUnusedParameterInspection — route handler contract */
-    public function info(Request $_request): Response
+    public function info(ServerRequestInterface $_request): Response
     {
         return Response::json($this->exampleService->getInfo());
     }
@@ -44,7 +44,7 @@ final readonly class ExampleController
      * @param array<string, string> $params Route parameters
      */
     /** @noinspection PhpUnusedParameterInspection — route handler contract */
-    public function greet(Request $_request, array $params): Response
+    public function greet(ServerRequestInterface $_request, array $params): Response
     {
         $name = $params['name'] ?? 'Guest';
 

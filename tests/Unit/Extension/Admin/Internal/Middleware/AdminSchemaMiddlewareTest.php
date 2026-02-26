@@ -8,14 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 use Pulsar\Auth\Authorization\PolicyInterface;
 use Pulsar\Auth\Identity\IdentityInterface;
 use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
 use Pulsar\Extension\Admin\Internal\Middleware\AdminSchemaMiddleware;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
-use Pulsar\Http\Response;
+use Pulsar\Http\Message\Response;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Http\ResponseStatus;
 
 #[CoversClass(AdminSchemaMiddleware::class)]
@@ -46,15 +47,13 @@ final class AdminSchemaMiddlewareTest extends TestCase
     }
 
     private function makeRequest(
-        Method $method = Method::GET,
+        string $method = 'GET',
         string $path = '/admin/schema',
         ?IdentityInterface $identity = null,
         bool $stepUpVerified = false,
         ?string $stepUpToken = null,
-    ): Request {
-        $headers = new HeaderBag(
-            $stepUpToken !== null ? ['X-Step-Up-Token' => $stepUpToken] : [],
-        );
+    ): ServerRequest {
+        $headers = $stepUpToken !== null ? ['X-Step-Up-Token' => $stepUpToken] : [];
 
         $attributes = [];
         if ($identity !== null) {
@@ -64,20 +63,22 @@ final class AdminSchemaMiddlewareTest extends TestCase
             $attributes['step_up_verified'] = true;
         }
 
-        return new Request(
+        return new ServerRequest(
             method: $method,
             uri: $path,
-            path: $path,
-            queryString: '',
             headers: $headers,
-            body: '',
             attributes: $attributes,
         );
     }
 
-    private function nextHandler(): callable
+    private function nextHandler(): RequestHandlerInterface
     {
-        return static fn(Request $r): Response => Response::json(['status' => 'ok']);
+        return new class implements RequestHandlerInterface {
+            public function handle(ServerRequestInterface $request): ResponseInterface
+            {
+                return Response::json(['status' => 'ok']);
+            }
+        };
     }
 
     #[Test]
@@ -88,8 +89,8 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('Schema management is disabled', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('Schema management is disabled', (string) $response->getBody());
     }
 
     #[Test]
@@ -100,8 +101,8 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Unauthorized, $response->status);
-        self::assertStringContainsString('Authentication required', $response->body);
+        self::assertSame(ResponseStatus::Unauthorized->value, $response->getStatusCode());
+        self::assertStringContainsString('Authentication required', (string) $response->getBody());
     }
 
     #[Test]
@@ -114,8 +115,8 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('Schema viewing not permitted', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('Schema viewing not permitted', (string) $response->getBody());
     }
 
     #[Test]
@@ -125,14 +126,14 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::GET,
+            method: 'GET',
             path: '/admin/schema/tables',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -142,14 +143,14 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::POST,
+            method: 'POST',
             path: '/admin/schema/preview/create',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -168,15 +169,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::DELETE,
+            method: 'DELETE',
             path: '/admin/schema/tables/users/columns/email',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('drop_column', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('drop_column', (string) $response->getBody());
     }
 
     #[Test]
@@ -193,15 +194,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::DELETE,
+            method: 'DELETE',
             path: '/admin/schema/tables/users/indexes/idx_email',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('drop_index', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('drop_index', (string) $response->getBody());
     }
 
     #[Test]
@@ -218,15 +219,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::DELETE,
+            method: 'DELETE',
             path: '/admin/schema/tables/users',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('drop', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('drop', (string) $response->getBody());
     }
 
     #[Test]
@@ -243,15 +244,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::POST,
+            method: 'POST',
             path: '/admin/schema/tables/users/rename',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('rename', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('rename', (string) $response->getBody());
     }
 
     #[Test]
@@ -268,15 +269,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::POST,
+            method: 'POST',
             path: '/admin/schema/tables/users/columns',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('alter', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('alter', (string) $response->getBody());
     }
 
     #[Test]
@@ -293,15 +294,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::POST,
+            method: 'POST',
             path: '/admin/schema/tables/users/indexes',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('alter', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('alter', (string) $response->getBody());
     }
 
     #[Test]
@@ -318,15 +319,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::POST,
+            method: 'POST',
             path: '/admin/schema/tables',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('create', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('create', (string) $response->getBody());
     }
 
     #[Test]
@@ -336,17 +337,17 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::DELETE,
+            method: 'DELETE',
             path: '/admin/schema/tables/users',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('Step-up authentication required', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('Step-up authentication required', (string) $response->getBody());
         /** @var array<string, mixed> $body */
-        $body = json_decode($response->body, true);
+        $body = json_decode((string) $response->getBody(), true);
         self::assertTrue($body['step_up_required']);
     }
 
@@ -357,7 +358,7 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::DELETE,
+            method: 'DELETE',
             path: '/admin/schema/tables/users',
             identity: $this->identity,
             stepUpVerified: true,
@@ -365,7 +366,7 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -375,7 +376,7 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::DELETE,
+            method: 'DELETE',
             path: '/admin/schema/tables/users',
             identity: $this->identity,
             stepUpToken: 'valid-token',
@@ -383,7 +384,7 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -394,14 +395,14 @@ final class AdminSchemaMiddlewareTest extends TestCase
         // Create operation is NOT in requireStepUpFor
         $middleware = $this->makeMiddleware(requireStepUpFor: ['drop']);
         $request = $this->makeRequest(
-            method: Method::POST,
+            method: 'POST',
             path: '/admin/schema/tables',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -411,14 +412,14 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::PUT,
+            method: 'PUT',
             path: '/admin/schema/tables/users',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -428,15 +429,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::POST,
+            method: 'POST',
             path: '/admin/schema/tables/users/rename',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('Step-up authentication required', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('Step-up authentication required', (string) $response->getBody());
     }
 
     #[Test]
@@ -446,15 +447,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::DELETE,
+            method: 'DELETE',
             path: '/admin/schema/tables/users/columns/email',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('Step-up authentication required', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('Step-up authentication required', (string) $response->getBody());
     }
 
     #[Test]
@@ -464,15 +465,15 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $middleware = $this->makeMiddleware();
         $request = $this->makeRequest(
-            method: Method::DELETE,
+            method: 'DELETE',
             path: '/admin/schema/tables/users/indexes/idx_email',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('Step-up authentication required', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('Step-up authentication required', (string) $response->getBody());
     }
 
     #[Test]
@@ -483,14 +484,14 @@ final class AdminSchemaMiddlewareTest extends TestCase
         // Create is NOT in the step-up list by default
         $middleware = $this->makeMiddleware(requireStepUpFor: ['drop', 'rename', 'drop_column', 'drop_index']);
         $request = $this->makeRequest(
-            method: Method::POST,
+            method: 'POST',
             path: '/admin/schema/tables',
             identity: $this->identity,
         );
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::OK, $response->status);
+        self::assertSame(ResponseStatus::OK->value, $response->getStatusCode());
     }
 
     #[Test]
@@ -504,8 +505,8 @@ final class AdminSchemaMiddlewareTest extends TestCase
 
         $response = $middleware->process($request, $this->nextHandler());
 
-        self::assertSame(ResponseStatus::Forbidden, $response->status);
-        self::assertStringContainsString('Schema viewing not permitted', $response->body);
+        self::assertSame(ResponseStatus::Forbidden->value, $response->getStatusCode());
+        self::assertStringContainsString('Schema viewing not permitted', (string) $response->getBody());
     }
 
     #[Test]
@@ -514,14 +515,9 @@ final class AdminSchemaMiddlewareTest extends TestCase
         $middleware = $this->makeMiddleware(enabled: false);
         $request = $this->makeRequest(identity: $this->identity);
 
-        $called = false;
-        $next = static function (Request $r) use (&$called): Response {
-            $called = true;
-            return Response::json(['status' => 'ok']);
-        };
+        $handler = $this->createMock(RequestHandlerInterface::class);
+        $handler->expects($this->never())->method('handle');
 
-        $middleware->process($request, $next);
-
-        self::assertFalse($called);
+        $middleware->process($request, $handler);
     }
 }

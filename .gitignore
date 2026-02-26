@@ -1,10 +1,12 @@
 # OS / editor
 .DS_Store
 Thumbs.db
+nul
 .idea/
 .vscode/
 *.swp
 *.swo
+*.stackdump
 
 # PHP / Composer
 /vendor/
@@ -15,17 +17,23 @@ Thumbs.db
 .psalm-cache/
 *.log
 
+# Database
+/database/*.sqlite
+/database/*.sqlite-journal
+/database/*.sqlite-wal
+
 # Runtime / app temp
 /bootstrap/cache/
 /storage/
 /var/
+/public/cms-assets/
 tmp/
 .cache/
 
 # Node / tooling
 node_modules/
 dist/
-build/
+/build/
 coverage/
 .eslintcache
 .prettier-cache
@@ -35,6 +43,9 @@ coverage/
 .env
 .env.*
 !.env.example
+
+# REPL history
+.pulsar_repl_history
 
 # PHP-CS-Fixer cache
 .php-cs-fixer.cache

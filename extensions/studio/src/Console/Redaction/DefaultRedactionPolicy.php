@@ -46,7 +46,7 @@ final class DefaultRedactionPolicy implements RedactionPolicyInterface
         // Connection strings with credentials: mysql://user:pass@host
         '#://[^:]+:[^@]+@#',
         // Bearer tokens
-        '/Bearer\s+[A-Za-z0-9\-._~+\/]+=*/i',
+        '/Bearer\s+[A-Za-z0-9._~+\/-]+=*/i',
         // Base64-encoded secrets (long base64 strings, min 32 chars)
         '/[A-Za-z0-9+\/]{32,}={0,2}/',
         // AWS-style keys

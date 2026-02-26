@@ -8,9 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Config\TenancyConfig;
-use Pulsar\Http\HeaderBag;
-use Pulsar\Http\Method;
-use Pulsar\Http\Request;
+use Pulsar\Http\Message\ServerRequest;
 use Pulsar\Tenancy\Resolver\PathPrefixTenantResolver;
 use Pulsar\Tenancy\TenantResolverStrategy;
 
@@ -29,13 +27,9 @@ final class PathPrefixTenantResolverTest extends TestCase
 
         $resolver = new PathPrefixTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/t/acme/dashboard',
-            path: '/t/acme/dashboard',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         $tenant = $resolver->resolve($request);
@@ -57,13 +51,9 @@ final class PathPrefixTenantResolverTest extends TestCase
 
         $resolver = new PathPrefixTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/api/acme/dashboard',
-            path: '/api/acme/dashboard',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         self::assertNull($resolver->resolve($request));
@@ -81,13 +71,9 @@ final class PathPrefixTenantResolverTest extends TestCase
 
         $resolver = new PathPrefixTenantResolver($config);
 
-        $request = new Request(
-            method: Method::GET,
+        $request = new ServerRequest(
+            method: 'GET',
             uri: '/t/unknown/dashboard',
-            path: '/t/unknown/dashboard',
-            queryString: '',
-            headers: new HeaderBag(),
-            body: '',
         );
 
         self::assertNull($resolver->resolve($request));
