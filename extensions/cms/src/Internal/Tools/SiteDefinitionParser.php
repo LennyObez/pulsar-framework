@@ -72,6 +72,10 @@ use function tempnam;
  * when it does not exist, a new entity is created.
  * Items without import_id are always created (backward compatible).
  */
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            site-import controllers; not instantiated by name.
+ */
 #[Internal(reason: 'Import/export internals; use ImportExportServiceInterface')]
 final readonly class SiteDefinitionParser
 {

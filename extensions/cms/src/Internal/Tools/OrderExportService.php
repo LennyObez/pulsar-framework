@@ -39,6 +39,10 @@ use const JSON_THROW_ON_ERROR;
  * Filters by date range, status, and tenant. PII redaction
  * is applied by default in JSON exports unless explicitly included.
  */
+/**
+ * @psalm-api Bound to OrderExportServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 #[Internal(reason: 'Order export internals; use OrderExportServiceInterface')]
 final readonly class OrderExportService implements OrderExportServiceInterface
 {

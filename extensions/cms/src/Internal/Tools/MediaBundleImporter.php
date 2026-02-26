@@ -43,6 +43,10 @@ use const JSON_THROW_ON_ERROR;
  * with rollback on failure.
  */
 #[Internal(reason: 'Media bundle import internals; use ImportController')]
+/**
+ * @psalm-api Resolved from the DI container by ImportExportService and admin
+ *            import controllers; not instantiated by name.
+ */
 final readonly class MediaBundleImporter
 {
     /** ZIP magic bytes (PK header). */
