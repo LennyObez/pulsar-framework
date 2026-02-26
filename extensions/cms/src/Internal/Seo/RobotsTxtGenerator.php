@@ -11,6 +11,9 @@ use function rtrim;
 
 /**
  * Generates robots.txt content with sitemap reference.
+ *
+ * @psalm-api Bound to RobotsTxtGeneratorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use RobotsTxtGeneratorInterface for public API')]
 final readonly class RobotsTxtGenerator implements RobotsTxtGeneratorInterface

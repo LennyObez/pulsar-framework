@@ -15,6 +15,9 @@ use Pulsar\Routing\RouterInterface;
  *
  * Registers four panels in the Studio sidebar: Audit Trail,
  * Content Cache Inspector, Media Processing Queue, and SEO Health Report.
+ *
+ * @psalm-api Discovered by the Studio extension through StudioModuleInterface;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal]
 final readonly class CmsStudioModule implements StudioModuleInterface

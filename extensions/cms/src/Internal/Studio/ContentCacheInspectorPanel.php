@@ -16,6 +16,9 @@ use Pulsar\Observability\Metrics\MetricRegistry;
  * Allows viewing cached pages (keys matching "cms_page:*"),
  * displays cache hit rates from metrics, and provides manual
  * invalidation by content ID, by tag, or full flush.
+ *
+ * @psalm-api Resolved from the DI container by CmsStudioModule; not
+ *            instantiated by name.
  */
 #[Internal]
 final readonly class ContentCacheInspectorPanel

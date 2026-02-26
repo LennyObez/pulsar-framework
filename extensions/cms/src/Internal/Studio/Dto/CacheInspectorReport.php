@@ -8,6 +8,9 @@ use Pulsar\Api\Internal;
 
 /**
  * Aggregated report from the content cache inspector panel.
+ *
+ * @psalm-api Returned by ContentCacheInspectorPanel::report(); consumed by Studio
+ *            templates.
  */
 #[Internal]
 final readonly class CacheInspectorReport
