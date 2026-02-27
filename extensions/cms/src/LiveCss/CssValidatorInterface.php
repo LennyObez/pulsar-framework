@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Validates CSS content for security, rejecting dangerous constructs.
+ *
+ * @psalm-api Public binding contract; implemented by CssValidator and
+ *            consumed by LiveCssService.
  */
 #[Api(since: '1.0.0')]
 interface CssValidatorInterface
