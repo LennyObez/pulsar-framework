@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  * Immutable value object representing a toast notification.
  *
  * Serializable to JSON for transport via the X-CMS-Toast response header.
+ *
+ * @psalm-api Public DTO constructed by admin controllers and serialized into
+ *            the X-CMS-Toast response header for the front-end JS reader.
  */
 #[Api(since: '1.0.0')]
 final readonly class Toast implements JsonSerializable

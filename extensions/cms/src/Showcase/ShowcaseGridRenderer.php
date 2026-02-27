@@ -18,6 +18,9 @@ use const JSON_THROW_ON_ERROR;
  *
  * Queries published showcase_project content items with their
  * custom field values and returns structured data for rendering.
+ *
+ * @psalm-api Public service resolved from the DI container by showcase
+ *            templates; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class ShowcaseGridRenderer

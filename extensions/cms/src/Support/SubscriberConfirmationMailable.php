@@ -22,6 +22,9 @@ use const ENT_QUOTES;
  *
  * Contains a confirmation link with the raw token. The subscriber must
  * click the link to confirm their subscription.
+ *
+ * @psalm-api Constructed by NewsletterSubscriptionService and dispatched
+ *            through the framework Mailable contract.
  */
 #[Internal(reason: 'Newsletter confirmation mailable; implementation detail')]
 final class SubscriberConfirmationMailable extends Mailable

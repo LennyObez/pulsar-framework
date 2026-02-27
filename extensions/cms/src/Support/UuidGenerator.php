@@ -17,6 +17,10 @@ use function substr;
 
 use const STR_PAD_LEFT;
 
+/**
+ * @psalm-api Static utility invoked by name from CMS services to generate
+ *            UUIDv7 identifiers for new entities; never instantiated.
+ */
 #[Internal]
 final class UuidGenerator
 {
