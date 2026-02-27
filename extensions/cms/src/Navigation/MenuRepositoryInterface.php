@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence interface for navigation menus and menu items.
+ *
+ * @psalm-api Public binding contract; implemented by DbMenuRepository
+ *            and consumed by navigation services and admin controllers.
  */
 #[Api(since: '1.0.0')]
 interface MenuRepositoryInterface

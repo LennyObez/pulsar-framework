@@ -9,6 +9,9 @@ use Pulsar\Extension\Cms\Content\Content;
 
 /**
  * Generates breadcrumb trails for content items based on their hierarchy.
+ *
+ * @psalm-api Public binding contract; implemented by BreadcrumbGenerator
+ *            and consumed by content templates.
  */
 #[Api(since: '1.0.0')]
 interface BreadcrumbGeneratorInterface
