@@ -16,6 +16,9 @@ use function min;
 
 /**
  * Configuration for image watermarking.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by image processing jobs that produce watermarked variants.
  */
 #[Api(since: '1.0.0')]
 final readonly class WatermarkConfig

@@ -10,6 +10,9 @@ use function is_string;
 
 /**
  * Multi-channel publishing configuration.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by ChannelRegistry and individual publishing channels.
  */
 #[Api(since: '1.0.0')]
 final readonly class PublishingConfig

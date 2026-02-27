@@ -13,6 +13,9 @@ use function is_string;
  *
  * Controls which LLM provider to use and connection parameters.
  * Disabled by default; requires explicit opt-in and API key configuration.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by ContentAssistant and AI controllers.
  */
 #[Api(since: '1.0.0')]
 final readonly class AiConfig

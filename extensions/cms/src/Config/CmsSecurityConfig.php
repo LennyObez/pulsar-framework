@@ -17,6 +17,9 @@ use function is_string;
  *
  * Controls SSRF protection, client fingerprinting, plugin trust policy,
  * and step-up authentication settings.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by security middleware, fingerprint resolver, and plugin loader.
  */
 #[Api(since: '1.0.0')]
 final readonly class CmsSecurityConfig
