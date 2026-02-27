@@ -10,6 +10,8 @@ use Pulsar\Api\Api;
  * Read-only query interface for content status counts used by the dashboard.
  *
  * Implementations should use optimized COUNT queries rather than loading entities.
+ *
+ * @psalm-api Public binding contract; consumed by dashboard widgets.
  */
 #[Api(since: '1.0.0')]
 interface ContentStatusQueryInterface

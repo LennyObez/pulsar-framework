@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence for global styles configuration.
+ *
+ * @psalm-api Public binding contract; implemented by FullSiteEditor service
+ *            and consumed by admin controllers.
  */
 #[Api(since: '1.0.0')]
 interface GlobalStylesRepositoryInterface

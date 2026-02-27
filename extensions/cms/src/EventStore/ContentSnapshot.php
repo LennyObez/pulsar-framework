@@ -13,6 +13,9 @@ use Pulsar\Api\Api;
  * Used in governance-grade environments to prove the exact state of
  * all translations at the moment of publication. Any modification
  * is detected via the evidence hash on restore.
+ *
+ * @psalm-api Public DTO returned from ContentSnapshotServiceInterface;
+ *            consumed by governance / audit views.
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentSnapshot

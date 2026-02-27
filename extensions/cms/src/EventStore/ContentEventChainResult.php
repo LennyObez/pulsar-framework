@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Result of verifying an event chain's evidence hashes.
+ *
+ * @psalm-api Public DTO returned from event chain verification routines;
+ *            consumed by audit / governance reports.
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentEventChainResult

@@ -9,6 +9,9 @@ use Pulsar\Api\Internal;
 /**
  * Collects all registered dashboard widgets and provides aggregated data
  * for the admin dashboard controller.
+ *
+ * @psalm-api Resolved from the DI container by the admin dashboard controller;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'CMS dashboard service; implementation detail')]
 final readonly class DashboardService

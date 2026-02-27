@@ -12,6 +12,8 @@ use Pulsar\Security\Audit\AuditEntry;
  *
  * Used by the dashboard to display recent CMS activity without
  * depending on the write-oriented AuditLoggerInterface.
+ *
+ * @psalm-api Public binding contract; consumed by dashboard widgets.
  */
 #[Api(since: '1.0.0')]
 interface AuditQueryInterface

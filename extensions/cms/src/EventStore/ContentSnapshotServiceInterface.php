@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Captures and restores complete content state across all locales
  * for governance-grade auditability.
+ *
+ * @psalm-api Public binding contract; implemented by DbContentSnapshotRepository
+ *            and consumed by governance + admin controllers.
  */
 #[Api(since: '1.0.0')]
 interface ContentSnapshotServiceInterface

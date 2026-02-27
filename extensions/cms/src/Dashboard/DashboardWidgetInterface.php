@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Each widget provides a name, template identifier, and computed data
  * for rendering in the admin dashboard.
+ *
+ * @psalm-api Public extension contract; implementations are tagged with
+ *            cms.dashboard.widget and aggregated by DashboardService.
  */
 #[Api(since: '1.0.0')]
 interface DashboardWidgetInterface
