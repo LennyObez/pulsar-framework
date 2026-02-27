@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Response from the SSRF-safe HTTP client.
+ *
+ * @psalm-api Public DTO returned from SafeHttpClient; consumed by webhook
+ *            and outbound HTTP services.
  */
 #[Api(since: '1.0.0')]
 final readonly class SafeHttpResponse

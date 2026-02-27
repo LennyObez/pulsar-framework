@@ -21,6 +21,9 @@ use const JSON_UNESCAPED_UNICODE;
  *
  * Produces a `<script type="application/ld+json">` tag suitable
  * for embedding in the HTML head for structured data / SEO.
+ *
+ * @psalm-api Public service resolved from the DI container by resume
+ *            content rendering; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class ResumeJsonLdGenerator

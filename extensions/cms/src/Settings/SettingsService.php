@@ -21,6 +21,9 @@ use function is_string;
 /**
  * Site settings service with typed value serialization, per-locale cascading,
  * and full audit trail for configuration changes.
+ *
+ * @psalm-api Bound to SettingsServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal]
 final readonly class SettingsService implements SettingsServiceInterface

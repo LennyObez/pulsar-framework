@@ -18,6 +18,9 @@ use const ENT_QUOTES;
  *
  * The output is designed for browser print-to-PDF with proper page breaks,
  * clean typography, and print media CSS. No external dependencies required.
+ *
+ * @psalm-api Public service resolved from the DI container by resume
+ *            export endpoints; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class ResumePdfGenerator

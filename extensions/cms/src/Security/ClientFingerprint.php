@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Contains hashed representations of client attributes, never raw values,
  * to support rate limiting and abuse detection without storing PII.
+ *
+ * @psalm-api Public DTO returned from ClientFingerprintResolver; consumed
+ *            by rate limiting and abuse detection middleware.
  */
 #[Api(since: '1.0.0')]
 final readonly class ClientFingerprint

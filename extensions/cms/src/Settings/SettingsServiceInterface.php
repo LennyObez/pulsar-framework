@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Supports per-group, per-key, and per-locale access patterns
  * with typed value serialization.
+ *
+ * @psalm-api Public binding contract; implemented by SettingsService and
+ *            consumed by user-land code and admin controllers.
  */
 #[Api(since: '1.0.0')]
 interface SettingsServiceInterface
