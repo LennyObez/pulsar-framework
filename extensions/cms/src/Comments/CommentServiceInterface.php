@@ -9,6 +9,9 @@ use Pulsar\Extension\Cms\Exception\CmsException;
 
 /**
  * Service interface for comment operations.
+ *
+ * @psalm-api Public binding contract; implemented by CommentService and
+ *            consumed by public-comment + admin moderation controllers.
  */
 #[Api(since: '1.0.0')]
 interface CommentServiceInterface
