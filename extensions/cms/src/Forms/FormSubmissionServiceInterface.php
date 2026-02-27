@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Service contract for form submission processing.
+ *
+ * @psalm-api Public binding contract; implemented by FormSubmissionService
+ *            and consumed by public form controllers.
  */
 #[Api(since: '1.0.0')]
 interface FormSubmissionServiceInterface

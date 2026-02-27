@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Contract for individual spam detection strategies.
+ *
+ * @psalm-api Public extension contract; implementations registered with
+ *            SpamScorer and aggregated into a combined score.
  */
 #[Api(since: '1.0.0')]
 interface SpamDetectorInterface

@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Terms in hierarchical taxonomies may have a parent term.
  * Sort order determines display position among siblings.
+ *
+ * @psalm-api Public DTO returned from TaxonomyRepositoryInterface; consumed
+ *            by content services and admin templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class TaxonomyTerm
