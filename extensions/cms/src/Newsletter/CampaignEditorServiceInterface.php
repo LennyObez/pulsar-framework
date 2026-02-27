@@ -13,6 +13,9 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * Handles CRUD operations, scheduling, cancellation, recipient counting,
  * and test sends for newsletter campaigns.
+ *
+ * @psalm-api Public binding contract; implemented by CampaignEditorService
+ *            and consumed by admin newsletter controllers.
  */
 #[Api(since: '1.0.0')]
 interface CampaignEditorServiceInterface
