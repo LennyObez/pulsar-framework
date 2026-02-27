@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Settings are organized by group (e.g., general, seo, comments, media)
  * and store JSON-encoded typed values.
+ *
+ * @psalm-api Public DTO returned from SettingsServiceInterface; consumed by
+ *            user-land code and admin templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class SiteSetting

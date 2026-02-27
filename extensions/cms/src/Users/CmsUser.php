@@ -14,6 +14,9 @@ use Pulsar\Auth\Identity\TwoFactorStatus;
  * This is not the canonical user entity (that lives in Auth). It is a
  * projection tailored for CMS admin user-management screens: roles, 2FA
  * status, content counts, and last-activity timestamps.
+ *
+ * @psalm-api Public DTO returned from CmsUserRepositoryInterface; consumed
+ *            by admin user-management controllers and templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class CmsUser
