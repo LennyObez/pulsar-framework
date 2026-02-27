@@ -16,6 +16,9 @@ use function is_string;
  * Stores site-wide CSS custom properties (design tokens) that apply
  * across all template parts and content. Changes propagate immediately
  * to all pages without per-page edits.
+ *
+ * @psalm-api Public DTO persisted via GlobalStylesRepositoryInterface;
+ *            consumed by full-site editor and theme rendering.
  */
 #[Api(since: '1.0.0')]
 final readonly class GlobalStylesConfig

@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence for template parts.
+ *
+ * @psalm-api Public binding contract; implemented by FullSiteEditor service
+ *            and consumed by template rendering and admin editor.
  */
 #[Api(since: '1.0.0')]
 interface TemplatePartRepositoryInterface
