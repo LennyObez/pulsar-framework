@@ -17,6 +17,9 @@ use function is_string;
 /**
  * Top-level CMS configuration DTO.
  *
+ * @psalm-api Public top-level configuration loaded from config/cms.php during
+ *            preBoot; consumed throughout the CMS by services and controllers.
+ *
  * Loaded from config/cms.php during the preBoot phase. All values have
  * sensible defaults for non-regulated environments; regulated deployments
  * should enable editorialWorkflow, eventSourcing, and atomicSnapshots.

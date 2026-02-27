@@ -10,6 +10,9 @@ use function is_array;
 
 /**
  * CMS workflow notification configuration.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by CmsNotificationDispatcher.
  */
 #[Api(since: '1.0.0')]
 final readonly class NotificationConfig

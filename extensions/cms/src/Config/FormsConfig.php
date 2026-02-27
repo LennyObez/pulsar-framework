@@ -13,6 +13,9 @@ use function is_string;
 
 /**
  * Form submission pipeline configuration.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by FormSubmissionService and SpamScorer setup.
  */
 #[Api(since: '1.0.0')]
 final readonly class FormsConfig

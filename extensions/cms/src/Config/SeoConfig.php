@@ -12,6 +12,9 @@ use function is_string;
 
 /**
  * SEO and link health configuration.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by SeoService, SitemapGenerator, and link health checker.
  */
 #[Api(since: '1.0.0')]
 final readonly class SeoConfig

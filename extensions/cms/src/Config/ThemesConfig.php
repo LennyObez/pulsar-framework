@@ -13,6 +13,9 @@ use function is_string;
 
 /**
  * Theme system configuration.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php; consumed
+ *            by ThemeManager, SafeArchiveExtractor, and theme rendering.
  */
 #[Api(since: '1.0.0')]
 final readonly class ThemesConfig

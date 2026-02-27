@@ -11,6 +11,9 @@ use function is_string;
 
 /**
  * Configuration for a single image variant (responsive size).
+ *
+ * @psalm-api Public configuration DTO referenced by MediaConfig; consumed
+ *            by image variant generation jobs.
  */
 #[Api(since: '1.0.0')]
 final readonly class ImageVariantConfig
