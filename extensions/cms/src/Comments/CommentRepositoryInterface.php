@@ -9,6 +9,9 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for the Comment entity.
+ *
+ * @psalm-api Public binding contract; implemented by DbCommentRepository and
+ *            consumed by CommentService and admin moderation controllers.
  */
 #[Api(since: '1.0.0')]
 interface CommentRepositoryInterface

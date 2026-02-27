@@ -17,6 +17,9 @@ use Pulsar\Security\Audit\AuditOutcome;
  *
  * Sanitizes comment bodies through CommentBodyPolicy, validates state transitions,
  * and emits audit events for all moderation actions.
+ *
+ * @psalm-api Bound to CommentServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use CommentServiceInterface for public API')]
 final readonly class CommentService implements CommentServiceInterface
