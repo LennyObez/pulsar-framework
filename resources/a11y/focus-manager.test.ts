@@ -8,6 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+// @ts-expect-error -- JS module without declaration file
 import {
   trapFocus,
   releaseFocus,
@@ -403,9 +404,9 @@ describe('initRovingTabindex / destroyRovingTabindex', () => {
     initRovingTabindex(toolbar, { itemSelector: 'button' });
 
     const buttons = toolbar.querySelectorAll('button');
-    expect(buttons[0].getAttribute('tabindex')).toBe('0');
-    expect(buttons[1].getAttribute('tabindex')).toBe('-1');
-    expect(buttons[2].getAttribute('tabindex')).toBe('-1');
+    expect(buttons[0]!.getAttribute('tabindex')).toBe('0');
+    expect(buttons[1]!.getAttribute('tabindex')).toBe('-1');
+    expect(buttons[2]!.getAttribute('tabindex')).toBe('-1');
   });
 
   it('should move focus forward with ArrowRight', () => {

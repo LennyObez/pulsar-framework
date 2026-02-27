@@ -142,6 +142,9 @@
                             <dt class="cms-detail-list__term">Total Comments</dt>
                             <dd class="cms-detail-list__value">{{ $authorStats['total_comments'] ?? 0 }}</dd>
 
+                            <dt class="cms-detail-list__term">Previous Comments</dt>
+                            <dd class="cms-detail-list__value">{{ ($authorStats['total_comments'] ?? 1) - 1 }}</dd>
+
                             <dt class="cms-detail-list__term">Spam Rate</dt>
                             <dd class="cms-detail-list__value">
                                 <?php

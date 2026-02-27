@@ -77,7 +77,7 @@ final readonly class ReleaseController
         return Response::json([
             'data' => [
                 'platforms' => array_map(
-                    static fn (ReleasePlatform $p): string => $p->value,
+                    static fn(ReleasePlatform $p): string => $p->value,
                     ReleasePlatform::cases(),
                 ),
                 'fields' => [
@@ -220,7 +220,7 @@ final readonly class ReleaseController
         $result = $this->betaSignupRepository->findAll($page, $perPage);
 
         return Response::json([
-            'data' => array_map(static fn ($signup): array => [
+            'data' => array_map(static fn($signup): array => [
                 'id' => $signup->id,
                 'email' => htmlspecialchars($signup->email, ENT_QUOTES, 'UTF-8'),
                 'device_type' => $signup->deviceType->value,

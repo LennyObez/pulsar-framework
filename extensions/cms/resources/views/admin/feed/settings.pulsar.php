@@ -21,16 +21,17 @@
             <thead class="cms-table__head">
                 <tr>
                     <th class="cms-table__th" scope="col">Content Type</th>
-                    <th class="cms-table__th" scope="col">RSS Feed</th>
-                    <th class="cms-table__th" scope="col">Atom Feed</th>
-                    <th class="cms-table__th" scope="col">Items per Feed</th>
-                    <th class="cms-table__th" scope="col">Feed URL</th>
+                    <th class="cms-table__th" scope="col">Feed Enabled</th>
+                    <th class="cms-table__th" scope="col">Item Limit</th>
+                    <th class="cms-table__th" scope="col">Body Mode</th>
+                    <th class="cms-table__th" scope="col">RSS URL</th>
+                    <th class="cms-table__th" scope="col">Atom URL</th>
                 </tr>
             </thead>
             <tbody class="cms-table__body">
                 @if (empty($contentTypes))
                     <tr>
-                        <td colspan="5" class="cms-table__empty">No content types configured.</td>
+                        <td colspan="6" class="cms-table__empty">No content types configured.</td>
                     </tr>
                 @endif
 
@@ -44,21 +45,11 @@
                         <td class="cms-table__td">
                             <label class="cms-toggle">
                                 <input type="checkbox"
-                                       name="feeds[{{ $type['slug'] ?? '' }}][rss]"
+                                       name="feeds[{{ $type['slug'] ?? '' }}][enabled]"
                                        value="1"
-                                       @if ($type['rss_enabled'] ?? false) checked @endif>
+                                       @if (($type['rss_enabled'] ?? false) || ($type['atom_enabled'] ?? false)) checked @endif>
                                 <span class="cms-toggle__slider"></span>
-                                <span class="cms-sr-only">Enable RSS feed for {{ $type['label'] ?? $type['slug'] ?? '' }}</span>
-                            </label>
-                        </td>
-                        <td class="cms-table__td">
-                            <label class="cms-toggle">
-                                <input type="checkbox"
-                                       name="feeds[{{ $type['slug'] ?? '' }}][atom]"
-                                       value="1"
-                                       @if ($type['atom_enabled'] ?? false) checked @endif>
-                                <span class="cms-toggle__slider"></span>
-                                <span class="cms-sr-only">Enable Atom feed for {{ $type['label'] ?? $type['slug'] ?? '' }}</span>
+                                <span class="cms-sr-only">Enable feed for {{ $type['label'] ?? $type['slug'] ?? '' }}</span>
                             </label>
                         </td>
                         <td class="cms-table__td">
@@ -72,11 +63,25 @@
                                    aria-label="Items per feed for {{ $type['label'] ?? $type['slug'] ?? '' }}">
                         </td>
                         <td class="cms-table__td">
-                            @if ($type['rss_enabled'] ?? false)
+                            <select name="feeds[{{ $type['slug'] ?? '' }}][body_mode]"
+                                    class="cms-form-group__select cms-form-group__select--sm"
+                                    aria-label="Body mode for {{ $type['label'] ?? $type['slug'] ?? '' }}">
+                                <option value="excerpt" @if (($type['body_mode'] ?? 'excerpt') === 'excerpt') selected @endif>Excerpt</option>
+                                <option value="full" @if (($type['body_mode'] ?? '') === 'full') selected @endif>Full Content</option>
+                            </select>
+                        </td>
+                        <td class="cms-table__td">
+                            @if (($type['rss_enabled'] ?? false) || ($type['atom_enabled'] ?? false))
                                 <a href="/feed/{{ $type['slug'] ?? '' }}/rss" class="cms-btn cms-btn--sm cms-btn--outline" target="_blank" rel="noopener">RSS</a>
+                            @else
+                                <span class="cms-text--muted">&mdash;</span>
                             @endif
-                            @if ($type['atom_enabled'] ?? false)
+                        </td>
+                        <td class="cms-table__td">
+                            @if (($type['rss_enabled'] ?? false) || ($type['atom_enabled'] ?? false))
                                 <a href="/feed/{{ $type['slug'] ?? '' }}/atom" class="cms-btn cms-btn--sm cms-btn--outline" target="_blank" rel="noopener">Atom</a>
+                            @else
+                                <span class="cms-text--muted">&mdash;</span>
                             @endif
                         </td>
                     </tr>

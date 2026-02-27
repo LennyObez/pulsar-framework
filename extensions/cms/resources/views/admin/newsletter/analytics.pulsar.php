@@ -100,5 +100,78 @@
             </tbody>
         </table>
     </div>
+
+    {{-- Recent sends --}}
+    <div class="cms-newsletter-analytics__sends">
+        <h3 class="cms-newsletter-analytics__sends-title">Recent Sends</h3>
+        <table class="cms-table">
+            <thead class="cms-table__head">
+                <tr>
+                    <th class="cms-table__th" scope="col">Subscriber Email</th>
+                    <th class="cms-table__th" scope="col">Status</th>
+                    <th class="cms-table__th" scope="col">Sent At</th>
+                    <th class="cms-table__th" scope="col">Opened At</th>
+                    <th class="cms-table__th" scope="col">Clicked At</th>
+                </tr>
+            </thead>
+            <tbody class="cms-table__body">
+                @if (empty($recentSends))
+                    <tr>
+                        <td colspan="5" class="cms-table__empty">No send records available yet.</td>
+                    </tr>
+                @endif
+
+                @foreach ($recentSends ?? [] as $send)
+                    <tr class="cms-table__row">
+                        <td class="cms-table__td">{{ $send['subscriber_email'] ?? '' }}</td>
+                        <td class="cms-table__td">
+                            <?php
+                        $__sendBadgeClass = match ($send['status'] ?? '') {
+                            'sent' => 'cms-badge cms-badge--in-review',
+                            'delivered' => 'cms-badge cms-badge--approved',
+                            'opened' => 'cms-badge cms-badge--approved',
+                            'clicked' => 'cms-badge cms-badge--approved',
+                            'bounced' => 'cms-badge cms-badge--spam',
+                            'failed' => 'cms-badge cms-badge--archived',
+                            default => 'cms-badge',
+                        };
+            ?>
+                            <span class="{{ $__sendBadgeClass }}" role="status">{{ ucfirst($send['status'] ?? '') }}</span>
+                        </td>
+                        <td class="cms-table__td">
+                            @if (isset($send['sent_at']))
+                                <time datetime="{{ $send['sent_at'] }}">{{ $send['sent_at_human'] ?? $send['sent_at'] }}</time>
+                            @else
+                                &mdash;
+                            @endif
+                        </td>
+                        <td class="cms-table__td">
+                            @if (isset($send['opened_at']) && $send['opened_at'] !== null)
+                                <time datetime="{{ $send['opened_at'] }}">{{ $send['opened_at_human'] ?? $send['opened_at'] }}</time>
+                            @else
+                                &mdash;
+                            @endif
+                        </td>
+                        <td class="cms-table__td">
+                            @if (isset($send['clicked_at']) && $send['clicked_at'] !== null)
+                                <time datetime="{{ $send['clicked_at'] }}">{{ $send['clicked_at_human'] ?? $send['clicked_at'] }}</time>
+                            @else
+                                &mdash;
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        @if (!empty($recentSends))
+            @include('cms::admin._partials.pagination', [
+                'page' => $sendsPagination['page'] ?? 1,
+                'perPage' => $sendsPagination['per_page'] ?? 20,
+                'total' => $sendsPagination['total'] ?? 0,
+                'baseUrl' => '/admin/cms/newsletter/campaigns/' . ($campaign['id'] ?? '') . '/analytics',
+            ])
+        @endif
+    </div>
 </div>
 @endsection

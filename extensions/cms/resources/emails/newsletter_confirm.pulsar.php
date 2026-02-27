@@ -22,6 +22,11 @@
                     <!-- Header -->
                     <tr>
                         <td style="padding: 32px 40px 24px 40px; text-align: center;">
+                            @if (isset($siteName) && $siteName !== '')
+                                <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">
+                                    {{ $siteName }}
+                                </p>
+                            @endif
                             <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #1a1a1a; line-height: 1.3;">
                                 Confirm Your Subscription
                             </h1>
@@ -32,7 +37,7 @@
                     <tr>
                         <td style="padding: 0 40px 24px 40px;">
                             <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.6; color: #4b5563;">
-                                You are subscribing with <strong>{{ $email }}</strong>.
+                                You are subscribing to the <strong>{{ $siteName ?? 'our' }}</strong> newsletter with <strong>{{ $email }}</strong>.
                             </p>
                             <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.6; color: #4b5563;">
                                 Please click the button below to confirm your newsletter subscription:

@@ -2115,6 +2115,11 @@
       "methods": [],
       "constants": []
     },
+    "Pulsar\\Http\\Controller\\HealthController": {
+      "since": "1.0.0",
+      "methods": [],
+      "constants": []
+    },
     "Pulsar\\Http\\Factory\\RequestFactory": {
       "since": "1.0.0-rc.11",
       "methods": [],
