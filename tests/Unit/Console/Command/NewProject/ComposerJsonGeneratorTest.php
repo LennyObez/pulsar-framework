@@ -32,7 +32,7 @@ final class ComposerJsonGeneratorTest extends TestCase
         $require = $decoded['require'];
         assert(is_array($require));
         self::assertSame('>=8.5', $require['php']);
-        self::assertSame('^1.0', $require['pulsar/framework']);
+        self::assertSame('^1.0', $require[ComposerJsonGenerator::FRAMEWORK_PACKAGE]);
     }
 
     #[Test]

@@ -200,6 +200,7 @@ final readonly class TemplateRegistry
             /node_modules/
             /var/cache/
             /var/log/
+            /storage/
             /.idea/
             /.vscode/
             .env
@@ -271,24 +272,24 @@ final readonly class TemplateRegistry
 
             return [
                 'session' => [
-                    'enabled' => true,
+                    'handler' => 'file',
                     'lifetime' => 7200,
-                    'cookie_name' => 'pulsar_session',
+                    'cookie_name' => 'PULSAR_SESSION',
                     'cookie_secure' => false,
-                    'cookie_http_only' => true,
-                    'cookie_same_site' => 'Lax',
+                    'cookie_httponly' => true,
+                    'cookie_samesite' => 'Lax',
                 ],
 
                 'csrf' => [
                     'enabled' => true,
-                    'token_name' => '_token',
-                    'header_name' => 'X-CSRF-TOKEN',
+                    'form_field_name' => '_csrf_token',
+                    'header_name' => 'X-CSRF-Token',
                 ],
 
                 'headers' => [
-                    'x_content_type_options' => 'nosniff',
-                    'x_frame_options' => 'DENY',
-                    'referrer_policy' => 'strict-origin-when-cross-origin',
+                    'X-Content-Type-Options' => 'nosniff',
+                    'X-Frame-Options' => 'DENY',
+                    'Referrer-Policy' => 'strict-origin-when-cross-origin',
                 ],
             ];
             PHP;
@@ -303,7 +304,8 @@ final readonly class TemplateRegistry
 
             return [
                 'session' => [
-                    'enabled' => false,
+                    'handler' => 'file',
+                    'lifetime' => 0,
                 ],
 
                 'csrf' => [
@@ -311,9 +313,9 @@ final readonly class TemplateRegistry
                 ],
 
                 'headers' => [
-                    'x_content_type_options' => 'nosniff',
-                    'x_frame_options' => 'DENY',
-                    'referrer_policy' => 'strict-origin-when-cross-origin',
+                    'X-Content-Type-Options' => 'nosniff',
+                    'X-Frame-Options' => 'DENY',
+                    'Referrer-Policy' => 'strict-origin-when-cross-origin',
                 ],
             ];
             PHP;
