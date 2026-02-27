@@ -9,6 +9,9 @@ use Pulsar\Extension\Cms\Exception\CmsException;
 
 /**
  * Service for managing live CSS overrides on installed themes.
+ *
+ * @psalm-api Public binding contract; implemented by LiveCssService and
+ *            consumed by admin theme controllers.
  */
 #[Api(since: '1.0.0')]
 interface LiveCssServiceInterface

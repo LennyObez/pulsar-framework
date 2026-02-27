@@ -11,6 +11,9 @@ use function is_int;
 
 /**
  * Configuration for the Live CSS editor subsystem.
+ *
+ * @psalm-api Public configuration DTO loaded from config/cms.php and
+ *            consumed by LiveCssService and the admin editor.
  */
 #[Api(since: '1.0.0')]
 final readonly class LiveCssConfig

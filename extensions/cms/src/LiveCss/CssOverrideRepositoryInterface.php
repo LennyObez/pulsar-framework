@@ -6,6 +6,9 @@ namespace Pulsar\Extension\Cms\LiveCss;
 
 /**
  * Repository for CSS override persistence.
+ *
+ * @psalm-api Public binding contract; implemented by DbCssOverrideRepository
+ *            and consumed by LiveCssService.
  */
 interface CssOverrideRepositoryInterface
 {
