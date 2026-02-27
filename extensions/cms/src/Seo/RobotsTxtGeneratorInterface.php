@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Generator for robots.txt content.
+ *
+ * @psalm-api Public binding contract; implemented by RobotsTxtGenerator and
+ *            consumed by /robots.txt route.
  */
 #[Api(since: '1.0.0')]
 interface RobotsTxtGeneratorInterface

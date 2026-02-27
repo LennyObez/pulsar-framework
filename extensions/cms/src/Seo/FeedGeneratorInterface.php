@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Generates RSS and Atom feeds for published content.
+ *
+ * @psalm-api Public binding contract; implemented by FeedGenerator and
+ *            consumed by RssChannel + feed routes.
  */
 #[Api(since: '1.0.0')]
 interface FeedGeneratorInterface

@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a link health check run completes.
+ *
+ * @psalm-api Event constructed by LinkHealthChecker and dispatched through
+ *            the EventDispatcher.
  */
 #[Api(since: '1.0.0')]
 final readonly class LinkHealthCheckCompleted

@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Sitemap generation service for XML sitemaps.
+ *
+ * @psalm-api Public binding contract; implemented by SitemapGenerator and
+ *            consumed by /sitemap.xml route.
  */
 #[Api(since: '1.0.0')]
 interface SitemapGeneratorInterface

@@ -10,6 +10,9 @@ use Pulsar\Extension\Cms\Content\ContentTranslation;
 
 /**
  * Core SEO service for generating meta tags and structured data.
+ *
+ * @psalm-api Public binding contract; implemented by SeoService and consumed
+ *            by content templates.
  */
 #[Api(since: '1.0.0')]
 interface SeoServiceInterface

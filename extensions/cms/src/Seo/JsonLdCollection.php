@@ -10,6 +10,9 @@ use function count;
 
 /**
  * Immutable collection of JSON-LD structured data objects.
+ *
+ * @psalm-api Public DTO returned from SeoServiceInterface; consumed by
+ *            content templates rendering the head section.
  */
 #[Api(since: '1.0.0')]
 final readonly class JsonLdCollection
