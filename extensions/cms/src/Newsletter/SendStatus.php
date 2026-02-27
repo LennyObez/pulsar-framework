@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  * Queued → Sent → Delivered
  * Queued → Failed
  * Sent → Bounced
+ *
+ * @psalm-api Public enum referenced by NewsletterSend::status; consumed by
+ *            dispatch jobs and admin send-detail views.
  */
 #[Api(since: '1.0.0')]
 enum SendStatus: string

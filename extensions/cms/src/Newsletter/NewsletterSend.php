@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  * campaign email to a specific subscriber.
  *
  * One-to-one mapping: each (campaign_id, subscriber_id) pair is unique.
+ *
+ * @psalm-api Public DTO returned from NewsletterSendRepositoryInterface;
+ *            consumed by dispatch jobs and admin send-detail views.
  */
 #[Api(since: '1.0.0')]
 final readonly class NewsletterSend

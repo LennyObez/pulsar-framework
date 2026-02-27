@@ -9,6 +9,9 @@ use Pulsar\Api\Pagination\PaginationResult;
 
 /**
  * Repository interface for newsletter send records.
+ *
+ * @psalm-api Public binding contract; implemented by DbNewsletterSendRepository
+ *            and consumed by dispatch jobs.
  */
 #[Api(since: '1.0.0')]
 interface NewsletterSendRepositoryInterface

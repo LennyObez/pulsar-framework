@@ -14,6 +14,9 @@ use Pulsar\Api\Api;
  * Sending → Sent
  * Cancelled (terminal)
  * Sent (terminal)
+ *
+ * @psalm-api Public enum referenced by NewsletterCampaign::status; consumed
+ *            by user-land code and admin views.
  */
 #[Api(since: '1.0.0')]
 enum CampaignStatus: string

@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Differs from the Seo\FeedGeneratorInterface by supporting content type
  * filtering and format selection in a single method.
+ *
+ * @psalm-api Public binding contract; implemented by FeedGeneratorService
+ *            and consumed by feed routes.
  */
 #[Api(since: '1.0.0')]
 interface FeedGeneratorServiceInterface

@@ -12,6 +12,9 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * Handles the full subscriber lifecycle: subscribe (with double opt-in),
  * confirm via token, unsubscribe, and re-subscribe.
+ *
+ * @psalm-api Public binding contract; implemented by NewsletterSubscriptionService
+ *            and consumed by public subscription form controllers.
  */
 #[Api(since: '1.0.0')]
 interface NewsletterSubscriptionServiceInterface
