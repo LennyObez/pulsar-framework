@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Menu items form a tree via parent_id and can link to either
  * internal content (via content_id) or external URLs.
+ *
+ * @psalm-api Public DTO returned from MenuRepositoryInterface; consumed by
+ *            navigation rendering.
  */
 #[Api(since: '1.0.0')]
 final readonly class MenuItem

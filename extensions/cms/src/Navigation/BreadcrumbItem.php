@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Value object representing a single breadcrumb trail entry.
+ *
+ * @psalm-api Public DTO returned from BreadcrumbGeneratorInterface; consumed
+ *            by content templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class BreadcrumbItem

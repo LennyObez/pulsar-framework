@@ -24,6 +24,10 @@ use function array_reverse;
  * pattern of one query per ancestor level.
  */
 #[Internal(reason: 'CMS navigation; implementation detail')]
+/**
+ * @psalm-api Bound to BreadcrumbGeneratorInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
+ */
 final readonly class BreadcrumbGenerator implements BreadcrumbGeneratorInterface
 {
     public function __construct(

@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  * This is a read-only projection used by templates. The label and titleAttr
  * come from the MenuItemTranslation for the requested locale, with fallback
  * to the first available translation.
+ *
+ * @psalm-api Public DTO produced by MenuRepositoryInterface during locale
+ *            resolution; consumed by navigation templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class MenuItemResolved
