@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Aggregates multiple spam detectors and produces a combined score.
+ *
+ * @psalm-api Resolved from the DI container by FormSubmissionService;
+ *            extensions register additional detectors during boot.
  */
 #[Api(since: '1.0.0')]
 final class SpamScorer

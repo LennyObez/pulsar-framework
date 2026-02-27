@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Per-locale translation for a taxonomy term.
+ *
+ * @psalm-api Public DTO returned from TaxonomyRepositoryInterface; consumed
+ *            by content services and admin templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class TaxonomyTermTranslation

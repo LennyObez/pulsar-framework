@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Part of the editorial workflow that gates content progression
  * from Draft through Review to Published status.
+ *
+ * @psalm-api Public DTO returned from EditorialWorkflowServiceInterface;
+ *            consumed by review queue templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class EditorialReview

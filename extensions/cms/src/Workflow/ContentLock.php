@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Locks auto-expire after a configurable TTL (default 30 minutes)
  * and are refreshed via periodic heartbeat while the editor is open.
+ *
+ * @psalm-api Public DTO returned from ContentLockServiceInterface; consumed
+ *            by editor middleware and admin templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class ContentLock

@@ -20,6 +20,9 @@ use function assert;
  * Uses INSERT ... ON CONFLICT DO UPDATE WHERE for atomic lock acquisition
  * that safely overwrites expired locks in a single statement.
  * Automatic expiration (30 minutes) with heartbeat renewal.
+ *
+ * @psalm-api Bound to ContentLockServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal]
 final readonly class ContentLockService implements ContentLockServiceInterface

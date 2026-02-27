@@ -8,6 +8,9 @@ use function substr;
 
 /**
  * Maps BCP 47 locale codes to PostgreSQL text search regconfig names.
+ *
+ * @psalm-api Static utility invoked by name from PostgresSearchService and
+ *            SearchVectorComputer; never instantiated.
  */
 final class LocaleRegconfigMap
 {

@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Hierarchical taxonomies support parent-child term relationships (categories);
  * flat taxonomies do not (tags).
+ *
+ * @psalm-api Public DTO returned from TaxonomyRepositoryInterface; consumed
+ *            by content services and admin templates.
  */
 #[Api(since: '1.0.0')]
 final readonly class Taxonomy

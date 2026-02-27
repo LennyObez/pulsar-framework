@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Persistence interface for taxonomy aggregates and terms.
+ *
+ * @psalm-api Public binding contract; implemented by DbTaxonomyRepository
+ *            and consumed by TaxonomyService and admin controllers.
  */
 #[Api(since: '1.0.0')]
 interface TaxonomyRepositoryInterface

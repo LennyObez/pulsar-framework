@@ -23,6 +23,9 @@ use function is_string;
  *
  * Coordinates content status transitions with editorial review records,
  * audit logging, and reviewer assignment.
+ *
+ * @psalm-api Bound to EditorialWorkflowServiceInterface in the CMS service
+ *            provider; resolved from the DI container, never instantiated by name.
  */
 #[Internal]
 final readonly class EditorialWorkflowService implements EditorialWorkflowServiceInterface

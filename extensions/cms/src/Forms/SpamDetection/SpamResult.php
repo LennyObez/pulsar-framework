@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Result of spam detection analysis.
+ *
+ * @psalm-api Public DTO returned from SpamDetectorInterface implementations;
+ *            consumed by SpamScorer aggregation.
  */
 #[Api(since: '1.0.0')]
 final readonly class SpamResult

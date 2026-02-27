@@ -13,6 +13,9 @@ use Pulsar\Database\Driver;
  *
  * Operates on the {@code cms_content_taxonomy_terms} join table via
  * upsert-style inserts and targeted deletes wrapped in transactions.
+ *
+ * @psalm-api Bound to TaxonomyServiceInterface in the CMS service provider;
+ *            resolved from the DI container, never instantiated by name.
  */
 #[Internal(reason: 'Use TaxonomyServiceInterface for public API')]
 final readonly class TaxonomyService implements TaxonomyServiceInterface
