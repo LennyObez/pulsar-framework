@@ -9,6 +9,9 @@ use Pulsar\Extension\Cms\Content\Content;
 
 /**
  * Service for checking and reporting on link health across content.
+ *
+ * @psalm-api Public binding contract; implemented by LinkHealthChecker and
+ *            consumed by scheduled jobs and Studio panels.
  */
 #[Api(since: '1.0.0')]
 interface LinkHealthServiceInterface

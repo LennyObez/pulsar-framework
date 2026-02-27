@@ -10,6 +10,9 @@ use Pulsar\Extension\Cms\Content\ContentTranslation;
 
 /**
  * Strategy interface for generating content-type-specific JSON-LD structured data.
+ *
+ * @psalm-api Public extension contract; implementations registered with the
+ *            CMS service provider and aggregated by SeoService.
  */
 #[Api(since: '1.0.0')]
 interface StructuredDataGeneratorInterface
