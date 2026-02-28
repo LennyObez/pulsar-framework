@@ -33,6 +33,10 @@ use function in_array;
  * RoleRegistryInterface, and all Internal\ namespaced classes.
  */
 #[Api(since: '1.0.0')]
+/**
+ * @psalm-api Public proxy constructed by CmsPluginManager and exposed to plugin
+ *            register() / boot() so they can resolve a curated subset of services.
+ */
 final readonly class ScopedContainerProxy
 {
     /** @var list<class-string> Base services available to all plugins. */

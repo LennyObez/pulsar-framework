@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Dispatched when a plugin has been deleted.
+ *
+ * @psalm-api Event constructed by CmsPluginManager and dispatched through
+ *            the EventDispatcher.
  */
 #[Api(since: '1.0.0')]
 final readonly class PluginDeleted

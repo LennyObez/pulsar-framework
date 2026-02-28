@@ -12,6 +12,9 @@ use function is_string;
 
 /**
  * Parsed plugin manifest (plugin.json) with all declared metadata.
+ *
+ * @psalm-api Public DTO produced from plugin.json parsing; consumed by
+ *            CmsPluginManager and PluginManifestValidator.
  */
 #[Api(since: '1.0.0')]
 final readonly class PluginManifest

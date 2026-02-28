@@ -9,6 +9,9 @@ use Pulsar\Api\Api;
 
 /**
  * Installed plugin entity: represents a plugin package installed in the CMS.
+ *
+ * @psalm-api Public DTO returned from CmsPluginRepositoryInterface; consumed
+ *            by CmsPluginManager and admin plugin views.
  */
 #[Api(since: '1.0.0')]
 final readonly class InstalledCmsPlugin

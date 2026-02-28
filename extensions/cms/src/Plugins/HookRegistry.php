@@ -15,6 +15,9 @@ use function usort;
  *
  * Plugins register callbacks for named hook points with a priority.
  * Lower priority values execute first.
+ *
+ * @psalm-api Public registry resolved from the DI container by CmsPluginManager
+ *            and HookExecutionEngine; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final class HookRegistry
