@@ -159,6 +159,9 @@ use function extension_loaded;
  * Binds CMS core services: settings, taxonomy, media, comments, search, SEO,
  * navigation, i18n, editorial workflow, tools/backup, security, block editor,
  * and content controller.
+ *
+ * @psalm-api Instantiated by name from CmsServiceProvider::register() to wire
+ *            the core service bindings into the DI container.
  */
 #[Internal(reason: 'CMS service wiring; use interfaces for public API')]
 final readonly class CmsCoreServiceProvider
