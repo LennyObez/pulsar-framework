@@ -9,6 +9,9 @@ use Pulsar\Extension\Cms\Exception\CmsException;
 
 /**
  * High-level theme lifecycle manager.
+ *
+ * @psalm-api Public binding contract; implemented by ThemeManager and
+ *            consumed by admin theme controllers.
  */
 #[Api(since: '1.0.0')]
 interface ThemeManagerInterface

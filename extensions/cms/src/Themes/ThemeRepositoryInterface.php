@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Repository interface for the InstalledTheme entity.
+ *
+ * @psalm-api Public binding contract; implemented by DbThemeRepository
+ *            and consumed by ThemeManager.
  */
 #[Api(since: '1.0.0')]
 interface ThemeRepositoryInterface
