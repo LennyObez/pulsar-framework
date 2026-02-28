@@ -8,6 +8,7 @@ use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Tenancy\Guard\SystemContext;
 
@@ -74,7 +75,7 @@ final class SystemContextTest extends TestCase
             ->with(
                 self::anything(),
                 self::anything(),
-                null,
+                self::callback(static fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'system:tenancy.system_context'),
                 'system_context_entered',
                 self::anything(),
                 self::callback(static fn(array $metadata): bool => $metadata['reason'] === 'migration'),

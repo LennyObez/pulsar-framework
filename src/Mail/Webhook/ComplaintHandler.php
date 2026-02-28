@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Mail\Webhook;
 
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -48,7 +49,7 @@ final readonly class ComplaintHandler
         $this->auditLogger?->log(
             event: AuditEvent::Communication,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('mail.webhook.complaint'),
             action: 'mail.complaint',
             resource: $messageId ?? '',
             metadata: [

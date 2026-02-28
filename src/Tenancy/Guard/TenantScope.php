@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Pulsar\Tenancy\Guard;
 
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Security\Audit\AuditEvent;
 use Pulsar\Security\Audit\AuditOutcome;
@@ -36,7 +37,7 @@ final class TenantScope
         $this->auditLogger?->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('tenancy.scope'),
             action: 'tenant_scope_entered',
             resource: $tenantId->toString(),
         );
@@ -54,7 +55,7 @@ final class TenantScope
         $this->auditLogger?->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('tenancy.scope'),
             action: 'tenant_scope_exited',
             resource: $previousTenantId?->toString() ?? '',
         );
@@ -75,7 +76,7 @@ final class TenantScope
             $this->auditLogger?->log(
                 event: AuditEvent::SystemEvent,
                 outcome: AuditOutcome::Success,
-                actor: null,
+                actor: AuditActor::system('tenancy.scope'),
                 action: 'tenant_scope_reset',
                 resource: $previousTenantId->toString(),
             );

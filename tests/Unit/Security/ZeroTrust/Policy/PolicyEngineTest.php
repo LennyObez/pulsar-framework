@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Security\Audit\AuditEntry;
@@ -986,7 +987,7 @@ final class PolicyEngineTest extends TestCase
             ->with(
                 AuditEvent::Authorization,
                 AuditOutcome::Success,
-                null,
+                self::callback(static fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'anonymous'),
                 'policy.evaluate',
                 '/test/resource',
                 self::callback(static function (array $metadata): bool {

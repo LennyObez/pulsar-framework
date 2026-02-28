@@ -9,7 +9,9 @@ use Fiber;
 use JsonException;
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Audit\Exception\AuditActorMissingException;
 use Pulsar\Context\RequestContextHolder;
 use Pulsar\Security\Crypto\Hmac;
 use Random\Engine\Secure;
@@ -74,12 +76,17 @@ final class AuditLogger implements AuditLoggerInterface
      * Log an audit event.
      *
      * Creates an AuditEntry with HMAC chain, writes it to the sink,
-     * and advances the chain state. When actor is null and RequestContext
-     * is available, auto-fills from context. Always enriches metadata
-     * with correlation_id and causation_id when context is available.
+     * and advances the chain state. The actor MUST resolve to a non-empty
+     * identifier — either passed explicitly (as `AuditActor` or string) or
+     * derived from the active `RequestContext`. Falling back to a generic
+     * `'system'` actor was historically used to mask null actors and is now
+     * forbidden (F25.10): an `AuditActorMissingException` is raised instead.
+     * Always enriches metadata with correlation_id and causation_id when
+     * context is available.
      *
      * @param array<string, mixed> $metadata
      *
+     * @throws AuditActorMissingException when no actor can be resolved.
      * @throws RandomException
      * @throws JsonException
      * @throws SodiumException
@@ -88,12 +95,16 @@ final class AuditLogger implements AuditLoggerInterface
     public function log(
         AuditEvent $event,
         AuditOutcome $outcome,
-        ?string $actor,
+        AuditActor|string|null $actor,
         string $action,
         string $resource = '',
         array $metadata = [],
     ): AuditEntry {
-        $resolvedActor = $actor;
+        $resolvedActor = match (true) {
+            $actor instanceof AuditActor => $actor->id,
+            $actor === '' => null,
+            default => $actor,
+        };
         $enrichedMetadata = $metadata;
 
         // Auto-enrich from request context when available
@@ -106,6 +117,10 @@ final class AuditLogger implements AuditLoggerInterface
 
             $enrichedMetadata['correlation_id'] ??= $requestContext->correlationId->value;
             $enrichedMetadata['causation_id'] ??= $requestContext->causationId->value;
+        }
+
+        if ($resolvedActor === null || $resolvedActor === '') {
+            throw AuditActorMissingException::notProvidedAndNoContext($action);
         }
 
         $id = bin2hex($this->randomizer->getBytes(16));
@@ -123,7 +138,7 @@ final class AuditLogger implements AuditLoggerInterface
                 id: $id,
                 event: $event,
                 outcome: $outcome,
-                actor: $resolvedActor ?? 'system',
+                actor: $resolvedActor,
                 action: $action,
                 resource: $resource,
                 timestamp: $timestamp,

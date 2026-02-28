@@ -6,6 +6,7 @@ namespace Pulsar\Database\Routing;
 
 use Override;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Database\ConnectionInterface;
 use Pulsar\Database\ConnectionManagerInterface;
@@ -107,7 +108,7 @@ final class RoutingConnectionManager implements ConnectionManagerInterface
         $this->auditLogger?->log(
             event: AuditEvent::DataAccess,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('db.routing'),
             action: 'database.replica_override',
             resource: 'connection',
             metadata: ['reason' => 'manual_override'],

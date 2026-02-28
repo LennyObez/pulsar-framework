@@ -6,6 +6,7 @@ namespace Pulsar\Security\ZeroTrust\Policy\Internal;
 
 use Override;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Event\EventDispatcherInterface;
 use Pulsar\Security\Audit\AuditEvent;
@@ -211,7 +212,7 @@ final readonly class PolicyEngine implements PolicyEngineInterface
         $this->auditLogger->log(
             event: AuditEvent::Authorization,
             outcome: $outcome,
-            actor: null,
+            actor: $this->identityId !== '' ? AuditActor::user($this->identityId) : AuditActor::anonymous(),
             action: 'policy.evaluate',
             resource: $result->resource,
             metadata: [

@@ -6,6 +6,7 @@ namespace Pulsar\Extension\Auth\WebAuthn\Ceremony;
 
 use DateTimeImmutable;
 use Pulsar\Api\Internal;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Auth\WebAuthn\Adapter\AttestationVerifier;
 use Pulsar\Extension\Auth\WebAuthn\Adapter\CborDecoder;
@@ -166,7 +167,7 @@ final readonly class RegistrationCeremony
             $this->auditLogger->log(
                 event: AuditEvent::Authentication,
                 outcome: AuditOutcome::Failure,
-                actor: null,
+                actor: AuditActor::anonymous(),
                 action: 'webauthn.registration.failed',
                 resource: 'webauthn:registration',
                 metadata: ['error' => $e->getMessage(), 'error_code' => $e->errorCode()],

@@ -7,6 +7,8 @@ namespace Pulsar\Tests\Unit\Security\Audit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Audit\AuditActor;
+use Pulsar\Audit\Exception\AuditActorMissingException;
 use Pulsar\Context\CausationId;
 use Pulsar\Context\CorrelationId;
 use Pulsar\Context\RequestContext;
@@ -254,7 +256,24 @@ final class AuditLoggerTest extends TestCase
     }
 
     #[Test]
-    public function logUsesSystemActorWhenNoContextAndNoActor(): void
+    public function logThrowsWhenNoContextAndNoActor(): void
+    {
+        $sink = $this->createStub(AuditSinkInterface::class);
+        $logger = new AuditLogger($sink, $this->auditKey);
+
+        $this->expectException(AuditActorMissingException::class);
+        $this->expectExceptionMessage('"startup"');
+
+        $logger->log(
+            event: AuditEvent::SystemEvent,
+            outcome: AuditOutcome::Success,
+            actor: null,
+            action: 'startup',
+        );
+    }
+
+    #[Test]
+    public function logAcceptsAuditActorValueObject(): void
     {
         $sink = $this->createStub(AuditSinkInterface::class);
         $logger = new AuditLogger($sink, $this->auditKey);
@@ -262,11 +281,11 @@ final class AuditLoggerTest extends TestCase
         $entry = $logger->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('background.startup'),
             action: 'startup',
         );
 
-        self::assertSame('system', $entry->actor);
+        self::assertSame('system:background.startup', $entry->actor);
     }
 
     #[Test]
@@ -296,7 +315,26 @@ final class AuditLoggerTest extends TestCase
     }
 
     #[Test]
-    public function logWithEmptyContextHolderDoesNotEnrich(): void
+    public function logWithEmptyContextHolderThrowsWhenActorMissing(): void
+    {
+        $sink = $this->createStub(AuditSinkInterface::class);
+        $contextHolder = new RequestContextHolder();
+        // No context set
+
+        $logger = new AuditLogger($sink, $this->auditKey, contextHolder: $contextHolder);
+
+        $this->expectException(AuditActorMissingException::class);
+
+        $logger->log(
+            event: AuditEvent::DataAccess,
+            outcome: AuditOutcome::Success,
+            actor: null,
+            action: 'read',
+        );
+    }
+
+    #[Test]
+    public function logWithEmptyContextHolderAcceptsExplicitActor(): void
     {
         $sink = $this->createStub(AuditSinkInterface::class);
         $contextHolder = new RequestContextHolder();
@@ -307,11 +345,11 @@ final class AuditLoggerTest extends TestCase
         $entry = $logger->log(
             event: AuditEvent::DataAccess,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('test'),
             action: 'read',
         );
 
-        self::assertSame('system', $entry->actor);
+        self::assertSame('system:test', $entry->actor);
         self::assertArrayNotHasKey('correlation_id', $entry->metadata);
     }
 }

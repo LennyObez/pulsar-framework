@@ -6,6 +6,7 @@ namespace Pulsar\Queue\Tenant;
 
 use NoDiscard;
 use Pulsar\Api\Api;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Queue\QueueManager;
 use Pulsar\Security\Audit\AuditEvent;
@@ -59,7 +60,7 @@ final readonly class TenantFanOutDispatcher
         $this->auditLogger?->log(
             event: AuditEvent::SystemEvent,
             outcome: AuditOutcome::Success,
-            actor: null,
+            actor: AuditActor::system('queue.tenant_fanout'),
             action: 'tenant_fan_out_started',
             metadata: [
                 'innerJobClass' => $innerJobClass,
@@ -91,7 +92,7 @@ final readonly class TenantFanOutDispatcher
                 $this->auditLogger?->log(
                     event: AuditEvent::SystemEvent,
                     outcome: AuditOutcome::Error,
-                    actor: null,
+                    actor: AuditActor::system('queue.tenant_fanout'),
                     action: 'tenant_fan_out_dispatch_failed',
                     resource: $tenantId->toString(),
                     metadata: [
@@ -105,7 +106,7 @@ final readonly class TenantFanOutDispatcher
         $this->auditLogger?->log(
             event: AuditEvent::SystemEvent,
             outcome: $failed === 0 ? AuditOutcome::Success : AuditOutcome::Error,
-            actor: null,
+            actor: AuditActor::system('queue.tenant_fanout'),
             action: 'tenant_fan_out_completed',
             metadata: [
                 'innerJobClass' => $innerJobClass,

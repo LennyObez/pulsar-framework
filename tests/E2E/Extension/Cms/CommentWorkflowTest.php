@@ -10,6 +10,7 @@ use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Api\Pagination\PaginationResult;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Extension\Cms\Comments\Comment;
 use Pulsar\Extension\Cms\Comments\CommentBodyPolicy;
@@ -286,11 +287,16 @@ final class E2EAuditLogger implements AuditLoggerInterface
     /** @var list<array<string, mixed>> */
     private array $entries = [];
 
-    public function log(AuditEvent $event, AuditOutcome $outcome, ?string $actor, string $action, string $resource = '', array $metadata = []): AuditEntry
+    public function log(AuditEvent $event, AuditOutcome $outcome, AuditActor|string|null $actor, string $action, string $resource = '', array $metadata = []): AuditEntry
     {
-        $this->entries[] = ['event' => $event, 'outcome' => $outcome, 'actor' => $actor, 'action' => $action, 'resource' => $resource, 'metadata' => $metadata];
+        $resolved = match (true) {
+            $actor instanceof AuditActor => $actor->id,
+            $actor === null || $actor === '' => '',
+            default => $actor,
+        };
+        $this->entries[] = ['event' => $event, 'outcome' => $outcome, 'actor' => $resolved, 'action' => $action, 'resource' => $resource, 'metadata' => $metadata];
 
-        return new AuditEntry(id: 'audit-' . count($this->entries), event: $event, outcome: $outcome, actor: $actor ?? '', action: $action, resource: $resource, timestamp: new DateTimeImmutable(), metadata: $metadata, previousHmac: '', hmac: '');
+        return new AuditEntry(id: 'audit-' . count($this->entries), event: $event, outcome: $outcome, actor: $resolved, action: $action, resource: $resource, timestamp: new DateTimeImmutable(), metadata: $metadata, previousHmac: '', hmac: '');
     }
 
     /** @return list<array<string, mixed>> */

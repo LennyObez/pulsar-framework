@@ -105,7 +105,7 @@ final class NullAuditLoggerTest extends TestCase
     }
 
     #[Test]
-    public function logUsesSystemActorWhenNull(): void
+    public function logUsesNullSentinelActorWhenNull(): void
     {
         $entry = $this->logger->log(
             AuditEvent::SystemEvent,
@@ -114,7 +114,10 @@ final class NullAuditLoggerTest extends TestCase
             'scheduled.task',
         );
 
-        self::assertSame('system', $entry->actor);
+        // NullAuditLogger discards events; the entry's actor uses the literal
+        // sentinel `'null'` so that any sink that does inspect the result can
+        // distinguish a NullAuditLogger placeholder from a real audit record.
+        self::assertSame('null', $entry->actor);
     }
 
     #[Test]

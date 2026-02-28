@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Server\RequestHandlerInterface;
+use Pulsar\Audit\AuditActor;
 use Pulsar\Audit\AuditLoggerInterface;
 use Pulsar\Http\Message\Response;
 use Pulsar\Http\Message\ServerRequest;
@@ -136,7 +137,7 @@ final class HoneypotMiddlewareTest extends TestCase
             ->with(
                 AuditEvent::SecurityEvent,
                 AuditOutcome::Denied,
-                null,
+                self::callback(static fn(mixed $actor): bool => $actor instanceof AuditActor && $actor->id === 'anonymous'),
                 'honeypot.triggered',
                 '/.env',
             )
