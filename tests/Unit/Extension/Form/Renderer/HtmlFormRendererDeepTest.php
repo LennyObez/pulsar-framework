@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Form\Builder\FormBuilder;
 use Pulsar\Extension\Form\Config\FormConfig;
 use Pulsar\Extension\Form\Config\RendererConfig;
+use Pulsar\Extension\Form\Contract\FormInterface;
 use Pulsar\Extension\Form\Field\CheckboxField;
 use Pulsar\Extension\Form\Field\ColorField;
 use Pulsar\Extension\Form\Field\DateField;
@@ -427,7 +428,7 @@ final class HtmlFormRendererDeepTest extends TestCase
     #[Test]
     public function csrfFieldRendersEmptyForNonFormInstance(): void
     {
-        $formStub = $this->createStub(\Pulsar\Extension\Form\Contract\FormInterface::class);
+        $formStub = $this->createStub(FormInterface::class);
         $formStub->method('isCsrfEnabled')->willReturn(true);
 
         $html = $this->renderer->renderCsrfField($formStub);

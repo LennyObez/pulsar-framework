@@ -84,7 +84,7 @@ final class TenantJobMiddlewareTest extends TestCase
         $this->middleware->handle($envelope, static fn(JobEnvelope $e): string => 'ok');
 
         self::assertFalse($this->context->isResolved());
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
     }
 
     #[Test]
@@ -101,7 +101,7 @@ final class TenantJobMiddlewareTest extends TestCase
         }
 
         self::assertFalse($this->context->isResolved());
-        self::assertNull($this->scope->getActiveTenantId());
+        self::assertNull($this->scope->activeTenantId);
     }
 
     #[Test]

@@ -72,14 +72,14 @@ final readonly class GraphqlExecutor
         ];
     }
 
-    private function resolveRootField(ParsedField $field): mixed
+    private function resolveRootField(ParsedField $field): ?array
     {
         return match ($field->name) {
             'content' => $this->resolveContent($field),
             'contents' => $this->resolveContents($field),
             'taxonomy' => $this->resolveTaxonomy($field),
             'media' => $this->resolveMedia($field),
-            default => throw GraphqlException::validationError("Unknown root field: {$field->name}"),
+            default => throw GraphqlException::validationError("Unknown root field: $field->name"),
         };
     }
 
@@ -190,7 +190,7 @@ final readonly class GraphqlExecutor
     /**
      * Resolve fields that require additional repository calls.
      */
-    private function resolveLazyField(array $data, string $typeName, ParsedField $field): mixed
+    private function resolveLazyField(array $data, string $typeName, ParsedField $field): ?array
     {
         if ($typeName === 'Content' && $field->name === 'translations') {
             /** @var string $contentId */
@@ -265,7 +265,7 @@ final readonly class GraphqlExecutor
     {
         if (!array_key_exists($name, $field->arguments)) {
             throw GraphqlException::validationError(
-                "Missing required argument '{$name}' on field '{$field->name}'",
+                "Missing required argument '$name' on field '$field->name'",
             );
         }
 
@@ -273,7 +273,7 @@ final readonly class GraphqlExecutor
     }
 
     /**
-     * @param array<mixed> $value
+     * @param array $value
      */
     private function isIndexedList(array $value): bool
     {

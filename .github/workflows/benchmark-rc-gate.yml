@@ -82,8 +82,10 @@ jobs:
 
       - name: Add results to job summary
         if: always()
+        env:
+          RC_VERSION: ${{ inputs.rc_version }}
         run: |
-          echo '## Tier C: RC Gate Results (${{ inputs.rc_version }})' >> "$GITHUB_STEP_SUMMARY"
+          echo "## Tier C: RC Gate Results ($RC_VERSION)" >> "$GITHUB_STEP_SUMMARY"
           echo '' >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           cat benchmark-tier-c.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "(no results)" >> "$GITHUB_STEP_SUMMARY"

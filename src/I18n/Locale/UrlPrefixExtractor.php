@@ -152,6 +152,6 @@ final readonly class UrlPrefixExtractor
             return ctype_alpha($segment);
         }
 
-        return preg_match('/^[a-zA-Z]{2,3}[-][a-zA-Z]{2}$/', $segment) === 1;
+        return preg_match('/^[a-zA-Z]{2,3}-[a-zA-Z]{2}$/', $segment) === 1;
     }
 }

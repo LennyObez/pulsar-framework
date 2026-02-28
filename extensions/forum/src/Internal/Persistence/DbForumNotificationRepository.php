@@ -181,7 +181,7 @@ final readonly class DbForumNotificationRepository implements ForumNotificationR
 
         /** @var array<string, mixed> $data */
         $data = $rawData !== null && $rawData !== ''
-            ? (array) json_decode($rawData, true, 512, JSON_THROW_ON_ERROR)
+            ? (array) json_decode($rawData, true, flags: JSON_THROW_ON_ERROR)
             : [];
 
         return new ForumNotification(

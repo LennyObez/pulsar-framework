@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Prescription entity.
  *
@@ -22,8 +24,8 @@ final class Prescription
      * @param int                     $quantityDays    Quantity in days
      * @param int                     $refillsRemaining Number of refills remaining
      * @param PrescriptionStatus      $status          Current prescription status
-     * @param \DateTimeImmutable      $prescribedAt    Prescription date
-     * @param \DateTimeImmutable|null $expiresAt       Expiration date
+     * @param DateTimeImmutable      $prescribedAt    Prescription date
+     * @param DateTimeImmutable|null $expiresAt       Expiration date
      */
     public function __construct(
         public readonly string $id,
@@ -35,8 +37,8 @@ final class Prescription
         public readonly int $quantityDays = 30,
         public int $refillsRemaining = 0,
         public PrescriptionStatus $status = PrescriptionStatus::Active,
-        public readonly \DateTimeImmutable $prescribedAt = new \DateTimeImmutable(),
-        public readonly ?\DateTimeImmutable $expiresAt = null,
+        public readonly DateTimeImmutable $prescribedAt = new DateTimeImmutable(),
+        public readonly ?DateTimeImmutable $expiresAt = null,
     ) {}
 
     public function isActive(): bool
@@ -50,7 +52,7 @@ final class Prescription
             return false;
         }
 
-        return $this->expiresAt < new \DateTimeImmutable();
+        return $this->expiresAt < new DateTimeImmutable();
     }
 
     public function hasRefills(): bool

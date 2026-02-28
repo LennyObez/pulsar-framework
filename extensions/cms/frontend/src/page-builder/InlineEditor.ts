@@ -228,8 +228,61 @@ export class InlineEditor {
   }
 
   private execFormat(command: string): void {
-    document.execCommand(command, false);
+    const selection = window.getSelection();
+    if (!selection || selection.isCollapsed || !selection.rangeCount) {
+      return;
+    }
+
+    const range = selection.getRangeAt(0);
+
+    if (command === 'removeFormat') {
+      // Extract text content and replace the selection with a plain text node
+      const text = range.toString();
+      range.deleteContents();
+      range.insertNode(document.createTextNode(text));
+      selection.collapseToEnd();
+    } else {
+      const tagName = command === 'bold' ? 'strong' : command === 'italic' ? 'em' : null;
+      if (tagName) {
+        this.wrapSelection(selection, range, tagName);
+      }
+    }
+
     this.element.focus();
+  }
+
+  private wrapSelection(selection: Selection, range: Range, tagName: string): void {
+    // Check if already wrapped in this tag -- if so, unwrap
+    let ancestor: Node | null = range.commonAncestorContainer;
+    while (ancestor && ancestor !== this.element) {
+      if (
+        ancestor.nodeType === Node.ELEMENT_NODE &&
+        (ancestor as Element).tagName === tagName.toUpperCase()
+      ) {
+        // Unwrap: replace the tag with its contents
+        const parent = ancestor.parentNode;
+        if (parent) {
+          while (ancestor.firstChild) {
+            parent.insertBefore(ancestor.firstChild, ancestor);
+          }
+          parent.removeChild(ancestor);
+        }
+        return;
+      }
+      ancestor = ancestor.parentNode;
+    }
+
+    // Wrap selection in the formatting element
+    const wrapper = document.createElement(tagName);
+    const contents = range.extractContents();
+    wrapper.appendChild(contents);
+    range.insertNode(wrapper);
+
+    // Re-select the wrapped content
+    selection.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(wrapper);
+    selection.addRange(newRange);
   }
 
   private insertLink(): void {
@@ -253,7 +306,19 @@ export class InlineEditor {
       return;
     }
 
-    document.execCommand('createLink', false, trimmed);
+    const range = selection.getRangeAt(0);
+    const anchor = document.createElement('a');
+    anchor.href = trimmed;
+    const contents = range.extractContents();
+    anchor.appendChild(contents);
+    range.insertNode(anchor);
+
+    // Re-select the link content
+    selection.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.selectNodeContents(anchor);
+    selection.addRange(newRange);
+
     this.element.focus();
   }
 
@@ -290,7 +355,7 @@ export class InlineEditor {
               !href.startsWith('/')
             ) {
               toRemove.push(child);
-              continue;
+              break;
             }
           } else {
             el.removeAttribute(attr.name);

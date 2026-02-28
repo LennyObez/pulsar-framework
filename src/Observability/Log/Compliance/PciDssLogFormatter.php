@@ -93,7 +93,6 @@ final class PciDssLogFormatter implements ComplianceLogFormatter
 
     private function maskPanInString(string $value): string
     {
-        /** @var string */
         return preg_replace_callback(self::PAN_PATTERN, function (array $matches): string {
             $digits = preg_replace('/[^0-9]/', '', $matches[0]) ?? '';
 

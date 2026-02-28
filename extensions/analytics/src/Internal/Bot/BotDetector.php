@@ -34,20 +34,11 @@ final readonly class BotDetector
     public function isBot(string $userAgent, array $headers = []): bool
     {
         // Empty user agent is always a bot
-        if ($userAgent === '') {
-            return true;
-        }
-
         // Tier 1: Known bot UA pattern matching
-        if (preg_match($this->combinedPattern, $userAgent) === 1) {
-            return true;
-        }
-
         // Tier 2: Header heuristics — missing Accept-Language is a strong bot signal
-        if (!isset($headers['accept-language']) || $headers['accept-language'] === '') {
-            return true;
-        }
-
-        return false;
+        return $userAgent === ''
+            || preg_match($this->combinedPattern, $userAgent) === 1
+            || !isset($headers['accept-language'])
+            || $headers['accept-language'] === '';
     }
 }

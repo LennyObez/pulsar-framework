@@ -8,6 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Pulsar\Api\Internal;
 use Pulsar\Extension\Subscriptions\Internal\SubscriptionService;
 use Pulsar\Extension\Subscriptions\Store;
+use Pulsar\Extension\Subscriptions\Subscription;
 use Pulsar\Http\Message\Response;
 use RuntimeException;
 
@@ -177,7 +178,7 @@ final readonly class SubscriptionController
      *
      * @return array<string, mixed>
      */
-    private static function serialize(\Pulsar\Extension\Subscriptions\Subscription $subscription): array
+    private static function serialize(Subscription $subscription): array
     {
         return [
             'id' => $subscription->id,

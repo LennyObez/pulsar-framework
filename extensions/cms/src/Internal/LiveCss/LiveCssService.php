@@ -75,7 +75,7 @@ final readonly class LiveCssService implements LiveCssServiceInterface
             AuditOutcome::Success,
             $createdBy,
             'cms.livecss.saved',
-            "theme:{$themeId}",
+            "theme:$themeId",
             ['version' => $nextVersion, 'reason' => $reason],
         );
 
@@ -87,7 +87,7 @@ final readonly class LiveCssService implements LiveCssServiceInterface
         $target = $this->repository->findById($overrideId);
 
         if ($target === null) {
-            throw new CmsException("CSS override not found: {$overrideId}");
+            throw new CmsException("CSS override not found: $overrideId");
         }
 
         $nextVersion = $this->repository->getNextVersion($target->themeId, $target->tenantId);
@@ -113,7 +113,7 @@ final readonly class LiveCssService implements LiveCssServiceInterface
             AuditOutcome::Success,
             $actorId,
             'cms.livecss.rollback',
-            "theme:{$target->themeId}",
+            "theme:$target->themeId",
             [
                 'from_version' => $target->version,
                 'to_version' => $nextVersion,

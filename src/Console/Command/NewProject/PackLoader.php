@@ -78,7 +78,7 @@ final readonly class PackLoader
 
         try {
             /** @var array<string, mixed> $data */
-            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw new RuntimeException(sprintf(
                 'Invalid JSON in pack manifest "%s": %s',

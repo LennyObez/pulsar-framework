@@ -68,7 +68,7 @@ final readonly class ProcessWebhookHandler
         // 2. Parse event
         try {
             /** @var array<string, mixed> $decoded */
-            $decoded = json_decode($request->rawBody, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($request->rawBody, true, flags: JSON_THROW_ON_ERROR);
             $event = WebhookEvent::fromArray($decoded);
         } catch (JsonException|ValueError $e) {
             $this->incrementWebhookMetric($provider, 'unknown', 'malformed');

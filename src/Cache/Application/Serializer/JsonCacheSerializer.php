@@ -44,7 +44,7 @@ final class JsonCacheSerializer implements CacheSerializerInterface
     public function deserialize(string $data): mixed
     {
         try {
-            return json_decode($data, true, 512, JSON_THROW_ON_ERROR);
+            return json_decode($data, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw CacheException::serializationFailed($e->getMessage(), $e);
         }

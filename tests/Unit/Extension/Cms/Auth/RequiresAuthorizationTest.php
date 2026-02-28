@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Cms\Auth;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
@@ -15,7 +14,6 @@ use Pulsar\Extension\Cms\Auth\CmsPermission;
 use Pulsar\Extension\Cms\Auth\RequiresAuthorization;
 use Pulsar\Http\Message\Response;
 
-#[CoversClass(RequiresAuthorization::class)]
 final class RequiresAuthorizationTest extends TestCase
 {
     use RequiresAuthorization;

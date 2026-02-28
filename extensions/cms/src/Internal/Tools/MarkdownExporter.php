@@ -127,7 +127,7 @@ final readonly class MarkdownExporter
         $sections = [];
 
         foreach ($blocks as $block) {
-            $header = "<!-- block:{$block->blockType}:{$block->sortOrder} -->";
+            $header = "<!-- block:$block->blockType:$block->sortOrder -->";
             $body = json_encode($block->data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             $sections[] = $header . "\n" . $body;
         }

@@ -59,8 +59,8 @@ final class FormNotificationMailable extends Mailable
             $escapedKey = htmlspecialchars($key, ENT_QUOTES, 'UTF-8');
             $escapedValue = htmlspecialchars(is_string($value) ? $value : (string) $value, ENT_QUOTES, 'UTF-8');
 
-            $rows[] = "<tr><td style=\"padding:8px;border:1px solid #ddd;font-weight:bold;vertical-align:top\">{$escapedKey}</td>"
-                . "<td style=\"padding:8px;border:1px solid #ddd\">{$escapedValue}</td></tr>";
+            $rows[] = "<tr><td style=\"padding:8px;border:1px solid #ddd;font-weight:bold;vertical-align:top\">$escapedKey</td>"
+                . "<td style=\"padding:8px;border:1px solid #ddd\">$escapedValue</td></tr>";
         }
 
         $tableRows = implode("\n", $rows);
@@ -72,7 +72,7 @@ final class FormNotificationMailable extends Mailable
             <head><meta charset="utf-8"><title>New Form Submission</title></head>
             <body style="font-family:sans-serif;color:#333;max-width:600px;margin:0 auto;padding:20px">
                 <h2 style="color:#1a1a1a;border-bottom:2px solid #eee;padding-bottom:10px">New Form Submission</h2>
-                <p>A new form submission was received on <strong>{$submittedAt}</strong>.</p>
+                <p>A new form submission was received on <strong>$submittedAt</strong>.</p>
                 <table style="width:100%;border-collapse:collapse;margin:20px 0">
                     <thead>
                         <tr>
@@ -81,7 +81,7 @@ final class FormNotificationMailable extends Mailable
                         </tr>
                     </thead>
                     <tbody>
-                        {$tableRows}
+                        $tableRows
                     </tbody>
                 </table>
                 <p style="color:#666;font-size:12px">Submission ID: {$this->submission->id}</p>

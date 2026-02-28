@@ -15,6 +15,7 @@ use Pulsar\Extension\Form\Exception\UploadException;
 use Pulsar\Extension\Form\Field\FileField;
 use Pulsar\Extension\Form\Field\PasswordField;
 use Pulsar\Extension\Form\Field\TextField;
+use Pulsar\Http\Validation\Rule\Required;
 use Pulsar\Http\Validation\Validator;
 
 #[CoversClass(FormBuilder::class)]
@@ -142,7 +143,7 @@ final class FormBuilderTest extends TestCase
     {
         $field = new TextField('name', 'Name');
         $field->setRequired(true);
-        $field->setRules([new \Pulsar\Http\Validation\Rule\Required()]);
+        $field->setRules([new Required()]);
 
         $form = $this->builder->id('test')->add($field)->build();
         $form->submit(['name' => '']);
@@ -155,7 +156,7 @@ final class FormBuilderTest extends TestCase
     public function form_passes_validation_with_valid_data(): void
     {
         $field = new TextField('name', 'Name');
-        $field->setRules([new \Pulsar\Http\Validation\Rule\Required()]);
+        $field->setRules([new Required()]);
 
         $form = $this->builder->id('test')->add($field)->build();
         $form->submit(['name' => 'John']);

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Know Your Customer (KYC) profile entity.
  *
@@ -20,9 +22,9 @@ final class KycProfile
      * @param non-empty-string|null   $documentNumber   Encrypted document number
      * @param KycVerificationStatus   $status           Current verification status
      * @param non-empty-string|null   $verifiedBy       Identifier of the verifying agent or system
-     * @param \DateTimeImmutable      $submittedAt      Submission timestamp
-     * @param \DateTimeImmutable|null $verifiedAt       Verification completion timestamp
-     * @param \DateTimeImmutable|null $expiresAt        Verification expiration timestamp
+     * @param DateTimeImmutable      $submittedAt      Submission timestamp
+     * @param DateTimeImmutable|null $verifiedAt       Verification completion timestamp
+     * @param DateTimeImmutable|null $expiresAt        Verification expiration timestamp
      */
     public function __construct(
         public readonly string $id,
@@ -32,9 +34,9 @@ final class KycProfile
         public readonly ?string $documentNumber = null,
         public KycVerificationStatus $status = KycVerificationStatus::Pending,
         public readonly ?string $verifiedBy = null,
-        public readonly \DateTimeImmutable $submittedAt = new \DateTimeImmutable(),
-        public readonly ?\DateTimeImmutable $verifiedAt = null,
-        public readonly ?\DateTimeImmutable $expiresAt = null,
+        public readonly DateTimeImmutable $submittedAt = new DateTimeImmutable(),
+        public readonly ?DateTimeImmutable $verifiedAt = null,
+        public readonly ?DateTimeImmutable $expiresAt = null,
     ) {}
 
     public function isVerified(): bool
@@ -48,7 +50,7 @@ final class KycProfile
             return false;
         }
 
-        return $this->expiresAt < new \DateTimeImmutable();
+        return $this->expiresAt < new DateTimeImmutable();
     }
 
     public function needsReverification(): bool

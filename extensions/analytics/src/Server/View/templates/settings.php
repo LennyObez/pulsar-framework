@@ -1,7 +1,13 @@
 <?php
 
 declare(strict_types=1);
-/** @var \Pulsar\Extension\Analytics\Config\AnalyticsConfig $config */
+
+use Pulsar\Extension\Analytics\Config\AnalyticsConfig;
+
+/**
+ * @var AnalyticsConfig $config
+ * @var callable(bool): string $boolLabel
+ */
 $boolLabel = static fn(bool $v): string => $v ? 'Yes' : 'No';
 $respectDnt = $boolLabel($config->privacy->respectDnt);
 $anonymizeReferrer = $boolLabel($config->privacy->anonymizeReferrer);
@@ -25,11 +31,11 @@ extract(['content' => <<<HTML
             <h3>Current Configuration</h3>
             <dl class="settings-list">
                 <dt>Collection Driver</dt>
-                <dd>{$config->collectionDriver}</dd>
+                <dd>$config->collectionDriver</dd>
                 <dt>Respect DNT</dt>
-                <dd>{$respectDnt}</dd>
+                <dd>$respectDnt</dd>
                 <dt>Anonymize Referrer</dt>
-                <dd>{$anonymizeReferrer}</dd>
+                <dd>$anonymizeReferrer</dd>
                 <dt>Raw Data Retention</dt>
                 <dd>{$config->retention->rawDays} days</dd>
                 <dt>Aggregated Data Retention</dt>

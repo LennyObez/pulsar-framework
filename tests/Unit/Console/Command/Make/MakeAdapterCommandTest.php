@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Console\Command\Make\MakeAdapterCommand;
 use Pulsar\Console\ExitCode;
 use Pulsar\Console\InputInterface;
+use Pulsar\Console\Output\BufferedOutput;
 use Pulsar\Console\OutputInterface;
 
 #[CoversClass(MakeAdapterCommand::class)]
@@ -102,7 +103,7 @@ final class MakeAdapterCommandTest extends TestCase
             ['path', 'app/Modules', 'app/Modules'],
         ]);
 
-        $output = new \Pulsar\Console\Output\BufferedOutput();
+        $output = new BufferedOutput();
 
         $result = $command->execute($input, $output);
 

@@ -63,14 +63,14 @@ final readonly class NewsletterBlock implements BlockTypeInterface
         $successMessage = htmlspecialchars($rawSuccess, ENT_QUOTES, 'UTF-8');
 
         $descriptionAttr = $description !== ''
-            ? " data-description=\"{$description}\""
+            ? " data-description=\"$description\""
             : '';
 
         return '<cms-newsletter-signup'
-            . " data-heading=\"{$heading}\""
+            . " data-heading=\"$heading\""
             . $descriptionAttr
-            . " data-button-text=\"{$buttonText}\""
-            . " data-success-message=\"{$successMessage}\""
+            . " data-button-text=\"$buttonText\""
+            . " data-success-message=\"$successMessage\""
             . '></cms-newsletter-signup>';
     }
 

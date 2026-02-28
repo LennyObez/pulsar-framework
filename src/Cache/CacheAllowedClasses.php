@@ -17,7 +17,10 @@ use ReflectionException;
 use Serializable;
 use SplFileInfo;
 
+use function array_filter;
 use function array_is_list;
+use function array_keys;
+use function array_values;
 use function class_exists;
 use function enum_exists;
 use function file_get_contents;
@@ -200,19 +203,14 @@ final class CacheAllowedClasses
      */
     private static function filterEligibleNamespaces(array $classNames): array
     {
-        $eligible = [];
-
-        foreach ($classNames as $className) {
-            foreach (self::ELIGIBLE_NAMESPACES as $namespace) {
-                if (str_starts_with($className, $namespace)) {
-                    /** @var class-string $className */
-                    $eligible[] = $className;
-                    break;
-                }
-            }
-        }
-
-        return $eligible;
+        /** @var list<class-string> */
+        return array_values(array_filter(
+            $classNames,
+            static fn(string $className): bool => array_any(
+                self::ELIGIBLE_NAMESPACES,
+                static fn(string $namespace): bool => str_starts_with($className, $namespace),
+            ),
+        ));
     }
 
     /**
@@ -262,17 +260,14 @@ final class CacheAllowedClasses
      */
     private static function hasDangerousMethods(ReflectionClass $ref): bool
     {
-        foreach (self::DANGEROUS_METHODS as $method) {
-            if ($ref->hasMethod($method)) {
-                $m = $ref->getMethod($method);
-                // Only count it if declared on this class (not inherited from a parent)
-                if ($m->getDeclaringClass()->getName() === $ref->getName()) {
-                    return true;
-                }
+        return array_any(self::DANGEROUS_METHODS, static function (string $method) use ($ref): bool {
+            if (!$ref->hasMethod($method)) {
+                return false;
             }
-        }
 
-        return false;
+            // Only count it if declared on this class (not inherited from a parent)
+            return $ref->getMethod($method)->getDeclaringClass()->getName() === $ref->getName();
+        });
     }
 
     /**

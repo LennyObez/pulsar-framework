@@ -78,7 +78,7 @@ final readonly class Post
     ): self {
         $now = new DateTimeImmutable();
         $editWindowExpiry = $editWindowMinutes > 0
-            ? $now->modify("+{$editWindowMinutes} minutes")
+            ? $now->modify("+$editWindowMinutes minutes")
             : null;
 
         return new self(

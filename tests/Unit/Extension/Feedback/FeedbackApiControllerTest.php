@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Unit\Extension\Feedback;
 
 use DateTimeImmutable;
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\MockObject\Stub;
@@ -24,7 +23,6 @@ use function json_decode;
 
 use const JSON_THROW_ON_ERROR;
 
-#[CoversClass(FeedbackApiController::class)]
 final class FeedbackApiControllerTest extends TestCase
 {
     private FeedbackRepositoryInterface&Stub $repository;

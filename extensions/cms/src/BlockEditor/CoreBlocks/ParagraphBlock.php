@@ -45,10 +45,10 @@ final readonly class ParagraphBlock implements BlockTypeInterface
         $alignment = $data['alignment'] ?? null;
 
         if (is_string($alignment) && in_array($alignment, self::VALID_ALIGNMENTS, true)) {
-            return "<p style=\"text-align:{$alignment}\">{$text}</p>";
+            return "<p style=\"text-align:$alignment\">$text</p>";
         }
 
-        return "<p>{$text}</p>";
+        return "<p>$text</p>";
     }
 
     #[Override]

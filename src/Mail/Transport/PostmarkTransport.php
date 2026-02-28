@@ -57,7 +57,7 @@ final readonly class PostmarkTransport implements TransportInterface
             }
 
             /** @var array{MessageID?: string} $decoded */
-            $decoded = json_decode($response->body, true, 512, JSON_THROW_ON_ERROR);
+            $decoded = json_decode($response->body, true, flags: JSON_THROW_ON_ERROR);
 
             return $decoded['MessageID'] ?? '';
         } catch (MailException $e) {

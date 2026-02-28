@@ -32,12 +32,12 @@ final readonly class SolutionAcceptedNotification implements ForumNotificationIn
 
     public function subject(): string
     {
-        return "Your answer was accepted in: {$this->threadTitle}";
+        return "Your answer was accepted in: $this->threadTitle";
     }
 
     public function body(): string
     {
-        return "Your post was marked as the accepted solution in the thread \"{$this->threadTitle}\".";
+        return "Your post was marked as the accepted solution in the thread \"$this->threadTitle\".";
     }
 
     public function metadata(): array

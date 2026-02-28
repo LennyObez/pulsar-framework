@@ -134,7 +134,7 @@ final class GraphqlParserTest extends TestCase
     {
         $query = '{ content(id: $missing) { id } }';
 
-        $parsed = $this->parser->parse($query, []);
+        $parsed = $this->parser->parse($query);
 
         self::assertNull($parsed->fields[0]->arguments['id']);
     }

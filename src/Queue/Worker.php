@@ -474,10 +474,7 @@ final class Worker
         }
 
         $elapsed = time() - $startedAt;
-        if ($this->options->timeLimitSeconds > 0 && $elapsed >= $this->options->timeLimitSeconds) {
-            return true;
-        }
 
-        return false;
+        return $this->options->timeLimitSeconds > 0 && $elapsed >= $this->options->timeLimitSeconds;
     }
 }

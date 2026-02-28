@@ -55,7 +55,7 @@ final readonly class AlertBlock implements BlockTypeInterface
             $dismissAttr = ' data-dismissible="true"';
         }
 
-        return "<div class=\"alert alert--{$alertType}\" role=\"alert\"{$dismissAttr}>{$message}</div>";
+        return "<div class=\"alert alert--$alertType\" role=\"alert\"$dismissAttr>$message</div>";
     }
 
     #[Override]

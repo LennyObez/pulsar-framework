@@ -117,7 +117,7 @@ final class AnalyticsExtensionBootTest extends TestCase
         $config = new AnalyticsConfig(enabled: false);
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
-            ->willReturnCallback(static fn(string $id): mixed => match ($id) {
+            ->willReturnCallback(static fn(string $id): ?object => match ($id) {
                 AnalyticsConfig::class => $config,
                 default => null,
             });
@@ -134,7 +134,7 @@ final class AnalyticsExtensionBootTest extends TestCase
         $config = new AnalyticsConfig(enabled: true);
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
-            ->willReturnCallback(static fn(string $id): mixed => match ($id) {
+            ->willReturnCallback(static fn(string $id): ?object => match ($id) {
                 AnalyticsConfig::class => $config,
                 default => null,
             });
@@ -153,7 +153,7 @@ final class AnalyticsExtensionBootTest extends TestCase
         $config = new AnalyticsConfig(enabled: false);
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
-            ->willReturnCallback(static fn(string $id): mixed => match ($id) {
+            ->willReturnCallback(static fn(string $id): ?object => match ($id) {
                 AnalyticsConfig::class => $config,
                 default => null,
             });
@@ -171,7 +171,7 @@ final class AnalyticsExtensionBootTest extends TestCase
 
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
-            ->willReturnCallback(static fn(string $id): mixed => match ($id) {
+            ->willReturnCallback(static fn(string $id): ?object => match ($id) {
                 AnalyticsConfig::class => $config,
                 JobRegistry::class => $registry,
                 default => null,
@@ -197,7 +197,7 @@ final class AnalyticsExtensionBootTest extends TestCase
 
         $container = $this->createStub(ContainerInterface::class);
         $container->method('get')
-            ->willReturnCallback(static fn(string $id): mixed => match ($id) {
+            ->willReturnCallback(static fn(string $id): ?object => match ($id) {
                 AnalyticsConfig::class => $config,
                 default => null,
             });

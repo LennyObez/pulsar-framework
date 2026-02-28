@@ -130,17 +130,12 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
     {
         $origin = strtolower(rtrim(trim($origin), '/'));
 
-        foreach ($this->config->trustedOrigins as $trusted) {
+        return array_any($this->config->trustedOrigins, function (string $trusted) use ($origin): bool {
             $trusted = strtolower(rtrim($trusted, '/'));
-            if ($origin === $trusted) {
-                return true;
-            }
-            if ($this->normalizePort($origin) === $this->normalizePort($trusted)) {
-                return true;
-            }
-        }
 
-        return false;
+            return $origin === $trusted
+                || $this->normalizePort($origin) === $this->normalizePort($trusted);
+        });
     }
 
     private function normalizePort(string $origin): string
@@ -179,7 +174,7 @@ final readonly class CsrfMiddleware implements MiddlewareInterface
             );
         }
 
-        $escapedMessage = htmlspecialchars($message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $escapedMessage = htmlspecialchars($message);
 
         return Response::html(
             sprintf(

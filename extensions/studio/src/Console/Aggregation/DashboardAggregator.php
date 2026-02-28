@@ -488,7 +488,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
 
         foreach ($rows as $row) {
             /** @var array{status_code?: int} $payload */
-            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($row['payload_json'], true, flags: JSON_THROW_ON_ERROR);
             $code = $payload['status_code'] ?? 0;
 
             if ($code <= 0) {
@@ -521,7 +521,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
 
         foreach ($rows as $row) {
             /** @var array{duration_ms?: float} $payload */
-            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($row['payload_json'], true, flags: JSON_THROW_ON_ERROR);
             $d = (float) ($payload['duration_ms'] ?? 0);
 
             if ($d > 0) {
@@ -562,7 +562,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
 
         foreach ($rows as $row) {
             /** @var array{route_name?: string, duration_ms?: float} $payload */
-            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($row['payload_json'], true, flags: JSON_THROW_ON_ERROR);
             $routeName = $payload['route_name'] ?? null;
 
             if ($routeName === null) {
@@ -609,7 +609,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
 
         foreach ($rows as $row) {
             /** @var array{sql_fingerprint?: string, sql?: string, duration_ms?: float} $payload */
-            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($row['payload_json'], true, flags: JSON_THROW_ON_ERROR);
             $fp = $payload['sql_fingerprint'] ?? null;
 
             if ($fp === null) {
@@ -662,7 +662,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
 
         foreach ($rows as $row) {
             /** @var array{exception_class?: string} $payload */
-            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($row['payload_json'], true, flags: JSON_THROW_ON_ERROR);
             $class = $payload['exception_class'] ?? 'Unknown';
 
             if (!isset($grouped[$class])) {
@@ -724,7 +724,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
         $result = [];
         foreach ($rows as $row) {
             /** @var array<string, mixed> $payload */
-            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($row['payload_json'], true, flags: JSON_THROW_ON_ERROR);
 
             if (!isset($payload['run_id'])) {
                 continue;
@@ -763,7 +763,7 @@ final readonly class DashboardAggregator implements DashboardAggregatorInterface
         $result = [];
         foreach ($rows as $row) {
             /** @var array<string, mixed> $payload */
-            $payload = json_decode($row['payload_json'], true, 512, JSON_THROW_ON_ERROR);
+            $payload = json_decode($row['payload_json'], true, flags: JSON_THROW_ON_ERROR);
 
             if (!isset($payload['run_id']) || $payload['run_id'] !== $runId) {
                 continue;

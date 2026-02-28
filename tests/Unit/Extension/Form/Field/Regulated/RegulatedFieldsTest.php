@@ -35,7 +35,7 @@ final class RegulatedFieldsTest extends TestCase
             'I confirm I am 18 or older.',
         );
 
-        self::assertSame('age_gate', $field->getPurpose());
+        self::assertSame('age_gate', $field->purpose);
     }
 
     #[Test]
@@ -49,7 +49,7 @@ final class RegulatedFieldsTest extends TestCase
             'I confirm I am 18 or older.',
         );
 
-        self::assertSame('2.1', $field->getPolicyVersion());
+        self::assertSame('2.1', $field->policyVersion);
     }
 
     #[Test]
@@ -64,7 +64,7 @@ final class RegulatedFieldsTest extends TestCase
             $policyText,
         );
 
-        self::assertSame($policyText, $field->getPolicyText());
+        self::assertSame($policyText, $field->policyText);
     }
 
     #[Test]

@@ -178,13 +178,13 @@ final class MigrationGenerator extends AbstractGenerator
     private function createTableSql(SchemaOperation $op): string
     {
         return "        \$connection->execute(\n"
-            . "            'CREATE TABLE IF NOT EXISTS {$op->table} (id INTEGER PRIMARY KEY)'\n"
+            . "            'CREATE TABLE IF NOT EXISTS $op->table (id INTEGER PRIMARY KEY)'\n"
             . '        );';
     }
 
     private function dropTableSql(SchemaOperation $op): string
     {
-        return "        \$connection->execute('DROP TABLE IF EXISTS {$op->table}');";
+        return "        \$connection->execute('DROP TABLE IF EXISTS $op->table');";
     }
 
     private function addColumnSql(SchemaOperation $op): string
@@ -194,7 +194,7 @@ final class MigrationGenerator extends AbstractGenerator
         $column = $op->column ?? 'unknown';
 
         return "        \$connection->execute(\n"
-            . "            'ALTER TABLE {$op->table} ADD COLUMN {$column} {$columnType}{$nullable}'\n"
+            . "            'ALTER TABLE $op->table ADD COLUMN $column $columnType$nullable'\n"
             . '        );';
     }
 
@@ -203,7 +203,7 @@ final class MigrationGenerator extends AbstractGenerator
         $column = $op->column ?? 'unknown';
 
         return "        \$connection->execute(\n"
-            . "            'ALTER TABLE {$op->table} DROP COLUMN {$column}'\n"
+            . "            'ALTER TABLE $op->table DROP COLUMN $column'\n"
             . '        );';
     }
 
@@ -214,7 +214,7 @@ final class MigrationGenerator extends AbstractGenerator
         $column = $op->column ?? 'unknown';
 
         return "        \$connection->execute(\n"
-            . "            'ALTER TABLE {$op->table} ALTER COLUMN {$column} TYPE {$newType}{$nullable}'\n"
+            . "            'ALTER TABLE $op->table ALTER COLUMN $column TYPE $newType$nullable'\n"
             . '        );';
     }
 
@@ -225,7 +225,7 @@ final class MigrationGenerator extends AbstractGenerator
         $column = $op->column ?? 'unknown';
 
         return "        \$connection->execute(\n"
-            . "            'ALTER TABLE {$op->table} ALTER COLUMN {$column} TYPE {$oldType}{$nullable}'\n"
+            . "            'ALTER TABLE $op->table ALTER COLUMN $column TYPE $oldType$nullable'\n"
             . '        );';
     }
 
@@ -235,7 +235,7 @@ final class MigrationGenerator extends AbstractGenerator
         $indexName = $this->meta($op, 'indexName', $op->table . '_' . $column . '_idx');
 
         return "        \$connection->execute(\n"
-            . "            'CREATE INDEX {$indexName} ON {$op->table} ({$column})'\n"
+            . "            'CREATE INDEX $indexName ON $op->table ($column)'\n"
             . '        );';
     }
 
@@ -244,7 +244,7 @@ final class MigrationGenerator extends AbstractGenerator
         $column = $op->column ?? 'unknown';
         $indexName = $this->meta($op, 'indexName', $op->table . '_' . $column . '_idx');
 
-        return "        \$connection->execute('DROP INDEX IF EXISTS {$indexName}');";
+        return "        \$connection->execute('DROP INDEX IF EXISTS $indexName');";
     }
 
     private function addForeignKeySql(SchemaOperation $op): string
@@ -259,8 +259,8 @@ final class MigrationGenerator extends AbstractGenerator
         $refTable = strtolower($refTable);
 
         return "        \$connection->execute(\n"
-            . "            'ALTER TABLE {$op->table} ADD CONSTRAINT {$fkName} "
-            . "FOREIGN KEY ({$column}) REFERENCES {$refTable} ({$localKey})'\n"
+            . "            'ALTER TABLE $op->table ADD CONSTRAINT $fkName "
+            . "FOREIGN KEY ($column) REFERENCES $refTable ($localKey)'\n"
             . '        );';
     }
 
@@ -270,7 +270,7 @@ final class MigrationGenerator extends AbstractGenerator
         $fkName = $this->meta($op, 'constraintName', $op->table . '_' . $column . '_fk');
 
         return "        \$connection->execute(\n"
-            . "            'ALTER TABLE {$op->table} DROP CONSTRAINT IF EXISTS {$fkName}'\n"
+            . "            'ALTER TABLE $op->table DROP CONSTRAINT IF EXISTS $fkName'\n"
             . '        );';
     }
 

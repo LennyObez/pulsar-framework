@@ -6,7 +6,6 @@ namespace Pulsar\Extension\Forum\Tests\Unit\Admin;
 
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use Pulsar\Extension\Admin\Contracts\DataResourceInterface;
 use Pulsar\Extension\Admin\Domain\ResourceOperation;
 use Pulsar\Extension\Forum\Admin\ForumCategoryResource;
 use Pulsar\Extension\Forum\Admin\ForumPostResource;
@@ -22,7 +21,6 @@ final class AdminResourceTest extends TestCase
     {
         $resource = new ForumThreadResource();
 
-        self::assertInstanceOf(DataResourceInterface::class, $resource);
         self::assertSame('forum_threads', $resource->name());
         self::assertSame('Forum Thread', $resource->label());
         self::assertSame('Forum Threads', $resource->pluralLabel());

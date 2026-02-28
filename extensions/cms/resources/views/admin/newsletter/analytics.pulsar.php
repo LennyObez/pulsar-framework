@@ -128,9 +128,7 @@
                             <?php
                         $__sendBadgeClass = match ($send['status'] ?? '') {
                             'sent' => 'cms-badge cms-badge--in-review',
-                            'delivered' => 'cms-badge cms-badge--approved',
-                            'opened' => 'cms-badge cms-badge--approved',
-                            'clicked' => 'cms-badge cms-badge--approved',
+                            'delivered', 'opened', 'clicked' => 'cms-badge cms-badge--approved',
                             'bounced' => 'cms-badge cms-badge--spam',
                             'failed' => 'cms-badge cms-badge--archived',
                             default => 'cms-badge',

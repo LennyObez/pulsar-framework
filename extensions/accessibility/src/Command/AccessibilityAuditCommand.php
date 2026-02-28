@@ -12,6 +12,7 @@ use Pulsar\Console\InputInterface;
 use Pulsar\Console\OutputInterface;
 use Pulsar\Extension\Accessibility\Audit\AccessibilityAuditor;
 use Pulsar\Extension\Accessibility\Audit\AuditReport;
+use Pulsar\Extension\Accessibility\Audit\ChecklistItem;
 use Pulsar\Extension\Accessibility\Audit\ManualChecklistGenerator;
 use Pulsar\Extension\Accessibility\Validator\AccessibilityViolation;
 use Pulsar\Extension\Accessibility\Validator\Severity;
@@ -116,7 +117,6 @@ final class AccessibilityAuditCommand extends Command
     {
         $minLevel = match (strtolower($minSeverity)) {
             'error' => 0,
-            'warning' => 1,
             'info' => 2,
             default => 1,
         };
@@ -241,7 +241,7 @@ final class AccessibilityAuditCommand extends Command
         );
 
         $data['manual_checklist'] = array_map(
-            static fn(\Pulsar\Extension\Accessibility\Audit\ChecklistItem $item): array => $item->toArray(),
+            static fn(ChecklistItem $item): array => $item->toArray(),
             $this->checklistGenerator->generate(),
         );
 

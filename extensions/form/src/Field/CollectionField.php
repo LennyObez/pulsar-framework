@@ -33,8 +33,8 @@ final class CollectionField implements FieldInterface
         private readonly string $name,
         private readonly string $label,
         private readonly Closure $prototype,
-        private readonly int $minEntries = 0,
-        private readonly ?int $maxEntries = null,
+        public readonly int $minEntries = 0,
+        public readonly ?int $maxEntries = null,
     ) {}
 
     #[Override]
@@ -142,15 +142,6 @@ final class CollectionField implements FieldInterface
         return $this->entries;
     }
 
-    public function getMinEntries(): int
-    {
-        return $this->minEntries;
-    }
-
-    public function getMaxEntries(): ?int
-    {
-        return $this->maxEntries;
-    }
 
     public function getId(): string
     {

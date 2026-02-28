@@ -50,7 +50,7 @@ final class CmsPluginContextTest extends TestCase
         );
 
         $this->context->registerContentType($definition);
-        $types = $this->context->getContentTypes();
+        $types = $this->context->contentTypes;
 
         self::assertCount(1, $types);
         self::assertSame('recipe', $types[0]->type);
@@ -62,7 +62,7 @@ final class CmsPluginContextTest extends TestCase
         $handler = static fn(): string => 'page-html';
 
         $this->context->registerAdminPage('/custom-page', 'Custom Page', $handler);
-        $pages = $this->context->getAdminPages();
+        $pages = $this->context->adminPages;
 
         self::assertCount(1, $pages);
         self::assertSame('/custom-page', $pages[0]['route']);
@@ -89,7 +89,7 @@ final class CmsPluginContextTest extends TestCase
         $handler = static fn(string $content): string => "<div>{$content}</div>";
 
         $this->context->registerShortcode('alert', $handler);
-        $shortcodes = $this->context->getShortcodes();
+        $shortcodes = $this->context->shortcodes;
 
         self::assertCount(1, $shortcodes);
         self::assertSame('alert', $shortcodes[0]['name']);
@@ -101,7 +101,7 @@ final class CmsPluginContextTest extends TestCase
         $renderer = static fn(array $data): string => '<div>Block</div>';
 
         $this->context->registerBlockType('custom-card', $renderer);
-        $blockTypes = $this->context->getBlockTypes();
+        $blockTypes = $this->context->blockTypes;
 
         self::assertCount(1, $blockTypes);
         self::assertSame('custom-card', $blockTypes[0]['name']);
@@ -114,16 +114,16 @@ final class CmsPluginContextTest extends TestCase
         $this->context->registerShortcode('two', static fn(): string => '');
         $this->context->registerBlockType('block-a', static fn(): string => '');
 
-        self::assertCount(2, $this->context->getShortcodes());
-        self::assertCount(1, $this->context->getBlockTypes());
+        self::assertCount(2, $this->context->shortcodes);
+        self::assertCount(1, $this->context->blockTypes);
     }
 
     #[Test]
     public function gettersReturnEmptyByDefault(): void
     {
-        self::assertSame([], $this->context->getContentTypes());
-        self::assertSame([], $this->context->getAdminPages());
-        self::assertSame([], $this->context->getShortcodes());
-        self::assertSame([], $this->context->getBlockTypes());
+        self::assertSame([], $this->context->contentTypes);
+        self::assertSame([], $this->context->adminPages);
+        self::assertSame([], $this->context->shortcodes);
+        self::assertSame([], $this->context->blockTypes);
     }
 }

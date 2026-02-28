@@ -40,7 +40,7 @@ final readonly class CsvContentImporter
         fwrite($stream, $csv);
         rewind($stream);
 
-        $headers = fgetcsv($stream, escape: '\\');
+        $headers = fgetcsv($stream, escape: '');
 
         if (!is_array($headers) || $headers === [null]) {
             fclose($stream);
@@ -51,7 +51,7 @@ final readonly class CsvContentImporter
         /** @var list<string> $headers */
         $results = [];
 
-        while (($row = fgetcsv($stream, escape: '\\')) !== false) {
+        while (($row = fgetcsv($stream, escape: '')) !== false) {
             if ($row === null || count($row) !== count($headers)) {
                 continue;
             }

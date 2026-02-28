@@ -72,6 +72,7 @@ use Pulsar\Extension\Cms\Internal\ABTest\ExperimentService;
 use Pulsar\Extension\Cms\Internal\Commerce\OrderService;
 use Pulsar\Extension\Cms\Internal\Security\CmsRateLimiter;
 use Pulsar\Extension\Cms\Internal\Security\QrCodeEncoder;
+use Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter;
 use Pulsar\Extension\Cms\LiveCss\CssValidatorInterface;
 use Pulsar\Extension\Cms\LiveCss\LiveCssServiceInterface;
 use Pulsar\Extension\Cms\LiveCss\ThemeTokenResolverInterface;
@@ -89,7 +90,9 @@ use Pulsar\Extension\Cms\Taxonomy\TaxonomyRepositoryInterface;
 use Pulsar\Extension\Cms\Taxonomy\TaxonomyServiceInterface;
 use Pulsar\Extension\Cms\Themes\ThemeManagerInterface;
 use Pulsar\Extension\Cms\Tools\BackupServiceInterface;
+use Pulsar\Extension\Cms\Tools\ImportAnalyzer;
 use Pulsar\Extension\Cms\Tools\ImportExportServiceInterface;
+use Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface;
 use Pulsar\Extension\Cms\Tools\ToolsServiceInterface;
 use Pulsar\Extension\Cms\Users\CmsUserRepositoryInterface;
 use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
@@ -387,9 +390,9 @@ final readonly class CmsAdminControllerProvider
             /** @var ImportExportServiceInterface $importExport */
             $importExport = $container->get(ImportExportServiceInterface::class);
 
-            /** @var \Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface|null $mediaBundleExporter */
-            $mediaBundleExporter = $container->has(\Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface::class)
-                ? $container->get(\Pulsar\Extension\Cms\Tools\MediaBundleExporterInterface::class)
+            /** @var MediaBundleExporterInterface|null $mediaBundleExporter */
+            $mediaBundleExporter = $container->has(MediaBundleExporterInterface::class)
+                ? $container->get(MediaBundleExporterInterface::class)
                 : null;
 
             $container->instance(
@@ -405,14 +408,14 @@ final readonly class CmsAdminControllerProvider
                 ),
             );
 
-            /** @var \Pulsar\Extension\Cms\Tools\ImportAnalyzer|null $importAnalyzer */
-            $importAnalyzer = $container->has(\Pulsar\Extension\Cms\Tools\ImportAnalyzer::class)
-                ? $container->get(\Pulsar\Extension\Cms\Tools\ImportAnalyzer::class)
+            /** @var ImportAnalyzer|null $importAnalyzer */
+            $importAnalyzer = $container->has(ImportAnalyzer::class)
+                ? $container->get(ImportAnalyzer::class)
                 : null;
 
-            /** @var \Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter|null $mediaBundleImporter */
-            $mediaBundleImporter = $container->has(\Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter::class)
-                ? $container->get(\Pulsar\Extension\Cms\Internal\Tools\MediaBundleImporter::class)
+            /** @var MediaBundleImporter|null $mediaBundleImporter */
+            $mediaBundleImporter = $container->has(MediaBundleImporter::class)
+                ? $container->get(MediaBundleImporter::class)
                 : null;
 
             $container->instance(

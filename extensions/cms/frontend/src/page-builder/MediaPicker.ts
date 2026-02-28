@@ -57,7 +57,7 @@ export class CmsMediaPicker extends HTMLElement {
     this.multiSelect = multi;
     this.selectedIds.clear();
     this.searchQuery = '';
-    this.loadAssets();
+    void this.loadAssets();
     this.dialog?.showModal();
   }
 
@@ -92,10 +92,11 @@ export class CmsMediaPicker extends HTMLElement {
     try {
       const response = await cmsApi(this.apiBase);
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        this.assets = [];
+      } else {
+        const data: unknown = await response.json();
+        this.assets = this.parseAssets(data);
       }
-      const data: unknown = await response.json();
-      this.assets = this.parseAssets(data);
     } catch {
       this.assets = [];
     }
@@ -178,7 +179,7 @@ export class CmsMediaPicker extends HTMLElement {
     fileInput.setAttribute('aria-label', 'Upload files');
     fileInput.addEventListener('change', () => {
       if (fileInput.files && fileInput.files.length > 0) {
-        this.uploadFiles(fileInput.files);
+        void this.uploadFiles(fileInput.files);
       }
     });
     dropzone.appendChild(fileInput);
@@ -207,7 +208,7 @@ export class CmsMediaPicker extends HTMLElement {
       dropzone.classList.remove('mp-dropzone--active');
       const files = e.dataTransfer?.files;
       if (files && files.length > 0) {
-        this.uploadFiles(files);
+        void this.uploadFiles(files);
       }
     });
 

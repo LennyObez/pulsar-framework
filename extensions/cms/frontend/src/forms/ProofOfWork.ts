@@ -20,7 +20,6 @@ async function sha256Hex(input: string): Promise<string> {
 async function findNonce(challenge: string): Promise<string> {
   let nonce = 0;
 
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     const candidate = String(nonce);
     const hash = await sha256Hex(challenge + candidate);

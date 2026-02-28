@@ -37,7 +37,7 @@ final class SpanSchemaTest extends TestCase
     #[Test]
     public function toArrayIncludesNullParentSpanIdWhenAbsent(): void
     {
-        $span = $this->createSpan(parentSpanId: null);
+        $span = $this->createSpan();
         $array = SpanSchema::toArray($span);
 
         self::assertNull($array['parent_span_id']);
@@ -95,7 +95,7 @@ final class SpanSchemaTest extends TestCase
         $span->end();
         $json = SpanSchema::toJson($span);
 
-        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         self::assertSame('test.operation', $decoded['name']);
         self::assertSame('1.0.0', $decoded['schema_version']);
     }

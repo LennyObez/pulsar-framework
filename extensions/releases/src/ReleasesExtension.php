@@ -68,10 +68,10 @@ final readonly class ReleasesExtension implements ExtensionInterface
         $prefix = '/admin/releases';
 
         $router->get($prefix, [AdminReleaseController::class, 'index'], 'releases.admin.index');
-        $router->get("{$prefix}/create", [AdminReleaseController::class, 'create'], 'releases.admin.create');
+        $router->get("$prefix/create", [AdminReleaseController::class, 'create'], 'releases.admin.create');
         $router->post($prefix, [AdminReleaseController::class, 'store'], 'releases.admin.store');
-        $router->get("{$prefix}/{id}", [AdminReleaseController::class, 'edit'], 'releases.admin.edit');
-        $router->put("{$prefix}/{id}", [AdminReleaseController::class, 'update'], 'releases.admin.update');
-        $router->get("{$prefix}/beta-signups", [AdminReleaseController::class, 'betaSignups'], 'releases.admin.beta_signups');
+        $router->get("$prefix/{id}", [AdminReleaseController::class, 'edit'], 'releases.admin.edit');
+        $router->put("$prefix/{id}", [AdminReleaseController::class, 'update'], 'releases.admin.update');
+        $router->get("$prefix/beta-signups", [AdminReleaseController::class, 'betaSignups'], 'releases.admin.beta_signups');
     }
 }

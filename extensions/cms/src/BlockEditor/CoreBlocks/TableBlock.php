@@ -98,7 +98,7 @@ final readonly class TableBlock implements BlockTypeInterface
         } else {
             foreach ($data['headers'] as $index => $header) {
                 if (!is_string($header)) {
-                    $errors[] = "headers[{$index}] must be a string";
+                    $errors[] = "headers[$index] must be a string";
                 }
             }
         }
@@ -108,14 +108,14 @@ final readonly class TableBlock implements BlockTypeInterface
         } else {
             foreach ($data['rows'] as $rowIndex => $row) {
                 if (!is_array($row)) {
-                    $errors[] = "rows[{$rowIndex}] must be an array";
+                    $errors[] = "rows[$rowIndex] must be an array";
 
                     continue;
                 }
 
                 foreach ($row as $cellIndex => $cell) {
                     if (!is_string($cell)) {
-                        $errors[] = "rows[{$rowIndex}][{$cellIndex}] must be a string";
+                        $errors[] = "rows[$rowIndex][$cellIndex] must be a string";
                     }
                 }
             }

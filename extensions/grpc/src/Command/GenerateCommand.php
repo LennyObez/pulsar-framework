@@ -52,7 +52,7 @@ final class GenerateCommand extends Command
         $this->name = 'grpc:generate';
         $this->description = 'Generate PHP code from proto files using protoc';
 
-        $this->addArgument('proto', 'Path to a specific proto file (optional, defaults to all)', false);
+        $this->addArgument('proto', 'Path to a specific proto file (optional, defaults to all)');
         $this->addOption('output', 'Output directory for generated code', 'o', $this->config->outputPath);
         $this->addOption('validate-only', 'Only validate without generating handler classes');
     }

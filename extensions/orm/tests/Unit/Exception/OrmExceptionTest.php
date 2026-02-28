@@ -14,9 +14,9 @@ final class OrmExceptionTest extends TestCase
     #[Test]
     public function extendsRuntimeException(): void
     {
-        $e = OrmException::operationFailed('insert');
+        $parents = class_parents(OrmException::class);
 
-        self::assertInstanceOf(RuntimeException::class, $e);
+        self::assertContains(RuntimeException::class, $parents);
     }
 
     #[Test]

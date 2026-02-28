@@ -73,7 +73,7 @@ final readonly class CommentService implements CommentServiceInterface
             AuditOutcome::Success,
             $authorId,
             'cms.comment.submitted',
-            "comment:{$comment->id}",
+            "comment:$comment->id",
             ['content_id' => $contentId, 'status' => $comment->status->value],
         );
 
@@ -113,7 +113,7 @@ final readonly class CommentService implements CommentServiceInterface
             AuditOutcome::Success,
             $comment->authorId,
             'cms.comment.edited',
-            "comment:{$commentId}",
+            "comment:$commentId",
             ['content_id' => $comment->contentId],
         );
 
@@ -140,8 +140,8 @@ final readonly class CommentService implements CommentServiceInterface
             AuditEvent::DataModification,
             AuditOutcome::Success,
             $moderatorId,
-            "cms.comment.{$target->value}",
-            "comment:{$commentId}",
+            "cms.comment.$target->value",
+            "comment:$commentId",
             [
                 'content_id' => $comment->contentId,
                 'from_status' => $comment->status->value,

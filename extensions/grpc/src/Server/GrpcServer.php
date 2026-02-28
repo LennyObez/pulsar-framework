@@ -26,16 +26,16 @@ use function substr;
  * Implements GrpcServerInterface so it can be passed directly to the adapter.
  */
 #[Api(since: '1.0.0')]
-final class GrpcServer implements GrpcServerInterface
+final readonly class GrpcServer implements GrpcServerInterface
 {
-    private readonly RequestDispatcher $dispatcher;
+    private RequestDispatcher $dispatcher;
 
-    private readonly LoggerInterface $logger;
+    private LoggerInterface $logger;
 
     public function __construct(
-        private readonly GrpcConfig $config,
-        private readonly ServiceRegistryInterface $registry,
-        private readonly GrpcTransportAdapterInterface $adapter,
+        private GrpcConfig $config,
+        private ServiceRegistryInterface $registry,
+        private GrpcTransportAdapterInterface $adapter,
         InterceptorPipeline $pipeline,
         ?LoggerInterface $logger = null,
     ) {

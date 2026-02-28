@@ -39,7 +39,7 @@ final readonly class SeparatorBlock implements BlockTypeInterface
         $style = $data['style'] ?? null;
 
         if (is_string($style) && in_array($style, self::VALID_STYLES, true)) {
-            return "<hr class=\"separator separator--{$style}\">";
+            return "<hr class=\"separator separator--$style\">";
         }
 
         return '<hr class="separator">';

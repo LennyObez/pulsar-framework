@@ -79,7 +79,13 @@ final readonly class ImageProcessor implements ImageProcessorInterface
 
         imagecopyresampled($destination, $source, 0, 0, 0, 0, $width, $height, $sourceWidth, $sourceHeight);
 
-        $outputPath = (string) tempnam(sys_get_temp_dir(), 'pulsar_img_') . '.' . $format;
+        $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_img_');
+
+        if ($tempFile === false) {
+            throw CmsException::invalidImageFile();
+        }
+
+        $outputPath = $tempFile . '.' . $format;
         $this->saveImage($destination, $outputPath, $format);
 
         unset($source, $destination);
@@ -135,7 +141,13 @@ final readonly class ImageProcessor implements ImageProcessorInterface
     {
         // GD re-encode inherently strips EXIF data
         $source = $this->loadImage($sourcePath);
-        $outputPath = (string) tempnam(sys_get_temp_dir(), 'pulsar_exif_') . '.jpg';
+        $tempFile = tempnam(sys_get_temp_dir(), 'pulsar_exif_');
+
+        if ($tempFile === false) {
+            throw CmsException::invalidImageFile();
+        }
+
+        $outputPath = $tempFile . '.jpg';
 
         imagejpeg($source, $outputPath, 95);
         unset($source);

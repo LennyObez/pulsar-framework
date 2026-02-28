@@ -48,11 +48,11 @@ final readonly class EmbedBlock implements BlockTypeInterface
         if (is_string($html) && $html !== '') {
             $sanitized = strip_tags($html, '<iframe>');
 
-            return "<div class=\"embed\">{$sanitized}</div>";
+            return "<div class=\"embed\">$sanitized</div>";
         }
 
         // Default: render as a sandboxed iframe
-        return "<div class=\"embed\"><iframe src=\"{$url}\" frameborder=\"0\" allowfullscreen sandbox=\"allow-scripts allow-same-origin\"></iframe></div>";
+        return "<div class=\"embed\"><iframe src=\"$url\" frameborder=\"0\" allowfullscreen sandbox=\"allow-scripts allow-same-origin\"></iframe></div>";
     }
 
     #[Override]

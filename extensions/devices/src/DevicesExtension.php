@@ -56,7 +56,7 @@ final readonly class DevicesExtension implements ExtensionInterface
 
         $router->get($prefix, [DeviceController::class, 'index'], 'devices.api.index');
         $router->post($prefix, [DeviceController::class, 'register'], 'devices.api.register');
-        $router->post("{$prefix}/{id}/rotate", [DeviceController::class, 'rotate'], 'devices.api.rotate');
-        $router->delete("{$prefix}/{id}", [DeviceController::class, 'delete'], 'devices.api.delete');
+        $router->post("$prefix/{id}/rotate", [DeviceController::class, 'rotate'], 'devices.api.rotate');
+        $router->delete("$prefix/{id}", [DeviceController::class, 'delete'], 'devices.api.delete');
     }
 }

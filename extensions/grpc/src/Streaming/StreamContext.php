@@ -16,18 +16,11 @@ use Pulsar\Api\Api;
 #[Api(since: '1.0.0')]
 final class StreamContext
 {
-    private bool $cancelled = false;
+    public private(set) bool $cancelled = false;
 
     /** @var list<Closure(): void> */
     private array $cancelCallbacks = [];
 
-    /**
-     * Whether this streaming call has been cancelled.
-     */
-    public function isCancelled(): bool
-    {
-        return $this->cancelled;
-    }
 
     /**
      * Cancel the streaming call.

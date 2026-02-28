@@ -9,12 +9,6 @@ import type { CmsToastContainer } from './ToastContainer.js';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
 
-interface ToastPayload {
-  readonly message: string;
-  readonly type: ToastType;
-  readonly duration: number;
-}
-
 const DEFAULT_DURATIONS: Readonly<Record<ToastType, number>> = {
   success: 5000,
   error: 8000,
@@ -78,20 +72,21 @@ class ToastManager {
       const VALID_TYPES: readonly string[] = ['success', 'error', 'info', 'warning'];
 
       for (const item of parsed) {
-        if (
-          typeof item === 'object' &&
-          item !== null &&
-          'message' in item &&
-          'type' in item &&
-          typeof (item as ToastPayload).message === 'string' &&
-          typeof (item as ToastPayload).type === 'string'
-        ) {
-          const raw = item as ToastPayload;
-          const type: ToastType = VALID_TYPES.includes(raw.type) ? (raw.type as ToastType) : 'info';
+        if (typeof item === 'object' && item !== null && 'message' in item && 'type' in item) {
+          const raw = item as Record<string, unknown>;
+          const message = raw.message;
+          const rawType = raw.type;
+          const rawDuration = raw.duration;
+
+          if (typeof message !== 'string' || typeof rawType !== 'string') {
+            continue;
+          }
+
+          const type: ToastType = VALID_TYPES.includes(rawType) ? (rawType as ToastType) : 'info';
           this.show(
-            raw.message,
+            message,
             type,
-            typeof raw.duration === 'number' ? raw.duration : (DEFAULT_DURATIONS[type] ?? 5000),
+            typeof rawDuration === 'number' ? rawDuration : (DEFAULT_DURATIONS[type] ?? 5000),
           );
         }
       }

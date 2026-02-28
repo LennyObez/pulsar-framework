@@ -504,10 +504,10 @@ final readonly class QrCodeEncoder
 
             // Separator (one module white border)
             for ($i = -1; $i <= 7; $i++) {
-                $this->setIfInBounds($matrix, $reserved, $startRow - 1, $startCol + $i, 0, $size);
-                $this->setIfInBounds($matrix, $reserved, $startRow + 7, $startCol + $i, 0, $size);
-                $this->setIfInBounds($matrix, $reserved, $startRow + $i, $startCol - 1, 0, $size);
-                $this->setIfInBounds($matrix, $reserved, $startRow + $i, $startCol + 7, 0, $size);
+                $this->setIfInBounds($matrix, $reserved, $startRow - 1, $startCol + $i, $size);
+                $this->setIfInBounds($matrix, $reserved, $startRow + 7, $startCol + $i, $size);
+                $this->setIfInBounds($matrix, $reserved, $startRow + $i, $startCol - 1, $size);
+                $this->setIfInBounds($matrix, $reserved, $startRow + $i, $startCol + 7, $size);
             }
         }
     }
@@ -516,10 +516,10 @@ final readonly class QrCodeEncoder
      * @param array<int, array<int, int|null>> &$matrix
      * @param array<int, array<int, int|null>> &$reserved
      */
-    private function setIfInBounds(array &$matrix, array &$reserved, int $row, int $col, int $value, int $size): void
+    private function setIfInBounds(array &$matrix, array &$reserved, int $row, int $col, int $size): void
     {
         if ($row >= 0 && $row < $size && $col >= 0 && $col < $size) {
-            $matrix[$row][$col] = $value;
+            $matrix[$row][$col] = 0;
             $reserved[$row][$col] = 1;
         }
     }

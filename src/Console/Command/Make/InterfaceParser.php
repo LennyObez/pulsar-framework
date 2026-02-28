@@ -81,7 +81,6 @@ final readonly class InterfaceParser
         for ($i = $from + 1; $i < $count; $i++) {
             $token = $tokens[$i];
             if (is_array($token) && $token[0] === T_STRING) {
-                /** @var string */
                 return $token[1];
             }
             if (is_array($token) && !in_array($token[0], [T_WHITESPACE, T_COMMENT, T_DOC_COMMENT], true)) {

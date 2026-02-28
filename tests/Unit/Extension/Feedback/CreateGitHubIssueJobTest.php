@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Feedback;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -21,7 +20,6 @@ use function mb_substr;
 use function sprintf;
 use function str_repeat;
 
-#[CoversClass(CreateGitHubIssueJob::class)]
 final class CreateGitHubIssueJobTest extends TestCase
 {
     private FeedbackRepositoryInterface&Stub $repo;

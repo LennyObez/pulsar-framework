@@ -59,7 +59,7 @@ final class ContrastReportTest extends TestCase
         ];
 
         $report = new ContrastReport($results);
-        $failures = $report->failures('aa_normal');
+        $failures = $report->failures();
 
         self::assertCount(1, $failures);
         self::assertEqualsWithDelta(3.0, $failures[0]->ratio, 0.01);
@@ -131,7 +131,7 @@ final class ContrastReportTest extends TestCase
         ];
 
         $report = new ContrastReport($results);
-        $passes = $report->passes('aa_normal');
+        $passes = $report->passes();
 
         self::assertCount(1, $passes);
         self::assertEqualsWithDelta(5.0, $passes[0]->ratio, 0.01);

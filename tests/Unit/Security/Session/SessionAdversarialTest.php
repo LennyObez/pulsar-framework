@@ -17,6 +17,7 @@ use Pulsar\Security\Session\Handler\CookieHandler;
 use Pulsar\Security\Session\Handler\DatabaseHandler;
 use Pulsar\Security\Session\SessionEncryption;
 use Pulsar\Security\Session\SessionManager;
+use Pulsar\Security\Session\Validator\RemoteAddressValidator;
 use Pulsar\Security\Session\Validator\UserAgentValidator;
 use ReflectionClass;
 
@@ -166,7 +167,7 @@ final class SessionAdversarialTest extends TestCase
     #[Test]
     public function validatorBypassDifferentIpRejected(): void
     {
-        $validator = new \Pulsar\Security\Session\Validator\RemoteAddressValidator(mode: 'strict');
+        $validator = new RemoteAddressValidator(mode: 'strict');
         $handler = new ArrayHandler();
         $config = new SessionConfig(
             cookieName: 'TEST_SESSION',

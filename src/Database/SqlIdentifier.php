@@ -45,6 +45,6 @@ final class SqlIdentifier
     {
         self::validate($identifier);
 
-        return "`{$identifier}`";
+        return "`$identifier`";
     }
 }

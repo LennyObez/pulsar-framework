@@ -114,7 +114,6 @@ final readonly class ContrastReport
     private static function passesLevel(ContrastResult $result, string $level): bool
     {
         return match ($level) {
-            'aa_normal' => $result->passesAaNormal,
             'aa_large' => $result->passesAaLarge,
             'aaa_normal' => $result->passesAaaNormal,
             'aaa_large' => $result->passesAaaLarge,

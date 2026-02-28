@@ -101,7 +101,7 @@ final readonly class SettingsService implements SettingsServiceInterface
             AuditOutcome::Success,
             null,
             'cms.settings.updated',
-            "setting:{$group}.{$key}",
+            "setting:$group.$key",
             [
                 'group' => $group,
                 'key' => $key,
@@ -250,7 +250,7 @@ final readonly class SettingsService implements SettingsServiceInterface
             'int' => (int) $serialized,
             'float' => (float) $serialized,
             'string' => $serialized,
-            default => json_decode($serialized, true, 512, JSON_THROW_ON_ERROR),
+            default => json_decode($serialized, true, flags: JSON_THROW_ON_ERROR),
         };
     }
 

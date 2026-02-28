@@ -111,10 +111,8 @@ final readonly class SafeHttpClient
         // Check explicit metadata hosts
         $lowHost = strtolower($host);
 
-        foreach (self::METADATA_HOSTS as $metadataHost) {
-            if ($lowHost === $metadataHost) {
-                throw CmsException::ssrfBlocked($url, 'Cloud metadata endpoint blocked');
-            }
+        if (in_array($lowHost, self::METADATA_HOSTS, true)) {
+            throw CmsException::ssrfBlocked($url, 'Cloud metadata endpoint blocked');
         }
 
         // Validate port
@@ -123,7 +121,7 @@ final readonly class SafeHttpClient
         // If the host is already an IP, validate directly
         if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
             if ($this->isBlockedIp($host)) {
-                throw CmsException::ssrfBlocked($url, "IP address {$host} is in a blocked range");
+                throw CmsException::ssrfBlocked($url, "IP address $host is in a blocked range");
             }
 
             return;
@@ -133,14 +131,14 @@ final readonly class SafeHttpClient
         $resolvedIps = $this->dnsResolve($host);
 
         if ($resolvedIps === []) {
-            throw CmsException::ssrfBlocked($url, "DNS resolution failed for host: {$host}");
+            throw CmsException::ssrfBlocked($url, "DNS resolution failed for host: $host");
         }
 
         foreach ($resolvedIps as $ip) {
             if ($this->isBlockedIp($ip)) {
                 throw CmsException::ssrfBlocked(
                     $url,
-                    "DNS for '{$host}' resolved to blocked IP: {$ip}",
+                    "DNS for '$host' resolved to blocked IP: $ip",
                 );
             }
         }
@@ -220,21 +218,20 @@ final readonly class SafeHttpClient
             return false;
         }
 
-        foreach (self::IPV4_PRIVATE_RANGES as [$rangeIp, $cidr]) {
-            $rangeLong = ip2long($rangeIp);
+        return array_any(
+            self::IPV4_PRIVATE_RANGES,
+            static function (array $range) use ($ipLong): bool {
+                $rangeLong = ip2long($range[0]);
 
-            if ($rangeLong === false) {
-                continue;
-            }
+                if ($rangeLong === false) {
+                    return false;
+                }
 
-            $mask = -1 << (32 - $cidr);
+                $mask = -1 << (32 - $range[1]);
 
-            if (($ipLong & $mask) === ($rangeLong & $mask)) {
-                return true;
-            }
-        }
-
-        return false;
+                return ($ipLong & $mask) === ($rangeLong & $mask);
+            },
+        );
     }
 
     /**
@@ -248,19 +245,11 @@ final readonly class SafeHttpClient
             return false;
         }
 
-        foreach (self::IPV6_PRIVATE_RANGES as [$rangeIp, $cidr]) {
-            $rangeBin = inet_pton($rangeIp);
-
-            if ($rangeBin === false) {
-                continue;
-            }
-
-            if ($this->ipv6InCidr($ipBin, $rangeBin, $cidr)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any(
+            self::IPV6_PRIVATE_RANGES,
+            fn(array $range): bool => ($rangeBin = inet_pton($range[0])) !== false
+                && $this->ipv6InCidr($ipBin, $rangeBin, $range[1]),
+        );
     }
 
     /**

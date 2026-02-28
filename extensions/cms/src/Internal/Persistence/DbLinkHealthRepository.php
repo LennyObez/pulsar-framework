@@ -65,7 +65,7 @@ final readonly class DbLinkHealthRepository implements LinkHealthRepositoryInter
         }
 
         $inClause = InListBuilder::compile($this->connection->driver(), 'source_content_id', 'content_ids', count($contentIds));
-        $sql = "SELECT * FROM cms_link_health_checks WHERE {$inClause} AND source_locale = :locale ORDER BY source_content_id, created_at DESC";
+        $sql = "SELECT * FROM cms_link_health_checks WHERE $inClause AND source_locale = :locale ORDER BY source_content_id, created_at DESC";
         $bindings = InListBuilder::expandParams($this->connection->driver(), 'content_ids', $contentIds);
         $bindings['locale'] = $locale;
 

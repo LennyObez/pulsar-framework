@@ -61,7 +61,7 @@ final readonly class DeviceTokenGuard implements MiddlewareInterface
         return $handler->handle($request);
     }
 
-    private static function unauthorized(string $message): Response
+    private static function unauthorized(string $message): ResponseInterface
     {
         return Response::json(
             ['error' => $message],

@@ -22,8 +22,10 @@ use Pulsar\Extension\Forum\Internal\AntiAbuse\ForumAntiAbuseMiddleware;
 use Pulsar\Extension\Forum\Internal\Notification\ForumNotificationDispatcher;
 use Pulsar\Extension\Forum\Post\PostRepositoryInterface;
 use Pulsar\Extension\Forum\Profile\ForumProfileRepositoryInterface;
+use Pulsar\Extension\Forum\Report\ForumModerationLogRepositoryInterface;
 use Pulsar\Extension\Forum\Report\PostReportRepositoryInterface;
 use Pulsar\Extension\Forum\Report\ThreadReportRepositoryInterface;
+use Pulsar\Extension\Forum\Report\UserBanRepositoryInterface;
 use Pulsar\Extension\Forum\Service\ForumServiceInterface;
 use Pulsar\Extension\Forum\Service\ModerationServiceInterface;
 use Pulsar\Extension\Forum\Service\ReputationServiceInterface;
@@ -68,6 +70,8 @@ final class ForumCoreServiceProviderTest extends TestCase
         $postReports = $this->createStub(PostReportRepositoryInterface::class);
         $tags = $this->createStub(TagRepositoryInterface::class);
         $subscriptions = $this->createStub(ThreadSubscriptionRepositoryInterface::class);
+        $userBans = $this->createStub(UserBanRepositoryInterface::class);
+        $moderationLogs = $this->createStub(ForumModerationLogRepositoryInterface::class);
 
         $container = $this->createStub(ContainerInterface::class);
 
@@ -96,6 +100,8 @@ final class ForumCoreServiceProviderTest extends TestCase
                 $postReports,
                 $tags,
                 $subscriptions,
+                $userBans,
+                $moderationLogs,
             ) {
                 if (isset($instanceMap[$id])) {
                     return $instanceMap[$id];
@@ -114,6 +120,8 @@ final class ForumCoreServiceProviderTest extends TestCase
                     PostReportRepositoryInterface::class => $postReports,
                     TagRepositoryInterface::class => $tags,
                     ThreadSubscriptionRepositoryInterface::class => $subscriptions,
+                    UserBanRepositoryInterface::class => $userBans,
+                    ForumModerationLogRepositoryInterface::class => $moderationLogs,
                     CategoryRepositoryInterface::class => null,
                     default => null,
                 };

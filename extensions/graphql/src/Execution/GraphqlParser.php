@@ -247,7 +247,7 @@ final class GraphqlParser
             return $this->parseName();
         }
 
-        throw GraphqlException::syntaxError("Unexpected character '{$char}' at position {$this->pos}");
+        throw GraphqlException::syntaxError("Unexpected character '$char' at position $this->pos");
     }
 
     private function parseStringLiteral(): string
@@ -317,7 +317,7 @@ final class GraphqlParser
         $numStr = substr($this->source, $start, $this->pos - $start);
 
         if (!is_numeric($numStr)) {
-            throw GraphqlException::syntaxError("Invalid number: {$numStr}");
+            throw GraphqlException::syntaxError("Invalid number: $numStr");
         }
 
         return $isFloat ? (float) $numStr : (int) $numStr;
@@ -329,7 +329,7 @@ final class GraphqlParser
 
         if ($this->pos >= $this->len || !$this->isNameStart($this->source[$this->pos])) {
             throw GraphqlException::syntaxError(
-                "Expected name at position {$this->pos}, got: "
+                "Expected name at position $this->pos, got: "
                 . ($this->pos < $this->len ? "'{$this->source[$this->pos]}'" : 'EOF'),
             );
         }
@@ -441,7 +441,7 @@ final class GraphqlParser
     {
         if ($this->pos >= $this->len || $this->source[$this->pos] !== $char) {
             $actual = $this->pos < $this->len ? "'{$this->source[$this->pos]}'" : 'EOF';
-            throw GraphqlException::syntaxError("Expected '{$char}' at position {$this->pos}, got {$actual}");
+            throw GraphqlException::syntaxError("Expected '$char' at position $this->pos, got $actual");
         }
 
         $this->pos++;
@@ -470,7 +470,7 @@ final class GraphqlParser
     private function consumeWord(string $word): void
     {
         if (!$this->peekWord($word)) {
-            throw GraphqlException::syntaxError("Expected '{$word}' at position {$this->pos}");
+            throw GraphqlException::syntaxError("Expected '$word' at position $this->pos");
         }
 
         $this->pos += strlen($word);

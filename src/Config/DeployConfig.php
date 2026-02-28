@@ -66,7 +66,6 @@ readonly class DeployConfig
     {
         $config = $this->checks[$name] ?? ['enabled' => true];
 
-        /** @var bool */
         return $config['enabled'] ?? true;
     }
 

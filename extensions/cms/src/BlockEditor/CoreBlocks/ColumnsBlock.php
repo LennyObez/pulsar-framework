@@ -68,7 +68,7 @@ final readonly class ColumnsBlock implements BlockTypeInterface
             return '<div class="columns"></div>';
         }
 
-        $html = "<div class=\"columns\" style=\"display:grid;grid-template-columns:repeat({$columnCount},1fr);gap:1rem\">";
+        $html = "<div class=\"columns\" style=\"display:grid;grid-template-columns:repeat($columnCount,1fr);gap:1rem\">";
 
         foreach ($columns as $column) {
             if (!is_array($column)) {
@@ -102,30 +102,30 @@ final readonly class ColumnsBlock implements BlockTypeInterface
 
         foreach ($data['columns'] as $colIndex => $column) {
             if (!is_array($column)) {
-                $errors[] = "columns[{$colIndex}] must be an object";
+                $errors[] = "columns[$colIndex] must be an object";
 
                 continue;
             }
 
             if (!isset($column['blocks']) || !is_array($column['blocks'])) {
-                $errors[] = "columns[{$colIndex}].blocks is required and must be an array";
+                $errors[] = "columns[$colIndex].blocks is required and must be an array";
 
                 continue;
             }
 
             foreach ($column['blocks'] as $blockIndex => $block) {
                 if (!is_array($block)) {
-                    $errors[] = "columns[{$colIndex}].blocks[{$blockIndex}] must be an object";
+                    $errors[] = "columns[$colIndex].blocks[$blockIndex] must be an object";
 
                     continue;
                 }
 
                 if (!isset($block['blockType']) || !is_string($block['blockType'])) {
-                    $errors[] = "columns[{$colIndex}].blocks[{$blockIndex}].blockType is required and must be a string";
+                    $errors[] = "columns[$colIndex].blocks[$blockIndex].blockType is required and must be a string";
                 }
 
                 if (!isset($block['data']) || !is_array($block['data'])) {
-                    $errors[] = "columns[{$colIndex}].blocks[{$blockIndex}].data is required and must be an object";
+                    $errors[] = "columns[$colIndex].blocks[$blockIndex].data is required and must be an object";
                 }
             }
         }

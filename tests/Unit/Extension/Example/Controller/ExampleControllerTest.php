@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Extension\Example\Controller;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Extension\Example\Controller\ExampleController;
 use Pulsar\Extension\Example\ExampleService;
 use Pulsar\Http\Message\ServerRequest;
 
-#[CoversClass(ExampleController::class)]
 final class ExampleControllerTest extends TestCase
 {
     #[Test]

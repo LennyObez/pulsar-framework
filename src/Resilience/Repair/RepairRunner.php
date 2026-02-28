@@ -7,6 +7,7 @@ namespace Pulsar\Resilience\Repair;
 use Pulsar\Resilience\Exception\ResilienceException;
 use Throwable;
 
+use function array_map;
 use function sprintf;
 
 /**
@@ -32,13 +33,7 @@ final class RepairRunner implements RepairRunnerInterface
      */
     public function diagnoseAll(): array
     {
-        $results = [];
-
-        foreach ($this->jobs as $job) {
-            $results[] = $job->diagnose();
-        }
-
-        return $results;
+        return array_values(array_map(static fn(RepairJobInterface $job): RepairDiagnosis => $job->diagnose(), $this->jobs));
     }
 
     /**

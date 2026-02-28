@@ -130,7 +130,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             }
 
             /** @var array<string, mixed> $manifestData */
-            $manifestData = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+            $manifestData = json_decode($manifestJson, true, flags: JSON_THROW_ON_ERROR);
             $manifest = PluginManifest::fromArray($manifestData);
 
             $validation = $this->manifestValidator->validate($manifest);
@@ -144,7 +144,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
 
             if ($existing !== null) {
                 throw CmsException::pluginManifestInvalid(
-                    "Plugin with slug '{$manifest->slug}' is already installed",
+                    "Plugin with slug '$manifest->slug' is already installed",
                 );
             }
 
@@ -164,7 +164,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                     AuditOutcome::Success,
                     $installedBy,
                     'cms.plugin.security_warnings',
-                    "plugin:{$manifest->slug}",
+                    "plugin:$manifest->slug",
                     ['warnings' => $securityWarnings],
                 );
             }
@@ -219,7 +219,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                 AuditOutcome::Success,
                 $installedBy,
                 'cms.plugin.installed',
-                "plugin:{$pluginId}",
+                "plugin:$pluginId",
                 ['slug' => $manifest->slug, 'version' => $manifest->version],
             );
 
@@ -266,7 +266,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             AuditOutcome::Success,
             $enabledBy,
             'cms.plugin.enabled',
-            "plugin:{$pluginId}",
+            "plugin:$pluginId",
             ['slug' => $plugin->slug],
         );
 
@@ -304,7 +304,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             AuditOutcome::Success,
             $disabledBy,
             'cms.plugin.disabled',
-            "plugin:{$pluginId}",
+            "plugin:$pluginId",
             ['slug' => $plugin->slug],
         );
 
@@ -347,7 +347,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
             AuditOutcome::Success,
             $deletedBy,
             'cms.plugin.deleted',
-            "plugin:{$pluginId}",
+            "plugin:$pluginId",
             ['slug' => $plugin->slug, 'reason' => $reason],
         );
 
@@ -405,7 +405,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                     AuditOutcome::Error,
                     null,
                     'cms.plugin.register_failed',
-                    "plugin:{$plugin->id}",
+                    "plugin:$plugin->id",
                     ['slug' => $plugin->slug, 'error' => $e->getMessage()],
                 );
             }
@@ -430,7 +430,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
                     AuditOutcome::Error,
                     null,
                     'cms.plugin.boot_failed',
-                    "plugin:{$slug}",
+                    "plugin:$slug",
                     ['error' => $e->getMessage()],
                 );
             }
@@ -477,7 +477,7 @@ final readonly class CmsPluginManager implements CmsPluginManagerInterface
         }
 
         /** @var array<string, mixed> $manifestData */
-        $manifestData = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+        $manifestData = json_decode($manifestJson, true, flags: JSON_THROW_ON_ERROR);
         $manifest = PluginManifest::fromArray($manifestData);
 
         if ($manifest->entryPoint === null) {

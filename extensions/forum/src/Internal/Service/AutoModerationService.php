@@ -109,20 +109,16 @@ final readonly class AutoModerationService
     {
         $recentPosts = $this->posts->findByAuthor($authorId, 1, 10);
 
-        foreach ($recentPosts->items as $post) {
+        return array_any($recentPosts->items, static function (object $post) use ($body, $since): bool {
             if ($post->createdAt < $since) {
-                continue;
+                return false;
             }
 
             $similarity = 0.0;
             similar_text($body, $post->body, $similarity);
 
-            if ($similarity >= self::DUPLICATE_SIMILARITY_THRESHOLD) {
-                return true;
-            }
-        }
-
-        return false;
+            return $similarity >= self::DUPLICATE_SIMILARITY_THRESHOLD;
+        });
     }
 
     /**

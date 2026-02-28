@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Pulsar\Api\Internal;
 use Pulsar\Audit\AuditLoggerInterface;
+use Pulsar\Cache\Application\CacheManagerInterface;
 use Pulsar\Cache\Application\TaggedCacheInterface;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Database\ConnectionInterface;
@@ -96,6 +97,7 @@ use Pulsar\Extension\Cms\Media\MediaDiskInterface;
 use Pulsar\Extension\Cms\Media\MediaRepositoryInterface;
 use Pulsar\Extension\Cms\Media\MediaService;
 use Pulsar\Extension\Cms\Media\MediaServiceInterface;
+use Pulsar\Extension\Cms\Media\ResponsiveImageRenderer;
 use Pulsar\Extension\Cms\Media\Security\FilenameSanitizer;
 use Pulsar\Extension\Cms\Media\Security\FileValidator;
 use Pulsar\Extension\Cms\Media\Security\PdfValidator;
@@ -133,8 +135,12 @@ use Pulsar\Extension\Cms\Workflow\ContentLockServiceInterface;
 use Pulsar\Extension\Cms\Workflow\EditorialWorkflowService;
 use Pulsar\Extension\Cms\Workflow\EditorialWorkflowServiceInterface;
 use Pulsar\I18n\Locale\UrlPrefixExtractor;
+use Pulsar\Mail\MailManager;
+use Pulsar\Mail\MailManagerInterface;
+use Pulsar\Observability\Metrics\MetricRegistry;
 use Pulsar\Queue\QueueDriverInterface;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Csrf\CsrfTokenManagerInterface;
 
 /**
  * Binds CMS core services: settings, taxonomy, media, comments, search, SEO,
@@ -562,8 +568,8 @@ final readonly class CmsCoreServiceProvider
 
         // Responsive image renderer
         $container->instance(
-            \Pulsar\Extension\Cms\Media\ResponsiveImageRenderer::class,
-            new \Pulsar\Extension\Cms\Media\ResponsiveImageRenderer(),
+            ResponsiveImageRenderer::class,
+            new ResponsiveImageRenderer(),
         );
 
         // Cache decorators — wrap repository/service bindings when cache is available
@@ -858,9 +864,9 @@ final readonly class CmsCoreServiceProvider
         $spamScorer->addDetector(new ProofOfWorkVerifier());
 
         // Rate limiter (needs cache)
-        if ($container->has(\Pulsar\Cache\Application\CacheManagerInterface::class)) {
-            /** @var \Pulsar\Cache\Application\CacheManagerInterface $cacheManager */
-            $cacheManager = $container->get(\Pulsar\Cache\Application\CacheManagerInterface::class);
+        if ($container->has(CacheManagerInterface::class)) {
+            /** @var CacheManagerInterface $cacheManager */
+            $cacheManager = $container->get(CacheManagerInterface::class);
             $spamScorer->addDetector(new RateLimitDetector(
                 $cacheManager->simple(),
                 $formsConfig->rateLimitPerHour,
@@ -871,22 +877,22 @@ final readonly class CmsCoreServiceProvider
 
         // Form submission service
         if (
-            $container->has(\Pulsar\Mail\MailManager::class)
+            $container->has(MailManager::class)
             && $container->has(EventDispatcherInterface::class)
-            && $container->has(\Pulsar\Security\Csrf\CsrfTokenManagerInterface::class)
+            && $container->has(CsrfTokenManagerInterface::class)
         ) {
-            /** @var \Pulsar\Mail\MailManager $mailManager */
-            $mailManager = $container->get(\Pulsar\Mail\MailManager::class);
+            /** @var MailManager $mailManager */
+            $mailManager = $container->get(MailManager::class);
 
             /** @var EventDispatcherInterface $eventDispatcher */
             $eventDispatcher = $container->get(EventDispatcherInterface::class);
 
-            /** @var \Pulsar\Security\Csrf\CsrfTokenManagerInterface $csrfManager */
-            $csrfManager = $container->get(\Pulsar\Security\Csrf\CsrfTokenManagerInterface::class);
+            /** @var CsrfTokenManagerInterface $csrfManager */
+            $csrfManager = $container->get(CsrfTokenManagerInterface::class);
 
-            /** @var \Pulsar\Observability\Metrics\MetricRegistry|null $metricRegistry */
-            $metricRegistry = $container->has(\Pulsar\Observability\Metrics\MetricRegistry::class)
-                ? $container->get(\Pulsar\Observability\Metrics\MetricRegistry::class)
+            /** @var MetricRegistry|null $metricRegistry */
+            $metricRegistry = $container->has(MetricRegistry::class)
+                ? $container->get(MetricRegistry::class)
                 : null;
 
             $formService = new FormSubmissionService(
@@ -918,7 +924,7 @@ final readonly class CmsCoreServiceProvider
             $auditLogger === null
             || !$container->has(NewsletterSubscriberRepositoryInterface::class)
             || !$container->has(NewsletterCampaignRepositoryInterface::class)
-            || !$container->has(\Pulsar\Mail\MailManagerInterface::class)
+            || !$container->has(MailManagerInterface::class)
         ) {
             return;
         }
@@ -929,8 +935,8 @@ final readonly class CmsCoreServiceProvider
         /** @var NewsletterCampaignRepositoryInterface $campaignRepo */
         $campaignRepo = $container->get(NewsletterCampaignRepositoryInterface::class);
 
-        /** @var \Pulsar\Mail\MailManagerInterface $mailManager */
-        $mailManager = $container->get(\Pulsar\Mail\MailManagerInterface::class);
+        /** @var MailManagerInterface $mailManager */
+        $mailManager = $container->get(MailManagerInterface::class);
 
         $container->instance(
             NewsletterSubscriptionServiceInterface::class,

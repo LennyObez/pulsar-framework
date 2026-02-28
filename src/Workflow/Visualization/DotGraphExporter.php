@@ -10,9 +10,9 @@ use Pulsar\Workflow\Definition\StateDefinition;
 use Pulsar\Workflow\Definition\StateType;
 use Pulsar\Workflow\Definition\TransitionDefinition;
 use Pulsar\Workflow\Definition\WorkflowDefinition;
-use Pulsar\Workflow\Definition\WorkflowType;
 use Pulsar\Workflow\Storage\WorkflowInstance;
 
+use function array_find;
 use function implode;
 use function is_string;
 use function sprintf;
@@ -46,9 +46,8 @@ final class DotGraphExporter implements DotGraphExporterInterface
 
     private function buildDot(WorkflowDefinition $definition, ?string $activeState): string
     {
-        $graphType = ($definition->type === WorkflowType::Workflow) ? 'digraph' : 'digraph';
         $lines = [];
-        $lines[] = sprintf('%s "%s" {', $graphType, $this->escape($definition->name));
+        $lines[] = sprintf('digraph "%s" {', $this->escape($definition->name));
         $lines[] = '    rankdir=LR;';
         $lines[] = '    node [fontname="Helvetica" fontsize=10];';
         $lines[] = '    edge [fontname="Helvetica" fontsize=9];';
@@ -154,13 +153,7 @@ final class DotGraphExporter implements DotGraphExporterInterface
 
     private function findInitialState(WorkflowDefinition $definition): ?StateDefinition
     {
-        foreach ($definition->states as $state) {
-            if ($state->isInitial()) {
-                return $state;
-            }
-        }
-
-        return null;
+        return array_find($definition->states, static fn(StateDefinition $state): bool => $state->isInitial());
     }
 
     /**

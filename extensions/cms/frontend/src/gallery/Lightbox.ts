@@ -1,5 +1,5 @@
 /**
- * Full-screen lightbox using native <dialog> element.
+ * Full-screen lightbox using native `<dialog>` element.
  *
  * Supports keyboard navigation, touch swipe, image preloading,
  * EXIF overlay toggle, and focus trapping.

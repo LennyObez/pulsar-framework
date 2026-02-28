@@ -155,7 +155,7 @@ final readonly class CreatePaymentIntentHandler
     private function deserializeIntent(string $payload): PaymentIntent
     {
         /** @var array{data: array{id: string, amount: int, currency: string, status: string, provider: string, idempotency_key: string, created_at: int, metadata?: array<string, mixed>}} $envelope */
-        $envelope = json_decode($payload, true, 512, JSON_THROW_ON_ERROR);
+        $envelope = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
         $data = $envelope['data'];
 
         /** @var array<string, mixed> $metadata */

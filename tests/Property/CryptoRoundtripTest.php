@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use Pulsar\Security\Crypto\Encryptor;
 use Pulsar\Security\Crypto\Hmac;
 use Pulsar\Security\Crypto\MasterKey;
+use Pulsar\Security\Exception\SecurityException;
 
 use function count;
 use function random_bytes;
@@ -183,7 +184,7 @@ final class CryptoRoundtripTest extends TestCase
         $plaintext = 'secret data';
         $ciphertext = $encryptor->encrypt($plaintext);
 
-        $this->expectException(\Pulsar\Security\Exception\SecurityException::class);
+        $this->expectException(SecurityException::class);
         $otherEncryptor->decrypt($ciphertext);
     }
 

@@ -55,7 +55,7 @@ final readonly class CommentAntiAbuseMiddleware implements MiddlewareInterface
 
         // Check content length first (cheapest check)
         if ($this->heuristics->isTooLong($body, $this->maxLength)) {
-            return $this->reject("Comment body exceeds maximum length of {$this->maxLength} characters");
+            return $this->reject("Comment body exceeds maximum length of $this->maxLength characters");
         }
 
         // Check excessive character repetition
@@ -65,7 +65,7 @@ final readonly class CommentAntiAbuseMiddleware implements MiddlewareInterface
 
         // Check link spam
         if ($this->heuristics->isLinkSpam($body, $this->maxLinks)) {
-            return $this->reject("Comment body contains more than {$this->maxLinks} links");
+            return $this->reject("Comment body contains more than $this->maxLinks links");
         }
 
         // Check duplicate submission

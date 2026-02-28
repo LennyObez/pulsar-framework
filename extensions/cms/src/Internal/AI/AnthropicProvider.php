@@ -53,7 +53,7 @@ final readonly class AnthropicProvider implements LlmProviderInterface
             'http' => [
                 'method' => 'POST',
                 'header' => "Content-Type: application/json\r\n"
-                    . "x-api-key: {$this->apiKey}\r\n"
+                    . "x-api-key: $this->apiKey\r\n"
                     . "anthropic-version: 2023-06-01\r\n",
                 'content' => $json,
                 'timeout' => 120,

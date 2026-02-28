@@ -7,6 +7,7 @@ namespace Pulsar\Tests\Unit\Observability\Log;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Pulsar\Config\AuditConfig;
 use Pulsar\Config\LoggingChannelConfig;
 use Pulsar\Config\ObservabilityConfig;
 use Pulsar\Observability\Log\LogEntry;
@@ -137,7 +138,7 @@ final class LoggerTest extends TestCase
                     stream: 'php://stderr',
                 ),
             ],
-            audit: new \Pulsar\Config\AuditConfig(
+            audit: new AuditConfig(
                 enabled: false,
                 logPath: 'var/logs/audit.jsonl',
                 events: [],
@@ -182,7 +183,7 @@ final class LoggerTest extends TestCase
             defaultLoggingChannel: 'app',
             loggingLevel: 'debug',
             loggingChannels: [],
-            audit: new \Pulsar\Config\AuditConfig(
+            audit: new AuditConfig(
                 enabled: false,
                 logPath: 'var/logs/audit.jsonl',
                 events: [],
@@ -207,7 +208,7 @@ final class LoggerTest extends TestCase
                     driver: 'unknown_driver',
                 ),
             ],
-            audit: new \Pulsar\Config\AuditConfig(
+            audit: new AuditConfig(
                 enabled: false,
                 logPath: 'var/logs/audit.jsonl',
                 events: [],

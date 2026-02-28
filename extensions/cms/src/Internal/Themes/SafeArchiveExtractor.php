@@ -92,7 +92,7 @@ final readonly class SafeArchiveExtractor implements ThemeArchiveExtractorInterf
                 $stat = $zip->statIndex($i);
 
                 if ($stat === false) {
-                    $warnings[] = "Cannot stat entry at index {$i}";
+                    $warnings[] = "Cannot stat entry at index $i";
 
                     continue;
                 }
@@ -144,7 +144,7 @@ final readonly class SafeArchiveExtractor implements ThemeArchiveExtractorInterf
                 $contents = $zip->getFromIndex($i);
 
                 if ($contents === false) {
-                    $warnings[] = "Failed to read entry: {$entryName}";
+                    $warnings[] = "Failed to read entry: $entryName";
 
                     continue;
                 }

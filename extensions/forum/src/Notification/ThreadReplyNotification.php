@@ -36,12 +36,12 @@ final readonly class ThreadReplyNotification implements ForumNotificationInterfa
 
     public function subject(): string
     {
-        return "New reply in: {$this->threadTitle}";
+        return "New reply in: $this->threadTitle";
     }
 
     public function body(): string
     {
-        return "{$this->authorName} replied to the thread \"{$this->threadTitle}\".";
+        return "$this->authorName replied to the thread \"$this->threadTitle\".";
     }
 
     public function metadata(): array

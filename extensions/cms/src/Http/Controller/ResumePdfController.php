@@ -84,7 +84,7 @@ final readonly class ResumePdfController
             $jsonValue = $field['value_json'];
 
             if (is_string($jsonValue) && $jsonValue !== '') {
-                $resumeData[$field['key']] = json_decode($jsonValue, true, 512, JSON_THROW_ON_ERROR);
+                $resumeData[$field['key']] = json_decode($jsonValue, true, flags: JSON_THROW_ON_ERROR);
             } elseif ($field['value_string'] !== null) {
                 $resumeData[$field['key']] = $field['value_string'];
             }

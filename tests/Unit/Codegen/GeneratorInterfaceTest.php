@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Pulsar\Tests\Unit\Codegen;
 
-use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Pulsar\Codegen\GeneratedFileSet;
@@ -12,7 +11,6 @@ use Pulsar\Codegen\GeneratorConfig;
 use Pulsar\Codegen\GeneratorInterface;
 use Pulsar\Codegen\Schema\EntityDefinition;
 
-#[CoversClass(GeneratorInterface::class)]
 final class GeneratorInterfaceTest extends TestCase
 {
     #[Test]

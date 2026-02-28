@@ -104,7 +104,7 @@ final class FileFlagStorage implements FlagStorageInterface
             ?: throw FeatureFlagException::storageError(sprintf('Cannot read file: %s', $this->filePath));
 
         try {
-            $data = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($content, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw FeatureFlagException::storageError(sprintf('Invalid JSON in %s: %s', $this->filePath, $e->getMessage()));
         }

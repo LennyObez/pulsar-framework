@@ -55,7 +55,7 @@ final readonly class ListBlock implements BlockTypeInterface
             $listItems[] = '<li>' . htmlspecialchars($item, ENT_QUOTES, 'UTF-8') . '</li>';
         }
 
-        return "<{$tag}>" . implode('', $listItems) . "</{$tag}>";
+        return "<$tag>" . implode('', $listItems) . "</$tag>";
     }
 
     #[Override]
@@ -68,7 +68,7 @@ final readonly class ListBlock implements BlockTypeInterface
         } else {
             foreach ($data['items'] as $index => $item) {
                 if (!is_string($item)) {
-                    $errors[] = "items[{$index}] must be a string";
+                    $errors[] = "items[$index] must be a string";
                 }
             }
         }

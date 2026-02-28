@@ -7,7 +7,6 @@ namespace Pulsar\Core\Wiring;
 use Pulsar\Api\Internal;
 use Pulsar\Config\ConfigManager;
 use Pulsar\Config\StorageConfig;
-use Pulsar\Container\BindingType;
 use Pulsar\Container\ContainerInterface;
 use Pulsar\Http\Middleware\MiddlewarePipeline;
 use Pulsar\Http\Middleware\MiddlewareRegistry;
@@ -40,7 +39,7 @@ final readonly class StorageWiring implements ServiceWiringInterface
 
         // Register default disk adapter as the interface binding
         if ($storageConfig->disks !== []) {
-            $container->bind(StorageAdapterInterface::class, static fn(): StorageAdapterInterface => $manager->disk(), BindingType::Singleton);
+            $container->bind(StorageAdapterInterface::class, static fn(): StorageAdapterInterface => $manager->disk());
         }
     }
 }

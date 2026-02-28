@@ -183,11 +183,18 @@ final class FromSchemaCommand extends Command
         }
 
         $total = $generated + $skipped;
+
+        if ($total === 0) {
+            $output->warning('No tables could be imported (all had empty column sets).');
+
+            return ExitCode::Success->value;
+        }
+
         $output->success(sprintf(
             '%d table%s processed (%s).',
             $total,
             $total !== 1 ? 's' : '',
-            $parts !== [] ? implode(', ', $parts) : '0 imported',
+            implode(', ', $parts),
         ));
 
         return ExitCode::Success->value;

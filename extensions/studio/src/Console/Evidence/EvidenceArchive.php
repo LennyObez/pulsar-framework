@@ -63,7 +63,7 @@ final readonly class EvidenceArchive
     {
         try {
             /** @var array<string, mixed> $data */
-            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw new InvalidArgumentException('Invalid JSON: ' . $e->getMessage(), 0, $e);
         }

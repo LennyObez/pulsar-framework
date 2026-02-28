@@ -19,13 +19,13 @@ final class SystemContextTest extends TestCase
     {
         $system = new SystemContext();
 
-        self::assertFalse($system->isActive());
+        self::assertFalse($system->active);
 
         $system->enter('test operation');
-        self::assertTrue($system->isActive());
+        self::assertTrue($system->active);
 
         $system->exit();
-        self::assertFalse($system->isActive());
+        self::assertFalse($system->active);
     }
 
     #[Test]
@@ -56,13 +56,13 @@ final class SystemContextTest extends TestCase
     {
         $system = new SystemContext();
 
-        self::assertFalse($system->isActive());
+        self::assertFalse($system->active);
 
         $system->enter('test');
-        self::assertTrue($system->isActive());
+        self::assertTrue($system->active);
 
         $system->exit();
-        self::assertFalse($system->isActive());
+        self::assertFalse($system->active);
     }
 
     #[Test]

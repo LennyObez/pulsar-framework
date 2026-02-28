@@ -43,7 +43,7 @@ final class ErrorSchemaTest extends TestCase
     #[Test]
     public function toArrayIncludesNullTraceIdWhenAbsent(): void
     {
-        $event = $this->createEvent(traceId: null);
+        $event = $this->createEvent();
         $array = ErrorSchema::toArray($event);
 
         self::assertNull($array['trace_id']);
@@ -65,7 +65,7 @@ final class ErrorSchemaTest extends TestCase
         $event = $this->createEvent();
         $json = ErrorSchema::toJson($event);
 
-        $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         self::assertIsArray($decoded);
         self::assertSame('1.0.0', $decoded['schema_version']);
         self::assertSame('abc123', $decoded['fingerprint']);

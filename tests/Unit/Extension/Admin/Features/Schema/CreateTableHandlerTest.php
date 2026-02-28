@@ -17,6 +17,7 @@ use Pulsar\Database\Schema\DdlCompiler;
 use Pulsar\Database\Schema\SchemaCapabilities;
 use Pulsar\Database\Schema\SchemaColumn;
 use Pulsar\Database\Schema\SchemaColumnType;
+use Pulsar\Database\Schema\SchemaException;
 use Pulsar\Database\Schema\SchemaManager;
 use Pulsar\Database\Schema\TableDefinition;
 use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
@@ -102,7 +103,7 @@ final class CreateTableHandlerTest extends TestCase
             columns: [new SchemaColumn('id', SchemaColumnType::Integer)],
         );
 
-        $this->expectException(\Pulsar\Database\Schema\SchemaException::class);
+        $this->expectException(SchemaException::class);
         $this->handler->execute($def, new MutationContext('admin', 'Test create'));
     }
 

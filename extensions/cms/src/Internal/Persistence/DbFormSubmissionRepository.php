@@ -213,7 +213,7 @@ final readonly class DbFormSubmissionRepository implements FormSubmissionReposit
         }
 
         $where = $conditions !== [] ? 'WHERE ' . implode(' AND ', $conditions) : '';
-        $sql = "SELECT * FROM cms_form_submissions {$where} ORDER BY submitted_at DESC LIMIT :limit OFFSET :offset";
+        $sql = "SELECT * FROM cms_form_submissions $where ORDER BY submitted_at DESC LIMIT :limit OFFSET :offset";
 
         $result = $this->connection->query($sql, $params);
 

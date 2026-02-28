@@ -170,8 +170,7 @@ final class KeyGenerateCommand extends Command
 
         // Replace the empty PULSAR_MASTER_KEY= line with the generated key
         if (str_contains($template, 'PULSAR_MASTER_KEY=')) {
-            /** @var string */
-            return preg_replace('/^PULSAR_MASTER_KEY=.*$/m', $keyLine, $template);
+            return (string) preg_replace('/^PULSAR_MASTER_KEY=.*$/m', $keyLine, $template);
         }
 
         return rtrim($template, "\n") . "\n" . $keyLine . "\n";

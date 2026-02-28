@@ -19,6 +19,7 @@ use Pulsar\Database\Schema\SchemaIndex;
 use Pulsar\Database\Schema\SchemaManager;
 use Pulsar\Database\Schema\TableDefinition;
 use Pulsar\Extension\Admin\Config\AdminSchemaConfig;
+use Pulsar\Extension\Admin\Exception\AdminException;
 use Pulsar\Extension\Admin\Features\Schema\AlterTableHandler;
 use Pulsar\Extension\Admin\Internal\Storage\SchemaChangeLogStoreInterface;
 
@@ -97,7 +98,7 @@ final class AlterTableHandlerTest extends TestCase
     #[Test]
     public function rejectsDeniedPrefixTable(): void
     {
-        $this->expectException(\Pulsar\Extension\Admin\Exception\AdminException::class);
+        $this->expectException(AdminException::class);
         $this->handler->addColumn(
             'admin_settings',
             new SchemaColumn('val', SchemaColumnType::String),

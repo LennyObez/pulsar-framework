@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Extension\Accessibility\Validator;
 
-use DOMDocument;
 use DOMElement;
-use DOMNode;
 use DOMXPath;
 
 use function in_array;
@@ -22,6 +20,7 @@ use function in_array;
  */
 final readonly class AltTextValidator implements ValidatorInterface
 {
+    use ParsesHtmlDom;
     /** Generic alt text values that indicate poor accessibility practice. */
     private const array GENERIC_ALT_VALUES = [
         'image',
@@ -89,7 +88,7 @@ final readonly class AltTextValidator implements ValidatorInterface
                     rule: 'generic-alt-text',
                     severity: Severity::Warning,
                     element: $snippet,
-                    message: "Alt text \"{$altText}\" is too generic. Provide a meaningful description of the image content.",
+                    message: "Alt text \"$altText\" is too generic. Provide a meaningful description of the image content.",
                     wcagCriterion: '1.1.1',
                     line: $line,
                 );
@@ -101,40 +100,8 @@ final readonly class AltTextValidator implements ValidatorInterface
 
     private function isDecorativeOrHidden(DOMElement $image): bool
     {
-        if ($image->getAttribute('role') === 'presentation') {
-            return true;
-        }
-
-        if ($image->getAttribute('aria-hidden') === 'true') {
-            return true;
-        }
-
-        return false;
+        return $image->getAttribute('role') === 'presentation'
+            || $image->getAttribute('aria-hidden') === 'true';
     }
 
-    private function loadHtml(string $html): ?DOMDocument
-    {
-        $dom = new DOMDocument();
-        $wrapped = '<div>' . $html . '</div>';
-        libxml_use_internal_errors(true);
-        $result = @$dom->loadHTML(
-            '<?xml encoding="UTF-8"><body>' . $wrapped . '</body>',
-            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD,
-        );
-        libxml_clear_errors();
-
-        if ($result === false) {
-            return null;
-        }
-
-        return $dom;
-    }
-
-    private function getOuterHtml(DOMNode $node): string
-    {
-        /** @var DOMDocument $dom */
-        $dom = $node->ownerDocument;
-
-        return trim($dom->saveHTML($node) ?: '');
-    }
 }

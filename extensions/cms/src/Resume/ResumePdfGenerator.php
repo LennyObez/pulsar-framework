@@ -63,12 +63,12 @@ final class ResumePdfGenerator
                 $description = $e(is_string($rawDescription) ? $rawDescription : '');
 
                 $items[] = '<div class="resume-entry">'
-                    . "<h3>{$title}</h3>"
-                    . "<div class=\"resume-meta\">{$company}"
-                    . ($location !== '' ? " &middot; {$location}" : '')
-                    . ($period !== '' ? " &middot; {$period}" : '')
+                    . "<h3>$title</h3>"
+                    . "<div class=\"resume-meta\">$company"
+                    . ($location !== '' ? " &middot; $location" : '')
+                    . ($period !== '' ? " &middot; $period" : '')
                     . '</div>'
-                    . ($description !== '' ? "<p>{$description}</p>" : '')
+                    . ($description !== '' ? "<p>$description</p>" : '')
                     . '</div>';
             }
 
@@ -95,9 +95,9 @@ final class ResumePdfGenerator
                 $year = $e(is_string($rawYear) ? $rawYear : '');
 
                 $items[] = '<div class="resume-entry">'
-                    . "<h3>{$degree}</h3>"
-                    . "<div class=\"resume-meta\">{$institution}"
-                    . ($year !== '' ? " &middot; {$year}" : '')
+                    . "<h3>$degree</h3>"
+                    . "<div class=\"resume-meta\">$institution"
+                    . ($year !== '' ? " &middot; $year" : '')
                     . '</div></div>';
             }
 
@@ -122,7 +122,7 @@ final class ResumePdfGenerator
 
                 if (is_array($skills) && $skills !== []) {
                     $skillList = implode(', ', array_map(static fn(mixed $s): string => $e(is_string($s) ? $s : ''), $skills));
-                    $items[] = "<div class=\"resume-entry\"><strong>{$catName}:</strong> {$skillList}</div>";
+                    $items[] = "<div class=\"resume-entry\"><strong>$catName:</strong> $skillList</div>";
                 }
             }
 
@@ -145,7 +145,7 @@ final class ResumePdfGenerator
                 $language = $e(is_string($rawLanguage) ? $rawLanguage : '');
                 $rawLevel = $lang['level'] ?? '';
                 $level = $e(is_string($rawLevel) ? $rawLevel : '');
-                $items[] = "<li>{$language}" . ($level !== '' ? " — {$level}" : '') . '</li>';
+                $items[] = "<li>$language" . ($level !== '' ? " — $level" : '') . '</li>';
             }
 
             if ($items !== []) {
@@ -169,9 +169,9 @@ final class ResumePdfGenerator
                 $issuer = $e(is_string($rawIssuer) ? $rawIssuer : '');
                 $rawCertYear = $cert['year'] ?? '';
                 $year = $e(is_string($rawCertYear) ? $rawCertYear : '');
-                $items[] = "<li>{$certName}"
-                    . ($issuer !== '' ? " — {$issuer}" : '')
-                    . ($year !== '' ? " ({$year})" : '')
+                $items[] = "<li>$certName"
+                    . ($issuer !== '' ? " — $issuer" : '')
+                    . ($year !== '' ? " ($year)" : '')
                     . '</li>';
             }
 
@@ -195,8 +195,8 @@ final class ResumePdfGenerator
                 $rawProjDescription = $project['description'] ?? '';
                 $description = $e(is_string($rawProjDescription) ? $rawProjDescription : '');
                 $items[] = '<div class="resume-entry">'
-                    . "<h3>{$projectName}</h3>"
-                    . ($description !== '' ? "<p>{$description}</p>" : '')
+                    . "<h3>$projectName</h3>"
+                    . ($description !== '' ? "<p>$description</p>" : '')
                     . '</div>';
             }
 
@@ -215,7 +215,7 @@ final class ResumePdfGenerator
             <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>{$escapedName} — Resume</title>
+            <title>$escapedName — Resume</title>
             <style>
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #1a1a1a; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 40px 24px; }
@@ -235,8 +235,8 @@ final class ResumePdfGenerator
             </style>
             </head>
             <body>
-            <h1>{$escapedName}</h1>
-            {$body}
+            <h1>$escapedName</h1>
+            $body
             </body>
             </html>
             HTML;

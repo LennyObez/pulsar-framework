@@ -56,8 +56,8 @@ final class InMemoryCredentialRepositoryTest extends TestCase
     #[Test]
     public function find_by_user_id_returns_all_user_credentials(): void
     {
-        $this->repo->persist($this->makeCredential('cred-1', 'user-1'));
-        $this->repo->persist($this->makeCredential('cred-2', 'user-1'));
+        $this->repo->persist($this->makeCredential());
+        $this->repo->persist($this->makeCredential('cred-2'));
         $this->repo->persist($this->makeCredential('cred-3', 'user-2'));
 
         $credentials = $this->repo->findByUserId('user-1');
@@ -104,8 +104,8 @@ final class InMemoryCredentialRepositoryTest extends TestCase
     #[Test]
     public function remove_by_user_id(): void
     {
-        $this->repo->persist($this->makeCredential('cred-1', 'user-1'));
-        $this->repo->persist($this->makeCredential('cred-2', 'user-1'));
+        $this->repo->persist($this->makeCredential());
+        $this->repo->persist($this->makeCredential('cred-2'));
         $this->repo->persist($this->makeCredential('cred-3', 'user-2'));
 
         $this->repo->removeByUserId('user-1');

@@ -81,7 +81,7 @@ final readonly class ExportOptions
             $validList = implode(', ', self::VALID_SCOPES);
 
             throw new InvalidArgumentException(
-                "Invalid export scope. Valid types: {$validList}",
+                "Invalid export scope. Valid types: $validList",
             );
         }
 

@@ -96,7 +96,7 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
         }
 
         $inClause = InListBuilder::compile($this->connection->driver(), 'content_id', 'content_ids', count($contentIds));
-        $sql = "SELECT * FROM cms_content_translations WHERE {$inClause} ORDER BY content_id, locale";
+        $sql = "SELECT * FROM cms_content_translations WHERE $inClause ORDER BY content_id, locale";
         $bindings = InListBuilder::expandParams($this->connection->driver(), 'content_ids', $contentIds);
 
         $result = $this->connection->query($sql, $bindings);
@@ -200,7 +200,7 @@ final readonly class DbContentTranslationRepository implements ContentTranslatio
             ogImageId: $row->getNullableString('og_image_id'),
             robots: $row->getNullableString('robots'),
             structuredDataOverrides: $structuredDataRaw !== null
-                ? json_decode($structuredDataRaw, true, 512, JSON_THROW_ON_ERROR)
+                ? json_decode($structuredDataRaw, true, flags: JSON_THROW_ON_ERROR)
                 : null,
             readingTimeMinutes: $row->getNullableInt('reading_time_minutes'),
             bodyPlaintext: $row->getString('body_plaintext'),

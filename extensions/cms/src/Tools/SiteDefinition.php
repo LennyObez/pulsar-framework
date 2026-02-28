@@ -76,7 +76,7 @@ final readonly class SiteDefinition
 
         if ($version !== '1.0') {
             throw new InvalidArgumentException(
-                "Unsupported site definition version: {$version}. Expected: 1.0",
+                "Unsupported site definition version: $version. Expected: 1.0",
             );
         }
 
@@ -105,7 +105,7 @@ final readonly class SiteDefinition
         $value = $data[$key] ?? [];
 
         if (!is_array($value)) {
-            throw new InvalidArgumentException("The \"{$key}\" key must be an array");
+            throw new InvalidArgumentException("The \"$key\" key must be an array");
         }
 
         return $value;

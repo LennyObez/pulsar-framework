@@ -74,7 +74,7 @@ final readonly class SocialLinksBlock implements BlockTypeInterface
         $style = is_string($data['style'] ?? null) ? $data['style'] : 'both';
         $size = is_string($data['size'] ?? null) ? $data['size'] : 'md';
 
-        $html = "<nav class=\"social-links social-links--{$style} social-links--{$size}\" aria-label=\"Social media links\">";
+        $html = "<nav class=\"social-links social-links--$style social-links--$size\" aria-label=\"Social media links\">";
 
         foreach ($links as $link) {
             if (!is_array($link)) {
@@ -86,7 +86,7 @@ final readonly class SocialLinksBlock implements BlockTypeInterface
             $escapedPlatform = htmlspecialchars($platform, ENT_QUOTES, 'UTF-8');
             $label = self::PLATFORM_LABELS[$platform] ?? $escapedPlatform;
 
-            $html .= "<a href=\"{$url}\" class=\"social-link social-link--{$escapedPlatform}\" rel=\"noopener noreferrer\" target=\"_blank\">{$label}</a>";
+            $html .= "<a href=\"$url\" class=\"social-link social-link--$escapedPlatform\" rel=\"noopener noreferrer\" target=\"_blank\">$label</a>";
         }
 
         return $html . '</nav>';
@@ -105,19 +105,19 @@ final readonly class SocialLinksBlock implements BlockTypeInterface
 
         foreach ($data['links'] as $index => $link) {
             if (!is_array($link)) {
-                $errors[] = "links[{$index}] must be an object";
+                $errors[] = "links[$index] must be an object";
 
                 continue;
             }
 
             if (!isset($link['platform']) || !is_string($link['platform'])) {
-                $errors[] = "links[{$index}].platform is required and must be a string";
+                $errors[] = "links[$index].platform is required and must be a string";
             } elseif (!array_key_exists($link['platform'], self::PLATFORM_LABELS)) {
-                $errors[] = "links[{$index}].platform '{$link['platform']}' is not a known platform";
+                $errors[] = "links[$index].platform '{$link['platform']}' is not a known platform";
             }
 
             if (!isset($link['url']) || !is_string($link['url'])) {
-                $errors[] = "links[{$index}].url is required and must be a string";
+                $errors[] = "links[$index].url is required and must be a string";
             }
         }
 

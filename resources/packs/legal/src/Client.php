@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace {{namespace}}\Entity;
 
+use DateTimeImmutable;
+
 /**
  * Legal client entity.
  *
@@ -20,7 +22,7 @@ final class Client
      * @param non-empty-string|null $contactPhone Primary contact phone
      * @param non-empty-string|null $address      Mailing address
      * @param ClientStatus          $status       Current client status
-     * @param \DateTimeImmutable    $engagedAt    Engagement date
+     * @param DateTimeImmutable    $engagedAt    Engagement date
      */
     public function __construct(
         public readonly string $id,
@@ -30,7 +32,7 @@ final class Client
         public readonly ?string $contactPhone = null,
         public readonly ?string $address = null,
         public ClientStatus $status = ClientStatus::Active,
-        public readonly \DateTimeImmutable $engagedAt = new \DateTimeImmutable(),
+        public readonly DateTimeImmutable $engagedAt = new DateTimeImmutable(),
     ) {}
 
     public function isActive(): bool

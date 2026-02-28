@@ -75,7 +75,7 @@ final class ManifestFormat
     public static function fromJson(string $json): IntegrityManifest
     {
         try {
-            $data = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+            $data = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             throw IntegrityException::manifestCorrupted('(string)', 'invalid JSON: ' . $e->getMessage());
         }

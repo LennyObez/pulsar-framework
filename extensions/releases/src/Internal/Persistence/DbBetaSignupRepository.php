@@ -110,7 +110,7 @@ final readonly class DbBetaSignupRepository implements BetaSignupRepositoryInter
         $perPage = max(1, min(100, $perPage));
         $offset = ($page - 1) * $perPage;
 
-        $countResult = $this->connection->query(self::SQL_COUNT_ALL, []);
+        $countResult = $this->connection->query(self::SQL_COUNT_ALL);
         $total = $countResult->first()?->getInt('total') ?? 0;
 
         $selectSql = self::SQL_FIND_ALL . ' LIMIT :limit OFFSET :offset';
@@ -149,7 +149,7 @@ final readonly class DbBetaSignupRepository implements BetaSignupRepositoryInter
     private static function hydrate(Row $row): BetaSignup
     {
         $brandsJson = $row->getString('camera_brands');
-        $decoded = json_decode($brandsJson, true, 512, JSON_THROW_ON_ERROR);
+        $decoded = json_decode($brandsJson, true, flags: JSON_THROW_ON_ERROR);
 
         /** @var list<string> $cameraBrands */
         $cameraBrands = is_array($decoded) ? $decoded : [];

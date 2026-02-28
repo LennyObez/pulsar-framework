@@ -50,7 +50,7 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
         }
 
         /** @var array<string, mixed> $manifestData */
-        $manifestData = json_decode($manifestJson, true, 512, JSON_THROW_ON_ERROR);
+        $manifestData = json_decode($manifestJson, true, flags: JSON_THROW_ON_ERROR);
 
         $tokenDefs = $manifestData['editable_tokens'] ?? [];
 
@@ -188,18 +188,8 @@ final readonly class ThemeTokenResolver implements ThemeTokenResolverInterface
     {
         $lower = strtolower($value);
 
-        if (str_contains($lower, 'url(')) {
-            return true;
-        }
-
-        if (str_contains($lower, 'expression(')) {
-            return true;
-        }
-
-        if (str_contains($lower, 'javascript:')) {
-            return true;
-        }
-
-        return false;
+        return str_contains($lower, 'url(')
+            || str_contains($lower, 'expression(')
+            || str_contains($lower, 'javascript:');
     }
 }

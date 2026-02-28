@@ -12,6 +12,7 @@ use PhpBench\Attributes\Iterations;
 use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Subject;
 use PhpBench\Attributes\Warmup;
+use Pulsar\Api\Pagination\PaginationResult;
 use Pulsar\Extension\Cms\Http\Controller\MediaController;
 use Pulsar\Extension\Cms\Media\MediaAsset;
 use Pulsar\Extension\Cms\Media\MediaDerivative;
@@ -79,9 +80,9 @@ final class MediaUploadThroughputBench
             }
 
             #[Override]
-            public function listAssets(?string $tenantId, int $page, int $perPage, ?string $mimeType = null, ?string $visibility = null): \Pulsar\Api\Pagination\PaginationResult
+            public function listAssets(?string $tenantId, int $page, int $perPage, ?string $mimeType = null, ?string $visibility = null): PaginationResult
             {
-                return new \Pulsar\Api\Pagination\PaginationResult(items: [$this->asset], total: 1, hasMore: false, perPage: $perPage);
+                return new PaginationResult(items: [$this->asset], total: 1, hasMore: false, perPage: $perPage);
             }
 
             #[Override]

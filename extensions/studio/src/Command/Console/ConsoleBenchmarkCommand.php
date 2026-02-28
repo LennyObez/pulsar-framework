@@ -107,7 +107,7 @@ final class ConsoleBenchmarkCommand extends Command
         }
 
         /** @var array<string, array{description: string, ini: array<string, string>, preload: bool, optimize: bool, worker?: string}> $profiles */
-        $profiles = json_decode($profilesContent, true, 512, JSON_THROW_ON_ERROR);
+        $profiles = json_decode($profilesContent, true, flags: JSON_THROW_ON_ERROR);
 
         if ($singleProfile !== null) {
             if (!isset($profiles[$singleProfile])) {
@@ -517,7 +517,7 @@ final class ConsoleBenchmarkCommand extends Command
 
         try {
             /** @var array{boot_us: int, warm_boot_us: int, iterations: int, memory_usage_kb: int, opcache_memory_kb: ?int, p50_us: int, p95_us: int, peak_rss_kb: int, rps: int} $metrics */
-            $metrics = json_decode($jsonLine, true, 512, JSON_THROW_ON_ERROR);
+            $metrics = json_decode($jsonLine, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException) {
             return null;
         }

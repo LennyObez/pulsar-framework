@@ -525,12 +525,12 @@ final class Container implements AdvancedContainerInterface
         $concrete = $this->contextualBindings[$consumer][$abstract];
 
         if (is_callable($concrete)) {
-            /** @var object */
+            /** @var object|null */
             return $concrete($this);
         }
 
         if (isset($this->definitions[$concrete]) || isset($this->instances[$concrete])) {
-            /** @var object */
+            /** @var object|null */
             return $this->get($concrete);
         }
 
