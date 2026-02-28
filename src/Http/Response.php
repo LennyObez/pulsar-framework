@@ -23,7 +23,7 @@ readonly class Response
     /**
      * Return a new response with the given body.
      *
-     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement -- Psalm does not yet infer clone() return type
+     * @psalm-suppress MoreSpecificReturnType, LessSpecificReturnStatement: Psalm does not yet infer clone() return type
      */
     #[NoDiscard]
     public function withBody(string $body): self

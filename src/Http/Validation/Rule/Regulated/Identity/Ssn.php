@@ -19,7 +19,7 @@ use function sprintf;
  *
  * Accepts XXX-XX-XXXX or XXXXXXXXX format.
  * Area: 001-899 (excluding 666), group: 01-99, serial: 0001-9999.
- * This is a FORMAT validator only — it does not verify that the SSN
+ * This is a FORMAT validator only; it does not verify that the SSN
  * has been issued or is currently assigned. For authoritative
  * verification, consult the SSA.
  *

@@ -6,6 +6,7 @@ namespace Pulsar\Runtime\Fiber;
 
 use Closure;
 use Fiber;
+use Psr\Log\LoggerInterface;
 use Pulsar\Api\Internal;
 use Socket;
 use Throwable;
@@ -37,15 +38,17 @@ final class FiberScheduler
      */
     public function __construct(
         private readonly int $maxConcurrency = 64,
+        private readonly ?LoggerInterface $logger = null,
     ) {}
 
     /**
      * Spawn a new Fiber for the given socket and handler.
      *
+     * If the fiber throws during start, the exception is caught and logged.
+     * The fiber is cleaned up and the scheduler continues operating.
+     *
      * @param Closure(Socket): void $handler
      * @return bool True if spawned, false if at concurrency limit
-     *
-     * @throws Throwable If the Fiber handler throws or the Fiber fails to start
      */
     public function spawn(Socket $socket, Closure $handler): bool
     {
@@ -58,8 +61,17 @@ final class FiberScheduler
         $this->fibers[$id] = $fiber;
         $this->sockets[$id] = $socket;
 
-        // Start the fiber immediately with the socket
-        $fiber->start($socket);
+        try {
+            $fiber->start($socket);
+        } catch (Throwable $e) {
+            $this->logger?->error('Fiber crashed during start', [
+                'exception' => $e,
+                'socket_id' => $id,
+            ]);
+            unset($this->fibers[$id], $this->sockets[$id]);
+
+            return true;
+        }
 
         // If the fiber completed immediately, clean up
         if ($fiber->isTerminated()) {
@@ -73,12 +85,11 @@ final class FiberScheduler
      * Run one tick of the event loop.
      *
      * Uses socket_select with the given timeout to check for readable sockets,
-     * then resumes the corresponding Fibers.
+     * then resumes the corresponding Fibers. If a fiber throws, the exception
+     * is caught and logged; the fiber is removed and the loop continues.
      *
      * @param float $timeoutSeconds Timeout for socket_select (default 0.1s)
      * @return int Number of fibers resumed
-     *
-     * @throws Throwable If a Fiber handler throws or a Fiber fails to resume
      */
     public function tick(float $timeoutSeconds = 0.1): int
     {
@@ -112,7 +123,18 @@ final class FiberScheduler
             $fiber = $this->fibers[$id];
 
             if ($fiber->isSuspended()) {
-                $fiber->resume();
+                try {
+                    $fiber->resume();
+                } catch (Throwable $e) {
+                    $this->logger?->error('Fiber crashed during tick', [
+                        'exception' => $e,
+                        'socket_id' => $id,
+                    ]);
+                    unset($this->fibers[$id], $this->sockets[$id]);
+                    $resumed++;
+
+                    continue;
+                }
                 $resumed++;
             }
 
@@ -148,11 +170,11 @@ final class FiberScheduler
      * Drain all active Fibers within the given timeout.
      *
      * Resumes all suspended Fibers and waits for them to terminate.
+     * If a fiber throws, the exception is caught and logged; the fiber
+     * is removed and draining continues for the remaining fibers.
      *
      * @param float $timeoutSeconds Maximum drain time
      * @return int Number of Fibers still active after drain
-     *
-     * @throws Throwable If a Fiber handler throws or a Fiber fails to resume
      */
     public function drain(float $timeoutSeconds = 5.0): int
     {
@@ -164,7 +186,17 @@ final class FiberScheduler
             // Resume any suspended fibers that aren't waiting on I/O
             foreach ($this->fibers as $id => $fiber) {
                 if ($fiber->isSuspended()) {
-                    $fiber->resume();
+                    try {
+                        $fiber->resume();
+                    } catch (Throwable $e) {
+                        $this->logger?->error('Fiber crashed during drain', [
+                            'exception' => $e,
+                            'socket_id' => $id,
+                        ]);
+                        unset($this->fibers[$id], $this->sockets[$id]);
+
+                        continue;
+                    }
                 }
 
                 if ($fiber->isTerminated()) {

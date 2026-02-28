@@ -15,8 +15,8 @@ use Pulsar\Http\Message\Response;
 use Pulsar\Http\ResponseStatus;
 use Pulsar\Runtime\Bridge\WorkerInterface;
 use Pulsar\Runtime\Worker\HealthResponse;
-use Pulsar\Runtime\Worker\HealthStatus;
 use Pulsar\Runtime\Worker\WorkerContext;
+use Pulsar\Runtime\Worker\WorkerHealthStatus;
 use Pulsar\Runtime\Worker\WorkerInfo;
 use Throwable;
 
@@ -128,11 +128,11 @@ final class RoadRunnerRuntime implements ReloadableRuntimeInterface
     {
         $this->status = RuntimeStatus::Draining;
         $this->workerContext->drain();
-        $this->logger?->info('RoadRunner worker reload requested — draining');
+        $this->logger?->info('RoadRunner worker reload requested: draining');
     }
 
     #[Override]
-    public function healthStatus(): HealthStatus
+    public function healthStatus(): WorkerHealthStatus
     {
         return $this->workerContext->healthStatus();
     }
@@ -237,7 +237,7 @@ final class RoadRunnerRuntime implements ReloadableRuntimeInterface
             return;
         }
 
-        /** @psalm-suppress UndefinedConstant -- POSIX-only, guarded by OS check */
+        /** @psalm-suppress UndefinedConstant: POSIX-only, guarded by OS check */
         pcntl_signal(SIGINT, function (): void {
             $this->stop();
         });

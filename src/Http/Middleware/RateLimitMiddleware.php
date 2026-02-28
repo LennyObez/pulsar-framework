@@ -22,6 +22,12 @@ use function is_string;
  * When a TrustedProxy is provided, resolves the real client IP from
  * X-Forwarded-For behind reverse proxies.
  *
+ * Supports composite keying (IP + user ID) for authenticated endpoints
+ * via a request attribute. Set `rate_limit.user_id` on the request
+ * (e.g., via an authentication middleware) to include the user ID
+ * in the rate-limit key. This prevents a single authenticated user
+ * from consuming the entire IP-based quota on shared networks.
+ *
  * Returns 429 Too Many Requests with standard rate-limit headers
  * when the limit is exceeded.
  */
@@ -58,17 +64,26 @@ final readonly class RateLimitMiddleware implements MiddlewareInterface
     /**
      * Resolve the rate-limit key from the request.
      *
-     * Uses TrustedProxy for IP resolution when available, otherwise
-     * falls back to REMOTE_ADDR.
+     * Builds a composite key from the client IP and, when present,
+     * the authenticated user ID (from the `rate_limit.user_id` request
+     * attribute). This prevents a single user from exhausting the
+     * IP-based quota on shared networks (e.g., corporate NAT).
      */
     private function resolveKey(ServerRequestInterface $request): string
     {
         if ($this->trustedProxy !== null) {
-            return 'rate_limit:' . $this->trustedProxy->resolveClientIp($request);
+            $ip = $this->trustedProxy->resolveClientIp($request);
+        } else {
+            $raw = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+            $ip = is_string($raw) ? $raw : 'unknown';
         }
 
-        $ip = $request->getServerParams()['REMOTE_ADDR'] ?? null;
+        $userId = $request->getAttribute('rate_limit.user_id');
 
-        return 'rate_limit:' . (is_string($ip) ? $ip : 'unknown');
+        if (is_string($userId) && $userId !== '') {
+            return 'rate_limit:' . $ip . ':' . $userId;
+        }
+
+        return 'rate_limit:' . $ip;
     }
 }

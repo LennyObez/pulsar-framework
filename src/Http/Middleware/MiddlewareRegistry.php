@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pulsar\Http\Middleware;
 
-use Pulsar\Api\Internal;
+use Pulsar\Api\Api;
 use RuntimeException;
 
 use function array_key_exists;
@@ -17,7 +17,7 @@ use function sprintf;
  * Groups map a single name to an ordered list of middleware.
  * Aliases map a short name to a single middleware class-string or instance.
  */
-#[Internal]
+#[Api(since: '1.0.0')]
 final class MiddlewareRegistry
 {
     /** @var array<string, list<MiddlewareInterface|class-string<MiddlewareInterface>>> */

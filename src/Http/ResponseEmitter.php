@@ -22,7 +22,7 @@ final class ResponseEmitter
      *
      * This sends headers and outputs the body. Should only be called once.
      *
-     * @codeCoverageIgnore Emits HTTP headers/body via PHP built-ins — requires live SAPI
+     * @codeCoverageIgnore Emits HTTP headers/body via PHP built-ins: requires live SAPI
      */
     public function emit(ResponseInterface $response): void
     {
@@ -36,7 +36,7 @@ final class ResponseEmitter
     /**
      * Emit the HTTP status line.
      *
-     * @codeCoverageIgnore Emits HTTP headers via PHP built-ins — requires live SAPI
+     * @codeCoverageIgnore Emits HTTP headers via PHP built-ins: requires live SAPI
      */
     private function emitStatusLine(ResponseInterface $response): void
     {
@@ -52,7 +52,7 @@ final class ResponseEmitter
     /**
      * Emit all response headers.
      *
-     * @codeCoverageIgnore Emits HTTP headers via PHP built-ins — requires live SAPI
+     * @codeCoverageIgnore Emits HTTP headers via PHP built-ins: requires live SAPI
      */
     private function emitHeaders(ResponseInterface $response): void
     {
@@ -68,7 +68,7 @@ final class ResponseEmitter
     /**
      * Emit the response body.
      *
-     * @codeCoverageIgnore Emits HTTP body via echo — requires live SAPI
+     * @codeCoverageIgnore Emits HTTP body via echo: requires live SAPI
      */
     private function emitBody(ResponseInterface $response): void
     {
@@ -92,7 +92,7 @@ final class ResponseEmitter
     /**
      * @throws RuntimeException If headers were already sent
      *
-     * @codeCoverageIgnore Checks headers_sent() — requires live SAPI
+     * @codeCoverageIgnore Checks headers_sent(): requires live SAPI
      */
     private function assertHeadersNotSent(): void
     {
