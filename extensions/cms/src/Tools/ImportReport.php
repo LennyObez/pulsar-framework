@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Provides aggregate counts and per-entity-type breakdown
  * for monitoring and user feedback.
+ *
+ * @psalm-api Public DTO returned from MediaBundleImporter::import(); consumed
+ *            by the import-result view and audit logging.
  */
 #[Api(since: '1.0.0')]
 final readonly class ImportReport

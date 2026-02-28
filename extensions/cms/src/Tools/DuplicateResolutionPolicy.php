@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Strategy for resolving duplicate entities during import.
+ *
+ * @psalm-api Public enum referenced by ImportExportServiceInterface and
+ *            MediaBundleImporter; admin import-policy controls expose its cases.
  */
 #[Api(since: '1.0.0')]
 enum DuplicateResolutionPolicy: string

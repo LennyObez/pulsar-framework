@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Exports CMS data as a ZIP bundle including media files.
+ *
+ * @psalm-api Public binding contract; implemented by MediaBundleExporter and
+ *            consumed by admin export controllers.
  */
 #[Api(since: '1.0.0')]
 interface MediaBundleExporterInterface

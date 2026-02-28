@@ -12,6 +12,9 @@ use Pulsar\Extension\Cms\Exception\CmsException;
  *
  * Backups are stored as JSON files with BLAKE2b integrity hashes.
  * Restore operations validate hash integrity before applying data.
+ *
+ * @psalm-api Public binding contract; implemented by BackupService and
+ *            consumed by admin backup controllers and the BackupRetentionJob.
  */
 #[Api(since: '1.0.0')]
 interface BackupServiceInterface
