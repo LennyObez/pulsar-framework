@@ -8,6 +8,9 @@ use Pulsar\Api\Api;
 
 /**
  * Supported content license types for media assets.
+ *
+ * @psalm-api Public enum referenced by MediaAsset::licenseType; consumed by
+ *            LicenseBadgeRenderer and admin upload forms.
  */
 #[Api(since: '1.0.0')]
 enum LicenseType: string

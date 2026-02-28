@@ -11,6 +11,9 @@ use function is_string;
 /**
  * Represents a generated image variant with its physical dimensions,
  * output format, and file size.
+ *
+ * @psalm-api Public DTO returned from ImageVariantGenerator; consumed by
+ *            MediaDerivative records and admin views.
  */
 #[Api(since: '1.0.0')]
 final readonly class ImageVariant
