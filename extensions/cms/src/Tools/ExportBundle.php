@@ -12,6 +12,10 @@ use Pulsar\Api\Api;
  *
  * Contains the exported data, an evidence hash for integrity verification,
  * and metadata about what was exported and how.
+ *
+ * @psalm-api Public DTO returned from ImportExportServiceInterface::export();
+ *            consumed by export controllers and the framework's
+ *            ImportExportProvider adapter.
  */
 #[Api(since: '1.0.0')]
 final readonly class ExportBundle

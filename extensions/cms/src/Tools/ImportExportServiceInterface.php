@@ -11,6 +11,10 @@ use Pulsar\Api\Api;
  *
  * Supports structured bundle export/import (selective entity types)
  * and full-site definition import (N.3 schema).
+ *
+ * @psalm-api Public binding contract; implemented by ImportExportService and
+ *            consumed by admin import/export controllers and the framework
+ *            ImportExportProvider adapter.
  */
 #[Api(since: '1.0.0')]
 interface ImportExportServiceInterface

@@ -11,6 +11,9 @@ use Pulsar\Api\Api;
  *
  * Provides entity counts, duplicate detection, and dependency analysis
  * so the user can review before committing the import.
+ *
+ * @psalm-api Public DTO returned from ImportAnalyzer::analyze(); consumed by
+ *            the admin import-preview view.
  */
 #[Api(since: '1.0.0')]
 final readonly class ImportAnalysisResult

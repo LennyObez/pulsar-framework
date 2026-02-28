@@ -16,6 +16,9 @@ use function is_string;
 /**
  * Analyzes an import bundle to detect duplicates, count entities,
  * and identify missing dependencies before executing the import.
+ *
+ * @psalm-api Resolved from the DI container by import controllers and
+ *            ImportExportService; not instantiated by name.
  */
 #[Api(since: '1.0.0')]
 final readonly class ImportAnalyzer

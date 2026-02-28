@@ -13,6 +13,8 @@ use function array_sum;
  *
  * Reports counts of created, updated, and skipped entities per type,
  * along with any warnings or errors encountered during the import.
+ *
+ * @psalm-api Public DTO returned from ImportExportServiceInterface::import().
  */
 #[Api(since: '1.0.0')]
 final readonly class ImportResult
