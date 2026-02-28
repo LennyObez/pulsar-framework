@@ -12,6 +12,9 @@ use Pulsar\Api\Api;
  *
  * Derivatives are generated automatically from the original upload
  * and stored alongside the source asset.
+ *
+ * @psalm-api Public DTO returned from MediaRepositoryInterface; consumed by
+ *            ResponsiveImageRenderer and admin views.
  */
 #[Api(since: '1.0.0')]
 final readonly class MediaDerivative

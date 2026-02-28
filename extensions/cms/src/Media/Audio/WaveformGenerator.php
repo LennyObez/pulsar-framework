@@ -24,6 +24,9 @@ use const JSON_THROW_ON_ERROR;
  *
  * Uses FFmpeg to extract raw PCM samples, then downsamples to a fixed number
  * of amplitude peaks suitable for canvas/SVG waveform visualization.
+ *
+ * @psalm-api Resolved from the DI container by audio derivative jobs;
+ *            not instantiated by name.
  */
 #[Internal(reason: 'Use WaveformGenerator via service container')]
 final readonly class WaveformGenerator

@@ -8,6 +8,10 @@ use Pulsar\Api\Api;
 
 /**
  * Image processing operations for derivative generation.
+ *
+ * @psalm-api Public binding contract; implemented by ImageProcessor /
+ *            ImagickImageProcessor and consumed by ImageVariantGenerator
+ *            and MediaService.
  */
 #[Api(since: '1.0.0')]
 interface ImageProcessorInterface
