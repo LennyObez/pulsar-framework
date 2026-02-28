@@ -25,7 +25,7 @@ final readonly class QueueMonitor implements QueueMonitorInterface
         return $this->metricsCollector;
     }
 
-    public function healthCheck(string $queue): HealthStatus
+    public function healthCheck(string $queue): QueueHealthStatus
     {
         return $this->healthCheck->check($queue);
     }

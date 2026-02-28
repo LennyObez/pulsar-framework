@@ -12,7 +12,7 @@ use Pulsar\Notification\Notification;
 use Pulsar\Notification\NotificationChannelInterface;
 
 /**
- * Logs notifications instead of delivering them — useful for testing and development.
+ * Logs notifications instead of delivering them: useful for testing and development.
  */
 #[Internal]
 final readonly class LogChannel implements NotificationChannelInterface

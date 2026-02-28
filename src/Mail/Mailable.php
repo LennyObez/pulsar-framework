@@ -7,7 +7,7 @@ namespace Pulsar\Mail;
 use Pulsar\Api\Api;
 
 /**
- * Base class for typed mailables — define envelope + content, optionally override with fluent API.
+ * Base class for typed mailables: define envelope + content, optionally override with fluent API.
  */
 #[Api(since: '1.0.0')]
 abstract class Mailable

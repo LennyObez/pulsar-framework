@@ -26,7 +26,7 @@ use function class_exists;
  * is not needed. Jobs are executed during the push() call and never
  * actually stored in a queue.
  */
-#[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
+#[Internal(reason: 'Implementation detail; use QueueDriverInterface contract')]
 final readonly class SyncDriver implements QueueDriverInterface
 {
     private Randomizer $randomizer;

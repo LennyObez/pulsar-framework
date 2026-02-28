@@ -11,7 +11,7 @@ use Pulsar\Api\Api;
  * Declares that a job performs no mutations (read-only).
  *
  * Side-effect-free jobs are inherently idempotent and are always safe to retry.
- * This provides stronger semantic guarantees than #[Idempotent] — the job
+ * This provides stronger semantic guarantees than #[Idempotent]: the job
  * produces no side effects beyond reading data.
  *
  * Maps to EffectClassification::ReadOnly.

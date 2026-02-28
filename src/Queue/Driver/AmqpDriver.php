@@ -38,7 +38,7 @@ use const JSON_THROW_ON_ERROR;
  * messages are supported via message TTL and dead-letter exchange routing.
  * Delivery tags are tracked internally for acknowledge/reject operations.
  */
-#[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
+#[Internal(reason: 'Implementation detail; use QueueDriverInterface contract')]
 final class AmqpDriver implements QueueDriverInterface
 {
     private readonly Randomizer $randomizer;

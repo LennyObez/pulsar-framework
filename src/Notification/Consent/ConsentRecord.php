@@ -9,7 +9,7 @@ use Pulsar\Api\Api;
 /**
  * Immutable record of a consent action.
  *
- * IP addresses are stored as hashes — never raw values.
+ * IP addresses are stored as hashes: never raw values.
  */
 #[Api(since: '1.0.0')]
 readonly class ConsentRecord

@@ -31,7 +31,7 @@ use const JSON_THROW_ON_ERROR;
  * with the availableAt timestamp as score. Pop operations atomically
  * move jobs from the ready list to a processing list via RPOPLPUSH.
  */
-#[Internal(reason: 'Implementation detail — use QueueDriverInterface contract')]
+#[Internal(reason: 'Implementation detail; use QueueDriverInterface contract')]
 final class RedisDriver implements QueueDriverInterface
 {
     private readonly Randomizer $randomizer;
@@ -287,23 +287,39 @@ final class RedisDriver implements QueueDriverInterface
         return $key;
     }
 
+    /**
+     * Lua script for atomic delayed job migration.
+     *
+     * Atomically moves all jobs whose score <= now from the delayed sorted set
+     * to the ready list, preventing race conditions where multiple workers could
+     * migrate the same job simultaneously.
+     *
+     * Uses Redis server-side Lua (EVAL) to guarantee atomicity: this is NOT
+     * JavaScript eval() and poses no code injection risk (the script is a
+     * compile-time constant, not user input).
+     */
+    private const string MIGRATE_LUA = <<<'LUA'
+        local delayed_key = KEYS[1]
+        local queue_key = KEYS[2]
+        local now = ARGV[1]
+        local jobs = redis.call('ZRANGEBYSCORE', delayed_key, '-inf', now)
+        if #jobs == 0 then
+            return 0
+        end
+        for i, job in ipairs(jobs) do
+            redis.call('ZREM', delayed_key, job)
+            redis.call('RPUSH', queue_key, job)
+        end
+        return #jobs
+        LUA;
+
     private function migrateDelayedJobs(Redis $redis, string $queue, int $now): void
     {
         $delayedKey = $this->key($queue, 'delayed');
-
-        /** @var list<string> $readyJobs */
-        $readyJobs = $redis->zRangeByScore($delayedKey, '-inf', (string) $now);
-
-        if ($readyJobs === []) {
-            return;
-        }
-
         $queueKey = $this->key($queue);
 
-        foreach ($readyJobs as $jobData) {
-            $redis->zRem($delayedKey, $jobData);
-            $redis->rPush($queueKey, $jobData);
-        }
+        /** @psalm-suppress MixedMethodCall: Redis::eval() is the standard API for server-side Lua */
+        $redis->eval(self::MIGRATE_LUA, [$delayedKey, $queueKey, (string) $now], 2);
     }
 
     private function removeFromProcessingById(Redis $redis, string $jobId): void

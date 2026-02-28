@@ -23,7 +23,7 @@ use function usleep;
  * APCu-backed lock for single-server deployments.
  *
  * Provides best-effort mutual exclusion using APCu's apcu_add() for atomic
- * acquisition. Release and refresh operations are not fully atomic — APCu
+ * acquisition. Release and refresh operations are not fully atomic: APCu
  * does not provide a compare-and-swap (CAS) primitive, so a narrow TOCTOU
  * window exists between the token fetch and the subsequent delete/store.
  * This is acceptable for single-server use where the race window is

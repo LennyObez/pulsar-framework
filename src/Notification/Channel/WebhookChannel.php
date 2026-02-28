@@ -11,6 +11,7 @@ use Pulsar\Notification\NotifiableInterface;
 use Pulsar\Notification\Notification;
 use Pulsar\Notification\NotificationChannelInterface;
 use Pulsar\Notification\NotificationHttpClientInterface;
+use Pulsar\Security\Validation\UrlSafetyValidator;
 use Throwable;
 
 use function is_string;
@@ -20,12 +21,17 @@ use const JSON_THROW_ON_ERROR;
 
 /**
  * Delivers notifications to arbitrary webhook endpoints.
+ *
+ * Validates webhook URLs against SSRF attacks before sending requests.
+ * Private/internal network addresses are rejected by default. Set
+ * $allowPrivateNetworks to true for legitimate internal webhook targets.
  */
 #[Internal]
 final readonly class WebhookChannel implements NotificationChannelInterface
 {
     public function __construct(
         private NotificationHttpClientInterface $httpClient,
+        private bool $allowPrivateNetworks = false,
     ) {}
 
     public function send(NotifiableInterface $notifiable, Notification $notification): void
@@ -45,6 +51,16 @@ final readonly class WebhookChannel implements NotificationChannelInterface
             }
 
             $url = $route;
+        }
+
+        // SSRF protection: validate webhook URL before sending
+        $validation = UrlSafetyValidator::validate($url, $this->allowPrivateNetworks);
+
+        if (!$validation->safe) {
+            throw NotificationException::channelNotAvailable(
+                $this->name(),
+                $validation->reason,
+            );
         }
 
         $headers = $payload->headers;

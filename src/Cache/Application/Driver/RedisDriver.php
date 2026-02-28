@@ -45,7 +45,7 @@ final class RedisDriver extends AbstractCacheDriver
 
         $values = $this->redis->mget($keys);
 
-        /** @psalm-suppress TypeDoesNotContainType — ext-redis mget() can return false on connection failure */
+        /** @psalm-suppress TypeDoesNotContainType: ext-redis mget() can return false on connection failure */
         if (!is_array($values)) {
             return array_fill_keys($keys, null);
         }
